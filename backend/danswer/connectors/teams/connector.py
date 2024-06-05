@@ -162,6 +162,20 @@ class TeamsConnector(LoadConnector, PollConnector):
                 doc_batch = []
         yield doc_batch
 
+    def _construct_semantic_identifier(
+        self, channel: Channel, top_message: ChatMessage
+    ) -> str:
+        first_poster = top_message.properties["from"]["user"]["displayName"]
+        channel_name = channel.properties["displayName"]
+        thread_subject = top_message.properties["subject"]
+        snippet = parse_html_page_basic(
+            top_message.body.content[:50].rstrip() + "..."
+            if len(top_message.body.content) > 50
+            else top_message.body.content
+        )
+
+        return f"{first_poster} in {channel_name} about {thread_subject}: {snippet}"
+
     def _convert_thread_to_document(
         self,
         channel: Channel,
@@ -213,20 +227,7 @@ class TeamsConnector(LoadConnector, PollConnector):
         if not post_members_list:
             post_members_list = self._extract_channel_members(channel)
 
-        semantic_string: str = "Post: " + channel.properties["displayName"]
-
-        first_poster = top_message.properties["from"]["user"]["displayName"]
-        channel_name = channel.properties["displayName"]
-        thread_subject = top_message.properties["subject"]
-        snippet = parse_html_page_basic(
-            top_message.body.content[:50].rstrip() + "..."
-            if len(top_message.body.content) > 50
-            else top_message.body.content
-        )
-        if post_members_list:
-            semantic_string = (
-                f"{first_poster} in {channel_name} about {thread_subject}: {snippet}"
-            )
+        semantic_string = self._construct_semantic_identifier(channel, top_message)
         post_id = top_message.properties["id"]
         web_url = top_message.web_url
 
