@@ -84,9 +84,9 @@ def gpt_search(
                 source_type=chunk.source_type,
                 link=chunk.source_links.get(0, "") if chunk.source_links else "",
                 metadata=chunk.metadata,
-                document_age=time_ago(chunk.updated_at)
-                if chunk.updated_at
-                else "Unknown",
+                document_age=(
+                    time_ago(chunk.updated_at) if chunk.updated_at else "Unknown"
+                ),
             )
             for chunk in top_chunks
         ],

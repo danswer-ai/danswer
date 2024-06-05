@@ -162,9 +162,9 @@ class MediaWikiConnector(LoadConnector, PollConnector):
                     pagegenerators.CategorizedPageGenerator(
                         category, recurse=self.recurse_depth
                     ),
-                    last_edit_start=datetime.datetime.fromtimestamp(start)
-                    if start
-                    else None,
+                    last_edit_start=(
+                        datetime.datetime.fromtimestamp(start) if start else None
+                    ),
                     last_edit_end=datetime.datetime.fromtimestamp(end) if end else None,
                 ),
                 groupsize=self.batch_size,

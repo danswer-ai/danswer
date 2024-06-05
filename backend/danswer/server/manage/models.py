@@ -98,7 +98,9 @@ class SlackBotConfigCreationRequest(BaseModel):
     # by an optional `PersonaSnapshot` object. Keeping it like this
     # for now for simplicity / speed of development
     document_sets: list[int] | None
-    persona_id: int | None  # NOTE: only one of `document_sets` / `persona_id` should be set
+    persona_id: (
+        int | None
+    )  # NOTE: only one of `document_sets` / `persona_id` should be set
     channel_names: list[str]
     respond_tag_only: bool = False
     respond_to_bots: bool = False
