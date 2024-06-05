@@ -1109,6 +1109,7 @@ export function ChatPage({
                                     setCompleteMessageMap(
                                       newCompleteMessageMap
                                     );
+
                                     setSelectedMessageForDocDisplay(messageId);
 
                                     // set message as latest so we can edit this message

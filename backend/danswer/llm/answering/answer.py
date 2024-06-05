@@ -121,9 +121,9 @@ class Answer:
 
         self.llm = llm
 
-        self.model_version = llm.__dict__["_model_version"]
-        print(self.model_version)
-        self.explicitly_alternate = explicitly_alternate
+        # self.model_version = llm.__dict__["_model_version"]
+        # print(self.model_version)
+        # self.explicitly_alternate = explicitly_alternate
 
         # print("LLM is ")
         # print()
