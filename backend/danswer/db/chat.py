@@ -249,7 +249,7 @@ def create_new_chat_message(
     rephrased_query: str | None = None,
     error: str | None = None,
     reference_docs: list[DBSearchDoc] | None = None,
-    alternate_assistant: str | None = None,
+    alternate_assistant_id: int | None = None,
     # Maps the citation number [n] to the DB SearchDoc
     citations: dict[int, int] | None = None,
     commit: bool = True,
@@ -266,7 +266,7 @@ def create_new_chat_message(
         citations=citations,
         files=files,
         error=error,
-        alternate_assistant=alternate_assistant,
+        alternate_assistant_id=alternate_assistant_id,
     )
 
     # SQL Alchemy will propagate this to update the reference_docs' foreign keys

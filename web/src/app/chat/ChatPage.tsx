@@ -574,6 +574,8 @@ export function ChatPage({
         getLastSuccessfulMessageId(currMessageHistory);
       for await (const packetBunch of sendMessage({
         message: currMessage,
+        // TODO actually pass in an id. This is functioal
+        alternateAssistantId: undefined,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,

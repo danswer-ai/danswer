@@ -63,6 +63,7 @@ export async function* sendMessage({
   temperature,
   systemPromptOverride,
   useExistingUserMessage,
+  alternateAssistantId,
 }: {
   message: string;
   fileDescriptors: FileDescriptor[];
@@ -82,6 +83,7 @@ export async function* sendMessage({
   // if specified, will use the existing latest user message
   // and will ignore the specified `message`
   useExistingUserMessage?: boolean;
+  alternateAssistantId?: number;
 }) {
   const documentsAreSelected =
     selectedDocumentIds && selectedDocumentIds.length > 0;
@@ -91,6 +93,7 @@ export async function* sendMessage({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      alternate_assistant_id: alternateAssistantId,
       chat_session_id: chatSessionId,
       parent_message_id: parentMessageId,
       message: message,
