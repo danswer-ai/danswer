@@ -75,9 +75,9 @@ def _get_channels(
         client.conversations_list,
         exclude_archived=exclude_archived,
         # also get private channels the bot is added to
-        types=["public_channel", "private_channel"]
-        if get_private
-        else ["public_channel"],
+        types=(
+            ["public_channel", "private_channel"] if get_private else ["public_channel"]
+        ),
     ):
         channels.extend(result["channels"])
 

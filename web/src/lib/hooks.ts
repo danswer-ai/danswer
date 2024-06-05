@@ -25,62 +25,91 @@ export type AutoScrollHookType = {
   lastMessageRef: RefObject<HTMLDivElement>;
   inputRef: RefObject<HTMLDivElement>;
   endDivRef: RefObject<HTMLDivElement>;
+  scrollableDivRef?: RefObject<HTMLDivElement>;
   distance?: number;
   debounce?: number;
 };
 
 /**
- * Scrolls on streaming of text, if within `distance`
+ * Scrolls on streaming of text, if within param `distance`
  */
 export const useScrollOnStream = ({
   isStreaming,
   lastMessageRef,
   inputRef,
   endDivRef,
+  scrollableDivRef,
   distance = 140, // distance that should "engage" the scroll
-  debounce = 100,
+  debounce = 150, // time for debouncing
 }: AutoScrollHookType) => {
-  const timeoutRef = useRef<number | null>(null);
+  const timeoutRef = useRef<boolean>(true);
+
+  const lastScrollTop = useRef<number>(0);
+
+  const blockActionRef = useRef<boolean>(false);
+
+  // let allowScroll = true
 
   useEffect(() => {
-    // Function to handle the scroll
+    // Function to handle the scroll itself
+    const scrollableDiv = scrollableDivRef?.current;
     const handleScroll = () => {
-      if (lastMessageRef.current && inputRef.current && endDivRef?.current) {
+      if (
+        timeoutRef.current &&
+        lastMessageRef.current &&
+        inputRef.current &&
+        endDivRef?.current &&
+        scrollableDivRef
+      ) {
         const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
         const endDivRect = inputRef.current.getBoundingClientRect();
 
+        const currentScrollTop = scrollableDiv?.scrollTop!;
+
+        // Check if scroll is upwards
+        if (currentScrollTop < lastScrollTop.current) {
+          blockActionRef.current = true;
+
+          setTimeout(() => {
+            blockActionRef.current = false;
+          }, 1000);
+        }
+
+        lastScrollTop.current = currentScrollTop;
+
         // Check if the bottom of the final chat is within the engagement distance
-        if (endDivRect.bottom - lastMessageRect.bottom > distance) {
-          endDivRef.current.scrollIntoView({ behavior: "smooth" });
+        if (
+          !blockActionRef.current &&
+          endDivRect.bottom - lastMessageRect.bottom > distance
+        ) {
+          timeoutRef.current = false;
+
+          setTimeout(() => {
+            endDivRef?.current?.scrollIntoView({ behavior: "smooth" });
+            timeoutRef.current = true;
+          }, 800) as unknown as number;
         }
       }
     };
 
     // Debounce the scroll event
     if (isStreaming) {
-      if (timeoutRef.current !== null) {
-        clearTimeout(timeoutRef.current);
-      }
-      timeoutRef.current = setTimeout(
-        handleScroll,
-        debounce
-      ) as unknown as number;
+      handleScroll();
     }
 
     // Cleanup function to clear the timeout when the component unmounts or the inputs change
     return () => {
-      if (timeoutRef.current !== null) {
-        clearTimeout(timeoutRef.current);
-      }
+      // if (timeoutRef.current !== null) {
+      //   clearTimeout(timeoutRef.current);
+      // }
     };
   });
 };
 
 export type InitialScrollType = {
-  isFetchingChatMessages: boolean;
   endDivRef: RefObject<HTMLDivElement>;
   hasPerformedInitialScroll: boolean;
-  initialScrollComplete: () => void;
+  completeInitialScroll: () => void;
   isStreaming: boolean;
 };
 
@@ -91,15 +120,13 @@ export const useInitialScroll = ({
   isStreaming,
   endDivRef,
   hasPerformedInitialScroll,
-  initialScrollComplete,
+  completeInitialScroll,
 }: InitialScrollType) => {
   useEffect(() => {
     // Check: have we done this before? + null checks
     if (!hasPerformedInitialScroll && endDivRef.current && isStreaming) {
-      console.log("Initial scroll");
       endDivRef.current.scrollIntoView({ behavior: "smooth" });
-
-      initialScrollComplete();
+      completeInitialScroll();
     }
   });
 };
@@ -111,9 +138,65 @@ export type ResponsiveScrollType = {
   textAreaRef: RefObject<HTMLTextAreaElement>;
 };
 
-/**
- * Scroll in cases where the input bar covers previously visible bottom of text
- */
+export type ResponsiveScrollParams = {
+  lastMessageRef: RefObject<HTMLDivElement>;
+  inputRef: RefObject<HTMLDivElement>;
+  endDivRef: RefObject<HTMLDivElement>;
+  textAreaRef: RefObject<HTMLTextAreaElement>;
+};
+
+export const useResponsiveScroll2 = ({
+  lastMessageRef,
+  inputRef,
+  endDivRef,
+  textAreaRef,
+}: ResponsiveScrollParams) => {
+  const previousHeight = useRef<number>(
+    inputRef.current?.getBoundingClientRect().height!
+  );
+
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let prevInputHeight = 0;
+
+    const handleInputResize = () => {
+      setTimeout(() => {
+        if (inputRef.current && lastMessageRef.current) {
+          const inputRect = inputRef.current.getBoundingClientRect();
+          const currentInputHeight = inputRect.height;
+
+          let newHeight: number =
+            inputRef.current?.getBoundingClientRect().height!;
+          const heightDifference = newHeight - previousHeight.current;
+          previousHeight.current = newHeight;
+
+          if (endDivRef.current) {
+            endDivRef?.current.scrollIntoView({ behavior: "smooth" });
+            endDivRef.current.style.height = `${Math.max(newHeight - 100, 0)}px`;
+            endDivRef.current.style.transition = "height 0.3s ease-out";
+          }
+
+          prevInputHeight = currentInputHeight;
+        }
+      }, 300);
+    };
+
+    const textarea = textAreaRef.current;
+    if (textarea) {
+      textarea.addEventListener("input", handleInputResize);
+    }
+
+    return () => {
+      if (textarea) {
+        textarea.removeEventListener("input", handleInputResize);
+      }
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+    };
+  });
+};
+
 export const useResponsiveScroll = ({
   lastMessageRef,
   inputRef,
@@ -127,7 +210,6 @@ export const useResponsiveScroll = ({
 
     // Core logic
     const handleInputResize = async () => {
-      console.log("Handle!");
       function delay(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms));
       }
@@ -158,12 +240,6 @@ export const useResponsiveScroll = ({
 
             timeoutId = setTimeout(() => {
               if (endDivRef && endDivRef?.current) {
-                // TODO
-                // window.scrollBy({
-                //   top: currentInputHeight - prevInputHeight,
-                //   behavior: 'smooth',
-                // });
-
                 endDivRef?.current.scrollIntoView({ behavior: "smooth" });
               }
             }, 500);
