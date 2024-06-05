@@ -610,6 +610,9 @@ export function ChatPage({
         useExistingUserMessage: isSeededChat,
       })) {
         for (const packet of packetBunch) {
+          console.log("packet");
+          console.log(packet);
+
           if (Object.hasOwn(packet, "answer_piece")) {
             answer += (packet as AnswerPiecePacket).answer_piece;
           } else if (Object.hasOwn(packet, "top_documents")) {

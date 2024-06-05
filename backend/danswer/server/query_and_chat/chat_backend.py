@@ -65,6 +65,9 @@ logger = setup_logger()
 
 router = APIRouter(prefix="/chat")
 
+# TODO
+MAX_TOKENS = 10000
+
 
 @router.get("/get-user-chat-sessions")
 def get_user_chat_sessions(

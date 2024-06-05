@@ -6,6 +6,7 @@ from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import STOP_STREAM_PAT
+from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.llm.answering.models import StreamProcessor
 from danswer.llm.answering.stream_processing.utils import map_document_id_order
 from danswer.prompts.constants import TRIPLE_BACKTICK
@@ -32,6 +33,8 @@ def extract_citations_from_stream(
     prepend_bracket = False
     cited_inds = set()
     hold = ""
+    num_token = 0
+
     for raw_token in tokens:
         if stop_stream:
             next_hold = hold + raw_token
@@ -53,9 +56,16 @@ def extract_citations_from_stream(
         if prepend_bracket:
             curr_segment += "[" + curr_segment
             prepend_bracket = False
+        # print('z')
+        if isinstance(token, str):
+            curr_segment += token
+            llm_out += token
+        else:
+            curr_segment += token[0]
+            llm_out += token[0]
+            num_token += token[1]
 
-        curr_segment += token
-        llm_out += token
+        # print(num_token)
 
         possible_citation_pattern = r"(\[\d*$)"  # [1, [, etc
         possible_citation_found = re.search(possible_citation_pattern, curr_segment)
@@ -103,14 +113,22 @@ def extract_citations_from_stream(
             curr_segment = curr_segment[:-1]
             prepend_bracket = True
 
-        yield DanswerAnswerPiece(answer_piece=curr_segment)
+        yield DanswerAnswerPiece(
+            answer_piece=curr_segment, max_token=(GEN_AI_MAX_OUTPUT_TOKENS == num_token)
+        )
         curr_segment = ""
 
     if curr_segment:
         if prepend_bracket:
-            yield DanswerAnswerPiece(answer_piece="[" + curr_segment)
+            yield DanswerAnswerPiece(
+                answer_piece="[" + curr_segment,
+                max_token=(GEN_AI_MAX_OUTPUT_TOKENS == num_token),
+            )
         else:
-            yield DanswerAnswerPiece(answer_piece=curr_segment)
+            yield DanswerAnswerPiece(
+                answer_piece=curr_segment,
+                max_token=(GEN_AI_MAX_OUTPUT_TOKENS == num_token),
+            )
 
 
 def build_citation_processor(

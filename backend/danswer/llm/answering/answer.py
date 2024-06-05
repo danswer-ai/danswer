@@ -195,11 +195,14 @@ class Answer:
                     self.tools, self.force_use_tool
                 )
             ]
+
+            # TODO yields here
             for message in self.llm.stream(
                 prompt=prompt,
                 tools=final_tool_definitions if final_tool_definitions else None,
                 tool_choice="required" if self.force_use_tool else None,
             ):
+                # print(message)
                 if isinstance(message, AIMessageChunk) and (
                     message.tool_call_chunks or message.tool_calls
                 ):
@@ -209,7 +212,10 @@ class Answer:
                         tool_call_chunk += message  # type: ignore
                 else:
                     if message.content:
-                        yield cast(str, message.content)
+                        if message.tokens:
+                            yield cast(tuple, (message.content, message.tokens))
+                        else:
+                            yield cast(str, message.content)
 
             if not tool_call_chunk:
                 return  # no tool call needed
@@ -360,6 +366,7 @@ class Answer:
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
+        # print("processsing output stream")
         if self._processed_stream is not None:
             yield from self._processed_stream
             return
@@ -421,6 +428,9 @@ class Answer:
 
         processed_stream = []
         for processed_packet in _process_stream(output_generator):
+            # TODO
+            # print("processed_packet")
+            # print(processed_packet)
             processed_stream.append(processed_packet)
             yield processed_packet
 
@@ -430,6 +440,7 @@ class Answer:
     def llm_answer(self) -> str:
         answer = ""
         for packet in self.processed_streamed_output:
+            print(packet)
             if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
                 answer += packet.answer_piece
 

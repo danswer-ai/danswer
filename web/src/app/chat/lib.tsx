@@ -127,6 +127,7 @@ export async function* sendMessage({
       use_existing_user_message: useExistingUserMessage,
     }),
   });
+
   if (!sendMessageResponse.ok) {
     const errorJson = await sendMessageResponse.json();
     const errorMsg = errorJson.message || errorJson.detail || "";

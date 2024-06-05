@@ -50,6 +50,7 @@ class LLMRelevanceFilterResponse(BaseModel):
 class DanswerAnswerPiece(BaseModel):
     # A small piece of a complete answer. Used for streaming back answers.
     answer_piece: str | None  # if None, specifies the end of an Answer
+    max_token: bool | None
 
 
 # An intermediate representation of citations, later translated into

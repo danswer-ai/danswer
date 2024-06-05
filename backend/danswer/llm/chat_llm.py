@@ -20,6 +20,7 @@ from langchain_core.messages import SystemMessage
 from langchain_core.messages import SystemMessageChunk
 from langchain_core.messages.tool import ToolCallChunk
 from langchain_core.messages.tool import ToolMessage
+from litellm import token_counter
 
 from danswer.configs.app_configs import LOG_ALL_MODEL_INTERACTIONS
 from danswer.configs.model_configs import DISABLE_LITELLM_STREAMING
@@ -138,7 +139,7 @@ def _convert_message_to_dict(message: BaseMessage) -> dict:
 
 
 def _convert_delta_to_message_chunk(
-    _dict: dict[str, Any], curr_msg: BaseMessage | None
+    _dict: dict[str, Any], curr_msg: BaseMessage | None, tokens: int = 0
 ) -> BaseMessageChunk:
     """Adapted from langchain_community.chat_models.litellm._convert_delta_to_message_chunk"""
     role = _dict.get("role") or (_base_msg_to_role(curr_msg) if curr_msg else None)
@@ -152,6 +153,7 @@ def _convert_delta_to_message_chunk(
 
     if role == "user":
         return HumanMessageChunk(content=content)
+
     elif role == "assistant":
         if tool_calls:
             tool_call = tool_calls[0]
@@ -163,12 +165,16 @@ def _convert_delta_to_message_chunk(
                 args=tool_call.function.arguments,
                 index=0,  # only support a single tool call atm
             )
+
             return AIMessageChunk(
                 content=content,
+                tokens=tokens,
                 additional_kwargs=additional_kwargs,
                 tool_call_chunks=[tool_call_chunk],
             )
-        return AIMessageChunk(content=content, additional_kwargs=additional_kwargs)
+        return AIMessageChunk(
+            content=content, tokens=tokens, additional_kwargs=additional_kwargs
+        )
     elif role == "system":
         return SystemMessageChunk(content=content)
     elif role == "function":
@@ -273,6 +279,7 @@ class DefaultMultiLLM(LLM):
             prompt = [_convert_message_to_dict(HumanMessage(content=prompt))]
 
         try:
+            # print("getting completion")
             return litellm.completion(
                 # model choice
                 model=f"{self.config.model_provider}/{self.config.model_name}",
@@ -288,6 +295,7 @@ class DefaultMultiLLM(LLM):
                 stream=stream,
                 # model params
                 temperature=self._temperature,
+                # max_tokens=1,
                 max_tokens=self._max_output_tokens,
                 timeout=self._timeout,
                 **self._model_kwargs,
@@ -318,6 +326,10 @@ class DefaultMultiLLM(LLM):
         response = cast(
             litellm.ModelResponse, self._completion(prompt, tools, tool_choice, False)
         )
+
+        # print("contains message")
+        # print(response)
+
         return _convert_litellm_message_to_langchain_message(
             response.choices[0].message
         )
@@ -338,16 +350,27 @@ class DefaultMultiLLM(LLM):
 
         output = None
         response = self._completion(prompt, tools, tool_choice, True)
+
         for part in response:
+            text = part["choices"][0]["delta"]["content"]
+
+            count = 0
+            if text is not None:
+                count = token_counter(
+                    model=response.model, text=text, count_response_tokens=True
+                )
+                print(count)
+
             if len(part["choices"]) == 0:
                 continue
             delta = part["choices"][0]["delta"]
-            message_chunk = _convert_delta_to_message_chunk(delta, output)
+            message_chunk = _convert_delta_to_message_chunk(delta, output, tokens=count)
             if output is None:
                 output = message_chunk
             else:
                 output += message_chunk
-
+            print("message chunk")
+            print(message_chunk)
             yield message_chunk
 
         if LOG_ALL_MODEL_INTERACTIONS and output:

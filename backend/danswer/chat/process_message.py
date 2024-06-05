@@ -460,7 +460,10 @@ def stream_chat_message_objects(
         reference_db_search_docs = None
         qa_docs_response = None
         ai_message_files = None  # any files to associate with the AI message e.g. dall-e generated images
+
+        # this won't work- need to address with the `llm` and accesss the raw output
         for packet in answer.processed_streamed_output:
+            print(packet)
             if isinstance(packet, ToolResponse):
                 if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                     (
@@ -535,7 +538,9 @@ def stream_chat_message_objects(
         msg_detail_response = translate_db_message_to_chat_message_detail(
             gen_ai_response_message
         )
-
+        print("msg_detail_response")
+        print(msg_detail_response)
+        print("")
         yield msg_detail_response
     except Exception as e:
         logger.exception(e)
@@ -558,4 +563,5 @@ def stream_chat_message(
             use_existing_user_message=use_existing_user_message,
         )
         for obj in objects:
+            print(obj.dict())
             yield get_json_line(obj.dict())
