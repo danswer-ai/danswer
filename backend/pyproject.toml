@@ -76,6 +76,7 @@ dependencies = [
     "tgcrypto==1.2.5",
     "dropbox==11.36.2",
     "pyrogram==2.0.106",
+    "notion-client>=2.2.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
@@ -108,8 +109,9 @@ dev-dependencies = [
     "types-requests==2.28.11.17",
     "types-retry==0.9.9.3",
     "types-urllib3==1.26.25.11",
+    "ipykernel>=6.29.4",
 ]
-virtual = true # Makes sure we dont install/build "danswer" as package
+virtual = false # We install danswer as package to make it possible to easily test it in notebooks
 
 [tool.hatch.metadata]
 allow-direct-references = true

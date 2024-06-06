@@ -8,10 +8,12 @@
 #   with-sources: false
 #   generate-hashes: false
 
+-e file:.
 absl-py==2.1.0
     # via tensorboard
     # via tensorflow
 aiohttp==3.9.4
+    # via danswer
     # via langchain
     # via langchain-community
     # via litellm
@@ -19,16 +21,21 @@ aiohttp==3.9.4
 aiosignal==1.3.1
     # via aiohttp
 alembic==1.10.4
+    # via danswer
 amqp==5.2.0
     # via kombu
 anyio==4.4.0
     # via httpcore
     # via openai
     # via starlette
+asttokens==2.4.1
+    # via stack-data
 astunparse==1.6.3
     # via tensorflow
 asyncpg==0.27.0
+    # via danswer
 atlassian-python-api==3.37.0
+    # via danswer
 attrs==23.2.0
     # via aiohttp
     # via cattrs
@@ -36,10 +43,12 @@ attrs==23.2.0
 bcrypt==4.1.3
     # via passlib
 beautifulsoup4==4.12.2
+    # via danswer
 billiard==4.2.0
     # via celery
 black==23.3.0
 boto3==1.34.84
+    # via danswer
 botocore==1.34.116
     # via boto3
     # via s3transfer
@@ -51,6 +60,7 @@ cachetools==5.3.3
 cattrs==23.2.3
     # via ddtrace
 celery==5.3.4
+    # via danswer
 celery-types==0.19.0
 certifi==2024.2.2
     # via httpcore
@@ -63,6 +73,7 @@ cffi==1.16.0
 cfgv==3.4.0
     # via pre-commit
 chardet==5.2.0
+    # via danswer
 charset-normalizer==3.3.2
     # via requests
 classify-imports==4.2.0
@@ -90,10 +101,13 @@ cloudpickle==3.0.0
     # via distributed
 cmake==3.29.3
     # via triton
+comm==0.2.2
+    # via ipykernel
 cryptography==42.0.7
     # via msal
     # via pyjwt
 dask==2023.8.1
+    # via danswer
     # via distributed
 dataclasses-json==0.6.6
     # via langchain
@@ -102,7 +116,11 @@ dataclasses-json==0.6.6
 ddsketch==3.0.1
     # via ddtrace
 ddtrace==2.6.5
+    # via danswer
+debugpy==1.8.1
+    # via ipykernel
 decorator==5.1.1
+    # via ipython
     # via retry
 defusedxml==0.7.1
     # via jira
@@ -116,24 +134,32 @@ dirtyjson==1.0.8
 distlib==0.3.8
     # via virtualenv
 distributed==2023.8.1
+    # via danswer
 distro==1.9.0
     # via openai
     # via zulip
 dnspython==2.6.1
     # via email-validator
 dropbox==11.36.2
+    # via danswer
 email-validator==2.1.1
     # via fastapi-users
 envier==0.5.1
     # via ddtrace
 et-xmlfile==1.1.0
     # via openpyxl
+executing==2.0.1
+    # via stack-data
 fastapi==0.109.2
+    # via danswer
     # via fastapi-users
 fastapi-users==12.1.3
+    # via danswer
     # via fastapi-users-db-sqlalchemy
 fastapi-users-db-sqlalchemy==5.0.0
+    # via danswer
 filelock==3.12.0
+    # via danswer
     # via huggingface-hub
     # via torch
     # via transformers
@@ -153,6 +179,7 @@ gast==0.5.4
 google-api-core==2.8.0
     # via google-api-python-client
 google-api-python-client==2.86.0
+    # via danswer
 google-auth==2.29.0
     # via google-api-core
     # via google-api-python-client
@@ -160,8 +187,10 @@ google-auth==2.29.0
     # via google-auth-oauthlib
     # via tensorboard
 google-auth-httplib2==0.1.0
+    # via danswer
     # via google-api-python-client
 google-auth-oauthlib==1.0.0
+    # via danswer
     # via tensorboard
 google-pasta==0.2.0
     # via tensorflow
@@ -183,18 +212,24 @@ h5py==3.9.0
 hpack==4.0.0
     # via h2
 httpcore==0.16.3
+    # via danswer
     # via httpx
 httplib2==0.22.0
     # via google-api-python-client
     # via google-auth-httplib2
 httpx==0.23.3
+    # via danswer
     # via httpx-oauth
     # via llama-index
+    # via notion-client
     # via openai
     # via rt
 httpx-oauth==0.11.2
+    # via danswer
 hubspot-api-client==8.1.0
+    # via danswer
 huggingface-hub==0.20.1
+    # via danswer
     # via sentence-transformers
     # via tokenizers
     # via transformers
@@ -214,11 +249,17 @@ importlib-metadata==7.1.0
     # via opentelemetry-api
 iniconfig==2.0.0
     # via pytest
+ipykernel==6.29.4
+ipython==8.25.0
+    # via ipykernel
+jedi==0.19.1
+    # via ipython
 jinja2==3.1.4
     # via distributed
     # via litellm
     # via torch
 jira==3.5.1
+    # via danswer
 jmespath==1.0.1
     # via boto3
     # via botocore
@@ -230,18 +271,27 @@ jsonpatch==1.33
     # via langchain-core
 jsonpointer==2.4
     # via jsonpatch
+jupyter-client==8.6.2
+    # via ipykernel
+jupyter-core==5.7.2
+    # via ipykernel
+    # via jupyter-client
 keras==2.15.0
     # via tensorflow
 kombu==5.3.7
     # via celery
 langchain==0.1.17
+    # via danswer
 langchain-community==0.0.36
+    # via danswer
     # via langchain
 langchain-core==0.1.50
+    # via danswer
     # via langchain
     # via langchain-community
     # via langchain-text-splitters
 langchain-text-splitters==0.0.1
+    # via danswer
     # via langchain
 langsmith==0.1.65
     # via langchain
@@ -252,7 +302,9 @@ libclang==18.1.1
 lit==18.1.6
     # via triton
 litellm==1.37.7
+    # via danswer
 llama-index==0.9.45
+    # via danswer
 locket==1.0.0
     # via distributed
     # via partd
@@ -263,6 +315,7 @@ makefun==1.15.2
     # via fastapi-users
 mako==1.2.4
     # via alembic
+    # via danswer
 markdown==3.6
     # via tensorboard
 markupsafe==2.1.5
@@ -271,6 +324,9 @@ markupsafe==2.1.5
     # via werkzeug
 marshmallow==3.21.2
     # via dataclasses-json
+matplotlib-inline==0.1.7
+    # via ipykernel
+    # via ipython
 matrix-client==0.3.2
     # via zulip
 ml-dtypes==0.2.0
@@ -278,6 +334,7 @@ ml-dtypes==0.2.0
 mpmath==1.3.0
     # via sympy
 msal==1.26.0
+    # via danswer
     # via office365-rest-python-client
 msgpack==1.0.8
     # via distributed
@@ -293,14 +350,18 @@ mypy-extensions==1.0.0
     # via mypy
     # via typing-inspect
 nest-asyncio==1.6.0
+    # via ipykernel
     # via llama-index
 networkx==3.3
     # via llama-index
     # via torch
 nltk==3.8.1
+    # via danswer
     # via llama-index
 nodeenv==1.9.0
     # via pre-commit
+notion-client==2.2.1
+    # via danswer
 numpy==1.26.4
     # via h5py
     # via langchain
@@ -341,12 +402,16 @@ nvidia-nvtx-cu11==11.7.91
     # via torch
 oauthlib==3.2.2
     # via atlassian-python-api
+    # via danswer
     # via requests-oauthlib
 office365-rest-python-client==2.5.9
+    # via danswer
 openai==1.14.3
+    # via danswer
     # via litellm
     # via llama-index
 openpyxl==3.1.2
+    # via danswer
 opentelemetry-api==1.25.0
     # via ddtrace
 opt-einsum==3.3.0
@@ -358,6 +423,7 @@ packaging==23.2
     # via dask
     # via distributed
     # via huggingface-hub
+    # via ipykernel
     # via jira
     # via langchain-core
     # via marshmallow
@@ -367,19 +433,25 @@ packaging==23.2
     # via transformers
 pandas==2.2.2
     # via llama-index
+parso==0.8.4
+    # via jedi
 partd==1.4.2
     # via dask
 passlib==1.7.4
     # via fastapi-users
 pathspec==0.12.1
     # via black
+pexpect==4.9.0
+    # via ipython
 pillow==10.3.0
     # via python-pptx
     # via sentence-transformers
 platformdirs==3.11.0
     # via black
+    # via jupyter-core
     # via virtualenv
 playwright==1.41.2
+    # via danswer
     # via pytest-playwright
 pluggy==1.5.0
     # via pytest
@@ -388,6 +460,7 @@ ply==3.11
 pre-commit==3.2.2
 prompt-toolkit==3.0.45
     # via click-repl
+    # via ipython
 protobuf==4.25.3
     # via ddtrace
     # via google-api-core
@@ -395,8 +468,15 @@ protobuf==4.25.3
     # via tensorboard
     # via tensorflow
 psutil==5.9.5
+    # via danswer
     # via distributed
+    # via ipykernel
 psycopg2-binary==2.9.9
+    # via danswer
+ptyprocess==0.7.0
+    # via pexpect
+pure-eval==0.2.2
+    # via stack-data
 py==1.11.0
     # via retry
 pyaes==1.6.1
@@ -409,7 +489,9 @@ pyasn1-modules==0.4.0
 pycparser==2.22
     # via cffi
 pycryptodome==3.19.1
+    # via danswer
 pydantic==1.10.13
+    # via danswer
     # via fastapi
     # via langchain
     # via langchain-core
@@ -418,6 +500,9 @@ pydantic==1.10.13
 pyee==11.0.1
     # via playwright
 pygithub==1.58.2
+    # via danswer
+pygments==2.18.0
+    # via ipython
 pyjwt==2.8.0
     # via fastapi-users
     # via msal
@@ -427,7 +512,9 @@ pynacl==1.5.0
 pyparsing==3.1.2
     # via httplib2
 pypdf==3.17.0
+    # via danswer
 pyrogram==2.0.106
+    # via danswer
 pysocks==1.7.1
     # via pyrogram
 pytelegrambotapi==4.19.0
@@ -439,20 +526,29 @@ pytest==7.4.4
 pytest-base-url==2.1.0
     # via pytest-playwright
 pytest-mock==3.12.0
+    # via danswer
 pytest-playwright==0.3.2
+    # via danswer
 python-dateutil==2.8.2
     # via botocore
     # via celery
+    # via danswer
     # via hubspot-api-client
+    # via jupyter-client
     # via pandas
     # via zenpy
 python-docx==1.1.0
+    # via danswer
 python-dotenv==1.0.0
+    # via danswer
     # via litellm
 python-gitlab==3.9.0
+    # via danswer
 python-multipart==0.0.7
+    # via danswer
     # via fastapi-users
 python-pptx==0.6.23
+    # via danswer
 python-slugify==6.1.2
     # via pytest-playwright
 pytz==2024.1
@@ -460,6 +556,7 @@ pytz==2024.1
     # via pandas
     # via zenpy
 pywikibot==9.0.0
+    # via danswer
 pyyaml==6.0.1
     # via dask
     # via distributed
@@ -469,6 +566,9 @@ pyyaml==6.0.1
     # via langchain-core
     # via pre-commit
     # via transformers
+pyzmq==26.0.3
+    # via ipykernel
+    # via jupyter-client
 regex==2024.5.15
     # via nltk
     # via tiktoken
@@ -476,6 +576,7 @@ regex==2024.5.15
 reorder-python-imports==3.9.0
 requests==2.31.0
     # via atlassian-python-api
+    # via danswer
     # via dropbox
     # via google-api-core
     # via huggingface-hub
@@ -504,17 +605,21 @@ requests==2.31.0
     # via zulip
 requests-oauthlib==1.3.1
     # via atlassian-python-api
+    # via danswer
     # via google-auth-oauthlib
     # via jira
 requests-toolbelt==1.0.0
     # via jira
     # via python-gitlab
 retry==0.9.2
+    # via danswer
 rfc3986==1.5.0
+    # via danswer
     # via httpx
 rsa==4.9
     # via google-auth
 rt==3.1.2
+    # via danswer
 ruff==0.0.286
 s3transfer==0.10.1
     # via boto3
@@ -537,6 +642,7 @@ setuptools==70.0.0
     # via tensorboard
     # via tensorflow
 six==1.16.0
+    # via asttokens
     # via astunparse
     # via atlassian-python-api
     # via ddsketch
@@ -551,6 +657,7 @@ six==1.16.0
     # via tensorflow
     # via zenpy
 slack-sdk==3.20.2
+    # via danswer
 sniffio==1.3.1
     # via anyio
     # via httpcore
@@ -562,20 +669,26 @@ soupsieve==2.5
     # via beautifulsoup4
 sqlalchemy==2.0.15
     # via alembic
+    # via danswer
     # via fastapi-users-db-sqlalchemy
     # via langchain
     # via langchain-community
     # via llama-index
+stack-data==0.6.3
+    # via ipython
 starlette==0.36.3
+    # via danswer
     # via fastapi
 stone==3.3.6
     # via dropbox
 supervisor==4.2.5
+    # via danswer
 sympy==1.12.1
     # via torch
 tblib==3.0.0
     # via distributed
 telebot==0.0.5
+    # via danswer
 tenacity==8.3.0
     # via langchain
     # via langchain-community
@@ -595,12 +708,15 @@ termcolor==2.4.0
 text-unidecode==1.3
     # via python-slugify
 tgcrypto==1.2.5
+    # via danswer
 threadpoolctl==3.5.0
     # via scikit-learn
 tiktoken==0.4.0
+    # via danswer
     # via litellm
     # via llama-index
 timeago==1.0.16
+    # via danswer
 tokenizers==0.15.2
     # via litellm
     # via transformers
@@ -613,13 +729,23 @@ torch==2.0.1
     # via triton
 tornado==6.4
     # via distributed
+    # via ipykernel
+    # via jupyter-client
 tqdm==4.66.4
     # via huggingface-hub
     # via nltk
     # via openai
     # via sentence-transformers
     # via transformers
+traitlets==5.14.3
+    # via comm
+    # via ipykernel
+    # via ipython
+    # via jupyter-client
+    # via jupyter-core
+    # via matplotlib-inline
 transformers==4.39.2
+    # via danswer
     # via sentence-transformers
 triton==2.0.0
     # via torch
@@ -645,6 +771,7 @@ typing-extensions==4.12.0
     # via ddtrace
     # via fastapi
     # via huggingface-hub
+    # via ipython
     # via jira
     # via llama-index
     # via mypy
@@ -672,6 +799,7 @@ urllib3==2.2.1
     # via hubspot-api-client
     # via requests
 uvicorn==0.21.1
+    # via danswer
 vine==5.1.0
     # via amqp
     # via celery
@@ -700,8 +828,10 @@ xmltodict==0.13.0
 yarl==1.9.4
     # via aiohttp
 zenpy==2.0.41
+    # via danswer
 zict==3.0.0
     # via distributed
 zipp==3.19.0
     # via importlib-metadata
 zulip==0.8.2
+    # via danswer
