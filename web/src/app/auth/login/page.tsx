@@ -7,12 +7,12 @@ import {
   AuthTypeMetadata,
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
-import Image from "next/image";
 import { SignInButton } from "./SignInButton";
 import { EmailPasswordForm } from "./EmailPasswordForm";
 import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { LoginText } from "./LoginText";
 
 const Page = async ({
   searchParams,
@@ -74,7 +74,7 @@ const Page = async ({
           {authUrl && authTypeMetadata && (
             <>
               <h2 className="text-center text-xl text-strong font-bold mt-6">
-                Log In to Danswer
+                <LoginText />
               </h2>
 
               <SignInButton
@@ -87,7 +87,7 @@ const Page = async ({
             <Card className="mt-4 w-96">
               <div className="flex">
                 <Title className="mb-2 mx-auto font-bold">
-                  Log In to Danswer
+                  <LoginText />
                 </Title>
               </div>
               <EmailPasswordForm />
