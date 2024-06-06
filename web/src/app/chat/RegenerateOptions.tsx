@@ -9,6 +9,7 @@ import { getFinalLLM } from "@/lib/llm/utils";
 
 import { Modal } from "@/components/Modal";
 import { modelOverRideType } from "./ChatPage";
+import { FiCheck } from "react-icons/fi";
 
 export default function RegenerateOption({
   llmOverrideManager,
@@ -16,7 +17,9 @@ export default function RegenerateOption({
   onClose,
   regenerateID,
   messageIdToResend,
+  alternateModel,
 }: {
+  alternateModel?: string;
   llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
   onClose: () => void;
@@ -64,16 +67,41 @@ export default function RegenerateOption({
       : llmName);
 
   return (
-    <RegenerateDropdown
-      options={llmOptions}
-      selected={currentModelName}
-      onSelect={(value) => {
-        const { provider, modelName } = destructureValue(value as string);
-        regenerateID(
-          { modelVersion: modelName, modelProvider: provider },
-          messageIdToResend
-        );
-      }}
-    />
+    <div className="group flex items-center relative">
+      <RegenerateDropdown
+        alternate={alternateModel}
+        options={llmOptions}
+        selected={currentModelName}
+        onSelect={(value) => {
+          const { provider, modelName } = destructureValue(value as string);
+          regenerateID(
+            { modelVersion: modelName, modelProvider: provider },
+            messageIdToResend
+          );
+        }}
+      />
+    </div>
   );
+
+  // <div className="group flex items-center">
+  //   <RegenerateDropdown
+  //     options={llmOptions}
+  //     selected={currentModelName}
+  //     onSelect={(value) => {
+  //       const { provider, modelName } = destructureValue(value as string);
+  //       regenerateID(
+  //         { modelVersion: modelName, modelProvider: provider },
+  //         messageIdToResend
+  //       );
+  //     }}
+  //   />
+  //   <p
+  //     className={`my-auto ml-1 ${!regenerateModal && "opacity-0"} text-xs group-hover:opacity-100 transition-all duration-300`}
+  //   >
+  //     {" "}
+  //     {alternateModel || ""}
+  //   </p>
+  // </div>
+
+  // );
 }

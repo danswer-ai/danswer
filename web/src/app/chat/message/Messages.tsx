@@ -377,26 +377,20 @@ export const AIMessage = ({
                 icon={FiThumbsDown}
                 onClick={() => handleFeedback("dislike")}
               />
+
               {regenerateID &&
                 messageIdToResend &&
                 onClose &&
                 llmOverrideManager &&
                 selectedAssistant && (
-                  <div className="group flex">
-                    <RegenerateOption
-                      regenerateID={regenerateID}
-                      messageIdToResend={messageIdToResend}
-                      onClose={onClose}
-                      llmOverrideManager={llmOverrideManager}
-                      selectedAssistant={selectedAssistant}
-                    />
-                    <p
-                      className={`my-auto ml-1 ${!regenerateModal && "opacity-0"} text-sm group-hover:opacity-100 transition-all duration-300`}
-                    >
-                      {" "}
-                      {alternateModel || ""}
-                    </p>
-                  </div>
+                  <RegenerateOption
+                    alternateModel={alternateModel}
+                    llmOverrideManager={llmOverrideManager}
+                    selectedAssistant={selectedAssistant}
+                    onClose={onClose}
+                    regenerateID={regenerateID}
+                    messageIdToResend={messageIdToResend}
+                  />
                 )}
               {/* {alternateModel && } */}
             </div>

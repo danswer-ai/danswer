@@ -247,7 +247,6 @@ def get_or_create_root_message(
             message="",
             token_count=0,
             message_type=MessageType.SYSTEM,
-            # alternate_model=None,
         )
         db_session.add(new_root_message)
         db_session.commit()

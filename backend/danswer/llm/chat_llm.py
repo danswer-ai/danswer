@@ -168,6 +168,7 @@ def _convert_delta_to_message_chunk(
                 additional_kwargs=additional_kwargs,
                 tool_call_chunks=[tool_call_chunk],
             )
+
         return AIMessageChunk(content=content, additional_kwargs=additional_kwargs)
     elif role == "system":
         return SystemMessageChunk(content=content)

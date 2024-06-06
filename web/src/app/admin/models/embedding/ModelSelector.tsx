@@ -29,6 +29,7 @@ export function ModelOption({
           ? model.description
           : "Custom model—no description is available."}
       </div>
+
       {model.link && (
         <a
           target="_blank"
