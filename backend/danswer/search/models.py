@@ -78,9 +78,6 @@ class SearchRequest(ChunkContext):
     skip_rerank: bool | None = None
     skip_llm_chunk_filter: bool | None = None
 
-    # If this is set, only the highest matching chunk (or merged chunks) is returned
-    dedupe_docs: bool = False
-
     class Config:
         arbitrary_types_allowed = True
 
@@ -118,6 +115,8 @@ class RetrievalDetails(ChunkContext):
     # if None, no offset / limit
     offset: int | None = None
     limit: int | None = None
+
+    # If this is set, only the highest matching chunk (or merged chunks) is returned
     dedupe_docs: bool = False
 
 

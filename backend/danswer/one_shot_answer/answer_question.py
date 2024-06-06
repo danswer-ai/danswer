@@ -208,15 +208,14 @@ def stream_answer_objects(
                     search_response_summary.top_sections
                 )
 
+                # Deduping happens at the last step to avoid harming quality by dropping content early on
                 deduped_docs = top_docs
                 if query_req.retrieval_options.dedupe_docs:
                     deduped_docs, dropped_inds = dedupe_documents(top_docs)
 
                 reference_db_search_docs = [
-                    create_db_search_doc(
-                        server_search_doc=top_doc, db_session=db_session
-                    )
-                    for top_doc in deduped_docs
+                    create_db_search_doc(server_search_doc=doc, db_session=db_session)
+                    for doc in deduped_docs
                 ]
 
                 response_docs = [
