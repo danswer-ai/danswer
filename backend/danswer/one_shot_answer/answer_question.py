@@ -157,6 +157,7 @@ def stream_answer_objects(
     )
 
     llm = get_llm_for_persona(persona=chat_session.persona)
+
     prompt_config = PromptConfig.from_model(prompt)
     document_pruning_config = DocumentPruningConfig(
         max_chunks=int(

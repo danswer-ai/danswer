@@ -235,8 +235,6 @@ def stream_chat_message_objects(
             )
         else:
             persona = chat_session.persona
-        print("persona")
-        print(persona)
 
         prompt_id = new_msg_req.prompt_id
         if prompt_id is None and persona.prompts:
@@ -246,13 +244,13 @@ def stream_chat_message_objects(
             raise RuntimeError(
                 "Must specify a set of documents for chat or specify search options"
             )
-
         try:
             llm = get_llm_for_persona(
                 persona=persona,
                 llm_override=new_msg_req.llm_override or chat_session.llm_override,
                 additional_headers=litellm_additional_headers,
             )
+
         except GenAIDisabledException:
             raise RuntimeError("LLM is disabled. Can't use chat flow without LLM.")
 
@@ -277,6 +275,7 @@ def stream_chat_message_objects(
                 user_id=user_id,
                 db_session=db_session,
             )
+
         else:
             parent_message = root_message
 
@@ -403,12 +402,16 @@ def stream_chat_message_objects(
         if not final_msg.prompt:
             raise RuntimeError("No Prompt found")
 
-        prompt_config = PromptConfig.from_model(
-            final_msg.prompt,
-            prompt_override=(
-                new_msg_req.prompt_override or chat_session.prompt_override
-            ),
-        )
+        prompt_config = (
+            PromptConfig.from_model(
+                final_msg.prompt,
+                prompt_override=(
+                    new_msg_req.prompt_override or chat_session.prompt_override
+                ),
+            )
+            if not persona
+            else PromptConfig.from_model(persona.prompts[0])
+        ) 
 
         # find out what tools to use
         search_tool: SearchTool | None = None

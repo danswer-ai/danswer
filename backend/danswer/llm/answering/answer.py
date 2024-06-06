@@ -205,6 +205,7 @@ class Answer:
                     self.tools, self.force_use_tool
                 )
             ]
+
             for message in self.llm.stream(
                 prompt=prompt,
                 tools=final_tool_definitions if final_tool_definitions else None,
