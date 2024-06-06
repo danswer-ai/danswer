@@ -782,9 +782,6 @@ export function ChatPage({
     regenerate?: boolean;
     modelOverRide?: LlmOverride | null;
   } = {}) => {
-    setMessage("");
-    setIsStreaming(true);
-
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
     const searchParamBasedChatSessionName =
@@ -859,23 +856,10 @@ export function ChatPage({
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
 
-    const updateFn = async (messages: Message[]) => {
-      const replacementsMap = finalMessage
-        ? new Map([[messages[0].messageId, TEMP_USER_MESSAGE_ID]] as [
-            number,
-            number,
-          ][])
-        : null;
-
-      upsertToCompleteMessageMap({
-        messages: messages,
-        replacementsMap: replacementsMap,
-        completeMessageMapOverride: frozenCompleteMessageMap,
-      });
-    };
-
-    // Clean streaming updates
-    await updateFn([
+    setMessage("");
+    setIsStreaming(true);
+    // Initial clearing of response
+    const messages: Message[] = [
       {
         messageId: -1,
         message: error || answer,
@@ -885,7 +869,20 @@ export function ChatPage({
         parentMessageId: parentId!,
         alternate_model: modelOverRide?.modelName,
       },
-    ]);
+    ];
+
+    const replacementsMap = finalMessage
+      ? new Map([[messages[0].messageId, TEMP_USER_MESSAGE_ID]] as [
+          number,
+          number,
+        ][])
+      : null;
+
+    upsertToCompleteMessageMap({
+      messages: messages,
+      replacementsMap: replacementsMap,
+      completeMessageMapOverride: frozenCompleteMessageMap,
+    });
 
     try {
       for await (const packetBunch of sendMessage({
@@ -974,7 +971,6 @@ export function ChatPage({
         await updateFn([
           {
             messageId: newAssistantMessageId,
-            // 153,
             message: error || answer,
             type: error ? "error" : "assistant",
             retrievalType,
@@ -1018,24 +1014,6 @@ export function ChatPage({
 
     setIsStreaming(false);
 
-    if (isNewSession) {
-      if (finalMessage) {
-        setSelectedMessageForDocDisplay(finalMessage.message_id);
-      }
-      if (!searchParamBasedChatSessionName) {
-        await nameChatSession(currChatSessionId, currMessage);
-      }
-
-      // NOTE: don't switch pages if the user has navigated away from the chat
-      if (
-        currChatSessionId === urlChatSessionId.current ||
-        urlChatSessionId.current === null
-      ) {
-        router.push(buildChatUrl(searchParams, currChatSessionId, null), {
-          scroll: false,
-        });
-      }
-    }
     if (
       finalMessage?.context_docs &&
       finalMessage.context_docs.top_documents.length > 0 &&
@@ -1044,6 +1022,7 @@ export function ChatPage({
       setSelectedMessageForDocDisplay(finalMessage.message_id);
     }
   };
+
   const onFeedback = async (
     messageId: number,
     feedbackType: FeedbackType,
