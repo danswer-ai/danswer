@@ -244,9 +244,11 @@ class WebConnector(LoadConnector):
                     playwright, context = start_playwright()
                     restart_playwright = False
 
+                if current_url.split(".")[-1].lower() in ['jpg', 'jpeg', 'gif', 'png', 'bmp']:
+                    continue
                 if current_url.split(".")[-1] == "pdf":
                     # PDF files are not checked for links
-                    response = requests.get(current_url)
+                    response = requests.get(current_url, allow_redirects=True)
                     page_text = pdf_to_text(file=io.BytesIO(response.content))
 
                     doc_batch.append(

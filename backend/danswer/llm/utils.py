@@ -313,17 +313,28 @@ def get_llm_max_tokens(
         return GEN_AI_MAX_TOKENS
 
     try:
-        model_obj = model_map.get(f"{model_provider}/{model_name}")
-        if not model_obj:
-            model_obj = model_map[model_name]
+        if model_provider == 'mistral':
+            token_lims = {
+                "mistral-small-latest": 32000,
+                "mistral-medium-latest": 32000,
+                "mistral-large-latest": 32000,
+                "open-mistral-7b": 32000,
+                "open-mixtral-8x7b": 32000,
+                "open-mixtral-8x22b": 64000
+            }
+            return token_lims[model_name]
+        else:
+            model_obj = model_map.get(f"{model_provider}/{model_name}")
+            if not model_obj:
+                model_obj = model_map[model_name]
 
-        if "max_input_tokens" in model_obj:
-            return model_obj["max_input_tokens"]
+            if "max_input_tokens" in model_obj:
+                return model_obj["max_input_tokens"]
 
-        if "max_tokens" in model_obj:
-            return model_obj["max_tokens"]
+            if "max_tokens" in model_obj:
+                return model_obj["max_tokens"]
 
-        raise RuntimeError("No max tokens found for LLM")
+            raise RuntimeError("No max tokens found for LLM")
     except Exception:
         logger.exception(
             f"Failed to get max tokens for LLM with name {model_name}. Defaulting to 4096."
