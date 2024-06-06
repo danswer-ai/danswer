@@ -9,7 +9,7 @@ import { CustomCheckbox } from "@/components/CustomCheckbox";
 import { updateHiddenStatus } from "../lib";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { getErrorMsg } from "@/lib/fetchUtils";
-import { ScoreSection } from "../ScoreEditor";
+import { ScoreSection } from "../../../../components/admin/documents/AdminDocumentsScoreEditor";
 import { useRouter } from "next/navigation";
 import { HorizontalFilters } from "@/components/search/filtering/Filters";
 import { useFilters } from "@/lib/hooks";

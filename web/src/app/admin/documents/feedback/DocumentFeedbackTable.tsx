@@ -17,7 +17,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import { getErrorMsg } from "@/lib/fetchUtils";
 import { HoverPopup } from "@/components/HoverPopup";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
-import { ScoreSection } from "../ScoreEditor";
+import { ScoreSection } from "../../../../components/admin/documents/AdminDocumentsScoreEditor";
 
 const IsVisibleSection = ({
   document,
