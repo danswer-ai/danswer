@@ -34,6 +34,8 @@ import Prism from "prismjs";
 
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
+import { Persona } from "@/app/admin/assistants/interfaces";
+import { Button } from "@tremor/react";
 
 function FileDisplay({ files }: { files: FileDescriptor[] }) {
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
@@ -71,6 +73,7 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 }
 
 export const AIMessage = ({
+  alternativeAssistant,
   messageId,
   content,
   files,
@@ -87,6 +90,7 @@ export const AIMessage = ({
   handleForceSearch,
   retrievalDisabled,
 }: {
+  alternativeAssistant?: Persona | null;
   messageId: number | null;
   content: string | JSX.Element;
   files?: FileDescriptor[];
@@ -166,9 +170,10 @@ export const AIMessage = ({
                 <FiCpu size={16} className="my-auto mx-auto" />
               </div>
             </div>
-
             <div className="font-bold text-emphasis ml-2 my-auto">
-              {personaName || "Danswer"}
+              {alternativeAssistant
+                ? alternativeAssistant.name
+                : personaName || "Danswer"}
             </div>
 
             {query === undefined &&

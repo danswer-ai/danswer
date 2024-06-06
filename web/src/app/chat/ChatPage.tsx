@@ -65,6 +65,8 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
+import { PersonaSelector } from "@/components/search/PersonaSelector";
+import { Button } from "@tremor/react";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -184,7 +186,9 @@ export function ChatPage({
       const response = await fetch(
         `/api/chat/get-chat-session/${existingChatSessionId}`
       );
+
       const chatSession = (await response.json()) as BackendChatSession;
+
       setSelectedPersona(
         filteredAssistants.find(
           (persona) => persona.id === chatSession.persona_id
@@ -306,6 +310,7 @@ export function ChatPage({
     setCompleteMessageMap(newCompleteMessageMap);
     return newCompleteMessageMap;
   };
+
   const messageHistory = buildLatestMessageChain(completeMessageMap);
   const [currentTool, setCurrentTool] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -577,8 +582,8 @@ export function ChatPage({
         getLastSuccessfulMessageId(currMessageHistory);
       for await (const packetBunch of sendMessage({
         message: currMessage,
-        // TODO actually pass in an id. This is functioal
-        alternateAssistantId: undefined,
+        // TODO dynamic
+        alternateAssistantId: -1,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
@@ -1025,8 +1030,21 @@ export function ChatPage({
                                 i === messageHistory.length - 1);
                             const previousMessage =
                               i !== 0 ? messageHistory[i - 1] : null;
+
+                            const currentAlternativeAssistant =
+                              message.alternateAssistantID
+                                ? availablePersonas.find(
+                                    (persona) =>
+                                      persona.id ===
+                                      message.alternateAssistantID
+                                  )
+                                : null;
+
                             return (
                               <AIMessage
+                                alternativeAssistant={
+                                  currentAlternativeAssistant
+                                }
                                 key={message.messageId}
                                 messageId={message.messageId}
                                 content={message.message}
@@ -1137,6 +1155,9 @@ export function ChatPage({
                           }
                         })}
 
+                        <Button onClick={() => console.log(completeMessageMap)}>
+                          Click me
+                        </Button>
                         {isStreaming &&
                           messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
@@ -1212,6 +1233,9 @@ export function ChatPage({
                     <div className="absolute bottom-0 z-10 w-full">
                       <div className="w-full pb-4">
                         <ChatInputBar
+                          removeAssistant={() => null}
+                          // tempAlter
+                          alternativeAssistant={livePersona}
                           message={message}
                           setMessage={setMessage}
                           onSubmit={onSubmit}

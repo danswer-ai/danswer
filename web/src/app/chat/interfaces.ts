@@ -56,6 +56,7 @@ export interface Message {
   parentMessageId: number | null;
   childrenMessageIds?: number[];
   latestChildMessageId?: number | null;
+  alternateAssistantID?: number | null;
 }
 
 export interface BackendChatSession {
@@ -79,6 +80,7 @@ export interface BackendMessage {
   time_sent: string;
   citations: CitationMap;
   files: FileDescriptor[];
+  alternate_assistant_id?: number | null;
 }
 
 export interface DocumentsResponse {

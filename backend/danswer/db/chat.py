@@ -461,6 +461,7 @@ def translate_db_message_to_chat_message_detail(
         time_sent=chat_message.time_sent,
         citations=chat_message.citations,
         files=chat_message.files or [],
+        alternate_assistant_id=chat_message.alternate_assistant_id,
     )
 
     return chat_msg_detail
