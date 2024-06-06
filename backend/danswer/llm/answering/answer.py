@@ -121,12 +121,6 @@ class Answer:
 
         self.llm = llm
 
-        # self.model_version = llm.__dict__["_model_version"]
-        # print(self.model_version)
-        # self.explicitly_alternate = explicitly_alternate
-
-        # print("LLM is ")
-        # print()
         self.llm_tokenizer = get_default_llm_tokenizer()
 
         self._final_prompt: list[BaseMessage] | None = None

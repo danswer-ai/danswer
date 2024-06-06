@@ -86,7 +86,6 @@ def create_chat_chain(
         raise RuntimeError("Could not trace chat message history")
 
     if regenerating:
-        print(mainline_messages[-1].message)
         return mainline_messages[-2], mainline_messages[:-2]
     return mainline_messages[-1], mainline_messages[:-1]
 

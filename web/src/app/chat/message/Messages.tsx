@@ -112,16 +112,6 @@ export const AIMessage = ({
     modelOverRide: modelOverRideType,
     messageIdToResend: number
   ) => void;
-
-  // regenerateID={regenerateID}
-  // messageIdToResend={
-  //   // messageHistory[messageHistory.length - 2] &&
-  //   // messageHistory[messageHistory.length - 2]
-  //   //   .messageId
-  // }
-  // onClose={() => setRegenerateModal(false)}
-  // llmOverrideManager={llmOverrideManager}
-  // selectedAssistant={livePersona}
   otherResponseCanSwitchTo?: number[];
   messageId: number | null;
   regenerateModal?: boolean;
@@ -397,7 +387,6 @@ export const AIMessage = ({
                       regenerateID={regenerateID}
                       messageIdToResend={messageIdToResend}
                       onClose={onClose}
-                      // () => setRegenerateModal(false)}
                       llmOverrideManager={llmOverrideManager}
                       selectedAssistant={selectedAssistant}
                     />
@@ -459,34 +448,6 @@ function MessageSwitcher({
     </div>
   );
 }
-
-// function ResponseSwitcher({
-//   currentPage,
-//   totalPages,
-//   handlePrevious,
-//   handleNext,
-// }: {
-//   currentPage: number;
-//   totalPages: number;
-//   handlePrevious?: () => void;
-//   handleNext?: () => void;
-// }) {
-//   return (
-//     <div className="flex items-center text-sm space-x-0.5">
-//       <Hoverable
-//         icon={FiChevronLeft}
-//         onClick={currentPage === 1 ? undefined : handlePrevious}
-//       />
-//       <span className="text-emphasis text-medium select-none">
-//         {currentPage} / {totalPages}
-//       </span>
-//       <Hoverable
-//         icon={FiChevronRight}
-//         onClick={currentPage === totalPages ? undefined : handleNext}
-//       />
-//     </div>
-//   );
-// }
 
 export const HumanMessage = ({
   content,

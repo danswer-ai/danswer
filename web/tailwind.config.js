@@ -16,31 +16,6 @@ module.exports = {
     transparent: "transparent",
     current: "currentColor",
     extend: {
-      // For removing prose
-      typography: {
-        validate: {
-          css: {
-            pre: false,
-            code: false,
-            "pre code": false,
-            "code::before": false,
-            "code::after": false,
-          },
-        },
-      },
-
-      // typography: (theme) => ({
-      //   'no-code-prose': {
-      //     css: {
-      //       pre: false,
-      //       code: false,
-      //       'pre code': false,
-      //       'code::before': false,
-      //       'code::after': false,
-      //     },
-      //   },
-      // }),
-
       screens: {
         "2xl": "1420px",
         "3xl": "1700px",

@@ -191,7 +191,7 @@ const Main = () => {
                 try {
                   await uploadCreateAndTriggerConnector();
                 } catch (e) {
-                  console.log("Failed to index filels: ", e);
+                  console.log("Failed to index files: ", e);
                 }
                 setFilesAreUploading(false);
               }}

@@ -27,32 +27,7 @@ export default function RegenerateOption({
   ) => void;
 }) {
   const { llmProviders } = useChatContext();
-  const { llmOverride, setLlmOverride, temperature, setTemperature } =
-    llmOverrideManager;
-
-  // const { llmProviders } = useChatContext();
   const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant);
-
-  const [localTemperature, setLocalTemperature] = useState<number>(
-    temperature || 0
-  );
-
-  const debouncedSetTemperature = useCallback(
-    debounce((value) => {
-      setTemperature(value);
-    }, 300),
-    []
-  );
-
-  const handleTemperatureChange = (value: number) => {
-    setLocalTemperature(value);
-    debouncedSetTemperature(value);
-  };
-
-  type modelValues = {
-    modelName: string;
-    provider: string;
-  };
   const llmOptions: { name: string; value: string }[] = [];
   const structureValue = (
     name: string,
@@ -92,24 +67,13 @@ export default function RegenerateOption({
     <RegenerateDropdown
       options={llmOptions}
       selected={currentModelName}
-      onSelect={
-        (value) =>
-          // TODO change of course
-          // console.log(value)
-          {
-            const { name, provider, modelName } = destructureValue(
-              value as string
-            );
-            // console.log({ modelVersion: modelName, modelProvider: provider})
-
-            // console.log(messageIdToResend)
-            regenerateID(
-              { modelVersion: modelName, modelProvider: provider },
-              messageIdToResend
-            );
-          }
-        // setLlmOverride(destructureValue(value as string))
-      }
+      onSelect={(value) => {
+        const { provider, modelName } = destructureValue(value as string);
+        regenerateID(
+          { modelVersion: modelName, modelProvider: provider },
+          messageIdToResend
+        );
+      }}
     />
   );
 }
