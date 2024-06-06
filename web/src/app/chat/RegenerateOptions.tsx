@@ -5,19 +5,30 @@ import { RegenerateDropdown } from "@/components/Dropdown";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { getFinalLLM } from "@/lib/llm/utils";
 
-export default function RegenerateOption({
-  llmOverrideManager,
-  selectedAssistant,
-  regenerateResponse,
-  messageIdToResend,
-  alternateModel,
-}: {
-  alternateModel?: string;
-  llmOverrideManager?: LlmOverrideManager;
+export type RegenerateOptions = {
+  llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
   messageIdToResend: number;
-  regenerateResponse: (modelOverRide: LlmOverride, responseId: number) => void;
+  regenerateResponse: (
+    modelOverRide: LlmOverride,
+    messageIdToResend: number
+  ) => void;
+  alternateModel?: string;
+};
+
+export default function RegenerateOption({
+  regenerate,
+}: {
+  regenerate: RegenerateOptions;
 }) {
+  const {
+    llmOverrideManager,
+    selectedAssistant,
+    regenerateResponse,
+    messageIdToResend,
+    alternateModel,
+  } = regenerate;
+
   const { llmProviders } = useChatContext();
   const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant);
   const llmOptions: { name: string; value: string }[] = [];
