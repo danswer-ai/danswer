@@ -30,9 +30,9 @@ export function ChatInputBar({
   setConfigModalActiveTab,
   textAreaRef,
   alternativeAssistant,
-  removeAssistant,
+  updateAlternativeAssistant,
 }: {
-  removeAssistant: () => void;
+  updateAlternativeAssistant: (newAlternativeAssistant: Persona | null) => void;
   message: string;
   setMessage: (message: string) => void;
   onSubmit: () => void;
@@ -42,7 +42,7 @@ export function ChatInputBar({
   filterManager: FilterManager;
   llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
-  alternativeAssistant?: Persona;
+  alternativeAssistant: Persona | null;
   files: FileDescriptor[];
   setFiles: (files: FileDescriptor[]) => void;
   handleFileUpload: (files: File[]) => void;
@@ -105,7 +105,10 @@ export function ChatInputBar({
                     {alternativeAssistant.name}
                   </p>
                   <div className="ml-auto ">
-                    <Hoverable icon={FiX} onClick={() => removeAssistant()} />
+                    <Hoverable
+                      icon={FiX}
+                      onClick={() => updateAlternativeAssistant(null)}
+                    />
                   </div>
                 </div>
               </div>

@@ -95,6 +95,15 @@ export function ChatPage({
   } = useChatContext();
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
 
+  const [selectedAlternativeAssistant, setSelectedAlternativeAssistant] =
+    useState<Persona | null>(filteredAssistants[1]);
+
+  const updateAlternativeAssistant = (
+    newAlternativeAssistant: Persona | null
+  ) => {
+    setSelectedAlternativeAssistant(newAlternativeAssistant);
+  };
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const existingChatIdRaw = searchParams.get("chatId");
@@ -582,8 +591,7 @@ export function ChatPage({
         getLastSuccessfulMessageId(currMessageHistory);
       for await (const packetBunch of sendMessage({
         message: currMessage,
-        // TODO dynamic
-        alternateAssistantId: -1,
+        alternateAssistantId: selectedAlternativeAssistant?.id,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
@@ -681,6 +689,7 @@ export function ChatPage({
             citations: finalMessage?.citations || {},
             files: finalMessage?.files || aiMessageImages || [],
             parentMessageId: newUserMessageId,
+            alternateAssistantID: selectedAlternativeAssistant?.id,
           },
         ]);
         if (isCancelledRef.current) {
@@ -1154,16 +1163,15 @@ export function ChatPage({
                             );
                           }
                         })}
-
-                        <Button onClick={() => console.log(completeMessageMap)}>
-                          Click me
-                        </Button>
                         {isStreaming &&
                           messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
                             "user" && (
                             <div key={messageHistory.length}>
                               <AIMessage
+                                alternativeAssistant={
+                                  selectedAlternativeAssistant
+                                }
                                 messageId={null}
                                 personaName={livePersona.name}
                                 content={
@@ -1233,9 +1241,11 @@ export function ChatPage({
                     <div className="absolute bottom-0 z-10 w-full">
                       <div className="w-full pb-4">
                         <ChatInputBar
-                          removeAssistant={() => null}
+                          updateAlternativeAssistant={
+                            updateAlternativeAssistant
+                          }
                           // tempAlter
-                          alternativeAssistant={livePersona}
+                          alternativeAssistant={selectedAlternativeAssistant}
                           message={message}
                           setMessage={setMessage}
                           onSubmit={onSubmit}
