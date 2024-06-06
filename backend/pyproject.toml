@@ -118,7 +118,7 @@ allow-direct-references = true
 packages = ["danswer"] # path here
 
 [tool.rye.workspace]
-#members = ["models_server*"] # we will only need this if we decide to use models_server as a package
+#members = ["models_server*"] # we will only need this if we decide to use models_server as a package.
 
 [tool.rye.scripts]
 model_server = { cmd = "uvicorn model_server.main:app --reload --port 9000" }
