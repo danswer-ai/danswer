@@ -138,7 +138,6 @@ def get_chat_session(
         )
     except ValueError:
         raise ValueError("Chat session does not exist or has been deleted")
-
     # for chat-seeding: if the session is unassigned, assign it now. This is done here
     # to avoid another back and forth between FE -> BE before starting the first
     # message generation
@@ -288,8 +287,6 @@ def handle_new_chat_message(
     have already been set as latest"""
     logger.debug(f"Received new chat message: {chat_message_req.message}")
 
-    # print('new message is')
-    # print(chat_message_req)
     if (
         not chat_message_req.message
         and chat_message_req.prompt_id is not None

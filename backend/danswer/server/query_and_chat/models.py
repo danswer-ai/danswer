@@ -184,6 +184,7 @@ class ChatMessageDetail(BaseModel):
     context_docs: RetrievalDocs | None
     message_type: MessageType
     time_sent: datetime
+    alternate_assistant_id: str | None
     # Dict mapping citation number to db_doc_id
     citations: dict[int, int] | None
     files: list[FileDescriptor]

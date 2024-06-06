@@ -70,6 +70,7 @@ export interface Message {
   parentMessageId: number | null;
   childrenMessageIds?: number[];
   latestChildMessageId?: number | null;
+  alternateAssistantID?: number | null;
 }
 
 export interface BackendChatSession {
@@ -95,6 +96,7 @@ export interface BackendMessage {
   citations: CitationMap;
   files: FileDescriptor[];
   tool_calls: ToolCallFinalResult[];
+  alternate_assistant_id?: number | null;
 }
 
 export interface DocumentsResponse {

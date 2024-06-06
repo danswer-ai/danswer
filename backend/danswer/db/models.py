@@ -708,6 +708,7 @@ class ChatMessage(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_session_id: Mapped[int] = mapped_column(ForeignKey("chat_session.id"))
+
     alternate_assistant_id = mapped_column(
         Integer, ForeignKey("persona.id"), nullable=True
     )

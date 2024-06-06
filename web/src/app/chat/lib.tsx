@@ -384,6 +384,7 @@ export function processRawChatHistory(
       message: messageInfo.message,
       type: messageInfo.message_type as "user" | "assistant",
       files: messageInfo.files,
+      alternateAssistantID: Number(messageInfo.alternate_assistant_id),
       // only include these fields if this is an assistant message so that
       // this is identical to what is computed at streaming time
       ...(messageInfo.message_type === "assistant"

@@ -547,6 +547,7 @@ def translate_db_message_to_chat_message_detail(
             )
             for tool_call in chat_message.tool_calls
         ],
+        alternate_assistant_id=chat_message.alternate_assistant_id,
     )
 
     return chat_msg_detail

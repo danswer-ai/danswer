@@ -1,5 +1,6 @@
-import React, { EventHandler, useEffect, useRef } from "react";
-import { FiSend, FiFilter, FiPlusCircle, FiCpu } from "react-icons/fi";
+import React, {  useEffect } from "react";
+ 
+import { FiSend, FiFilter, FiPlusCircle, FiCpu, FiX } from "react-icons/fi";
 import ChatInputOption from "./ChatInputOption";
 import { FaBrain } from "react-icons/fa";
 import { Persona } from "@/app/admin/assistants/interfaces";
@@ -9,6 +10,8 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
 import { FileDescriptor } from "../interfaces";
 import { InputBarPreview } from "../files/InputBarPreview";
+import { RobotIcon } from "@/components/icons/icons";
+import { Hoverable } from "@/components/Hoverable";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -27,7 +30,10 @@ export function ChatInputBar({
   handleFileUpload,
   setConfigModalActiveTab,
   textAreaRef,
+  alternativeAssistant,
+  updateAlternativeAssistant,
 }: {
+  updateAlternativeAssistant: (newAlternativeAssistant: Persona | null) => void;
   message: string;
   setMessage: (message: string) => void;
   onSubmit: () => void;
@@ -37,6 +43,7 @@ export function ChatInputBar({
   filterManager: FilterManager;
   llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
+  alternativeAssistant: Persona | null;
   files: FileDescriptor[];
   setFiles: (files: FileDescriptor[]) => void;
   handleFileUpload: (files: File[]) => void;
@@ -109,6 +116,22 @@ export function ChatInputBar({
               [&:has(textarea:focus)]::ring-black
             "
           >
+            {alternativeAssistant && (
+              <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full  ">
+                <div className="bg-neutral-200 p-2 rounded-t-lg  items-center flex w-full">
+                  <RobotIcon size={20} />
+                  <p className="ml-3 text-neutral-800 my-auto">
+                    {alternativeAssistant.name}
+                  </p>
+                  <div className="ml-auto ">
+                    <Hoverable
+                      icon={FiX}
+                      onClick={() => updateAlternativeAssistant(null)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
             {files.length > 0 && (
               <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-2">
                 {files.map((file) => (

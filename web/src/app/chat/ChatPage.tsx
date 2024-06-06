@@ -62,7 +62,6 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
 import {
   checkLLMSupportsImageInput,
-  destructureValue,
   getFinalLLM,
   structureValue,
 } from "@/lib/llm/utils";
@@ -78,9 +77,7 @@ import { TbLayoutSidebarRightExpand } from "react-icons/tb";
 import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 
 import ResizableSection from "@/components/resizable/ResizableSection";
-import { Button } from "@tremor/react";
 
-const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
 const SYSTEM_MESSAGE_ID = -3;
@@ -107,6 +104,15 @@ export function ChatPage({
   } = useChatContext();
 
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
+
+  const [selectedAlternativeAssistant, setSelectedAlternativeAssistant] =
+    useState<Persona | null>(filteredAssistants[1]);
+
+  const updateAlternativeAssistant = (
+    newAlternativeAssistant: Persona | null
+  ) => {
+    setSelectedAlternativeAssistant(newAlternativeAssistant);
+  };
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -213,6 +219,7 @@ export function ChatPage({
       const response = await fetch(
         `/api/chat/get-chat-session/${existingChatSessionId}`
       );
+
       const chatSession = (await response.json()) as BackendChatSession;
 
       setSelectedPersona(
@@ -350,6 +357,7 @@ export function ChatPage({
     setCompleteMessageMap(newCompleteMessageMap);
     return newCompleteMessageMap;
   };
+
   const messageHistory = buildLatestMessageChain(completeMessageMap);
   const [isStreaming, setIsStreaming] = useState(false);
 
@@ -730,8 +738,7 @@ export function ChatPage({
       const stack = new CurrentMessageFIFO();
       updateCurrentMessageFIFO(stack, {
         message: currMessage,
-        // TODO actually pass in an id. This is functioal
-        alternateAssistantId: undefined,
+        alternateAssistantId: selectedAlternativeAssistant?.id,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
@@ -850,6 +857,8 @@ export function ChatPage({
                 files: finalMessage?.files || aiMessageImages || [],
                 toolCalls: finalMessage?.tool_calls || toolCalls,
                 parentMessageId: newUserMessageId,
+                alternateAssistantID: selectedAlternativeAssistant?.id,
+
               },
             ]);
           }
@@ -857,6 +866,7 @@ export function ChatPage({
             setIsCancelled(false);
             break;
           }
+
         }
       }
     } catch (e: any) {
@@ -1235,16 +1245,47 @@ export function ChatPage({
                                 i === messageHistory.length - 1);
                             const previousMessage =
                               i !== 0 ? messageHistory[i - 1] : null;
+
+                            const currentAlternativeAssistant =
+                              message.alternateAssistantID
+                                ? availablePersonas.find(
+                                    (persona) =>
+                                      persona.id ===
+                                      message.alternateAssistantID
+                                  )
+                                : null;
+
                             return (
+
                               <div
-                                key={`${i}-${existingChatSessionId}`}
-                                ref={
-                                  i == messageHistory.length - 1
-                                    ? lastMessageRef
-                                    : null
+                              key={`${i}-${existingChatSessionId}`}
+                              ref={
+                                i == messageHistory.length - 1
+                                  ? lastMessageRef
+                                  : null}
+                                  >
+                              
+                              {/* <AIMessage
+                               
+                                key={message.messageId}
+                                messageId={message.messageId}
+                                content={message.message}
+                                files={message.files}
+                                query={messageHistory[i]?.query || undefined}
+                                personaName={livePersona.name}
+                                citedDocuments={getCitedDocumentsFromMessage(
+                                  message
+                                )}
+                                toolCall={message?.toolCalls?.[0]}
+                                isComplete={
+                                  i !== messageHistory.length - 1 ||
+                                  !isStreaming
                                 }
-                              >
+                              > */}
                                 <AIMessage
+                                 alternativeAssistant={
+                                  currentAlternativeAssistant
+                                }
                                   messageId={message.messageId}
                                   content={message.message}
                                   files={message.files}
@@ -1359,7 +1400,6 @@ export function ChatPage({
                             );
                           }
                         })}
-
                         {isStreaming &&
                           messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
@@ -1368,6 +1408,9 @@ export function ChatPage({
                               key={`${messageHistory.length}-${existingChatSessionId}`}
                             >
                               <AIMessage
+                                alternativeAssistant={
+                                  selectedAlternativeAssistant
+                                }
                                 messageId={null}
                                 personaName={livePersona.name}
                                 content={
@@ -1453,6 +1496,11 @@ export function ChatPage({
                           </div>
                         )}
                         <ChatInputBar
+                          updateAlternativeAssistant={
+                            updateAlternativeAssistant
+                          }
+                          // tempAlter
+                          alternativeAssistant={selectedAlternativeAssistant}
                           message={message}
                           setMessage={setMessage}
                           onSubmit={onSubmit}
