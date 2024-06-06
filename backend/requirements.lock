@@ -112,6 +112,7 @@ distro==1.9.0
     # via zulip
 dnspython==2.6.1
     # via email-validator
+dropbox==11.36.2
 email-validator==2.1.1
     # via fastapi-users
 envier==0.5.1
@@ -326,7 +327,7 @@ nvidia-nvtx-cu11==11.7.91
 oauthlib==3.2.2
     # via atlassian-python-api
     # via requests-oauthlib
-office365-rest-python-client==2.5.4
+office365-rest-python-client==2.5.9
 openai==1.14.3
     # via litellm
     # via llama-index
@@ -361,6 +362,8 @@ playwright==1.41.2
     # via pytest-playwright
 pluggy==1.5.0
     # via pytest
+ply==3.11
+    # via stone
 prompt-toolkit==3.0.45
     # via click-repl
 protobuf==4.25.3
@@ -374,6 +377,8 @@ psutil==5.9.5
 psycopg2-binary==2.9.9
 py==1.11.0
     # via retry
+pyaes==1.6.1
+    # via pyrogram
 pyasn1==0.6.0
     # via pyasn1-modules
     # via rsa
@@ -400,6 +405,11 @@ pynacl==1.5.0
 pyparsing==3.1.2
     # via httplib2
 pypdf==3.17.0
+pyrogram==2.0.106
+pysocks==1.7.1
+    # via pyrogram
+pytelegrambotapi==4.19.0
+    # via telebot
 pytest==7.4.4
     # via pytest-base-url
     # via pytest-mock
@@ -442,6 +452,7 @@ regex==2024.5.15
     # via transformers
 requests==2.31.0
     # via atlassian-python-api
+    # via dropbox
     # via google-api-core
     # via huggingface-hub
     # via jira
@@ -454,12 +465,14 @@ requests==2.31.0
     # via msal
     # via office365-rest-python-client
     # via pygithub
+    # via pytelegrambotapi
     # via pytest-base-url
     # via python-gitlab
     # via pywikibot
     # via requests-oauthlib
     # via requests-toolbelt
     # via rt
+    # via telebot
     # via tensorboard
     # via tiktoken
     # via transformers
@@ -503,10 +516,12 @@ six==1.16.0
     # via atlassian-python-api
     # via ddsketch
     # via ddtrace
+    # via dropbox
     # via google-auth-httplib2
     # via google-pasta
     # via hubspot-api-client
     # via python-dateutil
+    # via stone
     # via tensorboard
     # via tensorflow
     # via zenpy
@@ -528,11 +543,14 @@ sqlalchemy==2.0.15
     # via llama-index
 starlette==0.36.3
     # via fastapi
+stone==3.3.6
+    # via dropbox
 supervisor==4.2.5
 sympy==1.12.1
     # via torch
 tblib==3.0.0
     # via distributed
+telebot==0.0.5
 tenacity==8.3.0
     # via langchain
     # via langchain-community
@@ -551,6 +569,7 @@ termcolor==2.4.0
     # via tensorflow
 text-unidecode==1.3
     # via python-slugify
+tgcrypto==1.2.5
 threadpoolctl==3.5.0
     # via scikit-learn
 tiktoken==0.4.0
