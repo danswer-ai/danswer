@@ -209,7 +209,6 @@ export function ChatPage({
 
       // if the last message is an error, don't overwrite it
       if (messageHistory[messageHistory.length - 1]?.type !== "error") {
-        console.log("updating message map");
         setCompleteMessageMap(newCompleteMessageMap);
 
         const latestMessageId =
@@ -328,7 +327,6 @@ export function ChatPage({
       }
     }
 
-    console.log("updating message map");
     setCompleteMessageMap(newCompleteMessageMap);
     return newCompleteMessageMap;
   };
@@ -857,9 +855,6 @@ export function ChatPage({
     setMessage("");
     setCurrentMessageFiles([]);
     const parentId = messageIdToResend;
-    console.log("parentId");
-
-    console.log(parentId);
 
     setIsStreaming(true);
     let answer = "";
@@ -873,6 +868,8 @@ export function ChatPage({
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
 
+    let modelExists = false;
+
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
@@ -881,7 +878,7 @@ export function ChatPage({
 
         message: currMessage,
         fileDescriptors: currentMessageFiles,
-        parentMessageId: lastSuccessfulMessageId,
+        parentMessageId: parentId!,
         chatSessionId: currChatSessionId,
         promptId: livePersona?.prompts[0]?.id || 0,
         filters: buildFilters(
@@ -913,6 +910,8 @@ export function ChatPage({
         useExistingUserMessage: isSeededChat,
       })) {
         for (const packet of packetBunch) {
+          modelExists = true;
+
           if (Object.hasOwn(packet, "answer_piece")) {
             answer += (packet as AnswerPiecePacket).answer_piece;
           } else if (Object.hasOwn(packet, "top_documents")) {
@@ -984,7 +983,6 @@ export function ChatPage({
       }
     } catch (e: any) {
       const errorMsg = e.message;
-      console.log(errorMsg);
 
       upsertToCompleteMessageMap({
         messages: [
@@ -1243,17 +1241,7 @@ export function ChatPage({
                           </div>
                         </div>
                       )}
-                      {/* <Button 
-                      // used for evaluating the message tree
-                        className="fixed top-0 z-[1000]"
-                        onClick={() => {
-                          console.log("Message history");
-                          console.log(messageHistory);
-                          console.log(completeMessageMap);
-                        }}
-                      >
-                        Validate
-                      </Button> */}
+
                       {messageHistory.length === 0 &&
                         !isFetchingChatMessages &&
                         !isStreaming && (
@@ -1446,7 +1434,6 @@ export function ChatPage({
                                     message.parentMessageId!
                                   )!.latestChildMessageId = messageId;
 
-                                  console.log("updating message map");
                                   setCompleteMessageMap(newCompleteMessageMap);
                                   setSelectedMessageForDocDisplay(messageId);
 

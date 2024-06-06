@@ -46,7 +46,10 @@ def map_document_id_order(
 
 
 def create_chat_chain(
-    chat_session_id: int, db_session: Session, regenerating: bool | None = None
+    chat_session_id: int,
+    db_session: Session,
+    regenerating: bool | None = None,
+    parent_id: int | None = None,
 ) -> tuple[ChatMessage, list[ChatMessage]]:
     """Build the linear chain of messages without including the root message"""
     mainline_messages: list[ChatMessage] = []
@@ -68,7 +71,10 @@ def create_chat_chain(
         )
 
     current_message: ChatMessage | None = root_message
+
     while current_message is not None:
+        if parent_id and current_message.id == parent_id:
+            break
         child_msg = current_message.latest_child_message
         if not child_msg:
             break
@@ -85,8 +91,6 @@ def create_chat_chain(
     if not mainline_messages:
         raise RuntimeError("Could not trace chat message history")
 
-    if regenerating:
-        return mainline_messages[-2], mainline_messages[:-2]
     return mainline_messages[-1], mainline_messages[:-1]
 
 
