@@ -38,9 +38,8 @@ import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
 import { Button } from "@tremor/react";
 import RegenerateOption from "../RegenerateOptions";
-import { LlmOverrideManager } from "@/lib/hooks";
+import { LlmOverride, LlmOverrideManager } from "@/lib/hooks";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { modelOverRideType } from "../ChatPage";
 
 function FileDisplay({ files }: { files: FileDescriptor[] }) {
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
@@ -78,7 +77,6 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 }
 
 export const AIMessage = ({
-  regenerateModal,
   messageId,
   content,
   files,
@@ -101,20 +99,16 @@ export const AIMessage = ({
   llmOverrideManager,
   selectedAssistant,
   onClose,
-  regenerateID,
-  messageIdToResend,
+  regenerateResponse,
+  responseId,
 }: {
   llmOverrideManager?: LlmOverrideManager;
   selectedAssistant?: Persona;
   onClose?: () => void;
-  messageIdToResend?: number;
-  regenerateID?: (
-    modelOverRide: modelOverRideType,
-    messageIdToResend: number
-  ) => void;
+  responseId?: number;
+  regenerateResponse?: (modelOverRide: LlmOverride, responseId: number) => void;
   otherResponseCanSwitchTo?: number[];
   messageId: number | null;
-  regenerateModal?: boolean;
   content: string | JSX.Element;
   files?: FileDescriptor[];
   query?: string;
@@ -378,38 +372,18 @@ export const AIMessage = ({
                 onClick={() => handleFeedback("dislike")}
               />
 
-              {regenerateID &&
-                messageIdToResend &&
-                onClose &&
-                llmOverrideManager &&
-                selectedAssistant && (
-                  <RegenerateOption
-                    alternateModel={alternateModel}
-                    llmOverrideManager={llmOverrideManager}
-                    selectedAssistant={selectedAssistant}
-                    onClose={onClose}
-                    regenerateID={regenerateID}
-                    messageIdToResend={messageIdToResend}
-                  />
-                )}
-              {/* {alternateModel && } */}
+              {regenerateResponse && responseId && selectedAssistant && (
+                <RegenerateOption
+                  alternateModel={alternateModel}
+                  selectedAssistant={selectedAssistant}
+                  regenerateResponse={regenerateResponse}
+                  messageIdToResend={responseId}
+                  llmOverrideManager={llmOverrideManager}
+                />
+              )}
             </div>
           )}
         </div>
-
-        {/* {regenerateModal && ( */}
-        {/* {regenerateID && messageIdToResend && onClose && llmOverrideManager && selectedAssistant && < RegenerateOption
-          regenerateID={regenerateID}
-          messageIdToResend={
-            messageIdToResend
-
-          }
-          onClose={onClose}
-          // () => setRegenerateModal(false)}
-          llmOverrideManager={llmOverrideManager}
-          selectedAssistant={selectedAssistant}
-        />} */}
-        {/* )} */}
       </div>
     </div>
   );

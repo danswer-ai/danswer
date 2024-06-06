@@ -1,33 +1,22 @@
 import { useChatContext } from "@/components/context/ChatContext";
 import { LlmOverride, LlmOverrideManager } from "@/lib/hooks";
-import React, { useCallback, useRef, useState } from "react";
-import { debounce } from "lodash";
-import { DefaultDropdown, RegenerateDropdown } from "@/components/Dropdown";
-import { Text } from "@tremor/react";
+import { RegenerateDropdown } from "@/components/Dropdown";
+
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { getFinalLLM } from "@/lib/llm/utils";
-
-import { Modal } from "@/components/Modal";
-import { modelOverRideType } from "./ChatPage";
-import { FiCheck } from "react-icons/fi";
 
 export default function RegenerateOption({
   llmOverrideManager,
   selectedAssistant,
-  onClose,
-  regenerateID,
+  regenerateResponse,
   messageIdToResend,
   alternateModel,
 }: {
   alternateModel?: string;
-  llmOverrideManager: LlmOverrideManager;
+  llmOverrideManager?: LlmOverrideManager;
   selectedAssistant: Persona;
-  onClose: () => void;
   messageIdToResend: number;
-  regenerateID: (
-    modelOverRide: modelOverRideType,
-    messageIdToResend: number
-  ) => void;
+  regenerateResponse: (modelOverRide: LlmOverride, responseId: number) => void;
 }) {
   const { llmProviders } = useChatContext();
   const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant);
@@ -61,7 +50,7 @@ export default function RegenerateOption({
   });
 
   const currentModelName =
-    llmOverrideManager.llmOverride.modelName ||
+    llmOverrideManager?.llmOverride.modelName ||
     (selectedAssistant
       ? selectedAssistant.llm_model_version_override || llmName
       : llmName);
@@ -73,35 +62,15 @@ export default function RegenerateOption({
         options={llmOptions}
         selected={currentModelName}
         onSelect={(value) => {
-          const { provider, modelName } = destructureValue(value as string);
-          regenerateID(
-            { modelVersion: modelName, modelProvider: provider },
+          const { name, provider, modelName } = destructureValue(
+            value as string
+          );
+          regenerateResponse(
+            { name: name, provider: provider, modelName: modelName },
             messageIdToResend
           );
         }}
       />
     </div>
   );
-
-  // <div className="group flex items-center">
-  //   <RegenerateDropdown
-  //     options={llmOptions}
-  //     selected={currentModelName}
-  //     onSelect={(value) => {
-  //       const { provider, modelName } = destructureValue(value as string);
-  //       regenerateID(
-  //         { modelVersion: modelName, modelProvider: provider },
-  //         messageIdToResend
-  //       );
-  //     }}
-  //   />
-  //   <p
-  //     className={`my-auto ml-1 ${!regenerateModal && "opacity-0"} text-xs group-hover:opacity-100 transition-all duration-300`}
-  //   >
-  //     {" "}
-  //     {alternateModel || ""}
-  //   </p>
-  // </div>
-
-  // );
 }

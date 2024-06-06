@@ -33,12 +33,13 @@ export const HoverableWithText: React.FC<{
       onClick={onClick}
     >
       {icon({ size: size, className: "my-auto" })}
-
-      <p
-        className={`text-xs whitespace-nowrap overflow-hidden  ${appear && "opacity-0 group-hover:opacity-100 transition-opacity duration-300"} `}
-      >
-        {text || ""}
-      </p>
+      {text && (
+        <p
+          className={`text-xs whitespace-nowrap overflow-hidden  ${(appear || active) && "opacity-0 group-hover:opacity-100 transition-opacity duration-300"} `}
+        >
+          {text}
+        </p>
+      )}
     </div>
   );
 };

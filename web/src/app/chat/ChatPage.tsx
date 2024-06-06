@@ -41,7 +41,12 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
-import { useFilters, useLlmOverride } from "@/lib/hooks";
+import {
+  LlmOverride,
+  LlmOverrideManager,
+  useFilters,
+  useLlmOverride,
+} from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { FeedbackType } from "./types";
 import ResizableSection from "@/components/resizable/ResizableSection";
@@ -66,8 +71,6 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
-import RegenerateOption from "./RegenerateOptions";
-import { Button } from "@tremor/react";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -75,11 +78,10 @@ const TEMP_ASSISTANT_MESSAGE_ID = -2;
 const SYSTEM_MESSAGE_ID = -3;
 
 // TODO put in types file
-
-export type modelOverRideType = {
-  modelProvider?: string;
-  modelVersion?: string;
-};
+// export type modelOverRideType = {
+//   modelProvider?: string;
+//   modelVersion?: string;
+// };
 export function ChatPage({
   documentSidebarInitialWidth,
   defaultSelectedPersonaId,
@@ -87,8 +89,6 @@ export function ChatPage({
   documentSidebarInitialWidth?: number;
   defaultSelectedPersonaId?: number;
 }) {
-  const [regenerateModal, setRegenerateModal] = useState<boolean | null>(null);
-
   const [configModalActiveTab, setConfigModalActiveTab] = useState<
     string | null
   >(null);
@@ -128,8 +128,6 @@ export function ChatPage({
   const [isFetchingChatMessages, setIsFetchingChatMessages] = useState(
     existingChatSessionId !== null
   );
-
-  const regenerateNewModel = (prompt: string) => {};
 
   // needed so closures (e.g. onSubmit) can access the current value
   const urlChatSessionId = useRef<number | null>();
@@ -337,8 +335,8 @@ export function ChatPage({
   const [currentTool, setCurrentTool] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
 
-  const regenerateID = (
-    modelOverRide: modelOverRideType,
+  const regenerateResponse = (
+    modelOverRide: LlmOverride,
     messageIdToResend: number
   ) => {
     onSubmit({
@@ -513,7 +511,7 @@ export function ChatPage({
     forceSearch,
     isSeededChat,
     regenerate,
-    modelOverRide = { modelProvider: undefined, modelVersion: undefined },
+    modelOverRide = null,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
@@ -521,7 +519,7 @@ export function ChatPage({
     forceSearch?: boolean;
     isSeededChat?: boolean;
     regenerate?: boolean;
-    modelOverRide?: modelOverRideType;
+    modelOverRide?: LlmOverride | null;
   } = {}) => {
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
@@ -660,10 +658,9 @@ export function ChatPage({
           .map((document) => document.db_doc_id as number),
         queryOverride,
         forceSearch,
-        modelProvider:
-          llmOverrideManager.llmOverride.name || modelOverRide["modelProvider"],
+        modelProvider: modelOverRide ? modelOverRide.provider : undefined,
         modelVersion:
-          modelOverRide["modelVersion"] ||
+          modelOverRide?.modelName ||
           llmOverrideManager.llmOverride.modelName ||
           searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
           undefined,
@@ -1116,32 +1113,15 @@ export function ChatPage({
                               i !== 0 ? messageHistory[i - 1] : null;
                             return (
                               <AIMessage
-                                // regenerate={() =>
-                                //   // console.log("howdy")
-
-                                // }
-
-                                // {regenerateModal && (
-                                //   <RegenerateOption
-                                regenerateID={regenerateID}
-                                messageIdToResend={
-                                  parentMessage?.messageId
-                                  // messageHistory[messageHistory.length - 1] &&
-                                  // messageHistory[messageHistory.length - 2]
-                                  //   .messageId
-                                }
-                                onClose={() => setRegenerateModal(false)}
+                                regenerateResponse={regenerateResponse}
+                                responseId={parentMessage?.messageId}
                                 llmOverrideManager={llmOverrideManager}
                                 selectedAssistant={livePersona}
-                                //   />
-                                // )}
                                 alternateModel={message.alternate_model}
-                                // alternateModel={"gpt-4"}
                                 fullMessage={message}
                                 otherResponseCanSwitchTo={
                                   parentMessage?.childrenMessageIds || []
                                 }
-                                regenerateModal={regenerateModal || false}
                                 key={message.messageId}
                                 messageId={message.messageId}
                                 content={message.message}
@@ -1255,7 +1235,6 @@ export function ChatPage({
                             return (
                               <div key={i}>
                                 <AIMessage
-                                  regenerateModal={regenerateModal || false}
                                   messageId={message.messageId}
                                   personaName={livePersona.name}
                                   content={
@@ -1277,7 +1256,6 @@ export function ChatPage({
                             "user" && (
                             <div key={messageHistory.length}>
                               <AIMessage
-                                regenerateModal={regenerateModal || false}
                                 messageId={null}
                                 personaName={livePersona.name}
                                 content={
