@@ -2,7 +2,7 @@ import { ChangeEvent, FC, useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "./icons/icons";
 import { FiCheck, FiChevronDown, FiStar } from "react-icons/fi";
 import { Popover } from "./popover/Popover";
-import { Hoverable, HoverableWithText } from "./Hoverable";
+import { Hoverable } from "./Hoverable";
 
 export interface Option<T> {
   name: string;
@@ -448,7 +448,14 @@ export function RegenerateDropdown({
         open={isOpen}
         onOpenChange={(open) => setIsOpen(open)}
         content={
-          <HoverableWithText icon={FiStar} text={alternate} appear={true} />
+          !alternate ? (
+            <Hoverable icon={FiStar} />
+          ) : (
+            <Hoverable
+              icon={FiStar}
+              hoverText={{ text: alternate, animate: true }}
+            />
+          )
         }
         popover={Dropdown}
         align="start"

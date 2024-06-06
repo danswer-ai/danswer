@@ -268,9 +268,6 @@ export const AIMessage = ({
                                 : undefined
                             }
                             className="cursor-pointer text-link hover:text-link-hover"
-                            // href={rest.href}
-                            // target="_blank"
-                            // rel="noopener noreferrer"
                           >
                             {rest.children}
                           </a>
@@ -288,8 +285,6 @@ export const AIMessage = ({
                 ) : (
                   content
                 )}
-                {/* Can render for logging purposes */}
-                {/* {messageId} */}
               </>
             ) : isComplete ? null : (
               loader
@@ -485,9 +480,6 @@ export const HumanMessage = ({
           <div className="mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default flex flex-wrap">
             <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
               <FileDisplay files={files || []} />
-
-              {/* Can render for logging purposes */}
-              {/* {messageId} */}
               {isEditing ? (
                 <div>
                   <div
