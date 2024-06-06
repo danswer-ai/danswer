@@ -46,6 +46,7 @@ from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
 from danswer.db.persona import delete_old_default_personas
+from danswer.db.standard_answer import create_initial_default_standard_answer_category
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.llm_initialization import load_llm_providers
@@ -206,6 +207,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         create_initial_public_credential(db_session)
         create_initial_default_connector(db_session)
         associate_default_cc_pair(db_session)
+
+        logger.info("Verifying default standard answer category exists.")
+        create_initial_default_standard_answer_category(db_session)
 
         logger.info("Loading LLM providers from env variables")
         load_llm_providers(db_session)

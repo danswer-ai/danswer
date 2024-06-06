@@ -166,3 +166,26 @@ def fetch_standard_answer(
 
 def fetch_standard_answers(db_session: Session) -> Sequence[StandardAnswer]:
     return db_session.scalars(select(StandardAnswer)).all()
+
+
+def create_initial_default_standard_answer_category(db_session: Session) -> None:
+    default_category_id = 0
+    default_category_name = "General"
+    default_category = fetch_standard_answer_category(
+        standard_answer_category_id=default_category_id,
+        db_session=db_session,
+    )
+    if default_category is not None:
+        if default_category.name != default_category_name:
+            raise ValueError(
+                "DB is not in a valid initial state. "
+                "Default standard answer category does not have expected name."
+            )
+        return
+
+    standard_answer_category = StandardAnswerCategory(
+        id=default_category_id,
+        name=default_category_name,
+    )
+    db_session.add(standard_answer_category)
+    db_session.commit()
