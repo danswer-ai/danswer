@@ -99,7 +99,7 @@ export function ChatPage({
   const continueGenerating = () => {
     onSubmit({
       messageOverride:
-        "Continue Generating (pick up exactly where you left off but for code blocks and the like let's try and have it make sense to return in its own place)",
+        "Continue Generating (pick up exactly where you left off but for code blocks and the like let's try and have it make sense to return on its own place)",
     });
   };
 
@@ -1187,7 +1187,7 @@ export function ChatPage({
                           </div>
                         )}
 
-                        {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
+                        {/* Some padding at the bottom so the search bar can have space at the bottom to not cover the last message*/}
                         <div className={`min-h-[100px] w-full`}></div>
 
                         {livePersona &&

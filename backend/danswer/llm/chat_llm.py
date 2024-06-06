@@ -172,11 +172,21 @@ def _convert_delta_to_message_chunk(
                 tool_call_chunks=[tool_call_chunk],
             )
 
+        # For langchain v0.2:
+        # return AIMessageChunk(
+        #     usage_metadata={"output_tokens": tokens},
+        #     content=content,
+        #     additional_kwargs=additional_kwargs,
+        # )
+
         return AIMessageChunk(
-            usage_metadata={"output_tokens": tokens},
             content=content,
-            additional_kwargs=additional_kwargs,
+            additional_kwargs={
+                "usage_metadata": {"output_tokens": tokens},
+                **additional_kwargs,
+            },
         )
+
     elif role == "system":
         return SystemMessageChunk(content=content)
     elif role == "function":

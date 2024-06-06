@@ -211,13 +211,26 @@ class Answer:
                         tool_call_chunk += message  # type: ignore
                 else:
                     if message.content:
+                        # For langchain v0.2:
+                        # if (
+                        #     hasattr(message, "usage_metadata")
+                        #     and "output_tokens" in message.usage_metadata
+                        # ):
+                        #     yield ChunkWithCount(
+                        #         content=cast(str, message.content),
+                        #         tokens=message.usage_metadata["output_tokens"],
+                        #     )
+
+                        keyword_arguments = message.additional_kwargs
                         if (
-                            hasattr(message, "usage_metadata")
-                            and "output_tokens" in message.usage_metadata
+                            "usage_metadata" in keyword_arguments
+                            and "output_tokens" in keyword_arguments["usage_metadata"]
                         ):
                             yield ChunkWithCount(
-                                content=cast(str, message.content),
-                                tokens=message.usage_metadata["output_tokens"],
+                                content=str(message.content),
+                                tokens=keyword_arguments["usage_metadata"][
+                                    "output_tokens"
+                                ],  # Access output_tokens correctly
                             )
                         else:
                             yield cast(str, message.content)
