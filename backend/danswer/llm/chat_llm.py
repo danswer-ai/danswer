@@ -363,7 +363,10 @@ class DefaultMultiLLM(LLM):
             if len(part["choices"]) == 0:
                 continue
 
-            delta = part["choices"][0]["delta"]
+            choices = part["choices"][0]
+
+            finish_reason = choices["finish_reason"]
+            delta = choices["delta"]
             text = delta["content"]
 
             message_chunk = _convert_delta_to_message_chunk(
@@ -373,7 +376,7 @@ class DefaultMultiLLM(LLM):
                     token_counter(
                         model=response.model, text=text, count_response_tokens=True
                     )
-                    if text is not None
+                    if text is not None and finish_reason != "stop"
                     else None
                 ),
             )
