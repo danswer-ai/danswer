@@ -82,8 +82,9 @@ GEN_AI_LLM_PROVIDER_TYPE = os.environ.get("GEN_AI_LLM_PROVIDER_TYPE") or None
 # Override the auto-detection of LLM max context length
 
 GEN_AI_MAX_TOKENS = int(os.environ.get("GEN_AI_MAX_TOKENS") or 0) or None
+
 # Set this to be enough for an answer + quotes. Also used for Chat
-GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS") or 30)
+GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS") or 120)
 
 
 # Number of tokens from chat history to include at maximum
