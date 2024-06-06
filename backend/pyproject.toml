@@ -4,10 +4,10 @@ version = "0.1.0"
 description = "Danswer chatbot"
 authors = []
 dependencies = [
-    "Mako==1.2.4",
-    "Office365-REST-Python-Client==2.5.4",
-    "PyGithub==1.58.2",
-    "SQLAlchemy[mypy]==2.0.15",
+    "mako==1.2.4",
+    "office365-rest-python-client==2.5.4",
+    "pygithub==1.58.2",
+    "sqlalchemy[mypy]==2.0.15",
     "aiohttp==3.9.4",
     "alembic==1.10.4",
     "asyncpg==0.27.0",
@@ -19,7 +19,6 @@ dependencies = [
     "dask==2023.8.1",
     "ddtrace==2.6.5",
     "distributed==2023.8.1",
-    "fastapi==0.109.2",
     "fastapi-users==12.1.3",
     "fastapi-users-db-sqlalchemy==5.0.0",
     "filelock==3.12.0",
@@ -47,7 +46,6 @@ dependencies = [
     "psutil==5.9.5",
     "psycopg2-binary==2.9.9",
     "pycryptodome==3.19.1",
-    "pydantic==1.10.13",
     "pypdf==3.17.0",
     "pytest-mock==3.12.0",
     "pytest-playwright==0.3.2",
@@ -68,15 +66,12 @@ dependencies = [
     "supervisor==4.2.5",
     "tiktoken==0.4.0",
     "timeago==1.0.16",
-    "transformers==4.39.2",
-    "uvicorn==0.21.1",
     "zenpy==2.0.41",
     "zulip==0.8.2",
-    "h5py==3.9.0",
-    "safetensors==0.4.2",
-    "sentence-transformers==2.6.1",
-    "tensorflow==2.15.0",
-    "torch==2.0.1",
+    "fastapi==0.109.2",
+    "pydantic==1.10.13",
+    "transformers==4.39.2",
+    "uvicorn==0.21.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
@@ -117,17 +112,19 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["danswer"] # path here
 
+[tool.rye.workspace]
+#members = ["models_server*"]
+
+[tool.rye.scripts]
+background_tasks = { cmd = "python ./scripts/dev_run_background_jobs.py" }
+main_server = { cmd = " uvicorn danswer.main:app --reload --port 8080", env = { AUTH_TYPE = "disabled" } }
+run_migrations = { cmd = "alembic upgrade head" }
+
 [tool.mypy]
 plugins = "sqlalchemy.ext.mypy.plugin"
 mypy_path = "$MYPY_CONFIG_FILE_DIR"
 explicit_package_bases = true
 disallow_untyped_defs = true
-
-[tool.rye.scripts]
-model_server = { cmd = "uvicorn model_server.main:app --reload --port 9000" }
-background_tasks = { cmd = "python ./scripts/dev_run_background_jobs.py" }
-main_server = { cmd = " uvicorn danswer.main:app --reload --port 8080", env = { AUTH_TYPE = "disabled" } }
-run_migrations = { cmd = "alembic upgrade head" }
 
 [tool.ruff]
 ignore = []

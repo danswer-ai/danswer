@@ -187,7 +187,6 @@ h11==0.14.0
 h2==4.1.0
     # via httpx
 h5py==3.9.0
-    # via danswer
     # via tensorflow
 hpack==4.0.0
     # via h2
@@ -541,7 +540,6 @@ rt==3.1.2
 s3transfer==0.10.1
     # via boto3
 safetensors==0.4.2
-    # via danswer
     # via transformers
 scikit-learn==1.5.0
     # via sentence-transformers
@@ -549,7 +547,6 @@ scipy==1.13.1
     # via scikit-learn
     # via sentence-transformers
 sentence-transformers==2.6.1
-    # via danswer
 setuptools==70.0.0
     # via nvidia-cublas-cu11
     # via nvidia-cuda-cupti-cu11
@@ -609,7 +606,6 @@ tensorboard==2.15.2
 tensorboard-data-server==0.7.2
     # via tensorboard
 tensorflow==2.15.0
-    # via danswer
 tensorflow-estimator==2.15.0
     # via tensorflow
 tensorflow-io-gcs-filesystem==0.37.0
@@ -634,7 +630,6 @@ toolz==0.12.1
     # via distributed
     # via partd
 torch==2.0.1
-    # via danswer
     # via sentence-transformers
     # via triton
 tornado==6.4
