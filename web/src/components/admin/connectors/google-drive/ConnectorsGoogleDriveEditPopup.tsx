@@ -6,7 +6,7 @@ import {
 import { XIcon } from "@/components/icons/icons";
 import { Connector, GoogleDriveConfig } from "@/lib/types";
 import * as Yup from "yup";
-import { googleDriveConnectorNameBuilder } from "./utils";
+import { googleDriveConnectorNameBuilder } from "@/app/admin/connectors/google-drive/utils";
 import { Modal } from "@/components/Modal";
 import { Divider, Text } from "@tremor/react";
 

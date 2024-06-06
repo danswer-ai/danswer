@@ -11,7 +11,7 @@ import {
 } from "@/lib/types";
 import { useSWRConfig } from "swr";
 import { useState } from "react";
-import { ConnectorEditPopup } from "./ConnectorEditPopup";
+import { ConnectorEditPopup } from "./ConnectorsGoogleDriveEditPopup";
 import { DeleteColumn } from "@/components/admin/connectors/table/DeleteColumn";
 import {
   Table,
