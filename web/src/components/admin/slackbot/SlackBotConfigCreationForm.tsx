@@ -15,7 +15,7 @@ import {
   createSlackBotConfig,
   isPersonaASlackBotPersona,
   updateSlackBotConfig,
-} from "./lib";
+} from "../../../app/admin/bot/lib";
 import {
   Button,
   Card,
@@ -28,7 +28,7 @@ import {
   Text,
 } from "@tremor/react";
 import { useRouter } from "next/navigation";
-import { Persona } from "../assistants/interfaces";
+import { Persona } from "../../../app/admin/assistants/interfaces";
 import { useState } from "react";
 import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
 

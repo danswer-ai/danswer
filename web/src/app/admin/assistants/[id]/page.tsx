@@ -1,8 +1,8 @@
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { AssistantEditor } from "../AssistantEditor";
+import { AssistantEditor } from "../../../../components/admin/assistants/AdminAssistantsEditor";
 import { BackButton } from "@/components/BackButton";
 import { Card, Title } from "@tremor/react";
-import { DeletePersonaButton } from "./DeletePersonaButton";
+import { DeletePersonaButton } from "../../../../components/admin/assistants/AdminAssistantsDeletePersonaButton";
 import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
 import { SuccessfulPersonaUpdateRedirectType } from "../enums";
 import { RobotIcon } from "@/components/icons/icons";

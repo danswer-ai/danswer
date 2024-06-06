@@ -10,7 +10,7 @@ import {
   createSlackBotConfig,
   setSlackBotTokens,
   updateSlackBotConfig,
-} from "./lib";
+} from "../../../app/admin/bot/lib";
 import { Button, Card } from "@tremor/react";
 
 interface SlackBotTokensFormProps {

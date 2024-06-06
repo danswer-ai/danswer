@@ -2,9 +2,9 @@
 
 import { Button } from "@tremor/react";
 import { FiTrash } from "react-icons/fi";
-import { deletePersona } from "../lib";
+import { deletePersona } from "../../../app/admin/assistants/lib";
 import { useRouter } from "next/navigation";
-import { SuccessfulPersonaUpdateRedirectType } from "../enums";
+import { SuccessfulPersonaUpdateRedirectType } from "../../../app/admin/assistants/enums";
 
 export function DeletePersonaButton({
   personaId,
