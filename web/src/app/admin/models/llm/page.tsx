@@ -11,7 +11,7 @@ import {
 import { Popup } from "@/components/admin/connectors/Popup";
 import { Button, Divider, Text } from "@tremor/react";
 import { FiCpu } from "react-icons/fi";
-import { LLMConfiguration } from "@/components/admin/models/llm/ModelsLLMConfiguration";
+import { LLMConfiguration } from "@/components/admin/models/llm/AdminModelsLLMConfiguration";
 
 const LLMOptions = () => {
   const [popup, setPopup] = useState<{

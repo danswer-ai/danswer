@@ -15,9 +15,9 @@ import {
   GmailConfig,
 } from "@/lib/types";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
-import { GmailConnectorsTable } from "../../../../components/admin/connectors/gmail/AdminConnectorsGmailTable";
+import { GmailConnectorsTable } from "@/components/admin/connectors/gmail/AdminConnectorsGmailTable";
 import { gmailConnectorNameBuilder } from "./utils";
-import { GmailOAuthSection, GmailJsonUploadSection } from "../../../../components/admin/connectors/gmail/AdminConnectorsGmailCredential";
+import { GmailOAuthSection, GmailJsonUploadSection } from "@/components/admin/connectors/gmail/AdminConnectorsGmailCredential";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, Divider, Text, Title } from "@tremor/react";

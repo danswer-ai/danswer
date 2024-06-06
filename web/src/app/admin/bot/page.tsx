@@ -10,7 +10,7 @@ import {
 } from "@/components/icons/icons";
 import { SlackBotConfig } from "@/lib/types";
 import { useState } from "react";
-import { useSlackBotConfigs, useSlackBotTokens } from "../../../hooks/admin/bot/useSlackBotHook";
+import { useSlackBotConfigs, useSlackBotTokens } from "@/hooks/admin/bot/useSlackBotHook";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { deleteSlackBotConfig, isPersonaASlackBotPersona } from "./lib";
 import { SlackBotTokensForm } from "@/components/admin/slackbot/SlackBotTokensForm";

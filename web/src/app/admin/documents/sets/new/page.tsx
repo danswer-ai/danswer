@@ -2,7 +2,7 @@
 
 import { AdminPageTitle } from "@/components/admin/Title";
 import { BookmarkIcon } from "@/components/icons/icons";
-import { DocumentSetCreationForm } from "../../../../../components/admin/documents/sets/AdminDocumentsSetsCreationForm";
+import { DocumentSetCreationForm } from "@/components/admin/documents/sets/AdminDocumentsSetsCreationForm";
 import {
   useConnectorCredentialIndexingStatus,
   useUserGroups,
