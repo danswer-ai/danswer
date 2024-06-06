@@ -202,6 +202,9 @@ class SearchTool(Tool):
                 chunks_above=self.chunks_above,
                 chunks_below=self.chunks_below,
                 full_doc=self.full_doc,
+                dedupe_docs=self.retrieval_options.dedupe_docs
+                if self.retrieval_options
+                else False,
             ),
             user=self.user,
             db_session=self.db_session,
