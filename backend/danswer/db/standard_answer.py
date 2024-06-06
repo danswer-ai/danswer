@@ -42,9 +42,10 @@ def insert_standard_answer(
     categories: list[int],
     db_session: Session,
 ) -> StandardAnswer:
-    existing_categories = db_session.scalars(
-        select(StandardAnswerCategory).where(StandardAnswerCategory.id.in_(categories))
-    ).all()
+    existing_categories = fetch_standard_answer_categories_by_ids(
+        standard_answer_category_ids=categories,
+        db_session=db_session,
+    )
     if len(existing_categories) != len(categories):
         raise ValueError(f"Some or all categories with ids {categories} do not exist")
 
@@ -71,9 +72,10 @@ def update_standard_answer(
     if standard_answer is None:
         raise ValueError(f"No standard answer with id {standard_answer_id}")
 
-    existing_categories = db_session.scalars(
-        select(StandardAnswerCategory).where(StandardAnswerCategory.id.in_(categories))
-    ).all()
+    existing_categories = fetch_standard_answer_categories_by_ids(
+        standard_answer_category_ids=categories,
+        db_session=db_session,
+    )
     if len(existing_categories) != len(categories):
         raise ValueError(f"Some or all categories with ids {categories} do not exist")
 
@@ -134,6 +136,17 @@ def fetch_standard_answer_category(
             StandardAnswerCategory.id == standard_answer_category_id
         )
     )
+
+
+def fetch_standard_answer_categories_by_ids(
+    standard_answer_category_ids: list[int],
+    db_session: Session,
+) -> list[StandardAnswerCategory]:
+    return db_session.scalars(
+        select(StandardAnswerCategory).where(
+            StandardAnswerCategory.id.in_(standard_answer_category_ids)
+        )
+    ).all()
 
 
 def fetch_standard_answer_categories(
