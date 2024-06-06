@@ -417,11 +417,13 @@ export function RegenerateDropdown({
         overscroll-contain relative`}
     >
       <p
-        className="sticky top-0 flex
-      bg-background
-        mx-1
+        className="
+        sticky 
+        top-0 
+        flex
+        bg-background
         font-bold
-        px-2
+        px-3
         text-sm 
         py-1.5 
         "
@@ -462,7 +464,6 @@ export function RegenerateDropdown({
         align="start"
         side={side}
         sideOffset={5}
-        // matchWidth
         triggerMaxWidth
       />
     </div>

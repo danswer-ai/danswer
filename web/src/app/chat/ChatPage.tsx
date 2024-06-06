@@ -71,18 +71,12 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
-import { Button } from "@tremor/react";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
 const SYSTEM_MESSAGE_ID = -3;
 
-// TODO put in types file
-// export type modelOverRideType = {
-//   modelProvider?: string;
-//   modelVersion?: string;
-// };
 export function ChatPage({
   documentSidebarInitialWidth,
   defaultSelectedPersonaId,
@@ -1124,7 +1118,6 @@ export function ChatPage({
     router.push("/search");
   }
 
-  // TODO clarify
   const retrievalDisabled = !personaIncludesRetrieval(livePersona);
   return (
     <>
@@ -1478,8 +1471,7 @@ export function ChatPage({
                             </div>
                           )}
 
-                        {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-                        {/* <div className={`min-h-[100px] w-full`}></div> */}
+                        <div className={`min-h-[100px] w-full`}></div>
 
                         {livePersona &&
                           livePersona.starter_messages &&
