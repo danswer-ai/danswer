@@ -211,9 +211,13 @@ class Answer:
                         tool_call_chunk += message  # type: ignore
                 else:
                     if message.content:
-                        if message.tokens:
+                        if (
+                            hasattr(message, "usage_metadata")
+                            and "output_tokens" in message.usage_metadata
+                        ):
                             yield ChunkWithCount(
-                                content=message.content, tokens=message.tokens
+                                content=cast(str, message.content),
+                                tokens=message.usage_metadata["output_tokens"],
                             )
                         else:
                             yield cast(str, message.content)

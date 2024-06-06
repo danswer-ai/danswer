@@ -631,7 +631,7 @@ export function ChatPage({
             retrievalType = RetrievalType.Search;
             if (documents && documents.length > 0) {
               // point to the latest message (we don't know the messageId yet, which is why
-              // we have to use -1)
+              // we have to use the -1)
               setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
             }
           } else if (Object.hasOwn(packet, "file_ids")) {

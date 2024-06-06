@@ -25,10 +25,12 @@ class BaseChunk(BaseModel):
     chunk_id: int
     blurb: str  # The first sentence(s) of the first Section of the chunk
     content: str
-    source_links: dict[
-        int, str
-    ] | None  # Holds the link and the offsets into the raw Chunk text
-    section_continuation: bool  # True if this Chunk's start is not at the start of a Section
+    source_links: (
+        dict[int, str] | None
+    )  # Holds the link and the offsets into the raw Chunk text
+    section_continuation: (
+        bool  # True if this Chunk's start is not at the start of a Section
+    )
 
 
 class DocAwareChunk(BaseChunk):
