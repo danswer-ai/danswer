@@ -42,6 +42,7 @@ export type ValidSources =
   | "file"
   | "google_sites"
   | "loopio"
+  | "dropbox"
   | "sharepoint"
   | "zendesk"
   | "discourse"
@@ -186,6 +187,8 @@ export interface GoogleSitesConfig {
 
 export interface ZendeskConfig {}
 
+export interface DropboxConfig {}
+
 export interface MediaWikiBaseConfig {
   connector_name: string;
   language_code: string;
@@ -193,6 +196,7 @@ export interface MediaWikiBaseConfig {
   pages?: string[];
   recurse_depth?: number;
 }
+
 export interface MediaWikiConfig extends MediaWikiBaseConfig {
   hostname: string;
 }
@@ -213,7 +217,7 @@ export interface IndexAttemptSnapshot {
 
 export interface ConnectorIndexingStatus<
   ConnectorConfigType,
-  ConnectorCredentialType,
+  ConnectorCredentialType
 > {
   cc_pair_id: number;
   name: string | null;
@@ -355,6 +359,10 @@ export interface ZendeskCredentialJson {
   zendesk_subdomain: string;
   zendesk_email: string;
   zendesk_token: string;
+}
+
+export interface DropboxCredentialJson {
+  dropbox_access_token: string;
 }
 
 export interface SharepointCredentialJson {

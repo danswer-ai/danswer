@@ -332,12 +332,13 @@ export function ChatPage({
           (persona) => persona.id === existingChatSessionPersonaId
         )
       : defaultSelectedPersonaId !== undefined
-        ? filteredAssistants.find(
-            (persona) => persona.id === defaultSelectedPersonaId
-          )
-        : undefined
+      ? filteredAssistants.find(
+          (persona) => persona.id === defaultSelectedPersonaId
+        )
+      : undefined
   );
-  const livePersona = selectedPersona || filteredAssistants[0];
+  const livePersona =
+    selectedPersona || filteredAssistants[0] || availablePersonas[0];
 
   const [chatSessionSharedStatus, setChatSessionSharedStatus] =
     useState<ChatSessionSharedStatus>(ChatSessionSharedStatus.Private);
@@ -521,6 +522,9 @@ export function ChatPage({
       messageToResendParent ||
       (currMessageHistory.length > 0
         ? currMessageHistory[currMessageHistory.length - 1]
+        : null) ||
+      (completeMessageMap.size === 1
+        ? Array.from(completeMessageMap.values())[0]
         : null);
 
     // if we're resending, set the parent's child to null
@@ -683,14 +687,14 @@ export function ChatPage({
             message: currMessage,
             type: "user",
             files: currentMessageFiles,
-            parentMessageId: null,
+            parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
           },
           {
             messageId: TEMP_ASSISTANT_MESSAGE_ID,
             message: errorMsg,
             type: "error",
             files: aiMessageImages || [],
-            parentMessageId: null,
+            parentMessageId: TEMP_USER_MESSAGE_ID,
           },
         ],
         completeMessageMapOverride: frozenCompleteMessageMap,

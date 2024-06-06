@@ -129,8 +129,10 @@ def stream_answer_objects(
 
     prompt = None
     if query_req.prompt_id is not None:
+        # NOTE: let the user access any prompt as long as the Persona is shared
+        # with them
         prompt = get_prompt_by_id(
-            prompt_id=query_req.prompt_id, user=user, db_session=db_session
+            prompt_id=query_req.prompt_id, user=None, db_session=db_session
         )
     if prompt is None:
         if not chat_session.persona.prompts:
