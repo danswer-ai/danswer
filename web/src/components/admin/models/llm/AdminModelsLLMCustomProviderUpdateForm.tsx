@@ -9,7 +9,7 @@ import {
   Formik,
 } from "formik";
 import { FiPlus, FiTrash, FiX } from "react-icons/fi";
-import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
+import { LLM_PROVIDERS_ADMIN_URL } from "../../../../app/admin/models/llm/constants";
 import {
   Label,
   SubLabel,
@@ -18,7 +18,7 @@ import {
 } from "@/components/admin/connectors/Field";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
-import { FullLLMProvider } from "./interfaces";
+import { FullLLMProvider } from "../../../../app/admin/models/llm/interfaces";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import * as Yup from "yup";
 import isEqual from "lodash/isEqual";

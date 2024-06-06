@@ -11,13 +11,13 @@ import {
 } from "@tremor/react";
 import { PageSelector } from "@/components/PageSelector";
 import { DocumentBoostStatus } from "@/lib/types";
-import { updateHiddenStatus } from "../lib";
-import { numToDisplay } from "./constants";
+import { updateHiddenStatus } from "../../../../app/admin/documents/lib";
+import { numToDisplay } from "../../../../app/admin/documents/feedback/constants";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { getErrorMsg } from "@/lib/fetchUtils";
 import { HoverPopup } from "@/components/HoverPopup";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
-import { ScoreSection } from "../../../../components/admin/documents/AdminDocumentsScoreEditor";
+import { ScoreSection } from "../AdminDocumentsScoreEditor";
 
 const IsVisibleSection = ({
   document,

@@ -3,9 +3,9 @@ import { Title, Text, Divider, Card } from "@tremor/react";
 import {
   EmbeddingModelDescriptor,
   FullEmbeddingModelDescriptor,
-} from "./embeddingModels";
+} from "../../../../app/admin/models/embedding/embeddingModels";
 import { FiStar } from "react-icons/fi";
-import { CustomModelForm } from "./CustomModelForm";
+import { CustomModelForm } from "./AdminModelsEmbedingCustomForm";
 
 export function ModelOption({
   model,

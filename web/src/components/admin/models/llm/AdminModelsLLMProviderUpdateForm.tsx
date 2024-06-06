@@ -2,14 +2,14 @@ import { LoadingAnimation } from "@/components/Loading";
 import { Button, Divider, Text } from "@tremor/react";
 import { Form, Formik } from "formik";
 import { FiTrash } from "react-icons/fi";
-import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
+import { LLM_PROVIDERS_ADMIN_URL } from "../../../../app/admin/models/llm/constants";
 import {
   SelectorFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
-import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "./interfaces";
+import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "../../../../app/admin/models/llm/interfaces";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import * as Yup from "yup";
 import isEqual from "lodash/isEqual";

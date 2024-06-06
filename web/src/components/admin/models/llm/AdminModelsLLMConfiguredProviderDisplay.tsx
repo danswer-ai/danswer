@@ -1,10 +1,10 @@
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "./interfaces";
+import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "../../../../app/admin/models/llm/interfaces";
 import { Modal } from "@/components/Modal";
-import { LLMProviderUpdateForm } from "./LLMProviderUpdateForm";
-import { CustomLLMProviderUpdateForm } from "./CustomLLMProviderUpdateForm";
+import { LLMProviderUpdateForm } from "./AdminModelsLLMProviderUpdateForm";
+import { CustomLLMProviderUpdateForm } from "./AdminModelsLLMCustomProviderUpdateForm";
 import { useState } from "react";
-import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
+import { LLM_PROVIDERS_ADMIN_URL } from "../../../../app/admin/models/llm/constants";
 import { mutate } from "swr";
 import { Badge, Button } from "@tremor/react";
 import isEqual from "lodash/isEqual";

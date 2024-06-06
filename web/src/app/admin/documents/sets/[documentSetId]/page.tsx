@@ -11,7 +11,7 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { BookmarkIcon } from "@/components/icons/icons";
 import { BackButton } from "@/components/BackButton";
 import { Card } from "@tremor/react";
-import { DocumentSetCreationForm } from "../DocumentSetCreationForm";
+import { DocumentSetCreationForm } from "../../../../../components/admin/documents/sets/AdminDocumentsSetsCreationForm";
 import { useRouter } from "next/navigation";
 import { usePopup } from "@/components/admin/connectors/Popup";
 

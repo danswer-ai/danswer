@@ -6,7 +6,7 @@ import { Button, Divider, Text } from "@tremor/react";
 import { Form, Formik } from "formik";
 
 import * as Yup from "yup";
-import { EmbeddingModelDescriptor } from "./embeddingModels";
+import { EmbeddingModelDescriptor } from "../../../../app/admin/models/embedding/embeddingModels";
 
 export function CustomModelForm({
   onSubmit,

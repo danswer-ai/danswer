@@ -6,12 +6,12 @@ import { useState } from "react";
 import useSWR from "swr";
 import { Button, Callout, Text, Title } from "@tremor/react";
 import { ThreeDotsLoader } from "@/components/Loading";
-import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "./interfaces";
+import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "../../../../app/admin/models/llm/interfaces";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { LLMProviderUpdateForm } from "./LLMProviderUpdateForm";
-import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
-import { CustomLLMProviderUpdateForm } from "./CustomLLMProviderUpdateForm";
-import { ConfiguredLLMProviderDisplay } from "./ConfiguredLLMProviderDisplay";
+import { LLMProviderUpdateForm } from "./AdminModelsLLMProviderUpdateForm";
+import { LLM_PROVIDERS_ADMIN_URL } from "../../../../app/admin/models/llm/constants";
+import { CustomLLMProviderUpdateForm } from "./AdminModelsLLMCustomProviderUpdateForm";
+import { ConfiguredLLMProviderDisplay } from "./AdminModelsLLMConfiguredProviderDisplay";
 
 function LLMProviderUpdateModal({
   llmProviderDescriptor,

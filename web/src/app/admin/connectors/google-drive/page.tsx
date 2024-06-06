@@ -20,9 +20,9 @@ import {
   BooleanFormField,
   TextArrayFieldBuilder,
 } from "@/components/admin/connectors/Field";
-import { GoogleDriveConnectorsTable } from "../../../../components/admin/connectors/google-drive/GoogleDriveConnectorsTable";
+import { GoogleDriveConnectorsTable } from "../../../../components/admin/connectors/google-drive/AdminConnectorsGoogleDriveTable";
 import { googleDriveConnectorNameBuilder } from "./utils";
-import { DriveOAuthSection, DriveJsonUploadSection } from "../../../../components/admin/connectors/google-drive/ConnectorGoogleDriveCredential";
+import { DriveOAuthSection, DriveJsonUploadSection } from "../../../../components/admin/connectors/google-drive/AdminConnectorGoogleDriveCredential";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, Divider, Text, Title } from "@tremor/react";

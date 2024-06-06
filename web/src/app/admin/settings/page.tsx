@@ -2,7 +2,7 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { FiSettings } from "react-icons/fi";
 import { Settings } from "./interfaces";
 import { fetchSS } from "@/lib/utilsSS";
-import { SettingsForm } from "./SettingsForm";
+import { SettingsForm } from "../../../components/admin/settings/SettingsForm";
 import { Callout, Text } from "@tremor/react";
 
 export default async function Page() {
