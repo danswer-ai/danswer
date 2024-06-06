@@ -255,6 +255,17 @@ class StandardAnswer__StandardAnswerCategory(Base):
     )
 
 
+class SlackBotConfig__StandardAnswerCategory(Base):
+    __tablename__ = "slack_bot_config__standard_answer_category"
+
+    slack_bot_config_id: Mapped[int] = mapped_column(
+        ForeignKey("slack_bot_config.id"), primary_key=True
+    )
+    standard_answer_category_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer_category.id"), primary_key=True
+    )
+
+
 """
 Documents/Indexing Tables
 """
@@ -1051,6 +1062,11 @@ class StandardAnswerCategory(Base):
         secondary=StandardAnswer__StandardAnswerCategory.__table__,
         back_populates="categories",
     )
+    slack_bot_configs: Mapped[list["SlackBotConfig"]] = relationship(
+        "SlackBotConfig",
+        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+        back_populates="standard_answer_categories",
+    )
 
 
 class StandardAnswer(Base):
@@ -1087,6 +1103,11 @@ class SlackBotConfig(Base):
     )
 
     persona: Mapped[Persona | None] = relationship("Persona")
+    standard_answer_categories: Mapped[list[StandardAnswerCategory]] = relationship(
+        "StandardAnswerCategory",
+        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+        back_populates="slack_bot_configs",
+    )
 
 
 class TaskQueueState(Base):
