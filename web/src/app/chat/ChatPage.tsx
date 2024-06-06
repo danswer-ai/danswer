@@ -1174,19 +1174,15 @@ export function ChatPage({
                           )}
                         {!isStreaming && canContinue && (
                           <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
-                            <div className="ml-8 ">
-                              <div className="flex justify-end  w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
-                                <div className="ml-auto my-auto">
-                                  <EmphasizedClickable
-                                    onClick={() => continueGenerating()}
-                                  >
-                                    <div className="px-1 flex gap-x-1 text-xs">
-                                      Continue Generating
-                                      <FiActivity className="my-auto" />
-                                    </div>
-                                  </EmphasizedClickable>
+                            <div className="flex justify-end  w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words ml-8">
+                              <EmphasizedClickable
+                                onClick={() => continueGenerating()}
+                              >
+                                <div className="px-1 flex gap-x-1 text-xs">
+                                  Continue Generating
+                                  <FiActivity className="my-auto" />
                                 </div>
-                              </div>
+                              </EmphasizedClickable>
                             </div>
                           </div>
                         )}
