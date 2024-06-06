@@ -1,0 +1,26 @@
+[project]
+name = "model-server"
+version = "0.1.0"
+description = "Add your description here"
+authors = []
+dependencies = [
+    "fastapi==0.109.2",
+    "h5py==3.9.0",
+    "pydantic==1.10.13",
+    "safetensors==0.4.2",
+    "sentence-transformers==2.6.1",
+    "tensorflow==2.15.0",
+    "torch==2.0.1",
+    "transformers==4.39.2",
+    "uvicorn==0.21.1",
+]
+readme = "README.md"
+requires-python = ">= 3.11"
+
+[tool.rye]
+managed = true
+virtual = true
+dev-dependencies = []
+
+[tool.rye.scripts]
+model_server = { cmd = "uvicorn main:app --reload --port 9000" }

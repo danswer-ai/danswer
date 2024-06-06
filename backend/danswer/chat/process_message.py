@@ -128,6 +128,10 @@ def _handle_search_tool_response_summary(
 def _check_should_force_search(
     new_msg_req: CreateChatMessageRequest,
 ) -> ForceUseTool | None:
+    # If files are already provided, don't run the search tool
+    if new_msg_req.file_descriptors:
+        return None
+
     if (
         new_msg_req.query_override
         or (
@@ -269,8 +273,8 @@ def stream_chat_message_objects(
                     "Be sure to update the chat pointers before calling this."
                 )
 
-            # Save now to save the latest chat message
-            db_session.commit()
+            # NOTE: do not commit user message - it will be committed when the
+            # assistant message is successfully generated
         else:
             # re-create linear history of messages
             final_msg, history_msgs = create_chat_chain(
@@ -300,6 +304,7 @@ def stream_chat_message_objects(
                     new_file.to_file_descriptor() for new_file in latest_query_files
                 ],
                 db_session=db_session,
+                commit=False,
             )
 
         selected_db_search_docs = None
@@ -358,7 +363,7 @@ def stream_chat_message_objects(
             # error=,
             # reference_docs=,
             db_session=db_session,
-            commit=True,
+            commit=False,
         )
 
         if not final_msg.prompt:
@@ -388,7 +393,7 @@ def stream_chat_message_objects(
         search_tool: SearchTool | None = None
         tools: list[Tool] = []
         for tool_cls in persona_tool_classes:
-            if tool_cls.__name__ == SearchTool.__name__:
+            if tool_cls.__name__ == SearchTool.__name__ and not latest_query_files:
                 search_tool = SearchTool(
                     db_session=db_session,
                     user=user,
@@ -447,7 +452,9 @@ def stream_chat_message_objects(
                 PreviousMessage.from_chat_message(msg, files) for msg in history_msgs
             ],
             tools=tools,
-            force_use_tool=_check_should_force_search(new_msg_req),
+            force_use_tool=(
+                _check_should_force_search(new_msg_req) if search_tool else None
+            ),
         )
 
         reference_db_search_docs = None
@@ -487,11 +494,19 @@ def stream_chat_message_objects(
                 yield cast(ChatPacket, packet)
 
     except Exception as e:
-        logger.exception(e)
+        logger.exception("Failed to process chat message")
 
-        # Frontend will erase whatever answer and show this instead
-        # This will be the issue 99% of the time
-        yield StreamingError(error="LLM failed to respond, have you set your API key?")
+        # Don't leak the API key
+        error_msg = str(e)
+        if llm.config.api_key and llm.config.api_key.lower() in error_msg.lower():
+            error_msg = (
+                f"LLM failed to respond. Invalid API "
+                f"key error from '{llm.config.model_provider}'."
+            )
+
+        yield StreamingError(error=error_msg)
+        # Cancel the transaction so that no messages are saved
+        db_session.rollback()
         return
 
     # Post-LLM answer processing
@@ -515,6 +530,7 @@ def stream_chat_message_objects(
             citations=db_citations,
             error=None,
         )
+        db_session.commit()  # actually save user / assistant message
 
         msg_detail_response = translate_db_message_to_chat_message_detail(
             gen_ai_response_message

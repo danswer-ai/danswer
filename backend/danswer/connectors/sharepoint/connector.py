@@ -107,7 +107,7 @@ class SharepointConnector(LoadConnector, PollConnector):
             site_list_objects = site_object.lists.get().execute_query()
             for site_list_object in site_list_objects:
                 try:
-                    query = site_list_object.drive.root.get_files(True)
+                    query = site_list_object.drive.root.get_files(True, 1000)
                     if filter_str:
                         query = query.filter(filter_str)
                     driveitems = query.execute_query()
