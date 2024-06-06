@@ -9,6 +9,11 @@ from pydantic import BaseModel
 from danswer.llm.utils import get_default_llm_tokenizer
 
 
+class ChunkWithCount(BaseModel):
+    content: str
+    tokens: int
+
+
 def build_tool_message(
     tool_call: ToolCall, tool_content: str | list[str | dict[str, Any]]
 ) -> ToolMessage:

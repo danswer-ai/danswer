@@ -9,6 +9,7 @@ from danswer.configs.chat_configs import STOP_STREAM_PAT
 from danswer.llm.answering.models import StreamProcessor
 from danswer.llm.answering.stream_processing.utils import map_document_id_order
 from danswer.prompts.constants import TRIPLE_BACKTICK
+from danswer.tools.message import ChunkWithCount
 from danswer.utils.logger import setup_logger
 
 
@@ -61,12 +62,12 @@ def extract_citations_from_stream(
             llm_out += token
 
         # Counting tokens (counted in `raw_output_for_explicit_tool_calling_llms`)
-        else:
-            content, num_tokens = token
+        elif isinstance(token, ChunkWithCount):
+            content = token.content
 
             curr_segment += content
             llm_out += content
-            token_count += num_tokens
+            token_count += token.tokens
 
         possible_citation_pattern = r"(\[\d*$)"  # [1, [, etc
         possible_citation_found = re.search(possible_citation_pattern, curr_segment)

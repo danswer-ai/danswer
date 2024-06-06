@@ -172,7 +172,6 @@ def _convert_delta_to_message_chunk(
                 additional_kwargs=additional_kwargs,
                 tool_call_chunks=[tool_call_chunk],
             )
-        print(additional_kwargs)
 
         return AIMessageChunk(
             tokens=tokens,
