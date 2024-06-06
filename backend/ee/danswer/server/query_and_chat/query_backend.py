@@ -21,6 +21,8 @@ from danswer.search.models import SearchRequest
 from danswer.search.models import SearchResponse
 from danswer.search.pipeline import SearchPipeline
 from danswer.search.utils import chunks_or_sections_to_search_docs
+from danswer.search.utils import dedupe_documents
+from danswer.search.utils import drop_llm_indices
 from danswer.utils.logger import setup_logger
 from ee.danswer.server.query_and_chat.models import DocumentSearchRequest
 
@@ -63,8 +65,21 @@ def handle_search_request(
     relevant_chunk_indices = search_pipeline.relevant_chunk_indices
     top_docs = chunks_or_sections_to_search_docs(top_sections)
 
+    # Deduping happens at the last step to avoid harming quality by dropping content early on
+    deduped_docs = top_docs
+    dropped_inds = None
+    if search_request.retrieval_options.dedupe_docs:
+        deduped_docs, dropped_inds = dedupe_documents(top_docs)
+
     # No need to save the docs for this API
-    fake_saved_docs = [SavedSearchDoc.from_search_doc(doc) for doc in top_docs]
+    fake_saved_docs = [SavedSearchDoc.from_search_doc(doc) for doc in deduped_docs]
+
+    if dropped_inds:
+        relevant_chunk_indices = drop_llm_indices(
+            llm_indices=relevant_chunk_indices,
+            search_docs=fake_saved_docs,
+            dropped_indices=dropped_inds,
+        )
 
     return SearchResponse(
         top_documents=fake_saved_docs, llm_indices=relevant_chunk_indices
