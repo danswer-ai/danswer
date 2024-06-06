@@ -95,16 +95,13 @@ export const AIMessage = ({
   retrievalDisabled,
   onResponseSelection,
   alternateModel,
-  fullMessage,
   llmOverrideManager,
   selectedAssistant,
-  onClose,
   regenerateResponse,
   responseId,
 }: {
   llmOverrideManager?: LlmOverrideManager;
   selectedAssistant?: Persona;
-  onClose?: () => void;
   responseId?: number;
   regenerateResponse?: (modelOverRide: LlmOverride, responseId: number) => void;
   otherResponseCanSwitchTo?: number[];
@@ -124,7 +121,6 @@ export const AIMessage = ({
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
   alternateModel?: string;
-  fullMessage?: Message; // for debugging
 
   onResponseSelection?: (messageId: number) => void;
 }) => {
@@ -369,6 +365,13 @@ export const AIMessage = ({
 
               {regenerateResponse && responseId && selectedAssistant && (
                 <RegenerateOption
+                  regenerate={{
+                    alternateModel: alternateModel,
+                    selectedAssistant: selectedAssistant,
+                    regenerateResponse: regenerateResponse,
+                    responseId: responseId,
+                    llmOverrideManager: llmOverrideManager,
+                  }}
                   alternateModel={alternateModel}
                   selectedAssistant={selectedAssistant}
                   regenerateResponse={regenerateResponse}

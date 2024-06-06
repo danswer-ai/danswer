@@ -5,13 +5,24 @@ import { RegenerateDropdown } from "@/components/Dropdown";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { getFinalLLM } from "@/lib/llm/utils";
 
+export type RegenerateOptions = {
+  llmOverrideManager?: LlmOverrideManager;
+  selectedAssistant?: Persona;
+  responseId?: number;
+  regenerateResponse?: (modelOverRide: LlmOverride, responseId: number) => void;
+  alternateModel?: string;
+};
+
 export default function RegenerateOption({
+  // regenerate:
   llmOverrideManager,
   selectedAssistant,
   regenerateResponse,
   messageIdToResend,
   alternateModel,
+  regenerate,
 }: {
+  regenerate?: RegenerateOptions | null;
   alternateModel?: string;
   llmOverrideManager?: LlmOverrideManager;
   selectedAssistant: Persona;

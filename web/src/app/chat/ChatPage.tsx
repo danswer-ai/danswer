@@ -259,7 +259,6 @@ export function ChatPage({
     completeMessageMapOverride,
     replacementsMap = null,
     makeLatestChildMessage = false,
-    regenerate = false,
   }: {
     messages: Message[];
     // if calling this function repeatedly with short delay, stay may not update in time
@@ -267,7 +266,6 @@ export function ChatPage({
     completeMessageMapOverride?: Map<number, Message> | null;
     replacementsMap?: Map<number, number> | null;
     makeLatestChildMessage?: boolean;
-    regenerate?: boolean;
   }) => {
     // deep copy
     const frozenCompleteMessageMap =
@@ -296,11 +294,7 @@ export function ChatPage({
     messages.forEach((message) => {
       const idToReplace = replacementsMap?.get(message.messageId);
 
-      // regenerate
-      if (
-        idToReplace
-        // && !regenerate
-      ) {
+      if (idToReplace) {
         removeMessage(idToReplace, newCompleteMessageMap);
       }
 
@@ -596,9 +590,10 @@ export function ChatPage({
     if (!parentMessage && frozenCompleteMessageMap.size === 2) {
       parentMessage = frozenCompleteMessageMap.get(SYSTEM_MESSAGE_ID) || null;
     }
-    setMessage("");
+
     setCurrentMessageFiles([]);
 
+    setMessage("");
     setIsStreaming(true);
     let answer = "";
     let query: string | null = null;
@@ -787,6 +782,9 @@ export function ChatPage({
     regenerate?: boolean;
     modelOverRide?: LlmOverride | null;
   } = {}) => {
+    setMessage("");
+    setIsStreaming(true);
+
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
     const searchParamBasedChatSessionName =
@@ -852,11 +850,8 @@ export function ChatPage({
     if (!parentMessage && frozenCompleteMessageMap.size === 2) {
       parentMessage = frozenCompleteMessageMap.get(SYSTEM_MESSAGE_ID) || null;
     }
-    setMessage("");
     setCurrentMessageFiles([]);
     const parentId = messageIdToResend;
-
-    setIsStreaming(true);
     let answer = "";
     let query: string | null = null;
     let retrievalType: RetrievalType =
@@ -870,12 +865,47 @@ export function ChatPage({
 
     let modelExists = false;
 
+    // go ahead
+
+    const updateFn = async (messages: Message[]) => {
+      const replacementsMap = finalMessage
+        ? new Map([[messages[0].messageId, TEMP_USER_MESSAGE_ID]] as [
+            number,
+            number,
+          ][])
+        : null;
+
+      upsertToCompleteMessageMap({
+        messages: messages,
+        replacementsMap: replacementsMap,
+        completeMessageMapOverride: frozenCompleteMessageMap,
+      });
+    };
+
+    // const newAssistantMessageId =
+    //   finalMessage?.message_id || TEMP_USER_MESSAGE_ID;
+
+    await updateFn([
+      {
+        messageId: -1,
+        // 153,
+        message: error || answer,
+        type: error ? "error" : "assistant",
+        retrievalType,
+        // query: finalMessage?.rephrased_query || query,
+        // documents: finalMessage?.context_docs?.top_documents || documents,
+        // citations: finalMessage?.citations || {},
+        files: [],
+        parentMessageId: parentId!,
+        alternate_model: modelOverRide?.modelName,
+      },
+    ]);
+
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
       for await (const packetBunch of sendMessage({
         regenerate: regenerate,
-
         message: currMessage,
         fileDescriptors: currentMessageFiles,
         parentMessageId: parentId!,
@@ -953,7 +983,6 @@ export function ChatPage({
             messages: messages,
             replacementsMap: replacementsMap,
             completeMessageMapOverride: frozenCompleteMessageMap,
-            regenerate: regenerate,
           });
         };
 
@@ -1201,7 +1230,6 @@ export function ChatPage({
                     }`}
                     {...getRootProps()}
                   >
-                    {/* <input {...getInputProps()} /> */}
                     <div
                       className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
                       ref={scrollableDivRef}
@@ -1326,12 +1354,13 @@ export function ChatPage({
                               i !== 0 ? messageHistory[i - 1] : null;
                             return (
                               <AIMessage
+                                // regenerateOptions={}
+
                                 regenerateResponse={regenerateResponse}
                                 responseId={parentMessage?.messageId}
                                 llmOverrideManager={llmOverrideManager}
                                 selectedAssistant={livePersona}
                                 alternateModel={message.alternate_model}
-                                fullMessage={message}
                                 otherResponseCanSwitchTo={
                                   parentMessage?.childrenMessageIds || []
                                 }
@@ -1446,8 +1475,7 @@ export function ChatPage({
                           } else {
                             return (
                               <div key={i}>
-                                {/* {message.message} */}
-                                {/* <AIMessage
+                                <AIMessage
                                   messageId={message.messageId}
                                   personaName={livePersona.name}
                                   content={
@@ -1455,7 +1483,7 @@ export function ChatPage({
                                       {message.message}
                                     </p>
                                   }
-                                /> */}
+                                />
                               </div>
                             );
                           }
