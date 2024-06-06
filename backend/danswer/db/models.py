@@ -246,6 +246,17 @@ class Persona__Tool(Base):
     tool_id: Mapped[int] = mapped_column(ForeignKey("tool.id"), primary_key=True)
 
 
+class StandardAnswer__StandardAnswerCategory(Base):
+    __tablename__ = "standard_answer__standard_answer_category"
+
+    standard_answer_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer.id"), primary_key=True
+    )
+    standard_answer_category_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer_category.id"), primary_key=True
+    )
+
+
 """
 Documents/Indexing Tables
 """
@@ -1083,6 +1094,31 @@ class ChannelConfig(TypedDict):
     # If None then no follow up
     # If empty list, follow up with no tags
     follow_up_tags: NotRequired[list[str]]
+
+
+class StandardAnswerCategory(Base):
+    __tablename__ = "standard_answer_category"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
+        "StandardAnswer",
+        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+        back_populates="categories",
+    )
+
+
+class StandardAnswer(Base):
+    __tablename__ = "standard_answer"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    keyword: Mapped[str] = mapped_column(String, unique=True)
+    answer: Mapped[str] = mapped_column(String)
+    categories: Mapped[list[StandardAnswerCategory]] = relationship(
+        "StandardAnswerCategory",
+        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+        back_populates="standard_answers",
+    )
 
 
 class SlackBotResponseType(str, PyEnum):

@@ -12,6 +12,8 @@ from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
 from danswer.db.models import SlackBotConfig as SlackBotConfigModel
 from danswer.db.models import SlackBotResponseType
+from danswer.db.models import StandardAnswer as StandardAnswerModel
+from danswer.db.models import StandardAnswerCategory as StandardAnswerCategoryModel
 from danswer.indexing.models import EmbeddingModelDetail
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.models import FullUserSnapshot
@@ -162,3 +164,54 @@ class AllUsersResponse(BaseModel):
     invited: list[InvitedUserSnapshot]
     accepted_pages: int
     invited_pages: int
+
+    
+class StandardAnswerCategoryCreationRequest(BaseModel):
+    name: str
+
+
+class StandardAnswerCategory(BaseModel):
+    id: int
+    name: str
+
+    @classmethod
+    def from_model(
+        cls, standard_answer_category: StandardAnswerCategoryModel
+    ) -> "StandardAnswerCategory":
+        return cls(
+            id=standard_answer_category.id,
+            name=standard_answer_category.name,
+        )
+
+
+class StandardAnswer(BaseModel):
+    id: int
+    keyword: str
+    answer: str
+    categories: list[StandardAnswerCategory]
+
+    @classmethod
+    def from_model(cls, standard_answer_model: StandardAnswerModel) -> "StandardAnswer":
+        return cls(
+            id=standard_answer_model.id,
+            keyword=standard_answer_model.keyword,
+            answer=standard_answer_model.answer,
+            categories=[
+                StandardAnswerCategory.from_model(standard_answer_category_model)
+                for standard_answer_category_model in standard_answer_model.categories
+            ],
+        )
+
+
+class StandardAnswerCreationRequest(BaseModel):
+    keyword: str
+    answer: str
+    categories: list[int]
+
+    @validator("categories", pre=True)
+    def validate_categories(cls, value: list[int]) -> list[int]:
+        if len(value) < 1:
+            raise ValueError(
+                "At least one category must be attached to a standard answer"
+            )
+        return value
