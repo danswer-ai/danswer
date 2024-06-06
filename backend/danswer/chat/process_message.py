@@ -49,6 +49,8 @@ from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.retrieval.search_runner import inference_documents_from_ids
 from danswer.search.utils import chunks_or_sections_to_search_docs
+from danswer.search.utils import dedupe_documents
+from danswer.search.utils import drop_llm_indices
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.utils import get_json_line
@@ -95,14 +97,20 @@ def _handle_search_tool_response_summary(
     packet: ToolResponse,
     db_session: Session,
     selected_search_docs: list[DbSearchDoc] | None,
-) -> tuple[QADocsResponse, list[DbSearchDoc]]:
+    dedupe_docs: bool = False,
+) -> tuple[QADocsResponse, list[DbSearchDoc], list[int] | None]:
     response_sumary = cast(SearchResponseSummary, packet.response)
 
+    dropped_inds = None
     if not selected_search_docs:
         top_docs = chunks_or_sections_to_search_docs(response_sumary.top_sections)
+
+        if dedupe_docs:
+            deduped_docs, dropped_inds = dedupe_documents(top_docs)
+
         reference_db_search_docs = [
-            create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
-            for top_doc in top_docs
+            create_db_search_doc(server_search_doc=doc, db_session=db_session)
+            for doc in deduped_docs
         ]
     else:
         reference_db_search_docs = selected_search_docs
@@ -122,6 +130,7 @@ def _handle_search_tool_response_summary(
             recency_bias_multiplier=response_sumary.recency_bias_multiplier,
         ),
         reference_db_search_docs,
+        dropped_inds,
     )
 
 
@@ -460,19 +469,36 @@ def stream_chat_message_objects(
         reference_db_search_docs = None
         qa_docs_response = None
         ai_message_files = None  # any files to associate with the AI message e.g. dall-e generated images
+        dropped_indices = None
         for packet in answer.processed_streamed_output:
             if isinstance(packet, ToolResponse):
                 if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                     (
                         qa_docs_response,
                         reference_db_search_docs,
+                        dropped_indices,
                     ) = _handle_search_tool_response_summary(
-                        packet, db_session, selected_db_search_docs
+                        packet=packet,
+                        db_session=db_session,
+                        selected_search_docs=selected_db_search_docs,
+                        # Deduping happens at the last step to avoid harming quality by dropping content early on
+                        dedupe_docs=retrieval_options.dedupe_docs
+                        if retrieval_options
+                        else False,
                     )
                     yield qa_docs_response
                 elif packet.id == SECTION_RELEVANCE_LIST_ID:
+                    chunk_indices = packet.response
+
+                    if reference_db_search_docs is not None and dropped_indices:
+                        chunk_indices = drop_llm_indices(
+                            llm_indices=chunk_indices,
+                            search_docs=reference_db_search_docs,
+                            dropped_indices=dropped_indices,
+                        )
+
                     yield LLMRelevanceFilterResponse(
-                        relevant_chunk_indices=packet.response
+                        relevant_chunk_indices=chunk_indices
                     )
                 elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
                     img_generation_response = cast(

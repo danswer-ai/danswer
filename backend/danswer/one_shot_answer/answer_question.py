@@ -39,6 +39,8 @@ from danswer.one_shot_answer.qa_utils import combine_message_thread
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.utils import chunks_or_sections_to_search_docs
+from danswer.search.utils import dedupe_documents
+from danswer.search.utils import drop_llm_indices
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephrase
 from danswer.server.query_and_chat.models import ChatMessageDetail
@@ -195,6 +197,7 @@ def stream_answer_objects(
         skip_explicit_tool_calling=True,
     )
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
+    dropped_inds: list[int] = []
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
         # for one-shot flow, don't currently do anything with these
         if isinstance(packet, ToolResponse):
@@ -205,11 +208,14 @@ def stream_answer_objects(
                     search_response_summary.top_sections
                 )
 
+                # Deduping happens at the last step to avoid harming quality by dropping content early on
+                deduped_docs = top_docs
+                if query_req.retrieval_options.dedupe_docs:
+                    deduped_docs, dropped_inds = dedupe_documents(top_docs)
+
                 reference_db_search_docs = [
-                    create_db_search_doc(
-                        server_search_doc=top_doc, db_session=db_session
-                    )
-                    for top_doc in top_docs
+                    create_db_search_doc(server_search_doc=doc, db_session=db_session)
+                    for doc in deduped_docs
                 ]
 
                 response_docs = [
@@ -228,6 +234,15 @@ def stream_answer_objects(
                 )
                 yield initial_response
             elif packet.id == SECTION_RELEVANCE_LIST_ID:
+                chunk_indices = packet.response
+
+                if reference_db_search_docs is not None and dropped_inds:
+                    chunk_indices = drop_llm_indices(
+                        llm_indices=chunk_indices,
+                        search_docs=reference_db_search_docs,
+                        dropped_indices=dropped_inds,
+                    )
+
                 yield LLMRelevanceFilterResponse(relevant_chunk_indices=packet.response)
         else:
             yield packet
