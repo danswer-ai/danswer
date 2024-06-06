@@ -5,6 +5,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from danswer.configs.constants import DocumentSource
+from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import RetrievalDocs
@@ -48,9 +49,19 @@ class LLMRelevanceFilterResponse(BaseModel):
 
 
 class DanswerAnswerPiece(BaseModel):
-    # A small piece of a complete answer. Used for streaming back answers.
     answer_piece: str | None  # if None, specifies the end of an Answer
-    max_token: bool | None
+    max_token: bool | None = None  # default to None if not set
+
+    def __init__(self, answer_piece: str | None, token_count: int | None):
+        super().__init__(answer_piece=answer_piece)
+        if token_count:
+            self.max_token = token_count == GEN_AI_MAX_OUTPUT_TOKENS
+
+
+# class DanswerAnswerPiece(BaseModel):
+#     # A small piece of a complete answer. Used for streaming back answers.
+#     answer_piece: str | None  # if None, specifies the end of an Answer
+#     max_token: bool | None = None
 
 
 # An intermediate representation of citations, later translated into

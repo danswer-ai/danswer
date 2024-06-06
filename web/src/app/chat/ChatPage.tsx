@@ -94,7 +94,6 @@ export function ChatPage({
   } = useChatContext();
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
 
-  // TODO
   const [canContinue, setCanContinue] = useState(false);
 
   const continueGenerating = () => {
@@ -618,8 +617,6 @@ export function ChatPage({
         useExistingUserMessage: isSeededChat,
       })) {
         for (const packet of packetBunch) {
-          console.log("packet");
-          // console
           if (Object.hasOwn(packet, "max_token")) {
             if ((packet as AnswerPiecePacket).max_token) {
               setCanContinue(true);

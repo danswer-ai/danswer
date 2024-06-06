@@ -172,8 +172,12 @@ def _convert_delta_to_message_chunk(
                 additional_kwargs=additional_kwargs,
                 tool_call_chunks=[tool_call_chunk],
             )
+        print(additional_kwargs)
+
         return AIMessageChunk(
-            content=content, tokens=tokens, additional_kwargs=additional_kwargs
+            tokens=tokens,
+            content=content,
+            additional_kwargs=additional_kwargs,
         )
     elif role == "system":
         return SystemMessageChunk(content=content)
@@ -348,18 +352,23 @@ class DefaultMultiLLM(LLM):
         response = self._completion(prompt, tools, tool_choice, True)
 
         for part in response:
-            text = part["choices"][0]["delta"]["content"]
-
-            count = 0
-            if text is not None:
-                count = token_counter(
-                    model=response.model, text=text, count_response_tokens=True
-                )
-
             if len(part["choices"]) == 0:
                 continue
+
             delta = part["choices"][0]["delta"]
-            message_chunk = _convert_delta_to_message_chunk(delta, output, tokens=count)
+            text = delta["content"]
+
+            message_chunk = _convert_delta_to_message_chunk(
+                delta,
+                output,
+                tokens=(
+                    token_counter(
+                        model=response.model, text=text, count_response_tokens=True
+                    )
+                    if text is not None
+                    else None
+                ),
+            )
             if output is None:
                 output = message_chunk
             else:

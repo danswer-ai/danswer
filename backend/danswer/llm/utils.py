@@ -241,8 +241,6 @@ def message_generator_to_string_generator(
     messages: Iterator[BaseMessage],
 ) -> Iterator[str]:
     for message in messages:
-        print("this is a message")
-        print(message)
         yield message_to_string(message)
 
 

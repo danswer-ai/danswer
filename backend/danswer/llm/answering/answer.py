@@ -202,7 +202,6 @@ class Answer:
                 tools=final_tool_definitions if final_tool_definitions else None,
                 tool_choice="required" if self.force_use_tool else None,
             ):
-                # print(message)
                 if isinstance(message, AIMessageChunk) and (
                     message.tool_call_chunks or message.tool_calls
                 ):
@@ -213,7 +212,7 @@ class Answer:
                 else:
                     if message.content:
                         if message.tokens:
-                            yield cast(tuple, (message.content, message.tokens))
+                            yield cast((str, int), (message.content, message.tokens))
                         else:
                             yield cast(str, message.content)
 
@@ -428,9 +427,6 @@ class Answer:
 
         processed_stream = []
         for processed_packet in _process_stream(output_generator):
-            # TODO
-            # print("processed_packet")
-            # print(processed_packet)
             processed_stream.append(processed_packet)
             yield processed_packet
 
