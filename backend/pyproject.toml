@@ -5,7 +5,7 @@ description = "Danswer chatbot"
 authors = []
 dependencies = [
     "mako==1.2.4",
-    "office365-rest-python-client==2.5.4",
+    "office365-rest-python-client==2.5.9",
     "pygithub==1.58.2",
     "sqlalchemy[mypy]==2.0.15",
     "aiohttp==3.9.4",
@@ -72,6 +72,10 @@ dependencies = [
     "pydantic==1.10.13",
     "transformers==4.39.2",
     "uvicorn==0.21.1",
+    "telebot==0.0.5",
+    "tgcrypto==1.2.5",
+    "dropbox==11.36.2",
+    "pyrogram==2.0.106",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
