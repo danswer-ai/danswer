@@ -270,7 +270,6 @@ def create_new_chat_message(
     commit: bool = True,
     alternate_model: str | None = None,
 ) -> ChatMessage:
-    print("called just now")
     new_chat_message = ChatMessage(
         chat_session_id=chat_session_id,
         parent_message=parent_message.id,

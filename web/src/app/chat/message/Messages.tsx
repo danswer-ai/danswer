@@ -326,7 +326,6 @@ export const AIMessage = ({
             <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1.5">
               {currentResponseId !== undefined &&
                 onResponseSelection &&
-                // otherMessagesCanSwitchTo &&
                 otherResponseCanSwitchTo.length > 1 && (
                   <div className="mr-2">
                     <MessageSwitcher
@@ -557,7 +556,7 @@ export const HumanMessage = ({
               ) : typeof content === "string" ? (
                 <div className="flex flex-col preserve-lines prose max-w-full">
                   {content}
-                {/* </ReactMarkdown> */}
+                  {/* </ReactMarkdown> */}
                 </div>
               ) : (
                 content
