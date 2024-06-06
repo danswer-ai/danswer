@@ -37,7 +37,7 @@ import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
 import { Button } from "@tremor/react";
-import RegenerateOption from "../RegenerateOptions";
+import RegenerateOption, { RegenerateOptions } from "../RegenerateOptions";
 import { LlmOverride, LlmOverrideManager } from "@/lib/hooks";
 import { Persona } from "@/app/admin/assistants/interfaces";
 
@@ -77,6 +77,7 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 }
 
 export const AIMessage = ({
+  regenerate,
   messageId,
   content,
   files,
@@ -94,16 +95,8 @@ export const AIMessage = ({
   handleForceSearch,
   retrievalDisabled,
   onResponseSelection,
-  alternateModel,
-  llmOverrideManager,
-  selectedAssistant,
-  regenerateResponse,
-  responseId,
 }: {
-  llmOverrideManager?: LlmOverrideManager;
-  selectedAssistant?: Persona;
-  responseId?: number;
-  regenerateResponse?: (modelOverRide: LlmOverride, responseId: number) => void;
+  regenerate?: RegenerateOptions | null;
   otherResponseCanSwitchTo?: number[];
   messageId: number | null;
   content: string | JSX.Element;
@@ -120,7 +113,6 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
-  alternateModel?: string;
 
   onResponseSelection?: (messageId: number) => void;
 }) => {
@@ -362,23 +354,7 @@ export const AIMessage = ({
                 icon={FiThumbsDown}
                 onClick={() => handleFeedback("dislike")}
               />
-
-              {regenerateResponse && responseId && selectedAssistant && (
-                <RegenerateOption
-                  regenerate={{
-                    alternateModel: alternateModel,
-                    selectedAssistant: selectedAssistant,
-                    regenerateResponse: regenerateResponse,
-                    responseId: responseId,
-                    llmOverrideManager: llmOverrideManager,
-                  }}
-                  alternateModel={alternateModel}
-                  selectedAssistant={selectedAssistant}
-                  regenerateResponse={regenerateResponse}
-                  messageIdToResend={responseId}
-                  llmOverrideManager={llmOverrideManager}
-                />
-              )}
+              {regenerate && <RegenerateOption regenerate={regenerate} />}
             </div>
           )}
         </div>

@@ -839,10 +839,6 @@ export function ChatPage({
         ? Array.from(completeMessageMap.values())[0]
         : null);
 
-    // if we're resending, set the parent's child to null
-    // we will use tempMessages until the regenerated message is complete
-    const messageUpdates: Message[] = [];
-
     const frozenCompleteMessageMap = completeMessageMap;
 
     // on initial message send, we insert a dummy system message
@@ -863,10 +859,6 @@ export function ChatPage({
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
 
-    let modelExists = false;
-
-    // go ahead
-
     const updateFn = async (messages: Message[]) => {
       const replacementsMap = finalMessage
         ? new Map([[messages[0].messageId, TEMP_USER_MESSAGE_ID]] as [
@@ -882,19 +874,13 @@ export function ChatPage({
       });
     };
 
-    // const newAssistantMessageId =
-    //   finalMessage?.message_id || TEMP_USER_MESSAGE_ID;
-
+    // Clean streaming updates
     await updateFn([
       {
         messageId: -1,
-        // 153,
         message: error || answer,
         type: error ? "error" : "assistant",
         retrievalType,
-        // query: finalMessage?.rephrased_query || query,
-        // documents: finalMessage?.context_docs?.top_documents || documents,
-        // citations: finalMessage?.citations || {},
         files: [],
         parentMessageId: parentId!,
         alternate_model: modelOverRide?.modelName,
@@ -902,8 +888,6 @@ export function ChatPage({
     ]);
 
     try {
-      const lastSuccessfulMessageId =
-        getLastSuccessfulMessageId(currMessageHistory);
       for await (const packetBunch of sendMessage({
         regenerate: regenerate,
         message: currMessage,
@@ -940,8 +924,6 @@ export function ChatPage({
         useExistingUserMessage: isSeededChat,
       })) {
         for (const packet of packetBunch) {
-          modelExists = true;
-
           if (Object.hasOwn(packet, "answer_piece")) {
             answer += (packet as AnswerPiecePacket).answer_piece;
           } else if (Object.hasOwn(packet, "top_documents")) {
@@ -1354,13 +1336,13 @@ export function ChatPage({
                               i !== 0 ? messageHistory[i - 1] : null;
                             return (
                               <AIMessage
-                                // regenerateOptions={}
-
-                                regenerateResponse={regenerateResponse}
-                                responseId={parentMessage?.messageId}
-                                llmOverrideManager={llmOverrideManager}
-                                selectedAssistant={livePersona}
-                                alternateModel={message.alternate_model}
+                                regenerate={{
+                                  alternateModel: message.alternate_model,
+                                  selectedAssistant: livePersona,
+                                  regenerateResponse: regenerateResponse,
+                                  messageIdToResend: parentMessage?.messageId!,
+                                  llmOverrideManager: llmOverrideManager,
+                                }}
                                 otherResponseCanSwitchTo={
                                   parentMessage?.childrenMessageIds || []
                                 }

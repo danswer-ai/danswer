@@ -6,29 +6,29 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { getFinalLLM } from "@/lib/llm/utils";
 
 export type RegenerateOptions = {
-  llmOverrideManager?: LlmOverrideManager;
-  selectedAssistant?: Persona;
-  responseId?: number;
-  regenerateResponse?: (modelOverRide: LlmOverride, responseId: number) => void;
+  llmOverrideManager: LlmOverrideManager;
+  selectedAssistant: Persona;
+  messageIdToResend: number;
+  regenerateResponse: (
+    modelOverRide: LlmOverride,
+    messageIdToResend: number
+  ) => void;
   alternateModel?: string;
 };
 
 export default function RegenerateOption({
-  // regenerate:
-  llmOverrideManager,
-  selectedAssistant,
-  regenerateResponse,
-  messageIdToResend,
-  alternateModel,
   regenerate,
 }: {
-  regenerate?: RegenerateOptions | null;
-  alternateModel?: string;
-  llmOverrideManager?: LlmOverrideManager;
-  selectedAssistant: Persona;
-  messageIdToResend: number;
-  regenerateResponse: (modelOverRide: LlmOverride, responseId: number) => void;
+  regenerate: RegenerateOptions;
 }) {
+  const {
+    llmOverrideManager,
+    selectedAssistant,
+    regenerateResponse,
+    messageIdToResend,
+    alternateModel,
+  } = regenerate;
+
   const { llmProviders } = useChatContext();
   const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant);
   const llmOptions: { name: string; value: string }[] = [];

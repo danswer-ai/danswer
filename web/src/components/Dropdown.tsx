@@ -388,7 +388,6 @@ export function RegenerateDropdown({
   options,
   selected,
   onSelect,
-  includeDefault = false,
   side,
   maxHeight,
   gptBox,
@@ -415,18 +414,20 @@ export function RegenerateDropdown({
         bg-background
         ${maxHeight || "max-h-96"}
         overflow-y-auto 
-        overscroll-contain`}
+        overscroll-contain relative`}
     >
-      {includeDefault && (
-        <DefaultDropdownElement
-          key={-1}
-          name="Default"
-          onSelect={() => {
-            onSelect(null);
-          }}
-          isSelected={selected === null}
-        />
-      )}
+      <p
+        className="sticky top-0 flex
+      bg-background
+        mx-1
+        font-bold
+        px-2
+        text-sm 
+        py-1.5 
+        "
+      >
+        Pick a model
+      </p>
       {options.map((option, ind) => {
         const isSelected = option.value === selected;
         return (
