@@ -1,6 +1,12 @@
+# Web connector, but able to deal with Okta login prompts.
+#
+# Lots of code copied from the web connector.
+
 import io
 import ipaddress
+import logging
 import socket
+from argparse import ArgumentParser
 from enum import Enum
 from typing import Any
 from typing import cast
@@ -29,6 +35,8 @@ from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import pdf_to_text
 from danswer.file_processing.html_utils import web_html_cleanup
 from danswer.utils.logger import setup_logger
+
+from .okta import Credentials, do_login
 
 logger = setup_logger()
 
@@ -117,7 +125,7 @@ def get_internal_links(
 
 def start_playwright() -> Tuple[Playwright, BrowserContext]:
     playwright = sync_playwright().start()
-    browser = playwright.chromium.launch(headless=True)
+    browser = playwright.chromium.launch(headless=__name__ != "__main__")
 
     context = browser.new_context()
 
@@ -169,14 +177,22 @@ def _read_urls_file(location: str) -> list[str]:
     return urls
 
 
-class WebConnector(LoadConnector):
+class WebOktaConnector(LoadConnector):
     def __init__(
         self,
         base_url: str,  # Can't change this without disrupting existing users
+        okta_tenant_url: str,
+        okta_username: str,
+        okta_password: str,
         web_connector_type: str = WEB_CONNECTOR_VALID_SETTINGS.RECURSIVE.value,
         mintlify_cleanup: bool = True,  # Mostly ok to apply to other websites as well
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
+        self.creds = Credentials(
+            tenant_url=okta_tenant_url,
+            username=okta_username,
+            password=okta_password,
+        )
         self.mintlify_cleanup = mintlify_cleanup
         self.batch_size = batch_size
         self.recursive = False
@@ -263,6 +279,12 @@ class WebConnector(LoadConnector):
                 page = context.new_page()
                 page_response = page.goto(current_url)
                 final_page = page.url
+
+                if self.creds.is_login_url(final_page):
+                    logger.info(f"Redirected to {final_page}, which is within Okta tenant {self.creds.tenant_url}")
+                    do_login(page, self.creds)
+                    logger.info(f"Finished authentication sequence on {final_page}")
+
                 if final_page != current_url:
                     logger.info(f"Redirected to {final_page}")
                     protected_url_check(final_page)
@@ -326,7 +348,25 @@ class WebConnector(LoadConnector):
             raise RuntimeError("No valid pages found.")
 
 
+class ParsedArguments:
+    tenant_url: str
+    username: str
+    password: str
+    url: str
+
+
+def parse_args() -> ParsedArguments:
+    parser = ArgumentParser()
+    parser.add_argument("--tenant-url")
+    parser.add_argument("--username")
+    parser.add_argument("--password")
+    parser.add_argument("--url")
+
+    return parser.parse_args(namespace=ParsedArguments())
+
 if __name__ == "__main__":
-    connector = WebConnector("https://docs.danswer.dev/")
+    logging.basicConfig(level=logging.DEBUG)
+    args = parse_args()
+    connector = WebOktaConnector(args.url, args.tenant_url, args.username, args.password)
     document_batches = connector.load_from_state()
     print(next(document_batches))
