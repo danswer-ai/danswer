@@ -795,7 +795,6 @@ export function ChatPage({
       (message) => message.messageId === messageIdToResend
     );
 
-    // Parent of the message we wish to resend
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
       messageToResend?.parentMessageId !== undefined
@@ -987,13 +986,6 @@ export function ChatPage({
 
       upsertToCompleteMessageMap({
         messages: [
-          {
-            messageId: TEMP_USER_MESSAGE_ID,
-            message: currMessage,
-            type: "user",
-            files: currentMessageFiles,
-            parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
-          },
           {
             messageId: TEMP_ASSISTANT_MESSAGE_ID,
             message: errorMsg,
