@@ -14,6 +14,7 @@ import {
   FiCpu,
   FiX,
   FiPlus,
+  FiInfo,
 } from "react-icons/fi";
 import ChatInputOption from "./ChatInputOption";
 import { FaBrain } from "react-icons/fa";
@@ -26,7 +27,8 @@ import { FileDescriptor } from "../interfaces";
 import { InputBarPreview } from "../files/InputBarPreview";
 import { RobotIcon } from "@/components/icons/icons";
 import { Hoverable } from "@/components/Hoverable";
-
+import { AssistantIcon } from "@/components/assistants/AssistantIcon";
+import { Tooltip } from "@/components/tooltip/Tooltip";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
@@ -101,12 +103,18 @@ export function ChatInputBar({
   const suggestionsRef = useRef<HTMLDivElement | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  const interactionsRef = useRef<HTMLDivElement | null>(null);
+
   // Click out of assistant suggestions
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         suggestionsRef.current &&
-        !suggestionsRef.current.contains(event.target as Node)
+        !suggestionsRef.current.contains(event.target as Node) &&
+        !(
+          !interactionsRef.current ||
+          interactionsRef.current.contains(event.target as Node)
+        )
       ) {
         setShowSuggestions(false);
       }
@@ -119,8 +127,14 @@ export function ChatInputBar({
 
   // On user input
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    console.log(event.target.value);
     const text = event.target.value;
     setMessage(text);
+
+    if (!text.startsWith("@")) {
+      setShowSuggestions(false);
+      return;
+    }
 
     // If looking for an assistant...
     const match = text.match(/(?:\s|^)@(\w*)$/);
@@ -141,13 +155,46 @@ export function ChatInputBar({
     )
   );
 
+  const [assistantIconIndex, setAssistantIconIndex] = useState(0);
+
   // Update selected persona
   const updateCurrentPersona = (persona: Persona) => {
     setSelectedAlternativeAssistant(persona);
+    setAssistantIconIndex(0);
 
     // Reset input + suggestions
     setShowSuggestions(false);
     setMessage("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (
+      showSuggestions &&
+      filteredPersonas.length > 0 &&
+      (e.key === "Tab" || e.key == "Enter")
+    ) {
+      e.preventDefault();
+      if (assistantIconIndex == filteredPersonas.length) {
+        window.open("/assistants/new", "_blank");
+
+        setShowSuggestions(false);
+        setMessage("");
+      } else {
+        const option =
+          filteredPersonas[assistantIconIndex >= 0 ? assistantIconIndex : 0];
+        updateCurrentPersona(option);
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setAssistantIconIndex((assistantIconIndex) =>
+        Math.min(assistantIconIndex + 1, filteredPersonas.length)
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setAssistantIconIndex((assistantIconIndex) =>
+        Math.max(assistantIconIndex - 1, 0)
+      );
+    }
   };
 
   return (
@@ -174,19 +221,23 @@ export function ChatInputBar({
                 {filteredPersonas.map((currentPersona, index) => (
                   <button
                     key={index}
-                    className="px-2  rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-gray-100 cursor-pointer"
+                    className={`px-2 ${assistantIconIndex == index && "bg-gray-200"} rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-gray-100 cursor-pointer`}
                     onClick={() => {
                       updateCurrentPersona(currentPersona);
                     }}
                   >
                     <p className="font-bold ">{currentPersona.name}</p>
-                    <p className="line-clamp-1">{currentPersona.description}</p>
+                    <p className="line-clamp-1">
+                      {currentPersona.id == selectedAssistant.id &&
+                        "(default) "}
+                      {currentPersona.description}
+                    </p>
                   </button>
                 ))}
                 <a
                   key={filteredPersonas.length}
                   target="_blank"
-                  className="px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-gray-100 cursor-pointer"
+                  className={`${assistantIconIndex == filteredPersonas.length && "bg-gray-200"} px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-gray-100 cursor-pointer"`}
                   href="/assistants/new"
                 >
                   <FiPlus size={17} />
@@ -219,11 +270,23 @@ export function ChatInputBar({
             {alternativeAssistant && (
               <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full  ">
                 <div className="bg-neutral-200 p-2 rounded-t-lg  items-center flex w-full">
-                  <RobotIcon size={20} />
+                  <AssistantIcon assistant={alternativeAssistant} border />
                   <p className="ml-3 text-neutral-800 my-auto">
                     {alternativeAssistant.name}
                   </p>
-                  <div className="ml-auto ">
+                  <div ref={interactionsRef} className="flex gap-x-1 ml-auto ">
+                    <Tooltip
+                      content={
+                        <p className="max-w-sm flex flex-wrap">
+                          {alternativeAssistant.description}
+                        </p>
+                      }
+                    >
+                      <button>
+                        <Hoverable icon={FiInfo} />
+                      </button>
+                    </Tooltip>
+
                     <Hoverable
                       icon={FiX}
                       onClick={() => setSelectedAlternativeAssistant(null)}
@@ -255,6 +318,7 @@ export function ChatInputBar({
 
             <textarea
               onPaste={handlePaste}
+              onKeyDownCapture={handleKeyDown}
               ref={textAreaRef}
               className={`
                 m-0
@@ -282,7 +346,6 @@ export function ChatInputBar({
                 py-4
                 h-14
               `}
-              // onInput={handleKeyDown}
               autoFocus
               style={{ scrollbarWidth: "thin" }}
               role="textarea"

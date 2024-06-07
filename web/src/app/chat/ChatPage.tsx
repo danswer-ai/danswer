@@ -1112,6 +1112,7 @@ export function ChatPage({
                     {...getRootProps()}
                   >
                     {/* <input {...getInputProps()} /> */}
+
                     <div
                       className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
                       ref={scrollableDivRef}
@@ -1260,24 +1261,9 @@ export function ChatPage({
                                   : null}
                                   >
                               
-                              {/* <AIMessage
-                               
-                                key={message.messageId}
-                                messageId={message.messageId}
-                                content={message.message}
-                                files={message.files}
-                                query={messageHistory[i]?.query || undefined}
-                                personaName={livePersona.name}
-                                citedDocuments={getCitedDocumentsFromMessage(
-                                  message
-                                )}
-                                toolCall={message?.toolCalls?.[0]}
-                                isComplete={
-                                  i !== messageHistory.length - 1 ||
-                                  !isStreaming
-                                }
-                              > */}
+
                                 <AIMessage
+                                currentPersona={livePersona}
                                  alternativeAssistant={
                                   currentAlternativeAssistant
                                 }
@@ -1383,6 +1369,7 @@ export function ChatPage({
                             return (
                               <div key={`${i}-${existingChatSessionId}`}>
                                 <AIMessage
+                                  currentPersona={livePersona}
                                   messageId={message.messageId}
                                   personaName={livePersona.name}
                                   content={
@@ -1403,6 +1390,7 @@ export function ChatPage({
                               key={`${messageHistory.length}-${existingChatSessionId}`}
                             >
                               <AIMessage
+                                currentPersona={livePersona}
                                 alternativeAssistant={
                                   selectedAlternativeAssistant
                                 }
