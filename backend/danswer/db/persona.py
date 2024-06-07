@@ -59,6 +59,7 @@ def create_update_persona(
     user: User | None,
     db_session: Session,
 ) -> PersonaSnapshot:
+    """Higher level function than upsert_persona, although either is valid to use."""
     # Permission to actually use these is checked later
     document_sets = list(
         get_document_sets_by_ids(

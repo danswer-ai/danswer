@@ -172,10 +172,10 @@ def patch_slack_bot_config(
 def delete_slack_bot_config(
     slack_bot_config_id: int,
     db_session: Session = Depends(get_session),
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_admin_user),
 ) -> None:
     remove_slack_bot_config(
-        slack_bot_config_id=slack_bot_config_id, db_session=db_session
+        slack_bot_config_id=slack_bot_config_id, user=user, db_session=db_session
     )
 
 
