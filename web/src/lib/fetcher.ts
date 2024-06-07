@@ -11,11 +11,13 @@ class FetchError extends Error {
   }
 }
 
+const DEFAULT_ERROR_MSG = "An error occurred while fetching the data.";
+
 export const errorHandlingFetcher = async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) {
     const error = new FetchError(
-      "An error occurred while fetching the data.",
+      DEFAULT_ERROR_MSG,
       res.status,
       await res.json()
     );
