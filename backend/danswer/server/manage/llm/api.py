@@ -15,8 +15,8 @@ from danswer.db.llm import upsert_llm_provider
 from danswer.db.models import User
 from danswer.llm.factory import get_default_llm
 from danswer.llm.factory import get_llm
-from danswer.llm.options import fetch_available_well_known_llms
-from danswer.llm.options import WellKnownLLMProviderDescriptor
+from danswer.llm.llm_provider_options import fetch_available_well_known_llms
+from danswer.llm.llm_provider_options import WellKnownLLMProviderDescriptor
 from danswer.llm.utils import test_llm
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderDescriptor
@@ -55,13 +55,13 @@ def test_llm_configuration(
     functions_with_args: list[tuple[Callable, tuple]] = [(test_llm, (llm,))]
 
     if (
-        test_llm_request.default_fast_model_name
-        and test_llm_request.default_fast_model_name
+        test_llm_request.fast_default_model_name
+        and test_llm_request.fast_default_model_name
         != test_llm_request.default_model_name
     ):
         fast_llm = get_llm(
             provider=test_llm_request.provider,
-            model=test_llm_request.default_fast_model_name,
+            model=test_llm_request.fast_default_model_name,
             api_key=test_llm_request.api_key,
             api_base=test_llm_request.api_base,
             api_version=test_llm_request.api_version,

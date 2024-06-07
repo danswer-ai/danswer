@@ -1,23 +1,57 @@
 from collections.abc import Sequence
 from datetime import datetime
+from typing import cast
+
+from langchain_core.messages import BaseMessage
 
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import Prompt
 from danswer.llm.answering.models import PromptConfig
+from danswer.prompts.chat_prompts import ADDITIONAL_INFO
 from danswer.prompts.chat_prompts import CITATION_REMINDER
 from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
 from danswer.search.models import InferenceChunk
 
 
-def get_current_llm_day_time() -> str:
+MOST_BASIC_PROMPT = "You are a helpful AI assistant."
+DANSWER_DATETIME_REPLACEMENT = "DANSWER_DATETIME_REPLACEMENT"
+BASIC_TIME_STR = "The current date is {datetime_info}."
+
+
+def get_current_llm_day_time(
+    include_day_of_week: bool = True, full_sentence: bool = True
+) -> str:
     current_datetime = datetime.now()
     # Format looks like: "October 16, 2023 14:30"
     formatted_datetime = current_datetime.strftime("%B %d, %Y %H:%M")
     day_of_week = current_datetime.strftime("%A")
-    return f"The current day and time is {day_of_week} {formatted_datetime}"
+    if full_sentence:
+        return f"The current day and time is {day_of_week} {formatted_datetime}"
+    if include_day_of_week:
+        return f"{day_of_week} {formatted_datetime}"
+    return f"{formatted_datetime}"
+
+
+def add_time_to_system_prompt(system_prompt: str) -> str:
+    if DANSWER_DATETIME_REPLACEMENT in system_prompt:
+        return system_prompt.replace(
+            DANSWER_DATETIME_REPLACEMENT,
+            get_current_llm_day_time(full_sentence=False, include_day_of_week=True),
+        )
+
+    if system_prompt:
+        return system_prompt + ADDITIONAL_INFO.format(
+            datetime_info=get_current_llm_day_time()
+        )
+    else:
+        return (
+            MOST_BASIC_PROMPT
+            + " "
+            + BASIC_TIME_STR.format(datetime_info=get_current_llm_day_time())
+        )
 
 
 def build_task_prompt_reminders(
@@ -93,3 +127,65 @@ def build_complete_context_str(
         )
 
     return context_str.strip()
+
+
+_PER_MESSAGE_TOKEN_BUFFER = 7
+
+
+def find_last_index(lst: list[int], max_prompt_tokens: int) -> int:
+    """From the back, find the index of the last element to include
+    before the list exceeds the maximum"""
+    running_sum = 0
+
+    last_ind = 0
+    for i in range(len(lst) - 1, -1, -1):
+        running_sum += lst[i] + _PER_MESSAGE_TOKEN_BUFFER
+        if running_sum > max_prompt_tokens:
+            last_ind = i + 1
+            break
+    if last_ind >= len(lst):
+        raise ValueError("Last message alone is too large!")
+    return last_ind
+
+
+def drop_messages_history_overflow(
+    messages_with_token_cnts: list[tuple[BaseMessage, int]],
+    max_allowed_tokens: int,
+) -> list[BaseMessage]:
+    """As message history grows, messages need to be dropped starting from the furthest in the past.
+    The System message should be kept if at all possible and the latest user input which is inserted in the
+    prompt template must be included"""
+
+    final_messages: list[BaseMessage] = []
+    messages, token_counts = cast(
+        tuple[list[BaseMessage], list[int]], zip(*messages_with_token_cnts)
+    )
+    system_msg = (
+        final_messages[0]
+        if final_messages and final_messages[0].type == "system"
+        else None
+    )
+
+    history_msgs = messages[:-1]
+    final_msg = messages[-1]
+    if final_msg.type != "human":
+        if final_msg.type != "tool":
+            raise ValueError("Last message must be user input OR a tool result")
+        else:
+            final_msgs = messages[-3:]
+            history_msgs = messages[:-3]
+    else:
+        final_msgs = [final_msg]
+
+    # Start dropping from the history if necessary
+    ind_prev_msg_start = find_last_index(
+        token_counts, max_prompt_tokens=max_allowed_tokens
+    )
+
+    if system_msg and ind_prev_msg_start <= len(history_msgs):
+        final_messages.append(system_msg)
+
+    final_messages.extend(history_msgs[ind_prev_msg_start:])
+    final_messages.extend(final_msgs)
+
+    return final_messages

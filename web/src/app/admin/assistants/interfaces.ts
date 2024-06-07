@@ -1,3 +1,4 @@
+import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { DocumentSet, MinimalUserSnapshot } from "@/lib/types";
 
 export interface StarterMessage {
@@ -27,6 +28,7 @@ export interface Persona {
   description: string;
   document_sets: DocumentSet[];
   prompts: Prompt[];
+  tools: ToolSnapshot[];
   num_chunks?: number;
   llm_relevance_filter?: boolean;
   llm_filter_extraction?: boolean;
@@ -34,6 +36,6 @@ export interface Persona {
   llm_model_version_override?: string;
   starter_messages: StarterMessage[] | null;
   default_persona: boolean;
-  users: string[];
+  users: MinimalUserSnapshot[];
   groups: number[];
 }

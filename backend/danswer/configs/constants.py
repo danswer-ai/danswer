@@ -61,6 +61,12 @@ DISABLED_GEN_AI_MSG = (
 )
 
 
+# API Keys
+DANSWER_API_KEY_PREFIX = "API_KEY__"
+DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN = "danswerapikey.ai"
+UNNAMED_KEY_PLACEHOLDER = "Unnamed"
+
+
 class DocumentSource(str, Enum):
     # Special case, document passed in via Danswer APIs without specifying a source type
     INGESTION_API = "ingestion_api"
@@ -87,8 +93,12 @@ class DocumentSource(str, Enum):
     GOOGLE_SITES = "google_sites"
     ZENDESK = "zendesk"
     LOOPIO = "loopio"
+    DROPBOX = "dropbox"
     SHAREPOINT = "sharepoint"
+    DISCOURSE = "discourse"
     AXERO = "axero"
+    MEDIAWIKI = "mediawiki"
+    WIKIPEDIA = "wikipedia"
 
 
 class DocumentIndexType(str, Enum):
@@ -123,3 +133,10 @@ class TokenRateLimitScope(str, Enum):
     USER = "user"
     USER_GROUP = "user_group"
     GLOBAL = "global"
+
+
+class FileOrigin(str, Enum):
+    CHAT_UPLOAD = "chat_upload"
+    CHAT_IMAGE_GEN = "chat_image_gen"
+    CONNECTOR = "connector"
+    OTHER = "other"
