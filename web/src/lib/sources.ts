@@ -206,7 +206,8 @@ function fillSourceMetadata(
     ...partialMetadata,
     adminUrl: `/admin/connectors/${partialMetadata.displayName
       .toLowerCase()
-      .replaceAll(" ", "-")}`,
+      .replaceAll(" ", "-")
+      .replace(/[^0-9a-z-]/g, "")}`,
   };
 }
 
