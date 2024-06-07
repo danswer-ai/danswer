@@ -202,7 +202,6 @@ class Answer:
                 tools=final_tool_definitions if final_tool_definitions else None,
                 tool_choice="required" if self.force_use_tool else None,
             ):
-                keyword_arguments = message.additional_kwargs
                 if isinstance(message, AIMessageChunk) and (
                     message.tool_call_chunks or message.tool_calls
                 ):

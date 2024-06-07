@@ -59,7 +59,7 @@ def extract_citations_from_stream(
             prepend_bracket = False
 
         # Counting tokens (counted in `raw_output_for_explicit_tool_calling_llms`)
-        elif isinstance(token, MessageChunk):
+        if isinstance(token, MessageChunk):
             content = token.content
             curr_segment += content
             llm_out += content

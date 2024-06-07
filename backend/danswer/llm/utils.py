@@ -245,21 +245,25 @@ def message_generator_to_string_generator(
         yield message_to_string(message)
 
 
-def message_to_message_chunk(message: BaseMessage) -> MessageChunk:
+def message_to_message_chunk(message: BaseMessage) -> MessageChunk | str:
     if not isinstance(message.content, str):
         raise RuntimeError("LLM message not in expected format.")
 
     keyword_arguments = message.additional_kwargs
-
-    return MessageChunk(
-        content=str(message.content),
-        tokens=keyword_arguments["usage_metadata"]["output_tokens"],
-    )
+    if (
+        "usage_metadata" in keyword_arguments
+        and "output_tokens" in keyword_arguments["usage_metadata"]
+    ):
+        return MessageChunk(
+            content=str(message.content),
+            tokens=keyword_arguments["usage_metadata"]["output_tokens"],
+        )
+    return message.content
 
 
 def message_generator_to_message_chunk_generator(
     messages: Iterator[BaseMessage],
-) -> Iterator[MessageChunk]:
+) -> Iterator[MessageChunk | str]:
     for message in messages:
         yield message_to_message_chunk(message)
 
