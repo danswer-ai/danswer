@@ -1,5 +1,3 @@
-export const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
 class FetchError extends Error {
   status: number;
   info: any;
