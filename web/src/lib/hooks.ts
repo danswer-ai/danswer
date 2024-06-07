@@ -22,6 +22,7 @@ export type AutoScrollHookType = {
   lastMessageRef: RefObject<HTMLDivElement>;
   inputRef: RefObject<HTMLDivElement>;
   endDivRef: RefObject<HTMLDivElement>;
+  scrollableDivRef?: RefObject<HTMLDivElement>;
   distance?: number;
   debounce?: number;
 };
@@ -34,31 +35,53 @@ export const useScrollOnStream = ({
   lastMessageRef,
   inputRef,
   endDivRef,
+  scrollableDivRef,
   distance = 140, // distance that should "engage" the scroll
   debounce = 150, // time for debouncing
 }: AutoScrollHookType) => {
   const timeoutRef = useRef<boolean>(true);
+
+  const lastScrollTop = useRef<number>(0);
+
+  const blockActionRef = useRef<boolean>(false);
+
   // let allowScroll = true
 
   useEffect(() => {
     // Function to handle the scroll itself
+    const scrollableDiv = scrollableDivRef?.current;
     const handleScroll = () => {
       if (
         timeoutRef.current &&
         lastMessageRef.current &&
         inputRef.current &&
-        endDivRef?.current
+        endDivRef?.current &&
+        scrollableDivRef
       ) {
         const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
         const endDivRect = inputRef.current.getBoundingClientRect();
 
+        const currentScrollTop = scrollableDiv?.scrollTop!;
+
+        // Check if scroll is upwards
+        if (currentScrollTop < lastScrollTop.current) {
+          blockActionRef.current = true;
+
+          setTimeout(() => {
+            blockActionRef.current = false;
+          }, 1000);
+        }
+
+        lastScrollTop.current = currentScrollTop;
+
         // Check if the bottom of the final chat is within the engagement distance
-        if (endDivRect.bottom - lastMessageRect.bottom > distance) {
+        if (
+          !blockActionRef.current &&
+          endDivRect.bottom - lastMessageRect.bottom > distance
+        ) {
           timeoutRef.current = false;
 
-          console.log("Running in 2 seconds");
           setTimeout(() => {
-            console.log("running now");
             endDivRef?.current?.scrollIntoView({ behavior: "smooth" });
             timeoutRef.current = true;
           }, 800) as unknown as number;
@@ -146,7 +169,7 @@ export const useResponsiveScroll2 = ({
 
           if (endDivRef.current) {
             endDivRef?.current.scrollIntoView({ behavior: "smooth" });
-            endDivRef.current.style.height = `${Math.max(newHeight - 140, 0)}px`;
+            endDivRef.current.style.height = `${Math.max(newHeight - 100, 0)}px`;
             endDivRef.current.style.transition = "height 0.3s ease-out";
           }
 
@@ -169,19 +192,6 @@ export const useResponsiveScroll2 = ({
       }
     };
   });
-
-  // Apply the dynamic height to the extra div
-  // useEffect(() => {
-  //   if (extraDivRef.current && endDivRef.current) {
-  //     console.log("Changing height")
-
-  //     // endDivRef?.current.scrollIntoView({ behavior: "smooth" });
-  //     // endDivRef?.current.scrollIntoView({ behavior: "smooth" });
-
-  //     // lastMessageRef.current.scrollTo(0,0)
-
-  //   }
-  // }, [extraHeight, extraDivRef]);
 };
 
 export const useResponsiveScroll = ({
@@ -197,7 +207,6 @@ export const useResponsiveScroll = ({
 
     // Core logic
     const handleInputResize = async () => {
-      console.log("Handle!");
       function delay(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms));
       }
