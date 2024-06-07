@@ -5,11 +5,11 @@ from danswer.chat.models import AnswerQuestionStreamReturn
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
+from danswer.chat.models import MessageChunk
 from danswer.configs.chat_configs import STOP_STREAM_PAT
 from danswer.llm.answering.models import StreamProcessor
 from danswer.llm.answering.stream_processing.utils import map_document_id_order
 from danswer.prompts.constants import TRIPLE_BACKTICK
-from danswer.tools.message import ChunkWithCount
 from danswer.utils.logger import setup_logger
 
 
@@ -57,17 +57,14 @@ def extract_citations_from_stream(
             curr_segment += "[" + curr_segment
             prepend_bracket = False
 
-        if isinstance(token, str):
-            curr_segment += token
-            llm_out += token
-
         # Counting tokens (counted in `raw_output_for_explicit_tool_calling_llms`)
-        elif isinstance(token, ChunkWithCount):
+        elif isinstance(token, MessageChunk):
             content = token.content
-
             curr_segment += content
             llm_out += content
-            token_count += token.tokens
+
+            if token.tokens:
+                token_count += token.tokens
 
         possible_citation_pattern = r"(\[\d*$)"  # [1, [, etc
         possible_citation_found = re.search(possible_citation_pattern, curr_segment)

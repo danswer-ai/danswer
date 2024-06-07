@@ -12,6 +12,11 @@ from danswer.search.models import RetrievalDocs
 from danswer.search.models import SearchResponse
 
 
+class MessageChunk(BaseModel):
+    content: str
+    tokens: int | None = None
+
+
 class LlmDoc(BaseModel):
     """This contains the minimal set information for the LLM portion including citations"""
 

@@ -10,6 +10,7 @@ from danswer.chat.models import AnswerQuestionPossibleReturn
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
+from danswer.chat.models import MessageChunk
 from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
 from danswer.file_store.utils import InMemoryChatFile
 from danswer.llm.answering.models import AnswerStyleConfig
@@ -40,7 +41,6 @@ from danswer.tools.images.image_generation_tool import ImageGenerationResponse
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
 from danswer.tools.images.prompt import build_image_generation_user_prompt
 from danswer.tools.message import build_tool_message
-from danswer.tools.message import ChunkWithCount
 from danswer.tools.message import ToolCallSummary
 from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
@@ -161,7 +161,7 @@ class Answer:
 
     def _raw_output_for_explicit_tool_calling_llms(
         self,
-    ) -> Iterator[str | ToolRunKickoff | ToolResponse | ChunkWithCount]:
+    ) -> Iterator[str | ToolRunKickoff | ToolResponse | MessageChunk]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
 
         tool_call_chunk: AIMessageChunk | None = None
@@ -216,7 +216,7 @@ class Answer:
                         #     hasattr(message, "usage_metadata")
                         #     and "output_tokens" in message.usage_metadata
                         # ):
-                        #     yield ChunkWithCount(
+                        #     yield MessageChunk(
                         #         content=cast(str, message.content),
                         #         tokens=message.usage_metadata["output_tokens"],
                         #     )
@@ -226,14 +226,14 @@ class Answer:
                             "usage_metadata" in keyword_arguments
                             and "output_tokens" in keyword_arguments["usage_metadata"]
                         ):
-                            yield ChunkWithCount(
+                            yield MessageChunk(
                                 content=str(message.content),
                                 tokens=keyword_arguments["usage_metadata"][
                                     "output_tokens"
                                 ],  # Access output_tokens correctly
                             )
                         else:
-                            yield cast(str, message.content)
+                            yield MessageChunk(content=str(message.content))
 
             if not tool_call_chunk:
                 return  # no tool call needed
@@ -398,7 +398,7 @@ class Answer:
         )
 
         def _process_stream(
-            stream: Iterator[ToolRunKickoff | ToolResponse | str | ChunkWithCount],
+            stream: Iterator[ToolRunKickoff | ToolResponse | str | MessageChunk],
         ) -> AnswerStream:
             message = None
 
