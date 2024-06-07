@@ -554,7 +554,6 @@ export function ChatPage({
       });
       return;
     }
-
     let currMessage = messageToResend ? messageToResend.message : message;
     if (messageOverride) {
       currMessage = messageOverride;
