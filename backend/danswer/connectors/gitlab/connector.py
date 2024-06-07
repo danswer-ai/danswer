@@ -6,7 +6,6 @@ from datetime import timezone
 from typing import Any
 
 import gitlab
-import pytz
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -115,14 +114,12 @@ class GitlabConnector(LoadConnector, PollConnector):
                 doc_batch: list[Document] = []
                 for mr in mr_batch:
                     mr.updated_at = datetime.strptime(
-                        mr.updated_at, "%Y-%m-%dT%H:%M:%S.%f%z"
+                        mr.updated_at, "%Y-%m-%dT%H:%M:%S.%fZ"
                     )
-                    if start is not None and mr.updated_at < start.replace(
-                        tzinfo=pytz.UTC
-                    ):
+                    if start is not None and mr.updated_at < start:
                         yield doc_batch
                         return
-                    if end is not None and mr.updated_at > end.replace(tzinfo=pytz.UTC):
+                    if end is not None and mr.updated_at > end:
                         continue
                     doc_batch.append(_convert_merge_request_to_document(mr))
                 yield doc_batch
@@ -134,17 +131,13 @@ class GitlabConnector(LoadConnector, PollConnector):
                 doc_batch = []
                 for issue in issue_batch:
                     issue.updated_at = datetime.strptime(
-                        issue.updated_at, "%Y-%m-%dT%H:%M:%S.%f%z"
+                        issue.updated_at, "%Y-%m-%dT%H:%M:%S.%fZ"
                     )
-                    if start is not None:
-                        start = start.replace(tzinfo=pytz.UTC)
-                        if issue.updated_at < start:
-                            yield doc_batch
-                            return
-                    if end is not None:
-                        end = end.replace(tzinfo=pytz.UTC)
-                        if issue.updated_at > end:
-                            continue
+                    if start is not None and issue.updated_at < start:
+                        yield doc_batch
+                        return
+                    if end is not None and issue.updated_at > end:
+                        continue
                     doc_batch.append(_convert_issue_to_document(issue))
                 yield doc_batch
 
