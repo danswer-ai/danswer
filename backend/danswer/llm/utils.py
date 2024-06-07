@@ -18,6 +18,7 @@ from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 from tiktoken.core import Encoding
 
+from danswer.chat.models import MessageChunk
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
@@ -242,6 +243,29 @@ def message_generator_to_string_generator(
 ) -> Iterator[str]:
     for message in messages:
         yield message_to_string(message)
+
+
+def message_to_message_chunk(message: BaseMessage) -> MessageChunk:
+    if not isinstance(message.content, str):
+        raise RuntimeError("LLM message not in expected format.")
+
+    keyword_arguments = message.additional_kwargs
+
+    return MessageChunk(
+        content=str(message.content),
+        tokens=keyword_arguments["usage_metadata"]["output_tokens"],
+    )
+    # return MessageChunk
+
+
+# message.content
+
+
+def message_generator_to_message_chunk_generator(
+    messages: Iterator[BaseMessage],
+) -> Iterator[MessageChunk]:
+    for message in messages:
+        yield message_to_message_chunk(message)
 
 
 def should_be_verbose() -> bool:

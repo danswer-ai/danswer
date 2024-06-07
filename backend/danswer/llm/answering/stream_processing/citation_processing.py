@@ -53,6 +53,8 @@ def extract_citations_from_stream(
 
         # Special case of [1][ where ][ is a single token
         # This is where the model attempts to do consecutive citations like [1][2]
+        print(type(token))
+
         if prepend_bracket:
             curr_segment += "[" + curr_segment
             prepend_bracket = False
@@ -62,6 +64,7 @@ def extract_citations_from_stream(
             content = token.content
             curr_segment += content
             llm_out += content
+            print(content)
 
             if token.tokens:
                 token_count += token.tokens
@@ -111,16 +114,20 @@ def extract_citations_from_stream(
             curr_segment = curr_segment[:-1]
             prepend_bracket = True
 
-        yield DanswerAnswerPiece(answer_piece=curr_segment, token_count=token_count)
+        yield DanswerAnswerPiece.build_from_token_cnt(
+            answer_piece=curr_segment, token_count=token_count
+        )
         curr_segment = ""
 
     if curr_segment:
         if prepend_bracket:
-            yield DanswerAnswerPiece(
+            yield DanswerAnswerPiece.build_from_token_cnt(
                 answer_piece="[" + curr_segment, token_count=token_count
             )
         else:
-            yield DanswerAnswerPiece(answer_piece=curr_segment, token_count=token_count)
+            yield DanswerAnswerPiece.build_from_token_cnt(
+                answer_piece=curr_segment, token_count=token_count
+            )
 
 
 def build_citation_processor(

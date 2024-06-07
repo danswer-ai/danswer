@@ -33,7 +33,7 @@ from danswer.llm.answering.stream_processing.quotes_processing import (
 )
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import get_default_llm_tokenizer
-from danswer.llm.utils import message_generator_to_string_generator
+from danswer.llm.utils import message_generator_to_message_chunk_generator
 from danswer.tools.force import filter_tools_for_force_tool_use
 from danswer.tools.force import ForceUseTool
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
@@ -202,6 +202,7 @@ class Answer:
                 tools=final_tool_definitions if final_tool_definitions else None,
                 tool_choice="required" if self.force_use_tool else None,
             ):
+                keyword_arguments = message.additional_kwargs
                 if isinstance(message, AIMessageChunk) and (
                     message.tool_call_chunks or message.tool_calls
                 ):
@@ -211,26 +212,17 @@ class Answer:
                         tool_call_chunk += message  # type: ignore
                 else:
                     if message.content:
-                        # For langchain v0.2:
-                        # if (
-                        #     hasattr(message, "usage_metadata")
-                        #     and "output_tokens" in message.usage_metadata
-                        # ):
-                        #     yield MessageChunk(
-                        #         content=cast(str, message.content),
-                        #         tokens=message.usage_metadata["output_tokens"],
-                        #     )
-
                         keyword_arguments = message.additional_kwargs
                         if (
                             "usage_metadata" in keyword_arguments
                             and "output_tokens" in keyword_arguments["usage_metadata"]
                         ):
+                            output_tokens = keyword_arguments["usage_metadata"][
+                                "output_tokens"
+                            ]
+
                             yield MessageChunk(
-                                content=str(message.content),
-                                tokens=keyword_arguments["usage_metadata"][
-                                    "output_tokens"
-                                ],  # Access output_tokens correctly
+                                content=str(message.content), tokens=output_tokens
                             )
                         else:
                             yield MessageChunk(content=str(message.content))
@@ -240,6 +232,7 @@ class Answer:
 
         # if we have a tool call, we need to call the tool
         tool_call_requests = tool_call_chunk.tool_calls
+
         for tool_call_request in tool_call_requests:
             tool = [
                 tool for tool in self.tools if tool.name() == tool_call_request["name"]
@@ -271,7 +264,7 @@ class Answer:
                 )
             prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
 
-            yield from message_generator_to_string_generator(
+            yield from message_generator_to_message_chunk_generator(
                 self.llm.stream(
                     prompt=prompt,
                     tools=[tool.tool_definition() for tool in self.tools],
@@ -282,7 +275,7 @@ class Answer:
 
     def _raw_output_for_non_explicit_tool_calling_llms(
         self,
-    ) -> Iterator[str | ToolRunKickoff | ToolResponse]:
+    ) -> Iterator[str | ToolRunKickoff | ToolResponse | MessageChunk]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
         chosen_tool_and_args: tuple[Tool, dict] | None = None
 
@@ -339,7 +332,7 @@ class Answer:
                 )
             )
             prompt = prompt_builder.build()
-            yield from message_generator_to_string_generator(
+            yield from message_generator_to_message_chunk_generator(
                 self.llm.stream(prompt=prompt)
             )
             return
@@ -380,7 +373,9 @@ class Answer:
             )
 
         prompt = prompt_builder.build()
-        yield from message_generator_to_string_generator(self.llm.stream(prompt=prompt))
+        yield from message_generator_to_message_chunk_generator(
+            self.llm.stream(prompt=prompt)
+        )
 
     @property
     def processed_streamed_output(self) -> AnswerStream:

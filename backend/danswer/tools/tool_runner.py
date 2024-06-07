@@ -52,6 +52,7 @@ class ToolRunner:
             yield from self._tool_responses
 
         tool_responses: list[ToolResponse] = []
+
         for tool_response in self.tool.run(**self.args):
             yield tool_response
             tool_responses.append(tool_response)

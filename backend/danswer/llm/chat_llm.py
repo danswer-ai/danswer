@@ -168,16 +168,12 @@ def _convert_delta_to_message_chunk(
 
             return AIMessageChunk(
                 content=content,
-                additional_kwargs=additional_kwargs,
                 tool_call_chunks=[tool_call_chunk],
+                additional_kwargs={
+                    "usage_metadata": {"output_tokens": tokens},
+                    **additional_kwargs,
+                },
             )
-
-        # For langchain v0.2:
-        # return AIMessageChunk(
-        #     usage_metadata={"output_tokens": tokens},
-        #     content=content,
-        #     additional_kwargs=additional_kwargs,
-        # )
 
         return AIMessageChunk(
             content=content,

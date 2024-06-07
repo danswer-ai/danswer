@@ -55,12 +55,24 @@ class LLMRelevanceFilterResponse(BaseModel):
 
 class DanswerAnswerPiece(BaseModel):
     answer_piece: str | None  # if None, specifies the end of an Answer
+    token_count: int | None = None
     max_token: bool | None = None  # default to None if not set
 
-    def __init__(self, answer_piece: str | None, token_count: int | None = None):
-        super().__init__(answer_piece=answer_piece)
-        if token_count:
-            self.max_token = token_count >= GEN_AI_MAX_OUTPUT_TOKENS
+    @classmethod
+    def build_from_token_cnt(
+        cls, answer_piece: str | None, token_count: int | None
+    ) -> "DanswerAnswerPiece":
+        if token_count is None:
+            token_count = 1
+        return DanswerAnswerPiece(
+            answer_piece=answer_piece,
+            token_count=token_count,
+            max_token=(
+                token_count == GEN_AI_MAX_OUTPUT_TOKENS
+                if token_count is not None
+                else None
+            ),
+        )
 
 
 # An intermediate representation of citations, later translated into
