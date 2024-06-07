@@ -245,6 +245,10 @@ class NotionConnector(LoadConnector, PollConnector):
                             text = rich_text["text"]["content"]
                             cur_result_text_arr.append(text)
 
+                # if result_type == "bookmark": # it seems we're safe adding urls even if they're not in bookmarks
+                if "url" in result_obj:
+                    cur_result_text_arr.append(result_obj["url"])
+
                 if result["has_children"]:
                     if result_type == "child_page":
                         child_pages.append(result_block_id)

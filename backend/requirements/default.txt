@@ -59,6 +59,8 @@ retry==0.9.2  # This pulls in py which is in CVE-2022-42969, must remove py from
 rfc3986==1.5.0
 rt==3.1.2
 slack-sdk==3.20.2
+telebot==0.0.5
+tgcrypto==1.2.5
 SQLAlchemy[mypy]==2.0.15
 starlette==0.36.3
 supervisor==4.2.5
@@ -70,3 +72,4 @@ zulip==0.8.2
 hubspot-api-client==8.1.0
 zenpy==2.0.41
 dropbox==11.36.2
+pyrogram==2.0.106
