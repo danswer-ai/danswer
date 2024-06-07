@@ -2,6 +2,8 @@ import React from "react";
 import { useState, ReactNode } from "react";
 import { FiCheck, FiCopy } from "react-icons/fi";
 
+const CODE_BLOCK_PADDING_TYPE = { padding: "1rem" };
+
 interface CodeBlockProps {
   className?: string | undefined;
   children?: ReactNode;
@@ -24,9 +26,11 @@ export function CodeBlock({
 
   if (!language) {
     return (
-      <code {...props} className={`text-sm ${className}`}>
-        {children}
-      </code>
+      <pre style={CODE_BLOCK_PADDING_TYPE}>
+        <code {...props} className={`text-sm ${className}`}>
+          {children}
+        </code>
+      </pre>
     );
   }
 
