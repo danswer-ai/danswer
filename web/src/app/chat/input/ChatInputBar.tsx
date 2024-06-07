@@ -78,11 +78,10 @@ export function ChatInputBar({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null); // Store the timeout reference
   const contentRef = useRef<HTMLDivElement>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      console.log("HI");
+      // console.log("HI");
       if (suggestionsRef.current) {
         if (!suggestionsRef.current.contains(event.target as Node)) {
           // Clear any existing timeout to avoid unwanted behavior
@@ -92,11 +91,14 @@ export function ChatInputBar({
           // Set a delay before setting 'showSuggestions' to false
           timeoutRef.current = setTimeout(() => {
             setShowSuggestions(false);
-          }, 30); // 30ms delay before hiding suggestions
+          }, 100);
         } else {
-          console.log(suggestionsRef);
-          console.log("HIDE");
-          setShowSuggestions(false);
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
+          timeoutRef.current = setTimeout(() => {
+            setShowSuggestions(false);
+          }, 100);
         }
       }
     };
@@ -113,7 +115,6 @@ export function ChatInputBar({
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = event.target.value;
     setMessage(text);
-    setHidden(false);
 
     const match = text.match(/@(\w*)$/);
     if (match) {
@@ -129,8 +130,8 @@ export function ChatInputBar({
       .startsWith(message.slice(message.lastIndexOf("@") + 1).toLowerCase())
   );
   const updateCurrentPersona = (persona: Persona) => {
-    setShowSuggestions(false);
     setSelectedAlternativeAssistant(persona);
+    setShowSuggestions(false);
     setMessage("");
   };
 
@@ -149,7 +150,7 @@ export function ChatInputBar({
             mx-auto
           "
         >
-          {!hidden && showSuggestions && filteredPersonas.length > 0 && (
+          {showSuggestions && filteredPersonas.length > 0 && (
             <div
               ref={suggestionsRef}
               className="absolute inset-x-0 top-0 w-full transform -translate-y-full "
@@ -160,6 +161,7 @@ export function ChatInputBar({
                     key={index}
                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                     onClick={() => {
+                      console.log("ZZZ");
                       updateCurrentPersona(currentPersona);
                     }}
                   >
@@ -340,9 +342,6 @@ export function ChatInputBar({
           </div>
         </div>
       </div>
-      {/* <div className="text-center text-sm text-subtle mt-2">
-        Press "/" for shortcuts and useful prompts
-      </div> */}
     </div>
   );
 }
