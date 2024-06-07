@@ -4,7 +4,7 @@ import useSWR from "swr";
 
 import { LoadingAnimation } from "@/components/Loading";
 import { NotebookIcon } from "@/components/icons/icons";
-import { errorHandlingFetcher, fetcher } from "@/lib/fetcher";
+import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ConnectorIndexingStatus } from "@/lib/types";
 import { CCPairIndexingStatusTable } from "./CCPairIndexingStatusTable";
 import { AdminPageTitle } from "@/components/admin/Title";
