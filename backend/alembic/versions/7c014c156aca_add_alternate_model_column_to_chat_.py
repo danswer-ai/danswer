@@ -37,7 +37,7 @@ depends_on = None
 #     op.drop_column("chat_message", "alternate_model")
 
 
-def upgrade():
+def upgrade() -> None:
     op.add_column(
         "chat_message",
         sa.Column("alternate_model", sa.String(length=255), nullable=True),
