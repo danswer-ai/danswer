@@ -37,38 +37,45 @@ export const useScrollOnStream = ({
   distance = 140, // distance that should "engage" the scroll
   debounce = 150, // time for debouncing
 }: AutoScrollHookType) => {
-  const timeoutRef = useRef<number | null>(null);
+  const timeoutRef = useRef<boolean>(true);
+  // let allowScroll = true
 
   useEffect(() => {
     // Function to handle the scroll itself
     const handleScroll = () => {
-      if (lastMessageRef.current && inputRef.current && endDivRef?.current) {
+      if (
+        timeoutRef.current &&
+        lastMessageRef.current &&
+        inputRef.current &&
+        endDivRef?.current
+      ) {
         const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
         const endDivRect = inputRef.current.getBoundingClientRect();
 
         // Check if the bottom of the final chat is within the engagement distance
         if (endDivRect.bottom - lastMessageRect.bottom > distance) {
-          endDivRef.current.scrollIntoView({ behavior: "smooth" });
+          timeoutRef.current = false;
+
+          console.log("Running in 2 seconds");
+          setTimeout(() => {
+            console.log("running now");
+            endDivRef?.current?.scrollIntoView({ behavior: "smooth" });
+            timeoutRef.current = true;
+          }, 800) as unknown as number;
         }
       }
     };
 
     // Debounce the scroll event
     if (isStreaming) {
-      if (timeoutRef.current !== null) {
-        clearTimeout(timeoutRef.current);
-      }
-      timeoutRef.current = setTimeout(
-        handleScroll,
-        debounce
-      ) as unknown as number;
+      handleScroll();
     }
 
     // Cleanup function to clear the timeout when the component unmounts or the inputs change
     return () => {
-      if (timeoutRef.current !== null) {
-        clearTimeout(timeoutRef.current);
-      }
+      // if (timeoutRef.current !== null) {
+      //   clearTimeout(timeoutRef.current);
+      // }
     };
   });
 };
@@ -173,7 +180,6 @@ export type ResponsiveScrollParams = {
   inputRef: RefObject<HTMLDivElement>;
   endDivRef: RefObject<HTMLDivElement>;
   textAreaRef: RefObject<HTMLTextAreaElement>;
-  extraDivRef: RefObject<HTMLDivElement>; // Ref to the div you want to adjust
 };
 
 export const useResponsiveScroll2 = ({
@@ -181,7 +187,6 @@ export const useResponsiveScroll2 = ({
   inputRef,
   endDivRef,
   textAreaRef,
-  extraDivRef,
 }: ResponsiveScrollParams) => {
   const [extraHeight, setExtraHeight] = useState(0); // Starting with default 50px
 
@@ -208,17 +213,14 @@ export const useResponsiveScroll2 = ({
           console.log(paddingNeeded);
 
           if (
-            endDivRef.current &&
-            extraDivRef.current
+            endDivRef.current
             // && paddingNeeded > 0
           ) {
-            extraDivRef.current.style.height = `${extraHeight + paddingNeeded}px`;
-            setExtraHeight((extraHeight) => extraHeight + paddingNeeded);
-            endDivRef?.current.scrollIntoView({ behavior: "smooth" });
-
+            // extraDivRef.current.style.height = `${extraHeight + paddingNeeded}px`;
+            // setExtraHeight((extraHeight) => extraHeight + paddingNeeded);
+            // endDivRef?.current.scrollIntoView({ behavior: "smooth" });
             // console.log
             // endDivRef.current.scrollBy(extraHeight, extraHeight)
-
             // Set the dynamic height based on input bar
           }
 
