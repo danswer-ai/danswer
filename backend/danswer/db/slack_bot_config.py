@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
+from danswer.db.chat import get_prompt_by_id
 from danswer.db.chat import upsert_persona
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.document_set import get_document_sets_by_ids
@@ -46,6 +47,16 @@ def create_slack_bot_persona(
         )
     )
 
+    # load system default prompt for slack bot using document set
+    prompts = [
+        get_prompt_by_id(
+            prompt_id=0,
+            user=None,
+            db_session=db_session,
+            include_deleted=False,
+        )
+    ]
+
     # create/update persona associated with the slack bot
     persona_name = _build_persona_name(channel_names)
     persona = upsert_persona(
@@ -57,7 +68,7 @@ def create_slack_bot_persona(
         llm_relevance_filter=True,
         llm_filter_extraction=True,
         recency_bias=RecencyBiasSetting.AUTO,
-        prompts=None,
+        prompts=prompts,
         document_sets=document_sets,
         llm_model_provider_override=None,
         llm_model_version_override=None,
