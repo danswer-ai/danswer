@@ -252,7 +252,7 @@ export function ChatInputBar({
               [&:has(textarea:focus)]::ring-black
             "
           >
-            {/* <TooltipProvider> */}
+            {/* <TooltipProvid er> */}
 
             {alternativeAssistant && (
               <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full  ">
@@ -264,31 +264,6 @@ export function ChatInputBar({
                     {alternativeAssistant.name}
                   </p>
                   <div ref={interactionsRef} className="flex gap-x-1 ml-auto ">
-                    {/* <Tooltip>
-                        <Trigger asChild>
-                          <button>
-                            <Hoverable
-                              icon={FiInfo}
-                            />
-                          </button>
-                        </Trigger>
-                        <Content
-                          side="top"
-                          align="center"
-                          sideOffset={5}
-                          style={{
-                            background: 'black',
-                            color: 'white',
-                            padding: '8px',
-                            borderRadius: '4px',
-                            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-                          }}
-                        >
-                          {"hi"}
-                          <Arrow style={{ fill: 'black' }} />
-                        </Content>
-                      </Tooltip> */}
-
                     <Tooltip
                       content={
                         <p className="max-w-sm flex flex-wrap">
@@ -309,7 +284,7 @@ export function ChatInputBar({
                 </div>
               </div>
             )}
-            {/* </TooltipProvider> */}
+
             {files.length > 0 && (
               <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-2">
                 {files.map((file) => (

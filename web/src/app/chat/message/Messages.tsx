@@ -90,8 +90,10 @@ export const AIMessage = ({
   handleSearchQueryEdit,
   handleForceSearch,
   retrievalDisabled,
+  currentPersona,
 }: {
   alternativeAssistant?: Persona | null;
+  currentPersona: Persona;
   messageId: number | null;
   content: string | JSX.Element;
   files?: FileDescriptor[];
@@ -166,15 +168,10 @@ export const AIMessage = ({
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
         <div className="ml-8">
           <div className="flex">
-            {alternativeAssistant ? (
-              <AssistantIcon size="small" assistant={alternativeAssistant} />
-            ) : (
-              <div className="p-1 bg-ai rounded-lg h-fit my-auto">
-                <div className="text-inverted">
-                  <FiCpu size={16} className="my-auto mx-auto" />
-                </div>
-              </div>
-            )}
+            <AssistantIcon
+              size="small"
+              assistant={alternativeAssistant || currentPersona}
+            />
 
             <div className="font-bold text-emphasis ml-2 my-auto">
               {alternativeAssistant
