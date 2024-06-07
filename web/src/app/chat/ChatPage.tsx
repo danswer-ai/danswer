@@ -108,12 +108,6 @@ export function ChatPage({
   const [selectedAlternativeAssistant, setSelectedAlternativeAssistant] =
     useState<Persona | null>(null);
 
-  const updateAlternativeAssistant = (
-    newAlternativeAssistant: Persona | null
-  ) => {
-    setSelectedAlternativeAssistant(newAlternativeAssistant);
-  };
-
   const router = useRouter();
   const searchParams = useSearchParams();
   const existingChatIdRaw = searchParams.get("chatId");
@@ -1039,6 +1033,8 @@ export function ChatPage({
   const sidebarElementRef = useRef<HTMLDivElement>(null);
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
 
+  const currentPersona = selectedAlternativeAssistant || livePersona;
+
   return (
     <>
       <HealthCheckBanner />
@@ -1434,33 +1430,30 @@ export function ChatPage({
                         <div ref={endPaddingRef} className=" h-[95px]" />
                         <div ref={endDivRef}></div>
 
-                        {livePersona &&
-                          livePersona.starter_messages &&
-                          livePersona.starter_messages.length > 0 &&
+                        {currentPersona &&
+                          currentPersona.starter_messages &&
+                          currentPersona.starter_messages.length > 0 &&
                           selectedPersona &&
                           messageHistory.length === 0 &&
                           !isFetchingChatMessages && (
                             <div
                               className={`
-                              mx-auto 
-                              px-4 
-                              w-searchbar-xs 
-                              2xl:w-searchbar-sm 
-                              3xl:w-searchbar 
-                              grid 
-                              gap-4 
-                              grid-cols-1 
-                              grid-rows-1 
-                              mt-4 
-                              md:grid-cols-2 
-                              mb-6`}
+                            mx-auto 
+                            px-4 
+                            w-searchbar-xs 
+                            2xl:w-searchbar-sm 
+                            3xl:w-searchbar 
+                            grid 
+                            gap-4 
+                            grid-cols-1 
+                            grid-rows-1 
+                            mt-4 
+                            md:grid-cols-2 
+                            mb-6`}
                             >
-                              {livePersona.starter_messages.map(
+                              {currentPersona.starter_messages.map(
                                 (starterMessage, i) => (
-                                  <div
-                                    key={`${i}-${existingChatSessionId}`}
-                                    className="w-full"
-                                  >
+                                  <div key={i} className="w-full">
                                     <StarterMessage
                                       starterMessage={starterMessage}
                                       onClick={() =>
@@ -1479,29 +1472,13 @@ export function ChatPage({
                       </div>
                     </div>
 
-                    <div
-                      ref={inputRef}
-                      className="absolute bottom-0 z-10 w-full"
-                    >
-                      <div className="w-full relative pb-4">
-                        {aboveHorizon && (
-                          <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
-                            <button
-                              onClick={() => clientScrollToBottom(true)}
-                              className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2 mx-auto "
-                            >
-                              <FiArrowDown size={18} />
-                            </button>
-                          </div>
-                        )}
+                    <div className="absolute bottom-0 z-10 w-full">
+                      <div className="w-full pb-4">
                         <ChatInputBar
                           setSelectedAlternativeAssistant={
                             setSelectedAlternativeAssistant
                           }
                           personas={filteredAssistants}
-                          updateAlternativeAssistant={
-                            updateAlternativeAssistant
-                          }
                           alternativeAssistant={selectedAlternativeAssistant}
                           message={message}
                           setMessage={setMessage}

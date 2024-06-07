@@ -228,7 +228,7 @@ def stream_chat_message_objects(
         retrieval_options = new_msg_req.retrieval_options
         alternate_assistant_id = new_msg_req.alternate_assistant_id
 
-        # use alernate persona if possible
+        # use alernate persona if alternative assistant id is passed in
         if alternate_assistant_id:
             persona = get_persona_by_id(
                 alternate_assistant_id, user=user, db_session=db_session
@@ -401,6 +401,19 @@ def stream_chat_message_objects(
 
         if not final_msg.prompt:
             raise RuntimeError("No Prompt found")
+
+        print("The various prompts")
+
+        print(
+            PromptConfig.from_model(
+                final_msg.prompt,
+                prompt_override=(
+                    new_msg_req.prompt_override or chat_session.prompt_override
+                ),
+            )
+        )
+
+        print(PromptConfig.from_model(persona.prompts[0]))
 
         prompt_config = (
             PromptConfig.from_model(

@@ -7,7 +7,14 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { FiSend, FiFilter, FiPlusCircle, FiCpu, FiX } from "react-icons/fi";
+import {
+  FiSend,
+  FiFilter,
+  FiPlusCircle,
+  FiCpu,
+  FiX,
+  FiPlus,
+} from "react-icons/fi";
 import ChatInputOption from "./ChatInputOption";
 import { FaBrain } from "react-icons/fa";
 import { Persona } from "@/app/admin/assistants/interfaces";
@@ -40,11 +47,9 @@ export function ChatInputBar({
   setConfigModalActiveTab,
   textAreaRef,
   alternativeAssistant,
-  updateAlternativeAssistant,
 }: {
   setSelectedAlternativeAssistant: Dispatch<SetStateAction<Persona | null>>;
   personas: Persona[];
-  updateAlternativeAssistant: (newAlternativeAssistant: Persona | null) => void;
   message: string;
   setMessage: (message: string) => void;
   onSubmit: () => void;
@@ -94,48 +99,31 @@ export function ChatInputBar({
   const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant, null);
 
   const suggestionsRef = useRef<HTMLDivElement | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null); // Store the timeout reference
-  const contentRef = useRef<HTMLDivElement>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  // Click out of assistant suggestions
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // console.log("HI");
-      if (suggestionsRef.current) {
-        if (!suggestionsRef.current.contains(event.target as Node)) {
-          // Clear any existing timeout to avoid unwanted behavior
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-          }
-          // Set a delay before setting 'showSuggestions' to false
-          timeoutRef.current = setTimeout(() => {
-            setShowSuggestions(false);
-          }, 100);
-        } else {
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-          }
-          timeoutRef.current = setTimeout(() => {
-            setShowSuggestions(false);
-          }, 100);
-        }
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-      // Make sure to clear the timeout when the component unmounts
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
     };
   }, []);
 
+  // On user input
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = event.target.value;
     setMessage(text);
 
-    const match = text.match(/@(\w*)$/);
+    // If looking for an assistant...
+    const match = text.match(/(?:\s|^)@(\w*)$/);
     if (match) {
       setShowSuggestions(true);
     } else {
@@ -143,13 +131,21 @@ export function ChatInputBar({
     }
   };
 
+  // Redefines on state change
   const filteredPersonas = personas.filter((persona) =>
-    persona.name
-      .toLowerCase()
-      .startsWith(message.slice(message.lastIndexOf("@") + 1).toLowerCase())
+    persona.name.toLowerCase().startsWith(
+      message
+        .slice(message.lastIndexOf("@") + 1)
+        .split(/\s/)[0]
+        .toLowerCase()
+    )
   );
+
+  // Update selected persona
   const updateCurrentPersona = (persona: Persona) => {
     setSelectedAlternativeAssistant(persona);
+
+    // Reset input + suggestions
     setShowSuggestions(false);
     setMessage("");
   };
@@ -172,21 +168,30 @@ export function ChatInputBar({
           {showSuggestions && filteredPersonas.length > 0 && (
             <div
               ref={suggestionsRef}
-              className="absolute inset-x-0 top-0 w-full transform -translate-y-full "
+              className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full "
             >
-              <div className="rounded-lg bg-white border border-gray-300 overflow-hidden shadow-lg mx-2 mt-2 rounded  z-10">
+              <div className="rounded-lg py-1.5 bg-white border border-gray-300 overflow-hidden shadow-lg mx-2  px-1.5 mt-2 rounded  z-10">
                 {filteredPersonas.map((currentPersona, index) => (
-                  <div
+                  <button
                     key={index}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    className="px-2  rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-gray-100 cursor-pointer"
                     onClick={() => {
-                      console.log("ZZZ");
                       updateCurrentPersona(currentPersona);
                     }}
                   >
-                    {currentPersona.name}
-                  </div>
+                    <p className="font-bold ">{currentPersona.name}</p>
+                    <p className="line-clamp-1">{currentPersona.description}</p>
+                  </button>
                 ))}
+                <a
+                  key={filteredPersonas.length}
+                  target="_blank"
+                  className="px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-gray-100 cursor-pointer"
+                  href="/assistants/new"
+                >
+                  <FiPlus size={17} />
+                  <p>Create a new assistant</p>
+                </a>
               </div>
             </div>
           )}
@@ -221,7 +226,7 @@ export function ChatInputBar({
                   <div className="ml-auto ">
                     <Hoverable
                       icon={FiX}
-                      onClick={() => updateAlternativeAssistant(null)}
+                      onClick={() => setSelectedAlternativeAssistant(null)}
                     />
                   </div>
                 </div>
