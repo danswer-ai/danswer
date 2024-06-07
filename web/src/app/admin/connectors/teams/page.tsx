@@ -73,9 +73,9 @@ const MainSection = () => {
   return (
     <>
       <Text>
-        The Teams connector allows you to index and search through your Teams
-        channels. Once setup, all messages from the channels contained in the
-        specified teams will be queryable within Danswer.
+        The Teams connector allows you to index and search through your
+        Teams channels. Once setup, all messages from the channels contained 
+        in the specified teams will be queryable within Danswer.
       </Text>
 
       <Title className="mb-2 mt-6 ml-auto mr-auto">
@@ -165,8 +165,8 @@ const MainSection = () => {
       {teamsConnectorIndexingStatuses.length > 0 && (
         <>
           <Text className="mb-2">
-            The latest messages from the specified teams are fetched every 10
-            minutes.
+            The latest messages from the specified teams are
+            fetched every 10 minutes.
           </Text>
           <div className="mb-2">
             <ConnectorsTable<TeamsConfig, TeamsCredentialJson>
@@ -241,8 +241,8 @@ const MainSection = () => {
       ) : (
         <Text>
           Please provide all Azure info in Step 1 first! Once you&apos;re done
-          with that, you can then specify which teams you want to make
-          searchable.
+          with that, you can then specify which teams you want to
+          make searchable.
         </Text>
       )}
     </>
