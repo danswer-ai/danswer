@@ -45,7 +45,6 @@ import {
   useFilters,
   useInitialScroll,
   useLlmOverride,
-  useResponsiveScroll,
   useResponsiveScroll2,
 } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
@@ -1293,8 +1292,6 @@ export function ChatPage({
                             );
                           }
                         })}
-                        z
-                        <div ref={endDivRef} className="min-h-[100px]" />1 z
                         {isStreaming &&
                           messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
@@ -1320,6 +1317,8 @@ export function ChatPage({
                               />
                             </div>
                           )}
+
+                        <div ref={endDivRef} className="" />
                         {livePersona &&
                           livePersona.starter_messages &&
                           livePersona.starter_messages.length > 0 &&

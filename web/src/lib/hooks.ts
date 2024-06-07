@@ -112,69 +112,6 @@ export type ResponsiveScrollType = {
   textAreaRef: RefObject<HTMLTextAreaElement>;
 };
 
-/**
- * Scroll in cases where the input bar covers previously visible bottom of text
- */
-// export type ResponsiveScrollParams = {
-//   lastMessageRef: RefObject<HTMLDivElement>;
-//   inputRef: RefObject<HTMLDivElement>;
-//   endDivRef: RefObject<HTMLDivElement>;
-//   textAreaRef: RefObject<HTMLTextAreaElement>;
-// };
-
-// export const useResponsiveScroll = ({
-//   lastMessageRef,
-//   inputRef,
-//   endDivRef,
-//   textAreaRef,
-// }: ResponsiveScrollParams) => {
-//   useEffect(() => {
-
-//     let timeoutId: ReturnType<typeof setTimeout> | null = null;
-//     let prevInputHeight = 0;
-//     console.log("handling?")
-
-//     const handleInputResize = () => {
-//       if (timeoutId !== null) {
-//         clearTimeout(timeoutId);
-//       }
-//       timeoutId = setTimeout(() => {
-//         if (inputRef.current && lastMessageRef.current) {
-//           const inputRect = inputRef.current.getBoundingClientRect();
-//           const currentInputHeight = inputRect.height;
-//           const paddingNeeded = currentInputHeight - prevInputHeight;
-
-//           if (paddingNeeded > 0 && endDivRef.current) {
-//             endDivRef.current.style.paddingBottom = `${paddingNeeded}px`;
-//           }
-
-//           lastMessageRef.current.scrollIntoView({ behavior: 'smooth' });
-
-//           prevInputHeight = currentInputHeight;
-//         }
-//       }, 300);  // Adjust timeout as needed
-//     };
-
-//     const textarea = textAreaRef.current;
-//     if (textarea) {
-//       textarea.addEventListener('input', handleInputResize);
-//     }
-
-//     return () => {
-//       if (textarea) {
-//         textarea.removeEventListener('input', handleInputResize);
-//       }
-//       if (timeoutId !== null) {
-//         clearTimeout(timeoutId);
-//       }
-//     };
-//   }, [lastMessageRef, inputRef, endDivRef, textAreaRef]);
-// };
-
-//
-
-// import { RefObject, useEffect, useState } from "react";
-
 export type ResponsiveScrollParams = {
   lastMessageRef: RefObject<HTMLDivElement>;
   inputRef: RefObject<HTMLDivElement>;
@@ -188,40 +125,29 @@ export const useResponsiveScroll2 = ({
   endDivRef,
   textAreaRef,
 }: ResponsiveScrollParams) => {
-  const [extraHeight, setExtraHeight] = useState(0); // Starting with default 50px
+  const previousHeight = useRef<number>(
+    inputRef.current?.getBoundingClientRect().height!
+  );
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let prevInputHeight = 0;
 
     const handleInputResize = () => {
-      // console.log("Rescroll")
-      // console.log(inputRef)
-
-      if (timeoutId !== null) {
-        clearTimeout(timeoutId);
-      }
-
       setTimeout(() => {
-        // console.log("inputRef")
-
         if (inputRef.current && lastMessageRef.current) {
           const inputRect = inputRef.current.getBoundingClientRect();
           const currentInputHeight = inputRect.height;
-          const paddingNeeded = currentInputHeight - prevInputHeight;
 
-          console.log(paddingNeeded);
+          let newHeight: number =
+            inputRef.current?.getBoundingClientRect().height!;
+          const heightDifference = newHeight - previousHeight.current;
+          previousHeight.current = newHeight;
 
-          if (
-            endDivRef.current
-            // && paddingNeeded > 0
-          ) {
-            // extraDivRef.current.style.height = `${extraHeight + paddingNeeded}px`;
-            // setExtraHeight((extraHeight) => extraHeight + paddingNeeded);
-            // endDivRef?.current.scrollIntoView({ behavior: "smooth" });
-            // console.log
-            // endDivRef.current.scrollBy(extraHeight, extraHeight)
-            // Set the dynamic height based on input bar
+          if (endDivRef.current) {
+            endDivRef?.current.scrollIntoView({ behavior: "smooth" });
+            endDivRef.current.style.height = `${Math.max(newHeight - 140, 0)}px`;
+            endDivRef.current.style.transition = "height 0.3s ease-out";
           }
 
           prevInputHeight = currentInputHeight;
