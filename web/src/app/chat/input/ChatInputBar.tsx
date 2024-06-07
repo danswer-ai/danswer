@@ -1,5 +1,12 @@
-import React, {  useEffect } from "react";
+
  
+import React, {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { FiSend, FiFilter, FiPlusCircle, FiCpu, FiX } from "react-icons/fi";
 import ChatInputOption from "./ChatInputOption";
 import { FaBrain } from "react-icons/fa";
@@ -16,6 +23,7 @@ import { Hoverable } from "@/components/Hoverable";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
+  personas,
   message,
   setMessage,
   onSubmit,
@@ -24,6 +32,7 @@ export function ChatInputBar({
   retrievalDisabled,
   filterManager,
   llmOverrideManager,
+  setSelectedAlternativeAssistant,
   selectedAssistant,
   files,
   setFiles,
@@ -33,6 +42,8 @@ export function ChatInputBar({
   alternativeAssistant,
   updateAlternativeAssistant,
 }: {
+  setSelectedAlternativeAssistant: Dispatch<SetStateAction<Persona | null>>;
+  personas: Persona[];
   updateAlternativeAssistant: (newAlternativeAssistant: Persona | null) => void;
   message: string;
   setMessage: (message: string) => void;
@@ -82,6 +93,56 @@ export function ChatInputBar({
   const { llmProviders } = useChatContext();
   const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant, null);
 
+  const suggestionsRef = useRef<HTMLDivElement | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null); // Store the timeout reference
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node)
+      ) {
+        // Clear any existing timeout to avoid unwanted behavior
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+        // Set a delay before setting 'showSuggestions' to false
+        timeoutRef.current = setTimeout(() => {
+          setShowSuggestions(false);
+        }, 30); // 30ms delay before hiding suggestions
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      // Make sure to clear the timeout when the component unmounts
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = event.target.value;
+    setMessage(text);
+
+    const match = text.match(/@(\w*)$/);
+    if (match) {
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const filteredPersonas = personas.filter((persona) =>
+    persona.name
+      .toLowerCase()
+      .startsWith(message.slice(message.lastIndexOf("@") + 1).toLowerCase())
+  );
+
   return (
     <div>
       <div className="flex justify-center pb-2 max-w-screen-lg mx-auto mb-2">
@@ -97,9 +158,29 @@ export function ChatInputBar({
             mx-auto
           "
         >
+          {showSuggestions && filteredPersonas.length > 0 && (
+            <div className="absolute inset-x-0 top-0 transform -translate-y-full bg-white border border-gray-300 mt-2 rounded shadow-lg z-10">
+              {filteredPersonas.map((currentPersona, index) => (
+                <div
+                  key={index}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => {
+                    // handleSuggestionClick(suggestion)
+                    setShowSuggestions(false);
+                    setSelectedAlternativeAssistant(currentPersona);
+                    setMessage("");
+                  }}
+                >
+                  {currentPersona.name}
+                </div>
+              ))}
+            </div>
+          )}
+
           <div>
             <SelectedFilterDisplay filterManager={filterManager} />
           </div>
+
           <div
             className="
               opacity-100
@@ -132,6 +213,7 @@ export function ChatInputBar({
                 </div>
               </div>
             )}
+
             {files.length > 0 && (
               <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-2">
                 {files.map((file) => (
@@ -151,6 +233,7 @@ export function ChatInputBar({
                 ))}
               </div>
             )}
+
             <textarea
               onPaste={handlePaste}
               ref={textAreaRef}
@@ -180,13 +263,15 @@ export function ChatInputBar({
                 py-4
                 h-14
               `}
+              // onInput={handleKeyDown}
               autoFocus
               style={{ scrollbarWidth: "thin" }}
               role="textarea"
               aria-multiline
               placeholder="Send a message..."
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={handleInputChange}
+              // onChange={(e) => setMessage(e.target.value)}
               onKeyDown={(event) => {
                 if (
                   event.key === "Enter" &&
