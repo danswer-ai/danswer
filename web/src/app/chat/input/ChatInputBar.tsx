@@ -163,18 +163,13 @@ export function ChatInputBar({
       } else {
         const option =
           filteredPersonas[assistantIconIndex >= 0 ? assistantIconIndex : 0];
-        // setText(text + option + ' ');
         updateCurrentPersona(option);
       }
-
-      // setFilter('');
-      // setFilteredOptions(options);
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       setAssistantIconIndex((assistantIconIndex) =>
         Math.min(assistantIconIndex + 1, filteredPersonas.length)
       );
-      // setSelectedOptionIndex((selectedOptionIndex + 1) % filteredOptions.length);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setAssistantIconIndex((assistantIconIndex) =>
@@ -246,19 +241,15 @@ export function ChatInputBar({
               flex-col
               border
               border-border
-              rounded-lg
+              rounded-lg 
               bg-background
               [&:has(textarea:focus)]::ring-1
               [&:has(textarea:focus)]::ring-black
             "
           >
-            {/* <TooltipProvid er> */}
-
             {alternativeAssistant && (
               <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full  ">
                 <div className="bg-neutral-200 p-2 rounded-t-lg  items-center flex w-full">
-                  {/* <RobotIcon size={20} /> */}
-
                   <AssistantIcon assistant={alternativeAssistant} border />
                   <p className="ml-3 text-neutral-800 my-auto">
                     {alternativeAssistant.name}
@@ -333,7 +324,6 @@ export function ChatInputBar({
                 py-4
                 h-14
               `}
-              // onInput={handleKeyDown}
               autoFocus
               style={{ scrollbarWidth: "thin" }}
               role="textarea"
