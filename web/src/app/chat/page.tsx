@@ -41,7 +41,6 @@ export default async function Page({
   return (
     <>
       <InstantSSRAutoRefresh />
-
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
       {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
         <ApiKeyModal user={user} />
@@ -49,7 +48,6 @@ export default async function Page({
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
-
       <ChatProvider
         value={{
           user,

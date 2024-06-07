@@ -1,7 +1,7 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
 import React from "react";
 
-function generatePastelColorFromId(id: string): string {
+export function generatePastelColorFromId(id: string): string {
   const hash = Array.from(id).reduce(
     (acc, char) => acc + char.charCodeAt(0),
     0
@@ -12,16 +12,26 @@ function generatePastelColorFromId(id: string): string {
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
-export function AssistantIcon({ assistant }: { assistant: Persona }) {
+export function AssistantIcon({
+  assistant,
+  size,
+  border,
+}: {
+  assistant: Persona;
+  size?: "small" | "medium" | "large";
+  border?: boolean;
+}) {
   const color = generatePastelColorFromId(assistant.id.toString());
 
   return (
     <div
-      className="
-        w-10
-        h-10
+      className={`
+    
+     ${border && " border border-.5 border-black "}
+      ${(!size || size == "large") && "w-6 h-6"}
+      ${size == "small" && "w-6 h-6"}
         rounded-lg
-      "
+      `}
       style={{ backgroundColor: color }}
     />
   );
