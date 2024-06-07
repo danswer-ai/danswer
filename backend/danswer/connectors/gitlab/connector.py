@@ -7,6 +7,7 @@ from typing import Any
 import fnmatch
 from collections import deque
 import gitlab
+import pytz
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
