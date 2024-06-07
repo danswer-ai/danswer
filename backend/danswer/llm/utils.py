@@ -255,10 +255,6 @@ def message_to_message_chunk(message: BaseMessage) -> MessageChunk:
         content=str(message.content),
         tokens=keyword_arguments["usage_metadata"]["output_tokens"],
     )
-    # return MessageChunk
-
-
-# message.content
 
 
 def message_generator_to_message_chunk_generator(

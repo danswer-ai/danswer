@@ -53,7 +53,6 @@ def extract_citations_from_stream(
 
         # Special case of [1][ where ][ is a single token
         # This is where the model attempts to do consecutive citations like [1][2]
-        print(type(token))
 
         if prepend_bracket:
             curr_segment += "[" + curr_segment
@@ -64,7 +63,6 @@ def extract_citations_from_stream(
             content = token.content
             curr_segment += content
             llm_out += content
-            print(content)
 
             if token.tokens:
                 token_count += token.tokens
