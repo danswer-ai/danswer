@@ -1244,7 +1244,6 @@ export function ChatPage({
                           updateAlternativeAssistant={
                             updateAlternativeAssistant
                           }
-                          // tempAlter
                           alternativeAssistant={selectedAlternativeAssistant}
                           message={message}
                           setMessage={setMessage}
