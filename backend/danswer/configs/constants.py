@@ -93,7 +93,6 @@ class DocumentSource(str, Enum):
     GOOGLE_SITES = "google_sites"
     ZENDESK = "zendesk"
     LOOPIO = "loopio"
-    DROPBOX = "dropbox"
     SHAREPOINT = "sharepoint"
     TEAMS = "teams"
     DISCOURSE = "discourse"

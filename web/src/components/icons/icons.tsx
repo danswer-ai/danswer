@@ -51,7 +51,6 @@ import hubSpotIcon from "../../../public/HubSpot.png";
 import document360Icon from "../../../public/Document360.png";
 import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
-import dropboxIcon from "../../../public/Dropbox.png";
 import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";
 import mediawikiIcon from "../../../public/MediaWiki.svg";
@@ -615,18 +614,6 @@ export const ZendeskIcon = ({
     className={`w-[${size}px] h-[${size}px] ` + className}
   >
     <Image src={zendeskIcon} alt="Logo" width="96" height="96" />
-  </div>
-);
-
-export const DropboxIcon = ({
-  size = 16,
-  className = defaultTailwindCSS,
-}: IconProps) => (
-  <div
-    style={{ width: `${size}px`, height: `${size}px` }}
-    className={`w-[${size}px] h-[${size}px] ` + className}
-  >
-    <Image src={dropboxIcon} alt="Logo" width="96" height="96" />
   </div>
 );
 
