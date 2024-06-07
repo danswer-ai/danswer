@@ -7,11 +7,11 @@ from danswer.auth.users import current_admin_user
 from danswer.danswerbot.slack.config import validate_channel_names
 from danswer.danswerbot.slack.tokens import fetch_tokens
 from danswer.danswerbot.slack.tokens import save_tokens
-from danswer.db.chat import get_persona_by_id
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.engine import get_session
 from danswer.db.models import ChannelConfig
 from danswer.db.models import User
+from danswer.db.persona import get_persona_by_id
 from danswer.db.slack_bot_config import create_slack_bot_persona
 from danswer.db.slack_bot_config import fetch_slack_bot_config
 from danswer.db.slack_bot_config import fetch_slack_bot_configs

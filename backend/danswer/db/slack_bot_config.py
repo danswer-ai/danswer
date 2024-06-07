@@ -4,7 +4,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
-from danswer.db.chat import upsert_persona
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.document_set import get_document_sets_by_ids
 from danswer.db.models import ChannelConfig
@@ -12,6 +11,7 @@ from danswer.db.models import Persona
 from danswer.db.models import Persona__DocumentSet
 from danswer.db.models import SlackBotConfig
 from danswer.db.models import SlackBotResponseType
+from danswer.db.persona import upsert_persona
 from danswer.search.enums import RecencyBiasSetting
 
 
