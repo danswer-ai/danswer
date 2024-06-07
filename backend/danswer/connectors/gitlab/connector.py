@@ -193,12 +193,12 @@ class GitlabConnector(LoadConnector, PollConnector):
                     if start is not None:
                         start = start.replace(tzinfo=pytz.UTC)
                         if issue.updated_at < start:
-                        yield doc_batch
-                        return
+                            yield doc_batch
+                            return
                     if end is not None:
                         end = end.replace(tzinfo=pytz.UTC)
                         if issue.updated_at > end:
-                        continue
+                            continue
                     doc_batch.append(_convert_issue_to_document(issue))
                 yield doc_batch
 
