@@ -20,10 +20,10 @@ from danswer.server.manage.models import StandardAnswerCategory
 from danswer.server.manage.models import StandardAnswerCategoryCreationRequest
 from danswer.server.manage.models import StandardAnswerCreationRequest
 
-router = APIRouter("/manage/admin")
+router = APIRouter(prefix="/manage")
 
 
-@router.post("/standard-answer")
+@router.post("/admin/standard-answer")
 def create_standard_answer(
     standard_answer_creation_request: StandardAnswerCreationRequest,
     db_session: Session = Depends(get_session),
@@ -38,7 +38,7 @@ def create_standard_answer(
     return StandardAnswer.from_model(standard_answer_model)
 
 
-@router.get("/standard-answer")
+@router.get("/admin/standard-answer")
 def list_standard_answers(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
@@ -50,7 +50,7 @@ def list_standard_answers(
     ]
 
 
-@router.patch("/standard-answer/{standard_answer_id}")
+@router.patch("/admin/standard-answer/{standard_answer_id}")
 def patch_standard_answer(
     standard_answer_id: int,
     standard_answer_creation_request: StandardAnswerCreationRequest,
@@ -75,7 +75,7 @@ def patch_standard_answer(
     return StandardAnswer.from_model(standard_answer_model)
 
 
-@router.delete("/standard-answer/{standard_answer_id}")
+@router.delete("/admin/standard-answer/{standard_answer_id}")
 def delete_standard_answer(
     standard_answer_id: int,
     db_session: Session = Depends(get_session),
@@ -87,7 +87,7 @@ def delete_standard_answer(
     )
 
 
-@router.post("/standard-answer/category")
+@router.post("/admin/standard-answer/category")
 def create_standard_answer_category(
     standard_answer_category_creation_request: StandardAnswerCategoryCreationRequest,
     db_session: Session = Depends(get_session),
@@ -100,7 +100,7 @@ def create_standard_answer_category(
     return StandardAnswerCategory.from_model(standard_answer_category_model)
 
 
-@router.get("/standard-answer/category")
+@router.get("/admin/standard-answer/category")
 def list_standard_answer_categories(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
@@ -114,7 +114,7 @@ def list_standard_answer_categories(
     ]
 
 
-@router.patch("/standard-answer/category/{standard_answer_category_id}")
+@router.patch("/admin/standard-answer/category/{standard_answer_category_id}")
 def patch_standard_answer_category(
     standard_answer_category_id: int,
     standard_answer_category_creation_request: StandardAnswerCategoryCreationRequest,
