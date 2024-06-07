@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
 from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
-from danswer.db.chat import get_persona_by_id
 from danswer.db.engine import get_session
 from danswer.db.models import User
+from danswer.db.persona import get_persona_by_id
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
