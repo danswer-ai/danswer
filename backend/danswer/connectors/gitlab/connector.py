@@ -141,7 +141,7 @@ class GitlabConnector(LoadConnector, PollConnector):
 
         # Fetch code files
         if self.include_code_files:
-            # _fetch_files_bfs(project)
+            # Fetching using BFS as project.report_tree with recursion causing slow load
             queue = deque([''])  # Start with the root directory
             while queue:
                 current_path = queue.popleft()
