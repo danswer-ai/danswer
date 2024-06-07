@@ -21,6 +21,7 @@ export interface MinimalUserSnapshot {
 
 export type ValidSources =
   | "web"
+  | "web_okta"
   | "github"
   | "gitlab"
   | "slack"
@@ -87,6 +88,14 @@ export interface Connector<T> extends ConnectorBase<T> {
 export interface WebConfig {
   base_url: string;
   web_connector_type?: "recursive" | "single" | "sitemap";
+}
+
+export interface WebOktaConfig {
+  base_url: string;
+  web_connector_type?: "recursive" | "single" | "sitemap";
+  okta_tenant_url: string;
+  okta_username: string;
+  okta_password;
 }
 
 export interface GithubConfig {

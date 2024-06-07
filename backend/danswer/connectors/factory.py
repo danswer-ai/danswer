@@ -34,6 +34,7 @@ from danswer.connectors.slab.connector import SlabConnector
 from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.slack.load_connector import SlackLoadConnector
 from danswer.connectors.web.connector import WebConnector
+from danswer.connectors.web_okta.connector import WebOktaConnector
 from danswer.connectors.wikipedia.connector import WikipediaConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
@@ -49,6 +50,7 @@ def identify_connector_class(
 ) -> Type[BaseConnector]:
     connector_map = {
         DocumentSource.WEB: WebConnector,
+        DocumentSource.WEB_OKTA: WebOktaConnector,
         DocumentSource.FILE: LocalFileConnector,
         DocumentSource.SLACK: {
             InputType.LOAD_STATE: SlackLoadConnector,
