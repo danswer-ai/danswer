@@ -96,7 +96,7 @@ export function ChatPage({
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
 
   const [selectedAlternativeAssistant, setSelectedAlternativeAssistant] =
-    useState<Persona | null>(filteredAssistants[1]);
+    useState<Persona | null>(null);
 
   const updateAlternativeAssistant = (
     newAlternativeAssistant: Persona | null
@@ -1241,6 +1241,10 @@ export function ChatPage({
                     <div className="absolute bottom-0 z-10 w-full">
                       <div className="w-full pb-4">
                         <ChatInputBar
+                          setSelectedAlternativeAssistant={
+                            setSelectedAlternativeAssistant
+                          }
+                          personas={filteredAssistants}
                           updateAlternativeAssistant={
                             updateAlternativeAssistant
                           }
