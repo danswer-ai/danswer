@@ -354,8 +354,6 @@ export function DefaultDropdown({
         const isSelected = option.value === selected;
         return (
           <DefaultDropdownElement
-            // TODO modify to include different icons
-            // includeCheckbox={true}
             key={option.value}
             name={option.name}
             description={option.description}
