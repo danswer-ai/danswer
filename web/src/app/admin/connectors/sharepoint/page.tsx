@@ -233,11 +233,16 @@ const MainSection = () => {
             formBodyBuilder={TextArrayFieldBuilder({
               name: "sites",
               label: "Sites:",
-              subtext:
-                "Specify 0 or more sites to index. For example, specifying the site " +
-                "'support' for the 'danswerai' sharepoint will cause us to only index documents " +
-                "within the 'https://danswerai.sharepoint.com/sites/support' site. " +
-                "If no sites are specified, all sites in your organization will be indexed.",
+              subtext: (
+                <>
+                  <br />
+                  <ul>
+                    <li>• If no sites are specified, all sites in your organization will be indexed (Sites.Read.All permission required).</li>
+                    <li>• Specifying &apos;https://danswerai.sharepoint.com/sites/support&apos; for example will only index documents within this site.</li>
+                    <li>• Specifying &apos;https://danswerai.sharepoint.com/sites/support/subfolder&apos; for example will only index documents within this folder.</li>
+                  </ul>
+                </>
+              ),
             })}
             validationSchema={Yup.object().shape({
               sites: Yup.array()
