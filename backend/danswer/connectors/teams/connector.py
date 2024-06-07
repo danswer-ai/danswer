@@ -164,8 +164,12 @@ class TeamsConnector(LoadConnector, PollConnector):
 
     def _construct_semantic_identifier(
         self, channel: Channel, top_message: ChatMessage
-    ) -> str:
-        first_poster = top_message.properties["from"]["user"]["displayName"]
+    ) -> str | None:
+        first_poster = (
+            top_message.properties.get("from", {})
+            .get("user", {})
+            .get("displayName", {})
+        )
         channel_name = channel.properties["displayName"]
         thread_subject = top_message.properties["subject"]
         snippet = parse_html_page_basic(
@@ -173,6 +177,8 @@ class TeamsConnector(LoadConnector, PollConnector):
             if len(top_message.body.content) > 50
             else top_message.body.content
         )
+        if not first_poster or not channel_name or not thread_subject or not snippet:
+            return None
 
         return f"{first_poster} in {channel_name} about {thread_subject}: {snippet}"
 
@@ -187,7 +193,7 @@ class TeamsConnector(LoadConnector, PollConnector):
         most_recent_message_datetime: datetime | None = None
         top_message = thread[0]
         post_members_list: list[BasicExpertInfo] = []
-        messages_text = ""
+        thread_text = ""
 
         sorted_thread = sorted(thread, key=get_created_datetime, reverse=True)
 
@@ -202,7 +208,7 @@ class TeamsConnector(LoadConnector, PollConnector):
             # add text and a newline
             if message.body.content:
                 message_text = parse_html_page_basic(message.body.content)
-                messages_text += message_text
+                thread_text += message_text
 
             # if it has a subject, that means its the top level post message, so grab its id, url, and subject
             if message.properties["subject"]:
@@ -227,13 +233,19 @@ class TeamsConnector(LoadConnector, PollConnector):
         if not post_members_list:
             post_members_list = self._extract_channel_members(channel)
 
+        if not thread_text:
+            return None
+
         semantic_string = self._construct_semantic_identifier(channel, top_message)
+        if not semantic_string:
+            return None
+
         post_id = top_message.properties["id"]
         web_url = top_message.web_url
 
         doc = Document(
             id=post_id,
-            sections=[Section(link=web_url, text=messages_text)],
+            sections=[Section(link=web_url, text=thread_text)],
             source=DocumentSource.TEAMS,
             semantic_identifier=semantic_string,
             doc_updated_at=most_recent_message_datetime,

@@ -391,12 +391,6 @@ export interface AxeroCredentialJson {
 export interface MediaWikiCredentialJson {}
 export interface WikipediaCredentialJson extends MediaWikiCredentialJson {}
 
-export interface TeamsCredentialJson {
-  aad_client_id: string;
-  aad_client_secret: string;
-  aad_directory_id: string;
-}
-
 // DELETION
 
 export interface DeletionAttemptSnapshot {
