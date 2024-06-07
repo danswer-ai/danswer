@@ -109,8 +109,8 @@ class GitlabConnector(LoadConnector, PollConnector):
         project_name: str,
         batch_size: int = INDEX_BATCH_SIZE,
         state_filter: str = "all",
-        include_mrs: bool = False,
-        include_issues: bool = False,
+        include_mrs: bool = True,
+        include_issues: bool = True,
         include_code_files: bool = True,
     ) -> None:
         self.project_owner = project_owner
@@ -122,18 +122,10 @@ class GitlabConnector(LoadConnector, PollConnector):
         self.include_code_files = True
         self.gitlab_client: gitlab.Gitlab | None = None
 
-        print(f"GitlabConnector initialized with\n"
-              f"project_owner: {project_owner},\n"
-              f"include_code_files: {include_code_files},\n"
-              f"project_name: {project_name},\nbatch_size: {batch_size},\nstate_filter: {state_filter},\n"
-              f"include_mrs: {include_mrs},\ninclude_issues: {include_issues}")
-
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        print(f"Access Token: {credentials['gitlab_access_token']} Gitlab URL: {credentials['gitlab_url']}")
         self.gitlab_client = gitlab.Gitlab(
             credentials["gitlab_url"],
-            private_token=credentials["gitlab_access_token"],
-            timeout=60
+            private_token=credentials["gitlab_access_token"]
         )
         return None
 
@@ -149,24 +141,19 @@ class GitlabConnector(LoadConnector, PollConnector):
         # Fetch code files
         if self.include_code_files:
             # _fetch_files_bfs(project)
-            print(f"Scanning GitLab repository for files")
             queue = deque([''])  # Start with the root directory
             while queue:
                 current_path = queue.popleft()
-                print(f"Fetching files in directory: {current_path}")
                 files = project.repository_tree(path=current_path, all=True)
                 for file_batch in _batch_gitlab_objects(files, self.batch_size):
                     doc_batch = []
                     for file in file_batch:
                         if _should_exclude(file['path']):
-                            print(f"Skipping file: {file['path']} as it matches an exclude pattern")
                             continue
 
                         if file['type'] == 'blob':
-                            print(f"Indexing file: {file['path']}")
                             doc_batch.append(_convert_code_to_document(project, file, self.gitlab_client.url, self.project_name, self.project_owner))
                         elif file['type'] == 'tree':
-                            print(f"Adding directory to queue: {file['path']}")
                             queue.append(file['path'])
 
                     if doc_batch:
@@ -181,12 +168,14 @@ class GitlabConnector(LoadConnector, PollConnector):
                 doc_batch: list[Document] = []
                 for mr in mr_batch:
                     mr.updated_at = datetime.strptime(
-                        mr.updated_at[:-6], "%Y-%m-%dT%H:%M:%S.%fz"
+                        mr.updated_at, "%Y-%m-%dT%H:%M:%S.%f%z"
                     )
-                    if start is not None and mr.updated_at < start:
+                    if start is not None and mr.updated_at < start.replace(
+                        tzinfo=pytz.UTC
+                    ):
                         yield doc_batch
                         return
-                    if end is not None and mr.updated_at > end:
+                    if end is not None and mr.updated_at > end.replace(tzinfo=pytz.UTC):
                         continue
                     doc_batch.append(_convert_merge_request_to_document(mr))
                 yield doc_batch
@@ -198,12 +187,16 @@ class GitlabConnector(LoadConnector, PollConnector):
                 doc_batch = []
                 for issue in issue_batch:
                     issue.updated_at = datetime.strptime(
-                        issue.updated_at[:-6], "%Y-%m-%dT%H:%M:%S.%fz"
+                        issue.updated_at, "%Y-%m-%dT%H:%M:%S.%f%z"
                     )
-                    if start is not None and issue.updated_at < start:
+                    if start is not None:
+                        start = start.replace(tzinfo=pytz.UTC)
+                        if issue.updated_at < start:
                         yield doc_batch
                         return
-                    if end is not None and issue.updated_at > end:
+                    if end is not None:
+                        end = end.replace(tzinfo=pytz.UTC)
+                        if issue.updated_at > end:
                         continue
                     doc_batch.append(_convert_issue_to_document(issue))
                 yield doc_batch
@@ -228,8 +221,8 @@ if __name__ == "__main__":
         project_name=os.environ["PROJECT_NAME"],
         batch_size=10,
         state_filter="all",
-        include_mrs=False,
-        include_issues=False,
+        include_mrs=True,
+        include_issues=True,
         include_code_files=True,
     )
 
@@ -237,12 +230,7 @@ if __name__ == "__main__":
         {
             "gitlab_access_token": os.environ["GITLAB_ACCESS_TOKEN"],
             "gitlab_url": os.environ["GITLAB_URL"],
-            "gitlab_url": os.environ["GITLAB_URL"],
         }
     )
     document_batches = connector.load_from_state()
-    # next(document_batches)
     print(next(document_batches))
-
-
-
