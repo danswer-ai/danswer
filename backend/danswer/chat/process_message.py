@@ -105,6 +105,7 @@ def _handle_search_tool_response_summary(
     if not selected_search_docs:
         top_docs = chunks_or_sections_to_search_docs(response_sumary.top_sections)
 
+        deduped_docs = top_docs
         if dedupe_docs:
             deduped_docs, dropped_inds = dedupe_documents(top_docs)
 
