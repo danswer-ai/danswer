@@ -78,24 +78,28 @@ export function ChatInputBar({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null); // Store the timeout reference
   const contentRef = useRef<HTMLDivElement>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        suggestionsRef.current &&
-        !suggestionsRef.current.contains(event.target as Node)
-      ) {
-        // Clear any existing timeout to avoid unwanted behavior
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-        // Set a delay before setting 'showSuggestions' to false
-        timeoutRef.current = setTimeout(() => {
+      console.log("HI");
+      if (suggestionsRef.current) {
+        if (!suggestionsRef.current.contains(event.target as Node)) {
+          // Clear any existing timeout to avoid unwanted behavior
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
+          // Set a delay before setting 'showSuggestions' to false
+          timeoutRef.current = setTimeout(() => {
+            setShowSuggestions(false);
+          }, 30); // 30ms delay before hiding suggestions
+        } else {
+          console.log(suggestionsRef);
+          console.log("HIDE");
           setShowSuggestions(false);
-        }, 30); // 30ms delay before hiding suggestions
+        }
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -109,6 +113,7 @@ export function ChatInputBar({
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = event.target.value;
     setMessage(text);
+    setHidden(false);
 
     const match = text.match(/@(\w*)$/);
     if (match) {
@@ -123,6 +128,11 @@ export function ChatInputBar({
       .toLowerCase()
       .startsWith(message.slice(message.lastIndexOf("@") + 1).toLowerCase())
   );
+  const updateCurrentPersona = (persona: Persona) => {
+    setShowSuggestions(false);
+    setSelectedAlternativeAssistant(persona);
+    setMessage("");
+  };
 
   return (
     <div>
@@ -139,22 +149,24 @@ export function ChatInputBar({
             mx-auto
           "
         >
-          {showSuggestions && filteredPersonas.length > 0 && (
-            <div className="absolute inset-x-0 top-0 transform -translate-y-full bg-white border border-gray-300 mt-2 rounded shadow-lg z-10">
-              {filteredPersonas.map((currentPersona, index) => (
-                <div
-                  key={index}
-                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => {
-                    // handleSuggestionClick(suggestion)
-                    setShowSuggestions(false);
-                    setSelectedAlternativeAssistant(currentPersona);
-                    setMessage("");
-                  }}
-                >
-                  {currentPersona.name}
-                </div>
-              ))}
+          {!hidden && showSuggestions && filteredPersonas.length > 0 && (
+            <div
+              ref={suggestionsRef}
+              className="absolute inset-x-0 top-0 w-full transform -translate-y-full "
+            >
+              <div className="rounded-lg bg-white border border-gray-300 overflow-hidden shadow-lg mx-2 mt-2 rounded  z-10">
+                {filteredPersonas.map((currentPersona, index) => (
+                  <div
+                    key={index}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => {
+                      updateCurrentPersona(currentPersona);
+                    }}
+                  >
+                    {currentPersona.name}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -249,7 +261,6 @@ export function ChatInputBar({
               placeholder="Send a message..."
               value={message}
               onChange={handleInputChange}
-              // onChange={(e) => setMessage(e.target.value)}
               onKeyDown={(event) => {
                 if (
                   event.key === "Enter" &&
