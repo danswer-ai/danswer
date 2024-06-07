@@ -3,6 +3,7 @@ from functools import lru_cache
 from uuid import UUID
 
 from fastapi import HTTPException
+from sqlalchemy import delete
 from sqlalchemy import func
 from sqlalchemy import not_
 from sqlalchemy import or_
@@ -583,3 +584,15 @@ def get_persona_by_name(
         stmt = stmt.where(Persona.user_id == user.id)
     result = db_session.execute(stmt).scalar_one_or_none()
     return result
+
+
+def delete_persona_by_name(
+    persona_name: str, db_session: Session, is_default: bool = True
+) -> None:
+    stmt = delete(Persona).where(
+        Persona.name == persona_name, Persona.default_persona == is_default
+    )
+
+    db_session.execute(stmt)
+
+    db_session.commit()
