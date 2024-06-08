@@ -64,11 +64,16 @@ export const useScrollOnStream = ({
         const currentScrollTop = scrollableDiv?.scrollTop!;
 
         // Check if scroll is upwards
-        if (currentScrollTop < lastScrollTop.current) {
+        if (
+          currentScrollTop < lastScrollTop.current &&
+          !blockActionRef.current
+        ) {
           blockActionRef.current = true;
+          console.log("Set block!");
 
           setTimeout(() => {
             blockActionRef.current = false;
+            console.log("unsetblock!");
           }, 1000);
         }
 
@@ -93,13 +98,6 @@ export const useScrollOnStream = ({
     if (isStreaming) {
       handleScroll();
     }
-
-    // Cleanup function to clear the timeout when the component unmounts or the inputs change
-    return () => {
-      // if (timeoutRef.current !== null) {
-      //   clearTimeout(timeoutRef.current);
-      // }
-    };
   });
 };
 
@@ -142,7 +140,7 @@ export type ResponsiveScrollParams = {
   textAreaRef: RefObject<HTMLTextAreaElement>;
 };
 
-export const useResponsiveScroll2 = ({
+export const useResponsiveScroll = ({
   lastMessageRef,
   inputRef,
   endDivRef,
@@ -154,26 +152,26 @@ export const useResponsiveScroll2 = ({
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    let prevInputHeight = 0;
 
     const handleInputResize = () => {
       setTimeout(() => {
         if (inputRef.current && lastMessageRef.current) {
-          const inputRect = inputRef.current.getBoundingClientRect();
-          const currentInputHeight = inputRect.height;
-
           let newHeight: number =
             inputRef.current?.getBoundingClientRect().height!;
-          const heightDifference = newHeight - previousHeight.current;
-          previousHeight.current = newHeight;
 
-          if (endDivRef.current) {
+          const heightDifference = newHeight - previousHeight.current;
+
+          if (
+            previousHeight.current &&
+            heightDifference != 0 &&
+            endDivRef.current
+          ) {
             endDivRef?.current.scrollIntoView({ behavior: "smooth" });
             endDivRef.current.style.height = `${Math.max(newHeight - 100, 0)}px`;
             endDivRef.current.style.transition = "height 0.3s ease-out";
           }
 
-          prevInputHeight = currentInputHeight;
+          previousHeight.current = newHeight;
         }
       }, 300);
     };
@@ -188,90 +186,6 @@ export const useResponsiveScroll2 = ({
         textarea.removeEventListener("input", handleInputResize);
       }
       if (timeoutId !== null) {
-        clearTimeout(timeoutId);
-      }
-    };
-  });
-};
-
-export const useResponsiveScroll = ({
-  lastMessageRef,
-  inputRef,
-  endDivRef,
-  textAreaRef,
-}: ResponsiveScrollType) => {
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
-    let prevInputHeight = 0;
-    let prevDistance = 0;
-
-    // Core logic
-    const handleInputResize = async () => {
-      function delay(ms: number) {
-        return new Promise((resolve) => setTimeout(resolve, ms));
-      }
-      await delay(100);
-
-      // Validate that message and input exist
-      if (
-        lastMessageRef &&
-        inputRef &&
-        inputRef.current &&
-        lastMessageRef.current
-      ) {
-        const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
-        const endDivRect = inputRef.current.getBoundingClientRect();
-        const currentInputHeight = endDivRect.height;
-
-        if (
-          // Validate change in height
-          currentInputHeight > prevInputHeight &&
-          // Validate distance
-          endDivRect.top <= lastMessageRect.bottom
-        ) {
-          // Validate previous distance and existence of the final div
-          if (prevDistance > -100 && endDivRef && endDivRef?.current) {
-            if (timeoutId) {
-              clearTimeout(timeoutId);
-            }
-
-            timeoutId = setTimeout(() => {
-              if (endDivRef && endDivRef?.current) {
-                endDivRef?.current.scrollIntoView({ behavior: "smooth" });
-              }
-            }, 500);
-          }
-
-          prevInputHeight = currentInputHeight;
-        }
-        if (currentInputHeight !== prevInputHeight) {
-          prevInputHeight = currentInputHeight;
-        }
-      }
-
-      // Update previous distance for calculation (regardless of scroll)
-      if (
-        lastMessageRef &&
-        inputRef &&
-        inputRef.current &&
-        lastMessageRef.current
-      ) {
-        const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
-        const endDivRect = inputRef.current.getBoundingClientRect();
-        prevDistance = endDivRect.top - lastMessageRect.bottom;
-      }
-    };
-
-    const textarea = textAreaRef.current;
-    if (textarea) {
-      textarea.addEventListener("input", handleInputResize);
-    }
-
-    return () => {
-      if (textarea) {
-        textarea.removeEventListener("input", handleInputResize);
-      }
-      if (timeoutId) {
         clearTimeout(timeoutId);
       }
     };
