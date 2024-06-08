@@ -39,7 +39,7 @@ def add_time_to_system_prompt(system_prompt: str) -> str:
     if DANSWER_DATETIME_REPLACEMENT in system_prompt:
         return system_prompt.replace(
             DANSWER_DATETIME_REPLACEMENT,
-            get_current_llm_day_time(full_sentence=False, include_day_of_week=False),
+            get_current_llm_day_time(full_sentence=False, include_day_of_week=True),
         )
 
     if system_prompt:

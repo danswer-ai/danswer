@@ -21,12 +21,6 @@ class LLMConfig(BaseModel):
     api_key: str | None
 
 
-class LLMConfig(BaseModel):
-    model_provider: str
-    model_name: str
-    temperature: float
-
-
 class LLM(abc.ABC):
     """Mimics the LangChain LLM / BaseChatModel interfaces to make it easy
     to use these implementations to connect to a variety of LLM providers."""
