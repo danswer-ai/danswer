@@ -16,7 +16,15 @@ export const Hoverable: React.FC<{
   size?: number;
   active?: boolean;
   hoverText?: TextHover;
-}> = ({ hoverText, icon, onClick, size = ICON_SIZE, active = false }) => {
+  show?: boolean;
+}> = ({
+  hoverText,
+  icon,
+  onClick,
+  size = ICON_SIZE,
+  active = false,
+  show = false,
+}) => {
   return (
     <div
       className={`flex gap-x-1 group hover:bg-hover p-1.5 rounded h-fit cursor-pointer ${active && "bg-hover"}`}
@@ -25,7 +33,7 @@ export const Hoverable: React.FC<{
       {icon({ size: size, className: "my-auto" })}
       {hoverText && (
         <p
-          className={`text-xs whitespace-nowrap overflow-hidden  ${(hoverText.animate || active) && "opacity-0 group-hover:opacity-100 transition-opacity duration-300"} `}
+          className={`text-xs whitespace-nowrap overflow-hidden  ${hoverText.animate && !active && "opacity-0 group-hover:opacity-100 transition-opacity duration-300"} `}
         >
           {hoverText.text}
         </p>

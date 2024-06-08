@@ -8,11 +8,12 @@ import { getFinalLLM } from "@/lib/llm/utils";
 export type RegenerateOptions = {
   llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
-  messageIdToResend: number;
+  // messageIdToResend: number;
   regenerateResponse: (
-    modelOverRide: LlmOverride,
-    messageIdToResend: number
-  ) => void;
+    // responseId?: number,
+    modelOverRide: LlmOverride | null
+  ) => Promise<void>;
+
   alternateModel?: string;
 };
 
@@ -25,7 +26,7 @@ export default function RegenerateOption({
     llmOverrideManager,
     selectedAssistant,
     regenerateResponse,
-    messageIdToResend,
+    // messageIdToResend,
     alternateModel,
   } = regenerate;
 
@@ -76,9 +77,20 @@ export default function RegenerateOption({
           const { name, provider, modelName } = destructureValue(
             value as string
           );
+          console.log({
+            name: name,
+            provider: provider,
+            modelName: modelName,
+          });
           regenerateResponse(
-            { name: name, provider: provider, modelName: modelName },
-            messageIdToResend
+            // responseId: messageIdToResend,
+            // modelOverRide:
+            {
+              name: name,
+              provider: provider,
+              modelName: modelName,
+            }
+            // }
           );
         }}
       />

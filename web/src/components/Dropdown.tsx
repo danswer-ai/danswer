@@ -454,6 +454,7 @@ export function RegenerateDropdown({
           ) : (
             <Hoverable
               icon={FiStar}
+              active={isOpen}
               hoverText={{ text: alternate, animate: true }}
             />
           )

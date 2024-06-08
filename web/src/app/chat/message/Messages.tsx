@@ -113,7 +113,6 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
-
   onResponseSelection?: (messageId: number) => void;
 }) => {
   const [isReady, setIsReady] = useState(false);
@@ -353,6 +352,7 @@ export const AIMessage = ({
                 icon={FiThumbsDown}
                 onClick={() => handleFeedback("dislike")}
               />
+
               {regenerate && <RegenerateOption regenerate={regenerate} />}
             </div>
           )}
