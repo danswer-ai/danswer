@@ -45,6 +45,22 @@ _SYNC_BATCH_SIZE = 100
 #
 # If imports from this module are needed, use local imports to avoid circular importing
 #####
+# @celery_app.task(soft_time_limit=JOB_TIMEOUT)
+# def check_deleted_files_task() -> None:
+#     with Session(get_sqlalchemy_engine()) as db_session:
+#         connectors = fetch_connectors(db_session)
+#         for connector in connectors:
+#             deleted_files = check_deleted_files(connector)
+#             if deleted_files:
+#                 handle_deleted_files(deleted_files, db_session)
+
+
+def handle_deleted_files(deleted_files, db_session: Session) -> None:
+    for file in deleted_files:
+        db_session.delete(file)
+    db_session.commit()
+
+
 @build_celery_task_wrapper(name_cc_cleanup_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def cleanup_connector_credential_pair_task(
@@ -212,3 +228,12 @@ celery_app.conf.beat_schedule = {
         "schedule": timedelta(seconds=5),
     },
 }
+
+celery_app.conf.beat_schedule.update(
+    {
+        "check-for-deleted-files": {
+            "task": "check_deleted_files_task",
+            "schedule": timedelta(days=1),
+        },
+    }
+)
