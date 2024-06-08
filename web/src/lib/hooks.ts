@@ -45,8 +45,6 @@ export const useScrollOnStream = ({
 
   const blockActionRef = useRef<boolean>(false);
 
-  // let allowScroll = true
-
   useEffect(() => {
     // Function to handle the scroll itself
     const scrollableDiv = scrollableDivRef?.current;
@@ -136,6 +134,7 @@ export type ResponsiveScrollType = {
 export type ResponsiveScrollParams = {
   lastMessageRef: RefObject<HTMLDivElement>;
   inputRef: RefObject<HTMLDivElement>;
+  endPaddingRef: RefObject<HTMLDivElement>;
   endDivRef: RefObject<HTMLDivElement>;
   textAreaRef: RefObject<HTMLTextAreaElement>;
 };
@@ -143,6 +142,7 @@ export type ResponsiveScrollParams = {
 export const useResponsiveScroll = ({
   lastMessageRef,
   inputRef,
+  endPaddingRef,
   endDivRef,
   textAreaRef,
 }: ResponsiveScrollParams) => {
@@ -164,10 +164,11 @@ export const useResponsiveScroll = ({
           if (
             previousHeight.current &&
             heightDifference != 0 &&
-            endDivRef.current
+            endDivRef.current &&
+            endPaddingRef.current
           ) {
+            endPaddingRef.current.style.height = `${Math.max(newHeight - 100, 0)}px`;
             endDivRef?.current.scrollIntoView({ behavior: "smooth" });
-            endDivRef.current.style.height = `${Math.max(newHeight - 100, 0)}px`;
             endDivRef.current.style.transition = "height 0.3s ease-out";
           }
 
