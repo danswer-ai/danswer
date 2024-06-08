@@ -260,7 +260,7 @@ export const ChatSidebar = ({
                   {user && user.email ? user.email[0].toUpperCase() : "A"}
                 </div>
                 <p className="my-auto">
-                  {user ? user.email : "Anonymous Possum"}
+                  {user ? user.email : "Uni Wise Admin"}
                 </p>
                 <FiMoreHorizontal className="my-auto ml-auto mr-2" size={20} />
               </div>

@@ -7,7 +7,8 @@ personas:
   - id: 0
     name: "Uni Wise"
     description: >
-      Assistant with information from your univesity's knowledge base. Chat with the Language Model and get answers directly from your university's documents.
+      Assistant with information from your univesity's knowledge base. Chat with the Language Model and get answers directly from your university's documents. 
+      You can use Uni Wise to navigate your college experience.
     # Default Prompt objects attached to the persona, see prompts.yaml
     prompts:
       - "Answer-Question"
@@ -42,7 +43,7 @@ personas:
   - id: 1
     name: "Study Helper"
     description: >
-      Assistant with no access to documents. Chat with just the Language Model.
+      Assistant with no access to documents. Chat with just the Language Model. This mode is great for getting help with your assignments and answers faster than Uni Wise's default mode.
     prompts:
       - "OnlyLLM"
     num_chunks: 0
@@ -55,7 +56,7 @@ personas:
   - id: 2
     name: "Document Assistant"
     description: >
-      Chat with a language model that gives specific answer from one document.
+      Chat with a language model that can explore detailed insights on a specific document. Use this mode to perform a deep dive on a longer document.
     prompts:
       - "Paraphrase"
     num_chunks: 10

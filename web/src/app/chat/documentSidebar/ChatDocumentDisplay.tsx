@@ -76,7 +76,7 @@ export function ChatDocumentDisplay({
             <div
               className={`
                 text-xs
-                text-emphasis
+                ${document.score >= 0.75 ? 'text-green-500' : document.score >= 0.5 ? 'text-yellow-500' : 'text-red-500'}
                 bg-hover
                 rounded
                 p-0.5
@@ -86,7 +86,7 @@ export function ChatDocumentDisplay({
                 my-auto
                 mr-2`}
             >
-              {Math.abs(document.score).toFixed(2)}
+              {(Math.abs(document.score) * 100).toFixed(2)}%
             </div>
           </div>
         )}

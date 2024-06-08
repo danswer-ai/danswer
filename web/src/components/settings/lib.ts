@@ -3,6 +3,7 @@ import { CUSTOM_ANALYTICS_ENABLED, EE_ENABLED } from "@/lib/constants";
 import { fetchSS } from "@/lib/utilsSS";
 
 export async function fetchSettingsSS() {
+  
   const tasks = [fetchSS("/settings")];
   if (EE_ENABLED) {
     tasks.push(fetchSS("/enterprise-settings"));
@@ -11,7 +12,7 @@ export async function fetchSettingsSS() {
     }
   }
 
-  //Temporary dev fix to avoid Promise.all throwing an error
+  // Temporary dev fix to avoid Promise.all throwing an error
   // let results: Response[] | undefined;
   // try {
   //   results = await Promise.all(tasks);
