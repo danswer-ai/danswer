@@ -17,6 +17,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
+import ReactMarkdown from "react-markdown";
+import { FaMarkdown } from "react-icons/fa";
+import { useState } from "react";
+import remarkGfm from "remark-gfm";
 
 export function SectionHeader({
   children,
@@ -186,6 +190,75 @@ export function TextFormField({
     </div>
   );
 }
+
+interface MarkdownPreviewProps {
+  name: string;
+  label: string;
+  placeholder?: string;
+  error?: string;
+}
+
+export const MarkdownFormField = ({
+  name,
+  label,
+  error,
+  placeholder = "Enter your markdown here...",
+}: MarkdownPreviewProps) => {
+  const [field, _] = useField(name);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const togglePreview = () => {
+    setIsPreviewOpen(!isPreviewOpen);
+  };
+
+  return (
+    <div className="flex flex-col space-y-4 mb-4">
+      <Label>{label}</Label>
+      <div className="border border-gray-300 rounded-md">
+        <div className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-t-md">
+          <div className="flex items-center space-x-2">
+            <FaMarkdown className="text-gray-500" />
+            <span className="text-sm font-semibold text-gray-600">
+              Markdown
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={togglePreview}
+            className="text-sm font-semibold text-gray-600 hover:text-gray-800 focus:outline-none"
+          >
+            {isPreviewOpen ? "Write" : "Preview"}
+          </button>
+        </div>
+        {isPreviewOpen ? (
+          <div className="p-4 border-t border-gray-300">
+            <ReactMarkdown className="prose" remarkPlugins={[remarkGfm]}>
+              {field.value}
+            </ReactMarkdown>
+          </div>
+        ) : (
+          <div className="pt-2 px-2">
+            <textarea
+              {...field}
+              rows={2}
+              placeholder={placeholder}
+              className={`w-full p-2 border border-border rounded-md border-gray-300`}
+            />
+          </div>
+        )}
+      </div>
+      {error ? (
+        <ManualErrorMessage>{error}</ManualErrorMessage>
+      ) : (
+        <ErrorMessage
+          name={name}
+          component="div"
+          className="text-red-500 text-sm mt-1"
+        />
+      )}
+    </div>
+  );
+};
 
 interface BooleanFormFieldProps {
   name: string;
