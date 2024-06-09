@@ -161,7 +161,7 @@ const Main = () => {
             Dropbox indexing status
           </Title>
           <Text className="mb-2">
-            Due to Dropbox&apos;s access key design, the Dropbox connector will only
+            Due to Dropbox access key design, the Dropbox connector will only
             re-index files after a new access key is provided and the indexing
             process is re-run manually. Check the docs for more information.
           </Text>
