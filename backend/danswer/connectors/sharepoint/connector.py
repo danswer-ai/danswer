@@ -33,8 +33,34 @@ logger = setup_logger()
 class SiteData:
     url: str | None
     folder: Optional[str]
-    siteobjects: list = field(default_factory=list)
+    sites: list = field(default_factory=list)
     driveitems: list = field(default_factory=list)
+
+
+def _convert_driveitem_to_document(
+    driveitem: DriveItem,
+) -> Document:
+    file_text = extract_file_text(
+        file_name=driveitem.name,
+        file=io.BytesIO(driveitem.get_content().execute_query().value),
+        break_on_unprocessable=False,
+    )
+
+    doc = Document(
+        id=driveitem.id,
+        sections=[Section(link=driveitem.web_url, text=file_text)],
+        source=DocumentSource.SHAREPOINT,
+        semantic_identifier=driveitem.name,
+        doc_updated_at=driveitem.last_modified_datetime.replace(tzinfo=timezone.utc),
+        primary_owners=[
+            BasicExpertInfo(
+                display_name=driveitem.last_modified_by.user.displayName,
+                email=driveitem.last_modified_by.user.email,
+            )
+        ],
+        metadata={},
+    )
+    return doc
 
 
 class SharepointConnector(LoadConnector, PollConnector):
@@ -45,7 +71,7 @@ class SharepointConnector(LoadConnector, PollConnector):
     ) -> None:
         self.batch_size = batch_size
         self.graph_client: GraphClient | None = None
-        self.site_data = self._extract_site_and_folder(sites)
+        self.site_data: list[SiteData] = self._extract_site_and_folder(sites)
 
     @staticmethod
     def _extract_site_and_folder(site_urls: list[str]) -> list[SiteData]:
@@ -59,7 +85,7 @@ class SharepointConnector(LoadConnector, PollConnector):
                     parts[sites_index + 2] if len(parts) > sites_index + 2 else None
                 )
                 site_data_list.append(
-                    SiteData(url=site_url, folder=folder, siteobjects=[], driveitems=[])
+                    SiteData(url=site_url, folder=folder, sites=[], driveitems=[])
                 )
         return site_data_list
 
@@ -74,7 +100,7 @@ class SharepointConnector(LoadConnector, PollConnector):
 
         for element in self.site_data:
             sites: list[Site] = []
-            for site in element.siteobjects:
+            for site in element.sites:
                 site_sublist = site.lists.get().execute_query()
                 sites.extend(site_sublist)
 
@@ -99,50 +125,22 @@ class SharepointConnector(LoadConnector, PollConnector):
                     # but this is fine, as there are no actually documents in those
                     pass
 
-    def _get_all_sites(self) -> list[SiteData]:
+    def _populate_sitedata_sites(self) -> None:
         if self.graph_client is None:
             raise ConnectorMissingCredentialError("Sharepoint")
 
         if self.site_data:
             for element in self.site_data:
-                element.siteobjects = [
+                element.sites = [
                     self.graph_client.sites.get_by_url(element.url)
                     .get()
                     .execute_query()
                 ]
-
-            return self.site_data
-
         else:
             sites = self.graph_client.sites.get().execute_query()
-            return [SiteData(url=None, folder=None, siteobjects=sites, driveitems=[])]
-
-    def _convert_driveitem_to_document(
-        self,
-        driveitem: DriveItem,
-    ) -> Document:
-        file_text = extract_file_text(
-            file_name=driveitem.name,
-            file=io.BytesIO(driveitem.get_content().execute_query().value),
-        )
-
-        doc = Document(
-            id=driveitem.id,
-            sections=[Section(link=driveitem.web_url, text=file_text)],
-            source=DocumentSource.SHAREPOINT,
-            semantic_identifier=driveitem.name,
-            doc_updated_at=driveitem.last_modified_datetime.replace(
-                tzinfo=timezone.utc
-            ),
-            primary_owners=[
-                BasicExpertInfo(
-                    display_name=driveitem.last_modified_by.user.displayName,
-                    email=driveitem.last_modified_by.user.email,
-                )
-            ],
-            metadata={},
-        )
-        return doc
+            self.site_data = [
+                SiteData(url=None, folder=None, sites=sites, driveitems=[])
+            ]
 
     def _fetch_from_sharepoint(
         self, start: datetime | None = None, end: datetime | None = None
@@ -150,7 +148,7 @@ class SharepointConnector(LoadConnector, PollConnector):
         if self.graph_client is None:
             raise ConnectorMissingCredentialError("Sharepoint")
 
-        self.site_data = self._get_all_sites()
+        self._populate_sitedata_sites()
         self._populate_sitedata_driveitems(start=start, end=end)
 
         # goes over all urls, converts them into Document objects and then yields them in batches
@@ -158,7 +156,7 @@ class SharepointConnector(LoadConnector, PollConnector):
         for element in self.site_data:
             for driveitem in element.driveitems:
                 logger.debug(f"Processing: {driveitem.web_url}")
-                doc_batch.append(self._convert_driveitem_to_document(driveitem))
+                doc_batch.append(_convert_driveitem_to_document(driveitem))
 
                 if len(doc_batch) >= self.batch_size:
                     yield doc_batch
