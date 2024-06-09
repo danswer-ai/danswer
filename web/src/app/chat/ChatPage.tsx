@@ -332,10 +332,10 @@ export function ChatPage({
           (persona) => persona.id === existingChatSessionPersonaId
         )
       : defaultSelectedPersonaId !== undefined
-      ? filteredAssistants.find(
-          (persona) => persona.id === defaultSelectedPersonaId
-        )
-      : undefined
+        ? filteredAssistants.find(
+            (persona) => persona.id === defaultSelectedPersonaId
+          )
+        : undefined
   );
   const livePersona =
     selectedPersona || filteredAssistants[0] || availablePersonas[0];
@@ -884,8 +884,10 @@ export function ChatPage({
             setActiveTab={setConfigModalActiveTab}
             onClose={() => setConfigModalActiveTab(null)}
             filterManager={filterManager}
+            availableAssistants={filteredAssistants}
             selectedAssistant={livePersona}
             setSelectedAssistant={onPersonaChange}
+            llmProviders={llmProviders}
             llmOverrideManager={llmOverrideManager}
           />
 
