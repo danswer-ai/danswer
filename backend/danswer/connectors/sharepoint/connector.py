@@ -22,44 +22,11 @@ from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.file_processing.extract_file_text import docx_to_text
-from danswer.file_processing.extract_file_text import file_io_to_text
-from danswer.file_processing.extract_file_text import is_text_file_extension
-from danswer.file_processing.extract_file_text import pdf_to_text
-from danswer.file_processing.extract_file_text import pptx_to_text
-from danswer.file_processing.extract_file_text import xlsx_to_text
+from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.utils.logger import setup_logger
-
-UNSUPPORTED_FILE_TYPE_CONTENT = ""  # idea copied from the google drive side of things
 
 
 logger = setup_logger()
-
-
-def get_text_from_xlsx_driveitem(driveitem_object: DriveItem) -> str:
-    file_content = driveitem_object.get_content().execute_query().value
-    return xlsx_to_text(file=io.BytesIO(file_content))
-
-
-def get_text_from_docx_driveitem(driveitem_object: DriveItem) -> str:
-    file_content = driveitem_object.get_content().execute_query().value
-    return docx_to_text(file=io.BytesIO(file_content))
-
-
-def get_text_from_pdf_driveitem(driveitem_object: DriveItem) -> str:
-    file_content = driveitem_object.get_content().execute_query().value
-    file_text = pdf_to_text(file=io.BytesIO(file_content))
-    return file_text
-
-
-def get_text_from_txt_driveitem(driveitem_object: DriveItem) -> str:
-    file_content: bytes = driveitem_object.get_content().execute_query().value
-    return file_io_to_text(file=io.BytesIO(file_content))
-
-
-def get_text_from_pptx_driveitem(driveitem_object: DriveItem) -> str:
-    file_content = driveitem_object.get_content().execute_query().value
-    return pptx_to_text(file=io.BytesIO(file_content))
 
 
 @dataclass
@@ -96,25 +63,24 @@ class SharepointConnector(LoadConnector, PollConnector):
                 )
         return site_data_list
 
-    def _get_all_driveitem_objects(
+    def _populate_sitedata_driveitems(
         self,
         start: datetime | None = None,
         end: datetime | None = None,
-    ) -> list[DriveItem]:
+    ) -> None:
         filter_str = ""
         if start is not None and end is not None:
             filter_str = f"last_modified_datetime ge {start.isoformat()} and last_modified_datetime le {end.isoformat()}"
 
-        driveitem_list: list[DriveItem] = []
         for element in self.site_data:
-            site_objects_list: list[Site] = []
-            for site_object in element.siteobjects:
-                site_objects_sublist = site_object.lists.get().execute_query()
-                site_objects_list.extend(site_objects_sublist)
+            sites: list[Site] = []
+            for site in element.siteobjects:
+                site_sublist = site.lists.get().execute_query()
+                sites.extend(site_sublist)
 
-            for site_object in site_objects_list:
+            for site in sites:
                 try:
-                    query = site_object.drive.root.get_files(True, 1000)
+                    query = site.drive.root.get_files(True, 1000)
                     if filter_str:
                         query = query.filter(filter_str)
                     driveitems = query.execute_query()
@@ -133,9 +99,7 @@ class SharepointConnector(LoadConnector, PollConnector):
                     # but this is fine, as there are no actually documents in those
                     pass
 
-        return driveitem_list
-
-    def _get_all_site_objects(self) -> list[SiteData]:
+    def _get_all_sites(self) -> list[SiteData]:
         if self.graph_client is None:
             raise ConnectorMissingCredentialError("Sharepoint")
 
@@ -150,45 +114,30 @@ class SharepointConnector(LoadConnector, PollConnector):
             return self.site_data
 
         else:
-            site_objects = self.graph_client.sites.get().execute_query()
-            return [
-                SiteData(url=None, folder=None, siteobjects=site_objects, driveitems=[])
-            ]
+            sites = self.graph_client.sites.get().execute_query()
+            return [SiteData(url=None, folder=None, siteobjects=sites, driveitems=[])]
 
-    def _extract_driveitem_text(self, driveitem_object: DriveItem) -> str:
-        driveitem_name = driveitem_object.name
-        driveitem_text = UNSUPPORTED_FILE_TYPE_CONTENT
-
-        if driveitem_name.endswith(".docx"):
-            driveitem_text = get_text_from_docx_driveitem(driveitem_object)
-        elif driveitem_name.endswith(".pdf"):
-            driveitem_text = get_text_from_pdf_driveitem(driveitem_object)
-        elif driveitem_name.endswith(".xlsx"):
-            driveitem_text = get_text_from_xlsx_driveitem(driveitem_object)
-        elif driveitem_name.endswith(".pptx"):
-            driveitem_text = get_text_from_pptx_driveitem(driveitem_object)
-        elif is_text_file_extension(driveitem_name):
-            driveitem_text = get_text_from_txt_driveitem(driveitem_object)
-
-        return driveitem_text
-
-    def _convert_driveitem_object_to_document(
+    def _convert_driveitem_to_document(
         self,
-        driveitem_object: DriveItem,
+        driveitem: DriveItem,
     ) -> Document:
-        file_text = self._extract_driveitem_text(driveitem_object)
+        file_text = extract_file_text(
+            file_name=driveitem.name,
+            file=io.BytesIO(driveitem.get_content().execute_query().value),
+        )
+
         doc = Document(
-            id=driveitem_object.id,
-            sections=[Section(link=driveitem_object.web_url, text=file_text)],
+            id=driveitem.id,
+            sections=[Section(link=driveitem.web_url, text=file_text)],
             source=DocumentSource.SHAREPOINT,
-            semantic_identifier=driveitem_object.name,
-            doc_updated_at=driveitem_object.last_modified_datetime.replace(
+            semantic_identifier=driveitem.name,
+            doc_updated_at=driveitem.last_modified_datetime.replace(
                 tzinfo=timezone.utc
             ),
             primary_owners=[
                 BasicExpertInfo(
-                    display_name=driveitem_object.last_modified_by.user.displayName,
-                    email=driveitem_object.last_modified_by.user.email,
+                    display_name=driveitem.last_modified_by.user.displayName,
+                    email=driveitem.last_modified_by.user.email,
                 )
             ],
             metadata={},
@@ -201,23 +150,18 @@ class SharepointConnector(LoadConnector, PollConnector):
         if self.graph_client is None:
             raise ConnectorMissingCredentialError("Sharepoint")
 
-        self.site_data = self._get_all_site_objects()
-        self.driveitems = self._get_all_driveitem_objects(start=start, end=end)
+        self.site_data = self._get_all_sites()
+        self._populate_sitedata_driveitems(start=start, end=end)
 
         # goes over all urls, converts them into Document objects and then yields them in batches
         doc_batch: list[Document] = []
-        batch_count = 0
         for element in self.site_data:
-            for driveitem_object in element.driveitems:
-                logger.debug(f"Processing: {driveitem_object.web_url}")
-                doc_batch.append(
-                    self._convert_driveitem_object_to_document(driveitem_object)
-                )
+            for driveitem in element.driveitems:
+                logger.debug(f"Processing: {driveitem.web_url}")
+                doc_batch.append(self._convert_driveitem_to_document(driveitem))
 
-                batch_count += 1
-                if batch_count >= self.batch_size:
+                if len(doc_batch) >= self.batch_size:
                     yield doc_batch
-                    batch_count = 0
                     doc_batch = []
         yield doc_batch
 

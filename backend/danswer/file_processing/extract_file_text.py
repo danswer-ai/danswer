@@ -262,7 +262,9 @@ def extract_file_text(
 
     extension = get_file_ext(file_name)
     if not check_file_ext_is_valid(extension):
-        raise RuntimeError("Unprocessable file type")
+        logger.warning(f"Unprocessable file type: {file_name}")
+        return ""
+        # raise RuntimeError("Unprocessable file type")
 
     if extension == ".pdf":
         return pdf_to_text(file=file)
