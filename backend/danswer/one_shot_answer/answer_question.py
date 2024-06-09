@@ -51,7 +51,7 @@ from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
 from danswer.tools.search.search_tool import SECTION_RELEVANCE_LIST_ID
 from danswer.tools.tool import ToolResponse
-from danswer.tools.tool_runner import ToolRunKickoff
+from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
 
@@ -67,7 +67,7 @@ AnswerObjectIterator = Iterator[
     | StreamingError
     | ChatMessageDetail
     | CitationInfo
-    | ToolRunKickoff
+    | ToolCallKickoff
 ]
 
 
