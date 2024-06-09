@@ -161,7 +161,9 @@ const Main = () => {
             Dropbox indexing status
           </Title>
           <Text className="mb-2">
-            The latest article changes are fetched every 10 minutes.
+            Due to Dropbox's access key design, the Dropbox connector will only
+            re-index files after a new access key is provided and the indexing
+            process is re-run manually. Check the docs for more information.
           </Text>
           <div className="mb-2">
             <ConnectorsTable<DropboxConfig, DropboxCredentialJson>
@@ -197,7 +199,7 @@ const Main = () => {
               formBody={<></>}
               validationSchema={Yup.object().shape({})}
               initialValues={{}}
-              refreshFreq={10 * 60} // 10 minutes
+              // refreshFreq={10 * 60} // disabled re-indexing
               credentialId={dropboxCredential.id}
             />
           </Card>
