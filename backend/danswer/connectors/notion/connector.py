@@ -304,7 +304,7 @@ class NotionConnector(LoadConnector, PollConnector):
             page_tags = [
                 tag_dict_in_ms.get("name", "UnkName")
                 for tag_dict_in_ms in page.properties.get("Tags", {}).get(
-                    "multi_select", []
+                    "multi_select", {}
                 )
             ]
             print(page_tags)
