@@ -129,6 +129,8 @@ def get_chat_session(
         # we already did a permission check above with the call to
         # `get_chat_session_by_id`, so we can skip it here
         skip_permission_check=True,
+        # we need the tool call objs anyways, so just fetch them in a single call
+        prefetch_tool_calls=True,
     )
 
     return ChatSessionDetailResponse(
