@@ -24,6 +24,9 @@ from danswer.connectors.models import Section
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
+import requests
+from requests.exceptions import HTTPError
+
 logger = setup_logger()
 
 _NOTION_CALL_TIMEOUT = 30  # 30 seconds
@@ -85,6 +88,7 @@ class NotionConnector(LoadConnector, PollConnector):
         }
         self.indexed_pages: set[str] = set()
         self.root_page_id = root_page_id
+        self.is_db = False
         # if enabled, will recursively index child pages as they are found rather
         # relying entirely on the `search` API. We have received reports that the
         # `search` API misses many pages - in those cases, this might need to be
@@ -93,7 +97,23 @@ class NotionConnector(LoadConnector, PollConnector):
         # all pages regardless of if they are updated. If the notion workspace is
         # very large, this may not be practical.
         self.recursive_index_enabled = recursive_index_enabled or self.root_page_id
-
+        
+    def check_if_db(self, database_id: str) -> bool:
+        """Check if a page is a database"""
+        logger.debug(f"Checking if it is database for ID '{database_id}'")
+        block_url = f"https://api.notion.com/v1/databases/{database_id}/query"
+        body = None
+        res = requests.post(
+                block_url,
+                headers=self.headers,
+                json=body,
+                timeout=_NOTION_CALL_TIMEOUT,
+            )
+        if res.status_code == 404:
+            return False
+        else:
+            logger.info("Database found")
+            return True
     @retry(tries=3, delay=1, backoff=2)
     def _fetch_child_blocks(
         self, block_id: str, cursor: str | None = None
@@ -307,7 +327,6 @@ class NotionConnector(LoadConnector, PollConnector):
                     "multi_select", {}
                 )
             ]
-            print(page_tags)
             metatada = {"tags": page_tags} if page_tags else {}
             yield (
                 Document(
@@ -395,7 +414,12 @@ class NotionConnector(LoadConnector, PollConnector):
             "Recursively loading pages from Notion based on root page with "
             f"ID: {self.root_page_id}"
         )
-        pages = [self._fetch_page(page_id=self.root_page_id)]
+        if self.is_db:
+            page_ids = self._read_pages_from_database(self.root_page_id)
+            pages = [self._fetch_page(page_id=page_id) for page_id in page_ids]
+        else:
+            pages = [self._fetch_page(page_id=self.root_page_id)]
+
         yield from batch_generator(self._read_pages(pages), self.batch_size)
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
@@ -403,6 +427,7 @@ class NotionConnector(LoadConnector, PollConnector):
         self.headers["Authorization"] = (
             f'Bearer {credentials["notion_integration_token"]}'
         )
+        self.is_db = self.check_if_db(self.root_page_id) if self.root_page_id else False
         return None
 
     def load_from_state(self) -> GenerateDocumentsOutput:
