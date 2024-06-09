@@ -64,6 +64,20 @@ class NotionSearchResponse:
             if k in names:
                 setattr(self, k, v)
 
+HARCODED_TAG_FIELD_TYPES = set(["multi_select", "select"])
+
+def get_tags(page: NotionPage) -> dict[str, list[str] | str]:
+    tags_by_name = {}
+    for property_name, property_dict in page.properties.items():
+        property_type = property_dict.get("type", None)
+        if not property_type:
+            continue
+        if property_type in HARCODED_TAG_FIELD_TYPES:
+            collected_tags = [tag_dict.get("name", "UnkName") for tag_dict in property_dict[property_type]]
+            tags_by_name[property_name] = collected_tags
+
+    return tags_by_name if tags_by_name else {}
+
 
 # TODO - Add the ability to optionally limit to specific Notion databases
 class NotionConnector(LoadConnector, PollConnector):
@@ -97,23 +111,24 @@ class NotionConnector(LoadConnector, PollConnector):
         # all pages regardless of if they are updated. If the notion workspace is
         # very large, this may not be practical.
         self.recursive_index_enabled = recursive_index_enabled or self.root_page_id
-        
+
     def check_if_db(self, database_id: str) -> bool:
         """Check if a page is a database"""
         logger.debug(f"Checking if it is database for ID '{database_id}'")
         block_url = f"https://api.notion.com/v1/databases/{database_id}/query"
         body = None
         res = requests.post(
-                block_url,
-                headers=self.headers,
-                json=body,
-                timeout=_NOTION_CALL_TIMEOUT,
-            )
+            block_url,
+            headers=self.headers,
+            json=body,
+            timeout=_NOTION_CALL_TIMEOUT,
+        )
         if res.status_code == 404:
             return False
         else:
             logger.info("Database found")
             return True
+
     @retry(tries=3, delay=1, backoff=2)
     def _fetch_child_blocks(
         self, block_id: str, cursor: str | None = None
@@ -321,13 +336,7 @@ class NotionConnector(LoadConnector, PollConnector):
             page_blocks, child_page_ids = self._read_blocks(page.id)
             all_child_page_ids.extend(child_page_ids)
             page_title = self._read_page_title(page)
-            page_tags = [
-                tag_dict_in_ms.get("name", "UnkName")
-                for tag_dict_in_ms in page.properties.get("Tags", {}).get(
-                    "multi_select", {}
-                )
-            ]
-            metatada = {"tags": page_tags} if page_tags else {}
+            metadata = get_tags(page)
             yield (
                 Document(
                     id=page.id,
@@ -345,7 +354,7 @@ class NotionConnector(LoadConnector, PollConnector):
                     doc_updated_at=datetime.fromisoformat(
                         page.last_edited_time
                     ).astimezone(timezone.utc),
-                    metadata=metatada,
+                    metadata=metadata,
                 )
             )
             self.indexed_pages.add(page.id)
