@@ -46,7 +46,7 @@ class GmailConnector(LoadConnector, PollConnector):
         (2) A credential which holds a service account key JSON file, which
         can then be used to impersonate any user in the workspace.
         """
-        creds = None
+        creds: OAuthCredentials | ServiceAccountCredentials | None = None
         new_creds_dict = None
         if DB_CREDENTIALS_DICT_TOKEN_KEY in credentials:
             access_token_json_str = cast(
