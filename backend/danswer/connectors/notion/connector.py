@@ -74,11 +74,20 @@ def get_tags(page: NotionPage) -> dict[str, list[str] | str]:
             continue
         if property_type in HARCODED_TAG_FIELD_TYPES:
             collected_tags = []
-            for tag_dict in property_dict[property_type]:
-                if isinstance(tag_dict, dict):
-                    collected_tags.append(tag_dict.get("name", "UnkName"))
-                else:
-                    collected_tags.append(str(tag_dict))
+            property_tags : list[dict[str,str]] | dict[str, dict[str,str]] = property_dict[property_type]
+            if isinstance(property_tags, dict):
+                collected_tags.append(property_tags.get("name", "UnkName"))
+            elif isinstance(property_tags, list):
+                for tag_info in property_tags:
+                    if isinstance(tag_info, dict):
+                        collected_tags.append(tag_info.get("name", "UnkName"))
+                    else:
+                        logger.warning(f"Unexpected tag dict: {tag_info}, converting to string")
+                        collected_tags.append(str(tag_info))
+            else:
+                logger.warning(f"{property_tags} is not a dict or list")
+                continue
+            print(f"Adding tags for {property_name}: {collected_tags}")
             tags_by_name[property_name] = collected_tags
 
     return tags_by_name if tags_by_name else {}
