@@ -47,7 +47,7 @@ jobs:
           images: |
             us-docker.pkg.dev/${{ env.GarProjectID }}/${{ env.GarRepo }}/${{ env.GarImageName }}:${{ github.ref_name }}
 
-      - name: Web Image Docker Build and Push
+      - name: Model Server Image Docker Build and Push
         uses: int128/kaniko-action@v1
         with:
           context: ./backend

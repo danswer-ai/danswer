@@ -24,7 +24,6 @@ from danswer.db.chat import get_chat_messages_by_session
 from danswer.db.chat import get_chat_session_by_id
 from danswer.db.chat import get_chat_sessions_by_user
 from danswer.db.chat import get_or_create_root_message
-from danswer.db.chat import get_persona_by_id
 from danswer.db.chat import set_as_latest_chat_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import update_chat_session
@@ -32,6 +31,7 @@ from danswer.db.engine import get_session
 from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.models import User
+from danswer.db.persona import get_persona_by_id
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.file_processing.extract_file_text import extract_file_text

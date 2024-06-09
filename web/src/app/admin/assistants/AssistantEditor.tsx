@@ -34,6 +34,9 @@ import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelec
 import { FullLLMProvider } from "../models/llm/interfaces";
 import { Option } from "@/components/Dropdown";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
+import { checkUserIsNoAuthUser } from "@/lib/user";
+import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
+import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -41,12 +44,6 @@ function findSearchTool(tools: ToolSnapshot[]) {
 
 function findImageGenerationTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "ImageGenerationTool");
-}
-
-function checkLLMSupportsImageGeneration(provider: string, model: string) {
-  console.log(provider);
-  console.log(model);
-  return provider === "openai" && model === "gpt-4-turbo";
 }
 
 function Label({ children }: { children: string | JSX.Element }) {
@@ -68,6 +65,7 @@ export function AssistantEditor({
   redirectType,
   llmProviders,
   tools,
+  shouldAddAssistantToUserPreferences,
 }: {
   existingPersona?: Persona | null;
   ccPairs: CCPairBasicInfo[];
@@ -77,6 +75,7 @@ export function AssistantEditor({
   redirectType: SuccessfulPersonaUpdateRedirectType;
   llmProviders: FullLLMProvider[];
   tools: ToolSnapshot[];
+  shouldAddAssistantToUserPreferences?: boolean;
 }) {
   const router = useRouter();
   const { popup, setPopup } = usePopup();
@@ -259,7 +258,7 @@ export function AssistantEditor({
           if (
             values.image_generation_tool_enabled &&
             imageGenerationTool &&
-            checkLLMSupportsImageGeneration(
+            checkLLMSupportsImageInput(
               providerDisplayNameToProviderName.get(
                 values.llm_model_provider_override || ""
               ) ||
@@ -288,7 +287,8 @@ export function AssistantEditor({
               existingPromptId: existingPrompt?.id,
               ...values,
               num_chunks: numChunks,
-              users: user ? [user.id] : undefined,
+              users:
+                user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,
               tool_ids: tools,
             });
@@ -296,7 +296,8 @@ export function AssistantEditor({
             [promptResponse, personaResponse] = await createPersona({
               ...values,
               num_chunks: numChunks,
-              users: user ? [user.id] : undefined,
+              users:
+                user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,
               tool_ids: tools,
             });
@@ -319,12 +320,33 @@ export function AssistantEditor({
             });
             formikHelpers.setSubmitting(false);
           } else {
+            const assistant = await personaResponse.json();
+            const assistantId = assistant.id;
+            if (
+              shouldAddAssistantToUserPreferences &&
+              user?.preferences?.chosen_assistants
+            ) {
+              const success = await addAssistantToList(
+                assistantId,
+                user.preferences.chosen_assistants
+              );
+              if (success) {
+                setPopup({
+                  message: `"${assistant.name}" has been added to your list.`,
+                  type: "success",
+                });
+                router.refresh();
+              } else {
+                setPopup({
+                  message: `"${assistant.name}" could not be added to your list.`,
+                  type: "error",
+                });
+              }
+            }
             router.push(
               redirectType === SuccessfulPersonaUpdateRedirectType.ADMIN
                 ? `/admin/assistants?u=${Date.now()}`
-                : `/chat?assistantId=${
-                    ((await personaResponse.json()) as Persona).id
-                  }`
+                : `/chat?assistantId=${assistantId}`
             );
           }
         }}
@@ -541,7 +563,7 @@ export function AssistantEditor({
                   )}
 
                   {imageGenerationTool &&
-                    checkLLMSupportsImageGeneration(
+                    checkLLMSupportsImageInput(
                       providerDisplayNameToProviderName.get(
                         values.llm_model_provider_override || ""
                       ) ||
