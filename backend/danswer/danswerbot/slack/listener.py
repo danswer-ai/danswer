@@ -204,8 +204,6 @@ def build_request_details(
 
         msg = remove_danswer_bot_tag(msg, client=client.web_client)
 
-        logger.info(f"DANSWER_BOT_REPHRASE_MESSAGE: {DANSWER_BOT_REPHRASE_MESSAGE}")
-
         if DANSWER_BOT_REPHRASE_MESSAGE:
             logger.info(f"Rephrasing Slack message. Original message: {msg}")
             try:
