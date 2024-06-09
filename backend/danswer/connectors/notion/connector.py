@@ -73,7 +73,12 @@ def get_tags(page: NotionPage) -> dict[str, list[str] | str]:
         if not property_type:
             continue
         if property_type in HARCODED_TAG_FIELD_TYPES:
-            collected_tags = [tag_dict.get("name", "UnkName") for tag_dict in property_dict[property_type]]
+            collected_tags = []
+            for tag_dict in property_dict[property_type]:
+                if isinstance(tag_dict, dict):
+                    collected_tags.append(tag_dict.get("name", "UnkName"))
+                else:
+                    collected_tags.append(str(tag_dict))
             tags_by_name[property_name] = collected_tags
 
     return tags_by_name if tags_by_name else {}
@@ -337,6 +342,9 @@ class NotionConnector(LoadConnector, PollConnector):
             all_child_page_ids.extend(child_page_ids)
             page_title = self._read_page_title(page)
             metadata = get_tags(page)
+            # hack that makes sure if you have URL property with exactly this name it will be used as the link
+            if "URL" in page.properties:
+                page.url = page.properties["URL"].get("url", page.url)
             yield (
                 Document(
                     id=page.id,
