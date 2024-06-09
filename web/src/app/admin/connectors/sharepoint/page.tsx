@@ -237,9 +237,21 @@ const MainSection = () => {
                 <>
                   <br />
                   <ul>
-                    <li>• If no sites are specified, all sites in your organization will be indexed (Sites.Read.All permission required).</li>
-                    <li>• Specifying &apos;https://danswerai.sharepoint.com/sites/support&apos; for example will only index documents within this site.</li>
-                    <li>• Specifying &apos;https://danswerai.sharepoint.com/sites/support/subfolder&apos; for example will only index documents within this folder.</li>
+                    <li>
+                      • If no sites are specified, all sites in your
+                      organization will be indexed (Sites.Read.All permission
+                      required).
+                    </li>
+                    <li>
+                      • Specifying
+                      &apos;https://danswerai.sharepoint.com/sites/support&apos;
+                      for example will only index documents within this site.
+                    </li>
+                    <li>
+                      • Specifying
+                      &apos;https://danswerai.sharepoint.com/sites/support/subfolder&apos;
+                      for example will only index documents within this folder.
+                    </li>
                   </ul>
                 </>
               ),
