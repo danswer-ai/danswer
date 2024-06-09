@@ -21,6 +21,7 @@ export interface MinimalUserSnapshot {
 
 export type ValidSources =
   | "web"
+  | "git"
   | "github"
   | "gitlab"
   | "slack"
@@ -88,6 +89,13 @@ export interface Connector<T> extends ConnectorBase<T> {
 export interface WebConfig {
   base_url: string;
   web_connector_type?: "recursive" | "single" | "sitemap";
+}
+
+export interface GitConfig {
+  remote_url: string;
+  branch: string;
+  auth_private_key?: string;
+  include_globs: string;
 }
 
 export interface GithubConfig {
