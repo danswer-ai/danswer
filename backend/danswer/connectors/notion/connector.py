@@ -301,6 +301,14 @@ class NotionConnector(LoadConnector, PollConnector):
             page_blocks, child_page_ids = self._read_blocks(page.id)
             all_child_page_ids.extend(child_page_ids)
             page_title = self._read_page_title(page)
+            page_tags = [
+                tag_dict_in_ms.get("name", "UnkName")
+                for tag_dict_in_ms in page.properties.get("Tags", {}).get(
+                    "multi_select", []
+                )
+            ]
+            print(page_tags)
+            metatada = {"tags": page_tags} if page_tags else {}
             yield (
                 Document(
                     id=page.id,
@@ -318,7 +326,7 @@ class NotionConnector(LoadConnector, PollConnector):
                     doc_updated_at=datetime.fromisoformat(
                         page.last_edited_time
                     ).astimezone(timezone.utc),
-                    metadata={},
+                    metadata=metatada,
                 )
             )
             self.indexed_pages.add(page.id)
@@ -392,9 +400,9 @@ class NotionConnector(LoadConnector, PollConnector):
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         """Applies integration token to headers"""
-        self.headers[
-            "Authorization"
-        ] = f'Bearer {credentials["notion_integration_token"]}'
+        self.headers["Authorization"] = (
+            f'Bearer {credentials["notion_integration_token"]}'
+        )
         return None
 
     def load_from_state(self) -> GenerateDocumentsOutput:

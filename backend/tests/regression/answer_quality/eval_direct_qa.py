@@ -44,7 +44,7 @@ def load_yaml(filepath: str) -> dict:
     return data
 
 def extract_score(msg: str) -> int:
-    score_part = msg.split("score")[-1]
+    score_part = msg.split("core")[-1]
     score_cleaned = score_part.strip(punctuation).strip()
     try:
         score = int(score_cleaned)
