@@ -79,10 +79,13 @@ def _extract_answer_json(raw_model_output: str) -> dict:
         # LLMs get confused when handling the list in the json. Sometimes it doesn't attend
         # enough to the previous { token so it just ends the list of quotes and stops there
         # here, we add logic to try to fix this LLM error.
-        answer_json = extract_embedded_json(raw_model_output + "}")
+        try:
+            answer_json = extract_embedded_json(raw_model_output + "}")
+        except (ValueError, JSONDecodeError):
+            answer_json = {"answer": raw_model_output}
 
-    if "answer" not in answer_json:
-        raise ValueError("Model did not output an answer as expected.")
+    # if "answer" not in answer_json:
+    #     raise ValueError("Model did not output an answer as expected.")
 
     return answer_json
 

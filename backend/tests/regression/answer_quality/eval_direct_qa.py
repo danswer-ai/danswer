@@ -21,6 +21,9 @@ from danswer.search.models import RetrievalDetails
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.utils.callbacks import MetricsHander
 
+from danswer.llm.factory import get_default_llm
+from string import punctuation
+
 
 engine = get_sqlalchemy_engine()
 
@@ -40,6 +43,15 @@ def load_yaml(filepath: str) -> dict:
         data = yaml.safe_load(file)
     return data
 
+def extract_score(msg: str) -> int:
+    score_part = msg.split("score")[-1]
+    score_cleaned = score_part.strip(punctuation).strip()
+    try:
+        score = int(score_cleaned)
+    except ValueError:
+        score = 5
+        print(f"Could not extract score from message: {msg}")
+    return score
 
 def word_wrap(s: str, max_line_size: int = 100, prepend_tab: bool = True) -> str:
     words = s.split()
@@ -207,6 +219,7 @@ if __name__ == "__main__":
             )
 
             with Session(engine, expire_on_commit=False) as db_session:
+                scores = []
                 for sample in questions_data["questions"]:
                     print(
                         f"Running Test for Question {sample['id']}: {sample['question']}"
@@ -231,6 +244,13 @@ if __name__ == "__main__":
                         if answer
                         else "\tFailed, either crashed or refused to answer."
                     )
+                    llm = get_default_llm()
+                    compare_prompt = f"Question: {sample['question']}\nExpected Answer: {sample['expected_answer']}\nActual Answer: {answer} \n Now make a short comparison between the expected and actual answers, thinkning out louad. Then output the score for the actual answer from 1 to 10. After you finish writing, output the score again, using format `score: 08`"
+                    msg = llm.invoke(prompt = compare_prompt, tools = None, tool_choice=None)
+                    msg_content = str(msg.content)
+                    score = extract_score(msg_content)
+                    scores.append(score)
+                    print(msg_content)
                     if not args.discard_metrics:
                         print("\nRetrieval Metrics:")
                         if retrieval_metrics is None:
@@ -249,3 +269,5 @@ if __name__ == "__main__":
                             )
 
                     print("\n\n", flush=True)
+            print(f"Scores: {scores}")
+            print(f"Average Score: {sum(scores)/len(scores)}")
