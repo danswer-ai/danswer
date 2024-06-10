@@ -322,16 +322,6 @@ export function ChatPage({
   const [currentTool, setCurrentTool] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
 
-  const regenerateResponse = (
-    modelOverRide: LlmOverride,
-    responseId: number
-  ) => {
-    onSubmitResponse({
-      responseId,
-      modelOverRide,
-    });
-  };
-
   // uploaded files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
     FileDescriptor[]
@@ -759,7 +749,7 @@ export function ChatPage({
   };
 
   // Refactored methods
-  const onSubmitResponse = async ({
+  const regenerateResponse = async ({
     responseId,
     modelOverRide = null,
   }: {
@@ -1298,7 +1288,6 @@ export function ChatPage({
                                           });
                                           return;
                                         }
-
                                         if (
                                           previousMessage.messageId === null
                                         ) {
@@ -1452,7 +1441,6 @@ export function ChatPage({
                               )}
                             </div>
                           )}
-
                         <div ref={endDivRef} />
                       </div>
                     </div>

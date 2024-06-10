@@ -113,7 +113,6 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
-
   onResponseSelection?: (messageId: number) => void;
 }) => {
   const [isReady, setIsReady] = useState(false);

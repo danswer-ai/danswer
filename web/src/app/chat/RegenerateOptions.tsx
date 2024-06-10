@@ -9,10 +9,14 @@ export type RegenerateOptions = {
   llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
   messageIdToResend: number;
-  regenerateResponse: (
-    modelOverRide: LlmOverride,
-    messageIdToResend: number
-  ) => void;
+  regenerateResponse: ({
+    responseId,
+    modelOverRide,
+  }?: {
+    responseId?: number;
+    modelOverRide?: LlmOverride | null;
+  }) => Promise<void>;
+
   alternateModel?: string;
 };
 
@@ -76,10 +80,15 @@ export default function RegenerateOption({
           const { name, provider, modelName } = destructureValue(
             value as string
           );
-          regenerateResponse(
-            { name: name, provider: provider, modelName: modelName },
-            messageIdToResend
-          );
+          console.log("REGENERATE");
+          regenerateResponse({
+            responseId: messageIdToResend,
+            modelOverRide: {
+              name: name,
+              provider: provider,
+              modelName: modelName,
+            },
+          });
         }}
       />
     </div>
