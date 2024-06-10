@@ -210,19 +210,15 @@ class Answer:
                     else:
                         tool_call_chunk += message  # type: ignore
                 else:
-                    if message.content:
+                    if "content" in message.__dict__:
                         keyword_arguments = message.additional_kwargs
                         if (
                             "usage_metadata" in keyword_arguments
-                            and "output_tokens" in keyword_arguments["usage_metadata"]
+                            and "stop" in keyword_arguments["usage_metadata"]
                         ):
-                            output_tokens = keyword_arguments["usage_metadata"][
-                                "output_tokens"
-                            ]
+                            stop = keyword_arguments["usage_metadata"]["stop"]
 
-                            yield MessageChunk(
-                                content=str(message.content), tokens=output_tokens
-                            )
+                            yield MessageChunk(content=str(message.content), stop=stop)
                         else:
                             yield MessageChunk(content=str(message.content))
 

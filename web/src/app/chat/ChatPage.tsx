@@ -617,8 +617,14 @@ export function ChatPage({
         useExistingUserMessage: isSeededChat,
       })) {
         for (const packet of packetBunch) {
-          if (Object.hasOwn(packet, "max_token")) {
-            if ((packet as AnswerPiecePacket).max_token) {
+          // if (Object.hasOwn(packet, "max_token")) {
+          //   if ((packet as AnswerPiecePacket).max_token) {
+          //     setCanContinue(true);
+          //   }
+          // }
+
+          if (Object.hasOwn(packet, "stop")) {
+            if ((packet as AnswerPiecePacket).stop == "length") {
               setCanContinue(true);
             }
           }

@@ -20,7 +20,6 @@ from langchain_core.messages import SystemMessage
 from langchain_core.messages import SystemMessageChunk
 from langchain_core.messages.tool import ToolCallChunk
 from langchain_core.messages.tool import ToolMessage
-from litellm import token_counter
 
 from danswer.configs.app_configs import LOG_ALL_MODEL_INTERACTIONS
 from danswer.configs.model_configs import DISABLE_LITELLM_STREAMING
@@ -139,7 +138,9 @@ def _convert_message_to_dict(message: BaseMessage) -> dict:
 
 
 def _convert_delta_to_message_chunk(
-    _dict: dict[str, Any], curr_msg: BaseMessage | None, tokens: int = 0
+    _dict: dict[str, Any],
+    curr_msg: BaseMessage | None,
+    stop: str | None = None,
 ) -> BaseMessageChunk:
     """Adapted from langchain_community.chat_models.litellm._convert_delta_to_message_chunk"""
     role = _dict.get("role") or (_base_msg_to_role(curr_msg) if curr_msg else None)
@@ -170,7 +171,7 @@ def _convert_delta_to_message_chunk(
                 content=content,
                 tool_call_chunks=[tool_call_chunk],
                 additional_kwargs={
-                    "usage_metadata": {"output_tokens": tokens},
+                    "usage_metadata": {"stop": stop},
                     **additional_kwargs,
                 },
             )
@@ -178,7 +179,9 @@ def _convert_delta_to_message_chunk(
         return AIMessageChunk(
             content=content,
             additional_kwargs={
-                "usage_metadata": {"output_tokens": tokens},
+                "usage_metadata": {
+                    "stop": stop,
+                },
                 **additional_kwargs,
             },
         )
@@ -363,18 +366,11 @@ class DefaultMultiLLM(LLM):
 
             finish_reason = choices["finish_reason"]
             delta = choices["delta"]
-            text = delta["content"]
 
             message_chunk = _convert_delta_to_message_chunk(
                 delta,
                 output,
-                tokens=(
-                    token_counter(
-                        model=response.model, text=text, count_response_tokens=True
-                    )
-                    if text is not None and finish_reason != "stop"
-                    else None
-                ),
+                stop=finish_reason,
             )
             if output is None:
                 output = message_chunk

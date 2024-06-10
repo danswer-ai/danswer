@@ -16,7 +16,7 @@ export type SearchType = (typeof SearchType)[keyof typeof SearchType];
 
 export interface AnswerPiecePacket {
   answer_piece: string;
-  max_token?: boolean;
+  stop?: null | "length" | "stop";
 }
 
 export interface ErrorMessagePacket {

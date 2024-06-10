@@ -252,11 +252,11 @@ def message_to_message_chunk(message: BaseMessage) -> MessageChunk | str:
     keyword_arguments = message.additional_kwargs
     if (
         "usage_metadata" in keyword_arguments
-        and "output_tokens" in keyword_arguments["usage_metadata"]
+        and "stop" in keyword_arguments["usage_metadata"]
     ):
         return MessageChunk(
             content=str(message.content),
-            tokens=keyword_arguments["usage_metadata"]["output_tokens"],
+            stop=keyword_arguments["usage_metadata"]["stop"],
         )
     return message.content
 

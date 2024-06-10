@@ -28,12 +28,12 @@ def extract_citations_from_stream(
     stop_stream: str | None = STOP_STREAM_PAT,
 ) -> Iterator[DanswerAnswerPiece | CitationInfo]:
     llm_out = ""
+    stop = None
     max_citation_num = len(context_docs)
     curr_segment = ""
     prepend_bracket = False
     cited_inds = set()
     hold = ""
-    token_count = 0
 
     for raw_token in tokens:
         if stop_stream:
@@ -63,9 +63,7 @@ def extract_citations_from_stream(
             content = token.content
             curr_segment += content
             llm_out += content
-
-            if token.tokens:
-                token_count += token.tokens
+            stop = token.stop
 
         possible_citation_pattern = r"(\[\d*$)"  # [1, [, etc
         possible_citation_found = re.search(possible_citation_pattern, curr_segment)
@@ -112,19 +110,17 @@ def extract_citations_from_stream(
             curr_segment = curr_segment[:-1]
             prepend_bracket = True
 
-        yield DanswerAnswerPiece.build_from_token_cnt(
-            answer_piece=curr_segment, token_count=token_count
-        )
+        yield DanswerAnswerPiece(answer_piece=curr_segment, stop=stop)
         curr_segment = ""
 
     if curr_segment:
         if prepend_bracket:
             yield DanswerAnswerPiece.build_from_token_cnt(
-                answer_piece="[" + curr_segment, token_count=token_count
+                answer_piece="[" + curr_segment, stop=stop
             )
         else:
             yield DanswerAnswerPiece.build_from_token_cnt(
-                answer_piece=curr_segment, token_count=token_count
+                answer_piece=curr_segment, stop=stop
             )
 
 
