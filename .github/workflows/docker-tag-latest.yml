@@ -25,8 +25,8 @@ jobs:
 
     - name: Pull, Tag and Push Web Server Image
       run: |
-        docker buildx imagetools create -t danswer/danswer-web-server:latest danswer/danswer-web-server:${{ github.event.inputs.version }}
+        docker buildx imagetools create -t conlab/danswer-web-server:latest conlab/danswer-web-server:${{ github.event.inputs.version }}
 
     - name: Pull, Tag and Push API Server Image
       run: |
-        docker buildx imagetools create -t danswer/danswer-backend:latest danswer/danswer-backend:${{ github.event.inputs.version }}
+        docker buildx imagetools create -t conlab/danswer-backend:latest conlab/danswer-backend:${{ github.event.inputs.version }}

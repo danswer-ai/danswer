@@ -30,15 +30,15 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         tags: |
-          danswer/danswer-backend:${{ github.ref_name }}
-          danswer/danswer-backend:latest
+          conlab/danswer-backend:${{ github.ref_name }}
+          conlab/danswer-backend:latest
         build-args: |
           DANSWER_VERSION=${{ github.ref_name }}
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        # To run locally: trivy image --severity HIGH,CRITICAL danswer/danswer-backend
-        image-ref: docker.io/danswer/danswer-backend:${{ github.ref_name }}
+        # To run locally: trivy image --severity HIGH,CRITICAL conlab/danswer-backend
+        image-ref: docker.io/conlab/danswer-backend:${{ github.ref_name }}
         severity: 'CRITICAL,HIGH'
         trivyignores: ./backend/.trivyignore
