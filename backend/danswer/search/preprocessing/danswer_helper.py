@@ -95,9 +95,11 @@ def recommend_search_flow(
     return HelperResponse(
         values={
             "flow": flow,
-            "search_type": model_search_type
-            if heuristic_search_type is None
-            else heuristic_search_type,
+            "search_type": (
+                model_search_type
+                if heuristic_search_type is None
+                else heuristic_search_type
+            ),
         },
         details=[message] if message else [],
     )

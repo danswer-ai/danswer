@@ -174,8 +174,9 @@ def retrieve_chunks(
     db_session: Session,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
     multilingual_expansion_str: str | None = MULTILINGUAL_QUERY_EXPANSION,
-    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-    | None = None,
+    retrieval_metrics_callback: (
+        Callable[[RetrievalMetricsContainer], None] | None
+    ) = None,
 ) -> list[InferenceChunk]:
     """Returns a list of the best chunks from an initial keyword/semantic/ hybrid search."""
     # Don't do query expansion on complex queries, rephrasings likely would not work well

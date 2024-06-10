@@ -407,6 +407,7 @@ export function ChatPage({
   // just choose a conservative default, this will be updated in the
   // background on initial load / on persona change
   const [maxTokens, setMaxTokens] = useState<number>(4096);
+
   // fetch # of allowed document tokens for the selected Persona
   useEffect(() => {
     async function fetchMaxTokens() {
@@ -621,12 +622,14 @@ export function ChatPage({
     queryOverride,
     forceSearch,
     isSeededChat,
+    alternativeAssistant = null,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
     queryOverride?: string;
     forceSearch?: boolean;
     isSeededChat?: boolean;
+    alternativeAssistant?: Persona | null;
   } = {}) => {
     clientScrollToBottom();
     let currChatSessionId: number;
@@ -732,7 +735,9 @@ export function ChatPage({
       const stack = new CurrentMessageFIFO();
       updateCurrentMessageFIFO(stack, {
         message: currMessage,
-        alternateAssistantId: selectedAlternativeAssistant?.id,
+        alternateAssistantId: alternativeAssistant
+          ? alternativeAssistant.id
+          : selectedAlternativeAssistant?.id,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
@@ -1034,6 +1039,8 @@ export function ChatPage({
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
 
   const currentPersona = selectedAlternativeAssistant || livePersona;
+  const overallRetrievalDisabled = !personaIncludesRetrieval(livePersona);
+  const currentRetrievalDisabled = !personaIncludesRetrieval(currentPersona);
 
   return (
     <>
@@ -1309,62 +1316,68 @@ export function ChatPage({
                                             return;
                                           }
 
-                                          if (
-                                            previousMessage.messageId === null
-                                          ) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
-                                                "Cannot edit query of a pending message - please wait a few seconds and try again.",
-                                            });
-                                            return;
-                                          }
-                                          onSubmit({
-                                            messageIdToResend:
-                                              previousMessage.messageId,
-                                            queryOverride: newQuery,
+                                        if (
+                                          previousMessage.messageId === null
+                                        ) {
+                                          setPopup({
+                                            type: "error",
+                                            message:
+                                              "Cannot edit query of a pending message - please wait a few seconds and try again.",
                                           });
+                                          return;
                                         }
-                                      : undefined
-                                  }
-                                  isCurrentlyShowingRetrieved={
-                                    isShowingRetrieved
-                                  }
-                                  handleShowRetrieved={(messageNumber) => {
-                                    if (isShowingRetrieved) {
-                                      setSelectedMessageForDocDisplay(null);
-                                    } else {
-                                      if (messageNumber !== null) {
-                                        setSelectedMessageForDocDisplay(
-                                          messageNumber
-                                        );
-                                      } else {
-                                        setSelectedMessageForDocDisplay(-1);
+                                        onSubmit({
+                                          messageIdToResend:
+                                            previousMessage.messageId,
+                                          queryOverride: newQuery,
+                                          alternativeAssistant:
+                                            currentAlternativeAssistant
+                                        });
                                       }
-                                    }
-                                  }}
-                                  handleForceSearch={() => {
-                                    if (
-                                      previousMessage &&
-                                      previousMessage.messageId
-                                    ) {
-                                      onSubmit({
-                                        messageIdToResend:
-                                          previousMessage.messageId,
-                                        forceSearch: true,
-                                      });
+                                    : undefined
+                                }
+                                isCurrentlyShowingRetrieved={isShowingRetrieved}
+                                handleShowRetrieved={(messageNumber) => {
+                                  if (isShowingRetrieved) {
+                                    setSelectedMessageForDocDisplay(null);
+                                  } else {
+                                    if (messageNumber !== null) {
+                                      setSelectedMessageForDocDisplay(
+                                        messageNumber
+                                      );
                                     } else {
-                                      setPopup({
-                                        type: "error",
-                                        message:
-                                          "Failed to force search - please refresh the page and try again.",
-                                      });
+                                      setSelectedMessageForDocDisplay(-1);
                                     }
-                                  }}
-                                  retrievalDisabled={retrievalDisabled}
-                                />
-                              </div>
-                            );
+                                  }
+                                }}
+                                handleForceSearch={() => {
+                                  if (
+                                    previousMessage &&
+                                    previousMessage.messageId
+                                  ) {
+                                    onSubmit({
+                                      messageIdToResend:
+                                        previousMessage.messageId,
+                                      forceSearch: true,
+                                    });
+                                  } else {
+                                    setPopup({
+                                      type: "error",
+                                      message:
+                                        "Failed to force search - please refresh the page and try again.",
+                                    });
+                                  }
+                                }}
+                                retrievalDisabled={
+                                  currentAlternativeAssistant
+                                    ? !personaIncludesRetrieval(
+                                        currentAlternativeAssistant!
+                                      )
+                                    : overallRetrievalDisabled
+                                }
+                              />
+                            </div>
+                            )
                           } else {
                             return (
                               <div key={`${i}-${existingChatSessionId}`}>
@@ -1473,7 +1486,9 @@ export function ChatPage({
                           onSubmit={onSubmit}
                           isStreaming={isStreaming}
                           setIsCancelled={setIsCancelled}
-                          retrievalDisabled={retrievalDisabled}
+                          retrievalDisabled={
+                            !personaIncludesRetrieval(currentPersona)
+                          }
                           filterManager={filterManager}
                           llmOverrideManager={llmOverrideManager}
                           selectedAssistant={livePersona}

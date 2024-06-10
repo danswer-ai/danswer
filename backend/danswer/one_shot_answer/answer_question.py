@@ -87,8 +87,9 @@ def stream_answer_objects(
     bypass_acl: bool = False,
     use_citations: bool = False,
     danswerbot_flow: bool = False,
-    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-    | None = None,
+    retrieval_metrics_callback: (
+        Callable[[RetrievalMetricsContainer], None] | None
+    ) = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> AnswerObjectIterator:
     """Streams in order:
@@ -304,8 +305,9 @@ def get_search_answer(
     bypass_acl: bool = False,
     use_citations: bool = False,
     danswerbot_flow: bool = False,
-    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-    | None = None,
+    retrieval_metrics_callback: (
+        Callable[[RetrievalMetricsContainer], None] | None
+    ) = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> OneShotQAResponse:
     """Collects the streamed one shot answer responses into a single object"""
