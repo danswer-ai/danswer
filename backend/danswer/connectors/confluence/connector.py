@@ -364,7 +364,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 response = confluence_client._session.get(download_link)
 
                 if response.status_code == 200:
-                    extract = extract_file_text(response.content, attachment["title"])
+                    extract = extract_file_text(attachment["title"], response.content)
                     files_attachment_content.append(extract)
 
         except Exception as e:
