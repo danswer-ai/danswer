@@ -16,22 +16,40 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+
 class PygitRemoteCallbacks(pygit2.RemoteCallbacks):
-    last_transfer_progress = datetime.datetime.fromtimestamp(0)
+    auth_private_key: str | None
+    last_transfer_progress: datetime.datetime = datetime.datetime.fromtimestamp(0)
+
+    def __init__(self, auth_private_key: str | None):
+        super().__init__(None, None)
+        self.auth_private_key = auth_private_key
+
+    def credentials(self, url, username_from_url, allowed_types):
+        if allowed_types & pygit2.enums.CredentialType.USERNAME:
+            logger.info(f"Responding with username {username_from_url}")
+            return pygit2.Username(username_from_url)
+        elif allowed_types & pygit2.enums.CredentialType.SSH_MEMORY:
+            keypair = pygit2.KeypairFromMemory(username_from_url, None, self.auth_private_key, "")
+            logger.info(f"Responding with keypair")
+            return keypair
+        else:
+            logger.warning(f"Received request for credential, but don't support any type in {allowed_types}")
+            return None
 
     def sideband_progress(self, msg: str):
-        logger.info(f"Clone progress: remote: {msg}")
+        logger.debug(f"Clone progress: remote: {msg}")
 
     def transfer_progress(self, stats: pygit2.remotes.TransferProgress):
         now = datetime.datetime.now()
         if (now - self.last_transfer_progress).total_seconds() >= 15:
+            self.last_transfer_progress = now
             if stats.indexed_objects != stats.total_objects:
                 logger.info(f"Transfer: received {stats.received_objects}/{stats.total_objects} objects")
             elif stats.indexed_objects != stats.total_objects:
                 logger.info(f"Clone progress: indexed {stats.indexed_objects}/{stats.total_objects} objects")
             else:
-                logger.info(f"Clone progress: resolved {stats.indexed_deltas}/{stats.total_deltas}")
-            self.last_transfer_progress = now
+                logger.info(f"Clone progress: resolved {stats.indexed_deltas}/{stats.total_deltas} deltas")
 
 
 class GitConnector(LoadConnector):
@@ -52,29 +70,21 @@ class GitConnector(LoadConnector):
         return None
 
     def load_from_state(self) -> GenerateDocumentsOutput:
-        logger.info(
-            f"got params remote_url={self.remote_url} branch={self.branch} "
-            f"auth_private_key={self.auth_private_key} "
-            f"include_globs={self.include_globs}"
-        )
-
-        # FIXME: any way to get the connector instance/job ID?
         work_dir = tempfile.mkdtemp("danswer-connector-git")
         try:
             logger.info(f"Cloning {self.remote_url} into {work_dir}")
-            keypair = None
-            if self.auth_private_key:
-                keypair = pygit2.KeypairFromMemory("git", None, self.auth_private_key, None)
+            username = "git"
+            callbacks = PygitRemoteCallbacks(self.auth_private_key)
+            # FIXME: understand why depth=1 (for a shallow clone) causes "error reading from remote repository"
             pygit2.clone_repository(
                 self.remote_url,
                 work_dir,
-                depth=1, # perform a "shallow" clone
                 checkout_branch=self.branch,
-                callbacks=PygitRemoteCallbacks(credentials=keypair)
+                callbacks=callbacks,
             )
 
             matches = [
-                match[len(work_dir)+1:]
+                match[len(work_dir) + 1:]
                 for pattern in self.include_globs
                 for match in glob.glob(path.join(work_dir, pattern))
             ]
@@ -122,6 +132,12 @@ def parse_args() -> ParsedArguments:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     args = parse_args()
-    connector = GitConnector(args.remote_url, args.branch, args.auth_private_key, args.include_globs)
+    try:
+        with open(args.auth_private_key, "r") as f:
+            auth_private_key = f.read()
+    except TypeError:
+        auth_private_key = None
+
+    connector = GitConnector(args.remote_url, args.branch, auth_private_key, args.include_globs)
     document_batches = connector.load_from_state()
     print(next(document_batches))
