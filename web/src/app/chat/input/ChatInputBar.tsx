@@ -56,7 +56,7 @@ export function ChatInputBar({
   }, [message]);
 
   const { llmProviders } = useChatContext();
-  const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant);
+  const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant, null);
 
   return (
     <div>

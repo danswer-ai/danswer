@@ -19,7 +19,7 @@ export function AssistantsTab({
   llmProviders,
   onSelect,
 }: AssistantsTabProps) {
-  const [_, llmName] = getFinalLLM(llmProviders, null);
+  const [_, llmName] = getFinalLLM(llmProviders, null, null);
 
   return (
     <>

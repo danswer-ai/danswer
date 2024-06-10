@@ -773,7 +773,7 @@ export function ChatPage({
 
   const handleImageUpload = (acceptedFiles: File[]) => {
     const llmAcceptsImages = checkLLMSupportsImageInput(
-      ...getFinalLLM(llmProviders, livePersona)
+      ...getFinalLLM(llmProviders, livePersona, llmOverrideManager.llmOverride)
     );
     const imageFiles = acceptedFiles.filter((file) =>
       file.type.startsWith("image/")
