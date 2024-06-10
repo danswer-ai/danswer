@@ -34,6 +34,7 @@ from ee.danswer.server.query_and_chat.query_backend import (
 )
 from ee.danswer.server.query_history.api import router as query_history_router
 from ee.danswer.server.saml import router as saml_router
+from ee.danswer.server.seeding import seed_db
 from ee.danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
@@ -99,6 +100,10 @@ def get_ee_application() -> FastAPI:
 
     # Ensure all routes have auth enabled or are explicitly marked as public
     check_ee_router_auth(application)
+
+    # seed the Danswer environment with LLMs, Assistants, etc. based on an optional
+    # environment variable. Used to automate deployment for multiple environments.
+    seed_db()
 
     return application
 

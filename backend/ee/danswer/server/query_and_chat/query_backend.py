@@ -41,6 +41,7 @@ def handle_search_request(
     query = search_request.message
     logger.info(f"Received document search query: {query}")
 
+    llm = get_default_llm()
     search_pipeline = SearchPipeline(
         search_request=SearchRequest(
             query=query,
@@ -57,6 +58,7 @@ def handle_search_request(
             full_doc=search_request.full_doc,
         ),
         user=user,
+        llm=llm,
         db_session=db_session,
         bypass_acl=False,
     )
