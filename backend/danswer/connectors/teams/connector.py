@@ -11,6 +11,7 @@ from office365.teams.team import Team  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -24,14 +25,10 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-datetime_format_string = "%Y-%m-%dT%H:%M:%S.%f%z"
-
 
 def get_created_datetime(chat_message: ChatMessage) -> datetime:
     # Extract the 'createdDateTime' value from the 'properties' dictionary and convert it to a datetime object
-    return datetime.strptime(
-        chat_message.properties["createdDateTime"], datetime_format_string
-    )
+    return time_str_to_utc(chat_message.properties["createdDateTime"])
 
 
 def _extract_channel_members(channel: Channel) -> list[BasicExpertInfo]:
@@ -58,8 +55,8 @@ def _get_threads_from_channel(
 
     threads: list[list[ChatMessage]] = []
     for base_message in base_messages:
-        message_datetime = datetime.strptime(
-            base_message.properties["lastModifiedDateTime"], datetime_format_string
+        message_datetime = time_str_to_utc(
+            base_message.properties["lastModifiedDateTime"]
         )
 
         if start and message_datetime < start:
@@ -122,9 +119,8 @@ def _convert_thread_to_document(
 
     if sorted_thread:
         most_recent_message = sorted_thread[0]
-        most_recent_message_datetime = datetime.strptime(
-            most_recent_message.properties["createdDateTime"],
-            datetime_format_string,
+        most_recent_message_datetime = time_str_to_utc(
+            most_recent_message.properties["createdDateTime"]
         )
 
     for message in thread:
@@ -158,8 +154,6 @@ def _convert_thread_to_document(
         return None
 
     semantic_string = _construct_semantic_identifier(channel, top_message)
-    if not semantic_string:
-        return None
 
     post_id = top_message.properties["id"]
     web_url = top_message.web_url
@@ -219,12 +213,15 @@ class TeamsConnector(LoadConnector, PollConnector):
         teams = self.graph_client.teams.get().execute_query()
 
         if len(self.requested_team_list) > 0:
-            for requested_team in self.requested_team_list:
-                adjusted_request_string = requested_team.replace(" ", "")
-                for team in teams:
-                    adjusted_team_string = team.display_name.replace(" ", "")
-                    if adjusted_team_string == adjusted_request_string:
-                        teams_list.append(team)
+            adjusted_request_strings = [
+                requested_team.replace(" ", "")
+                for requested_team in self.requested_team_list
+            ]
+            teams_list = [
+                team
+                for team in teams
+                if team.display_name.replace(" ", "") in adjusted_request_strings
+            ]
         else:
             teams_list.extend(teams)
 
