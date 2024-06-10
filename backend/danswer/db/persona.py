@@ -506,18 +506,29 @@ def get_prompt_by_id(
     return prompt
 
 
+def _get_default_prompt(db_session: Session) -> Prompt:
+    stmt = select(Prompt).where(Prompt.id == 0)
+    result = db_session.execute(stmt)
+    prompt = result.scalar_one_or_none()
+
+    if prompt is None:
+        raise RuntimeError("Default Prompt not found")
+
+    return prompt
+
+
+def get_default_prompt(db_session: Session) -> Prompt:
+    return _get_default_prompt(db_session)
+
+
 @lru_cache()
-def get_default_prompt() -> Prompt:
+def get_default_prompt__read_only() -> Prompt:
+    """Due to the way lru_cache / SQLAlchemy works, this can cause issues
+    when trying to attach the returned `Prompt` object to a `Persona`. If you are
+    doing anything other than reading, you should use the `get_default_prompt`
+    method instead."""
     with Session(get_sqlalchemy_engine()) as db_session:
-        stmt = select(Prompt).where(Prompt.id == 0)
-
-        result = db_session.execute(stmt)
-        prompt = result.scalar_one_or_none()
-
-        if prompt is None:
-            raise RuntimeError("Default Prompt not found")
-
-        return prompt
+        return _get_default_prompt(db_session)
 
 
 def get_persona_by_id(

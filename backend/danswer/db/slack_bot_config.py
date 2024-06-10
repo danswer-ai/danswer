@@ -51,7 +51,7 @@ def create_slack_bot_persona(
 
     # create/update persona associated with the slack bot
     persona_name = _build_persona_name(channel_names)
-    default_prompt = get_default_prompt()
+    default_prompt = get_default_prompt(db_session)
     persona = upsert_persona(
         user=None,  # Slack Bot Personas are not attached to users
         persona_id=existing_persona_id,
