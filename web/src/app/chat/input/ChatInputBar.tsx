@@ -17,7 +17,7 @@ import {
 import ChatInputOption from "./ChatInputOption";
 import { FaBrain } from "react-icons/fa";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { FilterManager, LlmOverride, LlmOverrideManager } from "@/lib/hooks";
+import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
 import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
 import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
@@ -86,6 +86,11 @@ export function ChatInputBar({
 
   const interactionsRef = useRef<HTMLDivElement | null>(null);
 
+  const hideSuggestions = () => {
+    setShowSuggestions(false);
+    setAssistantIconIndex(0);
+  };
+
   // Click out of assistant suggestions
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -97,7 +102,7 @@ export function ChatInputBar({
           interactionsRef.current.contains(event.target as Node)
         )
       ) {
-        setShowSuggestions(false);
+        hideSuggestions();
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -108,12 +113,11 @@ export function ChatInputBar({
 
   // On user input
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    console.log(event.target.value);
     const text = event.target.value;
     setMessage(text);
 
     if (!text.startsWith("@")) {
-      setShowSuggestions(false);
+      hideSuggestions();
       return;
     }
 
@@ -122,7 +126,7 @@ export function ChatInputBar({
     if (match) {
       setShowSuggestions(true);
     } else {
-      setShowSuggestions(false);
+      hideSuggestions();
     }
   };
 
@@ -141,10 +145,9 @@ export function ChatInputBar({
   // Update selected persona
   const updateCurrentPersona = (persona: Persona) => {
     setSelectedAlternativeAssistant(persona);
-    setAssistantIconIndex(0);
 
     // Reset input + suggestions
-    setShowSuggestions(false);
+    hideSuggestions();
     setMessage("");
   };
 
@@ -157,8 +160,7 @@ export function ChatInputBar({
       e.preventDefault();
       if (assistantIconIndex == filteredPersonas.length) {
         window.open("/assistants/new", "_blank");
-
-        setShowSuggestions(false);
+        hideSuggestions();
         setMessage("");
       } else {
         const option =
@@ -257,7 +259,7 @@ export function ChatInputBar({
                   <div ref={interactionsRef} className="flex gap-x-1 ml-auto ">
                     <Tooltip
                       content={
-                        <p className="max-w-sm flex flex-wrap">
+                        <p className="max-w-xs flex flex-wrap">
                           {alternativeAssistant.description}
                         </p>
                       }

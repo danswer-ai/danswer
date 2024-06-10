@@ -27,7 +27,7 @@ export function AssistantIcon({
     <div
       className={`
     
-     ${border && " border border-.5 border-black "}
+     ${border && " border border-.5 border-neutral-400 "}
       ${(!size || size == "large") && "w-6 h-6"}
       ${size == "small" && "w-6 h-6"}
         rounded-lg
