@@ -25,7 +25,7 @@ ChunkFunc = Callable[[Document], list[DocAwareChunk]]
 
 
 def extract_blurb(text: str, blurb_size: int) -> str:
-    from llama_index.text_splitter import SentenceSplitter
+    from llama_index.legacy.text_splitter import SentenceSplitter
 
     token_count_func = get_default_tokenizer().tokenize
     blurb_splitter = SentenceSplitter(
@@ -45,7 +45,7 @@ def chunk_large_section(
     chunk_overlap: int = CHUNK_OVERLAP,
     blurb_size: int = BLURB_SIZE,
 ) -> list[DocAwareChunk]:
-    from llama_index.text_splitter import SentenceSplitter
+    from llama_index.legacy.text_splitter import SentenceSplitter
 
     blurb = extract_blurb(section_text, blurb_size)
 
@@ -164,7 +164,7 @@ def chunk_document(
 def split_chunk_text_into_mini_chunks(
     chunk_text: str, mini_chunk_size: int = MINI_CHUNK_SIZE
 ) -> list[str]:
-    from llama_index.text_splitter import SentenceSplitter
+    from llama_index.legacy.text_splitter import SentenceSplitter
 
     token_count_func = get_default_tokenizer().tokenize
     sentence_aware_splitter = SentenceSplitter(
