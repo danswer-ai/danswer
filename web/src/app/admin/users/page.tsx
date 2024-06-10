@@ -1,4 +1,6 @@
 "use client";
+import { FiPlusSquare } from "react-icons/fi";
+import Link from "next/link";
 
 import {
   Table,
@@ -141,11 +143,25 @@ const UsersTable = () => {
   );
 };
 
+const AddUserButton = () => {
+  return (
+    <Link
+      href="/admin/users/new"
+      className="flex py-2 px-4 mt-2 border border-border h-fit cursor-pointer hover:bg-hover text-sm w-40"
+    >
+      <div className="mx-auto flex">
+        <FiPlusSquare className="my-auto mr-2" />
+        Add Users
+      </div>
+    </Link>
+  );
+};
+
 const Page = () => {
   return (
     <div className="mx-auto container">
       <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
-
+      <AddUserButton />
       <UsersTable />
     </div>
   );
