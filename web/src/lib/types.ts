@@ -44,6 +44,7 @@ export type ValidSources =
   | "loopio"
   | "dropbox"
   | "sharepoint"
+  | "teams"
   | "zendesk"
   | "discourse"
   | "axero"
@@ -127,6 +128,10 @@ export interface SharepointConfig {
   sites?: string[];
 }
 
+export interface TeamsConfig {
+  teams?: string[];
+}
+
 export interface DiscourseConfig {
   base_url: string;
   categories?: string[];
@@ -134,6 +139,10 @@ export interface DiscourseConfig {
 
 export interface AxeroConfig {
   spaces?: string[];
+}
+
+export interface TeamsConfig {
+  teams?: string[];
 }
 
 export interface ProductboardConfig {}
@@ -366,9 +375,15 @@ export interface DropboxCredentialJson {
 }
 
 export interface SharepointCredentialJson {
-  aad_client_id: string;
-  aad_client_secret: string;
-  aad_directory_id: string;
+  sp_client_id: string;
+  sp_client_secret: string;
+  sp_directory_id: string;
+}
+
+export interface TeamsCredentialJson {
+  teams_client_id: string;
+  teams_client_secret: string;
+  teams_directory_id: string;
 }
 
 export interface DiscourseCredentialJson {

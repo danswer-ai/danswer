@@ -95,6 +95,7 @@ class DocumentSource(str, Enum):
     LOOPIO = "loopio"
     DROPBOX = "dropbox"
     SHAREPOINT = "sharepoint"
+    TEAMS = "teams"
     DISCOURSE = "discourse"
     AXERO = "axero"
     MEDIAWIKI = "mediawiki"

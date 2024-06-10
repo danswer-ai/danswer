@@ -1,15 +1,14 @@
 "use client";
 
 import * as Yup from "yup";
-import { TrashIcon, SharepointIcon } from "@/components/icons/icons"; // Make sure you have a Document360 icon
-import { errorHandlingFetcher } from "@/lib/fetcher";
-import { ErrorCallout } from "@/components/ErrorCallout";
+import { TrashIcon, TeamsIcon } from "@/components/icons/icons"; // Make sure you have a Document360 icon
+import { fetcher } from "@/lib/fetcher";
 import useSWR, { useSWRConfig } from "swr";
 import { LoadingAnimation } from "@/components/Loading";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
-  SharepointConfig,
-  SharepointCredentialJson,
+  TeamsConfig,
+  TeamsCredentialJson,
   ConnectorIndexingStatus,
   Credential,
 } from "@/lib/types"; // Modify or create these types as required
@@ -30,16 +29,16 @@ const MainSection = () => {
   const {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
-    error: connectorIndexingStatusesError,
+    error: isConnectorIndexingStatusesError,
   } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
-    errorHandlingFetcher
+    fetcher
   );
 
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
-    error: credentialsError,
+    error: isCredentialsError,
     refreshCredentials,
   } = usePublicCredentials();
 
@@ -50,60 +49,49 @@ const MainSection = () => {
     return <LoadingAnimation text="Loading" />;
   }
 
-  if (connectorIndexingStatusesError || !connectorIndexingStatuses) {
-    return (
-      <ErrorCallout
-        errorTitle="Something went wrong :("
-        errorMsg={connectorIndexingStatusesError?.info?.detail}
-      />
-    );
+  if (isConnectorIndexingStatusesError || !connectorIndexingStatuses) {
+    return <div>Failed to load connectors</div>;
   }
 
-  if (credentialsError || !credentialsData) {
-    return (
-      <ErrorCallout
-        errorTitle="Something went wrong :("
-        errorMsg={credentialsError?.info?.detail}
-      />
-    );
+  if (isCredentialsError || !credentialsData) {
+    return <div>Failed to load credentials</div>;
   }
 
-  const sharepointConnectorIndexingStatuses: ConnectorIndexingStatus<
-    SharepointConfig,
-    SharepointCredentialJson
+  const teamsConnectorIndexingStatuses: ConnectorIndexingStatus<
+    TeamsConfig,
+    TeamsCredentialJson
   >[] = connectorIndexingStatuses.filter(
     (connectorIndexingStatus) =>
-      connectorIndexingStatus.connector.source === "sharepoint"
+      connectorIndexingStatus.connector.source === "teams"
   );
 
-  const sharepointCredential: Credential<SharepointCredentialJson> | undefined =
+  const teamsCredential: Credential<TeamsCredentialJson> | undefined =
     credentialsData.find(
-      (credential) => credential.credential_json?.sp_client_id
+      (credential) => credential.credential_json?.teams_client_id
     );
 
   return (
     <>
       <Text>
-        The Sharepoint connector allows you to index and search through your
-        Sharepoint files. Once setup, your Word documents, Excel files,
-        PowerPoint presentations, OneNote notebooks, PDFs, and uploaded files
-        will be queryable within Danswer.
+        The Teams connector allows you to index and search through your Teams
+        channels. Once setup, all messages from the channels contained in the
+        specified teams will be queryable within Danswer.
       </Text>
 
       <Title className="mb-2 mt-6 ml-auto mr-auto">
-        Step 1: Provide Sharepoint credentials
+        Step 1: Provide Teams credentials
       </Title>
-      {sharepointCredential ? (
+      {teamsCredential ? (
         <>
           <div className="flex mb-1 text-sm">
             <Text className="my-auto">Existing Azure AD Client ID: </Text>
             <Text className="ml-1 italic my-auto">
-              {sharepointCredential.credential_json.sp_client_id}
+              {teamsCredential.credential_json.teams_client_id}
             </Text>
             <button
               className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
-                await adminDeleteCredential(sharepointCredential.id);
+                await adminDeleteCredential(teamsCredential.id);
                 refreshCredentials();
               }}
             >
@@ -118,7 +106,7 @@ const MainSection = () => {
             (tenant) ID, and Client Secret. You can follow the guide{" "}
             <a
               target="_blank"
-              href="https://docs.danswer.dev/connectors/sharepoint"
+              href="https://docs.danswer.dev/connectors/teams"
               className="text-link"
             >
               here
@@ -126,39 +114,39 @@ const MainSection = () => {
             to create an Azure AD application and obtain these values.
           </Text>
           <Card className="mt-2">
-            <CredentialForm<SharepointCredentialJson>
+            <CredentialForm<TeamsCredentialJson>
               formBody={
                 <>
                   <TextFormField
-                    name="sp_client_id"
+                    name="teams_client_id"
                     label="Application (client) ID:"
                   />
                   <TextFormField
-                    name="sp_directory_id"
+                    name="teams_directory_id"
                     label="Directory (tenant) ID:"
                   />
                   <TextFormField
-                    name="sp_client_secret"
+                    name="teams_client_secret"
                     label="Client Secret:"
                     type="password"
                   />
                 </>
               }
               validationSchema={Yup.object().shape({
-                sp_client_id: Yup.string().required(
+                teams_client_id: Yup.string().required(
                   "Please enter your Application (client) ID"
                 ),
-                sp_directory_id: Yup.string().required(
+                teams_directory_id: Yup.string().required(
                   "Please enter your Directory (tenant) ID"
                 ),
-                sp_client_secret: Yup.string().required(
+                teams_client_secret: Yup.string().required(
                   "Please enter your Client Secret"
                 ),
               })}
               initialValues={{
-                sp_client_id: "",
-                sp_directory_id: "",
-                sp_client_secret: "",
+                teams_client_id: "",
+                teams_directory_id: "",
+                teams_client_secret: "",
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
@@ -171,29 +159,28 @@ const MainSection = () => {
       )}
 
       <Title className="mb-2 mt-6 ml-auto mr-auto">
-        Step 2: Manage Sharepoint Connector
+        Step 2: Manage Teams Connector
       </Title>
 
-      {sharepointConnectorIndexingStatuses.length > 0 && (
+      {teamsConnectorIndexingStatuses.length > 0 && (
         <>
           <Text className="mb-2">
-            The latest state of your Word documents, Excel files, PowerPoint
-            presentations, OneNote notebooks, PDFs, and uploaded files are
-            fetched every 10 minutes.
+            The latest messages from the specified teams are fetched every 10
+            minutes.
           </Text>
           <div className="mb-2">
-            <ConnectorsTable<SharepointConfig, SharepointCredentialJson>
-              connectorIndexingStatuses={sharepointConnectorIndexingStatuses}
-              liveCredential={sharepointCredential}
+            <ConnectorsTable<TeamsConfig, TeamsCredentialJson>
+              connectorIndexingStatuses={teamsConnectorIndexingStatuses}
+              liveCredential={teamsCredential}
               getCredential={(credential) =>
-                credential.credential_json.sp_directory_id
+                credential.credential_json.teams_directory_id
               }
               onUpdate={() =>
                 mutate("/api/manage/admin/connector/indexing-status")
               }
               onCredentialLink={async (connectorId) => {
-                if (sharepointCredential) {
-                  await linkCredential(connectorId, sharepointCredential.id);
+                if (teamsCredential) {
+                  await linkCredential(connectorId, teamsCredential.id);
                   mutate("/api/manage/admin/connector/indexing-status");
                 }
               }}
@@ -204,7 +191,7 @@ const MainSection = () => {
                   getValue: (ccPairStatus) => {
                     const connectorConfig =
                       ccPairStatus.connector.connector_specific_config;
-                    return `${connectorConfig.sites}`;
+                    return `${connectorConfig.teams}`;
                   },
                 },
               ]}
@@ -214,65 +201,48 @@ const MainSection = () => {
         </>
       )}
 
-      {sharepointCredential ? (
+      {teamsCredential ? (
         <Card className="mt-4">
-          <ConnectorForm<SharepointConfig>
+          <ConnectorForm<TeamsConfig>
             nameBuilder={(values) =>
-              values.sites && values.sites.length > 0
-                ? `Sharepoint-${values.sites.join("-")}`
-                : "Sharepoint"
+              values.teams && values.teams.length > 0
+                ? `Teams-${values.teams.join("-")}`
+                : "Teams"
             }
             ccPairNameBuilder={(values) =>
-              values.sites && values.sites.length > 0
-                ? `Sharepoint-${values.sites.join("-")}`
-                : "Sharepoint"
+              values.teams && values.teams.length > 0
+                ? `Teams-${values.teams.join("-")}`
+                : "Teams"
             }
-            source="sharepoint"
+            source="teams"
             inputType="poll"
             // formBody={<></>}
             formBodyBuilder={TextArrayFieldBuilder({
-              name: "sites",
-              label: "Sites:",
-              subtext: (
-                <>
-                  <br />
-                  <ul>
-                    <li>
-                      • If no sites are specified, all sites in your
-                      organization will be indexed (Sites.Read.All permission
-                      required).
-                    </li>
-                    <li>
-                      • Specifying
-                      &apos;https://danswerai.sharepoint.com/sites/support&apos;
-                      for example will only index documents within this site.
-                    </li>
-                    <li>
-                      • Specifying
-                      &apos;https://danswerai.sharepoint.com/sites/support/subfolder&apos;
-                      for example will only index documents within this folder.
-                    </li>
-                  </ul>
-                </>
-              ),
+              name: "teams",
+              label: "Teams:",
+              subtext:
+                "Specify 0 or more Teams to index.  " +
+                "For example, specifying the Team 'Support' for the 'danswerai' Org will cause  " +
+                "us to only index messages sent in channels belonging to the 'Support' Team. " +
+                "If no Teams are specified, all Teams in your organization will be indexed.",
             })}
             validationSchema={Yup.object().shape({
-              sites: Yup.array()
-                .of(Yup.string().required("Site names must be strings"))
+              teams: Yup.array()
+                .of(Yup.string().required("Team names must be strings"))
                 .required(),
             })}
             initialValues={{
-              sites: [],
+              teams: [],
             }}
-            credentialId={sharepointCredential.id}
+            credentialId={teamsCredential.id}
             refreshFreq={10 * 60} // 10 minutes
           />
         </Card>
       ) : (
         <Text>
           Please provide all Azure info in Step 1 first! Once you&apos;re done
-          with that, you can then specify which Sharepoint sites you want to
-          make searchable.
+          with that, you can then specify which teams you want to make
+          searchable.
         </Text>
       )}
     </>
@@ -286,7 +256,7 @@ export default function Page() {
         <HealthCheckBanner />
       </div>
 
-      <AdminPageTitle icon={<SharepointIcon size={32} />} title="Sharepoint" />
+      <AdminPageTitle icon={<TeamsIcon size={32} />} title="Teams" />
 
       <MainSection />
     </div>
