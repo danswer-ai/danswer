@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 
 MODEL_SERVER_HOST = os.environ.get("MODEL_SERVER_HOST") or "localhost"

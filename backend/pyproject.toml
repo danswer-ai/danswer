@@ -110,6 +110,8 @@ dev-dependencies = [
     "types-retry==0.9.9.3",
     "types-urllib3==1.26.25.11",
     "ipykernel>=6.29.4",
+    "tqdm>=4.66.4",
+    "ipywidgets>=8.1.3",
 ]
 virtual = false # We install danswer as package to make it possible to easily test it in notebooks
 
@@ -127,6 +129,8 @@ model_server = { cmd = "uvicorn model_server.main:app --reload --port 9000" }
 background_tasks = { cmd = "python ./scripts/dev_run_background_jobs.py" }
 main_server = { cmd = " uvicorn danswer.main:app --reload --port 8080", env = { AUTH_TYPE = "disabled" } }
 run_migrations = { cmd = "alembic upgrade head" }
+solidaire_tests = {cmd = "python tests/regression/answer_quality/eval_direct_qa.py tests/regression/answer_quality/exil_solidaire.yaml --output tests/regression/answer_quality/exil_solidaire_output.yaml"}
+chattest = {cmd = "python chattest.py"}
 
 [tool.mypy]
 plugins = "sqlalchemy.ext.mypy.plugin"

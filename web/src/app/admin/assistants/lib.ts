@@ -1,3 +1,4 @@
+import dynamic from "next/dynamic";
 import { Persona, Prompt, StarterMessage } from "./interfaces";
 
 interface PersonaCreationRequest {

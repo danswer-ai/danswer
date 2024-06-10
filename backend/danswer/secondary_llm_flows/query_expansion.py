@@ -123,6 +123,7 @@ def history_based_query_rephrase(
     )
 
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(prompt_msgs)
+    logger.debug(f"Filled LLM prompt: {filled_llm_prompt}")
     rephrased_query = message_to_string(llm.invoke(filled_llm_prompt))
 
     logger.debug(f"Rephrased combined query: {rephrased_query}")
