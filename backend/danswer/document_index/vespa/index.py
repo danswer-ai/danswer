@@ -709,7 +709,7 @@ def _create_document_xml_lines(doc_names: list[str | None]) -> str:
     return "\n".join(doc_lines)
 
 
-def _copy_clean_chunk_id(
+def _clean_chunk_id_copy(
     chunk: DocMetadataAwareIndexChunk,
 ) -> DocMetadataAwareIndexChunk:
     clean_chunk = chunk.copy(
@@ -817,7 +817,7 @@ class VespaIndex(DocumentIndex):
         chunks: list[DocMetadataAwareIndexChunk],
     ) -> set[DocumentInsertionRecord]:
         # IMPORTANT: This must be done one index at a time, do not use secondary index here
-        cleaned_chunks = [_copy_clean_chunk_id(chunk) for chunk in chunks]
+        cleaned_chunks = [_clean_chunk_id_copy(chunk) for chunk in chunks]
         return _clear_and_index_vespa_chunks(
             chunks=cleaned_chunks, index_name=self.index_name
         )
