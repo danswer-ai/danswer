@@ -20,6 +20,8 @@ def generate_system_fingerprint():
 
 def count_tokens(text, tokenizer: str = 'cl100k_base'):
     """Count the number of tokens in the text based on the tokenizer."""
+    # Availble tokenizers
+    # https://github.com/openai/tiktoken/blob/main/tiktoken_ext/openai_public.py
     encoding = tiktoken.get_encoding(tokenizer)
     tokens = encoding.encode(text)
     return len(tokens)
