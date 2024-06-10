@@ -2,7 +2,7 @@
 
 import * as Yup from "yup";
 import { TrashIcon, TeamsIcon } from "@/components/icons/icons"; // Make sure you have a Document360 icon
-import { fetcher } from "@/lib/fetcher";
+import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { useSWRConfig } from "swr";
 import { LoadingAnimation } from "@/components/Loading";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -32,7 +32,7 @@ const MainSection = () => {
     error: isConnectorIndexingStatusesError,
   } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
-    fetcher
+    errorHandlingFetcher
   );
 
   const {
