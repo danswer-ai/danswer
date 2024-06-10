@@ -1,6 +1,7 @@
 import functools
 import importlib
 from typing import Any
+from typing import TypeVar
 
 from danswer.utils.logger import setup_logger
 
@@ -36,3 +37,21 @@ def fetch_versioned_implementation(module: str, attribute: str) -> Any:
             return getattr(importlib.import_module(module), attribute)
 
         raise
+
+
+T = TypeVar("T")
+
+
+def fetch_versioned_implementation_with_fallback(
+    module: str, attribute: str, fallback: T
+) -> T:
+    try:
+        return fetch_versioned_implementation(module, attribute)
+    except Exception as e:
+        logger.warning(
+            "Failed to fetch versioned implementation for %s.%s: %s",
+            module,
+            attribute,
+            e,
+        )
+        return fallback

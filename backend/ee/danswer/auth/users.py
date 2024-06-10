@@ -11,6 +11,7 @@ from danswer.utils.logger import setup_logger
 from ee.danswer.auth.api_key import get_hashed_api_key_from_request
 from ee.danswer.db.api_key import fetch_user_for_api_key
 from ee.danswer.db.saml import get_saml_account
+from ee.danswer.server.seeding import get_seed_config
 from ee.danswer.utils.secrets import extract_hashed_cookie
 
 logger = setup_logger()
@@ -55,3 +56,10 @@ def api_key_dep(request: Request, db_session: Session = Depends(get_session)) ->
         raise HTTPException(status_code=401, detail="Invalid API key")
 
     return user
+
+
+def get_default_admin_user_emails_() -> list[str]:
+    seed_config = get_seed_config()
+    if seed_config and seed_config.admin_user_emails:
+        return seed_config.admin_user_emails
+    return []
