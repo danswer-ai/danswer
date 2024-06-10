@@ -166,8 +166,6 @@ def read_text_file(
 
 def pdf_to_text(file: IO[Any], pdf_pass: str | None = None) -> str:
     try:
-        if isinstance(file, bytes):
-            file = io.BytesIO(file)
         pdf_reader = PdfReader(file)
 
         # If marked as encrypted and a password is provided, try to decrypt
