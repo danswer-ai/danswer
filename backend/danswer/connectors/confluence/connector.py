@@ -1,4 +1,3 @@
-import io
 import os
 from collections.abc import Callable
 from collections.abc import Collection
@@ -29,11 +28,7 @@ from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.file_processing.extract_file_text import docx_to_text
-from danswer.file_processing.extract_file_text import is_text_file_extension
-from danswer.file_processing.extract_file_text import pdf_to_text
-from danswer.file_processing.extract_file_text import pptx_to_text
-from danswer.file_processing.extract_file_text import xlsx_to_text
+from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.file_processing.html_utils import format_document_soup
 from danswer.utils.logger import setup_logger
 
@@ -170,22 +165,6 @@ def get_used_attachments(text: str, confluence_client: Confluence) -> list[str]:
     for attachment in soup.findAll("ri:attachment"):
         files_in_used.append(attachment.attrs["ri:filename"])
     return files_in_used
-
-
-def extract_file_content(file_content: Any, file_name: str) -> str:
-    if file_name.endswith(".pdf"):
-        return pdf_to_text(io.BytesIO(file_content), file_name)
-    elif file_name.endswith(".docx"):
-        return docx_to_text(io.BytesIO(file_content))
-    elif file_name.endswith(".xlsx"):
-        return xlsx_to_text(io.BytesIO(file_content))
-    elif file_name.endswith(".pptx"):
-        return pptx_to_text(io.BytesIO(file_content))
-    elif is_text_file_extension(file_name):
-        return file_content.decode("utf-8")
-    else:
-        logger.info(f"Not supported file extension. Ignoring '{file_name}'")
-        return ""
 
 
 def _comment_dfs(
@@ -385,9 +364,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 response = confluence_client._session.get(download_link)
 
                 if response.status_code == 200:
-                    extract = extract_file_content(
-                        response.content, attachment["title"]
-                    )
+                    extract = extract_file_text(response.content, attachment["title"])
                     files_attachment_content.append(extract)
 
         except Exception as e:
