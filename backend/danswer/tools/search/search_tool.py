@@ -294,7 +294,7 @@ class SearchTool(Tool):
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
         query = cast(str, kwargs["query"])
-
+        tag_report = ""
         if self.selected_docs:
             yield from self._build_response_for_specified_sections(query)
             return
@@ -330,7 +330,7 @@ class SearchTool(Tool):
         yield ToolResponse(
             id=SEARCH_RESPONSE_SUMMARY_ID,
             response=SearchResponseSummary(
-                rephrased_query=query + f"\n {tag_report}",
+                rephrased_query=query + tag_report,
                 top_sections=search_pipeline.reranked_sections,
                 predicted_flow=search_pipeline.predicted_flow,
                 predicted_search=search_pipeline.predicted_search_type,
