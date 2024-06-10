@@ -69,7 +69,10 @@ def _process_file(
 
     if is_text_file_extension(file_name):
         encoding = detect_encoding(file)
-        file_content_raw, file_metadata = read_text_file(file, encoding=encoding,ignore_danswer_metadata=False)
+        file_content_raw, file_metadata = read_text_file(
+            file, encoding=encoding, ignore_danswer_metadata=False
+        )
+        logger.error(f"file_metadata: {file_metadata}")
 
     # Using the PDF reader function directly to pass in password cleanly
     elif extension == ".pdf":

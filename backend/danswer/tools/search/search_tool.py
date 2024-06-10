@@ -14,20 +14,24 @@ from danswer.llm.answering.doc_pruning import prune_documents
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
+from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import LLMConfig
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
+from danswer.search.models import BaseFilters
 from danswer.search.models import IndexFilters
 from danswer.search.models import InferenceSection
 from danswer.search.models import RetrievalDetails
 from danswer.search.models import SearchRequest
+from danswer.search.models import Tag
 from danswer.search.pipeline import SearchPipeline
 from danswer.secondary_llm_flows.choose_search import check_if_need_search
 from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
 from danswer.tools.search.search_utils import llm_doc_to_dict
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
+from danswer.utils.logger import setup_logger
 
 SEARCH_RESPONSE_SUMMARY_ID = "search_response_summary"
 SECTION_RELEVANCE_LIST_ID = "section_relevance_list"
@@ -53,6 +57,92 @@ additional information or details would provide little or no value.
 
 HINT: if you are unfamiliar with the user input OR think the user input is a typo, use this tool.
 """
+
+HARDCODED_DTAGS_PROMPT = """
+You will be given user query and list of all possible tags that sysyem can use to give user docs relevant for the query.
+Think out loud in short and concise way what things might be relevant for the user query.
+After finishing thinking out loud, make sure to provide the list of tags that you think are relevant for the user query.
+The format should be a simple list of tags separated by commas in brackets, for example: `[tag1, tag2, tag3]`.
+It should always be the last thing you write in the message. If not tags are relevant, write `[]`.
+Here are all possible tag values: `{tag_values}` , here's the user query : `{query}`
+"""
+
+
+class SingleTagConfig(BaseModel):
+    tag_key: str
+    all_possible_tag_values: list[str]
+
+
+class DtagsConfig(BaseModel):
+    dtags: list[SingleTagConfig]
+
+
+logger = setup_logger(__name__)
+
+
+def generate_context_dependent_filters(
+    query: str, dtags_config_str: str
+) -> BaseFilters | None:
+    """
+    This function is used to generate filters based on the query and the persona's description.
+    We use the dtags_config_str to parse it into expected format.
+    Expected format:
+    {
+        "dtags": [
+            {
+            "tag_key": "Tags",
+            "all_possible_tag_values": ["равенство", "дискриминация", "преступление"],
+            },
+            {
+            "tag_key": "Select",
+            "all_possible_tag_values": ["Уже во Франции", "Хочу во Францию"],
+            },
+            ],
+    }
+    Args:
+    query: str: The query that the user has asked.
+    dtags_config_str: str: The persona's description that contains the dtags_config and can be loaded into a dict with json.loads.
+
+    Returns:
+    BaseFilters: The filters that are generated based on the query and the dtags_config_str.
+    """
+
+    # define pydantic model and validators using our doc
+    # copilot, write it and define validators
+    try:
+        dtags_config = DtagsConfig(**json.loads(dtags_config_str))
+    except Exception as e:
+        logger.error(
+            f"Error parsing dtags config. Will use empty filters, error is: {e}"
+        )
+        filters = None
+        # filters = BaseFilters(
+        #     tags=[Tag(tag_key="Tags", tag_value="равенство")]
+        # )  # эксперимент
+    all_tags = []
+    llm = get_default_llm()
+    for dtag_config in dtags_config.dtags:
+        try:
+            tag_values = str(dtag_config.all_possible_tag_values)
+            choose_tags_prompt = HARDCODED_DTAGS_PROMPT.format(
+                tag_values=tag_values, query=query
+            )
+            chosen_tags_msg = llm.invoke(
+                prompt=choose_tags_prompt, tools=None, tool_choice=None
+            )
+            logger.info(f"Chosen tags msg: {chosen_tags_msg.content}")
+            raw_tags = str(chosen_tags_msg).split("[")[-1].split("]")[0].split(",")
+            tags = [
+                Tag(tag_key=dtag_config.tag_key, tag_value=tag.strip())
+                for tag in raw_tags
+            ]
+            all_tags.extend(tags)
+        except (ValueError, TypeError) as e:
+            logger.error(
+                f"Error parsing dtags config. Will skip this tag, error is: {e}"
+            )
+    filters = BaseFilters(tags=all_tags)
+    return filters
 
 
 class SearchTool(Tool):
@@ -187,17 +277,25 @@ class SearchTool(Tool):
         if self.selected_docs:
             yield from self._build_response_for_specified_sections(query)
             return
-
+        if "[DTAGS]" in self.persona.description:
+            dtags_config_str = self.persona.description.split("[DTAGS]")[-1].split(
+                "[/DTAGS]"
+            )[0]
+            filters = generate_context_dependent_filters(query, dtags_config_str)
+            if not self.retrieval_options:
+                self.retrieval_options = RetrievalDetails(filters=filters)
+            else:
+                self.retrieval_options.filters = filters
         search_pipeline = SearchPipeline(
             search_request=SearchRequest(
                 query=query,
-                human_selected_filters=self.retrieval_options.filters
-                if self.retrieval_options
-                else None,
+                human_selected_filters=(
+                    self.retrieval_options.filters if self.retrieval_options else None
+                ),
                 persona=self.persona,
-                offset=self.retrieval_options.offset
-                if self.retrieval_options
-                else None,
+                offset=(
+                    self.retrieval_options.offset if self.retrieval_options else None
+                ),
                 limit=self.retrieval_options.limit if self.retrieval_options else None,
                 chunks_above=self.chunks_above,
                 chunks_below=self.chunks_below,
