@@ -273,9 +273,11 @@ class DefaultMultiLLM(LLM):
             prompt = [_convert_message_to_dict(HumanMessage(content=prompt))]
 
         try:
+            # When custom LLM provider is supplied, model name doesn't require prefix in LiteLLM
+            prefix = f"{self.config.model_provider}/" if not self._custom_llm_provider else ""
             return litellm.completion(
                 # model choice
-                model=f"{self.config.model_provider}/{self.config.model_name}",
+                model=f"{prefix}{self.config.model_name}",
                 api_key=self._api_key,
                 base_url=self._api_base,
                 api_version=self._api_version,
