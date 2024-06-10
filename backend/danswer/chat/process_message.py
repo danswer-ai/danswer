@@ -26,7 +26,6 @@ from danswer.db.chat import get_chat_session_by_id
 from danswer.db.chat import get_db_search_doc_by_id
 from danswer.db.chat import get_doc_query_identifiers_from_model
 from danswer.db.chat import get_or_create_root_message
-from danswer.db.chat import get_persona_by_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.embedding_model import get_current_db_embedding_model
@@ -35,6 +34,7 @@ from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import ToolCall
 from danswer.db.models import User
+from danswer.db.persona import get_persona_by_id
 from danswer.document_index.factory import get_default_document_index
 from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import FileDescriptor
@@ -227,7 +227,6 @@ def stream_chat_message_objects(
         reference_doc_ids = new_msg_req.search_doc_ids
         retrieval_options = new_msg_req.retrieval_options
         alternate_assistant_id = new_msg_req.alternate_assistant_id
-        # print(new_msg_req.__dict__)
 
         # use alernate persona if alternative assistant id is passed in
         if alternate_assistant_id:
@@ -413,7 +412,7 @@ def stream_chat_message_objects(
             if not persona
             else PromptConfig.from_model(persona.prompts[0])
         )
-        # print(persona.tools)
+
         persona_tool_classes = [
             get_tool_cls(tool, db_session) for tool in persona.tools
         ]
@@ -450,7 +449,6 @@ def stream_chat_message_objects(
                         full_doc=new_msg_req.full_doc,
 =======
         tools: list[Tool] = []
-        # print(persona_tool_classes)
 
         for tool_cls in persona_tool_classes:
             if tool_cls.__name__ == SearchTool.__name__ and not latest_query_files:

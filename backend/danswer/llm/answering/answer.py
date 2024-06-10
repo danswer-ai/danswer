@@ -398,8 +398,6 @@ class Answer:
             else self._raw_output_for_non_explicit_tool_calling_llms()
         )
 
-        # print(output_generator)
-
         def _process_stream(
             stream: Iterator[ToolCallKickoff | ToolResponse | str],
         ) -> AnswerStream:
