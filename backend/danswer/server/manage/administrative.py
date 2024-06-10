@@ -231,3 +231,13 @@ def update_token_budget_settings(
     # Store the settings in the dynamic config store
     get_dynamic_config_store().store(TOKEN_BUDGET_SETTINGS, settings_json)
     return {"message": "Token budget settings updated successfully."}
+
+
+@router.put("/admin/users")
+def bulk_add_users(
+    _: User | None = Depends(current_admin_user),
+    users: list[str] = Body(..., embed=True),
+) -> dict:
+    print(users)
+    # print(users)
+    return {}
