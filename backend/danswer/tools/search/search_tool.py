@@ -58,13 +58,18 @@ additional information or details would provide little or no value.
 HINT: if you are unfamiliar with the user input OR think the user input is a typo, use this tool.
 """
 
-HARDCODED_DTAGS_PROMPT = """
+HARDCODED_PRE_CHOICE_PROMPT = """
 You will be given user query and list of all possible tags that sysyem can use to give user docs relevant for the query.
 Think out loud in short and concise way what things might be relevant for the user query.
-After finishing thinking out loud, make sure to provide the list of tags that you think are relevant for the user query.
+If there's strong connection to some of the mentioned tags, make sure to mention them.
+Here are all possible tag values: `{all_tag_values}` , here's the user query : `{query}`
+"""
+
+HARDCODED_DTAGS_PROMPT = """
+You will be given a report on what tags might be relevant to the user query. Choose tags, from the list of scoped values.
 The format should be a simple list of tags separated by commas in brackets, for example: `[tag1, tag2, tag3]`.
-It should always be the last thing you write in the message. If not tags are relevant, write `[]`.
-Here are all possible tag values: `{tag_values}` , here's the user query : `{query}`
+It should always be the ONLY thing you write in the message. If not tags are relevant, write `[]`. No yapping.
+Here are all scoped possible tag values: `{tag_values}` , here's the user query : `{query}`, here's the report: {report}.
 """
 
 
@@ -82,7 +87,7 @@ logger = setup_logger(__name__)
 
 def generate_context_dependent_filters(
     query: str, dtags_config_str: str
-) -> BaseFilters | None:
+) -> tuple[BaseFilters | None, str]:
     """
     This function is used to generate filters based on the query and the persona's description.
     We use the dtags_config_str to parse it into expected format.
@@ -109,6 +114,7 @@ def generate_context_dependent_filters(
 
     # define pydantic model and validators using our doc
     # copilot, write it and define validators
+    llm = get_default_llm()  # TODO:  maybe singleton pattern and out of function scope?
     try:
         dtags_config = DtagsConfig(**json.loads(dtags_config_str))
     except Exception as e:
@@ -120,29 +126,44 @@ def generate_context_dependent_filters(
         #     tags=[Tag(tag_key="Tags", tag_value="равенство")]
         # )  # эксперимент
     all_tags = []
-    llm = get_default_llm()
-    for dtag_config in dtags_config.dtags:
+    tag_report = ""
+    all_possible_tag_values = [
+        single_dtag
+        for single_tag_config in dtags_config.dtags
+        for single_dtag in single_tag_config.all_possible_tag_values
+    ]
+    pre_report_prompt = HARDCODED_PRE_CHOICE_PROMPT.format(
+        all_tag_values=all_possible_tag_values, query=query
+    )
+    pre_report_msg = llm.invoke(prompt=pre_report_prompt, tools=None, tool_choice=None)
+    logger.info(f"Pre report msg: {pre_report_msg.content}")
+    for single_dtag_config in dtags_config.dtags:
         try:
-            tag_values = str(dtag_config.all_possible_tag_values)
+            scoped_tag_values = str(single_dtag_config.all_possible_tag_values)
             choose_tags_prompt = HARDCODED_DTAGS_PROMPT.format(
-                tag_values=tag_values, query=query
+                tag_values=scoped_tag_values,
+                query=query,
+                report=str(pre_report_msg.content),
             )
             chosen_tags_msg = llm.invoke(
                 prompt=choose_tags_prompt, tools=None, tool_choice=None
             )
             logger.info(f"Chosen tags msg: {chosen_tags_msg.content}")
-            raw_tags = str(chosen_tags_msg).split("[")[-1].split("]")[0].split(",")
+            raw_tags = (
+                str(chosen_tags_msg.content).split("[")[-1].split("]")[0].split(",")
+            )
             tags = [
-                Tag(tag_key=dtag_config.tag_key, tag_value=tag.strip())
+                Tag(tag_key=single_dtag_config.tag_key, tag_value=tag.strip())
                 for tag in raw_tags
             ]
             all_tags.extend(tags)
+            tag_report += f"{single_dtag_config.tag_key} : {raw_tags}\n"
         except (ValueError, TypeError) as e:
             logger.error(
                 f"Error parsing dtags config. Will skip this tag, error is: {e}"
             )
     filters = BaseFilters(tags=all_tags)
-    return filters
+    return filters, tag_report
 
 
 class SearchTool(Tool):
@@ -281,7 +302,9 @@ class SearchTool(Tool):
             dtags_config_str = self.persona.description.split("[DTAGS]")[-1].split(
                 "[/DTAGS]"
             )[0]
-            filters = generate_context_dependent_filters(query, dtags_config_str)
+            filters, tag_report = generate_context_dependent_filters(
+                query, dtags_config_str
+            )
             if not self.retrieval_options:
                 self.retrieval_options = RetrievalDetails(filters=filters)
             else:
@@ -307,7 +330,7 @@ class SearchTool(Tool):
         yield ToolResponse(
             id=SEARCH_RESPONSE_SUMMARY_ID,
             response=SearchResponseSummary(
-                rephrased_query=query,
+                rephrased_query=query + f"\n {tag_report}",
                 top_sections=search_pipeline.reranked_sections,
                 predicted_flow=search_pipeline.predicted_flow,
                 predicted_search=search_pipeline.predicted_search_type,
