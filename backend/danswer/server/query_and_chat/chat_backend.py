@@ -4,6 +4,7 @@ import uuid
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
 from fastapi.responses import StreamingResponse
@@ -41,6 +42,7 @@ from danswer.file_store.models import FileDescriptor
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
+from danswer.llm.headers import get_litellm_additional_request_headers
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.secondary_llm_flows.chat_session_naming import (
     get_renamed_conversation_name,
@@ -233,6 +235,7 @@ def delete_chat_session_by_id(
 @router.post("/send-message")
 def handle_new_chat_message(
     chat_message_req: CreateChatMessageRequest,
+    request: Request,
     user: User | None = Depends(current_user),
 ) -> StreamingResponse:
     """This endpoint is both used for all the following purposes:
@@ -256,6 +259,9 @@ def handle_new_chat_message(
         new_msg_req=chat_message_req,
         user=user,
         use_existing_user_message=chat_message_req.use_existing_user_message,
+        litellm_additional_headers=get_litellm_additional_request_headers(
+            request.headers
+        ),
     )
 
     return StreamingResponse(packets, media_type="application/json")
