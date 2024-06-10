@@ -47,6 +47,7 @@ VALID_FILE_EXTENSIONS = PLAIN_TEXT_FILE_EXTENSIONS + [
     ".xlsx",
     ".eml",
     ".epub",
+    ".html",
 ]
 
 
@@ -253,6 +254,10 @@ def file_io_to_text(file: IO[Any]) -> str:
     return file_content_raw
 
 
+def html_to_text(file: IO[Any]) -> str:
+    return parse_html_page_basic(file)
+
+
 def extract_file_text(
     file_name: str | None,
     file: IO[Any],
@@ -286,6 +291,9 @@ def extract_file_text(
 
     elif extension == ".epub":
         return epub_to_text(file)
+
+    elif extension == ".html":
+        return html_to_text(file)
 
     else:
         return file_io_to_text(file)
