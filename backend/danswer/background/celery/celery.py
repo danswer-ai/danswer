@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from danswer.background.connector_deletion import delete_connector_credential_pair
 from danswer.background.task_utils import build_celery_task_wrapper
-from danswer.background.task_utils import name_bulk_add_users_task
 from danswer.background.task_utils import name_cc_cleanup_task
 from danswer.background.task_utils import name_document_set_sync_task
 from danswer.configs.app_configs import JOB_TIMEOUT
@@ -46,15 +45,6 @@ _SYNC_BATCH_SIZE = 100
 #
 # If imports from this module are needed, use local imports to avoid circular importing
 #####
-@build_celery_task_wrapper(name_bulk_add_users_task)
-@celery_app.task(soft_time_limit=JOB_TIMEOUT)
-def bulk_add_users(
-    emails: list[str],
-) -> None:
-    print("Hello from celery: {}".format(emails))
-    return None
-
-
 @build_celery_task_wrapper(name_cc_cleanup_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def cleanup_connector_credential_pair_task(
