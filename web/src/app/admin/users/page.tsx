@@ -310,7 +310,7 @@ const AddUserButton = ({
       <Button onClick={() => setModal(true)}>
         <div className="flex">
           <FiPlusSquare className="my-auto mr-2" />
-          Add Users
+          Invite Users
         </div>
       </Button>
       {modal && (
