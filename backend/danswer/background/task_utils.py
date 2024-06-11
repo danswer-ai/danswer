@@ -14,6 +14,10 @@ from danswer.db.tasks import mark_task_start
 from danswer.db.tasks import register_task
 
 
+def name_bulk_add_users_task(emails: list[str]) -> str:
+    return "bulk_add_users_task_{}".format(len(emails))
+
+
 def name_cc_cleanup_task(connector_id: int, credential_id: int) -> str:
     return f"cleanup_connector_credential_pair_{connector_id}_{credential_id}"
 

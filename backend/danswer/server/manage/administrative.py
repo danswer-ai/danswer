@@ -236,8 +236,12 @@ def update_token_budget_settings(
 @router.put("/admin/users")
 def bulk_add_users(
     _: User | None = Depends(current_admin_user),
-    users: list[str] = Body(..., embed=True),
+    emails: list[str] = Body(..., embed=True),
 ) -> dict:
-    print(users)
-    # print(users)
+    from danswer.background.celery.celery import bulk_add_users
+
+    print(emails)
+    bulk_add_users.apply_async(
+        kwargs=dict(emails=emails),
+    )
     return {}
