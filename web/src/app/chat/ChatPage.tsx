@@ -245,9 +245,14 @@ export function ChatPage({
   const [message, setMessage] = useState(
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
+
   const [completeMessageMap, setCompleteMessageMap] = useState<
     Map<number, Message>
   >(new Map());
+
+  /**
+   * Overrides message map
+   */
   const upsertToCompleteMessageMap = ({
     messages,
     completeMessageMapOverride,
@@ -748,14 +753,15 @@ export function ChatPage({
     }
   };
 
+  // const
+
   // Refactored methods
-  const regenerateResponse = async ({
-    responseId,
-    modelOverRide = null,
-  }: {
-    responseId?: number;
-    modelOverRide?: LlmOverride | null;
-  } = {}) => {
+  const regenerateResponse = async (
+    responseId: number,
+    modelOverRide: LlmOverride | null
+  ) => {
+    console.log(responseId);
+    console.log(modelOverRide);
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
     const searchParamBasedChatSessionName =
@@ -947,6 +953,14 @@ export function ChatPage({
       setSelectedMessageForDocDisplay(finalMessage.message_id);
     }
   };
+
+  // Define the Higher Order Function to preset responseId
+  function createRegenerator(responseId: number) {
+    // Return a new function that only needs modelOverRide to be specified when called
+    return async function (modelOverRide: LlmOverride | null) {
+      return await regenerateResponse(responseId, modelOverRide);
+    };
+  }
 
   const onFeedback = async (
     messageId: number,
@@ -1242,8 +1256,10 @@ export function ChatPage({
                                 regenerate={{
                                   alternateModel: message.alternate_model,
                                   selectedAssistant: livePersona,
-                                  regenerateResponse: regenerateResponse,
-                                  messageIdToResend: parentMessage?.messageId!,
+                                  regenerateResponse: createRegenerator(
+                                    parentMessage?.messageId!
+                                  ),
+                                  // messageIdToResend: parentMessage?.messageId!,
                                   llmOverrideManager: llmOverrideManager,
                                 }}
                                 otherResponseCanSwitchTo={

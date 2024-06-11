@@ -352,6 +352,7 @@ export const AIMessage = ({
                 icon={FiThumbsDown}
                 onClick={() => handleFeedback("dislike")}
               />
+
               {regenerate && <RegenerateOption regenerate={regenerate} />}
             </div>
           )}
