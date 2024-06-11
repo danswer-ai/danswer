@@ -20,6 +20,7 @@ import { User } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 import useSWRMutation from "swr/mutation";
 import { ErrorCallout } from "@/components/ErrorCallout";
+import { HidableSection } from "@/app/admin/assistants/HidableSection";
 
 interface UsersResponse {
   accepted: Array<User>;
@@ -126,47 +127,49 @@ const AcceptedUserTable = ({
     });
   };
   return (
-    <Table className="overflow-visible">
-      <TableHead>
-        <TableRow>
-          <TableHeaderCell>Email</TableHeaderCell>
-          <TableHeaderCell>Role</TableHeaderCell>
-          <TableHeaderCell>
-            <div className="flex">
-              <div className="ml-auto">Actions</div>
-            </div>
-          </TableHeaderCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {users.map((user) => (
-          <TableRow key={user.id}>
-            <TableCell>{user.email}</TableCell>
-            <TableCell>
-              <i>{user.role === "admin" ? "Admin" : "User"}</i>
-            </TableCell>
-            <TableCell>
-              <div className="flex justify-end space-x-2">
-                {user.role !== "admin" && (
-                  <PromoteButton
-                    user={user}
-                    onSuccess={onPromotionSuccess}
-                    onError={onPromotionError}
-                  />
-                )}
-                {user.role === "admin" && (
-                  <DemoteButton
-                    user={user}
-                    onSuccess={onDemotionSuccess}
-                    onError={onDemotionError}
-                  />
-                )}
+    <HidableSection sectionTitle="Signed Up Users">
+      <Table className="overflow-visible">
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Email</TableHeaderCell>
+            <TableHeaderCell>Role</TableHeaderCell>
+            <TableHeaderCell>
+              <div className="flex">
+                <div className="ml-auto">Actions</div>
               </div>
-            </TableCell>
+            </TableHeaderCell>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHead>
+        <TableBody>
+          {users.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>
+                <i>{user.role === "admin" ? "Admin" : "User"}</i>
+              </TableCell>
+              <TableCell>
+                <div className="flex justify-end space-x-2">
+                  {user.role !== "admin" && (
+                    <PromoteButton
+                      user={user}
+                      onSuccess={onPromotionSuccess}
+                      onError={onPromotionError}
+                    />
+                  )}
+                  {user.role === "admin" && (
+                    <DemoteButton
+                      user={user}
+                      onSuccess={onDemotionSuccess}
+                      onError={onDemotionError}
+                    />
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </HidableSection>
   );
 };
 
@@ -215,34 +218,36 @@ const InvitedUserTable = ({
   };
 
   return (
-    <Table className="overflow-visible">
-      <TableHead>
-        <TableRow>
-          <TableHeaderCell>Email</TableHeaderCell>
-          <TableHeaderCell>
-            <div className="flex">
-              <div className="ml-auto">Actions</div>
-            </div>
-          </TableHeaderCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {users.map((user) => (
-          <TableRow key={user.email}>
-            <TableCell>{user.email}</TableCell>
-            <TableCell>
-              <div className="flex justify-end space-x-2">
-                <RemoveUserButton
-                  user={user}
-                  onSuccess={onPromotionSuccess}
-                  onError={onPromotionError}
-                />
+    <HidableSection sectionTitle="Invited Users">
+      <Table className="overflow-visible">
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Email</TableHeaderCell>
+            <TableHeaderCell>
+              <div className="flex">
+                <div className="ml-auto">Actions</div>
               </div>
-            </TableCell>
+            </TableHeaderCell>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHead>
+        <TableBody>
+          {users.map((user) => (
+            <TableRow key={user.email}>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>
+                <div className="flex justify-end space-x-2">
+                  <RemoveUserButton
+                    user={user}
+                    onSuccess={onPromotionSuccess}
+                    onError={onPromotionError}
+                  />
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </HidableSection>
   );
 };
 
