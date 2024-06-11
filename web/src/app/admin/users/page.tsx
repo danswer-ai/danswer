@@ -168,6 +168,82 @@ const AcceptedUserTable = ({
   );
 };
 
+const RemoveUserButton = ({
+  user,
+  onSuccess,
+  onError,
+}: {
+  user: User;
+  onSuccess: () => void;
+  onError: (message: string) => void;
+}) => {
+  const { trigger } = useSWRMutation(
+    "/api/manage/admin/remove-invited-user",
+    mutationFetcher,
+    { onSuccess, onError }
+  );
+  return (
+    <Button onClick={() => trigger({ user_email: user.email })}>
+      Uninivite User
+    </Button>
+  );
+};
+
+const InvitedUserTable = ({
+  users,
+  setPopup,
+}: {
+  users: Array<User>;
+  setPopup: (spec: PopupSpec) => void;
+}) => {
+  if (!users.length) return null;
+
+  const onPromotionSuccess = () => {
+    mutate("/api/manage/users");
+    setPopup({
+      message: "User uninvited!",
+      type: "success",
+    });
+  };
+  const onPromotionError = (errorMsg: string) => {
+    setPopup({
+      message: `Unable to uninvite user - ${errorMsg}`,
+      type: "error",
+    });
+  };
+
+  return (
+    <Table className="overflow-visible">
+      <TableHead>
+        <TableRow>
+          <TableHeaderCell>Email</TableHeaderCell>
+          <TableHeaderCell>
+            <div className="flex">
+              <div className="ml-auto">Actions</div>
+            </div>
+          </TableHeaderCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {users.map((user) => (
+          <TableRow key={user.email}>
+            <TableCell>{user.email}</TableCell>
+            <TableCell>
+              <div className="flex justify-end space-x-2">
+                <RemoveUserButton
+                  user={user}
+                  onSuccess={onPromotionSuccess}
+                  onError={onPromotionError}
+                />
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};
+
 const UsersTable = () => {
   const { popup, setPopup } = usePopup();
 
@@ -195,6 +271,7 @@ const UsersTable = () => {
     <div>
       {popup}
 
+      <InvitedUserTable users={invited} setPopup={setPopup} />
       <AcceptedUserTable users={users} setPopup={setPopup} />
     </div>
   );

@@ -39,6 +39,7 @@ from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.manage.models import BoostDoc
 from danswer.server.manage.models import BoostUpdateRequest
 from danswer.server.manage.models import HiddenUpdateRequest
+from danswer.server.manage.models import UserByEmail
 from danswer.utils.logger import setup_logger
 
 router = APIRouter(prefix="/manage")
@@ -242,3 +243,13 @@ def bulk_invite_users(
 ) -> int:
     all_emails = list(set(emails) | set(get_invited_users()))
     return write_invited_users(all_emails)
+
+
+@router.patch("/admin/remove-invited-user")
+def remove_invited_user(
+    user_email: UserByEmail,
+    _: User | None = Depends(current_admin_user),
+) -> int:
+    users = get_invited_users()
+    remaining_users = [user for user in users if user != user_email.user_email]
+    return write_invited_users(remaining_users)
