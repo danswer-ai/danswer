@@ -2,9 +2,37 @@ import time
 import uuid
 import tiktoken
 import hashlib
+from typing import Dict, Any, Tuple
 
 
-def generate_system_fingerprint():
+def extract_prompt(
+    openai_request: Dict[str, Any],
+    tokenizer: str = 'cl100k_base'
+) -> Tuple[str, int]:
+    """
+    Extracts the prompt from an OpenAI request and counts the number of tokens.
+
+    Args:
+        openai_request (Dict[str, Any]): The OpenAI request JSON as a dictionary.
+
+    Returns:
+        Tuple[str, int]: A tuple containing the prompt string and the number of tokens.
+    """
+    # Find the last user message
+    user_messages = [
+        msg['content']
+        for msg in openai_request['messages'] if msg['role'] == 'user'
+    ]
+    if not user_messages:
+        raise ValueError("No user messages found in the OpenAI request.")
+
+    prompt = user_messages[-1]
+    prompt_tokens = len(tokenizer.encode(prompt))
+    prompt_tokens = count_tokens(prompt)
+
+    return prompt, prompt_tokens
+
+def generate_system_fingerprint() -> str:
     """Generate unique system_fingerprint."""
     # Generate a unique ID
     unique_id = uuid.uuid4().hex
@@ -18,7 +46,7 @@ def generate_system_fingerprint():
     return f"fp_{system_fingerprint}"
 
 
-def count_tokens(text, tokenizer: str = 'cl100k_base'):
+def count_tokens(text: str, tokenizer: str = 'cl100k_base') -> int:
     """Count the number of tokens in the text based on the tokenizer."""
     # Availble tokenizers
     # https://github.com/openai/tiktoken/blob/main/tiktoken_ext/openai_public.py
@@ -27,8 +55,13 @@ def count_tokens(text, tokenizer: str = 'cl100k_base'):
     return len(tokens)
 
 
-def translate_danswer_to_openai(danswer_resp, model: str = 'gpt-3.5-turbo'):
+def translate_danswer_to_openai(
+    danswer_resp: dict,
+    model: str = 'gpt-3.5-turbo',
+    prompt_tokens: int = 0
+) -> dict:
     """Translate danswer API response to openai API response."""
+
     # Generate a unique ID and timestamp for the OpenAI response
     response_id = f"chatcmpl-{uuid.uuid4()}"
     created_timestamp = int(time.time())
@@ -37,7 +70,9 @@ def translate_danswer_to_openai(danswer_resp, model: str = 'gpt-3.5-turbo'):
         danswer_resp["answer"] + '\n' + danswer_resp["answer_citationless"]
     )
 
-    prompt_tokens = 0   # How to pass value of the prompt
+    system_fingerprint = generate_system_fingerprint()
+
+    prompt_tokens = prompt_tokens
     completion_tokens = count_tokens(full_answer)
     total_tokens = prompt_tokens + completion_tokens
 
@@ -46,7 +81,7 @@ def translate_danswer_to_openai(danswer_resp, model: str = 'gpt-3.5-turbo'):
         "object": "chat.completion",
         "created": created_timestamp,
         "model": model,
-        "system_fingerprint": "fp_44709d6fcb",  # Is it constant?
+        "system_fingerprint": system_fingerprint,
         "choices": [{
             "index": 0,
             "message": {
