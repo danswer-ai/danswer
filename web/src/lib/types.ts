@@ -4,6 +4,12 @@ export interface UserPreferences {
   chosen_assistants: number[] | null;
 }
 
+enum UserStatus {
+  live = "LIVE",
+  invited = "INVITED",
+  blocked = "BLOCKED",
+}
+
 export interface User {
   id: string;
   email: string;

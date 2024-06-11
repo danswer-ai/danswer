@@ -13,27 +13,174 @@ import {
 } from "@tremor/react";
 import { LoadingAnimation } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { usePopup } from "@/components/admin/connectors/Popup";
+import { usePopup, PopupSpec } from "@/components/admin/connectors/Popup";
 import { UsersIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { User } from "@/lib/types";
 import useSWR, { mutate } from "swr";
+import useSWRMutation from "swr/mutation";
 import { ErrorCallout } from "@/components/ErrorCallout";
+
+interface UsersResponse {
+  accepted: Array<User>;
+  invited: Array<User>;
+}
+
+const mutationFetcher = async (
+  url: string,
+  { arg }: { arg: { user_email: string } }
+) => {
+  return fetch(url, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      user_email: arg.user_email,
+    }),
+  })
+    .then((res) => res.json())
+    .catch((res) => res.text());
+};
+
+const PromoteButton = ({
+  user,
+  onSuccess,
+  onError,
+}: {
+  user: User;
+  onSuccess: () => void;
+  onError: (message: string) => void;
+}) => {
+  const { trigger, isMutating } = useSWRMutation(
+    "/api/manage/promote-user-to-admin",
+    mutationFetcher,
+    { onSuccess, onError }
+  );
+  return (
+    <Button
+      onClick={() => trigger({ user_email: user.email })}
+      disabled={isMutating}
+    >
+      Promote to Admin User
+    </Button>
+  );
+};
+
+const DemoteButton = ({
+  user,
+  onSuccess,
+  onError,
+}: {
+  user: User;
+  onSuccess: () => void;
+  onError: (message: string) => void;
+}) => {
+  const { trigger } = useSWRMutation(
+    "/api/manage/demote-admin-to-basic",
+    mutationFetcher,
+    { onSuccess, onError }
+  );
+  return (
+    <Button onClick={() => trigger({ user_email: user.email })}>
+      Demote to Basic User
+    </Button>
+  );
+};
+
+const AcceptedUserTable = ({
+  users,
+  setPopup,
+}: {
+  users: Array<User>;
+  setPopup: (spec: PopupSpec) => void;
+}) => {
+  if (!users.length) return null;
+
+  const onPromotionSuccess = () => {
+    mutate("/api/manage/users");
+    setPopup({
+      message: "User promoted to admin user!",
+      type: "success",
+    });
+  };
+  const onPromotionError = (errorMsg: string) => {
+    setPopup({
+      message: `Unable to promote user - ${errorMsg}`,
+      type: "error",
+    });
+  };
+  const onDemotionSuccess = () => {
+    mutate("/api/manage/users");
+    setPopup({
+      message: "Admin demoted to basic user!",
+      type: "success",
+    });
+  };
+  const onDemotionError = (errorMsg: string) => {
+    setPopup({
+      message: `Unable to demote admin - ${errorMsg}`,
+      type: "error",
+    });
+  };
+  return (
+    <Table className="overflow-visible">
+      <TableHead>
+        <TableRow>
+          <TableHeaderCell>Email</TableHeaderCell>
+          <TableHeaderCell>Role</TableHeaderCell>
+          <TableHeaderCell>
+            <div className="flex">
+              <div className="ml-auto">Actions</div>
+            </div>
+          </TableHeaderCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {users.map((user) => (
+          <TableRow key={user.id}>
+            <TableCell>{user.email}</TableCell>
+            <TableCell>
+              <i>{user.role === "admin" ? "Admin" : "User"}</i>
+            </TableCell>
+            <TableCell>
+              <div className="flex justify-end space-x-2">
+                {user.role !== "admin" && (
+                  <PromoteButton
+                    user={user}
+                    onSuccess={onPromotionSuccess}
+                    onError={onPromotionError}
+                  />
+                )}
+                {user.role === "admin" && (
+                  <DemoteButton
+                    user={user}
+                    onSuccess={onDemotionSuccess}
+                    onError={onDemotionError}
+                  />
+                )}
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};
 
 const UsersTable = () => {
   const { popup, setPopup } = usePopup();
 
-  const {
-    data: users,
-    isLoading,
-    error,
-  } = useSWR<User[]>("/api/manage/users", errorHandlingFetcher);
+  const { data, isLoading, error } = useSWR<UsersResponse>(
+    "/api/manage/users",
+    errorHandlingFetcher
+  );
 
   if (isLoading) {
     return <LoadingAnimation text="Loading" />;
   }
 
-  if (error || !users) {
+  if (error || !data) {
     return (
       <ErrorCallout
         errorTitle="Error loading users"
@@ -42,103 +189,13 @@ const UsersTable = () => {
     );
   }
 
+  const { accepted: users, invited } = data;
+
   return (
     <div>
       {popup}
 
-      <Table className="overflow-visible">
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>Email</TableHeaderCell>
-            <TableHeaderCell>Role</TableHeaderCell>
-            <TableHeaderCell>
-              <div className="flex">
-                <div className="ml-auto">Actions</div>
-              </div>
-            </TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>
-                <i>{user.role === "admin" ? "Admin" : "User"}</i>
-              </TableCell>
-              <TableCell>
-                <div className="flex justify-end space-x-2">
-                  {user.role !== "admin" && (
-                    <Button
-                      onClick={async () => {
-                        const res = await fetch(
-                          "/api/manage/promote-user-to-admin",
-                          {
-                            method: "PATCH",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                              user_email: user.email,
-                            }),
-                          }
-                        );
-                        if (!res.ok) {
-                          const errorMsg = await res.text();
-                          setPopup({
-                            message: `Unable to promote user - ${errorMsg}`,
-                            type: "error",
-                          });
-                        } else {
-                          mutate("/api/manage/users");
-                          setPopup({
-                            message: "User promoted to admin user!",
-                            type: "success",
-                          });
-                        }
-                      }}
-                    >
-                      Promote to Admin User
-                    </Button>
-                  )}
-                  {user.role === "admin" && (
-                    <Button
-                      onClick={async () => {
-                        const res = await fetch(
-                          "/api/manage/demote-admin-to-basic",
-                          {
-                            method: "PATCH",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                              user_email: user.email,
-                            }),
-                          }
-                        );
-                        if (!res.ok) {
-                          const errorMsg = await res.text();
-                          setPopup({
-                            message: `Unable to demote admin - ${errorMsg}`,
-                            type: "error",
-                          });
-                        } else {
-                          mutate("/api/manage/users");
-                          setPopup({
-                            message: "Admin demoted to basic user!",
-                            type: "success",
-                          });
-                        }
-                      }}
-                    >
-                      Demote to Basic User
-                    </Button>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <AcceptedUserTable users={users} setPopup={setPopup} />
     </div>
   );
 };

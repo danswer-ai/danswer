@@ -1,3 +1,5 @@
+from typing import TypedDict
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -8,8 +10,8 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.noauth_user import fetch_no_auth_user
 from danswer.auth.noauth_user import set_no_auth_user_preferences
-from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserRole
+from danswer.auth.schemas import UserStatus
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.auth.users import optional_user
@@ -20,9 +22,12 @@ from danswer.db.models import User
 from danswer.db.users import get_user_by_email
 from danswer.db.users import list_users
 from danswer.dynamic_configs.factory import get_dynamic_config_store
+from danswer.dynamic_configs.users import get_invited_users
 from danswer.server.manage.models import UserByEmail
 from danswer.server.manage.models import UserInfo
 from danswer.server.manage.models import UserRoleResponse
+from danswer.server.models import FullUserSnapshot
+from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
 
 router = APIRouter()
@@ -67,13 +72,31 @@ async def demote_admin(
     db_session.commit()
 
 
+class AllUsersResponse(TypedDict):
+    accepted: list[FullUserSnapshot]
+    invited: list[InvitedUserSnapshot]
+
+
 @router.get("/manage/users")
 def list_all_users(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> list[UserRead]:
+) -> AllUsersResponse:
     users = list_users(db_session)
-    return [UserRead.from_orm(user) for user in users]
+    accepted_emails = {user.email for user in users}
+    invited_emails = set(get_invited_users())
+    return {
+        "accepted": [
+            FullUserSnapshot(
+                id=user.id, email=user.email, role=user.role, status=UserStatus.LIVE
+            )
+            for user in users
+        ],
+        "invited": [
+            InvitedUserSnapshot(email=email)
+            for email in invited_emails.difference(accepted_emails)
+        ],
+    }
 
 
 """Endpoints for all"""
