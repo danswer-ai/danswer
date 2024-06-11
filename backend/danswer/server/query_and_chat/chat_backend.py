@@ -42,6 +42,8 @@ from danswer.file_store.models import FileDescriptor
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
+from danswer.llm.exceptions import GenAIDisabledException
+from danswer.llm.factory import get_default_llm
 from danswer.llm.headers import get_litellm_additional_request_headers
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.secondary_llm_flows.chat_session_naming import (
@@ -170,6 +172,7 @@ def create_new_chat_session(
 @router.put("/rename-chat-session")
 def rename_chat_session(
     rename_req: ChatRenameRequest,
+    request: Request,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> RenameChatSessionResponse:
@@ -193,7 +196,16 @@ def rename_chat_session(
     )
     full_history = history_msgs + [final_msg]
 
-    new_name = get_renamed_conversation_name(full_history=full_history)
+    try:
+        llm = get_default_llm(
+            additional_headers=get_litellm_additional_request_headers(request.headers)
+        )
+    except GenAIDisabledException:
+        # This may be longer than what the LLM tends to produce but is the most
+        # clear thing we can do
+        return RenameChatSessionResponse(new_name=full_history[0].message)
+
+    new_name = get_renamed_conversation_name(full_history=full_history, llm=llm)
 
     update_chat_session(
         db_session=db_session,
