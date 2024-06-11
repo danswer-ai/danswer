@@ -22,7 +22,9 @@ const addUsers = async (url: string, { arg }: { arg: Array<string> }) => {
   });
 };
 
-interface FormProps {}
+interface FormProps {
+  onSuccess: () => void;
+}
 
 interface FormValues {
   emails: string;
@@ -70,14 +72,18 @@ const AddUserForm = withFormik<FormProps, FormValues>({
     }
     return {};
   },
-  handleSubmit: async (values: FormValues) => {
+  handleSubmit: async (values: FormValues, formikBag) => {
     const emails = values.emails.trim().split(WHITESPACE_SPLIT);
-    await addUsers("/api/manage/admin/users", { arg: emails });
+    await addUsers("/api/manage/admin/users", { arg: emails }).then((res) => {
+      if (res.ok) {
+        formikBag.props.onSuccess();
+      }
+    });
   },
 })(AddUserFormRenderer);
 
-const BulkAdd = () => {
-  return <AddUserForm />;
+const BulkAdd = ({ onSuccess }: FormProps) => {
+  return <AddUserForm onSuccess={onSuccess} />;
 };
 
 export default BulkAdd;

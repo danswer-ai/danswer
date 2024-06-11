@@ -1,6 +1,8 @@
 "use client";
+import { useState } from "react";
 import { FiPlusSquare } from "react-icons/fi";
 import Link from "next/link";
+import { Modal } from "@/components/Modal";
 
 import {
   Table,
@@ -10,6 +12,7 @@ import {
   TableBody,
   TableCell,
   Button,
+  Text,
 } from "@tremor/react";
 import { LoadingAnimation } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
@@ -21,6 +24,7 @@ import useSWR, { mutate } from "swr";
 import useSWRMutation from "swr/mutation";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { HidableSection } from "@/app/admin/assistants/HidableSection";
+import BulkAdd from "@/components/admin/users/BulkAdd";
 
 interface UsersResponse {
   accepted: Array<User>;
@@ -278,34 +282,56 @@ const UsersTable = () => {
     <div>
       {popup}
 
-      <InvitedUserTable users={invited} setPopup={setPopup} />
-      <AcceptedUserTable users={users} setPopup={setPopup} />
+      <div className="flex flex-col gap-y-4">
+        <AddUserButton setPopup={setPopup} />
+        <InvitedUserTable users={invited} setPopup={setPopup} />
+        <AcceptedUserTable users={users} setPopup={setPopup} />
+      </div>
     </div>
   );
 };
 
-const AddUserButton = () => {
+const AddUserButton = ({
+  setPopup,
+}: {
+  setPopup: (spec: PopupSpec) => void;
+}) => {
+  const [modal, setModal] = useState(false);
+  const onSuccess = () => {
+    mutate("/api/manage/users");
+    setModal(false);
+    setPopup({
+      message: "Users invited!",
+      type: "success",
+    });
+  };
   return (
-    <Link
-      href="/admin/users/new"
-      className="flex py-2 px-4 mt-2 border border-border h-fit cursor-pointer hover:bg-hover text-sm w-40"
-    >
-      <div className="mx-auto flex">
-        <FiPlusSquare className="my-auto mr-2" />
-        Add Users
-      </div>
-    </Link>
+    <>
+      <Button onClick={() => setModal(true)}>
+        <div className="flex">
+          <FiPlusSquare className="my-auto mr-2" />
+          Add Users
+        </div>
+      </Button>
+      {modal && (
+        <Modal title="Bulk Add Users" onOutsideClick={() => setModal(false)}>
+          <div className="flex flex-col gap-y-4">
+            <Text className="font-medium text-base">
+              Add the email addresses to import, separated by whitespaces.
+            </Text>
+            <BulkAdd onSuccess={onSuccess} />
+          </div>
+        </Modal>
+      )}
+    </>
   );
 };
 
 const Page = () => {
   return (
     <div className="mx-auto container">
-      <div className="flex flex-col gap-y-4">
-        <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
-        <AddUserButton />
-        <UsersTable />
-      </div>
+      <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
+      <UsersTable />
     </div>
   );
 };
