@@ -1,4 +1,4 @@
-from translator import translate_danswer_to_openai
+from danswer.danswerbot.openai_compliant_adapter.translator import translate_danswer_to_openai
 import unittest
 from unittest.mock import patch
 
