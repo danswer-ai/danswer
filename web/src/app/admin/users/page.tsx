@@ -38,9 +38,11 @@ const mutationFetcher = async (
     body: JSON.stringify({
       user_email: arg.user_email,
     }),
-  })
-    .then((res) => res.json())
-    .catch((res) => res.text());
+  }).then(async (res) => {
+    if (res.ok) return res.json();
+    const text = await res.text();
+    throw Error(text);
+  });
 };
 
 const PromoteButton = ({
