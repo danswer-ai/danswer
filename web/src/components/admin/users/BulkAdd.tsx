@@ -59,7 +59,7 @@ const AddUserForm = withFormik<FormProps, FormValues>({
     };
   },
   validate: (values: FormValues): FormikErrors<FormValues> => {
-    const emails = values.emails.split(WHITESPACE_SPLIT);
+    const emails = values.emails.trim().split(WHITESPACE_SPLIT);
     if (!emails.some(Boolean)) {
       return { emails: "Required" };
     }
@@ -68,10 +68,10 @@ const AddUserForm = withFormik<FormProps, FormValues>({
         return { emails: `${email} is not a valid email` };
       }
     }
-    return { emails: "" };
+    return {};
   },
-  handleSubmit: async (values) => {
-    const emails = values.emails.split(WHITESPACE_SPLIT);
+  handleSubmit: async (values: FormValues) => {
+    const emails = values.emails.trim().split(WHITESPACE_SPLIT);
     await addUsers("/api/manage/admin/users", { arg: emails });
   },
 })(AddUserFormRenderer);
