@@ -301,9 +301,11 @@ const AddUserButton = () => {
 const Page = () => {
   return (
     <div className="mx-auto container">
-      <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
-      <AddUserButton />
-      <UsersTable />
+      <div className="flex flex-col gap-y-4">
+        <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
+        <AddUserButton />
+        <UsersTable />
+      </div>
     </div>
   );
 };
