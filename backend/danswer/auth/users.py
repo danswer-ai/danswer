@@ -1,4 +1,3 @@
-import os
 import smtplib
 import uuid
 from collections.abc import AsyncGenerator
@@ -51,6 +50,7 @@ from danswer.db.auth import get_user_db
 from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
 from danswer.db.models import User
+from danswer.dynamic_configs.users import get_invited_users
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
@@ -58,9 +58,6 @@ from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 
 logger = setup_logger()
-
-USER_WHITELIST_FILE = "/home/danswer_whitelist.txt"
-_user_whitelist: list[str] | None = None
 
 
 def verify_auth_setting() -> None:
@@ -92,20 +89,8 @@ def user_needs_to_be_verified() -> bool:
     return AUTH_TYPE != AuthType.BASIC or REQUIRE_EMAIL_VERIFICATION
 
 
-def get_user_whitelist() -> list[str]:
-    global _user_whitelist
-    if _user_whitelist is None:
-        if os.path.exists(USER_WHITELIST_FILE):
-            with open(USER_WHITELIST_FILE, "r") as file:
-                _user_whitelist = [line.strip() for line in file]
-        else:
-            _user_whitelist = []
-
-    return _user_whitelist
-
-
 def verify_email_in_whitelist(email: str) -> None:
-    whitelist = get_user_whitelist()
+    whitelist = get_invited_users()
     if (whitelist and email not in whitelist) or not email:
         raise PermissionError("User not on allowed user whitelist")
 
