@@ -30,6 +30,7 @@ from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.dynamic_configs.users import get_invited_users
 from danswer.dynamic_configs.users import write_invited_users
 from danswer.file_store.file_store import get_default_file_store
 from danswer.llm.factory import get_default_llm
@@ -235,8 +236,9 @@ def update_token_budget_settings(
 
 
 @router.put("/admin/users")
-def bulk_add_users(
+def bulk_invite_users(
     _: User | None = Depends(current_admin_user),
     emails: list[str] = Body(..., embed=True),
 ) -> int:
-    return write_invited_users(emails)
+    all_emails = list(set(emails) | set(get_invited_users()))
+    return write_invited_users(all_emails)

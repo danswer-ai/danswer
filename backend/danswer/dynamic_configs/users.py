@@ -16,7 +16,6 @@ def get_invited_users() -> list[str]:
 
 
 def write_invited_users(emails: list[str]) -> int:
-    all_emails = list(set(emails) | set(get_invited_users()))
     store = get_dynamic_config_store()
-    store.store(USER_STORE_KEY, cast(JSON_ro, all_emails))
-    return len(all_emails)
+    store.store(USER_STORE_KEY, cast(JSON_ro, emails))
+    return len(emails)
