@@ -32,6 +32,8 @@ import BulkAdd from "@/components/admin/users/BulkAdd";
 interface UsersResponse {
   accepted: Array<User>;
   invited: Array<User>;
+  accepted_pages: number;
+  invited_pages: number;
 }
 
 const UsersTables = ({
@@ -41,8 +43,10 @@ const UsersTables = ({
   q: string;
   setPopup: (spec: PopupSpec) => void;
 }) => {
-  const { data, isLoading, error } = useSWR<UsersResponse>(
-    `/api/manage/users?q=${encodeURI(q)}`,
+  const [invitedPage, setInvitedPage] = useState(1);
+  const [acceptedPage, setAcceptedPage] = useState(1);
+  const { data, isLoading, mutate, error } = useSWR<UsersResponse>(
+    `/api/manage/users?q=${encodeURI(q)}&accepted_page=${acceptedPage - 1}&invited_page=${invitedPage - 1}`,
     errorHandlingFetcher
   );
 
@@ -59,12 +63,26 @@ const UsersTables = ({
     );
   }
 
-  const { accepted, invited } = data;
+  const { accepted, invited, accepted_pages, invited_pages } = data;
 
   return (
     <>
-      <InvitedUserTable users={invited} setPopup={setPopup} />
-      <SignedUpUserTable users={accepted} setPopup={setPopup} />
+      <InvitedUserTable
+        users={invited}
+        setPopup={setPopup}
+        currentPage={invitedPage}
+        onPageChange={setInvitedPage}
+        totalPages={invited_pages}
+        mutate={mutate}
+      />
+      <SignedUpUserTable
+        users={accepted}
+        setPopup={setPopup}
+        currentPage={acceptedPage}
+        onPageChange={setAcceptedPage}
+        totalPages={accepted_pages}
+        mutate={mutate}
+      />
     </>
   );
 };
@@ -102,7 +120,9 @@ const AddUserButton = ({
 }) => {
   const [modal, setModal] = useState(false);
   const onSuccess = () => {
-    mutate("/api/manage/users");
+    mutate(
+      (key) => typeof key === "string" && key.startsWith("/api/manage/users")
+    );
     setModal(false);
     setPopup({
       message: "Users invited!",

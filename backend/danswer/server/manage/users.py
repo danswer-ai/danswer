@@ -33,6 +33,8 @@ from danswer.server.models import MinimalUserSnapshot
 
 router = APIRouter()
 
+USERS_PAGE_SIZE = 10
+
 
 @router.patch("/manage/promote-user-to-admin")
 def promote_admin(
@@ -76,11 +78,15 @@ async def demote_admin(
 class AllUsersResponse(TypedDict):
     accepted: list[FullUserSnapshot]
     invited: list[InvitedUserSnapshot]
+    accepted_pages: int
+    invited_pages: int
 
 
 @router.get("/manage/users")
 def list_all_users(
     q: str,
+    accepted_page: int,
+    invited_page: int,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> AllUsersResponse:
@@ -92,6 +98,9 @@ def list_all_users(
             email for email in invited_emails if re.search(r"{}".format(q), email, re.I)
         ]
 
+    accepted_count = len(accepted_emails)
+    invited_count = len(invited_emails)
+
     return {
         "accepted": [
             FullUserSnapshot(
@@ -101,12 +110,14 @@ def list_all_users(
                 status=UserStatus.LIVE if user.is_active else UserStatus.BLOCKED,
             )
             for user in users
-        ],
+        ][accepted_page * USERS_PAGE_SIZE : (accepted_page + 1) * USERS_PAGE_SIZE],
         "invited": [
             InvitedUserSnapshot(email=email)
             for email in invited_emails
             if email not in accepted_emails
-        ],
+        ][invited_page * USERS_PAGE_SIZE : (invited_page + 1) * USERS_PAGE_SIZE],
+        "accepted_pages": accepted_count // USERS_PAGE_SIZE,
+        "invited_pages": invited_count // USERS_PAGE_SIZE,
     }
 
 

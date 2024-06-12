@@ -10,9 +10,17 @@ import {
   Button,
 } from "@tremor/react";
 import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
-import useSWR, { mutate } from "swr";
+import CenteredPageSelector from "./CenteredPageSelector";
+import { type PageSelectorProps } from "@/components/PageSelector";
+import useSWR from "swr";
 import { type User, UserStatus } from "@/lib/types";
 import useSWRMutation from "swr/mutation";
+
+interface Props {
+  users: Array<User>;
+  setPopup: (spec: PopupSpec) => void;
+  mutate: () => void;
+}
 
 const RemoveUserButton = ({
   user,
@@ -38,14 +46,15 @@ const RemoveUserButton = ({
 const InvitedUserTable = ({
   users,
   setPopup,
-}: {
-  users: Array<User>;
-  setPopup: (spec: PopupSpec) => void;
-}) => {
+  currentPage,
+  totalPages,
+  onPageChange,
+  mutate,
+}: Props & PageSelectorProps) => {
   if (!users.length) return null;
 
   const onRemovalSuccess = () => {
-    mutate("/api/manage/users");
+    mutate();
     setPopup({
       message: "User uninvited!",
       type: "success",
@@ -60,34 +69,41 @@ const InvitedUserTable = ({
 
   return (
     <HidableSection sectionTitle="Invited Users">
-      <Table className="overflow-visible">
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>Email</TableHeaderCell>
-            <TableHeaderCell>
-              <div className="flex">
-                <div className="ml-auto">Actions</div>
-              </div>
-            </TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.email}>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>
-                <div className="flex justify-end space-x-2">
-                  <RemoveUserButton
-                    user={user}
-                    onSuccess={onRemovalSuccess}
-                    onError={onRemovalError}
-                  />
-                </div>
-              </TableCell>
+      <>
+        {totalPages > 1 ? (
+          <CenteredPageSelector
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+          />
+        ) : null}
+        <Table className="overflow-visible">
+          <TableHead>
+            <TableRow>
+              <TableHeaderCell>Email</TableHeaderCell>
+              <TableHeaderCell>
+                <div className="flex justify-end">Actions</div>
+              </TableHeaderCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHead>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.email}>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>
+                  <div className="flex justify-end">
+                    <RemoveUserButton
+                      user={user}
+                      onSuccess={onRemovalSuccess}
+                      onError={onRemovalError}
+                    />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </>
     </HidableSection>
   );
 };
