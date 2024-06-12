@@ -251,8 +251,8 @@ def remove_invited_user(
     user_email: UserByEmail,
     _: User | None = Depends(current_admin_user),
 ) -> int:
-    users = get_invited_users()
-    remaining_users = [user for user in users if user != user_email.user_email]
+    user_emails = get_invited_users()
+    remaining_users = [user for user in user_emails if user != user_email.user_email]
     return write_invited_users(remaining_users)
 
 
