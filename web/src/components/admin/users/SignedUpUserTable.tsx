@@ -68,7 +68,7 @@ const BlockerButton = ({
   );
 };
 
-const AcceptedUserTable = ({
+const SignedUpUserTable = ({
   users,
   setPopup,
 }: {
@@ -174,4 +174,4 @@ const AcceptedUserTable = ({
   );
 };
 
-export default AcceptedUserTable;
+export default SignedUpUserTable;

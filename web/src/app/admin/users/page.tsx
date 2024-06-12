@@ -1,6 +1,6 @@
 "use client";
 import InvitedUserTable from "@/components/admin/users/InvitedUserTable";
-import AcceptedUserTable from "@/components/admin/users/AcceptedUserTable";
+import SignedUpUserTable from "@/components/admin/users/SignedUpUserTable";
 import { useState } from "react";
 import { FiPlusSquare } from "react-icons/fi";
 import Link from "next/link";
@@ -63,7 +63,7 @@ const UsersTable = () => {
       <div className="flex flex-col gap-y-4">
         <AddUserButton setPopup={setPopup} />
         <InvitedUserTable users={invited} setPopup={setPopup} />
-        <AcceptedUserTable users={users} setPopup={setPopup} />
+        <SignedUpUserTable users={users} setPopup={setPopup} />
       </div>
     </div>
   );
