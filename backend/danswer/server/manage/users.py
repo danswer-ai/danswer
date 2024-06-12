@@ -1,5 +1,4 @@
 import re
-from typing import TypedDict
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -24,6 +23,7 @@ from danswer.db.users import get_user_by_email
 from danswer.db.users import list_users
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.users import get_invited_users
+from danswer.server.manage.models import AllUsersResponse
 from danswer.server.manage.models import UserByEmail
 from danswer.server.manage.models import UserInfo
 from danswer.server.manage.models import UserRoleResponse
@@ -75,13 +75,6 @@ async def demote_admin(
     db_session.commit()
 
 
-class AllUsersResponse(TypedDict):
-    accepted: list[FullUserSnapshot]
-    invited: list[InvitedUserSnapshot]
-    accepted_pages: int
-    invited_pages: int
-
-
 @router.get("/manage/users")
 def list_all_users(
     q: str,
@@ -101,8 +94,8 @@ def list_all_users(
     accepted_count = len(accepted_emails)
     invited_count = len(invited_emails)
 
-    return {
-        "accepted": [
+    return AllUsersResponse(
+        accepted=[
             FullUserSnapshot(
                 id=user.id,
                 email=user.email,
@@ -111,14 +104,14 @@ def list_all_users(
             )
             for user in users
         ][accepted_page * USERS_PAGE_SIZE : (accepted_page + 1) * USERS_PAGE_SIZE],
-        "invited": [
+        invited=[
             InvitedUserSnapshot(email=email)
             for email in invited_emails
             if email not in accepted_emails
         ][invited_page * USERS_PAGE_SIZE : (invited_page + 1) * USERS_PAGE_SIZE],
-        "accepted_pages": accepted_count // USERS_PAGE_SIZE,
-        "invited_pages": invited_count // USERS_PAGE_SIZE,
-    }
+        accepted_pages=accepted_count // USERS_PAGE_SIZE,
+        invited_pages=invited_count // USERS_PAGE_SIZE,
+    )
 
 
 """Endpoints for all"""
