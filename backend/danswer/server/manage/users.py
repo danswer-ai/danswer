@@ -88,7 +88,10 @@ def list_all_users(
     return {
         "accepted": [
             FullUserSnapshot(
-                id=user.id, email=user.email, role=user.role, status=UserStatus.LIVE
+                id=user.id,
+                email=user.email,
+                role=user.role,
+                status=UserStatus.LIVE if user.is_active else UserStatus.BLOCKED,
             )
             for user in users
         ],

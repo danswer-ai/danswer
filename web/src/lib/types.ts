@@ -4,10 +4,10 @@ export interface UserPreferences {
   chosen_assistants: number[] | null;
 }
 
-enum UserStatus {
-  live = "LIVE",
-  invited = "INVITED",
-  blocked = "BLOCKED",
+export enum UserStatus {
+  live = "live",
+  invited = "invited",
+  blocked = "blocked",
 }
 
 export interface User {
@@ -18,6 +18,7 @@ export interface User {
   is_verified: string;
   role: "basic" | "admin";
   preferences: UserPreferences;
+  status: UserStatus;
 }
 
 export interface MinimalUserSnapshot {

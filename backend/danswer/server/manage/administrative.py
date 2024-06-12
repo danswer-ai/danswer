@@ -26,6 +26,7 @@ from danswer.db.feedback import update_document_boost
 from danswer.db.feedback import update_document_hidden
 from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
 from danswer.db.models import User
+from danswer.db.users import get_user_by_email
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs.factory import get_dynamic_config_store
@@ -253,3 +254,37 @@ def remove_invited_user(
     users = get_invited_users()
     remaining_users = [user for user in users if user != user_email.user_email]
     return write_invited_users(remaining_users)
+
+
+@router.patch("/admin/block-user")
+def block_user(
+    user_email: UserByEmail,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    user_to_block = get_user_by_email(
+        email=user_email.user_email, db_session=db_session
+    )
+    if not user_to_block:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_to_block.is_active = False
+    db_session.add(user_to_block)
+    db_session.commit()
+
+
+@router.patch("/admin/unblock-user")
+def unblock_user(
+    user_email: UserByEmail,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    user_to_unblock = get_user_by_email(
+        email=user_email.user_email, db_session=db_session
+    )
+    if not user_to_unblock:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_to_unblock.is_active = True
+    db_session.add(user_to_unblock)
+    db_session.commit()

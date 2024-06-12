@@ -19,7 +19,7 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { usePopup, PopupSpec } from "@/components/admin/connectors/Popup";
 import { UsersIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { User } from "@/lib/types";
+import { User, UserStatus } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 import useSWRMutation from "swr/mutation";
 import { ErrorCallout } from "@/components/ErrorCallout";
@@ -95,6 +95,51 @@ const DemoteButton = ({
   );
 };
 
+const BlockButton = ({
+  user,
+  onSuccess,
+  onError,
+}: {
+  user: User;
+  onSuccess: () => void;
+  onError: (message: string) => void;
+}) => {
+  const { trigger, isMutating } = useSWRMutation(
+    "/api/manage/admin/block-user",
+    mutationFetcher,
+    { onSuccess, onError }
+  );
+  return (
+    <Button
+      onClick={() => trigger({ user_email: user.email })}
+      disabled={isMutating}
+    >
+      Block Access
+    </Button>
+  );
+};
+
+const UnblockButton = ({
+  user,
+  onSuccess,
+  onError,
+}: {
+  user: User;
+  onSuccess: () => void;
+  onError: (message: string) => void;
+}) => {
+  const { trigger } = useSWRMutation(
+    "/api/manage/admin/unblock-user",
+    mutationFetcher,
+    { onSuccess, onError }
+  );
+  return (
+    <Button onClick={() => trigger({ user_email: user.email })}>
+      Unblock Access
+    </Button>
+  );
+};
+
 const AcceptedUserTable = ({
   users,
   setPopup,
@@ -127,6 +172,33 @@ const AcceptedUserTable = ({
   const onDemotionError = (errorMsg: string) => {
     setPopup({
       message: `Unable to demote admin - ${errorMsg}`,
+      type: "error",
+    });
+  };
+
+  const onBlockSuccess = () => {
+    mutate("/api/manage/users");
+    setPopup({
+      message: "User blocked!",
+      type: "success",
+    });
+  };
+  const onBlockError = (errorMsg: string) => {
+    setPopup({
+      message: `Unable to block user - ${errorMsg}`,
+      type: "error",
+    });
+  };
+  const onUnblockSuccess = () => {
+    mutate("/api/manage/users");
+    setPopup({
+      message: "User unblocked!",
+      type: "success",
+    });
+  };
+  const onUnblockError = (errorMsg: string) => {
+    setPopup({
+      message: `Unable to unblock user - ${errorMsg}`,
       type: "error",
     });
   };
@@ -165,6 +237,20 @@ const AcceptedUserTable = ({
                       user={user}
                       onSuccess={onDemotionSuccess}
                       onError={onDemotionError}
+                    />
+                  )}
+                  {user.status === UserStatus.live && (
+                    <BlockButton
+                      user={user}
+                      onSuccess={onBlockSuccess}
+                      onError={onBlockError}
+                    />
+                  )}
+                  {user.status === UserStatus.blocked && (
+                    <UnblockButton
+                      user={user}
+                      onSuccess={onUnblockSuccess}
+                      onError={onUnblockError}
                     />
                   )}
                 </div>
