@@ -239,8 +239,8 @@ def update_token_budget_settings(
 
 @router.put("/admin/users")
 def bulk_invite_users(
-    _: User | None = Depends(current_admin_user),
     emails: list[str] = Body(..., embed=True),
+    _: User | None = Depends(current_admin_user),
 ) -> int:
     all_emails = list(set(emails) | set(get_invited_users()))
     return write_invited_users(all_emails)
