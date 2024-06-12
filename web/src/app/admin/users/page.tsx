@@ -50,17 +50,21 @@ const mutationFetcher = async (
   });
 };
 
-const PromoteButton = ({
+const PromoterButton = ({
   user,
+  promote,
   onSuccess,
   onError,
 }: {
   user: User;
+  promote: boolean;
   onSuccess: () => void;
   onError: (message: string) => void;
 }) => {
   const { trigger, isMutating } = useSWRMutation(
-    "/api/manage/promote-user-to-admin",
+    promote
+      ? "/api/manage/promote-user-to-admin"
+      : "/api/manage/demote-admin-to-basic",
     mutationFetcher,
     { onSuccess, onError }
   );
@@ -69,43 +73,24 @@ const PromoteButton = ({
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
     >
-      Promote to Admin User
+      {promote ? "Promote" : "Demote"} to Admin User
     </Button>
   );
 };
 
-const DemoteButton = ({
+const BlockerButton = ({
   user,
+  block,
   onSuccess,
   onError,
 }: {
   user: User;
-  onSuccess: () => void;
-  onError: (message: string) => void;
-}) => {
-  const { trigger } = useSWRMutation(
-    "/api/manage/demote-admin-to-basic",
-    mutationFetcher,
-    { onSuccess, onError }
-  );
-  return (
-    <Button onClick={() => trigger({ user_email: user.email })}>
-      Demote to Basic User
-    </Button>
-  );
-};
-
-const BlockButton = ({
-  user,
-  onSuccess,
-  onError,
-}: {
-  user: User;
+  block: boolean;
   onSuccess: () => void;
   onError: (message: string) => void;
 }) => {
   const { trigger, isMutating } = useSWRMutation(
-    "/api/manage/admin/block-user",
+    block ? "/api/manage/admin/block-user" : "/api/manage/admin/unblock-user",
     mutationFetcher,
     { onSuccess, onError }
   );
@@ -114,28 +99,7 @@ const BlockButton = ({
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
     >
-      Block Access
-    </Button>
-  );
-};
-
-const UnblockButton = ({
-  user,
-  onSuccess,
-  onError,
-}: {
-  user: User;
-  onSuccess: () => void;
-  onError: (message: string) => void;
-}) => {
-  const { trigger } = useSWRMutation(
-    "/api/manage/admin/unblock-user",
-    mutationFetcher,
-    { onSuccess, onError }
-  );
-  return (
-    <Button onClick={() => trigger({ user_email: user.email })}>
-      Unblock Access
+      {block ? "Block" : "Unblock"} Access
     </Button>
   );
 };
@@ -149,31 +113,30 @@ const AcceptedUserTable = ({
 }) => {
   if (!users.length) return null;
 
-  const onPromotionSuccess = () => {
+  const onSuccess = (message: string) => {
     mutate("/api/manage/users");
     setPopup({
-      message: "User promoted to admin user!",
+      message,
       type: "success",
     });
+  };
+  const onError = (message: string) => {
+    setPopup({
+      message,
+      type: "error",
+    });
+  };
+  const onPromotionSuccess = () => {
+    onSuccess("User promoted to admin user!");
   };
   const onPromotionError = (errorMsg: string) => {
-    setPopup({
-      message: `Unable to promote user - ${errorMsg}`,
-      type: "error",
-    });
+    onError(`Unable to promote user - ${errorMsg}`);
   };
   const onDemotionSuccess = () => {
-    mutate("/api/manage/users");
-    setPopup({
-      message: "Admin demoted to basic user!",
-      type: "success",
-    });
+    onSuccess("Admin demoted to basic user!");
   };
   const onDemotionError = (errorMsg: string) => {
-    setPopup({
-      message: `Unable to demote admin - ${errorMsg}`,
-      type: "error",
-    });
+    onError(`Unable to demote admin - ${errorMsg}`);
   };
 
   const onBlockSuccess = () => {
@@ -225,34 +188,18 @@ const AcceptedUserTable = ({
               </TableCell>
               <TableCell>
                 <div className="flex justify-end space-x-2">
-                  {user.role !== "admin" && (
-                    <PromoteButton
-                      user={user}
-                      onSuccess={onPromotionSuccess}
-                      onError={onPromotionError}
-                    />
-                  )}
-                  {user.role === "admin" && (
-                    <DemoteButton
-                      user={user}
-                      onSuccess={onDemotionSuccess}
-                      onError={onDemotionError}
-                    />
-                  )}
-                  {user.status === UserStatus.live && (
-                    <BlockButton
-                      user={user}
-                      onSuccess={onBlockSuccess}
-                      onError={onBlockError}
-                    />
-                  )}
-                  {user.status === UserStatus.blocked && (
-                    <UnblockButton
-                      user={user}
-                      onSuccess={onUnblockSuccess}
-                      onError={onUnblockError}
-                    />
-                  )}
+                  <PromoterButton
+                    user={user}
+                    promote={user.role !== "admin"}
+                    onSuccess={onPromotionSuccess}
+                    onError={onPromotionError}
+                  />
+                  <BlockerButton
+                    user={user}
+                    block={user.status === UserStatus.live}
+                    onSuccess={onBlockSuccess}
+                    onError={onBlockError}
+                  />
                 </div>
               </TableCell>
             </TableRow>
@@ -293,14 +240,14 @@ const InvitedUserTable = ({
 }) => {
   if (!users.length) return null;
 
-  const onPromotionSuccess = () => {
+  const onRemovalSuccess = () => {
     mutate("/api/manage/users");
     setPopup({
       message: "User uninvited!",
       type: "success",
     });
   };
-  const onPromotionError = (errorMsg: string) => {
+  const onRemovalError = (errorMsg: string) => {
     setPopup({
       message: `Unable to uninvite user - ${errorMsg}`,
       type: "error",
@@ -328,8 +275,8 @@ const InvitedUserTable = ({
                 <div className="flex justify-end space-x-2">
                   <RemoveUserButton
                     user={user}
-                    onSuccess={onPromotionSuccess}
-                    onError={onPromotionError}
+                    onSuccess={onRemovalSuccess}
+                    onError={onRemovalError}
                   />
                 </div>
               </TableCell>
