@@ -13,6 +13,7 @@ import bs4
 from atlassian import Confluence  # type:ignore
 from requests import HTTPError
 
+from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
@@ -45,6 +46,7 @@ logger = setup_logger()
 def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, str]:
     """Sample
     https://danswer.atlassian.net/wiki/spaces/1234abcd/pages/5678efgh/overview
+    https://danswer.atlassian.net/wiki/spaces/ASAM/overview
     wiki_base is https://danswer.atlassian.net/wiki
     space is 1234abcd
     page_id is 5678efgh
@@ -56,8 +58,9 @@ def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, st
         + parsed_url.netloc
         + parsed_url.path.split("/spaces")[0]
     )
-    space = parsed_url.path.split("/")[3]
-    page_id = parsed_url.path.split("/")[5]
+    path_parts = parsed_url.path.split("/")
+    space = path_parts[3]
+    page_id = path_parts[5] if len(path_parts) > 5 else ""
     return wiki_base, space, page_id
 
 
@@ -219,6 +222,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self.wiki_base, self.space, self.page_id, self.is_cloud = extract_confluence_keys_from_url(
             wiki_page_url
         )
+        self.space_level_scan = False
+        if self.page_id is None or self.page_id == "":
+            self.space_level_scan = True
         self.confluence_client: Confluence | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
@@ -239,7 +245,60 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         confluence_client: Confluence,
         start_ind: int,
     ) -> Collection[dict[str, Any]]:
-        def _fetch(start_ind: int, batch_size: int) -> Collection[dict[str, Any]]:
+        def _fetch_space(start_ind: int, batch_size: int) -> Collection[dict[str, Any]]:
+            get_all_pages_from_space = make_confluence_call_handle_rate_limit(
+                confluence_client.get_all_pages_from_space
+            )
+            try:
+                return get_all_pages_from_space(
+                    self.space,
+                    start=start_ind,
+                    limit=batch_size,
+                    status="current"
+                    if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
+                    else None,
+                    expand="body.storage.value,version",
+                )
+            except Exception:
+                logger.warning(
+                    f"Batch failed with space {self.space} at offset {start_ind} "
+                    f"with size {batch_size}, processing pages individually..."
+                )
+
+                view_pages: list[dict[str, Any]] = []
+                for i in range(self.batch_size):
+                    try:
+                        # Could be that one of the pages here failed due to this bug:
+                        # https://jira.atlassian.com/browse/CONFCLOUD-76433
+                        view_pages.extend(
+                            get_all_pages_from_space(
+                                self.space,
+                                start=start_ind + i,
+                                limit=1,
+                                status="current"
+                                if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
+                                else None,
+                                expand="body.storage.value,version",
+                            )
+                        )
+                    except HTTPError as e:
+                        logger.warning(
+                            f"Page failed with space {self.space} at offset {start_ind + i}, "
+                            f"trying alternative expand option: {e}"
+                        )
+                        # Use view instead, which captures most info but is less complete
+                        view_pages.extend(
+                            get_all_pages_from_space(
+                                self.space,
+                                start=start_ind + i,
+                                limit=1,
+                                expand="body.view.value,version",
+                            )
+                        )
+
+                return view_pages
+
+        def _fetch_child_pages(start_ind: int, batch_size: int) -> Collection[dict[str, Any]]:
             get_page_child_by_type = make_confluence_call_handle_rate_limit(
                 confluence_client.get_page_child_by_type
             )
@@ -279,11 +338,20 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 return child_pages
 
         pages: list[dict[str, Any]] = []
-        batch = _fetch(start_ind, self.batch_size)
+        # batch = _fetch(start_ind, self.batch_size)
+        batch = (
+            _fetch_space(start_ind, self.batch_size)
+            if self.space_level_scan
+            else _fetch_child_pages(start_ind, self.batch_size)
+        )
         pages.extend(batch)
         while batch:
             start_ind += self.batch_size
-            batch = _fetch(start_ind, self.batch_size)
+            batch = (
+                _fetch_space(start_ind, self.batch_size)
+                if self.space_level_scan
+                else _fetch_child_pages(start_ind, self.batch_size)
+            )
             pages.extend(batch)
         return pages
 
@@ -350,9 +418,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
                 if response.status_code == 200:
                     extract = extract_file_text(
-                        attachment["title"],
-                        io.BytesIO(response.content),
-                        break_on_unprocessable=False,
+                        file_name = attachment["title"],
+                        file = io.BytesIO(response.content),
+                        break_on_unprocessable = False
                     )
                     files_attachment_content.append(extract)
 
