@@ -51,10 +51,10 @@ def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, st
     """
     parsed_url = urlparse(wiki_url)
     wiki_base = (
-            parsed_url.scheme
-            + "://"
-            + parsed_url.netloc
-            + parsed_url.path.split("/spaces")[0]
+        parsed_url.scheme
+        + "://"
+        + parsed_url.netloc
+        + parsed_url.path.split("/spaces")[0]
     )
     space = parsed_url.path.split("/")[3]
     page_id = parsed_url.path.split("/")[5]
@@ -73,10 +73,10 @@ def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, st
 
     parsed_url = urlparse(wiki_url)
     wiki_base = (
-            parsed_url.scheme
-            + "://"
-            + parsed_url.netloc
-            + parsed_url.path.split(DISPLAY)[0]
+        parsed_url.scheme
+        + "://"
+        + parsed_url.netloc
+        + parsed_url.path.split(DISPLAY)[0]
     )
     space = DISPLAY.join(parsed_url.path.split(DISPLAY)[1:]).split("/")[0]
     page_id = parsed_url.path.split("/")[5]
@@ -85,8 +85,8 @@ def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, st
 
 def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str, str, bool]:
     is_confluence_cloud = (
-            ".atlassian.net/wiki/spaces/" in wiki_url
-            or ".jira.com/wiki/spaces/" in wiki_url
+        ".atlassian.net/wiki/spaces/" in wiki_url
+        or ".jira.com/wiki/spaces/" in wiki_url
     )
 
     try:
@@ -176,9 +176,9 @@ def get_used_attachments(text: str, confluence_client: Confluence) -> list[str]:
 
 
 def _comment_dfs(
-        comments_str: str,
-        comment_pages: Collection[dict[str, Any]],
-        confluence_client: Confluence,
+    comments_str: str,
+    comment_pages: Collection[dict[str, Any]],
+    confluence_client: Confluence,
 ) -> str:
     get_page_child_by_type = make_confluence_call_handle_rate_limit(
         confluence_client.get_page_child_by_type
@@ -204,14 +204,14 @@ def _comment_dfs(
 
 class ConfluenceConnector(LoadConnector, PollConnector):
     def __init__(
-            self,
-            wiki_page_url: str,
-            batch_size: int = INDEX_BATCH_SIZE,
-            continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
-            # if a page has one of the labels specified in this list, we will just
-            # skip it. This is generally used to avoid indexing extra sensitive
-            # pages.
-            labels_to_skip: list[str] = CONFLUENCE_CONNECTOR_LABELS_TO_SKIP,
+        self,
+        wiki_page_url: str,
+        batch_size: int = INDEX_BATCH_SIZE,
+        continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
+        # if a page has one of the labels specified in this list, we will just
+        # skip it. This is generally used to avoid indexing extra sensitive
+        # pages.
+        labels_to_skip: list[str] = CONFLUENCE_CONNECTOR_LABELS_TO_SKIP,
     ) -> None:
         self.batch_size = batch_size
         self.continue_on_failure = continue_on_failure
@@ -235,9 +235,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         return None
 
     def _fetch_pages(
-            self,
-            confluence_client: Confluence,
-            start_ind: int,
+        self,
+        confluence_client: Confluence,
+        start_ind: int,
     ) -> Collection[dict[str, Any]]:
         def _fetch(start_ind: int, batch_size: int) -> Collection[dict[str, Any]]:
             get_page_child_by_type = make_confluence_call_handle_rate_limit(
