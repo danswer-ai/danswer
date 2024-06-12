@@ -46,7 +46,7 @@ const PromoterButton = ({
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
     >
-      {promote ? "Promote" : "Demote"} to Admin User
+      {promote ? "Promote" : "Demote"} to {promote ? "Admin" : "Basic"} User
     </Button>
   );
 };
