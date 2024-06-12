@@ -272,6 +272,9 @@ def block_user(
     if not user_to_block:
         raise HTTPException(status_code=404, detail="User not found")
 
+    if user_to_block.is_active is False:
+        logger.warning("{} is already blocked".format(user_to_block.email))
+
     user_to_block.is_active = False
     db_session.add(user_to_block)
     db_session.commit()
@@ -288,6 +291,9 @@ def unblock_user(
     )
     if not user_to_unblock:
         raise HTTPException(status_code=404, detail="User not found")
+
+    if user_to_unblock.is_active is True:
+        logger.warning("{} is already unblocked".format(user_to_unblock.email))
 
     user_to_unblock.is_active = True
     db_session.add(user_to_unblock)
