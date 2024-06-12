@@ -13,7 +13,6 @@ import bs4
 from atlassian import Confluence  # type:ignore
 from requests import HTTPError
 
-from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
@@ -22,6 +21,7 @@ from danswer.configs.constants import DocumentSource
 from danswer.connectors.confluence.rate_limit_handler import (
     make_confluence_call_handle_rate_limit,
 )
+from danswer.connectors.cross_connector_utils.html_utils import format_document_soup
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -37,65 +37,71 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 # Potential Improvements
-# 1. If wiki page instead of space, do a search of all the children of the page instead of index all in the space
+# 1. If wiki page instead of space, do a search of all the children of the page instead of index all in the space: DONE
 # 2. Include attachments, etc
 # 3. Segment into Sections for more accurate linking, can split by headers but make sure no text/ordering is lost
 
 
-def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str]:
+def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, str]:
     """Sample
-    https://danswer.atlassian.net/wiki/spaces/1234abcd/overview
+    https://danswer.atlassian.net/wiki/spaces/1234abcd/pages/5678efgh/overview
     wiki_base is https://danswer.atlassian.net/wiki
     space is 1234abcd
+    page_id is 5678efgh
     """
     parsed_url = urlparse(wiki_url)
     wiki_base = (
-        parsed_url.scheme
-        + "://"
-        + parsed_url.netloc
-        + parsed_url.path.split("/spaces")[0]
+            parsed_url.scheme
+            + "://"
+            + parsed_url.netloc
+            + parsed_url.path.split("/spaces")[0]
     )
     space = parsed_url.path.split("/")[3]
-    return wiki_base, space
+    page_id = parsed_url.path.split("/")[5]
+    return wiki_base, space, page_id
 
 
-def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, str]:
+def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, str, str]:
     """Sample
-    https://danswer.ai/confluence/display/1234abcd/overview
+    https://danswer.ai/confluence/display/1234abcd/pages/5678efgh/overview
     wiki_base is https://danswer.ai/confluence
     space is 1234abcd
+    page_id is 5678efgh
     """
     # /display/ is always right before the space and at the end of the base url
     DISPLAY = "/display/"
 
     parsed_url = urlparse(wiki_url)
     wiki_base = (
-        parsed_url.scheme
-        + "://"
-        + parsed_url.netloc
-        + parsed_url.path.split(DISPLAY)[0]
+            parsed_url.scheme
+            + "://"
+            + parsed_url.netloc
+            + parsed_url.path.split(DISPLAY)[0]
     )
     space = DISPLAY.join(parsed_url.path.split(DISPLAY)[1:]).split("/")[0]
-    return wiki_base, space
+    page_id = parsed_url.path.split("/")[5]
+    return wiki_base, space, page_id
 
 
-def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str, bool]:
+def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str, str, bool]:
     is_confluence_cloud = (
-        ".atlassian.net/wiki/spaces/" in wiki_url
-        or ".jira.com/wiki/spaces/" in wiki_url
+            ".atlassian.net/wiki/spaces/" in wiki_url
+            or ".jira.com/wiki/spaces/" in wiki_url
     )
 
     try:
         if is_confluence_cloud:
-            wiki_base, space = _extract_confluence_keys_from_cloud_url(wiki_url)
+            wiki_base, space, page_id = _extract_confluence_keys_from_cloud_url(wiki_url)
         else:
-            wiki_base, space = _extract_confluence_keys_from_datacenter_url(wiki_url)
+            wiki_base, space, page_id = _extract_confluence_keys_from_datacenter_url(wiki_url)
     except Exception as e:
-        error_msg = f"Not a valid Confluence Wiki Link, unable to extract wiki base and space names. Exception: {e}"
+        error_msg = f"Not a valid Confluence Wiki Link, unable to extract wiki base, space, and page id. Exception: {e}"
         logger.error(error_msg)
         raise ValueError(error_msg)
 
-    return wiki_base, space, is_confluence_cloud
+    print(f"wiki_base: {wiki_base}, space: {space}, page_id: {page_id}, is_confluence_cloud: {is_confluence_cloud}")
+
+    return wiki_base, space, page_id, is_confluence_cloud
 
 
 @lru_cache()
@@ -170,9 +176,9 @@ def get_used_attachments(text: str, confluence_client: Confluence) -> list[str]:
 
 
 def _comment_dfs(
-    comments_str: str,
-    comment_pages: Collection[dict[str, Any]],
-    confluence_client: Confluence,
+        comments_str: str,
+        comment_pages: Collection[dict[str, Any]],
+        confluence_client: Confluence,
 ) -> str:
     get_page_child_by_type = make_confluence_call_handle_rate_limit(
         confluence_client.get_page_child_by_type
@@ -198,19 +204,19 @@ def _comment_dfs(
 
 class ConfluenceConnector(LoadConnector, PollConnector):
     def __init__(
-        self,
-        wiki_page_url: str,
-        batch_size: int = INDEX_BATCH_SIZE,
-        continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
-        # if a page has one of the labels specified in this list, we will just
-        # skip it. This is generally used to avoid indexing extra sensitive
-        # pages.
-        labels_to_skip: list[str] = CONFLUENCE_CONNECTOR_LABELS_TO_SKIP,
+            self,
+            wiki_page_url: str,
+            batch_size: int = INDEX_BATCH_SIZE,
+            continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
+            # if a page has one of the labels specified in this list, we will just
+            # skip it. This is generally used to avoid indexing extra sensitive
+            # pages.
+            labels_to_skip: list[str] = CONFLUENCE_CONNECTOR_LABELS_TO_SKIP,
     ) -> None:
         self.batch_size = batch_size
         self.continue_on_failure = continue_on_failure
         self.labels_to_skip = set(labels_to_skip)
-        self.wiki_base, self.space, self.is_cloud = extract_confluence_keys_from_url(
+        self.wiki_base, self.space, self.page_id, self.is_cloud = extract_confluence_keys_from_url(
             wiki_page_url
         )
         self.confluence_client: Confluence | None = None
@@ -229,79 +235,56 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         return None
 
     def _fetch_pages(
-        self,
-        confluence_client: Confluence,
-        start_ind: int,
+            self,
+            confluence_client: Confluence,
+            start_ind: int,
     ) -> Collection[dict[str, Any]]:
         def _fetch(start_ind: int, batch_size: int) -> Collection[dict[str, Any]]:
-            get_all_pages_from_space = make_confluence_call_handle_rate_limit(
-                confluence_client.get_all_pages_from_space
+            get_page_child_by_type = make_confluence_call_handle_rate_limit(
+                confluence_client.get_page_child_by_type
             )
             try:
-                return get_all_pages_from_space(
-                    self.space,
+                return get_page_child_by_type(
+                    self.page_id,
+                    type="page",
                     start=start_ind,
                     limit=batch_size,
-                    status="current"
-                    if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
-                    else None,
                     expand="body.storage.value,version",
                 )
             except Exception:
                 logger.warning(
-                    f"Batch failed with space {self.space} at offset {start_ind} "
+                    f"Batch failed with page {self.page_id} at offset {start_ind} "
                     f"with size {batch_size}, processing pages individually..."
                 )
 
-                view_pages: list[dict[str, Any]] = []
+                child_pages: list[dict[str, Any]] = []
                 for i in range(self.batch_size):
+                    ind = start_ind + i
                     try:
-                        # Could be that one of the pages here failed due to this bug:
-                        # https://jira.atlassian.com/browse/CONFCLOUD-76433
-                        view_pages.extend(
-                            get_all_pages_from_space(
-                                self.space,
-                                start=start_ind + i,
-                                limit=1,
-                                status="current"
-                                if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
-                                else None,
-                                expand="body.storage.value,version",
-                            )
+                        child_page = get_page_child_by_type(
+                            self.page_id,
+                            type="page",
+                            start=ind,
+                            limit=1,
+                            expand="body.storage.value,version",
                         )
-                    except HTTPError as e:
+                        child_pages.extend(child_page)
+                    except Exception as e:
                         logger.warning(
-                            f"Page failed with space {self.space} at offset {start_ind + i}, "
-                            f"trying alternative expand option: {e}"
+                            f"Page {self.page_id} at offset {ind} failed: {e}"
                         )
-                        # Use view instead, which captures most info but is less complete
-                        view_pages.extend(
-                            get_all_pages_from_space(
-                                self.space,
-                                start=start_ind + i,
-                                limit=1,
-                                expand="body.view.value,version",
-                            )
-                        )
+                        if not self.continue_on_failure:
+                            raise e
 
-                return view_pages
+                return child_pages
 
-        try:
-            return _fetch(start_ind, self.batch_size)
-        except Exception as e:
-            if not self.continue_on_failure:
-                raise e
-
-        # error checking phase, only reachable if `self.continue_on_failure=True`
         pages: list[dict[str, Any]] = []
-        for i in range(self.batch_size):
-            try:
-                pages.extend(_fetch(start_ind + i, 1))
-            except Exception:
-                logger.exception(
-                    "Ran into exception when fetching pages from Confluence"
-                )
-
+        batch = _fetch(start_ind, self.batch_size)
+        pages.extend(batch)
+        while batch:
+            start_ind += self.batch_size
+            batch = _fetch(start_ind, self.batch_size)
+            pages.extend(batch)
         return pages
 
     def _fetch_comments(self, confluence_client: Confluence, page_id: str) -> str:
@@ -383,7 +366,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         return "\n".join(files_attachment_content)
 
     def _get_doc_batch(
-        self, start_ind: int, time_filter: Callable[[datetime], bool] | None = None
+            self, start_ind: int, time_filter: Callable[[datetime], bool] | None = None
     ) -> tuple[list[Document], int]:
         doc_batch: list[Document] = []
 
@@ -394,6 +377,8 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         for page in batch:
             last_modified_str = page["version"]["when"]
             author = cast(str | None, page["version"].get("by", {}).get("email"))
+            if last_modified_str.endswith('Z'):
+                last_modified_str = last_modified_str[:-1] + '+00:00'
             last_modified = datetime.fromisoformat(last_modified_str)
 
             if last_modified.tzinfo is None:
@@ -473,7 +458,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 break
 
     def poll_source(
-        self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
+            self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
