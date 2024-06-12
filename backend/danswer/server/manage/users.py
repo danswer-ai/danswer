@@ -1,3 +1,4 @@
+import re
 from typing import TypedDict
 
 from fastapi import APIRouter
@@ -79,12 +80,18 @@ class AllUsersResponse(TypedDict):
 
 @router.get("/manage/users")
 def list_all_users(
+    q: str,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> AllUsersResponse:
-    users = list_users(db_session)
+    users = list_users(db_session, q=q)
     accepted_emails = {user.email for user in users}
-    invited_emails = set(get_invited_users())
+    invited_emails = get_invited_users()
+    if q:
+        invited_emails = [
+            email for email in invited_emails if re.search(r"{}".format(q), email, re.I)
+        ]
+
     return {
         "accepted": [
             FullUserSnapshot(
@@ -97,7 +104,8 @@ def list_all_users(
         ],
         "invited": [
             InvitedUserSnapshot(email=email)
-            for email in invited_emails.difference(accepted_emails)
+            for email in invited_emails
+            if email not in accepted_emails
         ],
     }
 

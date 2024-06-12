@@ -1,6 +1,7 @@
 "use client";
 import InvitedUserTable from "@/components/admin/users/InvitedUserTable";
 import SignedUpUserTable from "@/components/admin/users/SignedUpUserTable";
+import { SearchBar } from "@/components/search/SearchBar";
 import { useState } from "react";
 import { FiPlusSquare } from "react-icons/fi";
 import Link from "next/link";
@@ -33,11 +34,15 @@ interface UsersResponse {
   invited: Array<User>;
 }
 
-const UsersTable = () => {
-  const { popup, setPopup } = usePopup();
-
+const UsersTables = ({
+  q,
+  setPopup,
+}: {
+  q: string;
+  setPopup: (spec: PopupSpec) => void;
+}) => {
   const { data, isLoading, error } = useSWR<UsersResponse>(
-    "/api/manage/users",
+    `/api/manage/users?q=${encodeURI(q)}`,
     errorHandlingFetcher
   );
 
@@ -54,16 +59,37 @@ const UsersTable = () => {
     );
   }
 
-  const { accepted: users, invited } = data;
+  const { accepted, invited } = data;
+
+  return (
+    <>
+      <InvitedUserTable users={invited} setPopup={setPopup} />
+      <SignedUpUserTable users={accepted} setPopup={setPopup} />
+    </>
+  );
+};
+
+const SearchableTables = () => {
+  const { popup, setPopup } = usePopup();
+  const [query, setQuery] = useState("");
+  const [q, setQ] = useState("");
 
   return (
     <div>
       {popup}
 
       <div className="flex flex-col gap-y-4">
-        <AddUserButton setPopup={setPopup} />
-        <InvitedUserTable users={invited} setPopup={setPopup} />
-        <SignedUpUserTable users={users} setPopup={setPopup} />
+        <div className="flex gap-x-4">
+          <AddUserButton setPopup={setPopup} />
+          <div className="flex-grow">
+            <SearchBar
+              query={query}
+              setQuery={setQuery}
+              onSearch={() => setQ(query)}
+            />
+          </div>
+        </div>
+        <UsersTables q={q} setPopup={setPopup} />
       </div>
     </div>
   );
@@ -109,7 +135,7 @@ const Page = () => {
   return (
     <div className="mx-auto container">
       <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
-      <UsersTable />
+      <SearchableTables />
     </div>
   );
 };
