@@ -3,7 +3,7 @@ import { Title, Text, Divider, Card } from "@tremor/react";
 import {
   EmbeddingModelDescriptor,
   FullEmbeddingModelDescriptor,
-} from "../../../../app/admin/models/embedding/embeddingModels";
+} from "@/app/admin/models/embedding/embeddingModels";
 import { FiStar } from "react-icons/fi";
 import { CustomModelForm } from "./AdminModelsEmbedingCustomForm";
 

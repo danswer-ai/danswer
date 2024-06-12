@@ -1,6 +1,6 @@
 import { Modal } from "@/components/Modal";
 import { Button, Text, Callout } from "@tremor/react";
-import { EmbeddingModelDescriptor } from "../../../../app/admin/models/embedding/embeddingModels";
+import { EmbeddingModelDescriptor } from "@/app/admin/models/embedding/embeddingModels";
 
 export function ModelSelectionConfirmaion({
   selectedModel,

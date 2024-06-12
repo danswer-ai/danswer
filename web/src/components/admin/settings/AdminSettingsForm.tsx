@@ -2,7 +2,7 @@
 
 import { Label, SubLabel } from "@/components/admin/connectors/Field";
 import { Title } from "@tremor/react";
-import { Settings } from "../../../app/admin/settings/interfaces";
+import { Settings } from "@/app/admin/settings/interfaces";
 import { useRouter } from "next/navigation";
 import { DefaultDropdown, Option } from "@/components/Dropdown";
 

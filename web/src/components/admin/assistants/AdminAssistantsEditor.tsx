@@ -12,10 +12,10 @@ import {
 } from "formik";
 
 import * as Yup from "yup";
-import { buildFinalPrompt, createPersona, updatePersona } from "../../../app/admin/assistants/lib";
+import { buildFinalPrompt, createPersona, updatePersona } from "@/app/admin/assistants/lib";
 import { useRouter } from "next/navigation";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { Persona, StarterMessage } from "../../../app/admin/assistants/interfaces";
+import { Persona, StarterMessage } from "@/app/admin/assistants/interfaces";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -29,9 +29,9 @@ import { EE_ENABLED } from "@/lib/constants";
 import { useUserGroups } from "@/lib/hooks";
 import { Bubble } from "@/components/Bubble";
 import { GroupsIcon } from "@/components/icons/icons";
-import { SuccessfulPersonaUpdateRedirectType } from "../../../app/admin/assistants/enums";
+import { SuccessfulPersonaUpdateRedirectType } from "@/app/admin/assistants/enums";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
-import { FullLLMProvider } from "../../../app/admin/models/llm/interfaces";
+import { FullLLMProvider } from "@/app/admin/models/llm/interfaces";
 import { Option } from "@/components/Dropdown";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
 

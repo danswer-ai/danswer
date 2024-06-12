@@ -244,7 +244,7 @@ export default function Page() {
       </div>
 
       <AdminPageTitle icon={<AxeroIcon size={32} />} title="Axero" />
-
+      
       <MainSection />
     </div>
   );

@@ -1,12 +1,12 @@
 "use client";
 
-import { adminSearch } from "../../../../app/admin/documents/explorer/lib";
+import { adminSearch } from "@/app/admin/documents/explorer/lib";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useState, useEffect } from "react";
 import { DanswerDocument } from "@/lib/search/interfaces";
 import { buildDocumentSummaryDisplay } from "@/components/search/DocumentDisplay";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
-import { updateHiddenStatus } from "../../../../app/admin/documents/lib";
+import { updateHiddenStatus } from "@/app/admin/documents/lib";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { getErrorMsg } from "@/lib/fetchUtils";
 import { ScoreSection } from "@/components/admin/documents/AdminDocumentsScoreEditor";
@@ -149,7 +149,7 @@ export function Explorer({
     } else {
       setResults([]);
     }
-  }, [query, filterManager.selectedDocumentSets, filterManager.selectedSources, filterManager.timeRange, timeoutId, router, onSearch]);
+  }, [query, filterManager.selectedDocumentSets, filterManager.selectedSources, filterManager.timeRange]);
 
   return (
     <div>
