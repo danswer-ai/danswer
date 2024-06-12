@@ -338,7 +338,6 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 return child_pages
 
         pages: list[dict[str, Any]] = []
-        # batch = _fetch(start_ind, self.batch_size)
         batch = (
             _fetch_space(start_ind, self.batch_size)
             if self.space_level_scan
