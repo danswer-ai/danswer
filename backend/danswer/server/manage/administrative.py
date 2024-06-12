@@ -259,12 +259,16 @@ def remove_invited_user(
 @router.patch("/admin/block-user")
 def block_user(
     user_email: UserByEmail,
-    _: User | None = Depends(current_admin_user),
+    current_user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
+    if current_user.email == user_email.user_email:
+        raise HTTPException(status_code=400, detail="You cannot block yourself")
+
     user_to_block = get_user_by_email(
         email=user_email.user_email, db_session=db_session
     )
+
     if not user_to_block:
         raise HTTPException(status_code=404, detail="User not found")
 
