@@ -332,10 +332,10 @@ export function ChatPage({
           (persona) => persona.id === existingChatSessionPersonaId
         )
       : defaultSelectedPersonaId !== undefined
-      ? filteredAssistants.find(
-          (persona) => persona.id === defaultSelectedPersonaId
-        )
-      : undefined
+        ? filteredAssistants.find(
+            (persona) => persona.id === defaultSelectedPersonaId
+          )
+        : undefined
   );
   const livePersona =
     selectedPersona || filteredAssistants[0] || availablePersonas[0];
@@ -773,7 +773,7 @@ export function ChatPage({
 
   const handleImageUpload = (acceptedFiles: File[]) => {
     const llmAcceptsImages = checkLLMSupportsImageInput(
-      ...getFinalLLM(llmProviders, livePersona)
+      ...getFinalLLM(llmProviders, livePersona, llmOverrideManager.llmOverride)
     );
     const imageFiles = acceptedFiles.filter((file) =>
       file.type.startsWith("image/")
@@ -884,8 +884,10 @@ export function ChatPage({
             setActiveTab={setConfigModalActiveTab}
             onClose={() => setConfigModalActiveTab(null)}
             filterManager={filterManager}
+            availableAssistants={filteredAssistants}
             selectedAssistant={livePersona}
             setSelectedAssistant={onPersonaChange}
+            llmProviders={llmProviders}
             llmOverrideManager={llmOverrideManager}
           />
 

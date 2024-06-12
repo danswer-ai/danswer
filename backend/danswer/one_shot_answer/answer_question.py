@@ -19,11 +19,11 @@ from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_db_search_doc
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_or_create_root_message
-from danswer.db.chat import get_prompt_by_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.engine import get_session_context_manager
 from danswer.db.models import User
+from danswer.db.persona import get_prompt_by_id
 from danswer.llm.answering.answer import Answer
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import CitationConfig
@@ -172,7 +172,7 @@ def stream_answer_objects(
         persona=chat_session.persona,
         retrieval_options=query_req.retrieval_options,
         prompt_config=prompt_config,
-        llm_config=llm.config,
+        llm=llm,
         pruning_config=document_pruning_config,
     )
 
