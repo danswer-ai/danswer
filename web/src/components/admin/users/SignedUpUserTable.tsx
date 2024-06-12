@@ -34,6 +34,7 @@ const PromoterButton = ({
   );
   return (
     <Button
+      className="w-min"
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
     >
@@ -60,6 +61,7 @@ const BlockerButton = ({
   );
   return (
     <Button
+      className="w-min"
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
     >
@@ -136,6 +138,7 @@ const SignedUpUserTable = ({
           <TableRow>
             <TableHeaderCell>Email</TableHeaderCell>
             <TableHeaderCell>Role</TableHeaderCell>
+            <TableHeaderCell>Status</TableHeaderCell>
             <TableHeaderCell>
               <div className="flex">
                 <div className="ml-auto">Actions</div>
@@ -151,7 +154,10 @@ const SignedUpUserTable = ({
                 <i>{user.role === "admin" ? "Admin" : "User"}</i>
               </TableCell>
               <TableCell>
-                <div className="flex justify-end space-x-2">
+                <i>{user.status === "live" ? "Active" : "Inactive"}</i>
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col items-end gap-y-2">
                   <PromoterButton
                     user={user}
                     promote={user.role !== "admin"}
