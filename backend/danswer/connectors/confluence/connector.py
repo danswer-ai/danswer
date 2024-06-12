@@ -102,7 +102,7 @@ def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str, str, bool
         logger.error(error_msg)
         raise ValueError(error_msg)
 
-    print(f"wiki_base: {wiki_base}, space: {space}, page_id: {page_id}, is_confluence_cloud: {is_confluence_cloud}")
+    logger.info(f"wiki_base: {wiki_base}, space: {space}, page_id: {page_id}, is_confluence_cloud: {is_confluence_cloud}")
 
     return wiki_base, space, page_id, is_confluence_cloud
 
@@ -226,6 +226,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         if self.page_id is None or self.page_id == "":
             self.space_level_scan = True
         self.confluence_client: Confluence | None = None
+        logger.info(f"wiki_base: {self.wiki_base}, space: {self.space}, page_id: {self.page_id}, is_confluence_cloud: {self.is_confluence_cloud} space_level_scan: {self.space_level_scan}")
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         username = credentials["confluence_username"]
@@ -337,21 +338,22 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
                 return child_pages
 
+        try:
+            return _fetch_space(start_ind, self.batch_size) if self.space_level_scan else _fetch_child_pages(start_ind, self.batch_size)
+        except Exception as e:
+            if not self.continue_on_failure:
+                raise e
+
+        # error checking phase, only reachable if `self.continue_on_failure=True`
         pages: list[dict[str, Any]] = []
-        batch = (
-            _fetch_space(start_ind, self.batch_size)
-            if self.space_level_scan
-            else _fetch_child_pages(start_ind, self.batch_size)
-        )
-        pages.extend(batch)
-        while batch:
-            start_ind += self.batch_size
-            batch = (
-                _fetch_space(start_ind, self.batch_size)
-                if self.space_level_scan
-                else _fetch_child_pages(start_ind, self.batch_size)
-            )
-            pages.extend(batch)
+        for i in range(self.batch_size):
+            try:
+                pages.extend(_fetch_space(start_ind + i, 1) if self.space_level_scan else _fetch_child_pages(start_ind + i, 1))
+            except Exception:
+                logger.exception(
+                    "Ran into exception when fetching pages from Confluence"
+                )
+
         return pages
 
     def _fetch_comments(self, confluence_client: Confluence, page_id: str) -> str:
@@ -417,9 +419,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
                 if response.status_code == 200:
                     extract = extract_file_text(
-                        file_name = attachment["title"],
-                        file = io.BytesIO(response.content),
-                        break_on_unprocessable = False
+                        attachment["title"], io.BytesIO(response.content), False
                     )
                     files_attachment_content.append(extract)
 
