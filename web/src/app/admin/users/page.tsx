@@ -307,7 +307,7 @@ const AddUserButton = ({
   };
   return (
     <>
-      <Button onClick={() => setModal(true)}>
+      <Button className="w-fit" onClick={() => setModal(true)}>
         <div className="flex">
           <FiPlusSquare className="my-auto mr-2" />
           Invite Users
