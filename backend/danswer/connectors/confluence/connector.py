@@ -339,7 +339,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 page_id, start=0, limit=500
             )
             for attachment in attachments_container["results"]:
-                if attachment["metadata"]["mediaType"] in ["image/jpeg", "image/png"]:
+                if attachment["metadata"]["mediaType"] in ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "video/mp4", "video/quicktime"]:
                     continue
 
                 if attachment["title"] not in files_in_used:
