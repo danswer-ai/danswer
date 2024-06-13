@@ -45,7 +45,7 @@ export function AuthSignupRequestVerificationButton({
     <button
       className="text-link"
       onClick={requestVerification}
-      disabled={isRequestingVerification} // Disable the button while requesting
+      disabled={isRequestingVerification}
     >
       {isRequestingVerification && <Spinner />}
       {children}
