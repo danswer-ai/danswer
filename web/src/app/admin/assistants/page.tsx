@@ -1,4 +1,4 @@
-import { PersonasTable } from "./PersonaTable";
+import { PersonasTable } from "@/components/admin/assistants/AdminAssistantsPersonaTable";
 import { FiPlusSquare } from "react-icons/fi";
 import Link from "next/link";
 import { Divider, Text, Title } from "@tremor/react";

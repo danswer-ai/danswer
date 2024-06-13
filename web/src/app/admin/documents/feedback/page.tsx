@@ -3,7 +3,7 @@
 import { LoadingAnimation } from "@/components/Loading";
 import { ThumbsUpIcon } from "@/components/icons/icons";
 import { useMostReactedToDocuments } from "@/lib/hooks";
-import { DocumentFeedbackTable } from "./DocumentFeedbackTable";
+import { DocumentFeedbackTable } from "@/components/admin/documents/feedback/AdminDocumentsFeedbackTable";
 import { numPages, numToDisplay } from "./constants";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Title } from "@tremor/react";

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Modal } from "../../../../components/Modal";
+import { Modal } from "@/components/Modal";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
 import { FiltersTab } from "./FiltersTab";
 import { FiCpu, FiFilter, FiX } from "react-icons/fi";

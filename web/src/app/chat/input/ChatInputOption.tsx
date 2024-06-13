@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { IconType } from "react-icons";
-import { DefaultDropdownElement } from "../../../components/Dropdown";
-import { Popover } from "../../../components/popover/Popover";
+import { DefaultDropdownElement } from "@/components/Dropdown";
+import { Popover } from "@/components/popover/Popover";
 
 interface ChatInputOptionProps {
   name: string;

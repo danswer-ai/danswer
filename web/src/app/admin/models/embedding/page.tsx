@@ -6,10 +6,10 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import { Button, Card, Text, Title } from "@tremor/react";
 import { FiPackage } from "react-icons/fi";
 import useSWR, { mutate } from "swr";
-import { ModelOption, ModelSelector } from "./ModelSelector";
+import { ModelOption, ModelSelector } from "@/components/admin/models/embeding/AdminModelsEmbedingSelector";
 import { useState } from "react";
-import { ModelSelectionConfirmaionModal } from "./ModelSelectionConfirmation";
-import { ReindexingProgressTable } from "./ReindexingProgressTable";
+import { ModelSelectionConfirmaionModal } from "@/components/admin/models/embeding/AdminModelsEmbedingSelectionConfirmation";
+import { ReindexingProgressTable } from "@/components/admin/models/embeding/AdminModelsEmbedingReindexingProgressTable";
 import { Modal } from "@/components/Modal";
 import {
   AVAILABLE_MODELS,
@@ -20,7 +20,7 @@ import {
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Connector, ConnectorIndexingStatus } from "@/lib/types";
 import Link from "next/link";
-import { CustomModelForm } from "./CustomModelForm";
+import { CustomModelForm } from "@/components/admin/models/embeding/AdminModelsEmbedingCustomForm";
 
 function Main() {
   const [tentativeNewEmbeddingModel, setTentativeNewEmbeddingModel] =

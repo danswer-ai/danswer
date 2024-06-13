@@ -1,4 +1,4 @@
-import { AssistantEditor } from "../AssistantEditor";
+import { AssistantEditor } from "@/components/admin/assistants/AdminAssistantsEditor";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { RobotIcon } from "@/components/icons/icons";
 import { BackButton } from "@/components/BackButton";
