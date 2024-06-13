@@ -30,8 +30,8 @@ import { HidableSection } from "@/app/admin/assistants/HidableSection";
 import BulkAdd from "@/components/admin/users/BulkAdd";
 
 interface UsersResponse {
-  accepted: Array<User>;
-  invited: Array<User>;
+  accepted: User[];
+  invited: User[];
   accepted_pages: number;
   invited_pages: number;
 }
