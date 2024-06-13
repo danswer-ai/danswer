@@ -4,7 +4,7 @@ from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.dynamic_configs.interface import JSON_ro
 
-USER_STORE_KEY = "USERS"
+USER_STORE_KEY = "INVITED_USERS"
 
 
 def get_invited_users() -> list[str]:
