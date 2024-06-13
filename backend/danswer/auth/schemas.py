@@ -12,7 +12,7 @@ class UserRole(str, Enum):
 class UserStatus(str, Enum):
     LIVE = "live"
     INVITED = "invited"
-    BLOCKED = "blocked"
+    DEACTIVATED = "deactivated"
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):

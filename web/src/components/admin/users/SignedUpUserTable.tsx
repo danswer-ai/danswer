@@ -51,19 +51,21 @@ const PromoterButton = ({
   );
 };
 
-const BlockerButton = ({
+const DeactivaterButton = ({
   user,
-  block,
+  deactivate,
   onSuccess,
   onError,
 }: {
   user: User;
-  block: boolean;
+  deactivate: boolean;
   onSuccess: () => void;
   onError: (message: string) => void;
 }) => {
   const { trigger, isMutating } = useSWRMutation(
-    block ? "/api/manage/admin/block-user" : "/api/manage/admin/unblock-user",
+    deactivate
+      ? "/api/manage/admin/deactivate-user"
+      : "/api/manage/admin/activate-user",
     userMutationFetcher,
     { onSuccess, onError }
   );
@@ -73,7 +75,7 @@ const BlockerButton = ({
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
     >
-      {block ? "Block" : "Unblock"} Access
+      {deactivate ? "Deactivate" : "Activate"} Access
     </Button>
   );
 };
@@ -114,29 +116,29 @@ const SignedUpUserTable = ({
     onError(`Unable to demote admin - ${errorMsg}`);
   };
 
-  const onBlockSuccess = () => {
+  const onDeactivateSuccess = () => {
     mutate();
     setPopup({
-      message: "User blocked!",
+      message: "User deactivated!",
       type: "success",
     });
   };
-  const onBlockError = (errorMsg: string) => {
+  const onDeactivateError = (errorMsg: string) => {
     setPopup({
-      message: `Unable to block user - ${errorMsg}`,
+      message: `Unable to deactivate user - ${errorMsg}`,
       type: "error",
     });
   };
-  const onUnblockSuccess = () => {
+  const onActivateSuccess = () => {
     mutate();
     setPopup({
-      message: "User unblocked!",
+      message: "User activate!",
       type: "success",
     });
   };
-  const onUnblockError = (errorMsg: string) => {
+  const onActivateError = (errorMsg: string) => {
     setPopup({
-      message: `Unable to unblock user - ${errorMsg}`,
+      message: `Unable to activate user - ${errorMsg}`,
       type: "error",
     });
   };
@@ -181,11 +183,11 @@ const SignedUpUserTable = ({
                       onSuccess={onPromotionSuccess}
                       onError={onPromotionError}
                     />
-                    <BlockerButton
+                    <DeactivaterButton
                       user={user}
-                      block={user.status === UserStatus.live}
-                      onSuccess={onBlockSuccess}
-                      onError={onBlockError}
+                      deactivate={user.status === UserStatus.live}
+                      onSuccess={onDeactivateSuccess}
+                      onError={onDeactivateError}
                     />
                   </div>
                 </TableCell>

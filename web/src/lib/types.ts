@@ -7,7 +7,7 @@ export interface UserPreferences {
 export enum UserStatus {
   live = "live",
   invited = "invited",
-  blocked = "blocked",
+  deactivated = "deactivated",
 }
 
 export interface User {

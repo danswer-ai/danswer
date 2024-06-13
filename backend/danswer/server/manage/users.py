@@ -100,7 +100,7 @@ def list_all_users(
                 id=user.id,
                 email=user.email,
                 role=user.role,
-                status=UserStatus.LIVE if user.is_active else UserStatus.BLOCKED,
+                status=UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED,
             )
             for user in users
         ][accepted_page * USERS_PAGE_SIZE : (accepted_page + 1) * USERS_PAGE_SIZE],

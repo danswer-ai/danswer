@@ -256,45 +256,45 @@ def remove_invited_user(
     return write_invited_users(remaining_users)
 
 
-@router.patch("/admin/block-user")
-def block_user(
+@router.patch("/admin/deactivate-user")
+def deactivate_user(
     user_email: UserByEmail,
     current_user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     if current_user.email == user_email.user_email:
-        raise HTTPException(status_code=400, detail="You cannot block yourself")
+        raise HTTPException(status_code=400, detail="You cannot deactivate yourself")
 
-    user_to_block = get_user_by_email(
+    user_to_deactivate = get_user_by_email(
         email=user_email.user_email, db_session=db_session
     )
 
-    if not user_to_block:
+    if not user_to_deactivate:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user_to_block.is_active is False:
-        logger.warning("{} is already blocked".format(user_to_block.email))
+    if user_to_deactivate.is_active is False:
+        logger.warning("{} is already deactivated".format(user_to_deactivate.email))
 
-    user_to_block.is_active = False
-    db_session.add(user_to_block)
+    user_to_deactivate.is_active = False
+    db_session.add(user_to_deactivate)
     db_session.commit()
 
 
-@router.patch("/admin/unblock-user")
-def unblock_user(
+@router.patch("/admin/activate-user")
+def activate_user(
     user_email: UserByEmail,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    user_to_unblock = get_user_by_email(
+    user_to_activate = get_user_by_email(
         email=user_email.user_email, db_session=db_session
     )
-    if not user_to_unblock:
+    if not user_to_activate:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user_to_unblock.is_active is True:
-        logger.warning("{} is already unblocked".format(user_to_unblock.email))
+    if user_to_activate.is_active is True:
+        logger.warning("{} is already activated".format(user_to_activate.email))
 
-    user_to_unblock.is_active = True
-    db_session.add(user_to_unblock)
+    user_to_activate.is_active = True
+    db_session.add(user_to_activate)
     db_session.commit()
