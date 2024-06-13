@@ -2,7 +2,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Text } from "@tremor/react";
-import { RequestNewVerificationEmail } from "@/components/auth/signup/AuthSignuoRequestVerifiicationButton";
+import { AuthSignupRequestVerificationButton } from "@/components/auth/signup/AuthSignupRequestVerificationButton";
 import { User } from "@/lib/types";
 
 export function Verify({ user }: { user: User | null }) {
@@ -52,11 +52,11 @@ export function Verify({ user }: { user: User | null }) {
 
           {user && (
             <div className="text-center">
-              <RequestNewVerificationEmail email={user.email}>
+              <AuthSignupRequestVerificationButton email={user.email}>
                 <Text className="mt-2 text-link">
                   Get new verification email
                 </Text>
-              </RequestNewVerificationEmail>
+              </AuthSignupRequestVerificationButton>
             </div>
           )}
         </div>

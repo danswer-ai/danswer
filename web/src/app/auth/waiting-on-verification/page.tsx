@@ -8,7 +8,7 @@ import Image from "next/image";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { User } from "@/lib/types";
 import { Text } from "@tremor/react";
-import { RequestNewVerificationEmail } from "@/components/auth/signup/AuthSignuoRequestVerifiicationButton";
+import { AuthSignupRequestVerificationButton } from "@/components/auth/signup/AuthSignupRequestVerificationButton";
 
 export default async function Page() {
   // catch cases where the backend is completely unreachable here
@@ -56,9 +56,9 @@ export default async function Page() {
               <br />
               <br />
               If you don&apos;t see anything, click{" "}
-              <RequestNewVerificationEmail email={currentUser.email}>
+              <AuthSignupRequestVerificationButton email={currentUser.email}>
                 here
-              </RequestNewVerificationEmail>{" "}
+              </AuthSignupRequestVerificationButton>{" "}
               to request a new email.
             </Text>
           </div>

@@ -5,7 +5,7 @@ import { requestEmailVerification } from "@/app/auth/lib";
 import { Spinner } from "@/components/Spinner";
 import { useState } from "react";
 
-export function RequestNewVerificationEmail({
+export function AuthSignupRequestVerificationButton({
   children,
   email,
 }: {
