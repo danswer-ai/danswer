@@ -26,6 +26,7 @@ from fastapi_users.openapi import OpenAPIResponseType
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy.orm import Session
 
+from danswer.auth.invited_users import get_invited_users
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
 from danswer.configs.app_configs import AUTH_TYPE
@@ -50,7 +51,6 @@ from danswer.db.auth import get_user_db
 from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
 from danswer.db.models import User
-from danswer.dynamic_configs.users import get_invited_users
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType

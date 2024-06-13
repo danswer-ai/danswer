@@ -10,6 +10,8 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from danswer.auth.invited_users import get_invited_users
+from danswer.auth.invited_users import write_invited_users
 from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.app_configs import TOKEN_BUDGET_GLOBALLY_ENABLED
@@ -31,8 +33,6 @@ from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.dynamic_configs.users import get_invited_users
-from danswer.dynamic_configs.users import write_invited_users
 from danswer.file_store.file_store import get_default_file_store
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import test_llm
