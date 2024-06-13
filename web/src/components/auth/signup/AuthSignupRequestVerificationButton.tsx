@@ -13,36 +13,44 @@ export function AuthSignupRequestVerificationButton({
   email: string;
 }) {
   const { popup, setPopup } = usePopup();
-  const [isRequestingVerification, setIsRequestingVerification] =
-    useState(false);
+  const [isRequestingVerification, setIsRequestingVerification] = useState(false);
+
+  async function requestVerification() {
+    setIsRequestingVerification(true);
+    try {
+      const response = await requestEmailVerification(email);
+
+      if (response.ok) {
+        setPopup({
+          type: "success",
+          message: "A new verification email has been sent!",
+        });
+      } else {
+        const errorDetail = (await response.json()).detail;
+        setPopup({
+          type: "error",
+          message: `Failed to send a new verification email - ${errorDetail}`,
+        });
+      }
+    } catch (error) {
+      setPopup({
+        type: "error",
+        message: `An unexpected error occurred. Please try again later.`,
+      });
+    } finally {
+      setIsRequestingVerification(false);
+    }
+  }
 
   return (
     <button
       className="text-link"
-      onClick={async () => {
-        setIsRequestingVerification(true);
-        const response = await requestEmailVerification(email);
-        setIsRequestingVerification(false);
-
-        if (response.ok) {
-          setPopup({
-            type: "success",
-            message: "A new verification email has been sent!",
-          });
-          setIsRequestingVerification(false);
-        } else {
-          const errorDetail = (await response.json()).detail;
-          setPopup({
-            type: "error",
-            message: `Failed to send a new verification email - ${errorDetail}`,
-          });
-          setIsRequestingVerification(false);
-        }
-      }}
+      onClick={requestVerification}
+      disabled={isRequestingVerification} // Disable the button while requesting
     >
       {isRequestingVerification && <Spinner />}
-      {popup}
       {children}
+      {popup}
     </button>
   );
 }
