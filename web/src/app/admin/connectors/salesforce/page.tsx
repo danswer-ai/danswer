@@ -2,7 +2,7 @@
 
 import * as Yup from "yup";
 import { TrashIcon, SalesforceIcon } from "@/components/icons/icons"; // Make sure you have a Document360 icon
-import { fetcher } from "@/lib/fetcher";
+import { errorHandlingFetcher as fetcher } from "@/lib/fetcher";
 import useSWR, { useSWRConfig } from "swr";
 import { LoadingAnimation } from "@/components/Loading";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -62,12 +62,12 @@ const MainSection = () => {
     SalesforceCredentialJson
   >[] = connectorIndexingStatuses.filter(
     (connectorIndexingStatus) =>
-      connectorIndexingStatus.connector.source === "Salesforce"
+      connectorIndexingStatus.connector.source === "salesforce"
   );
 
   const SalesforceCredential: Credential<SalesforceCredentialJson> | undefined =
     credentialsData.find(
-      (credential) => credential.credential_json?.aad_client_id
+      (credential) => credential.credential_json?.sf_username
     );
 
   return (
@@ -85,9 +85,9 @@ const MainSection = () => {
       {SalesforceCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            <Text className="my-auto">Existing Azure AD Client ID: </Text>
+            <Text className="my-auto">Existing SalesForce Username: </Text>
             <Text className="ml-1 italic my-auto">
-              {SalesforceCredential.credential_json.aad_client_id}
+              {SalesforceCredential.credential_json.sf_username}
             </Text>
             <button
               className="ml-1 hover:bg-hover rounded p-1"
@@ -176,7 +176,7 @@ const MainSection = () => {
               connectorIndexingStatuses={SalesforceConnectorIndexingStatuses}
               liveCredential={SalesforceCredential}
               getCredential={(credential) =>
-                credential.credential_json.aad_directory_id
+                credential.credential_json.sf_security_token
               }
               onUpdate={() =>
                 mutate("/api/manage/admin/connector/indexing-status")
@@ -194,7 +194,7 @@ const MainSection = () => {
                   getValue: (ccPairStatus) => {
                     const connectorConfig =
                       ccPairStatus.connector.connector_specific_config;
-                    return `${connectorConfig.sites}`;
+                    return `${connectorConfig.requested_objects}`;
                   },
                 },
               ]}
@@ -208,34 +208,34 @@ const MainSection = () => {
         <Card className="mt-4">
           <ConnectorForm<SalesforceConfig>
             nameBuilder={(values) =>
-              values.sites && values.sites.length > 0
-                ? `Salesforce-${values.sites.join("-")}`
+              values.requested_objects && values.requested_objects.length > 0
+                ? `Salesforce-${values.requested_objects.join("-")}`
                 : "Salesforce"
             }
             ccPairNameBuilder={(values) =>
-              values.sites && values.sites.length > 0
-                ? `Salesforce-${values.sites.join("-")}`
+              values.requested_objects && values.requested_objects.length > 0
+                ? `Salesforce-${values.requested_objects.join("-")}`
                 : "Salesforce"
             }
-            source="Salesforce"
+            source="salesforce"
             inputType="poll"
             // formBody={<></>}
             formBodyBuilder={TextArrayFieldBuilder({
-              name: "sites",
-              label: "Sites:",
+              name: "requested_objects",
+              label: "requested_objects:",
               subtext:
-                "Specify 0 or more sites to index. For example, specifying the site " +
+                "Specify 0 or more requested_objects to index. For example, specifying the site " +
                 "'support' for the 'danswerai' Salesforce will cause us to only index documents " +
-                "within the 'https://danswerai.Salesforce.com/sites/support' site. " +
-                "If no sites are specified, all sites in your organization will be indexed.",
+                "within the 'https://danswerai.Salesforce.com/requested_objects/support' site. " +
+                "If no requested_objects are specified, all requested_objects in your organization will be indexed.",
             })}
             validationSchema={Yup.object().shape({
-              sites: Yup.array()
+              requested_objects: Yup.array()
                 .of(Yup.string().required("Site names must be strings"))
                 .required(),
             })}
             initialValues={{
-              sites: [],
+              requested_objects: [],
             }}
             credentialId={SalesforceCredential.id}
             refreshFreq={10 * 60} // 10 minutes
