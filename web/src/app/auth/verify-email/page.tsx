@@ -3,7 +3,7 @@ import {
   getAuthTypeMetadataSS,
   getCurrentUserSS,
 } from "@/lib/userSS";
-import { Verify } from "@/components/auth/signup/AuthSignupVerifiication";
+import { EmailVerificationComponent } from "@/components/auth/signup/AuthSignupVerifiication";
 import { User } from "@/lib/types";
 import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -40,7 +40,7 @@ export default async function Page() {
           <div className="h-16 w-16 mx-auto animate-pulse">
             <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
           </div>
-        <Verify user={currentUser} />
+        <EmailVerificationComponent user={currentUser} />
       </div>
       </div>
     </main>

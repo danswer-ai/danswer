@@ -5,7 +5,7 @@ import { Text } from "@tremor/react";
 import { AuthSignupRequestVerificationButton } from "@/components/auth/signup/AuthSignupRequestVerificationButton";
 import { User } from "@/lib/types";
 
-export function Verify({ user }: { user: User | null }) {
+export function EmailVerificationComponent({ user }: { user: User | null }) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
