@@ -1,11 +1,8 @@
 "use client";
-
-import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { Text } from "@tremor/react";
-import { RequestNewVerificationEmail } from "../waiting-on-verification/RequestNewVerificationEmail";
+import { RequestNewVerificationEmail } from "@/components/auth/signup/AuthSignuoRequestVerifiicationButton";
 import { User } from "@/lib/types";
 
 export function Verify({ user }: { user: User | null }) {
@@ -46,35 +43,24 @@ export function Verify({ user }: { user: User | null }) {
   }, []);
 
   return (
-    <main>
-      <div className="absolute top-10x w-full">
-        <HealthCheckBanner />
-      </div>
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <>
+      {!error ? (
+        <Text className="mt-2">Verifying your email...</Text>
+      ) : (
         <div>
-          <div className="h-16 w-16 mx-auto animate-pulse">
-            <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
-          </div>
+          <Text className="mt-2">{error}</Text>
 
-          {!error ? (
-            <Text className="mt-2">Verifying your email...</Text>
-          ) : (
-            <div>
-              <Text className="mt-2">{error}</Text>
-
-              {user && (
-                <div className="text-center">
-                  <RequestNewVerificationEmail email={user.email}>
-                    <Text className="mt-2 text-link">
-                      Get new verification email
-                    </Text>
-                  </RequestNewVerificationEmail>
-                </div>
-              )}
+          {user && (
+            <div className="text-center">
+              <RequestNewVerificationEmail email={user.email}>
+                <Text className="mt-2 text-link">
+                  Get new verification email
+                </Text>
+              </RequestNewVerificationEmail>
             </div>
           )}
         </div>
-      </div>
-    </main>
+      )}
+    </>
   );
 }

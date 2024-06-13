@@ -7,7 +7,7 @@ import { Button } from "@tremor/react";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
-import { requestEmailVerification } from "../lib";
+import { requestEmailVerification } from "@/app/auth/lib";
 import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
 

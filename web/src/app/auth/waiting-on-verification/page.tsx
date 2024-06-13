@@ -8,7 +8,7 @@ import Image from "next/image";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { User } from "@/lib/types";
 import { Text } from "@tremor/react";
-import { RequestNewVerificationEmail } from "./RequestNewVerificationEmail";
+import { RequestNewVerificationEmail } from "@/components/auth/signup/AuthSignuoRequestVerifiicationButton";
 
 export default async function Page() {
   // catch cases where the backend is completely unreachable here
