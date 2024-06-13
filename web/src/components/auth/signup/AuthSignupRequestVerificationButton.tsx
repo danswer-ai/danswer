@@ -37,9 +37,8 @@ export function AuthSignupRequestVerificationButton({
         type: "error",
         message: `An unexpected error occurred. Please try again later.`,
       });
-    } finally {
-      setIsRequestingVerification(false);
     }
+    setIsRequestingVerification(false);
   }
 
   return (
