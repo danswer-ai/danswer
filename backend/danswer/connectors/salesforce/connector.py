@@ -22,7 +22,6 @@ from danswer.connectors.salesforce.utils import json_to_natural_language
 from danswer.utils.logger import setup_logger
 
 DEFAULT_PARENT_OBJECT_TYPES = ["Account"]
-SF_JSON_FILTER = r"Id$|Date$|Is|Has|stamp|url"
 MAX_QUERY_LENGTH = 10000  # max query length is 20,000 characters
 
 logger = setup_logger()

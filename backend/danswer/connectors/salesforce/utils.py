@@ -1,5 +1,7 @@
 import re
 
+SF_JSON_FILTER = r"Id$|Date$|Is|Has|stamp|url"
+
 
 def _remove_null_values(data):
     """
@@ -61,7 +63,7 @@ def _filter_out_booleans_dates_and_ids(data):
     if isinstance(data, dict):
         filtered_dict = {}
         for key, value in data.items():
-            if not re.search(r"Id$|Date$|Is|Has|stamp|url", key, re.IGNORECASE):
+            if not re.search(SF_JSON_FILTER, key, re.IGNORECASE):
                 if "__c" in key:
                     key = key[:-3]
                 if isinstance(value, (dict, list)):
