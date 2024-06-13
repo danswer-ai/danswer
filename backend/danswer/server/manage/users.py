@@ -109,8 +109,8 @@ def list_all_users(
             for email in invited_emails
             if email not in accepted_emails
         ][invited_page * USERS_PAGE_SIZE : (invited_page + 1) * USERS_PAGE_SIZE],
-        accepted_pages=accepted_count // USERS_PAGE_SIZE,
-        invited_pages=invited_count // USERS_PAGE_SIZE,
+        accepted_pages=accepted_count // USERS_PAGE_SIZE + 1,
+        invited_pages=invited_count // USERS_PAGE_SIZE + 1,
     )
 
 
