@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from datetime import timezone
 from typing import Any
 
 from simple_salesforce import Salesforce
@@ -45,9 +46,9 @@ class SalesforceConnector(LoadConnector, PollConnector):
         self.parent_object_list: list[str] = DEFAULT_PARENT_OBJECT_TYPES
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        salesforce_username = credentials["salesforce_username"]
-        salesforce_password = credentials["salesforce_password"]
-        salesforce_security_token = credentials["salesforce_security_token"]
+        salesforce_username = credentials["sf_username"]
+        salesforce_password = credentials["sf_password"]
+        salesforce_security_token = credentials["sf_security_token"]
 
         self.sf_client = Salesforce(
             username=salesforce_username,
@@ -77,7 +78,7 @@ class SalesforceConnector(LoadConnector, PollConnector):
         extracted_link = f"https://{self.sf_client.sf_instance}/{extracted_id}"
         extracted_doc_updated_at = time_str_to_utc(object_dict["LastModifiedDate"])
         extracted_object_text = extract_dict_text(object_dict)
-        extracted_semantic_identifier = object_dict["name"]
+        extracted_semantic_identifier = object_dict.get("Name", "Uknown Object Name")
         extracted_primary_owners = [
             BasicExpertInfo(
                 display_name=self._get_id_name(object_dict["LastModifiedById"])
@@ -105,10 +106,12 @@ class SalesforceConnector(LoadConnector, PollConnector):
             return False
 
         object_type = child_relationship["childSObject"]
-        # sf_object = SFType(object_type, sf.session_id, sf.sf_instance)
-        # object_description = sf_object.describe()
-        # if not object_description['queryable']:
-        #     return False
+        sf_object = SFType(
+            object_type, self.sf_client.session_id, self.sf_client.sf_instance
+        )
+        object_description = sf_object.describe()
+        if not object_description["queryable"]:
+            return False
 
         try:
             query = f"SELECT Count() FROM {object_type} LIMIT 1"
@@ -116,7 +119,7 @@ class SalesforceConnector(LoadConnector, PollConnector):
             if result["totalSize"] == 0:
                 return False
         except Exception as e:
-            print(f"Object type {object_type} doesn't support query: {e}")
+            logger.warning(f"Object type {object_type} doesn't support query: {e}")
             return False
 
         if child_relationship["field"]:
@@ -155,16 +158,13 @@ class SalesforceConnector(LoadConnector, PollConnector):
             sf_type, self.sf_client.session_id, self.sf_client.sf_instance
         )
         all_account_objects = sf_object.describe()
-        # if sf_type == "Attachment":
-        #     print(json.dumps(all_account_objects, indent=2))
+
         fields = []
         for field in all_account_objects["fields"]:
-            # print("field:", field['name'])
             if field:
-                if field["type"] == "base64":
-                    print("field:", field["name"])
-                    continue
-                fields.append(field["name"])
+                if field["type"] != "base64":
+                    fields.append(field["name"])
+
         return fields
 
     def _generate_query_per_parent_type(self, parent_sf_type: str):
@@ -204,7 +204,12 @@ class SalesforceConnector(LoadConnector, PollConnector):
             logger.debug(f"Processing: {parent_object_type}")
             for query in self._generate_query_per_parent_type(parent_object_type):
                 if start is not None and end is not None:
-                    query += f"WHERE CreatedDate > {start.isoformat()} AND CreatedDate < {end.isoformat()}"
+                    if start and start.tzinfo is None:
+                        start = start.replace(tzinfo=timezone.utc)
+                    if end and end.tzinfo is None:
+                        end = end.replace(tzinfo=timezone.utc)
+                    query += f" WHERE CreatedDate > {start.isoformat()} AND CreatedDate < {end.isoformat()}"
+
                 query_result = self.sf_client.query_all(query)
 
                 for record_dict in query_result["records"]:
@@ -239,9 +244,9 @@ if __name__ == "__main__":
 
     connector.load_credentials(
         {
-            "salesforce_username": os.environ["SF_USERNAME"],
-            "salesforce_password": os.environ["SF_PASSWORD"],
-            "salesforce_security_token": os.environ["SF_SECURITY_TOKEN"],
+            "sf_username": os.environ["SF_USERNAME"],
+            "sf_password": os.environ["SF_PASSWORD"],
+            "sf_security_token": os.environ["SF_SECURITY_TOKEN"],
         }
     )
     document_batches = connector.load_from_state()
