@@ -29,12 +29,14 @@ export function AuthSignupRequestVerificationButton({
             type: "success",
             message: "A new verification email has been sent!",
           });
+          setIsRequestingVerification(false);
         } else {
           const errorDetail = (await response.json()).detail;
           setPopup({
             type: "error",
             message: `Failed to send a new verification email - ${errorDetail}`,
           });
+          setIsRequestingVerification(false);
         }
       }}
     >
