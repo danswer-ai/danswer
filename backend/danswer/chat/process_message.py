@@ -193,6 +193,7 @@ def stream_chat_message_objects(
     # on the `new_msg_req.message`. Currently, requires a state where the last message is a
     # user message (e.g. this can only be used for the chat-seeding flow).
     use_existing_user_message: bool = False,
+    litellm_additional_headers: dict[str, str] | None = None,
 ) -> ChatPacketStream:
     """Streams in order:
     1. [conditional] Retrieved documents if a search needs to be run
@@ -228,7 +229,9 @@ def stream_chat_message_objects(
 
         try:
             llm = get_llm_for_persona(
-                persona, new_msg_req.llm_override or chat_session.llm_override
+                persona=persona,
+                llm_override=new_msg_req.llm_override or chat_session.llm_override,
+                additional_headers=litellm_additional_headers,
             )
         except GenAIDisabledException:
             raise RuntimeError("LLM is disabled. Can't use chat flow without LLM.")
@@ -410,7 +413,7 @@ def stream_chat_message_objects(
                     persona=persona,
                     retrieval_options=retrieval_options,
                     prompt_config=prompt_config,
-                    llm_config=llm.config,
+                    llm=llm,
                     pruning_config=document_pruning_config,
                     selected_docs=selected_llm_docs,
                     chunks_above=new_msg_req.chunks_above,
@@ -455,7 +458,9 @@ def stream_chat_message_objects(
             llm=(
                 llm
                 or get_llm_for_persona(
-                    persona, new_msg_req.llm_override or chat_session.llm_override
+                    persona=persona,
+                    llm_override=new_msg_req.llm_override or chat_session.llm_override,
+                    additional_headers=litellm_additional_headers,
                 )
             ),
             message_history=[
@@ -576,6 +581,7 @@ def stream_chat_message(
     new_msg_req: CreateChatMessageRequest,
     user: User | None,
     use_existing_user_message: bool = False,
+    litellm_additional_headers: dict[str, str] | None = None,
 ) -> Iterator[str]:
     with get_session_context_manager() as db_session:
         objects = stream_chat_message_objects(
@@ -583,6 +589,7 @@ def stream_chat_message(
             user=user,
             db_session=db_session,
             use_existing_user_message=use_existing_user_message,
+            litellm_additional_headers=litellm_additional_headers,
         )
         for obj in objects:
             yield get_json_line(obj.dict())

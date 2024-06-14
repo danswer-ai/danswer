@@ -1,6 +1,7 @@
 import {
   AxeroIcon,
   BookstackIcon,
+  ClickupIcon,
   ConfluenceIcon,
   DiscourseIcon,
   Document360Icon,
@@ -22,6 +23,7 @@ import {
   ProductboardIcon,
   RequestTrackerIcon,
   SharepointIcon,
+  TeamsIcon,
   SlabIcon,
   SlackIcon,
   ZendeskIcon,
@@ -164,6 +166,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Sharepoint",
     category: SourceCategory.AppConnection,
   },
+  teams: {
+    icon: TeamsIcon,
+    displayName: "Teams",
+    category: SourceCategory.AppConnection,
+  },
   discourse: {
     icon: DiscourseIcon,
     displayName: "Discourse",
@@ -187,6 +194,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   requesttracker: {
     icon: RequestTrackerIcon,
     displayName: "Request Tracker",
+    category: SourceCategory.AppConnection,
+  },
+  clickup: {
+    icon: ClickupIcon,
+    displayName: "Clickup",
     category: SourceCategory.AppConnection,
   },
 };

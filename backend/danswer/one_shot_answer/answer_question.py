@@ -173,7 +173,7 @@ def stream_answer_objects(
         persona=chat_session.persona,
         retrieval_options=query_req.retrieval_options,
         prompt_config=prompt_config,
-        llm_config=llm.config,
+        llm=llm,
         pruning_config=document_pruning_config,
     )
 
