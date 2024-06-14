@@ -57,6 +57,7 @@ import teamsIcon from "../../../public/Teams.png";
 import mediawikiIcon from "../../../public/MediaWiki.svg";
 import wikipediaIcon from "../../../public/Wikipedia.svg";
 import discourseIcon from "../../../public/Discourse.png";
+import clickupIcon from "../../../public/Clickup.svg";
 import { FaRobot } from "react-icons/fa";
 
 interface IconProps {
@@ -653,6 +654,20 @@ export const AxeroIcon = ({
     <Image src="/Axero.jpeg" alt="Logo" width="96" height="96" />
   </div>
 );
+
+export const ClickupIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={clickupIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
 
 export const MediaWikiIcon = ({
   size = 16,
