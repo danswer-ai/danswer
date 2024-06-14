@@ -17,20 +17,13 @@ from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.connectors.salesforce.utils import clean_data
-from danswer.connectors.salesforce.utils import json_to_natural_language
+from danswer.connectors.salesforce.utils import extract_dict_text
 from danswer.utils.logger import setup_logger
 
 DEFAULT_PARENT_OBJECT_TYPES = ["Account"]
 MAX_QUERY_LENGTH = 10000  # max query length is 20,000 characters
 
 logger = setup_logger()
-
-
-def extract_dict_text(unprocessed_object_dict: dict) -> str:
-    processed_dict = clean_data(unprocessed_object_dict)
-    natural_language_dict = json_to_natural_language(processed_dict)
-    return natural_language_dict
 
 
 class SalesforceConnector(LoadConnector, PollConnector):
@@ -41,8 +34,9 @@ class SalesforceConnector(LoadConnector, PollConnector):
     ) -> None:
         self.batch_size = batch_size
         self.sf_client: Salesforce | None = None
-        self.requested_parent_object_list: list[str] = requested_objects
         self.parent_object_list: list[str] = DEFAULT_PARENT_OBJECT_TYPES
+        if requested_objects:
+            self.parent_object_list = requested_objects
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         salesforce_username = credentials["sf_username"]
@@ -57,15 +51,22 @@ class SalesforceConnector(LoadConnector, PollConnector):
 
         return None
 
-    def _get_id_name(self, id: str) -> str:
+    def _get_sf_type_object(self, type_name: str) -> SFType:
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
+        return SFType(type_name, self.sf_client.session_id, self.sf_client.sf_instance)
 
-        user_object_info = self.sf_client.query(
-            f"SELECT Name FROM User WHERE Id = '{id}'"
-        )
-        name = user_object_info.get("Records", [{}])[0].get("Name", "Null User")
-        return name
+    def _get_name_from_id(self, id: str) -> str:
+        if self.sf_client is None:
+            raise ConnectorMissingCredentialError("Salesforce")
+        try:
+            user_object_info = self.sf_client.query(
+                f"SELECT Name FROM User WHERE Id = '{id}'"
+            )
+            name = user_object_info.get("Records", [{}])[0].get("Name", "Null User")
+            return name
+        except Exception:
+            return "Null User"
 
     def _convert_object_instance_to_document(
         self, object_dict: dict[str, Any]
@@ -80,7 +81,7 @@ class SalesforceConnector(LoadConnector, PollConnector):
         extracted_semantic_identifier = object_dict.get("Name", "Uknown Object Name")
         extracted_primary_owners = [
             BasicExpertInfo(
-                display_name=self._get_id_name(object_dict["LastModifiedById"])
+                display_name=self._get_name_from_id(object_dict["LastModifiedById"])
             )
         ]
 
@@ -95,7 +96,7 @@ class SalesforceConnector(LoadConnector, PollConnector):
         )
         return doc
 
-    def _is_valid_child_object(self, child_relationship: dict):
+    def _is_valid_child_object(self, child_relationship: dict) -> bool:
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
 
@@ -104,21 +105,19 @@ class SalesforceConnector(LoadConnector, PollConnector):
         if not child_relationship["relationshipName"]:
             return False
 
-        object_type = child_relationship["childSObject"]
-        sf_object = SFType(
-            object_type, self.sf_client.session_id, self.sf_client.sf_instance
-        )
+        sf_type = child_relationship["childSObject"]
+        sf_object = self._get_sf_type_object(sf_type)
         object_description = sf_object.describe()
         if not object_description["queryable"]:
             return False
 
         try:
-            query = f"SELECT Count() FROM {object_type} LIMIT 1"
+            query = f"SELECT Count() FROM {sf_type} LIMIT 1"
             result = self.sf_client.query(query)
             if result["totalSize"] == 0:
                 return False
         except Exception as e:
-            logger.warning(f"Object type {object_type} doesn't support query: {e}")
+            logger.warning(f"Object type {sf_type} doesn't support query: {e}")
             return False
 
         if child_relationship["field"]:
@@ -129,13 +128,11 @@ class SalesforceConnector(LoadConnector, PollConnector):
 
         return True
 
-    def _get_all_children_of_sf_type(self, sf_type: str):
+    def _get_all_children_of_sf_type(self, sf_type: str) -> list[dict]:
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
 
-        sf_object = SFType(
-            sf_type, self.sf_client.session_id, self.sf_client.sf_instance
-        )
+        sf_object = self._get_sf_type_object(sf_type)
         object_description = sf_object.describe()
 
         children_objects: list[dict] = []
@@ -153,16 +150,14 @@ class SalesforceConnector(LoadConnector, PollConnector):
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
 
-        sf_object = SFType(
-            sf_type, self.sf_client.session_id, self.sf_client.sf_instance
-        )
+        sf_object = self._get_sf_type_object(sf_type)
         all_account_objects = sf_object.describe()
 
-        fields = []
-        for field in all_account_objects["fields"]:
-            if field:
-                if field["type"] != "base64":
-                    fields.append(field["name"])
+        fields = [
+            field.get("name")
+            for field in all_account_objects["fields"]
+            if field.get("type", "base64") != "base64"
+        ]
 
         return fields
 
@@ -194,12 +189,8 @@ class SalesforceConnector(LoadConnector, PollConnector):
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
 
-        parent_object_types = DEFAULT_PARENT_OBJECT_TYPES
-        if self.requested_parent_object_list:
-            parent_object_types = self.requested_parent_object_list
-
         doc_batch: list[Document] = []
-        for parent_object_type in parent_object_types:
+        for parent_object_type in self.parent_object_list:
             logger.debug(f"Processing: {parent_object_type}")
             for query in self._generate_query_per_parent_type(parent_object_type):
                 if start is not None and end is not None:
