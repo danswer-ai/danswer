@@ -13,6 +13,7 @@ import bs4
 from atlassian import Confluence  # type:ignore
 from requests import HTTPError
 
+from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_LABELS
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
@@ -402,10 +403,10 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
             if time_filter is None or time_filter(last_modified):
                 page_id = page["id"]
+                page_labels = self._fetch_labels(self.confluence_client, page_id)
 
                 # check disallowed labels
                 if self.labels_to_skip:
-                    page_labels = self._fetch_labels(self.confluence_client, page_id)
                     label_intersection = self.labels_to_skip.intersection(page_labels)
                     if label_intersection:
                         logger.info(
@@ -445,6 +446,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         else None,
                         metadata={
                             "Wiki Space Name": self.space,
+                            "labels": page_labels
+                            if CONFLUENCE_CONNECTOR_INDEX_LABELS
+                            else [],
                         },
                     )
                 )

@@ -178,6 +178,11 @@ CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES = (
     os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower() == "true"
 )
 
+# Save pages labels as Tag
+CONFLUENCE_CONNECTOR_INDEX_LABELS = (
+    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_LABELS", "").lower() == "true"
+)
+
 JIRA_CONNECTOR_LABELS_TO_SKIP = [
     ignored_tag
     for ignored_tag in os.environ.get("JIRA_CONNECTOR_LABELS_TO_SKIP", "").split(",")
