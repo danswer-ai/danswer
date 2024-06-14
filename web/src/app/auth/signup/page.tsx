@@ -7,7 +7,7 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import Image from "next/image";
-import { EmailPasswordForm } from "../login/EmailPasswordForm";
+import { EmailPasswordForm } from "@/components/auth/login/AuthLoginEmailPasswordForm";
 import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
 

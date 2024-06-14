@@ -3,9 +3,11 @@ import {
   getAuthTypeMetadataSS,
   getCurrentUserSS,
 } from "@/lib/userSS";
-import { Verify } from "./Verify";
+import { EmailVerificationComponent } from "@/components/auth/signup/AuthSignupVerification";
 import { User } from "@/lib/types";
 import { redirect } from "next/navigation";
+import { HealthCheckBanner } from "@/components/health/healthcheck";
+import Image from "next/image";
 
 export default async function Page() {
   // catch cases where the backend is completely unreachable here
@@ -26,5 +28,21 @@ export default async function Page() {
     return redirect("/");
   }
 
-  return <Verify user={currentUser} />;
+  
+
+  return (
+    <main>
+      <div className="absolute top-10x w-full">
+        <HealthCheckBanner />
+      </div>
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div>
+          <div className="h-16 w-16 mx-auto animate-pulse">
+            <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
+          </div>
+        <EmailVerificationComponent user={currentUser} />
+      </div>
+      </div>
+    </main>
+  );
 }

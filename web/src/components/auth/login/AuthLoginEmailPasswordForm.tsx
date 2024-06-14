@@ -7,7 +7,7 @@ import { Button } from "@tremor/react";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
-import { requestEmailVerification } from "../lib";
+import { requestEmailVerification } from "@/app/auth/lib";
 import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
 
@@ -20,11 +20,55 @@ export function EmailPasswordForm({
 }) {
   const router = useRouter();
   const { popup, setPopup } = usePopup();
-  const [isWorking, setIsWorking] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+
+  async function requestVerificationForRegister (values: { email: string; password: string; }) {
+    setIsPending(true);
+    const response = await basicSignup(values.email, values.password);
+    if (!response.ok) {
+      const errorDetail = (await response.json()).detail;
+
+      let errorMsg = "Unknown error";
+      if (errorDetail === "REGISTER_USER_ALREADY_EXISTS") {
+        errorMsg =
+          "An account already exists with the specified email.";
+      }
+      setPopup({
+        type: "error",
+        message: `Failed to sign up - ${errorMsg}`,
+      });
+    }
+    setIsPending(false);
+  }
+
+  async function requestVerificationForLogin (values: { email: string; password: string; }) {
+    setIsPending(true);
+    const loginResponse = await basicLogin(values.email, values.password);
+    if (loginResponse.ok) {
+      if (isSignup && shouldVerify) {
+        await requestEmailVerification(values.email);
+        router.push("/auth/waiting-on-verification");
+      } else {
+        router.push("/");
+      }
+    } else {
+      setIsPending(false);
+      const errorDetail = (await loginResponse.json()).detail;
+
+      let errorMsg = "Unknown error";
+      if (errorDetail === "LOGIN_BAD_CREDENTIALS") {
+        errorMsg = "Invalid email or password";
+      }
+      setPopup({
+        type: "error",
+        message: `Failed to login - ${errorMsg}`,
+      });
+    }
+  }
 
   return (
     <>
-      {isWorking && <Spinner />}
+      {isPending && <Spinner />}
       {popup}
       <Formik
         initialValues={{
@@ -35,50 +79,7 @@ export function EmailPasswordForm({
           email: Yup.string().email().required(),
           password: Yup.string().required(),
         })}
-        onSubmit={async (values) => {
-          if (isSignup) {
-            // login is fast, no need to show a spinner
-            setIsWorking(true);
-            const response = await basicSignup(values.email, values.password);
-
-            if (!response.ok) {
-              const errorDetail = (await response.json()).detail;
-
-              let errorMsg = "Unknown error";
-              if (errorDetail === "REGISTER_USER_ALREADY_EXISTS") {
-                errorMsg =
-                  "An account already exists with the specified email.";
-              }
-              setPopup({
-                type: "error",
-                message: `Failed to sign up - ${errorMsg}`,
-              });
-              return;
-            }
-          }
-
-          const loginResponse = await basicLogin(values.email, values.password);
-          if (loginResponse.ok) {
-            if (isSignup && shouldVerify) {
-              await requestEmailVerification(values.email);
-              router.push("/auth/waiting-on-verification");
-            } else {
-              router.push("/");
-            }
-          } else {
-            setIsWorking(false);
-            const errorDetail = (await loginResponse.json()).detail;
-
-            let errorMsg = "Unknown error";
-            if (errorDetail === "LOGIN_BAD_CREDENTIALS") {
-              errorMsg = "Invalid email or password";
-            }
-            setPopup({
-              type: "error",
-              message: `Failed to login - ${errorMsg}`,
-            });
-          }
-        }}
+        onSubmit={isSignup ? requestVerificationForRegister : requestVerificationForLogin}
       >
         {({ isSubmitting, values }) => (
           <Form>
