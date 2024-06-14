@@ -4,6 +4,7 @@ from typing import Type
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.axero.connector import AxeroConnector
 from danswer.connectors.bookstack.connector import BookstackConnector
+from danswer.connectors.clickup.connector import ClickupConnector
 from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.danswer_jira.connector import JiraConnector
 from danswer.connectors.discourse.connector import DiscourseConnector
@@ -33,6 +34,7 @@ from danswer.connectors.sharepoint.connector import SharepointConnector
 from danswer.connectors.slab.connector import SlabConnector
 from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.slack.load_connector import SlackLoadConnector
+from danswer.connectors.teams.connector import TeamsConnector
 from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.wikipedia.connector import WikipediaConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
@@ -76,8 +78,10 @@ def identify_connector_class(
         DocumentSource.LOOPIO: LoopioConnector,
         DocumentSource.DROPBOX: DropboxConnector,
         DocumentSource.SHAREPOINT: SharepointConnector,
+        DocumentSource.TEAMS: TeamsConnector,
         DocumentSource.DISCOURSE: DiscourseConnector,
         DocumentSource.AXERO: AxeroConnector,
+        DocumentSource.CLICKUP: ClickupConnector,
         DocumentSource.MEDIAWIKI: MediaWikiConnector,
         DocumentSource.WIKIPEDIA: WikipediaConnector,
     }
