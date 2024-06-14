@@ -22,7 +22,7 @@ export function EmailPasswordForm({
   const { popup, setPopup } = usePopup();
   const [isPending, setIsPending] = useState(false);
 
-  async function requestVerificationForSignup (values: { email: string; password: string; }) {
+  async function requestVerificationForRegister (values: { email: string; password: string; }) {
     setIsPending(true);
     const response = await basicSignup(values.email, values.password);
     if (!response.ok) {
@@ -79,7 +79,7 @@ export function EmailPasswordForm({
           email: Yup.string().email().required(),
           password: Yup.string().required(),
         })}
-        onSubmit={isSignup ? requestVerificationForSignup : requestVerificationForLogin}
+        onSubmit={isSignup ? requestVerificationForRegister : requestVerificationForLogin}
       >
         {({ isSubmitting, values }) => (
           <Form>
