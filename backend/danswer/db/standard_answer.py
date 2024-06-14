@@ -11,7 +11,7 @@ logger = setup_logger()
 
 
 def check_category_validity(category_name: str) -> bool:
-    """If a category name is too long, it should be used (it will cause an error in Postgres
+    """If a category name is too long, it should not be used (it will cause an error in Postgres
     as the unique constraint can only apply to entries that are less than 2704 bytes).
 
     Additionally, extremely long categories are not really usable / useful."""
@@ -39,15 +39,15 @@ def insert_standard_answer_category(
 def insert_standard_answer(
     keyword: str,
     answer: str,
-    categories: list[int],
+    category_ids: list[int],
     db_session: Session,
 ) -> StandardAnswer:
     existing_categories = fetch_standard_answer_categories_by_ids(
-        standard_answer_category_ids=categories,
+        standard_answer_category_ids=category_ids,
         db_session=db_session,
     )
-    if len(existing_categories) != len(categories):
-        raise ValueError(f"Some or all categories with ids {categories} do not exist")
+    if len(existing_categories) != len(category_ids):
+        raise ValueError(f"Some or all categories with ids {category_ids} do not exist")
 
     standard_answer = StandardAnswer(
         keyword=keyword,
@@ -63,7 +63,7 @@ def update_standard_answer(
     standard_answer_id: int,
     keyword: str,
     answer: str,
-    categories: list[int],
+    category_ids: list[int],
     db_session: Session,
 ) -> StandardAnswer:
     standard_answer = db_session.scalar(
@@ -73,11 +73,11 @@ def update_standard_answer(
         raise ValueError(f"No standard answer with id {standard_answer_id}")
 
     existing_categories = fetch_standard_answer_categories_by_ids(
-        standard_answer_category_ids=categories,
+        standard_answer_category_ids=category_ids,
         db_session=db_session,
     )
-    if len(existing_categories) != len(categories):
-        raise ValueError(f"Some or all categories with ids {categories} do not exist")
+    if len(existing_categories) != len(category_ids):
+        raise ValueError(f"Some or all categories with ids {category_ids} do not exist")
 
     standard_answer.keyword = keyword
     standard_answer.answer = answer

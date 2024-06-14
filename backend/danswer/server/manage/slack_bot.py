@@ -113,7 +113,7 @@ def create_slack_bot_config(
         persona_id=persona_id,
         channel_config=channel_config,
         response_type=slack_bot_config_creation_request.response_type,
-        standard_answer_categories=slack_bot_config_creation_request.standard_answer_categories,
+        standard_answer_category_ids=slack_bot_config_creation_request.standard_answer_categories,
         db_session=db_session,
     )
     return SlackBotConfig.from_model(slack_bot_config_model)
@@ -172,7 +172,7 @@ def patch_slack_bot_config(
         persona_id=persona_id,
         channel_config=channel_config,
         response_type=slack_bot_config_creation_request.response_type,
-        standard_answer_categories=slack_bot_config_creation_request.standard_answer_categories,
+        standard_answer_category_ids=slack_bot_config_creation_request.standard_answer_categories,
         db_session=db_session,
     )
     return SlackBotConfig.from_model(slack_bot_config_model)

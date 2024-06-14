@@ -32,7 +32,7 @@ def create_standard_answer(
     standard_answer_model = insert_standard_answer(
         keyword=standard_answer_creation_request.keyword,
         answer=standard_answer_creation_request.answer,
-        categories=standard_answer_creation_request.categories,
+        category_ids=standard_answer_creation_request.categories,
         db_session=db_session,
     )
     return StandardAnswer.from_model(standard_answer_model)
@@ -69,7 +69,7 @@ def patch_standard_answer(
         standard_answer_id=standard_answer_id,
         keyword=standard_answer_creation_request.keyword,
         answer=standard_answer_creation_request.answer,
-        categories=standard_answer_creation_request.categories,
+        category_ids=standard_answer_creation_request.categories,
         db_session=db_session,
     )
     return StandardAnswer.from_model(standard_answer_model)

@@ -73,16 +73,16 @@ def insert_slack_bot_config(
     persona_id: int | None,
     channel_config: ChannelConfig,
     response_type: SlackBotResponseType,
-    standard_answer_categories: list[int],
+    standard_answer_category_ids: list[int],
     db_session: Session,
 ) -> SlackBotConfig:
     existing_standard_answer_categories = fetch_standard_answer_categories_by_ids(
-        standard_answer_category_ids=standard_answer_categories,
+        standard_answer_category_ids=standard_answer_category_ids,
         db_session=db_session,
     )
-    if len(existing_standard_answer_categories) != len(standard_answer_categories):
+    if len(existing_standard_answer_categories) != len(standard_answer_category_ids):
         raise ValueError(
-            f"Some or all categories with ids {standard_answer_categories} do not exist"
+            f"Some or all categories with ids {standard_answer_category_ids} do not exist"
         )
 
     slack_bot_config = SlackBotConfig(
@@ -102,7 +102,7 @@ def update_slack_bot_config(
     persona_id: int | None,
     channel_config: ChannelConfig,
     response_type: SlackBotResponseType,
-    standard_answer_categories: list[int],
+    standard_answer_category_ids: list[int],
     db_session: Session,
 ) -> SlackBotConfig:
     slack_bot_config = db_session.scalar(
@@ -114,12 +114,12 @@ def update_slack_bot_config(
         )
 
     existing_standard_answer_categories = fetch_standard_answer_categories_by_ids(
-        standard_answer_category_ids=standard_answer_categories,
+        standard_answer_category_ids=standard_answer_category_ids,
         db_session=db_session,
     )
-    if len(existing_standard_answer_categories) != len(standard_answer_categories):
+    if len(existing_standard_answer_categories) != len(standard_answer_category_ids):
         raise ValueError(
-            f"Some or all categories with ids {standard_answer_categories} do not exist"
+            f"Some or all categories with ids {standard_answer_category_ids} do not exist"
         )
 
     # get the existing persona id before updating the object
