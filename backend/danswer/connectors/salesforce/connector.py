@@ -1,4 +1,5 @@
 import os
+from collections.abc import Iterator
 from datetime import datetime
 from datetime import timezone
 from typing import Any
@@ -146,7 +147,7 @@ class SalesforceConnector(LoadConnector, PollConnector):
                 )
         return children_objects
 
-    def _get_all_fields_for_sf_type(self, sf_type: str):
+    def _get_all_fields_for_sf_type(self, sf_type: str) -> list[str]:
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
 
@@ -161,7 +162,7 @@ class SalesforceConnector(LoadConnector, PollConnector):
 
         return fields
 
-    def _generate_query_per_parent_type(self, parent_sf_type: str):
+    def _generate_query_per_parent_type(self, parent_sf_type: str) -> Iterator[str]:
         parent_fields = self._get_all_fields_for_sf_type(parent_sf_type)
         child_sf_types = self._get_all_children_of_sf_type(parent_sf_type)
 
