@@ -173,7 +173,7 @@ class SalesforceConnector(LoadConnector, PollConnector):
             if len(query_addition) + len(query) > MAX_QUERY_LENGTH:
                 query += f"\n FROM {parent_sf_type}"
                 yield query
-                query = f"SELECT {', '.join(parent_fields)}" + query_addition
+                query = "SELECT Id" + query_addition
             else:
                 query += query_addition
 
@@ -192,24 +192,29 @@ class SalesforceConnector(LoadConnector, PollConnector):
         doc_batch: list[Document] = []
         for parent_object_type in self.parent_object_list:
             logger.debug(f"Processing: {parent_object_type}")
+
+            query_results: dict = {}
             for query in self._generate_query_per_parent_type(parent_object_type):
                 if start is not None and end is not None:
                     if start and start.tzinfo is None:
                         start = start.replace(tzinfo=timezone.utc)
                     if end and end.tzinfo is None:
                         end = end.replace(tzinfo=timezone.utc)
-                    query += f" WHERE CreatedDate > {start.isoformat()} AND CreatedDate < {end.isoformat()}"
+                    query += f" WHERE LastModifiedDate > {start.isoformat()} AND LastModifiedDate < {end.isoformat()}"
 
                 query_result = self.sf_client.query_all(query)
 
                 for record_dict in query_result["records"]:
-                    doc_batch.append(
-                        self._convert_object_instance_to_document(record_dict)
-                    )
+                    query_results.setdefault(record_dict["Id"], {}).update(record_dict)
 
-                    if len(doc_batch) > self.batch_size:
-                        yield doc_batch
-                        doc_batch = []
+            for combined_object_dict in query_results.values():
+                doc_batch.append(
+                    self._convert_object_instance_to_document(combined_object_dict)
+                )
+
+                if len(doc_batch) > self.batch_size:
+                    yield doc_batch
+                    doc_batch = []
         yield doc_batch
 
     def load_from_state(self) -> GenerateDocumentsOutput:
