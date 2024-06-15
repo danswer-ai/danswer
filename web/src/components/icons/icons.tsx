@@ -537,7 +537,7 @@ export const SalesforceIcon = ({
     style={{ width: `${size}px`, height: `${size}px` }}
     className={`w-[${size}px] h-[${size}px] ` + className}
   >
-    <Image src={sharepointIcon} alt="Logo" width="96" height="96" />
+    <Image src={salesforceIcon} alt="Logo" width="96" height="96" />
   </div>
 );
 

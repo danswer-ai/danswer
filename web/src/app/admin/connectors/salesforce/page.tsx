@@ -74,9 +74,8 @@ const MainSection = () => {
     <>
       <Text>
         The Salesforce connector allows you to index and search through your
-        Salesforce files. Once setup, your Word documents, Excel files,
-        PowerPoint presentations, OneNote notebooks, PDFs, and uploaded files
-        will be queryable within Danswer.
+        Salesforce data. Once setup, all indicated Salesforce data will be will
+        be queryable within Danswer.
       </Text>
 
       <Title className="mb-2 mt-6 ml-auto mr-auto">
@@ -103,8 +102,9 @@ const MainSection = () => {
       ) : (
         <>
           <Text className="mb-2">
-            As a first step, please provide Application (client) ID, Directory
-            (tenant) ID, and Client Secret. You can follow the guide{" "}
+            As a first step, please provide the Salesforce admin account&apos;s
+            username, password, and Salesforce security token. You can follow
+            the guide{" "}
             <a
               target="_blank"
               href="https://docs.danswer.dev/connectors/Salesforce"
@@ -112,7 +112,7 @@ const MainSection = () => {
             >
               here
             </a>{" "}
-            to create an Azure AD application and obtain these values.
+            to create get your Salesforce Security Token.
           </Text>
           <Card className="mt-2">
             <CredentialForm<SalesforceCredentialJson>
@@ -167,9 +167,8 @@ const MainSection = () => {
       {SalesforceConnectorIndexingStatuses.length > 0 && (
         <>
           <Text className="mb-2">
-            The latest state of your Word documents, Excel files, PowerPoint
-            presentations, OneNote notebooks, PDFs, and uploaded files are
-            fetched every 10 minutes.
+            The latest state of your Salesforce objects are fetched every 10
+            minutes.
           </Text>
           <div className="mb-2">
             <ConnectorsTable<SalesforceConfig, SalesforceCredentialJson>
@@ -224,14 +223,19 @@ const MainSection = () => {
               name: "requested_objects",
               label: "requested_objects:",
               subtext:
-                "Specify 0 or more requested_objects to index. For example, specifying the site " +
-                "'support' for the 'danswerai' Salesforce will cause us to only index documents " +
-                "within the 'https://danswerai.Salesforce.com/requested_objects/support' site. " +
-                "If no requested_objects are specified, all requested_objects in your organization will be indexed.",
+                "Optionally, specify the Salesforce object type you would like us to index by. For example, specifying the object " +
+                "'Lead' will cause us to generate a document based on each Lead. " +
+                "These documents would contain all the information for this Lead, including its child objects (E.g. associated contacts, companies, etc.). " +
+                "If no requested objects are specified, we will default to indexing by 'Account'." +
+                "Make sure to use the singular form of the object (E.g. Opportunity instead of Opportunities)",
             })}
             validationSchema={Yup.object().shape({
               requested_objects: Yup.array()
-                .of(Yup.string().required("Site names must be strings"))
+                .of(
+                  Yup.string().required(
+                    "Salesforce object names must be strings"
+                  )
+                )
                 .required(),
             })}
             initialValues={{
@@ -243,9 +247,9 @@ const MainSection = () => {
         </Card>
       ) : (
         <Text>
-          Please provide all Azure info in Step 1 first! Once you&apos;re done
-          with that, you can then specify which Salesforce sites you want to
-          make searchable.
+          Please provide all Salesforce info in Step 1 first! Once you&apos;re
+          done with that, you can then specify which Salesforce objects you want
+          to make searchable.
         </Text>
       )}
     </>

@@ -35,9 +35,15 @@ class SalesforceConnector(LoadConnector, PollConnector):
     ) -> None:
         self.batch_size = batch_size
         self.sf_client: Salesforce | None = None
-        self.parent_object_list: list[str] = DEFAULT_PARENT_OBJECT_TYPES
+        self.parent_object_list: list[str] = []
         if requested_objects:
-            self.parent_object_list = requested_objects
+            for requested_object in requested_objects:
+                if requested_object:  # ensure first letter is capitalized
+                    self.parent_object_list.append(
+                        requested_object[0].upper() + requested_object[1:]
+                    )
+        else:
+            self.parent_object_list = DEFAULT_PARENT_OBJECT_TYPES
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         salesforce_username = credentials["sf_username"]
