@@ -3,7 +3,12 @@ import { FiSend, FiFilter, FiPlusCircle, FiCpu } from "react-icons/fi";
 import ChatInputOption from "./ChatInputOption";
 import { FaBrain } from "react-icons/fa";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { FilterManager, LlmOverride, LlmOverrideManager } from "@/lib/hooks";
+import {
+  FilterManager,
+  LlmOverride,
+  LlmOverrideManager,
+  useLlmOverride,
+} from "@/lib/hooks";
 import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
 import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
@@ -20,7 +25,6 @@ export function ChatInputBar({
   setIsCancelled,
   retrievalDisabled,
   filterManager,
-  llmOverrideManager,
   selectedAssistant,
   files,
   setFiles,
@@ -35,7 +39,6 @@ export function ChatInputBar({
   setIsCancelled: (value: boolean) => void;
   retrievalDisabled: boolean;
   filterManager: FilterManager;
-  llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
   files: FileDescriptor[];
   setFiles: (files: FileDescriptor[]) => void;
@@ -54,6 +57,8 @@ export function ChatInputBar({
       )}px`;
     }
   }, [message]);
+
+  const llmOverrideManager = useLlmOverride();
 
   const { llmProviders } = useChatContext();
   const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant);
