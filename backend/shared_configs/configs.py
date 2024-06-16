@@ -28,7 +28,7 @@ ENABLE_RERANKING_REAL_TIME_FLOW = (
     os.environ.get("ENABLE_RERANKING_REAL_TIME_FLOW", "").lower() == "true"
 )
 # Only using one cross-encoder for now
-CROSS_ENCODER_MODEL_ENSEMBLE = ["mixedbread-ai/mxbai-rerank-xsmall-v1"]
+CROSS_ENCODER_MODEL_ENSEMBLE = ["mixedbread-ai/mxbai-rerank-large-v1"]
 CROSS_EMBED_CONTEXT_SIZE = 512
 
 # This controls the minimum number of pytorch "threads" to allocate to the embedding
