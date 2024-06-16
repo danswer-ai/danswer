@@ -293,9 +293,16 @@ const Main = () => {
 
   const { popup, setPopup } = usePopup();
 
+  const appCredentialSuccessfullyFetched =
+    appCredentialData ||
+    (isAppCredentialError && isAppCredentialError.status === 404);
+  const serviceAccountKeySuccessfullyFetched =
+    serviceAccountKeyData ||
+    (isServiceAccountKeyError && isServiceAccountKeyError.status === 404);
+
   if (
-    (!appCredentialData && isAppCredentialLoading) ||
-    (!serviceAccountKeyData && isServiceAccountKeyLoading) ||
+    (!appCredentialSuccessfullyFetched && isAppCredentialLoading) ||
+    (!serviceAccountKeySuccessfullyFetched && isServiceAccountKeyLoading) ||
     (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
     (!credentialsData && isCredentialsLoading)
   ) {
@@ -315,8 +322,8 @@ const Main = () => {
   }
 
   if (
-    (isAppCredentialError && isAppCredentialError.status !== 404) ||
-    (isServiceAccountKeyError && isServiceAccountKeyError.status !== 404)
+    !appCredentialSuccessfullyFetched ||
+    !serviceAccountKeySuccessfullyFetched
   ) {
     return (
       <ErrorCallout errorTitle="Error loading Google Drive app credentials. Contact an administrator." />
