@@ -377,11 +377,12 @@ class Connector(Base):
     source: Mapped[DocumentSource] = mapped_column(
         Enum(DocumentSource, native_enum=False)
     )
-    input_type = mapped_column(Enum(InputType, native_enum=False))
+    # input_type = mapped_column(Enum(InputType, native_enum=False))
     connector_specific_config: Mapped[dict[str, Any]] = mapped_column(
         postgresql.JSONB()
     )
     refresh_freq: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    pruning_freq: Mapped[int | None] = mapped_column(Integer, nullable=True)
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -488,6 +489,7 @@ class IndexAttempt(Base):
     # This is only for attempts that are explicitly marked as from the start via
     # the run once API
     from_beginning: Mapped[bool] = mapped_column(Boolean)
+    input_type = mapped_column(Enum(InputType, native_enum=False))
     status: Mapped[IndexingStatus] = mapped_column(
         Enum(IndexingStatus, native_enum=False)
     )

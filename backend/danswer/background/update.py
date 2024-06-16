@@ -17,6 +17,7 @@ from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.db.connector import fetch_connectors
+from danswer.db.connector import InputType
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_db_current_time
@@ -50,12 +51,13 @@ _UNEXPECTED_STATE_FAILURE_REASON = (
 )
 
 
-def _should_create_new_indexing(
+def should_create_new_indexing(
     connector: Connector,
     last_index: IndexAttempt | None,
     model: EmbeddingModel,
     secondary_index_building: bool,
     db_session: Session,
+    frequency: int | None,
 ) -> bool:
     # User can still manually create single indexing attempts via the UI for the
     # currently in use index
@@ -76,7 +78,7 @@ def _should_create_new_indexing(
     if connector.disabled:
         return False
 
-    if connector.refresh_freq is None:
+    if frequency is None:
         return False
     if not last_index:
         return True
@@ -90,7 +92,7 @@ def _should_create_new_indexing(
 
     current_db_time = get_db_current_time(db_session)
     time_since_index = current_db_time - last_index.time_updated
-    return time_since_index.total_seconds() >= connector.refresh_freq
+    return time_since_index.total_seconds() >= frequency
 
 
 def _is_indexing_job_marked_as_finished(index_attempt: IndexAttempt | None) -> bool:
@@ -166,17 +168,22 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
                     last_attempt = get_last_attempt(
                         connector.id, credential.id, model.id, db_session
                     )
-                    if not _should_create_new_indexing(
+                    if not should_create_new_indexing(
                         connector=connector,
                         last_index=last_attempt,
                         model=model,
                         secondary_index_building=len(embedding_models) > 1,
                         db_session=db_session,
+                        frequency=connector.refresh_freq,
                     ):
                         continue
 
                     create_index_attempt(
-                        connector.id, credential.id, model.id, db_session
+                        connector.id,
+                        credential.id,
+                        model.id,
+                        db_session,
+                        InputType.POLL,
                     )
 
 

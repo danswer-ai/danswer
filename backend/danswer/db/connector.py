@@ -8,7 +8,6 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.models import InputType
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.server.documents.models import ConnectorBase
@@ -22,14 +21,11 @@ logger = setup_logger()
 def fetch_connectors(
     db_session: Session,
     sources: list[DocumentSource] | None = None,
-    input_types: list[InputType] | None = None,
     disabled_status: bool | None = None,
 ) -> list[Connector]:
     stmt = select(Connector)
     if sources is not None:
         stmt = stmt.where(Connector.source.in_(sources))
-    if input_types is not None:
-        stmt = stmt.where(Connector.input_type.in_(input_types))
     if disabled_status is not None:
         stmt = stmt.where(Connector.disabled == disabled_status)
     results = db_session.scalars(stmt)
@@ -81,9 +77,9 @@ def create_connector(
     connector = Connector(
         name=connector_data.name,
         source=connector_data.source,
-        input_type=connector_data.input_type,
         connector_specific_config=connector_data.connector_specific_config,
         refresh_freq=connector_data.refresh_freq,
+        pruning_freq=connector_data.pruning_freq,
         disabled=connector_data.disabled,
     )
     db_session.add(connector)
@@ -110,9 +106,9 @@ def update_connector(
 
     connector.name = connector_data.name
     connector.source = connector_data.source
-    connector.input_type = connector_data.input_type
     connector.connector_specific_config = connector_data.connector_specific_config
     connector.refresh_freq = connector_data.refresh_freq
+    connector.pruning_freq = connector_data.pruning_freq
     connector.disabled = connector_data.disabled
 
     db_session.commit()
@@ -242,8 +238,8 @@ def create_initial_default_connector(db_session: Session) -> None:
     if default_connector is not None:
         if (
             default_connector.source != DocumentSource.INGESTION_API
-            or default_connector.input_type != InputType.LOAD_STATE
             or default_connector.refresh_freq is not None
+            or default_connector.pruning_freq is not None
             or default_connector.disabled
         ):
             raise ValueError(
@@ -256,9 +252,9 @@ def create_initial_default_connector(db_session: Session) -> None:
         id=default_connector_id,
         name="Ingestion API",
         source=DocumentSource.INGESTION_API,
-        input_type=InputType.LOAD_STATE,
         connector_specific_config={},
         refresh_freq=None,
+        pruning_freq=None,
     )
     db_session.add(connector)
     db_session.commit()

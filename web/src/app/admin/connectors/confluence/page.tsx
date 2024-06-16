@@ -285,7 +285,6 @@ const Main = () => {
                 extractSpaceFromUrl(values.wiki_page_url)
               }
               source="confluence"
-              inputType="poll"
               formBody={
                 <>
                   <TextFormField name="wiki_page_url" label="Confluence URL:" />
@@ -299,7 +298,8 @@ const Main = () => {
               initialValues={{
                 wiki_page_url: "",
               }}
-              refreshFreq={10 * 60} // 10 minutes
+              // refreshFreq={10 * 60} // 10 minutes
+              pruneFreq={1 * 30}
               credentialId={confluenceCredential.id}
             />
           </Card>

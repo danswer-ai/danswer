@@ -73,10 +73,10 @@ export interface DocumentBoostStatus {
 // CONNECTORS
 export interface ConnectorBase<T> {
   name: string;
-  input_type: ValidInputTypes;
   source: ValidSources;
   connector_specific_config: T;
   refresh_freq: number | null;
+  pruning_freq: number | null;
   disabled: boolean;
 }
 

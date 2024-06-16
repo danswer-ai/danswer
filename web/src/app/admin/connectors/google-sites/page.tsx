@@ -108,12 +108,12 @@ export default function GoogleSites() {
                       await createConnector<GoogleSitesConfig>({
                         name: `GoogleSitesConnector-${values.base_url}`,
                         source: "google_sites",
-                        input_type: "load_state",
                         connector_specific_config: {
                           base_url: values.base_url,
                           zip_path: filePaths[0],
                         },
                         refresh_freq: null,
+                        pruning_freq: null,
                         disabled: false,
                       });
                     if (connectorErrorMsg || !connector) {

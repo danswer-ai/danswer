@@ -11,6 +11,7 @@ from sqlalchemy import update
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
 
+from danswer.connectors.models import InputType
 from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
@@ -35,6 +36,7 @@ def create_index_attempt(
     credential_id: int,
     embedding_model_id: int,
     db_session: Session,
+    input_type: InputType | None = None,
     from_beginning: bool = False,
 ) -> int:
     new_attempt = IndexAttempt(
@@ -42,6 +44,7 @@ def create_index_attempt(
         credential_id=credential_id,
         embedding_model_id=embedding_model_id,
         from_beginning=from_beginning,
+        input_type=input_type,
         status=IndexingStatus.NOT_STARTED,
     )
     db_session.add(new_attempt)
@@ -127,8 +130,14 @@ def get_last_attempt(
     credential_id: int,
     embedding_model_id: int | None,
     db_session: Session,
+    input_type: InputType | None = None,
 ) -> IndexAttempt | None:
-    stmt = select(IndexAttempt).where(
+    stmt = select(IndexAttempt)
+    if input_type is not None:
+        stmt = stmt.where(
+            IndexAttempt.input_type == input_type,
+        )
+    stmt = stmt.where(
         IndexAttempt.connector_id == connector_id,
         IndexAttempt.credential_id == credential_id,
         IndexAttempt.embedding_model_id == embedding_model_id,

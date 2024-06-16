@@ -4,13 +4,21 @@ from typing import cast
 from celery import Celery  # type: ignore
 from sqlalchemy.orm import Session
 
+from danswer.background.celery.celery_utils import should_sync_doc_set
 from danswer.background.connector_deletion import delete_connector_credential_pair
+from danswer.background.connector_deletion import delete_connector_credential_pair_batch
+from danswer.background.indexing.run_indexing import get_document_generator
+from danswer.background.indexing.run_indexing import prepare_index_attempt
 from danswer.background.task_utils import build_celery_task_wrapper
 from danswer.background.task_utils import name_cc_cleanup_task
+from danswer.background.task_utils import name_cc_pruning_task
 from danswer.background.task_utils import name_document_set_sync_task
+from danswer.background.update import should_create_new_indexing
 from danswer.configs.app_configs import JOB_TIMEOUT
+from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
+from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.document import prepare_to_modify_documents
 from danswer.db.document_set import delete_document_set
 from danswer.db.document_set import fetch_document_sets
@@ -18,12 +26,17 @@ from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.document_set import fetch_documents_for_document_set_paginated
 from danswer.db.document_set import get_document_set_by_id
 from danswer.db.document_set import mark_document_set_as_synced
+from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import build_connection_string
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import SYNC_DB_API
+from danswer.db.index_attempt import create_index_attempt
+from danswer.db.index_attempt import get_index_attempt
+from danswer.db.index_attempt import get_last_attempt
+from danswer.db.index_attempt import mark_attempt_failed
+from danswer.db.index_attempt import mark_attempt_succeeded
 from danswer.db.models import DocumentSet
-from danswer.db.tasks import check_live_task_not_timed_out
-from danswer.db.tasks import get_latest_task
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
@@ -38,27 +51,13 @@ celery_app = Celery(__name__, broker=celery_broker_url, backend=celery_backend_u
 
 
 _SYNC_BATCH_SIZE = 100
-
+_DOCUMENT_DELETION_BATCH_SIZE = 1000
 
 #####
 # Tasks that need to be run in job queue, registered via APIs
 #
 # If imports from this module are needed, use local imports to avoid circular importing
 #####
-# @celery_app.task(soft_time_limit=JOB_TIMEOUT)
-# def check_deleted_files_task() -> None:
-#     with Session(get_sqlalchemy_engine()) as db_session:
-#         connectors = fetch_connectors(db_session)
-#         for connector in connectors:
-#             deleted_files = check_deleted_files(connector)
-#             if deleted_files:
-#                 handle_deleted_files(deleted_files, db_session)
-
-
-def handle_deleted_files(deleted_files, db_session: Session) -> None:
-    for file in deleted_files:
-        db_session.delete(file)
-    db_session.commit()
 
 
 @build_celery_task_wrapper(name_cc_cleanup_task)
@@ -103,6 +102,55 @@ def cleanup_connector_credential_pair_task(
             )
         except Exception as e:
             logger.exception(f"Failed to run connector_deletion due to {e}")
+            raise e
+
+
+@build_celery_task_wrapper(name_cc_pruning_task)
+@celery_app.task(soft_time_limit=JOB_TIMEOUT)
+def prune_documents_task(
+    connector_id: int, credential_id: int, index_attempt_id: int
+) -> None:
+    """ """
+    with Session(get_sqlalchemy_engine()) as db_session:
+        print("index_attempt_id: ", index_attempt_id)
+        index_attempt = get_index_attempt(db_session, index_attempt_id)
+        if not index_attempt:
+            return
+        print("index_attempt.connector: ", index_attempt.connector)
+        print("index_attempt.connector.input_type: ", index_attempt.input_type)
+        print("index_attempt.status: ", index_attempt.status)
+        try:
+            doc_batch_generator = get_document_generator(
+                db_session=db_session,
+                attempt=index_attempt,
+            )
+            all_connector_doc_ids: set[str] = set()
+            for doc_batch in doc_batch_generator:
+                all_connector_doc_ids.update(doc.id for doc in doc_batch)
+
+            all_indexed_document_ids: set[str] = set()
+            for doc in get_documents_for_connector_credential_pair(
+                db_session=db_session,
+                connector_id=connector_id,
+                credential_id=credential_id,
+            ):
+                all_indexed_document_ids.update(doc.id)
+
+            doc_ids_to_remove = list(all_indexed_document_ids - all_connector_doc_ids)
+
+            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+            document_index = get_default_document_index(
+                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+            )
+            delete_connector_credential_pair_batch(
+                document_ids=doc_ids_to_remove,
+                connector_id=connector_id,
+                credential_id=credential_id,
+                document_index=document_index,
+            )
+            mark_attempt_succeeded(index_attempt, db_session)
+        except Exception as e:
+            mark_attempt_failed(index_attempt, db_session)
             raise e
 
 
@@ -189,51 +237,74 @@ def sync_document_set_task(document_set_id: int) -> None:
 # Periodic Tasks
 #####
 @celery_app.task(
-    name="check_for_document_sets_sync_task",
+    name="manage_all_tasks",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_for_document_sets_sync_task() -> None:
+def manage_all_tasks() -> None:
     """Runs periodically to check if any document sets are out of sync
     Creates a task to sync the set if needed"""
+
     with Session(get_sqlalchemy_engine()) as db_session:
+        # manage document syncing task
         # check if any document sets are not synced
         document_set_info = fetch_document_sets(
             user_id=None, db_session=db_session, include_outdated=True
         )
         for document_set, _ in document_set_info:
-            if not document_set.is_up_to_date:
-                task_name = name_document_set_sync_task(document_set.id)
-                latest_sync = get_latest_task(task_name, db_session)
-
-                if latest_sync and check_live_task_not_timed_out(
-                    latest_sync, db_session
-                ):
-                    logger.info(
-                        f"Document set '{document_set.id}' is already syncing. Skipping."
-                    )
-                    continue
-
-                logger.info(f"Document set {document_set.id} syncing now!")
+            if should_sync_doc_set(document_set, db_session):
                 sync_document_set_task.apply_async(
                     kwargs=dict(document_set_id=document_set.id),
                 )
+
+        # manage document pruning
+        all_connectors = fetch_connectors(db_session=db_session)
+        # for connector in all_connectors:
+        #     logger.debug(f"checking: {connector.id}")
+
+        embedding_models = [get_current_db_embedding_model(db_session)]
+        secondary_embedding_model = get_secondary_db_embedding_model(db_session)
+        if secondary_embedding_model is not None:
+            embedding_models.append(secondary_embedding_model)
+        for connector in all_connectors:
+            for association in connector.credentials:
+                for model in embedding_models:
+                    credential = association.credential
+
+                    last_attempt = get_last_attempt(
+                        connector.id, credential.id, model.id, db_session
+                    )
+
+                    if should_create_new_indexing(
+                        connector=connector,
+                        last_index=last_attempt,
+                        model=model,
+                        secondary_index_building=len(embedding_models) > 1,
+                        db_session=db_session,
+                        frequency=connector.pruning_freq,
+                    ):
+                        index_attempt_id = create_index_attempt(
+                            connector.id,
+                            credential.id,
+                            model.id,
+                            db_session,
+                        )
+                        prepare_index_attempt(db_session, index_attempt_id)
+                        logger.debug(f"checking: {connector.id}")
+                        prune_documents_task.apply_async(
+                            kwargs=dict(
+                                connector_id=connector.id,
+                                credential_id=credential.id,
+                                index_attempt_id=index_attempt_id,
+                            )
+                        )
 
 
 #####
 # Celery Beat (Periodic Tasks) Settings
 #####
 celery_app.conf.beat_schedule = {
-    "check-for-document-set-sync": {
-        "task": "check_for_document_sets_sync_task",
+    "manage-all-tasks": {
+        "task": "manage_all_tasks",
         "schedule": timedelta(seconds=5),
     },
 }
-
-celery_app.conf.beat_schedule.update(
-    {
-        "check-for-deleted-files": {
-            "task": "check_deleted_files_task",
-            "schedule": timedelta(days=1),
-        },
-    }
-)

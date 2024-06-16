@@ -57,7 +57,6 @@ interface BaseProps<T extends Yup.AnyObject> {
   nameBuilder: (values: T) => string;
   ccPairNameBuilder?: (values: T) => string | null;
   source: ValidSources;
-  inputType: ValidInputTypes;
   // if specified, will automatically try and link the credential
   credentialId?: number;
   // If both are specified, will render formBody and then formBodyBuilder
@@ -70,6 +69,7 @@ interface BaseProps<T extends Yup.AnyObject> {
     responseJson: Connector<T> | undefined
   ) => void;
   refreshFreq?: number;
+  pruneFreq?: number;
   // If specified, then we will create an empty credential and associate
   // the connector with it. If credentialId is specified, then this will be ignored
   shouldCreateEmptyCredentialForConnector?: boolean;
@@ -84,13 +84,13 @@ export function ConnectorForm<T extends Yup.AnyObject>({
   nameBuilder,
   ccPairNameBuilder,
   source,
-  inputType,
   credentialId,
   formBody,
   formBodyBuilder,
   validationSchema,
   initialValues,
   refreshFreq,
+  pruneFreq,
   onSubmit,
   shouldCreateEmptyCredentialForConnector,
 }: ConnectorFormProps<T>): JSX.Element {
@@ -141,9 +141,9 @@ export function ConnectorForm<T extends Yup.AnyObject>({
           const { message, isSuccess, response } = await submitConnector<T>({
             name: connectorName,
             source,
-            input_type: inputType,
             connector_specific_config: connectorConfig,
             refresh_freq: refreshFreq || 0,
+            pruning_freq: pruneFreq || 0,
             disabled: false,
           });
 
@@ -278,9 +278,9 @@ export function UpdateConnectorForm<T extends Yup.AnyObject>({
             {
               name: nameBuilder ? nameBuilder(values) : existingConnector.name,
               source: existingConnector.source,
-              input_type: existingConnector.input_type,
               connector_specific_config: values,
               refresh_freq: existingConnector.refresh_freq,
+              pruning_freq: existingConnector.pruning_freq,
               disabled: false,
             },
             existingConnector.id

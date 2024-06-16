@@ -117,11 +117,11 @@ const Main = () => {
                     await createConnector<FileConfig>({
                       name: "FileConnector-" + Date.now(),
                       source: "file",
-                      input_type: "load_state",
                       connector_specific_config: {
                         file_locations: filePaths,
                       },
                       refresh_freq: null,
+                      pruning_freq: null,
                       disabled: false,
                     });
                   if (connectorErrorMsg || !connector) {

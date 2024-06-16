@@ -35,6 +35,13 @@ class BaseConnector(abc.ABC):
 
 
 # Large set update or reindex, generally pulling a complete state or from a savestate file
+class PruneConnector(BaseConnector):
+    @abc.abstractmethod
+    def prune_connector(self) -> GenerateDocumentsOutput:
+        raise NotImplementedError
+
+
+# Large set update or reindex, generally pulling a complete state or from a savestate file
 class LoadConnector(BaseConnector):
     @abc.abstractmethod
     def load_from_state(self) -> GenerateDocumentsOutput:

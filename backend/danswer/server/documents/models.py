@@ -6,7 +6,6 @@ from pydantic import BaseModel
 
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.models import InputType
 from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
@@ -65,9 +64,9 @@ class DeletionAttemptSnapshot(BaseModel):
 class ConnectorBase(BaseModel):
     name: str
     source: DocumentSource
-    input_type: InputType
     connector_specific_config: dict[str, Any]
     refresh_freq: int | None  # In seconds, None for one time index with no refresh
+    pruning_freq: int | None  # In seconds, None for one time index with no refresh
     disabled: bool
 
 
@@ -83,9 +82,9 @@ class ConnectorSnapshot(ConnectorBase):
             id=connector.id,
             name=connector.name,
             source=connector.source,
-            input_type=connector.input_type,
             connector_specific_config=connector.connector_specific_config,
             refresh_freq=connector.refresh_freq,
+            pruning_freq=connector.pruning_freq,
             credential_ids=[
                 association.credential.id for association in connector.credentials
             ],
