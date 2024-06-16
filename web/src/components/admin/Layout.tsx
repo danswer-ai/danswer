@@ -182,6 +182,21 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                 ],
               },
               {
+                name: "Telemetry",
+                items: [
+                  {
+                    name: (
+                      <div className="flex">
+                        <FiSettings size={18} />
+                        <div className="ml-1">Export Telemetry</div>
+                      </div>
+                    ),
+                    link: "/admin/telemetry"
+
+                  }
+                ]
+              },
+              {
                 name: "Settings",
                 items: [
                   {
