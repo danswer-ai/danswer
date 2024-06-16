@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Label, ManualErrorMessage } from "./admin/connectors/Field";
 import CreatableSelect from "react-select/creatable";
+import Select from "react-select";
 import { ErrorMessage } from "formik";
 
 interface Option {
@@ -12,10 +13,11 @@ interface MultiSelectDropdownProps {
   name: string;
   label: string;
   options: Option[];
+  creatable: boolean;
   initialSelectedOptions?: Option[];
   direction?: "top" | "bottom";
   onChange: (selected: Option[]) => void;
-  onCreate: (created_name: string) => Promise<Option>;
+  onCreate?: (created_name: string) => Promise<Option>;
   error?: string;
 }
 
@@ -23,6 +25,7 @@ const MultiSelectDropdown = ({
   name,
   label,
   options,
+  creatable,
   onChange,
   onCreate,
   error,
@@ -45,33 +48,55 @@ const MultiSelectDropdown = ({
   };
 
   const handleCreateOption = async (inputValue: string) => {
-    try {
-      const newOption = await onCreate(inputValue);
-      if (newOption) {
-        setAllOptions([...options, newOption]);
-        setSelectedOptions([...selectedOptions, newOption]);
+    if (creatable) {
+      if (!onCreate) {
+        console.error("onCreate is required for creatable");
+        return;
       }
-    } catch (error) {
-      console.error("Error creating option:", error);
+      try {
+        const newOption = await onCreate(inputValue);
+        if (newOption) {
+          setAllOptions([...options, newOption]);
+          setSelectedOptions([...selectedOptions, newOption]);
+          onChange([...selectedOptions, newOption]);
+        }
+      } catch (error) {
+        console.error("Error creating option:", error);
+      }
+    } else {
+      return;
     }
   };
 
   return (
     <div className="flex flex-col space-y-4 mb-4">
       <Label>{label}</Label>
-      <CreatableSelect
-        isMulti
-        // isSearchable={false}
-        options={allOptions}
-        value={selectedOptions}
-        onChange={handleChange}
-        onCreateOption={handleCreateOption}
-        onInputChange={handleInputChange}
-        inputValue={inputValue}
-        className="react-select-container"
-        classNamePrefix="react-select"
-        menuPlacement={direction}
-      />
+      {creatable ? (
+        <CreatableSelect
+          isMulti
+          options={allOptions}
+          value={selectedOptions}
+          onChange={handleChange}
+          onCreateOption={handleCreateOption}
+          onInputChange={handleInputChange}
+          inputValue={inputValue}
+          className="react-select-container"
+          classNamePrefix="react-select"
+          menuPlacement={direction}
+        />
+      ) : (
+        <Select
+          isMulti
+          options={allOptions}
+          value={selectedOptions}
+          onChange={handleChange}
+          onInputChange={handleInputChange}
+          inputValue={inputValue}
+          className="react-select-container"
+          classNamePrefix="react-select"
+          menuPlacement={direction}
+        />
+      )}
       {error ? (
         <ManualErrorMessage>{error}</ManualErrorMessage>
       ) : (
