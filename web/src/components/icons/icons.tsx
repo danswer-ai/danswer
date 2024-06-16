@@ -52,6 +52,7 @@ import document360Icon from "../../../public/Document360.png";
 import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
 import dropboxIcon from "../../../public/Dropbox.png";
+import salesforceIcon from "../../../public/Salesforce.png";
 import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";
 import mediawikiIcon from "../../../public/MediaWiki.svg";
@@ -525,6 +526,18 @@ export const RequestTrackerIcon = ({
     className={`w-[${size}px] h-[${size}px] ` + className}
   >
     <Image src={requestTrackerIcon} alt="Logo" width="96" height="96" />
+  </div>
+);
+
+export const SalesforceIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={salesforceIcon} alt="Logo" width="96" height="96" />
   </div>
 );
 
