@@ -114,6 +114,7 @@ export default function GoogleSites() {
                           zip_path: filePaths[0],
                         },
                         refresh_freq: null,
+                        prune_freq: null,
                         disabled: false,
                       });
                     if (connectorErrorMsg || !connector) {
