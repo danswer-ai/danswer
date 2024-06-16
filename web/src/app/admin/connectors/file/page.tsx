@@ -122,6 +122,7 @@ const Main = () => {
                         file_locations: filePaths,
                       },
                       refresh_freq: null,
+                      prune_freq: null,
                       disabled: false,
                     });
                   if (connectorErrorMsg || !connector) {

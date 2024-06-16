@@ -50,6 +50,12 @@ class PollConnector(BaseConnector):
         raise NotImplementedError
 
 
+class PruneConnector(BaseConnector):
+    @abc.abstractmethod
+    def prune_connector(self) -> set[str]:
+        raise NotImplementedError
+
+
 # Event driven
 class EventConnector(BaseConnector):
     @abc.abstractmethod

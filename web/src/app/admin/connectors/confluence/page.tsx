@@ -300,6 +300,7 @@ const Main = () => {
                 wiki_page_url: "",
               }}
               refreshFreq={10 * 60} // 10 minutes
+              pruneFreq={1 * 30}
               credentialId={confluenceCredential.id}
             />
           </Card>

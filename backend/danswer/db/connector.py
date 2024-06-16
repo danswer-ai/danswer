@@ -84,6 +84,7 @@ def create_connector(
         input_type=connector_data.input_type,
         connector_specific_config=connector_data.connector_specific_config,
         refresh_freq=connector_data.refresh_freq,
+        prune_freq=connector_data.prune_freq,
         disabled=connector_data.disabled,
     )
     db_session.add(connector)
@@ -113,6 +114,7 @@ def update_connector(
     connector.input_type = connector_data.input_type
     connector.connector_specific_config = connector_data.connector_specific_config
     connector.refresh_freq = connector_data.refresh_freq
+    connector.prune_freq = connector_data.prune_freq
     connector.disabled = connector_data.disabled
 
     db_session.commit()
@@ -259,6 +261,7 @@ def create_initial_default_connector(db_session: Session) -> None:
         input_type=InputType.LOAD_STATE,
         connector_specific_config={},
         refresh_freq=None,
+        prune_freq=None,
     )
     db_session.add(connector)
     db_session.commit()

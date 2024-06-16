@@ -85,6 +85,7 @@ export interface ConnectorBase<T> {
   source: ValidSources;
   connector_specific_config: T;
   refresh_freq: number | null;
+  prune_freq: number | null;
   disabled: boolean;
 }
 
