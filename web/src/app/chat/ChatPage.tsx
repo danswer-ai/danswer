@@ -108,6 +108,8 @@ export function ChatPage({
   const [selectedAssistant, setSelectedAssistant] = useState<Persona | null>(
     null
   );
+  const [alternativeGeneratingAssistant, setAlternativeGeneratingAssistant] =
+    useState<Persona | null>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -623,14 +625,14 @@ export function ChatPage({
     queryOverride,
     forceSearch,
     isSeededChat,
-    alternativeAssistant = null,
+    alternativeAssistantId,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
     queryOverride?: string;
     forceSearch?: boolean;
     isSeededChat?: boolean;
-    alternativeAssistant?: Persona | null;
+    alternativeAssistantId?: number | null;
   } = {}) => {
     clientScrollToBottom();
     let currChatSessionId: number;
@@ -651,6 +653,7 @@ export function ChatPage({
     const messageToResend = messageHistory.find(
       (message) => message.messageId === messageIdToResend
     );
+
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
       messageToResend?.parentMessageId !== undefined
@@ -715,6 +718,8 @@ export function ChatPage({
     if (!parentMessage && frozenCompleteMessageMap.size === 2) {
       parentMessage = frozenCompleteMessageMap.get(SYSTEM_MESSAGE_ID) || null;
     }
+
+    const currentAssistantId = alternativeAssistantId ?? selectedAssistant?.id;
     resetInputBar();
     setIsStreaming(true);
     let answer = "";
@@ -736,9 +741,7 @@ export function ChatPage({
       const stack = new CurrentMessageFIFO();
       updateCurrentMessageFIFO(stack, {
         message: currMessage,
-        alternateAssistantId: alternativeAssistant
-          ? alternativeAssistant.id
-          : selectedAssistant?.id,
+        alternateAssistantId: currentAssistantId,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
@@ -918,6 +921,7 @@ export function ChatPage({
     ) {
       setSelectedMessageForDocDisplay(finalMessage.message_id);
     }
+    setAlternativeGeneratingAssistant(null);
   };
 
   const onFeedback = async (
@@ -1331,8 +1335,8 @@ export function ChatPage({
                                           messageIdToResend:
                                             previousMessage.messageId,
                                           queryOverride: newQuery,
-                                          alternativeAssistant:
-                                            currentAlternativeAssistant
+                                          alternativeAssistantId:
+                                            currentAlternativeAssistant?.id,
                                         });
                                       }
                                     : undefined
@@ -1356,10 +1360,18 @@ export function ChatPage({
                                     previousMessage &&
                                     previousMessage.messageId
                                   ) {
+                                    if (currentAlternativeAssistant) {
+                                      setAlternativeGeneratingAssistant(
+                                        currentAlternativeAssistant
+                                      );
+                                    }
+
                                     onSubmit({
                                       messageIdToResend:
                                         previousMessage.messageId,
                                       forceSearch: true,
+                                      alternativeAssistantId:
+                                        currentAlternativeAssistant?.id,
                                     });
                                   } else {
                                     setPopup({
@@ -1405,7 +1417,10 @@ export function ChatPage({
                             >
                               <AIMessage
                                 currentPersona={livePersona}
-                                alternativeAssistant={selectedAssistant}
+                                alternativeAssistant={
+                                  alternativeGeneratingAssistant ??
+                                  selectedAssistant
+                                }
                                 messageId={null}
                                 personaName={livePersona.name}
                                 content={

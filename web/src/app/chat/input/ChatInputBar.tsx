@@ -109,6 +109,7 @@ export function ChatInputBar({
     setShowSuggestions(false);
     setAssistantIconIndex(0);
   };
+  // const [keyedOut, setKeyedOut] = useState<boolean>(false)
 
   // Update selected persona
   const updateCurrentPersona = (persona: Persona) => {
@@ -123,10 +124,8 @@ export function ChatInputBar({
       if (
         suggestionsRef.current &&
         !suggestionsRef.current.contains(event.target as Node) &&
-        !(
-          !interactionsRef.current ||
-          interactionsRef.current.contains(event.target as Node)
-        )
+        (!interactionsRef.current ||
+          !interactionsRef.current.contains(event.target as Node))
       ) {
         hideSuggestions();
       }
@@ -170,6 +169,7 @@ export function ChatInputBar({
 
   //
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // setKeyedOut(false)
     if (
       showSuggestions &&
       filteredPersonas.length > 0 &&
@@ -270,12 +270,15 @@ export function ChatInputBar({
           >
             {alternativeAssistant && (
               <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full  ">
-                <div className="bg-neutral-200 p-2 rounded-t-lg  items-center flex w-full">
+                <div
+                  ref={interactionsRef}
+                  className="bg-neutral-200 p-2 rounded-t-lg  items-center flex w-full"
+                >
                   <AssistantIcon assistant={alternativeAssistant} border />
                   <p className="ml-3 text-neutral-800 my-auto">
                     {alternativeAssistant.name}
                   </p>
-                  <div ref={interactionsRef} className="flex gap-x-1 ml-auto ">
+                  <div className="flex gap-x-1 ml-auto ">
                     <Tooltip
                       content={
                         <p className="max-w-xs flex flex-wrap">
