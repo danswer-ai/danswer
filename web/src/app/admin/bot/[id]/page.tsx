@@ -3,7 +3,11 @@ import { CPUIcon } from "@/components/icons/icons";
 import { SlackBotCreationForm } from "../SlackBotConfigCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { DocumentSet, SlackBotConfig } from "@/lib/types";
+import {
+  DocumentSet,
+  SlackBotConfig,
+  StandardAnswerCategory,
+} from "@/lib/types";
 import { Text } from "@tremor/react";
 import { BackButton } from "@/components/BackButton";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
@@ -17,16 +21,19 @@ async function Page({ params }: { params: { id: string } }) {
     fetchSS("/manage/admin/slack-bot/config"),
     fetchSS("/manage/document-set"),
     fetchAssistantsSS(),
+    fetchSS("/manage/admin/standard-answer/category"),
   ];
 
   const [
     slackBotsResponse,
     documentSetsResponse,
     [assistants, assistantsFetchError],
+    standardAnswerCategoriesResponse,
   ] = (await Promise.all(tasks)) as [
     Response,
     Response,
     FetchAssistantsResponse,
+    Response,
   ];
 
   if (!slackBotsResponse.ok) {
@@ -70,6 +77,18 @@ async function Page({ params }: { params: { id: string } }) {
     );
   }
 
+  if (!standardAnswerCategoriesResponse.ok) {
+    return (
+      <ErrorCallout
+        errorTitle="Something went wrong :("
+        errorMsg={`Failed to fetch standard answer categories - ${await standardAnswerCategoriesResponse.text()}`}
+      />
+    );
+  }
+
+  const standardAnswerCategories =
+    (await standardAnswerCategoriesResponse.json()) as StandardAnswerCategory[];
+
   return (
     <div className="container mx-auto">
       <InstantSSRAutoRefresh />
@@ -88,6 +107,7 @@ async function Page({ params }: { params: { id: string } }) {
       <SlackBotCreationForm
         documentSets={documentSets}
         personas={assistants}
+        standardAnswerCategories={standardAnswerCategories}
         existingSlackBotConfig={slackBotConfig}
       />
     </div>

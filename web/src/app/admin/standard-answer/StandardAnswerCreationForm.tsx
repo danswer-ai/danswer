@@ -109,6 +109,7 @@ export const StandardAnswerCreationForm = ({
                     );
                     setFieldValue("categories", selected_categories);
                   }}
+                  creatable={true}
                   onCreate={async (created_name) => {
                     const response = await createStandardAnswerCategory({
                       name: created_name,
