@@ -5,7 +5,7 @@ import { GmailIcon } from "@/components/icons/icons";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
+import { PopupSpec, usePopup } from "@/components/adminPageComponents/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
   ConnectorIndexingStatus,
@@ -14,12 +14,12 @@ import {
   GmailServiceAccountCredentialJson,
   GmailConfig,
 } from "@/lib/types";
-import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
-import { GmailConnectorsTable } from "@/components/admin/connectors/gmail/AdminConnectorsGmailTable";
+import { ConnectorForm } from "@/components/adminPageComponents/connectors/ConnectorForm";
+import { GmailConnectorsTable } from "@/components/adminPageComponents/connectors/gmail/AdminConnectorsGmailTable";
 import { gmailConnectorNameBuilder } from "./utils";
-import { GmailOAuthSection, GmailJsonUploadSection } from "@/components/admin/connectors/gmail/AdminConnectorsGmailCredential";
+import { GmailOAuthSection, GmailJsonUploadSection } from "@/components/adminPageComponents/connectors/gmail/AdminConnectorsGmailCredential";
 import { usePublicCredentials } from "@/lib/hooks";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { Card, Divider, Text, Title } from "@tremor/react";
 
 interface GmailConnectorManagementProps {

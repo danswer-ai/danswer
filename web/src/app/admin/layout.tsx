@@ -1,4 +1,4 @@
-import { Layout } from "@/components/admin/Layout";
+import { Layout } from "@/components/adminPageComponents/Layout";
 
 export default async function AdminLayout({
   children,

@@ -6,9 +6,9 @@ import {
 } from "@/lib/userSS";
 import { fetchSS } from "@/lib/utilsSS";
 import { redirect } from "next/navigation";
-import { BackendChatSession } from "../../interfaces";
+import { BackendChatSession } from "@/components/chatPageComponents/interfaces";
 import { Header } from "@/components/header/Header";
-import { SharedChatDisplay } from "./SharedChatDisplay";
+import { SharedChatDisplay } from "@/components/chatPageComponents/sharedChat/ChatSharedChatDisplay";
 
 async function getSharedChat(chatId: string) {
   const response = await fetchSS(

@@ -13,15 +13,15 @@ import {
   Credential,
 } from "@/lib/types"; // Modify or create these types as required
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
-import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
+import { CredentialForm } from "@/components/adminPageComponents/connectors/CredentialForm";
 import {
   TextFormField,
   TextArrayFieldBuilder,
-} from "@/components/admin/connectors/Field";
-import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
-import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
+} from "@/components/adminPageComponents/connectors/Field";
+import { ConnectorsTable } from "@/components/adminPageComponents/connectors/table/ConnectorsTable";
+import { ConnectorForm } from "@/components/adminPageComponents/connectors/ConnectorForm";
 import { usePublicCredentials } from "@/lib/hooks";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { Card, Text, Title } from "@tremor/react";
 
 const MainSection = () => {

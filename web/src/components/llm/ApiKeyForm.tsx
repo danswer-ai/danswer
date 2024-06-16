@@ -1,9 +1,9 @@
-import { Popup } from "../admin/connectors/Popup";
+import { Popup } from "../adminPageComponents/connectors/Popup";
 import { useState } from "react";
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from "@tremor/react";
 import { WellKnownLLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
-import { LLMProviderUpdateForm } from "@/components/admin/models/llm/AdminModelsLLMProviderUpdateForm";
-import { CustomLLMProviderUpdateForm } from "@/components/admin/models/llm/AdminModelsLLMCustomProviderUpdateForm";
+import { LLMProviderUpdateForm } from "@/components/adminPageComponents/models/llm/AdminModelsLLMProviderUpdateForm";
+import { CustomLLMProviderUpdateForm } from "@/components/adminPageComponents/models/llm/AdminModelsLLMCustomProviderUpdateForm";
 
 export const ApiKeyForm = ({
   onSuccess,

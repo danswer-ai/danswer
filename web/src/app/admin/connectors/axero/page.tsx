@@ -13,18 +13,18 @@ import {
   Credential,
 } from "@/lib/types";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
-import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
+import { CredentialForm } from "@/components/adminPageComponents/connectors/CredentialForm";
 import {
   TextFormField,
   TextArrayFieldBuilder,
   BooleanFormField,
   TextArrayField,
-} from "@/components/admin/connectors/Field";
-import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
-import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
+} from "@/components/adminPageComponents/connectors/Field";
+import { ConnectorsTable } from "@/components/adminPageComponents/connectors/table/ConnectorsTable";
+import { ConnectorForm } from "@/components/adminPageComponents/connectors/ConnectorForm";
 import { usePublicCredentials } from "@/lib/hooks";
 import { Button, Card, Divider, Text, Title } from "@tremor/react";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 
 const MainSection = () => {
   const { mutate } = useSWRConfig();

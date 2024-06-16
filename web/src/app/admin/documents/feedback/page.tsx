@@ -3,9 +3,9 @@
 import { LoadingAnimation } from "@/components/Loading";
 import { ThumbsUpIcon } from "@/components/icons/icons";
 import { useMostReactedToDocuments } from "@/lib/hooks";
-import { DocumentFeedbackTable } from "@/components/admin/documents/feedback/AdminDocumentsFeedbackTable";
+import { DocumentFeedbackTable } from "@/components/adminPageComponents/documents/AdminDocumentsFeedbackTable";
 import { numPages, numToDisplay } from "./constants";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { Title } from "@tremor/react";
 
 const Main = () => {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PopupSpec } from "../admin/connectors/Popup";
+import { PopupSpec } from "../adminPageComponents/connectors/Popup";
 import { ThumbsDownIcon, ThumbsUpIcon } from "../icons/icons";
 
 type Feedback = "like" | "dislike";

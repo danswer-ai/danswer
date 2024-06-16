@@ -1,4 +1,4 @@
-import { PopupSpec } from "../admin/connectors/Popup";
+import { PopupSpec } from "../adminPageComponents/connectors/Popup";
 import { ChevronsDownIcon, ChevronsUpIcon } from "../icons/icons";
 
 type DocumentFeedbackType = "endorse" | "reject" | "hide" | "unhide";

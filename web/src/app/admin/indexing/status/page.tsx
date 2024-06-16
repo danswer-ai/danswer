@@ -6,8 +6,8 @@ import { LoadingAnimation } from "@/components/Loading";
 import { NotebookIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import { ConnectorIndexingStatus } from "@/lib/types";
-import { CCPairIndexingStatusTable } from "@/components/admin/indexing/AdminIndexingCCPairStatusTable";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { CCPairIndexingStatusTable } from "@/components/adminPageComponents/indexing/AdminIndexingCCPairStatusTable";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import Link from "next/link";
 import { Button, Text } from "@tremor/react";
 

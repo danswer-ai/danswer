@@ -6,18 +6,18 @@ import * as Yup from "yup";
 import { LoadingAnimation } from "@/components/Loading";
 import { GoogleSitesIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
-import { TextFormField } from "@/components/admin/connectors/Field";
+import { TextFormField } from "@/components/adminPageComponents/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus, GoogleSitesConfig } from "@/lib/types";
 import { Form, Formik } from "formik";
 import { useState } from "react";
-import { usePopup } from "@/components/admin/connectors/Popup";
+import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { linkCredential } from "@/lib/credential";
-import { FileUpload } from "@/components/admin/connectors/FileUpload";
-import { SingleUseConnectorsTable } from "@/components/admin/connectors/table/SingleUseConnectorsTable";
+import { FileUpload } from "@/components/adminPageComponents/connectors/FileUpload";
+import { SingleUseConnectorsTable } from "@/components/adminPageComponents/connectors/table/SingleUseConnectorsTable";
 import { Spinner } from "@/components/Spinner";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { Button, Card, Text, Title } from "@tremor/react";
 
 export default function GoogleSites() {

@@ -1,4 +1,4 @@
-import { PersonasTable } from "@/components/admin/assistants/AdminAssistantsPersonaTable";
+import { PersonasTable } from "@/components/adminPageComponents/assistants/AdminAssistantsPersonaTable";
 import { FiPlusSquare } from "react-icons/fi";
 import Link from "next/link";
 import { Divider, Text, Title } from "@tremor/react";
@@ -6,7 +6,7 @@ import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Persona } from "./interfaces";
 import { RobotIcon } from "@/components/icons/icons";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 
 export default async function Page() {
   const personaResponse = await fetchSS("/admin/persona");

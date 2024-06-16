@@ -2,16 +2,16 @@
 
 import { Form, Formik } from "formik";
 import { useEffect, useState } from "react";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import {
   BooleanFormField,
   SectionHeader,
   TextFormField,
-} from "@/components/admin/connectors/Field";
-import { Popup } from "@/components/admin/connectors/Popup";
+} from "@/components/adminPageComponents/connectors/Field";
+import { Popup } from "@/components/adminPageComponents/connectors/Popup";
 import { Button, Divider, Text } from "@tremor/react";
 import { FiCpu } from "react-icons/fi";
-import { LLMConfiguration } from "@/components/admin/models/llm/AdminModelsLLMConfiguration";
+import { LLMConfiguration } from "@/components/adminPageComponents/models/llm/AdminModelsLLMConfiguration";
 
 const LLMOptions = () => {
   const [popup, setPopup] = useState<{
