@@ -35,33 +35,28 @@ class SalesforceConnector(LoadConnector, PollConnector):
     ) -> None:
         self.batch_size = batch_size
         self.sf_client: Salesforce | None = None
-        self.parent_object_list: list[str] = []
-        if requested_objects:
-            for requested_object in requested_objects:
-                if requested_object:  # ensure first letter is capitalized
-                    self.parent_object_list.append(
-                        requested_object[0].upper() + requested_object[1:]
-                    )
-        else:
-            self.parent_object_list = DEFAULT_PARENT_OBJECT_TYPES
+        self.parent_object_list = (
+            [obj.capitalize() for obj in requested_objects]
+            if requested_objects
+            else DEFAULT_PARENT_OBJECT_TYPES
+        )
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        salesforce_username = credentials["sf_username"]
-        salesforce_password = credentials["sf_password"]
-        salesforce_security_token = credentials["sf_security_token"]
-
         self.sf_client = Salesforce(
-            username=salesforce_username,
-            password=salesforce_password,
-            security_token=salesforce_security_token,
+            username=credentials["sf_username"],
+            password=credentials["sf_password"],
+            security_token=credentials["sf_security_token"],
         )
 
         return None
 
-    def _get_sf_type_object(self, type_name: str) -> SFType:
+    def _get_sf_type_object_json(self, type_name: str) -> Any:
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
-        return SFType(type_name, self.sf_client.session_id, self.sf_client.sf_instance)
+        sf_object = SFType(
+            type_name, self.sf_client.session_id, self.sf_client.sf_instance
+        )
+        return sf_object.describe()
 
     def _get_name_from_id(self, id: str) -> str:
         if self.sf_client is None:
@@ -73,6 +68,7 @@ class SalesforceConnector(LoadConnector, PollConnector):
             name = user_object_info.get("Records", [{}])[0].get("Name", "Null User")
             return name
         except Exception:
+            logger.warning(f"Couldnt find name for object id: {id}")
             return "Null User"
 
     def _convert_object_instance_to_document(
@@ -81,11 +77,11 @@ class SalesforceConnector(LoadConnector, PollConnector):
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
 
-        extracted_id = object_dict["Id"]
+        extracted_id = f"SALESFORCE_{object_dict['Id']}"
         extracted_link = f"https://{self.sf_client.sf_instance}/{extracted_id}"
         extracted_doc_updated_at = time_str_to_utc(object_dict["LastModifiedDate"])
         extracted_object_text = extract_dict_text(object_dict)
-        extracted_semantic_identifier = object_dict.get("Name", "Uknown Object Name")
+        extracted_semantic_identifier = object_dict.get("Name", "Unknown Object")
         extracted_primary_owners = [
             BasicExpertInfo(
                 display_name=self._get_name_from_id(object_dict["LastModifiedById"])
@@ -113,8 +109,7 @@ class SalesforceConnector(LoadConnector, PollConnector):
             return False
 
         sf_type = child_relationship["childSObject"]
-        sf_object = self._get_sf_type_object(sf_type)
-        object_description = sf_object.describe()
+        object_description = self._get_sf_type_object_json(sf_type)
         if not object_description["queryable"]:
             return False
 
@@ -139,8 +134,7 @@ class SalesforceConnector(LoadConnector, PollConnector):
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
 
-        sf_object = self._get_sf_type_object(sf_type)
-        object_description = sf_object.describe()
+        object_description = self._get_sf_type_object_json(sf_type)
 
         children_objects: list[dict] = []
         for child_relationship in object_description["childRelationships"]:
@@ -157,18 +151,24 @@ class SalesforceConnector(LoadConnector, PollConnector):
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
 
-        sf_object = self._get_sf_type_object(sf_type)
-        all_account_objects = sf_object.describe()
+        object_description = self._get_sf_type_object_json(sf_type)
 
         fields = [
             field.get("name")
-            for field in all_account_objects["fields"]
+            for field in object_description["fields"]
             if field.get("type", "base64") != "base64"
         ]
 
         return fields
 
     def _generate_query_per_parent_type(self, parent_sf_type: str) -> Iterator[str]:
+        """
+        This function takes in an object_type and generates query(s) designed to grab
+        information associated to objects of that type.
+        It does that by getting all the fields of the parent object type.
+        Then it gets all the child objects of that object type and all the fields of
+        those children as well.
+        """
         parent_fields = self._get_all_fields_for_sf_type(parent_sf_type)
         child_sf_types = self._get_all_children_of_sf_type(parent_sf_type)
 
@@ -213,6 +213,10 @@ class SalesforceConnector(LoadConnector, PollConnector):
 
                 for record_dict in query_result["records"]:
                     query_results.setdefault(record_dict["Id"], {}).update(record_dict)
+
+            logger.info(
+                f"Number of {parent_object_type} Objects processed: {len(query_results)}"
+            )
 
             for combined_object_dict in query_results.values():
                 doc_batch.append(
