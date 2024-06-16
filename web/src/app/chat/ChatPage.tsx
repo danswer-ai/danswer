@@ -486,73 +486,10 @@ export function ChatPage({
     documentSidebarInitialWidth = Math.min(700, maxDocumentSidebarWidth);
   }
 
-  const onSubmit = async ({
-    messageIdToResend,
-    messageOverride,
-    queryOverride,
-    forceSearch,
-    isSeededChat,
-  }: {
-    messageIdToResend?: number;
-    messageOverride?: string;
-    queryOverride?: string;
-    forceSearch?: boolean;
-    isSeededChat?: boolean;
-  } = {}) => {
-    let currChatSessionId: number;
-    let isNewSession = chatSessionId === null;
-    const searchParamBasedChatSessionName =
-      searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
-
-    if (isNewSession) {
-      currChatSessionId = await createChatSession(
-        livePersona?.id || 0,
-        searchParamBasedChatSessionName
-      );
-    } else {
-      currChatSessionId = chatSessionId as number;
-    }
-    setChatSessionId(currChatSessionId);
-
-    const messageToResend = messageHistory.find(
-      (message) => message.messageId === messageIdToResend
-    );
-    const messageToResendParent =
-      messageToResend?.parentMessageId !== null &&
-      messageToResend?.parentMessageId !== undefined
-        ? completeMessageMap.get(messageToResend.parentMessageId)
-        : null;
-    const messageToResendIndex = messageToResend
-      ? messageHistory.indexOf(messageToResend)
-      : null;
-    if (!messageToResend && messageIdToResend !== undefined) {
-      setPopup({
-        message:
-          "Failed to re-send message - please refresh the page and try again.",
-        type: "error",
-      });
-      return;
-    }
-
-    let currMessage = messageToResend ? messageToResend.message : message;
-    if (messageOverride) {
-      currMessage = messageOverride;
-    }
-    const currMessageHistory =
-      messageToResendIndex !== null
-        ? messageHistory.slice(0, messageToResendIndex)
-        : messageHistory;
-    let parentMessage =
-      messageToResendParent ||
-      (currMessageHistory.length > 0
-        ? currMessageHistory[currMessageHistory.length - 1]
-        : null) ||
-      (completeMessageMap.size === 1
-        ? Array.from(completeMessageMap.values())[0]
-        : null);
-
-    // if we're resending, set the parent's child to null
-    // we will use tempMessages until the regenerated message is complete
+  const createInitialUpdateMap = (
+    currMessage: string,
+    parentMessage: Message | null
+  ) => {
     const messageUpdates: Message[] = [
       {
         messageId: TEMP_USER_MESSAGE_ID,
@@ -574,15 +511,122 @@ export function ChatPage({
     const frozenCompleteMessageMap = upsertToCompleteMessageMap({
       messages: messageUpdates,
     });
-    // on initial message send, we insert a dummy system message
-    // set this as the parent here if no parent is set
-    if (!parentMessage && frozenCompleteMessageMap.size === 2) {
-      parentMessage = frozenCompleteMessageMap.get(SYSTEM_MESSAGE_ID) || null;
+    return frozenCompleteMessageMap;
+  };
+
+  async function initializeSession({
+    messageIdToResend,
+  }: {
+    messageIdToResend: number | undefined;
+  }) {
+    // Determine if a new session needs to be created based on the existing chatSessionId
+    const isNewSession = chatSessionId === null;
+    const searchParamBasedChatSessionName =
+      searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
+
+    // Create a new chat session if needed, otherwise use the existing one
+    let currChatSessionId = isNewSession
+      ? await createChatSession(
+          livePersona?.id || 0,
+          searchParamBasedChatSessionName
+        )
+      : chatSessionId;
+
+    // Update the chat session ID
+    setChatSessionId(currChatSessionId);
+
+    // Retrieve the message to resend based on the provided ID
+    const messageToResend = messageHistory.find(
+      (message) => message.messageId === messageIdToResend
+    );
+    const messageToResendParent = messageToResend?.parentMessageId
+      ? completeMessageMap.get(messageToResend.parentMessageId)
+      : null;
+    const messageToResendIndex = messageToResend
+      ? messageHistory.indexOf(messageToResend)
+      : null;
+
+    if (!messageToResend && messageIdToResend !== undefined) {
+      return false;
     }
+
+    return {
+      messageToResend,
+      messageToResendIndex,
+      messageToResendParent,
+      currChatSessionId,
+      isNewSession,
+      searchParamBasedChatSessionName,
+      // currMessage, parentMessage
+    };
+  }
+
+  const getMessageInfo = ({
+    messageOverride,
+    messageToResend,
+    messageToResendIndex,
+    messageToResendParent,
+  }: {
+    messageOverride: string | undefined;
+    messageToResend: Message | undefined;
+    messageToResendIndex: number | null;
+    messageToResendParent: Message | null | undefined;
+  }) => {
+    let currMessage =
+      messageOverride || (messageToResend ? messageToResend.message : message);
+
+    const currMessageHistory =
+      messageToResendIndex !== null
+        ? messageHistory.slice(0, messageToResendIndex)
+        : messageHistory;
+    let parentMessage =
+      messageToResendParent ||
+      (currMessageHistory.length > 0
+        ? currMessageHistory[currMessageHistory.length - 1]
+        : null) ||
+      (completeMessageMap.size === 1
+        ? Array.from(completeMessageMap.values())[0]
+        : null);
 
     setCurrentMessageFiles([]);
     setMessage("");
     setIsStreaming(true);
+
+    // Return relevant message details
+    return {
+      currMessage,
+      parentMessage,
+      currMessageHistory,
+    };
+  };
+
+  const streamMessage = async ({
+    modelName,
+    modelOverRide,
+    regenerate,
+    currMessageHistory,
+    currMessage,
+    responseId,
+    currChatSessionId,
+    queryOverride,
+    forceSearch,
+    isSeededChat,
+    parentId,
+    frozenCompleteMessageMap,
+  }: {
+    modelName?: string;
+    regenerate?: boolean;
+    currMessageHistory?: Message[];
+    currMessage: string;
+    currChatSessionId: number;
+    queryOverride?: string | undefined;
+    forceSearch?: boolean | undefined;
+    isSeededChat?: boolean | undefined;
+    responseId?: number | undefined;
+    parentId?: number | undefined;
+    frozenCompleteMessageMap: Map<number, Message>;
+    modelOverRide?: LlmOverride;
+  }) => {
     let answer = "";
     let query: string | null = null;
     let retrievalType: RetrievalType =
@@ -595,8 +639,9 @@ export function ChatPage({
     let finalMessage: BackendMessage | null = null;
 
     try {
-      const lastSuccessfulMessageId =
-        getLastSuccessfulMessageId(currMessageHistory);
+      const lastSuccessfulMessageId = currMessageHistory
+        ? getLastSuccessfulMessageId(currMessageHistory)
+        : responseId!;
       for await (const packetBunch of sendMessage({
         message: currMessage,
         fileDescriptors: currentMessageFiles,
@@ -617,8 +662,9 @@ export function ChatPage({
           .map((document) => document.db_doc_id as number),
         queryOverride,
         forceSearch,
-        modelProvider: llmOverrideManager.llmOverride.name || undefined,
+        modelProvider: modelOverRide ? modelOverRide.provider : undefined,
         modelVersion:
+          modelOverRide?.modelName ||
           llmOverrideManager.llmOverride.modelName ||
           searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
           undefined,
@@ -659,45 +705,73 @@ export function ChatPage({
             finalMessage = packet as BackendMessage;
           }
         }
-        const updateFn = (messages: Message[]) => {
+
+        const realtimeMessageUpdate = (messages: Message[]) => {
           const replacementsMap = finalMessage
-            ? new Map([
-                [messages[0].messageId, TEMP_USER_MESSAGE_ID],
-                [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
-              ] as [number, number][])
+            ? regenerate
+              ? new Map([[messages[0].messageId, TEMP_USER_MESSAGE_ID]] as [
+                  number,
+                  number,
+                ][])
+              : new Map([
+                  [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+                  [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+                ] as [number, number][])
             : null;
+
           upsertToCompleteMessageMap({
             messages: messages,
             replacementsMap: replacementsMap,
             completeMessageMapOverride: frozenCompleteMessageMap,
           });
         };
+
         const newUserMessageId =
           finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
         const newAssistantMessageId =
           finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
-        updateFn([
-          {
-            messageId: newUserMessageId,
-            message: currMessage,
-            type: "user",
-            files: currentMessageFiles,
-            parentMessageId: parentMessage?.messageId || null,
-            childrenMessageIds: [newAssistantMessageId],
-            latestChildMessageId: newAssistantMessageId,
-          },
-          {
-            messageId: newAssistantMessageId,
-            message: error || answer,
-            type: error ? "error" : "assistant",
-            retrievalType,
-            query: finalMessage?.rephrased_query || query,
-            documents: finalMessage?.context_docs?.top_documents || documents,
-            citations: finalMessage?.citations || {},
-            files: finalMessage?.files || aiMessageImages || [],
-            parentMessageId: newUserMessageId,
-          },
-        ]);
+
+        realtimeMessageUpdate(
+          regenerate
+            ? [
+                {
+                  messageId: newAssistantMessageId,
+                  message: error || answer,
+                  type: error ? "error" : "assistant",
+                  retrievalType,
+                  query: finalMessage?.rephrased_query || query,
+                  documents:
+                    finalMessage?.context_docs?.top_documents || documents,
+                  citations: finalMessage?.citations || {},
+                  files: finalMessage?.files || aiMessageImages || [],
+                  parentMessageId: responseId!,
+                  alternate_model: modelName,
+                },
+              ]
+            : [
+                {
+                  messageId: newUserMessageId,
+                  message: currMessage,
+                  type: "user",
+                  files: currentMessageFiles,
+                  parentMessageId: parentId!,
+                  childrenMessageIds: [newAssistantMessageId],
+                  latestChildMessageId: newAssistantMessageId,
+                },
+                {
+                  messageId: newAssistantMessageId,
+                  message: error || answer,
+                  type: error ? "error" : "assistant",
+                  retrievalType,
+                  query: finalMessage?.rephrased_query || query,
+                  documents:
+                    finalMessage?.context_docs?.top_documents || documents,
+                  citations: finalMessage?.citations || {},
+                  files: finalMessage?.files || aiMessageImages || [],
+                  parentMessageId: newUserMessageId,
+                },
+              ]
+        );
         if (isCancelledRef.current) {
           setIsCancelled(false);
           break;
@@ -706,26 +780,110 @@ export function ChatPage({
     } catch (e: any) {
       const errorMsg = e.message;
       upsertToCompleteMessageMap({
-        messages: [
-          {
-            messageId: TEMP_USER_MESSAGE_ID,
-            message: currMessage,
-            type: "user",
-            files: currentMessageFiles,
-            parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
-          },
-          {
-            messageId: TEMP_ASSISTANT_MESSAGE_ID,
-            message: errorMsg,
-            type: "error",
-            files: aiMessageImages || [],
-            parentMessageId: TEMP_USER_MESSAGE_ID,
-          },
-        ],
+        messages: regenerate
+          ? [
+              {
+                messageId: TEMP_ASSISTANT_MESSAGE_ID,
+                message: errorMsg,
+                type: "error",
+                files: aiMessageImages || [],
+                parentMessageId: TEMP_USER_MESSAGE_ID,
+              },
+            ]
+          : [
+              {
+                messageId: TEMP_USER_MESSAGE_ID,
+                message: currMessage,
+                type: "user",
+                files: currentMessageFiles,
+                parentMessageId: parentId || SYSTEM_MESSAGE_ID,
+              },
+              {
+                messageId: TEMP_ASSISTANT_MESSAGE_ID,
+                message: errorMsg,
+                type: "error",
+                files: aiMessageImages || [],
+                parentMessageId: TEMP_USER_MESSAGE_ID,
+              },
+            ],
         completeMessageMapOverride: frozenCompleteMessageMap,
       });
     }
+
+    return {
+      finalMessage,
+      retrievalType,
+    };
+  };
+
+  const onSubmit = async ({
+    messageIdToResend,
+    messageOverride,
+    queryOverride,
+    forceSearch,
+    isSeededChat,
+  }: {
+    messageIdToResend?: number;
+    messageOverride?: string;
+    queryOverride?: string;
+    forceSearch?: boolean;
+    isSeededChat?: boolean;
+  } = {}) => {
+    // Initialize the session (necessary state updates, etc.)
+    const structuredParameters = await initializeSession({ messageIdToResend });
+    if (!structuredParameters) {
+      setPopup({
+        message:
+          "Failed to re-send message - please refresh the page and try again.",
+        type: "error",
+      });
+      return;
+    }
+
+    let {
+      messageToResend,
+      messageToResendParent,
+      messageToResendIndex,
+      currChatSessionId,
+      isNewSession,
+      searchParamBasedChatSessionName,
+    } = structuredParameters;
+
+    // if we're resending, set the parent's child to null
+    // we will use tempMessages until the regenerated message is complete
+    let { currMessage, parentMessage, currMessageHistory } = getMessageInfo({
+      messageOverride,
+      messageToResend,
+      messageToResendIndex,
+      messageToResendParent,
+    });
+
+    const frozenCompleteMessageMap = createInitialUpdateMap(
+      currMessage,
+      parentMessage
+    );
+
+    // on initial message send, we insert a dummy system message
+    // set this as the parent here if no parent is set
+    if (!parentMessage && frozenCompleteMessageMap.size === 2) {
+      parentMessage = frozenCompleteMessageMap.get(SYSTEM_MESSAGE_ID) || null;
+    }
+
+    // const d = parentMessage?.messageId
+
+    const { finalMessage, retrievalType } = await streamMessage({
+      currMessageHistory,
+      currMessage,
+      currChatSessionId,
+      queryOverride,
+      forceSearch,
+      isSeededChat,
+      frozenCompleteMessageMap,
+      parentId: parentMessage?.messageId!,
+    });
+
     setIsStreaming(false);
+
     if (isNewSession) {
       if (finalMessage) {
         setSelectedMessageForDocDisplay(finalMessage.message_id);
@@ -744,6 +902,7 @@ export function ChatPage({
         });
       }
     }
+
     if (
       finalMessage?.context_docs &&
       finalMessage.context_docs.top_documents.length > 0 &&
@@ -753,15 +912,29 @@ export function ChatPage({
     }
   };
 
-  // const
+  async function initializeSession2({ responseId }: { responseId: number }) {
+    // Determine if a new session needs to be created based on the existing chatSessionId
+    // const isNewSession = chatSessionId === null;
+    // const searchParamBasedChatSessionName = searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
 
-  // Refactored methods
-  const regenerateResponse = async (
-    responseId: number,
-    modelOverRide: LlmOverride | null
-  ) => {
-    console.log(responseId);
-    console.log(modelOverRide);
+    // // Create a new chat session if needed, otherwise use the existing one
+    // let currChatSessionId = isNewSession
+    //   ? await createChatSession(livePersona?.id || 0, searchParamBasedChatSessionName)
+    //   : chatSessionId;
+
+    // // Update the chat session ID
+    // setChatSessionId(currChatSessionId);
+
+    // // Retrieve the message to resend based on the provided ID
+    // const messageToResend = messageHistory.find(message => message.messageId === messageIdToResend);
+    // const messageToResendParent = messageToResend?.parentMessageId
+    //   ? completeMessageMap.get(messageToResend.parentMessageId)
+    //   : null;
+    // const messageToResendIndex = messageToResend ? messageHistory.indexOf(messageToResend) : null;
+
+    // if (!messageToResend && messageIdToResend !== undefined) {
+    //   return false;
+
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
     const searchParamBasedChatSessionName =
@@ -776,21 +949,246 @@ export function ChatPage({
       currChatSessionId = chatSessionId as number;
     }
 
-    let answer = "";
-    let query: string | null = null;
-    let retrievalType: RetrievalType =
-      selectedDocuments.length > 0
-        ? RetrievalType.SelectedDocs
-        : RetrievalType.None;
-    let documents: DanswerDocument[] = selectedDocuments;
-    let aiMessageImages: FileDescriptor[] | null = null;
-    let error: string | null = null;
-    let finalMessage: BackendMessage | null = null;
-
     const messageToResend = messageHistory.find(
       (message) => message.messageId === responseId
     );
+
     let currMessage = messageToResend ? messageToResend.message : message;
+    setChatSessionId(currChatSessionId);
+    setCurrentMessageFiles([]);
+    setIsStreaming(true);
+
+    // }
+
+    return {
+      currMessage,
+      currChatSessionId,
+      isNewSession,
+      searchParamBasedChatSessionName,
+      // currMessage, parentMessage
+    };
+  }
+
+  // Refactored methods
+  const regenerateResponse = async (
+    responseId: number,
+    modelOverRide: LlmOverride | null
+  ) => {
+    const {
+      currMessage,
+      currChatSessionId,
+      isNewSession,
+      searchParamBasedChatSessionName,
+      // currMessage, parentMessage
+    } = await initializeSession2({ responseId });
+
+    // const frozenCompleteMessageMap = completeMessageMap;
+
+    // // let {
+    // //   currMessage,
+    // //   parentMessage,
+    // //   currMessageHistory
+    // // } = getMessageInfo({ messageOverride, messageToResend, messageToResendIndex, messageToResendParent })
+
+    // // let answer = "";
+    // // let query: string | null = null;
+    // // let retrievalType: RetrievalType =
+    // //   selectedDocuments.length > 0
+    // //     ? RetrievalType.SelectedDocs
+    // //     : RetrievalType.None;
+    // // let documents: DanswerDocument[] = selectedDocuments;
+    // // let aiMessageImages: FileDescriptor[] | null = null;
+    // // let error: string | null = null;
+    // // let finalMessage: BackendMessage | null = null;
+
+    // // // Initial clearing of response
+    // // const messages: Message[] = [
+    // //   {
+    // //     messageId: -1,
+    // //     message: error || answer,
+    // //     type: error ? "error" : "assistant",
+    // //     retrievalType,
+    // //     files: [],
+    // //     parentMessageId: responseId!,
+    // //     alternate_model: modelOverRide?.modelName,
+    // //   },
+    // // ];
+
+    // // upsertToCompleteMessageMap({
+    // //   messages: messages,
+    // //   replacementsMap: finalMessage
+    // //     ? new Map([[messages[0].messageId, TEMP_USER_MESSAGE_ID]] as [
+    // //       number,
+    // //       number,
+    // //     ][])
+    // //     : null,
+    // //   completeMessageMapOverride: frozenCompleteMessageMap,
+    // // });
+
+    // // Stream response updates
+    // // try {
+    // //   for await (const packetBunch of sendMessage({
+    // //     regenerate: true,
+    // //     message: currMessage,
+    // //     fileDescriptors: currentMessageFiles,
+    // //     parentMessageId: responseId!,
+    // //     chatSessionId: currChatSessionId,
+    // //     promptId: livePersona?.prompts[0]?.id || 0,
+    // //     filters: buildFilters(
+    // //       filterManager.selectedSources,
+    // //       filterManager.selectedDocumentSets,
+    // //       filterManager.timeRange,
+    // //       filterManager.selectedTags
+    // //     ),
+    // //     selectedDocumentIds: selectedDocuments
+    // //       .filter(
+    // //         (document) =>
+    // //           document.db_doc_id !== undefined && document.db_doc_id !== null
+    // //       )
+    // //       .map((document) => document.db_doc_id as number),
+    // //     queryOverride: undefined,
+    // //     forceSearch: undefined,
+    // //     modelProvider: modelOverRide ? modelOverRide.provider : undefined,
+    // //     modelVersion:
+    // //       modelOverRide?.modelName ||
+    // //       llmOverrideManager.llmOverride.modelName ||
+    // //       searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
+    // //       undefined,
+    // //     temperature:
+    // //       llmOverrideManager.temperature ||
+    // //       parseFloat(searchParams.get(SEARCH_PARAM_NAMES.TEMPERATURE) || "") ||
+    // //       undefined,
+    // //     systemPromptOverride:
+    // //       searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
+    // //     useExistingUserMessage: false,
+    // //   })) {
+    // //     for (const packet of packetBunch) {
+    // //       if (Object.hasOwn(packet, "answer_piece")) {
+    // //         answer += (packet as AnswerPiecePacket).answer_piece;
+    // //       } else if (Object.hasOwn(packet, "top_documents")) {
+    // //         documents = (packet as DocumentsResponse).top_documents;
+    // //         query = (packet as DocumentsResponse).rephrased_query;
+    // //         retrievalType = RetrievalType.Search;
+    // //         if (documents && documents.length > 0) {
+    // //           // point to the latest message (we don't know the messageId yet, which is why
+    // //           // we have to use -1)
+    // //           setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
+    // //         }
+    // //       } else if (Object.hasOwn(packet, "file_ids")) {
+    // //         aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
+    // //           (fileId) => {
+    // //             return {
+    // //               id: fileId,
+    // //               type: ChatFileType.IMAGE,
+    // //             };
+    // //           }
+    // //         );
+    // //       } else if (Object.hasOwn(packet, "tool_name")) {
+    // //         setCurrentTool((packet as ToolRunKickoff).tool_name);
+    // //       } else if (Object.hasOwn(packet, "error")) {
+    // //         error = (packet as StreamingError).error;
+    // //       } else if (Object.hasOwn(packet, "message_id")) {
+    // //         finalMessage = packet as BackendMessage;
+    // //       }
+    // //     }
+
+    // //     const updateFn = async (messages: Message[]) => {
+    // //       const replacementsMap = finalMessage
+    // //         ? new Map([[messages[0].messageId, TEMP_USER_MESSAGE_ID]] as [
+    // //           number,
+    // //           number,
+    // //         ][])
+    // //         : null;
+
+    // //       upsertToCompleteMessageMap({
+    // //         messages: messages,
+    // //         replacementsMap: replacementsMap,
+    // //         completeMessageMapOverride: frozenCompleteMessageMap,
+    // //       });
+    // //     };
+
+    // //     const newAssistantMessageId =
+    // //       finalMessage?.message_id || TEMP_USER_MESSAGE_ID;
+
+    // //     await updateFn([
+    // //       {
+    // //         messageId: newAssistantMessageId,
+    // //         message: error || answer,
+    // //         type: error ? "error" : "assistant",
+    // //         retrievalType,
+    // //         query: finalMessage?.rephrased_query || query,
+    // //         documents: finalMessage?.context_docs?.top_documents || documents,
+    // //         citations: finalMessage?.citations || {},
+    // //         files: finalMessage?.files || aiMessageImages || [],
+    // //         parentMessageId: responseId!,
+    // //         alternate_model: modelOverRide?.modelName,
+    // //       },
+    // //     ]);
+
+    // //     if (isCancelledRef.current) {
+    // //       setIsCancelled(false);
+    // //       break;
+    // //     }
+    // //   }
+    // // } catch (e: any) {
+    // //   const errorMsg = e.message;
+
+    // //   upsertToCompleteMessageMap({
+    // //     messages: [
+    // //       {
+    // //         messageId: TEMP_ASSISTANT_MESSAGE_ID,
+    // //         message: errorMsg,
+    // //         type: "error",
+    // //         files: aiMessageImages || [],
+    // //         parentMessageId: TEMP_USER_MESSAGE_ID,
+    // //       },
+    // //     ],
+    // //     completeMessageMapOverride: frozenCompleteMessageMap,
+    // //   });
+    // // }
+
+    // let answer = "";
+    // let query: string | null = null;
+    // let retrievalType: RetrievalType =
+    //   selectedDocuments.length > 0
+    //     ? RetrievalType.SelectedDocs
+    //     : RetrievalType.None;
+    // let documents: DanswerDocument[] = selectedDocuments;
+    // let aiMessageImages: FileDescriptor[] | null = null;
+    // let error: string | null = null;
+    // // let finalMessage: BackendMessage | null = null;
+
+    // console.log(responseId);
+    // console.log(modelOverRide);
+    // let currChatSessionId: number;
+    // let isNewSession = chatSessionId === null;
+    // const searchParamBasedChatSessionName =
+    //   searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
+
+    // if (isNewSession) {
+    //   currChatSessionId = await createChatSession(
+    //     livePersona?.id || 0,
+    //     searchParamBasedChatSessionName
+    //   );
+    // } else {
+    //   currChatSessionId = chatSessionId as number;
+    // }
+
+    let answer = "";
+    let query: string | null = null;
+    // let retrievalType: RetrievalType =
+    //   selectedDocuments.length > 0
+    //     ? RetrievalType.SelectedDocs
+    //     : RetrievalType.None;
+    // let documents: DanswerDocument[] = selectedDocuments;
+    // let aiMessageImages: FileDescriptor[] | null = null;
+    let error: string | null = null;
+    // let finalMessage: BackendMessage | null = null;
+
+    // const messageToResend = messageHistory.find(
+    //   (message) => message.messageId === responseId
+    // );
+    // let currMessage = messageToResend ? messageToResend.message : message;
     const frozenCompleteMessageMap = completeMessageMap;
 
     setChatSessionId(currChatSessionId);
@@ -803,7 +1201,7 @@ export function ChatPage({
         messageId: -1,
         message: error || answer,
         type: error ? "error" : "assistant",
-        retrievalType,
+        retrievalType: RetrievalType.None,
         files: [],
         parentMessageId: responseId!,
         alternate_model: modelOverRide?.modelName,
@@ -812,7 +1210,7 @@ export function ChatPage({
 
     upsertToCompleteMessageMap({
       messages: messages,
-      replacementsMap: finalMessage
+      replacementsMap: null
         ? new Map([[messages[0].messageId, TEMP_USER_MESSAGE_ID]] as [
             number,
             number,
@@ -821,127 +1219,37 @@ export function ChatPage({
       completeMessageMapOverride: frozenCompleteMessageMap,
     });
 
-    // Stream response updates
-    try {
-      for await (const packetBunch of sendMessage({
-        regenerate: true,
-        message: currMessage,
-        fileDescriptors: currentMessageFiles,
-        parentMessageId: responseId!,
-        chatSessionId: currChatSessionId,
-        promptId: livePersona?.prompts[0]?.id || 0,
-        filters: buildFilters(
-          filterManager.selectedSources,
-          filterManager.selectedDocumentSets,
-          filterManager.timeRange,
-          filterManager.selectedTags
-        ),
-        selectedDocumentIds: selectedDocuments
-          .filter(
-            (document) =>
-              document.db_doc_id !== undefined && document.db_doc_id !== null
-          )
-          .map((document) => document.db_doc_id as number),
-        queryOverride: undefined,
-        forceSearch: undefined,
-        modelProvider: modelOverRide ? modelOverRide.provider : undefined,
-        modelVersion:
-          modelOverRide?.modelName ||
-          llmOverrideManager.llmOverride.modelName ||
-          searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
-          undefined,
-        temperature:
-          llmOverrideManager.temperature ||
-          parseFloat(searchParams.get(SEARCH_PARAM_NAMES.TEMPERATURE) || "") ||
-          undefined,
-        systemPromptOverride:
-          searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
-        useExistingUserMessage: false,
-      })) {
-        for (const packet of packetBunch) {
-          if (Object.hasOwn(packet, "answer_piece")) {
-            answer += (packet as AnswerPiecePacket).answer_piece;
-          } else if (Object.hasOwn(packet, "top_documents")) {
-            documents = (packet as DocumentsResponse).top_documents;
-            query = (packet as DocumentsResponse).rephrased_query;
-            retrievalType = RetrievalType.Search;
-            if (documents && documents.length > 0) {
-              // point to the latest message (we don't know the messageId yet, which is why
-              // we have to use -1)
-              setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
-            }
-          } else if (Object.hasOwn(packet, "file_ids")) {
-            aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
-              (fileId) => {
-                return {
-                  id: fileId,
-                  type: ChatFileType.IMAGE,
-                };
-              }
-            );
-          } else if (Object.hasOwn(packet, "tool_name")) {
-            setCurrentTool((packet as ToolRunKickoff).tool_name);
-          } else if (Object.hasOwn(packet, "error")) {
-            error = (packet as StreamingError).error;
-          } else if (Object.hasOwn(packet, "message_id")) {
-            finalMessage = packet as BackendMessage;
-          }
-        }
+    // Initial clearing of response
+    // const messages: Message[] = [
+    //   {
+    //     messageId: -1,
+    //     message: error || answer,
+    //     type: error ? "error" : "assistant",
+    //     retrievalType,
+    //     files: [],
+    //     parentMessageId: responseId!,
+    //     alternate_model: modelOverRide?.modelName,
+    //   },
+    // ];
 
-        const updateFn = async (messages: Message[]) => {
-          const replacementsMap = finalMessage
-            ? new Map([[messages[0].messageId, TEMP_USER_MESSAGE_ID]] as [
-                number,
-                number,
-              ][])
-            : null;
+    // upsertToCompleteMessageMap({
+    //   messages: messages,
+    //   replacementsMap: null
+    //     ? new Map([[messages[0].messageId, TEMP_USER_MESSAGE_ID]] as [
+    //       number,
+    //       number,
+    //     ][])
+    //     : null,
+    //   completeMessageMapOverride: frozenCompleteMessageMap,
+    // });
 
-          upsertToCompleteMessageMap({
-            messages: messages,
-            replacementsMap: replacementsMap,
-            completeMessageMapOverride: frozenCompleteMessageMap,
-          });
-        };
-
-        const newAssistantMessageId =
-          finalMessage?.message_id || TEMP_USER_MESSAGE_ID;
-
-        await updateFn([
-          {
-            messageId: newAssistantMessageId,
-            message: error || answer,
-            type: error ? "error" : "assistant",
-            retrievalType,
-            query: finalMessage?.rephrased_query || query,
-            documents: finalMessage?.context_docs?.top_documents || documents,
-            citations: finalMessage?.citations || {},
-            files: finalMessage?.files || aiMessageImages || [],
-            parentMessageId: responseId!,
-            alternate_model: modelOverRide?.modelName,
-          },
-        ]);
-
-        if (isCancelledRef.current) {
-          setIsCancelled(false);
-          break;
-        }
-      }
-    } catch (e: any) {
-      const errorMsg = e.message;
-
-      upsertToCompleteMessageMap({
-        messages: [
-          {
-            messageId: TEMP_ASSISTANT_MESSAGE_ID,
-            message: errorMsg,
-            type: "error",
-            files: aiMessageImages || [],
-            parentMessageId: TEMP_USER_MESSAGE_ID,
-          },
-        ],
-        completeMessageMapOverride: frozenCompleteMessageMap,
-      });
-    }
+    const { finalMessage, retrievalType } = await streamMessage({
+      regenerate: true,
+      currMessage,
+      currChatSessionId,
+      responseId: responseId!,
+      frozenCompleteMessageMap,
+    });
 
     setIsStreaming(false);
 
