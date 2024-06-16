@@ -95,8 +95,9 @@ export function ChatPage({
   } = useChatContext();
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
 
-  const [selectedAlternativeAssistant, setSelectedAlternativeAssistant] =
-    useState<Persona | null>(null);
+  const [selectedAssistant, setSelectedAssistant] = useState<Persona | null>(
+    null
+  );
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -590,7 +591,7 @@ export function ChatPage({
         message: currMessage,
         alternateAssistantId: alternativeAssistant
           ? alternativeAssistant.id
-          : selectedAlternativeAssistant?.id,
+          : selectedAssistant?.id,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
@@ -688,7 +689,7 @@ export function ChatPage({
             citations: finalMessage?.citations || {},
             files: finalMessage?.files || aiMessageImages || [],
             parentMessageId: newUserMessageId,
-            alternateAssistantID: selectedAlternativeAssistant?.id,
+            alternateAssistantID: selectedAssistant?.id,
           },
         ]);
         if (isCancelledRef.current) {
@@ -847,7 +848,7 @@ export function ChatPage({
     router.push("/search");
   }
 
-  const currentPersona = selectedAlternativeAssistant || livePersona;
+  const currentPersona = selectedAssistant || livePersona;
   const overallRetrievalDisabled = !personaIncludesRetrieval(livePersona);
   const currentRetrievalDisabled = !personaIncludesRetrieval(currentPersona);
 
@@ -1182,9 +1183,7 @@ export function ChatPage({
                             <div key={messageHistory.length}>
                               <AIMessage
                                 currentPersona={livePersona}
-                                alternativeAssistant={
-                                  selectedAlternativeAssistant
-                                }
+                                alternativeAssistant={selectedAssistant}
                                 messageId={null}
                                 personaName={livePersona.name}
                                 content={
@@ -1252,11 +1251,11 @@ export function ChatPage({
                         )}
                       <div className="w-full pb-4">
                         <ChatInputBar
-                          setSelectedAlternativeAssistant={
-                            setSelectedAlternativeAssistant
-                          }
+                          onSetSelectedAssistant={(
+                            alternativeAssistant: Persona | null
+                          ) => setSelectedAssistant(alternativeAssistant)}
+                          alternativeAssistant={selectedAssistant}
                           personas={filteredAssistants}
-                          alternativeAssistant={selectedAlternativeAssistant}
                           message={message}
                           setMessage={setMessage}
                           onSubmit={onSubmit}

@@ -39,7 +39,7 @@ export function ChatInputBar({
   retrievalDisabled,
   filterManager,
   llmOverrideManager,
-  setSelectedAlternativeAssistant,
+  onSetSelectedAssistant,
   selectedAssistant,
   files,
   setFiles,
@@ -48,7 +48,7 @@ export function ChatInputBar({
   textAreaRef,
   alternativeAssistant,
 }: {
-  setSelectedAlternativeAssistant: Dispatch<SetStateAction<Persona | null>>;
+  onSetSelectedAssistant: (alternativeAssistant: Persona | null) => void;
   personas: Persona[];
   message: string;
   setMessage: (message: string) => void;
@@ -91,6 +91,13 @@ export function ChatInputBar({
     setAssistantIconIndex(0);
   };
 
+  // Update selected persona
+  const updateCurrentPersona = (persona: Persona) => {
+    onSetSelectedAssistant(persona.id == selectedAssistant.id ? null : persona);
+    hideSuggestions();
+    setMessage("");
+  };
+
   // Click out of assistant suggestions
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -111,7 +118,7 @@ export function ChatInputBar({
     };
   }, []);
 
-  // On user input
+  // Complete user input handling
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = event.target.value;
     setMessage(text);
@@ -121,7 +128,7 @@ export function ChatInputBar({
       return;
     }
 
-    // If looking for an assistant...
+    // If looking for an assistant...fup
     const match = text.match(/(?:\s|^)@(\w*)$/);
     if (match) {
       setShowSuggestions(true);
@@ -142,15 +149,7 @@ export function ChatInputBar({
 
   const [assistantIconIndex, setAssistantIconIndex] = useState(0);
 
-  // Update selected persona
-  const updateCurrentPersona = (persona: Persona) => {
-    setSelectedAlternativeAssistant(persona);
-
-    // Reset input + suggestions
-    hideSuggestions();
-    setMessage("");
-  };
-
+  //
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (
       showSuggestions &&
@@ -271,7 +270,7 @@ export function ChatInputBar({
 
                     <Hoverable
                       icon={FiX}
-                      onClick={() => setSelectedAlternativeAssistant(null)}
+                      onClick={() => onSetSelectedAssistant(null)}
                     />
                   </div>
                 </div>
@@ -299,7 +298,9 @@ export function ChatInputBar({
             )}
 
             <textarea
+              // handle key downs (not necessarily input changes) - refer to function
               onKeyDownCapture={handleKeyDown}
+              onChange={handleInputChange}
               ref={textAreaRef}
               className={`
                 m-0
@@ -332,7 +333,6 @@ export function ChatInputBar({
               aria-multiline
               placeholder="Send a message..."
               value={message}
-              onChange={handleInputChange}
               onKeyDown={(event) => {
                 if (
                   event.key === "Enter" &&

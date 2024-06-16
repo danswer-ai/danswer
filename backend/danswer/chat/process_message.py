@@ -220,7 +220,6 @@ def stream_chat_message_objects(
         reference_doc_ids = new_msg_req.search_doc_ids
         retrieval_options = new_msg_req.retrieval_options
         alternate_assistant_id = new_msg_req.alternate_assistant_id
-        # print(new_msg_req.__dict__)
 
         # use alernate persona if alternative assistant id is passed in
         if alternate_assistant_id:
@@ -406,7 +405,7 @@ def stream_chat_message_objects(
             if not persona
             else PromptConfig.from_model(persona.prompts[0])
         )
-        # print(persona.tools)
+
         persona_tool_classes = [
             get_tool_cls(tool, db_session) for tool in persona.tools
         ]
@@ -423,7 +422,6 @@ def stream_chat_message_objects(
         # in the future, will support arbitrary user-defined tools
         search_tool: SearchTool | None = None
         tools: list[Tool] = []
-        # print(persona_tool_classes)
 
         for tool_cls in persona_tool_classes:
             if tool_cls.__name__ == SearchTool.__name__ and not latest_query_files:
@@ -464,8 +462,6 @@ def stream_chat_message_objects(
                     dalle_key = openai_provider.api_key
                 tools.append(ImageGenerationTool(api_key=dalle_key))
 
-        # print(tools)
-
         answer = Answer(
             question=final_msg.message,
             latest_query_files=latest_query_files,
@@ -492,8 +488,6 @@ def stream_chat_message_objects(
                 _check_should_force_search(new_msg_req) if search_tool else None
             ),
         )
-        print(answer.__dict__)
-        print("llll")
 
         reference_db_search_docs = None
         qa_docs_response = None
