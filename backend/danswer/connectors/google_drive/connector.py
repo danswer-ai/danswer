@@ -58,6 +58,7 @@ class GDriveMimeType(str, Enum):
     SPREADSHEET = "application/vnd.google-apps.spreadsheet"
     PDF = "application/pdf"
     WORD_DOC = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    PPT = "application/vnd.google-apps.presentation"
     POWERPOINT = (
         "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     )
@@ -330,6 +331,9 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         response = service.files().get_media(fileId=file["id"]).execute()
         return pdf_to_text(file=io.BytesIO(response))
     elif mime_type == GDriveMimeType.POWERPOINT.value:
+        response = service.files().get_media(fileId=file["id"]).execute()
+        return pptx_to_text(file=io.BytesIO(response))
+    elif mime_type == GDriveMimeType.PPT.value:
         response = service.files().get_media(fileId=file["id"]).execute()
         return pptx_to_text(file=io.BytesIO(response))
 
