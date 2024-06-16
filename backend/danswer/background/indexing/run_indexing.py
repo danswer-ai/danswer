@@ -6,11 +6,7 @@ from datetime import timezone
 
 from sqlalchemy.orm import Session
 
-from danswer.background.connector_deletion import (
-    _delete_connector_credential_pair_batch,
-)
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
-from danswer.configs.app_configs import DISABLE_DOCUMENT_CLEANUP
 from danswer.configs.app_configs import POLL_CONNECTOR_OFFSET
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -22,7 +18,6 @@ from danswer.db.connector import disable_connector
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.credentials import backend_update_credential_json
-from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import mark_attempt_failed
@@ -46,7 +41,7 @@ def _get_document_generator(
     attempt: IndexAttempt,
     start_time: datetime,
     end_time: datetime,
-) -> tuple[GenerateDocumentsOutput, bool]:
+) -> GenerateDocumentsOutput:
     """
     NOTE: `start_time` and `end_time` are only used for poll connectors
 
@@ -75,7 +70,7 @@ def _get_document_generator(
     if task == InputType.LOAD_STATE:
         assert isinstance(runnable_connector, LoadConnector)
         doc_batch_generator = runnable_connector.load_from_state()
-        is_listing_complete = True
+
     elif task == InputType.POLL:
         assert isinstance(runnable_connector, PollConnector)
         if attempt.connector_id is None or attempt.credential_id is None:
@@ -88,13 +83,12 @@ def _get_document_generator(
         doc_batch_generator = runnable_connector.poll_source(
             start=start_time.timestamp(), end=end_time.timestamp()
         )
-        is_listing_complete = False
 
     else:
         # Event types cannot be handled by a background type
         raise RuntimeError(f"Invalid task type: {task}")
 
-    return doc_batch_generator, is_listing_complete
+    return doc_batch_generator
 
 
 def _run_indexing(
@@ -166,7 +160,7 @@ def _run_indexing(
                 datetime(1970, 1, 1, tzinfo=timezone.utc),
             )
 
-            doc_batch_generator, is_listing_complete = _get_document_generator(
+            doc_batch_generator = _get_document_generator(
                 db_session=db_session,
                 attempt=index_attempt,
                 start_time=window_start,
@@ -222,39 +216,6 @@ def _run_indexing(
                     total_docs_indexed=document_count,
                     new_docs_indexed=net_doc_change,
                     docs_removed_from_index=0,
-                )
-
-            if is_listing_complete and not DISABLE_DOCUMENT_CLEANUP:
-                # clean up all documents from the index that have not been returned from the connector
-                all_indexed_document_ids = {
-                    d.id
-                    for d in get_documents_for_connector_credential_pair(
-                        db_session=db_session,
-                        connector_id=db_connector.id,
-                        credential_id=db_credential.id,
-                    )
-                }
-                doc_ids_to_remove = list(
-                    all_indexed_document_ids - all_connector_doc_ids
-                )
-                logger.debug(
-                    f"Cleaning up {len(doc_ids_to_remove)} documents that are not contained in the newest connector state"
-                )
-
-                # delete docs from cc-pair and receive the number of completely deleted docs in return
-                _delete_connector_credential_pair_batch(
-                    document_ids=doc_ids_to_remove,
-                    connector_id=db_connector.id,
-                    credential_id=db_credential.id,
-                    document_index=document_index,
-                )
-
-                update_docs_indexed(
-                    db_session=db_session,
-                    index_attempt=index_attempt,
-                    total_docs_indexed=document_count,
-                    new_docs_indexed=net_doc_change,
-                    docs_removed_from_index=len(doc_ids_to_remove),
                 )
 
             run_end_dt = window_end
