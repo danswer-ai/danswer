@@ -561,5 +561,4 @@ def stream_chat_message(
             use_existing_user_message=use_existing_user_message,
         )
         for obj in objects:
-            print(obj)
             yield get_json_line(obj.dict())

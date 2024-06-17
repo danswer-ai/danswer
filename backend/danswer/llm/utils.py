@@ -360,7 +360,6 @@ def get_max_input_tokens(
     model_provider: str,
     output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
 ) -> int:
-    print("HI")
     # NOTE: we previously used `litellm.get_max_tokens()`, but despite the name, this actually
     # returns the max OUTPUT tokens. Under the hood, this uses the `litellm.model_cost` dict,
     # and there is no other interface to get what we want. This should be okay though, since the
@@ -377,18 +376,6 @@ def get_max_input_tokens(
             model_map=litellm_model_map,
         )
         - output_tokens
-    )
-
-    print(f"Max output {output_tokens} {GEN_AI_MAX_TOKENS}")
-    print(
-        (
-            get_llm_max_tokens(
-                model_name=model_name,
-                model_provider=model_provider,
-                model_map=litellm_model_map,
-            ),
-            output_tokens,
-        )
     )
 
     if input_toks <= 0:
