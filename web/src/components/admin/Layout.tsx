@@ -20,6 +20,7 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import {
+  FiActivity,
   FiCpu,
   FiLayers,
   FiPackage,
@@ -182,16 +183,16 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                 ],
               },
               {
-                name: "Telemetry",
+                name: "Usage",
                 items: [
                   {
                     name: (
                       <div className="flex">
-                        <FiSettings size={18} />
-                        <div className="ml-1">Export Telemetry</div>
+                        <FiActivity size={18} />
+                        <div className="ml-1">Usage</div>
                       </div>
                     ),
-                    link: "/admin/telemetry",
+                    link: "/admin/usage",
                   },
                 ],
               },
