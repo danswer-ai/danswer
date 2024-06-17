@@ -3,12 +3,12 @@
 import { AdminPageTitle } from "@/components/admin/Title";
 import { ClipboardIcon, EditIcon, TrashIcon } from "@/components/icons/icons";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { useStandardAnswers } from "./hooks";
+import { useStandardAnswers, useStandardAnswerCategories } from "./hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Button, Text } from "@tremor/react";
 import Link from "next/link";
-import { StandardAnswer } from "@/lib/types";
+import { StandardAnswer, StandardAnswerCategory } from "@/lib/types";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useState } from "react";
 import {
@@ -22,19 +22,27 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { deleteStandardAnswer } from "./lib";
+import { FilterDropdown } from "@/components/search/filtering/FilterDropdown";
+import { FiTag } from "react-icons/fi";
+import { SelectedBubble } from "@/components/search/filtering/Filters";
 
 const StandardAnswersTable = ({
   standardAnswers,
+  standardAnswerCategories,
   refresh,
   setPopup,
 }: {
   standardAnswers: StandardAnswer[];
+  standardAnswerCategories: StandardAnswerCategory[];
   refresh: () => void;
   setPopup: (popup: PopupSpec | null) => void;
 }) => {
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [selectedCategories, setSelectedCategories] = useState<
+    StandardAnswerCategory[]
+  >([]);
   const columns = [
     { name: "", key: "edit" },
     { name: "Keyword/Phrase", key: "keyword" },
@@ -48,7 +56,12 @@ const StandardAnswersTable = ({
     const searchMatch = Object.values(fieldsToSearch).some((value) => {
       return value.toLowerCase().includes(cleanedQuery);
     });
-    return searchMatch;
+    const categoryMatch =
+      selectedCategories.length == 0 ||
+      selectedCategories.some((category) =>
+        categories.map((c) => c.id).includes(category.id)
+      );
+    return searchMatch && categoryMatch;
   });
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
@@ -77,6 +90,16 @@ const StandardAnswersTable = ({
     refresh();
   };
 
+  const handleCategorySelect = (category: StandardAnswerCategory) => {
+    setSelectedCategories((prev: StandardAnswerCategory[]) => {
+      const prevCategoryIds = prev.map((category) => category.id);
+      if (prevCategoryIds.includes(category.id)) {
+        return prev.filter((c) => c.id !== category.id);
+      }
+      return [...prev, category];
+    });
+  };
+
   return (
     <div className="justify-center py-2">
       <div className="flex items-center w-full border-2 border-border rounded-lg px-4 py-2 focus-within:border-accent">
@@ -100,6 +123,42 @@ const StandardAnswersTable = ({
           suppressContentEditableWarning={true}
         />
       </div>
+      <div className="my-4 border-b border-border">
+        <FilterDropdown
+          options={standardAnswerCategories.map((category) => {
+            return {
+              key: category.name,
+              display: category.name,
+            };
+          })}
+          selected={selectedCategories.map((category) => category.name)}
+          handleSelect={(option) => {
+            handleCategorySelect(
+              standardAnswerCategories.find(
+                (category) => category.name === option.key
+              )!
+            );
+          }}
+          icon={
+            <div className="my-auto mr-2 w-[16px] h-[16px]">
+              <FiTag size={16} />
+            </div>
+          }
+          defaultDisplay="All Categories"
+        />
+        <div className="flex pb-4 mt-2 h-12">
+          {selectedCategories.map((category) => (
+            <SelectedBubble
+              key={category.id}
+              onClick={() => handleCategorySelect(category)}
+            >
+              <>
+                <span className="ml-2 text-sm">{category.name}</span>
+              </>
+            </SelectedBubble>
+          ))}
+        </div>
+      </div>
       <div className="mx-auto">
         <Table>
           <TableHead>
@@ -116,9 +175,6 @@ const StandardAnswersTable = ({
               <TableRow key={item.id}>
                 <TableCell className="w-1/24">
                   <Link href={`/admin/standard-answer/${item.id}`}>
-                    {/* <Button color="blue" size="xs">
-                    Edit
-                  </Button> */}
                     <EditIcon />
                   </Link>
                 </TableCell>
@@ -174,6 +230,11 @@ const Main = () => {
     isLoading: standardAnswersIsLoading,
     refreshStandardAnswers,
   } = useStandardAnswers();
+  const {
+    data: standardAnswerCategories,
+    error: standardAnswerCategoriesError,
+    isLoading: standardAnswerCategoriesIsLoading,
+  } = useStandardAnswerCategories();
 
   if (standardAnswersIsLoading) {
     return <ThreeDotsLoader />;
@@ -186,6 +247,18 @@ const Main = () => {
         errorMsg={
           standardAnswersError.info?.message ||
           standardAnswersError.message.info?.detail
+        }
+      />
+    );
+  }
+
+  if (standardAnswerCategoriesError || !standardAnswerCategories) {
+    return (
+      <ErrorCallout
+        errorTitle="Error loading standard answer categories"
+        errorMsg={
+          standardAnswerCategoriesError.info?.message ||
+          standardAnswerCategoriesError.message.info?.detail
         }
       />
     );
@@ -212,6 +285,7 @@ const Main = () => {
       <div>
         <StandardAnswersTable
           standardAnswers={standardAnswers}
+          standardAnswerCategories={standardAnswerCategories}
           refresh={refreshStandardAnswers}
           setPopup={setPopup}
         />
