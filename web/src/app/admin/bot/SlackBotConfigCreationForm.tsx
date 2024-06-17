@@ -3,7 +3,11 @@
 import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import * as Yup from "yup";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { DocumentSet, SlackBotConfig } from "@/lib/types";
+import {
+  DocumentSet,
+  SlackBotConfig,
+  StandardAnswerCategory,
+} from "@/lib/types";
 import {
   BooleanFormField,
   SectionHeader,
@@ -31,20 +35,22 @@ import { useRouter } from "next/navigation";
 import { Persona } from "../assistants/interfaces";
 import { useState } from "react";
 import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
+import MultiSelectDropdown from "@/components/MultiSelectDropdown";
 
 export const SlackBotCreationForm = ({
   documentSets,
   personas,
+  standardAnswerCategories,
   existingSlackBotConfig,
 }: {
   documentSets: DocumentSet[];
   personas: Persona[];
+  standardAnswerCategories: StandardAnswerCategory[];
   existingSlackBotConfig?: SlackBotConfig;
 }) => {
   const isUpdate = existingSlackBotConfig !== undefined;
   const { popup, setPopup } = usePopup();
   const router = useRouter();
-
   const existingSlackBotUsesPersona = existingSlackBotConfig?.persona
     ? !isPersonaASlackBotPersona(existingSlackBotConfig.persona)
     : false;
@@ -91,6 +97,9 @@ export const SlackBotCreationForm = ({
                 ? existingSlackBotConfig.persona.id
                 : null,
             response_type: existingSlackBotConfig?.response_type || "citations",
+            standard_answer_categories: existingSlackBotConfig
+              ? existingSlackBotConfig.standard_answer_categories
+              : [],
           }}
           validationSchema={Yup.object().shape({
             channel_names: Yup.array().of(Yup.string()),
@@ -106,6 +115,7 @@ export const SlackBotCreationForm = ({
             follow_up_tags: Yup.array().of(Yup.string()),
             document_sets: Yup.array().of(Yup.number()),
             persona_id: Yup.number().nullable(),
+            standard_answer_categories: Yup.array(),
           })}
           onSubmit={async (values, formikHelpers) => {
             formikHelpers.setSubmitting(true);
@@ -120,6 +130,9 @@ export const SlackBotCreationForm = ({
                 (teamMemberEmail) => teamMemberEmail !== ""
               ),
               usePersona: usingPersonas,
+              standard_answer_categories: values.standard_answer_categories.map(
+                (category) => category.id
+              ),
             };
             if (!cleanedValues.still_need_help_enabled) {
               cleanedValues.follow_up_tags = undefined;
@@ -128,7 +141,6 @@ export const SlackBotCreationForm = ({
                 cleanedValues.follow_up_tags = [];
               }
             }
-
             let response;
             if (isUpdate) {
               response = await updateSlackBotConfig(
@@ -153,7 +165,7 @@ export const SlackBotCreationForm = ({
             }
           }}
         >
-          {({ isSubmitting, values }) => (
+          {({ isSubmitting, values, setFieldValue }) => (
             <Form>
               <div className="px-6 pb-6">
                 <SectionHeader>The Basics</SectionHeader>
@@ -380,6 +392,49 @@ export const SlackBotCreationForm = ({
                     </TabPanel>
                   </TabPanels>
                 </TabGroup>
+
+                <Divider />
+
+                <div>
+                  <SectionHeader>
+                    [Optional] Standard Answer Categories
+                  </SectionHeader>
+                  <Text>
+                    Select standard answer categories to configure DanswerBot's
+                    behavior.
+                  </Text>
+                  <div className="w-4/12">
+                    <MultiSelectDropdown
+                      name="standard_answer_categories"
+                      label=""
+                      onChange={(selected_options) => {
+                        const selected_categories = selected_options.map(
+                          (option) => {
+                            return {
+                              id: Number(option.value),
+                              name: option.label,
+                            };
+                          }
+                        );
+                        setFieldValue(
+                          "standard_answer_categories",
+                          selected_categories
+                        );
+                      }}
+                      creatable={false}
+                      options={standardAnswerCategories.map((category) => ({
+                        label: category.name,
+                        value: category.id.toString(),
+                      }))}
+                      initialSelectedOptions={values.standard_answer_categories.map(
+                        (category) => ({
+                          label: category.name,
+                          value: category.id.toString(),
+                        })
+                      )}
+                    />
+                  </div>
+                </div>
 
                 <Divider />
 

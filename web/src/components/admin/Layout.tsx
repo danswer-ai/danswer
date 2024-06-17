@@ -11,6 +11,7 @@ import {
   RobotIcon,
   ConnectorIcon,
   SlackIcon,
+  ClipboardIcon,
 } from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import {
@@ -124,6 +125,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
               {
                 name: "Custom Assistants",
                 items: [
+                  {
+                    name: (
+                      <div className="flex">
+                        <ClipboardIcon size={18} />
+                        <div className="ml-1">Standard Answers</div>
+                      </div>
+                    ),
+                    link: "/admin/standard-answer",
+                  },
                   {
                     name: (
                       <div className="flex">

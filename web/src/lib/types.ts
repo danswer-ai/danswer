@@ -456,6 +456,19 @@ export interface Tag {
   source: ValidSources;
 }
 
+// STANDARD ANSWERS
+export interface StandardAnswerCategory {
+  id: number;
+  name: string;
+}
+
+export interface StandardAnswer {
+  id: number;
+  keyword: string;
+  answer: string;
+  categories: StandardAnswerCategory[];
+}
+
 // SLACK BOT CONFIGS
 
 export type AnswerFilterOption =
@@ -478,6 +491,7 @@ export interface SlackBotConfig {
   persona: Persona | null;
   channel_config: ChannelConfig;
   response_type: SlackBotResponseType;
+  standard_answer_categories: StandardAnswerCategory[];
 }
 
 export interface SlackBotTokens {
