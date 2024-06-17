@@ -527,12 +527,6 @@ export const HumanMessage = ({
                           handleEditSubmit();
                         }
                       }}
-                      // ref={(textarea) => {
-                      //   if (textarea) {
-                      //     textarea.selectionStart = textarea.selectionEnd =
-                      //       textarea.value.length;
-                      //   }
-                      // }}
                     />
                     <div className="flex justify-end mt-2 gap-2 pr-4">
                       <button
