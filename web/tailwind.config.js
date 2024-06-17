@@ -44,6 +44,7 @@ module.exports = {
         "background-search": "#ffffff",
         "background-custom-header": "#f3f4f6",
         "background-inverted": "#000000",
+        "background-weak": "#f3f4f6", // gray-100
 
         // text or icons
         link: "#3b82f6", // blue-500
@@ -61,6 +62,7 @@ module.exports = {
         // borders
         border: "#e5e7eb", // gray-200
         "border-light": "#f3f4f6", // gray-100
+        "border-medium": "#d1d5db", // gray-300
         "border-strong": "#9ca3af", // gray-400
 
         // hover
