@@ -141,7 +141,7 @@ def fetch_standard_answer_category(
 def fetch_standard_answer_categories_by_ids(
     standard_answer_category_ids: list[int],
     db_session: Session,
-) -> list[StandardAnswerCategory]:
+) -> Sequence[StandardAnswerCategory]:
     return db_session.scalars(
         select(StandardAnswerCategory).where(
             StandardAnswerCategory.id.in_(standard_answer_category_ids)
