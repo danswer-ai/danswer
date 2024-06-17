@@ -240,9 +240,43 @@ def read_pdf_file(
 
 
 def docx_to_text(file: IO[Any]) -> str:
+    def is_simple_table(table: docx.table.Table) -> bool:
+        for row in table.rows:
+            # No omitted cells
+            if row.grid_cols_before > 0 or row.grid_cols_after > 0:
+                return False
+
+            # No nested tables
+            if any(cell.tables for cell in row.cells):
+                return False
+
+        return True
+
+    def extract_cell_text(cell: docx.table._Cell) -> str:
+        cell_paragraphs = [para.text.strip() for para in cell.paragraphs]
+        return ' '.join(p for p in cell_paragraphs if p)
+
+    paragraphs = []
+
     doc = docx.Document(file)
-    full_text = [para.text for para in doc.paragraphs]
-    return TEXT_SECTION_SEPARATOR.join(full_text)
+    for item in doc.iter_inner_content():
+        if isinstance(item, docx.text.paragraph.Paragraph):
+            paragraphs.append(item.text)
+        elif isinstance(item, docx.table.Table):
+            if not item.rows or not is_simple_table(item):
+                continue
+
+            # We assume the first row to be the table heading
+            headings = [extract_cell_text(c).rstrip(":") for c in item.rows[0].cells]
+            for row in item.rows[1:]:
+                row_lines = []
+                for i, cell in enumerate(row.cells):
+                    # Squash cell paragraphs into a single line of text
+                    cell_text = extract_cell_text(cell)
+                    row_lines.append(f"{headings[i]}: {cell_text}" if headings[i] else cell_text)
+                paragraphs.append("\n".join(row_lines))
+
+    return TEXT_SECTION_SEPARATOR.join(paragraphs)
 
 
 def pptx_to_text(file: IO[Any]) -> str:
