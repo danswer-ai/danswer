@@ -256,7 +256,6 @@ export function handleAutoScroll(
   buffer: number = 300
 ) {
   if (endRef && scrollableRef) {
-    if (endRef.current && scrollableRef.current) console.log("Scrolling");
     if (
       scrollableRef.current.scrollHeight -
         scrollableRef.current.scrollTop -

@@ -1151,44 +1151,48 @@ export function ChatPage({
                             const previousMessage =
                               i !== 0 ? messageHistory[i - 1] : null;
 
-                            if (i == messageHistory.length - 1) {
-                              return (
-                                <div key={i} ref={lastMessageRef}>
-                                  <AIMessage
-                                    key={message.messageId}
-                                    messageId={message.messageId}
-                                    content={message.message}
-                                    files={message.files}
-                                    query={
-                                      messageHistory[i]?.query || undefined
-                                    }
-                                    personaName={livePersona.name}
-                                    citedDocuments={getCitedDocumentsFromMessage(
-                                      message
-                                    )}
-                                    toolCall={message.toolCalls[0]}
-                                    isComplete={
-                                      i !== messageHistory.length - 1 ||
-                                      !isStreaming
-                                    }
-                                    hasDocs={
-                                      (message.documents &&
-                                        message.documents.length > 0) === true
-                                    }
-                                    handleFeedback={
-                                      i === messageHistory.length - 1 &&
-                                        isStreaming
-                                        ? undefined
-                                        : (feedbackType) =>
+                            return (
+                              <div
+                                key={i}
+                                ref={
+                                  i == messageHistory.length - 1
+                                    ? lastMessageRef
+                                    : null
+                                }
+                              >
+                                <AIMessage
+                                  key={message.messageId}
+                                  messageId={message.messageId}
+                                  content={message.message}
+                                  files={message.files}
+                                  query={messageHistory[i]?.query || undefined}
+                                  personaName={livePersona.name}
+                                  citedDocuments={getCitedDocumentsFromMessage(
+                                    message
+                                  )}
+                                  toolCall={message.toolCalls[0]}
+                                  isComplete={
+                                    i !== messageHistory.length - 1 ||
+                                    !isStreaming
+                                  }
+                                  hasDocs={
+                                    (message.documents &&
+                                      message.documents.length > 0) === true
+                                  }
+                                  handleFeedback={
+                                    i === messageHistory.length - 1 &&
+                                    isStreaming
+                                      ? undefined
+                                      : (feedbackType) =>
                                           setCurrentFeedback([
                                             feedbackType,
                                             message.messageId as number,
                                           ])
-                                    }
-                                    handleSearchQueryEdit={
-                                      i === messageHistory.length - 1 &&
-                                        !isStreaming
-                                        ? (newQuery) => {
+                                  }
+                                  handleSearchQueryEdit={
+                                    i === messageHistory.length - 1 &&
+                                    !isStreaming
+                                      ? (newQuery) => {
                                           if (!previousMessage) {
                                             setPopup({
                                               type: "error",
@@ -1214,150 +1218,46 @@ export function ChatPage({
                                             queryOverride: newQuery,
                                           });
                                         }
-                                        : undefined
-                                    }
-                                    isCurrentlyShowingRetrieved={
-                                      isShowingRetrieved
-                                    }
-                                    handleShowRetrieved={(messageNumber) => {
-                                      if (isShowingRetrieved) {
-                                        setSelectedMessageForDocDisplay(null);
+                                      : undefined
+                                  }
+                                  isCurrentlyShowingRetrieved={
+                                    isShowingRetrieved
+                                  }
+                                  handleShowRetrieved={(messageNumber) => {
+                                    if (isShowingRetrieved) {
+                                      setSelectedMessageForDocDisplay(null);
+                                    } else {
+                                      if (messageNumber !== null) {
+                                        setSelectedMessageForDocDisplay(
+                                          messageNumber
+                                        );
                                       } else {
-                                        if (messageNumber !== null) {
-                                          setSelectedMessageForDocDisplay(
-                                            messageNumber
-                                          );
-                                        } else {
-                                          setSelectedMessageForDocDisplay(-1);
-                                        }
+                                        setSelectedMessageForDocDisplay(-1);
                                       }
-                                    }}
-                                    handleForceSearch={() => {
-                                      if (
-                                        previousMessage &&
-                                        previousMessage.messageId
-                                      ) {
-                                        onSubmit({
-                                          messageIdToResend:
-                                            previousMessage.messageId,
-                                          forceSearch: true,
-                                        });
-                                      } else {
-                                        setPopup({
-                                          type: "error",
-                                          message:
-                                            "Failed to force search - please refresh the page and try again.",
-                                        });
-                                      }
-                                    }}
-                                    retrievalDisabled={retrievalDisabled}
-                                  />
-                                </div>
-                              );
-                            } else {
-                              return (
-                                <div key={i} ref={lastMessageRef}>
-                                  <AIMessage
-                                    key={message.messageId}
-                                    messageId={message.messageId}
-                                    content={message.message}
-                                    files={message.files}
-                                    query={
-                                      messageHistory[i]?.query || undefined
                                     }
-                                    personaName={livePersona.name}
-                                    citedDocuments={getCitedDocumentsFromMessage(
-                                      message
-                                    )}
-                                    toolCall={message.toolCalls[0]}
-                                    isComplete={
-                                      i !== messageHistory.length - 1 ||
-                                      !isStreaming
+                                  }}
+                                  handleForceSearch={() => {
+                                    if (
+                                      previousMessage &&
+                                      previousMessage.messageId
+                                    ) {
+                                      onSubmit({
+                                        messageIdToResend:
+                                          previousMessage.messageId,
+                                        forceSearch: true,
+                                      });
+                                    } else {
+                                      setPopup({
+                                        type: "error",
+                                        message:
+                                          "Failed to force search - please refresh the page and try again.",
+                                      });
                                     }
-                                    hasDocs={
-                                      (message.documents &&
-                                        message.documents.length > 0) === true
-                                    }
-                                    handleFeedback={
-                                      i === messageHistory.length - 1 &&
-                                      isStreaming
-                                        ? undefined
-                                        : (feedbackType) =>
-                                            setCurrentFeedback([
-                                              feedbackType,
-                                              message.messageId as number,
-                                            ])
-                                    }
-                                    handleSearchQueryEdit={
-                                      i === messageHistory.length - 1 &&
-                                      !isStreaming
-                                        ? (newQuery) => {
-                                            if (!previousMessage) {
-                                              setPopup({
-                                                type: "error",
-                                                message:
-                                                  "Cannot edit query of first message - please refresh the page and try again.",
-                                              });
-                                              return;
-                                            }
-
-                                            if (
-                                              previousMessage.messageId === null
-                                            ) {
-                                              setPopup({
-                                                type: "error",
-                                                message:
-                                                  "Cannot edit query of a pending message - please wait a few seconds and try again.",
-                                              });
-                                              return;
-                                            }
-                                            onSubmit({
-                                              messageIdToResend:
-                                                previousMessage.messageId,
-                                              queryOverride: newQuery,
-                                            });
-                                          }
-                                        : undefined
-                                    }
-                                    isCurrentlyShowingRetrieved={
-                                      isShowingRetrieved
-                                    }
-                                    handleShowRetrieved={(messageNumber) => {
-                                      if (isShowingRetrieved) {
-                                        setSelectedMessageForDocDisplay(null);
-                                      } else {
-                                        if (messageNumber !== null) {
-                                          setSelectedMessageForDocDisplay(
-                                            messageNumber
-                                          );
-                                        } else {
-                                          setSelectedMessageForDocDisplay(-1);
-                                        }
-                                      }
-                                    }}
-                                    handleForceSearch={() => {
-                                      if (
-                                        previousMessage &&
-                                        previousMessage.messageId
-                                      ) {
-                                        onSubmit({
-                                          messageIdToResend:
-                                            previousMessage.messageId,
-                                          forceSearch: true,
-                                        });
-                                      } else {
-                                        setPopup({
-                                          type: "error",
-                                          message:
-                                            "Failed to force search - please refresh the page and try again.",
-                                        });
-                                      }
-                                    }}
-                                    retrievalDisabled={retrievalDisabled}
-                                  />
-                                </div>
-                              );
-                            }
+                                  }}
+                                  retrievalDisabled={retrievalDisabled}
+                                />
+                              </div>
+                            );
                           } else {
                             return (
                               <div key={i}>
@@ -1399,8 +1299,8 @@ export function ChatPage({
                               />
                             </div>
                           )}
-                        <div ref={endPaddingRef} className="" />
-                        <div ref={endDivRef} className="" />
+                        <div ref={endPaddingRef} />
+                        <div ref={endDivRef} />
                         {livePersona &&
                           livePersona.starter_messages &&
                           livePersona.starter_messages.length > 0 &&
