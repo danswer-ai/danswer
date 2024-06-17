@@ -77,7 +77,7 @@ def generate_chat_sessions_report(
     return file_name
 
 
-@router.post("/admin/generate-report")
+@router.post("/admin/generate-usage-report")
 async def generate_report(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),

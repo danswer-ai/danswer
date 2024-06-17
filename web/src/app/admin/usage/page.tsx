@@ -1,14 +1,13 @@
 "use client";
 
 import { AdminPageTitle } from "@/components/admin/Title";
-import { UsageReport } from "./interfaces";
+// import { UsageReport } from "./interfaces";
 
 import { FiActivity, FiDownloadCloud } from "react-icons/fi";
 import {
   Callout,
   DateRangePicker,
   DateRangePickerItem,
-  DateRangePickerValue,
   Divider,
   Table,
   TableHead,
@@ -19,11 +18,10 @@ import {
 } from "@tremor/react";
 import { Button } from "@tremor/react";
 import { useTimeRange } from "@/lib/hooks";
-import { useSWR } from "swr";
-import { useEffect } from "react";
+import { useSWRConfig } from "swr";
 
-function GenerateReportInput({ props }) {
-  const [dateRange, setDateRange] = useTimeRange();
+function GenerateReportInput() {
+  const [_, setDateRange] = useTimeRange();
 
   // const onSubmit = useEffect(
   //   const {
@@ -34,6 +32,26 @@ function GenerateReportInput({ props }) {
   //   '/admin/generate-usage-report'
   // )
   // )
+
+  const requestReport = () => {
+    console.log("Requesting Report");
+    fetch("/api/admin/generate-usage-report", {
+      method: "POST",
+      credentials: "include",
+    })
+      .then((transfer) => {
+        return transfer.blob();
+      })
+      .then((bytes) => {
+        let elm = document.createElement("a");
+        elm.href = URL.createObjectURL(bytes);
+        elm.setAttribute("download", "usage_reports.zip");
+        elm.click();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
 
   const lastMonth = new Date();
   lastMonth.setMonth(lastMonth.getMonth() - 1);
@@ -79,7 +97,7 @@ function GenerateReportInput({ props }) {
         color={"blue"}
         icon={FiDownloadCloud}
         size="xs"
-        onSubmit={() => {}}
+        onClick={() => requestReport()}
       >
         Generate Report
       </Button>
@@ -88,7 +106,7 @@ function GenerateReportInput({ props }) {
   );
 }
 
-function DataDisclaimer({ props }) {
+function DataDisclaimer() {
   return (
     <div className="mb-10">
       <div className="mx-auto mt-2 mb-6">
@@ -141,7 +159,7 @@ export default function Page() {
         Generate usage statistics for all users in the workspace.
       </Text>
       <DataDisclaimer />
-      <GenerateReportInput className="mb-10" />
+      <GenerateReportInput />
       <Divider />
       <UsageReportsTable />
     </div>
