@@ -35,6 +35,7 @@ export function ResizableSection({
 
   useEffect(() => {
     const newWidth = applyMinAndMax(width, minWidth, maxWidth);
+
     setWidth(newWidth);
     Cookies.set(DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME, newWidth.toString(), {
       path: "/",
@@ -56,6 +57,8 @@ export function ResizableSection({
       const delta = mouseMoveEvent.clientX - startX;
       let newWidth = applyMinAndMax(width - delta, minWidth, maxWidth);
       setWidth(newWidth);
+      console.log(newWidth);
+
       Cookies.set(DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME, newWidth.toString(), {
         path: "/",
       });

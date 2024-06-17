@@ -9,23 +9,10 @@ import { BasicSelectable } from "@/components/BasicClickable";
 import { Message, RetrievalType } from "../interfaces";
 import { HoverPopup } from "@/components/HoverPopup";
 import { HEADER_PADDING } from "@/lib/constants";
-
-function SectionHeader({
-  name,
-  icon,
-}: {
-  name: string;
-  icon: React.FC<{ className: string }>;
-}) {
-  return (
-    <div className="text-lg text-emphasis font-medium flex pb-0.5 mb-3.5 mt-2 font-bold">
-      {icon({ className: "my-auto mr-1" })}
-      {name}
-    </div>
-  );
-}
+import { FaToggleOn } from "react-icons/fa";
 
 export function DocumentSidebar({
+  closeSidebar,
   selectedMessage,
   selectedDocuments,
   toggleDocumentSelection,
@@ -34,6 +21,7 @@ export function DocumentSidebar({
   maxTokens,
   isLoading,
 }: {
+  closeSidebar: () => void;
   selectedMessage: Message | null;
   selectedDocuments: DanswerDocument[] | null;
   toggleDocumentSelection: (document: DanswerDocument) => void;
@@ -58,11 +46,39 @@ export function DocumentSidebar({
   // start of the document (since title + metadata + misc overhead) takes up
   // space
   const tokenLimitReached = selectedDocumentTokens > maxTokens - 75;
+
+  function SectionHeader({
+    name,
+    icon,
+    includeToggle,
+  }: {
+    name: string;
+    icon: React.FC<{ className: string }>;
+    includeToggle?: boolean;
+  }) {
+    return (
+      <div className="w-full text-lg text-emphasis font-medium flex pb-0.5 mb-3.5 mt-2 font-bold">
+        {icon({ className: "my-auto mr-1" })}
+        {name}
+
+        {includeToggle && (
+          <button
+            onClick={() => closeSidebar()}
+            className="flex  ml-auto content-end "
+          >
+            <FaToggleOn size={24} />
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className={`
       flex-initial 
       overflow-y-hidden
+      bg-background-weak
       flex
       flex-col
       w-full
@@ -81,6 +97,7 @@ export function DocumentSidebar({
                 : "Retrieved Documents"
             }
             icon={FiFileText}
+            includeToggle
           />
         </div>
 

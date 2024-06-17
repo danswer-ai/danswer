@@ -58,6 +58,7 @@ export const ChatSidebar = ({
         className={`
         flex-none
         w-64
+        bg-background-weak
         3xl:w-72
         border-r 
         border-border 
