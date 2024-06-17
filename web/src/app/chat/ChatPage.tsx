@@ -1020,7 +1020,7 @@ export function ChatPage({
                               ? completeMessageMap.get(message.parentMessageId)
                               : null;
                             return (
-                              <div key={i}>
+                              <div key={`${i}-${existingChatSessionId}`}>
                                 <HumanMessage
                                   content={message.message}
                                   files={message.files}
@@ -1079,7 +1079,7 @@ export function ChatPage({
 
                             return (
                               <div
-                                key={i}
+                                key={`${i}-${existingChatSessionId}`}
                                 ref={
                                   i == messageHistory.length - 1
                                     ? lastMessageRef
@@ -1186,7 +1186,7 @@ export function ChatPage({
                             );
                           } else {
                             return (
-                              <div key={i}>
+                              <div key={`${i}-${existingChatSessionId}`}>
                                 <AIMessage
                                   messageId={message.messageId}
                                   personaName={livePersona.name}
@@ -1250,7 +1250,10 @@ export function ChatPage({
                             >
                               {livePersona.starter_messages.map(
                                 (starterMessage, i) => (
-                                  <div key={i} className="w-full">
+                                  <div
+                                    key={`${i}-${existingChatSessionId}`}
+                                    className="w-full"
+                                  >
                                     <StarterMessage
                                       starterMessage={starterMessage}
                                       onClick={() =>
