@@ -687,8 +687,6 @@ export function ChatPage({
           }
         }
         const updateFn = (messages: Message[]) => {
-          console.log(messages);
-
           const replacementsMap = finalMessage
             ? new Map([
               [messages[0].messageId, TEMP_USER_MESSAGE_ID],

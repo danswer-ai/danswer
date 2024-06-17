@@ -67,11 +67,9 @@ export const useScrollOnStream = ({
           !blockActionRef.current
         ) {
           blockActionRef.current = true;
-          console.log("Set block!");
 
           setTimeout(() => {
             blockActionRef.current = false;
-            console.log("unsetblock!");
           }, 1000);
         }
 
