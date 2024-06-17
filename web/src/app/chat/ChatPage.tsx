@@ -782,11 +782,11 @@ export function ChatPage({
     isSeededChat?: boolean;
   } = {}) => {
     // Initialize the session (necessary state updates, etc.)
-    const structuredParameters = await initializeSession({ messageIdToResend });
-    if (!structuredParameters) {
+    const initialParameters = await initializeSession({ messageIdToResend });
+    if (!initialParameters) {
       setPopup({
         message:
-          "Failed to re-send message - please refresh the page and try again.",
+          "Failed to send message - please refresh the page and try again.",
         type: "error",
       });
       return;
@@ -799,10 +799,8 @@ export function ChatPage({
       currChatSessionId,
       isNewSession,
       searchParamBasedChatSessionName,
-    } = structuredParameters;
+    } = initialParameters;
 
-    // if we're resending, set the parent's child to null
-    // we will use tempMessages until the regenerated message is complete
     let { currMessage, parentMessage, currMessageHistory } = getMessageInfo({
       messageOverride,
       messageToResend,
