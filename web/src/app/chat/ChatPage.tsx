@@ -480,15 +480,17 @@ export function ChatPage({
     queryOverride,
     forceSearch,
     isSeededChat,
-    alternativeAssistantId,
+    alternativeAssistant = null,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
     queryOverride?: string;
     forceSearch?: boolean;
     isSeededChat?: boolean;
-    alternativeAssistantId?: number | null;
+    alternativeAssistant?: Persona | null;
   } = {}) => {
+    setAlternativeGeneratingAssistant(alternativeAssistant);
+
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
     const searchParamBasedChatSessionName =
@@ -572,11 +574,12 @@ export function ChatPage({
       parentMessage = frozenCompleteMessageMap.get(SYSTEM_MESSAGE_ID) || null;
     }
 
-    const currentAssistantId = alternativeAssistantId ?? selectedAssistant?.id;
+    const currentAssistantId = alternativeAssistant
+      ? alternativeAssistant.id
+      : selectedAssistant?.id;
 
     setMessage("");
     setCurrentMessageFiles([]);
-
     setIsStreaming(true);
     let answer = "";
     let query: string | null = null;
@@ -1117,8 +1120,8 @@ export function ChatPage({
                                           messageIdToResend:
                                             previousMessage.messageId,
                                           queryOverride: newQuery,
-                                          alternativeAssistantId:
-                                            currentAlternativeAssistant?.id,
+                                          alternativeAssistant:
+                                            currentAlternativeAssistant,
                                         });
                                       }
                                     : undefined
@@ -1142,18 +1145,12 @@ export function ChatPage({
                                     previousMessage &&
                                     previousMessage.messageId
                                   ) {
-                                    if (currentAlternativeAssistant) {
-                                      setAlternativeGeneratingAssistant(
-                                        currentAlternativeAssistant
-                                      );
-                                    }
-
                                     onSubmit({
                                       messageIdToResend:
                                         previousMessage.messageId,
                                       forceSearch: true,
-                                      alternativeAssistantId:
-                                        currentAlternativeAssistant?.id,
+                                      alternativeAssistant:
+                                        currentAlternativeAssistant,
                                     });
                                   } else {
                                     setPopup({

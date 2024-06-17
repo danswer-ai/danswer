@@ -90,7 +90,6 @@ export function ChatInputBar({
     setShowSuggestions(false);
     setAssistantIconIndex(0);
   };
-  // const [keyedOut, setKeyedOut] = useState<boolean>(false)
 
   // Update selected persona
   const updateCurrentPersona = (persona: Persona) => {
@@ -136,7 +135,6 @@ export function ChatInputBar({
     }
   };
 
-  // Redefines on state change
   const filteredPersonas = personas.filter((persona) =>
     persona.name.toLowerCase().startsWith(
       message
@@ -148,9 +146,7 @@ export function ChatInputBar({
 
   const [assistantIconIndex, setAssistantIconIndex] = useState(0);
 
-  //
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // setKeyedOut(false)
     if (
       showSuggestions &&
       filteredPersonas.length > 0 &&
