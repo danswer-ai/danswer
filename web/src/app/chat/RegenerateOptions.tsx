@@ -1,34 +1,20 @@
 import { useChatContext } from "@/components/context/ChatContext";
-import { LlmOverride, LlmOverrideManager } from "@/lib/hooks";
+import { LlmOverride, LlmOverrideManager, useLlmOverride } from "@/lib/hooks";
 import { RegenerateDropdown } from "@/components/Dropdown";
 
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { getFinalLLM } from "@/lib/llm/utils";
 
-export type RegenerateOptions = {
-  llmOverrideManager: LlmOverrideManager;
-  selectedAssistant: Persona;
-  // messageIdToResend: number;
-  regenerateResponse: (
-    // responseId?: number,
-    modelOverRide: LlmOverride | null
-  ) => Promise<void>;
-
-  alternateModel?: string;
-};
-
 export default function RegenerateOption({
+  selectedAssistant,
   regenerate,
+  alternateModel,
 }: {
-  regenerate: RegenerateOptions;
+  selectedAssistant: Persona;
+  regenerate: (modelOverRide: LlmOverride) => Promise<void>;
+  alternateModel?: string;
 }) {
-  const {
-    llmOverrideManager,
-    selectedAssistant,
-    regenerateResponse,
-    // messageIdToResend,
-    alternateModel,
-  } = regenerate;
+  const llmOverrideManager = useLlmOverride();
 
   const { llmProviders } = useChatContext();
   const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant);
@@ -77,21 +63,11 @@ export default function RegenerateOption({
           const { name, provider, modelName } = destructureValue(
             value as string
           );
-          console.log({
+          regenerate({
             name: name,
             provider: provider,
             modelName: modelName,
           });
-          regenerateResponse(
-            // responseId: messageIdToResend,
-            // modelOverRide:
-            {
-              name: name,
-              provider: provider,
-              modelName: modelName,
-            }
-            // }
-          );
         }}
       />
     </div>

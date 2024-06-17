@@ -37,9 +37,9 @@ import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
 import { Button } from "@tremor/react";
-import RegenerateOption, { RegenerateOptions } from "../RegenerateOptions";
-import { LlmOverride, LlmOverrideManager } from "@/lib/hooks";
+import RegenerateOption from "../RegenerateOptions";
 import { Persona } from "@/app/admin/assistants/interfaces";
+import { LlmOverride } from "@/lib/hooks";
 
 function FileDisplay({ files }: { files: FileDescriptor[] }) {
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
@@ -78,11 +78,12 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 
 export const AIMessage = ({
   regenerate,
+  alternateModel,
   messageId,
   content,
   files,
   query,
-  personaName,
+  persona,
   citedDocuments,
   currentTool,
   isComplete,
@@ -96,13 +97,14 @@ export const AIMessage = ({
   retrievalDisabled,
   onResponseSelection,
 }: {
-  regenerate?: RegenerateOptions | null;
+  alternateModel?: string;
+  regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
   otherResponseCanSwitchTo?: number[];
   messageId: number | null;
   content: string | JSX.Element;
   files?: FileDescriptor[];
   query?: string;
-  personaName?: string;
+  persona?: Persona;
   citedDocuments?: [string, DanswerDocument][] | null;
   currentTool?: string | null;
   isComplete?: boolean;
@@ -185,7 +187,7 @@ export const AIMessage = ({
             </div>
 
             <div className="font-bold text-emphasis ml-2 my-auto">
-              {personaName || "Danswer"}
+              {persona ? persona.name : "Danswer"}
             </div>
 
             {query === undefined &&
@@ -353,7 +355,13 @@ export const AIMessage = ({
                 onClick={() => handleFeedback("dislike")}
               />
 
-              {regenerate && <RegenerateOption regenerate={regenerate} />}
+              {regenerate && (
+                <RegenerateOption
+                  selectedAssistant={persona!}
+                  regenerate={regenerate}
+                  alternateModel={alternateModel}
+                />
+              )}
             </div>
           )}
         </div>

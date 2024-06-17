@@ -564,6 +564,7 @@ export function ChatPage({
     forceSearch,
     isSeededChat,
     parentId,
+
     frozenCompleteMessageMap,
   }: {
     regenerate?: boolean;
@@ -576,7 +577,7 @@ export function ChatPage({
     responseId?: number | undefined;
     parentId?: number | undefined;
     frozenCompleteMessageMap: Map<number, Message>;
-    modelOverRide?: LlmOverride;
+    modelOverRide: LlmOverride | undefined;
   }) => {
     let answer = "";
     let query: string | null = null;
@@ -774,12 +775,16 @@ export function ChatPage({
     queryOverride,
     forceSearch,
     isSeededChat,
+    regenerate,
+    modelOverRide,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
     queryOverride?: string;
     forceSearch?: boolean;
     isSeededChat?: boolean;
+    regenerate?: boolean;
+    modelOverRide?: LlmOverride;
   } = {}) => {
     // Initialize the session (necessary state updates, etc.)
     const initialParameters = await initializeSession({ messageIdToResend });
@@ -808,26 +813,49 @@ export function ChatPage({
       messageToResendParent,
     });
 
-    const frozenCompleteMessageMap = createInitialUpdateMap(
-      currMessage,
-      parentMessage
-    );
+    const frozenCompleteMessageMap = regenerate
+      ? completeMessageMap
+      : createInitialUpdateMap(currMessage, parentMessage);
+
+    if (regenerate) {
+      let answer = "";
+      let error: string | null = null;
+
+      upsertToCompleteMessageMap({
+        messages: [
+          {
+            messageId: -1,
+            message: error || answer,
+            type: error ? "error" : "assistant",
+            retrievalType: RetrievalType.None,
+            files: [],
+            parentMessageId: messageIdToResend!,
+            alternate_model: modelOverRide?.modelName,
+          },
+        ],
+        replacementsMap: null
+          ? new Map([[-1, TEMP_USER_MESSAGE_ID]] as [number, number][])
+          : null,
+        completeMessageMapOverride: frozenCompleteMessageMap,
+      });
+    }
 
     // on initial message send, we insert a dummy system message
     // set this as the parent here if no parent is set
-    if (!parentMessage && frozenCompleteMessageMap.size === 2) {
+    if (!regenerate && !parentMessage && frozenCompleteMessageMap.size === 2) {
       parentMessage = frozenCompleteMessageMap.get(SYSTEM_MESSAGE_ID) || null;
     }
 
-    // const d = parentMessage?.messageId
-
     const { finalMessage, retrievalType } = await streamMessage({
-      currMessageHistory,
+      regenerate,
+      currMessageHistory: currMessageHistory,
       currMessage,
+      responseId: messageIdToResend,
       currChatSessionId,
       queryOverride,
       forceSearch,
-      isSeededChat,
+      isSeededChat: isSeededChat,
+      modelOverRide,
       frozenCompleteMessageMap,
       parentId: parentMessage?.messageId!,
     });
@@ -865,7 +893,7 @@ export function ChatPage({
   async function initializeSession({
     messageIdToResend,
   }: {
-    messageIdToResend: number | undefined;
+    messageIdToResend?: number;
   }) {
     // Determine if a new session needs to be created based on the existing chatSessionId
     const isNewSession = chatSessionId === null;
@@ -905,99 +933,18 @@ export function ChatPage({
       currChatSessionId,
       isNewSession,
       searchParamBasedChatSessionName,
-      // currMessage, parentMessage
     };
   }
-
-  async function initializeSession2({ responseId }: { responseId: number }) {
-    let isNewSession = chatSessionId === null;
-    const searchParamBasedChatSessionName =
-      searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
-
-    let currChatSessionId = isNewSession
-      ? await createChatSession(
-          livePersona?.id || 0,
-          searchParamBasedChatSessionName
-        )
-      : chatSessionId!;
-
-    const messageToResend = messageHistory.find(
-      (message) => message.messageId === responseId
-    );
-
-    let currMessage = messageToResend ? messageToResend.message : message;
-    setChatSessionId(currChatSessionId);
-    setCurrentMessageFiles([]);
-    setIsStreaming(true);
-
-    return {
-      currMessage,
-      currChatSessionId,
-      isNewSession,
-      searchParamBasedChatSessionName,
-    };
-  }
-
-  // Refactored methods
-  const regenerateResponse = async (
-    responseId: number,
-    modelOverRide: LlmOverride | null
-  ) => {
-    const {
-      currMessage,
-      currChatSessionId,
-      isNewSession,
-      searchParamBasedChatSessionName,
-      // currMessage, parentMessage
-    } = await initializeSession2({ responseId });
-
-    let answer = "";
-    let error: string | null = null;
-    const frozenCompleteMessageMap = completeMessageMap;
-
-    upsertToCompleteMessageMap({
-      messages: [
-        {
-          messageId: -1,
-          message: error || answer,
-          type: error ? "error" : "assistant",
-          retrievalType: RetrievalType.None,
-          files: [],
-          parentMessageId: responseId!,
-          alternate_model: modelOverRide?.modelName,
-        },
-      ],
-      replacementsMap: null
-        ? new Map([[-1, TEMP_USER_MESSAGE_ID]] as [number, number][])
-        : null,
-      completeMessageMapOverride: frozenCompleteMessageMap,
-    });
-
-    const { finalMessage, retrievalType } = await streamMessage({
-      regenerate: true,
-      currMessage,
-      currChatSessionId,
-      responseId: responseId!,
-      frozenCompleteMessageMap,
-      modelOverRide: modelOverRide!,
-    });
-
-    setIsStreaming(false);
-
-    if (
-      finalMessage?.context_docs &&
-      finalMessage.context_docs.top_documents.length > 0 &&
-      retrievalType === RetrievalType.Search
-    ) {
-      setSelectedMessageForDocDisplay(finalMessage.message_id);
-    }
-  };
 
   // Define the Higher Order Function to preset responseId
   function createRegenerator(responseId: number) {
     // Return a new function that only needs modelOverRide to be specified when called
-    return async function (modelOverRide: LlmOverride | null) {
-      return await regenerateResponse(responseId, modelOverRide);
+    return async function (modelOverRide: LlmOverride) {
+      return await onSubmit({
+        regenerate: true,
+        messageIdToResend: responseId,
+        modelOverRide,
+      });
     };
   }
 
@@ -1292,15 +1239,10 @@ export function ChatPage({
                               i !== 0 ? messageHistory[i - 1] : null;
                             return (
                               <AIMessage
-                                regenerate={{
-                                  alternateModel: message.alternate_model,
-                                  selectedAssistant: livePersona,
-                                  regenerateResponse: createRegenerator(
-                                    parentMessage?.messageId!
-                                  ),
-                                  // messageIdToResend: parentMessage?.messageId!,
-                                  llmOverrideManager: llmOverrideManager,
-                                }}
+                                alternateModel={message.alternate_model}
+                                regenerate={createRegenerator(
+                                  parentMessage?.messageId!
+                                )}
                                 otherResponseCanSwitchTo={
                                   parentMessage?.childrenMessageIds || []
                                 }
@@ -1309,7 +1251,7 @@ export function ChatPage({
                                 content={message.message}
                                 files={message.files}
                                 query={messageHistory[i]?.query || undefined}
-                                personaName={livePersona.name}
+                                persona={livePersona}
                                 citedDocuments={getCitedDocumentsFromMessage(
                                   message
                                 )}
@@ -1381,8 +1323,9 @@ export function ChatPage({
                                     previousMessage.messageId
                                   ) {
                                     onSubmit({
+                                      regenerate: true,
                                       messageIdToResend:
-                                        previousMessage.messageId,
+                                        parentMessage?.messageId!,
                                       forceSearch: true,
                                     });
                                   } else {
@@ -1416,7 +1359,7 @@ export function ChatPage({
                               <div key={i}>
                                 <AIMessage
                                   messageId={message.messageId}
-                                  personaName={livePersona.name}
+                                  persona={livePersona}
                                   content={
                                     <p className="text-red-700 text-sm my-auto">
                                       {message.message}
@@ -1429,7 +1372,6 @@ export function ChatPage({
                         })}
 
                         {/* pass in the document */}
-
                         {isStreaming &&
                           messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
@@ -1437,7 +1379,7 @@ export function ChatPage({
                             <div key={messageHistory.length}>
                               <AIMessage
                                 messageId={null}
-                                personaName={livePersona.name}
+                                persona={livePersona}
                                 content={
                                   <div className="text-sm my-auto">
                                     <ThreeDots
@@ -1510,7 +1452,6 @@ export function ChatPage({
                           setIsCancelled={setIsCancelled}
                           retrievalDisabled={retrievalDisabled}
                           filterManager={filterManager}
-                          llmOverrideManager={llmOverrideManager}
                           selectedAssistant={livePersona}
                           files={currentMessageFiles}
                           setFiles={setCurrentMessageFiles}
