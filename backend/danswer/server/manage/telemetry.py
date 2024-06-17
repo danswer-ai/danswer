@@ -1,9 +1,11 @@
 import csv
 import io
 import uuid
+import zipfile
 
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import Response
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
@@ -21,7 +23,8 @@ router = APIRouter()
 # TODO: can probably merge these helpers into one and use __annotations__ to get fields and headers
 def generate_chat_messages_report(
     db_session: Session, file_store: FileStore, report_id: str
-) -> None:
+) -> str:
+    file_name = f"{report_id}_chat_messages"
     messages = get_empty_chat_messages_entries(db_session)
     # write to memory buffer and store using pg_file_store
     with io.StringIO() as csvbuf:
@@ -33,17 +36,21 @@ def generate_chat_messages_report(
         # after writing seek to begining of buffer
         csvbuf.seek(0)
         file_store.save_file(
-            file_name=f"{report_id}_chat_messages",
+            file_name=file_name,
             content=csvbuf,
-            display_name=f"{report_id}_chat_messages",
+            # content=csvbuf,
+            display_name=file_name,
             file_origin=FileOrigin.OTHER,
             file_type="text/csv",
         )
 
+    return file_name
+
 
 def generate_chat_sessions_report(
     db_session: Session, file_store: FileStore, report_id: str
-) -> None:
+) -> str:
+    file_name = f"{report_id}_chat_sessions"
     sessions = get_chat_sessions_skeleton(db_session)
     # write to memory buffer and store using pg_file_store
     with io.StringIO() as csvbuf:
@@ -60,23 +67,39 @@ def generate_chat_sessions_report(
         # after writing seek to begining of buffer
         csvbuf.seek(0)
         file_store.save_file(
-            file_name=f"{report_id}_chat_sessions",
+            file_name=file_name,
             content=csvbuf,
-            display_name=f"{report_id}_chat_sessions",
+            display_name=file_name,
             file_origin=FileOrigin.OTHER,
             file_type="text/csv",
         )
+
+    return file_name
 
 
 @router.post("/admin/generate-report")
 async def generate_report(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> list[str]:
+) -> Response:
     report_id = str(uuid.uuid4())
     file_store = get_default_file_store(db_session)
 
-    generate_chat_messages_report(db_session, file_store, report_id)
-    generate_chat_sessions_report(db_session, file_store, report_id)
+    messages_filename = generate_chat_messages_report(db_session, file_store, report_id)
+    sessions_filename = generate_chat_sessions_report(db_session, file_store, report_id)
 
-    return ["Success"]
+    zipBuffer = io.BytesIO()
+    with zipfile.ZipFile(zipBuffer, "a", zipfile.ZIP_DEFLATED) as zipFile:
+        # write messages
+        zipFile.writestr(
+            "chat_messages.csv",
+            file_store.read_file(messages_filename, mode="b").read(),
+        )
+        zipFile.writestr(
+            "chat_sessions.csv",
+            file_store.read_file(sessions_filename, mode="b").read(),
+        )
+
+    zipBuffer.seek(0)
+
+    return Response(zipBuffer.read(), media_type="application/zip")
