@@ -191,10 +191,9 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                         <div className="ml-1">Export Telemetry</div>
                       </div>
                     ),
-                    link: "/admin/telemetry"
-
-                  }
-                ]
+                    link: "/admin/telemetry",
+                  },
+                ],
               },
               {
                 name: "Settings",

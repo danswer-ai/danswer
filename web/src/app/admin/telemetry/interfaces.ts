@@ -1,3 +1,1 @@
-export interface TelemetryReport {
-
-}
+export interface TelemetryReport {}

@@ -4,7 +4,15 @@ import { Settings, TelemetryReport } from "./interfaces";
 import { fetchSS } from "@/lib/utilsSS";
 
 import { FiSettings } from "react-icons/fi";
-import { Callout, Divider, Table, TableHead, TableHeaderCell, TableRow, Text } from "@tremor/react";
+import {
+  Callout,
+  Divider,
+  Table,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  Text,
+} from "@tremor/react";
 import { Button } from "@tremor/react";
 
 function TelemetryReportsTable() {
@@ -19,12 +27,12 @@ function TelemetryReportsTable() {
         </TableRow>
       </TableHead>
     </Table>
-  )
+  );
 }
 
 function DataDisclaimer({ props }) {
   return (
-    <div {...props} >
+    <div {...props}>
       <div className="mx-auto">
         <Callout title="Data Collection" color="teal">
           <Text>
@@ -42,7 +50,7 @@ function DataDisclaimer({ props }) {
         </Callout>
       </div>
     </div>
-  )
+  );
 }
 
 export default async function Page() {
@@ -66,17 +74,13 @@ export default async function Page() {
         Export Telemetry about usage statistics for all users in the workspace.
       </Text>
       <DataDisclaimer className="mb-20" />
-      <Button
-        color={"blue"}
-        size="md"
-      >
+      <Button color={"blue"} size="md">
         Export
       </Button>
 
       <Divider />
 
       <TelemetryReportsTable />
-
     </div>
   );
 }

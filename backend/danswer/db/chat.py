@@ -156,6 +156,53 @@ def delete_chat_session(
     db_session.commit()
 
 
+class ChatSessionSkeleton:
+    session_id: int
+    user_id: int
+    one_shot: bool
+    time_created: datetime.datetime
+    time_updated: datetime.datetime
+
+    def __init__(
+        self,
+        session_id: int,
+        user_id: int,
+        one_shot: bool,
+        time_created: datetime.datetime,
+        time_updated: datetime.datetime,
+    ) -> None:
+        self.session_id = session_id
+        self.user_id = user_id
+        self.one_shot = one_shot
+        self.time_created = time_created
+        self.time_updated = time_updated
+
+
+def get_chat_sessions_skeleton(
+    db_session: Session,
+) -> list[ChatSessionSkeleton]:
+    stmt = select(
+        ChatSession.id,
+        ChatSession.user_id,
+        ChatSession.one_shot,
+        ChatSession.time_created,
+        ChatSession.time_updated,
+    )
+
+    result = db_session.execute(stmt).all()
+
+    return [
+        ChatSessionSkeleton(
+            session_id=s.id,
+            user_id=s.user_id,
+            one_shot=s.one_shot,
+            time_created=s.time_created,
+            time_updated=s.time_updated,
+        )
+        for s in result
+    ]
+
+
 def get_chat_message(
     chat_message_id: int,
     user_id: UUID | None,
