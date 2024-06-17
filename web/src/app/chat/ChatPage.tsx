@@ -466,7 +466,6 @@ export function ChatPage({
   });
 
   // Scroll if input bar covers bottom of message history
-
   useResponsiveScroll({
     lastMessageRef,
     inputRef,

@@ -167,9 +167,10 @@ export const useResponsiveScroll = ({
             endDivRef.current &&
             endPaddingRef.current
           ) {
+            endPaddingRef.current.style.transition = "height 0.3s ease-out";
+
             endPaddingRef.current.style.height = `${Math.max(newHeight - 100, 0)}px`;
             endDivRef?.current.scrollIntoView({ behavior: "smooth" });
-            endDivRef.current.style.transition = "height 0.3s ease-out";
           }
 
           previousHeight.current = newHeight;
