@@ -86,7 +86,7 @@ def create_connector(
         connector_specific_config=connector_data.connector_specific_config,
         refresh_freq=connector_data.refresh_freq,
         prune_freq=connector_data.prune_freq
-        if connector_data.prune_freq == -1
+        if connector_data.prune_freq is not None
         else DEFAULT_PRUNING_FREQ,
         disabled=connector_data.disabled,
     )

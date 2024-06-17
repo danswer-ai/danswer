@@ -69,7 +69,7 @@ def should_prune_cc_pair(
         return False
 
     if check_live_task_not_timed_out(last_pruning_task, db_session):
-        logger.info(f"Connector '{connector.id}' is already pruning. Skipping.")
+        logger.info(f"Connector '{connector.name}' is already pruning. Skipping.")
         return False
 
     if not last_pruning_task.start_time:
@@ -80,6 +80,10 @@ def should_prune_cc_pair(
 
 
 def extract_ids_from_runnable_connector(runnable_connector: BaseConnector) -> set[str]:
+    """
+    If the PruneConnector hasnt been implemented for the given connector, just pull
+    all docs using the load_from_state and grab out the IDs
+    """
     all_connector_doc_ids: set[str] = set()
     if isinstance(runnable_connector, PruneConnector):
         all_connector_doc_ids = runnable_connector.prune_connector()
