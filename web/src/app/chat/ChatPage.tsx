@@ -99,7 +99,7 @@ export function ChatPage({
   const continueGenerating = () => {
     onSubmit({
       messageOverride:
-        "Continue Generating (pick up exactly where you left off but for code blocks and the like let's try and have it make sense to return on its own place)",
+        "Continue Generating (pick up exactly where you left off)",
     });
   };
 
@@ -1178,17 +1178,24 @@ export function ChatPage({
                               />
                             </div>
                           )}
+
                         {!isStreaming && canContinue && (
-                          <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
-                            <div className="flex justify-end  w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words ml-8">
-                              <EmphasizedClickable
-                                onClick={() => continueGenerating()}
-                              >
-                                <div className="px-1 flex gap-x-1 text-xs">
-                                  Continue Generating
-                                  <FiActivity className="my-auto" />
+                          <div className=" mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
+                            <div className="ml-8">
+                              <div className=" w-message-xs  2xl:w-message-sm 3xl:w-message-default break-words ml-8">
+                                <div className="flex p-1">
+                                  <div className="ml-auto my-auto">
+                                    <EmphasizedClickable
+                                      onClick={() => continueGenerating()}
+                                    >
+                                      <div className="px-1 flex gap-x-1 text-xs">
+                                        Continue
+                                        <FiActivity className="my-auto" />
+                                      </div>
+                                    </EmphasizedClickable>
+                                  </div>
                                 </div>
-                              </EmphasizedClickable>
+                              </div>
                             </div>
                           </div>
                         )}

@@ -108,6 +108,7 @@ def compute_max_document_tokens_for_persona(
 def compute_max_llm_input_tokens(llm_config: LLMConfig) -> int:
     """Maximum tokens allows in the input to the LLM (of any type)."""
 
+    print(llm_config)
     input_tokens = get_max_input_tokens(
         model_name=llm_config.model_name, model_provider=llm_config.model_provider
     )

@@ -157,9 +157,9 @@ export const AIMessage = ({
     );
 
   return (
-    <div className={"py-5 px-5 flex -mr-6 w-full"}>
-      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
-        <div className="ml-8">
+    <div className={"py-5 px-5 flex -mr-6 w-full "}>
+      <div className=" mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
+        <div className=" ml-8">
           <div className="flex">
             <div className="p-1 bg-ai rounded-lg h-fit my-auto">
               <div className="text-inverted">
@@ -176,8 +176,8 @@ export const AIMessage = ({
               handleShowRetrieved !== undefined &&
               isCurrentlyShowingRetrieved !== undefined &&
               !retrievalDisabled && (
-                <div className="flex w-message-xs 2xl:w-message-sm 3xl:w-message-default absolute ml-8">
-                  <div className="ml-auto">
+                <div className="flex w-message-xs  2xl:w-message-sm 3xl:w-message-default absolute ml-8">
+                  <div className="ml-autof">
                     <ShowHideDocsButton
                       messageId={messageId}
                       isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
@@ -188,7 +188,7 @@ export const AIMessage = ({
               )}
           </div>
 
-          <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
+          <div className="w-message-xs   2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
             {query !== undefined &&
               handleShowRetrieved !== undefined &&
               isCurrentlyShowingRetrieved !== undefined &&

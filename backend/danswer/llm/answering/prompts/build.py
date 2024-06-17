@@ -57,7 +57,6 @@ class AnswerPromptBuilder:
         self, message_history: list[PreviousMessage], llm_config: LLMConfig
     ) -> None:
         self.max_tokens = compute_max_llm_input_tokens(llm_config)
-
         (
             self.message_history,
             self.history_token_cnts,
