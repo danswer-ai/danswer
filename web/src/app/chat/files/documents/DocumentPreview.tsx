@@ -26,7 +26,7 @@ export function DocumentPreview({
         flex
         items-center
         p-2
-        bg-hover-light
+        bg-hover
         border
         border-border
         rounded-md
