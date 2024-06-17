@@ -146,7 +146,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             input_type: inputType,
             connector_specific_config: connectorConfig,
             refresh_freq: refreshFreq || 0,
-            prune_freq: pruneFreq || 0,
+            prune_freq: pruneFreq || null,
             disabled: false,
           });
 

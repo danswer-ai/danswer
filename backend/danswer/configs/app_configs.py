@@ -199,6 +199,8 @@ EXPERIMENTAL_CHECKPOINTING_ENABLED = (
     os.environ.get("EXPERIMENTAL_CHECKPOINTING_ENABLED", "").lower() == "true"
 )
 
+DEFAULT_PRUNING_FREQ = 60 * 60 * 24  # Once a day
+
 
 #####
 # Indexing Configs
