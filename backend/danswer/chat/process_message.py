@@ -373,9 +373,9 @@ def stream_chat_message_objects(
             )
 
         # when overriding model, ensure that the alternate model is known
-        alternate_model = None
-        if new_msg_req.llm_override:
-            alternate_model = new_msg_req.llm_override.model_version
+        alternate_model = (
+            new_msg_req.llm_override.model_version if new_msg_req.llm_override else None
+        )
 
         # Cannot determine these without the LLM step or breaking out early
         partial_response = partial(

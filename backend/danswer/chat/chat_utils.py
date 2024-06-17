@@ -73,10 +73,8 @@ def create_chat_chain(
     current_message: ChatMessage | None = root_message
 
     while current_message is not None:
-        if parent_id and current_message.id == parent_id:
-            break
         child_msg = current_message.latest_child_message
-        if not child_msg:
+        if not child_msg or (parent_id and current_message.id == parent_id):
             break
         current_message = id_to_msg.get(child_msg)
 

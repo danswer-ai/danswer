@@ -564,7 +564,6 @@ export const HumanMessage = ({
               ) : typeof content === "string" ? (
                 <div className="flex flex-col preserve-lines prose max-w-full">
                   {content}
-                  {/* </ReactMarkdown> */}
                 </div>
               ) : (
                 content
