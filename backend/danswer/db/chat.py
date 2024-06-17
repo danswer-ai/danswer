@@ -1,3 +1,4 @@
+import datetime
 from uuid import UUID
 
 from sqlalchemy import delete
@@ -201,6 +202,33 @@ def get_chat_messages_by_session(
 
     return list(result)
 
+
+class ChatMessageSkeleton:
+    message_id: int
+    chat_session_id: int
+    time_sent: datetime.datetime
+
+    def __init__(self, message_id, chat_session_id, time_sent):
+        self.message_id = message_id
+        self.chat_session_id = chat_session_id
+        self.time_sent = time_sent
+    
+
+# Gets skeletons of all message
+# TODO: should change this to use a key index with dates
+def get_empty_chat_messages_entries(
+    db_session: Session,
+    ) -> list[ChatMessageSkeleton]:
+    stmt = select(ChatMessage.id, ChatMessage.chat_session_id, ChatMessage.time_sent).where(ChatMessage.message_type == MessageType.USER)
+
+    result = db_session.execute(stmt).all()
+
+    print(result)
+    return [ChatMessageSkeleton(
+        message_id=m.id,
+        chat_session_id=m.chat_session_id,
+        time_sent=m.time_sent
+    ) for m in result]
 
 def get_or_create_root_message(
     chat_session_id: int,
@@ -462,3 +490,4 @@ def translate_db_message_to_chat_message_detail(
     )
 
     return chat_msg_detail
+
