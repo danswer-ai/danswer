@@ -1225,8 +1225,8 @@ export function ChatPage({
                               />
                             </div>
                           )}
-                        <div ref={endPaddingRef} className="" />
-                        <div ref={endDivRef} className="" />
+                        <div ref={endPaddingRef} />
+                        <div ref={endDivRef} />
                         {livePersona &&
                           livePersona.starter_messages &&
                           livePersona.starter_messages.length > 0 &&
