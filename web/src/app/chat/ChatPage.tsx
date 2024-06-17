@@ -601,7 +601,6 @@ export function ChatPage({
   };
 
   const streamMessage = async ({
-    modelName,
     modelOverRide,
     regenerate,
     currMessageHistory,
@@ -614,7 +613,6 @@ export function ChatPage({
     parentId,
     frozenCompleteMessageMap,
   }: {
-    modelName?: string;
     regenerate?: boolean;
     currMessageHistory?: Message[];
     currMessage: string;
@@ -643,6 +641,7 @@ export function ChatPage({
         ? getLastSuccessfulMessageId(currMessageHistory)
         : responseId!;
       for await (const packetBunch of sendMessage({
+        regenerate: regenerate,
         message: currMessage,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
@@ -745,7 +744,7 @@ export function ChatPage({
                   citations: finalMessage?.citations || {},
                   files: finalMessage?.files || aiMessageImages || [],
                   parentMessageId: responseId!,
-                  alternate_model: modelName,
+                  alternate_model: modelOverRide?.modelName,
                 },
               ]
             : [
@@ -1249,6 +1248,7 @@ export function ChatPage({
       currChatSessionId,
       responseId: responseId!,
       frozenCompleteMessageMap,
+      modelOverRide: modelOverRide!,
     });
 
     setIsStreaming(false);
