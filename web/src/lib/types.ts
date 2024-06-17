@@ -43,6 +43,7 @@ export type ValidSources =
   | "google_sites"
   | "loopio"
   | "dropbox"
+  | "salesforce"
   | "sharepoint"
   | "teams"
   | "zendesk"
@@ -124,6 +125,10 @@ export interface ConfluenceConfig {
 export interface JiraConfig {
   jira_project_url: string;
   comment_email_blacklist?: string[];
+}
+
+export interface SalesforceConfig {
+  requested_objects?: string[];
 }
 
 export interface SharepointConfig {
@@ -385,6 +390,12 @@ export interface ZendeskCredentialJson {
 
 export interface DropboxCredentialJson {
   dropbox_access_token: string;
+}
+
+export interface SalesforceCredentialJson {
+  sf_username: string;
+  sf_password: string;
+  sf_security_token: string;
 }
 
 export interface SharepointCredentialJson {
