@@ -143,3 +143,11 @@ class FileOrigin(str, Enum):
     CHAT_IMAGE_GEN = "chat_image_gen"
     CONNECTOR = "connector"
     OTHER = "other"
+
+
+class ReportType(str, Enum):
+    CHAT_MESSAGES = "chat_messages"
+    CHAT_SESSIONS = "chat_sessions"
+    USERS = "users"
+    SLACK_MESSAGES = "slack_messages"
+    API_USAGE = "api_usage"
