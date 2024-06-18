@@ -38,8 +38,8 @@ export const useScrollOnStream = ({
   endDivRef,
   endPaddingRef,
   scrollableDivRef,
-  distance = 200, // distance that should "engage" the scroll
-  debounce = 20, // time for debouncing
+  distance = 600, // distance that should "engage" the scroll
+  debounce = 10, // time for debouncing
 }: AutoScrollHookType) => {
   const previousHeight = useRef<number>(
     inputRef.current?.getBoundingClientRect().height!

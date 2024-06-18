@@ -433,8 +433,10 @@ export function ChatPage({
       const scrollDistance =
         endDivRef?.current?.getBoundingClientRect()?.top! -
         inputRef?.current?.getBoundingClientRect()?.top!;
-      setAboveHorizon(scrollDistance > 100);
+      setAboveHorizon(scrollDistance > 200);
     };
+
+    console.log(scrollableDivRef?.current);
 
     scrollableDivRef?.current?.addEventListener("scroll", handleUserScroll);
     return () => {
@@ -443,7 +445,7 @@ export function ChatPage({
         handleUserScroll
       );
     };
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, [chatSessionId]);
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -1324,21 +1326,24 @@ export function ChatPage({
                             </div>
                           )}
                       </div>
-                      {aboveHorizon && (
-                        <button
-                          onClick={() => clientScrollToBottom()}
-                          className="p-1 rounded-2xl bg-background-strong border border-border sticky mx-auto bottom-0 "
-                        >
-                          <FiArrowDown size={18} />
-                        </button>
-                      )}
                     </div>
 
                     <div
                       ref={inputRef}
                       className="absolute bottom-0 z-10 w-full"
                     >
-                      <div className="w-full pb-4">
+                      <div className="w-full relative  pb-4">
+                        {aboveHorizon && (
+                          <div className="w-full  pointer-events-none flex sticky justify-center">
+                            <button
+                              onClick={() => clientScrollToBottom()}
+                              className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2  mx-auto "
+                            >
+                              <FiArrowDown size={18} />
+                            </button>
+                          </div>
+                        )}
+
                         <ChatInputBar
                           message={message}
                           setMessage={setMessage}
