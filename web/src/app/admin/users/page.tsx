@@ -1,4 +1,11 @@
 "use client";
+import InvitedUserTable from "@/components/admin/users/InvitedUserTable";
+import SignedUpUserTable from "@/components/admin/users/SignedUpUserTable";
+import { SearchBar } from "@/components/search/SearchBar";
+import { useState } from "react";
+import { FiPlusSquare } from "react-icons/fi";
+import Link from "next/link";
+import { Modal } from "@/components/Modal";
 
 import {
   Table,
@@ -8,30 +15,46 @@ import {
   TableBody,
   TableCell,
   Button,
+  Text,
 } from "@tremor/react";
 import { LoadingAnimation } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { usePopup } from "@/components/admin/connectors/Popup";
+import { usePopup, PopupSpec } from "@/components/admin/connectors/Popup";
 import { UsersIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { User } from "@/lib/types";
+import { type User, UserStatus } from "@/lib/types";
 import useSWR, { mutate } from "swr";
+import useSWRMutation from "swr/mutation";
 import { ErrorCallout } from "@/components/ErrorCallout";
+import { HidableSection } from "@/app/admin/assistants/HidableSection";
+import BulkAdd from "@/components/admin/users/BulkAdd";
 
-const UsersTable = () => {
-  const { popup, setPopup } = usePopup();
+interface UsersResponse {
+  accepted: User[];
+  invited: User[];
+  accepted_pages: number;
+  invited_pages: number;
+}
 
-  const {
-    data: users,
-    isLoading,
-    error,
-  } = useSWR<User[]>("/api/manage/users", errorHandlingFetcher);
+const UsersTables = ({
+  q,
+  setPopup,
+}: {
+  q: string;
+  setPopup: (spec: PopupSpec) => void;
+}) => {
+  const [invitedPage, setInvitedPage] = useState(1);
+  const [acceptedPage, setAcceptedPage] = useState(1);
+  const { data, isLoading, mutate, error } = useSWR<UsersResponse>(
+    `/api/manage/users?q=${encodeURI(q)}&accepted_page=${acceptedPage - 1}&invited_page=${invitedPage - 1}`,
+    errorHandlingFetcher
+  );
 
   if (isLoading) {
     return <LoadingAnimation text="Loading" />;
   }
 
-  if (error || !users) {
+  if (error || !data) {
     return (
       <ErrorCallout
         errorTitle="Error loading users"
@@ -40,104 +63,91 @@ const UsersTable = () => {
     );
   }
 
+  const { accepted, invited, accepted_pages, invited_pages } = data;
+
+  return (
+    <>
+      <InvitedUserTable
+        users={invited}
+        setPopup={setPopup}
+        currentPage={invitedPage}
+        onPageChange={setInvitedPage}
+        totalPages={invited_pages}
+        mutate={mutate}
+      />
+      <SignedUpUserTable
+        users={accepted}
+        setPopup={setPopup}
+        currentPage={acceptedPage}
+        onPageChange={setAcceptedPage}
+        totalPages={accepted_pages}
+        mutate={mutate}
+      />
+    </>
+  );
+};
+
+const SearchableTables = () => {
+  const { popup, setPopup } = usePopup();
+  const [query, setQuery] = useState("");
+  const [q, setQ] = useState("");
+
   return (
     <div>
       {popup}
 
-      <Table className="overflow-visible">
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>Email</TableHeaderCell>
-            <TableHeaderCell>Role</TableHeaderCell>
-            <TableHeaderCell>
-              <div className="flex">
-                <div className="ml-auto">Actions</div>
-              </div>
-            </TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>
-                <i>{user.role === "admin" ? "Admin" : "User"}</i>
-              </TableCell>
-              <TableCell>
-                <div className="flex justify-end space-x-2">
-                  {user.role !== "admin" && (
-                    <Button
-                      onClick={async () => {
-                        const res = await fetch(
-                          "/api/manage/promote-user-to-admin",
-                          {
-                            method: "PATCH",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                              user_email: user.email,
-                            }),
-                          }
-                        );
-                        if (!res.ok) {
-                          const errorMsg = await res.text();
-                          setPopup({
-                            message: `Unable to promote user - ${errorMsg}`,
-                            type: "error",
-                          });
-                        } else {
-                          mutate("/api/manage/users");
-                          setPopup({
-                            message: "User promoted to admin user!",
-                            type: "success",
-                          });
-                        }
-                      }}
-                    >
-                      Promote to Admin User
-                    </Button>
-                  )}
-                  {user.role === "admin" && (
-                    <Button
-                      onClick={async () => {
-                        const res = await fetch(
-                          "/api/manage/demote-admin-to-basic",
-                          {
-                            method: "PATCH",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                              user_email: user.email,
-                            }),
-                          }
-                        );
-                        if (!res.ok) {
-                          const errorMsg = await res.text();
-                          setPopup({
-                            message: `Unable to demote admin - ${errorMsg}`,
-                            type: "error",
-                          });
-                        } else {
-                          mutate("/api/manage/users");
-                          setPopup({
-                            message: "Admin demoted to basic user!",
-                            type: "success",
-                          });
-                        }
-                      }}
-                    >
-                      Demote to Basic User
-                    </Button>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="flex flex-col gap-y-4">
+        <div className="flex gap-x-4">
+          <AddUserButton setPopup={setPopup} />
+          <div className="flex-grow">
+            <SearchBar
+              query={query}
+              setQuery={setQuery}
+              onSearch={() => setQ(query)}
+            />
+          </div>
+        </div>
+        <UsersTables q={q} setPopup={setPopup} />
+      </div>
     </div>
+  );
+};
+
+const AddUserButton = ({
+  setPopup,
+}: {
+  setPopup: (spec: PopupSpec) => void;
+}) => {
+  const [modal, setModal] = useState(false);
+  const onSuccess = () => {
+    mutate(
+      (key) => typeof key === "string" && key.startsWith("/api/manage/users")
+    );
+    setModal(false);
+    setPopup({
+      message: "Users invited!",
+      type: "success",
+    });
+  };
+  return (
+    <>
+      <Button className="w-fit" onClick={() => setModal(true)}>
+        <div className="flex">
+          <FiPlusSquare className="my-auto mr-2" />
+          Invite Users
+        </div>
+      </Button>
+      {modal && (
+        <Modal title="Bulk Add Users" onOutsideClick={() => setModal(false)}>
+          <div className="flex flex-col gap-y-4">
+            <Text className="font-medium text-base">
+              Add the email addresses to import, separated by whitespaces.
+            </Text>
+            <BulkAdd onSuccess={onSuccess} />
+          </div>
+        </Modal>
+      )}
+    </>
   );
 };
 
@@ -145,8 +155,7 @@ const Page = () => {
   return (
     <div className="mx-auto container">
       <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
-
-      <UsersTable />
+      <SearchableTables />
     </div>
   );
 };

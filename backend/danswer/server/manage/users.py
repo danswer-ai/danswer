@@ -1,3 +1,5 @@
+import re
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -6,10 +8,11 @@ from pydantic import BaseModel
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
+from danswer.auth.invited_users import get_invited_users
 from danswer.auth.noauth_user import fetch_no_auth_user
 from danswer.auth.noauth_user import set_no_auth_user_preferences
-from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserRole
+from danswer.auth.schemas import UserStatus
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.auth.users import optional_user
@@ -20,12 +23,17 @@ from danswer.db.models import User
 from danswer.db.users import get_user_by_email
 from danswer.db.users import list_users
 from danswer.dynamic_configs.factory import get_dynamic_config_store
+from danswer.server.manage.models import AllUsersResponse
 from danswer.server.manage.models import UserByEmail
 from danswer.server.manage.models import UserInfo
 from danswer.server.manage.models import UserRoleResponse
+from danswer.server.models import FullUserSnapshot
+from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
 
 router = APIRouter()
+
+USERS_PAGE_SIZE = 10
 
 
 @router.patch("/manage/promote-user-to-admin")
@@ -69,11 +77,41 @@ async def demote_admin(
 
 @router.get("/manage/users")
 def list_all_users(
+    q: str,
+    accepted_page: int,
+    invited_page: int,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> list[UserRead]:
-    users = list_users(db_session)
-    return [UserRead.from_orm(user) for user in users]
+) -> AllUsersResponse:
+    users = list_users(db_session, q=q)
+    accepted_emails = {user.email for user in users}
+    invited_emails = get_invited_users()
+    if q:
+        invited_emails = [
+            email for email in invited_emails if re.search(r"{}".format(q), email, re.I)
+        ]
+
+    accepted_count = len(accepted_emails)
+    invited_count = len(invited_emails)
+
+    return AllUsersResponse(
+        accepted=[
+            FullUserSnapshot(
+                id=user.id,
+                email=user.email,
+                role=user.role,
+                status=UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED,
+            )
+            for user in users
+        ][accepted_page * USERS_PAGE_SIZE : (accepted_page + 1) * USERS_PAGE_SIZE],
+        invited=[
+            InvitedUserSnapshot(email=email)
+            for email in invited_emails
+            if email not in accepted_emails
+        ][invited_page * USERS_PAGE_SIZE : (invited_page + 1) * USERS_PAGE_SIZE],
+        accepted_pages=accepted_count // USERS_PAGE_SIZE + 1,
+        invited_pages=invited_count // USERS_PAGE_SIZE + 1,
+    )
 
 
 """Endpoints for all"""
