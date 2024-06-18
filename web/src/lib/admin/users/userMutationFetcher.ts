@@ -12,8 +12,8 @@ const userMutationFetcher = async (
     }),
   }).then(async (res) => {
     if (res.ok) return res.json();
-    const text = await res.text();
-    throw Error(text);
+    const errorDetail = (await res.json()).detail;
+    throw Error(errorDetail);
   });
 };
 

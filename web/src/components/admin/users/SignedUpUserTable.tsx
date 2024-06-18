@@ -14,7 +14,6 @@ import {
   TableCell,
   Button,
 } from "@tremor/react";
-import { PageSelector } from "@/components/PageSelector";
 
 interface Props {
   users: Array<User>;
@@ -45,6 +44,7 @@ const PromoterButton = ({
       className="w-min"
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
+      size="xs"
     >
       {promote ? "Promote" : "Demote"} to {promote ? "Admin" : "Basic"} User
     </Button>
@@ -54,28 +54,38 @@ const PromoterButton = ({
 const DeactivaterButton = ({
   user,
   deactivate,
-  onSuccess,
-  onError,
+  setPopup,
+  mutate,
 }: {
   user: User;
   deactivate: boolean;
-  onSuccess: () => void;
-  onError: (message: string) => void;
+  setPopup: (spec: PopupSpec) => void;
+  mutate: () => void;
 }) => {
   const { trigger, isMutating } = useSWRMutation(
     deactivate
       ? "/api/manage/admin/deactivate-user"
       : "/api/manage/admin/activate-user",
     userMutationFetcher,
-    { onSuccess, onError }
+    {
+      onSuccess: () => {
+        mutate();
+        setPopup({
+          message: `User ${deactivate ? "deactivated" : "activated"}!`,
+          type: "success",
+        });
+      },
+      onError: (errorMsg) => setPopup({ message: errorMsg, type: "error" }),
+    }
   );
   return (
     <Button
       className="w-min"
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
+      size="xs"
     >
-      {deactivate ? "Deactivate" : "Activate"} Access
+      {deactivate ? "Deactivate" : "Activate"}
     </Button>
   );
 };
@@ -116,34 +126,8 @@ const SignedUpUserTable = ({
     onError(`Unable to demote admin - ${errorMsg}`);
   };
 
-  const onDeactivateSuccess = () => {
-    mutate();
-    setPopup({
-      message: "User deactivated!",
-      type: "success",
-    });
-  };
-  const onDeactivateError = (errorMsg: string) => {
-    setPopup({
-      message: `Unable to deactivate user - ${errorMsg}`,
-      type: "error",
-    });
-  };
-  const onActivateSuccess = () => {
-    mutate();
-    setPopup({
-      message: "User activate!",
-      type: "success",
-    });
-  };
-  const onActivateError = (errorMsg: string) => {
-    setPopup({
-      message: `Unable to activate user - ${errorMsg}`,
-      type: "error",
-    });
-  };
   return (
-    <HidableSection sectionTitle="Signed Up Users">
+    <HidableSection sectionTitle="Current Users">
       <>
         {totalPages > 1 ? (
           <CenteredPageSelector
@@ -186,8 +170,8 @@ const SignedUpUserTable = ({
                     <DeactivaterButton
                       user={user}
                       deactivate={user.status === UserStatus.live}
-                      onSuccess={onDeactivateSuccess}
-                      onError={onDeactivateError}
+                      setPopup={setPopup}
+                      mutate={mutate}
                     />
                   </div>
                 </TableCell>

@@ -1,13 +1,8 @@
 "use client";
-import useSWRMutation from "swr/mutation";
-import { RobotIcon } from "@/components/icons/icons";
+
 import { withFormik, FormikProps, FormikErrors, Form, Field } from "formik";
 
-import { BackButton } from "@/components/BackButton";
-import { Card } from "@tremor/react";
-import { AdminPageTitle } from "@/components/admin/Title";
-import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
-import { Button, Text } from "@tremor/react";
+import { Button } from "@tremor/react";
 
 const WHITESPACE_SPLIT = /\s+/;
 const EMAIL_REGEX = /[^@]+@[^.]+\.[^.]/;
@@ -24,6 +19,7 @@ const addUsers = async (url: string, { arg }: { arg: Array<string> }) => {
 
 interface FormProps {
   onSuccess: () => void;
+  onFailure: (res: Response) => void;
 }
 
 interface FormValues {
@@ -77,13 +73,15 @@ const AddUserForm = withFormik<FormProps, FormValues>({
     await addUsers("/api/manage/admin/users", { arg: emails }).then((res) => {
       if (res.ok) {
         formikBag.props.onSuccess();
+      } else {
+        formikBag.props.onFailure(res);
       }
     });
   },
 })(AddUserFormRenderer);
 
-const BulkAdd = ({ onSuccess }: FormProps) => {
-  return <AddUserForm onSuccess={onSuccess} />;
+const BulkAdd = ({ onSuccess, onFailure }: FormProps) => {
+  return <AddUserForm onSuccess={onSuccess} onFailure={onFailure} />;
 };
 
 export default BulkAdd;
