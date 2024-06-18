@@ -383,6 +383,7 @@ class Connector(Base):
         postgresql.JSONB()
     )
     refresh_freq: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    prune_freq: Mapped[int | None] = mapped_column(Integer, nullable=True)
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
