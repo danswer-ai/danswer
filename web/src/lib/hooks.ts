@@ -8,7 +8,7 @@ import {
 } from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { errorHandlingFetcher } from "./fetcher";
-import { RefObject, useState } from "react";
+import { Dispatch, RefObject, SetStateAction, useState } from "react";
 import { DateRangePickerValue } from "@tremor/react";
 import { SourceMetadata } from "./search/interfaces";
 import { destructureValue } from "./llm/utils";
@@ -25,9 +25,10 @@ export type AutoScrollHookType = {
   lastMessageRef: RefObject<HTMLDivElement>;
   inputRef: RefObject<HTMLDivElement>;
   endDivRef: RefObject<HTMLDivElement>;
-  scrollableDivRef?: RefObject<HTMLDivElement>;
+  scrollableDivRef: RefObject<HTMLDivElement>;
   distance?: number;
   debounce?: number;
+  scrollDist: number;
   endPaddingRef: RefObject<HTMLDivElement>;
 };
 
@@ -41,8 +42,9 @@ export const useScrollOnStream = ({
   endDivRef,
   endPaddingRef,
   scrollableDivRef,
-  distance = 50, // distance that should "engage" the scroll
-  debounce = 100, // time for debouncing
+  scrollDist,
+  distance = 400, // distance that should "engage" the scroll
+  debounce = 20, // time for debouncing
 }: AutoScrollHookType) => {
   const previousHeight = useRef<number>(
     inputRef.current?.getBoundingClientRect().height!
@@ -57,37 +59,37 @@ export const useScrollOnStream = ({
         inputRef.current &&
         endDivRef?.current &&
         scrollableDivRef &&
+        scrollableDivRef.current &&
+        lastMessageRef.current &&
         !blockActionRef.current
       ) {
-        if (scrollableDivRef.current && lastMessageRef.current) {
-          let newHeight: number = scrollableDivRef.current?.scrollHeight!;
-          const heightDifference = newHeight - previousHeight.current;
-          previousHeight.current = newHeight;
+        let newHeight: number = scrollableDivRef.current?.scrollHeight!;
+        const heightDifference = newHeight - previousHeight.current;
+        previousHeight.current = newHeight;
 
-          if (heightDifference > 0) {
-            blockActionRef.current = true;
+        if (scrollDist < distance) {
+          blockActionRef.current = true;
+          scrollableDivRef?.current?.scrollBy({
+            left: 0,
+            top: Math.max(0, heightDifference),
+            behavior: "smooth",
+          });
+
+          const gap =
+            endPaddingRef?.current?.getBoundingClientRect().top! -
+            inputRef.current.getBoundingClientRect().top +
+            100;
+          if (gap - heightDifference > 200) {
             scrollableDivRef?.current?.scrollBy({
               left: 0,
-              top: heightDifference,
+              top: Math.max(gap, 0),
               behavior: "smooth",
             });
-
-            const gap =
-              endPaddingRef?.current?.getBoundingClientRect().top! -
-              inputRef.current.getBoundingClientRect().top +
-              100;
-            if (gap - heightDifference > distance) {
-              scrollableDivRef?.current?.scrollBy({
-                left: 0,
-                top: gap,
-                behavior: "smooth",
-              });
-            }
-
-            setTimeout(() => {
-              blockActionRef.current = false;
-            }, debounce) as unknown as number;
           }
+
+          setTimeout(() => {
+            blockActionRef.current = false;
+          }, debounce) as unknown as number;
         }
       }
     };
@@ -98,23 +100,38 @@ export const useScrollOnStream = ({
   });
 
   useEffect(() => {
+    const handleUserScroll = () => {
+      if (!blockActionRef.current) {
+        blockActionRef.current = true;
+        setTimeout(() => {
+          blockActionRef.current = false;
+        }, 100);
+      }
+    };
+
+    scrollableDivRef?.current?.addEventListener("scroll", handleUserScroll);
+
+    return () => {
+      scrollableDivRef?.current?.removeEventListener(
+        "scroll",
+        handleUserScroll
+      );
+    };
+  }, []);
+
+  // scroll on end of stream if within distance
+  useEffect(() => {
     if (
       lastMessageRef.current &&
       inputRef.current &&
-      endDivRef?.current &&
-      scrollableDivRef
+      endDivRef.current &&
+      scrollableDivRef?.current &&
+      !isStreaming
     ) {
-      const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
-      const endDivRect = inputRef.current.getBoundingClientRect();
-
-      if (
-        scrollableDivRef.current &&
-        lastMessageRef.current &&
-        endDivRect.bottom - lastMessageRect.bottom > -200
-      ) {
+      if (scrollDist < distance) {
         scrollableDivRef?.current?.scrollBy({
           left: 0,
-          top: Math.max(lastMessageRect.bottom - endDivRect.bottom + 300, 0),
+          top: Math.max(scrollDist + 600, 0),
           behavior: "smooth",
         });
       }
@@ -199,7 +216,7 @@ export const useResponsiveScroll = ({
 
             scrollableDivRef?.current.scrollBy({
               left: 0,
-              top: heightDifference,
+              top: Math.max(heightDifference, 0),
               behavior: "smooth",
             });
           }

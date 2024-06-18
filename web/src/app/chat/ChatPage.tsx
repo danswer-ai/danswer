@@ -38,15 +38,13 @@ import {
   uploadFilesForChat,
 } from "./lib";
 import { useContext, useEffect, useRef, useState } from "react";
+
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
 import {
-  useScrollOnStream,
   useFilters,
-  useInitialScroll,
   useLlmOverride,
-  useResponsiveScroll,
 } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { FeedbackType } from "./types";
@@ -55,7 +53,7 @@ import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoade
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { ChatPersonaSelector } from "./ChatPersonaSelector";
-import { FiShare2 } from "react-icons/fi";
+import { FiArrowDown, FiArrowDownCircle, FiShare2 } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { ThreeDots } from "react-loader-spinner";
@@ -112,6 +110,8 @@ export function ChatPage({
   } = useChatContext();
 
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
+  const [aboveHorizon, setAboveHorizon] = useState(false);
+
   const [scrollingCancelled, setScrollingCancelled] = useState(false);
 
   const router = useRouter();
@@ -458,12 +458,33 @@ export function ChatPage({
   const endDivRef = useRef<HTMLDivElement>(null);
   const endPaddingRef = useRef<HTMLDivElement>(null);
 
+  const [scrollDist, setScrollDist] = useState<number>(0);
+
   useEffect(() => {
     if (scrollableDivRef.current) {
       const scrollDiv = scrollableDivRef.current;
       scrollDiv.scrollTop = scrollDiv.scrollHeight;
     }
-  }, []); // Empty dependency array ensures this runs only once on mount
+
+    const handleUserScroll = () => {
+      const scrollDistance =
+        endDivRef?.current?.getBoundingClientRect()?.top! -
+        inputRef?.current?.getBoundingClientRect()?.top!;
+      setScrollDist(scrollDist);
+
+      setAboveHorizon(scrollDistance > 200);
+    };
+
+    console.log(scrollableDivRef?.current);
+
+    scrollableDivRef?.current?.addEventListener("scroll", handleUserScroll);
+    return () => {
+      scrollableDivRef?.current?.removeEventListener(
+        "scroll",
+        handleUserScroll
+      );
+    };
+  }, [chatSessionId]);
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -501,6 +522,7 @@ export function ChatPage({
     endPaddingRef,
     inputRef,
     endDivRef,
+    scrollDist,
   });
 
   // Scroll if necessary for initial message
@@ -875,6 +897,8 @@ export function ChatPage({
       });
     }
   };
+
+  // useE
 
   const onPersonaChange = (persona: Persona | null) => {
     if (persona && persona.id !== livePersona.id) {
@@ -1384,7 +1408,18 @@ export function ChatPage({
                       ref={inputRef}
                       className="absolute bottom-0 z-10 w-full"
                     >
-                      <div className="w-full pb-4">
+                      <div className="w-full relative  pb-4">
+                        {aboveHorizon && (
+                          <div className="w-full  pointer-events-none flex sticky justify-center">
+                            <button
+                              onClick={() => clientScrollToBottom()}
+                              className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2  mx-auto "
+                            >
+                              <FiArrowDown size={18} />
+                            </button>
+                          </div>
+                        )}
+
                         <ChatInputBar
                           message={message}
                           setMessage={setMessage}
