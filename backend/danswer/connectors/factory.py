@@ -1,7 +1,6 @@
 from typing import Any
 from typing import Type
 
-from backend.danswer.db.models import Credential
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DocumentSource
@@ -44,6 +43,7 @@ from danswer.connectors.wikipedia.connector import WikipediaConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
 from danswer.db.credentials import backend_update_credential_json
+from danswer.db.models import Credential
 
 
 class ConnectorMissingException(Exception):
@@ -125,7 +125,7 @@ def instantiate_connector(
     connector_specific_config: dict[str, Any],
     credential: Credential,
     db_session: Session,
-) -> tuple[BaseConnector, dict[str, Any] | None]:
+) -> BaseConnector:
     connector_class = identify_connector_class(source, input_type)
     connector = connector_class(**connector_specific_config)
     new_credentials = connector.load_credentials(credential.credential_json)

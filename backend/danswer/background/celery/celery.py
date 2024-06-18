@@ -273,7 +273,7 @@ def schedule_tasks() -> None:
         for cc_pair in all_cc_pairs:
             if should_prune_cc_pair(
                 connector=cc_pair.connector,
-                credential_id=cc_pair.credential,
+                credential=cc_pair.credential,
                 db_session=db_session,
             ):
                 logger.info(f"Pruning the {cc_pair.connector.name} connector")

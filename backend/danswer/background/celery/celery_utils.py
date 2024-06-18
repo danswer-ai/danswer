@@ -97,7 +97,7 @@ def extract_ids_from_runnable_connector(runnable_connector: BaseConnector) -> se
         for doc_batch in doc_batch_generator:
             all_connector_doc_ids.update(doc.id for doc in doc_batch)
     elif isinstance(runnable_connector, PollConnector):
-        start = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        start = datetime(1970, 1, 1, tzinfo=timezone.utc).timestamp()
         end = datetime.now(timezone.utc).timestamp()
         doc_batch_generator = runnable_connector.poll_source(start=start, end=end)
         for doc_batch in doc_batch_generator:
