@@ -72,9 +72,16 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
+<<<<<<< HEAD
 import { FaToggleOff } from "react-icons/fa";
 import { ChatPopup } from "./ChatPopup";
 import { ChatBanner } from "./ChatBanner";
+=======
+
+import { TbLayoutSidebarRightExpand } from "react-icons/tb";
+
+import { HEADER_HEIGHT, SUB_HEADER } from "@/lib/constants";
+>>>>>>> 5c26ab0b (add aligned headers)
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -963,9 +970,13 @@ export function ChatPage({
                       <ChatBanner />
 
                       {livePersona && (
-                        <div className="sticky top-0 left-80 z-10 w-full bg-background flex">
-                          <div className="mt-2 flex w-full">
-                            <div className="ml-2 p-1 rounded w-fit">
+                        <div
+                          className={`sticky top-0 left-80 z-10 w-full bg-background flex ${HEADER_HEIGHT}`}
+                        >
+                          <div
+                            className={`${SUB_HEADER}   items-end flex w-full`}
+                          >
+                            <div className="ml-2 px-1  rounded w-fit">
                               <ChatPersonaSelector
                                 personas={filteredAssistants}
                                 selectedPersonaId={livePersona.id}
@@ -974,15 +985,16 @@ export function ChatPage({
                               />
                             </div>
 
-                            <div className="ml-auto mr-8 flex">
+                            <div className="ml-auto mr-3 mt-auto flex items-end">
                               {chatSessionId !== null && (
                                 <div
                                   onClick={() => setSharingModalVisible(true)}
                                   className={`
-                                    my-auto
-                                    p-2
+
                                     rounded
                                     cursor-pointer
+                                    px-2 
+                                    py-1
                                     hover:bg-hover-light
                                   `}
                                 >
@@ -990,17 +1002,18 @@ export function ChatPage({
                                 </div>
                               )}
 
-                              <div className=" my-auto ml-4">
+                              <div className=" flex  ml-4">
                                 <UserDropdown user={user} />
+
+                                {!retrievalDisabled && !showDocSidebar && (
+                                  <button
+                                    className="ml-4 mt-auto"
+                                    onClick={() => toggleSidebar()}
+                                  >
+                                    <TbLayoutSidebarRightExpand size={24} />
+                                  </button>
+                                )}
                               </div>
-                              {!retrievalDisabled && !showDocSidebar && (
-                                <button
-                                  className="ml-4"
-                                  onClick={() => toggleSidebar()}
-                                >
-                                  <FaToggleOff size={24} />
-                                </button>
-                              )}
                             </div>
                           </div>
                         </div>

@@ -8,8 +8,13 @@ import { useRouter } from "next/navigation";
 import { BasicClickable, BasicSelectable } from "@/components/BasicClickable";
 import { ChatSession } from "../interfaces";
 import {
+<<<<<<< HEAD
   NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
   NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
+=======
+  HEADER_HEIGHT,
+  NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
+>>>>>>> 5c26ab0b (add aligned headers)
 } from "@/lib/constants";
 import { ChatTab } from "./ChatTab";
 import { Folder } from "../folders/interfaces";
@@ -68,7 +73,7 @@ export const ChatSidebar = ({
         transition-transform`}
         id="chat-sidebar"
       >
-        <div className="pt-6 flex">
+        <div className={`pt-4  ${HEADER_HEIGHT} flex`}>
           <Link
             className="ml-4 w-full"
             href={

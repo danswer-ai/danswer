@@ -7,12 +7,16 @@ import { FiMessageSquare, FiSearch } from "react-icons/fi";
 import { HeaderWrapper } from "./HeaderWrapper";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { UserDropdown } from "../UserDropdown";
+<<<<<<< HEAD
 import { Logo } from "../Logo";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
 
 export function HeaderTitle({ children }: { children: JSX.Element | string }) {
   return <h1 className="flex text-2xl text-strong font-bold">{children}</h1>;
 }
+=======
+import { SUB_HEADER } from "@/lib/constants";
+>>>>>>> 5c26ab0b (add aligned headers)
 
 interface HeaderProps {
   user: User | null;
@@ -29,6 +33,7 @@ export function Header({ user }: HeaderProps) {
   return (
     <HeaderWrapper>
       <div className="flex h-full">
+<<<<<<< HEAD
         <Link
           className="py-3 flex flex-col"
           href={
@@ -57,6 +62,24 @@ export function Header({ user }: HeaderProps) {
             </div>
           </div>
         </Link>
+=======
+        <div className={`${SUB_HEADER} flex items-end`}>
+          <Link
+            href={
+              settings && settings.default_page === "chat" ? "/chat" : "/search"
+            }
+          >
+            <div className="flex items-end bg-black">
+              <div className="h-[32px] w-[30px]">
+                <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
+              </div>
+              <h1 className="inline-block text-2xl text-strong font-bold mt-auto">
+                Danswer
+              </h1>
+            </div>
+          </Link>
+        </div>
+>>>>>>> 5c26ab0b (add aligned headers)
 
         {(!settings ||
           (settings.search_page_enabled && settings.chat_page_enabled)) && (
@@ -65,19 +88,23 @@ export function Header({ user }: HeaderProps) {
               href="/search"
               className={"ml-6 h-full flex flex-col hover:bg-hover"}
             >
-              <div className="w-24 flex my-auto">
-                <div className={"mx-auto flex text-strong px-2"}>
-                  <FiSearch className="my-auto mr-1" />
-                  <h1 className="flex text-sm font-bold my-auto">Search</h1>
+              <div className={`${SUB_HEADER} flex items-end`}>
+                <div className="w-24 flex ">
+                  <div className={"mx-auto flex text-strong px-2"}>
+                    <FiSearch className="my-auto mr-1" />
+                    <h1 className="flex text-sm font-bold my-auto">Search</h1>
+                  </div>
                 </div>
               </div>
             </Link>
 
             <Link href="/chat" className="h-full flex flex-col hover:bg-hover">
-              <div className="w-24 flex my-auto">
-                <div className="mx-auto flex text-strong px-2">
-                  <FiMessageSquare className="my-auto mr-1" />
-                  <h1 className="flex text-sm font-bold my-auto">Chat</h1>
+              <div className={`${SUB_HEADER} flex items-end`}>
+                <div className="w-24 flex ">
+                  <div className="mx-auto flex text-strong px-2">
+                    <FiMessageSquare className="my-auto mr-1" />
+                    <h1 className="flex text-sm font-bold my-auto">Chat</h1>
+                  </div>
                 </div>
               </div>
             </Link>

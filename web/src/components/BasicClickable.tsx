@@ -65,11 +65,13 @@ export function BasicSelectable({
   selected,
   hasBorder,
   fullWidth = false,
+  padding = true,
 }: {
   children: string | JSX.Element;
   selected: boolean;
   hasBorder?: boolean;
   fullWidth?: boolean;
+  padding?: boolean;
 }) {
   return (
     <div
@@ -78,8 +80,9 @@ export function BasicSelectable({
         font-medium 
         text-emphasis 
         text-sm
-        p-1
+        ${padding && "p-1"}
         select-none
+        
         ${hasBorder ? "border border-border" : ""}
         ${selected ? "bg-hover" : "hover:bg-hover"}
         ${fullWidth ? "w-full" : ""}`}

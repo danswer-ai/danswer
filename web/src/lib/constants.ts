@@ -1,6 +1,12 @@
 export type AuthType = "disabled" | "basic" | "google_oauth" | "oidc" | "saml";
 
+<<<<<<< HEAD
 export const HOST_URL = process.env.WEB_DOMAIN || "http://127.0.0.1:3000";
+=======
+export const HEADER_HEIGHT = "h-16";
+export const SUB_HEADER = "h-12";
+
+>>>>>>> 5c26ab0b (add aligned headers)
 export const INTERNAL_URL = process.env.INTERNAL_URL || "http://127.0.0.1:8080";
 export const NEXT_PUBLIC_DISABLE_STREAMING =
   process.env.NEXT_PUBLIC_DISABLE_STREAMING?.toLowerCase() === "true";
