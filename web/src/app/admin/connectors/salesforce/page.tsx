@@ -239,12 +239,12 @@ const MainSection = () => {
                   </a>
                   for an example of how Danswer uses the objects. <br />
                   <br />
-                  If unsure, don't specify any objects and Danswer will default
-                  to indexing by 'Account'.
+                  If unsure, don&apos;t specify any objects and Danswer will
+                  default to indexing by &apos;Account&apos;.
                   <br />
                   <br />
                   Hint: Use the singular form of the object name (e.g.,
-                  'Opportunity' instead of 'Opportunities').
+                  &apos;Opportunity&apos; instead of &apos;Opportunities&apos;).
                 </>
               ),
             })}
