@@ -423,6 +423,8 @@ export function ChatPage({
   const endDivRef = useRef<HTMLDivElement>(null);
   const endPaddingRef = useRef<HTMLDivElement>(null);
 
+  const [scrollDist, setScrollDist] = useState<number>(0);
+
   useEffect(() => {
     if (scrollableDivRef.current) {
       const scrollDiv = scrollableDivRef.current;
@@ -433,6 +435,8 @@ export function ChatPage({
       const scrollDistance =
         endDivRef?.current?.getBoundingClientRect()?.top! -
         inputRef?.current?.getBoundingClientRect()?.top!;
+      setScrollDist(scrollDist);
+
       setAboveHorizon(scrollDistance > 200);
     };
 
@@ -483,6 +487,7 @@ export function ChatPage({
     endPaddingRef,
     inputRef,
     endDivRef,
+    scrollDist,
   });
 
   // Scroll if necessary for initial message

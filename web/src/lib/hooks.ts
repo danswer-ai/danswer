@@ -22,9 +22,10 @@ export type AutoScrollHookType = {
   lastMessageRef: RefObject<HTMLDivElement>;
   inputRef: RefObject<HTMLDivElement>;
   endDivRef: RefObject<HTMLDivElement>;
-  scrollableDivRef?: RefObject<HTMLDivElement>;
+  scrollableDivRef: RefObject<HTMLDivElement>;
   distance?: number;
   debounce?: number;
+  scrollDist: number;
   endPaddingRef: RefObject<HTMLDivElement>;
 };
 
@@ -38,8 +39,9 @@ export const useScrollOnStream = ({
   endDivRef,
   endPaddingRef,
   scrollableDivRef,
-  distance = 600, // distance that should "engage" the scroll
-  debounce = 10, // time for debouncing
+  scrollDist,
+  distance = 400, // distance that should "engage" the scroll
+  debounce = 20, // time for debouncing
 }: AutoScrollHookType) => {
   const previousHeight = useRef<number>(
     inputRef.current?.getBoundingClientRect().height!
@@ -54,41 +56,37 @@ export const useScrollOnStream = ({
         inputRef.current &&
         endDivRef?.current &&
         scrollableDivRef &&
+        scrollableDivRef.current &&
+        lastMessageRef.current &&
         !blockActionRef.current
       ) {
-        if (scrollableDivRef.current && lastMessageRef.current) {
-          let newHeight: number = scrollableDivRef.current?.scrollHeight!;
-          const heightDifference = newHeight - previousHeight.current;
-          previousHeight.current = newHeight;
+        let newHeight: number = scrollableDivRef.current?.scrollHeight!;
+        const heightDifference = newHeight - previousHeight.current;
+        previousHeight.current = newHeight;
 
-          const scrollDistance =
-            endDivRef.current.getBoundingClientRect().top -
-            inputRef.current.getBoundingClientRect().top;
+        if (scrollDist < distance) {
+          blockActionRef.current = true;
+          scrollableDivRef?.current?.scrollBy({
+            left: 0,
+            top: Math.max(0, heightDifference),
+            behavior: "smooth",
+          });
 
-          if (heightDifference > 0 && scrollDistance < distance) {
-            blockActionRef.current = true;
+          const gap =
+            endPaddingRef?.current?.getBoundingClientRect().top! -
+            inputRef.current.getBoundingClientRect().top +
+            100;
+          if (gap - heightDifference > 200) {
             scrollableDivRef?.current?.scrollBy({
               left: 0,
-              top: heightDifference,
+              top: Math.max(gap, 0),
               behavior: "smooth",
             });
-
-            const gap =
-              endPaddingRef?.current?.getBoundingClientRect().top! -
-              inputRef.current.getBoundingClientRect().top +
-              100;
-            if (gap - heightDifference > 100) {
-              scrollableDivRef?.current?.scrollBy({
-                left: 0,
-                top: gap,
-                behavior: "smooth",
-              });
-            }
-
-            setTimeout(() => {
-              blockActionRef.current = false;
-            }, debounce) as unknown as number;
           }
+
+          setTimeout(() => {
+            blockActionRef.current = false;
+          }, debounce) as unknown as number;
         }
       }
     };
@@ -96,7 +94,9 @@ export const useScrollOnStream = ({
     if (isStreaming) {
       handleScroll();
     }
+  });
 
+  useEffect(() => {
     const handleUserScroll = () => {
       if (!blockActionRef.current) {
         blockActionRef.current = true;
@@ -114,23 +114,21 @@ export const useScrollOnStream = ({
         handleUserScroll
       );
     };
-  });
+  }, []);
 
+  // scroll on end of stream if within distance
   useEffect(() => {
     if (
       lastMessageRef.current &&
       inputRef.current &&
-      endDivRef?.current &&
-      scrollableDivRef
+      endDivRef.current &&
+      scrollableDivRef?.current &&
+      !isStreaming
     ) {
-      const scrollDistance =
-        endDivRef.current.getBoundingClientRect().top -
-        inputRef.current.getBoundingClientRect().top;
-
-      if (scrollableDivRef.current && scrollDistance < distance) {
+      if (scrollDist < distance) {
         scrollableDivRef?.current?.scrollBy({
           left: 0,
-          top: Math.max(scrollDistance + 300, 0),
+          top: Math.max(scrollDist + 600, 0),
           behavior: "smooth",
         });
       }
@@ -215,7 +213,7 @@ export const useResponsiveScroll = ({
 
             scrollableDivRef?.current.scrollBy({
               left: 0,
-              top: heightDifference,
+              top: Math.max(heightDifference, 0),
               behavior: "smooth",
             });
           }
