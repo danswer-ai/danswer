@@ -266,6 +266,17 @@ class SlackBotConfig__StandardAnswerCategory(Base):
     )
 
 
+class ChatMessage__StandardAnswer(Base):
+    __tablename__ = "chat_message__standard_answer"
+
+    chat_message_id: Mapped[int] = mapped_column(
+        ForeignKey("chat_message.id"), primary_key=True
+    )
+    standard_answer_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer.id"), primary_key=True
+    )
+
+
 """
 Documents/Indexing Tables
 """
@@ -661,6 +672,10 @@ class ChatSession(Base):
         ForeignKey("chat_folder.id"), nullable=True
     )
 
+    slack_thread_id: Mapped[str | None] = mapped_column(
+        String, nullable=True, default=None
+    )
+
     # the latest "overrides" specified by the user. These take precedence over
     # the attached persona. However, overrides specified directly in the
     # `send-message` call will take precedence over these.
@@ -743,6 +758,11 @@ class ChatMessage(Base):
     search_docs: Mapped[list["SearchDoc"]] = relationship(
         "SearchDoc",
         secondary="chat_message__search_doc",
+        back_populates="chat_messages",
+    )
+    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
+        "StandardAnswer",
+        secondary=ChatMessage__StandardAnswer.__table__,
         back_populates="chat_messages",
     )
 
@@ -1073,11 +1093,28 @@ class StandardAnswer(Base):
     __tablename__ = "standard_answer"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    keyword: Mapped[str] = mapped_column(String, unique=True)
+    keyword: Mapped[str] = mapped_column(String)
     answer: Mapped[str] = mapped_column(String)
+    active: Mapped[bool] = mapped_column(Boolean)
+
+    __table_args__ = (
+        Index(
+            "unique_keyword_active",
+            keyword,
+            active,
+            unique=True,
+            postgresql_where=(active == True),  # noqa: E712
+        ),
+    )
+
     categories: Mapped[list[StandardAnswerCategory]] = relationship(
         "StandardAnswerCategory",
         secondary=StandardAnswer__StandardAnswerCategory.__table__,
+        back_populates="standard_answers",
+    )
+    chat_messages: Mapped[list[ChatMessage]] = relationship(
+        "ChatMessage",
+        secondary=ChatMessage__StandardAnswer.__table__,
         back_populates="standard_answers",
     )
 

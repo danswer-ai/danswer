@@ -1,5 +1,8 @@
+import string
 from collections.abc import Sequence
 
+from sqlalchemy import func
+from sqlalchemy import literal_column
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -53,6 +56,7 @@ def insert_standard_answer(
         keyword=keyword,
         answer=answer,
         categories=existing_categories,
+        active=True,
     )
     db_session.add(standard_answer)
     db_session.commit()
@@ -98,7 +102,7 @@ def remove_standard_answer(
     if standard_answer is None:
         raise ValueError(f"No standard answer with id {standard_answer_id}")
 
-    db_session.delete(standard_answer)
+    standard_answer.active = False
     db_session.commit()
 
 
@@ -164,8 +168,35 @@ def fetch_standard_answer(
     )
 
 
+def find_matching_standard_answers(
+    id_in: list[int],
+    query: str,
+    db_session: Session,
+) -> list[StandardAnswer]:
+    stmt = select(StandardAnswer).where(StandardAnswer.active is True)
+    cleaner = str.maketrans("", "", string.punctuation)
+    cleaned_query = query.translate(cleaner).lower()
+    keyphrase_words = func.unnest(
+        func.string_to_array(func.lower(StandardAnswer.keyword), " ")
+    ).alias("keyphrase_words")
+    query_words = func.unnest(func.string_to_array(cleaned_query, " ")).alias(
+        "query_words"
+    )
+    subquery = (
+        select(literal_column("1"))
+        .where(~keyphrase_words.in_(select(query_words)))
+        .exists()
+    )
+    stmt = stmt.where(~subquery)
+    if id_in:
+        stmt = stmt.where(StandardAnswer.id.in_(id_in))
+    return list(db_session.scalars(stmt).all())
+
+
 def fetch_standard_answers(db_session: Session) -> Sequence[StandardAnswer]:
-    return db_session.scalars(select(StandardAnswer)).all()
+    return db_session.scalars(
+        select(StandardAnswer).where(StandardAnswer.active is True)
+    ).all()
 
 
 def create_initial_default_standard_answer_category(db_session: Session) -> None:
