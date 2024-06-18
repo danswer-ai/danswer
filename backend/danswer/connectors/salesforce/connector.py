@@ -11,6 +11,7 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
+from danswer.connectors.interfaces import IdConnector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
@@ -27,7 +28,7 @@ MAX_QUERY_LENGTH = 10000  # max query length is 20,000 characters
 logger = setup_logger()
 
 
-class SalesforceConnector(LoadConnector, PollConnector):
+class SalesforceConnector(LoadConnector, PollConnector, IdConnector):
     def __init__(
         self,
         batch_size: int = INDEX_BATCH_SIZE,
@@ -229,8 +230,6 @@ class SalesforceConnector(LoadConnector, PollConnector):
         yield doc_batch
 
     def load_from_state(self) -> GenerateDocumentsOutput:
-        if self.sf_client is None:
-            raise ConnectorMissingCredentialError("Salesforce")
         return self._fetch_from_salesforce()
 
     def poll_source(
@@ -241,6 +240,19 @@ class SalesforceConnector(LoadConnector, PollConnector):
         start_datetime = datetime.utcfromtimestamp(start)
         end_datetime = datetime.utcfromtimestamp(end)
         return self._fetch_from_salesforce(start=start_datetime, end=end_datetime)
+
+    def retrieve_all_source_ids(self) -> set[str]:
+        if self.sf_client is None:
+            raise ConnectorMissingCredentialError("Salesforce")
+        all_retrieved_ids: set[str] = set()
+        for parent_object_type in self.parent_object_list:
+            query = f"SELECT Id FROM {parent_object_type}"
+            query_result = self.sf_client.query_all(query)
+            all_retrieved_ids.update(
+                instance_dict.get("Id", "") for instance_dict in query_result["records"]
+            )
+
+        return all_retrieved_ids
 
 
 if __name__ == "__main__":
