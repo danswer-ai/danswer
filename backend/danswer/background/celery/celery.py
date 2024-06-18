@@ -248,14 +248,13 @@ def sync_document_set_task(document_set_id: int) -> None:
 # Periodic Tasks
 #####
 @celery_app.task(
-    name="schedule_tasks",
+    name="check_for_document_sets_sync_task",
     soft_time_limit=JOB_TIMEOUT,
 )
-def schedule_tasks() -> None:
-    """Runs periodically to check if any tasks should be run and runs them"""
-
+def check_for_document_sets_sync_task() -> None:
+    """Runs periodically to check if any sync tasks should be run and adds them
+    to the queue"""
     with Session(get_sqlalchemy_engine()) as db_session:
-        # manage document syncing task
         # check if any document sets are not synced
         document_set_info = fetch_document_sets(
             user_id=None, db_session=db_session, include_outdated=True
@@ -267,7 +266,16 @@ def schedule_tasks() -> None:
                     kwargs=dict(document_set_id=document_set.id),
                 )
 
-        # manage document pruning
+
+@celery_app.task(
+    name="check_for_prune_task",
+    soft_time_limit=JOB_TIMEOUT,
+)
+def check_for_prune_task() -> None:
+    """Runs periodically to check if any prune tasks should be run and adds them
+    to the queue"""
+
+    with Session(get_sqlalchemy_engine()) as db_session:
         all_cc_pairs = get_connector_credential_pairs(db_session)
 
         for cc_pair in all_cc_pairs:
@@ -290,8 +298,16 @@ def schedule_tasks() -> None:
 # Celery Beat (Periodic Tasks) Settings
 #####
 celery_app.conf.beat_schedule = {
-    "schedule-tasks": {
-        "task": "schedule_tasks",
+    "check-for-document-set-sync": {
+        "task": "check_for_document_sets_sync_task",
         "schedule": timedelta(seconds=5),
     },
 }
+celery_app.conf.beat_schedule.update(
+    {
+        "check-for-prune": {
+            "task": "check_for_prune_task",
+            "schedule": timedelta(seconds=5),
+        },
+    }
+)
