@@ -24,6 +24,7 @@ from danswer.utils.logger import setup_logger
 
 DEFAULT_PARENT_OBJECT_TYPES = ["Account"]
 MAX_QUERY_LENGTH = 10000  # max query length is 20,000 characters
+ID_PREFIX = "SALESFORCE_"
 
 logger = setup_logger()
 
@@ -78,7 +79,7 @@ class SalesforceConnector(LoadConnector, PollConnector, IdConnector):
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
 
-        extracted_id = f"SALESFORCE_{object_dict['Id']}"
+        extracted_id = f"{ID_PREFIX}{object_dict['Id']}"
         extracted_link = f"https://{self.sf_client.sf_instance}/{extracted_id}"
         extracted_doc_updated_at = time_str_to_utc(object_dict["LastModifiedDate"])
         extracted_object_text = extract_dict_text(object_dict)
@@ -249,7 +250,8 @@ class SalesforceConnector(LoadConnector, PollConnector, IdConnector):
             query = f"SELECT Id FROM {parent_object_type}"
             query_result = self.sf_client.query_all(query)
             all_retrieved_ids.update(
-                instance_dict.get("Id", "") for instance_dict in query_result["records"]
+                f"{ID_PREFIX}{instance_dict.get('Id', '')}"
+                for instance_dict in query_result["records"]
             )
 
         return all_retrieved_ids
