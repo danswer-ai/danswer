@@ -50,9 +50,9 @@ class PollConnector(BaseConnector):
         raise NotImplementedError
 
 
-class PruneConnector(BaseConnector):
+class IdConnector(BaseConnector):
     @abc.abstractmethod
-    def prune_connector(self) -> set[str]:
+    def retrieve_all_source_ids(self) -> set[str]:
         raise NotImplementedError
 
 

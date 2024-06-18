@@ -11,14 +11,13 @@ from danswer.background.connector_deletion import delete_connector_credential_pa
 from danswer.background.connector_deletion import delete_connector_credential_pair_batch
 from danswer.background.task_utils import build_celery_task_wrapper
 from danswer.background.task_utils import name_cc_cleanup_task
-from danswer.background.task_utils import name_cc_pruning_task
+from danswer.background.task_utils import name_cc_prune_task
 from danswer.background.task_utils import name_document_set_sync_task
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.models import InputType
-from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import get_connector_credential_pair
-from danswer.db.credentials import backend_update_credential_json
+from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.document import prepare_to_modify_documents
@@ -98,7 +97,7 @@ def cleanup_connector_credential_pair_task(
             raise e
 
 
-@build_celery_task_wrapper(name_cc_pruning_task)
+@build_celery_task_wrapper(name_cc_prune_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def prune_documents_task(connector_id: int, credential_id: int) -> None:
     """connector pruning task. For a cc pair, this task pulls all docuement IDs from the source
@@ -113,30 +112,29 @@ def prune_documents_task(connector_id: int, credential_id: int) -> None:
             )
 
             if not cc_pair:
+                logger.warning(f"ccpair not found for {connector_id} {credential_id}")
                 return
 
-            runnable_connector, new_credential_json = instantiate_connector(
+            runnable_connector = instantiate_connector(
                 cc_pair.connector.source,
                 InputType.PRUNE,
                 cc_pair.connector.connector_specific_config,
-                cc_pair.credential.credential_json,
+                cc_pair.credential,
+                db_session,
             )
-            if new_credential_json is not None:
-                backend_update_credential_json(
-                    cc_pair.credential, new_credential_json, db_session
-                )
 
             all_connector_doc_ids: set[str] = extract_ids_from_runnable_connector(
                 runnable_connector
             )
 
-            all_indexed_document_ids: set[str] = set()
-            for doc in get_documents_for_connector_credential_pair(
-                db_session=db_session,
-                connector_id=connector_id,
-                credential_id=credential_id,
-            ):
-                all_indexed_document_ids.add(doc.id)
+            all_indexed_document_ids = {
+                doc.id
+                for doc in get_documents_for_connector_credential_pair(
+                    db_session=db_session,
+                    connector_id=connector_id,
+                    credential_id=credential_id,
+                )
+            }
 
             doc_ids_to_remove = list(all_indexed_document_ids - all_connector_doc_ids)
 
@@ -250,12 +248,11 @@ def sync_document_set_task(document_set_id: int) -> None:
 # Periodic Tasks
 #####
 @celery_app.task(
-    name="manage_all_tasks",
+    name="schedule_tasks",
     soft_time_limit=JOB_TIMEOUT,
 )
-def manage_all_tasks() -> None:
-    """Runs periodically to check if any document sets are out of sync
-    Creates a task to sync the set if needed"""
+def schedule_tasks() -> None:
+    """Runs periodically to check if any tasks should be run and runs them"""
 
     with Session(get_sqlalchemy_engine()) as db_session:
         # manage document syncing task
@@ -271,31 +268,30 @@ def manage_all_tasks() -> None:
                 )
 
         # manage document pruning
-        all_connectors = fetch_connectors(db_session=db_session)
+        all_cc_pairs = get_connector_credential_pairs(db_session)
 
-        for connector in all_connectors:
-            for association in connector.credentials:
-                credential = association.credential
-                if should_prune_cc_pair(
-                    connector=connector,
-                    credential_id=credential.id,
-                    db_session=db_session,
-                ):
-                    logger.info(f"Pruning the {connector.name} connector")
+        for cc_pair in all_cc_pairs:
+            if should_prune_cc_pair(
+                connector=cc_pair.connector,
+                credential_id=cc_pair.credential,
+                db_session=db_session,
+            ):
+                logger.info(f"Pruning the {cc_pair.connector.name} connector")
 
-                    prune_documents_task.apply_async(
-                        kwargs=dict(
-                            connector_id=connector.id, credential_id=credential.id
-                        )
+                prune_documents_task.apply_async(
+                    kwargs=dict(
+                        connector_id=cc_pair.connector.id,
+                        credential_id=cc_pair.credential.id,
                     )
+                )
 
 
 #####
 # Celery Beat (Periodic Tasks) Settings
 #####
 celery_app.conf.beat_schedule = {
-    "manage-all-tasks": {
-        "task": "manage_all_tasks",
+    "schedule-tasks": {
+        "task": "schedule_tasks",
         "schedule": timedelta(seconds=5),
     },
 }

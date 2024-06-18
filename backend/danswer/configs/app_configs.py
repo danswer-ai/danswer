@@ -175,8 +175,7 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
 
 # Avoid to get archived pages
 CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES = (
-    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower()
-    == "false"
+    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower() == "true"
 )
 
 JIRA_CONNECTOR_LABELS_TO_SKIP = [

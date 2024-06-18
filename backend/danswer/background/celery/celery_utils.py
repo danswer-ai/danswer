@@ -1,13 +1,18 @@
+from datetime import datetime
+from datetime import timezone
+
 from sqlalchemy.orm import Session
 
 from danswer.background.task_utils import name_cc_cleanup_task
-from danswer.background.task_utils import name_cc_pruning_task
+from danswer.background.task_utils import name_cc_prune_task
 from danswer.background.task_utils import name_document_set_sync_task
 from danswer.connectors.interfaces import BaseConnector
+from danswer.connectors.interfaces import IdConnector
 from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PruneConnector
+from danswer.connectors.interfaces import PollConnector
 from danswer.db.engine import get_db_current_time
 from danswer.db.models import Connector
+from danswer.db.models import Credential
 from danswer.db.models import DocumentSet
 from danswer.db.tasks import check_live_task_not_timed_out
 from danswer.db.tasks import get_latest_task
@@ -51,13 +56,13 @@ def should_sync_doc_set(document_set: DocumentSet, db_session: Session) -> bool:
 
 
 def should_prune_cc_pair(
-    connector: Connector, credential_id: int, db_session: Session
+    connector: Connector, credential: Credential, db_session: Session
 ) -> bool:
     if not connector.prune_freq:
         return False
 
-    pruning_task_name = name_cc_pruning_task(
-        connector_id=connector.id, credential_id=credential_id
+    pruning_task_name = name_cc_prune_task(
+        connector_id=connector.id, credential_id=credential.id
     )
     last_pruning_task = get_latest_task(pruning_task_name, db_session)
     current_db_time = get_db_current_time(db_session)
@@ -85,11 +90,19 @@ def extract_ids_from_runnable_connector(runnable_connector: BaseConnector) -> se
     all docs using the load_from_state and grab out the IDs
     """
     all_connector_doc_ids: set[str] = set()
-    if isinstance(runnable_connector, PruneConnector):
-        all_connector_doc_ids = runnable_connector.prune_connector()
+    if isinstance(runnable_connector, IdConnector):
+        all_connector_doc_ids = runnable_connector.retrieve_all_source_ids()
     elif isinstance(runnable_connector, LoadConnector):
         doc_batch_generator = runnable_connector.load_from_state()
         for doc_batch in doc_batch_generator:
             all_connector_doc_ids.update(doc.id for doc in doc_batch)
+    elif isinstance(runnable_connector, PollConnector):
+        start = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        end = datetime.now(timezone.utc).timestamp()
+        doc_batch_generator = runnable_connector.poll_source(start=start, end=end)
+        for doc_batch in doc_batch_generator:
+            all_connector_doc_ids.update(doc.id for doc in doc_batch)
+    else:
+        raise RuntimeError("Pruning job could not find a valid runnable_connector.")
 
     return all_connector_doc_ids

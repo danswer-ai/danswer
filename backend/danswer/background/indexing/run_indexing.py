@@ -17,7 +17,6 @@ from danswer.connectors.models import InputType
 from danswer.db.connector import disable_connector
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
 from danswer.db.connector_credential_pair import update_connector_credential_pair
-from danswer.db.credentials import backend_update_credential_json
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import mark_attempt_failed
@@ -52,16 +51,13 @@ def _get_document_generator(
     task = attempt.connector.input_type
 
     try:
-        runnable_connector, new_credential_json = instantiate_connector(
+        runnable_connector = instantiate_connector(
             attempt.connector.source,
             task,
             attempt.connector.connector_specific_config,
-            attempt.credential.credential_json,
+            attempt.credential,
+            db_session,
         )
-        if new_credential_json is not None:
-            backend_update_credential_json(
-                attempt.credential, new_credential_json, db_session
-            )
     except Exception as e:
         logger.exception(f"Unable to instantiate connector due to {e}")
         disable_connector(attempt.connector.id, db_session)
