@@ -28,6 +28,7 @@ export type AutoScrollHookType = {
   scrollableDivRef?: RefObject<HTMLDivElement>;
   distance?: number;
   debounce?: number;
+  endPaddingRef: RefObject<HTMLDivElement>;
 };
 
 /**
@@ -38,66 +39,87 @@ export const useScrollOnStream = ({
   lastMessageRef,
   inputRef,
   endDivRef,
+  endPaddingRef,
   scrollableDivRef,
-  distance = 140, // distance that should "engage" the scroll
-  debounce = 150, // time for debouncing
+  distance = 50, // distance that should "engage" the scroll
+  debounce = 100, // time for debouncing
 }: AutoScrollHookType) => {
-  const timeoutRef = useRef<boolean>(true);
-
-  const lastScrollTop = useRef<number>(0);
+  const previousHeight = useRef<number>(
+    inputRef.current?.getBoundingClientRect().height!
+  );
 
   const blockActionRef = useRef<boolean>(false);
 
   useEffect(() => {
-    // Function to handle the scroll itself
-    const scrollableDiv = scrollableDivRef?.current;
     const handleScroll = () => {
       if (
-        timeoutRef.current &&
         lastMessageRef.current &&
         inputRef.current &&
         endDivRef?.current &&
-        scrollableDivRef
+        scrollableDivRef &&
+        !blockActionRef.current
       ) {
-        const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
-        const endDivRect = inputRef.current.getBoundingClientRect();
+        if (scrollableDivRef.current && lastMessageRef.current) {
+          let newHeight: number = scrollableDivRef.current?.scrollHeight!;
+          const heightDifference = newHeight - previousHeight.current;
+          previousHeight.current = newHeight;
 
-        const currentScrollTop = scrollableDiv?.scrollTop!;
+          if (heightDifference > 0) {
+            blockActionRef.current = true;
+            scrollableDivRef?.current?.scrollBy({
+              left: 0,
+              top: heightDifference,
+              behavior: "smooth",
+            });
 
-        // Check if scroll is upwards
-        if (
-          currentScrollTop < lastScrollTop.current &&
-          !blockActionRef.current
-        ) {
-          blockActionRef.current = true;
+            const gap =
+              endPaddingRef?.current?.getBoundingClientRect().top! -
+              inputRef.current.getBoundingClientRect().top +
+              100;
+            if (gap - heightDifference > distance) {
+              scrollableDivRef?.current?.scrollBy({
+                left: 0,
+                top: gap,
+                behavior: "smooth",
+              });
+            }
 
-          setTimeout(() => {
-            blockActionRef.current = false;
-          }, 1000);
-        }
-
-        lastScrollTop.current = currentScrollTop;
-
-        // Check if the bottom of the final chat is within the engagement distance
-        if (
-          !blockActionRef.current &&
-          endDivRect.bottom - lastMessageRect.bottom > distance
-        ) {
-          timeoutRef.current = false;
-
-          setTimeout(() => {
-            endDivRef?.current?.scrollIntoView({ behavior: "smooth" });
-            timeoutRef.current = true;
-          }, 800) as unknown as number;
+            setTimeout(() => {
+              blockActionRef.current = false;
+            }, debounce) as unknown as number;
+          }
         }
       }
     };
 
-    // Debounce the scroll event
     if (isStreaming) {
       handleScroll();
     }
   });
+
+  useEffect(() => {
+    if (
+      lastMessageRef.current &&
+      inputRef.current &&
+      endDivRef?.current &&
+      scrollableDivRef
+    ) {
+      const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
+      const endDivRect = inputRef.current.getBoundingClientRect();
+
+      if (
+        scrollableDivRef.current &&
+        lastMessageRef.current &&
+        endDivRect.bottom - lastMessageRect.bottom > -200
+      ) {
+        scrollableDivRef?.current?.scrollBy({
+          left: 0,
+          top: Math.max(lastMessageRect.bottom - endDivRect.bottom + 300, 0),
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [isStreaming]);
 };
 
 export type InitialScrollType = {
@@ -138,6 +160,7 @@ export type ResponsiveScrollParams = {
   endPaddingRef: RefObject<HTMLDivElement>;
   endDivRef: RefObject<HTMLDivElement>;
   textAreaRef: RefObject<HTMLTextAreaElement>;
+  scrollableDivRef: RefObject<HTMLDivElement>;
 };
 
 export const useResponsiveScroll = ({
@@ -146,6 +169,7 @@ export const useResponsiveScroll = ({
   endPaddingRef,
   endDivRef,
   textAreaRef,
+  scrollableDivRef,
 }: ResponsiveScrollParams) => {
   const previousHeight = useRef<number>(
     inputRef.current?.getBoundingClientRect().height!
@@ -166,12 +190,18 @@ export const useResponsiveScroll = ({
             previousHeight.current &&
             heightDifference != 0 &&
             endDivRef.current &&
-            endPaddingRef.current
+            endPaddingRef.current &&
+            scrollableDivRef &&
+            scrollableDivRef.current
           ) {
             endPaddingRef.current.style.transition = "height 0.3s ease-out";
+            endPaddingRef.current.style.height = `${Math.max(newHeight - 60, 0)}px`;
 
-            endPaddingRef.current.style.height = `${Math.max(newHeight - 100, 0)}px`;
-            endDivRef?.current.scrollIntoView({ behavior: "smooth" });
+            scrollableDivRef?.current.scrollBy({
+              left: 0,
+              top: heightDifference,
+              behavior: "smooth",
+            });
           }
 
           previousHeight.current = newHeight;
