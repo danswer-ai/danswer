@@ -72,6 +72,19 @@ def handle_doc_feedback_button(
     )
 
 
+def handle_generate_answer_button(
+    req: SocketModeRequest,
+    client: SocketModeClient,
+) -> None:
+    req.payload["container"]["channel_id"]
+    req.payload["container"]["message_ts"]
+    req.payload["container"]["thread_ts"]
+    # TODO: handle how to generate AI answer from this button
+    # Ideally, want to use the process_message function
+    # in listener.py.
+    raise NotImplementedError("Not implemented yet")
+
+
 def handle_slack_feedback(
     feedback_id: str,
     feedback_type: str,

@@ -1,5 +1,6 @@
 from datetime import datetime
 from datetime import timedelta
+from collections.abc import Sequence
 from uuid import UUID
 
 from sqlalchemy import delete
@@ -65,6 +66,19 @@ def get_chat_session_by_id(
         raise ValueError("Chat session has been deleted")
 
     return chat_session
+
+
+def get_chat_sessions_by_slack_thread_id(
+    slack_thread_id: str,
+    user_id: UUID | None,
+    db_session: Session,
+) -> Sequence[ChatSession]:
+    stmt = select(ChatSession).where(ChatSession.slack_thread_id == slack_thread_id)
+    if user_id is not None:
+        stmt = stmt.where(
+            or_(ChatSession.user_id == user_id, ChatSession.user_id.is_(None))
+        )
+    return db_session.scalars(stmt).all()
 
 
 def get_chat_sessions_by_user(
@@ -144,6 +158,7 @@ def create_chat_session(
     prompt_override: PromptOverride | None = None,
     one_shot: bool = False,
     danswerbot_flow: bool = False,
+    slack_thread_id: str | None = None,
 ) -> ChatSession:
     chat_session = ChatSession(
         user_id=user_id,
@@ -153,6 +168,7 @@ def create_chat_session(
         prompt_override=prompt_override,
         one_shot=one_shot,
         danswerbot_flow=danswerbot_flow,
+        slack_thread_id=slack_thread_id,
     )
 
     db_session.add(chat_session)
@@ -238,6 +254,25 @@ def get_chat_message(
         raise ValueError("Chat message does not belong to user")
 
     return chat_message
+
+
+def get_chat_messages_by_sessions(
+    chat_session_ids: list[int],
+    user_id: UUID | None,
+    db_session: Session,
+    skip_permission_check: bool = False,
+) -> Sequence[ChatMessage]:
+    if not skip_permission_check:
+        for chat_session_id in chat_session_ids:
+            get_chat_session_by_id(
+                chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
+            )
+    stmt = (
+        select(ChatMessage)
+        .where(ChatMessage.chat_session_id.in_(chat_session_ids))
+        .order_by(nullsfirst(ChatMessage.parent_message))
+    )
+    return db_session.execute(stmt).scalars().all()
 
 
 def get_chat_messages_by_session(

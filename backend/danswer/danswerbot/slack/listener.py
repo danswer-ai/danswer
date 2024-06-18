@@ -18,6 +18,7 @@ from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_ID
+from danswer.danswerbot.slack.constants import GENERATE_ANSWER_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import IMMEDIATE_RESOLVED_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
@@ -26,6 +27,9 @@ from danswer.danswerbot.slack.handlers.handle_buttons import handle_doc_feedback
 from danswer.danswerbot.slack.handlers.handle_buttons import handle_followup_button
 from danswer.danswerbot.slack.handlers.handle_buttons import (
     handle_followup_resolved_button,
+)
+from danswer.danswerbot.slack.handlers.handle_buttons import (
+    handle_generate_answer_button,
 )
 from danswer.danswerbot.slack.handlers.handle_buttons import handle_slack_feedback
 from danswer.danswerbot.slack.handlers.handle_message import handle_message
@@ -390,6 +394,8 @@ def action_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
             return handle_followup_resolved_button(req, client, immediate=True)
         elif action["action_id"] == FOLLOWUP_BUTTON_RESOLVED_ACTION_ID:
             return handle_followup_resolved_button(req, client, immediate=False)
+        elif action["action_id"] == GENERATE_ANSWER_BUTTON_ACTION_ID:
+            return handle_generate_answer_button(req, client)
 
 
 def view_routing(req: SocketModeRequest, client: SocketModeClient) -> None:

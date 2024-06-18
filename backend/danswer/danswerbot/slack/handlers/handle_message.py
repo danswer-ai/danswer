@@ -7,6 +7,13 @@ from typing import cast
 from typing import Optional
 from typing import TypeVar
 
+from backend.danswer.configs.constants import MessageType
+from backend.danswer.db.chat import create_chat_session
+from backend.danswer.db.chat import create_new_chat_message
+from backend.danswer.db.chat import get_chat_messages_by_sessions
+from backend.danswer.db.chat import get_chat_sessions_by_slack_thread_id
+from backend.danswer.db.chat import get_or_create_root_message
+from backend.danswer.db.standard_answer import find_matching_standard_answers
 from retry import retry
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -31,6 +38,7 @@ from danswer.danswerbot.slack.blocks import build_documents_blocks
 from danswer.danswerbot.slack.blocks import build_follow_up_block
 from danswer.danswerbot.slack.blocks import build_qa_response_blocks
 from danswer.danswerbot.slack.blocks import build_sources_blocks
+from danswer.danswerbot.slack.blocks import build_standard_answer_blocks
 from danswer.danswerbot.slack.blocks import get_feedback_reminder_blocks
 from danswer.danswerbot.slack.blocks import get_restate_blocks
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
@@ -44,6 +52,7 @@ from danswer.danswerbot.slack.utils import SlackRateLimiter
 from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import Persona
+from danswer.db.models import Prompt
 from danswer.db.models import SlackBotConfig
 from danswer.db.models import SlackBotResponseType
 from danswer.db.persona import fetch_persona_by_id
@@ -170,6 +179,173 @@ def remove_scheduled_feedback_reminder(
             logger.info(
                 "Unable to delete the scheduled message. It must have already been posted"
             )
+
+
+def send_team_member_message(
+    client: WebClient,
+    channel: str,
+    thread_ts: str,
+) -> None:
+    respond_in_thread(
+        client=client,
+        channel=channel,
+        text=(
+            "👋 Hi, we've just gathered and forwarded the relevant "
+            + "information to the team. They'll get back to you shortly!"
+        ),
+        thread_ts=thread_ts,
+    )
+
+
+def handle_standard_answers(
+    message_info: SlackMessageInfo,
+    receiver_ids: list[str] | None,
+    channel_config: SlackBotConfig | None,
+    slack_thread_id: str | None,
+    prompt: Prompt | None,
+    respond_team_member_list: list[str] | None,
+    logger: logging.Logger,
+    client: WebClient,
+    db_session: Session,
+) -> bool:
+    """
+    Potentially respond to the user message depending on whether the user's message matches
+    any of the configured standard answers and also whether those answers have already been
+    provided in the current thread.
+
+    Returns True if no standard answers are found to match the user's message and therefore,
+    we still need to respond to the users.
+    """
+    configured_standard_answer_categories = (
+        channel_config.standard_answer_categories if channel_config else []
+    )
+    configured_standard_answers = set(
+        [
+            standard_answer
+            for standard_answer_category in configured_standard_answer_categories
+            for standard_answer in standard_answer_category.standard_answers
+        ]
+    )
+    query_msg = message_info.thread_messages[-1]
+
+    if slack_thread_id is None:
+        used_standard_answer_ids = set([])
+    else:
+        chat_sessions = get_chat_sessions_by_slack_thread_id(
+            slack_thread_id=slack_thread_id,
+            user_id=None,
+            db_session=db_session,
+        )
+        chat_messages = get_chat_messages_by_sessions(
+            chat_session_ids=chat_sessions.map(lambda x: x.id),
+            user_id=None,
+            db_session=db_session,
+            skip_permission_check=True,
+        )
+        used_standard_answer_ids = set(
+            [
+                standard_answer.id
+                for chat_message in chat_messages
+                for standard_answer in chat_message.standard_answers
+            ]
+        )
+
+    usable_standard_answers = configured_standard_answers.difference(
+        used_standard_answer_ids
+    )
+    if usable_standard_answers:
+        matching_standard_answers = find_matching_standard_answers(
+            query=query_msg.message,
+            id_in=list(usable_standard_answers.map(lambda x: x.id)),
+            db_session=db_session,
+        )
+    else:
+        matching_standard_answers = []
+    if matching_standard_answers:
+        chat_session = create_chat_session(
+            db_session=db_session,
+            user_id=None,
+            danswerbot_flow=True,
+            slack_thread_id=slack_thread_id,
+            one_shot=True,
+        )
+
+        root_message = get_or_create_root_message(
+            chat_session_id=chat_session.id, db_session=db_session
+        )
+
+        new_user_message = create_new_chat_message(
+            chat_session_id=chat_session.id,
+            parent_message=root_message,
+            prompt_id=prompt.id if prompt else None,
+            message=query_msg.message,
+            token_count=0,
+            message_type=MessageType.USER,
+            db_session=db_session,
+            commit=True,
+        )
+
+        formatted_answers = []
+        for standard_answer in matching_standard_answers:
+            formatted_answer = f"If you're looking for `{standard_answer.keyword}`: {standard_answer.content}"
+            formatted_answers.append(formatted_answer)
+        answer_message = "\n".join(formatted_answers)
+
+        _ = create_new_chat_message(
+            chat_session_id=chat_session.id,
+            parent_message=new_user_message,
+            prompt_id=prompt.id if prompt else None,
+            message=answer_message,
+            token_count=0,
+            message_type=MessageType.ASSISTANT,
+            error=None,
+            db_session=db_session,
+            commit=True,
+        )
+
+        update_emote_react(
+            emoji=DANSWER_REACT_EMOJI,
+            channel=message_info.channel_to_respond,
+            message_ts=message_info.msg_to_respond,
+            remove=True,
+            client=client,
+        )
+
+        restate_question_blocks = get_restate_blocks(
+            msg=query_msg.message,
+            is_bot_msg=message_info.is_bot_msg,
+        )
+
+        answer_blocks = build_standard_answer_blocks(
+            answer_message=answer_message,
+        )
+
+        all_blocks = restate_question_blocks + answer_blocks
+
+        try:
+            respond_in_thread(
+                client=client,
+                channel=message_info.channel_to_respond,
+                receiver_ids=receiver_ids,
+                text="Hello! Danswer has some results for you!",
+                blocks=all_blocks,
+                thread_ts=message_info.msg_to_respond,
+                unfurl=False,
+            )
+
+            if respond_team_member_list:
+                send_team_member_message(
+                    client=client,
+                    channel=message_info.channel_to_respond,
+                    thread_ts=message_info.msg_to_respond,
+                )
+
+            return False
+        except Exception as e:
+            logger.exception(f"Unable to send standard answer message: {e}")
+            return True
+    else:
+        return True
 
 
 def handle_message(
@@ -422,16 +598,13 @@ def handle_message(
             )
 
         # In case of failures, don't keep the reaction there permanently
-        try:
-            update_emote_react(
-                emoji=DANSWER_REACT_EMOJI,
-                channel=message_info.channel_to_respond,
-                message_ts=message_info.msg_to_respond,
-                remove=True,
-                client=client,
-            )
-        except SlackApiError as e:
-            logger.error(f"Failed to remove Reaction due to: {e}")
+        update_emote_react(
+            emoji=DANSWER_REACT_EMOJI,
+            channel=message_info.channel_to_respond,
+            message_ts=message_info.msg_to_respond,
+            remove=True,
+            client=client,
+        )
 
         return True
 
@@ -476,16 +649,13 @@ def handle_message(
             return True
 
     # Got an answer at this point, can remove reaction and give results
-    try:
-        update_emote_react(
-            emoji=DANSWER_REACT_EMOJI,
-            channel=message_info.channel_to_respond,
-            message_ts=message_info.msg_to_respond,
-            remove=True,
-            client=client,
-        )
-    except SlackApiError as e:
-        logger.error(f"Failed to remove Reaction due to: {e}")
+    update_emote_react(
+        emoji=DANSWER_REACT_EMOJI,
+        channel=message_info.channel_to_respond,
+        message_ts=message_info.msg_to_respond,
+        remove=True,
+        client=client,
+    )
 
     if answer.answer_valid is False:
         logger.info(
@@ -602,13 +772,9 @@ def handle_message(
         # For DM (ephemeral message), we need to create a thread via a normal message so the user can see
         # the ephemeral message. This also will give the user a notification which ephemeral message does not.
         if respond_team_member_list or respond_slack_group_list:
-            respond_in_thread(
+            send_team_member_message(
                 client=client,
                 channel=channel,
-                text=(
-                    "👋 Hi, we've just gathered and forwarded the relevant "
-                    + "information to the team. They'll get back to you shortly!"
-                ),
                 thread_ts=message_ts_to_respond_to,
             )
 
