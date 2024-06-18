@@ -68,43 +68,41 @@ const InvitedUserTable = ({
   };
 
   return (
-    <HidableSection sectionTitle="Invited Users">
-      <>
-        {totalPages > 1 ? (
-          <CenteredPageSelector
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={onPageChange}
-          />
-        ) : null}
-        <Table className="overflow-visible">
-          <TableHead>
-            <TableRow>
-              <TableHeaderCell>Email</TableHeaderCell>
-              <TableHeaderCell>
-                <div className="flex justify-end">Actions</div>
-              </TableHeaderCell>
+    <>
+      <Table className="overflow-visible">
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Email</TableHeaderCell>
+            <TableHeaderCell>
+              <div className="flex justify-end">Actions</div>
+            </TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {users.map((user) => (
+            <TableRow key={user.email}>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>
+                <div className="flex justify-end">
+                  <RemoveUserButton
+                    user={user}
+                    onSuccess={onRemovalSuccess}
+                    onError={onRemovalError}
+                  />
+                </div>
+              </TableCell>
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.email}>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <div className="flex justify-end">
-                    <RemoveUserButton
-                      user={user}
-                      onSuccess={onRemovalSuccess}
-                      onError={onRemovalError}
-                    />
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </>
-    </HidableSection>
+          ))}
+        </TableBody>
+      </Table>
+      {totalPages > 1 ? (
+        <CenteredPageSelector
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
+      ) : null}
+    </>
   );
 };
 

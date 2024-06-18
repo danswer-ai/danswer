@@ -10,8 +10,6 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from danswer.auth.invited_users import get_invited_users
-from danswer.auth.invited_users import write_invited_users
 from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.app_configs import TOKEN_BUDGET_GLOBALLY_ENABLED
@@ -28,7 +26,6 @@ from danswer.db.feedback import update_document_boost
 from danswer.db.feedback import update_document_hidden
 from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
 from danswer.db.models import User
-from danswer.db.users import get_user_by_email
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs.factory import get_dynamic_config_store
@@ -40,7 +37,6 @@ from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.manage.models import BoostDoc
 from danswer.server.manage.models import BoostUpdateRequest
 from danswer.server.manage.models import HiddenUpdateRequest
-from danswer.server.manage.models import UserByEmail
 from danswer.utils.logger import setup_logger
 
 router = APIRouter(prefix="/manage")
@@ -235,66 +231,3 @@ def update_token_budget_settings(
     # Store the settings in the dynamic config store
     get_dynamic_config_store().store(TOKEN_BUDGET_SETTINGS, settings_json)
     return {"message": "Token budget settings updated successfully."}
-
-
-@router.put("/admin/users")
-def bulk_invite_users(
-    emails: list[str] = Body(..., embed=True),
-    _: User | None = Depends(current_admin_user),
-) -> int:
-    all_emails = list(set(emails) | set(get_invited_users()))
-    return write_invited_users(all_emails)
-
-
-@router.patch("/admin/remove-invited-user")
-def remove_invited_user(
-    user_email: UserByEmail,
-    _: User | None = Depends(current_admin_user),
-) -> int:
-    user_emails = get_invited_users()
-    remaining_users = [user for user in user_emails if user != user_email.user_email]
-    return write_invited_users(remaining_users)
-
-
-@router.patch("/admin/deactivate-user")
-def deactivate_user(
-    user_email: UserByEmail,
-    current_user: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> None:
-    if current_user.email == user_email.user_email:
-        raise HTTPException(status_code=400, detail="You cannot deactivate yourself")
-
-    user_to_deactivate = get_user_by_email(
-        email=user_email.user_email, db_session=db_session
-    )
-
-    if not user_to_deactivate:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if user_to_deactivate.is_active is False:
-        logger.warning("{} is already deactivated".format(user_to_deactivate.email))
-
-    user_to_deactivate.is_active = False
-    db_session.add(user_to_deactivate)
-    db_session.commit()
-
-
-@router.patch("/admin/activate-user")
-def activate_user(
-    user_email: UserByEmail,
-    _: User | None = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> None:
-    user_to_activate = get_user_by_email(
-        email=user_email.user_email, db_session=db_session
-    )
-    if not user_to_activate:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if user_to_activate.is_active is True:
-        logger.warning("{} is already activated".format(user_to_activate.email))
-
-    user_to_activate.is_active = True
-    db_session.add(user_to_activate)
-    db_session.commit()

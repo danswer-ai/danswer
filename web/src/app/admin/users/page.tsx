@@ -4,19 +4,9 @@ import SignedUpUserTable from "@/components/admin/users/SignedUpUserTable";
 import { SearchBar } from "@/components/search/SearchBar";
 import { useState } from "react";
 import { FiPlusSquare } from "react-icons/fi";
-import Link from "next/link";
 import { Modal } from "@/components/Modal";
 
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-  Button,
-  Text,
-} from "@tremor/react";
+import { Button, Text } from "@tremor/react";
 import { LoadingAnimation } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { usePopup, PopupSpec } from "@/components/admin/connectors/Popup";
@@ -24,10 +14,42 @@ import { UsersIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { type User, UserStatus } from "@/lib/types";
 import useSWR, { mutate } from "swr";
-import useSWRMutation from "swr/mutation";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { HidableSection } from "@/app/admin/assistants/HidableSection";
 import BulkAdd from "@/components/admin/users/BulkAdd";
+
+const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
+  if (!validDomains.length) {
+    return (
+      <div className="text-sm">
+        No invited users. Anyone can sign up with a valid email address. To
+        restrict access you can:
+        <div className="flex flex-wrap ml-2 mt-1">
+          (1) Invite users above. Once a user has been invited, only emails that
+          have explicitly been invited will be able to sign-up.
+        </div>
+        <div className="mt-1 ml-2">
+          (2) Set the{" "}
+          <b className="font-mono w-fit h-fit">VALID_EMAIL_DOMAINS</b>{" "}
+          environment variable to a comma separated list of email domains. This
+          will restrict access to users with email addresses from these domains.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-sm">
+      No invited users. Anyone with an email address with any of the following
+      domains can sign up: <i>{validDomains.join(", ")}</i>.
+      <div className="mt-2">
+        To further restrict access you can invite users above. Once a user has
+        been invited, only emails that have explicitly been invited will be able
+        to sign-up.
+      </div>
+    </div>
+  );
+};
 
 interface UsersResponse {
   accepted: User[];
@@ -46,11 +68,18 @@ const UsersTables = ({
   const [invitedPage, setInvitedPage] = useState(1);
   const [acceptedPage, setAcceptedPage] = useState(1);
   const { data, isLoading, mutate, error } = useSWR<UsersResponse>(
-    `/api/manage/users?q=${encodeURI(q)}&accepted_page=${acceptedPage - 1}&invited_page=${invitedPage - 1}`,
+    `/api/manage/users?q=${encodeURI(q)}&accepted_page=${
+      acceptedPage - 1
+    }&invited_page=${invitedPage - 1}`,
     errorHandlingFetcher
   );
+  const {
+    data: validDomains,
+    isLoading: isLoadingDomains,
+    error: domainsError,
+  } = useSWR<string[]>("/api/manage/admin/valid-domains", errorHandlingFetcher);
 
-  if (isLoading) {
+  if (isLoading || isLoadingDomains) {
     return <LoadingAnimation text="Loading" />;
   }
 
@@ -63,18 +92,45 @@ const UsersTables = ({
     );
   }
 
+  if (domainsError || !validDomains) {
+    return (
+      <ErrorCallout
+        errorTitle="Error loading valid domains"
+        errorMsg={domainsError?.info?.detail}
+      />
+    );
+  }
+
   const { accepted, invited, accepted_pages, invited_pages } = data;
+
+  // remove users that are already accepted
+  const finalInvited = invited.filter(
+    (user) => !accepted.map((u) => u.email).includes(user.email)
+  );
 
   return (
     <>
-      <InvitedUserTable
-        users={invited}
-        setPopup={setPopup}
-        currentPage={invitedPage}
-        onPageChange={setInvitedPage}
-        totalPages={invited_pages}
-        mutate={mutate}
-      />
+      <HidableSection sectionTitle="Invited Users">
+        {invited.length > 0 ? (
+          finalInvited.length > 0 ? (
+            <InvitedUserTable
+              users={finalInvited}
+              setPopup={setPopup}
+              currentPage={invitedPage}
+              onPageChange={setInvitedPage}
+              totalPages={invited_pages}
+              mutate={mutate}
+            />
+          ) : (
+            <div className="text-sm">
+              To invite additional teammates, use the <b>Invite Users</b> button
+              above!
+            </div>
+          )
+        ) : (
+          <ValidDomainsDisplay validDomains={validDomains} />
+        )}
+      </HidableSection>
       <SignedUpUserTable
         users={accepted}
         setPopup={setPopup}
@@ -129,6 +185,13 @@ const AddUserButton = ({
       type: "success",
     });
   };
+  const onFailure = async (res: Response) => {
+    const error = (await res.json()).detail;
+    setPopup({
+      message: `Failed to invite users - ${error}`,
+      type: "error",
+    });
+  };
   return (
     <>
       <Button className="w-fit" onClick={() => setModal(true)}>
@@ -143,7 +206,7 @@ const AddUserButton = ({
             <Text className="font-medium text-base">
               Add the email addresses to import, separated by whitespaces.
             </Text>
-            <BulkAdd onSuccess={onSuccess} />
+            <BulkAdd onSuccess={onSuccess} onFailure={onFailure} />
           </div>
         </Modal>
       )}
