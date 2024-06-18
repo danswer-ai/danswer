@@ -89,7 +89,8 @@ module.exports = {
         },
 
         // bubbles in chat for each "user"
-        user: "#fb7185", // yellow-400
+        user: "#fb7185", // rose-400
+        "user-hover": "#f43f5e", // rose-500
         ai: "#60a5fa", // blue-400
 
         // for display documents

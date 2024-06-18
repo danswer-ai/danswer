@@ -7,9 +7,11 @@ import { SelectedDocumentDisplay } from "./SelectedDocumentDisplay";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { BasicSelectable } from "@/components/BasicClickable";
 import { Message, RetrievalType } from "../interfaces";
-import { HEADER_PADDING } from "@/lib/constants";
+import { HEADER_HEIGHT, HEADER_PADDING, SUB_HEADER } from "@/lib/constants";
 import { HoverPopup } from "@/components/HoverPopup";
 import { FaToggleOn } from "react-icons/fa";
+
+import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
 
 export function DocumentSidebar({
   closeSidebar,
@@ -57,16 +59,19 @@ export function DocumentSidebar({
     includeToggle?: boolean;
   }) {
     return (
-      <div className="w-full text-lg text-emphasis font-medium flex pb-0.5 mb-3.5 mt-2 font-bold">
-        {icon({ className: "my-auto mr-1" })}
-        {name}
-
+      <div
+        className={`w-full flex text-lg  text-emphasis font-medium flex  mb-3.5 font-bold   ${SUB_HEADER}   flex items-end`}
+      >
+        <p className="flex   mt-auto ">
+          {icon({ className: "my-auto  mr-1" })}
+          {name}
+        </p>
         {includeToggle && (
           <button
             onClick={() => closeSidebar()}
             className="flex  ml-auto content-end "
           >
-            <FaToggleOn size={24} />
+            <TbLayoutSidebarLeftExpand size={24} />
           </button>
         )}
       </div>
@@ -76,6 +81,7 @@ export function DocumentSidebar({
   return (
     <div
       className={`
+
       flex-initial 
       overflow-y-hidden
       bg-background-weak
@@ -87,9 +93,8 @@ export function DocumentSidebar({
       id="document-sidebar"
     >
       {popup}
-
-      <div className="h-4/6 flex flex-col mt-4">
-        <div className="px-3 mb-3 flex border-b border-border">
+      <div className="h-4/6 flex flex-col ">
+        <div className="px-3   mb-3 flex border-b border-border">
           <SectionHeader
             name={
               selectedMessageRetrievalType === RetrievalType.SelectedDocs
