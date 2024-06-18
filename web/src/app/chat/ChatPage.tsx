@@ -88,6 +88,7 @@ export function ChatPage({
   const [configModalActiveTab, setConfigModalActiveTab] = useState<
     string | null
   >(null);
+
   let {
     user,
     chatSessions,
@@ -98,6 +99,7 @@ export function ChatPage({
     folders,
     openedFolders,
   } = useChatContext();
+
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
   const [scrollingCancelled, setScrollingCancelled] = useState(false);
 
@@ -419,6 +421,13 @@ export function ChatPage({
   const endDivRef = useRef<HTMLDivElement>(null);
   const endPaddingRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (scrollableDivRef.current) {
+      const scrollDiv = scrollableDivRef.current;
+      scrollDiv.scrollTop = scrollDiv.scrollHeight;
+    }
+  }, []); // Empty dependency array ensures this runs only once on mount
+
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -452,9 +461,9 @@ export function ChatPage({
     isStreaming,
     lastMessageRef,
     scrollableDivRef,
+    endPaddingRef,
     inputRef,
     endDivRef,
-    distance: -250,
   });
 
   // Scroll if necessary for initial message
@@ -472,6 +481,7 @@ export function ChatPage({
     endDivRef,
     endPaddingRef,
     textAreaRef,
+    scrollableDivRef,
   });
 
   // used for resizing of the document sidebar
@@ -519,6 +529,7 @@ export function ChatPage({
     forceSearch?: boolean;
     isSeededChat?: boolean;
   } = {}) => {
+    clientScrollToBottom();
     setScrollingCancelled(true);
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
@@ -766,15 +777,24 @@ export function ChatPage({
         await nameChatSession(currChatSessionId, currMessage);
       }
 
-      // NOTE: don't switch pages if the user has navigated away from the chat
-      if (
-        currChatSessionId === urlChatSessionId.current ||
-        urlChatSessionId.current === null
-      ) {
-        router.push(buildChatUrl(searchParams, currChatSessionId, null), {
-          scroll: false,
-        });
-      }
+      // // NOTE: don't switch pages if the user has navigated away from the chat
+      // if (
+      //   currChatSessionId === urlChatSessionId.current ||
+      //   urlChatSessionId.current === null
+      // ) {
+
+      const newUrl = buildChatUrl(searchParams, currChatSessionId, null);
+      window.history.pushState(
+        { ...window.history.state, as: newUrl, url: newUrl },
+        "",
+        newUrl
+      );
+
+      // Previous method
+      // router.push(buildChatUrl(searchParams, currChatSessionId, null), {
+      //   scroll: false,
+      // },);
+      // }
     }
     if (
       finalMessage?.context_docs &&
@@ -877,6 +897,16 @@ export function ChatPage({
     });
   };
 
+  const clientScrollToBottom = () => {
+    setTimeout(() => {
+      endDivRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 200);
+  };
+
+  useEffect(() => {
+    clientScrollToBottom();
+  }, [chatSessionId]);
+
   // handle redirect if chat page is disabled
   // NOTE: this must be done here, in a client component since
   // settings are passed in via Context and therefore aren't
@@ -958,8 +988,10 @@ export function ChatPage({
                     {...getRootProps()}
                   >
                     {/* <input {...getInputProps()} /> */}
+
                     <div
-                      className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                      id="chat"
+                      className={`w-full chat h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
                       ref={scrollableDivRef}
                     >
                       {livePersona && (
@@ -1010,7 +1042,7 @@ export function ChatPage({
 
                       <div
                         className={
-                          "mt-4 pt-12 sm:pt-0 mx-8" +
+                          "mt-4  pt-12 sm:pt-0 mx-8" +
                           (hasPerformedInitialScroll ? "" : " invisible")
                         }
                       >
@@ -1087,7 +1119,7 @@ export function ChatPage({
                                 }
                               >
                                 <AIMessage
-                                  key={message.messageId}
+                                  key={i}
                                   messageId={message.messageId}
                                   content={message.message}
                                   files={message.files}
@@ -1203,8 +1235,10 @@ export function ChatPage({
                         {isStreaming &&
                           messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
-                          "user" && (
-                            <div key={messageHistory.length}>
+                            "user" && (
+                            <div
+                              key={`${messageHistory}-${existingChatSessionId}`}
+                            >
                               <AIMessage
                                 messageId={null}
                                 personaName={livePersona.name}
@@ -1225,8 +1259,10 @@ export function ChatPage({
                               />
                             </div>
                           )}
-                        <div ref={endPaddingRef} />
+
+                        <div ref={endPaddingRef} className="h-[40px]" />
                         <div ref={endDivRef} />
+
                         {livePersona &&
                           livePersona.starter_messages &&
                           livePersona.starter_messages.length > 0 &&
