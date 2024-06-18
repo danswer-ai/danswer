@@ -8,7 +8,7 @@ import {
 } from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { errorHandlingFetcher } from "./fetcher";
-import { RefObject, useState } from "react";
+import { Dispatch, RefObject, SetStateAction, useState } from "react";
 import { DateRangePickerValue } from "@tremor/react";
 import { SourceMetadata } from "./search/interfaces";
 import { EE_ENABLED } from "./constants";
@@ -38,8 +38,8 @@ export const useScrollOnStream = ({
   endDivRef,
   endPaddingRef,
   scrollableDivRef,
-  distance = 50, // distance that should "engage" the scroll
-  debounce = 100, // time for debouncing
+  distance = 200, // distance that should "engage" the scroll
+  debounce = 20, // time for debouncing
 }: AutoScrollHookType) => {
   const previousHeight = useRef<number>(
     inputRef.current?.getBoundingClientRect().height!
@@ -61,7 +61,11 @@ export const useScrollOnStream = ({
           const heightDifference = newHeight - previousHeight.current;
           previousHeight.current = newHeight;
 
-          if (heightDifference > 0) {
+          const scrollDistance =
+            endDivRef.current.getBoundingClientRect().top -
+            inputRef.current.getBoundingClientRect().top;
+
+          if (heightDifference > 0 && scrollDistance < distance) {
             blockActionRef.current = true;
             scrollableDivRef?.current?.scrollBy({
               left: 0,
@@ -73,7 +77,7 @@ export const useScrollOnStream = ({
               endPaddingRef?.current?.getBoundingClientRect().top! -
               inputRef.current.getBoundingClientRect().top +
               100;
-            if (gap - heightDifference > distance) {
+            if (gap - heightDifference > 100) {
               scrollableDivRef?.current?.scrollBy({
                 left: 0,
                 top: gap,
@@ -92,6 +96,24 @@ export const useScrollOnStream = ({
     if (isStreaming) {
       handleScroll();
     }
+
+    const handleUserScroll = () => {
+      if (!blockActionRef.current) {
+        blockActionRef.current = true;
+        setTimeout(() => {
+          blockActionRef.current = false;
+        }, 100);
+      }
+    };
+
+    scrollableDivRef?.current?.addEventListener("scroll", handleUserScroll);
+
+    return () => {
+      scrollableDivRef?.current?.removeEventListener(
+        "scroll",
+        handleUserScroll
+      );
+    };
   });
 
   useEffect(() => {
@@ -101,17 +123,14 @@ export const useScrollOnStream = ({
       endDivRef?.current &&
       scrollableDivRef
     ) {
-      const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
-      const endDivRect = inputRef.current.getBoundingClientRect();
+      const scrollDistance =
+        endDivRef.current.getBoundingClientRect().top -
+        inputRef.current.getBoundingClientRect().top;
 
-      if (
-        scrollableDivRef.current &&
-        lastMessageRef.current &&
-        endDivRect.bottom - lastMessageRect.bottom > -200
-      ) {
+      if (scrollableDivRef.current && scrollDistance < distance) {
         scrollableDivRef?.current?.scrollBy({
           left: 0,
-          top: Math.max(lastMessageRect.bottom - endDivRect.bottom + 300, 0),
+          top: Math.max(scrollDistance + 300, 0),
           behavior: "smooth",
         });
       }

@@ -37,6 +37,7 @@ import {
   uploadFilesForChat,
 } from "./lib";
 import { useContext, useEffect, useRef, useState } from "react";
+
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
@@ -55,7 +56,7 @@ import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoade
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { ChatPersonaSelector } from "./ChatPersonaSelector";
-import { FiShare2 } from "react-icons/fi";
+import { FiArrowDown, FiArrowDownCircle, FiShare2 } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { ThreeDots } from "react-loader-spinner";
@@ -71,7 +72,6 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
-import { Button } from "@tremor/react";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -101,6 +101,8 @@ export function ChatPage({
   } = useChatContext();
 
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
+  const [aboveHorizon, setAboveHorizon] = useState(false);
+
   const [scrollingCancelled, setScrollingCancelled] = useState(false);
 
   const router = useRouter();
@@ -426,6 +428,21 @@ export function ChatPage({
       const scrollDiv = scrollableDivRef.current;
       scrollDiv.scrollTop = scrollDiv.scrollHeight;
     }
+
+    const handleUserScroll = () => {
+      const scrollDistance =
+        endDivRef?.current?.getBoundingClientRect()?.top! -
+        inputRef?.current?.getBoundingClientRect()?.top!;
+      setAboveHorizon(scrollDistance > 100);
+    };
+
+    scrollableDivRef?.current?.addEventListener("scroll", handleUserScroll);
+    return () => {
+      scrollableDivRef?.current?.removeEventListener(
+        "scroll",
+        handleUserScroll
+      );
+    };
   }, []); // Empty dependency array ensures this runs only once on mount
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -836,6 +853,8 @@ export function ChatPage({
       });
     }
   };
+
+  // useE
 
   const onPersonaChange = (persona: Persona | null) => {
     if (persona && persona.id !== livePersona.id) {
@@ -1305,6 +1324,14 @@ export function ChatPage({
                             </div>
                           )}
                       </div>
+                      {aboveHorizon && (
+                        <button
+                          onClick={() => clientScrollToBottom()}
+                          className="p-1 rounded-2xl bg-background-strong border border-border sticky mx-auto bottom-0 "
+                        >
+                          <FiArrowDown size={18} />
+                        </button>
+                      )}
                     </div>
 
                     <div
