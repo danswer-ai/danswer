@@ -90,9 +90,7 @@ def _process_file(
         file_name
     )
     title = (
-        all_metadata["file_title"]
-        if "file_title" in all_metadata
-        else file_display_name
+        all_metadata["title"] or "" if "title" in all_metadata else file_display_name
     )
 
     time_updated = all_metadata.get("time_updated", datetime.now(timezone.utc))
@@ -115,7 +113,7 @@ def _process_file(
             "secondary_owners",
             "filename",
             "file_display_name",
-            "file_title",
+            "title",
         ]
     }
 
