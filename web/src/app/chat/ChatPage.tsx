@@ -475,8 +475,6 @@ export function ChatPage({
       setAboveHorizon(scrollDistance > 200);
     };
 
-    console.log(scrollableDivRef?.current);
-
     scrollableDivRef?.current?.addEventListener("scroll", handleUserScroll);
     return () => {
       scrollableDivRef?.current?.removeEventListener(
