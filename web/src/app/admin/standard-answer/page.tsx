@@ -277,7 +277,7 @@ const Main = () => {
       )}
       <div className="mb-2"></div>
 
-      <Link className="flex mb-3" href="/admin/standard-answer/new">
+      <Link className="flex mb-3 w-fit" href="/admin/standard-answer/new">
         <Button className="my-auto" color="green" size="xs">
           New Standard Answer
         </Button>
