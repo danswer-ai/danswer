@@ -12,6 +12,7 @@ import { useState } from "react";
 import { DateRangePickerValue } from "@tremor/react";
 import { SourceMetadata } from "./search/interfaces";
 import { EE_ENABLED } from "./constants";
+import { destructureValue } from "./llm/utils";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 
@@ -138,12 +139,18 @@ export interface LlmOverrideManager {
   setTemperature: React.Dispatch<React.SetStateAction<number | null>>;
 }
 
-export function useLlmOverride(): LlmOverrideManager {
-  const [llmOverride, setLlmOverride] = useState<LlmOverride>({
-    name: "",
-    provider: "",
-    modelName: "",
-  });
+export function useLlmOverride(
+  currentAlternateModel?: string
+): LlmOverrideManager {
+  const [llmOverride, setLlmOverride] = useState<LlmOverride>(
+    currentAlternateModel
+      ? destructureValue(currentAlternateModel)
+      : {
+          name: "",
+          provider: "",
+          modelName: "",
+        }
+  );
   const [temperature, setTemperature] = useState<number | null>(null);
 
   return {

@@ -92,6 +92,7 @@ export function ChatPage({
     folders,
     openedFolders,
   } = useChatContext();
+
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
 
   const router = useRouter();
@@ -104,6 +105,14 @@ export function ChatPage({
   const selectedChatSession = chatSessions.find(
     (chatSession) => chatSession.id === existingChatSessionId
   );
+
+  // console.log(selectedChatSession?.current_alternate_model)
+
+  const llmOverrideManager = useLlmOverride(
+    selectedChatSession?.current_alternate_model
+  );
+  // console.log(llmOverrideManager.llmOverride)
+
   const existingChatSessionPersonaId = selectedChatSession?.persona_id;
 
   // used to track whether or not the initial "submit on load" has been performed
@@ -138,12 +147,12 @@ export function ChatPage({
       filterManager.setSelectedTags([]);
       filterManager.setTimeRange(null);
       // reset LLM overrides
-      llmOverrideManager.setLlmOverride({
-        name: "",
-        provider: "",
-        modelName: "",
-      });
-      llmOverrideManager.setTemperature(null);
+      // llmOverrideManager.setLlmOverride({
+      //   name: "",
+      //   provider: "",
+      //   modelName: "",
+      // });
+      // llmOverrideManager.setTemperature(null);
       // remove uploaded files
       setCurrentMessageFiles([]);
 
@@ -177,7 +186,6 @@ export function ChatPage({
           submitOnLoadPerformed.current = true;
           await onSubmit();
         }
-
         return;
       }
 
@@ -186,6 +194,9 @@ export function ChatPage({
         `/api/chat/get-chat-session/${existingChatSessionId}`
       );
       const chatSession = (await response.json()) as BackendChatSession;
+
+      console.log("chatSession.current_alternate_model");
+      console.log(chatSession.current_alternate_model);
       setSelectedPersona(
         filteredAssistants.find(
           (persona) => persona.id === chatSession.persona_id
@@ -385,8 +396,6 @@ export function ChatPage({
       availableSources,
       availableDocumentSets,
     });
-
-  const llmOverrideManager = useLlmOverride();
 
   // state for cancelling streaming
   const [isCancelled, setIsCancelled] = useState(false);
@@ -595,6 +604,7 @@ export function ChatPage({
           .map((document) => document.db_doc_id as number),
         queryOverride,
         forceSearch,
+
         modelProvider: llmOverrideManager.llmOverride.name || undefined,
         modelVersion:
           llmOverrideManager.llmOverride.modelName ||
@@ -843,6 +853,9 @@ export function ChatPage({
   }
 
   const retrievalDisabled = !personaIncludesRetrieval(livePersona);
+
+  console.log(llmOverrideManager);
+
   return (
     <>
       {/* <div className="absolute top-0 z-40 w-full">
@@ -892,17 +905,20 @@ export function ChatPage({
             />
           )}
 
-          <ConfigurationModal
-            activeTab={configModalActiveTab}
-            setActiveTab={setConfigModalActiveTab}
-            onClose={() => setConfigModalActiveTab(null)}
-            filterManager={filterManager}
-            availableAssistants={filteredAssistants}
-            selectedAssistant={livePersona}
-            setSelectedAssistant={onPersonaChange}
-            llmProviders={llmProviders}
-            llmOverrideManager={llmOverrideManager}
-          />
+          {chatSessionId !== null && (
+            <ConfigurationModal
+              chatSessionId={chatSessionId}
+              activeTab={configModalActiveTab}
+              setActiveTab={setConfigModalActiveTab}
+              onClose={() => setConfigModalActiveTab(null)}
+              filterManager={filterManager}
+              availableAssistants={filteredAssistants}
+              selectedAssistant={livePersona}
+              setSelectedAssistant={onPersonaChange}
+              llmProviders={llmProviders}
+              llmOverrideManager={llmOverrideManager}
+            />
+          )}
 
           {documentSidebarInitialWidth !== undefined ? (
             <Dropzone onDrop={handleImageUpload} noClick>
@@ -1044,7 +1060,9 @@ export function ChatPage({
                                 citedDocuments={getCitedDocumentsFromMessage(
                                   message
                                 )}
-                                toolCall={message.toolCalls[0]}
+                                toolCall={
+                                  message.toolCalls && message.toolCalls[0]
+                                }
                                 isComplete={
                                   i !== messageHistory.length - 1 ||
                                   !isStreaming
@@ -1212,7 +1230,6 @@ export function ChatPage({
                               )}
                             </div>
                           )}
-
                         <div ref={endDivRef} />
                       </div>
                     </div>

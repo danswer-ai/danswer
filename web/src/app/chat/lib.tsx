@@ -21,6 +21,25 @@ import { Persona } from "../admin/assistants/interfaces";
 import { ReadonlyURLSearchParams } from "next/navigation";
 import { SEARCH_PARAM_NAMES } from "./searchParams";
 
+export async function updateChatSession(
+  chatSessionId: number,
+  newAlternateModel: string
+) {
+  console.log("zz");
+
+  console.log(chatSessionId, newAlternateModel);
+  const response = await fetch("/api/chat/update-thread-model", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      chat_session_id: chatSessionId,
+      new_alternate_model: newAlternateModel,
+    }),
+  });
+  return response;
+}
 export async function createChatSession(
   personaId: number,
   description: string | null
@@ -195,6 +214,7 @@ export async function renameChatSession(
   chatSessionId: number,
   newName: string
 ) {
+  console.log(chatSessionId, newName);
   const response = await fetch(`/api/chat/rename-chat-session`, {
     method: "PUT",
     headers: {

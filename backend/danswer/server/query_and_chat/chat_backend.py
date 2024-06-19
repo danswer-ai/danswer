@@ -63,6 +63,7 @@ from danswer.server.query_and_chat.models import LLMOverride
 from danswer.server.query_and_chat.models import PromptOverride
 from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
+from danswer.server.query_and_chat.models import UpdateThreadRequest
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -77,9 +78,13 @@ def get_user_chat_sessions(
 ) -> ChatSessionsResponse:
     user_id = user.id if user is not None else None
 
-    chat_sessions = get_chat_sessions_by_user(
-        user_id=user_id, deleted=False, db_session=db_session
-    )
+    try:
+        chat_sessions = get_chat_sessions_by_user(
+            user_id=user_id, deleted=False, db_session=db_session
+        )
+
+    except ValueError:
+        raise ValueError("Chat session does not exist or has been deleted")
 
     return ChatSessionsResponse(
         sessions=[
@@ -90,10 +95,29 @@ def get_user_chat_sessions(
                 time_created=chat.time_created.isoformat(),
                 shared_status=chat.shared_status,
                 folder_id=chat.folder_id,
+                current_alternate_model=chat.current_alternate_model,
             )
             for chat in chat_sessions
         ]
     )
+
+
+@router.put("/update-thread-model")
+def update_thread(
+    update_thread_req: UpdateThreadRequest,
+    request: Request,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    chat_session = get_chat_session_by_id(
+        chat_session_id=update_thread_req.chat_session_id,
+        user_id=user.id if user is not None else None,
+        db_session=db_session,
+    )
+    chat_session.current_alternate_model = update_thread_req.new_alternate_model
+
+    db_session.add(chat_session)
+    db_session.commit()
 
 
 @router.get("/get-chat-session/{session_id}")
@@ -138,6 +162,7 @@ def get_chat_session(
         description=chat_session.description,
         persona_id=chat_session.persona_id,
         persona_name=chat_session.persona.name,
+        current_alternate_model=chat_session.current_alternate_model,
         messages=[
             translate_db_message_to_chat_message_detail(
                 msg, remove_doc_content=is_shared  # if shared, don't leak doc content

@@ -53,6 +53,7 @@ export interface ChatSession {
   time_created: string;
   shared_status: ChatSessionSharedStatus;
   folder_id: number | null;
+  current_alternate_model: string;
 }
 
 export interface Message {
@@ -79,6 +80,7 @@ export interface BackendChatSession {
   messages: BackendMessage[];
   time_created: string;
   shared_status: ChatSessionSharedStatus;
+  current_alternate_model?: string;
 }
 
 export interface BackendMessage {
