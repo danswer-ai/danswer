@@ -39,7 +39,7 @@ BUILT_IN_TOOLS: list[InCodeToolInfo] = [
     },
     {
         "cls": InternetSearchTool,
-        "description": "The Internet Search Tool allows the assistant to perform internet searches to provide up-to-date information.",
+        "description": "The Internet Search Tool allows the assistant to perform internet searches for up-to-date information.",
         "in_code_tool_id": InternetSearchTool.__name__,
     },
 ]

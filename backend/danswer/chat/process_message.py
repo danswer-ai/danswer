@@ -72,7 +72,9 @@ from danswer.tools.force import ForceUseTool
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import ImageGenerationResponse
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
-from danswer.tools.internet_search.internet_search_tool import INTERNET_SEARCH_RESPONSE_ID
+from danswer.tools.internet_search.internet_search_tool import (
+    INTERNET_SEARCH_RESPONSE_ID,
+)
 from danswer.tools.internet_search.internet_search_tool import InternetSearchResponse
 from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
