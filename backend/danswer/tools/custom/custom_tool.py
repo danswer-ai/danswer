@@ -48,7 +48,7 @@ class CustomTool(Tool):
 
     def name(self) -> str:
         return self._name
-    
+
     def description(self) -> str:
         return self._description
 

@@ -314,18 +314,28 @@ class Answer:
                 query=self.question,
                 history=self.message_history,
                 llm=self.llm,
-            ) 
+            )
 
-            available_tools_and_args = [(self.tools[ind], args) for ind, args in enumerate(tool_options) if args is not None]
+            available_tools_and_args = [
+                (self.tools[ind], args)
+                for ind, args in enumerate(tool_options)
+                if args is not None
+            ]
 
-            logger.info(f"Selecting single tool from tools: {[(tool.name(), args) for tool, args in available_tools_and_args]}")
+            logger.info(
+                f"Selecting single tool from tools: {[(tool.name(), args) for tool, args in available_tools_and_args]}"
+            )
 
-            chosen_tool_and_args = select_single_tool_for_non_tool_calling_llm(
-                tools_and_args=available_tools_and_args,
-                history=self.message_history,
-                query=self.question,
-                llm=self.llm,
-            ) if available_tools_and_args else None
+            chosen_tool_and_args = (
+                select_single_tool_for_non_tool_calling_llm(
+                    tools_and_args=available_tools_and_args,
+                    history=self.message_history,
+                    query=self.question,
+                    llm=self.llm,
+                )
+                if available_tools_and_args
+                else None
+            )
 
             logger.info(f"Chosen tool: {chosen_tool_and_args}")
 

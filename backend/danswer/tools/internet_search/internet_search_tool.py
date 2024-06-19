@@ -91,7 +91,7 @@ class InternetSearchTool(Tool):
 
     def name(self) -> str:
         return self.NAME
-    
+
     def description(self) -> str:
         return self.DESCRIPTION
 
@@ -113,8 +113,14 @@ class InternetSearchTool(Tool):
                 },
             },
         }
-    
-    def check_if_needs_internet_search(self, query: str, history: list[PreviousMessage], llm: LLM, force_run: bool = False) -> bool:
+
+    def check_if_needs_internet_search(
+        self,
+        query: str,
+        history: list[PreviousMessage],
+        llm: LLM,
+        force_run: bool = False,
+    ) -> bool:
         history_str = combine_message_chain(
             messages=history, token_limit=GEN_AI_HISTORY_CUTOFF
         )
@@ -139,10 +145,14 @@ class InternetSearchTool(Tool):
         llm: LLM,
         force_run: bool = False,
     ) -> dict[str, Any] | None:
-        if not force_run and not self.check_if_needs_internet_search(query, history, llm):
+        if not force_run and not self.check_if_needs_internet_search(
+            query, history, llm
+        ):
             return None
-        
-        rephrased_query = history_based_query_rephrase(query=query, history=history, llm=llm)
+
+        rephrased_query = history_based_query_rephrase(
+            query=query, history=history, llm=llm
+        )
         return {
             "internet_search_query": rephrased_query,
         }

@@ -1,6 +1,5 @@
 from typing import Any
 
-
 from danswer.chat.chat_utils import combine_message_chain
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.llm.answering.models import PreviousMessage
@@ -8,7 +7,6 @@ from danswer.llm.interfaces import LLM
 from danswer.llm.utils import message_to_string
 from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.tools.tool import Tool
-
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -17,7 +15,8 @@ logger = setup_logger()
 SINGLE_TOOL_SELECTION_PROMPT = f"""
 You are an expert at selecting the most useful tool to run for answering the query.
 You will be given a numbered list of tools and their arguments, a message history, and a query.
-You will select a single tool that will be most useful for answering the query, and provide only the number corresponding to the tool you want to use.
+You will select a single tool that will be most useful for answering the query.
+Respond with only the number corresponding to the tool you want to use.
 
 Conversation History:
 {GENERAL_SEP_PAT}
@@ -34,6 +33,7 @@ Respond with EXACTLY and ONLY the number corresponding to the tool you want to u
 
 Your selection:
 """
+
 
 def select_single_tool_for_non_tool_calling_llm(
     tools_and_args: list[tuple[Tool, dict[str, Any]]],
