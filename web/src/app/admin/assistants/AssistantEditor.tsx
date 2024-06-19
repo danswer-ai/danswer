@@ -673,7 +673,7 @@ export function AssistantEditor({
                         )}
                       </>
                     )}
-                    
+
                     {internetSearchTool && (
                       <BooleanFormField
                         name={`enabled_tools_map.${internetSearchTool.id}`}
