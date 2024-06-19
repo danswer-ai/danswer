@@ -16,6 +16,7 @@ from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import message_to_string
 from danswer.prompts.constants import GENERAL_SEP_PAT
+from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
 from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
@@ -60,11 +61,6 @@ class InternetSearchResponse(BaseModel):
     internet_results: list[InternetSearchResult]
 
 
-internet_search_tool_description = """
-Perform an internet search.
-"""
-
-
 def llm_doc_from_internet_search_result(result: InternetSearchResult) -> LlmDoc:
     return LlmDoc(
         document_id=result.link,
@@ -81,6 +77,7 @@ def llm_doc_from_internet_search_result(result: InternetSearchResult) -> LlmDoc:
 
 class InternetSearchTool(Tool):
     NAME = "run_internet_search"
+    DESCRIPTION = "Perform an internet search for up-to-date information."
 
     def __init__(self, api_key: str, num_results: int = 10) -> None:
         self.api_key = api_key
@@ -94,13 +91,16 @@ class InternetSearchTool(Tool):
 
     def name(self) -> str:
         return self.NAME
+    
+    def description(self) -> str:
+        return self.DESCRIPTION
 
     def tool_definition(self) -> dict:
         return {
             "type": "function",
             "function": {
                 "name": self.name(),
-                "description": internet_search_tool_description,
+                "description": self.description(),
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -113,20 +113,8 @@ class InternetSearchTool(Tool):
                 },
             },
         }
-
-    def get_args_for_non_tool_calling_llm(
-        self,
-        query: str,
-        history: list[PreviousMessage],
-        llm: LLM,
-        force_run: bool = False,
-    ) -> dict[str, Any] | None:
-        args = {
-            "internet_search_query": query,
-        }
-        if force_run:
-            return args
-
+    
+    def check_if_needs_internet_search(self, query: str, history: list[PreviousMessage], llm: LLM, force_run: bool = False) -> bool:
         history_str = combine_message_chain(
             messages=history, token_limit=GEN_AI_HISTORY_CUTOFF
         )
@@ -140,11 +128,24 @@ class InternetSearchTool(Tool):
             f"Evaluated if should use internet search: {use_internet_search_output}"
         )
 
-        if (
+        return (
             YES_INTERNET_SEARCH.split()[0]
-        ).lower() in use_internet_search_output.lower():
-            return args
-        return None
+        ).lower() in use_internet_search_output.lower()
+
+    def get_args_for_non_tool_calling_llm(
+        self,
+        query: str,
+        history: list[PreviousMessage],
+        llm: LLM,
+        force_run: bool = False,
+    ) -> dict[str, Any] | None:
+        if not force_run and not self.check_if_needs_internet_search(query, history, llm):
+            return None
+        
+        rephrased_query = history_based_query_rephrase(query=query, history=history, llm=llm)
+        return {
+            "internet_search_query": rephrased_query,
+        }
 
     def build_tool_message_content(
         self, *args: ToolResponse

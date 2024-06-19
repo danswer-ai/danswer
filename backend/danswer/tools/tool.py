@@ -13,6 +13,10 @@ class Tool(abc.ABC):
     def name(self) -> str:
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def description(self) -> str:
+        raise NotImplementedError
+
     """For LLMs which support explicit tool calling"""
 
     @abc.abstractmethod

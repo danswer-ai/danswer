@@ -44,10 +44,13 @@ class CustomTool(Tool):
         self._tool_definition = self._method_spec.to_tool_definition()
 
         self._name = self._method_spec.name
-        self.description = self._method_spec.summary
+        self._description = self._method_spec.summary
 
     def name(self) -> str:
         return self._name
+    
+    def description(self) -> str:
+        return self._description
 
     """For LLMs which support explicit tool calling"""
 
@@ -78,7 +81,7 @@ class CustomTool(Tool):
                             history=history,
                             query=query,
                             tool_name=self.name(),
-                            tool_description=self.description,
+                            tool_description=self.description(),
                         )
                     ),
                 ]
@@ -94,7 +97,7 @@ class CustomTool(Tool):
                         history=history,
                         query=query,
                         tool_name=self.name(),
-                        tool_description=self.description,
+                        tool_description=self.description(),
                         tool_args=self.tool_definition()["function"]["parameters"],
                     )
                 ),
