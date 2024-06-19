@@ -531,7 +531,9 @@ export function checkAnyAssistantHasSearch(
 
 export function personaIncludesRetrieval(selectedPersona: Persona) {
   return selectedPersona.tools.some(
-    (tool) => tool.in_code_tool_id && ["SearchTool", "InternetSearchTool"].includes(tool.in_code_tool_id)
+    (tool) =>
+      tool.in_code_tool_id &&
+      ["SearchTool", "InternetSearchTool"].includes(tool.in_code_tool_id)
   );
 }
 

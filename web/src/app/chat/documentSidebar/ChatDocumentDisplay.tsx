@@ -45,7 +45,11 @@ export function ChatDocumentDisplay({
           target="_blank"
           rel="noopener noreferrer"
         >
-          {isInternet ? <InternetSearchIcon url={document.link} /> : <SourceIcon sourceType={document.source_type} iconSize={18} />}
+          {isInternet ? (
+            <InternetSearchIcon url={document.link} />
+          ) : (
+            <SourceIcon sourceType={document.source_type} iconSize={18} />
+          )}
           <p className="overflow-hidden text-ellipsis mx-2 my-auto text-sm ">
             {document.semantic_identifier || document.document_id}
           </p>
@@ -74,12 +78,13 @@ export function ChatDocumentDisplay({
           </div>
         )}
 
-        {!isInternet && <DocumentSelector
-          isSelected={isSelected}
-          handleSelect={() => handleSelect(document.document_id)}
+        {!isInternet && (
+          <DocumentSelector
+            isSelected={isSelected}
+            handleSelect={() => handleSelect(document.document_id)}
             isDisabled={tokenLimitReached && !isSelected}
           />
-        }
+        )}
       </div>
       <div>
         <div className="mt-1">

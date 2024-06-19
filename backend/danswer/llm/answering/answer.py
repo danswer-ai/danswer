@@ -350,7 +350,9 @@ class Answer:
                 yield response
 
             if final_context_documents is None:
-                raise RuntimeError(f"{tool.name()} did not return final context documents")
+                raise RuntimeError(
+                    f"{tool.name()} did not return final context documents"
+                )
 
             self._update_prompt_builder_for_search_tool(
                 prompt_builder, final_context_documents

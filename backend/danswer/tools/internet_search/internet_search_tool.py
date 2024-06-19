@@ -1,17 +1,16 @@
+import json
 from collections.abc import Generator
 from datetime import datetime
-import json
 from typing import Any
 from typing import cast
-import uuid
-import httpx
 
+import httpx
 from pydantic import BaseModel
-from danswer.chat.chat_utils import combine_message_chain 
+
+from danswer.chat.chat_utils import combine_message_chain
 from danswer.chat.models import LlmDoc
 from danswer.configs.constants import DocumentSource
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
-
 from danswer.dynamic_configs.interface import JSON_ro
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.interfaces import LLM
@@ -55,14 +54,16 @@ class InternetSearchResult(BaseModel):
     link: str
     snippet: str
 
+
 class InternetSearchResponse(BaseModel):
-    revised_query : str
+    revised_query: str
     internet_results: list[InternetSearchResult]
 
 
 internet_search_tool_description = """
 Perform an internet search.
 """
+
 
 def llm_doc_from_internet_search_result(result: InternetSearchResult) -> LlmDoc:
     return LlmDoc(
@@ -76,6 +77,7 @@ def llm_doc_from_internet_search_result(result: InternetSearchResult) -> LlmDoc:
         link=result.link,
         source_links={0: result.link},
     )
+
 
 class InternetSearchTool(Tool):
     NAME = "run_internet_search"
@@ -119,23 +121,24 @@ class InternetSearchTool(Tool):
         llm: LLM,
         force_run: bool = False,
     ) -> dict[str, Any] | None:
-        args = { "internet_search_query": query, }
+        args = {
+            "internet_search_query": query,
+        }
         if force_run:
             return args
-        
+
         history_str = combine_message_chain(
-            messages=history,
-            token_limit=GEN_AI_HISTORY_CUTOFF
+            messages=history, token_limit=GEN_AI_HISTORY_CUTOFF
         )
         prompt = INTERNET_SEARCH_TEMPLATE.format(
             chat_history=history_str,
             final_query=query,
         )
-        use_internet_search_output = message_to_string(
-            llm.invoke(prompt)
-        )
+        use_internet_search_output = message_to_string(llm.invoke(prompt))
 
-        logger.debug(f"Evaluated if should use internet search: {use_internet_search_output}")
+        logger.debug(
+            f"Evaluated if should use internet search: {use_internet_search_output}"
+        )
 
         if (
             YES_INTERNET_SEARCH.split()[0]
@@ -146,9 +149,7 @@ class InternetSearchTool(Tool):
     def build_tool_message_content(
         self, *args: ToolResponse
     ) -> str | list[str | dict[str, Any]]:
-        search_response = cast(
-            InternetSearchResponse, args[0].response
-        )
+        search_response = cast(InternetSearchResponse, args[0].response)
         return json.dumps(search_response.dict())
 
     def _perform_search(self, query: str) -> InternetSearchResponse:
@@ -167,8 +168,8 @@ class InternetSearchTool(Tool):
                     link=result["url"],
                     snippet=result["snippet"],
                 )
-                for result in results["webPages"]["value"][:self.num_results]
-            ]
+                for result in results["webPages"]["value"][: self.num_results]
+            ],
         )
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
@@ -191,7 +192,5 @@ class InternetSearchTool(Tool):
         )
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
-        search_response = cast(
-            InternetSearchResponse, args[0].response
-        )
+        search_response = cast(InternetSearchResponse, args[0].response)
         return search_response.dict()

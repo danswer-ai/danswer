@@ -14,7 +14,8 @@ from danswer.chat.models import LlmDoc
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
-from danswer.configs.chat_configs import BING_API_KEY, CHAT_TARGET_CHUNK_PERCENTAGE
+from danswer.configs.chat_configs import BING_API_KEY
+from danswer.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
 from danswer.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.constants import MessageType
@@ -52,11 +53,14 @@ from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
 from danswer.llm.interfaces import LLMConfig
 from danswer.llm.utils import get_default_llm_tokenizer
-from danswer.search.enums import OptionalSearchSetting, QueryFlow, SearchType
+from danswer.search.enums import OptionalSearchSetting
+from danswer.search.enums import QueryFlow
+from danswer.search.enums import SearchType
 from danswer.search.retrieval.search_runner import inference_documents_from_ids
-from danswer.search.utils import chunks_or_sections_to_search_docs, internet_search_response_to_search_docs
+from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.search.utils import dedupe_documents
 from danswer.search.utils import drop_llm_indices
+from danswer.search.utils import internet_search_response_to_search_docs
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.utils import get_json_line
@@ -68,7 +72,9 @@ from danswer.tools.force import ForceUseTool
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import ImageGenerationResponse
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
-from danswer.tools.internet_search.internet_search_tool import INTERNET_SEARCH_RESPONSE_ID, InternetSearchResponse, InternetSearchTool
+from danswer.tools.internet_search.internet_search_tool import INTERNET_SEARCH_RESPONSE_ID
+from danswer.tools.internet_search.internet_search_tool import InternetSearchResponse
+from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
 from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
@@ -151,7 +157,9 @@ def _handle_internet_search_tool_response_summary(
     db_session: Session,
 ) -> tuple[QADocsResponse, list[DbSearchDoc]]:
     internet_search_response = cast(InternetSearchResponse, packet.response)
-    server_search_docs = internet_search_response_to_search_docs(internet_search_response)
+    server_search_docs = internet_search_response_to_search_docs(
+        internet_search_response
+    )
 
     reference_db_search_docs = [
         create_db_search_doc(server_search_doc=doc, db_session=db_session)
@@ -173,7 +181,6 @@ def _handle_internet_search_tool_response_summary(
         ),
         reference_db_search_docs,
     )
-
 
 
 def _check_should_force_search(
@@ -510,9 +517,7 @@ def stream_chat_message_objects(
                 elif tool_cls.__name__ == InternetSearchTool.__name__:
                     bing_api_key = BING_API_KEY
                     if not bing_api_key:
-                        raise ValueError(
-                            "Internet search tool requires a Bing API key"
-                        )
+                        raise ValueError("Internet search tool requires a Bing API key")
                     tool_dict[db_tool_model.id] = [
                         InternetSearchTool(api_key=bing_api_key)
                     ]

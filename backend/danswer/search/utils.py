@@ -1,9 +1,7 @@
 from collections.abc import Sequence
-from datetime import datetime
 from typing import TypeVar
-from danswer.configs.constants import DocumentSource
-from danswer.search.enums import SearchType
 
+from danswer.configs.constants import DocumentSource
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceSection
@@ -70,12 +68,13 @@ def chunks_or_sections_to_search_docs(
     )
     return search_docs
 
+
 def internet_search_response_to_search_docs(
     internet_search_response: InternetSearchResponse,
 ) -> list[SearchDoc]:
     return [
         SearchDoc(
-            document_id=doc.link, 
+            document_id=doc.link,
             chunk_ind=-1,
             semantic_identifier=doc.title,
             link=doc.link,

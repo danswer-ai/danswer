@@ -678,7 +678,7 @@ export function AssistantEditor({
                       <BooleanFormField
                         name={`enabled_tools_map.${internetSearchTool.id}`}
                         label="Internet Search Tool"
-                        subtext="The Internet Search Tool allows the assistant to search the internet for information. The tool will be used when the user asks the assistant to search the internet."
+                        subtext="The Internet Search Tool allows the assistant to search the internet for information."
                         onChange={() => {
                           toggleToolInValues(internetSearchTool.id);
                         }}

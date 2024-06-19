@@ -261,21 +261,19 @@ export const AIMessage = ({
                 </div>
               )}
 
-            {toolCall &&
-              toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME &&
-              (
-                <div className="my-2">
-                  <ToolRunDisplay
-                    toolName={
-                      toolCall.tool_result
-                        ? `Searched the internet`
-                        : `Searching the internet`
-                    }
-                    toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
-                    isRunning={!toolCall.tool_result}
-                  />
-                </div>
-              )}
+            {toolCall && toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
+              <div className="my-2">
+                <ToolRunDisplay
+                  toolName={
+                    toolCall.tool_result
+                      ? `Searched the internet`
+                      : `Searching the internet`
+                  }
+                  toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
+                  isRunning={!toolCall.tool_result}
+                />
+              </div>
+            )}
 
             {content ? (
               <>
@@ -338,16 +336,14 @@ export const AIMessage = ({
                       const display = (
                         <div className="max-w-350 text-ellipsis text-sm border border-border py-1 px-2 rounded flex">
                           <div className="mr-1 my-auto">
-                            {
-                              document.is_internet
-                                ? <InternetSearchIcon
-                                    url={document.link}
-                                  />
-                                : <SourceIcon
+                            {document.is_internet ? (
+                              <InternetSearchIcon url={document.link} />
+                            ) : (
+                              <SourceIcon
                                 sourceType={document.source_type}
                                 iconSize={16}
                               />
-                            }
+                            )}
                           </div>
                           [{citationKey}] {document!.semantic_identifier}
                         </div>

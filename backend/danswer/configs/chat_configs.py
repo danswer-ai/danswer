@@ -79,5 +79,5 @@ STOP_STREAM_PAT = os.environ.get("STOP_STREAM_PAT") or None
 # The backend logic for this being True isn't fully supported yet
 HARD_DELETE_CHATS = False
 
-# Internet Search 
+# Internet Search
 BING_API_KEY = os.environ.get("BING_API_KEY") or None

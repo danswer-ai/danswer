@@ -11,7 +11,7 @@ export const SearchType = {
   SEMANTIC: "semantic",
   KEYWORD: "keyword",
   AUTOMATIC: "automatic",
-  INTERNET: "internet"
+  INTERNET: "internet",
 };
 export type SearchType = (typeof SearchType)[keyof typeof SearchType];
 
