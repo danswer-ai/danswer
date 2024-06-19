@@ -645,6 +645,7 @@ class SearchDoc(Base):
     secondary_owners: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
     )
+    is_internet: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
 
     chat_messages = relationship(
         "ChatMessage",

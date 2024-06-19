@@ -23,6 +23,7 @@ class SearchType(str, Enum):
     KEYWORD = "keyword"
     SEMANTIC = "semantic"
     HYBRID = "hybrid"
+    INTERNET = "internet"
 
 
 class QueryFlow(str, Enum):

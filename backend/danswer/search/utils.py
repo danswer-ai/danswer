@@ -1,11 +1,15 @@
 from collections.abc import Sequence
+from datetime import datetime
 from typing import TypeVar
+from danswer.configs.constants import DocumentSource
+from danswer.search.enums import SearchType
 
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceSection
 from danswer.search.models import SavedSearchDoc
 from danswer.search.models import SearchDoc
+from danswer.tools.internet_search.internet_search_tool import InternetSearchResponse
 
 
 T = TypeVar("T", InferenceSection, InferenceChunk, SearchDoc)
@@ -57,6 +61,7 @@ def chunks_or_sections_to_search_docs(
                 updated_at=chunk.updated_at,
                 primary_owners=chunk.primary_owners,
                 secondary_owners=chunk.secondary_owners,
+                is_internet=False,
             )
             for chunk in chunks
         ]
@@ -64,3 +69,27 @@ def chunks_or_sections_to_search_docs(
         else []
     )
     return search_docs
+
+def internet_search_response_to_search_docs(
+    internet_search_response: InternetSearchResponse,
+) -> list[SearchDoc]:
+    return [
+        SearchDoc(
+            document_id=doc.link, 
+            chunk_ind=-1,
+            semantic_identifier=doc.title,
+            link=doc.link,
+            blurb=doc.snippet,
+            source_type=DocumentSource.NOT_APPLICABLE,
+            boost=0,
+            hidden=False,
+            metadata={},
+            score=None,
+            match_highlights=[],
+            updated_at=None,
+            primary_owners=[],
+            secondary_owners=[],
+            is_internet=True,
+        )
+        for doc in internet_search_response.internet_results
+    ]
