@@ -155,11 +155,12 @@ export function AssistantEditor({
     ? findImageGenerationTool(tools)
     : undefined;
   const internetSearchTool = findInternetSearchTool(tools);
-  
+
   const customTools = tools.filter(
     (tool) =>
       tool.in_code_tool_id !== searchTool?.in_code_tool_id &&
-      tool.in_code_tool_id !== imageGenerationTool?.in_code_tool_id
+      tool.in_code_tool_id !== imageGenerationTool?.in_code_tool_id &&
+      tool.in_code_tool_id !== internetSearchTool?.in_code_tool_id
   );
 
   const availableTools = [
@@ -671,6 +672,17 @@ export function AssistantEditor({
                           </CollapsibleSection>
                         )}
                       </>
+                    )}
+                    
+                    {internetSearchTool && (
+                      <BooleanFormField
+                        name={`enabled_tools_map.${internetSearchTool.id}`}
+                        label="Internet Search Tool"
+                        subtext="The Internet Search Tool allows the assistant to search the internet for information. The tool will be used when the user asks the assistant to search the internet."
+                        onChange={() => {
+                          toggleToolInValues(internetSearchTool.id);
+                        }}
+                      />
                     )}
 
                     {customTools.length > 0 && (
