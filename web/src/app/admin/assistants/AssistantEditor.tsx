@@ -53,6 +53,10 @@ function findImageGenerationTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "ImageGenerationTool");
 }
 
+function findInternetSearchTool(tools: ToolSnapshot[]) {
+  return tools.find((tool) => tool.in_code_tool_id === "InternetSearchTool");
+}
+
 function SubLabel({ children }: { children: string | JSX.Element }) {
   return <div className="text-sm text-subtle mb-2">{children}</div>;
 }
@@ -150,6 +154,8 @@ export function AssistantEditor({
   const imageGenerationTool = providerSupportingImageGenerationExists
     ? findImageGenerationTool(tools)
     : undefined;
+  const internetSearchTool = findInternetSearchTool(tools);
+  
   const customTools = tools.filter(
     (tool) =>
       tool.in_code_tool_id !== searchTool?.in_code_tool_id &&
@@ -160,6 +166,7 @@ export function AssistantEditor({
     ...customTools,
     ...(searchTool ? [searchTool] : []),
     ...(imageGenerationTool ? [imageGenerationTool] : []),
+    ...(internetSearchTool ? [internetSearchTool] : []),
   ];
   const enabledToolsMap: { [key: number]: boolean } = {};
   availableTools.forEach((tool) => {
