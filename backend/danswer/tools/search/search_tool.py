@@ -10,6 +10,7 @@ from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import LlmDoc
 from danswer.db.models import Persona
 from danswer.db.models import User
+from danswer.dynamic_configs.interface import JSON_ro
 from danswer.llm.answering.doc_pruning import prune_documents
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
@@ -55,6 +56,8 @@ HINT: if you are unfamiliar with the user input OR think the user input is a typ
 
 
 class SearchTool(Tool):
+    NAME = "run_search"
+
     def __init__(
         self,
         db_session: Session,
@@ -87,18 +90,16 @@ class SearchTool(Tool):
         self.bypass_acl = bypass_acl
         self.db_session = db_session
 
-    @classmethod
-    def name(cls) -> str:
-        return "run_search"
+    def name(self) -> str:
+        return self.NAME
 
     """For explicit tool calling"""
 
-    @classmethod
-    def tool_definition(cls) -> dict:
+    def tool_definition(self) -> dict:
         return {
             "type": "function",
             "function": {
-                "name": cls.name(),
+                "name": self.name(),
                 "description": search_tool_description,
                 "parameters": {
                     "type": "object",
@@ -241,3 +242,13 @@ class SearchTool(Tool):
             document_pruning_config=self.pruning_config,
         )
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=final_context_documents)
+
+    def final_result(self, *args: ToolResponse) -> JSON_ro:
+        final_docs = cast(
+            list[LlmDoc],
+            next(arg.response for arg in args if arg.id == FINAL_CONTEXT_DOCUMENTS),
+        )
+        # NOTE: need to do this json.loads(doc.json()) stuff because there are some
+        # subfields that are not serializable by default (datetime)
+        # this forces pydantic to make them JSON serializable for us
+        return [json.loads(doc.json()) for doc in final_docs]

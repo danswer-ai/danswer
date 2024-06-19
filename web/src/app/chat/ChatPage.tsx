@@ -12,7 +12,8 @@ import {
   Message,
   RetrievalType,
   StreamingError,
-  ToolRunKickoff,
+  ToolCallFinalResult,
+  ToolCallMetadata,
 } from "./interfaces";
 import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 import { Persona } from "../admin/assistants/interfaces";
@@ -265,6 +266,7 @@ export function ChatPage({
         message: "",
         type: "system",
         files: [],
+        toolCalls: [],
         parentMessageId: null,
         childrenMessageIds: [firstMessageId],
         latestChildMessageId: firstMessageId,
@@ -307,7 +309,6 @@ export function ChatPage({
     return newCompleteMessageMap;
   };
   const messageHistory = buildLatestMessageChain(completeMessageMap);
-  const [currentTool, setCurrentTool] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
 
   // uploaded files
@@ -535,6 +536,7 @@ export function ChatPage({
         message: currMessage,
         type: "user",
         files: currentMessageFiles,
+        toolCalls: [],
         parentMessageId: parentMessage?.messageId || null,
       },
     ];
@@ -569,6 +571,7 @@ export function ChatPage({
     let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
+    let toolCalls: ToolCallMetadata[] = [];
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
@@ -627,7 +630,13 @@ export function ChatPage({
               }
             );
           } else if (Object.hasOwn(packet, "tool_name")) {
-            setCurrentTool((packet as ToolRunKickoff).tool_name);
+            toolCalls = [
+              {
+                tool_name: (packet as ToolCallMetadata).tool_name,
+                tool_args: (packet as ToolCallMetadata).tool_args,
+                tool_result: (packet as ToolCallMetadata).tool_result,
+              },
+            ];
           } else if (Object.hasOwn(packet, "error")) {
             error = (packet as StreamingError).error;
           } else if (Object.hasOwn(packet, "message_id")) {
@@ -657,6 +666,7 @@ export function ChatPage({
             message: currMessage,
             type: "user",
             files: currentMessageFiles,
+            toolCalls: [],
             parentMessageId: parentMessage?.messageId || null,
             childrenMessageIds: [newAssistantMessageId],
             latestChildMessageId: newAssistantMessageId,
@@ -670,6 +680,7 @@ export function ChatPage({
             documents: finalMessage?.context_docs?.top_documents || documents,
             citations: finalMessage?.citations || {},
             files: finalMessage?.files || aiMessageImages || [],
+            toolCalls: finalMessage?.tool_calls || toolCalls,
             parentMessageId: newUserMessageId,
           },
         ]);
@@ -687,6 +698,7 @@ export function ChatPage({
             message: currMessage,
             type: "user",
             files: currentMessageFiles,
+            toolCalls: [],
             parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
           },
           {
@@ -694,6 +706,7 @@ export function ChatPage({
             message: errorMsg,
             type: "error",
             files: aiMessageImages || [],
+            toolCalls: [],
             parentMessageId: TEMP_USER_MESSAGE_ID,
           },
         ],
@@ -1031,7 +1044,7 @@ export function ChatPage({
                                 citedDocuments={getCitedDocumentsFromMessage(
                                   message
                                 )}
-                                currentTool={currentTool}
+                                toolCall={message.toolCalls[0]}
                                 isComplete={
                                   i !== messageHistory.length - 1 ||
                                   !isStreaming

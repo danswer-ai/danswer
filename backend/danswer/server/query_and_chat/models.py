@@ -17,6 +17,7 @@ from danswer.search.models import ChunkContext
 from danswer.search.models import RetrievalDetails
 from danswer.search.models import SearchDoc
 from danswer.search.models import Tag
+from danswer.tools.models import ToolCallFinalResult
 
 
 class SourceTag(Tag):
@@ -176,6 +177,7 @@ class ChatMessageDetail(BaseModel):
     # Dict mapping citation number to db_doc_id
     citations: dict[int, int] | None
     files: list[FileDescriptor]
+    tool_calls: list[ToolCallFinalResult]
 
     def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
         initial_dict = super().dict(*args, **kwargs)  # type: ignore

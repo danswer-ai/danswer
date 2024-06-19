@@ -2,15 +2,12 @@ import { Header } from "@/components/header/Header";
 import { AdminSidebar } from "@/components/admin/connectors/AdminSidebar";
 import {
   NotebookIcon,
-  KeyIcon,
   UsersIcon,
   ThumbsUpIcon,
   BookmarkIcon,
-  CPUIcon,
   ZoomInIcon,
   RobotIcon,
   ConnectorIcon,
-  SlackIcon,
 } from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import {
@@ -19,13 +16,7 @@ import {
   getCurrentUserSS,
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
-import {
-  FiCpu,
-  FiLayers,
-  FiPackage,
-  FiSettings,
-  FiSlack,
-} from "react-icons/fi";
+import { FiCpu, FiPackage, FiSettings, FiSlack, FiTool } from "react-icons/fi";
 
 export async function Layout({ children }: { children: React.ReactNode }) {
   const tasks = [getAuthTypeMetadataSS(), getCurrentUserSS()];
@@ -141,6 +132,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                       </div>
                     ),
                     link: "/admin/bot",
+                  },
+                  {
+                    name: (
+                      <div className="flex">
+                        <FiTool size={18} className="my-auto" />
+                        <div className="ml-1">Tools</div>
+                      </div>
+                    ),
+                    link: "/admin/tools",
                   },
                 ],
               },
