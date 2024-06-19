@@ -59,6 +59,7 @@ from danswer.tools.tool_runner import (
 from danswer.tools.tool_runner import ToolCallFinalResult
 from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.tools.tool_runner import ToolRunner
+from danswer.tools.tool_selection import select_single_tool_for_non_tool_calling_llm
 from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
 
@@ -251,7 +252,7 @@ class Answer:
                 ),
             )
 
-            if tool.name() == SearchTool.NAME:
+            if tool.name() in {SearchTool.NAME, InternetSearchTool.NAME}:
                 self._update_prompt_builder_for_search_tool(prompt_builder, [])
             elif tool.name() == ImageGenerationTool.NAME:
                 prompt_builder.update_user_prompt(
@@ -259,8 +260,6 @@ class Answer:
                         query=self.question,
                     )
                 )
-            elif tool.name() == InternetSearchTool.NAME:
-                self._update_prompt_builder_for_search_tool(prompt_builder, [])
             yield tool_runner.tool_final_result()
 
             prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
@@ -310,18 +309,25 @@ class Answer:
 
             chosen_tool_and_args = (tool, tool_args)
         else:
-            all_tool_args = check_which_tools_should_run_for_non_tool_calling_llm(
+            tool_options = check_which_tools_should_run_for_non_tool_calling_llm(
                 tools=self.tools,
                 query=self.question,
                 history=self.message_history,
                 llm=self.llm,
-            )
-            for ind, args in enumerate(all_tool_args):
-                if args is not None:
-                    chosen_tool_and_args = (self.tools[ind], args)
-                    # TODO: Don't just pick the first tool selected
-                    # for now, just pick the first tool selected
-                    break
+            ) 
+
+            available_tools_and_args = [(self.tools[ind], args) for ind, args in enumerate(tool_options) if args is not None]
+
+            logger.info(f"Selecting single tool from tools: {[(tool.name(), args) for tool, args in available_tools_and_args]}")
+
+            chosen_tool_and_args = select_single_tool_for_non_tool_calling_llm(
+                tools_and_args=available_tools_and_args,
+                history=self.message_history,
+                query=self.question,
+                llm=self.llm,
+            ) if available_tools_and_args else None
+
+            logger.info(f"Chosen tool: {chosen_tool_and_args}")
 
         if not chosen_tool_and_args:
             prompt_builder.update_system_prompt(
