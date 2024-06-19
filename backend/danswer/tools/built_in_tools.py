@@ -10,6 +10,7 @@ from danswer.db.models import Persona
 from danswer.db.models import Tool as ToolDBModel
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
 from danswer.tools.search.search_tool import SearchTool
+from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
 from danswer.tools.tool import Tool
 from danswer.utils.logger import setup_logger
 
@@ -35,6 +36,11 @@ BUILT_IN_TOOLS: list[InCodeToolInfo] = [
             "The tool will be used when the user asks the assistant to generate an image."
         ),
         "in_code_tool_id": ImageGenerationTool.__name__,
+    },
+    {
+        "cls": InternetSearchTool,
+        "description": "The Internet Search Tool allows the assistant to perform internet searches to provide up-to-date information.",
+        "in_code_tool_id": InternetSearchTool.__name__,
     },
 ]
 
