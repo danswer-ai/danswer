@@ -15,7 +15,7 @@ export function LlmTab({
 }: {
   llmOverrideManager: LlmOverrideManager;
   currentAssistant: Persona;
-  chatSessionId: number;
+  chatSessionId?: number;
 }) {
   const { llmProviders } = useChatContext();
   const { llmOverride, setLlmOverride, temperature, setTemperature } =
@@ -74,7 +74,9 @@ export function LlmTab({
             llmOverride.modelName
           )}
           onSelect={(value) => {
-            updateChatSession(chatSessionId, value as string);
+            if (chatSessionId) {
+              updateChatSession(chatSessionId, value as string);
+            }
             setLlmOverride(destructureValue(value as string));
           }}
         />

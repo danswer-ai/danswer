@@ -66,7 +66,7 @@ export function ConfigurationModal({
   filterManager: FilterManager;
   llmProviders: LLMProviderDescriptor[];
   llmOverrideManager: LlmOverrideManager;
-  chatSessionId: number;
+  chatSessionId?: number;
 }) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

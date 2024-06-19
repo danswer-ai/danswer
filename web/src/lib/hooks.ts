@@ -13,6 +13,7 @@ import { DateRangePickerValue } from "@tremor/react";
 import { SourceMetadata } from "./search/interfaces";
 import { EE_ENABLED } from "./constants";
 import { destructureValue } from "./llm/utils";
+import { ChatSession } from "@/app/chat/interfaces";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 
@@ -137,23 +138,38 @@ export interface LlmOverrideManager {
   setLlmOverride: React.Dispatch<React.SetStateAction<LlmOverride>>;
   temperature: number | null;
   setTemperature: React.Dispatch<React.SetStateAction<number | null>>;
+  updateChatSession: (chatSession?: ChatSession) => void;
 }
 
 export function useLlmOverride(
-  currentAlternateModel?: string
+  currentChatSession?: ChatSession
 ): LlmOverrideManager {
   const [llmOverride, setLlmOverride] = useState<LlmOverride>(
-    currentAlternateModel
-      ? destructureValue(currentAlternateModel)
+    currentChatSession && currentChatSession.current_alternate_model
+      ? destructureValue(currentChatSession.current_alternate_model)
       : {
           name: "",
           provider: "",
           modelName: "",
         }
   );
+
+  const updateChatSession = (chatSession?: ChatSession) => {
+    setLlmOverride(
+      chatSession && chatSession.current_alternate_model
+        ? destructureValue(chatSession.current_alternate_model)
+        : {
+            name: "",
+            provider: "",
+            modelName: "",
+          }
+    );
+  };
+
   const [temperature, setTemperature] = useState<number | null>(null);
 
   return {
+    updateChatSession,
     llmOverride,
     setLlmOverride,
     temperature,

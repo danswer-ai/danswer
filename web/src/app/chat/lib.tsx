@@ -25,9 +25,6 @@ export async function updateChatSession(
   chatSessionId: number,
   newAlternateModel: string
 ) {
-  console.log("zz");
-
-  console.log(chatSessionId, newAlternateModel);
   const response = await fetch("/api/chat/update-thread-model", {
     method: "PUT",
     headers: {

@@ -34,6 +34,7 @@ import {
   removeMessage,
   sendMessage,
   setMessageAsLatest,
+  updateChatSession,
   updateParentChildren,
   uploadFilesForChat,
 } from "./lib";
@@ -59,7 +60,12 @@ import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
-import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
+import {
+  checkLLMSupportsImageInput,
+  destructureValue,
+  getFinalLLM,
+  structureValue,
+} from "@/lib/llm/utils";
 import { ChatInputBar } from "./input/ChatInputBar";
 import { ConfigurationModal } from "./modal/configuration/ConfigurationModal";
 import { useChatContext } from "@/components/context/ChatContext";
@@ -106,18 +112,13 @@ export function ChatPage({
     (chatSession) => chatSession.id === existingChatSessionId
   );
 
-  // console.log(selectedChatSession?.current_alternate_model)
-
-  const llmOverrideManager = useLlmOverride(
-    selectedChatSession?.current_alternate_model
-  );
-  // console.log(llmOverrideManager.llmOverride)
+  const llmOverrideManager = useLlmOverride(selectedChatSession);
 
   const existingChatSessionPersonaId = selectedChatSession?.persona_id;
 
   // used to track whether or not the initial "submit on load" has been performed
   // this only applies if `?submit-on-load=true` or `?submit-on-load=1` is in the URL
-  // NOTE: this is required due to React strict mode, where all `useEffect` hooks
+  // NOTE: this is required due to React sstrict mode, where all `useEffect` hooks
   // are run twice on initial load during development
   const submitOnLoadPerformed = useRef<boolean>(false);
 
@@ -133,26 +134,38 @@ export function ChatPage({
   // this is triggered every time the user switches which chat
   // session they are using
   useEffect(() => {
+    if (
+      chatSessionId &&
+      !urlChatSessionId.current &&
+      llmOverrideManager.llmOverride
+    ) {
+      updateChatSession(
+        chatSessionId,
+        structureValue(
+          llmOverrideManager.llmOverride.name,
+          llmOverrideManager.llmOverride.provider,
+          llmOverrideManager.llmOverride.modelName
+        ) as string
+      );
+    }
     urlChatSessionId.current = existingChatSessionId;
-
     textAreaRef.current?.focus();
 
     // only clear things if we're going from one chat session to another
+
     if (chatSessionId !== null && existingChatSessionId !== chatSessionId) {
       // de-select documents
       clearSelectedDocuments();
       // reset all filters
+
       filterManager.setSelectedDocumentSets([]);
       filterManager.setSelectedSources([]);
       filterManager.setSelectedTags([]);
       filterManager.setTimeRange(null);
-      // reset LLM overrides
-      // llmOverrideManager.setLlmOverride({
-      //   name: "",
-      //   provider: "",
-      //   modelName: "",
-      // });
-      // llmOverrideManager.setTemperature(null);
+
+      // reset LLM overrides (based on chat session!)
+      llmOverrideManager.updateChatSession(selectedChatSession);
+      llmOverrideManager.setTemperature(null);
       // remove uploaded files
       setCurrentMessageFiles([]);
 
@@ -195,8 +208,6 @@ export function ChatPage({
       );
       const chatSession = (await response.json()) as BackendChatSession;
 
-      console.log("chatSession.current_alternate_model");
-      console.log(chatSession.current_alternate_model);
       setSelectedPersona(
         filteredAssistants.find(
           (persona) => persona.id === chatSession.persona_id
@@ -853,9 +864,6 @@ export function ChatPage({
   }
 
   const retrievalDisabled = !personaIncludesRetrieval(livePersona);
-
-  console.log(llmOverrideManager);
-
   return (
     <>
       {/* <div className="absolute top-0 z-40 w-full">
@@ -905,20 +913,18 @@ export function ChatPage({
             />
           )}
 
-          {chatSessionId !== null && (
-            <ConfigurationModal
-              chatSessionId={chatSessionId}
-              activeTab={configModalActiveTab}
-              setActiveTab={setConfigModalActiveTab}
-              onClose={() => setConfigModalActiveTab(null)}
-              filterManager={filterManager}
-              availableAssistants={filteredAssistants}
-              selectedAssistant={livePersona}
-              setSelectedAssistant={onPersonaChange}
-              llmProviders={llmProviders}
-              llmOverrideManager={llmOverrideManager}
-            />
-          )}
+          <ConfigurationModal
+            chatSessionId={chatSessionId!}
+            activeTab={configModalActiveTab}
+            setActiveTab={setConfigModalActiveTab}
+            onClose={() => setConfigModalActiveTab(null)}
+            filterManager={filterManager}
+            availableAssistants={filteredAssistants}
+            selectedAssistant={livePersona}
+            setSelectedAssistant={onPersonaChange}
+            llmProviders={llmProviders}
+            llmOverrideManager={llmOverrideManager}
+          />
 
           {documentSidebarInitialWidth !== undefined ? (
             <Dropzone onDrop={handleImageUpload} noClick>
