@@ -85,9 +85,9 @@ async def demote_admin(
 
 @router.get("/manage/users")
 def list_all_users(
-    q: str,
-    accepted_page: int,
-    invited_page: int,
+    q: str = "",
+    accepted_page: int = 0,
+    invited_page: int = 0,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> AllUsersResponse:
