@@ -9,7 +9,7 @@ export function HeaderWrapper({
 }) {
   return (
     <header className="border-b border-border bg-background-emphasis">
-      <div className={`mx-8   ${HEADER_HEIGHT}`}>{children}</div>
+      <div className={`mx-8 ${HEADER_HEIGHT}`}>{children}</div>
     </header>
   );
 }

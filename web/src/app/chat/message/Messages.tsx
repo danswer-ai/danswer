@@ -506,7 +506,6 @@ export const HumanMessage = ({
                       style={{ scrollbarWidth: "thin" }}
                       onChange={(e) => {
                         setEditedContent(e.target.value);
-                        // e.target.style.height = "auto";
                         e.target.style.height = `${e.target.scrollHeight}px`;
                       }}
                       onKeyDown={(e) => {

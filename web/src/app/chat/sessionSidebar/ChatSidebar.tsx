@@ -64,7 +64,6 @@ export const ChatSidebar = ({
         w-64
         flex
         flex-none
-
         bg-background-weak
         3xl:w-72
         border-r 

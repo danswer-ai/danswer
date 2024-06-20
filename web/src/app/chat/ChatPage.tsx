@@ -962,7 +962,6 @@ export function ChatPage({
                       retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
                     }
                       flex-initial transition-margin duration-300 
-                      
                       `}
                     {...getRootProps()}
                   >
@@ -996,7 +995,6 @@ export function ChatPage({
                                 <div
                                   onClick={() => setSharingModalVisible(true)}
                                   className={`
-
                                     rounded
                                     cursor-pointer
                                     px-2 
@@ -1311,8 +1309,7 @@ export function ChatPage({
                   {!retrievalDisabled ? (
                     <div
                       ref={sidebarElementRef}
-                      className={`relative  flex-none overflow-y-hidden  sidebar bg-background-weak hidden lg:block  w-[350px] h-screen  `}
-                      id="document-sidebar"
+                      className={`relative  flex-none overflow-y-hidden sidebar bg-background-weak hidden lg:block  w-[350px] h-screen  `}
                     >
                       <DocumentSidebar
                         closeSidebar={() => toggleSidebar()}
