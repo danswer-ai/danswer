@@ -45,9 +45,9 @@ def select_single_tool_for_non_tool_calling_llm(
         return tools_and_args[0]
 
     tool_list_str = "\n".join(
-        f"""{ind}: {tool.name()} ({args}) - {tool.description()}"""
+        f"""```{ind}: {tool.name()} ({args}) - {tool.description()}```"""
         for ind, (tool, args) in enumerate(tools_and_args)
-    )
+    ).lstrip()
 
     history_str = combine_message_chain(
         messages=history,
