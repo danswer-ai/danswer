@@ -465,7 +465,7 @@ def validate_persona_tools(tools: list[Tool]) -> None:
     for tool in tools:
         if tool.name == "InternetSearchTool" and not BING_API_KEY: 
             raise ValueError(
-                "Bing API key not found, cannot use InternetSearchTool in persona"
+                "Bing API key not found, please contact your Danswer admin to get it added!"
             )
 
 
