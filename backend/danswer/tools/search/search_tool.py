@@ -46,7 +46,7 @@ class SearchResponseSummary(BaseModel):
     recency_bias_multiplier: float
 
 
-search_tool_description = """
+SEARCH_TOOL_DESCRIPTION = """
 Runs a semantic search over the user's knowledge base. The default behavior is to use this tool. \
 The only scenario where you should not use this tool is if:
 
@@ -61,7 +61,7 @@ HINT: if you are unfamiliar with the user input OR think the user input is a typ
 class SearchTool(Tool):
     NAME = "run_search"
     DISPLAY_NAME = "Search Tool"
-    DESCRIPTION = search_tool_description
+    DESCRIPTION = SEARCH_TOOL_DESCRIPTION
 
     def __init__(
         self,

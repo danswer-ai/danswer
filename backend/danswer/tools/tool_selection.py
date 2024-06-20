@@ -1,4 +1,5 @@
 from typing import Any
+import re
 
 from danswer.chat.chat_utils import combine_message_chain
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
@@ -58,8 +59,20 @@ def select_single_tool_for_non_tool_calling_llm(
     )
     output = message_to_string(llm.invoke(prompt))
     try:
-        tool_ind = int(output)
-        return tools_and_args[tool_ind]
+        # First try to match the number
+        number_match = re.search(r'\d+', output)
+        if number_match:
+            tool_ind = int(number_match.group())
+            return tools_and_args[tool_ind]
+        
+        # If that fails, try to match the tool name
+        for tool, args in tools_and_args:
+            if tool.name().lower() in output.lower():
+                return tool, args
+        
+        # If that fails, return the first tool
+        return tools_and_args[0]
+
     except Exception:
         logger.error(f"Failed to select single tool for non-tool-calling LLM: {output}")
         return None
