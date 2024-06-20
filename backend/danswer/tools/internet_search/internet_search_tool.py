@@ -76,9 +76,9 @@ def llm_doc_from_internet_search_result(result: InternetSearchResult) -> LlmDoc:
 
 
 class InternetSearchTool(Tool):
-    NAME = "run_internet_search"
-    DISPLAY_NAME = "Internet Search Tool"
-    DESCRIPTION = "Perform an internet search for up-to-date information."
+    _NAME = "run_internet_search"
+    _DISPLAY_NAME = "Internet Search Tool"
+    _DESCRIPTION = "Perform an internet search for up-to-date information."
 
     def __init__(self, api_key: str, num_results: int = 10) -> None:
         self.api_key = api_key
@@ -90,18 +90,24 @@ class InternetSearchTool(Tool):
         self.num_results = num_results
         self.client = httpx.Client()
 
+    @property
     def name(self) -> str:
-        return self.NAME
+        return self._NAME
 
+    @property
     def description(self) -> str:
-        return self.DESCRIPTION
+        return self._DESCRIPTION
+    
+    @property
+    def display_name(self) -> str:
+        return self._DISPLAY_NAME
 
     def tool_definition(self) -> dict:
         return {
             "type": "function",
             "function": {
-                "name": self.name(),
-                "description": self.description(),
+                "name": self.name,
+                "description": self.description,
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -120,7 +126,6 @@ class InternetSearchTool(Tool):
         query: str,
         history: list[PreviousMessage],
         llm: LLM,
-        force_run: bool = False,
     ) -> bool:
         history_str = combine_message_chain(
             messages=history, token_limit=GEN_AI_HISTORY_CUTOFF

@@ -233,7 +233,7 @@ class Answer:
         tool_call_requests = tool_call_chunk.tool_calls
         for tool_call_request in tool_call_requests:
             tool = [
-                tool for tool in self.tools if tool.name() == tool_call_request["name"]
+                tool for tool in self.tools if tool.name == tool_call_request["name"]
             ][0]
             tool_args = (
                 self.force_use_tool.args
@@ -252,9 +252,9 @@ class Answer:
                 ),
             )
 
-            if tool.name() in {SearchTool.NAME, InternetSearchTool.NAME}:
+            if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
                 self._update_prompt_builder_for_search_tool(prompt_builder, [])
-            elif tool.name() == ImageGenerationTool.NAME:
+            elif tool.name == ImageGenerationTool._NAME:
                 prompt_builder.update_user_prompt(
                     build_image_generation_user_prompt(
                         query=self.question,
@@ -285,7 +285,7 @@ class Answer:
                     [
                         tool
                         for tool in self.tools
-                        if tool.name() == self.force_use_tool.tool_name
+                        if tool.name == self.force_use_tool.tool_name
                     ]
                 ),
                 None,
@@ -305,7 +305,7 @@ class Answer:
             )
 
             if tool_args is None:
-                raise RuntimeError(f"Tool '{tool.name()}' did not return args")
+                raise RuntimeError(f"Tool '{tool.name}' did not return args")
 
             chosen_tool_and_args = (tool, tool_args)
         else:
@@ -323,7 +323,7 @@ class Answer:
             ]
 
             logger.info(
-                f"Selecting single tool from tools: {[(tool.name(), args) for tool, args in available_tools_and_args]}"
+                f"Selecting single tool from tools: {[(tool.name, args) for tool, args in available_tools_and_args]}"
             )
 
             chosen_tool_and_args = (
@@ -358,7 +358,7 @@ class Answer:
         tool_runner = ToolRunner(tool, tool_args)
         yield tool_runner.kickoff()
 
-        if tool.name() in {SearchTool.NAME, InternetSearchTool.NAME}:
+        if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
             final_context_documents = None
             for response in tool_runner.tool_responses():
                 if response.id == FINAL_CONTEXT_DOCUMENTS:
@@ -367,13 +367,13 @@ class Answer:
 
             if final_context_documents is None:
                 raise RuntimeError(
-                    f"{tool.name()} did not return final context documents"
+                    f"{tool.name} did not return final context documents"
                 )
 
             self._update_prompt_builder_for_search_tool(
                 prompt_builder, final_context_documents
             )
-        elif tool.name() == ImageGenerationTool.NAME:
+        elif tool.name == ImageGenerationTool._NAME:
             img_urls = []
             for response in tool_runner.tool_responses():
                 if response.id == IMAGE_GENERATION_RESPONSE_ID:
@@ -395,7 +395,7 @@ class Answer:
                 HumanMessage(
                     content=build_user_message_for_custom_tool_for_non_tool_calling_llm(
                         self.question,
-                        tool.name(),
+                        tool.name,
                         *tool_runner.tool_responses(),
                     )
                 )

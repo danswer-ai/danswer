@@ -193,7 +193,7 @@ def stream_answer_objects(
         single_message_history=history_str,
         tools=[search_tool],
         force_use_tool=ForceUseTool(
-            tool_name=search_tool.name(),
+            tool_name=search_tool.name,
             args={"query": rephrased_query},
         ),
         # for now, don't use tool calling for this flow, as we haven't

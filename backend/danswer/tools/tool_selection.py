@@ -46,7 +46,7 @@ def select_single_tool_for_non_tool_calling_llm(
         return tools_and_args[0]
 
     tool_list_str = "\n".join(
-        f"""```{ind}: {tool.name()} ({args}) - {tool.description()}```"""
+        f"""```{ind}: {tool.name} ({args}) - {tool.description}```"""
         for ind, (tool, args) in enumerate(tools_and_args)
     ).lstrip()
 
@@ -67,7 +67,7 @@ def select_single_tool_for_non_tool_calling_llm(
         
         # If that fails, try to match the tool name
         for tool, args in tools_and_args:
-            if tool.name().lower() in output.lower():
+            if tool.name.lower() in output.lower():
                 return tool, args
         
         # If that fails, return the first tool

@@ -29,7 +29,7 @@ BUILT_IN_TOOLS: list[InCodeToolInfo] = [
         "cls": SearchTool,
         "description": "The Search Tool allows the Assistant to search through connected knowledge to help build an answer.",
         "in_code_tool_id": SearchTool.__name__,
-        "display_name": SearchTool.DISPLAY_NAME,
+        "display_name": SearchTool._DISPLAY_NAME,
     },
     {
         "cls": ImageGenerationTool,
@@ -38,13 +38,13 @@ BUILT_IN_TOOLS: list[InCodeToolInfo] = [
             "The tool will be used when the user asks the assistant to generate an image."
         ),
         "in_code_tool_id": ImageGenerationTool.__name__,
-        "display_name": ImageGenerationTool.DISPLAY_NAME,
+        "display_name": ImageGenerationTool._DISPLAY_NAME,
     },
     {
         "cls": InternetSearchTool,
         "description": "The Internet Search Tool allows the assistant to perform internet searches for up-to-date information.",
         "in_code_tool_id": InternetSearchTool.__name__,
-        "display_name": InternetSearchTool.DISPLAY_NAME,
+        "display_name": InternetSearchTool._DISPLAY_NAME,
     },
 ]
 
@@ -65,7 +65,7 @@ def load_builtin_tools(db_session: Session) -> None:
             # Update existing tool
             tool.name = tool_name
             tool.description = tool_info["description"]
-            tool.display_name = tool_info["display_name"]
+            
             logger.info(f"Updated tool: {tool_name}")
         else:
             # Add new tool
@@ -73,7 +73,6 @@ def load_builtin_tools(db_session: Session) -> None:
                 name=tool_name,
                 description=tool_info["description"],
                 in_code_tool_id=tool_info["in_code_tool_id"],
-                display_name=tool_info["display_name"],
             )
             db_session.add(new_tool)
             logger.info(f"Added new tool: {tool_name}")

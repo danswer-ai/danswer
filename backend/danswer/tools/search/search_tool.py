@@ -59,9 +59,9 @@ HINT: if you are unfamiliar with the user input OR think the user input is a typ
 
 
 class SearchTool(Tool):
-    NAME = "run_search"
-    DISPLAY_NAME = "Search Tool"
-    DESCRIPTION = SEARCH_TOOL_DESCRIPTION
+    _NAME = "run_search"
+    _DISPLAY_NAME = "Search Tool"
+    _DESCRIPTION = SEARCH_TOOL_DESCRIPTION
 
     def __init__(
         self,
@@ -97,11 +97,17 @@ class SearchTool(Tool):
         self.bypass_acl = bypass_acl
         self.db_session = db_session
 
+    @property
     def name(self) -> str:
-        return self.NAME
+        return self._NAME
 
+    @property
     def description(self) -> str:
-        return self.DESCRIPTION
+        return self._DESCRIPTION
+
+    @property
+    def display_name(self) -> str:
+        return self._DISPLAY_NAME
 
     """For explicit tool calling"""
 
@@ -109,8 +115,8 @@ class SearchTool(Tool):
         return {
             "type": "function",
             "function": {
-                "name": self.name(),
-                "description": self.description(),
+                "name": self.name,
+                "description": self.description,
                 "parameters": {
                     "type": "object",
                     "properties": {

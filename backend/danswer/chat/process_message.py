@@ -212,7 +212,7 @@ def _check_should_force_search(
             args = {"query": new_msg_req.message}
 
         return ForceUseTool(
-            tool_name=SearchTool.NAME,
+            tool_name=SearchTool._NAME,
             args=args,
         )
     return None
@@ -679,7 +679,7 @@ def stream_chat_message_objects(
         tool_name_to_tool_id: dict[str, int] = {}
         for tool_id, tool_list in tool_dict.items():
             for tool in tool_list:
-                tool_name_to_tool_id[tool.name()] = tool_id
+                tool_name_to_tool_id[tool.name] = tool_id
 
         gen_ai_response_message = partial_response(
             message=answer.llm_answer,
