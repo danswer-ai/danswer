@@ -24,19 +24,22 @@ export function ResizableSection({
   intialWidth,
   minWidth,
   maxWidth,
+  updateWidth,
 }: {
   children: JSX.Element;
   intialWidth: number;
   minWidth: number;
   maxWidth?: number;
+  updateWidth: (newWidth: number) => void,
+  width: number;
 }) {
-  const [width, setWidth] = useState<number>(intialWidth);
+  const [initialWidth, setInitialWidth] = useState<number>(intialWidth);
   const [isResizing, setIsResizing] = useState<boolean>(false);
 
   useEffect(() => {
-    const newWidth = applyMinAndMax(width, minWidth, maxWidth);
+    const newWidth = applyMinAndMax(initialWidth, minWidth, maxWidth);
 
-    setWidth(newWidth);
+    updateWidth(newWidth);
     Cookies.set(DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME, newWidth.toString(), {
       path: "/",
     });
@@ -55,8 +58,9 @@ export function ResizableSection({
     const handleMouseMove = (mouseMoveEvent: MouseEvent) => {
       // Calculate the change in position
       const delta = mouseMoveEvent.clientX - startX;
-      let newWidth = applyMinAndMax(width - delta, minWidth, maxWidth);
-      setWidth(newWidth);
+      let newWidth = applyMinAndMax(initialWidth - delta, minWidth, maxWidth);
+      updateWidth(newWidth);
+      setInitialWidth(newWidth)
       console.log(newWidth);
 
       Cookies.set(DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME, newWidth.toString(), {
@@ -98,16 +102,15 @@ export function ResizableSection({
           h-full
           w-full
           transition-all duration-300 ease-in hover:border-border-strong hover:border-l-2
-          ${
-            isResizing
+          ${isResizing
               ? "transition-all duration-300 ease-in border-border-strong border-l-2"
               : ""
-          }
+            }
           `}
         ></div>
       </div>
       <div
-        style={{ width: `${width}px` }}
+        style={{ width: `${initialWidth}px` }}
         className={`resize-section h-full flex`}
       >
         {children}

@@ -15,7 +15,7 @@ from danswer.db.persona import upsert_persona
 from danswer.db.persona import upsert_prompt
 from danswer.search.enums import RecencyBiasSetting
 
-
+ 
 def load_prompts_from_yaml(prompts_yaml: str = PROMPTS_YAML) -> None:
     with open(prompts_yaml, "r") as file:
         data = yaml.safe_load(file)
