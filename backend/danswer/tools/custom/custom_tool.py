@@ -53,11 +53,10 @@ class CustomTool(Tool):
     @property
     def description(self) -> str:
         return self._description
-    
+
     @property
     def display_name(self) -> str:
         return self._name
-
 
     """For LLMs which support explicit tool calling"""
 

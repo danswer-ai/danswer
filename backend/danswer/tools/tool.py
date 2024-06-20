@@ -18,7 +18,7 @@ class Tool(abc.ABC):
     @abc.abstractmethod
     def description(self) -> str:
         raise NotImplementedError
-    
+
     @property
     @abc.abstractmethod
     def display_name(self) -> str:

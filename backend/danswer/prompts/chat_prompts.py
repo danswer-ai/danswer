@@ -146,7 +146,7 @@ Standalone question (Respond with only the short combined query):
 
 INTERNET_SEARCH_QUERY_REPHRASE = f"""
 Given the following conversation and a follow up input, rephrase the follow up into a SHORT, \
-standalone query suitable for an internet search engine. 
+standalone query suitable for an internet search engine.
 IMPORTANT: If a specific query might limit results, keep it broad. \
 If a broad query might yield too many results, make it detailed.
 If there is a clear change in topic, ensure the query reflects the new topic accurately.

@@ -15,9 +15,7 @@ down_revision = "e209dc5a8156"
 
 def upgrade() -> None:
     op.add_column("search_doc", sa.Column("is_internet", sa.Boolean(), nullable=True))
-    op.add_column(
-        "tool", sa.Column("display_name", sa.String(), nullable=True)
-    )
+    op.add_column("tool", sa.Column("display_name", sa.String(), nullable=True))
 
 
 def downgrade() -> None:

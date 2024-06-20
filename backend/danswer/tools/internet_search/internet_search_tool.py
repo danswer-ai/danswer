@@ -98,7 +98,7 @@ class InternetSearchTool(Tool):
     @property
     def description(self) -> str:
         return self._DESCRIPTION
-    
+
     @property
     def display_name(self) -> str:
         return self._DISPLAY_NAME
@@ -158,7 +158,10 @@ class InternetSearchTool(Tool):
             return None
 
         rephrased_query = history_based_query_rephrase(
-            query=query, history=history, llm=llm, prompt_template=INTERNET_SEARCH_QUERY_REPHRASE
+            query=query,
+            history=history,
+            llm=llm,
+            prompt_template=INTERNET_SEARCH_QUERY_REPHRASE,
         )
         return {
             "internet_search_query": rephrased_query,
