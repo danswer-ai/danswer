@@ -312,6 +312,7 @@ export function AssistantEditor({
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,
               tool_ids: enabledTools,
+              custom_code: existingPersona.custom_code ?? "",
             });
           } else {
             [promptResponse, personaResponse] = await createPersona({
@@ -321,6 +322,7 @@ export function AssistantEditor({
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,
               tool_ids: enabledTools,
+              custom_code: "",
             });
           }
 
