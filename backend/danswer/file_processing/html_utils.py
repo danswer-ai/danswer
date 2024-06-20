@@ -39,7 +39,8 @@ def format_element_text(element_text: str, link_href: str | None) -> str:
 
     if (
         not link_href
-        or HTML_BASED_CONNECTOR_TRANSFORM_LINKS_STRATEGY == HtmlBasedConnectorTransformLinksStrategy.STRIP
+        or HTML_BASED_CONNECTOR_TRANSFORM_LINKS_STRATEGY
+        == HtmlBasedConnectorTransformLinksStrategy.STRIP
     ):
         return element_text_no_newlines
 
