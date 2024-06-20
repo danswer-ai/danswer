@@ -4,6 +4,7 @@ import urllib.parse
 
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentIndexType
+from danswer.file_processing.enums import HtmlBasedConnectorTransformLinksStrategy
 
 #####
 # App Configs
@@ -159,6 +160,11 @@ WEB_CONNECTOR_OAUTH_CLIENT_ID = os.environ.get("WEB_CONNECTOR_OAUTH_CLIENT_ID")
 WEB_CONNECTOR_OAUTH_CLIENT_SECRET = os.environ.get("WEB_CONNECTOR_OAUTH_CLIENT_SECRET")
 WEB_CONNECTOR_OAUTH_TOKEN_URL = os.environ.get("WEB_CONNECTOR_OAUTH_TOKEN_URL")
 WEB_CONNECTOR_VALIDATE_URLS = os.environ.get("WEB_CONNECTOR_VALIDATE_URLS")
+
+HTML_BASED_CONNECTOR_TRANSFORM_LINKS_STRATEGY = os.environ.get(
+    "HTML_BASED_CONNECTOR_TRANSFORM_LINKS_STRATEGY",
+    HtmlBasedConnectorTransformLinksStrategy.STRIP,
+)
 
 NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP = (
     os.environ.get("NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP", "").lower()
