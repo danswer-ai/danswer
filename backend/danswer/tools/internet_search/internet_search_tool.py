@@ -77,6 +77,7 @@ def llm_doc_from_internet_search_result(result: InternetSearchResult) -> LlmDoc:
 
 class InternetSearchTool(Tool):
     NAME = "run_internet_search"
+    DISPLAY_NAME = "Internet Search Tool"
     DESCRIPTION = "Perform an internet search for up-to-date information."
 
     def __init__(self, api_key: str, num_results: int = 10) -> None:

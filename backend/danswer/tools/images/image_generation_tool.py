@@ -57,6 +57,7 @@ class ImageGenerationResponse(BaseModel):
 class ImageGenerationTool(Tool):
     NAME = "run_image_generation"
     DESCRIPTION = "Generate an image from a prompt."
+    DISPLAY_NAME = "Image Generation Tool"
 
     def __init__(
         self,

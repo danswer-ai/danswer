@@ -60,6 +60,7 @@ HINT: if you are unfamiliar with the user input OR think the user input is a typ
 
 class SearchTool(Tool):
     NAME = "run_search"
+    DISPLAY_NAME = "Search Tool"
     DESCRIPTION = search_tool_description
 
     def __init__(
