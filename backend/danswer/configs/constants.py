@@ -100,6 +100,7 @@ class DocumentSource(str, Enum):
     CLICKUP = "clickup"
     MEDIAWIKI = "mediawiki"
     WIKIPEDIA = "wikipedia"
+    S3 = "s3"
 
 
 class DocumentIndexType(str, Enum):
