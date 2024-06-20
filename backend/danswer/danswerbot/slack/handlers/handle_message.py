@@ -37,6 +37,7 @@ from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import fetch_userids_from_emails
+from danswer.danswerbot.slack.utils import fetch_userids_from_groups
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.danswerbot.slack.utils import slack_usage_report
 from danswer.danswerbot.slack.utils import SlackRateLimiter
@@ -262,6 +263,7 @@ def handle_message(
 
         respond_tag_only = channel_conf.get("respond_tag_only") or False
         respond_team_member_list = channel_conf.get("respond_team_member_list") or None
+        respond_slack_group_list = channel_conf.get("respond_slack_group_list") or None
 
     if respond_tag_only and not bypass_filters:
         logger.info(
@@ -271,7 +273,11 @@ def handle_message(
         return False
 
     if respond_team_member_list:
-        send_to, _ = fetch_userids_from_emails(respond_team_member_list, client)
+        user_ids, _ = fetch_userids_from_emails(respond_team_member_list, client)
+        send_to = (send_to + user_ids) if send_to else user_ids
+    if respond_slack_group_list:
+        user_ids, _ = fetch_userids_from_groups(respond_slack_group_list, client)
+        send_to = (send_to + user_ids) if send_to else user_ids
 
     # If configured to respond to team members only, then cannot be used with a /DanswerBot command
     # which would just respond to the sender

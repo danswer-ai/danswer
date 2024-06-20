@@ -74,6 +74,9 @@ export const SlackBotCreationForm = ({
             respond_team_member_list:
               existingSlackBotConfig?.channel_config
                 ?.respond_team_member_list || ([] as string[]),
+            respond_slack_group_list:
+              existingSlackBotConfig?.channel_config
+                ?.respond_slack_group_list || ([] as string[]),
             still_need_help_enabled:
               existingSlackBotConfig?.channel_config?.follow_up_tags !==
               undefined,
@@ -102,6 +105,7 @@ export const SlackBotCreationForm = ({
             respond_tag_only: Yup.boolean().required(),
             respond_to_bots: Yup.boolean().required(),
             respond_team_member_list: Yup.array().of(Yup.string()).required(),
+            respond_slack_group_list: Yup.array().of(Yup.string()).required(),
             still_need_help_enabled: Yup.boolean().required(),
             follow_up_tags: Yup.array().of(Yup.string()),
             document_sets: Yup.array().of(Yup.number()),
@@ -118,6 +122,9 @@ export const SlackBotCreationForm = ({
               ),
               respond_team_member_list: values.respond_team_member_list.filter(
                 (teamMemberEmail) => teamMemberEmail !== ""
+              ),
+              respond_slack_group_list: values.respond_slack_group_list.filter(
+                (slackGroupName) => slackGroupName !== ""
               ),
               usePersona: usingPersonas,
             };
@@ -235,6 +242,15 @@ export const SlackBotCreationForm = ({
                   "assistant" mode, where it helps the team members find
                   answers, but let's them build on top of DanswerBot's response / throw 
                   out the occasional incorrect answer.`}
+                  values={values}
+                />
+                <TextArrayField
+                  name="respond_slack_group_list"
+                  label="Slack Group Names"
+                  subtext={`If specified, DanswerBot responses will only be 
+                  visible to slack groups in this list. This is
+                  useful if you want DanswerBot to operate in an
+                  "assistant" mode.`}
                   values={values}
                 />
                 <Divider />
