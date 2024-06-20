@@ -112,7 +112,7 @@ const MainSection = () => {
           <p className="text-sm mb-4">
             To use the Slack connector, you must first provide a Slack bot token
             corresponding to the Slack App set up in your workspace. For more
-            details on setting up the Danswer Slack App, see the{" "}
+            details on setting up the enMedD CHP Slack App, see the{" "}
             <a
               className="text-blue-500"
               href="https://docs.danswer.dev/connectors/slack#setting-up"

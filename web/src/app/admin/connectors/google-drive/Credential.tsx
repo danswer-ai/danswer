@@ -322,7 +322,7 @@ export const DriveOAuthSection = ({
     return (
       <div>
         <p className="text-sm mb-2">
-          When using a Google Drive Service Account, you can either have Danswer
+          When using a Google Drive Service Account, you can either have enMedD CHP
           act as the service account itself OR you can specify an account for
           the service account to impersonate.
           <br />
@@ -378,7 +378,7 @@ export const DriveOAuthSection = ({
                 <TextFormField
                   name="google_drive_delegated_user"
                   label="[Optional] User email to impersonate:"
-                  subtext="If left blank, Danswer will use the service account itself."
+                  subtext="If left blank, enMedD CHP will use the service account itself."
                 />
                 <div className="flex">
                   <button

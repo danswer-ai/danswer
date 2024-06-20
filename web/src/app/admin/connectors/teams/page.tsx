@@ -86,7 +86,7 @@ const MainSection = () => {
       <Text>
         The Teams connector allows you to index and search through your Teams
         channels. Once setup, all messages from the channels contained in the
-        specified teams will be queryable within Danswer.
+        specified teams will be queryable within enMedD CHP.
       </Text>
 
       <Title className="mb-2 mt-6 ml-auto mr-auto">
@@ -233,7 +233,7 @@ const MainSection = () => {
               label: "Teams:",
               subtext:
                 "Specify 0 or more Teams to index.  " +
-                "For example, specifying the Team 'Support' for the 'danswerai' Org will cause  " +
+                "For example, specifying the Team 'Support' for the 'chp-ai' Org will cause  " +
                 "us to only index messages sent in channels belonging to the 'Support' Team. " +
                 "If no Teams are specified, all Teams in your organization will be indexed.",
             })}

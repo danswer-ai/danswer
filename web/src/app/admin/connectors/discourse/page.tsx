@@ -88,7 +88,7 @@ const Main = () => {
       {popup}
       <Text>
         This connector allows you to sync all your Discourse Topics into
-        Danswer. More details on how to setup the Discourse connector can be
+        enMedD CHP. More details on how to setup the Discourse connector can be
         found in{" "}
         <a
           className="text-link"
@@ -232,7 +232,7 @@ const Main = () => {
                   <TextFormField
                     name="base_url"
                     label="Base URL:"
-                    subtext="This might be something like https://danswer.discourse.group/ or https://community.yourcompany.com/"
+                    subtext="This might be something like https://community.yourcompany.com/"
                   />
                 </>
               }
