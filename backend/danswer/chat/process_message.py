@@ -176,7 +176,7 @@ def _handle_internet_search_tool_response_summary(
             rephrased_query=internet_search_response.revised_query,
             top_documents=response_docs,
             predicted_flow=QueryFlow.QUESTION_ANSWER,
-            predicted_search=SearchType.INTERNET,
+            predicted_search=SearchType.HYBRID,
             applied_source_filters=[],
             applied_time_cutoff=None,
             recency_bias_multiplier=1.0,
