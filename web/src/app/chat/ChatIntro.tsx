@@ -96,19 +96,13 @@ export function ChatIntro({
 
                 {availableSources.length > 0 && (
                   <div className="mt-1">
-                    <button
-                      onClick={() =>
-                        setDisplaySources((displaySources) => !displaySources)
-                      }
+                    <p
                       className="font-bold mb-1 mt-4 text-emphasis flex"
                     >
                       Sources:{" "}
-                      <span className="inline-block my-auto">
-                        {displaySources ? <FaCaretDown /> : <FaCaretRight />}
-                      </span>
-                    </button>
+                    </p>
                     <div
-                      className={` ${displaySources ? "visible" : "invisible"} flex flex-wrap gap-2`}
+                      className={`flex flex-wrap gap-2`}
                     >
                       {availableSourceMetadata.map((sourceMetadata) => (
                         <span

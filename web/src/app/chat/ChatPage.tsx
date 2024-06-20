@@ -133,6 +133,7 @@ export function ChatPage({
     existingChatSessionId !== null
   );
 
+
   // needed so closures (e.g. onSubmit) can access the current value
   const urlChatSessionId = useRef<number | null>();
   // this is triggered every time the user switches which chat
@@ -348,20 +349,20 @@ export function ChatPage({
     useState<number | null>(null);
   const { aiMessage } = selectedMessageForDocDisplay
     ? getHumanAndAIMessageFromMessageNumber(
-        messageHistory,
-        selectedMessageForDocDisplay
-      )
+      messageHistory,
+      selectedMessageForDocDisplay
+    )
     : { aiMessage: null };
 
   const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
     existingChatSessionPersonaId !== undefined
       ? filteredAssistants.find(
-          (persona) => persona.id === existingChatSessionPersonaId
-        )
+        (persona) => persona.id === existingChatSessionPersonaId
+      )
       : defaultSelectedPersonaId !== undefined
         ? filteredAssistants.find(
-            (persona) => persona.id === defaultSelectedPersonaId
-          )
+          (persona) => persona.id === defaultSelectedPersonaId
+        )
         : undefined
   );
   const livePersona =
@@ -474,6 +475,8 @@ export function ChatPage({
       }
     }
   };
+
+
   useEffect(() => {
     adjustDocumentSidebarWidth(); // Adjust the width on initial render
     window.addEventListener("resize", adjustDocumentSidebarWidth); // Add resize event listener
@@ -520,7 +523,7 @@ export function ChatPage({
     );
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
-      messageToResend?.parentMessageId !== undefined
+        messageToResend?.parentMessageId !== undefined
         ? completeMessageMap.get(messageToResend.parentMessageId)
         : null;
     const messageToResendIndex = messageToResend
@@ -671,9 +674,9 @@ export function ChatPage({
         const updateFn = (messages: Message[]) => {
           const replacementsMap = finalMessage
             ? new Map([
-                [messages[0].messageId, TEMP_USER_MESSAGE_ID],
-                [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
-              ] as [number, number][])
+              [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+              [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+            ] as [number, number][])
             : null;
           upsertToCompleteMessageMap({
             messages: messages,
@@ -870,10 +873,18 @@ export function ChatPage({
   const [showDocSidebar, setShowDocSidebar] = useState(true); // State to track if sidebar is open
 
   const toggleSidebar = () => {
+    if (sidebarElementRef.current) {
+      sidebarElementRef.current.style.width = showDocSidebar ? '0px' : `350px`;
+    }
+
+
     setShowDocSidebar((showDocSidebar) => !showDocSidebar); // Toggle the state which will in turn toggle the class
   };
 
   const retrievalDisabled = !personaIncludesRetrieval(livePersona);
+  const sidebarElementRef = useRef<HTMLDivElement>(null)
+
+
 
   return (
     <>
@@ -942,10 +953,9 @@ export function ChatPage({
               {({ getRootProps }) => (
                 <>
                   <div
-                    className={`w-full sm:relative h-screen ${
-                      retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
-                    }
-                      flex-grow transition-margin duration-300 
+                    className={`w-full sm:relative h-screen ${retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
+                      }
+                      flex-initial transition-margin duration-300 
                       
                       `}
                     {...getRootProps()}
@@ -956,12 +966,8 @@ export function ChatPage({
                       ref={scrollableDivRef}
                     >
                       {livePersona && (
-                        <div
-                          className={`sticky top-0 left-80 z-10 w-full bg-background flex ${HEADER_HEIGHT}`}
-                        >
-                          <div
-                            className={`${SUB_HEADER}   items-end flex w-full`}
-                          >
+                        <div className={`sticky top-0 left-0 z-10 w-full bg-background flex ${HEADER_HEIGHT}`}>
+                          <div className={`${SUB_HEADER}   items-end flex w-full`}>
                             <div className="ml-2 px-1  rounded w-fit">
                               <ChatPersonaSelector
                                 personas={filteredAssistants}
@@ -969,6 +975,7 @@ export function ChatPage({
                                 onPersonaChange={onPersonaChange}
                                 userId={user?.id}
                               />
+
                             </div>
 
                             <div className="ml-auto mr-3 mt-auto flex items-end">
@@ -988,6 +995,7 @@ export function ChatPage({
                                 </div>
                               )}
 
+
                               <div className=" flex  ml-4">
                                 <UserDropdown user={user} />
 
@@ -1000,6 +1008,8 @@ export function ChatPage({
                                   </button>
                                 )}
                               </div>
+
+
                             </div>
                           </div>
                         </div>
@@ -1077,7 +1087,7 @@ export function ChatPage({
                             const isShowingRetrieved =
                               (selectedMessageForDocDisplay !== null &&
                                 selectedMessageForDocDisplay ===
-                                  message.messageId) ||
+                                message.messageId) ||
                               (selectedMessageForDocDisplay ===
                                 TEMP_USER_MESSAGE_ID &&
                                 i === messageHistory.length - 1);
@@ -1107,40 +1117,40 @@ export function ChatPage({
                                   i === messageHistory.length - 1 && isStreaming
                                     ? undefined
                                     : (feedbackType) =>
-                                        setCurrentFeedback([
-                                          feedbackType,
-                                          message.messageId as number,
-                                        ])
+                                      setCurrentFeedback([
+                                        feedbackType,
+                                        message.messageId as number,
+                                      ])
                                 }
                                 handleSearchQueryEdit={
                                   i === messageHistory.length - 1 &&
-                                  !isStreaming
+                                    !isStreaming
                                     ? (newQuery) => {
-                                        if (!previousMessage) {
-                                          setPopup({
-                                            type: "error",
-                                            message:
-                                              "Cannot edit query of first message - please refresh the page and try again.",
-                                          });
-                                          return;
-                                        }
-
-                                        if (
-                                          previousMessage.messageId === null
-                                        ) {
-                                          setPopup({
-                                            type: "error",
-                                            message:
-                                              "Cannot edit query of a pending message - please wait a few seconds and try again.",
-                                          });
-                                          return;
-                                        }
-                                        onSubmit({
-                                          messageIdToResend:
-                                            previousMessage.messageId,
-                                          queryOverride: newQuery,
+                                      if (!previousMessage) {
+                                        setPopup({
+                                          type: "error",
+                                          message:
+                                            "Cannot edit query of first message - please refresh the page and try again.",
                                         });
+                                        return;
                                       }
+
+                                      if (
+                                        previousMessage.messageId === null
+                                      ) {
+                                        setPopup({
+                                          type: "error",
+                                          message:
+                                            "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                        });
+                                        return;
+                                      }
+                                      onSubmit({
+                                        messageIdToResend:
+                                          previousMessage.messageId,
+                                        queryOverride: newQuery,
+                                      });
+                                    }
                                     : undefined
                                 }
                                 isCurrentlyShowingRetrieved={isShowingRetrieved}
@@ -1198,7 +1208,7 @@ export function ChatPage({
                         {isStreaming &&
                           messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
-                            "user" && (
+                          "user" && (
                             <div key={messageHistory.length}>
                               <AIMessage
                                 messageId={null}
@@ -1290,31 +1300,51 @@ export function ChatPage({
 
                   {!retrievalDisabled ? (
                     <div
-                      className={` flex-initial overflow-y-hidden bg-background-weak flex flex-col max-w-3xl h-screen transition-transform duration-300 ${showDocSidebar ? " translate-x-0" : "translate-x-full !w-0 "}`}
+                      ref={sidebarElementRef}
+                      className={`relative  flex-none overflow-y-hidden  sidebar bg-background-weak hidden lg:block  w-[350px] h-screen  `}
                       id="document-sidebar"
                     >
-                      <ResizableSection
-                        intialWidth={documentSidebarInitialWidth as number}
-                        minWidth={400}
-                        maxWidth={maxDocumentSidebarWidth || undefined}
-                      >
-                        <DocumentSidebar
-                          closeSidebar={() => toggleSidebar()}
-                          selectedMessage={aiMessage}
-                          selectedDocuments={selectedDocuments}
-                          toggleDocumentSelection={toggleDocumentSelection}
-                          clearSelectedDocuments={clearSelectedDocuments}
-                          selectedDocumentTokens={selectedDocumentTokens}
-                          maxTokens={maxTokens}
-                          isLoading={isFetchingChatMessages}
-                        />
-                      </ResizableSection>
+
+                      <DocumentSidebar
+                        closeSidebar={() => toggleSidebar()}
+                        selectedMessage={aiMessage}
+                        selectedDocuments={selectedDocuments}
+                        toggleDocumentSelection={toggleDocumentSelection}
+                        clearSelectedDocuments={clearSelectedDocuments}
+                        selectedDocumentTokens={selectedDocumentTokens}
+                        maxTokens={maxTokens}
+                        isLoading={isFetchingChatMessages}
+                      />
                     </div>
+
+                    // <div
+                    //   ref={sidebarElementRef}
+                    //   className={` flex-initial overflow-y-hidden sidebar bg-background-weak flex flex-col max-w-3xl h-screen transition-transform duration-300 `}
+                    //   id="document-sidebar"
+                    // >
+                    //   <ResizableSection
+                    //     intialWidth={documentSidebarInitialWidth as number}
+                    //     minWidth={400}
+                    //     maxWidth={maxDocumentSidebarWidth || undefined}
+                    //     updateWidth={updateWidth}
+                    //   >
+                    //     <DocumentSidebar
+                    //       closeSidebar={() => toggleSidebar()}
+                    //       selectedMessage={aiMessage}
+                    //       selectedDocuments={selectedDocuments}
+                    //       toggleDocumentSelection={toggleDocumentSelection}
+                    //       clearSelectedDocuments={clearSelectedDocuments}
+                    //       selectedDocumentTokens={selectedDocumentTokens}
+                    //       maxTokens={maxTokens}
+                    //       isLoading={isFetchingChatMessages}
+                    //     />
+                    //   </ResizableSection>
+                    // </div>
                   ) : // Another option is to use a div with the width set to the initial width, so that the
-                  // chat section appears in the same place as before
-                  // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
-                  // chat section appears in the same place as before
-                  null}
+                    // chat section appears in the same place as before
+                    // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
+                    // chat section appears in the same place as before
+                    null}
                 </>
               )}
             </Dropzone>
