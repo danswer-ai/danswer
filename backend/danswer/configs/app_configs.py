@@ -188,12 +188,18 @@ GONG_CONNECTOR_START_TIME = os.environ.get("GONG_CONNECTOR_START_TIME")
 
 GITHUB_CONNECTOR_BASE_URL = os.environ.get("GITHUB_CONNECTOR_BASE_URL") or None
 
+GITLAB_CONNECTOR_INCLUDE_CODE_FILES = (
+    os.environ.get("GITLAB_CONNECTOR_INCLUDE_CODE_FILES", "").lower() == "true"
+)
+
 DASK_JOB_CLIENT_ENABLED = (
     os.environ.get("DASK_JOB_CLIENT_ENABLED", "").lower() == "true"
 )
 EXPERIMENTAL_CHECKPOINTING_ENABLED = (
     os.environ.get("EXPERIMENTAL_CHECKPOINTING_ENABLED", "").lower() == "true"
 )
+
+DEFAULT_PRUNING_FREQ = 60 * 60 * 24  # Once a day
 
 
 #####
@@ -224,10 +230,6 @@ ENABLE_MINI_CHUNK = os.environ.get("ENABLE_MINI_CHUNK", "").lower() == "true"
 MINI_CHUNK_SIZE = 150
 # Timeout to wait for job's last update before killing it, in hours
 CLEANUP_INDEXING_JOBS_TIMEOUT = int(os.environ.get("CLEANUP_INDEXING_JOBS_TIMEOUT", 3))
-# If set to true, then will not clean up documents that "no longer exist" when running Load connectors
-DISABLE_DOCUMENT_CLEANUP = (
-    os.environ.get("DISABLE_DOCUMENT_CLEANUP", "").lower() == "true"
-)
 
 
 #####
