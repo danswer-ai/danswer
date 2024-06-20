@@ -35,11 +35,11 @@ export const useScrollOnStream = ({
   isStreaming,
   scrollableDivRef,
   scrollDist,
-  distance = 600, // distance that should "engage" the scroll
+  distance = 500, // distance that should "engage" the scroll
   debounce = 200, // time for debouncing
 }: AutoScrollHookType) => {
+  const preventScroll = useRef<boolean>(false);
   const blockActionRef = useRef<boolean>(false);
-  // const userScrollRef = useRef
 
   useEffect(() => {
     if (
@@ -49,9 +49,9 @@ export const useScrollOnStream = ({
       !blockActionRef.current
     ) {
       if (scrollDist < distance && !blockActionRef.current) {
+        // catch up if necessary!
         const scrollAmount = scrollDist + (scrollDist > 140 ? 1000 : 0);
         blockActionRef.current = true;
-        console.log(`scrolling by ${scrollAmount}`);
         scrollableDivRef?.current?.scrollBy({
           left: 0,
           top: Math.max(0, scrollAmount),
@@ -63,25 +63,6 @@ export const useScrollOnStream = ({
       }
     }
   });
-
-  useEffect(() => {
-    const handleUserScroll = () => {
-      if (!blockActionRef.current) {
-        blockActionRef.current = true;
-        setTimeout(() => {
-          blockActionRef.current = false;
-        }, 100);
-      }
-    };
-
-    scrollableDivRef?.current?.addEventListener("scroll", handleUserScroll);
-    return () => {
-      scrollableDivRef?.current?.removeEventListener(
-        "scroll",
-        handleUserScroll
-      );
-    };
-  }, []);
 
   // scroll on end of stream if within distance
   useEffect(() => {
@@ -335,7 +316,6 @@ export function useLlmOverride(): LlmOverrideManager {
 /* 
 EE Only APIs
 */
-
 const USER_GROUP_URL = "/api/manage/admin/user-group";
 
 export const useUserGroups = (): {

@@ -6,7 +6,7 @@ import { HoverPopup } from "@/components/HoverPopup";
 import { Hoverable } from "@/components/Hoverable";
 import { useEffect, useRef, useState } from "react";
 import { FiCheck, FiEdit2, FiSearch, FiX } from "react-icons/fi";
-let count = 0;
+
 export function ShowHideDocsButton({
   messageId,
   isCurrentlyShowingRetrieved,
