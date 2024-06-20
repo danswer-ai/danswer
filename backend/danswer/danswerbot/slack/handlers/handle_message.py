@@ -278,10 +278,12 @@ def handle_message(
     if respond_slack_group_list:
         user_ids, _ = fetch_userids_from_groups(respond_slack_group_list, client)
         send_to = (send_to + user_ids) if send_to else user_ids
+    if send_to:
+        send_to = list(set(send_to))  # remove duplicates
 
     # If configured to respond to team members only, then cannot be used with a /DanswerBot command
     # which would just respond to the sender
-    if respond_team_member_list and is_bot_msg:
+    if (respond_team_member_list or respond_slack_group_list) and is_bot_msg:
         if sender_id:
             respond_in_thread(
                 client=client,
@@ -454,7 +456,7 @@ def handle_message(
 
             # For DM (ephemeral message), we need to create a thread via a normal message so the user can see
             # the ephemeral message. This also will give the user a notification which ephemeral message does not.
-            if respond_team_member_list:
+            if respond_team_member_list or respond_slack_group_list:
                 respond_in_thread(
                     client=client,
                     channel=channel,
@@ -599,7 +601,7 @@ def handle_message(
 
         # For DM (ephemeral message), we need to create a thread via a normal message so the user can see
         # the ephemeral message. This also will give the user a notification which ephemeral message does not.
-        if respond_team_member_list:
+        if respond_team_member_list or respond_slack_group_list:
             respond_in_thread(
                 client=client,
                 channel=channel,
