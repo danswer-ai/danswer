@@ -20,8 +20,9 @@ export function BasicClickable({
         text-sm
         p-1
         h-full
+        bg-background
         select-none
-        hover:bg-hover
+        hover:bg-hover-light
         ${fullWidth ? "w-full" : ""}`}
     >
       {children}

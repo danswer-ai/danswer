@@ -16,6 +16,7 @@ import { HEADER_PADDING } from "@/lib/constants";
 import { FaToggleOn } from "react-icons/fa";
 
 import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
+import { useRef } from "react";
 
 export function DocumentSidebar({
   closeSidebar,
@@ -64,7 +65,7 @@ export function DocumentSidebar({
   }) {
     return (
       <div
-        className={`w-full flex text-lg  text-emphasis font-medium flex  mb-3.5 font-bold   ${SUB_HEADER}   flex items-end`}
+        className={`w-full flex text-lg  text-emphasis font-medium flex  mb-3.5 font-bold   ${SUB_HEADER}  b-  flex items-end`}
       >
         <p className="flex   mt-auto ">
           {icon({ className: "my-auto  mr-1" })}
@@ -82,158 +83,157 @@ export function DocumentSidebar({
     );
   }
 
+
+
   return (
     <div
-      className={`
-
-      flex-initial 
-      overflow-y-hidden
-      bg-background-weak
-      flex
-      flex-col
-      w-full
-      h-screen
-      `}
-      id="document-sidebar"
+      className={` w-[350px]  absolute right-0 h-screen border-l border-l-border `}
     >
-      {popup}
-      <div className="h-4/6 flex flex-col ">
-        <div className="px-3   mb-3 flex border-b border-border">
-          <SectionHeader
-            name={
-              selectedMessageRetrievalType === RetrievalType.SelectedDocs
-                ? "Referenced Documents"
-                : "Retrieved Documents"
-            }
-            icon={FiFileText}
-            includeToggle
-          />
+      <div className="w-full flex-initial 
+      overflow-y-hidden
+      flex
+      flex-col h-screen">
+
+        {popup}
+
+        <div className="h-4/6 flex flex-col ">
+          <div className="px-3   mb-3 flex border-b border-border">
+            <SectionHeader
+              name={
+                selectedMessageRetrievalType === RetrievalType.SelectedDocs
+                  ? "Referenced Documents"
+                  : "Retrieved Documents"
+              }
+              icon={FiFileText}
+              includeToggle
+            />
+          </div>
+
+          {currentDocuments ? (
+            <div className="overflow-y-auto dark-scrollbar flex flex-col">
+              <div>
+                {dedupedDocuments.length > 0 ? (
+                  dedupedDocuments.map((document, ind) => (
+                    <div
+                      key={document.document_id}
+                      className={
+                        ind === dedupedDocuments.length - 1
+                          ? "mb-5"
+                          : "border-b border-border-light mb-3"
+                      }
+                    >
+                      <ChatDocumentDisplay
+                        document={document}
+                        setPopup={setPopup}
+                        queryEventId={null}
+                        isAIPick={false}
+                        isSelected={selectedDocumentIds.includes(
+                          document.document_id
+                        )}
+                        handleSelect={(documentId) => {
+                          toggleDocumentSelection(
+                            dedupedDocuments.find(
+                              (document) => document.document_id === documentId
+                            )!
+                          );
+                        }}
+                        tokenLimitReached={tokenLimitReached}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <div className="mx-3">
+                    <Text>No documents found for the query.</Text>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            !isLoading && (
+              <div className="ml-4 mr-3">
+                <Text>
+                  When you run ask a question, the retrieved documents will show
+                  up here!
+                </Text>
+              </div>
+            )
+          )}
         </div>
 
-        {currentDocuments ? (
-          <div className="overflow-y-auto dark-scrollbar flex flex-col">
-            <div>
-              {dedupedDocuments.length > 0 ? (
-                dedupedDocuments.map((document, ind) => (
-                  <div
-                    key={document.document_id}
-                    className={
-                      ind === dedupedDocuments.length - 1
-                        ? "mb-5"
-                        : "border-b border-border-light mb-3"
-                    }
-                  >
-                    <ChatDocumentDisplay
-                      document={document}
-                      setPopup={setPopup}
-                      queryEventId={null}
-                      isAIPick={false}
-                      isSelected={selectedDocumentIds.includes(
-                        document.document_id
-                      )}
-                      handleSelect={(documentId) => {
-                        toggleDocumentSelection(
-                          dedupedDocuments.find(
-                            (document) => document.document_id === documentId
-                          )!
-                        );
-                      }}
-                      tokenLimitReached={tokenLimitReached}
+        <div className="text-sm mb-4 border-t border-border pt-4 overflow-y-hidden flex flex-col">
+          <div className="flex border-b border-border px-3">
+            <div className="flex">
+              <SectionHeader name="Selected Documents" icon={FiFileText} />
+
+              {tokenLimitReached && (
+                <div className="ml-2 my-auto">
+                  <div className="mb-2">
+                    <HoverPopup
+                      mainContent={
+                        <FiAlertTriangle
+                          className="text-alert my-auto"
+                          size="16"
+                        />
+                      }
+                      popupContent={
+                        <Text className="w-40">
+                          Over LLM context length by:{" "}
+                          <i>{selectedDocumentTokens - maxTokens} tokens</i>
+                          <br />
+                          <br />
+                          {selectedDocuments && selectedDocuments.length > 0 && (
+                            <>
+                              Truncating: &quot;
+                              <i>
+                                {
+                                  selectedDocuments[selectedDocuments.length - 1]
+                                    .semantic_identifier
+                                }
+                              </i>
+                              &quot;
+                            </>
+                          )}
+                        </Text>
+                      }
+                      direction="left"
                     />
                   </div>
-                ))
-              ) : (
-                <div className="mx-3">
-                  <Text>No documents found for the query.</Text>
                 </div>
               )}
             </div>
-          </div>
-        ) : (
-          !isLoading && (
-            <div className="ml-4 mr-3">
-              <Text>
-                When you run ask a question, the retrieved documents will show
-                up here!
-              </Text>
-            </div>
-          )
-        )}
-      </div>
 
-      <div className="text-sm mb-4 border-t border-border pt-4 overflow-y-hidden flex flex-col">
-        <div className="flex border-b border-border px-3">
-          <div className="flex">
-            <SectionHeader name="Selected Documents" icon={FiFileText} />
-
-            {tokenLimitReached && (
-              <div className="ml-2 my-auto">
-                <div className="mb-2">
-                  <HoverPopup
-                    mainContent={
-                      <FiAlertTriangle
-                        className="text-alert my-auto"
-                        size="16"
-                      />
-                    }
-                    popupContent={
-                      <Text className="w-40">
-                        Over LLM context length by:{" "}
-                        <i>{selectedDocumentTokens - maxTokens} tokens</i>
-                        <br />
-                        <br />
-                        {selectedDocuments && selectedDocuments.length > 0 && (
-                          <>
-                            Truncating: &quot;
-                            <i>
-                              {
-                                selectedDocuments[selectedDocuments.length - 1]
-                                  .semantic_identifier
-                              }
-                            </i>
-                            &quot;
-                          </>
-                        )}
-                      </Text>
-                    }
-                    direction="left"
-                  />
-                </div>
+            {selectedDocuments && selectedDocuments.length > 0 && (
+              <div className="ml-auto my-auto" onClick={clearSelectedDocuments}>
+                <BasicSelectable selected={false}>De-Select All</BasicSelectable>
               </div>
             )}
           </div>
 
-          {selectedDocuments && selectedDocuments.length > 0 && (
-            <div className="ml-auto my-auto" onClick={clearSelectedDocuments}>
-              <BasicSelectable selected={false}>De-Select All</BasicSelectable>
+          {selectedDocuments && selectedDocuments.length > 0 ? (
+            <div className="flex flex-col gap-y-2 py-3 px-3 overflow-y-auto dark-scrollbar max-h-full">
+              {selectedDocuments.map((document) => (
+                <SelectedDocumentDisplay
+                  key={document.document_id}
+                  document={document}
+                  handleDeselect={(documentId) => {
+                    toggleDocumentSelection(
+                      dedupedDocuments.find(
+                        (document) => document.document_id === documentId
+                      )!
+                    );
+                  }}
+                />
+              ))}
             </div>
+          ) : (
+            !isLoading && (
+              <Text className="mx-3 py-3">
+                Select documents from the retrieved documents section to chat
+                specifically with them!
+              </Text>
+            )
           )}
         </div>
-
-        {selectedDocuments && selectedDocuments.length > 0 ? (
-          <div className="flex flex-col gap-y-2 py-3 px-3 overflow-y-auto dark-scrollbar max-h-full">
-            {selectedDocuments.map((document) => (
-              <SelectedDocumentDisplay
-                key={document.document_id}
-                document={document}
-                handleDeselect={(documentId) => {
-                  toggleDocumentSelection(
-                    dedupedDocuments.find(
-                      (document) => document.document_id === documentId
-                    )!
-                  );
-                }}
-              />
-            ))}
-          </div>
-        ) : (
-          !isLoading && (
-            <Text className="mx-3 py-3">
-              Select documents from the retrieved documents section to chat
-              specifically with them!
-            </Text>
-          )
-        )}
       </div>
     </div>
   );

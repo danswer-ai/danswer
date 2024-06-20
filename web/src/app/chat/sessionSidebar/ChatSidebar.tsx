@@ -61,8 +61,10 @@ export const ChatSidebar = ({
       {popup}
       <div
         className={`
-        flex-none
         w-64
+        flex
+        flex-none
+
         bg-background-weak
         3xl:w-72
         border-r 
@@ -107,12 +109,13 @@ export const ChatSidebar = ({
             href={
               "/chat" +
               (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-              currentChatSession
+                currentChatSession
                 ? `?assistantId=${currentChatSession.persona_id}`
                 : "")
             }
             className="ml-3 w-full"
           >
+
             <BasicClickable fullWidth>
               <div className="flex items-center text-sm">
                 <FiEdit className="ml-1 mr-2" /> New Chat

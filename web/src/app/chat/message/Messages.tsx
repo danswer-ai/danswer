@@ -275,9 +275,9 @@ export const AIMessage = ({
                                 : undefined
                             }
                             className="cursor-pointer text-link hover:text-link-hover"
-                            // href={rest.href}
-                            // target="_blank"
-                            // rel="noopener noreferrer"
+                          // href={rest.href}
+                          // target="_blank"
+                          // rel="noopener noreferrer"
                           >
                             {rest.children}
                           </a>
@@ -497,6 +497,7 @@ export const HumanMessage = ({
                       placeholder-gray-400 
                       resize-none
                       pl-4
+                      overflow-y-auto
                       pr-12 
                       py-4`}
                       aria-multiline
@@ -505,7 +506,7 @@ export const HumanMessage = ({
                       style={{ scrollbarWidth: "thin" }}
                       onChange={(e) => {
                         setEditedContent(e.target.value);
-                        e.target.style.height = "auto";
+                        // e.target.style.height = "auto";
                         e.target.style.height = `${e.target.scrollHeight}px`;
                       }}
                       onKeyDown={(e) => {
@@ -514,15 +515,19 @@ export const HumanMessage = ({
                           setEditedContent(content);
                           setIsEditing(false);
                         }
-                      }}
-                      // ref={(textarea) => {
-                      //   if (textarea) {
-                      //     textarea.selectionStart = textarea.selectionEnd =
-                      //       textarea.value.length;
-                      //   }
-                      // }}
+                        if (e.key === "Enter" && e.metaKey) {
+                          handleEditSubmit()
+                        }
+                      }
+                      }
+                    // ref={(textarea) => {
+                    //   if (textarea) {
+                    //     textarea.selectionStart = textarea.selectionEnd =
+                    //       textarea.value.length;
+                    //   }
+                    // }}
                     />
-                    <div className="flex justify-end mt-2 gap-2 pr-4">
+                    < div className="flex justify-end mt-2 gap-2 pr-4" >
                       <button
                         className={`
                           w-fit 
@@ -589,9 +594,9 @@ export const HumanMessage = ({
                 </div>
               )}
             {onEdit &&
-            isHovered &&
-            !isEditing &&
-            (!files || files.length === 0) ? (
+              isHovered &&
+              !isEditing &&
+              (!files || files.length === 0) ? (
               <Hoverable
                 icon={FiEdit2}
                 onClick={() => {
@@ -605,6 +610,6 @@ export const HumanMessage = ({
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
