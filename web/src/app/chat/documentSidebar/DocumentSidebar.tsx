@@ -79,17 +79,16 @@ export function DocumentSidebar({
     );
   }
 
-
-
   return (
     <div
       className={` w-[350px]  absolute right-0 h-screen border-l border-l-border `}
     >
-      <div className="w-full flex-initial 
+      <div
+        className="w-full flex-initial 
       overflow-y-hidden
       flex
-      flex-col h-screen">
-
+      flex-col h-screen"
+      >
         {popup}
 
         <div className="h-4/6 flex flex-col ">
@@ -177,18 +176,20 @@ export function DocumentSidebar({
                           <i>{selectedDocumentTokens - maxTokens} tokens</i>
                           <br />
                           <br />
-                          {selectedDocuments && selectedDocuments.length > 0 && (
-                            <>
-                              Truncating: &quot;
-                              <i>
-                                {
-                                  selectedDocuments[selectedDocuments.length - 1]
-                                    .semantic_identifier
-                                }
-                              </i>
-                              &quot;
-                            </>
-                          )}
+                          {selectedDocuments &&
+                            selectedDocuments.length > 0 && (
+                              <>
+                                Truncating: &quot;
+                                <i>
+                                  {
+                                    selectedDocuments[
+                                      selectedDocuments.length - 1
+                                    ].semantic_identifier
+                                  }
+                                </i>
+                                &quot;
+                              </>
+                            )}
                         </Text>
                       }
                       direction="left"
@@ -200,7 +201,9 @@ export function DocumentSidebar({
 
             {selectedDocuments && selectedDocuments.length > 0 && (
               <div className="ml-auto my-auto" onClick={clearSelectedDocuments}>
-                <BasicSelectable selected={false}>De-Select All</BasicSelectable>
+                <BasicSelectable selected={false}>
+                  De-Select All
+                </BasicSelectable>
               </div>
             )}
           </div>

@@ -96,14 +96,10 @@ export function ChatIntro({
 
                 {availableSources.length > 0 && (
                   <div className="mt-1">
-                    <p
-                      className="font-bold mb-1 mt-4 text-emphasis flex"
-                    >
+                    <p className="font-bold mb-1 mt-4 text-emphasis flex">
                       Sources:{" "}
                     </p>
-                    <div
-                      className={`flex flex-wrap gap-2`}
-                    >
+                    <div className={`flex flex-wrap gap-2`}>
                       {availableSourceMetadata.map((sourceMetadata) => (
                         <span
                           key={sourceMetadata.internalName}
