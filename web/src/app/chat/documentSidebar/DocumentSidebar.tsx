@@ -7,7 +7,12 @@ import { SelectedDocumentDisplay } from "./SelectedDocumentDisplay";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { BasicSelectable } from "@/components/BasicClickable";
 import { Message, RetrievalType } from "../interfaces";
-import { HEADER_HEIGHT, HEADER_PADDING, SUB_HEADER } from "@/lib/constants";
+import {
+  HEADER_HEIGHT,
+  HEADER_PADDING,
+  SIDEBAR_WIDTH,
+  SUB_HEADER,
+} from "@/lib/constants";
 import { HoverPopup } from "@/components/HoverPopup";
 import { FaToggleOn } from "react-icons/fa";
 
@@ -81,7 +86,7 @@ export function DocumentSidebar({
 
   return (
     <div
-      className={` w-[350px]  absolute right-0 h-screen border-l border-l-border `}
+      className={`${SIDEBAR_WIDTH} absolute right-0 h-screen border-l border-l-border `}
     >
       <div
         className="w-full flex-initial 
