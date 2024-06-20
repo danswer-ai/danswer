@@ -65,13 +65,14 @@ def load_builtin_tools(db_session: Session) -> None:
             # Update existing tool
             tool.name = tool_name
             tool.description = tool_info["description"]
-            
+            tool.display_name = tool_info["display_name"]
             logger.info(f"Updated tool: {tool_name}")
         else:
             # Add new tool
             new_tool = ToolDBModel(
                 name=tool_name,
                 description=tool_info["description"],
+                display_name=tool_info["display_name"],
                 in_code_tool_id=tool_info["in_code_tool_id"],
             )
             db_session.add(new_tool)
