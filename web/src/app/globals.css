@@ -51,7 +51,6 @@
   white-space: pre-wrap; /* Preserves whitespace and wraps text */
 }
 
-
 .sidebar {
-  transition: width .2s;
+  transition: width 0.2s;
 }
