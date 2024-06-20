@@ -928,6 +928,7 @@ class Persona(Base):
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
+    custom_code: str = "Just hardcoded, bro"
     # Currently stored but unused, all flows use hybrid
     search_type: Mapped[SearchType] = mapped_column(
         Enum(SearchType, native_enum=False), default=SearchType.HYBRID

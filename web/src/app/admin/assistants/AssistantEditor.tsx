@@ -156,6 +156,7 @@ export function AssistantEditor({
         initialValues={{
           name: existingPersona?.name ?? "",
           description: existingPersona?.description ?? "",
+          custom_code: existingPersona?.custom_code ?? "",
           system_prompt: existingPrompt?.system_prompt ?? "",
           task_prompt: existingPrompt?.task_prompt ?? "",
           is_public: existingPersona?.is_public ?? defaultPublic,
@@ -187,6 +188,7 @@ export function AssistantEditor({
             description: Yup.string().required(
               "Must give the Assistant a description!"
             ),
+            custom_code: Yup.string().nullable(),
             system_prompt: Yup.string(),
             task_prompt: Yup.string(),
             is_public: Yup.boolean().required(),
@@ -385,6 +387,12 @@ export function AssistantEditor({
                       );
                     }}
                     error={finalPromptError}
+                  />
+                  <TextFormField
+                    name="custom_code"
+                    label="Custom Code"
+                    isTextArea={true}
+                    subtext="Provide a custom code to be used in the assistant."
                   />
 
                   <TextFormField

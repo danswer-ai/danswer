@@ -74,6 +74,7 @@ export function AssistantsTab({
             <div className="text-sm text-subtle mb-2 mt-2">
               {assistant.description}
             </div>
+
             <div className="mt-2 flex flex-col gap-y-2">
               {assistant.document_sets.length > 0 && (
                 <div className="text-xs text-subtle flex flex-wrap gap-2">
