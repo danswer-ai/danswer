@@ -50,6 +50,7 @@ export type ValidSources =
   | "google_sites"
   | "loopio"
   | "dropbox"
+  | "s3"
   | "salesforce"
   | "sharepoint"
   | "teams"
@@ -218,6 +219,11 @@ export interface GoogleSitesConfig {
 export interface ZendeskConfig {}
 
 export interface DropboxConfig {}
+
+export interface S3Config {
+  bucket_name: string;
+  prefix: string;
+}
 
 export interface MediaWikiBaseConfig {
   connector_name: string;
@@ -398,6 +404,12 @@ export interface ZendeskCredentialJson {
 
 export interface DropboxCredentialJson {
   dropbox_access_token: string;
+}
+
+export interface S3CredentialJson {
+  profile_name: string;
+  aws_access_key_id: string;
+  aws_secret_access_key: string;
 }
 
 export interface SalesforceCredentialJson {
