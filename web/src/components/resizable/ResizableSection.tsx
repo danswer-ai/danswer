@@ -24,22 +24,18 @@ export function ResizableSection({
   intialWidth,
   minWidth,
   maxWidth,
-  updateWidth,
 }: {
   children: JSX.Element;
   intialWidth: number;
   minWidth: number;
   maxWidth?: number;
-  updateWidth: (newWidth: number) => void;
-  width: number;
 }) {
-  const [initialWidth, setInitialWidth] = useState<number>(intialWidth);
+  const [width, setWidth] = useState<number>(intialWidth);
   const [isResizing, setIsResizing] = useState<boolean>(false);
 
   useEffect(() => {
-    const newWidth = applyMinAndMax(initialWidth, minWidth, maxWidth);
-
-    updateWidth(newWidth);
+    const newWidth = applyMinAndMax(width, minWidth, maxWidth);
+    setWidth(newWidth);
     Cookies.set(DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME, newWidth.toString(), {
       path: "/",
     });
@@ -58,10 +54,8 @@ export function ResizableSection({
     const handleMouseMove = (mouseMoveEvent: MouseEvent) => {
       // Calculate the change in position
       const delta = mouseMoveEvent.clientX - startX;
-      let newWidth = applyMinAndMax(initialWidth - delta, minWidth, maxWidth);
-      updateWidth(newWidth);
-      setInitialWidth(newWidth);
-
+      let newWidth = applyMinAndMax(width - delta, minWidth, maxWidth);
+      setWidth(newWidth);
       Cookies.set(DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME, newWidth.toString(), {
         path: "/",
       });
@@ -110,7 +104,7 @@ export function ResizableSection({
         ></div>
       </div>
       <div
-        style={{ width: `${initialWidth}px` }}
+        style={{ width: `${width}px` }}
         className={`resize-section h-full flex`}
       >
         {children}
