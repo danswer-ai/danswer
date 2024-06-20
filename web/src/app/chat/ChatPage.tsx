@@ -435,9 +435,9 @@ export function ChatPage({
       const scrollDistance =
         endDivRef?.current?.getBoundingClientRect()?.top! -
         inputRef?.current?.getBoundingClientRect()?.top!;
-      setScrollDist(scrollDist);
 
-      setAboveHorizon(scrollDistance > 200);
+      setScrollDist(scrollDistance + 100);
+      setAboveHorizon(scrollDistance > 500);
     };
 
     scrollableDivRef?.current?.addEventListener("scroll", handleUserScroll);
@@ -480,15 +480,13 @@ export function ChatPage({
   // Scroll on stream if within the "gap"
   useScrollOnStream({
     isStreaming,
-    lastMessageRef,
     scrollableDivRef,
-    endPaddingRef,
     inputRef,
     endDivRef,
     scrollDist,
   });
 
-  // Scroll if necessary for initial message
+  // // Scroll if necessary for initial message
   useInitialScroll({
     isStreaming,
     endDivRef,
@@ -500,7 +498,6 @@ export function ChatPage({
   useResponsiveScroll({
     lastMessageRef,
     inputRef,
-    endDivRef,
     endPaddingRef,
     textAreaRef,
     scrollableDivRef,
@@ -1015,7 +1012,7 @@ export function ChatPage({
 
                     <div
                       id="chat"
-                      className={`w-full chat h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                      className={`w-full  chat h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
                       ref={scrollableDivRef}
                     >
                       {livePersona && (
@@ -1284,8 +1281,23 @@ export function ChatPage({
                             </div>
                           )}
 
-                        <div ref={endPaddingRef} className="h-[40px]" />
-                        <div ref={endDivRef} />
+                        {/* <button onClick={() => {
+                          const scrollDistance =
+                            endDivRef?.current?.getBoundingClientRect()?.top! -
+                            inputRef?.current?.getBoundingClientRect()?.top!;
+
+                          console.log(scrollDistance
+                          )
+                        }}>
+
+
+
+                        </button> */}
+                        <div
+                          ref={endPaddingRef}
+                          className="bg-black h-[50px]"
+                        />
+                        <div ref={endDivRef} className="bg-red-200"></div>
 
                         {livePersona &&
                           livePersona.starter_messages &&
@@ -1333,11 +1345,11 @@ export function ChatPage({
 
                     <div
                       ref={inputRef}
-                      className="absolute bottom-0 z-10 w-full"
+                      className="absolute bottom-0  z-10 w-full  "
                     >
-                      <div className="w-full relative  pb-4">
+                      <div className="   relative pb-8">
                         {aboveHorizon && (
-                          <div className="w-full  pointer-events-none flex sticky justify-center">
+                          <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
                             <button
                               onClick={() => clientScrollToBottom()}
                               className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2  mx-auto "
