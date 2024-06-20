@@ -30,7 +30,7 @@ export function ResizableSection({
   intialWidth: number;
   minWidth: number;
   maxWidth?: number;
-  updateWidth: (newWidth: number) => void,
+  updateWidth: (newWidth: number) => void;
   width: number;
 }) {
   const [initialWidth, setInitialWidth] = useState<number>(intialWidth);
@@ -60,8 +60,7 @@ export function ResizableSection({
       const delta = mouseMoveEvent.clientX - startX;
       let newWidth = applyMinAndMax(initialWidth - delta, minWidth, maxWidth);
       updateWidth(newWidth);
-      setInitialWidth(newWidth)
-      console.log(newWidth);
+      setInitialWidth(newWidth);
 
       Cookies.set(DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME, newWidth.toString(), {
         path: "/",
@@ -102,10 +101,11 @@ export function ResizableSection({
           h-full
           w-full
           transition-all duration-300 ease-in hover:border-border-strong hover:border-l-2
-          ${isResizing
+          ${
+            isResizing
               ? "transition-all duration-300 ease-in border-border-strong border-l-2"
               : ""
-            }
+          }
           `}
         ></div>
       </div>
