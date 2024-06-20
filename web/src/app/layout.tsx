@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Danswer",
-  description: "Question answering for your documents",
+  title: "enMedD CHP",
+  description: "enMedD Conversational Health Platform",
 };
 
 export const dynamic = "force-dynamic";

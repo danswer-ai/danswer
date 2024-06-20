@@ -156,7 +156,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     # Danswer APIs key
     api_key = get_danswer_api_key()
-    logger.info(f"Danswer API Key: {api_key}")
+    logger.info(f"CHP API Key: {api_key}")
 
     if OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET:
         logger.info("Both OAuth Client ID and Secret are configured.")
@@ -256,7 +256,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
 def get_application() -> FastAPI:
     application = FastAPI(
-        title="Danswer Backend", version=__version__, lifespan=lifespan
+        title="enMedD CHP Backend", version=__version__, lifespan=lifespan
     )
 
     include_router_with_global_prefix_prepended(application, chat_router)
@@ -374,6 +374,6 @@ app = get_application()
 
 if __name__ == "__main__":
     logger.info(
-        f"Starting Danswer Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
+        f"Starting enMedD CHP Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
     )
     uvicorn.run(app, host=APP_HOST, port=APP_PORT)

@@ -123,7 +123,7 @@ const Main = () => {
             >
               setup guide
             </a>{" "}
-            on the Danswer docs to obtain a Dropbox token.
+            on the enMedD CHP docs to obtain a Dropbox token.
           </Text>
           <Card className="mt-4 mb-4">
             <CredentialForm<DropboxCredentialJson>
