@@ -15,6 +15,7 @@ from danswer.dynamic_configs.interface import JSON_ro
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import message_to_string
+from danswer.prompts.chat_prompts import INTERNET_SEARCH_QUERY_REPHRASE
 from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
 from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS
@@ -157,7 +158,7 @@ class InternetSearchTool(Tool):
             return None
 
         rephrased_query = history_based_query_rephrase(
-            query=query, history=history, llm=llm
+            query=query, history=history, llm=llm, prompt_template=INTERNET_SEARCH_QUERY_REPHRASE
         )
         return {
             "internet_search_query": rephrased_query,
