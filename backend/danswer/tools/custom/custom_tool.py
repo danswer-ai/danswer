@@ -46,11 +46,18 @@ class CustomTool(Tool):
         self._name = self._method_spec.name
         self._description = self._method_spec.summary
 
+    @property
     def name(self) -> str:
         return self._name
 
+    @property
     def description(self) -> str:
         return self._description
+    
+    @property
+    def display_name(self) -> str:
+        return self._name
+
 
     """For LLMs which support explicit tool calling"""
 
@@ -80,8 +87,8 @@ class CustomTool(Tool):
                         content=SHOULD_USE_CUSTOM_TOOL_USER_PROMPT.format(
                             history=history,
                             query=query,
-                            tool_name=self.name(),
-                            tool_description=self.description(),
+                            tool_name=self.name,
+                            tool_description=self.description,
                         )
                     ),
                 ]
@@ -96,8 +103,8 @@ class CustomTool(Tool):
                     content=TOOL_ARG_USER_PROMPT.format(
                         history=history,
                         query=query,
-                        tool_name=self.name(),
-                        tool_description=self.description(),
+                        tool_name=self.name,
+                        tool_description=self.description,
                         tool_args=self.tool_definition()["function"]["parameters"],
                     )
                 ),
@@ -124,7 +131,7 @@ class CustomTool(Tool):
 
         # pretend like nothing happened if not parse-able
         logger.error(
-            f"Failed to parse args for '{self.name()}' tool. Recieved: {args_result_str}"
+            f"Failed to parse args for '{self.name}' tool. Recieved: {args_result_str}"
         )
         return None
 
