@@ -34,7 +34,7 @@ import {
   removeMessage,
   sendMessage,
   setMessageAsLatest,
-  updateChatSession,
+  updateModelOverrideForChatSession,
   updateParentChildren,
   uploadFilesForChat,
 } from "./lib";
@@ -139,7 +139,7 @@ export function ChatPage({
       !urlChatSessionId.current &&
       llmOverrideManager.llmOverride
     ) {
-      updateChatSession(
+      updateModelOverrideForChatSession(
         chatSessionId,
         structureValue(
           llmOverrideManager.llmOverride.name,
@@ -164,7 +164,7 @@ export function ChatPage({
       filterManager.setTimeRange(null);
 
       // reset LLM overrides (based on chat session!)
-      llmOverrideManager.updateChatSession(selectedChatSession);
+      llmOverrideManager.updateModelOverrideForChatSession(selectedChatSession);
       llmOverrideManager.setTemperature(null);
       // remove uploaded files
       setCurrentMessageFiles([]);

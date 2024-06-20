@@ -6,7 +6,8 @@ import { DefaultDropdown } from "@/components/Dropdown";
 import { Text } from "@tremor/react";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { destructureValue, getFinalLLM, structureValue } from "@/lib/llm/utils";
-import { updateChatSession } from "../../lib";
+import { updateModelOverrideForChatSession } from "../../lib";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 
 export function LlmTab({
   llmOverrideManager,
@@ -74,10 +75,10 @@ export function LlmTab({
             llmOverride.modelName
           )}
           onSelect={(value) => {
-            if (chatSessionId) {
-              updateChatSession(chatSessionId, value as string);
-            }
             setLlmOverride(destructureValue(value as string));
+            if (chatSessionId) {
+              updateModelOverrideForChatSession(chatSessionId, value as string);
+            }
           }}
         />
       </div>

@@ -102,10 +102,9 @@ def get_user_chat_sessions(
     )
 
 
-@router.put("/update-thread-model")
+@router.put("/update-chat-session-model")
 def update_thread(
     update_thread_req: UpdateThreadRequest,
-    request: Request,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:

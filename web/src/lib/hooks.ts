@@ -138,7 +138,7 @@ export interface LlmOverrideManager {
   setLlmOverride: React.Dispatch<React.SetStateAction<LlmOverride>>;
   temperature: number | null;
   setTemperature: React.Dispatch<React.SetStateAction<number | null>>;
-  updateChatSession: (chatSession?: ChatSession) => void;
+  updateModelOverrideForChatSession: (chatSession?: ChatSession) => void;
 }
 
 export function useLlmOverride(
@@ -154,7 +154,7 @@ export function useLlmOverride(
         }
   );
 
-  const updateChatSession = (chatSession?: ChatSession) => {
+  const updateModelOverrideForChatSession = (chatSession?: ChatSession) => {
     setLlmOverride(
       chatSession && chatSession.current_alternate_model
         ? destructureValue(chatSession.current_alternate_model)
@@ -169,7 +169,7 @@ export function useLlmOverride(
   const [temperature, setTemperature] = useState<number | null>(null);
 
   return {
-    updateChatSession,
+    updateModelOverrideForChatSession,
     llmOverride,
     setLlmOverride,
     temperature,
