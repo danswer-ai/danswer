@@ -45,7 +45,6 @@ import { useDocumentSelection } from "./useDocumentSelection";
 import { useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { FeedbackType } from "./types";
-import ResizableSection from "@/components/resizable/ResizableSection";
 import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
@@ -72,16 +71,16 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
-<<<<<<< HEAD
-import { FaToggleOff } from "react-icons/fa";
 import { ChatPopup } from "./ChatPopup";
 import { ChatBanner } from "./ChatBanner";
-=======
-
 import { TbLayoutSidebarRightExpand } from "react-icons/tb";
+import {
+  HEADER_HEIGHT,
+  SIDEBAR_WIDTH,
+  SIDEBAR_WIDTH_CONST,
+  SUB_HEADER,
+} from "@/lib/constants";
 
-import { HEADER_HEIGHT, SUB_HEADER } from "@/lib/constants";
->>>>>>> 5c26ab0b (add aligned headers)
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -878,7 +877,9 @@ export function ChatPage({
 
   const toggleSidebar = () => {
     if (sidebarElementRef.current) {
-      sidebarElementRef.current.style.width = showDocSidebar ? "0px" : `350px`;
+      sidebarElementRef.current.style.width = showDocSidebar
+        ? "0px"
+        : SIDEBAR_WIDTH_CONST;
     }
 
     setShowDocSidebar((showDocSidebar) => !showDocSidebar); // Toggle the state which will in turn toggle the class
@@ -1083,7 +1084,6 @@ export function ChatPage({
                                       newCompleteMessageMap
                                     );
                                     setSelectedMessageForDocDisplay(messageId);
-
                                     // set message as latest so we can edit this message
                                     // and so it sticks around on page reload
                                     setMessageAsLatest(messageId);
@@ -1309,7 +1309,7 @@ export function ChatPage({
                   {!retrievalDisabled ? (
                     <div
                       ref={sidebarElementRef}
-                      className={`relative  flex-none overflow-y-hidden sidebar bg-background-weak hidden lg:block  w-[350px] h-screen  `}
+                      className={`relative   overflow-y-hidden sidebar bg-background-weak hidden lg:block  ${SIDEBAR_WIDTH} h-screen  `}
                     >
                       <DocumentSidebar
                         closeSidebar={() => toggleSidebar()}
@@ -1322,30 +1322,7 @@ export function ChatPage({
                         isLoading={isFetchingChatMessages}
                       />
                     </div>
-                  ) : // <div
-                  //   ref={sidebarElementRef}
-                  //   className={` flex-initial overflow-y-hidden sidebar bg-background-weak flex flex-col max-w-3xl h-screen transition-transform duration-300 `}
-                  //   id="document-sidebar"
-                  // >
-                  //   <ResizableSection
-                  //     intialWidth={documentSidebarInitialWidth as number}
-                  //     minWidth={400}
-                  //     maxWidth={maxDocumentSidebarWidth || undefined}
-                  //     updateWidth={updateWidth}
-                  //   >
-                  //     <DocumentSidebar
-                  //       closeSidebar={() => toggleSidebar()}
-                  //       selectedMessage={aiMessage}
-                  //       selectedDocuments={selectedDocuments}
-                  //       toggleDocumentSelection={toggleDocumentSelection}
-                  //       clearSelectedDocuments={clearSelectedDocuments}
-                  //       selectedDocumentTokens={selectedDocumentTokens}
-                  //       maxTokens={maxTokens}
-                  //       isLoading={isFetchingChatMessages}
-                  //     />
-                  //   </ResizableSection>
-                  // </div>
-                  // Another option is to use a div with the width set to the initial width, so that the
+                  ) : // Another option is to use a div with the width set to the initial width, so that the
                   // chat section appears in the same place as before
                   // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
                   // chat section appears in the same place as before

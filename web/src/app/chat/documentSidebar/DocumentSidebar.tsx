@@ -7,16 +7,11 @@ import { SelectedDocumentDisplay } from "./SelectedDocumentDisplay";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { BasicSelectable } from "@/components/BasicClickable";
 import { Message, RetrievalType } from "../interfaces";
-<<<<<<< HEAD
-=======
-import { HEADER_HEIGHT, HEADER_PADDING, SUB_HEADER } from "@/lib/constants";
->>>>>>> 5c26ab0b (add aligned headers)
-import { HoverPopup } from "@/components/HoverPopup";
-import { HEADER_PADDING } from "@/lib/constants";
-import { FaToggleOn } from "react-icons/fa";
 
+import {  SUB_HEADER, SIDEBAR_WIDTH } from "@/lib/constants";
+
+import { HoverPopup } from "@/components/HoverPopup";
 import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
-import { useRef } from "react";
 
 export function DocumentSidebar({
   closeSidebar,
@@ -85,7 +80,7 @@ export function DocumentSidebar({
 
   return (
     <div
-      className={` w-[350px]  absolute right-0 h-screen border-l border-l-border `}
+      className={`${SIDEBAR_WIDTH} absolute right-0 h-screen border-l border-l-border `}
     >
       <div
         className="w-full flex-initial 
