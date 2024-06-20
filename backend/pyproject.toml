@@ -77,6 +77,7 @@ dependencies = [
     "dropbox==11.36.2",
     "pyrogram==2.0.106",
     "notion-client>=2.2.1",
+    "simple-salesforce>=1.12.6",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
