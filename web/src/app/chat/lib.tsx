@@ -15,7 +15,7 @@ import {
   Message,
   RetrievalType,
   StreamingError,
-  ToolRunKickoff,
+  ToolCallMetadata,
 } from "./interfaces";
 import { Persona } from "../admin/assistants/interfaces";
 import { ReadonlyURLSearchParams } from "next/navigation";
@@ -138,7 +138,7 @@ export async function* sendMessage({
     | DocumentsResponse
     | BackendMessage
     | ImageGenerationDisplay
-    | ToolRunKickoff
+    | ToolCallMetadata
     | StreamingError
   >(sendMessageResponse);
 }
@@ -384,6 +384,7 @@ export function processRawChatHistory(
             citations: messageInfo?.citations || {},
           }
         : {}),
+      toolCalls: messageInfo.tool_calls,
       parentMessageId: messageInfo.parent_message,
       childrenMessageIds: [],
       latestChildMessageId: messageInfo.latest_child_message,

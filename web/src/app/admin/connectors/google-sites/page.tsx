@@ -5,7 +5,8 @@ import * as Yup from "yup";
 
 import { LoadingAnimation } from "@/components/Loading";
 import { GoogleSitesIcon } from "@/components/icons/icons";
-import { fetcher } from "@/lib/fetcher";
+import { errorHandlingFetcher } from "@/lib/fetcher";
+import { ErrorCallout } from "@/components/ErrorCallout";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus, GoogleSitesConfig } from "@/lib/types";
@@ -29,10 +30,10 @@ export default function GoogleSites() {
   const {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
-    error: isConnectorIndexingStatusesError,
+    error: connectorIndexingStatusesError,
   } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
-    fetcher
+    errorHandlingFetcher
   );
 
   const googleSitesIndexingStatuses: ConnectorIndexingStatus<
@@ -113,6 +114,7 @@ export default function GoogleSites() {
                           zip_path: filePaths[0],
                         },
                         refresh_freq: null,
+                        prune_freq: 0,
                         disabled: false,
                       });
                     if (connectorErrorMsg || !connector) {
@@ -211,7 +213,7 @@ export default function GoogleSites() {
         </h2>
         {isConnectorIndexingStatusesLoading ? (
           <LoadingAnimation text="Loading" />
-        ) : isConnectorIndexingStatusesError || !connectorIndexingStatuses ? (
+        ) : connectorIndexingStatusesError || !connectorIndexingStatuses ? (
           <div>Error loading indexing history</div>
         ) : googleSitesIndexingStatuses.length > 0 ? (
           <SingleUseConnectorsTable<GoogleSitesConfig, {}>

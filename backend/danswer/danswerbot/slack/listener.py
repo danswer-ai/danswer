@@ -10,6 +10,7 @@ from slack_sdk.socket_mode.response import SocketModeResponse
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import MessageType
+from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
 from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
@@ -40,6 +41,7 @@ from danswer.danswerbot.slack.utils import get_channel_name_from_id
 from danswer.danswerbot.slack.utils import get_danswer_bot_app_id
 from danswer.danswerbot.slack.utils import read_slack_thread
 from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
+from danswer.danswerbot.slack.utils import rephrase_slack_message
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
@@ -53,6 +55,20 @@ from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 
 logger = setup_logger()
+
+
+# In rare cases, some users have been experiencing a massive amount of trivial messages coming through
+# to the Slack Bot with trivial messages. Adding this to avoid exploding LLM costs while we track down
+# the cause.
+_SLACK_GREETINGS_TO_IGNORE = {
+    "Welcome back!",
+    "It's going to be a great day.",
+    "Salutations!",
+    "Greetings!",
+    "Feeling great!",
+    "Hi there",
+    ":wave:",
+}
 
 
 def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool:
@@ -74,6 +90,19 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
 
         if not msg:
             channel_specific_logger.error("Cannot respond to empty message - skipping")
+            return False
+
+        if (
+            msg in _SLACK_GREETINGS_TO_IGNORE
+            or remove_danswer_bot_tag(msg, client=client.web_client)
+            in _SLACK_GREETINGS_TO_IGNORE
+        ):
+            channel_specific_logger.error(
+                f"Ignoring weird Slack greeting message: '{msg}'"
+            )
+            channel_specific_logger.error(
+                f"Weird Slack greeting message payload: '{req.payload}'"
+            )
             return False
 
         # Ensure that the message is a new message of expected type
@@ -201,6 +230,14 @@ def build_request_details(
         thread_ts = event.get("thread_ts")
 
         msg = remove_danswer_bot_tag(msg, client=client.web_client)
+
+        if DANSWER_BOT_REPHRASE_MESSAGE:
+            logger.info(f"Rephrasing Slack message. Original message: {msg}")
+            try:
+                msg = rephrase_slack_message(msg)
+                logger.info(f"Rephrased message: {msg}")
+            except Exception as e:
+                logger.error(f"Error while trying to rephrase the Slack message: {e}")
 
         if tagged:
             logger.info("User tagged DanswerBot")

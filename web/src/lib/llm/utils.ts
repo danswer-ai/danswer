@@ -1,9 +1,11 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
+import { LlmOverride } from "@/lib/hooks";
 
 export function getFinalLLM(
   llmProviders: LLMProviderDescriptor[],
-  persona: Persona | null
+  persona: Persona | null,
+  llmOverride: LlmOverride | null
 ): [string, string] {
   const defaultProvider = llmProviders.find(
     (llmProvider) => llmProvider.is_default_provider
@@ -17,6 +19,11 @@ export function getFinalLLM(
     model = persona.llm_model_version_override || model;
   }
 
+  if (llmOverride) {
+    provider = llmOverride.provider || provider;
+    model = llmOverride.modelName || model;
+  }
+
   return [provider, model];
 }
 
@@ -25,6 +32,10 @@ const MODELS_SUPPORTING_IMAGES = [
   ["openai", "gpt-4-vision-preview"],
   ["openai", "gpt-4-turbo"],
   ["openai", "gpt-4-1106-vision-preview"],
+  ["azure", "gpt-4o"],
+  ["azure", "gpt-4-vision-preview"],
+  ["azure", "gpt-4-turbo"],
+  ["azure", "gpt-4-1106-vision-preview"],
 ];
 
 export function checkLLMSupportsImageInput(provider: string, model: string) {

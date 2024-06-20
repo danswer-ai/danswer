@@ -5,5 +5,4 @@
 .idea
 /deployment/data/nginx/app.conf
 .vscode/launch.json
-*.session
-*.session-journal
+*.sw?
