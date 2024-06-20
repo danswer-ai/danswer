@@ -15,6 +15,7 @@ import { createCredential, linkCredential } from "@/lib/credential";
 import { useSWRConfig } from "swr";
 import { Button, Divider } from "@tremor/react";
 import { EE_ENABLED } from "@/lib/constants";
+import IsPublicField from "./IsPublicField";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
@@ -246,16 +247,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             {showNonPublicOption && (
               <>
                 <Divider />
-                <BooleanFormField
-                  name="is_public"
-                  label="Documents are Public?"
-                  subtext={
-                    "If set, then documents indexed by this connector will be " +
-                    "visible to all users. If turned off, then only users who explicitly " +
-                    "have been given access to the documents (e.g. through a User Group) " +
-                    "will have access"
-                  }
-                />
+                <IsPublicField />
                 <Divider />
               </>
             )}
