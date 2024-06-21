@@ -101,6 +101,7 @@ def get_answer_with_quote(
         persona_id=query_request.persona_id,
         user=user,
         db_session=db_session,
+        is_for_edit=False,
     )
 
     llm = get_default_llm() if not persona else get_llm_for_persona(persona)
