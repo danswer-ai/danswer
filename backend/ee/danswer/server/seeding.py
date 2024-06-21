@@ -8,6 +8,10 @@ from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.llm import upsert_llm_provider
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.utils.logger import setup_logger
+from ee.danswer.server.enterprise_settings.models import EnterpriseSettings
+from ee.danswer.server.enterprise_settings.store import store_settings
+from ee.danswer.server.enterprise_settings.store import upload_logo
+
 
 logger = setup_logger()
 
@@ -17,13 +21,14 @@ _SEED_CONFIG_ENV_VAR_NAME = "ENV_SEED_CONFIGURATION"
 class SeedConfiguration(BaseModel):
     llms: list[LLMProviderUpsertRequest] | None = None
     admin_user_emails: list[str] | None = None
+    seeded_name: str | None = None
+    seeded_logo_path: str | None = None
 
 
 def _parse_env() -> SeedConfiguration | None:
     seed_config_str = os.getenv(_SEED_CONFIG_ENV_VAR_NAME)
     if seed_config_str is None:
         return None
-
     seed_config = SeedConfiguration.parse_raw(seed_config_str)
     return seed_config
 
@@ -47,9 +52,25 @@ def get_seed_config() -> SeedConfiguration | None:
 
 def seed_db() -> None:
     seed_config = _parse_env()
+
     if seed_config is None:
+        logger.info("No seeding configuration file passed")
         return
 
     with get_session_context_manager() as db_session:
         if seed_config.llms is not None:
             _seed_llms(db_session, seed_config.llms)
+
+        is_seeded_logo = (
+            upload_logo(db_session=db_session, file=seed_config.seeded_logo_path)
+            if seed_config.seeded_logo_path
+            else False
+        )
+        seeded_name = seed_config.seeded_name
+
+        if is_seeded_logo or seeded_name:
+            logger.info("Seeding enterprise settings")
+            seeded_settings = EnterpriseSettings(
+                application_name=seeded_name, use_custom_logo=is_seeded_logo
+            )
+            store_settings(seeded_settings)

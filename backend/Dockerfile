@@ -10,14 +10,15 @@ https://github.com/danswer-ai/danswer"
 # Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
 ARG DANSWER_VERSION=0.3-dev
 ENV DANSWER_VERSION=${DANSWER_VERSION}
-RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 
+RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 # Install system dependencies
 # cmake needed for psycopg (postgres)
 # libpq-dev needed for psycopg (postgres)
 # curl included just for users' convenience
 # zip for Vespa step futher down
 # ca-certificates for HTTPS
+
 RUN apt-get update && \
     apt-get install -y cmake curl zip ca-certificates libgnutls30=3.7.9-2+deb12u2 \
     libblkid1=2.38.1-5+deb12u1 libmount1=2.38.1-5+deb12u1 libsmartcols1=2.38.1-5+deb12u1 \
@@ -79,6 +80,9 @@ COPY supervisord.conf /usr/etc/supervisord.conf
 
 # Escape hatch
 COPY ./scripts/force_delete_connector_by_id.py /app/scripts/force_delete_connector_by_id.py
+
+# Put logo in assets
+COPY ./assets /app/assets
 
 ENV PYTHONPATH /app
 
