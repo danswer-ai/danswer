@@ -361,6 +361,7 @@ def get_max_document_tokens(
             persona_id=persona_id,
             user=user,
             db_session=db_session,
+            is_for_edit=False,
         )
     except ValueError:
         raise HTTPException(status_code=404, detail="Persona not found")
