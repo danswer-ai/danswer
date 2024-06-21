@@ -58,7 +58,6 @@ services:
         max-size: "50m"
         max-file: "6"
 
-
   web_server:
     image: danswer/danswer-ee-web-server:latest
     build:
