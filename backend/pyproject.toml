@@ -91,8 +91,8 @@ managed = true
 dev-dependencies = [
     "black==23.3.0",
     "celery-types==0.19.0",
-    "mypy-extensions==1.0.0",
-    "mypy==1.8.0",
+    "mypy-extensions>=1.0.0",
+    "mypy>=1.10.0",
     "pre-commit==3.2.2",
     "reorder-python-imports==3.9.0",
     "ruff==0.0.286",

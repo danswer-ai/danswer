@@ -354,7 +354,7 @@ multidict==6.0.5
     # via yarl
 mwparserfromhell==0.6.6
     # via pywikibot
-mypy==1.8.0
+mypy==1.10.0
     # via sqlalchemy
 mypy-extensions==1.0.0
     # via black

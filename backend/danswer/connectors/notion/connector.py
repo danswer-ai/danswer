@@ -7,6 +7,7 @@ from datetime import timezone
 from typing import Any
 from typing import Optional
 
+import requests
 from retry import retry
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -23,9 +24,6 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
-
-import requests
-from requests.exceptions import HTTPError
 
 logger = setup_logger()
 
@@ -64,25 +62,31 @@ class NotionSearchResponse:
             if k in names:
                 setattr(self, k, v)
 
+
 HARCODED_TAG_FIELD_TYPES = set(["multi_select", "select"])
 
+
 def get_tags(page: NotionPage) -> dict[str, list[str] | str]:
-    tags_by_name = {}
+    tags_by_name: dict[str, list[str] | str] = {}
     for property_name, property_dict in page.properties.items():
         property_type = property_dict.get("type", None)
         if not property_type:
             continue
         if property_type in HARCODED_TAG_FIELD_TYPES:
-            collected_tags = []
-            property_tags : list[dict[str,str]] | dict[str, dict[str,str]] = property_dict[property_type]
+            collected_tags: list[str] = []
+            property_tags: (
+                list[dict[str, str]] | dict[str, dict[str, str]] | dict[str, str]
+            ) = property_dict[property_type]
             if isinstance(property_tags, dict):
-                collected_tags.append(property_tags.get("name", "UnkName"))
+                collected_tags.append(str(property_tags.get("name", "UnkName")))
             elif isinstance(property_tags, list):
                 for tag_info in property_tags:
                     if isinstance(tag_info, dict):
                         collected_tags.append(tag_info.get("name", "UnkName"))
                     else:
-                        logger.warning(f"Unexpected tag dict: {tag_info}, converting to string")
+                        logger.warning(
+                            f"Unexpected tag dict: {tag_info}, converting to string"
+                        )
                         collected_tags.append(str(tag_info))
             else:
                 logger.warning(f"{property_tags} is not a dict or list")
@@ -450,9 +454,9 @@ class NotionConnector(LoadConnector, PollConnector):
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         """Applies integration token to headers"""
-        self.headers["Authorization"] = (
-            f'Bearer {credentials["notion_integration_token"]}'
-        )
+        self.headers[
+            "Authorization"
+        ] = f'Bearer {credentials["notion_integration_token"]}'
         self.is_db = self.check_if_db(self.root_page_id) if self.root_page_id else False
         return None
 

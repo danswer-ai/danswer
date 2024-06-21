@@ -236,7 +236,7 @@ def eml_to_text(file: IO[Any]) -> str:
     text_content = []
     for part in message.walk():
         if part.get_content_type().startswith("text/plain"):
-            text_content.append(part.get_payload())
+            text_content.append(str(part.get_payload()))
     return TEXT_SECTION_SEPARATOR.join(text_content)
 
 
