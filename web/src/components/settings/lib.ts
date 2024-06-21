@@ -20,11 +20,30 @@ export async function fetchSettingsSS() {
     tasks.length > 2 ? await results[2].json() : null
   ) as string | null;
 
-  const combinedSettings = {
+  const combinedSettings: CombinedSettings = {
     settings,
     enterpriseSettings,
     customAnalyticsScript,
   };
 
   return combinedSettings;
+}
+
+export interface CombinedSettings {
+  settings: Settings;
+  enterpriseSettings: EnterpriseSettings | null;
+  customAnalyticsScript: string | null;
+}
+
+let cachedSettings: CombinedSettings;
+
+export async function getCombinedSettings({
+  forceRetrieval,
+}: {
+  forceRetrieval?: boolean;
+}): Promise<CombinedSettings> {
+  if (!cachedSettings || forceRetrieval) {
+    cachedSettings = await fetchSettingsSS();
+  }
+  return cachedSettings;
 }
