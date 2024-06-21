@@ -1,9 +1,7 @@
 import "./globals.css";
 
 import { Inter } from "next/font/google";
-import {
-  getCombinedSettings,
-} from "@/components/settings/lib";
+import { getCombinedSettings } from "@/components/settings/lib";
 import { CUSTOM_ANALYTICS_ENABLED } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { Metadata } from "next";
