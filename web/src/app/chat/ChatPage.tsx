@@ -333,20 +333,20 @@ export function ChatPage({
     useState<number | null>(null);
   const { aiMessage } = selectedMessageForDocDisplay
     ? getHumanAndAIMessageFromMessageNumber(
-      messageHistory,
-      selectedMessageForDocDisplay
-    )
+        messageHistory,
+        selectedMessageForDocDisplay
+      )
     : { aiMessage: null };
 
   const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
     existingChatSessionPersonaId !== undefined
       ? filteredAssistants.find(
-        (persona) => persona.id === existingChatSessionPersonaId
-      )
+          (persona) => persona.id === existingChatSessionPersonaId
+        )
       : defaultSelectedPersonaId !== undefined
         ? filteredAssistants.find(
-          (persona) => persona.id === defaultSelectedPersonaId
-        )
+            (persona) => persona.id === defaultSelectedPersonaId
+          )
         : undefined
   );
 
@@ -533,7 +533,7 @@ export function ChatPage({
     );
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
-        messageToResend?.parentMessageId !== undefined
+      messageToResend?.parentMessageId !== undefined
         ? completeMessageMap.get(messageToResend.parentMessageId)
         : null;
     const messageToResendIndex = messageToResend
@@ -682,9 +682,9 @@ export function ChatPage({
         const updateFn = (messages: Message[]) => {
           const replacementsMap = finalMessage
             ? new Map([
-              [messages[0].messageId, TEMP_USER_MESSAGE_ID],
-              [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
-            ] as [number, number][])
+                [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+                [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+              ] as [number, number][])
             : null;
           upsertToCompleteMessageMap({
             messages: messages,
@@ -958,8 +958,9 @@ export function ChatPage({
               {({ getRootProps }) => (
                 <>
                   <div
-                    className={`w-full sm:relative h-screen ${retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
-                      }`}
+                    className={`w-full sm:relative h-screen ${
+                      retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
+                    }`}
                     {...getRootProps()}
                   >
                     {/* <input {...getInputProps()} /> */}
@@ -1077,7 +1078,7 @@ export function ChatPage({
                             const isShowingRetrieved =
                               (selectedMessageForDocDisplay !== null &&
                                 selectedMessageForDocDisplay ===
-                                message.messageId) ||
+                                  message.messageId) ||
                               (selectedMessageForDocDisplay ===
                                 TEMP_USER_MESSAGE_ID &&
                                 i === messageHistory.length - 1);
@@ -1335,9 +1336,9 @@ export function ChatPage({
                       />
                     </ResizableSection>
                   ) : // Another option is to use a div with the width set to the initial width, so that the
-                    // chat section appears in the same place as before
-                    // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
-                    null}
+                  // chat section appears in the same place as before
+                  // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
+                  null}
                 </>
               )}
             </Dropzone>
