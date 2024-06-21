@@ -1,7 +1,8 @@
 import { ChangeEvent, FC, useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "./icons/icons";
-import { FiCheck, FiChevronDown } from "react-icons/fi";
+import { FiCheck, FiChevronDown, FiStar } from "react-icons/fi";
 import { Popover } from "./popover/Popover";
+import { Hoverable } from "./Hoverable";
 
 export interface Option<T> {
   name: string;
@@ -234,6 +235,7 @@ export function DefaultDropdownElement({
   onSelect,
   isSelected,
   includeCheckbox = false,
+  gptBox = false,
 }: {
   name: string | JSX.Element;
   icon?: React.FC<{ size?: number; className?: string }>;
@@ -241,6 +243,7 @@ export function DefaultDropdownElement({
   onSelect?: () => void;
   isSelected?: boolean;
   includeCheckbox?: boolean;
+  gptBox?: boolean;
 }) {
   return (
     <div
@@ -290,6 +293,7 @@ export function DefaultDropdown({
   includeDefault = false,
   side,
   maxHeight,
+  gptBox,
 }: {
   options: StringOrNumberOption[];
   selected: string | null;
@@ -297,6 +301,7 @@ export function DefaultDropdown({
   includeDefault?: boolean;
   side?: "top" | "right" | "bottom" | "left";
   maxHeight?: string;
+  gptBox?: boolean;
 }) {
   const selectedOption = options.find((option) => option.value === selected);
   const [isOpen, setIsOpen] = useState(false);
@@ -371,6 +376,93 @@ export function DefaultDropdown({
         side={side}
         sideOffset={5}
         matchWidth
+        triggerMaxWidth
+      />
+    </div>
+  );
+}
+
+export function RegenerateDropdown({
+  options,
+  selected,
+  onSelect,
+  side,
+  maxHeight,
+  gptBox,
+  alternate,
+}: {
+  alternate?: string;
+  options: StringOrNumberOption[];
+  selected: string | null;
+  onSelect: (value: string | number | null) => void;
+  includeDefault?: boolean;
+  side?: "top" | "right" | "bottom" | "left";
+  maxHeight?: string;
+  gptBox?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const Dropdown = (
+    <div
+      className={`
+        border 
+        border 
+        rounded-lg 
+        flex 
+        flex-col 
+        bg-background
+        ${maxHeight || "max-h-96"}
+        overflow-y-auto 
+        overscroll-contain relative`}
+    >
+      <p
+        className="
+        sticky 
+        top-0 
+        flex
+        bg-background
+        font-bold
+        px-3
+        text-sm 
+        py-1.5 
+        "
+      >
+        Pick a model
+      </p>
+      {options.map((option, ind) => {
+        const isSelected = option.value === selected;
+        return (
+          <DefaultDropdownElement
+            key={option.value}
+            name={option.name}
+            description={option.description}
+            onSelect={() => onSelect(option.value)}
+            isSelected={isSelected}
+          />
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <div onClick={() => setIsOpen(!isOpen)}>
+      <Popover
+        open={isOpen}
+        onOpenChange={(open) => setIsOpen(open)}
+        content={
+          !alternate ? (
+            <Hoverable icon={FiStar} />
+          ) : (
+            <Hoverable
+              icon={FiStar}
+              active={isOpen}
+              hoverText={{ text: alternate, animate: true }}
+            />
+          )
+        }
+        popover={Dropdown}
+        align="start"
+        side={side}
+        sideOffset={5}
         triggerMaxWidth
       />
     </div>

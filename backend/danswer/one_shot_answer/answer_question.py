@@ -195,6 +195,7 @@ def stream_answer_objects(
             tool_name=search_tool.name(),
             args={"query": rephrased_query},
         ),
+        explicitly_alternate=True,
         # for now, don't use tool calling for this flow, as we haven't
         # tested quotes with tool calling too much yet
         skip_explicit_tool_calling=True,
@@ -250,7 +251,6 @@ def stream_answer_objects(
         else:
             yield packet
 
-    # Saving Gen AI answer and responding with message info
     gen_ai_response_message = create_new_chat_message(
         chat_session_id=chat_session.id,
         parent_message=new_user_message,

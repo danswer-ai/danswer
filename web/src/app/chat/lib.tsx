@@ -21,6 +21,10 @@ import { Persona } from "../admin/assistants/interfaces";
 import { ReadonlyURLSearchParams } from "next/navigation";
 import { SEARCH_PARAM_NAMES } from "./searchParams";
 
+export function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function createChatSession(
   personaId: number,
   description: string | null
@@ -63,6 +67,7 @@ export async function* sendMessage({
   temperature,
   systemPromptOverride,
   useExistingUserMessage,
+  regenerate,
   alternateAssistantId,
 }: {
   message: string;
@@ -80,6 +85,7 @@ export async function* sendMessage({
   temperature?: number;
   // prompt overrides
   systemPromptOverride?: string;
+  regenerate?: boolean;
   // if specified, will use the existing latest user message
   // and will ignore the specified `message`
   useExistingUserMessage?: boolean;
@@ -94,6 +100,7 @@ export async function* sendMessage({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      regenerate: regenerate,
       alternate_assistant_id: alternateAssistantId,
       chat_session_id: chatSessionId,
       parent_message_id: parentMessageId,
@@ -123,7 +130,7 @@ export async function* sendMessage({
       llm_override:
         temperature || modelVersion
           ? {
-              temperature,
+              temperature: temperature || 0,
               model_provider: modelProvider,
               model_version: modelVersion,
             }
@@ -392,6 +399,7 @@ export function processRawChatHistory(
       parentMessageId: messageInfo.parent_message,
       childrenMessageIds: [],
       latestChildMessageId: messageInfo.latest_child_message,
+      alternate_model: messageInfo.alternate_model,
     };
 
     messages.set(messageInfo.message_id, message);

@@ -77,7 +77,3 @@ export function Header({ user }: HeaderProps) {
     </HeaderWrapper>
   );
 }
-
-/* 
-
-*/

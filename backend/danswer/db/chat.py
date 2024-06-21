@@ -253,6 +253,7 @@ def create_new_chat_message(
     # Maps the citation number [n] to the DB SearchDoc
     citations: dict[int, int] | None = None,
     commit: bool = True,
+    alternate_model: str | None = None,
 ) -> ChatMessage:
     new_chat_message = ChatMessage(
         chat_session_id=chat_session_id,
@@ -267,6 +268,7 @@ def create_new_chat_message(
         files=files,
         error=error,
         alternate_assistant_id=alternate_assistant_id,
+        alternate_model=alternate_model,
     )
 
     # SQL Alchemy will propagate this to update the reference_docs' foreign keys
@@ -461,6 +463,7 @@ def translate_db_message_to_chat_message_detail(
         time_sent=chat_message.time_sent,
         citations=chat_message.citations,
         files=chat_message.files or [],
+        alternate_model=chat_message.alternate_model,
         alternate_assistant_id=chat_message.alternate_assistant_id,
     )
 

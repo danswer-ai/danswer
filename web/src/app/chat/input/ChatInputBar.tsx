@@ -17,7 +17,12 @@ import {
 import ChatInputOption from "./ChatInputOption";
 import { FaBrain } from "react-icons/fa";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
+import {
+  FilterManager,
+  LlmOverride,
+  LlmOverrideManager,
+  useLlmOverride,
+} from "@/lib/hooks";
 import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
 import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
@@ -27,6 +32,7 @@ import { RobotIcon } from "@/components/icons/icons";
 import { Hoverable } from "@/components/Hoverable";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
+import { submitMessageTypes } from "../ChatPage";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
@@ -52,7 +58,7 @@ export function ChatInputBar({
   personas: Persona[];
   message: string;
   setMessage: (message: string) => void;
-  onSubmit: () => void;
+  onSubmit: ({ messageIdToResend, messageOverride, queryOverride, forceSearch, isSeededChat, regenerate, modelOverRide, alternativeAssistant, }: submitMessageTypes) => Promise<void>
   isStreaming: boolean;
   setIsCancelled: (value: boolean) => void;
   retrievalDisabled: boolean;
@@ -77,6 +83,8 @@ export function ChatInputBar({
       )}px`;
     }
   }, [message]);
+
+
 
   const { llmProviders } = useChatContext();
   const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant, null);
@@ -196,7 +204,7 @@ export function ChatInputBar({
               className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full "
             >
               <div className="rounded-lg py-1.5 bg-white border border-gray-300 overflow-hidden shadow-lg mx-2  px-1.5 mt-2 rounded  z-10">
-                {filteredPersonas.map((currentPersona, index) => (
+                {filteredPersonas.length > 1 && filteredPersonas.map((currentPersona, index) => (
                   <button
                     key={index}
                     className={`px-2 ${assistantIconIndex == index && "bg-gray-200"} rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-gray-100 cursor-pointer`}
@@ -308,11 +316,10 @@ export function ChatInputBar({
                 resize-none
                 border-0
                 bg-transparent
-                ${
-                  textAreaRef.current &&
+                ${textAreaRef.current &&
                   textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT
-                    ? "overflow-y-auto mt-2"
-                    : ""
+                  ? "overflow-y-auto mt-2"
+                  : ""
                 }
                 whitespace-normal
                 break-word
@@ -339,7 +346,7 @@ export function ChatInputBar({
                   message &&
                   !isStreaming
                 ) {
-                  onSubmit();
+                  onSubmit({ alternativeAssistant: alternativeAssistant });
                   event.preventDefault();
                 }
               }}
@@ -394,7 +401,7 @@ export function ChatInputBar({
                 onClick={() => {
                   if (!isStreaming) {
                     if (message) {
-                      onSubmit();
+                      onSubmit({ alternativeAssistant: alternativeAssistant });
                     }
                   } else {
                     setIsCancelled(true);
@@ -403,9 +410,8 @@ export function ChatInputBar({
               >
                 <FiSend
                   size={18}
-                  className={`text-emphasis w-9 h-9 p-2 rounded-lg ${
-                    message ? "bg-blue-200" : ""
-                  }`}
+                  className={`text-emphasis w-9 h-9 p-2 rounded-lg ${message ? "bg-blue-200" : ""
+                    }`}
                 />
               </div>
             </div>
