@@ -13,7 +13,7 @@ import {
 import { Divider } from "@tremor/react";
 import { Select, SelectItem } from "@tremor/react";
 import { ThreeDotsLoader } from "@/components/Loading";
-import { ChatSessionSnapshot } from "../usage/types";
+import { ChatSessionMinimal } from "../usage/types";
 import { timestampToReadableDate } from "@/lib/dateUtils";
 import { FiFrown, FiMinus, FiSmile } from "react-icons/fi";
 import { useState } from "react";
@@ -27,48 +27,37 @@ import { DownloadAsCSV } from "./DownloadAsCSV";
 const NUM_IN_PAGE = 20;
 
 function QueryHistoryTableRow({
-  chatSessionSnapshot,
+  chatSessionMinimal,
 }: {
-  chatSessionSnapshot: ChatSessionSnapshot;
+  chatSessionMinimal: ChatSessionMinimal;
 }) {
-  let finalFeedback: Feedback | "mixed" | null = null;
-  for (const message of chatSessionSnapshot.messages) {
-    if (message.feedback_type) {
-      if (finalFeedback === null) {
-        finalFeedback = message.feedback_type;
-      } else if (finalFeedback !== message.feedback_type) {
-        finalFeedback = "mixed";
-      }
-    }
-  }
-
   return (
     <TableRow
-      key={chatSessionSnapshot.id}
+      key={chatSessionMinimal.id}
       className="hover:bg-hover-light cursor-pointer relative"
     >
       <TableCell>
         <Text className="whitespace-normal line-clamp-5">
-          {chatSessionSnapshot.messages[0]?.message || "-"}
+          {chatSessionMinimal.first_user_message || "-"}
         </Text>
       </TableCell>
       <TableCell>
         <Text className="whitespace-normal line-clamp-5">
-          {chatSessionSnapshot.messages[1]?.message || "-"}
+          {chatSessionMinimal.first_ai_message || "-"}
         </Text>
       </TableCell>
       <TableCell>
-        <FeedbackBadge feedback={finalFeedback} />
+        <FeedbackBadge feedback={chatSessionMinimal.feedback_type} />
       </TableCell>
-      <TableCell>{chatSessionSnapshot.user_email || "-"}</TableCell>
-      <TableCell>{chatSessionSnapshot.persona_name || "Unknown"}</TableCell>
+      <TableCell>{chatSessionMinimal.user_email || "-"}</TableCell>
+      <TableCell>{chatSessionMinimal.persona_name || "Unknown"}</TableCell>
       <TableCell>
-        {timestampToReadableDate(chatSessionSnapshot.time_created)}
+        {timestampToReadableDate(chatSessionMinimal.time_created)}
       </TableCell>
       {/* Wrapping in <td> to avoid console warnings */}
       <td className="w-0 p-0">
         <Link
-          href={`/admin/performance/query-history/${chatSessionSnapshot.id}`}
+          href={`/admin/performance/query-history/${chatSessionMinimal.id}`}
           className="absolute w-full h-full left-0"
         ></Link>
       </td>
@@ -152,10 +141,10 @@ export function QueryHistoryTable() {
             <TableBody>
               {chatSessionData
                 .slice(NUM_IN_PAGE * (page - 1), NUM_IN_PAGE * page)
-                .map((chatSessionSnapshot) => (
+                .map((chatSessionMinimal) => (
                   <QueryHistoryTableRow
-                    key={chatSessionSnapshot.id}
-                    chatSessionSnapshot={chatSessionSnapshot}
+                    key={chatSessionMinimal.id}
+                    chatSessionMinimal={chatSessionMinimal}
                   />
                 ))}
             </TableBody>
