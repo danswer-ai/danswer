@@ -207,6 +207,8 @@ services:
         - NEXT_PUBLIC_DISABLE_LOGOUT=${NEXT_PUBLIC_DISABLE_LOGOUT:-}
         - NEXT_PUBLIC_THEME=${NEXT_PUBLIC_THEME:-}
         - NEXT_PUBLIC_ENABLE_PAID_EE_FEATURES=${NEXT_PUBLIC_ENABLE_PAID_EE_FEATURES:-true}
+        # Leave off unless absolutely necessary
+        - NEXT_PUBLIC_TOGGLE_OFF_DANSWER_POWERED=${NEXT_PUBLIC_TOGGLE_OFF_DANSWER_POWERED:-false}
     depends_on:
       - api_server
     restart: always

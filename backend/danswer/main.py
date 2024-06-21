@@ -248,7 +248,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     )
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
-
     yield
 
 

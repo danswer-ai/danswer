@@ -1,16 +1,14 @@
 "use client";
 
 import { User } from "@/lib/types";
-import { logout } from "@/lib/user";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { CustomDropdown, DefaultDropdownElement } from "../Dropdown";
+import React, { useContext } from "react";
 import { FiMessageSquare, FiSearch } from "react-icons/fi";
 import { HeaderWrapper } from "./HeaderWrapper";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { UserDropdown } from "../UserDropdown";
 import { Logo } from "../Logo";
+import { NEXT_PUBLIC_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
 
 export function HeaderTitle({ children }: { children: JSX.Element | string }) {
   return <h1 className="flex text-2xl text-strong font-bold">{children}</h1>;
@@ -47,9 +45,11 @@ export function Header({ user }: HeaderProps) {
                   <HeaderTitle>
                     {enterpriseSettings.application_name}
                   </HeaderTitle>
-                  <p className="text-xs text-subtle -mt-1.5">
-                    Powered by Danswer
-                  </p>
+                  {!NEXT_PUBLIC_TOGGLE_OFF_DANSWER_POWERED && (
+                    <p className="text-xs text-subtle -mt-1.5">
+                      Powered by Danswer
+                    </p>
+                  )}
                 </div>
               ) : (
                 <HeaderTitle>Danswer</HeaderTitle>
