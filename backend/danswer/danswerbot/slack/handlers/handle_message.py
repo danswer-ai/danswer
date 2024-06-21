@@ -273,8 +273,7 @@ def handle_message(
         return False
 
     if respond_team_member_list:
-        user_ids, _ = fetch_userids_from_emails(respond_team_member_list, client)
-        send_to = (send_to + user_ids) if send_to else user_ids
+        send_to, _ = fetch_userids_from_emails(respond_team_member_list, client)
     if respond_slack_group_list:
         user_ids, _ = fetch_userids_from_groups(respond_slack_group_list, client)
         send_to = (send_to + user_ids) if send_to else user_ids
