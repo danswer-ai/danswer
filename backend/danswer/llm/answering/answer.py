@@ -352,7 +352,7 @@ class Answer:
                         list[ImageGenerationResponse], response.response
                     )
                     img_urls = [img.url for img in img_generation_response]
-                    break
+
                 yield response
 
             prompt_builder.update_user_prompt(
