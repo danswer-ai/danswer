@@ -41,3 +41,14 @@ export interface ChatSessionSnapshot {
   persona_name: string | null;
   time_created: string;
 }
+
+export interface ChatSessionMinimal {
+  id: number;
+  user_email: string | null;
+  name: string | null;
+  first_user_message: string;
+  first_ai_message: string;
+  persona_name: string | null;
+  time_created: string;
+  feedback_type: Feedback | "mixed" | null;
+}

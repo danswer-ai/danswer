@@ -1,7 +1,7 @@
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import {
-  ChatSessionSnapshot,
+  ChatSessionMinimal,
   DanswerBotAnalytics,
   QueryAnalytics,
   UserAnalytics,
@@ -74,7 +74,7 @@ export const useQueryHistory = () => {
     start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
     end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
   });
-  const swrResponse = useSWR<ChatSessionSnapshot[]>(url, errorHandlingFetcher);
+  const swrResponse = useSWR<ChatSessionMinimal[]>(url, errorHandlingFetcher);
 
   return {
     ...swrResponse,

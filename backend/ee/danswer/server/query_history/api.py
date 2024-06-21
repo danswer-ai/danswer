@@ -3,6 +3,7 @@ import io
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
+from typing import Literal
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -21,7 +22,7 @@ from danswer.db.chat import get_chat_session_by_id
 from danswer.db.engine import get_session
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
-from ee.danswer.db.query_history import fetch_chat_sessions_by_time
+from ee.danswer.db.query_history import fetch_chat_sessions_eagerly_by_time
 
 
 router = APIRouter()
@@ -79,6 +80,17 @@ class MessageSnapshot(BaseModel):
             feedback_text=feedback_text,
             time_created=message.time_sent,
         )
+
+
+class ChatSessionMinimal(BaseModel):
+    id: int
+    user_email: str
+    name: str | None
+    first_user_message: str
+    first_ai_message: str
+    persona_name: str
+    time_created: datetime
+    feedback_type: QAFeedbackType | Literal["mixed"] | None
 
 
 class ChatSessionSnapshot(BaseModel):
@@ -146,6 +158,85 @@ class QuestionAnswerPairSnapshot(BaseModel):
         }
 
 
+def fetch_and_process_chat_session_history_minimal(
+    db_session: Session,
+    start: datetime,
+    end: datetime,
+    feedback_filter: QAFeedbackType | None = None,
+    limit: int | None = 500,
+) -> list[ChatSessionMinimal]:
+    chat_sessions = fetch_chat_sessions_eagerly_by_time(
+        start=start, end=end, db_session=db_session, limit=limit
+    )
+
+    minimal_sessions = []
+    for chat_session in chat_sessions:
+        if not chat_session.messages:
+            continue
+
+        first_user_message = next(
+            (
+                message.message
+                for message in chat_session.messages
+                if message.message_type == MessageType.USER
+            ),
+            "",
+        )
+        first_ai_message = next(
+            (
+                message.message
+                for message in chat_session.messages
+                if message.message_type == MessageType.ASSISTANT
+            ),
+            "",
+        )
+
+        has_positive_feedback = any(
+            feedback.is_positive
+            for message in chat_session.messages
+            for feedback in message.chat_message_feedbacks
+        )
+
+        has_negative_feedback = any(
+            not feedback.is_positive
+            for message in chat_session.messages
+            for feedback in message.chat_message_feedbacks
+        )
+
+        feedback_type: QAFeedbackType | Literal["mixed"] | None = (
+            "mixed"
+            if has_positive_feedback and has_negative_feedback
+            else QAFeedbackType.LIKE
+            if has_positive_feedback
+            else QAFeedbackType.DISLIKE
+            if has_negative_feedback
+            else None
+        )
+
+        if feedback_filter:
+            if feedback_filter == QAFeedbackType.LIKE and not has_positive_feedback:
+                continue
+            if feedback_filter == QAFeedbackType.DISLIKE and not has_negative_feedback:
+                continue
+
+        minimal_sessions.append(
+            ChatSessionMinimal(
+                id=chat_session.id,
+                user_email=get_display_email(
+                    chat_session.user.email if chat_session.user else None
+                ),
+                name=chat_session.description,
+                first_user_message=first_user_message,
+                first_ai_message=first_ai_message,
+                persona_name=chat_session.persona.name,
+                time_created=chat_session.time_created,
+                feedback_type=feedback_type,
+            )
+        )
+
+    return minimal_sessions
+
+
 def fetch_and_process_chat_session_history(
     db_session: Session,
     start: datetime,
@@ -153,7 +244,7 @@ def fetch_and_process_chat_session_history(
     feedback_type: QAFeedbackType | None,
     limit: int | None = 500,
 ) -> list[ChatSessionSnapshot]:
-    chat_sessions = fetch_chat_sessions_by_time(
+    chat_sessions = fetch_chat_sessions_eagerly_by_time(
         start=start, end=end, db_session=db_session, limit=limit
     )
 
@@ -214,15 +305,15 @@ def get_chat_session_history(
     end: datetime | None = None,
     _: db_models.User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> list[ChatSessionSnapshot]:
-    return fetch_and_process_chat_session_history(
+) -> list[ChatSessionMinimal]:
+    return fetch_and_process_chat_session_history_minimal(
         db_session=db_session,
         start=start
         or (
             datetime.now(tz=timezone.utc) - timedelta(days=30)
         ),  # default is 30d lookback
         end=end or datetime.now(tz=timezone.utc),
-        feedback_type=feedback_type,
+        feedback_filter=feedback_type,
     )
 
 
