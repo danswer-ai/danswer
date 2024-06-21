@@ -77,7 +77,7 @@ export function ChatInputBar({
 
   return (
     <div>
-      <div className="flex  justify-center pb-2 max-w-screen-lg mx-auto mb-2">
+      <div className="flex justify-center pb-2 max-w-screen-lg mx-auto mb-2">
         <div
           className="
             w-full
@@ -87,7 +87,8 @@ export function ChatInputBar({
             w-searchbar-xs
             2xl:w-searchbar-sm
             3xl:w-searchbar
-            mx-auto"
+            mx-auto
+          "
         >
           <div>
             <SelectedFilterDisplay filterManager={filterManager} />

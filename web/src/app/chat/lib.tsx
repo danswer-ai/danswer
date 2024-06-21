@@ -5,7 +5,7 @@ import {
 } from "@/lib/search/interfaces";
 import { handleStream } from "@/lib/search/streamingUtils";
 import { FeedbackType } from "./types";
-import { RefObject } from "react";
+import { Dispatch, RefObject, SetStateAction, useEffect, useRef } from "react";
 import {
   BackendMessage,
   ChatSession,
@@ -64,6 +64,14 @@ export async function createChatSession(
   const chatSessionResponseJson = await createChatSessionResponse.json();
   return chatSessionResponseJson.chat_session_id;
 }
+
+export type PacketType =
+  | ToolCallMetadata
+  | BackendMessage
+  | AnswerPiecePacket
+  | DocumentsResponse
+  | ImageGenerationDisplay
+  | StreamingError;
 
 export async function* sendMessage({
   message,
@@ -150,14 +158,7 @@ export async function* sendMessage({
     throw Error(`Failed to send message - ${errorMsg}`);
   }
 
-  yield* handleStream<
-    | AnswerPiecePacket
-    | DocumentsResponse
-    | BackendMessage
-    | ImageGenerationDisplay
-    | ToolCallMetadata
-    | StreamingError
-  >(sendMessageResponse);
+  yield* handleStream<PacketType>(sendMessageResponse);
 }
 
 export async function nameChatSession(chatSessionId: number, message: string) {
@@ -250,22 +251,112 @@ export async function* simulateLLMResponse(input: string, delay: number = 30) {
   }
 }
 
-export function handleAutoScroll(
-  endRef: RefObject<any>,
-  scrollableRef: RefObject<any>,
-  buffer: number = 300
-) {
-  if (endRef && scrollableRef) {
-    if (
-      scrollableRef.current.scrollHeight -
-        scrollableRef.current.scrollTop -
-        buffer <=
-      scrollableRef.current.clientHeight
-    ) {
-      endRef.current.scrollIntoView({ behavior: "smooth" });
+export type IScrollOnStream = {
+  isStreaming: boolean;
+  inputRef: RefObject<HTMLDivElement>;
+  endDivRef: RefObject<HTMLDivElement>;
+  scrollableDivRef: RefObject<HTMLDivElement>;
+  distance?: number;
+  debounce?: number;
+  setAboveHorizon: Dispatch<SetStateAction<boolean>>;
+};
+
+/**
+ * Scrolls on streaming of text, if within param `distance`
+ */
+export const useScrollOnStream = ({
+  endDivRef,
+  inputRef,
+  isStreaming,
+  scrollableDivRef,
+  distance = 500, // distance that should "engage" the scroll
+  debounce = 100, // time for debouncing
+  setAboveHorizon,
+}: IScrollOnStream) => {
+  // Refs for efficiency
+  const preventScrollInterference = useRef<boolean>(false);
+  const preventScroll = useRef<boolean>(false);
+  const blockActionRef = useRef<boolean>(false);
+  const previousScroll = useRef<number>(0);
+  const scrollDist = useRef<number>(0);
+
+  const updateScrollTracking = () => {
+    const scrollDistance =
+      endDivRef?.current?.getBoundingClientRect()?.top! -
+      inputRef?.current?.getBoundingClientRect()?.top!;
+    scrollDist.current = scrollDistance;
+    setAboveHorizon(scrollDist.current > 500);
+  };
+
+  scrollableDivRef?.current?.addEventListener("scroll", updateScrollTracking);
+
+  useEffect(() => {
+    if (isStreaming && scrollableDivRef && scrollableDivRef.current) {
+      updateScrollTracking();
+
+      let newHeight: number = scrollableDivRef.current?.scrollTop!;
+      const heightDifference = newHeight - previousScroll.current;
+      previousScroll.current = newHeight;
+
+      // Prevent streaming scroll
+      if (heightDifference < 0 && !preventScroll.current) {
+        // Stop current
+        scrollableDivRef.current.style.scrollBehavior = "auto";
+        scrollableDivRef.current.scrollTop = scrollableDivRef.current.scrollTop;
+        scrollableDivRef.current.style.scrollBehavior = "smooth";
+        preventScrollInterference.current = true;
+        preventScroll.current = true;
+
+        setTimeout(() => {
+          preventScrollInterference.current = false;
+        }, 2000);
+        setTimeout(() => {
+          preventScroll.current = false;
+        }, 10000);
+      }
+
+      // Ensure can scroll
+      else if (!preventScrollInterference.current) {
+        preventScroll.current = false;
+      }
+
+      if (
+        scrollDist.current < distance &&
+        !blockActionRef.current &&
+        !blockActionRef.current &&
+        !preventScroll.current
+      ) {
+        // catch up if necessary!
+        const scrollAmount =
+          scrollDist.current + (scrollDist.current > 140 ? 2000 : 0);
+        blockActionRef.current = true;
+
+        scrollableDivRef?.current?.scrollBy({
+          left: 0,
+          top: Math.max(0, scrollAmount),
+          behavior: "smooth",
+        });
+
+        setTimeout(() => {
+          blockActionRef.current = false;
+        }, debounce);
+      }
     }
-  }
-}
+  });
+
+  // scroll on end of stream if within distance
+  useEffect(() => {
+    if (scrollableDivRef?.current && !isStreaming) {
+      if (scrollDist.current < distance) {
+        scrollableDivRef?.current?.scrollBy({
+          left: 0,
+          top: Math.max(scrollDist.current + 600, 0),
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [isStreaming]);
+};
 
 export function getHumanAndAIMessageFromMessageNumber(
   messageHistory: Message[],

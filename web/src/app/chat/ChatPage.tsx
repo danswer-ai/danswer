@@ -28,6 +28,7 @@ import {
   getLastSuccessfulMessageId,
   handleChatFeedback,
   nameChatSession,
+  PacketType,
   personaIncludesRetrieval,
   processRawChatHistory,
   removeMessage,
@@ -36,9 +37,9 @@ import {
   updateModelOverrideForChatSession,
   updateParentChildren,
   uploadFilesForChat,
+  useScrollOnStream,
 } from "./lib";
 import { useContext, useEffect, useRef, useState } from "react";
-
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
@@ -46,6 +47,7 @@ import {
   useFilters,
   useLlmOverride,
 } from "@/lib/hooks";
+import { useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { FeedbackType } from "./types";
 import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
@@ -53,7 +55,7 @@ import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoade
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { ChatPersonaSelector } from "./ChatPersonaSelector";
-import { FiArrowDown, FiArrowDownCircle, FiShare2 } from "react-icons/fi";
+import { FiArrowDown, FiShare2 } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { ThreeDots } from "react-loader-spinner";
@@ -97,7 +99,6 @@ export function ChatPage({
   const [configModalActiveTab, setConfigModalActiveTab] = useState<
     string | null
   >(null);
-
   let {
     user,
     chatSessions,
@@ -110,7 +111,6 @@ export function ChatPage({
   } = useChatContext();
 
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
-  const [aboveHorizon, setAboveHorizon] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -144,9 +144,6 @@ export function ChatPage({
   const urlChatSessionId = useRef<number | null>();
   // this is triggered every time the user switches which chat
   // session they are using
-
-  useEffect(() => {});
-
   useEffect(() => {
     if (
       chatSessionId &&
@@ -360,7 +357,7 @@ export function ChatPage({
   const messageHistory = buildLatestMessageChain(completeMessageMap);
   const [isStreaming, setIsStreaming] = useState(false);
 
-  // uploaded the files
+  // uploaded files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
     FileDescriptor[]
   >([]);
@@ -371,23 +368,22 @@ export function ChatPage({
     useState<number | null>(null);
   const { aiMessage } = selectedMessageForDocDisplay
     ? getHumanAndAIMessageFromMessageNumber(
-      messageHistory,
-      selectedMessageForDocDisplay
-    )
+        messageHistory,
+        selectedMessageForDocDisplay
+      )
     : { aiMessage: null };
 
   const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
     existingChatSessionPersonaId !== undefined
       ? filteredAssistants.find(
-        (persona) => persona.id === existingChatSessionPersonaId
-      )
+          (persona) => persona.id === existingChatSessionPersonaId
+        )
       : defaultSelectedPersonaId !== undefined
         ? filteredAssistants.find(
-          (persona) => persona.id === defaultSelectedPersonaId
-        )
+            (persona) => persona.id === defaultSelectedPersonaId
+          )
         : undefined
   );
-
   const livePersona =
     selectedPersona || filteredAssistants[0] || availablePersonas[0];
 
@@ -449,6 +445,8 @@ export function ChatPage({
   const [sharingModalVisible, setSharingModalVisible] =
     useState<boolean>(false);
 
+  const [aboveHorizon, setAboveHorizon] = useState(false);
+
   // auto scroll as message comes out
   const scrollableDivRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -456,85 +454,66 @@ export function ChatPage({
   const endDivRef = useRef<HTMLDivElement>(null);
   const endPaddingRef = useRef<HTMLDivElement>(null);
 
-  const [scrollDist, setScrollDist] = useState<number>(0);
-
-  useEffect(() => {
-    if (scrollableDivRef.current) {
-      const scrollDiv = scrollableDivRef.current;
-      scrollDiv.scrollTop = scrollDiv.scrollHeight;
-    }
-
-    const handleUserScroll = () => {
-      const scrollDistance =
-        endDivRef?.current?.getBoundingClientRect()?.top! -
-        inputRef?.current?.getBoundingClientRect()?.top!;
-
-      setScrollDist(scrollDistance + 100);
-      setAboveHorizon(scrollDistance > 500);
-    };
-
-    scrollableDivRef?.current?.addEventListener("scroll", handleUserScroll);
-    return () => {
-      scrollableDivRef?.current?.removeEventListener(
-        "scroll",
-        handleUserScroll
-      );
-    };
-  }, [chatSessionId]);
-
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const textarea = textAreaRef.current;
-    if (textarea) {
-      textarea.style.height = "0px";
-      textarea.style.height = `${Math.min(
-        textarea.scrollHeight,
-        MAX_INPUT_HEIGHT
-      )}px`;
-    }
-  }, [message]);
-
-  const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(
-    messageHistory.length > 0
-  );
-
-  useEffect(() => {
-    if (messageHistory.length > 0) {
-      setHasPerformedInitialScroll(true);
-    }
-  }, [messageHistory.length]);
-
-  // The scrolling hooks
-  const completeInitialScroll = () => {
-    setHasPerformedInitialScroll(true);
-  };
-
   // Scroll on stream if within the "gap"
   useScrollOnStream({
     isStreaming,
     scrollableDivRef,
     inputRef,
     endDivRef,
-    scrollDist,
+    setAboveHorizon,
   });
 
-  // // Scroll if necessary for initial message
-  useInitialScroll({
-    isStreaming,
-    endDivRef,
-    hasPerformedInitialScroll,
-    completeInitialScroll,
-  });
+  // scroll to bottom initially
+  const [hasPerformedInitialScroll, setHasPerformedInitialScroll] =
+    useState(false);
 
-  // Scroll if input bar covers bottom of message history
-  useResponsiveScroll({
-    lastMessageRef,
-    inputRef,
-    endPaddingRef,
-    textAreaRef,
-    scrollableDivRef,
-  });
+  useEffect(() => {
+    clientScrollToBottom();
+  }, [chatSessionId]);
+
+  const previousHeight = useRef<number>(
+    inputRef.current?.getBoundingClientRect().height!
+  );
+
+  const handleInputResize = () => {
+    setTimeout(() => {
+      if (inputRef.current && lastMessageRef.current) {
+        let newHeight: number =
+          inputRef.current?.getBoundingClientRect().height!;
+        const heightDifference = newHeight - previousHeight.current;
+        if (
+          previousHeight.current &&
+          heightDifference != 0 &&
+          endPaddingRef.current &&
+          scrollableDivRef &&
+          scrollableDivRef.current
+        ) {
+          endPaddingRef.current.style.transition = "height 0.3s ease-out";
+          endPaddingRef.current.style.height = `${Math.max(newHeight - 50, 0)}px`;
+
+          scrollableDivRef?.current.scrollBy({
+            left: 0,
+            top: Math.max(heightDifference, 0),
+            behavior: "smooth",
+          });
+        }
+        previousHeight.current = newHeight;
+      }
+    }, 100);
+  };
+
+  const clientScrollToBottom = () => {
+    setTimeout(() => {
+      endDivRef.current?.scrollIntoView({ behavior: "smooth" });
+      setHasPerformedInitialScroll(true);
+    }, 500);
+  };
+
+  // handle re-sizing of the text area
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    handleInputResize();
+  }, [message]);
 
   // used for resizing of the document sidebar
   const masterFlexboxRef = useRef<HTMLDivElement>(null);
@@ -569,6 +548,50 @@ export function ChatPage({
     documentSidebarInitialWidth = Math.min(700, maxDocumentSidebarWidth);
   }
 
+  class MessageFIFOStack {
+    private stack: PacketType[] = [];
+    isComplete: boolean = false;
+    error: string | null = null;
+
+    push(packetBunch: PacketType) {
+      this.stack.push(packetBunch);
+    }
+
+    pop(): PacketType | undefined {
+      return this.stack.shift();
+    }
+
+    isEmpty(): boolean {
+      return this.stack.length === 0;
+    }
+  }
+  async function updateStackAsync(stack: MessageFIFOStack, params: any) {
+    try {
+      for await (const packetBunch of sendMessage(params)) {
+        for (const packet of packetBunch) {
+          stack.push(packet);
+        }
+
+        if (isCancelledRef.current) {
+          setIsCancelled(false);
+          break;
+        }
+      }
+    } catch (error) {
+      console.error("Error in updateStackAsync:", error);
+      stack.error = String(error);
+    } finally {
+      stack.isComplete = true;
+    }
+  }
+
+  const resetInputBar = () => {
+    setMessage("");
+    if (endPaddingRef.current) {
+      endPaddingRef.current.style.height = `95px`;
+    }
+  };
+
   const onSubmit = async ({
     messageIdToResend,
     messageOverride,
@@ -583,7 +606,6 @@ export function ChatPage({
     isSeededChat?: boolean;
   } = {}) => {
     clientScrollToBottom();
-
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
     const searchParamBasedChatSessionName =
@@ -604,7 +626,7 @@ export function ChatPage({
     );
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
-        messageToResend?.parentMessageId !== undefined
+      messageToResend?.parentMessageId !== undefined
         ? completeMessageMap.get(messageToResend.parentMessageId)
         : null;
     const messageToResendIndex = messageToResend
@@ -618,6 +640,7 @@ export function ChatPage({
       });
       return;
     }
+
     let currMessage = messageToResend ? messageToResend.message : message;
     if (messageOverride) {
       currMessage = messageOverride;
@@ -664,9 +687,7 @@ export function ChatPage({
     if (!parentMessage && frozenCompleteMessageMap.size === 2) {
       parentMessage = frozenCompleteMessageMap.get(SYSTEM_MESSAGE_ID) || null;
     }
-    setMessage("");
-    setCurrentMessageFiles([]);
-
+    resetInputBar();
     setIsStreaming(true);
     let answer = "";
     let query: string | null = null;
@@ -682,7 +703,9 @@ export function ChatPage({
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
-      for await (const packetBunch of sendMessage({
+
+      const stack = new MessageFIFOStack();
+      updateStackAsync(stack, {
         message: currMessage,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
@@ -715,87 +738,95 @@ export function ChatPage({
         systemPromptOverride:
           searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
         useExistingUserMessage: isSeededChat,
-      })) {
-        for (const packet of packetBunch) {
-          if (Object.hasOwn(packet, "answer_piece")) {
-            answer += (packet as AnswerPiecePacket).answer_piece;
-          } else if (Object.hasOwn(packet, "top_documents")) {
-            documents = (packet as DocumentsResponse).top_documents;
-            query = (packet as DocumentsResponse).rephrased_query;
-            retrievalType = RetrievalType.Search;
-            if (documents && documents.length > 0) {
-              // point to the latest message (we don't know the messageId yet, which is why
-              // we have to use -1)
-              setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
-            }
-          } else if (Object.hasOwn(packet, "file_ids")) {
-            aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
-              (fileId) => {
-                return {
-                  id: fileId,
-                  type: ChatFileType.IMAGE,
-                };
-              }
-            );
-          } else if (Object.hasOwn(packet, "tool_name")) {
-            toolCalls = [
-              {
-                tool_name: (packet as ToolCallMetadata).tool_name,
-                tool_args: (packet as ToolCallMetadata).tool_args,
-                tool_result: (packet as ToolCallMetadata).tool_result,
-              },
-            ];
-          } else if (Object.hasOwn(packet, "error")) {
-            error = (packet as StreamingError).error;
-          } else if (Object.hasOwn(packet, "message_id")) {
-            finalMessage = packet as BackendMessage;
-          }
-        }
-        const updateFn = (messages: Message[]) => {
-          const replacementsMap = finalMessage
-            ? new Map([
+      });
+      const updateFn = (messages: Message[]) => {
+        const replacementsMap = finalMessage
+          ? new Map([
               [messages[0].messageId, TEMP_USER_MESSAGE_ID],
               [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
             ] as [number, number][])
-            : null;
-          upsertToCompleteMessageMap({
-            messages: messages,
-            replacementsMap: replacementsMap,
-            completeMessageMapOverride: frozenCompleteMessageMap,
-          });
-        };
-        const newUserMessageId =
-          finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
-        const newAssistantMessageId =
-          finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+          : null;
+        upsertToCompleteMessageMap({
+          messages: messages,
+          replacementsMap: replacementsMap,
+          completeMessageMapOverride: frozenCompleteMessageMap,
+        });
+      };
 
-        updateFn([
-          {
-            messageId: newUserMessageId,
-            message: currMessage,
-            type: "user",
-            files: currentMessageFiles,
-            toolCalls: [],
-            parentMessageId: parentMessage?.messageId || null,
-            childrenMessageIds: [newAssistantMessageId],
-            latestChildMessageId: newAssistantMessageId,
-          },
-          {
-            messageId: newAssistantMessageId,
-            message: error || answer,
-            type: error ? "error" : "assistant",
-            retrievalType,
-            query: finalMessage?.rephrased_query || query,
-            documents: finalMessage?.context_docs?.top_documents || documents,
-            citations: finalMessage?.citations || {},
-            files: finalMessage?.files || aiMessageImages || [],
-            toolCalls: finalMessage?.tool_calls || toolCalls,
-            parentMessageId: newUserMessageId,
-          },
-        ]);
-        if (isCancelledRef.current) {
-          setIsCancelled(false);
-          break;
+      while (!stack.isComplete || !stack.isEmpty()) {
+        await new Promise((resolve) => setTimeout(resolve, 2));
+
+        if (!stack.isEmpty()) {
+          const packet = stack.pop();
+          if (packet) {
+            if (Object.hasOwn(packet, "answer_piece")) {
+              answer += (packet as AnswerPiecePacket).answer_piece;
+            } else if (Object.hasOwn(packet, "top_documents")) {
+              documents = (packet as DocumentsResponse).top_documents;
+              query = (packet as DocumentsResponse).rephrased_query;
+              retrievalType = RetrievalType.Search;
+              if (documents && documents.length > 0) {
+                // point to the latest message (we don't know the messageId yet, which is why
+                // we have to use -1)
+                setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
+              }
+            } else if (Object.hasOwn(packet, "file_ids")) {
+              aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
+                (fileId) => {
+                  return {
+                    id: fileId,
+                    type: ChatFileType.IMAGE,
+                  };
+                }
+              );
+            } else if (Object.hasOwn(packet, "tool_name")) {
+              toolCalls = [
+                {
+                  tool_name: (packet as ToolCallMetadata).tool_name,
+                  tool_args: (packet as ToolCallMetadata).tool_args,
+                  tool_result: (packet as ToolCallMetadata).tool_result,
+                },
+              ];
+            } else if (Object.hasOwn(packet, "error")) {
+              error = (packet as StreamingError).error;
+            } else if (Object.hasOwn(packet, "message_id")) {
+              finalMessage = packet as BackendMessage;
+            }
+
+            const newUserMessageId =
+              finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
+            const newAssistantMessageId =
+              finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+            updateFn([
+              {
+                messageId: newUserMessageId,
+                message: currMessage,
+                type: "user",
+                files: currentMessageFiles,
+                toolCalls: [],
+                parentMessageId: parentMessage?.messageId || null,
+                childrenMessageIds: [newAssistantMessageId],
+                latestChildMessageId: newAssistantMessageId,
+              },
+              {
+                messageId: newAssistantMessageId,
+                message: error || answer,
+                type: error ? "error" : "assistant",
+                retrievalType,
+                query: finalMessage?.rephrased_query || query,
+                documents:
+                  finalMessage?.context_docs?.top_documents || documents,
+                citations: finalMessage?.citations || {},
+                files: finalMessage?.files || aiMessageImages || [],
+                toolCalls: finalMessage?.tool_calls || toolCalls,
+                parentMessageId: newUserMessageId,
+              },
+            ]);
+          }
+          if (isCancelledRef.current) {
+            setIsCancelled(false);
+            break;
+          }
         }
       }
     } catch (e: any) {
@@ -831,20 +862,15 @@ export function ChatPage({
         await nameChatSession(currChatSessionId, currMessage);
       }
 
-      // // NOTE: don't switch pages if the user has navigated away from the chat
-      // if (
-      //   currChatSessionId === urlChatSessionId.current ||
-      //   urlChatSessionId.current === null
-      // ) {
-
-      // const newUrl = buildChatU
-      // router.replace(window.location.pathname, {scroll:}, { shallow: true })
-
-      // Previous method
-      router.replace(buildChatUrl(searchParams, currChatSessionId, null), {
-        scroll: false,
-      });
-      // }
+      // NOTE: don't switch pages if the user has navigated away from the chat
+      if (
+        currChatSessionId === urlChatSessionId.current ||
+        urlChatSessionId.current === null
+      ) {
+        router.push(buildChatUrl(searchParams, currChatSessionId, null), {
+          scroll: false,
+        });
+      }
     }
     if (
       finalMessage?.context_docs &&
@@ -886,8 +912,6 @@ export function ChatPage({
       });
     }
   };
-
-  // useE
 
   const onPersonaChange = (persona: Persona | null) => {
     if (persona && persona.id !== livePersona.id) {
@@ -948,16 +972,6 @@ export function ChatPage({
       }
     });
   };
-
-  const clientScrollToBottom = () => {
-    setTimeout(() => {
-      endDivRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 300);
-  };
-
-  useEffect(() => {
-    clientScrollToBottom();
-  }, [chatSessionId]);
 
   // handle redirect if chat page is disabled
   // NOTE: this must be done here, in a client component since
@@ -1063,10 +1077,8 @@ export function ChatPage({
                     {...getRootProps()}
                   >
                     {/* <input {...getInputProps()} /> */}
-
                     <div
-                      id="chat"
-                      className={`w-full  chat h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                      className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
                       ref={scrollableDivRef}
                     >
                       {/* ChatBanner is a custom banner that displays a admin-specified message at 
@@ -1129,7 +1141,7 @@ export function ChatPage({
 
                       <div
                         className={
-                          "mt-4  pt-12 sm:pt-0 mx-8" +
+                          "mt-4 pt-12 sm:pt-0 mx-8" +
                           (hasPerformedInitialScroll ? "" : " invisible")
                         }
                       >
@@ -1188,13 +1200,12 @@ export function ChatPage({
                             const isShowingRetrieved =
                               (selectedMessageForDocDisplay !== null &&
                                 selectedMessageForDocDisplay ===
-                                message.messageId) ||
+                                  message.messageId) ||
                               (selectedMessageForDocDisplay ===
                                 TEMP_USER_MESSAGE_ID &&
                                 i === messageHistory.length - 1);
                             const previousMessage =
                               i !== 0 ? messageHistory[i - 1] : null;
-
                             return (
                               <div
                                 key={`${i}-${existingChatSessionId}`}
@@ -1205,7 +1216,6 @@ export function ChatPage({
                                 }
                               >
                                 <AIMessage
-                                  key={i}
                                   messageId={message.messageId}
                                   content={message.message}
                                   files={message.files}
@@ -1214,7 +1224,9 @@ export function ChatPage({
                                   citedDocuments={getCitedDocumentsFromMessage(
                                     message
                                   )}
-                                  toolCall={message.toolCalls[0]}
+                                  toolCall={
+                                    message.toolCalls && message.toolCalls[0]
+                                  }
                                   isComplete={
                                     i !== messageHistory.length - 1 ||
                                     !isStreaming
@@ -1318,12 +1330,13 @@ export function ChatPage({
                             );
                           }
                         })}
+
                         {isStreaming &&
                           messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
                             "user" && (
                             <div
-                              key={`${messageHistory}-${existingChatSessionId}`}
+                              key={`${messageHistory.length}-${existingChatSessionId}`}
                             >
                               <AIMessage
                                 messageId={null}
@@ -1346,8 +1359,9 @@ export function ChatPage({
                             </div>
                           )}
 
+                        {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                         <div ref={endPaddingRef} className=" h-[95px]" />
-                        <div ref={endDivRef} className="bg-red-200"></div>
+                        <div ref={endDivRef}></div>
 
                         {livePersona &&
                           livePersona.starter_messages &&
@@ -1357,18 +1371,18 @@ export function ChatPage({
                           !isFetchingChatMessages && (
                             <div
                               className={`
-                            mx-auto 
-                            px-4 
-                            w-searchbar-xs 
-                            2xl:w-searchbar-sm 
-                            3xl:w-searchbar 
-                            grid 
-                            gap-4 
-                            grid-cols-1 
-                            grid-rows-1 
-                            mt-4 
-                            md:grid-cols-2 
-                            mb-6`}
+                              mx-auto 
+                              px-4 
+                              w-searchbar-xs 
+                              2xl:w-searchbar-sm 
+                              3xl:w-searchbar 
+                              grid 
+                              gap-4 
+                              grid-cols-1 
+                              grid-rows-1 
+                              mt-4 
+                              md:grid-cols-2 
+                              mb-6`}
                             >
                               {livePersona.starter_messages.map(
                                 (starterMessage, i) => (
@@ -1390,14 +1404,15 @@ export function ChatPage({
                               )}
                             </div>
                           )}
+                        <div ref={endDivRef} />
                       </div>
                     </div>
 
                     <div
                       ref={inputRef}
-                      className="absolute bottom-0  z-10 w-full  "
+                      className="absolute bottom-0 z-10 w-full"
                     >
-                      <div className="   relative pb-8">
+                      <div className="w-full relative pb-4">
                         {aboveHorizon && (
                           <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
                             <button
@@ -1408,7 +1423,6 @@ export function ChatPage({
                             </button>
                           </div>
                         )}
-
                         <ChatInputBar
                           message={message}
                           setMessage={setMessage}
@@ -1456,9 +1470,9 @@ export function ChatPage({
                       </ResizableSection>
                     </div>
                   ) : // Another option is to use a div with the width set to the initial width, so that the
-                    // chat section appears in the same place as before
-                    // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
-                    null}
+                  // chat section appears in the same place as before
+                  // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
+                  null}
                 </>
               )}
             </Dropzone>
