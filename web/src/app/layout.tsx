@@ -2,7 +2,6 @@ import "./globals.css";
 
 import { Inter } from "next/font/google";
 import {
-  fetchSettingsSS,
   getCombinedSettings,
 } from "@/components/settings/lib";
 import { CUSTOM_ANALYTICS_ENABLED } from "@/lib/constants";
