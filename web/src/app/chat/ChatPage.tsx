@@ -760,15 +760,15 @@ export function ChatPage({
         await nameChatSession(currChatSessionId, currMessage);
       }
 
-      // // NOTE: don't switch pages if the user has navigated away from the chat
-      // if (
-      //   currChatSessionId === urlChatSessionId.current ||
-      //   urlChatSessionId.current === null
-      // ) {
-
-      router.replace(buildChatUrl(searchParams, currChatSessionId, null), {
-        scroll: false,
-      });
+      // NOTE: don't switch pages if the user has navigated away from the chat
+      if (
+        currChatSessionId === urlChatSessionId.current ||
+        urlChatSessionId.current === null
+      ) {
+        router.replace(buildChatUrl(searchParams, currChatSessionId, null), {
+          scroll: false,
+        });
+      }
     }
     if (
       finalMessage?.context_docs &&
@@ -810,8 +810,6 @@ export function ChatPage({
       });
     }
   };
-
-  // useE
 
   const onPersonaChange = (persona: Persona | null) => {
     if (persona && persona.id !== livePersona.id) {
