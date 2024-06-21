@@ -1,13 +1,9 @@
 import io
-import os
 from collections.abc import Callable
 from collections.abc import Collection
 from datetime import datetime
 from datetime import timezone
 from functools import lru_cache
-import tempfile
-from detect_secrets import SecretsCollection
-from detect_secrets.settings import default_settings
 from typing import Any
 from typing import cast
 from urllib.parse import urlparse
@@ -35,6 +31,7 @@ from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.file_processing.html_utils import format_document_soup
 from danswer.utils.logger import setup_logger
+from danswer.utils.masking import find_and_mask_secrets
 
 logger = setup_logger()
 
@@ -436,7 +433,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 comments_text = self._fetch_comments(self.confluence_client, page_id)
                 page_text += comments_text
 
-                page_text = self.find_and_mask_secrets(page_text)
+                page_text = find_and_mask_secrets(page_text)
 
                 doc_batch.append(
                     Document(
@@ -468,27 +465,6 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
             if num_pages < self.batch_size:
                 break
-
-    def find_and_mask_secrets(self, text):
-        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-            tmp_file.write(text.encode())
-            tmp_file_path = tmp_file.name
-
-        # Scan the temporary file
-        with default_settings() as settings:
-            secrets = SecretsCollection()
-            secrets.scan_file(tmp_file_path)
-        
-        # Read back the secrets and mask them
-        masked_text = text
-        for secret in secrets:
-            secret_value = secret[1].secret_value
-            masked_text = masked_text.replace(secret_value, '[MASKED]')
-        
-        # Clean up the temporary file
-        os.remove(tmp_file_path)
-        
-        return masked_text
 
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
