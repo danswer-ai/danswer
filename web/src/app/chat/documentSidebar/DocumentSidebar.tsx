@@ -7,9 +7,10 @@ import { SelectedDocumentDisplay } from "./SelectedDocumentDisplay";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { BasicSelectable } from "@/components/BasicClickable";
 import { Message, RetrievalType } from "../interfaces";
-
-import {  SUB_HEADER, SIDEBAR_WIDTH } from "@/lib/constants";
-
+import {
+  SIDEBAR_WIDTH,
+  SUB_HEADER,
+} from "@/lib/constants";
 import { HoverPopup } from "@/components/HoverPopup";
 import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
 
