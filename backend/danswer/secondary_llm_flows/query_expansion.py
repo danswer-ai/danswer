@@ -74,11 +74,12 @@ def multilingual_query_expansion(
 def get_contextual_rephrase_messages(
     question: str,
     history_str: str,
+    prompt_template: str = HISTORY_QUERY_REPHRASE,
 ) -> list[dict[str, str]]:
     messages = [
         {
             "role": "user",
-            "content": HISTORY_QUERY_REPHRASE.format(
+            "content": prompt_template.format(
                 question=question, chat_history=history_str
             ),
         },
@@ -94,6 +95,7 @@ def history_based_query_rephrase(
     size_heuristic: int = 200,
     punctuation_heuristic: int = 10,
     skip_first_rephrase: bool = False,
+    prompt_template: str = HISTORY_QUERY_REPHRASE,
 ) -> str:
     # Globally disabled, just use the exact user query
     if DISABLE_LLM_QUERY_REPHRASE:
@@ -119,7 +121,7 @@ def history_based_query_rephrase(
     )
 
     prompt_msgs = get_contextual_rephrase_messages(
-        question=query, history_str=history_str
+        question=query, history_str=history_str, prompt_template=prompt_template
     )
 
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(prompt_msgs)

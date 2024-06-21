@@ -199,6 +199,7 @@ class SearchDoc(BaseModel):
     updated_at: datetime | None
     primary_owners: list[str] | None
     secondary_owners: list[str] | None
+    is_internet: bool = False
 
     def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
         initial_dict = super().dict(*args, **kwargs)  # type: ignore

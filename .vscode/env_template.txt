@@ -41,3 +41,6 @@ FAST_GEN_AI_MODEL_VERSION=gpt-3.5-turbo
 # Python stuff
 PYTHONPATH=./backend
 PYTHONUNBUFFERED=1
+
+# Internet Search 
+BING_API_KEY=<REPLACE THIS>

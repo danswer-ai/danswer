@@ -105,6 +105,9 @@ class DocumentSource(str, Enum):
     MEDIAWIKI = "mediawiki"
     WIKIPEDIA = "wikipedia"
 
+    # Special case, for internet search
+    NOT_APPLICABLE = "not_applicable"
+
 
 class DocumentIndexType(str, Enum):
     COMBINED = "combined"  # Vespa

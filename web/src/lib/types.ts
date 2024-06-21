@@ -59,7 +59,8 @@ export type ValidSources =
   | "clickup"
   | "axero"
   | "wikipedia"
-  | "mediawiki";
+  | "mediawiki"
+  | "not_applicable";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =

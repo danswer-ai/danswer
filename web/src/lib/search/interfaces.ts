@@ -11,6 +11,7 @@ export const SearchType = {
   SEMANTIC: "semantic",
   KEYWORD: "keyword",
   AUTOMATIC: "automatic",
+  INTERNET: "internet",
 };
 export type SearchType = (typeof SearchType)[keyof typeof SearchType];
 
@@ -48,6 +49,7 @@ export interface DanswerDocument {
   metadata: { [key: string]: string };
   updated_at: string | null;
   db_doc_id?: number;
+  is_internet: boolean;
 }
 
 export interface DocumentInfoPacket {

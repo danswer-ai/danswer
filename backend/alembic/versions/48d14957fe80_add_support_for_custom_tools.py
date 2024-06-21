@@ -13,8 +13,6 @@ from sqlalchemy.dialects import postgresql
 # revision identifiers, used by Alembic.
 revision = "48d14957fe80"
 down_revision = "b85f02ec1308"
-branch_labels = None
-depends_on = None
 
 
 def upgrade() -> None:

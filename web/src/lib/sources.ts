@@ -207,6 +207,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Clickup",
     category: SourceCategory.AppConnection,
   },
+  not_applicable: {
+    icon: GlobeIcon,
+    displayName: "Internet",
+    category: SourceCategory.ImportedKnowledge,
+  },
 };
 
 function fillSourceMetadata(
