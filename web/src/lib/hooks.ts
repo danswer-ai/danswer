@@ -16,47 +16,93 @@ import { EE_ENABLED } from "./constants";
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 
 import { useEffect, useRef } from "react";
-import { block } from "sharp";
 
-export type AutoScrollHookType = {
+export type IScrollOnStream = {
   isStreaming: boolean;
   inputRef: RefObject<HTMLDivElement>;
   endDivRef: RefObject<HTMLDivElement>;
   scrollableDivRef: RefObject<HTMLDivElement>;
   distance?: number;
   debounce?: number;
-  scrollDist: number;
+  setAboveHorizon: Dispatch<SetStateAction<boolean>>;
 };
 
 /**
  * Scrolls on streaming of text, if within param `distance`
  */
 export const useScrollOnStream = ({
+  endDivRef,
+  inputRef,
   isStreaming,
   scrollableDivRef,
-  scrollDist,
   distance = 500, // distance that should "engage" the scroll
-  debounce = 200, // time for debouncing
-}: AutoScrollHookType) => {
+  debounce = 100, // time for debouncing
+  setAboveHorizon,
+}: IScrollOnStream) => {
+  // Refs for efficiency
+  const preventScrollInterference = useRef<boolean>(false);
   const preventScroll = useRef<boolean>(false);
   const blockActionRef = useRef<boolean>(false);
+  const previousScroll = useRef<number>(0);
+  const scrollDist = useRef<number>(0);
+
+  const updateScrollTracking = () => {
+    const scrollDistance =
+      endDivRef?.current?.getBoundingClientRect()?.top! -
+      inputRef?.current?.getBoundingClientRect()?.top!;
+    scrollDist.current = scrollDistance;
+    setAboveHorizon(scrollDist.current > 500);
+  };
+
+  scrollableDivRef?.current?.addEventListener("scroll", updateScrollTracking);
 
   useEffect(() => {
-    if (
-      isStreaming &&
-      scrollableDivRef &&
-      scrollableDivRef.current &&
-      !blockActionRef.current
-    ) {
-      if (scrollDist < distance && !blockActionRef.current) {
+    if (isStreaming && scrollableDivRef && scrollableDivRef.current) {
+      updateScrollTracking();
+
+      let newHeight: number = scrollableDivRef.current?.scrollTop!;
+      const heightDifference = newHeight - previousScroll.current;
+      previousScroll.current = newHeight;
+
+      // Prevent streaming scroll
+      if (heightDifference < 0 && !preventScroll.current) {
+        // Stop current
+        scrollableDivRef.current.style.scrollBehavior = "auto";
+        scrollableDivRef.current.scrollTop = scrollableDivRef.current.scrollTop;
+        scrollableDivRef.current.style.scrollBehavior = "smooth";
+        preventScrollInterference.current = true;
+        preventScroll.current = true;
+
+        setTimeout(() => {
+          preventScrollInterference.current = false;
+        }, 2000);
+        setTimeout(() => {
+          preventScroll.current = false;
+        }, 10000);
+      }
+
+      // Ensure can scroll
+      else if (!preventScrollInterference.current) {
+        preventScroll.current = false;
+      }
+
+      if (
+        scrollDist.current < distance &&
+        !blockActionRef.current &&
+        !blockActionRef.current &&
+        !preventScroll.current
+      ) {
         // catch up if necessary!
-        const scrollAmount = scrollDist + (scrollDist > 140 ? 1000 : 0);
+        const scrollAmount =
+          scrollDist.current + (scrollDist.current > 140 ? 2000 : 0);
         blockActionRef.current = true;
+
         scrollableDivRef?.current?.scrollBy({
           left: 0,
           top: Math.max(0, scrollAmount),
           behavior: "smooth",
         });
+
         setTimeout(() => {
           blockActionRef.current = false;
         }, debounce);
@@ -67,10 +113,10 @@ export const useScrollOnStream = ({
   // scroll on end of stream if within distance
   useEffect(() => {
     if (scrollableDivRef?.current && !isStreaming) {
-      if (scrollDist < distance) {
+      if (scrollDist.current < distance) {
         scrollableDivRef?.current?.scrollBy({
           left: 0,
-          top: Math.max(scrollDist + 600, 0),
+          top: Math.max(scrollDist.current + 600, 0),
           behavior: "smooth",
         });
       }
@@ -78,39 +124,7 @@ export const useScrollOnStream = ({
   }, [isStreaming]);
 };
 
-export type InitialScrollType = {
-  endDivRef: RefObject<HTMLDivElement>;
-  hasPerformedInitialScroll: boolean;
-  completeInitialScroll: () => void;
-  isStreaming: boolean;
-};
-
-/**
- * Initial scroll (specifically for the situation in which your input is too long)
- */
-export const useInitialScroll = ({
-  isStreaming,
-  endDivRef,
-  hasPerformedInitialScroll,
-  completeInitialScroll,
-}: InitialScrollType) => {
-  useEffect(() => {
-    // Check: have we done this before? + null checks
-    if (!hasPerformedInitialScroll && endDivRef.current && isStreaming) {
-      endDivRef.current.scrollIntoView({ behavior: "smooth" });
-      completeInitialScroll();
-    }
-  });
-};
-
-export type ResponsiveScrollType = {
-  lastMessageRef: RefObject<HTMLDivElement>;
-  inputRef: RefObject<HTMLDivElement>;
-  endDivRef: RefObject<HTMLDivElement>;
-  textAreaRef: RefObject<HTMLTextAreaElement>;
-};
-
-export type ResponsiveScrollParams = {
+export type IResponsiveScroll = {
   lastMessageRef: RefObject<HTMLDivElement>;
   inputRef: RefObject<HTMLDivElement>;
   endPaddingRef: RefObject<HTMLDivElement>;
@@ -124,10 +138,11 @@ export const useResponsiveScroll = ({
   endPaddingRef,
   textAreaRef,
   scrollableDivRef,
-}: ResponsiveScrollParams) => {
+}: IResponsiveScroll) => {
   const previousHeight = useRef<number>(
     inputRef.current?.getBoundingClientRect().height!
   );
+
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -304,7 +319,6 @@ export function useLlmOverride(): LlmOverrideManager {
     modelName: "",
   });
   const [temperature, setTemperature] = useState<number | null>(null);
-
   return {
     llmOverride,
     setLlmOverride,

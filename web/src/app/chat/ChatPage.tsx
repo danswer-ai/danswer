@@ -44,7 +44,6 @@ import { useDocumentSelection } from "./useDocumentSelection";
 import {
   useScrollOnStream,
   useFilters,
-  useInitialScroll,
   useLlmOverride,
   useResponsiveScroll,
 } from "@/lib/hooks";
@@ -421,30 +420,11 @@ export function ChatPage({
   const endDivRef = useRef<HTMLDivElement>(null);
   const endPaddingRef = useRef<HTMLDivElement>(null);
 
-  const [scrollDist, setScrollDist] = useState<number>(0);
-
   useEffect(() => {
     if (scrollableDivRef.current) {
       const scrollDiv = scrollableDivRef.current;
       scrollDiv.scrollTop = scrollDiv.scrollHeight;
     }
-
-    const handleUserScroll = () => {
-      const scrollDistance =
-        endDivRef?.current?.getBoundingClientRect()?.top! -
-        inputRef?.current?.getBoundingClientRect()?.top!;
-
-      setScrollDist(scrollDistance + 100);
-      setAboveHorizon(scrollDistance > 500);
-    };
-
-    scrollableDivRef?.current?.addEventListener("scroll", handleUserScroll);
-    return () => {
-      scrollableDivRef?.current?.removeEventListener(
-        "scroll",
-        handleUserScroll
-      );
-    };
   }, [chatSessionId]);
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -460,9 +440,8 @@ export function ChatPage({
     }
   }, [message]);
 
-  const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(
-    messageHistory.length > 0
-  );
+  const [hasPerformedInitialScroll, setHasPerformedInitialScroll] =
+    useState(false);
 
   useEffect(() => {
     if (messageHistory.length > 0) {
@@ -470,26 +449,13 @@ export function ChatPage({
     }
   }, [messageHistory.length]);
 
-  // The scrolling hooks
-  const completeInitialScroll = () => {
-    setHasPerformedInitialScroll(true);
-  };
-
   // Scroll on stream if within the "gap"
   useScrollOnStream({
     isStreaming,
     scrollableDivRef,
     inputRef,
     endDivRef,
-    scrollDist,
-  });
-
-  // // Scroll if necessary for initial message
-  useInitialScroll({
-    isStreaming,
-    endDivRef,
-    hasPerformedInitialScroll,
-    completeInitialScroll,
+    setAboveHorizon,
   });
 
   // Scroll if input bar covers bottom of message history
@@ -547,7 +513,6 @@ export function ChatPage({
     isSeededChat?: boolean;
   } = {}) => {
     clientScrollToBottom();
-
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
     const searchParamBasedChatSessionName =
@@ -785,6 +750,7 @@ export function ChatPage({
         completeMessageMapOverride: frozenCompleteMessageMap,
       });
     }
+
     setIsStreaming(false);
     if (isNewSession) {
       if (finalMessage) {
@@ -800,14 +766,9 @@ export function ChatPage({
       //   urlChatSessionId.current === null
       // ) {
 
-      // const newUrl = buildChatU
-      // router.replace(window.location.pathname, {scroll:}, { shallow: true })
-
-      // Previous method
       router.replace(buildChatUrl(searchParams, currChatSessionId, null), {
         scroll: false,
       });
-      // }
     }
     if (
       finalMessage?.context_docs &&
@@ -915,7 +876,8 @@ export function ChatPage({
   const clientScrollToBottom = () => {
     setTimeout(() => {
       endDivRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 300);
+      setHasPerformedInitialScroll(true);
+    }, 500);
   };
 
   useEffect(() => {
