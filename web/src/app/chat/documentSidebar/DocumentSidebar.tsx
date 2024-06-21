@@ -14,10 +14,7 @@ import {
   SUB_HEADER,
 } from "@/lib/constants";
 import { HoverPopup } from "@/components/HoverPopup";
-import { FaToggleOn } from "react-icons/fa";
-
 import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
-import { useRef } from "react";
 
 export function DocumentSidebar({
   closeSidebar,

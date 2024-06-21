@@ -932,16 +932,16 @@ export function ChatPage({
               {({ getRootProps }) => (
                 <>
                   <div
-                    className={`w-full sm:relative h-screen ${
+                    className={`w-full  sm:relative h-screen ${
                       retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
                     }
-                      flex-initial transition-margin duration-300 
+                      flex-1 transition-margin duration-300 
                       `}
                     {...getRootProps()}
                   >
                     {/* <input {...getInputProps()} /> */}
                     <div
-                      className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                      className={`w-full h-full flex  flex-col overflow-y-auto overflow-x-hidden relative`}
                       ref={scrollableDivRef}
                     >
                       {livePersona && (
@@ -1279,7 +1279,7 @@ export function ChatPage({
                   {!retrievalDisabled ? (
                     <div
                       ref={sidebarElementRef}
-                      className={`relative   overflow-y-hidden sidebar bg-background-weak hidden lg:block  ${SIDEBAR_WIDTH} h-screen  `}
+                      className={`relative flex  overflow-y-hidden sidebar bg-background-weak hidden lg:block  ${SIDEBAR_WIDTH} h-screen  `}
                     >
                       <DocumentSidebar
                         closeSidebar={() => toggleSidebar()}
