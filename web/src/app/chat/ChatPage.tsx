@@ -891,6 +891,8 @@ export function ChatPage({
 
   const toggleSidebar = () => {
     if (sidebarElementRef.current) {
+      sidebarElementRef.current.style.transition = "width 0.3s ease-in-out";
+
       sidebarElementRef.current.style.width = showDocSidebar
         ? "0px"
         : `${usedSidebarWidth}px`;
