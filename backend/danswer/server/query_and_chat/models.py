@@ -32,7 +32,7 @@ class SimpleQueryRequest(BaseModel):
     query: str
 
 
-class UpdateThreadRequest(BaseModel):
+class UpdateChatSessionThreadRequest(BaseModel):
     # If not specified, use Danswer default persona
     chat_session_id: int
     new_alternate_model: str

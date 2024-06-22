@@ -118,7 +118,7 @@ export function ChatPage({
 
   // used to track whether or not the initial "submit on load" has been performed
   // this only applies if `?submit-on-load=true` or `?submit-on-load=1` is in the URL
-  // NOTE: this is required due to React sstrict mode, where all `useEffect` hooks
+  // NOTE: this is required due to React strict mode, where all `useEffect` hooks
   // are run twice on initial load during development
   const submitOnLoadPerformed = useRef<boolean>(false);
 

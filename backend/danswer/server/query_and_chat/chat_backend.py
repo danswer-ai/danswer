@@ -63,7 +63,7 @@ from danswer.server.query_and_chat.models import LLMOverride
 from danswer.server.query_and_chat.models import PromptOverride
 from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
-from danswer.server.query_and_chat.models import UpdateThreadRequest
+from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -103,8 +103,8 @@ def get_user_chat_sessions(
 
 
 @router.put("/update-chat-session-model")
-def update_thread(
-    update_thread_req: UpdateThreadRequest,
+def update_chat_session_model(
+    update_thread_req: UpdateChatSessionThreadRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
