@@ -107,7 +107,7 @@ def unsafe_deletion(
     return num_docs_deleted
 
 
-def _delete_connector(cc_pair_id: int, db_session: Session) -> None:
+def _delete_connector(cc_pair_id: int, db_session: Session):
     user_input = input(
         "This may cause issues with your Danswer instance! Do you want to continue? (enter 'Y' to continue): "
     )
