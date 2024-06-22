@@ -107,7 +107,7 @@ def unsafe_deletion(
     return num_docs_deleted
 
 
-def _delete_connector(cc_pair_id: int, db_session: Session):
+def _delete_connector(cc_pair_id: int, db_session: Session) -> None:
     user_input = input(
         "This may cause issues with your Danswer instance! Do you want to continue? (enter 'Y' to continue): "
     )
@@ -173,7 +173,6 @@ def _delete_connector(cc_pair_id: int, db_session: Session):
 
     except Exception as e:
         logger.error(f"Failed to delete connector due to {e}")
-        return False
 
     if cc_pair.connector.source == DocumentSource.FILE:
         connector = cc_pair.connector
