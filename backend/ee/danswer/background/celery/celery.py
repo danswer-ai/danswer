@@ -14,6 +14,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from ee.danswer.background.user_group_sync import name_user_group_sync_task
 from ee.danswer.db.user_group import fetch_user_groups
+from ee.danswer.server.reporting.usage_export_generation import create_new_usage_report
 from ee.danswer.user_groups.sync import sync_user_groups
 
 logger = setup_logger()
@@ -76,6 +77,20 @@ def check_for_user_groups_sync_task() -> None:
                 register_task(task.id, task_name, db_session)
 
 
+@celery_app.task(
+    name="autogenerate_usage_report_task",
+    soft_time_limit=JOB_TIMEOUT,
+)
+def autogenerate_usage_report_task() -> None:
+    """This generates usage report under the /admin/generate-usage/report endpoint"""
+    with Session(get_sqlalchemy_engine()) as db_session:
+        create_new_usage_report(
+            db_session=db_session,
+            user_id=None,
+            period=None,
+        )
+
+
 #####
 # Celery Beat (Periodic Tasks) Settings
 #####
@@ -83,6 +98,10 @@ celery_app.conf.beat_schedule = {
     "check-for-user-group-sync": {
         "task": "check_for_user_groups_sync_task",
         "schedule": timedelta(seconds=5),
+    },
+    "autogenerate_usage_report": {
+        "task": "autogenerate_usage_report_task",
+        "schedule": timedelta(days=30),  # TODO: change this to config flag
     },
     **(celery_app.conf.beat_schedule or {}),
 }

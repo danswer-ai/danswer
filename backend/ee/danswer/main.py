@@ -33,6 +33,7 @@ from ee.danswer.server.query_and_chat.query_backend import (
     basic_router as query_router,
 )
 from ee.danswer.server.query_history.api import router as query_history_router
+from ee.danswer.server.reporting.usage_export_api import router as usage_export_router
 from ee.danswer.server.saml import router as saml_router
 from ee.danswer.server.seeding import seed_db
 from ee.danswer.server.token_rate_limits.api import (
@@ -97,6 +98,7 @@ def get_ee_application() -> FastAPI:
         application, token_rate_limit_settings_router
     )
     include_router_with_global_prefix_prepended(application, enterprise_settings_router)
+    include_router_with_global_prefix_prepended(application, usage_export_router)
 
     # Ensure all routes have auth enabled or are explicitly marked as public
     check_ee_router_auth(application)
