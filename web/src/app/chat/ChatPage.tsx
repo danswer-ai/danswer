@@ -74,6 +74,7 @@ import {
   SIDEBAR_WIDTH_CONST,
   SUB_HEADER,
 } from "@/lib/constants";
+import ResizableSection from "@/components/resizable/ResizableSection";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -239,6 +240,19 @@ export function ChatPage({
 
     initialSessionFetch();
   }, [existingChatSessionId]);
+
+  const [usedSidebarWidth, setUsedSidebarWidth] = useState<number>(
+    parseInt(SIDEBAR_WIDTH_CONST)
+  );
+
+  const updateSidebarWidth = (newWidth: number) => {
+    setUsedSidebarWidth(newWidth);
+    if (sidebarElementRef.current && innerSidebarElementRef.current) {
+      sidebarElementRef.current.style.transition = "";
+      sidebarElementRef.current.style.width = `${newWidth}px`;
+      innerSidebarElementRef.current.style.width = `${newWidth}px`;
+    }
+  };
 
   const [chatSessionId, setChatSessionId] = useState<number | null>(
     existingChatSessionId
@@ -857,7 +871,7 @@ export function ChatPage({
     if (sidebarElementRef.current) {
       sidebarElementRef.current.style.width = showDocSidebar
         ? "0px"
-        : SIDEBAR_WIDTH_CONST;
+        : `${usedSidebarWidth}px`;
     }
 
     setShowDocSidebar((showDocSidebar) => !showDocSidebar); // Toggle the state which will in turn toggle the class
@@ -865,6 +879,7 @@ export function ChatPage({
 
   const retrievalDisabled = !personaIncludesRetrieval(livePersona);
   const sidebarElementRef = useRef<HTMLDivElement>(null);
+  const innerSidebarElementRef = useRef<HTMLDivElement>(null);
 
   return (
     <>
@@ -1282,16 +1297,24 @@ export function ChatPage({
                       ref={sidebarElementRef}
                       className={`relative flex-none z-[1000] overflow-y-hidden sidebar bg-background-weak  ${SIDEBAR_WIDTH} h-screen  `}
                     >
-                      <DocumentSidebar
-                        closeSidebar={() => toggleSidebar()}
-                        selectedMessage={aiMessage}
-                        selectedDocuments={selectedDocuments}
-                        toggleDocumentSelection={toggleDocumentSelection}
-                        clearSelectedDocuments={clearSelectedDocuments}
-                        selectedDocumentTokens={selectedDocumentTokens}
-                        maxTokens={maxTokens}
-                        isLoading={isFetchingChatMessages}
-                      />
+                      <ResizableSection
+                        updateSidebarWidth={updateSidebarWidth}
+                        intialWidth={usedSidebarWidth}
+                        minWidth={300}
+                        maxWidth={maxDocumentSidebarWidth || undefined}
+                      >
+                        <DocumentSidebar
+                          ref={innerSidebarElementRef}
+                          closeSidebar={() => toggleSidebar()}
+                          selectedMessage={aiMessage}
+                          selectedDocuments={selectedDocuments}
+                          toggleDocumentSelection={toggleDocumentSelection}
+                          clearSelectedDocuments={clearSelectedDocuments}
+                          selectedDocumentTokens={selectedDocumentTokens}
+                          maxTokens={maxTokens}
+                          isLoading={isFetchingChatMessages}
+                        />
+                      </ResizableSection>
                     </div>
                   ) : // Another option is to use a div with the width set to the initial width, so that the
                   // chat section appears in the same place as before
