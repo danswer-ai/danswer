@@ -87,7 +87,7 @@ export function SharedChatDisplay({
                       key={message.messageId}
                       messageId={message.messageId}
                       content={message.message}
-                      personaName={chatSession.persona_name}
+                      persona={currentPersona}
                       citedDocuments={getCitedDocumentsFromMessage(message)}
                       isComplete
                     />
