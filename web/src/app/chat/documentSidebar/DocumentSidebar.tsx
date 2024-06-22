@@ -67,7 +67,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     }) {
       return (
         <div
-          className={`w-full flex text-lg  text-emphasis font-medium flex  mb-3.5 font-bold   ${SUB_HEADER}  b-  flex items-end`}
+          className={`w-full flex text-lg  text-emphasis font-medium flex  mb-3.5 font-bold   ${SUB_HEADER}  flex items-end`}
         >
           <p className="flex   mt-auto ">
             {icon({ className: "my-auto  mr-1" })}
@@ -249,3 +249,5 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     );
   }
 );
+
+DocumentSidebar.displayName = "DocumentSidebar";

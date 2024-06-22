@@ -59,7 +59,6 @@ export function ResizableSection({
       let newWidth = applyMinAndMax(width - delta, minWidth, maxWidth);
       setWidth(newWidth);
       if (updateSidebarWidth) {
-        console.log(newWidth);
         updateSidebarWidth(newWidth);
       }
       Cookies.set(DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME, newWidth.toString(), {
