@@ -962,7 +962,8 @@ export function ChatPage({
                     className={`w-full  sm:relative h-screen ${
                       retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
                     }
-                      flex-1 transition-margin duration-300 
+                      flex-auto transition-margin duration-300 
+                      overflow-x-auto
                       `}
                     {...getRootProps()}
                   >
@@ -1309,7 +1310,7 @@ export function ChatPage({
                   {!retrievalDisabled ? (
                     <div
                       ref={sidebarElementRef}
-                      className={`relative flex  overflow-y-hidden sidebar bg-background-weak hidden lg:block  ${SIDEBAR_WIDTH} h-screen  `}
+                      className={`relative flex-none z-[1000] overflow-y-hidden sidebar bg-background-weak  ${SIDEBAR_WIDTH} h-screen  `}
                     >
                       <DocumentSidebar
                         closeSidebar={() => toggleSidebar()}
