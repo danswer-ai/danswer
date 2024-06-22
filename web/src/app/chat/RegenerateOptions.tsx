@@ -17,7 +17,7 @@ export default function RegenerateOption({
   const llmOverrideManager = useLlmOverride();
 
   const { llmProviders } = useChatContext();
-  const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant);
+  const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant, null);
   const llmOptions: { name: string; value: string }[] = [];
   const structureValue = (
     name: string,
