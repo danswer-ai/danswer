@@ -50,7 +50,7 @@ def unsafe_deletion(
     document_index: DocumentIndex,
     cc_pair: ConnectorCredentialPair,
     pair_id: int,
-):
+) -> int:
     connector_id = cc_pair.connector_id
     credential_id = cc_pair.credential_id
 
@@ -107,7 +107,7 @@ def unsafe_deletion(
     return num_docs_deleted
 
 
-def _delete_connector(cc_pair_id: int, db_session: Session):
+def _delete_connector(cc_pair_id: int, db_session: Session) -> None:
     user_input = input(
         "This may cause issues with your Danswer instance! Do you want to continue? (enter 'Y' to continue): "
     )
