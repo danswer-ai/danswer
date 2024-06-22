@@ -13,7 +13,6 @@ sys.path.append(parent_dir)
 # pylint: disable=E402
 # flake8: noqa: E402
 
-
 # Now import Danswer modules
 from danswer.db.models import DocumentSet__ConnectorCredentialPair
 from danswer.db.connector import fetch_connector_by_id
@@ -34,7 +33,7 @@ from danswer.db.engine import get_session_context_manager
 from danswer.document_index.factory import get_default_document_index
 from danswer.file_store.file_store import get_default_file_store
 from danswer.document_index.document_index_utils import get_both_index_names
-from danswer.background.connector_deletion import delete_connector_credential_pair_batch
+from danswer.db.document import delete_documents_complete__no_commit
 
 # pylint: enable=E402
 # flake8: noqa: E402
@@ -55,6 +54,8 @@ def unsafe_deletion(
     credential_id = cc_pair.credential_id
 
     num_docs_deleted = 0
+
+    # Gather and delete documents
     while True:
         documents = get_documents_for_connector_credential_pair(
             db_session=db_session,
@@ -65,32 +66,34 @@ def unsafe_deletion(
         if not documents:
             break
 
-        delete_connector_credential_pair_batch(
-            document_ids=[document.id for document in documents],
-            connector_id=connector_id,
-            credential_id=credential_id,
-            document_index=document_index,
+        document_ids = [document.id for document in documents]
+        document_index.delete(doc_ids=document_ids)
+        delete_documents_complete__no_commit(
+            db_session=db_session,
+            document_ids=document_ids,
         )
+
         num_docs_deleted += len(documents)
 
+    # Delete index attempts
     delete_index_attempts(
         db_session=db_session,
         connector_id=connector_id,
         credential_id=credential_id,
     )
-    print(connector_id, connector_id, pair_id)
 
+    # Delete document sets + connector / credential Pairs
     stmt = delete(DocumentSet__ConnectorCredentialPair).where(
         DocumentSet__ConnectorCredentialPair.connector_credential_pair_id == pair_id
     )
     db_session.execute(stmt)
-
     stmt = delete(ConnectorCredentialPair).where(
         ConnectorCredentialPair.connector_id == connector_id,
         ConnectorCredentialPair.credential_id == credential_id,
     )
     db_session.execute(stmt)
 
+    # Delete Connector
     connector = fetch_connector_by_id(
         db_session=db_session,
         connector_id=connector_id,
@@ -109,10 +112,12 @@ def unsafe_deletion(
 
 def _delete_connector(cc_pair_id: int, db_session: Session) -> None:
     user_input = input(
-        "This may cause issues with your Danswer instance! Do you want to continue? (enter 'Y' to continue): "
+        "DO NOT USE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. \
+        IT MAY CAUSE ISSUES with your Danswer instance! \
+        Are you SURE you want to continue? (enter 'Y' to continue): "
     )
     if user_input != "Y":
-        print(f"You entered {user_input}. Exiting!")
+        logger.info(f"You entered {user_input}. Exiting!")
         return
 
     logger.info("Getting connector credential pair")
