@@ -8,6 +8,8 @@ import { BarChartIcon } from "@/components/icons/icons";
 import { useTimeRange } from "../lib";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { FiActivity } from "react-icons/fi";
+import UsageReports from "./UsageReports";
+import { Divider } from "@tremor/react";
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useTimeRange();
@@ -25,6 +27,8 @@ export default function AnalyticsPage() {
       <QueryPerformanceChart timeRange={timeRange} />
       <FeedbackChart timeRange={timeRange} />
       <DanswerBotChart timeRange={timeRange} />
+      <Divider />
+      <UsageReports />
     </main>
   );
 }

@@ -2,6 +2,8 @@ import datetime
 from typing import Literal
 
 from sqlalchemy import asc
+from sqlalchemy import BinaryExpression
+from sqlalchemy import ColumnElement
 from sqlalchemy import desc
 from sqlalchemy.orm import contains_eager
 from sqlalchemy.orm import joinedload
@@ -17,16 +19,22 @@ def fetch_chat_sessions_eagerly_by_time(
     start: datetime.datetime,
     end: datetime.datetime,
     db_session: Session,
-    ascending: bool = False,
     limit: int | None = 500,
+    initial_id: int | None = None,
 ) -> list[ChatSession]:
-    time_order = asc(ChatSession.time_created) if ascending else desc(ChatSession.time_created)  # type: ignore
+    id_order = desc(ChatSession.id)  # type: ignore
+    time_order = desc(ChatSession.time_created)  # type: ignore
     message_order = asc(ChatMessage.id)  # type: ignore
 
+    filters: list[ColumnElement | BinaryExpression] = [
+        ChatSession.time_created.between(start, end)
+    ]
+    if initial_id:
+        filters.append(ChatSession.id < initial_id)
     subquery = (
         db_session.query(ChatSession.id, ChatSession.time_created)
-        .filter(ChatSession.time_created.between(start, end))
-        .order_by(desc(ChatSession.id), time_order)
+        .filter(*filters)
+        .order_by(id_order, time_order)
         .distinct(ChatSession.id)
         .limit(limit)
         .subquery()
@@ -34,7 +42,7 @@ def fetch_chat_sessions_eagerly_by_time(
 
     query = (
         db_session.query(ChatSession)
-        .join(subquery, ChatSession.id == subquery.c.id)
+        .join(subquery, ChatSession.id == subquery.c.id)  # type: ignore
         .outerjoin(ChatMessage, ChatSession.id == ChatMessage.chat_session_id)
         .options(
             joinedload(ChatSession.user),

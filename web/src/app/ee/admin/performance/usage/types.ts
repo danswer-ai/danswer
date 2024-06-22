@@ -52,3 +52,11 @@ export interface ChatSessionMinimal {
   time_created: string;
   feedback_type: Feedback | "mixed" | null;
 }
+
+export interface UsageReport {
+  report_name: string;
+  requestor: string | null;
+  time_created: string;
+  period_from: string | null;
+  period_to: string | null;
+}
