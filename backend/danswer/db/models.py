@@ -661,6 +661,8 @@ class ChatSession(Base):
         ForeignKey("chat_folder.id"), nullable=True
     )
 
+    current_alternate_model: Mapped[str | None] = mapped_column(String, default=None)
+
     # the latest "overrides" specified by the user. These take precedence over
     # the attached persona. However, overrides specified directly in the
     # `send-message` call will take precedence over these.
