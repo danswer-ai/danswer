@@ -73,7 +73,7 @@ const Main = () => {
             setShowForm(false);
           }}
           setPopup={setPopup}
-          users={users}
+          users={users.accepted}
           ccPairs={ccPairs}
         />
       )}

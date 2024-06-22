@@ -61,7 +61,7 @@ const Page = ({ params }: { params: { groupId: string } }) => {
 
       {userGroup ? (
         <GroupDisplay
-          users={users}
+          users={users.accepted}
           ccPairs={ccPairs}
           userGroup={userGroup}
           refreshUserGroup={refreshUserGroup}

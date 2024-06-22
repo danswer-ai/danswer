@@ -14,6 +14,7 @@ import { SourceMetadata } from "./search/interfaces";
 import { EE_ENABLED } from "./constants";
 import { destructureValue } from "./llm/utils";
 import { ChatSession } from "@/app/chat/interfaces";
+import { UsersResponse } from "./users/interfaces";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 
@@ -119,7 +120,8 @@ export function useFilters(): FilterManager {
 
 export const useUsers = () => {
   const url = "/api/manage/users";
-  const swrResponse = useSWR<User[]>(url, errorHandlingFetcher);
+
+  const swrResponse = useSWR<UsersResponse>(url, errorHandlingFetcher);
 
   return {
     ...swrResponse,
