@@ -14,6 +14,9 @@ export class RedirectError extends FetchError {
   }
 }
 
+const DEFAULT_AUTH_ERROR_MSG =
+  "An error occurred while fetching the data, related to the user's authentication status.";
+
 const DEFAULT_ERROR_MSG = "An error occurred while fetching the data.";
 
 export const errorHandlingFetcher = async (url: string) => {
@@ -21,7 +24,7 @@ export const errorHandlingFetcher = async (url: string) => {
 
   if (res.status === 403) {
     const redirect = new RedirectError(
-      DEFAULT_ERROR_MSG,
+      DEFAULT_AUTH_ERROR_MSG,
       res.status,
       await res.json()
     );
