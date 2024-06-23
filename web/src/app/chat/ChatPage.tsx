@@ -127,6 +127,13 @@ export function ChatPage({
     existingChatSessionId !== null
   );
 
+  const clientScrollToBottom = () => {
+    setTimeout(() => {
+      endDivRef.current?.scrollIntoView({ behavior: "smooth" });
+      setHasPerformedInitialScroll(true);
+    }, 500);
+  };
+
   // needed so closures (e.g. onSubmit) can access the current value
   const urlChatSessionId = useRef<number | null>();
   // this is triggered every time the user switches which chat
@@ -260,7 +267,7 @@ export function ChatPage({
   }: {
     messages: Message[];
     // if calling this function repeatedly with short delay, stay may not update in time
-    // and result in weird behavipr
+    // and result in weird behavior
     completeMessageMapOverride?: Map<number, Message> | null;
     replacementsMap?: Map<number, number> | null;
     makeLatestChildMessage?: boolean;
@@ -499,6 +506,100 @@ export function ChatPage({
     documentSidebarInitialWidth = Math.min(700, maxDocumentSidebarWidth);
   }
 
+  type PacketBunch =
+    | ToolCallMetadata
+    | BackendMessage
+    | AnswerPiecePacket
+    | DocumentsResponse
+    | ImageGenerationDisplay
+    | StreamingError;
+
+  class MessageFIFOStack {
+    private stack: PacketBunch[] = [];
+    isComplete: boolean = false;
+    error: string | null = null;
+
+    push(packetBunch: PacketBunch) {
+      this.stack.push(packetBunch);
+    }
+
+    pop(): PacketBunch | undefined {
+      return this.stack.shift();
+    }
+
+    isEmpty(): boolean {
+      return this.stack.length === 0;
+    }
+  }
+
+  class MessageState {
+    answer: string = "";
+    documents: any[] = [];
+    query: string | null = null;
+    retrievalType: RetrievalType = RetrievalType.Search;
+    aiMessageImages: { id: string; type: ChatFileType }[] = [];
+    toolCalls: { tool_name: string; tool_args: any; tool_result: any }[] = [];
+    finalMessage: BackendMessage | null = null;
+
+    update(
+      packetBunch: (
+        | ToolCallMetadata
+        | BackendMessage
+        | AnswerPiecePacket
+        | DocumentsResponse
+        | ImageGenerationDisplay
+        | StreamingError
+      )[]
+    ) {
+      for (const packet of packetBunch) {
+        if (Object.hasOwn(packet, "answer_piece")) {
+          this.answer += (packet as AnswerPiecePacket).answer_piece;
+        } else if (Object.hasOwn(packet, "top_documents")) {
+          const docResponse = packet as DocumentsResponse;
+          this.documents = docResponse.top_documents;
+          this.query = docResponse.rephrased_query;
+          this.retrievalType = RetrievalType.Search;
+        } else if (Object.hasOwn(packet, "file_ids")) {
+          this.aiMessageImages = (
+            packet as ImageGenerationDisplay
+          ).file_ids.map((fileId) => ({
+            id: fileId,
+            type: ChatFileType.IMAGE,
+          }));
+        } else if (Object.hasOwn(packet, "tool_name")) {
+          const toolCall = packet as ToolCallMetadata;
+          this.toolCalls.push({
+            tool_name: toolCall.tool_name,
+            tool_args: toolCall.tool_args,
+            tool_result: toolCall.tool_result,
+          });
+        } else if (Object.hasOwn(packet, "message_id")) {
+          this.finalMessage = packet as BackendMessage;
+        }
+      }
+    }
+  }
+
+  async function updateStackAsync(stack: MessageFIFOStack, params: any) {
+    try {
+      for await (const packetBunch of sendMessage(params)) {
+        for (const packet of packetBunch) {
+          stack.push(packet);
+        }
+
+        if (isCancelledRef.current) {
+          setIsCancelled(false);
+          break;
+        }
+      }
+    } catch (error) {
+      console.error("Error in updateStackAsync:", error);
+      stack.error = String(error);
+    } finally {
+      stack.isComplete = true;
+    }
+  }
+
   const onSubmit = async ({
     messageIdToResend,
     messageOverride,
@@ -512,6 +613,7 @@ export function ChatPage({
     forceSearch?: boolean;
     isSeededChat?: boolean;
   } = {}) => {
+    console.log("ZZ");
     clientScrollToBottom();
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
@@ -585,6 +687,7 @@ export function ChatPage({
         latestChildMessageId: TEMP_USER_MESSAGE_ID,
       });
     }
+
     const frozenCompleteMessageMap = upsertToCompleteMessageMap({
       messages: messageUpdates,
     });
@@ -611,7 +714,11 @@ export function ChatPage({
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
-      for await (const packetBunch of sendMessage({
+
+      const stack = new MessageFIFOStack();
+
+      // Start the async buffer update
+      updateStackAsync(stack, {
         message: currMessage,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
@@ -643,89 +750,239 @@ export function ChatPage({
         systemPromptOverride:
           searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
         useExistingUserMessage: isSeededChat,
-      })) {
-        for (const packet of packetBunch) {
-          if (Object.hasOwn(packet, "answer_piece")) {
-            answer += (packet as AnswerPiecePacket).answer_piece;
-          } else if (Object.hasOwn(packet, "top_documents")) {
-            documents = (packet as DocumentsResponse).top_documents;
-            query = (packet as DocumentsResponse).rephrased_query;
-            retrievalType = RetrievalType.Search;
-            if (documents && documents.length > 0) {
-              // point to the latest message (we don't know the messageId yet, which is why
-              // we have to use -1)
-              setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
-            }
-          } else if (Object.hasOwn(packet, "file_ids")) {
-            aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
-              (fileId) => {
-                return {
-                  id: fileId,
-                  type: ChatFileType.IMAGE,
-                };
-              }
-            );
-          } else if (Object.hasOwn(packet, "tool_name")) {
-            toolCalls = [
-              {
-                tool_name: (packet as ToolCallMetadata).tool_name,
-                tool_args: (packet as ToolCallMetadata).tool_args,
-                tool_result: (packet as ToolCallMetadata).tool_result,
-              },
-            ];
-          } else if (Object.hasOwn(packet, "error")) {
-            error = (packet as StreamingError).error;
-          } else if (Object.hasOwn(packet, "message_id")) {
-            finalMessage = packet as BackendMessage;
-          }
-        }
-        const updateFn = (messages: Message[]) => {
-          const replacementsMap = finalMessage
-            ? new Map([
-                [messages[0].messageId, TEMP_USER_MESSAGE_ID],
-                [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
-              ] as [number, number][])
-            : null;
-          upsertToCompleteMessageMap({
-            messages: messages,
-            replacementsMap: replacementsMap,
-            completeMessageMapOverride: frozenCompleteMessageMap,
-          });
-        };
-        const newUserMessageId =
-          finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
-        const newAssistantMessageId =
-          finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+      });
 
-        updateFn([
-          {
-            messageId: newUserMessageId,
-            message: currMessage,
-            type: "user",
-            files: currentMessageFiles,
-            toolCalls: [],
-            parentMessageId: parentMessage?.messageId || null,
-            childrenMessageIds: [newAssistantMessageId],
-            latestChildMessageId: newAssistantMessageId,
-          },
-          {
-            messageId: newAssistantMessageId,
-            message: error || answer,
-            type: error ? "error" : "assistant",
-            retrievalType,
-            query: finalMessage?.rephrased_query || query,
-            documents: finalMessage?.context_docs?.top_documents || documents,
-            citations: finalMessage?.citations || {},
-            files: finalMessage?.files || aiMessageImages || [],
-            toolCalls: finalMessage?.tool_calls || toolCalls,
-            parentMessageId: newUserMessageId,
-          },
-        ]);
-        if (isCancelledRef.current) {
-          setIsCancelled(false);
-          break;
+      const delay = (ms: number) => {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      };
+      await delay(30);
+
+      while (!stack.isComplete || !stack.isEmpty()) {
+        await delay(15);
+
+        if (!stack.isEmpty()) {
+          const packet = stack.pop();
+          if (packet) {
+            // state.update(packetBunch);
+
+            if (Object.hasOwn(packet, "answer_piece")) {
+              let answer_piece = (packet as AnswerPiecePacket).answer_piece;
+              answer += answer_piece;
+              // console
+            } else if (Object.hasOwn(packet, "top_documents")) {
+              documents = (packet as DocumentsResponse).top_documents;
+              query = (packet as DocumentsResponse).rephrased_query;
+              retrievalType = RetrievalType.Search;
+              if (documents && documents.length > 0) {
+                // point to the latest message (we don't know the messageId yet, which is why
+                // we have to use -1)
+                setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
+              }
+            } else if (Object.hasOwn(packet, "file_ids")) {
+              aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
+                (fileId) => {
+                  return {
+                    id: fileId,
+                    type: ChatFileType.IMAGE,
+                  };
+                }
+              );
+            } else if (Object.hasOwn(packet, "tool_name")) {
+              toolCalls = [
+                {
+                  tool_name: (packet as ToolCallMetadata).tool_name,
+                  tool_args: (packet as ToolCallMetadata).tool_args,
+                  tool_result: (packet as ToolCallMetadata).tool_result,
+                },
+              ];
+            } else if (Object.hasOwn(packet, "error")) {
+              error = (packet as StreamingError).error;
+            } else if (Object.hasOwn(packet, "message_id")) {
+              finalMessage = packet as BackendMessage;
+            }
+          }
+
+          const updateFn = (messages: Message[]) => {
+            const replacementsMap = finalMessage
+              ? new Map([
+                  [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+                  [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+                ] as [number, number][])
+              : null;
+            upsertToCompleteMessageMap({
+              messages: messages,
+              replacementsMap: replacementsMap,
+              completeMessageMapOverride: frozenCompleteMessageMap,
+            });
+          };
+          const newUserMessageId =
+            finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
+          const newAssistantMessageId =
+            finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+
+          updateFn([
+            {
+              messageId: newUserMessageId,
+              message: currMessage,
+              type: "user",
+              files: currentMessageFiles,
+              toolCalls: [],
+              parentMessageId: parentMessage?.messageId || null,
+              childrenMessageIds: [newAssistantMessageId],
+              latestChildMessageId: newAssistantMessageId,
+            },
+            {
+              messageId: newAssistantMessageId,
+              message: error || answer,
+              type: error ? "error" : "assistant",
+              retrievalType,
+              query: finalMessage?.rephrased_query || query,
+              documents: finalMessage?.context_docs?.top_documents || documents,
+              citations: finalMessage?.citations || {},
+              files: finalMessage?.files || aiMessageImages || [],
+              toolCalls: finalMessage?.tool_calls || toolCalls,
+              parentMessageId: newUserMessageId,
+            },
+          ]);
         }
       }
+
+      // for await (const packetBunch of sendMessage({
+      //   message: currMessage,
+      //   fileDescriptors: currentMessageFiles,
+      //   parentMessageId: lastSuccessfulMessageId,
+      //   chatSessionId: currChatSessionId,
+      //   promptId: livePersona?.prompts[0]?.id || 0,
+      //   filters: buildFilters(
+      //     filterManager.selectedSources,
+      //     filterManager.selectedDocumentSets,
+      //     filterManager.timeRange,
+      //     filterManager.selectedTags
+      //   ),
+      //   selectedDocumentIds: selectedDocuments
+      //     .filter(
+      //       (document) =>
+      //         document.db_doc_id !== undefined && document.db_doc_id !== null
+      //     )
+      //     .map((document) => document.db_doc_id as number),
+      //   queryOverride,
+      //   forceSearch,
+      //   modelProvider: llmOverrideManager.llmOverride.name || undefined,
+      //   modelVersion:
+      //     llmOverrideManager.llmOverride.modelName ||
+      //     searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
+      //     undefined,
+      //   temperature:
+      //     llmOverrideManager.temperature ||
+      //     parseFloat(searchParams.get(SEARCH_PARAM_NAMES.TEMPERATURE) || "") ||
+      //     undefined,
+      //   systemPromptOverride:
+      //     searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
+      //   useExistingUserMessage: isSeededChat,
+      // })) {
+
+      //   let answer_piece: string = "";
+      //   for (const packet of packetBunch) {
+
+      //     if (Object.hasOwn(packet, "answer_piece")) {
+      //       answer_piece = (packet as AnswerPiecePacket).answer_piece;
+      //       // answer += answer_piece
+      //       // console
+      //     } else if (Object.hasOwn(packet, "top_documents")) {
+      //       documents = (packet as DocumentsResponse).top_documents;
+      //       query = (packet as DocumentsResponse).rephrased_query;
+      //       retrievalType = RetrievalType.Search;
+      //       if (documents && documents.length > 0) {
+      //         // point to the latest message (we don't know the messageId yet, which is why
+      //         // we have to use -1)
+      //         setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
+      //       }
+      //     } else if (Object.hasOwn(packet, "file_ids")) {
+      //       aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
+      //         (fileId) => {
+      //           return {
+      //             id: fileId,
+      //             type: ChatFileType.IMAGE,
+      //           };
+      //         }
+      //       );
+      //     } else if (Object.hasOwn(packet, "tool_name")) {
+      //       toolCalls = [
+      //         {
+      //           tool_name: (packet as ToolCallMetadata).tool_name,
+      //           tool_args: (packet as ToolCallMetadata).tool_args,
+      //           tool_result: (packet as ToolCallMetadata).tool_result,
+      //         },
+      //       ];
+      //     } else if (Object.hasOwn(packet, "error")) {
+      //       error = (packet as StreamingError).error;
+      //     } else if (Object.hasOwn(packet, "message_id")) {
+      //       finalMessage = packet as BackendMessage;
+      //     }
+      //   }
+      //   const delay = (ms: number) => {
+      //     return new Promise(resolve => setTimeout(resolve, ms));
+      //   }
+
+      //   // const sub_answer_pieces
+      //   let pieces = answer_piece.split(/(\s|\n)/);
+
+      //   // Initialize an empty string to build the answer
+
+      //   // Loop through each piece
+      //   for (let piece of pieces) {
+      //     console.log(piece)
+      //     answer += piece
+      //     const updateFn = (messages: Message[]) => {
+      //       const replacementsMap = finalMessage
+      //         ? new Map([
+      //           [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+      //           [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+      //         ] as [number, number][])
+      //         : null;
+      //       upsertToCompleteMessageMap({
+      //         messages: messages,
+      //         replacementsMap: replacementsMap,
+      //         completeMessageMapOverride: frozenCompleteMessageMap,
+      //       });
+      //     };
+      //     const newUserMessageId =
+      //       finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
+      //     const newAssistantMessageId =
+      //       finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+
+      //     updateFn([
+      //       {
+      //         messageId: newUserMessageId,
+      //         message: currMessage,
+      //         type: "user",
+      //         files: currentMessageFiles,
+      //         toolCalls: [],
+      //         parentMessageId: parentMessage?.messageId || null,
+      //         childrenMessageIds: [newAssistantMessageId],
+      //         latestChildMessageId: newAssistantMessageId,
+      //       },
+      //       {
+      //         messageId: newAssistantMessageId,
+      //         message: error || answer,
+      //         type: error ? "error" : "assistant",
+      //         retrievalType,
+      //         query: finalMessage?.rephrased_query || query,
+      //         documents: finalMessage?.context_docs?.top_documents || documents,
+      //         citations: finalMessage?.citations || {},
+      //         files: finalMessage?.files || aiMessageImages || [],
+      //         toolCalls: finalMessage?.tool_calls || toolCalls,
+      //         parentMessageId: newUserMessageId,
+      //       },
+      //     ]);
+
+      //   }
+
+      //   if (isCancelledRef.current) {
+      //     setIsCancelled(false);
+      //     break;
+      //   }
+      // }
     } catch (e: any) {
       const errorMsg = e.message;
       upsertToCompleteMessageMap({
@@ -752,31 +1009,32 @@ export function ChatPage({
     }
 
     setIsStreaming(false);
-    if (isNewSession) {
-      if (finalMessage) {
-        setSelectedMessageForDocDisplay(finalMessage.message_id);
-      }
-      if (!searchParamBasedChatSessionName) {
-        await nameChatSession(currChatSessionId, currMessage);
-      }
+    //   if (isNewSession) {
+    //     if (finalMessage) {
+    //       setSelectedMessageForDocDisplay(finalMessage.message_id);
+    //     }
+    //     if (!searchParamBasedChatSessionName) {
+    //       await nameChatSession(currChatSessionId, currMessage);
+    //     }
 
-      // NOTE: don't switch pages if the user has navigated away from the chat
-      if (
-        currChatSessionId === urlChatSessionId.current ||
-        urlChatSessionId.current === null
-      ) {
-        router.replace(buildChatUrl(searchParams, currChatSessionId, null), {
-          scroll: false,
-        });
-      }
-    }
-    if (
-      finalMessage?.context_docs &&
-      finalMessage.context_docs.top_documents.length > 0 &&
-      retrievalType === RetrievalType.Search
-    ) {
-      setSelectedMessageForDocDisplay(finalMessage.message_id);
-    }
+    //     // NOTE: don't switch pages if the user has navigated away from the chat
+    //     if (
+    //       currChatSessionId === urlChatSessionId.current ||
+    //       urlChatSessionId.current === null
+    //     ) {
+    //       router.replace(buildChatUrl(searchParams, currChatSessionId, null), {
+    //         scroll: false,
+    //       });
+    //     }
+    //   }
+    //   if (
+    //     finalMessage?.context_docs &&
+    //     finalMessage.context_docs.top_documents.length > 0 &&
+    //     retrievalType === RetrievalType.Search
+    //   ) {
+    //     setSelectedMessageForDocDisplay(finalMessage.message_id);
+    //   }
+    // };
   };
 
   const onFeedback = async (
@@ -869,13 +1127,6 @@ export function ChatPage({
         setCurrentMessageFiles((prev) => [...removeTempFiles(prev), ...files]);
       }
     });
-  };
-
-  const clientScrollToBottom = () => {
-    setTimeout(() => {
-      endDivRef.current?.scrollIntoView({ behavior: "smooth" });
-      setHasPerformedInitialScroll(true);
-    }, 500);
   };
 
   useEffect(() => {

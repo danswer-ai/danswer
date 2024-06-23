@@ -36,7 +36,7 @@ export const useScrollOnStream = ({
   isStreaming,
   scrollableDivRef,
   distance = 500, // distance that should "engage" the scroll
-  debounce = 100, // time for debouncing
+  debounce = 15, // time for debouncing
   setAboveHorizon,
 }: IScrollOnStream) => {
   // Refs for efficiency
@@ -105,7 +105,7 @@ export const useScrollOnStream = ({
 
         setTimeout(() => {
           blockActionRef.current = false;
-        }, debounce);
+        }, debounce / 10);
       }
     }
   });
