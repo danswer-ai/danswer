@@ -890,6 +890,7 @@ export function ChatPage({
   const [showDocSidebar, setShowDocSidebar] = useState(true); // State to track if sidebar is open
 
   const toggleSidebar = () => {
+    console.log("TOGGLING");
     if (sidebarElementRef.current) {
       sidebarElementRef.current.style.transition = "width 0.3s ease-in-out";
 
