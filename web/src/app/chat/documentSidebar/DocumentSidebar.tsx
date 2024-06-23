@@ -16,6 +16,36 @@ import {
 import { HoverPopup } from "@/components/HoverPopup";
 import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
 import { ForwardedRef, forwardRef } from "react";
+
+function SectionHeader({
+  name,
+  icon,
+  closeHeader,
+}: {
+  name: string;
+  icon: React.FC<{ className: string }>;
+  closeHeader?: () => void;
+}) {
+  return (
+    <div
+      className={`w-full flex text-lg  text-emphasis font-medium flex  mb-3.5 font-bold   ${SUB_HEADER}  flex items-end`}
+    >
+      <p className="flex   mt-auto ">
+        {icon({ className: "my-auto  mr-1" })}
+        {name}
+      </p>
+      {closeHeader && (
+        <button
+          onClick={() => closeHeader()}
+          className="flex  ml-auto content-end "
+        >
+          <TbLayoutSidebarLeftExpand size={24} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 interface DocumentSidebarProps {
   closeSidebar: () => void;
   selectedMessage: Message | null;
@@ -58,35 +88,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     // space
     const tokenLimitReached = selectedDocumentTokens > maxTokens - 75;
 
-    function SectionHeader({
-      name,
-      icon,
-      includeToggle,
-    }: {
-      name: string;
-      icon: React.FC<{ className: string }>;
-      includeToggle?: boolean;
-    }) {
-      return (
-        <div
-          className={`w-full flex text-lg  text-emphasis font-medium flex  mb-3.5 font-bold   ${SUB_HEADER}  flex items-end`}
-        >
-          <p className="flex   mt-auto ">
-            {icon({ className: "my-auto  mr-1" })}
-            {name}
-          </p>
-          {includeToggle && (
-            <button
-              onClick={() => closeSidebar()}
-              className="flex  ml-auto content-end "
-            >
-              <TbLayoutSidebarLeftExpand size={24} />
-            </button>
-          )}
-        </div>
-      );
-    }
-
     return (
       <div
         ref={ref}
@@ -109,7 +110,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                     : "Retrieved Documents"
                 }
                 icon={FiFileText}
-                includeToggle
+                closeHeader={closeSidebar}
               />
             </div>
 
