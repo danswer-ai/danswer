@@ -59,6 +59,9 @@ COPY ./alembic /app/alembic
 COPY ./alembic.ini /app/alembic.ini
 COPY supervisord.conf /usr/etc/supervisord.conf
 
+# Escape hatch
+COPY ./scripts/deletion_script.py /app/scripts/deletion_script.py
+
 ENV PYTHONPATH /app
 
 # Default command which does nothing
