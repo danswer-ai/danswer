@@ -1,7 +1,6 @@
 export class FetchError extends Error {
   status: number;
   info: any;
-
   constructor(message: string, status: number, info: any) {
     super(message);
     this.status = status;
@@ -9,10 +8,26 @@ export class FetchError extends Error {
   }
 }
 
+export class RedirectError extends FetchError {
+  constructor(message: string, status: number, info: any) {
+    super(message, status, info);
+  }
+}
+
 const DEFAULT_ERROR_MSG = "An error occurred while fetching the data.";
 
 export const errorHandlingFetcher = async (url: string) => {
   const res = await fetch(url);
+
+  if (res.status === 403) {
+    const redirect = new RedirectError(
+      DEFAULT_ERROR_MSG,
+      res.status,
+      await res.json()
+    );
+    throw redirect;
+  }
+
   if (!res.ok) {
     const error = new FetchError(
       DEFAULT_ERROR_MSG,
@@ -21,5 +36,6 @@ export const errorHandlingFetcher = async (url: string) => {
     );
     throw error;
   }
+
   return res.json();
 };
