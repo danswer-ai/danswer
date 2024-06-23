@@ -250,7 +250,6 @@ async def get_user_role(user: User = Depends(current_user)) -> UserRoleResponse:
 def verify_user_logged_in(
     user: User | None = Depends(optional_user),
 ) -> UserInfo:
-    print("HI")
     # NOTE: this does not use `current_user` / `current_admin_user` because we don't want
     # to enforce user verification here - the frontend always wants to get the info about
     # the current user regardless of if they are currently verified
@@ -264,6 +263,7 @@ def verify_user_logged_in(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="User Not Authenticated"
         )
+
     return UserInfo.from_model(user)
 
 

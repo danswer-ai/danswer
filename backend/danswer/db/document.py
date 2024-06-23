@@ -249,9 +249,8 @@ def upsert_documents_complete(
 def delete_document_by_connector_credential_pair__no_commit(
     db_session: Session,
     document_ids: list[str],
-    connector_credential_pair_identifier: (
-        ConnectorCredentialPairIdentifier | None
-    ) = None,
+    connector_credential_pair_identifier: ConnectorCredentialPairIdentifier
+    | None = None,
 ) -> None:
     stmt = delete(DocumentByConnectorCredentialPair).where(
         DocumentByConnectorCredentialPair.id.in_(document_ids)

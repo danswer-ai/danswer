@@ -37,7 +37,6 @@ import {
   updateModelOverrideForChatSession,
   updateParentChildren,
   uploadFilesForChat,
-  useScrollOnStream,
 } from "./lib";
 import { useContext, useEffect, useRef, useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -432,48 +431,37 @@ export function ChatPage({
       availableDocumentSets,
     });
 
-  // state for cancelling streaming
-  const [isCancelled, setIsCancelled] = useState(false);
-  const isCancelledRef = useRef(isCancelled);
-  useEffect(() => {
-    isCancelledRef.current = isCancelled;
-  }, [isCancelled]);
-
   const [currentFeedback, setCurrentFeedback] = useState<
     [FeedbackType, number] | null
   >(null);
+
   const [sharingModalVisible, setSharingModalVisible] =
     useState<boolean>(false);
 
+  // state for cancelling streaming
+  const [isCancelled, setIsCancelled] = useState(false);
   const [aboveHorizon, setAboveHorizon] = useState(false);
 
-  // auto scroll as message comes out
   const scrollableDivRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLDivElement>(null);
   const endDivRef = useRef<HTMLDivElement>(null);
   const endPaddingRef = useRef<HTMLDivElement>(null);
 
-  // Scroll on stream if within the "gap"
-  useScrollOnStream({
-    isStreaming,
-    scrollableDivRef,
-    inputRef,
-    endDivRef,
-    setAboveHorizon,
-  });
-
-  // scroll to bottom initially
-  const [hasPerformedInitialScroll, setHasPerformedInitialScroll] =
-    useState(false);
-
-  useEffect(() => {
-    clientScrollToBottom();
-  }, [chatSessionId]);
-
   const previousHeight = useRef<number>(
     inputRef.current?.getBoundingClientRect().height!
   );
+  const scrollDist = useRef<number>(0);
+
+  const updateScrollTracking = () => {
+    const scrollDistance =
+      endDivRef?.current?.getBoundingClientRect()?.top! -
+      inputRef?.current?.getBoundingClientRect()?.top!;
+    scrollDist.current = scrollDistance;
+    setAboveHorizon(scrollDist.current > 500);
+  };
+
+  scrollableDivRef?.current?.addEventListener("scroll", updateScrollTracking);
 
   const handleInputResize = () => {
     setTimeout(() => {
@@ -509,11 +497,97 @@ export function ChatPage({
     }, 500);
   };
 
+  const isCancelledRef = useRef<boolean>(isCancelled); // scroll is cancelled
+  const preventScrollInterference = useRef<boolean>(false);
+  const preventScroll = useRef<boolean>(false);
+  const blockActionRef = useRef<boolean>(false);
+  const previousScroll = useRef<number>(0);
+  const distance = 400; // distance that should "engage" the scroll
+  const debounce = 100; // time for debouncing
+  useEffect(() => {
+    isCancelledRef.current = isCancelled;
+  }, [isCancelled]);
+
+  useEffect(() => {
+    if (isStreaming && scrollableDivRef && scrollableDivRef.current) {
+      let newHeight: number = scrollableDivRef.current?.scrollTop!;
+      const heightDifference = newHeight - previousScroll.current;
+      previousScroll.current = newHeight;
+
+      // Prevent streaming scroll
+      if (heightDifference < 0 && !preventScroll.current) {
+        scrollableDivRef.current.style.scrollBehavior = "auto";
+        scrollableDivRef.current.scrollTop = scrollableDivRef.current.scrollTop;
+        scrollableDivRef.current.style.scrollBehavior = "smooth";
+        preventScrollInterference.current = true;
+        preventScroll.current = true;
+
+        setTimeout(() => {
+          preventScrollInterference.current = false;
+        }, 2000);
+        setTimeout(() => {
+          preventScroll.current = false;
+        }, 10000);
+      }
+
+      // Ensure can scroll if scroll down
+      else if (!preventScrollInterference.current) {
+        preventScroll.current = false;
+      }
+      if (
+        scrollDist.current < distance &&
+        !blockActionRef.current &&
+        !blockActionRef.current &&
+        !preventScroll.current
+      ) {
+        // catch up if necessary!
+        const scrollAmount =
+          scrollDist.current + (scrollDist.current > 140 ? 2000 : 0);
+        blockActionRef.current = true;
+
+        scrollableDivRef?.current?.scrollBy({
+          left: 0,
+          top: Math.max(0, scrollAmount),
+          behavior: "smooth",
+        });
+
+        setTimeout(() => {
+          blockActionRef.current = false;
+        }, debounce);
+      }
+    }
+  });
+
+  // scroll on end of stream if within distance
+  useEffect(() => {
+    if (scrollableDivRef?.current && !isStreaming) {
+      if (scrollDist.current < distance) {
+        scrollableDivRef?.current?.scrollBy({
+          left: 0,
+          top: Math.max(scrollDist.current + 600, 0),
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [isStreaming]);
+
+  const [hasPerformedInitialScroll, setHasPerformedInitialScroll] =
+    useState(false);
+
+  // On new page
+  useEffect(() => {
+    clientScrollToBottom();
+  }, [chatSessionId]);
+
   // handle re-sizing of the text area
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     handleInputResize();
   }, [message]);
+
+  useEffect(() => {
+    updateScrollTracking();
+  }, [messageHistory]);
 
   // used for resizing of the document sidebar
   const masterFlexboxRef = useRef<HTMLDivElement>(null);
@@ -548,7 +622,7 @@ export function ChatPage({
     documentSidebarInitialWidth = Math.min(700, maxDocumentSidebarWidth);
   }
 
-  class MessageFIFOStack {
+  class CurrentMessageStack {
     private stack: PacketType[] = [];
     isComplete: boolean = false;
     error: string | null = null;
@@ -565,7 +639,10 @@ export function ChatPage({
       return this.stack.length === 0;
     }
   }
-  async function updateStackAsync(stack: MessageFIFOStack, params: any) {
+  async function updateCurrentMessageStack(
+    stack: CurrentMessageStack,
+    params: any
+  ) {
     try {
       for await (const packetBunch of sendMessage(params)) {
         for (const packet of packetBunch) {
@@ -578,7 +655,7 @@ export function ChatPage({
         }
       }
     } catch (error) {
-      console.error("Error in updateStackAsync:", error);
+      console.error("Error in updateCurrentMessageStack:", error);
       stack.error = String(error);
     } finally {
       stack.isComplete = true;
@@ -704,8 +781,8 @@ export function ChatPage({
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
 
-      const stack = new MessageFIFOStack();
-      updateStackAsync(stack, {
+      const stack = new CurrentMessageStack();
+      updateCurrentMessageStack(stack, {
         message: currMessage,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
@@ -740,6 +817,7 @@ export function ChatPage({
         useExistingUserMessage: isSeededChat,
       });
       const updateFn = (messages: Message[]) => {
+        console.log("UPDATING");
         const replacementsMap = finalMessage
           ? new Map([
               [messages[0].messageId, TEMP_USER_MESSAGE_ID],
@@ -752,9 +830,13 @@ export function ChatPage({
           completeMessageMapOverride: frozenCompleteMessageMap,
         });
       };
+      const delay = (ms: number) => {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      };
+      await delay(10);
 
       while (!stack.isComplete || !stack.isEmpty()) {
-        await new Promise((resolve) => setTimeout(resolve, 2));
+        await delay(3);
 
         if (!stack.isEmpty()) {
           const packet = stack.pop();

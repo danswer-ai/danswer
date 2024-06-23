@@ -440,14 +440,14 @@ def translate_db_search_doc_to_server_search_doc(
         hidden=db_search_doc.hidden,
         metadata=db_search_doc.doc_metadata if not remove_doc_content else {},
         score=db_search_doc.score,
-        match_highlights=(
-            db_search_doc.match_highlights if not remove_doc_content else []
-        ),
+        match_highlights=db_search_doc.match_highlights
+        if not remove_doc_content
+        else [],
         updated_at=db_search_doc.updated_at if not remove_doc_content else None,
         primary_owners=db_search_doc.primary_owners if not remove_doc_content else [],
-        secondary_owners=(
-            db_search_doc.secondary_owners if not remove_doc_content else []
-        ),
+        secondary_owners=db_search_doc.secondary_owners
+        if not remove_doc_content
+        else [],
     )
 
 

@@ -143,11 +143,9 @@ class Document(DocumentBase):
     @classmethod
     def from_base(cls, base: DocumentBase) -> "Document":
         return cls(
-            id=(
-                make_url_compatible(base.id)
-                if base.id
-                else "ingestion_api_" + make_url_compatible(base.semantic_identifier)
-            ),
+            id=make_url_compatible(base.id)
+            if base.id
+            else "ingestion_api_" + make_url_compatible(base.semantic_identifier),
             sections=base.sections,
             source=base.source or DocumentSource.INGESTION_API,
             semantic_identifier=base.semantic_identifier,
