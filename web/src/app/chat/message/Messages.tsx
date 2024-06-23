@@ -514,6 +514,7 @@ export const HumanMessage = ({
                           setEditedContent(content);
                           setIsEditing(false);
                         }
+                        // Submit edit if "Command Enter" is pressed, like in ChatGPT
                         if (e.key === "Enter" && e.metaKey) {
                           handleEditSubmit();
                         }

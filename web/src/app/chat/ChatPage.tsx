@@ -922,10 +922,7 @@ export function ChatPage({
           openedFolders={openedFolders}
         />
 
-        <div
-          className=" flex w-full   overflow-x-hidden"
-          ref={masterFlexboxRef}
-        >
+        <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
           {popup}
           {currentFeedback && (
             <FeedbackModal
@@ -1327,7 +1324,8 @@ export function ChatPage({
                   {!retrievalDisabled ? (
                     <div
                       ref={sidebarElementRef}
-                      className={`relative flex-none z-[1000] overflow-y-hidden sidebar bg-background-weak  ${SIDEBAR_WIDTH} h-screen  `}
+                      className={`relative flex-none z-[1000] overflow-y-hidden sidebar bg-background-weak h-screen`}
+                      style={{ width: showDocSidebar ? usedSidebarWidth : 0 }}
                     >
                       <ResizableSection
                         updateSidebarWidth={updateSidebarWidth}
