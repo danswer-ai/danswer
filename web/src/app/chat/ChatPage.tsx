@@ -664,6 +664,7 @@ export function ChatPage({
 
   const resetInputBar = () => {
     setMessage("");
+    setCurrentMessageFiles([]);
     if (endPaddingRef.current) {
       endPaddingRef.current.style.height = `95px`;
     }
@@ -852,6 +853,14 @@ export function ChatPage({
                 // we have to use -1)
                 setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
               }
+            } else if (Object.hasOwn(packet, "tool_name")) {
+              toolCalls = [
+                {
+                  tool_name: (packet as ToolCallMetadata).tool_name,
+                  tool_args: (packet as ToolCallMetadata).tool_args,
+                  tool_result: (packet as ToolCallMetadata).tool_result,
+                },
+              ];
             } else if (Object.hasOwn(packet, "file_ids")) {
               aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
                 (fileId) => {
@@ -999,7 +1008,6 @@ export function ChatPage({
     if (persona && persona.id !== livePersona.id) {
       // remove uploaded files
       setCurrentMessageFiles([]);
-
       setSelectedPersona(persona);
       textAreaRef.current?.focus();
       router.push(buildChatUrl(searchParams, null, persona.id));
@@ -1499,7 +1507,7 @@ export function ChatPage({
                           <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
                             <button
                               onClick={() => clientScrollToBottom()}
-                              className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2  mx-auto "
+                              className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2 mx-auto "
                             >
                               <FiArrowDown size={18} />
                             </button>
