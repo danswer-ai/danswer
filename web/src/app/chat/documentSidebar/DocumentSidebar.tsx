@@ -93,9 +93,9 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
       >
         <div
           className="w-full flex-initial 
-      overflow-y-hidden
-      flex
-      flex-col h-screen"
+          overflow-y-hidden
+          flex
+          flex-col h-screen"
         >
           {popup}
 

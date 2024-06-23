@@ -87,7 +87,7 @@ def get_display_email(email: str | None, space_less: bool = False) -> str:
 
 
 def user_needs_to_be_verified() -> bool:
-    # all other auth types besides basic type should require users to be
+    # all other auth types besides basic should require users to be
     # verified
     return AUTH_TYPE != AuthType.BASIC or REQUIRE_EMAIL_VERIFICATION
 

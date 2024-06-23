@@ -890,7 +890,6 @@ export function ChatPage({
   const [showDocSidebar, setShowDocSidebar] = useState(true); // State to track if sidebar is open
 
   const toggleSidebar = () => {
-    console.log("TOGGLING");
     if (sidebarElementRef.current) {
       sidebarElementRef.current.style.transition = "width 0.3s ease-in-out";
 
@@ -977,7 +976,7 @@ export function ChatPage({
               {({ getRootProps }) => (
                 <>
                   <div
-                    className={`w-full  sm:relative h-screen ${
+                    className={`w-full sm:relative h-screen ${
                       retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
                     }
                       flex-auto transition-margin duration-300 
@@ -1026,7 +1025,7 @@ export function ChatPage({
                                 </div>
                               )}
 
-                              <div className=" flex  ml-4">
+                              <div className="flex ml-4">
                                 <UserDropdown user={user} />
 
                                 {!retrievalDisabled && !showDocSidebar && (
@@ -1352,7 +1351,6 @@ export function ChatPage({
                   ) : // Another option is to use a div with the width set to the initial width, so that the
                   // chat section appears in the same place as before
                   // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
-                  // chat section appears in the same place as before
                   null}
                 </>
               )}
