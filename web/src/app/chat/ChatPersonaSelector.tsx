@@ -19,7 +19,7 @@ function PersonaItem({
   isOwner: boolean;
 }) {
   return (
-    <div className="flex w-full ">
+    <div className="flex w-full">
       <div
         key={id}
         className={`
@@ -130,10 +130,7 @@ export function ChatPersonaSelector({
         </div>
       }
     >
-      <div
-        className=" 
-      select-none text-xl text-strong font-bold flex px-2  rounded cursor-pointer hover:bg-hover-light"
-      >
+      <div className="select-none text-xl text-strong font-bold flex px-2 rounded cursor-pointer hover:bg-hover-light">
         <div className="mt-auto">
           {currentlySelectedPersona?.name || "Default"}
         </div>

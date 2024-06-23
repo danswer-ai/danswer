@@ -1,5 +1,3 @@
-// import { HEADER_HEIGHT } from "@/lib/constants";
-
 import { HEADER_HEIGHT } from "@/lib/constants";
 
 export function HeaderWrapper({

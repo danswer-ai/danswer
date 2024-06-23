@@ -85,7 +85,6 @@ export function ChatInputBar({
               flex-col
               border
               border-border-medium
-
               rounded-lg
               overflow-hidden
               bg-background-weak
