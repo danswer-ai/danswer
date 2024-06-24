@@ -308,6 +308,31 @@ def fetch_userids_from_emails(
     return user_ids, failed_to_find
 
 
+def fetch_userids_from_groups(
+    group_names: list[str], client: WebClient
+) -> tuple[list[str], list[str]]:
+    user_ids: list[str] = []
+    failed_to_find: list[str] = []
+    for group_name in group_names:
+        try:
+            # First, find the group ID from the group name
+            response = client.usergroups_list()
+            groups = {group["name"]: group["id"] for group in response["usergroups"]}
+            group_id = groups.get(group_name)
+
+            if group_id:
+                # Fetch user IDs for the group
+                response = client.usergroups_users_list(usergroup=group_id)
+                user_ids.extend(response["users"])
+            else:
+                failed_to_find.append(group_name)
+        except Exception as e:
+            logger.error(f"Error fetching user IDs for group {group_name}: {str(e)}")
+            failed_to_find.append(group_name)
+
+    return user_ids, failed_to_find
+
+
 def fetch_groupids_from_names(
     names: list[str], client: WebClient
 ) -> tuple[list[str], list[str]]:

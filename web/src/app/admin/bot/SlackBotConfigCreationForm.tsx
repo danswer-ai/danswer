@@ -71,9 +71,13 @@ export const SlackBotCreationForm = ({
               existingSlackBotConfig?.channel_config?.respond_tag_only || false,
             respond_to_bots:
               existingSlackBotConfig?.channel_config?.respond_to_bots || false,
-            respond_team_member_list:
+            respond_member_group_list: (
               existingSlackBotConfig?.channel_config
-                ?.respond_team_member_list || ([] as string[]),
+                ?.respond_team_member_list ?? []
+            ).concat(
+              existingSlackBotConfig?.channel_config
+                ?.respond_slack_group_list ?? []
+            ),
             still_need_help_enabled:
               existingSlackBotConfig?.channel_config?.follow_up_tags !==
               undefined,
@@ -101,7 +105,7 @@ export const SlackBotCreationForm = ({
             questionmark_prefilter_enabled: Yup.boolean().required(),
             respond_tag_only: Yup.boolean().required(),
             respond_to_bots: Yup.boolean().required(),
-            respond_team_member_list: Yup.array().of(Yup.string()).required(),
+            respond_member_group_list: Yup.array().of(Yup.string()).required(),
             still_need_help_enabled: Yup.boolean().required(),
             follow_up_tags: Yup.array().of(Yup.string()),
             document_sets: Yup.array().of(Yup.number()),
@@ -116,8 +120,13 @@ export const SlackBotCreationForm = ({
               channel_names: values.channel_names.filter(
                 (channelName) => channelName !== ""
               ),
-              respond_team_member_list: values.respond_team_member_list.filter(
-                (teamMemberEmail) => teamMemberEmail !== ""
+              respond_team_member_list: values.respond_member_group_list.filter(
+                (teamMemberEmail) =>
+                  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(teamMemberEmail)
+              ),
+              respond_slack_group_list: values.respond_member_group_list.filter(
+                (slackGroupName) =>
+                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(slackGroupName)
               ),
               usePersona: usingPersonas,
             };
@@ -227,14 +236,14 @@ export const SlackBotCreationForm = ({
                   subtext="If not set, DanswerBot will always ignore messages from Bots"
                 />
                 <TextArrayField
-                  name="respond_team_member_list"
-                  label="Team Members Emails"
+                  name="respond_member_group_list"
+                  label="Team Member Emails Or Slack Group Names"
                   subtext={`If specified, DanswerBot responses will only be 
-                  visible to members in this list. This is
+                  visible to the members or groups in this list. This is
                   useful if you want DanswerBot to operate in an
                   "assistant" mode, where it helps the team members find
                   answers, but let's them build on top of DanswerBot's response / throw 
-                  out the occasional incorrect answer.`}
+                  out the occasional incorrect answer. Group names are case sensitive.`}
                   values={values}
                 />
                 <Divider />
