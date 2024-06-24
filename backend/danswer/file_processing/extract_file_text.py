@@ -305,14 +305,18 @@ def epub_to_text(file: IO[Any]) -> str:
         return TEXT_SECTION_SEPARATOR.join(text_content)
 
 
-def file_io_to_text(file: IO[Any]) -> str:
+def file_io_to_text(file: IO[Any], break_on_unprocessable: bool) -> str:
     try:
         encoding = detect_encoding(file)
         file_content_raw, _ = read_text_file(file, encoding=encoding)
         return file_content_raw
     except Exception as e:
-        logger.warning(f"Detected txt file failed to decode: {e}")
-        return ""
+        error_string = f"Detected txt file failed to decode: {e}"
+        if break_on_unprocessable:
+            raise RuntimeError(error_string)
+        else:
+            logger.warning(error_string)
+            return ""
 
 
 def extract_file_text(
@@ -321,7 +325,7 @@ def extract_file_text(
     break_on_unprocessable: bool = True,
 ) -> str:
     if is_encoded_as_text(file):
-        return file_io_to_text(file)
+        return file_io_to_text(file, break_on_unprocessable)
     if not file_name:
         logger.warning("No file_name and not known text encoding")
         return ""
@@ -356,4 +360,4 @@ def extract_file_text(
         return parse_html_page_basic(file)
 
     else:
-        return file_io_to_text(file)
+        return file_io_to_text(file, break_on_unprocessable)
