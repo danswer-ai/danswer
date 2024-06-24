@@ -9,7 +9,6 @@ import { BasicSelectable } from "@/components/BasicClickable";
 import { Message, RetrievalType } from "../interfaces";
 import {
   SIDEBAR_WIDTH,
-  SUB_HEADER,
 } from "@/lib/constants";
 import { HoverPopup } from "@/components/HoverPopup";
 import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
@@ -26,20 +25,19 @@ function SectionHeader({
 }) {
   return (
     <div
-      className={`w-full flex text-lg  text-emphasis font-medium flex  mb-3.5 font-bold   ${SUB_HEADER}  flex items-end`}
+      className={`w-full mt-3 flex text-lg text-emphasis font-medium flex  mb-3.5 font-bold flex items-end`}
     >
-      <p className="flex   mt-auto ">
-        {icon({ className: "my-auto  mr-1" })}
-        {name}
-      </p>
-      {closeHeader && (
-        <button
-          onClick={() => closeHeader()}
-          className="flex  ml-auto content-end "
-        >
-          <TbLayoutSidebarLeftExpand size={24} />
-        </button>
-      )}
+      <div className="flex mt-auto justify-between w-full">
+        <p className="flex">
+          {icon({ className: "my-auto mr-1" })}
+          {name}
+        </p>
+        {closeHeader && (
+          <button onClick={() => closeHeader()}>
+            <TbLayoutSidebarLeftExpand size={24} />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

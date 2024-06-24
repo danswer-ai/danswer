@@ -13,7 +13,7 @@ import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constan
 export function HeaderTitle({ children }: { children: JSX.Element | string }) {
   return <h1 className="flex text-2xl text-strong font-bold">{children}</h1>;
 }
-import { SUB_HEADER } from "@/lib/constants";
+
 
 interface HeaderProps {
   user: User | null;
@@ -66,23 +66,19 @@ export function Header({ user }: HeaderProps) {
               href="/search"
               className={"ml-6 h-full flex flex-col hover:bg-hover"}
             >
-              <div className={`${SUB_HEADER} flex items-end`}>
-                <div className="w-24 flex ">
-                  <div className={"mx-auto flex text-strong px-2"}>
-                    <FiSearch className="my-auto mr-1" />
-                    <h1 className="flex text-sm font-bold my-auto">Search</h1>
-                  </div>
+              <div className="w-24 flex my-auto">
+                <div className={"mx-auto flex text-strong px-2"}>
+                  <FiSearch className="my-auto mr-1" />
+                  <h1 className="flex text-sm font-bold my-auto">Search</h1>
                 </div>
               </div>
             </Link>
 
             <Link href="/chat" className="h-full flex flex-col hover:bg-hover">
-              <div className={`${SUB_HEADER} flex items-end`}>
-                <div className="w-24 flex ">
-                  <div className="mx-auto flex text-strong px-2">
-                    <FiMessageSquare className="my-auto mr-1" />
-                    <h1 className="flex text-sm font-bold my-auto">Chat</h1>
-                  </div>
+              <div className="w-24 flex my-auto">
+                <div className="mx-auto flex text-strong px-2">
+                  <FiMessageSquare className="my-auto mr-1" />
+                  <h1 className="flex text-sm font-bold my-auto">Chat</h1>
                 </div>
               </div>
             </Link>
@@ -90,7 +86,7 @@ export function Header({ user }: HeaderProps) {
         )}
 
         <div className="ml-auto h-full flex flex-col">
-          <div className={`${SUB_HEADER} flex items-end`}>
+          <div className="my-auto">
             <UserDropdown user={user} hideChatAndSearch />
           </div>
         </div>
