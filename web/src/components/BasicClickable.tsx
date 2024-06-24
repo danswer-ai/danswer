@@ -83,7 +83,6 @@ export function BasicSelectable({
         text-sm
         ${padding && "p-1"}
         select-none
-        
         ${hasBorder ? "border border-border" : ""}
         ${selected ? "bg-hover" : "hover:bg-hover"}
         ${fullWidth ? "w-full" : ""}`}

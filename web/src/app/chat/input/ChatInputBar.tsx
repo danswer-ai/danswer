@@ -119,7 +119,6 @@ export function ChatInputBar({
                 shrink
                 resize-none
                 border-0
-             
                 bg-background-weak
                 ${
                   textAreaRef.current &&
@@ -127,7 +126,6 @@ export function ChatInputBar({
                     ? "overflow-y-auto mt-2"
                     : ""
                 }
-                
                 overflow-hidden
                 whitespace-normal
                 break-word
