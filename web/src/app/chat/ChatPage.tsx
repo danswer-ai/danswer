@@ -600,7 +600,6 @@ export function ChatPage({
         }
       }
     } catch (error) {
-      console.error("Error in updateCurrentMessageStack:", error);
       stack.error = String(error);
     } finally {
       stack.isComplete = true;
@@ -763,7 +762,6 @@ export function ChatPage({
         useExistingUserMessage: isSeededChat,
       });
       const updateFn = (messages: Message[]) => {
-        console.log("UPDATING");
         const replacementsMap = finalMessage
           ? new Map([
               [messages[0].messageId, TEMP_USER_MESSAGE_ID],
@@ -787,8 +785,6 @@ export function ChatPage({
         if (!stack.isEmpty()) {
           const packet = stack.pop();
           if (packet) {
-            console.log(packet);
-
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {
