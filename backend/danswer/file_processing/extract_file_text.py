@@ -122,17 +122,6 @@ def is_macos_resource_fork_file(file_name: str) -> bool:
     )
 
 
-def is_encoded_as_text(file: IO[bytes]) -> bool:
-    try:
-        raw_data = file.read(50000)  # Read some bytes to check encoding
-        file.seek(0)  # Reset file pointer to the beginning
-        encoding = chardet.detect(raw_data)["encoding"]
-        return encoding.lower() in TEXT_ENCODINGS if encoding else False
-    except Exception as e:
-        logger.error(f"Failed to determine if file is a text file: {e}")
-        return False
-
-
 # To include additional metadata in the search index, add a .danswer_metadata.json file
 # to the zip file. This file should contain a list of objects with the following format:
 # [{ "filename": "file1.txt", "link": "https://example.com/file1.txt" }]
@@ -324,7 +313,7 @@ def extract_file_text(
     file: IO[Any],
     break_on_unprocessable: bool = True,
 ) -> str:
-    if is_encoded_as_text(file):
+    if detect_encoding(file).lower() in TEXT_ENCODINGS:
         return file_io_to_text(file, break_on_unprocessable)
     if not file_name:
         logger.warning("No file_name and not known text encoding")
