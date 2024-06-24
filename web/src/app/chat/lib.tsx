@@ -5,7 +5,14 @@ import {
 } from "@/lib/search/interfaces";
 import { handleStream } from "@/lib/search/streamingUtils";
 import { FeedbackType } from "./types";
-import { Dispatch, RefObject, SetStateAction, useEffect, useRef } from "react";
+import {
+  Dispatch,
+  MutableRefObject,
+  RefObject,
+  SetStateAction,
+  useEffect,
+  useRef,
+} from "react";
 import {
   BackendMessage,
   ChatSession,
@@ -547,4 +554,93 @@ export async function uploadFilesForChat(
   const responseJson = await response.json();
 
   return [responseJson.files as FileDescriptor[], null];
+}
+
+export async function useScrollonStream({
+  isStreaming,
+  scrollableDivRef,
+  scrollDist,
+  endDivRef,
+  distance,
+  debounce,
+}: {
+  isStreaming: boolean;
+  scrollableDivRef: RefObject<HTMLDivElement>;
+  scrollDist: MutableRefObject<number>;
+  endDivRef: RefObject<HTMLDivElement>;
+  distance: number;
+  debounce: number;
+}) {
+  const preventScrollInterference = useRef<boolean>(false);
+  const preventScroll = useRef<boolean>(false);
+  const blockActionRef = useRef<boolean>(false);
+  const previousScroll = useRef<number>(0);
+
+  useEffect(() => {
+    if (isStreaming && scrollableDivRef && scrollableDivRef.current) {
+      let newHeight: number = scrollableDivRef.current?.scrollTop!;
+      const heightDifference = newHeight - previousScroll.current;
+      previousScroll.current = newHeight;
+
+      // Prevent streaming scroll
+      if (heightDifference < 0 && !preventScroll.current) {
+        scrollableDivRef.current.style.scrollBehavior = "auto";
+        scrollableDivRef.current.scrollTop = scrollableDivRef.current.scrollTop;
+        scrollableDivRef.current.style.scrollBehavior = "smooth";
+        preventScrollInterference.current = true;
+        preventScroll.current = true;
+
+        setTimeout(() => {
+          preventScrollInterference.current = false;
+        }, 2000);
+        setTimeout(() => {
+          preventScroll.current = false;
+        }, 10000);
+      }
+
+      // Ensure can scroll if scroll down
+      else if (!preventScrollInterference.current) {
+        preventScroll.current = false;
+      }
+      if (
+        scrollDist.current < distance &&
+        !blockActionRef.current &&
+        !blockActionRef.current &&
+        !preventScroll.current &&
+        endDivRef &&
+        endDivRef.current
+      ) {
+        // catch up if necessary!
+        const scrollAmount = scrollDist.current + 10000;
+        if (scrollDist.current > 140) {
+          endDivRef.current.scrollIntoView();
+        } else {
+          blockActionRef.current = true;
+
+          scrollableDivRef?.current?.scrollBy({
+            left: 0,
+            top: Math.max(0, scrollAmount),
+            behavior: "smooth",
+          });
+
+          setTimeout(() => {
+            blockActionRef.current = false;
+          }, debounce);
+        }
+      }
+    }
+  });
+
+  // scroll on end of stream if within distance
+  useEffect(() => {
+    if (scrollableDivRef?.current && !isStreaming) {
+      if (scrollDist.current < distance) {
+        scrollableDivRef?.current?.scrollBy({
+          left: 0,
+          top: Math.max(scrollDist.current + 600, 0),
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [isStreaming]);
 }

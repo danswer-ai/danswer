@@ -37,6 +37,7 @@ import {
   updateModelOverrideForChatSession,
   updateParentChildren,
   uploadFilesForChat,
+  useScrollonStream,
 } from "./lib";
 import { useContext, useEffect, useRef, useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -498,83 +499,26 @@ export function ChatPage({
   };
 
   const isCancelledRef = useRef<boolean>(isCancelled); // scroll is cancelled
-  const preventScrollInterference = useRef<boolean>(false);
-  const preventScroll = useRef<boolean>(false);
-  const blockActionRef = useRef<boolean>(false);
-  const previousScroll = useRef<number>(0);
-  const distance = 400; // distance that should "engage" the scroll
-  const debounce = 100; // time for debouncing
   useEffect(() => {
     isCancelledRef.current = isCancelled;
   }, [isCancelled]);
 
-  useEffect(() => {
-    if (isStreaming && scrollableDivRef && scrollableDivRef.current) {
-      let newHeight: number = scrollableDivRef.current?.scrollTop!;
-      const heightDifference = newHeight - previousScroll.current;
-      previousScroll.current = newHeight;
+  const distance = 500; // distance that should "engage" the scroll
+  const debounce = 100; // time for debouncing
 
-      // Prevent streaming scroll
-      if (heightDifference < 0 && !preventScroll.current) {
-        scrollableDivRef.current.style.scrollBehavior = "auto";
-        scrollableDivRef.current.scrollTop = scrollableDivRef.current.scrollTop;
-        scrollableDivRef.current.style.scrollBehavior = "smooth";
-        preventScrollInterference.current = true;
-        preventScroll.current = true;
-
-        setTimeout(() => {
-          preventScrollInterference.current = false;
-        }, 2000);
-        setTimeout(() => {
-          preventScroll.current = false;
-        }, 10000);
-      }
-
-      // Ensure can scroll if scroll down
-      else if (!preventScrollInterference.current) {
-        preventScroll.current = false;
-      }
-      if (
-        scrollDist.current < distance &&
-        !blockActionRef.current &&
-        !blockActionRef.current &&
-        !preventScroll.current
-      ) {
-        // catch up if necessary!
-        const scrollAmount =
-          scrollDist.current + (scrollDist.current > 140 ? 2000 : 0);
-        blockActionRef.current = true;
-
-        scrollableDivRef?.current?.scrollBy({
-          left: 0,
-          top: Math.max(0, scrollAmount),
-          behavior: "smooth",
-        });
-
-        setTimeout(() => {
-          blockActionRef.current = false;
-        }, debounce);
-      }
-    }
+  useScrollonStream({
+    isStreaming,
+    scrollableDivRef,
+    scrollDist,
+    endDivRef,
+    distance,
+    debounce,
   });
-
-  // scroll on end of stream if within distance
-  useEffect(() => {
-    if (scrollableDivRef?.current && !isStreaming) {
-      if (scrollDist.current < distance) {
-        scrollableDivRef?.current?.scrollBy({
-          left: 0,
-          top: Math.max(scrollDist.current + 600, 0),
-          behavior: "smooth",
-        });
-      }
-    }
-  }, [isStreaming]);
 
   const [hasPerformedInitialScroll, setHasPerformedInitialScroll] =
     useState(false);
 
-  // On new page
+  // on new page
   useEffect(() => {
     clientScrollToBottom();
   }, [chatSessionId]);
@@ -585,6 +529,7 @@ export function ChatPage({
     handleInputResize();
   }, [message]);
 
+  // tracks scrolling
   useEffect(() => {
     updateScrollTracking();
   }, [messageHistory]);
@@ -834,14 +779,16 @@ export function ChatPage({
       const delay = (ms: number) => {
         return new Promise((resolve) => setTimeout(resolve, ms));
       };
-      await delay(10);
 
+      await delay(50);
       while (!stack.isComplete || !stack.isEmpty()) {
-        await delay(3);
+        await delay(2);
 
         if (!stack.isEmpty()) {
           const packet = stack.pop();
           if (packet) {
+            console.log(packet);
+
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {
