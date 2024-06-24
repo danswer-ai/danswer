@@ -306,9 +306,13 @@ def epub_to_text(file: IO[Any]) -> str:
 
 
 def file_io_to_text(file: IO[Any]) -> str:
-    encoding = detect_encoding(file)
-    file_content_raw, _ = read_text_file(file, encoding=encoding)
-    return file_content_raw
+    try:
+        encoding = detect_encoding(file)
+        file_content_raw, _ = read_text_file(file, encoding=encoding)
+        return file_content_raw
+    except Exception as e:
+        logger.warning(f"Detected txt file failed to decode: {e}")
+        return ""
 
 
 def extract_file_text(
