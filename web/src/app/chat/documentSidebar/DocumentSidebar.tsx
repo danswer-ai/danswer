@@ -87,7 +87,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     return (
       <div
         ref={ref}
-        className={`${SIDEBAR_WIDTH} sidebar absolute right-0 h-screen border-l border-l-border `}
+        className={`${SIDEBAR_WIDTH} sidebar absolute right-0 h-screen border-l border-l-border`}
       >
         <div
           className="w-full flex-initial 
@@ -98,7 +98,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
           {popup}
 
           <div className="h-4/6 flex flex-col ">
-            <div className="px-3   mb-3 flex border-b border-border">
+            <div className="px-3 mb-3 flex border-b border-border">
               <SectionHeader
                 name={
                   selectedMessageRetrievalType === RetrievalType.SelectedDocs
