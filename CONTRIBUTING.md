@@ -117,7 +117,7 @@ If you only want to dockerize the database. This will be the case if you wanted 
 
 Navigate to `danswer/deployment/docker_compose`, then start up Vespa and Postgres with:
 ```bash
-docker compose -f docker-compose.dev.yml -p --build danswer-stack up -d index relational_db
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build index relational_db
 ```
 Then you will just run the inference model server, api server, and the NextJS web project in you console by following the steps below.
 
@@ -130,7 +130,7 @@ If you will be taking a look into the database through pgadmin, you can do that 
 If you only want to modify the frontend, you can also dockerize the also the backend, which is the model server or the `inference_model_server` docker container, and the api server docker containers, or the `api_server`, from the `docker-compose.dev.yaml` file. 
 
 ```bash
-docker compose -f docker-compose.dev.yml -p --build danswer-stack up -d index relational_db inference_model_server api_server
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build index relational_db inference_model_server api_server
 ```
 
 It will also be required for you to add you environment variable if you wanted to containerize the backend, which is done by creating `.env` file in the `deployment/docker_compose` directory. This will then be read by docker compose while created its own container for each application. Example use case is if you want to modify the type of authentication (if basic, google_oauth, etc.). 
@@ -139,7 +139,7 @@ Then you only by running the NextJS web project by following the steps below.
 
 If it happens that you modified the environment variables in the `.env` file throughout your development process, you must rebuild you docker container for it to be reflected in it. You can do that by:
 ```bash
-docker compose -f docker-compose.dev.yml -p --build danswer-stack up -d index relational_db inference_model_server api_server --forcce-recreate
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build index relational_db inference_model_server api_server --forcce-recreate
 ```
 
 
