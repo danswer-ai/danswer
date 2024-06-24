@@ -74,12 +74,7 @@ import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 
 import { TbLayoutSidebarRightExpand } from "react-icons/tb";
 
-import {
-  HEADER_HEIGHT,
-  SIDEBAR_WIDTH,
-  SIDEBAR_WIDTH_CONST,
-  SUB_HEADER,
-} from "@/lib/constants";
+import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 import ResizableSection from "@/components/resizable/ResizableSection";
 
 const MAX_INPUT_HEIGHT = 200;
@@ -982,13 +977,9 @@ export function ChatPage({
                       ref={scrollableDivRef}
                     >
                       {livePersona && (
-                        <div
-                          className={`sticky top-0 left-0 z-10 w-full bg-background flex ${HEADER_HEIGHT}`}
-                        >
-                          <div
-                            className={`${SUB_HEADER}   items-end flex w-full`}
-                          >
-                            <div className="ml-2 px-1  rounded w-fit">
+                        <div className="sticky top-0 left-80 z-10 w-full bg-background flex">
+                          <div className="mt-2 flex w-full">
+                            <div className="ml-2 p-1 rounded w-fit">
                               <ChatPersonaSelector
                                 personas={filteredAssistants}
                                 selectedPersonaId={livePersona.id}
@@ -997,15 +988,15 @@ export function ChatPage({
                               />
                             </div>
 
-                            <div className="ml-auto mr-3 mt-auto flex items-end">
+                            <div className="ml-auto mr-3 flex">
                               {chatSessionId !== null && (
                                 <div
                                   onClick={() => setSharingModalVisible(true)}
                                   className={`
+                                    my-auto
+                                    p-2
                                     rounded
                                     cursor-pointer
-                                    px-2 
-                                    py-1
                                     hover:bg-hover-light
                                   `}
                                 >
@@ -1013,9 +1004,8 @@ export function ChatPage({
                                 </div>
                               )}
 
-                              <div className="flex ml-4">
+                              <div className="ml-4 flex my-auto">
                                 <UserDropdown user={user} />
-
                                 {!retrievalDisabled && !showDocSidebar && (
                                   <button
                                     className="ml-4 mt-auto"
