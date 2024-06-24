@@ -366,7 +366,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
                 if response.status_code == 200:
                     extract = extract_file_text(
-                        attachment["title"], io.BytesIO(response.content), False
+                        attachment["title"],
+                        io.BytesIO(response.content),
+                        break_on_unprocessable=False,
                     )
                     files_attachment_content.append(extract)
 

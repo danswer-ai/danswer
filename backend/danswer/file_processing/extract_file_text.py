@@ -26,6 +26,50 @@ logger = setup_logger()
 TEXT_SECTION_SEPARATOR = "\n\n"
 
 
+TEXT_ENCODINGS = [
+    "ascii",
+    "utf-8",
+    "utf-16",
+    "utf-32",
+    "windows-1250",
+    "windows-1251",
+    "windows-1252",
+    "windows-1253",
+    "windows-1254",
+    "windows-1255",
+    "windows-1256",
+    "windows-1257",
+    "windows-1258",
+    "iso-8859-1",
+    "iso-8859-2",
+    "iso-8859-3",
+    "iso-8859-4",
+    "iso-8859-5",
+    "iso-8859-6",
+    "iso-8859-7",
+    "iso-8859-8",
+    "iso-8859-9",
+    "iso-8859-10",
+    "iso-8859-13",
+    "iso-8859-14",
+    "iso-8859-15",
+    "iso-8859-16",
+    "cp437",
+    "cp850",
+    "cp866",
+    "mac-roman",
+    "mac-cyrillic",
+    "koi8-r",
+    "koi8-u",
+    "big5",
+    "gb2312",
+    "gb18030",
+    "shift-jis",
+    "euc-jp",
+    "euc-kr",
+]
+
+
 PLAIN_TEXT_FILE_EXTENSIONS = [
     ".txt",
     ".md",
@@ -76,6 +120,17 @@ def is_macos_resource_fork_file(file_name: str) -> bool:
     return os.path.basename(file_name).startswith("._") and file_name.startswith(
         "__MACOSX"
     )
+
+
+def is_encoded_as_text(file: IO[bytes]) -> bool:
+    try:
+        raw_data = file.read(50000)  # Read some bytes to check encoding
+        file.seek(0)  # Reset file pointer to the beginning
+        encoding = chardet.detect(raw_data)["encoding"]
+        return encoding.lower() in TEXT_ENCODINGS if encoding else False
+    except Exception as e:
+        logger.error(f"Failed to determine if file is a text file: {e}")
+        return False
 
 
 # To include additional metadata in the search index, add a .danswer_metadata.json file
@@ -261,8 +316,11 @@ def extract_file_text(
     file: IO[Any],
     break_on_unprocessable: bool = True,
 ) -> str:
-    if not file_name:
+    if is_encoded_as_text(file):
         return file_io_to_text(file)
+    if not file_name:
+        logger.warning("No file_name and not known text encoding")
+        return ""
 
     extension = get_file_ext(file_name)
     if not check_file_ext_is_valid(extension):
