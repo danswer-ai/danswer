@@ -1,8 +1,8 @@
 import fnmatch
-import itertools
+import io
+import mimetypes
 import time
 from collections import deque
-from collections.abc import Iterable
 from collections.abc import Iterator
 from datetime import datetime
 from datetime import timedelta
@@ -29,6 +29,7 @@ from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
@@ -93,15 +94,31 @@ def _batch_github_objects(
             yield mini_batch
 
 
-def _batch_github_object_list(
-    git_objs: Iterable[Any], batch_size: int
+def _get_contents_rate_limited(
+    repo: Repository.Repository,
+    path: str,
+    github_client: Github,
+    batch_size: int,
+    attempt_num: int = 0
 ) -> Iterator[list[Any]]:
-    it = iter(git_objs)
-    while True:
-        batch = list(itertools.islice(it, batch_size))
-        if not batch:
-            break
-        yield batch
+    if attempt_num > _MAX_NUM_RATE_LIMIT_RETRIES:
+        raise RuntimeError(
+            "Re-tried fetching contents too many times. Something is going wrong with fetching contents from Github"
+        )
+
+    try:
+        batch = repo.get_contents(path=path)
+        if not isinstance(batch, list):
+            batch = [batch]
+        iterable = batch_generator(batch, batch_size=batch_size)
+    except RateLimitExceededException:
+        _sleep_after_rate_limit_exception(github_client)
+        iterable = _get_contents_rate_limited(
+            repo, path, github_client, batch_size, attempt_num + 1
+        )
+
+    for mini_batch in iterable:
+        yield mini_batch
 
 
 def _convert_pr_to_document(pull_request: PullRequest) -> Document:
@@ -115,6 +132,7 @@ def _convert_pr_to_document(pull_request: PullRequest) -> Document:
         # due to local time discrepancies with UTC
         doc_updated_at=pull_request.updated_at.replace(tzinfo=timezone.utc),
         metadata={
+            "type": "pull_request",
             "merged": str(pull_request.merged),
             "state": pull_request.state,
         },
@@ -135,25 +153,43 @@ def _convert_issue_to_document(issue: Issue) -> Document:
         # updated_at is UTC time but is timezone unaware
         doc_updated_at=issue.updated_at.replace(tzinfo=timezone.utc),
         metadata={
+            "type": "issue",
             "state": issue.state,
         },
     )
 
 
-def _convert_code_to_document(file: ContentFile.ContentFile) -> Document:
-    file_content_obj = file.decoded_content
-    try:
-        file_content = file_content_obj.decode("utf-8")
-    except UnicodeDecodeError:
-        file_content = file_content_obj.decode("latin-1")
+def _convert_code_to_document(file: ContentFile.ContentFile) -> Document | None:
+    text = extract_file_text(
+        file.name,
+        io.BytesIO(file.decoded_content),
+        break_on_unprocessable=False,
+    )
+
+    if not text:
+        # Heuristic #1: Skip definite images and videos (for example, SVG is
+        # a plain-text format but we don't want to index it regardless)
+        content_type, _ = mimetypes.guess_type(file.name)
+        if content_type and content_type.split("/")[0] in ["image", "video"]:
+            logger.debug(f"Skipping non-indexable content: {file.html_url}")
+            return None
+
+        # Heuristic #2: Skip non-UTF-8 content, which is usually binary files
+        try:
+            text = file.decoded_content.decode("utf-8")
+        except UnicodeDecodeError:
+            logger.debug(f"Skipping non-UTF-8 content: {file.html_url}")
+            return None
 
     doc = Document(
         id=file.html_url,
-        sections=[Section(link=file.html_url, text=file_content)],
+        sections=[Section(link=file.html_url, text=text)],
         source=DocumentSource.GITHUB,
         semantic_identifier=file.name,
         doc_updated_at=None,
-        metadata={},
+        metadata={
+            "type": "code"
+        },
     )
     return doc
 
@@ -224,9 +260,9 @@ class GithubConnector(LoadConnector, PollConnector):
             queue = deque([""])  # Start with the root directory
             while queue:
                 current_path = queue.popleft()
-                files = repo.get_contents(path=current_path)
-                files = cast(list, files)
-                for file_batch in _batch_github_object_list(files, self.batch_size):
+                for file_batch in _get_contents_rate_limited(
+                    repo, current_path, self.github_client, self.batch_size
+                ):
                     code_doc_batch: list[Document] = []
                     for file in file_batch:
                         file = cast(ContentFile.ContentFile, file)
@@ -235,9 +271,9 @@ class GithubConnector(LoadConnector, PollConnector):
                             continue
 
                         if file.type == "file":
-                            code_doc_batch.append(
-                                _convert_code_to_document(file)
-                            )
+                            doc = _convert_code_to_document(file)
+                            if doc:
+                                code_doc_batch.append(doc)
                         elif file.type == "dir":
                             queue.append(file.path)
 
