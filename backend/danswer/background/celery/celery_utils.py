@@ -64,7 +64,13 @@ def should_prune_cc_pair(
     pruning_task_name = name_cc_prune_task(
         connector_id=connector.id, credential_id=credential.id
     )
+    generic_pruning_task_name = name_cc_prune_task()
+
     last_pruning_task = get_latest_task(pruning_task_name, db_session)
+    most_recent_generic_pruning_task = get_latest_task(
+        generic_pruning_task_name, db_session
+    )
+
     current_db_time = get_db_current_time(db_session)
 
     if not last_pruning_task:
@@ -72,6 +78,11 @@ def should_prune_cc_pair(
         if time_since_initialization.total_seconds() >= connector.prune_freq:
             return True
         return False
+
+    if most_recent_generic_pruning_task:
+        if check_live_task_not_timed_out(most_recent_generic_pruning_task, db_session):
+            logger.info("Another Connector is already pruning. Skipping.")
+            return False
 
     if check_live_task_not_timed_out(last_pruning_task, db_session):
         logger.info(f"Connector '{connector.name}' is already pruning. Skipping.")

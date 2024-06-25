@@ -15,7 +15,7 @@ def get_latest_task(
 ) -> TaskQueueState | None:
     stmt = (
         select(TaskQueueState)
-        .where(TaskQueueState.task_name == task_name)
+        .where(TaskQueueState.task_name.like(f"%{task_name}%"))
         .order_by(desc(TaskQueueState.id))
         .limit(1)
     )
