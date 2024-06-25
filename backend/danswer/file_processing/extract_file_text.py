@@ -3,6 +3,7 @@ import json
 import os
 import re
 import zipfile
+from collections.abc import Callable
 from collections.abc import Iterator
 from email.parser import Parser as EmailParser
 from pathlib import Path
@@ -24,50 +25,6 @@ logger = setup_logger()
 
 
 TEXT_SECTION_SEPARATOR = "\n\n"
-
-
-TEXT_ENCODINGS = [
-    "ascii",
-    "utf-8",
-    "utf-16",
-    "utf-32",
-    "windows-1250",
-    "windows-1251",
-    "windows-1252",
-    "windows-1253",
-    "windows-1254",
-    "windows-1255",
-    "windows-1256",
-    "windows-1257",
-    "windows-1258",
-    "iso-8859-1",
-    "iso-8859-2",
-    "iso-8859-3",
-    "iso-8859-4",
-    "iso-8859-5",
-    "iso-8859-6",
-    "iso-8859-7",
-    "iso-8859-8",
-    "iso-8859-9",
-    "iso-8859-10",
-    "iso-8859-13",
-    "iso-8859-14",
-    "iso-8859-15",
-    "iso-8859-16",
-    "cp437",
-    "cp850",
-    "cp866",
-    "mac-roman",
-    "mac-cyrillic",
-    "koi8-r",
-    "koi8-u",
-    "big5",
-    "gb2312",
-    "gb18030",
-    "shift-jis",
-    "euc-jp",
-    "euc-kr",
-]
 
 
 PLAIN_TEXT_FILE_EXTENSIONS = [
@@ -107,6 +64,16 @@ def get_file_ext(file_path_or_name: str | Path) -> str:
 
 def check_file_ext_is_valid(ext: str) -> bool:
     return ext in VALID_FILE_EXTENSIONS
+
+
+def is_text_file(file: IO[bytes]) -> bool:
+    """
+    checks if the first 1024 bytes only contain printable or whitespace characters
+    if it does, then we say its a 'txt'
+    """
+    raw_data = file.read(1024)
+    text_chars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7F})
+    return all(c in text_chars for c in raw_data)
 
 
 def detect_encoding(file: IO[bytes]) -> str:
@@ -294,18 +261,14 @@ def epub_to_text(file: IO[Any]) -> str:
         return TEXT_SECTION_SEPARATOR.join(text_content)
 
 
-def file_io_to_text(file: IO[Any], break_on_unprocessable: bool) -> str:
+def file_io_to_text(file: IO[Any]) -> str:
     try:
         encoding = detect_encoding(file)
         file_content_raw, _ = read_text_file(file, encoding=encoding)
         return file_content_raw
     except Exception as e:
-        error_string = f"Detected txt file failed to decode: {e}"
-        if break_on_unprocessable:
-            raise RuntimeError(error_string)
-        else:
-            logger.warning(error_string)
-            return ""
+        logger.warning(f"Detected txt file failed to decode: {e}")
+        return ""
 
 
 def extract_file_text(
@@ -313,43 +276,27 @@ def extract_file_text(
     file: IO[Any],
     break_on_unprocessable: bool = True,
 ) -> str:
-    if not file_name:
-        if detect_encoding(file).lower() in TEXT_ENCODINGS:
-            return file_io_to_text(file, break_on_unprocessable)
-        logger.warning("No file_name and not known text encoding")
+    extension_to_function: dict[str, Callable[[IO[Any]], str]] = {
+        ".pdf": pdf_to_text,
+        ".docx": docx_to_text,
+        ".pptx": pptx_to_text,
+        ".xlsx": xlsx_to_text,
+        ".eml": eml_to_text,
+        ".epub": epub_to_text,
+        ".html": parse_html_page_basic,
+    }
+
+    if file_name:
+        extension = get_file_ext(file_name)
+        if check_file_ext_is_valid(extension):
+            return extension_to_function.get(extension, file_io_to_text)(file)
+
+    if is_text_file(file):
+        return file_io_to_text(file)
+
+    failure_string = "No file_name or known text encoding"
+    if not break_on_unprocessable:
+        logger.warning(failure_string)
         return ""
 
-    extension = get_file_ext(file_name)
-    if not check_file_ext_is_valid(extension):
-        if detect_encoding(file).lower() in TEXT_ENCODINGS:
-            return file_io_to_text(file, break_on_unprocessable)
-
-        if break_on_unprocessable:
-            raise RuntimeError(f"Unprocessable file type: {file_name}")
-        else:
-            logger.warning(f"Unprocessable file type: {file_name}")
-            return ""
-
-    if extension == ".pdf":
-        return pdf_to_text(file=file)
-
-    elif extension == ".docx":
-        return docx_to_text(file)
-
-    elif extension == ".pptx":
-        return pptx_to_text(file)
-
-    elif extension == ".xlsx":
-        return xlsx_to_text(file)
-
-    elif extension == ".eml":
-        return eml_to_text(file)
-
-    elif extension == ".epub":
-        return epub_to_text(file)
-
-    elif extension == ".html":
-        return parse_html_page_basic(file)
-
-    else:
-        return file_io_to_text(file, break_on_unprocessable)
+    raise RuntimeError(failure_string)
