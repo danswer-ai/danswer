@@ -223,7 +223,7 @@ export interface ZendeskConfig {}
 
 export interface DropboxConfig {}
 
-export type BlobType = "S3" | "R2";
+export type BlobType = "S3" | "R2" | "GOOGLE_CLOUD_STORAGE" | "OCI_STORAGE";
 
 export interface S3Config {
   bucket_type: "S3";
@@ -233,6 +233,18 @@ export interface S3Config {
 
 export interface R2Config {
   bucket_type: "R2";
+  bucket_name: string;
+  prefix: string;
+}
+
+export interface GCSConfig {
+  bucket_type: "GOOGLE_CLOUD_STORAGE";
+  bucket_name: string;
+  prefix: string;
+}
+
+export interface OCIConfig {
+  bucket_type: "OCI_STORAGE";
   bucket_name: string;
   prefix: string;
 }
@@ -430,6 +442,18 @@ export interface S3CredentialJson {
   aws_secret_access_key: string;
 }
 
+export interface GCSCredentialJson {
+  project_id: string;
+  client_email: string;
+  private_key: string;
+}
+
+export interface OCICredentialJson {
+  namespace: string;
+  region: string;
+  access_key_id: string;
+  secret_access_key: string;
+}
 export interface SalesforceCredentialJson {
   sf_username: string;
   sf_password: string;

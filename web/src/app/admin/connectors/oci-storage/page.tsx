@@ -2,7 +2,7 @@
 
 import { AdminPageTitle } from "@/components/admin/Title";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { R2Icon, TrashIcon } from "@/components/icons/icons";
+import { OCIStorageIcon, TrashIcon } from "@/components/icons/icons";
 import { LoadingAnimation } from "@/components/Loading";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
@@ -13,11 +13,12 @@ import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { usePublicCredentials } from "@/lib/hooks";
+
 import {
   ConnectorIndexingStatus,
   Credential,
-  S3Config,
-  S3CredentialJson,
+  OCIConfig,
+  OCICredentialJson,
   R2Config,
   R2CredentialJson,
 } from "@/lib/types";
@@ -26,7 +27,7 @@ import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { useState } from "react";
 
-const R2Main = () => {
+const OCIMain = () => {
   const { popup, setPopup } = usePopup();
 
   const { mutate } = useSWRConfig();
@@ -70,20 +71,16 @@ const R2Main = () => {
     );
   }
 
-  const r2ConnectorIndexingStatuses: ConnectorIndexingStatus<
-    R2Config,
-    R2CredentialJson
+  const ociConnectorIndexingStatuses: ConnectorIndexingStatus<
+    OCIConfig,
+    OCICredentialJson
   >[] = connectorIndexingStatuses.filter(
     (connectorIndexingStatus) =>
-      connectorIndexingStatus.connector.source === "r2"
+      connectorIndexingStatus.connector.source === "oci"
   );
-  // console.log(credentialsData)
-  // console.log(credentialsData[0].credential_json?.profile_name)
 
-  const r2Credential: Credential<R2CredentialJson> | undefined =
-    credentialsData.find(
-      (credential) => credential.credential_json?.account_id
-    );
+  const ociCredential: Credential<OCICredentialJson> | undefined =
+    credentialsData.find((credential) => credential.credential_json?.namespace);
 
   return (
     <>
@@ -91,23 +88,23 @@ const R2Main = () => {
       <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your access info
       </Title>
-      {r2Credential ? (
+      {ociCredential ? (
         <>
           {" "}
           <div className="flex mb-1 text-sm">
-            <p className="my-auto">Existing R2 Access Key ID: </p>
+            <p className="my-auto">Existing OCI Access Key ID: </p>
             <p className="ml-1 italic my-auto">
-              {r2Credential.credential_json.r2_access_key_id}
+              {ociCredential.credential_json.access_key_id}
             </p>
             {", "}
-            <p className="ml-1 my-auto">Account ID: </p>
+            <p className="ml-1 my-auto">Namespace: </p>
             <p className="ml-1 italic my-auto">
-              {r2Credential.credential_json.account_id}
+              {ociCredential.credential_json.namespace}
             </p>{" "}
             <button
               className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
-                if (r2ConnectorIndexingStatuses.length > 0) {
+                if (ociConnectorIndexingStatuses.length > 0) {
                   setPopup({
                     type: "error",
                     message:
@@ -115,7 +112,7 @@ const R2Main = () => {
                   });
                   return;
                 }
-                await adminDeleteCredential(r2Credential.id);
+                await adminDeleteCredential(ociCredential.id);
                 refreshCredentials();
               }}
             >
@@ -128,40 +125,45 @@ const R2Main = () => {
           <Text>
             <ul className="list-disc mt-2 ml-4">
               <li>
-                Provide your R2 Access Key ID, Secret Access Key, and Account ID
-                for authentication.
+                Provide your OCI Access Key ID, Secret Access Key, Namespace,
+                and Region for authentication.
               </li>
-              <li>These credentials will be used to access your R2 buckets.</li>
+              <li>
+                These credentials will be used to access your OCI buckets.
+              </li>
             </ul>
           </Text>
           <Card className="mt-4">
-            <CredentialForm<R2CredentialJson>
+            <CredentialForm<OCICredentialJson>
               formBody={
                 <>
                   <TextFormField
-                    name="r2_access_key_id"
-                    label="R2 Access Key ID:"
+                    name="access_key_id"
+                    label="OCI Access Key ID:"
                   />
                   <TextFormField
-                    name="r2_secret_access_key"
-                    label="R2 Secret Access Key:"
+                    name="secret_access_key"
+                    label="OCI Secret Access Key:"
                   />
-                  <TextFormField name="account_id" label="Account ID:" />
+                  <TextFormField name="namespace" label="Namespace:" />
+                  <TextFormField name="region" label="Region:" />
                 </>
               }
               validationSchema={Yup.object().shape({
-                r2_access_key_id: Yup.string().required(
-                  "R2 Access Key ID is required"
+                access_key_id: Yup.string().required(
+                  "OCI Access Key ID is required"
                 ),
-                r2_secret_access_key: Yup.string().required(
-                  "R2 Secret Access Key is required"
+                secret_access_key: Yup.string().required(
+                  "OCI Secret Access Key is required"
                 ),
-                account_id: Yup.string().required("Account ID is required"),
+                namespace: Yup.string().required("Namespace is required"),
+                region: Yup.string().required("Region is required"),
               })}
               initialValues={{
-                r2_access_key_id: "",
-                r2_secret_access_key: "",
-                account_id: "",
+                access_key_id: "",
+                secret_access_key: "",
+                namespace: "",
+                region: "",
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
@@ -174,27 +176,27 @@ const R2Main = () => {
       )}
 
       <Title className="mb-2 mt-6 ml-auto mr-auto">
-        Step 2: Which R2 bucket do you want to make searchable?
+        Step 2: Which OCI bucket do you want to make searchable?
       </Title>
 
-      {r2ConnectorIndexingStatuses.length > 0 && (
+      {ociConnectorIndexingStatuses.length > 0 && (
         <>
           <Title className="mb-2 mt-6 ml-auto mr-auto">
-            R2 indexing status
+            OCI indexing status
           </Title>
           <Text className="mb-2">
             The latest changes are fetched every 10 minutes.
           </Text>
           <div className="mb-2">
-            <ConnectorsTable<R2Config, R2CredentialJson>
-              connectorIndexingStatuses={r2ConnectorIndexingStatuses}
-              liveCredential={r2Credential}
+            <ConnectorsTable<OCIConfig, OCICredentialJson>
+              connectorIndexingStatuses={ociConnectorIndexingStatuses}
+              liveCredential={ociCredential}
               getCredential={(credential) => {
                 return <div></div>;
               }}
               onCredentialLink={async (connectorId) => {
-                if (r2Credential) {
-                  await linkCredential(connectorId, r2Credential.id);
+                if (ociCredential) {
+                  await linkCredential(connectorId, ociCredential.id);
                   mutate("/api/manage/admin/connector/indexing-status");
                 }
               }}
@@ -206,19 +208,19 @@ const R2Main = () => {
         </>
       )}
 
-      {r2Credential && (
+      {ociCredential && (
         <>
           <Card className="mt-4">
             <h2 className="font-bold mb-3">Create Connection</h2>
             <Text className="mb-4">
-              Press connect below to start the connection to your R2 bucket.
+              Press connect below to start the connection to your OCI bucket.
             </Text>
-            <ConnectorForm<R2Config>
-              nameBuilder={(values) => `R2Connector-${values.bucket_name}`}
+            <ConnectorForm<OCIConfig>
+              nameBuilder={(values) => `OCIConnector-${values.bucket_name}`}
               ccPairNameBuilder={(values) =>
-                `R2Connector-${values.bucket_name}`
+                `OCIConnector-${values.bucket_name}`
               }
-              source="r2"
+              source="oci"
               inputType="poll"
               formBodyBuilder={(values) => (
                 <div>
@@ -231,31 +233,20 @@ const R2Main = () => {
               )}
               validationSchema={Yup.object().shape({
                 bucket_type: Yup.string()
-                  .oneOf(["R2"])
-                  .required("Bucket type must be R2"),
+                  .oneOf(["OCI"])
+                  .required("Bucket type must be OCI"),
                 bucket_name: Yup.string().required(
-                  "Please enter the name of the R2 bucket to index, e.g. my-test-bucket"
+                  "Please enter the name of the OCI bucket to index, e.g. my-test-bucket"
                 ),
                 prefix: Yup.string().default(""),
               })}
               initialValues={{
-                bucket_type: "R2",
+                bucket_type: "OCI",
                 bucket_name: "",
                 prefix: "",
               }}
-              // validationSchema={Yup.object().shape({
-              //   bucket_name: Yup.string().required(
-              //     "Please enter the name of the R2 bucket to index, e.g. my-test-bucket"
-              //   ),
-              //   prefix: Yup.string().default("")
-              // })}
-              // initialValues={{
-              //   bucket_type: "R2",
-              //   bucket_name: "",
-              //   prefix: "",
-              // }}
               refreshFreq={10 * 60} // 10 minutes
-              credentialId={r2Credential.id}
+              credentialId={ociCredential.id}
             />
           </Card>
         </>
@@ -265,15 +256,16 @@ const R2Main = () => {
 };
 
 export default function Page() {
-  const [selectedStorage, setSelectedStorage] = useState<string>("s3");
-
   return (
     <div className="mx-auto container">
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <AdminPageTitle icon={<R2Icon size={32} />} title="R2 Storage" />
-      <R2Main key={2} />
+      <AdminPageTitle
+        icon={<OCIStorageIcon size={32} />}
+        title="Oracle Cloud Infrastructure"
+      />
+      <OCIMain />
     </div>
   );
 }
