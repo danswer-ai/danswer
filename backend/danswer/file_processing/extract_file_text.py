@@ -69,7 +69,7 @@ def check_file_ext_is_valid(ext: str) -> bool:
 def is_text_file(file: IO[bytes]) -> bool:
     """
     checks if the first 1024 bytes only contain printable or whitespace characters
-    if it does, then we say its a 'txt'
+    if it does, then we say its a plaintext file
     """
     raw_data = file.read(1024)
     text_chars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7F})
@@ -282,24 +282,22 @@ def extract_file_text(
         ".html": parse_html_page_basic,
     }
 
-    try:
+    def _process_file() -> str:
         if file_name:
             extension = get_file_ext(file_name)
             if check_file_ext_is_valid(extension):
                 return extension_to_function.get(extension, file_io_to_text)(file)
 
+        # Either the file somehow has no name or the extension is not one that we are familiar with
         if is_text_file(file):
             return file_io_to_text(file)
 
-        failure_string = "No file_name or known text encoding"
-        if break_on_unprocessable:
-            raise RuntimeError(failure_string)
+        raise ValueError("Unknown file extension and unknown text encoding")
 
-        logger.warning(failure_string)
-        return ""
-
+    try:
+        return _process_file()
     except Exception as e:
         if break_on_unprocessable:
-            raise RuntimeError(failure_string)
-        logger.warning(str(e))
+            raise RuntimeError(f"Failed to process file: {str(e)}") from e
+        logger.warning(f"Failed to process file: {str(e)}")
         return ""
