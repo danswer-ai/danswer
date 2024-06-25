@@ -25,7 +25,7 @@ function SectionHeader({
 }) {
   return (
     <div
-      className={`w-full mt-3 flex text-lg text-emphasis font-medium flex  mb-3.5 font-bold flex items-end`}
+      className={`w-full mt-3 flex text-lg text-emphasis font-medium flex mb-3.5 font-bold flex items-end`}
     >
       <div className="flex mt-auto justify-between w-full">
         <p className="flex">
@@ -169,7 +169,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             <div className="flex border-b border-border px-3">
               <div className="flex">
                 <SectionHeader name="Selected Documents" icon={FiFileText} />
-
                 {tokenLimitReached && (
                   <div className="ml-2 my-auto">
                     <div className="mb-2">
@@ -208,7 +207,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                   </div>
                 )}
               </div>
-
               {selectedDocuments && selectedDocuments.length > 0 && (
                 <div
                   className="ml-auto my-auto"
