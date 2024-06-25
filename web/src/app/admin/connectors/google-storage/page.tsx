@@ -70,7 +70,7 @@ const GCSMain = () => {
     GCSCredentialJson
   >[] = connectorIndexingStatuses.filter(
     (connectorIndexingStatus) =>
-      connectorIndexingStatus.connector.source === "gcs"
+      connectorIndexingStatus.connector.source === "google_cloud_storage"
   );
 
   const gcsCredential: Credential<GCSCredentialJson> | undefined =
@@ -202,7 +202,7 @@ const GCSMain = () => {
               ccPairNameBuilder={(values) =>
                 `GCSConnector-${values.bucket_name}`
               }
-              source="gcs"
+              source="google_cloud_storage"
               inputType="poll"
               formBodyBuilder={(values) => (
                 <div>
@@ -215,15 +215,15 @@ const GCSMain = () => {
               )}
               validationSchema={Yup.object().shape({
                 bucket_type: Yup.string()
-                  .oneOf(["GCS"])
-                  .required("Bucket type must be GCS"),
+                  .oneOf(["GOOGLE_CLOUD_STORAGE"])
+                  .required("Bucket type must be GOOGLE_CLOUD_STORAGE"),
                 bucket_name: Yup.string().required(
                   "Please enter the name of the GCS bucket to index, e.g. my-gcs-bucket"
                 ),
                 prefix: Yup.string().default(""),
               })}
               initialValues={{
-                bucket_type: "GCS",
+                bucket_type: "GOOGLE_CLOUD_STORAGE",
                 bucket_name: "",
                 prefix: "",
               }}

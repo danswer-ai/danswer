@@ -62,7 +62,7 @@ export type ValidSources =
   | "mediawiki"
   | "s3"
   | "r2"
-  | "google_storage"
+  | "google_cloud_storage"
   | "oci_storage";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";

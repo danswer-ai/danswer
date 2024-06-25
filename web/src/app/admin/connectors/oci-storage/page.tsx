@@ -76,7 +76,7 @@ const OCIMain = () => {
     OCICredentialJson
   >[] = connectorIndexingStatuses.filter(
     (connectorIndexingStatus) =>
-      connectorIndexingStatus.connector.source === "ocistorage"
+      connectorIndexingStatus.connector.source === "oci_storage"
   );
 
   const ociCredential: Credential<OCICredentialJson> | undefined =
