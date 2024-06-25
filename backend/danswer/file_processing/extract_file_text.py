@@ -255,23 +255,9 @@ def file_io_to_text(file: IO[Any]) -> str:
     file_content_raw, _ = read_text_file(file, encoding=encoding)
     return file_content_raw
 
-
-def extract_file_text(
-    file_name: str | None,
-    file: IO[Any],
-    break_on_unprocessable: bool = True,
+def _extract_file_text_by_extension(
+    file: IO[Any], extension: str
 ) -> str:
-    if not file_name:
-        return file_io_to_text(file)
-
-    extension = get_file_ext(file_name)
-    if not check_file_ext_is_valid(extension):
-        if break_on_unprocessable:
-            raise RuntimeError(f"Unprocessable file type: {file_name}")
-        else:
-            logger.warning(f"Unprocessable file type: {file_name}")
-            return ""
-
     if extension == ".pdf":
         return pdf_to_text(file=file)
 
@@ -295,3 +281,26 @@ def extract_file_text(
 
     else:
         return file_io_to_text(file)
+
+
+def extract_file_text(
+    file_name: str | None,
+    file: IO[Any],
+    break_on_unprocessable: bool = True,
+) -> str:
+    if not file_name:
+        return file_io_to_text(file)
+
+    extension = get_file_ext(file_name)
+    if not check_file_ext_is_valid(extension):
+        if break_on_unprocessable:
+            raise RuntimeError(f"Unprocessable file type: {file_name}")
+        else:
+            logger.warning(f"Unprocessable file type: {file_name}")
+            return ""
+
+    try:
+        return _extract_file_text_by_extension(file, extension)
+    except Exception:
+        logger.exception(f"Failed to extract text from file: {file_name}")
+        return ""
