@@ -289,5 +289,5 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
 # founders@danswer.ai OR message Chris Weaver or Yuhong Sun in the Danswer
 # Slack community (https://join.slack.com/t/danswer/shared_invite/zt-1w76msxmd-HJHLe3KNFIAIzk_0dSOKaQ)
 ENTERPRISE_EDITION_ENABLED = (
-    os.environ.get("ENABLE_PAID_EE_FEATURES", "").lower() == "true"
+    os.environ.get("ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "").lower() == "true"
 )
