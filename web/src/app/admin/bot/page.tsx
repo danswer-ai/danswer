@@ -277,7 +277,7 @@ const Main = () => {
           <div className="mb-2"></div>
 
           <Link className="flex mb-3" href="/admin/bot/new">
-            <Button className="my-auto" className="bg-blue-600" size="xs">
+            <Button className="bg-blue-600 my-auto" size="xs">
               New Slack Bot Configuration
             </Button>
           </Link>
