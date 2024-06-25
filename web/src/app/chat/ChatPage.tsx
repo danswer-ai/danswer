@@ -988,7 +988,7 @@ export function ChatPage({
                               />
                             </div>
 
-                            <div className="ml-auto mr-3 flex">
+                            <div className="ml-auto mr-6 flex">
                               {chatSessionId !== null && (
                                 <div
                                   onClick={() => setSharingModalVisible(true)}
@@ -1315,6 +1315,7 @@ export function ChatPage({
                         maxWidth={maxDocumentSidebarWidth || undefined}
                       >
                         <DocumentSidebar
+                          initialWidth={showDocSidebar ? usedSidebarWidth : 0}
                           ref={innerSidebarElementRef}
                           closeSidebar={() => toggleSidebar()}
                           selectedMessage={aiMessage}
