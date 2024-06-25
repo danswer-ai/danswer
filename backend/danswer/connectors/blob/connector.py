@@ -77,7 +77,9 @@ class BlobStorageConnector(LoadConnector, PollConnector):
 
             self.s3_client = session.client("s3")
 
-        elif self.bucket_type == "GCS":
+        elif self.bucket_type == "GOOGLE_CLOUD_STORAGE":
+            logger.error(credentials)
+            print(credentials)
             if not all(
                 credentials.get(key)
                 for key in ["access_key_id", "secret_access_key", "project_id"]

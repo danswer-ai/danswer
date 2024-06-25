@@ -130,22 +130,13 @@ def instantiate_connector(
     credential: Credential,
     db_session: Session,
 ) -> BaseConnector:
-    print("Trying 1")
     print(connector_specific_config)
 
     connector_class = identify_connector_class(source, input_type)
-    print("tring 1.2")
 
     connector = connector_class(**connector_specific_config)
 
-    print("Trying 2")
-    print(connector)
-
-    print(type(connector))
-
     new_credentials = connector.load_credentials(credential.credential_json)
-    print("nx")
-    print(new_credentials)
 
     if new_credentials is not None:
         backend_update_credential_json(credential, new_credentials, db_session)
