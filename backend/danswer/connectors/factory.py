@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.axero.connector import AxeroConnector
+from danswer.connectors.blob.connector import BlobStorageConnector
 from danswer.connectors.bookstack.connector import BookstackConnector
 from danswer.connectors.clickup.connector import ClickupConnector
 from danswer.connectors.confluence.connector import ConfluenceConnector
@@ -32,7 +33,6 @@ from danswer.connectors.models import InputType
 from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
 from danswer.connectors.requesttracker.connector import RequestTrackerConnector
-from danswer.connectors.s3.connector import BlobStorageConnector
 from danswer.connectors.salesforce.connector import SalesforceConnector
 from danswer.connectors.sharepoint.connector import SharepointConnector
 from danswer.connectors.slab.connector import SlabConnector
@@ -91,7 +91,10 @@ def identify_connector_class(
         DocumentSource.CLICKUP: ClickupConnector,
         DocumentSource.MEDIAWIKI: MediaWikiConnector,
         DocumentSource.WIKIPEDIA: WikipediaConnector,
-        DocumentSource.BLOB: BlobStorageConnector,
+        DocumentSource.S3: BlobStorageConnector,
+        DocumentSource.R2: BlobStorageConnector,
+        DocumentSource.GOOGLE_CLOUD_STORAGE: BlobStorageConnector,
+        DocumentSource.OCI_STORAGE: BlobStorageConnector,
     }
     connector_by_source = connector_map.get(source, {})
 
@@ -128,7 +131,11 @@ def instantiate_connector(
     db_session: Session,
 ) -> BaseConnector:
     print("Trying 1")
+    print(connector_specific_config)
+
     connector_class = identify_connector_class(source, input_type)
+    print("tring 1.2")
+
     connector = connector_class(**connector_specific_config)
 
     print("Trying 2")

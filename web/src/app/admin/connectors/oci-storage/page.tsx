@@ -76,7 +76,7 @@ const OCIMain = () => {
     OCICredentialJson
   >[] = connectorIndexingStatuses.filter(
     (connectorIndexingStatus) =>
-      connectorIndexingStatus.connector.source === "oci"
+      connectorIndexingStatus.connector.source === "ocistorage"
   );
 
   const ociCredential: Credential<OCICredentialJson> | undefined =
@@ -220,7 +220,7 @@ const OCIMain = () => {
               ccPairNameBuilder={(values) =>
                 `OCIConnector-${values.bucket_name}`
               }
-              source="oci"
+              source="oci_storage"
               inputType="poll"
               formBodyBuilder={(values) => (
                 <div>
@@ -233,15 +233,15 @@ const OCIMain = () => {
               )}
               validationSchema={Yup.object().shape({
                 bucket_type: Yup.string()
-                  .oneOf(["OCI"])
-                  .required("Bucket type must be OCI"),
+                  .oneOf(["OCI_STORAGE"])
+                  .required("Bucket type must be OCI_STORAGE"),
                 bucket_name: Yup.string().required(
                   "Please enter the name of the OCI bucket to index, e.g. my-test-bucket"
                 ),
                 prefix: Yup.string().default(""),
               })}
               initialValues={{
-                bucket_type: "OCI",
+                bucket_type: "OCI_STORAGE",
                 bucket_name: "",
                 prefix: "",
               }}

@@ -76,6 +76,40 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                 session = boto3.Session()
 
             self.s3_client = session.client("s3")
+
+        elif self.bucket_type == "GCS":
+            if not all(
+                credentials.get(key)
+                for key in ["access_key_id", "secret_access_key", "project_id"]
+            ):
+                raise ConnectorMissingCredentialError("Google Cloud Storage")
+
+            self.s3_client = boto3.client(
+                "s3",
+                endpoint_url="https://storage.googleapis.com",
+                aws_access_key_id=credentials["access_key_id"],
+                aws_secret_access_key=credentials["secret_access_key"],
+                region_name="auto",
+            )
+
+        elif self.bucket_type == "OCI_STORAGE":
+            if not all(
+                credentials.get(key)
+                for key in ["namespace", "region", "access_key_id", "secret_access_key"]
+            ):
+                raise ConnectorMissingCredentialError("Oracle Cloud Infrastructure")
+
+            self.s3_client = boto3.client(
+                "s3",
+                endpoint_url=f"https://{credentials['namespace']}.compat.objectstorage.{credentials['region']}.oraclecloud.com",
+                aws_access_key_id=credentials["access_key_id"],
+                aws_secret_access_key=credentials["secret_access_key"],
+                region_name=credentials["region"],
+            )
+
+        else:
+            raise ValueError(f"Unsupported bucket type: {self.bucket_type}")
+
         return None
 
     def _download_object(self, key: str) -> bytes:
@@ -106,10 +140,15 @@ class BlobStorageConnector(LoadConnector, PollConnector):
 
         paginator = self.s3_client.get_paginator("list_objects_v2")
         pages = paginator.paginate(Bucket=self.bucket_name, Prefix=self.prefix)
+        logger.info(f"Pages are {pages}")
 
         batch: list[Document] = []
         for page in pages:
+            logger.info(f"page {page}")
+
             if "Contents" not in page:
+                logger.info("Skipping")
+
                 continue
             for obj in page["Contents"]:
                 if obj["Key"].endswith("/"):
@@ -123,6 +162,12 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                 downloaded_file = self._download_object(obj["Key"])
                 link = self._get_presigned_url(obj["Key"])
                 name = os.path.basename(obj["Key"])
+                BUCKET_TYPE_TO_SOURCE = {
+                    "S3": DocumentSource.S3,
+                    "R2": DocumentSource.R2,
+                    "OCI_STORAGE": DocumentSource.OCI_STORAGE,
+                    "GOOGLE_CLOUD_STORAGE": DocumentSource.GOOGLE_CLOUD_STORAGE,
+                }
 
                 try:
                     text = extract_file_text(
@@ -132,9 +177,9 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                     )
                     batch.append(
                         Document(
-                            id=f"{'r2' if self.use_r2 else 's3'}:{self.bucket_name}:{obj['Key']}",
+                            id=f"{BUCKET_TYPE_TO_SOURCE[self.bucket_type]}:{self.bucket_name}:{obj['Key']}",
                             sections=[Section(link=link, text=text)],
-                            source=DocumentSource.S3,  # You might want to add an R2 source if needed
+                            source=BUCKET_TYPE_TO_SOURCE[self.bucket_type],
                             semantic_identifier=name,
                             doc_updated_at=last_modified,
                             metadata={"type": "article"},

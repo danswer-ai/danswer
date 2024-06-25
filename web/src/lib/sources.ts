@@ -39,6 +39,7 @@ import {
 import { ValidSources } from "./types";
 import { SourceCategory, SourceMetadata } from "./search/interfaces";
 import { Persona } from "@/app/admin/assistants/interfaces";
+import internal from "stream";
 
 interface PartialSourceMetadata {
   icon: React.FC<{ size?: number; className?: string }>;
@@ -61,12 +62,12 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "S3",
     category: SourceCategory.AppConnection,
   },
-  ocistorage: {
+  oci_storage: {
     icon: OCIStorageIcon,
     displayName: "OCI Storage",
     category: SourceCategory.AppConnection,
   },
-  googlestorage: {
+  google_storage: {
     icon: GoogleStorageIcon,
     displayName: "Google Storage",
     category: SourceCategory.AppConnection,
@@ -237,6 +238,7 @@ function fillSourceMetadata(
   partialMetadata: PartialSourceMetadata,
   internalName: ValidSources
 ): SourceMetadata {
+  console.log(internalName);
   return {
     internalName: internalName,
     ...partialMetadata,

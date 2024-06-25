@@ -26,8 +26,8 @@ export async function submitConnector<T>(
   connectorId?: number
 ): Promise<{ message: string; isSuccess: boolean; response?: Connector<T> }> {
   const isUpdate = connectorId !== undefined;
+  console.log(JSON.stringify(connector));
 
-  let isSuccess = false;
   try {
     const response = await fetch(
       BASE_CONNECTOR_URL + (isUpdate ? `/${connectorId}` : ""),
@@ -41,7 +41,6 @@ export async function submitConnector<T>(
     );
 
     if (response.ok) {
-      isSuccess = true;
       const responseJson = await response.json();
       return { message: "Success!", isSuccess: true, response: responseJson };
     } else {
@@ -162,6 +161,15 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             });
             return;
           }
+          console.log({
+            name: connectorName,
+            source,
+            input_type: inputType,
+            connector_specific_config: connectorConfig,
+            refresh_freq: refreshFreq || 0,
+            prune_freq: pruneFreq ?? null,
+            disabled: false,
+          });
 
           const { message, isSuccess, response } = await submitConnector<T>({
             name: connectorName,
