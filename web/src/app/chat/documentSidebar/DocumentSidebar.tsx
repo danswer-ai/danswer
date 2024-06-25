@@ -51,6 +51,7 @@ interface DocumentSidebarProps {
   selectedDocumentTokens: number;
   maxTokens: number;
   isLoading: boolean;
+  initialWidth: number;
 }
 
 export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
@@ -64,6 +65,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
       selectedDocumentTokens,
       maxTokens,
       isLoading,
+      initialWidth,
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
@@ -86,8 +88,9 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
 
     return (
       <div
+        style={{ width: initialWidth }}
         ref={ref}
-        className={`${SIDEBAR_WIDTH} sidebar absolute right-0 h-screen border-l border-l-border`}
+        className={`sidebar absolute right-0 h-screen border-l border-l-border`}
       >
         <div
           className="w-full flex-initial 
@@ -98,7 +101,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
           {popup}
 
           <div className="h-4/6 flex flex-col ">
-            <div className="px-3 mb-3 flex border-b border-border">
+            <div className="pl-3 pr-6 mb-3 flex border-b border-border">
               <SectionHeader
                 name={
                   selectedMessageRetrievalType === RetrievalType.SelectedDocs
