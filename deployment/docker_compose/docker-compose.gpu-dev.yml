@@ -84,7 +84,7 @@ services:
 
       # Enterprise Edition only
       - API_KEY_HASH_ROUNDS=${API_KEY_HASH_ROUNDS:-}
-      - ENABLE_PAID_EE_FEATURES=${ENABLE_PAID_EE_FEATURES:-false}
+      - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -184,7 +184,7 @@ services:
 
       # Enterprise Edition only
       - API_KEY_HASH_ROUNDS=${API_KEY_HASH_ROUNDS:-}
-      - ENABLE_PAID_EE_FEATURES=${ENABLE_PAID_EE_FEATURES:-false}
+      - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -215,7 +215,7 @@ services:
       - THEME_IS_DARK=${THEME_IS_DARK:-}
 
       # Enterprise Edition only
-      - ENABLE_PAID_EE_FEATURES=${ENABLE_PAID_EE_FEATURES:-false}
+      - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
 
 
   inference_model_server:

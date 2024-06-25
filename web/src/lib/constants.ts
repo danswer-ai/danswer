@@ -30,7 +30,7 @@ export const LOGOUT_DISABLED =
 // NOTE: this should ONLY be used on the server-side. If used client side,
 // it will not be accurate (will always be false).
 export const SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED =
-  process.env.ENABLE_PAID_EE_FEATURES?.toLowerCase() === "true";
+  process.env.ENABLE_PAID_ENTERPRISE_EDITION_FEATURES?.toLowerCase() === "true";
 
 export const CUSTOM_ANALYTICS_ENABLED = process.env.CUSTOM_ANALYTICS_SECRET_KEY
   ? true
