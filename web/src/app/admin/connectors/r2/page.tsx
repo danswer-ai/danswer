@@ -77,8 +77,6 @@ const R2Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "r2"
   );
-  // console.log(credentialsData)
-  // console.log(credentialsData[0].credential_json?.profile_name)
 
   const r2Credential: Credential<R2CredentialJson> | undefined =
     credentialsData.find(
@@ -243,17 +241,6 @@ const R2Main = () => {
                 bucket_name: "",
                 prefix: "",
               }}
-              // validationSchema={Yup.object().shape({
-              //   bucket_name: Yup.string().required(
-              //     "Please enter the name of the R2 bucket to index, e.g. my-test-bucket"
-              //   ),
-              //   prefix: Yup.string().default("")
-              // })}
-              // initialValues={{
-              //   bucket_type: "R2",
-              //   bucket_name: "",
-              //   prefix: "",
-              // }}
               refreshFreq={10 * 60} // 10 minutes
               credentialId={r2Credential.id}
             />

@@ -9,7 +9,6 @@ from botocore.client import BaseClient
 from botocore.client import Config
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.constants import BlobType
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -28,14 +27,12 @@ logger = setup_logger()
 class BlobStorageConnector(LoadConnector, PollConnector):
     def __init__(
         self,
-        bucket_type: BlobType,
+        bucket_type: str,
         bucket_name: str,
         prefix: str = "",
         batch_size: int = INDEX_BATCH_SIZE,
         use_r2: bool = False,
     ) -> None:
-        logger.info("Instantiating zz")
-        logger.info(f"bucket types is {bucket_type}")
         self.bucket_type = bucket_type
         self.bucket_name = bucket_name
         self.prefix = prefix if not prefix or prefix.endswith("/") else prefix + "/"
@@ -44,8 +41,9 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         self.s3_client: BaseClient | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        logger.info("Loading credentials asdfasf")
-        logger.info(credentials)
+        logger.info(
+            f"Loading credentials for {self.bucket_name} or type {self.bucket_type}"
+        )
 
         if self.bucket_type == "R2":
             if not all(
@@ -78,8 +76,6 @@ class BlobStorageConnector(LoadConnector, PollConnector):
             self.s3_client = session.client("s3")
 
         elif self.bucket_type == "GOOGLE_CLOUD_STORAGE":
-            logger.error(credentials)
-            print(credentials)
             if not all(
                 credentials.get(key)
                 for key in ["access_key_id", "secret_access_key", "project_id"]
@@ -115,16 +111,15 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         return None
 
     def _download_object(self, key: str) -> bytes:
-        logger.info("Downloading objects")
         if self.s3_client is None:
-            raise ConnectorMissingCredentialError("S3/R2")
+            raise ConnectorMissingCredentialError("Blob storage")
         object = self.s3_client.get_object(Bucket=self.bucket_name, Key=key)
         return object["Body"].read()
 
     def _get_presigned_url(self, key: str) -> str:
         logger.info("Getting presigned url")
         if self.s3_client is None:
-            raise ConnectorMissingCredentialError("S3/R2")
+            raise ConnectorMissingCredentialError("Blog storage")
 
         url = self.s3_client.generate_presigned_url(
             "get_object", Params={"Bucket": self.bucket_name, "Key": key}, ExpiresIn=0
@@ -138,7 +133,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
     ) -> GenerateDocumentsOutput:
         logger.info("yielding objects")
         if self.s3_client is None:
-            raise ConnectorMissingCredentialError("S3/R2")
+            raise ConnectorMissingCredentialError("Blog storage")
 
         paginator = self.s3_client.get_paginator("list_objects_v2")
         pages = paginator.paginate(Bucket=self.bucket_name, Prefix=self.prefix)
@@ -146,11 +141,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
 
         batch: list[Document] = []
         for page in pages:
-            logger.info(f"page {page}")
-
             if "Contents" not in page:
-                logger.info("Skipping")
-
                 continue
             for obj in page["Contents"]:
                 if obj["Key"].endswith("/"):
@@ -164,6 +155,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                 downloaded_file = self._download_object(obj["Key"])
                 link = self._get_presigned_url(obj["Key"])
                 name = os.path.basename(obj["Key"])
+
                 BUCKET_TYPE_TO_SOURCE = {
                     "S3": DocumentSource.S3,
                     "R2": DocumentSource.R2,
@@ -194,7 +186,6 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                     logger.exception(
                         f"Error decoding object {obj['Key']} as UTF-8: {e}"
                     )
-
         if batch:
             yield batch
 
@@ -208,7 +199,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         if self.s3_client is None:
-            raise ConnectorMissingCredentialError("S3/R2")
+            raise ConnectorMissingCredentialError("Blog storage")
 
         start_datetime = datetime.fromtimestamp(start, tz=timezone.utc)
         end_datetime = datetime.fromtimestamp(end, tz=timezone.utc)

@@ -128,24 +128,24 @@ const GCSMain = () => {
               formBody={
                 <>
                   <TextFormField name="project_id" label="GCS Project ID:" />
-                  <TextFormField name="client_email" label="Client Email:" />
+                  <TextFormField name="access_key_id" label="Access Key ID:" />
                   <TextFormField
-                    name="private_key"
-                    label="Private Key:"
-                    as="textarea"
-                    rows={4}
+                    name="secret_access_key"
+                    label="Secret Access Key:"
                   />
                 </>
               }
               validationSchema={Yup.object().shape({
                 project_id: Yup.string().required("GCS Project ID is required"),
-                client_email: Yup.string().required("Client Email is required"),
-                private_key: Yup.string().required("Private Key is required"),
+                secret_access_key: Yup.string().required(
+                  "Client Email is required"
+                ),
+                access_key_id: Yup.string().required("Private Key is required"),
               })}
               initialValues={{
                 project_id: "",
-                client_email: "",
-                private_key: "",
+                secret_access_key: "",
+                access_key_id: "",
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {

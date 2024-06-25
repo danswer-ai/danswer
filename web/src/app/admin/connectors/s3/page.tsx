@@ -239,16 +239,6 @@ const S3Main = () => {
                 bucket_name: "",
                 prefix: "",
               }}
-              // validationSchema={Yup.object().shape({
-              //   bucket_name: Yup.string().required(
-              //     "Please enter the name of the S3 bucket to index, e.g. my-test-bucket"
-              //   ),
-              //   prefix: Yup.string().default("")
-              // })}
-              // initialValues={{
-              //   bucket_name: "",
-              //   prefix: "",
-              // }}
               refreshFreq={10 * 60} // 10 minutes
               credentialId={s3Credential.id}
             />

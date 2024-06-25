@@ -52,26 +52,6 @@ type SourceMap = {
 };
 
 const SOURCE_METADATA_MAP: SourceMap = {
-  r2: {
-    icon: R2Icon,
-    displayName: "R2",
-    category: SourceCategory.AppConnection,
-  },
-  s3: {
-    icon: S3Icon,
-    displayName: "S3",
-    category: SourceCategory.AppConnection,
-  },
-  oci_storage: {
-    icon: OCIStorageIcon,
-    displayName: "OCI Storage",
-    category: SourceCategory.AppConnection,
-  },
-  google_storage: {
-    icon: GoogleStorageIcon,
-    displayName: "Google Storage",
-    category: SourceCategory.AppConnection,
-  },
   web: {
     icon: GlobeIcon,
     displayName: "Web",
@@ -232,13 +212,32 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Clickup",
     category: SourceCategory.AppConnection,
   },
+  s3: {
+    icon: S3Icon,
+    displayName: "S3",
+    category: SourceCategory.AppConnection,
+  },
+  r2: {
+    icon: R2Icon,
+    displayName: "R2",
+    category: SourceCategory.AppConnection,
+  },
+  oci_storage: {
+    icon: OCIStorageIcon,
+    displayName: "OCI Storage",
+    category: SourceCategory.AppConnection,
+  },
+  google_cloud_storage: {
+    icon: GoogleStorageIcon,
+    displayName: "Google Storage",
+    category: SourceCategory.AppConnection,
+  },
 };
 
 function fillSourceMetadata(
   partialMetadata: PartialSourceMetadata,
   internalName: ValidSources
 ): SourceMetadata {
-  console.log(internalName);
   return {
     internalName: internalName,
     ...partialMetadata,
@@ -263,7 +262,6 @@ export function listSourceMetadata(): SourceMetadata[] {
       return fillSourceMetadata(metadata, source as ValidSources);
     }
   );
-  console.log(entries);
   return entries;
 }
 

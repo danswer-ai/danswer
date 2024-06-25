@@ -119,8 +119,6 @@ export const searchRequestStreamed = async ({
           chunk = chunk as DocumentInfoPacket;
           const topDocuments = chunk.top_documents as DanswerDocument[] | null;
           if (topDocuments) {
-            console.log("updating top docs");
-            console.log(topDocuments);
             relevantDocuments = topDocuments;
             updateDocs(relevantDocuments);
           }
