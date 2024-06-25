@@ -23,7 +23,6 @@ import {
   ProductboardIcon,
   RequestTrackerIcon,
   R2Icon,
-  BlobIcon,
   SalesforceIcon,
   SharepointIcon,
   TeamsIcon,
@@ -33,6 +32,9 @@ import {
   ZulipIcon,
   MediaWikiIcon,
   WikipediaIcon,
+  S3Icon,
+  OCIStorageIcon,
+  GoogleStorageIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import { SourceCategory, SourceMetadata } from "./search/interfaces";
@@ -49,6 +51,26 @@ type SourceMap = {
 };
 
 const SOURCE_METADATA_MAP: SourceMap = {
+  r2: {
+    icon: R2Icon,
+    displayName: "R2",
+    category: SourceCategory.AppConnection,
+  },
+  s3: {
+    icon: S3Icon,
+    displayName: "S3",
+    category: SourceCategory.AppConnection,
+  },
+  ocistorage: {
+    icon: OCIStorageIcon,
+    displayName: "OCI Storage",
+    category: SourceCategory.AppConnection,
+  },
+  googlestorage: {
+    icon: GoogleStorageIcon,
+    displayName: "Google Storage",
+    category: SourceCategory.AppConnection,
+  },
   web: {
     icon: GlobeIcon,
     displayName: "Web",
@@ -164,11 +186,6 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Dropbox",
     category: SourceCategory.AppConnection,
   },
-  blob: {
-    icon: BlobIcon,
-    displayName: "Blob storage",
-    category: SourceCategory.AppConnection,
-  },
   salesforce: {
     icon: SalesforceIcon,
     displayName: "Salesforce",
@@ -230,13 +247,22 @@ function fillSourceMetadata(
 }
 
 export function getSourceMetadata(sourceType: ValidSources): SourceMetadata {
-  return fillSourceMetadata(SOURCE_METADATA_MAP[sourceType], sourceType);
+  const response = fillSourceMetadata(
+    SOURCE_METADATA_MAP[sourceType],
+    sourceType
+  );
+
+  return response;
 }
 
 export function listSourceMetadata(): SourceMetadata[] {
-  return Object.entries(SOURCE_METADATA_MAP).map(([source, metadata]) => {
-    return fillSourceMetadata(metadata, source as ValidSources);
-  });
+  const entries = Object.entries(SOURCE_METADATA_MAP).map(
+    ([source, metadata]) => {
+      return fillSourceMetadata(metadata, source as ValidSources);
+    }
+  );
+  console.log(entries);
+  return entries;
 }
 
 export function getSourceDisplayName(sourceType: ValidSources): string | null {

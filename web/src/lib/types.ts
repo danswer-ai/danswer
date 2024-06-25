@@ -58,12 +58,12 @@ export type ValidSources =
   | "axero"
   | "clickup"
   | "axero"
-  | "blob"
   | "wikipedia"
   | "mediawiki"
-  | "blob"
   | "s3"
-  | "r2";
+  | "r2"
+  | "googlestorage"
+  | "ocistorage";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
