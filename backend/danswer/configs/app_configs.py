@@ -214,6 +214,12 @@ EXPERIMENTAL_CHECKPOINTING_ENABLED = (
 
 DEFAULT_PRUNING_FREQ = 60 * 60 * 24  # Once a day
 
+PREVENT_SIMULTANEOUS_PRUNING = (
+    os.environ.get("PREVENT_SIMULTANEOUS_PRUNING", "").lower() == "true"
+)
+
+MAX_PRUNING_FREQ = 300  # Max
+
 
 #####
 # Indexing Configs
