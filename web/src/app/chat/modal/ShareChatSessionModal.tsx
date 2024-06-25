@@ -146,7 +146,7 @@ export function ShareChatSessionModal({
                   setLinkGenerating(false);
                 }}
                 size="xs"
-                color="green"
+                className="bg-blue-600"
               >
                 Generate and Copy Share Link
               </Button>

@@ -226,9 +226,8 @@ export function ConnectorForm<T extends Yup.AnyObject>({
               <Button
                 type="submit"
                 size="xs"
-                color="green"
+                className="bg-blue-600 mx-auto w-64"
                 disabled={isSubmitting}
-                className="mx-auto w-64"
               >
                 Connect
               </Button>
@@ -309,10 +308,9 @@ export function UpdateConnectorForm<T extends Yup.AnyObject>({
             <div className="flex">
               <Button
                 type="submit"
-                color="green"
+                className="bg-blue-600 mx-auto w-64"
                 size="xs"
                 disabled={isSubmitting}
-                className="mx-auto w-64"
               >
                 Update
               </Button>

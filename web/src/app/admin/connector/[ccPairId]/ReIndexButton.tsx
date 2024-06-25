@@ -46,8 +46,7 @@ function ReIndexPopup({
     <Modal title="Run Indexing" onOutsideClick={hide}>
       <div>
         <Button
-          className="ml-auto"
-          color="green"
+          className="ml-auto bg-blue-600"
           size="xs"
           onClick={() => {
             triggerIndexing(false);
@@ -65,8 +64,7 @@ function ReIndexPopup({
         <Divider />
 
         <Button
-          className="ml-auto"
-          color="green"
+          className="ml-auto bg-blue-600"
           size="xs"
           onClick={() => {
             triggerIndexing(true);
@@ -117,8 +115,7 @@ export function ReIndexButton({
       )}
       {popup}
       <Button
-        className="ml-auto"
-        color="green"
+        className="ml-auto bg-blue-600"
         size="xs"
         onClick={() => {
           setReIndexPopupVisible(true);

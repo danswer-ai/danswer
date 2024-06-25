@@ -187,7 +187,7 @@ function Main() {
               be lost.
             </div>
             <div className="flex">
-              <Button onClick={onCancel} className="mt-3 mx-auto" color="green">
+              <Button onClick={onCancel} className="mt-3 mx-auto bg-blue-600">
                 Confirm
               </Button>
             </div>

@@ -70,7 +70,7 @@ export default function Status() {
         title="Existing Connectors"
         farRightElement={
           <Link href="/admin/add-connector">
-            <Button color="green" size="xs">
+            <Button className="bg-blue-600" size="xs">
               Add Connector
             </Button>
           </Link>

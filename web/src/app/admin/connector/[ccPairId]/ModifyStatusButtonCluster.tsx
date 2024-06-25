@@ -19,7 +19,7 @@ export function ModifyStatusButtonCluster({
       {popup}
       {ccPair.connector.disabled ? (
         <Button
-          color="green"
+          className="bg-blue-600"
           size="xs"
           onClick={() =>
             disableConnector(ccPair.connector, setPopup, () =>

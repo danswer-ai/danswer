@@ -331,8 +331,7 @@ export function CustomLLMProviderUpdateForm({
                   onClick={() => {
                     arrayHelpers.push(["", ""]);
                   }}
-                  className="mt-3"
-                  color="green"
+                  className="mt-3 bg-blue-600"
                   size="xs"
                   type="button"
                   icon={FiPlus}

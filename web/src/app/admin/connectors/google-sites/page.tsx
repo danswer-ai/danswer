@@ -188,9 +188,8 @@ export default function GoogleSites() {
                     />
                     <div className="flex">
                       <Button
-                        className="mt-4 w-64 mx-auto"
                         size="xs"
-                        color="green"
+                        className="bg-blue-600 mt-4 w-64 mx-auto"
                         type="submit"
                         disabled={
                           selectedFiles.length !== 1 ||

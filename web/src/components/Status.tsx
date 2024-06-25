@@ -43,7 +43,7 @@ export function IndexAttemptStatus({
     }
   } else if (status === "success") {
     badge = (
-      <Badge size={size} color="green" icon={FiCheckCircle}>
+      <Badge size={size} className="bg-blue-600" icon={FiCheckCircle}>
         Succeeded
       </Badge>
     );
@@ -97,7 +97,7 @@ export function CCPairStatus({
     );
   } else {
     badge = (
-      <Badge size={size} color="green" icon={FiCheckCircle}>
+      <Badge size={size} className="bg-blue-600" icon={FiCheckCircle}>
         Active
       </Badge>
     );

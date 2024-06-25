@@ -217,8 +217,7 @@ const Main = () => {
                   />
                   <div className="flex">
                     <Button
-                      className="mt-4 w-64 mx-auto"
-                      color="green"
+                      className="mt-4 w-64 mx-auto bg-blue-600"
                       size="xs"
                       type="submit"
                       disabled={

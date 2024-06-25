@@ -172,8 +172,7 @@ function ToolForm({
       <Divider />
       <div className="flex">
         <Button
-          className="mx-auto"
-          color="green"
+          className="mx-auto bg-blue-600"
           size="md"
           type="submit"
           disabled={isSubmitting || !!definitionError}

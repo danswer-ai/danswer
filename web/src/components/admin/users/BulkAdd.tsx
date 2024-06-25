@@ -38,8 +38,7 @@ const AddUserFormRenderer = ({
         <div className="text-error text-sm">{errors.emails}</div>
       )}
       <Button
-        className="mx-auto"
-        color="green"
+        className="mx-auto bg-blue-600"
         size="md"
         type="submit"
         disabled={isSubmitting}

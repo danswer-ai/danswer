@@ -151,7 +151,11 @@ const DocumentSetTable = ({
                   </TableCell>
                   <TableCell>
                     {documentSet.is_up_to_date ? (
-                      <Badge size="md" color="green" icon={FiCheckCircle}>
+                      <Badge
+                        size="md"
+                        className="bg-blue-600"
+                        icon={FiCheckCircle}
+                      >
                         Up to Date
                       </Badge>
                     ) : documentSet.cc_pair_descriptors.length > 0 ? (
@@ -247,7 +251,7 @@ const Main = () => {
 
       <div className="flex mb-6">
         <Link href="/admin/documents/sets/new">
-          <Button size="xs" color="green" className="ml-2 my-auto">
+          <Button size="xs" className="bg-blue-600 ml-2 my-auto">
             New Document Set
           </Button>
         </Link>

@@ -116,7 +116,7 @@ function LLMProviderDisplay({
                 Default
               </Badge>
             ) : (
-              <Badge color="green" size="xs">
+              <Badge className="bg-blue-600" size="xs">
                 Enabled
               </Badge>
             )}

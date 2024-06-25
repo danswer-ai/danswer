@@ -41,7 +41,7 @@ export function ModelSelectionConfirmaion({
       )}
 
       <div className="flex mt-8">
-        <Button className="mx-auto" color="green" onClick={onConfirm}>
+        <Button className="mx-auto bg-blue-600" onClick={onConfirm}>
           Confirm
         </Button>
       </div>

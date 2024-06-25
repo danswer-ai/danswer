@@ -852,8 +852,7 @@ export function AssistantEditor({
                                 message: "",
                               });
                             }}
-                            className="mt-3"
-                            color="green"
+                            className="mt-3 bg-blue-600"
                             size="xs"
                             type="button"
                             icon={FiPlus}
@@ -933,8 +932,7 @@ export function AssistantEditor({
 
                 <div className="flex">
                   <Button
-                    className="mx-auto"
-                    color="green"
+                    className="mx-auto bg-blue-600"
                     size="md"
                     type="submit"
                     disabled={isSubmitting}

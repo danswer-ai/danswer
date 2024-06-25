@@ -156,10 +156,6 @@ export function AssistantsGallery({
                       </Button>
                     ) : (
                       <Button
-                        className="
-                      mr-2
-                      my-auto
-                    "
                         icon={FiPlus}
                         onClick={async () => {
                           const success = await addAssistantToList(
@@ -181,7 +177,8 @@ export function AssistantsGallery({
                           }
                         }}
                         size="xs"
-                        color="green"
+                        className="bg-blue-600 mr-2
+                      my-auto"
                       >
                         Add
                       </Button>

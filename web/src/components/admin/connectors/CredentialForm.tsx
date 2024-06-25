@@ -70,9 +70,8 @@ export function CredentialForm<T extends Yup.AnyObject>({
               <Button
                 type="submit"
                 size="xs"
-                color="green"
+                className="bg-blue-600 mx-auto w-64"
                 disabled={isSubmitting}
-                className="mx-auto w-64"
               >
                 Update
               </Button>
