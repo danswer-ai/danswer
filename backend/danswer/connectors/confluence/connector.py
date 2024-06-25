@@ -438,7 +438,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 doc_metadata: dict[str, str | list[str]] = {
                     "Wiki Space Name": self.space
                 }
-                if not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING:
+                if not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING and page_labels:
                     doc_metadata["labels"] = page_labels
 
                 doc_batch.append(
