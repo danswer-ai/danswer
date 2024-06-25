@@ -1,7 +1,7 @@
 import { Bold } from "@tremor/react";
 import Image from "next/image";
 
-export function DanswerInitializingLoader() {
+export function InitializingLoader() {
   return (
     <div className="mx-auto animate-pulse">
       <div className="h-24 w-24 mx-auto mb-3">
