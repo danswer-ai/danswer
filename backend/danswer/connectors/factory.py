@@ -130,12 +130,8 @@ def instantiate_connector(
     credential: Credential,
     db_session: Session,
 ) -> BaseConnector:
-    print(connector_specific_config)
-
     connector_class = identify_connector_class(source, input_type)
-
     connector = connector_class(**connector_specific_config)
-
     new_credentials = connector.load_credentials(credential.credential_json)
 
     if new_credentials is not None:

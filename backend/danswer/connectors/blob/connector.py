@@ -131,13 +131,11 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         start: datetime,
         end: datetime,
     ) -> GenerateDocumentsOutput:
-        logger.info("yielding objects")
         if self.s3_client is None:
             raise ConnectorMissingCredentialError("Blog storage")
 
         paginator = self.s3_client.get_paginator("list_objects_v2")
         pages = paginator.paginate(Bucket=self.bucket_name, Prefix=self.prefix)
-        logger.info(f"Pages are {pages}")
 
         batch: list[Document] = []
         for page in pages:
