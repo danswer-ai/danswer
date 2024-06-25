@@ -51,7 +51,6 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                 for key in ["r2_access_key_id", "r2_secret_access_key", "account_id"]
             ):
                 raise ConnectorMissingCredentialError("Cloudflare R2")
-
             self.s3_client = boto3.client(
                 "s3",
                 endpoint_url=f"https://{credentials['account_id']}.r2.cloudflarestorage.com",
@@ -60,19 +59,18 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                 region_name="auto",
                 config=Config(signature_version="s3v4"),
             )
-        elif self.bucket_type == "S3":
-            if credentials.get("aws_access_key_id") and credentials.get(
-                "aws_secret_access_key"
-            ):
-                session = boto3.Session(
-                    aws_access_key_id=credentials["aws_access_key_id"],
-                    aws_secret_access_key=credentials["aws_secret_access_key"],
-                )
-            elif credentials.get("profile_name"):
-                session = boto3.Session(profile_name=credentials["profile_name"])
-            else:
-                session = boto3.Session()
 
+        elif self.bucket_type == "S3":
+            if not all(
+                credentials.get(key)
+                for key in ["aws_access_key_id", "aws_secret_access_key"]
+            ):
+                raise ConnectorMissingCredentialError("Google Cloud Storage")
+
+            session = boto3.Session(
+                aws_access_key_id=credentials["aws_access_key_id"],
+                aws_secret_access_key=credentials["aws_secret_access_key"],
+            )
             self.s3_client = session.client("s3")
 
         elif self.bucket_type == "GOOGLE_CLOUD_STORAGE":
@@ -141,6 +139,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         for page in pages:
             if "Contents" not in page:
                 continue
+
             for obj in page["Contents"]:
                 if obj["Key"].endswith("/"):
                     continue
@@ -154,13 +153,6 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                 link = self._get_presigned_url(obj["Key"])
                 name = os.path.basename(obj["Key"])
 
-                BUCKET_TYPE_TO_SOURCE = {
-                    "S3": DocumentSource.S3,
-                    "R2": DocumentSource.R2,
-                    "OCI_STORAGE": DocumentSource.OCI_STORAGE,
-                    "GOOGLE_CLOUD_STORAGE": DocumentSource.GOOGLE_CLOUD_STORAGE,
-                }
-
                 try:
                     text = extract_file_text(
                         name,
@@ -169,9 +161,9 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                     )
                     batch.append(
                         Document(
-                            id=f"{BUCKET_TYPE_TO_SOURCE[self.bucket_type]}:{self.bucket_name}:{obj['Key']}",
+                            id=f"{self.bucket_type}:{self.bucket_name}:{obj['Key']}",
                             sections=[Section(link=link, text=text)],
-                            source=BUCKET_TYPE_TO_SOURCE[self.bucket_type],
+                            source=DocumentSource(self.bucket_type.lower()),
                             semantic_identifier=name,
                             doc_updated_at=last_modified,
                             metadata={"type": "article"},
@@ -180,6 +172,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                     if len(batch) == self.batch_size:
                         yield batch
                         batch = []
+
                 except Exception as e:
                     logger.exception(
                         f"Error decoding object {obj['Key']} as UTF-8: {e}"

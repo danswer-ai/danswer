@@ -437,7 +437,6 @@ export interface R2CredentialJson {
 }
 
 export interface S3CredentialJson {
-  aws_profile_name: string;
   aws_access_key_id: string;
   aws_secret_access_key: string;
 }

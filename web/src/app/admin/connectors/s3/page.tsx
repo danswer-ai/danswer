@@ -95,11 +95,6 @@ const S3Main = () => {
             <p className="ml-1 italic my-auto">
               {s3Credential.credential_json.aws_access_key_id}
             </p>
-            {", "}
-            <p className="ml-1 my-auto">Profile Name: </p>
-            <p className="ml-1 italic my-auto">
-              {s3Credential.credential_json.aws_profile_name}
-            </p>{" "}
             <button
               className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
@@ -152,12 +147,10 @@ const S3Main = () => {
               validationSchema={Yup.object().shape({
                 aws_access_key_id: Yup.string().default(""),
                 aws_secret_access_key: Yup.string().default(""),
-                aws_profile_name: Yup.string().default(""),
               })}
               initialValues={{
                 aws_access_key_id: "",
                 aws_secret_access_key: "",
-                aws_profile_name: "",
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
