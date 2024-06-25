@@ -100,7 +100,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
         >
           {popup}
 
-          <div className="h-4/6 flex flex-col ">
+          <div className="h-4/6 flex flex-col">
             <div className="pl-3 pr-6 mb-3 flex border-b border-border">
               <SectionHeader
                 name={
