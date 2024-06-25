@@ -284,8 +284,8 @@ export function AssistantEditor({
                 providerDisplayNameToProviderName.get(
                   values.llm_model_provider_override || ""
                 ) ||
-                  defaultProviderName ||
-                  "",
+                defaultProviderName ||
+                "",
                 values.llm_model_version_override || defaultModelName || ""
               )
             ) {
@@ -455,7 +455,85 @@ export function AssistantEditor({
                   </>
                 </HidableSection>
 
+
                 <Divider />
+
+                {llmProviders.length > 0 && (
+                  <>
+                    <HidableSection
+                      sectionTitle="[Advanced] Model Selection"
+                      defaultHidden
+                    >
+                      <>
+                        <Text>
+                          Pick which LLM to use for this Assistant. If left as
+                          Default, will use{" "}
+                          <b className="italic">{defaultModelName}</b>
+                          .
+                          <br />
+                          <br />
+                          For more information on the different LLMs, checkout
+                          the{" "}
+                          <a
+                            href="https://platform.openai.com/docs/models"
+                            target="_blank"
+                            className="text-blue-500"
+                          >
+                            OpenAI docs
+                          </a>
+                          .
+                        </Text>
+
+                        <div className="flex mt-6">
+                          <div className="w-96">
+                            <SubLabel>LLM Provider</SubLabel>
+                            <SelectorFormField
+                              name="llm_model_provider_override"
+                              options={llmProviders.map((llmProvider) => ({
+                                name: llmProvider.name,
+                                value: llmProvider.name,
+                              }))}
+                              includeDefault={true}
+                              onSelect={(selected) => {
+                                if (
+                                  selected !==
+                                  values.llm_model_provider_override
+                                ) {
+                                  setFieldValue(
+                                    "llm_model_version_override",
+                                    null
+                                  );
+                                }
+                                setFieldValue(
+                                  "llm_model_provider_override",
+                                  selected
+                                );
+                              }}
+                            />
+                          </div>
+
+                          {values.llm_model_provider_override && (
+                            <div className="w-96 ml-4">
+                              <SubLabel>Model</SubLabel>
+                              <SelectorFormField
+                                name="llm_model_version_override"
+                                options={
+                                  modelOptionsByProvider.get(
+                                    values.llm_model_provider_override
+                                  ) || []
+                                }
+                                maxHeight="max-h-72"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    </HidableSection>
+
+                    <Divider />
+                  </>
+                )}
+
 
                 <HidableSection sectionTitle="Tools">
                   <>
@@ -602,11 +680,11 @@ export function AssistantEditor({
                         providerDisplayNameToProviderName.get(
                           values.llm_model_provider_override || ""
                         ) ||
-                          defaultProviderName ||
-                          "",
+                        defaultProviderName ||
+                        "",
                         values.llm_model_version_override ||
-                          defaultModelName ||
-                          ""
+                        defaultModelName ||
+                        ""
                       ) && (
                         <BooleanFormField
                           name={`enabled_tools_map.${imageGenerationTool.id}`}
@@ -637,82 +715,6 @@ export function AssistantEditor({
                 </HidableSection>
 
                 <Divider />
-
-                {llmProviders.length > 0 && (
-                  <>
-                    <HidableSection
-                      sectionTitle="[Advanced] Model Selection"
-                      defaultHidden
-                    >
-                      <>
-                        <Text>
-                          Pick which LLM to use for this Assistant. If left as
-                          Default, will use{" "}
-                          <b className="italic">{defaultModelName}</b>
-                          .
-                          <br />
-                          <br />
-                          For more information on the different LLMs, checkout
-                          the{" "}
-                          <a
-                            href="https://platform.openai.com/docs/models"
-                            target="_blank"
-                            className="text-blue-500"
-                          >
-                            OpenAI docs
-                          </a>
-                          .
-                        </Text>
-
-                        <div className="flex mt-6">
-                          <div className="w-96">
-                            <SubLabel>LLM Provider</SubLabel>
-                            <SelectorFormField
-                              name="llm_model_provider_override"
-                              options={llmProviders.map((llmProvider) => ({
-                                name: llmProvider.name,
-                                value: llmProvider.name,
-                              }))}
-                              includeDefault={true}
-                              onSelect={(selected) => {
-                                if (
-                                  selected !==
-                                  values.llm_model_provider_override
-                                ) {
-                                  setFieldValue(
-                                    "llm_model_version_override",
-                                    null
-                                  );
-                                }
-                                setFieldValue(
-                                  "llm_model_provider_override",
-                                  selected
-                                );
-                              }}
-                            />
-                          </div>
-
-                          {values.llm_model_provider_override && (
-                            <div className="w-96 ml-4">
-                              <SubLabel>Model</SubLabel>
-                              <SelectorFormField
-                                name="llm_model_version_override"
-                                options={
-                                  modelOptionsByProvider.get(
-                                    values.llm_model_provider_override
-                                  ) || []
-                                }
-                                maxHeight="max-h-72"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    </HidableSection>
-
-                    <Divider />
-                  </>
-                )}
 
                 <HidableSection
                   sectionTitle="[Advanced] Starter Messages"
