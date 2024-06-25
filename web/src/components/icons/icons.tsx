@@ -43,6 +43,7 @@ import {
 import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
+import blobSVG from "../../../public/blob.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
 import guruIcon from "../../../public/Guru.svg";
 import gongIcon from "../../../public/Gong.png";
@@ -55,6 +56,7 @@ import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
 import dropboxIcon from "../../../public/Dropbox.png";
 import s3Icon from "../../../public/S3.png";
+import r2Icon from "../../../public/r2.webp";
 import salesforceIcon from "../../../public/Salesforce.png";
 import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";
@@ -439,6 +441,21 @@ export const JiraIcon = ({
   );
 };
 
+export const BlobIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  // Jira Icon has a bit more surrounding whitespace than other icons, which is why we need to adjust it here
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={blobSVG} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
 export const ZulipIcon = ({
   size = 16,
   className = defaultTailwindCSS,
@@ -541,6 +558,18 @@ export const SalesforceIcon = ({
     className={`w-[${size}px] h-[${size}px] ` + className}
   >
     <Image src={salesforceIcon} alt="Logo" width="96" height="96" />
+  </div>
+);
+
+export const R2Icon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={r2Icon} alt="Logo" width="96" height="96" />
   </div>
 );
 

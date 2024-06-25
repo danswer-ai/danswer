@@ -32,7 +32,7 @@ from danswer.connectors.models import InputType
 from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
 from danswer.connectors.requesttracker.connector import RequestTrackerConnector
-from danswer.connectors.s3.connector import S3Connector
+from danswer.connectors.s3.connector import BlobStorageConnector
 from danswer.connectors.salesforce.connector import SalesforceConnector
 from danswer.connectors.sharepoint.connector import SharepointConnector
 from danswer.connectors.slab.connector import SlabConnector
@@ -91,7 +91,7 @@ def identify_connector_class(
         DocumentSource.CLICKUP: ClickupConnector,
         DocumentSource.MEDIAWIKI: MediaWikiConnector,
         DocumentSource.WIKIPEDIA: WikipediaConnector,
-        DocumentSource.S3: S3Connector,
+        DocumentSource.BLOB: BlobStorageConnector,
     }
     connector_by_source = connector_map.get(source, {})
 
@@ -117,7 +117,6 @@ def identify_connector_class(
         raise ConnectorMissingException(
             f"Connector for source={source} does not accept input_type={input_type}"
         )
-
     return connector
 
 
@@ -128,9 +127,18 @@ def instantiate_connector(
     credential: Credential,
     db_session: Session,
 ) -> BaseConnector:
+    print("Trying 1")
     connector_class = identify_connector_class(source, input_type)
     connector = connector_class(**connector_specific_config)
+
+    print("Trying 2")
+    print(connector)
+
+    print(type(connector))
+
     new_credentials = connector.load_credentials(credential.credential_json)
+    print("nx")
+    print(new_credentials)
 
     if new_credentials is not None:
         backend_update_credential_json(credential, new_credentials, db_session)

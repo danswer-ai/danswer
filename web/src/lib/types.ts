@@ -50,7 +50,6 @@ export type ValidSources =
   | "google_sites"
   | "loopio"
   | "dropbox"
-  | "s3"
   | "salesforce"
   | "sharepoint"
   | "teams"
@@ -59,8 +58,12 @@ export type ValidSources =
   | "axero"
   | "clickup"
   | "axero"
+  | "blob"
   | "wikipedia"
-  | "mediawiki";
+  | "mediawiki"
+  | "blob"
+  | "s3"
+  | "r2";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -220,7 +223,16 @@ export interface ZendeskConfig {}
 
 export interface DropboxConfig {}
 
+export type BlobType = "S3" | "R2";
+
 export interface S3Config {
+  bucket_type: "S3";
+  bucket_name: string;
+  prefix: string;
+}
+
+export interface R2Config {
+  bucket_type: "R2";
   bucket_name: string;
   prefix: string;
 }
@@ -406,8 +418,14 @@ export interface DropboxCredentialJson {
   dropbox_access_token: string;
 }
 
+export interface R2CredentialJson {
+  account_id: string;
+  r2_access_key_id: string;
+  r2_secret_access_key: string;
+}
+
 export interface S3CredentialJson {
-  profile_name: string;
+  aws_profile_name: string;
   aws_access_key_id: string;
   aws_secret_access_key: string;
 }

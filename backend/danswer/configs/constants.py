@@ -100,6 +100,12 @@ class DocumentSource(str, Enum):
     CLICKUP = "clickup"
     MEDIAWIKI = "mediawiki"
     WIKIPEDIA = "wikipedia"
+    BLOB = "blob"
+    S3 = "s3"
+
+
+class BlobType(Enum):
+    R2 = "r2"
     S3 = "s3"
 
 
