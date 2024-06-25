@@ -262,13 +262,9 @@ def epub_to_text(file: IO[Any]) -> str:
 
 
 def file_io_to_text(file: IO[Any]) -> str:
-    try:
-        encoding = detect_encoding(file)
-        file_content_raw, _ = read_text_file(file, encoding=encoding)
-        return file_content_raw
-    except Exception as e:
-        logger.warning(f"Detected txt file failed to decode: {e}")
-        return ""
+    encoding = detect_encoding(file)
+    file_content_raw, _ = read_text_file(file, encoding=encoding)
+    return file_content_raw
 
 
 def extract_file_text(
@@ -286,17 +282,24 @@ def extract_file_text(
         ".html": parse_html_page_basic,
     }
 
-    if file_name:
-        extension = get_file_ext(file_name)
-        if check_file_ext_is_valid(extension):
-            return extension_to_function.get(extension, file_io_to_text)(file)
+    try:
+        if file_name:
+            extension = get_file_ext(file_name)
+            if check_file_ext_is_valid(extension):
+                return extension_to_function.get(extension, file_io_to_text)(file)
 
-    if is_text_file(file):
-        return file_io_to_text(file)
+        if is_text_file(file):
+            return file_io_to_text(file)
 
-    failure_string = "No file_name or known text encoding"
-    if not break_on_unprocessable:
+        failure_string = "No file_name or known text encoding"
+        if break_on_unprocessable:
+            raise RuntimeError(failure_string)
+
         logger.warning(failure_string)
         return ""
 
-    raise RuntimeError(failure_string)
+    except Exception as e:
+        if break_on_unprocessable:
+            raise RuntimeError(failure_string)
+        logger.warning(str(e))
+        return ""
