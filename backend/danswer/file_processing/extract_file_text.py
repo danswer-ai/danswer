@@ -313,14 +313,17 @@ def extract_file_text(
     file: IO[Any],
     break_on_unprocessable: bool = True,
 ) -> str:
-    if detect_encoding(file).lower() in TEXT_ENCODINGS:
-        return file_io_to_text(file, break_on_unprocessable)
     if not file_name:
+        if detect_encoding(file).lower() in TEXT_ENCODINGS:
+            return file_io_to_text(file, break_on_unprocessable)
         logger.warning("No file_name and not known text encoding")
         return ""
 
     extension = get_file_ext(file_name)
     if not check_file_ext_is_valid(extension):
+        if detect_encoding(file).lower() in TEXT_ENCODINGS:
+            return file_io_to_text(file, break_on_unprocessable)
+
         if break_on_unprocessable:
             raise RuntimeError(f"Unprocessable file type: {file_name}")
         else:
