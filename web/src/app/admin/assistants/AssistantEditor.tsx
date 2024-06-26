@@ -460,6 +460,28 @@ export function AssistantEditor({
                   label="Description"
                 // subtext="Provide a short descriptions which gives users a hint as to what they should use this Assistant for."
                 />
+
+                <TextFormField
+                  tooltip="Gives your assistant a prime directive"
+                  name="system_prompt"
+                  label="System Prompt"
+                  isTextArea={true}
+                  placeholder='Tell your assistant what it is used for'
+                  // 
+                  onChange={(e) => {
+                    setFieldValue("system_prompt", e.target.value);
+                    triggerFinalPromptUpdate(
+                      e.target.value,
+                      values.task_prompt,
+                      searchToolEnabled()
+                    );
+                  }}
+                  error={finalPromptError}
+                />
+
+
+
+
                 <div className="mb-6">
                   <div className="flex gap-x-2 items-center">
                     <div className="block font-medium text-base">LLM Provider{" "}</div>
@@ -473,7 +495,7 @@ export function AssistantEditor({
                     </Tooltip>
 
                   </div>
-                  <div className="flex items-starts">
+                  <div className="mb-2 flex items-starts">
                     <div className="w-96">
 
                       <SelectorFormField
@@ -520,228 +542,198 @@ export function AssistantEditor({
                     )}
                   </div>
                   {/* <FurtherDetails text="Learn how to pick an LLM provider" link="https://docs.danswer.dev/guides/providers" /> */}
+
+                  <div className="ml-1">
+
+                    {imageGenerationTool &&
+                      checkLLMSupportsImageInput(
+                        providerDisplayNameToProviderName.get(
+                          values.llm_model_provider_override || ""
+                        ) ||
+                        defaultProviderName ||
+                        "",
+                        values.llm_model_version_override ||
+                        defaultModelName ||
+                        ""
+                      ) && (
+                        <BooleanFormField
+                          noPadding
+                          name={`enabled_tools_map.${imageGenerationTool.id}`}
+                          label="Image Generation Tool"
+                          // subtext="The Image Generation Tool allows the assistant to use DALL-E 3 to generate images. The tool will be used when the user asks the assistant to generate an image."
+                          onChange={() => {
+                            toggleToolInValues(imageGenerationTool.id);
+                          }}
+                        />
+                      )}
+
+                    {ccPairs.length > 0 && searchTool && (
+                      <>
+                        <BooleanFormField
+                          name={`enabled_tools_map.${searchTool.id}`}
+                          label="Search Tool"
+                          noPadding
+
+                          // subtext={`The Search Tool allows the Assistant to search through connected knowledge to help build an answer.`}
+                          onChange={() => {
+                            setFieldValue("num_chunks", null);
+                            toggleToolInValues(searchTool.id);
+                          }}
+                        />
+
+
+                        {searchToolEnabled() && (<CollapsibleSection prompt="Configure Search">
+                          <div className=" ">
+                            {ccPairs.length > 0 && (
+                              <>
+                                <NewLabel>Document Sets</NewLabel>
+
+                                <div>
+                                  <SubLabel>
+                                    <>
+                                      Select which{" "}
+                                      {!user || user.role === "admin" ? (
+                                        <Link
+                                          href="/admin/documents/sets"
+                                          className="text-blue-500"
+                                          target="_blank"
+                                        >
+                                          Document Sets
+                                        </Link>
+                                      ) : (
+                                        "Document Sets"
+                                      )}{" "}
+                                      that this Assistant should search through.
+                                      If none are specified, the Assistant will
+                                      search through all available documents in
+                                      order to try and respond to queries.
+                                    </>
+                                  </SubLabel>
+                                </div>
+
+                                {documentSets.length > 0 ? (
+                                  <FieldArray
+                                    name="document_set_ids"
+                                    render={(arrayHelpers: ArrayHelpers) => (
+                                      <div>
+                                        <div className="mb-3 mt-2 flex gap-2 flex-wrap text-sm">
+                                          {documentSets.map((documentSet) => {
+                                            const ind =
+                                              values.document_set_ids.indexOf(
+                                                documentSet.id
+                                              );
+                                            let isSelected = ind !== -1;
+                                            return (
+                                              <DocumentSetSelectable
+                                                key={documentSet.id}
+                                                documentSet={documentSet}
+                                                isSelected={isSelected}
+                                                onSelect={() => {
+                                                  if (isSelected) {
+                                                    arrayHelpers.remove(ind);
+                                                  } else {
+                                                    arrayHelpers.push(
+                                                      documentSet.id
+                                                    );
+                                                  }
+                                                }}
+                                              />
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    )}
+                                  />
+                                ) : (
+                                  <Italic className="text-sm">
+                                    No Document Sets available.{" "}
+                                    {user?.role !== "admin" && (
+                                      <>
+                                        If this functionality would be useful,
+                                        reach out to the administrators of
+                                        Danswer for assistance.
+                                      </>
+                                    )}
+                                  </Italic>
+                                )}
+
+                                <div className="mt-6">
+                                  <TextFormField
+                                    smaller={true}
+                                    name="num_chunks"
+                                    label="Number of Chunks"
+                                    tooltip="How many chunks to feed the LLM"
+                                    placeholder="Defaults to 10 chunks."
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      // Allow only integer values
+                                      if (
+                                        value === "" ||
+                                        /^[0-9]+$/.test(value)
+                                      ) {
+                                        setFieldValue("num_chunks", value);
+                                      }
+                                    }}
+                                  />
+
+
+
+                                  <BooleanFormField
+                                    small
+                                    noPadding
+                                    name="llm_relevance_filter"
+                                    label="Apply LLM Relevance Filter"
+                                  // subtext={
+                                  //   "If enabled, the LLM will filter out chunks that are not relevant to the user query."
+                                  // }
+                                  />
+
+                                  <BooleanFormField
+                                    small
+                                    noPadding
+                                    alignTop
+                                    name="include_citations"
+                                    label="Include Citations"
+                                    subtext={`
+              If set, the response will include bracket citations ([1], [2], etc.) 
+             
+             
+              for each document used by the LLM to help inform the response. This is 
+              the same technique used by the default Assistants. In general, we recommend 
+              to leave this enabled in order to increase trust in the LLM answer.`}
+                                  />
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </CollapsibleSection>
+                        )}
+
+                      </>
+                    )}
+
+                    {customTools.length > 0 && (
+                      <>
+                        {customTools.map((tool) => (
+                          <BooleanFormField
+                            key={tool.id}
+                            name={`enabled_tools_map.${tool.id}`}
+                            label={tool.name}
+                            subtext={tool.description}
+                            onChange={() => {
+                              toggleToolInValues(tool.id);
+                            }}
+                          />
+                        ))}
+                      </>
+                    )}
+
+                  </div>
                 </div>
-
-                <TextFormField
-                  tooltip="Gives your assistant a prime directive"
-                  name="system_prompt"
-                  label="System Prompt"
-                  isTextArea={true}
-                  placeholder='Tell your assistant what it is used for'
-                  // 
-                  onChange={(e) => {
-                    setFieldValue("system_prompt", e.target.value);
-                    triggerFinalPromptUpdate(
-                      e.target.value,
-                      values.task_prompt,
-                      searchToolEnabled()
-                    );
-                  }}
-                  error={finalPromptError}
-                />
-
-
-
-
 
 
                 {/* <HidableSection sectionTitle="Tools"> */}
 
-                <div className="mb-6">
-                  {/* <div className="flex gap-x-2 mb-2 items-center">
-                    <div className="block font-medium text-base">Tool Selection{" "}</div>
-                    <Tooltip
-                      content={<p className="bg-black text-white">I can talk</p>}
-                      side="top"
-                      align="start"
-                    >
-                      <FiInfo size={12} />
-                    </Tooltip>
-                  </div> */}
-
-                  {imageGenerationTool &&
-                    checkLLMSupportsImageInput(
-                      providerDisplayNameToProviderName.get(
-                        values.llm_model_provider_override || ""
-                      ) ||
-                      defaultProviderName ||
-                      "",
-                      values.llm_model_version_override ||
-                      defaultModelName ||
-                      ""
-                    ) && (
-                      <BooleanFormField
-                        noPadding
-                        name={`enabled_tools_map.${imageGenerationTool.id}`}
-                        label="Image Generation Tool"
-                        // subtext="The Image Generation Tool allows the assistant to use DALL-E 3 to generate images. The tool will be used when the user asks the assistant to generate an image."
-                        onChange={() => {
-                          toggleToolInValues(imageGenerationTool.id);
-                        }}
-                      />
-                    )}
-
-                  {ccPairs.length > 0 && searchTool && (
-                    <>
-                      <BooleanFormField
-                        name={`enabled_tools_map.${searchTool.id}`}
-                        label="Search Tool"
-                        noPadding
-
-                        // subtext={`The Search Tool allows the Assistant to search through connected knowledge to help build an answer.`}
-                        onChange={() => {
-                          setFieldValue("num_chunks", null);
-                          toggleToolInValues(searchTool.id);
-                        }}
-                      />
-
-
-                      {searchToolEnabled() && (<CollapsibleSection prompt="Configure Search">
-                        <div className=" ">
-                          {ccPairs.length > 0 && (
-                            <>
-                              <NewLabel>Document Sets</NewLabel>
-
-                              <div>
-                                <SubLabel>
-                                  <>
-                                    Select which{" "}
-                                    {!user || user.role === "admin" ? (
-                                      <Link
-                                        href="/admin/documents/sets"
-                                        className="text-blue-500"
-                                        target="_blank"
-                                      >
-                                        Document Sets
-                                      </Link>
-                                    ) : (
-                                      "Document Sets"
-                                    )}{" "}
-                                    that this Assistant should search through.
-                                    If none are specified, the Assistant will
-                                    search through all available documents in
-                                    order to try and respond to queries.
-                                  </>
-                                </SubLabel>
-                              </div>
-
-                              {documentSets.length > 0 ? (
-                                <FieldArray
-                                  name="document_set_ids"
-                                  render={(arrayHelpers: ArrayHelpers) => (
-                                    <div>
-                                      <div className="mb-3 mt-2 flex gap-2 flex-wrap text-sm">
-                                        {documentSets.map((documentSet) => {
-                                          const ind =
-                                            values.document_set_ids.indexOf(
-                                              documentSet.id
-                                            );
-                                          let isSelected = ind !== -1;
-                                          return (
-                                            <DocumentSetSelectable
-                                              key={documentSet.id}
-                                              documentSet={documentSet}
-                                              isSelected={isSelected}
-                                              onSelect={() => {
-                                                if (isSelected) {
-                                                  arrayHelpers.remove(ind);
-                                                } else {
-                                                  arrayHelpers.push(
-                                                    documentSet.id
-                                                  );
-                                                }
-                                              }}
-                                            />
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
-                                  )}
-                                />
-                              ) : (
-                                <Italic className="text-sm">
-                                  No Document Sets available.{" "}
-                                  {user?.role !== "admin" && (
-                                    <>
-                                      If this functionality would be useful,
-                                      reach out to the administrators of
-                                      Danswer for assistance.
-                                    </>
-                                  )}
-                                </Italic>
-                              )}
-
-                              <div className="mt-6">
-                                <TextFormField
-                                  smaller={true}
-                                  name="num_chunks"
-                                  label="Number of Chunks"
-                                  tooltip="How many chunks to feed the LLM"
-                                  placeholder="Defaults to 10 chunks."
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    // Allow only integer values
-                                    if (
-                                      value === "" ||
-                                      /^[0-9]+$/.test(value)
-                                    ) {
-                                      setFieldValue("num_chunks", value);
-                                    }
-                                  }}
-                                />
-
-
-
-                                <BooleanFormField
-                                  small
-                                  noPadding
-                                  name="llm_relevance_filter"
-                                  label="Apply LLM Relevance Filter"
-                                // subtext={
-                                //   "If enabled, the LLM will filter out chunks that are not relevant to the user query."
-                                // }
-                                />
-
-                                <BooleanFormField
-                                  small
-                                  noPadding
-                                  alignTop
-                                  name="include_citations"
-                                  label="Include Citations"
-                                  subtext={`
-                                If set, the response will include bracket citations ([1], [2], etc.) 
-                               
-                               
-                                for each document used by the LLM to help inform the response. This is 
-                                the same technique used by the default Assistants. In general, we recommend 
-                                to leave this enabled in order to increase trust in the LLM answer.`}
-                                />
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </CollapsibleSection>
-                      )}
-
-                    </>
-                  )}
-
-                  {customTools.length > 0 && (
-                    <>
-                      {customTools.map((tool) => (
-                        <BooleanFormField
-                          key={tool.id}
-                          name={`enabled_tools_map.${tool.id}`}
-                          label={tool.name}
-                          subtext={tool.description}
-                          onChange={() => {
-                            toggleToolInValues(tool.id);
-                          }}
-                        />
-                      ))}
-                    </>
-                  )}
-                </div>
 
 
                 <Divider />
