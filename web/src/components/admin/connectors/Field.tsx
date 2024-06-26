@@ -17,7 +17,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
-import { NewLabel } from "@/components/new/label";
 
 export function SectionHeader({
   children,
@@ -27,8 +26,18 @@ export function SectionHeader({
   return <div className="mb-4 font-bold text-lg">{children}</div>;
 }
 
-export function Label({ children }: { children: string | JSX.Element }) {
-  return <div className="block font-medium text-base">{children}</div>;
+export function Label({
+  children,
+  small,
+}: {
+  children: string | JSX.Element;
+  small?: boolean;
+}) {
+  return (
+    <div className={`block font-medium base ${small ? "text-sm" : "tex-base"}`}>
+      {children}
+    </div>
+  );
 }
 
 export function SubLabel({ children }: { children: string | JSX.Element }) {
@@ -77,7 +86,7 @@ export function TextFormField({
   tooltip,
   furtherText,
   furtherLink,
-  smaller,
+  small,
 }: {
   name: string;
   label: string;
@@ -96,7 +105,7 @@ export function TextFormField({
   tooltip?: string;
   furtherText?: string;
   furtherLink?: string;
-  smaller?: boolean;
+  small?: boolean;
 }) {
   let heightString = defaultHeight || "";
   if (isTextArea && !heightString) {
@@ -106,7 +115,7 @@ export function TextFormField({
   return (
     <div className="mb-6">
       <div className="flex gap-x-2 items-center">
-        {!smaller ? <Label>{label}</Label> : <NewLabel>{label}</NewLabel>}
+        <Label small={small}>{label}</Label>
         {tooltip && (
           <TooltipProvider>
             <Tooltip>
@@ -141,7 +150,7 @@ export function TextFormField({
         name={name}
         id={name}
         className={`
-          ${smaller && "text-sm"}
+          ${small && "text-sm"}
           border 
           border-border 
           rounded 
@@ -193,11 +202,7 @@ export const BooleanFormField = ({
           {...(onChange ? { onChange } : {})}
         />
         <div>
-          {small ? (
-            <NewLabel className="pt-0  mt-0">{label}</NewLabel>
-          ) : (
-            <Label>{label}</Label>
-          )}
+          <Label small={small}>{label}</Label>
           {subtext && <SubLabel>{subtext}</SubLabel>}
         </div>
       </label>

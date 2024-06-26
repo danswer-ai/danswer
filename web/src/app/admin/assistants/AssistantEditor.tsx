@@ -11,8 +11,6 @@ import {
   Formik,
 } from "formik";
 
-import { NewLabel } from "@/components/new/label";
-
 import * as Yup from "yup";
 import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
 import { useRouter } from "next/navigation";
@@ -22,6 +20,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   BooleanFormField,
+  Label,
   SelectorFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
@@ -578,7 +577,7 @@ export function AssistantEditor({
                             <div className=" ">
                               {ccPairs.length > 0 && (
                                 <>
-                                  <NewLabel>Document Sets</NewLabel>
+                                  <Label small>Document Sets</Label>
 
                                   <div>
                                     <SubLabel>
@@ -652,7 +651,7 @@ export function AssistantEditor({
 
                                   <div className="mt-6">
                                     <TextFormField
-                                      smaller={true}
+                                      small={true}
                                       name="num_chunks"
                                       label="Number of Chunks"
                                       tooltip="How many chunks to feed the LLM"
@@ -760,7 +759,7 @@ export function AssistantEditor({
                                 <div className="flex">
                                   <div className="w-full mr-6 border border-border p-3 rounded">
                                     <div>
-                                      <NewLabel>Name</NewLabel>
+                                      <Label small>Name</Label>
                                       <SubLabel>
                                         Shows up as the &quot;title&quot; for
                                         this Starter Message. For example,
@@ -788,7 +787,7 @@ export function AssistantEditor({
                                     </div>
 
                                     <div className="mt-3">
-                                      <NewLabel>Description</NewLabel>
+                                      <Label small>Description</Label>
                                       <SubLabel>
                                         A description which tells the user what
                                         they might want to use this Starter
@@ -817,7 +816,7 @@ export function AssistantEditor({
                                     </div>
 
                                     <div className="mt-3">
-                                      <NewLabel>Message</NewLabel>
+                                      <Label small>Message</Label>
                                       <SubLabel>
                                         The actual message to be sent as the
                                         initial user message if a user selects
