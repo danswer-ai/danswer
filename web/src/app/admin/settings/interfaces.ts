@@ -18,4 +18,5 @@ export interface CombinedSettings {
   settings: Settings;
   enterpriseSettings: EnterpriseSettings | null;
   customAnalyticsScript: string | null;
+  isMobile: boolean;
 }

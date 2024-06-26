@@ -38,21 +38,24 @@ module.exports = {
       },
       colors: {
         // background
-        background: "#f9fafb", // gray-50
+        background: "#fafafa", // neutral-50
+        "background-weak": "#f5f5f5", // neutral-100
+
+        // background: "#f3f4f6",
         "background-emphasis": "#f6f7f8",
         "background-strong": "#eaecef",
         "background-search": "#ffffff",
         "background-custom-header": "#f3f4f6",
         "background-inverted": "#000000",
-        "background-weak": "#f3f4f6", // gray-100
+        // "background-weak": "#f0f0f0", // neutral-100
 
         // text or icons
         link: "#3b82f6", // blue-500
         "link-hover": "#1d4ed8", // blue-700
-        subtle: "#6b7280", // gray-500
-        default: "#4b5563", // gray-600
-        emphasis: "#374151", // gray-700
-        strong: "#111827", // gray-900
+        subtle: "#737373", // neutral-500
+        default: "#525252", // neutral-600
+        emphasis: "#374151", // neutral-700
+        strong: "#171717", // neutral-900
         inverted: "#ffffff", // white
         error: "#ef4444", // red-500
         success: "#059669", // emerald-600
@@ -60,15 +63,15 @@ module.exports = {
         accent: "#6671d0",
 
         // borders
-        border: "#e5e7eb", // gray-200
-        "border-light": "#f3f4f6", // gray-100
-        "border-medium": "#d1d5db", // gray-300
-        "border-strong": "#9ca3af", // gray-400
+        border: "#e5e5e5", // neutral-200
+        "border-light": "#f3f4f6", // neutral-100
+        "border-medium": "#d4d4d4", // neutral-300
+        "border-strong": "#a3a3a3", // neutral-400
 
         // hover
-        "hover-light": "#f3f4f6", // gray-100
-        hover: "#e5e7eb", // gray-200
-        "hover-emphasis": "#d1d5db", // gray-300
+        "hover-light": "#f3f4f6", // neutral-100
+        hover: "#e5e5e5", // neutral-200
+        "hover-emphasis": "#d4d4d4", // neutral-300
         "accent-hover": "#5964c2",
 
         // keyword highlighting
@@ -78,9 +81,9 @@ module.exports = {
 
         // scrollbar
         scrollbar: {
-          track: "#f9fafb",
-          thumb: "#e5e7eb",
-          "thumb-hover": "#d1d5db",
+          track: "#fafafa",
+          thumb: "#e5e5e5",
+          "thumb-hover": "#d4d4d4",
 
           dark: {
             thumb: "#989a9c",
@@ -89,7 +92,8 @@ module.exports = {
         },
 
         // bubbles in chat for each "user"
-        user: "#fb7185", // yellow-400
+        user: "#fb7185", // rose-400
+        "user-hover": "#f43f5e", // rose-500
         ai: "#60a5fa", // blue-400
 
         // for display documents
@@ -106,22 +110,22 @@ module.exports = {
             inverted: "#ffffff", // white
           },
           background: {
-            muted: "#f9fafb", // gray-50
-            subtle: "#f3f4f6", // gray-100
+            muted: "#fafafa", // neutral-50
+            subtle: "#f3f4f6", // neutral-100
             DEFAULT: "#ffffff", // white
-            emphasis: "#374151", // gray-700
+            emphasis: "#374151", // neutral-700
           },
           border: {
-            DEFAULT: "#e5e7eb", // gray-200
+            DEFAULT: "#e5e5e5", // neutral-200
           },
           ring: {
-            DEFAULT: "#e5e7eb", // gray-200
+            DEFAULT: "#e5e5e5", // neutral-200
           },
           content: {
-            subtle: "#9ca3af", // gray-400
-            DEFAULT: "#4b5563", // gray-600
-            emphasis: "#374151", // gray-700
-            strong: "#111827", // gray-900
+            subtle: "#a3a3a3", // neutral-400
+            DEFAULT: "#525252", // neutral-600
+            emphasis: "#374151", // neutral-700
+            strong: "#171717", // neutral-900
             inverted: "#ffffff", // white
           },
         },
@@ -133,53 +137,53 @@ module.exports = {
             subtle: "#1e40af", // blue-800
             DEFAULT: "#3b82f6", // blue-500
             emphasis: "#60a5fa", // blue-400
-            inverted: "#030712", // gray-950
+            inverted: "#0a0a0a", // neutral-950
           },
           background: {
             muted: "#131A2B", // custom
-            subtle: "#1f2937", // gray-800
-            DEFAULT: "#111827", // gray-900
-            emphasis: "#d1d5db", // gray-300
+            subtle: "#262626", // neutral-800
+            DEFAULT: "#171717", // neutral-900
+            emphasis: "#d4d4d4", // neutral-300
           },
           border: {
-            DEFAULT: "#1f2937", // gray-800
+            DEFAULT: "#262626", // neutral-800
           },
           ring: {
-            DEFAULT: "#1f2937", // gray-800
+            DEFAULT: "#262626", // neutral-800
           },
           content: {
-            subtle: "#6b7280", // gray-500
-            DEFAULT: "#d1d5db", // gray-300
-            emphasis: "#f3f4f6", // gray-100
-            strong: "#f9fafb", // gray-50
+            subtle: "#737373", // neutral-500
+            DEFAULT: "#d4d4d4", // neutral-300
+            emphasis: "#f3f4f6", // neutral-100
+            strong: "#fafafa", // neutral-50
             inverted: "#000000", // black
           },
         },
-      },
-      boxShadow: {
-        // light
-        "tremor-input": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-        "tremor-card":
-          "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
-        "tremor-dropdown":
-          "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-        // dark
-        "dark-tremor-input": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-        "dark-tremor-card":
-          "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
-        "dark-tremor-dropdown":
-          "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-      },
-      borderRadius: {
-        "tremor-small": "0.375rem",
-        "tremor-default": "0.5rem",
-        "tremor-full": "9999px",
-      },
-      fontSize: {
-        "tremor-label": ["0.75rem"],
-        "tremor-default": ["0.875rem", { lineHeight: "1.25rem" }],
-        "tremor-title": ["1.125rem", { lineHeight: "1.75rem" }],
-        "tremor-metric": ["1.875rem", { lineHeight: "2.25rem" }],
+        boxShadow: {
+          // light
+          "tremor-input": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+          "tremor-card":
+            "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+          "tremor-dropdown":
+            "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+          // dark
+          "dark-tremor-input": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+          "dark-tremor-card":
+            "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+          "dark-tremor-dropdown":
+            "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        },
+        borderRadius: {
+          "tremor-small": "0.375rem",
+          "tremor-default": "0.5rem",
+          "tremor-full": "9999px",
+        },
+        fontSize: {
+          "tremor-label": ["0.75rem"],
+          "tremor-default": ["0.875rem", { lineHeight: "1.25rem" }],
+          "tremor-title": ["1.125rem", { lineHeight: "1.75rem" }],
+          "tremor-metric": ["1.875rem", { lineHeight: "2.25rem" }],
+        },
       },
     },
   },

@@ -51,7 +51,7 @@ import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoade
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { ChatPersonaSelector } from "./ChatPersonaSelector";
-import { FiArrowDown, FiShare2 } from "react-icons/fi";
+import { FiArrowDown, FiMenu } from "react-icons/fi"; 
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { ThreeDots } from "react-loader-spinner";
@@ -1021,6 +1021,12 @@ export function ChatPage({
     setShowDocSidebar((showDocSidebar) => !showDocSidebar); // Toggle the state which will in turn toggle the class
   };
 
+  const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(false);
+
+  const toggleChatSideBar = () => {
+    setIsChatSidebarOpen(!isChatSidebarOpen);
+  };
+
   const retrievalDisabled = !personaIncludesRetrieval(livePersona);
   const sidebarElementRef = useRef<HTMLDivElement>(null);
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
@@ -1036,6 +1042,8 @@ export function ChatPage({
 
       <div className="flex relative bg-background text-default overflow-x-hidden">
         <ChatSidebar
+          isChatSidebarOpen={isChatSidebarOpen}
+          toggleChatSideBar={toggleChatSideBar}
           existingChats={chatSessions}
           currentChatSession={selectedChatSession}
           folders={folders}
@@ -1121,6 +1129,20 @@ export function ChatPage({
                                 userId={user?.id}
                               />
                             </div>
+
+                            {settings?.isMobile && !isChatSidebarOpen && (
+                              <div
+                                onClick={toggleChatSideBar}
+                                className={`
+                                    rounded
+                                    cursor-pointer
+                                    my-auto
+                                    hover:bg-hover-light
+                                  `}
+                              >
+                                <FiMenu size={24} />
+                              </div>
+                            )}
 
                             <div className="ml-auto mr-6 flex">
                               {chatSessionId !== null && (
