@@ -11,7 +11,7 @@ import * as Yup from "yup";
 import { FormBodyBuilder } from "./types";
 import { DefaultDropdown, StringOrNumberOption } from "@/components/Dropdown";
 import { FiInfo, FiPlus, FiX } from "react-icons/fi";
-import { Tooltip } from "@/components/tooltip/Tooltip";
+import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip";
 import { NewLabel } from "@/components/new/label";
 
 export function SectionHeader({
@@ -98,13 +98,16 @@ export function TextFormField({
           :
           <NewLabel>{label}</NewLabel>}
         {tooltip &&
-          <Tooltip
-            content={<p className="bg-black text-white">I can talk</p>}
-            side="top"
-            align="start"
-          >
-            <FiInfo size={12} />
-          </Tooltip>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <FiInfo size={12} />
+              </TooltipTrigger>
+              <TooltipContent side="top" align="center">
+                <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">{tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         }
         {error ? (
           <ManualErrorMessage>{error}</ManualErrorMessage>
