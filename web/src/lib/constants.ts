@@ -26,6 +26,7 @@ export const SEARCH_TYPE_COOKIE_NAME = "search_type";
 
 export const SIDEBAR_WIDTH_CONST = "350px";
 export const SIDEBAR_WIDTH = `w-[350px]`;
+export const SIDEBAR_WIDTH_KEY = "sidebar_local";
 
 export const HEADER_PADDING = "pt-[64px]";
 

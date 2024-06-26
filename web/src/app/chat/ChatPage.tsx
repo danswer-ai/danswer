@@ -263,7 +263,7 @@ export function ChatPage({
   }, [existingChatSessionId]);
 
   const [usedSidebarWidth, setUsedSidebarWidth] = useState<number>(
-    parseInt(SIDEBAR_WIDTH_CONST)
+    documentSidebarInitialWidth || parseInt(SIDEBAR_WIDTH_CONST)
   );
 
   const updateSidebarWidth = (newWidth: number) => {
@@ -1317,7 +1317,7 @@ export function ChatPage({
                   {!retrievalDisabled ? (
                     <div
                       ref={sidebarElementRef}
-                      className={`relative flex-none z-[1000] overflow-y-hidden sidebar bg-background-weak h-screen`}
+                      className={`relative flex-none  overflow-y-hidden sidebar bg-background-weak h-screen`}
                       style={{ width: showDocSidebar ? usedSidebarWidth : 0 }}
                     >
                       <ResizableSection
