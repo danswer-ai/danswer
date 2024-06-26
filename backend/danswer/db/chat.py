@@ -21,6 +21,7 @@ from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.db.models import ToolCall
 from danswer.db.models import User
+from danswer.db.pg_file_store import delete_lobj_by_id
 from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
@@ -85,8 +86,25 @@ def get_chat_sessions_by_user(
     return list(chat_sessions)
 
 
-def delete_chats_older_than(days_old: int, db_session: Session) -> None:
+def delete_chats_and_their_files_older_than(days_old: int, db_session: Session) -> None:
     cutoff_time = datetime.utcnow() - timedelta(days=days_old)
+
+    # Select messages older than cutoff_time with files
+    messages_with_files = db_session.execute(
+        select(ChatMessage.id, ChatMessage.files).where(
+            ChatMessage.time_sent < cutoff_time, ChatMessage.files.isnot(None)
+        )
+    ).fetchall()
+
+    # Delete files associated with each message
+    for _, files in messages_with_files:
+        if files:
+            for file_info in files:
+                lobj_oid = file_info.get("lobj_oid")
+                if lobj_oid:
+                    delete_lobj_by_id(lobj_oid, db_session)
+
+    # Delete the chat messages
     stmt = delete(ChatMessage).where(ChatMessage.time_sent < cutoff_time)
     db_session.execute(stmt)
     db_session.commit()

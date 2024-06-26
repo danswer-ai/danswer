@@ -8,9 +8,8 @@ from danswer.background.celery.celery_app import celery_app
 from danswer.background.task_utils import build_celery_task_wrapper
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.db.chat import delete_chat_sessions_older_than
-from danswer.db.chat import delete_chats_older_than
+from danswer.db.chat import delete_chats_and_their_files_older_than
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.pg_file_store import delete_chat_files_older_than
 from danswer.server.settings.store import load_settings
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
@@ -41,8 +40,7 @@ def sync_user_group_task(user_group_id: int) -> None:
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def perform_ttl_management_task(retention_limit_days: int) -> None:
     with Session(get_sqlalchemy_engine()) as db_session:
-        delete_chat_files_older_than(retention_limit_days, db_session)
-        delete_chats_older_than(retention_limit_days, db_session)
+        delete_chats_and_their_files_older_than(retention_limit_days, db_session)
         delete_chat_sessions_older_than(retention_limit_days, db_session)
 
 

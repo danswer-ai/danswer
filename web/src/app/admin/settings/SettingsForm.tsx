@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { DefaultDropdown, Option } from "@/components/Dropdown";
 import { useContext } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function Checkbox({
   label,
@@ -101,19 +101,22 @@ function IntegerInput({
 
 export function SettingsForm() {
   const router = useRouter();
-
   const combinedSettings = useContext(SettingsContext);
+  const [chatRetention, setChatRetention] = useState("");
+  const { popup, setPopup } = usePopup();
+
+  useEffect(() => {
+    if (combinedSettings?.settings.maximum_chat_retention_days !== undefined) {
+      setChatRetention(
+        combinedSettings.settings.maximum_chat_retention_days?.toString() || ""
+      );
+    }
+  }, [combinedSettings?.settings.maximum_chat_retention_days]);
+
   if (!combinedSettings) {
     return null;
   }
   const settings = combinedSettings.settings;
-
-  // Local state for the chat retention input
-  const [chatRetention, setChatRetention] = useState(
-    settings.maximum_chat_retention_days || ""
-  );
-
-  const { popup, setPopup } = usePopup();
 
   async function updateSettingField(
     updateRequests: { fieldName: keyof Settings; newValue: any }[]

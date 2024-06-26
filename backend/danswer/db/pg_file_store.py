@@ -1,6 +1,5 @@
 import tempfile
 from datetime import datetime
-from datetime import timedelta
 from datetime import timezone
 from io import BytesIO
 from typing import IO
@@ -138,25 +137,3 @@ def delete_pgfilestore_by_file_name(
     db_session: Session,
 ) -> None:
     db_session.query(PGFileStore).filter_by(file_name=file_name).delete()
-
-
-def delete_chat_files_older_than(days_old: int, db_session: Session) -> None:
-    cutoff_time = datetime.utcnow() - timedelta(days=days_old)
-
-    deleted_count = (
-        db_session.query(PGFileStore)
-        .filter(
-            PGFileStore.file_origin.in_(
-                [FileOrigin.CHAT_UPLOAD, FileOrigin.CHAT_IMAGE_GEN]
-            ),
-            PGFileStore.uploaded_at < cutoff_time,
-        )
-        .delete()
-    )
-
-    if deleted_count:
-        logger.info(
-            f"Deleted {deleted_count} files uploaded through chat older than {days_old} days."
-        )
-
-    db_session.commit()
