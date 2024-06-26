@@ -353,7 +353,7 @@ class DefaultMultiLLM(LLM):
                 yield message_chunk
 
         except RemoteProtocolError:
-            raise Exception(
+            raise RuntimeError(
                 "The AI model failed partway through generation, please try again."
             )
 
