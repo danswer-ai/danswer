@@ -41,10 +41,10 @@ import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
-import { Tooltip } from "@/components/tooltip/Tooltip";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
+import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip";
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
 }
@@ -61,6 +61,7 @@ function findImageGenerationTool(tools: ToolSnapshot[]) {
 
 import React, { ReactNode } from 'react';
 import { Label } from "@radix-ui/react-label";
+
 interface CollapsibleSectionProps {
   children: ReactNode;
   prompt?: string
@@ -481,19 +482,19 @@ export function AssistantEditor({
 
 
 
-
                 <div className="mb-6">
                   <div className="flex gap-x-2 items-center">
                     <div className="block font-medium text-base">LLM Provider{" "}</div>
-
-                    <Tooltip
-                      content={<p className="bg-black text-white">I can talk</p>}
-                      side="top"
-                      align="start"
-                    >
-                      <FiInfo size={12} />
-                    </Tooltip>
-
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <FiInfo size={12} />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center">
+                          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">Select an LLM default instance to use for this assistant!</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <div className="mb-2 flex items-starts">
                     <div className="w-96">
@@ -762,7 +763,7 @@ export function AssistantEditor({
                 <div className="mb-6">
                   <div className="flex gap-x-2 items-center">
                     <div className="block font-medium text-base">Add Starter Messages (Optional){" "}</div>
-                    <Tooltip
+                    {/* <Tooltip
                       content={<p className="bg-black text-white">Starter Messages help guide users to use this Assistant.
                         They are shown to the user as clickable options when
                         they select this Assistant. When selected, the specified
@@ -771,7 +772,7 @@ export function AssistantEditor({
                       align="start"
                     >
                       <FiInfo size={12} />
-                    </Tooltip>
+                    </Tooltip> */}
                   </div>
                   <FieldArray
                     name="starter_messages"
