@@ -218,7 +218,8 @@ PREVENT_SIMULTANEOUS_PRUNING = (
     os.environ.get("PREVENT_SIMULTANEOUS_PRUNING", "").lower() == "true"
 )
 
-MAX_PRUNING_FREQ = 300  # Max
+# This is the maxiumum rate at which documents are queried for a pruning job. 0 disables the limitation.
+MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE = 0
 
 
 #####

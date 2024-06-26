@@ -1,19 +1,21 @@
 from datetime import datetime
 from datetime import timezone
-from time import sleep
 
 from sqlalchemy.orm import Session
 
 from danswer.background.task_utils import name_cc_cleanup_task
 from danswer.background.task_utils import name_cc_prune_task
 from danswer.background.task_utils import name_document_set_sync_task
-from danswer.configs.app_configs import MAX_PRUNING_FREQ
+from danswer.configs.app_configs import MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE
 from danswer.configs.app_configs import PREVENT_SIMULTANEOUS_PRUNING
+from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
+    rate_limit_builder,
+)
 from danswer.connectors.interfaces import BaseConnector
-from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import IdConnector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.models import Document
 from danswer.db.engine import get_db_current_time
 from danswer.db.models import Connector
 from danswer.db.models import Credential
@@ -24,8 +26,6 @@ from danswer.server.documents.models import DeletionAttemptSnapshot
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
-
-ONE_MINUTE_IN_SECONDS = 60
 
 
 def get_deletion_status(
@@ -101,42 +101,37 @@ def should_prune_cc_pair(
     return time_since_last_pruning.total_seconds() >= connector.prune_freq
 
 
+def rate_limit_doc_generation(doc_batch: list[Document]) -> set[str]:
+    return {doc.id for doc in doc_batch}
+
+
 def extract_ids_from_runnable_connector(runnable_connector: BaseConnector) -> set[str]:
     """
     If the PruneConnector hasnt been implemented for the given connector, just pull
     all docs using the load_from_state and grab out the IDs
     """
     all_connector_doc_ids: set[str] = set()
+
+    doc_batch_generator = None
     if isinstance(runnable_connector, IdConnector):
         all_connector_doc_ids = runnable_connector.retrieve_all_source_ids()
     elif isinstance(runnable_connector, LoadConnector):
         doc_batch_generator = runnable_connector.load_from_state()
-        all_connector_doc_ids = rate_limit_doc_generation(doc_batch_generator)
     elif isinstance(runnable_connector, PollConnector):
         start = datetime(1970, 1, 1, tzinfo=timezone.utc).timestamp()
         end = datetime.now(timezone.utc).timestamp()
         doc_batch_generator = runnable_connector.poll_source(start=start, end=end)
-        all_connector_doc_ids = rate_limit_doc_generation(doc_batch_generator)
     else:
         raise RuntimeError("Pruning job could not find a valid runnable_connector.")
 
-    return all_connector_doc_ids
+    doc_generation_func = rate_limit_doc_generation
+    if MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE:
+        doc_generation_func = rate_limit_builder(
+            max_calls=MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE, period=60
+        )(rate_limit_doc_generation)
 
-
-def rate_limit_doc_generation(doc_batch_generator: GenerateDocumentsOutput) -> set[str]:
-    all_connector_doc_ids: set[str] = set()
-    docs_added = 0
-    start_time = datetime.now()
-
-    for doc_batch in doc_batch_generator:
-        batch_size = len(doc_batch)
-        if docs_added + batch_size > MAX_PRUNING_FREQ:
-            elapsed_time = (datetime.now() - start_time).total_seconds()
-            if elapsed_time < ONE_MINUTE_IN_SECONDS:
-                sleep(ONE_MINUTE_IN_SECONDS - elapsed_time)
-            docs_added = 0
-            start_time = datetime.now()
-        all_connector_doc_ids.update(doc.id for doc in doc_batch)
-        docs_added += batch_size
+    if doc_batch_generator:
+        for doc_batch in doc_batch_generator:
+            all_connector_doc_ids.update(doc_generation_func(doc_batch))
 
     return all_connector_doc_ids
