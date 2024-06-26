@@ -681,12 +681,10 @@ export function AssistantEditor({
                                       name="include_citations"
                                       label="Include Citations"
                                       subtext={`
-              If set, the response will include bracket citations ([1], [2], etc.) 
-             
-             
-              for each document used by the LLM to help inform the response. This is 
-              the same technique used by the default Assistants. In general, we recommend 
-              to leave this enabled in order to increase trust in the LLM answer.`}
+                                      If set, the response will include bracket citations ([1], [2], etc.) 
+                                      for each document used by the LLM to help inform the response. This is 
+                                      the same technique used by the default Assistants. In general, we recommend 
+                                      to leave this enabled in order to increase trust in the LLM answer.`}
                                     />
                                   </div>
                                 </>
@@ -732,8 +730,8 @@ export function AssistantEditor({
                           searchToolEnabled()
                         );
                       }}
-                      furtherText="Learn about prompting in our docs!"
-                      furtherLink="https://docs.danswer.dev/guides/assistants"
+                      explanationText="Learn about prompting in our docs!"
+                      explanationLink="https://docs.danswer.dev/guides/assistants"
                     />
                   </>
                 )}

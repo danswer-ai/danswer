@@ -48,7 +48,7 @@ export function ManualErrorMessage({ children }: { children: string }) {
   return <div className="text-error text-sm">{children}</div>;
 }
 
-export function FurtherDetails({
+export function ExplanationText({
   text,
   link,
 }: {
@@ -57,14 +57,35 @@ export function FurtherDetails({
 }) {
   return link ? (
     <a
+      className="underline cursor-pointer text-sm font-medium"
       target="_blank"
       href={link}
-      className=" underline cursor-pointer text-sm font-medium"
     >
       {text}
     </a>
   ) : (
-    <div className="text-sm font-semibold"> {text} </div>
+    <div className="text-sm font-semibold">{text}</div>
+  );
+}
+
+export function ToolTipDetails({
+  children,
+}: {
+  children: string | JSX.Element;
+}) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <FiInfo size={12} />
+        </TooltipTrigger>
+        <TooltipContent side="top" align="center">
+          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+            {children}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -84,8 +105,8 @@ export function TextFormField({
   fontSize,
   hideError,
   tooltip,
-  furtherText,
-  furtherLink,
+  explanationText,
+  explanationLink,
   small,
 }: {
   name: string;
@@ -103,8 +124,8 @@ export function TextFormField({
   fontSize?: "text-sm" | "text-base" | "text-lg";
   hideError?: boolean;
   tooltip?: string;
-  furtherText?: string;
-  furtherLink?: string;
+  explanationText?: string;
+  explanationLink?: string;
   small?: boolean;
 }) {
   let heightString = defaultHeight || "";
@@ -116,20 +137,9 @@ export function TextFormField({
     <div className="mb-6">
       <div className="flex gap-x-2 items-center">
         <Label small={small}>{label}</Label>
-        {tooltip && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <FiInfo size={12} />
-              </TooltipTrigger>
-              <TooltipContent side="top" align="center">
-                <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                  {tooltip}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
+
+        {tooltip && <ToolTipDetails>{tooltip}</ToolTipDetails>}
+
         {error ? (
           <ManualErrorMessage>{error}</ManualErrorMessage>
         ) : (
@@ -168,7 +178,9 @@ export function TextFormField({
         autoComplete={autoCompleteDisabled ? "off" : undefined}
         {...(onChange ? { onChange } : {})}
       />
-      {furtherText && <FurtherDetails link={furtherLink} text={furtherText} />}
+      {explanationText && (
+        <ExplanationText link={explanationLink} text={explanationText} />
+      )}
     </div>
   );
 }
@@ -193,8 +205,8 @@ export const BooleanFormField = ({
   alignTop,
 }: BooleanFormFieldProps) => {
   return (
-    <div className=" mb-4">
-      <label className={`flex  text-sm`}>
+    <div className="mb-4">
+      <label className="flex text-sm">
         <Field
           name={name}
           type="checkbox"
@@ -320,7 +332,6 @@ interface SelectorFormFieldProps {
   side?: "top" | "right" | "bottom" | "left";
   maxHeight?: string;
   onSelect?: (selected: string | number | null) => void;
-  includeLogo?: boolean;
   defaultValue?: string;
 }
 
@@ -333,14 +344,13 @@ export function SelectorFormField({
   side = "bottom",
   maxHeight,
   onSelect,
-  includeLogo = false,
   defaultValue,
 }: SelectorFormFieldProps) {
   const [field] = useField<string>(name);
   const { setFieldValue } = useFormikContext();
 
   return (
-    <div className="mb-2">
+    <div className="mb-4">
       {label && <Label>{label}</Label>}
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
