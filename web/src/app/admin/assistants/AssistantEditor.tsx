@@ -10,7 +10,7 @@ import {
   Form,
   Formik,
 } from "formik";
-import { Input } from "@/components/new/input";
+
 import { NewLabel } from "@/components/new/label";
 
 import * as Yup from "yup";

@@ -29,7 +29,7 @@
     "clsx": "^2.1.1",
     "formik": "^2.2.9",
     "js-cookie": "^3.0.5",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.21", 
     "mdast-util-find-and-replace": "^3.0.1",
     "next": "^14.2.3",
     "npm": "^10.8.0",
