@@ -69,11 +69,11 @@ function CCPairIndexingStatusDisplay({
 }
 
 function ClickableTableRow({
-  url, 
-  children, 
-  ...props 
+  url,
+  children,
+  ...props
 }: {
-  url: string; 
+  url: string;
   children: React.ReactNode;
   [key: string]: any; // This allows for any additional props
 }) {
@@ -85,7 +85,7 @@ function ClickableTableRow({
 
   return (
     <TableRow {...props} onClick={navigate}>
-        {children}
+      {children}
     </TableRow>
   );
 }
