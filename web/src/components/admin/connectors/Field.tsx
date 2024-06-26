@@ -11,6 +11,8 @@ import * as Yup from "yup";
 import { FormBodyBuilder } from "./types";
 import { DefaultDropdown, StringOrNumberOption } from "@/components/Dropdown";
 import { FiInfo, FiPlus, FiX } from "react-icons/fi";
+import { Tooltip } from "@/components/tooltip/Tooltip";
+import { NewLabel } from "@/components/new/label";
 
 export function SectionHeader({
   children,
@@ -32,6 +34,18 @@ export function ManualErrorMessage({ children }: { children: string }) {
   return <div className="text-error text-sm">{children}</div>;
 }
 
+export function FurtherDetails({ text, link }: { text: string, link?: string }) {
+  return (
+    <>
+      {
+        link ? <a target="_blank" href={link} className=" underline cursor-pointer text-sm font-medium">{text}</a>
+          :
+          <div className="text-sm font-semibold"> {text} </div>
+      }
+    </>
+  )
+}
+
 export function TextFormField({
   name,
   label,
@@ -47,7 +61,10 @@ export function TextFormField({
   isCode = false,
   fontSize,
   hideError,
-  tooltip
+  tooltip,
+  furtherText,
+  furtherLink,
+  smaller
 }: {
   name: string;
   label: string;
@@ -63,7 +80,10 @@ export function TextFormField({
   isCode?: boolean;
   fontSize?: "text-sm" | "text-base" | "text-lg";
   hideError?: boolean;
-  tooltip?: JSX.Element
+  tooltip?: string
+  furtherText?: string,
+  furtherLink?: string,
+  smaller?: boolean
 }) {
   let heightString = defaultHeight || "";
   if (isTextArea && !heightString) {
@@ -73,8 +93,19 @@ export function TextFormField({
   return (
     <div className="mb-6">
       <div className="flex gap-x-2 items-center">
-        <Label>{label}</Label>
-        <FiInfo size={12} />
+        {!smaller ?
+          <Label>{label}</Label>
+          :
+          <NewLabel>{label}</NewLabel>}
+        {tooltip &&
+          <Tooltip
+            content={<p className="bg-black text-white">I can talk</p>}
+            side="top"
+            align="start"
+          >
+            <FiInfo size={12} />
+          </Tooltip>
+        }
         {error ? (
           <ManualErrorMessage>{error}</ManualErrorMessage>
         ) : (
@@ -87,6 +118,7 @@ export function TextFormField({
           )
         )}
       </div>
+
       {subtext && <SubLabel>{subtext}</SubLabel>}
       <Field
         as={isTextArea ? "textarea" : "input"}
@@ -94,6 +126,7 @@ export function TextFormField({
         name={name}
         id={name}
         className={`
+          ${smaller && "text-sm"}
           border 
           border-border 
           rounded 
@@ -111,7 +144,7 @@ export function TextFormField({
         autoComplete={autoCompleteDisabled ? "off" : undefined}
         {...(onChange ? { onChange } : {})}
       />
-
+      {furtherText && <FurtherDetails link={furtherLink} text={furtherText} />}
     </div>
   );
 }
@@ -121,6 +154,9 @@ interface BooleanFormFieldProps {
   label: string;
   subtext?: string | JSX.Element;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  noPadding?: boolean;
+  small?: boolean;
+  alignTop?: boolean
 }
 
 export const BooleanFormField = ({
@@ -128,22 +164,24 @@ export const BooleanFormField = ({
   label,
   subtext,
   onChange,
+  noPadding,
+  small,
+  alignTop
 }: BooleanFormFieldProps) => {
   return (
-    <div className="mb-4">
-      <label className="flex text-sm">
+    <div className=" mb-4">
+      <label className={`flex  text-sm`}>
         <Field
           name={name}
           type="checkbox"
-          className="mx-3 px-5 w-3.5 h-3.5 my-auto"
+          className={`${noPadding ? "mr-3" : "mx-3"}  px-5 w-3.5 h-3.5 ${alignTop ? "mt-1" : "my-auto"}`}
           {...(onChange ? { onChange } : {})}
         />
         <div>
-          <Label>{label}</Label>
+          {small ? <NewLabel className="pt-0  mt-0">{label}</NewLabel> : <Label>{label}</Label>}
           {subtext && <SubLabel>{subtext}</SubLabel>}
         </div>
       </label>
-
       <ErrorMessage
         name={name}
         component="div"
@@ -259,8 +297,9 @@ interface SelectorFormFieldProps {
   maxHeight?: string;
   onSelect?: (selected: string | number | null) => void;
   includeLogo?: boolean
+  defaultValue?: string
 }
-import { Icons } from "@/components/icons/icons";
+
 export function SelectorFormField({
   name,
   label,
@@ -270,18 +309,18 @@ export function SelectorFormField({
   side = "bottom",
   maxHeight,
   onSelect,
-  includeLogo = false
+  includeLogo = false,
+  defaultValue
 }: SelectorFormFieldProps) {
   const [field] = useField<string>(name);
   const { setFieldValue } = useFormikContext();
 
   return (
-    <div className="mb-4">
+    <div className="mb-2">
       {label && <Label>{label}</Label>}
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
       <div className="mt-2">
-
         <DefaultDropdown
           options={options}
           selected={field.value}
@@ -289,8 +328,10 @@ export function SelectorFormField({
           includeDefault={includeDefault}
           side={side}
           maxHeight={maxHeight}
+          defaultValue={defaultValue}
         />
       </div>
+
 
       <ErrorMessage
         name={name}

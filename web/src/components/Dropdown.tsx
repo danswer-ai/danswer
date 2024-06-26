@@ -1,5 +1,5 @@
 import { ChangeEvent, FC, useEffect, useRef, useState } from "react";
-import { ChevronDownIcon, Icons } from "./icons/icons";
+import { ChevronDownIcon } from "./icons/icons";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
 import { Popover } from "./popover/Popover";
 
@@ -8,6 +8,7 @@ export interface Option<T> {
   value: T;
   description?: string;
   metadata?: { [key: string]: any };
+  icon?: React.FC<{ size?: number; className?: string }>;
 }
 
 export type StringOrNumberOption = Option<string | number>;
@@ -289,11 +290,13 @@ export function DefaultDropdown({
   includeDefault = false,
   side,
   maxHeight,
+  defaultValue
 }: {
   options: StringOrNumberOption[];
   selected: string | null;
   onSelect: (value: string | number | null) => void;
   includeDefault?: boolean;
+  defaultValue?: string
   side?: "top" | "right" | "bottom" | "left";
   maxHeight?: string;
 }) {
@@ -315,7 +318,7 @@ export function DefaultDropdown({
     >
       <p className="line-clamp-1">
         {selectedOption?.name ||
-          (includeDefault ? "Default" : "Select an option...")}
+          (includeDefault ? (defaultValue ?? "Default") : "Select an option...")}
       </p>
       <FiChevronDown className="my-auto ml-auto" />
     </div>
@@ -342,7 +345,6 @@ export function DefaultDropdown({
             onSelect(null);
           }}
           isSelected={selected === null}
-          icon={Icons.OpenAI}
         />
       )}
       {options.map((option, ind) => {
@@ -354,7 +356,7 @@ export function DefaultDropdown({
             description={option.description}
             onSelect={() => onSelect(option.value)}
             isSelected={isSelected}
-            icon={Icons.OpenAI}
+            icon={option.icon}
           />
         );
       })}
