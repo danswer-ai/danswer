@@ -124,13 +124,12 @@ def extract_ids_from_runnable_connector(runnable_connector: BaseConnector) -> se
     else:
         raise RuntimeError("Pruning job could not find a valid runnable_connector.")
 
-    doc_generation_func = rate_limit_doc_generation
-    if MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE:
-        doc_generation_func = rate_limit_builder(
-            max_calls=MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE, period=60
-        )(rate_limit_doc_generation)
-
     if doc_batch_generator:
+        doc_generation_func = rate_limit_doc_generation
+        if MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE:
+            doc_generation_func = rate_limit_builder(
+                max_calls=MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE, period=60
+            )(rate_limit_doc_generation)
         for doc_batch in doc_batch_generator:
             all_connector_doc_ids.update(doc_generation_func(doc_batch))
 
