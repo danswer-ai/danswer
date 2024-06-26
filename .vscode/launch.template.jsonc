@@ -54,7 +54,7 @@
                 "PYTHONUNBUFFERED": "1"
             },
             "args": [
-                "ee.danswer.main:app",
+                "danswer.main:app",
                 "--reload",
                 "--port",
                 "8080"
