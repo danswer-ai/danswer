@@ -61,6 +61,11 @@ indexCapability:
     name: indexing-model-storage
     accessMode: "ReadWriteOnce"
     storage: "3Gi"
+  resources:
+    # For example
+    # limits:
+    #   nvidia.com/gpu: 1
+
 
 config:
   envConfigMapName: env-configmap
