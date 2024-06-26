@@ -1,7 +1,7 @@
 """create usage reports table
 
 Revision ID: bc9771dccadf
-Revises: 48d14957fe80
+Revises: 0568ccf46a6b
 Create Date: 2024-06-18 10:04:26.800282
 
 """
