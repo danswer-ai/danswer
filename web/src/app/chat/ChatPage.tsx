@@ -74,12 +74,9 @@ import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";
 import { ChatBanner } from "./ChatBanner";
 import { TbLayoutSidebarRightExpand } from "react-icons/tb";
-import {
-  SIDEBAR_WIDTH_CONST,
-} from "@/lib/constants";
+import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 
 import ResizableSection from "@/components/resizable/ResizableSection";
-
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;

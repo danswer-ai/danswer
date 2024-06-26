@@ -14,7 +14,6 @@ export function HeaderTitle({ children }: { children: JSX.Element | string }) {
   return <h1 className="flex text-2xl text-strong font-bold">{children}</h1>;
 }
 
-
 interface HeaderProps {
   user: User | null;
 }
