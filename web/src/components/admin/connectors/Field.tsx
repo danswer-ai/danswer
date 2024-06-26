@@ -11,7 +11,12 @@ import * as Yup from "yup";
 import { FormBodyBuilder } from "./types";
 import { DefaultDropdown, StringOrNumberOption } from "@/components/Dropdown";
 import { FiInfo, FiPlus, FiX } from "react-icons/fi";
-import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@radix-ui/react-tooltip";
 import { NewLabel } from "@/components/new/label";
 
 export function SectionHeader({
@@ -34,16 +39,24 @@ export function ManualErrorMessage({ children }: { children: string }) {
   return <div className="text-error text-sm">{children}</div>;
 }
 
-export function FurtherDetails({ text, link }: { text: string, link?: string }) {
-  return (
-    <>
-      {
-        link ? <a target="_blank" href={link} className=" underline cursor-pointer text-sm font-medium">{text}</a>
-          :
-          <div className="text-sm font-semibold"> {text} </div>
-      }
-    </>
-  )
+export function FurtherDetails({
+  text,
+  link,
+}: {
+  text: string;
+  link?: string;
+}) {
+  return link ? (
+    <a
+      target="_blank"
+      href={link}
+      className=" underline cursor-pointer text-sm font-medium"
+    >
+      {text}
+    </a>
+  ) : (
+    <div className="text-sm font-semibold"> {text} </div>
+  );
 }
 
 export function TextFormField({
@@ -64,7 +77,7 @@ export function TextFormField({
   tooltip,
   furtherText,
   furtherLink,
-  smaller
+  smaller,
 }: {
   name: string;
   label: string;
@@ -80,10 +93,10 @@ export function TextFormField({
   isCode?: boolean;
   fontSize?: "text-sm" | "text-base" | "text-lg";
   hideError?: boolean;
-  tooltip?: string
-  furtherText?: string,
-  furtherLink?: string,
-  smaller?: boolean
+  tooltip?: string;
+  furtherText?: string;
+  furtherLink?: string;
+  smaller?: boolean;
 }) {
   let heightString = defaultHeight || "";
   if (isTextArea && !heightString) {
@@ -93,22 +106,21 @@ export function TextFormField({
   return (
     <div className="mb-6">
       <div className="flex gap-x-2 items-center">
-        {!smaller ?
-          <Label>{label}</Label>
-          :
-          <NewLabel>{label}</NewLabel>}
-        {tooltip &&
+        {!smaller ? <Label>{label}</Label> : <NewLabel>{label}</NewLabel>}
+        {tooltip && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
                 <FiInfo size={12} />
               </TooltipTrigger>
               <TooltipContent side="top" align="center">
-                <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">{tooltip}</p>
+                <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                  {tooltip}
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        }
+        )}
         {error ? (
           <ManualErrorMessage>{error}</ManualErrorMessage>
         ) : (
@@ -159,7 +171,7 @@ interface BooleanFormFieldProps {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   noPadding?: boolean;
   small?: boolean;
-  alignTop?: boolean
+  alignTop?: boolean;
 }
 
 export const BooleanFormField = ({
@@ -169,7 +181,7 @@ export const BooleanFormField = ({
   onChange,
   noPadding,
   small,
-  alignTop
+  alignTop,
 }: BooleanFormFieldProps) => {
   return (
     <div className=" mb-4">
@@ -181,7 +193,11 @@ export const BooleanFormField = ({
           {...(onChange ? { onChange } : {})}
         />
         <div>
-          {small ? <NewLabel className="pt-0  mt-0">{label}</NewLabel> : <Label>{label}</Label>}
+          {small ? (
+            <NewLabel className="pt-0  mt-0">{label}</NewLabel>
+          ) : (
+            <Label>{label}</Label>
+          )}
           {subtext && <SubLabel>{subtext}</SubLabel>}
         </div>
       </label>
@@ -299,8 +315,8 @@ interface SelectorFormFieldProps {
   side?: "top" | "right" | "bottom" | "left";
   maxHeight?: string;
   onSelect?: (selected: string | number | null) => void;
-  includeLogo?: boolean
-  defaultValue?: string
+  includeLogo?: boolean;
+  defaultValue?: string;
 }
 
 export function SelectorFormField({
@@ -313,7 +329,7 @@ export function SelectorFormField({
   maxHeight,
   onSelect,
   includeLogo = false,
-  defaultValue
+  defaultValue,
 }: SelectorFormFieldProps) {
   const [field] = useField<string>(name);
   const { setFieldValue } = useFormikContext();
@@ -334,7 +350,6 @@ export function SelectorFormField({
           defaultValue={defaultValue}
         />
       </div>
-
 
       <ErrorMessage
         name={name}
