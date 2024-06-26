@@ -71,12 +71,8 @@ interface IconProps {
   className?: string;
 }
 
-
-type PropIconProps = React.HTMLAttributes<SVGElement>
-
 export const defaultTailwindCSS = "my-auto flex flex-shrink-0 text-default";
 export const defaultTailwindCSSBlue = "my-auto flex flex-shrink-0 text-link";
-
 
 export const OpenAIIcon = ({
   size = 16,
@@ -90,8 +86,7 @@ export const OpenAIIcon = ({
       <Image src={openAISVG} alt="Logo" width="96" height="96" />
     </div>
   );
-}
-
+};
 
 export const AnthropicIcon = ({
   size = 16,
@@ -106,10 +101,6 @@ export const AnthropicIcon = ({
     </div>
   );
 };
-
-
-
-
 
 export const PlugIcon = ({
   size = 16,
