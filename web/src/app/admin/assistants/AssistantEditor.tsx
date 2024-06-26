@@ -713,10 +713,10 @@ export function AssistantEditor({
                   </div>
                 </div>
 
-                <Divider />
-
                 {llmProviders.length > 0 && (
                   <>
+                    <Divider />
+
                     <TextFormField
                       name="task_prompt"
                       label="Additional instructions (Optional)"
@@ -735,7 +735,6 @@ export function AssistantEditor({
                     />
                   </>
                 )}
-                <Divider />
                 <div className="mb-6">
                   <div className="flex gap-x-2 items-center">
                     <div className="block font-medium text-base">
@@ -884,63 +883,63 @@ export function AssistantEditor({
                   userGroups &&
                   (!user || user.role === "admin") && (
                     <>
-                      <HidableSection sectionTitle="Access">
-                        <>
-                          <BooleanFormField
-                            name="is_public"
-                            label="Is Public?"
-                            subtext="If set, this Assistant will be available to all users. If not, only the specified User Groups will be able to access it."
-                          />
 
-                          {userGroups &&
-                            userGroups.length > 0 &&
-                            !values.is_public && (
-                              <div>
-                                <Text>
-                                  Select which User Groups should have access to
-                                  this Assistant.
-                                </Text>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                  {userGroups.map((userGroup) => {
-                                    const isSelected = values.groups.includes(
-                                      userGroup.id
-                                    );
-                                    return (
-                                      <Bubble
-                                        key={userGroup.id}
-                                        isSelected={isSelected}
-                                        onClick={() => {
-                                          if (isSelected) {
-                                            setFieldValue(
-                                              "groups",
-                                              values.groups.filter(
-                                                (id) => id !== userGroup.id
-                                              )
-                                            );
-                                          } else {
-                                            setFieldValue("groups", [
-                                              ...values.groups,
-                                              userGroup.id,
-                                            ]);
-                                          }
-                                        }}
-                                      >
-                                        <div className="flex">
-                                          <GroupsIcon />
-                                          <div className="ml-1">
-                                            {userGroup.name}
-                                          </div>
-                                        </div>
-                                      </Bubble>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
-                        </>
-                      </HidableSection>
-                    </>
-                  )}
+                    <Divider />
+
+                    <BooleanFormField
+                      small
+                      noPadding
+                      alignTop
+                      name="is_public"
+                      label="Is Public?"
+                      subtext="If set, this Assistant will be available to all users. If not, only the specified User Groups will be able to access it."
+                    />
+
+                    {userGroups &&
+                      userGroups.length > 0 &&
+                      !values.is_public && (
+                        <div>
+                          <Text>
+                            Select which User Groups should have access to this
+                            Assistant.
+                          </Text>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {userGroups.map((userGroup) => {
+                              const isSelected = values.groups.includes(
+                                userGroup.id
+                              );
+                              return (
+                                <Bubble
+                                  key={userGroup.id}
+                                  isSelected={isSelected}
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setFieldValue(
+                                        "groups",
+                                        values.groups.filter(
+                                          (id) => id !== userGroup.id
+                                        )
+                                      );
+                                    } else {
+                                      setFieldValue("groups", [
+                                        ...values.groups,
+                                        userGroup.id,
+                                      ]);
+                                    }
+                                  }}
+                                >
+                                  <div className="flex">
+                                    <GroupsIcon />
+                                    <div className="ml-1">{userGroup.name}</div>
+                                  </div>
+                                </Bubble>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                  </>
+                )}
 
                 <div className="flex">
                   <Button
