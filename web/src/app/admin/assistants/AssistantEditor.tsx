@@ -24,9 +24,8 @@ import {
   SelectorFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
-import { HidableSection } from "./HidableSection";
-import { FiInfo, FiPlus, FiSettings, FiX } from "react-icons/fi";
-import { EE_ENABLED } from "@/lib/constants";
+import CollapsibleSection from "./CollapsibleSection";
+import { FiInfo, FiPlus, FiX } from "react-icons/fi";
 import { useUserGroups } from "@/lib/hooks";
 import { Bubble } from "@/components/Bubble";
 import { GroupsIcon } from "@/components/icons/icons";
@@ -43,6 +42,8 @@ import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidE
 
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip";
 
+
+import { EE_ENABLED } from "@/lib/constants";
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
 }
@@ -50,67 +51,6 @@ function findSearchTool(tools: ToolSnapshot[]) {
 function findImageGenerationTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "ImageGenerationTool");
 }
-
-import React, { ReactNode } from "react";
-
-interface CollapsibleSectionProps {
-  children: ReactNode;
-  prompt?: string;
-  className?: string;
-}
-
-const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
-  children,
-  prompt,
-  className = "",
-}) => {
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
-
-  const toggleCollapse = (e?: React.MouseEvent<HTMLDivElement>) => {
-    // Only toggle if the click is on the border or plus sign
-    if (
-      !e ||
-      e.currentTarget === e.target ||
-      (e.target as HTMLElement).classList.contains("collapse-toggle")
-    ) {
-      setIsCollapsed(!isCollapsed);
-    }
-  };
-
-  return (
-    <div
-      className={`relative ${isCollapsed ? "h-6" : ""} ${className}`}
-      style={{ transition: "height 0.3s ease-out" }}
-    >
-      <div
-        className={`
-          cursor-pointer
-          ${isCollapsed ? "h-6" : "pl-4 border-l-2  border-border"}
-        `}
-        onClick={toggleCollapse}
-      >
-        {isCollapsed ? (
-          <span className="collapse-toggle text-lg absolute left-0 top-0  text-sm flex  items-center gap-x-3 cursor-pointer">
-            <FiSettings className="pointer-events-none my-auto" size={16} />
-            {prompt}{" "}
-          </span>
-        ) : (
-          <>
-            {children}
-            <Button
-              onClick={(e) => toggleCollapse()}
-              className="text-sm   p-1 rounded-lg"
-            >
-              Settings updated
-            </Button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default CollapsibleSection;
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
   return <div className="text-sm text-subtle mb-2">{children}</div>;
@@ -880,7 +820,6 @@ export function AssistantEditor({
                   />
                 </div>
 
-                <Divider />
 
 
                 {isPaidEnterpriseFeaturesEnabled &&
@@ -890,60 +829,62 @@ export function AssistantEditor({
 
                     <Divider />
 
-                    <BooleanFormField
-                      small
-                      noPadding
-                      alignTop
-                      name="is_public"
-                      label="Is Public?"
-                      subtext="If set, this Assistant will be available to all users. If not, only the specified User Groups will be able to access it."
-                    />
+                      <BooleanFormField
+                        small
+                        noPadding
+                        alignTop
+                        name="is_public"
+                        label="Is Public?"
+                        subtext="If set, this Assistant will be available to all users. If not, only the specified User Groups will be able to access it."
+                      />
 
-                    {userGroups &&
-                      userGroups.length > 0 &&
-                      !values.is_public && (
-                        <div>
-                          <Text>
-                            Select which User Groups should have access to this
-                            Assistant.
-                          </Text>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {userGroups.map((userGroup) => {
-                              const isSelected = values.groups.includes(
-                                userGroup.id
-                              );
-                              return (
-                                <Bubble
-                                  key={userGroup.id}
-                                  isSelected={isSelected}
-                                  onClick={() => {
-                                    if (isSelected) {
-                                      setFieldValue(
-                                        "groups",
-                                        values.groups.filter(
-                                          (id) => id !== userGroup.id
-                                        )
-                                      );
-                                    } else {
-                                      setFieldValue("groups", [
-                                        ...values.groups,
-                                        userGroup.id,
-                                      ]);
-                                    }
-                                  }}
-                                >
-                                  <div className="flex">
-                                    <GroupsIcon />
-                                    <div className="ml-1">{userGroup.name}</div>
-                                  </div>
-                                </Bubble>
-                              );
-                            })}
+                      {userGroups &&
+                        userGroups.length > 0 &&
+                        !values.is_public && (
+                          <div>
+                            <Text>
+                              Select which User Groups should have access to
+                              this Assistant.
+                            </Text>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {userGroups.map((userGroup) => {
+                                const isSelected = values.groups.includes(
+                                  userGroup.id
+                                );
+                                return (
+                                  <Bubble
+                                    key={userGroup.id}
+                                    isSelected={isSelected}
+                                    onClick={() => {
+                                      if (isSelected) {
+                                        setFieldValue(
+                                          "groups",
+                                          values.groups.filter(
+                                            (id) => id !== userGroup.id
+                                          )
+                                        );
+                                      } else {
+                                        setFieldValue("groups", [
+                                          ...values.groups,
+                                          userGroup.id,
+                                        ]);
+                                      }
+                                    }}
+                                  >
+                                    <div className="flex">
+                                      <GroupsIcon />
+                                      <div className="ml-1">
+                                        {userGroup.name}
+                                      </div>
+                                    </div>
+                                  </Bubble>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                  </>
-                )}
+                        )}
+                    </>
+                  )}
 
                 <div className="flex">
                   <Button
