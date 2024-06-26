@@ -17,6 +17,7 @@
             "request": "launch",
             "cwd": "${workspaceRoot}/web",
             "runtimeExecutable": "npm",
+            "envFile": "${workspaceFolder}/.env",
             "runtimeArgs": [
                 "run", "dev"
             ],
@@ -28,6 +29,7 @@
             "request": "launch",
             "module": "uvicorn",
             "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/.env",
             "env": {
                 "LOG_LEVEL": "DEBUG",
                 "PYTHONUNBUFFERED": "1"
@@ -45,6 +47,7 @@
             "request": "launch",
             "module": "uvicorn",
             "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/.env",
             "env": {
                 "LOG_ALL_MODEL_INTERACTIONS": "True",
                 "LOG_LEVEL": "DEBUG",
@@ -63,6 +66,7 @@
             "request": "launch",
             "program": "danswer/background/update.py",
             "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/.env",
             "env": {
                 "ENABLE_MINI_CHUNK": "false",
                 "LOG_LEVEL": "DEBUG",
@@ -77,6 +81,7 @@
             "request": "launch",
             "program": "scripts/dev_run_background_jobs.py",
             "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/.env",
             "env": {
                 "LOG_LEVEL": "DEBUG",
                 "PYTHONUNBUFFERED": "1",
