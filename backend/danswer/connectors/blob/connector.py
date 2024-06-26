@@ -41,6 +41,22 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         self.s3_client: BaseClient | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
+        """Checks for boto3 credentials based on the bucket type.
+        (1) R2: Access Key ID, Secret Access Key, Account ID
+        (2) S3: AWS Access Key ID, AWS Secret Access Key
+        (3) GOOGLE_CLOUD_STORAGE: Access Key ID, Secret Access Key, Project ID
+        (4) OCI_STORAGE: Namespace, Region, Access Key ID, Secret Access Key
+
+        For each bucket type, the method initializes the appropriate S3 client:
+        - R2: Uses Cloudflare R2 endpoint with S3v4 signature
+        - S3: Creates a standard boto3 S3 client
+        - GOOGLE_CLOUD_STORAGE: Uses Google Cloud Storage endpoint
+        - OCI_STORAGE: Uses Oracle Cloud Infrastructure Object Storage endpoint
+
+        Raises ConnectorMissingCredentialError if required credentials are missing.
+        Raises ValueError for unsupported bucket types.
+        """
+
         logger.info(
             f"Loading credentials for {self.bucket_name} or type {self.bucket_type}"
         )
@@ -115,7 +131,6 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         return object["Body"].read()
 
     def _get_presigned_url(self, key: str) -> str:
-        logger.info("Getting presigned url")
         if self.s3_client is None:
             raise ConnectorMissingCredentialError("Blog storage")
 
@@ -124,7 +139,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         )
         return url
 
-    def _yield_objects(
+    def _yield_blob_objects(
         self,
         start: datetime,
         end: datetime,
@@ -166,7 +181,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                             source=DocumentSource(self.bucket_type.lower()),
                             semantic_identifier=name,
                             doc_updated_at=last_modified,
-                            metadata={"type": "article"},
+                            metadata={"type": "blob"},
                         )
                     )
                     if len(batch) == self.batch_size:
@@ -181,7 +196,8 @@ class BlobStorageConnector(LoadConnector, PollConnector):
             yield batch
 
     def load_from_state(self) -> GenerateDocumentsOutput:
-        return self._yield_objects(
+        logger.info("Loading blob objects")
+        return self._yield_blob_objects(
             start=datetime(1970, 1, 1, tzinfo=timezone.utc),
             end=datetime.now(timezone.utc),
         )
@@ -195,7 +211,49 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         start_datetime = datetime.fromtimestamp(start, tz=timezone.utc)
         end_datetime = datetime.fromtimestamp(end, tz=timezone.utc)
 
-        for batch in self._yield_objects(start_datetime, end_datetime):
+        for batch in self._yield_blob_objects(start_datetime, end_datetime):
             yield batch
 
         return None
+
+
+if __name__ == "__main__":
+    # Create credentials dictionary
+    credentials_dict = {
+        "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID"),
+        "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
+    }
+
+    # Initialize the connector
+    connector = BlobStorageConnector(
+        bucket_type=os.environ.get("BUCKET_TYPE"),
+        bucket_name=os.environ.get("BUCKET_NAME"),
+        prefix="",  # Optional: specify a prefix if needed
+    )
+
+    try:
+        # Load credentials
+        connector.load_credentials(credentials_dict)
+
+        # Generate documents
+        document_batch_generator = connector.load_from_state()
+
+        # Print the first batch of documents
+        for document_batch in document_batch_generator:
+            print("First batch of documents:")
+            for doc in document_batch:
+                print(f"Document ID: {doc.id}")
+                print(f"Semantic Identifier: {doc.semantic_identifier}")
+                print(f"Source: {doc.source}")
+                print(f"Updated At: {doc.doc_updated_at}")
+                print("Sections:")
+                for section in doc.sections:
+                    print(f"  - Link: {section.link}")
+                    print(f"  - Text: {section.text[:100]}...")  # Print first 100 chars
+                print("---")
+            break  # Only print the first batch
+
+    except ConnectorMissingCredentialError as e:
+        print(f"Error: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
