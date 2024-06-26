@@ -4,8 +4,6 @@
 
 # For local dev, often user Authentication is not needed
 AUTH_TYPE=disabled
-# This passes top N results to LLM an additional time for reranking prior to answer generation, quite token heavy so we disable it for dev generally
-DISABLE_LLM_CHUNK_FILTER=True
 
 
 # Always keep these on for Dev
@@ -13,6 +11,11 @@ DISABLE_LLM_CHUNK_FILTER=True
 LOG_ALL_MODEL_INTERACTIONS=True
 # More verbose logging
 LOG_LEVEL=debug
+
+
+# This passes top N results to LLM an additional time for reranking prior to answer generation
+# This step is quite heavy on token usage so we disable it for dev generally
+DISABLE_LLM_CHUNK_FILTER=True
 
 
 # Useful if you want to toggle auth on/off (google_oauth/OIDC specifically)
@@ -42,3 +45,8 @@ FAST_GEN_AI_MODEL_VERSION=gpt-3.5-turbo
 # Python stuff
 PYTHONPATH=./backend
 PYTHONUNBUFFERED=1
+
+
+# Enable the full set of Danswer Enterprise Edition features
+# NOTE: DO NOT ENABLE THIS UNLESS YOU HAVE A PAID ENTERPRISE LICENSE (or if you are using this for local testing/development)
+ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=False
