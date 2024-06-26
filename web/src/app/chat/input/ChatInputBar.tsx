@@ -84,9 +84,10 @@ export function ChatInputBar({
               flex
               flex-col
               border
-              border-border
+              border-border-medium
               rounded-lg
-              bg-background
+              overflow-hidden
+              bg-background-weak
               [&:has(textarea:focus)]::ring-1
               [&:has(textarea:focus)]::ring-black
             "
@@ -118,13 +119,14 @@ export function ChatInputBar({
                 shrink
                 resize-none
                 border-0
-                bg-transparent
+                bg-background-weak
                 ${
                   textAreaRef.current &&
                   textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT
                     ? "overflow-y-auto mt-2"
                     : ""
                 }
+                overflow-hidden
                 whitespace-normal
                 break-word
                 overscroll-contain
@@ -157,7 +159,7 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-            <div className="flex items-center space-x-3 px-4 pb-2">
+            <div className="flex items-center space-x-3  px-4 pb-2">
               <ChatInputOption
                 name={selectedAssistant ? selectedAssistant.name : "Assistants"}
                 icon={FaBrain}
