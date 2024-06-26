@@ -17,7 +17,7 @@ export default async function Page() {
     );
   } else {
     body = (
-      <Card>
+      <Card className="max-w-4xl">
         <AssistantEditor
           {...values}
           defaultPublic={true}

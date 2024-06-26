@@ -10,7 +10,7 @@ import {
 import * as Yup from "yup";
 import { FormBodyBuilder } from "./types";
 import { DefaultDropdown, StringOrNumberOption } from "@/components/Dropdown";
-import { FiPlus, FiX } from "react-icons/fi";
+import { FiInfo, FiPlus, FiX } from "react-icons/fi";
 
 export function SectionHeader({
   children,
@@ -29,7 +29,7 @@ export function SubLabel({ children }: { children: string | JSX.Element }) {
 }
 
 export function ManualErrorMessage({ children }: { children: string }) {
-  return <div className="text-error text-sm mt-1">{children}</div>;
+  return <div className="text-error text-sm">{children}</div>;
 }
 
 export function TextFormField({
@@ -47,6 +47,7 @@ export function TextFormField({
   isCode = false,
   fontSize,
   hideError,
+  tooltip
 }: {
   name: string;
   label: string;
@@ -62,6 +63,7 @@ export function TextFormField({
   isCode?: boolean;
   fontSize?: "text-sm" | "text-base" | "text-lg";
   hideError?: boolean;
+  tooltip?: JSX.Element
 }) {
   let heightString = defaultHeight || "";
   if (isTextArea && !heightString) {
@@ -69,8 +71,22 @@ export function TextFormField({
   }
 
   return (
-    <div className="mb-4">
-      <Label>{label}</Label>
+    <div className="mb-6">
+      <div className="flex gap-x-2 items-center">
+        <Label>{label}</Label>
+        <FiInfo size={12} />
+        {error ? (
+          <ManualErrorMessage>{error}</ManualErrorMessage>
+        ) : (
+          !hideError && (
+            <ErrorMessage
+              name={name}
+              component="div"
+              className="text-red-500 my-auto text-sm"
+            />
+          )
+        )}
+      </div>
       {subtext && <SubLabel>{subtext}</SubLabel>}
       <Field
         as={isTextArea ? "textarea" : "input"}
@@ -95,17 +111,7 @@ export function TextFormField({
         autoComplete={autoCompleteDisabled ? "off" : undefined}
         {...(onChange ? { onChange } : {})}
       />
-      {error ? (
-        <ManualErrorMessage>{error}</ManualErrorMessage>
-      ) : (
-        !hideError && (
-          <ErrorMessage
-            name={name}
-            component="div"
-            className="text-red-500 text-sm mt-1"
-          />
-        )
-      )}
+
     </div>
   );
 }
@@ -252,8 +258,9 @@ interface SelectorFormFieldProps {
   side?: "top" | "right" | "bottom" | "left";
   maxHeight?: string;
   onSelect?: (selected: string | number | null) => void;
+  includeLogo?: boolean
 }
-
+import { Icons } from "@/components/icons/icons";
 export function SelectorFormField({
   name,
   label,
@@ -263,6 +270,7 @@ export function SelectorFormField({
   side = "bottom",
   maxHeight,
   onSelect,
+  includeLogo = false
 }: SelectorFormFieldProps) {
   const [field] = useField<string>(name);
   const { setFieldValue } = useFormikContext();
@@ -273,6 +281,7 @@ export function SelectorFormField({
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
       <div className="mt-2">
+
         <DefaultDropdown
           options={options}
           selected={field.value}
