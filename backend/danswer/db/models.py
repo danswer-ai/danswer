@@ -1127,6 +1127,9 @@ class PGFileStore(Base):
     file_type: Mapped[str] = mapped_column(String, default="text/plain")
     file_metadata: Mapped[JSON_ro] = mapped_column(postgresql.JSONB(), nullable=True)
     lobj_oid: Mapped[int] = mapped_column(Integer, nullable=False)
+    uploaded_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
 
 """

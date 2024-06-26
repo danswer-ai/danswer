@@ -1,4 +1,7 @@
 import tempfile
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 from io import BytesIO
 from typing import IO
 
@@ -81,6 +84,7 @@ def upsert_pgfilestore(
     lobj_oid: int,
     db_session: Session,
     commit: bool = False,
+    uploaded_at: datetime | None = None,
     file_metadata: dict | None = None,
 ) -> PGFileStore:
     pgfilestore = db_session.query(PGFileStore).filter_by(file_name=file_name).first()
@@ -98,12 +102,15 @@ def upsert_pgfilestore(
 
         pgfilestore.lobj_oid = lobj_oid
     else:
+        if not uploaded_at:
+            uploaded_at = datetime.now(tz=timezone.utc)
         pgfilestore = PGFileStore(
             file_name=file_name,
             display_name=display_name,
             file_origin=file_origin,
             file_type=file_type,
             file_metadata=file_metadata,
+            uploaded_at=uploaded_at,
             lobj_oid=lobj_oid,
         )
         db_session.add(pgfilestore)
@@ -131,3 +138,25 @@ def delete_pgfilestore_by_file_name(
     db_session: Session,
 ) -> None:
     db_session.query(PGFileStore).filter_by(file_name=file_name).delete()
+
+
+def delete_chat_files_older_than(days_old: int, db_session: Session) -> None:
+    cutoff_time = datetime.utcnow() - timedelta(days=days_old)
+
+    deleted_count = (
+        db_session.query(PGFileStore)
+        .filter(
+            PGFileStore.file_origin.in_(
+                [FileOrigin.CHAT_UPLOAD, FileOrigin.CHAT_IMAGE_GEN]
+            ),
+            PGFileStore.uploaded_at < cutoff_time,
+        )
+        .delete()
+    )
+
+    if deleted_count:
+        logger.info(
+            f"Deleted {deleted_count} files uploaded through chat older than {days_old} days."
+        )
+
+    db_session.commit()

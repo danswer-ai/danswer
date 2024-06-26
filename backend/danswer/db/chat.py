@@ -1,3 +1,5 @@
+from datetime import datetime
+from datetime import timedelta
 from uuid import UUID
 
 from sqlalchemy import delete
@@ -83,6 +85,13 @@ def get_chat_sessions_by_user(
     return list(chat_sessions)
 
 
+def delete_chats_older_than(days_old: int, db_session: Session) -> None:
+    cutoff_time = datetime.utcnow() - timedelta(days=days_old)
+    stmt = delete(ChatMessage).where(ChatMessage.time_sent < cutoff_time)
+    db_session.execute(stmt)
+    db_session.commit()
+
+
 def create_chat_session(
     db_session: Session,
     description: str,
@@ -154,6 +163,23 @@ def delete_chat_session(
 
     else:
         chat_session.deleted = True
+
+    db_session.commit()
+
+
+def delete_chat_sessions_older_than(days_old: int, db_session: Session) -> None:
+    cutoff_time = datetime.utcnow() - timedelta(days=days_old)
+
+    deleted_count = (
+        db_session.query(ChatSession)
+        .filter(ChatSession.time_created < cutoff_time)
+        .delete()
+    )
+
+    if deleted_count:
+        logger.info(
+            f"Deleted {deleted_count} chat sessions older than {days_old} days."
+        )
 
     db_session.commit()
 
