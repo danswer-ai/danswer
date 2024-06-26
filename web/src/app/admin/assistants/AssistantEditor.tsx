@@ -670,8 +670,12 @@ export function AssistantEditor({
                                     <BooleanFormField
                                       small
                                       noPadding
+                                      alignTop
                                       name="llm_relevance_filter"
                                       label="Apply LLM Relevance Filter"
+                                      subtext={
+                                        "If enabled, the LLM will filter out chunks that are not relevant to the user query."
+                                      }
                                     />
 
                                     <BooleanFormField
