@@ -10,7 +10,8 @@ import {
   Form,
   Formik,
 } from "formik";
-
+import { Input } from "@/components/new/input"
+import { Label } from "@/components/new/label"
 import * as Yup from "yup";
 import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
 import { useRouter } from "next/navigation";
@@ -47,11 +48,11 @@ function findImageGenerationTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "ImageGenerationTool");
 }
 
-function Label({ children }: { children: string | JSX.Element }) {
-  return (
-    <div className="block font-medium text-base text-emphasis">{children}</div>
-  );
-}
+// function Label({ children }: { children: string | JSX.Element }) {
+//   return (
+//     <div className="block font-medium text-base text-emphasis">{children}</div>
+//   );
+// }
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
   return <div className="text-sm text-subtle mb-2">{children}</div>;
@@ -392,68 +393,36 @@ export function AssistantEditor({
           return (
             <Form>
               <div className="pb-6">
-                <HidableSection sectionTitle="Basics">
-                  <>
-                    <TextFormField
-                      name="name"
-                      label="Name"
-                      disabled={isUpdate}
-                      subtext="Users will be able to select this Assistant based on this name."
-                    />
+                <TextFormField
+                  name="name"
+                  label="Name"
+                  disabled={isUpdate}
+                // subtext="Users will be able to select this Assistant based on this name."
+                />
+                <TextFormField
+                  name="description"
+                  label="Description"
+                // subtext="Provide a short descriptions which gives users a hint as to what they should use this Assistant for."
+                />
+                <TextFormField
+                  name="system_prompt"
+                  label="System Prompt"
+                  isTextArea={true}
+                  placeholder='What should your assistant be about?'
+                  // 
+                  onChange={(e) => {
+                    setFieldValue("system_prompt", e.target.value);
+                    triggerFinalPromptUpdate(
+                      e.target.value,
+                      values.task_prompt,
+                      searchToolEnabled()
+                    );
+                  }}
+                  error={finalPromptError}
+                />
 
-                    <TextFormField
-                      name="description"
-                      label="Description"
-                      subtext="Provide a short descriptions which gives users a hint as to what they should use this Assistant for."
-                    />
 
-                    <TextFormField
-                      name="system_prompt"
-                      label="System Prompt"
-                      isTextArea={true}
-                      subtext={
-                        'Give general info about what the Assistant is about. For example, "You are an assistant for On-Call engineers. Your goal is to read the provided context documents and give recommendations as to how to resolve the issue."'
-                      }
-                      onChange={(e) => {
-                        setFieldValue("system_prompt", e.target.value);
-                        triggerFinalPromptUpdate(
-                          e.target.value,
-                          values.task_prompt,
-                          searchToolEnabled()
-                        );
-                      }}
-                      error={finalPromptError}
-                    />
 
-                    <TextFormField
-                      name="task_prompt"
-                      label="Task Prompt (Optional)"
-                      isTextArea={true}
-                      subtext={`Give specific instructions as to what to do with the user query. 
-                      For example, "Find any relevant sections from the provided documents that can 
-                      help the user resolve their issue and explain how they are relevant."`}
-                      onChange={(e) => {
-                        setFieldValue("task_prompt", e.target.value);
-                        triggerFinalPromptUpdate(
-                          values.system_prompt,
-                          e.target.value,
-                          searchToolEnabled()
-                        );
-                      }}
-                      error={finalPromptError}
-                    />
-
-                    <Label>Final Prompt</Label>
-
-                    {finalPrompt ? (
-                      <pre className="text-sm mt-2 whitespace-pre-wrap">
-                        {finalPrompt}
-                      </pre>
-                    ) : (
-                      "-"
-                    )}
-                  </>
-                </HidableSection>
 
 
                 <Divider />
@@ -527,6 +496,24 @@ export function AssistantEditor({
                             </div>
                           )}
                         </div>
+                        <TextFormField
+                          name="task_prompt"
+                          label="Task Prompt (Optional)"
+                          isTextArea={true}
+                          subtext={`Give specific instructions as to what to do with the user query. 
+                      For example, "Find any relevant sections from the provided documents that can 
+                      help the user resolve their issue and explain how they are relevant."`}
+                          onChange={(e) => {
+                            setFieldValue("task_prompt", e.target.value);
+                            triggerFinalPromptUpdate(
+                              values.system_prompt,
+                              e.target.value,
+                              searchToolEnabled()
+                            );
+                          }}
+                          error={finalPromptError}
+                        />
+
                       </>
                     </HidableSection>
 

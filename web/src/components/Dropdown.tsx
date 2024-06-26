@@ -1,5 +1,5 @@
 import { ChangeEvent, FC, useEffect, useRef, useState } from "react";
-import { ChevronDownIcon } from "./icons/icons";
+import { ChevronDownIcon, Icons } from "./icons/icons";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
 import { Popover } from "./popover/Popover";
 
@@ -24,9 +24,8 @@ function StandardDropdownOption<T>({
   return (
     <button
       onClick={() => handleSelect(option)}
-      className={`w-full text-left block px-4 py-2.5 text-sm hover:bg-gray-800 ${
-        index !== 0 ? " border-t-2 border-gray-600" : ""
-      }`}
+      className={`w-full text-left block px-4 py-2.5 text-sm hover:bg-gray-800 ${index !== 0 ? " border-t-2 border-gray-600" : ""
+        }`}
       role="menuitem"
     >
       <p className="font-medium">{option.name}</p>
@@ -216,9 +215,8 @@ export const CustomDropdown = ({
       {isOpen && (
         <div
           onClick={() => setIsOpen(!isOpen)}
-          className={`absolute ${
-            direction === "up" ? "bottom-full pb-2" : "pt-2 "
-          } w-full z-30 box-shadow`}
+          className={`absolute ${direction === "up" ? "bottom-full pb-2" : "pt-2 "
+            } w-full z-30 box-shadow`}
         >
           {dropdown}
         </div>
@@ -269,9 +267,10 @@ export function DefaultDropdownElement({
               onChange={() => null}
             />
           )}
-          {icon && icon({ size: 16, className: "mr-2 my-auto" })}
+          {icon && icon({ size: 16, className: "mr-2 h-4 w-4 my-auto" })}
           {name}
         </div>
+
         {description && <div className="text-xs">{description}</div>}
       </div>
       {isSelected && (
@@ -343,6 +342,7 @@ export function DefaultDropdown({
             onSelect(null);
           }}
           isSelected={selected === null}
+          icon={Icons.OpenAI}
         />
       )}
       {options.map((option, ind) => {
@@ -354,6 +354,7 @@ export function DefaultDropdown({
             description={option.description}
             onSelect={() => onSelect(option.value)}
             isSelected={isSelected}
+            icon={Icons.OpenAI}
           />
         );
       })}
