@@ -11,7 +11,8 @@ import {
   Formik,
 } from "formik";
 import { Input } from "@/components/new/input"
-import { Label } from "@/components/new/label"
+import { NewLabel } from "@/components/new/label"
+
 import * as Yup from "yup";
 import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
 import { useRouter } from "next/navigation";
@@ -21,11 +22,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   BooleanFormField,
+  FurtherDetails,
+  ManualErrorMessage,
   SelectorFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
 import { HidableSection } from "./HidableSection";
-import { FiPlus, FiX } from "react-icons/fi";
+import { FiInfo, FiPlus, FiSettings, FiX } from "react-icons/fi";
+import { EE_ENABLED } from "@/lib/constants";
 import { useUserGroups } from "@/lib/hooks";
 import { Bubble } from "@/components/Bubble";
 import { GroupsIcon } from "@/components/icons/icons";
@@ -37,6 +41,7 @@ import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
+import { Tooltip } from "@/components/tooltip/Tooltip";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
@@ -53,6 +58,55 @@ function findImageGenerationTool(tools: ToolSnapshot[]) {
 //     <div className="block font-medium text-base text-emphasis">{children}</div>
 //   );
 // }
+
+import React, { ReactNode } from 'react';
+import { Label } from "@radix-ui/react-label";
+interface CollapsibleSectionProps {
+  children: ReactNode;
+  prompt?: string
+  className?: string;
+}
+
+const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ children, prompt, className = '' }) => {
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+
+  const toggleCollapse = (e?: React.MouseEvent<HTMLDivElement>) => {
+    // Only toggle if the click is on the border or plus sign
+    if (!e || e.currentTarget === e.target || (e.target as HTMLElement).classList.contains('collapse-toggle')) {
+      setIsCollapsed(!isCollapsed);
+    }
+  };
+
+  return (
+    <div
+      className={`relative ${isCollapsed ? 'h-6' : ''} ${className}`}
+      style={{ transition: 'height 0.3s ease-out' }}
+    >
+      <div
+        className={`
+          cursor-pointer
+          ${isCollapsed ? 'h-6' : 'pl-4 border-l-2  border-border'}
+        `}
+        onClick={toggleCollapse}
+      >
+        {isCollapsed ? (
+
+          <span className="collapse-toggle text-lg absolute left-0 top-0  text-sm flex  items-center gap-x-3 cursor-pointer">
+            <FiSettings className="pointer-events-none my-auto" size={16} />
+            {prompt} </span>
+        ) : (<>
+          {children}
+          <Button onClick={e => toggleCollapse()} className="text-sm   p-1 rounded-lg">
+            Settings updated
+          </Button>
+        </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CollapsibleSection;
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
   return <div className="text-sm text-subtle mb-2">{children}</div>;
@@ -228,7 +282,7 @@ export function AssistantEditor({
           })
           .test(
             "system-prompt-or-task-prompt",
-            "Must provide at least one of System Prompt or Task Prompt",
+            "Must provide a system prompt",
             (values) => {
               const systemPromptSpecified = values.system_prompt
                 ? values.system_prompt.length > 0
@@ -242,7 +296,7 @@ export function AssistantEditor({
               } // Return true if at least one field has a value
 
               setFinalPromptError(
-                "Must provide at least one of System Prompt or Task Prompt"
+                "Must provide System Prompt or Additional Instructions"
               );
             }
           )}
@@ -395,20 +449,85 @@ export function AssistantEditor({
               <div className="pb-6">
                 <TextFormField
                   name="name"
+                  tooltip="Users will be able to select based on this name."
                   label="Name"
                   disabled={isUpdate}
                 // subtext="Users will be able to select this Assistant based on this name."
                 />
                 <TextFormField
+                  tooltip="Used for identifying assistants and their use cases."
                   name="description"
                   label="Description"
                 // subtext="Provide a short descriptions which gives users a hint as to what they should use this Assistant for."
                 />
+                <div className="mb-6">
+                  <div className="flex gap-x-2 items-center">
+                    <div className="block font-medium text-base">LLM Provider{" "}</div>
+
+                    <Tooltip
+                      content={<p className="bg-black text-white">I can talk</p>}
+                      side="top"
+                      align="start"
+                    >
+                      <FiInfo size={12} />
+                    </Tooltip>
+
+                  </div>
+                  <div className="flex items-starts">
+                    <div className="w-96">
+
+                      <SelectorFormField
+                        defaultValue={`Default (${defaultModelName})`}
+                        name="llm_model_provider_override"
+                        options={llmProviders.map((llmProvider) => ({
+                          name: llmProvider.name,
+                          value: llmProvider.name,
+                          icon: llmProvider.icon
+                        }))}
+                        includeDefault={true}
+                        onSelect={(selected) => {
+                          if (
+                            selected !==
+                            values.llm_model_provider_override
+                          ) {
+                            setFieldValue(
+                              "llm_model_version_override",
+                              null
+                            );
+                          }
+                          setFieldValue(
+                            "llm_model_provider_override",
+                            selected
+                          );
+                        }}
+
+                      />
+                    </div>
+
+                    {values.llm_model_provider_override && (
+                      <div className="w-96 ml-4">
+                        <SelectorFormField
+                          name="llm_model_version_override"
+                          options={
+                            modelOptionsByProvider.get(
+                              values.llm_model_provider_override
+                            ) || []
+                          }
+                          maxHeight="max-h-72"
+
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {/* <FurtherDetails text="Learn how to pick an LLM provider" link="https://docs.danswer.dev/guides/providers" /> */}
+                </div>
+
                 <TextFormField
+                  tooltip="Gives your assistant a prime directive"
                   name="system_prompt"
                   label="System Prompt"
                   isTextArea={true}
-                  placeholder='What should your assistant be about?'
+                  placeholder='Tell your assistant what it is used for'
                   // 
                   onChange={(e) => {
                     setFieldValue("system_prompt", e.target.value);
@@ -425,324 +544,269 @@ export function AssistantEditor({
 
 
 
+
+                {/* <HidableSection sectionTitle="Tools"> */}
+
+                <div className="mb-6">
+                  {/* <div className="flex gap-x-2 mb-2 items-center">
+                    <div className="block font-medium text-base">Tool Selection{" "}</div>
+                    <Tooltip
+                      content={<p className="bg-black text-white">I can talk</p>}
+                      side="top"
+                      align="start"
+                    >
+                      <FiInfo size={12} />
+                    </Tooltip>
+                  </div> */}
+
+                  {imageGenerationTool &&
+                    checkLLMSupportsImageInput(
+                      providerDisplayNameToProviderName.get(
+                        values.llm_model_provider_override || ""
+                      ) ||
+                      defaultProviderName ||
+                      "",
+                      values.llm_model_version_override ||
+                      defaultModelName ||
+                      ""
+                    ) && (
+                      <BooleanFormField
+                        noPadding
+                        name={`enabled_tools_map.${imageGenerationTool.id}`}
+                        label="Image Generation Tool"
+                        // subtext="The Image Generation Tool allows the assistant to use DALL-E 3 to generate images. The tool will be used when the user asks the assistant to generate an image."
+                        onChange={() => {
+                          toggleToolInValues(imageGenerationTool.id);
+                        }}
+                      />
+                    )}
+
+                  {ccPairs.length > 0 && searchTool && (
+                    <>
+                      <BooleanFormField
+                        name={`enabled_tools_map.${searchTool.id}`}
+                        label="Search Tool"
+                        noPadding
+
+                        // subtext={`The Search Tool allows the Assistant to search through connected knowledge to help build an answer.`}
+                        onChange={() => {
+                          setFieldValue("num_chunks", null);
+                          toggleToolInValues(searchTool.id);
+                        }}
+                      />
+
+
+                      {searchToolEnabled() && (<CollapsibleSection prompt="Configure Search">
+                        <div className=" ">
+                          {ccPairs.length > 0 && (
+                            <>
+                              <NewLabel>Document Sets</NewLabel>
+
+                              <div>
+                                <SubLabel>
+                                  <>
+                                    Select which{" "}
+                                    {!user || user.role === "admin" ? (
+                                      <Link
+                                        href="/admin/documents/sets"
+                                        className="text-blue-500"
+                                        target="_blank"
+                                      >
+                                        Document Sets
+                                      </Link>
+                                    ) : (
+                                      "Document Sets"
+                                    )}{" "}
+                                    that this Assistant should search through.
+                                    If none are specified, the Assistant will
+                                    search through all available documents in
+                                    order to try and respond to queries.
+                                  </>
+                                </SubLabel>
+                              </div>
+
+                              {documentSets.length > 0 ? (
+                                <FieldArray
+                                  name="document_set_ids"
+                                  render={(arrayHelpers: ArrayHelpers) => (
+                                    <div>
+                                      <div className="mb-3 mt-2 flex gap-2 flex-wrap text-sm">
+                                        {documentSets.map((documentSet) => {
+                                          const ind =
+                                            values.document_set_ids.indexOf(
+                                              documentSet.id
+                                            );
+                                          let isSelected = ind !== -1;
+                                          return (
+                                            <DocumentSetSelectable
+                                              key={documentSet.id}
+                                              documentSet={documentSet}
+                                              isSelected={isSelected}
+                                              onSelect={() => {
+                                                if (isSelected) {
+                                                  arrayHelpers.remove(ind);
+                                                } else {
+                                                  arrayHelpers.push(
+                                                    documentSet.id
+                                                  );
+                                                }
+                                              }}
+                                            />
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+                                />
+                              ) : (
+                                <Italic className="text-sm">
+                                  No Document Sets available.{" "}
+                                  {user?.role !== "admin" && (
+                                    <>
+                                      If this functionality would be useful,
+                                      reach out to the administrators of
+                                      Danswer for assistance.
+                                    </>
+                                  )}
+                                </Italic>
+                              )}
+
+                              <div className="mt-6">
+                                <TextFormField
+                                  smaller={true}
+                                  name="num_chunks"
+                                  label="Number of Chunks"
+                                  tooltip="How many chunks to feed the LLM"
+                                  placeholder="Defaults to 10 chunks."
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Allow only integer values
+                                    if (
+                                      value === "" ||
+                                      /^[0-9]+$/.test(value)
+                                    ) {
+                                      setFieldValue("num_chunks", value);
+                                    }
+                                  }}
+                                />
+
+
+
+                                <BooleanFormField
+                                  small
+                                  noPadding
+                                  name="llm_relevance_filter"
+                                  label="Apply LLM Relevance Filter"
+                                // subtext={
+                                //   "If enabled, the LLM will filter out chunks that are not relevant to the user query."
+                                // }
+                                />
+
+                                <BooleanFormField
+                                  small
+                                  noPadding
+                                  alignTop
+                                  name="include_citations"
+                                  label="Include Citations"
+                                  subtext={`
+                                If set, the response will include bracket citations ([1], [2], etc.) 
+                               
+                               
+                                for each document used by the LLM to help inform the response. This is 
+                                the same technique used by the default Assistants. In general, we recommend 
+                                to leave this enabled in order to increase trust in the LLM answer.`}
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </CollapsibleSection>
+                      )}
+
+                    </>
+                  )}
+
+                  {customTools.length > 0 && (
+                    <>
+                      {customTools.map((tool) => (
+                        <BooleanFormField
+                          key={tool.id}
+                          name={`enabled_tools_map.${tool.id}`}
+                          label={tool.name}
+                          subtext={tool.description}
+                          onChange={() => {
+                            toggleToolInValues(tool.id);
+                          }}
+                        />
+                      ))}
+                    </>
+                  )}
+                </div>
+
+
                 <Divider />
 
                 {llmProviders.length > 0 && (
                   <>
-                    <HidableSection
-                      sectionTitle="[Advanced] Model Selection"
-                      defaultHidden
-                    >
-                      <>
-                        <Text>
-                          Pick which LLM to use for this Assistant. If left as
-                          Default, will use{" "}
-                          <b className="italic">{defaultModelName}</b>
-                          .
-                          <br />
-                          <br />
-                          For more information on the different LLMs, checkout
-                          the{" "}
-                          <a
-                            href="https://platform.openai.com/docs/models"
-                            target="_blank"
-                            className="text-blue-500"
-                          >
-                            OpenAI docs
-                          </a>
-                          .
-                        </Text>
-
-                        <div className="flex mt-6">
-                          <div className="w-96">
-                            <SubLabel>LLM Provider</SubLabel>
-                            <SelectorFormField
-                              name="llm_model_provider_override"
-                              options={llmProviders.map((llmProvider) => ({
-                                name: llmProvider.name,
-                                value: llmProvider.name,
-                              }))}
-                              includeDefault={true}
-                              onSelect={(selected) => {
-                                if (
-                                  selected !==
-                                  values.llm_model_provider_override
-                                ) {
-                                  setFieldValue(
-                                    "llm_model_version_override",
-                                    null
-                                  );
-                                }
-                                setFieldValue(
-                                  "llm_model_provider_override",
-                                  selected
-                                );
-                              }}
-                            />
-                          </div>
-
-                          {values.llm_model_provider_override && (
-                            <div className="w-96 ml-4">
-                              <SubLabel>Model</SubLabel>
-                              <SelectorFormField
-                                name="llm_model_version_override"
-                                options={
-                                  modelOptionsByProvider.get(
-                                    values.llm_model_provider_override
-                                  ) || []
-                                }
-                                maxHeight="max-h-72"
-                              />
-                            </div>
-                          )}
-                        </div>
-                        <TextFormField
-                          name="task_prompt"
-                          label="Task Prompt (Optional)"
-                          isTextArea={true}
-                          subtext={`Give specific instructions as to what to do with the user query. 
-                      For example, "Find any relevant sections from the provided documents that can 
-                      help the user resolve their issue and explain how they are relevant."`}
-                          onChange={(e) => {
-                            setFieldValue("task_prompt", e.target.value);
-                            triggerFinalPromptUpdate(
-                              values.system_prompt,
-                              e.target.value,
-                              searchToolEnabled()
-                            );
-                          }}
-                          error={finalPromptError}
-                        />
-
-                      </>
-                    </HidableSection>
-
-                    <Divider />
+                    <TextFormField
+                      name="task_prompt"
+                      label="Additional instructions (Optional)"
+                      isTextArea={true}
+                      placeholder="What should this assistant do in response to user query?"
+                      onChange={(e) => {
+                        setFieldValue("task_prompt", e.target.value);
+                        triggerFinalPromptUpdate(
+                          values.system_prompt,
+                          e.target.value,
+                          searchToolEnabled()
+                        );
+                      }}
+                      furtherText="Learn about prompting in our docs!"
+                      furtherLink="https://docs.danswer.dev/guides/assistants"
+                    />
                   </>
                 )}
-
-
-                <HidableSection sectionTitle="Tools">
-                  <>
-                    {ccPairs.length > 0 && searchTool && (
-                      <>
-                        <BooleanFormField
-                          name={`enabled_tools_map.${searchTool.id}`}
-                          label="Search Tool"
-                          subtext={`The Search Tool allows the Assistant to search through connected knowledge to help build an answer.`}
-                          onChange={() => {
-                            setFieldValue("num_chunks", null);
-                            toggleToolInValues(searchTool.id);
-                          }}
-                        />
-
-                        {searchToolEnabled() && (
-                          <div className="pl-4 border-l-2 ml-4 border-border">
-                            {ccPairs.length > 0 && (
-                              <>
-                                <Label>Document Sets</Label>
-
-                                <div>
-                                  <SubLabel>
-                                    <>
-                                      Select which{" "}
-                                      {!user || user.role === "admin" ? (
-                                        <Link
-                                          href="/admin/documents/sets"
-                                          className="text-blue-500"
-                                          target="_blank"
-                                        >
-                                          Document Sets
-                                        </Link>
-                                      ) : (
-                                        "Document Sets"
-                                      )}{" "}
-                                      that this Assistant should search through.
-                                      If none are specified, the Assistant will
-                                      search through all available documents in
-                                      order to try and respond to queries.
-                                    </>
-                                  </SubLabel>
-                                </div>
-
-                                {documentSets.length > 0 ? (
-                                  <FieldArray
-                                    name="document_set_ids"
-                                    render={(arrayHelpers: ArrayHelpers) => (
-                                      <div>
-                                        <div className="mb-3 mt-2 flex gap-2 flex-wrap text-sm">
-                                          {documentSets.map((documentSet) => {
-                                            const ind =
-                                              values.document_set_ids.indexOf(
-                                                documentSet.id
-                                              );
-                                            let isSelected = ind !== -1;
-                                            return (
-                                              <DocumentSetSelectable
-                                                key={documentSet.id}
-                                                documentSet={documentSet}
-                                                isSelected={isSelected}
-                                                onSelect={() => {
-                                                  if (isSelected) {
-                                                    arrayHelpers.remove(ind);
-                                                  } else {
-                                                    arrayHelpers.push(
-                                                      documentSet.id
-                                                    );
-                                                  }
-                                                }}
-                                              />
-                                            );
-                                          })}
-                                        </div>
-                                      </div>
-                                    )}
-                                  />
-                                ) : (
-                                  <Italic className="text-sm">
-                                    No Document Sets available.{" "}
-                                    {user?.role !== "admin" && (
-                                      <>
-                                        If this functionality would be useful,
-                                        reach out to the administrators of
-                                        Danswer for assistance.
-                                      </>
-                                    )}
-                                  </Italic>
-                                )}
-
-                                <>
-                                  <TextFormField
-                                    name="num_chunks"
-                                    label="Number of Chunks"
-                                    placeholder="If unspecified, will use 10 chunks."
-                                    subtext={
-                                      <div>
-                                        How many chunks should we feed into the
-                                        LLM when generating the final response?
-                                        Each chunk is ~400 words long.
-                                      </div>
-                                    }
-                                    onChange={(e) => {
-                                      const value = e.target.value;
-                                      // Allow only integer values
-                                      if (
-                                        value === "" ||
-                                        /^[0-9]+$/.test(value)
-                                      ) {
-                                        setFieldValue("num_chunks", value);
-                                      }
-                                    }}
-                                  />
-
-                                  <Label>Misc</Label>
-
-                                  <BooleanFormField
-                                    name="llm_relevance_filter"
-                                    label="Apply LLM Relevance Filter"
-                                    subtext={
-                                      "If enabled, the LLM will filter out chunks that are not relevant to the user query."
-                                    }
-                                  />
-
-                                  <BooleanFormField
-                                    name="include_citations"
-                                    label="Include Citations"
-                                    subtext={`
-                                If set, the response will include bracket citations ([1], [2], etc.) 
-                                for each document used by the LLM to help inform the response. This is 
-                                the same technique used by the default Assistants. In general, we recommend 
-                                to leave this enabled in order to increase trust in the LLM answer.`}
-                                  />
-                                </>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </>
-                    )}
-
-                    {imageGenerationTool &&
-                      checkLLMSupportsImageInput(
-                        providerDisplayNameToProviderName.get(
-                          values.llm_model_provider_override || ""
-                        ) ||
-                        defaultProviderName ||
-                        "",
-                        values.llm_model_version_override ||
-                        defaultModelName ||
-                        ""
-                      ) && (
-                        <BooleanFormField
-                          name={`enabled_tools_map.${imageGenerationTool.id}`}
-                          label="Image Generation Tool"
-                          subtext="The Image Generation Tool allows the assistant to use DALL-E 3 to generate images. The tool will be used when the user asks the assistant to generate an image."
-                          onChange={() => {
-                            toggleToolInValues(imageGenerationTool.id);
-                          }}
-                        />
-                      )}
-
-                    {customTools.length > 0 && (
-                      <>
-                        {customTools.map((tool) => (
-                          <BooleanFormField
-                            key={tool.id}
-                            name={`enabled_tools_map.${tool.id}`}
-                            label={tool.name}
-                            subtext={tool.description}
-                            onChange={() => {
-                              toggleToolInValues(tool.id);
-                            }}
-                          />
-                        ))}
-                      </>
-                    )}
-                  </>
-                </HidableSection>
-
                 <Divider />
-
-                <HidableSection
-                  sectionTitle="[Advanced] Starter Messages"
-                  defaultHidden
-                >
-                  <>
-                    <div className="mb-4">
-                      <SubLabel>
-                        Starter Messages help guide users to use this Assistant.
+                <div className="mb-6">
+                  <div className="flex gap-x-2 items-center">
+                    <div className="block font-medium text-base">Add Starter Messages (Optional){" "}</div>
+                    <Tooltip
+                      content={<p className="bg-black text-white">Starter Messages help guide users to use this Assistant.
                         They are shown to the user as clickable options when
                         they select this Assistant. When selected, the specified
-                        message is sent to the LLM as the initial user message.
-                      </SubLabel>
-                    </div>
-
-                    <FieldArray
-                      name="starter_messages"
-                      render={(
-                        arrayHelpers: ArrayHelpers<StarterMessage[]>
-                      ) => (
-                        <div>
-                          {values.starter_messages &&
-                            values.starter_messages.length > 0 &&
-                            values.starter_messages.map((_, index) => {
-                              return (
-                                <div
-                                  key={index}
-                                  className={index === 0 ? "mt-2" : "mt-6"}
-                                >
-                                  <div className="flex">
-                                    <div className="w-full mr-6 border border-border p-3 rounded">
-                                      <div>
-                                        <Label>Name</Label>
-                                        <SubLabel>
-                                          Shows up as the &quot;title&quot; for
-                                          this Starter Message. For example,
-                                          &quot;Write an email&quot;.
-                                        </SubLabel>
-                                        <Field
-                                          name={`starter_messages[${index}].name`}
-                                          className={`
+                        message is sent to the LLM as the initial user message</p>}
+                      side="top"
+                      align="start"
+                    >
+                      <FiInfo size={12} />
+                    </Tooltip>
+                  </div>
+                  <FieldArray
+                    name="starter_messages"
+                    render={(
+                      arrayHelpers: ArrayHelpers<StarterMessage[]>
+                    ) => (
+                      <div>
+                        {values.starter_messages &&
+                          values.starter_messages.length > 0 &&
+                          values.starter_messages.map((_, index) => {
+                            return (
+                              <div
+                                key={index}
+                                className={index === 0 ? "mt-2" : "mt-6"}
+                              >
+                                <div className="flex">
+                                  <div className="w-full mr-6 border border-border p-3 rounded">
+                                    <div>
+                                      <NewLabel>Name</NewLabel>
+                                      <SubLabel>
+                                        Shows up as the &quot;title&quot; for
+                                        this Starter Message. For example,
+                                        &quot;Write an email&quot;.
+                                      </SubLabel>
+                                      <Field
+                                        name={`starter_messages[${index}].name`}
+                                        className={`
                                         border 
                                         border-border 
                                         bg-background 
@@ -752,113 +816,113 @@ export function AssistantEditor({
                                         px-3 
                                         mr-4
                                       `}
-                                          autoComplete="off"
-                                        />
-                                        <ErrorMessage
-                                          name={`starter_messages[${index}].name`}
-                                          component="div"
-                                          className="text-error text-sm mt-1"
-                                        />
-                                      </div>
-
-                                      <div className="mt-3">
-                                        <Label>Description</Label>
-                                        <SubLabel>
-                                          A description which tells the user
-                                          what they might want to use this
-                                          Starter Message for. For example
-                                          &quot;to a client about a new
-                                          feature&quot;
-                                        </SubLabel>
-                                        <Field
-                                          name={`starter_messages.${index}.description`}
-                                          className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
-                                      `}
-                                          autoComplete="off"
-                                        />
-                                        <ErrorMessage
-                                          name={`starter_messages[${index}].description`}
-                                          component="div"
-                                          className="text-error text-sm mt-1"
-                                        />
-                                      </div>
-
-                                      <div className="mt-3">
-                                        <Label>Message</Label>
-                                        <SubLabel>
-                                          The actual message to be sent as the
-                                          initial user message if a user selects
-                                          this starter prompt. For example,
-                                          &quot;Write me an email to a client
-                                          about a new billing feature we just
-                                          released.&quot;
-                                        </SubLabel>
-                                        <Field
-                                          name={`starter_messages[${index}].message`}
-                                          className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
-                                      `}
-                                          as="textarea"
-                                          autoComplete="off"
-                                        />
-                                        <ErrorMessage
-                                          name={`starter_messages[${index}].message`}
-                                          component="div"
-                                          className="text-error text-sm mt-1"
-                                        />
-                                      </div>
+                                        autoComplete="off"
+                                      />
+                                      <ErrorMessage
+                                        name={`starter_messages[${index}].name`}
+                                        component="div"
+                                        className="text-error text-sm mt-1"
+                                      />
                                     </div>
-                                    <div className="my-auto">
-                                      <FiX
-                                        className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
-                                        onClick={() =>
-                                          arrayHelpers.remove(index)
-                                        }
+
+                                    <div className="mt-3">
+                                      <NewLabel>Description</NewLabel>
+                                      <SubLabel>
+                                        A description which tells the user
+                                        what they might want to use this
+                                        Starter Message for. For example
+                                        &quot;to a client about a new
+                                        feature&quot;
+                                      </SubLabel>
+                                      <Field
+                                        name={`starter_messages.${index}.description`}
+                                        className={`
+                                        border 
+                                        border-border 
+                                        bg-background 
+                                        rounded 
+                                        w-full 
+                                        py-2 
+                                        px-3 
+                                        mr-4
+                                      `}
+                                        autoComplete="off"
+                                      />
+                                      <ErrorMessage
+                                        name={`starter_messages[${index}].description`}
+                                        component="div"
+                                        className="text-error text-sm mt-1"
+                                      />
+                                    </div>
+
+                                    <div className="mt-3">
+                                      <NewLabel>Message</NewLabel>
+                                      <SubLabel>
+                                        The actual message to be sent as the
+                                        initial user message if a user selects
+                                        this starter prompt. For example,
+                                        &quot;Write me an email to a client
+                                        about a new billing feature we just
+                                        released.&quot;
+                                      </SubLabel>
+                                      <Field
+                                        name={`starter_messages[${index}].message`}
+                                        className={`
+                                        border 
+                                        border-border 
+                                        bg-background 
+                                        rounded 
+                                        w-full 
+                                        py-2 
+                                        px-3 
+                                        mr-4
+                                      `}
+                                        as="textarea"
+                                        autoComplete="off"
+                                      />
+                                      <ErrorMessage
+                                        name={`starter_messages[${index}].message`}
+                                        component="div"
+                                        className="text-error text-sm mt-1"
                                       />
                                     </div>
                                   </div>
+                                  <div className="my-auto">
+                                    <FiX
+                                      className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
+                                      onClick={() =>
+                                        arrayHelpers.remove(index)
+                                      }
+                                    />
+                                  </div>
                                 </div>
-                              );
-                            })}
+                              </div>
+                            );
+                          })}
 
-                          <Button
-                            onClick={() => {
-                              arrayHelpers.push({
-                                name: "",
-                                description: "",
-                                message: "",
-                              });
-                            }}
-                            className="mt-3"
-                            color="green"
-                            size="xs"
-                            type="button"
-                            icon={FiPlus}
-                          >
-                            Add New
-                          </Button>
-                        </div>
-                      )}
-                    />
-                  </>
-                </HidableSection>
+                        <Button
+                          onClick={() => {
+                            arrayHelpers.push({
+                              name: "",
+                              description: "",
+                              message: "",
+                            });
+                          }}
+                          className="mt-3"
+                          color="green"
+                          size="xs"
+                          type="button"
+                          icon={FiPlus}
+                        >
+                          Add New
+                        </Button>
+                      </div>
+                    )}
+                  />
+                </div>
 
                 <Divider />
+
 
                 {isPaidEnterpriseFeaturesEnabled &&
                   userGroups &&
@@ -919,7 +983,6 @@ export function AssistantEditor({
                             )}
                         </>
                       </HidableSection>
-                      <Divider />
                     </>
                   )}
 
@@ -939,6 +1002,6 @@ export function AssistantEditor({
           );
         }}
       </Formik>
-    </div>
+    </div >
   );
 }
