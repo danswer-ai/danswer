@@ -1,6 +1,6 @@
 import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { ZoomInIcon } from "@/components/icons/icons";
-import { Explorer } from "@/components/adminPageComponents/documents/explorer/AdminDocumentsExplorerExplorer";
+import { Explorer } from "@/components/adminPageComponents/documents/AdminDocumentsExplorerExplorer";
 import { fetchValidFilterInfo } from "@/lib/search/utilsSS";
 
 const Page = async ({

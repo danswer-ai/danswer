@@ -17,11 +17,11 @@ import {
 } from "./interfaces";
 import { ChatSidebar } from "./sessionSidebar/ChatSessionSidebar";
 import { DocumentSet, Tag, User, ValidSources } from "@/lib/types";
-import { Persona } from "../../app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import { Header } from "@/components/header/Header";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
-import { Settings } from "../../app/admin/settings/interfaces";
+import { Settings } from "@/app/admin/settings/interfaces";
 import {
   buildChatUrl,
   buildLatestMessageChain,
@@ -65,7 +65,7 @@ import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
-import { LLMProviderDescriptor } from "../../app/admin/models/llm/interfaces";
+import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
 import { InputBarPreviewImage } from "./files/ChatFilesInputBarPreviewImage";
 import { Folder } from "./folders/interfaces";
