@@ -3,7 +3,6 @@ from datetime import timedelta
 from uuid import UUID
 
 from sqlalchemy import delete
-from sqlalchemy import null
 from sqlalchemy import nullsfirst
 from sqlalchemy import or_
 from sqlalchemy import select
@@ -111,7 +110,7 @@ def delete_orphaned_search_docs(db_session: Session) -> None:
     orphaned_docs = orphaned_docs = (
         db_session.query(SearchDoc)
         .outerjoin(ChatMessage__SearchDoc)
-        .filter(ChatMessage__SearchDoc.chat_message_id == null)
+        .filter(ChatMessage__SearchDoc.chat_message_id.is_(None))
         .all()
     )
     for doc in orphaned_docs:
