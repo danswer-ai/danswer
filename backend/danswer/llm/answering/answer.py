@@ -59,9 +59,6 @@ from danswer.tools.tool_runner import ToolCallFinalResult
 from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.tools.tool_runner import ToolRunner
 from danswer.tools.utils import explicit_tool_calling_supported
-from danswer.utils.logger import setup_logger
-
-logger = setup_logger()
 
 
 def _get_answer_stream_processor(
