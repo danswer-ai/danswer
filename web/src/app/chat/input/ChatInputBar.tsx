@@ -120,10 +120,11 @@ export function ChatInputBar({
                 resize-none
                 border-0
                 bg-background-weak
-                ${textAreaRef.current &&
+                ${
+                  textAreaRef.current &&
                   textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT
-                  ? "overflow-y-auto mt-2"
-                  : ""
+                    ? "overflow-y-auto mt-2"
+                    : ""
                 }
                 overflow-hidden
                 whitespace-normal
@@ -222,8 +223,9 @@ export function ChatInputBar({
               >
                 <FiSend
                   size={18}
-                  className={`text-emphasis w-9 h-9 p-2 rounded-lg ${message ? "bg-blue-200" : ""
-                    }`}
+                  className={`text-emphasis w-9 h-9 p-2 rounded-lg ${
+                    message ? "bg-blue-200" : ""
+                  }`}
                 />
               </div>
             </div>

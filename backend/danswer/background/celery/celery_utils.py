@@ -1,8 +1,6 @@
 from datetime import datetime
 from datetime import timezone
 
-from sqlalchemy.orm import Session
-
 from danswer.background.task_utils import name_cc_cleanup_task
 from danswer.background.task_utils import name_cc_prune_task
 from danswer.background.task_utils import name_document_set_sync_task
@@ -18,6 +16,7 @@ from danswer.db.tasks import check_live_task_not_timed_out
 from danswer.db.tasks import get_latest_task
 from danswer.server.documents.models import DeletionAttemptSnapshot
 from danswer.utils.logger import setup_logger
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

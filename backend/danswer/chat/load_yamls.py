@@ -1,8 +1,6 @@
 from typing import cast
 
 import yaml
-from sqlalchemy.orm import Session
-
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import PERSONAS_YAML
 from danswer.configs.chat_configs import PROMPTS_YAML
@@ -14,6 +12,7 @@ from danswer.db.persona import get_prompt_by_name
 from danswer.db.persona import upsert_persona
 from danswer.db.persona import upsert_prompt
 from danswer.search.enums import RecencyBiasSetting
+from sqlalchemy.orm import Session
 
 
 def load_prompts_from_yaml(prompts_yaml: str = PROMPTS_YAML) -> None:

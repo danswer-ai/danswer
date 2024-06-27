@@ -3,8 +3,6 @@ from collections.abc import Iterator
 from functools import partial
 from typing import cast
 
-from sqlalchemy.orm import Session
-
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import CustomToolResponse
@@ -75,6 +73,7 @@ from danswer.tools.utils import compute_all_tool_tokens
 from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

@@ -8,13 +8,6 @@ from typing import Any
 from typing import cast
 from typing import Optional
 
-from retry import retry
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
-from slack_sdk.models.blocks import Block
-from slack_sdk.models.metadata import Metadata
-from sqlalchemy.orm import Session
-
 from danswer.configs.app_configs import DISABLE_TELEMETRY
 from danswer.configs.constants import ID_SEPARATOR
 from danswer.configs.constants import MessageType
@@ -39,6 +32,12 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.text_processing import replace_whitespaces_w_space
+from retry import retry
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+from slack_sdk.models.blocks import Block
+from slack_sdk.models.metadata import Metadata
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

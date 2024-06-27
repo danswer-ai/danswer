@@ -2,17 +2,16 @@ import json
 from collections.abc import Iterator
 
 import requests
-from langchain.schema.language_model import LanguageModelInput
-from langchain_core.messages import AIMessage
-from langchain_core.messages import BaseMessage
-from requests import Timeout
-
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import ToolChoiceOptions
 from danswer.llm.utils import convert_lm_input_to_basic_string
 from danswer.utils.logger import setup_logger
+from langchain.schema.language_model import LanguageModelInput
+from langchain_core.messages import AIMessage
+from langchain_core.messages import BaseMessage
+from requests import Timeout
 
 
 logger = setup_logger()

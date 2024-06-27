@@ -10,7 +10,7 @@ interface ChatInputOptionProps {
   size?: number;
 
   options?: { name: string; value: number; onClick?: () => void }[];
-  flexPriority?: "shrink" | "stiff" | "second"
+  flexPriority?: "shrink" | "stiff" | "second";
 }
 
 const ChatInputOption = ({
@@ -19,7 +19,7 @@ const ChatInputOption = ({
   onClick,
   size = 16,
   options,
-  flexPriority
+  flexPriority,
 }: ChatInputOptionProps) => {
   const [isDropupVisible, setDropupVisible] = useState(false);
 
@@ -80,12 +80,18 @@ const ChatInputOption = ({
   );
 
   if (!dropdownContent) {
-    return <div className={`
+    return (
+      <div
+        onClick={onClick}
+        className={`
           ${flexPriority == "shrink" && "flex-shrink-[10000] flex-grow-0 flex-basis-auto min-w-[3px] whitespace-nowrap overflow-hidden text-ellipsis"}
           ${flexPriority == "second" && "flex-shrink  flex-basis-0 min-w-[30px] whitespace-nowrap overflow-hidden text-ellipsis"}
           ${flexPriority == "stiff" && "flex-none whitespace-nowrap overflow-hidden text-ellipsis"}
           `}
-      onClick={onClick}>{option}</div>;
+      >
+        {option}
+      </div>
+    );
   }
 
   return (

@@ -1,13 +1,5 @@
 from uuid import UUID
 
-from sqlalchemy import delete
-from sqlalchemy import nullsfirst
-from sqlalchemy import or_
-from sqlalchemy import select
-from sqlalchemy.exc import MultipleResultsFound
-from sqlalchemy.orm import joinedload
-from sqlalchemy.orm import Session
-
 from danswer.auth.schemas import UserRole
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
@@ -28,6 +20,13 @@ from danswer.search.models import SearchDoc as ServerSearchDoc
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.tools.tool_runner import ToolCallFinalResult
 from danswer.utils.logger import setup_logger
+from sqlalchemy import delete
+from sqlalchemy import nullsfirst
+from sqlalchemy import or_
+from sqlalchemy import select
+from sqlalchemy.exc import MultipleResultsFound
+from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
