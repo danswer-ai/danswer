@@ -3,7 +3,7 @@ name: Build and Push Model Server Image on Tag
 on:
   push:
     tags:
-      - 'disabled-model-server-build'  # Currently there are no EE features on the model server
+      - '*'
 
 jobs:
   build-and-push:
