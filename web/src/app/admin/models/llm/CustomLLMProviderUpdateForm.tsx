@@ -196,7 +196,9 @@ export function CustomLLMProviderUpdateForm({
             subtext="A name which you can use to identify this provider when selecting it in the UI."
             placeholder="Display Name"
           />
+
           <Divider />
+
           <TextFormField
             name="provider"
             label="Provider Name"
@@ -363,6 +365,7 @@ export function CustomLLMProviderUpdateForm({
             label="Default Model"
             placeholder="E.g. gpt-4"
           />
+
           <TextFormField
             name="fast_default_model_name"
             subtext={`The model to use for lighter flows like \`LLM Chunk Filter\` 
@@ -371,6 +374,7 @@ export function CustomLLMProviderUpdateForm({
             label="[Optional] Fast Model"
             placeholder="E.g. gpt-4"
           />
+
           <Divider />
 
           <div>
