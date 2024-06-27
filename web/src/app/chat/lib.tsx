@@ -501,6 +501,32 @@ export function removeMessage(
   completeMessageMap.delete(messageId);
 }
 
+export function checkAnyAssistantHasSearch(
+  messageHistory: Message[],
+  availablePersonas: Persona[],
+  livePersona: Persona
+): boolean {
+  const response =
+    messageHistory.some((message) => {
+      if (
+        message.type !== "assistant" ||
+        message.alternateAssistantID === null
+      ) {
+        return false;
+      }
+
+      const alternateAssistant = availablePersonas.find(
+        (persona) => persona.id === message.alternateAssistantID
+      );
+
+      return alternateAssistant
+        ? personaIncludesRetrieval(alternateAssistant)
+        : false;
+    }) || personaIncludesRetrieval(livePersona);
+
+  return response;
+}
+
 export function personaIncludesRetrieval(selectedPersona: Persona) {
   return selectedPersona.num_chunks !== 0;
 }

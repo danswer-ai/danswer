@@ -1,5 +1,3 @@
-
- 
 import React, {
   Dispatch,
   SetStateAction,
@@ -214,11 +212,11 @@ export function ChatInputBar({
               ref={suggestionsRef}
               className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full "
             >
-              <div className="rounded-lg py-1.5 bg-white border border-gray-300 overflow-hidden shadow-lg mx-2  px-1.5 mt-2 rounded  z-10">
+              <div className="rounded-lg py-1.5 bg-white border border-gray-300 overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded  z-10">
                 {filteredPersonas.map((currentPersona, index) => (
                   <button
                     key={index}
-                    className={`px-2 ${assistantIconIndex == index && "bg-gray-200"} rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-gray-100 cursor-pointer`}
+                    className={`px-2 ${assistantIconIndex == index && "bg-hover"} rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
                     onClick={() => {
                       updateCurrentPersona(currentPersona);
                     }}
@@ -234,7 +232,7 @@ export function ChatInputBar({
                 <a
                   key={filteredPersonas.length}
                   target="_blank"
-                  className={`${assistantIconIndex == filteredPersonas.length && "bg-gray-200"} px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-gray-100 cursor-pointer"`}
+                  className={`${assistantIconIndex == filteredPersonas.length && "bg-hover"} px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
                   href="/assistants/new"
                 >
                   <FiPlus size={17} />

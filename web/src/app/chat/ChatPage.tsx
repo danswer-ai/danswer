@@ -22,6 +22,7 @@ import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import {
   buildChatUrl,
   buildLatestMessageChain,
+  checkAnyAssistantHasSearch,
   createChatSession,
   getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
@@ -1044,14 +1045,36 @@ export function ChatPage({
     setShowDocSidebar((showDocSidebar) => !showDocSidebar); // Toggle the state which will in turn toggle the class
   };
 
-  const retrievalDisabled = !personaIncludesRetrieval(livePersona);
+  useEffect(() => {
+    const includes = checkAnyAssistantHasSearch(
+      messageHistory,
+      availablePersonas,
+      livePersona
+    );
+    setRetrievalEnabled(includes);
+  }, [messageHistory, availablePersonas, livePersona]);
+
+  const [retrievalEnabled, setRetrievalEnabled] = useState(() => {
+    return checkAnyAssistantHasSearch(
+      messageHistory,
+      availablePersonas,
+      livePersona
+    );
+  });
+  const [editingRetrievalEnabled, setEditingRetrievalEnabled] = useState(false);
   const sidebarElementRef = useRef<HTMLDivElement>(null);
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
 
-
   const currentPersona = selectedAssistant || livePersona;
-  const overallRetrievalDisabled = !personaIncludesRetrieval(livePersona);
-  const currentRetrievalDisabled = !personaIncludesRetrieval(currentPersona);
+
+  const updateSelectedAssistant = (newAssistant: Persona | null) => {
+    setSelectedAssistant(newAssistant);
+    if (newAssistant) {
+      setEditingRetrievalEnabled(personaIncludesRetrieval(newAssistant));
+    } else {
+      setEditingRetrievalEnabled(false);
+    }
+  };
 
   return (
     <>
@@ -1122,7 +1145,7 @@ export function ChatPage({
                 <>
                   <div
                     className={`w-full sm:relative h-screen ${
-                      retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
+                      !retrievalEnabled ? "pb-[111px]" : "pb-[140px]"
                     }
                       flex-auto transition-margin duration-300 
                       overflow-x-auto
@@ -1169,7 +1192,7 @@ export function ChatPage({
 
                               <div className="ml-4 flex my-auto">
                                 <UserDropdown user={user} />
-                                {!retrievalDisabled && !showDocSidebar && (
+                                {retrievalEnabled && !showDocSidebar && (
                                   <button
                                     className="ml-4 mt-auto"
                                     onClick={() => toggleSidebar()}
@@ -1261,11 +1284,10 @@ export function ChatPage({
                               i !== 0 ? messageHistory[i - 1] : null;
 
                             const currentAlternativeAssistant =
-                              message.alternateAssistantID
+                              message.alternateAssistantID != null
                                 ? availablePersonas.find(
                                     (persona) =>
-                                      persona.id ===
-                                      message.alternateAssistantID
+                                      persona.id == message.alternateAssistantID
                                   )
                                 : null;
 
@@ -1386,7 +1408,7 @@ export function ChatPage({
                                     ? !personaIncludesRetrieval(
                                         currentAlternativeAssistant!
                                       )
-                                    : overallRetrievalDisabled
+                                    : !retrievalEnabled
                                 }
                               />
                             </div>
@@ -1492,7 +1514,9 @@ export function ChatPage({
                         <ChatInputBar
                           onSetSelectedAssistant={(
                             alternativeAssistant: Persona | null
-                          ) => setSelectedAssistant(alternativeAssistant)}
+                          ) => {
+                            updateSelectedAssistant(alternativeAssistant);
+                          }}
                           alternativeAssistant={selectedAssistant}
                           personas={filteredAssistants}
                           message={message}
@@ -1516,7 +1540,7 @@ export function ChatPage({
                     </div>
                   </div>
 
-                  {!retrievalDisabled ? (
+                  {retrievalEnabled || editingRetrievalEnabled ? (
                     <div
                       ref={sidebarElementRef}
                       className={`relative flex-none  overflow-y-hidden sidebar bg-background-weak h-screen`}
