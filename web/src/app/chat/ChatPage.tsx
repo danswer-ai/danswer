@@ -204,6 +204,7 @@ export function ChatPage({
           submitOnLoadPerformed.current = true;
           await onSubmit();
         }
+
         return;
       }
 
@@ -378,8 +379,6 @@ export function ChatPage({
           )
         : undefined
   );
-  console.log(selectedPersona, filteredAssistants, availablePersonas);
-
   const livePersona =
     selectedPersona || filteredAssistants[0] || availablePersonas[0];
 

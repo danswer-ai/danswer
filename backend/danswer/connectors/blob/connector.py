@@ -20,7 +20,6 @@ from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.utils.logger import setup_logger
 
-
 logger = setup_logger()
 
 
@@ -31,13 +30,11 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         bucket_name: str,
         prefix: str = "",
         batch_size: int = INDEX_BATCH_SIZE,
-        use_r2: bool = False,
     ) -> None:
         self.bucket_type = bucket_type
         self.bucket_name = bucket_name
         self.prefix = prefix if not prefix or prefix.endswith("/") else prefix + "/"
         self.batch_size = batch_size
-        self.use_r2 = use_r2
         self.s3_client: BaseClient | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
@@ -91,8 +88,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
 
         elif self.bucket_type == "GOOGLE_CLOUD_STORAGE":
             if not all(
-                credentials.get(key)
-                for key in ["access_key_id", "secret_access_key", "project_id"]
+                credentials.get(key) for key in ["access_key_id", "secret_access_key"]
             ):
                 raise ConnectorMissingCredentialError("Google Cloud Storage")
 
@@ -135,9 +131,34 @@ class BlobStorageConnector(LoadConnector, PollConnector):
             raise ConnectorMissingCredentialError("Blog storage")
 
         url = self.s3_client.generate_presigned_url(
-            "get_object", Params={"Bucket": self.bucket_name, "Key": key}, ExpiresIn=0
+            "get_object",
+            Params={"Bucket": self.bucket_name, "Key": key},
+            ExpiresIn=self.presign_length,
         )
         return url
+
+    def _get_blob_link(self, key: str) -> str:
+        if self.s3_client is None:
+            raise ConnectorMissingCredentialError("Blob storage")
+
+        if self.bucket_type == "R2":
+            account_id = self.s3_client.meta.endpoint_url.split("//")[1].split(".")[0]
+            return f"https://{account_id}.r2.cloudflarestorage.com/{self.bucket_name}/{key}"
+
+        elif self.bucket_type == "S3":
+            region = self.s3_client.meta.region_name
+            return f"https://{self.bucket_name}.s3.{region}.amazonaws.com/{key}"
+
+        elif self.bucket_type == "GOOGLE_CLOUD_STORAGE":
+            return f"https://storage.cloud.google.com/{self.bucket_name}/{key}"
+
+        elif self.bucket_type == "OCI_STORAGE":
+            namespace = self.s3_client.meta.endpoint_url.split("//")[1].split(".")[0]
+            region = self.s3_client.meta.region_name
+            return f"https://objectstorage.{region}.oraclecloud.com/n/{namespace}/b/{self.bucket_name}/o/{key}"
+
+        else:
+            raise ValueError(f"Unsupported bucket type: {self.bucket_type}")
 
     def _yield_blob_objects(
         self,
@@ -165,7 +186,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                     continue
 
                 downloaded_file = self._download_object(obj["Key"])
-                link = self._get_presigned_url(obj["Key"])
+                link = self._get_blob_link(obj["Key"])
                 name = os.path.basename(obj["Key"])
 
                 try:
@@ -218,7 +239,6 @@ class BlobStorageConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
-    # Create credentials dictionary
     credentials_dict = {
         "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID"),
         "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
@@ -228,17 +248,12 @@ if __name__ == "__main__":
     connector = BlobStorageConnector(
         bucket_type=os.environ.get("BUCKET_TYPE"),
         bucket_name=os.environ.get("BUCKET_NAME"),
-        prefix="",  # Optional: specify a prefix if needed
+        prefix="",
     )
 
     try:
-        # Load credentials
         connector.load_credentials(credentials_dict)
-
-        # Generate documents
         document_batch_generator = connector.load_from_state()
-
-        # Print the first batch of documents
         for document_batch in document_batch_generator:
             print("First batch of documents:")
             for doc in document_batch:
@@ -249,9 +264,9 @@ if __name__ == "__main__":
                 print("Sections:")
                 for section in doc.sections:
                     print(f"  - Link: {section.link}")
-                    print(f"  - Text: {section.text[:100]}...")  # Print first 100 chars
+                    print(f"  - Text: {section.text[:100]}...")
                 print("---")
-            break  # Only print the first batch
+            break
 
     except ConnectorMissingCredentialError as e:
         print(f"Error: {e}")

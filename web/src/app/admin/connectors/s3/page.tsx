@@ -19,7 +19,7 @@ import {
   S3Config,
   S3CredentialJson,
 } from "@/lib/types";
-import { Card, Select, SelectItem, Text, Title } from "@tremor/react";
+import { Card, Text, Title } from "@tremor/react";
 import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { useState } from "react";
@@ -176,6 +176,7 @@ const S3Main = () => {
           </Text>
           <div className="mb-2">
             <ConnectorsTable<S3Config, S3CredentialJson>
+              includeName={true}
               connectorIndexingStatuses={s3ConnectorIndexingStatuses}
               liveCredential={s3Credential}
               getCredential={(credential) => {

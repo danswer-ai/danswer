@@ -442,7 +442,6 @@ export interface S3CredentialJson {
 }
 
 export interface GCSCredentialJson {
-  project_id: string;
   access_key_id: string;
   secret_access_key: string;
 }

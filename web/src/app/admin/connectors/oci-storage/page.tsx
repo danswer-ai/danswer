@@ -4,7 +4,10 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { OCIStorageIcon, TrashIcon } from "@/components/icons/icons";
 import { LoadingAnimation } from "@/components/Loading";
-import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
+import {
+  ConnectorForm,
+  NumberFormField,
+} from "@/components/admin/connectors/ConnectorForm";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -189,6 +192,7 @@ const OCIMain = () => {
           </Text>
           <div className="mb-2">
             <ConnectorsTable<OCIConfig, OCICredentialJson>
+              includeName={true}
               connectorIndexingStatuses={ociConnectorIndexingStatuses}
               liveCredential={ociCredential}
               getCredential={(credential) => {

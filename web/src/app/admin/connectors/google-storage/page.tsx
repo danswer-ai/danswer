@@ -87,10 +87,15 @@ const GCSMain = () => {
       {gcsCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            <p className="my-auto">Existing GCS Project ID: </p>
+            <p className="my-auto">Existing GCS Access Key ID: </p>
             <p className="ml-1 italic my-auto">
-              {gcsCredential.credential_json.project_id}
+              {gcsCredential.credential_json.access_key_id}
             </p>
+            {", "}
+            <p className="ml-1 my-auto">Secret Access Key: </p>
+            <p className="ml-1 italic my-auto">
+              {gcsCredential.credential_json.secret_access_key}
+            </p>{" "}
             <button
               className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
@@ -136,14 +141,12 @@ const GCSMain = () => {
                 </>
               }
               validationSchema={Yup.object().shape({
-                project_id: Yup.string().required("GCS Project ID is required"),
                 secret_access_key: Yup.string().required(
                   "Client Email is required"
                 ),
                 access_key_id: Yup.string().required("Private Key is required"),
               })}
               initialValues={{
-                project_id: "",
                 secret_access_key: "",
                 access_key_id: "",
               }}
@@ -171,6 +174,7 @@ const GCSMain = () => {
           </Text>
           <div className="mb-2">
             <ConnectorsTable<GCSConfig, GCSCredentialJson>
+              includeName={true}
               connectorIndexingStatuses={gcsConnectorIndexingStatuses}
               liveCredential={gcsCredential}
               getCredential={(credential) => {
@@ -251,17 +255,3 @@ export default function Page() {
     </div>
   );
 }
-
-// export default function Page() {
-//   const [selectedStorage, setSelectedStorage] = useState<string>("s3");
-
-//   return (
-//     <div className="mx-auto container">
-//       <div className="mb-4">
-//         <HealthCheckBanner />
-//       </div>
-//       <AdminPageTitle icon={<GoogleStorageIcon size={32} />} title="Google Storage" />
-//       <R2Main key={2} />
-//     </div>
-//   );
-// }
