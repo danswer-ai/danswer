@@ -392,9 +392,9 @@ export function ChatPage({
     useState<number | null>(null);
   const { aiMessage } = selectedMessageForDocDisplay
     ? getHumanAndAIMessageFromMessageNumber(
-      messageHistory,
-      selectedMessageForDocDisplay
-    )
+        messageHistory,
+        selectedMessageForDocDisplay
+      )
     : { aiMessage: null };
 
   const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
@@ -1101,7 +1101,7 @@ export function ChatPage({
   });
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
-  const secondsUntilExpiration = getSecondsUntilExpiration(user);
+  // const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
   const currentPersona = alternativeAssistant || liveAssistant;
 
@@ -1133,9 +1133,9 @@ export function ChatPage({
     <>
       <HealthCheckBanner />
       <InstantSSRAutoRefresh />
-      <div className="m-3">
+      {/* <div className="m-3">
         <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
-      </div>
+      </div> */}
 
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}

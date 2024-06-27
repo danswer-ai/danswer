@@ -89,8 +89,8 @@ export async function Layout({ children }: { children: React.ReactNode }) {
       return redirect("/auth/waiting-on-verification");
     }
   }
-  
-  const secondsUntilExpiration = getSecondsUntilExpiration(user)
+
+  const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
   return (
     <div className="h-screen overflow-y-hidden">

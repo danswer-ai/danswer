@@ -91,7 +91,6 @@ export function humanReadableFormatWithTime(datetimeString: string): string {
     hour: "numeric",
     minute: "numeric",
   });
-
   // Format the date and return it
   return formatter.format(date);
 }
@@ -102,7 +101,6 @@ export function getSecondsUntilExpiration(
   if (!userInfo) {
     return null;
   }
-
   const { oidc_expiry, current_token_created_at, current_token_expiry_length } =
     userInfo;
 
@@ -121,8 +119,8 @@ export function getSecondsUntilExpiration(
     );
   }
 
-  if (oidc_expiry !== undefined && !isNaN(oidc_expiry)) {
-    const expiresAtFromOIDC = new Date(oidc_expiry * 1000);
+  if (oidc_expiry) {
+    const expiresAtFromOIDC = new Date(oidc_expiry);
     secondsUntilOIDCExpiration = Math.floor(
       (expiresAtFromOIDC.getTime() - now.getTime()) / 1000
     );

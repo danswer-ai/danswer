@@ -1,6 +1,8 @@
 import smtplib
 import uuid
 from collections.abc import AsyncGenerator
+from datetime import datetime
+from datetime import timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Optional
@@ -184,13 +186,11 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             associate_by_email=associate_by_email,
             is_verified_by_default=is_verified_by_default,
         )
-        
+
         if expires_at:
-            user.oidc_expiry = expires_at
-            await self.user_db.update(user, update_dict={"oidc_expiry": expires_at})
-
+            oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
+            await self.user_db.update(user, update_dict={"oidc_expiry": oidc_expiry})
         return user
-
 
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
@@ -245,11 +245,9 @@ def get_database_strategy(
         expiry_length = SESSION_EXPIRE_TIME_SECONDS
         access_token = await access_token_db.get_by_token(token)
         if access_token:
-            print("WRITING TOKEN")
             await access_token_db.update(
                 access_token, update_dict={"expiry_length": expiry_length}
             )
-
         return token
 
     strategy.write_token = write_token_with_expiry

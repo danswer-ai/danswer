@@ -1,6 +1,6 @@
+from datetime import datetime
 from typing import Any
 from typing import TYPE_CHECKING
-import datetime 
 
 from pydantic import BaseModel
 from pydantic import root_validator
@@ -21,7 +21,7 @@ from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
 
 if TYPE_CHECKING:
-    from danswer.db.models import User as UserModel
+    pass
 
 
 class VersionResponse(BaseModel):
@@ -47,8 +47,8 @@ class UserInfo(BaseModel):
     is_verified: bool
     role: UserRole
     preferences: UserPreferences
-    oidc_expiry: int | None = None
-    current_token_created_at: datetime.datetime | None = None
+    oidc_expiry: datetime | None = None
+    current_token_created_at: datetime | None = None
     current_token_expiry_length: int | None = None
 
     @classmethod
