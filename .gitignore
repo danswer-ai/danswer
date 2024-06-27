@@ -3,6 +3,8 @@
 .venv
 .mypy_cache
 .idea
+/backend/apicache/
+/backend/package-lock.json
 /deployment/data/nginx/app.conf
 .vscode/launch.json
 *.sw?

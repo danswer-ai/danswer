@@ -35,6 +35,18 @@ class BaseFilters(BaseModel):
     tags: list[Tag] | None = None
 
     @classmethod
+    def from_instance(cls, base_filters: "BaseFilters | None") -> "BaseFilters | None":
+        if base_filters is None:
+            return None
+        else:
+            return cls(
+                source_type=base_filters.source_type,
+                document_set=base_filters.document_set,
+                time_cutoff=base_filters.time_cutoff,
+                tags=base_filters.tags,
+            )
+
+    @classmethod
     def from_persona(cls, persona: Persona) -> "BaseFilters | None":
         if persona.use_recent_documents and persona.num_days is not None:
             from_date = datetime.now(timezone.utc) - timedelta(days=persona.num_days)
@@ -52,9 +64,9 @@ class BaseFilters(BaseModel):
         if retrieval_filter is None and persona_filter is None:
             return None
         elif retrieval_filter is None:
-            return persona_filter
+            return cls.from_instance(persona_filter)
         elif persona_filter is None:
-            return retrieval_filter
+            return cls.from_instance(retrieval_filter)
         else:
             return cls(
                 source_type=retrieval_filter.source_type,

@@ -22,7 +22,7 @@ def upgrade() -> None:
     )
     op.execute("UPDATE persona SET use_recent_documents = false")
     op.alter_column("persona", "use_recent_documents", nullable=False)
-    op.add_column("persona", sa.Column("num_days", sa.Integer(), nullable=True))
+    op.add_column("persona", sa.Column("num_days", sa.Float(), nullable=True))
 
 
 def downgrade() -> None:
