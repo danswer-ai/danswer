@@ -63,6 +63,8 @@ services:
       - HYBRID_ALPHA=${HYBRID_ALPHA:-}  # Hybrid Search Alpha (0 for entirely keyword, 1 for entirely vector)
       - EDIT_KEYWORD_QUERY=${EDIT_KEYWORD_QUERY:-}
       - MULTILINGUAL_QUERY_EXPANSION=${MULTILINGUAL_QUERY_EXPANSION:-}
+      - LANGUAGE_HINT=${LANGUAGE_HINT:-}
+      - LANGUAGE_CHAT_NAMING_HINT=${LANGUAGE_CHAT_NAMING_HINT:-}
       - QA_PROMPT_OVERRIDE=${QA_PROMPT_OVERRIDE:-}
       # Other services
       - POSTGRES_HOST=relational_db
@@ -140,6 +142,8 @@ services:
       - HYBRID_ALPHA=${HYBRID_ALPHA:-}  # Hybrid Search Alpha (0 for entirely keyword, 1 for entirely vector)
       - EDIT_KEYWORD_QUERY=${EDIT_KEYWORD_QUERY:-}
       - MULTILINGUAL_QUERY_EXPANSION=${MULTILINGUAL_QUERY_EXPANSION:-}
+      - LANGUAGE_HINT=${LANGUAGE_HINT:-}
+      - LANGUAGE_CHAT_NAMING_HINT=${LANGUAGE_CHAT_NAMING_HINT:-}
       - QA_PROMPT_OVERRIDE=${QA_PROMPT_OVERRIDE:-}
       # Other Services
       - POSTGRES_HOST=relational_db
