@@ -21,7 +21,7 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { Table } from "@tremor/react";
 import { DeleteButton } from "@/components/DeleteButton";
-import { FiCopy, FiEdit, FiRefreshCw, FiX } from "react-icons/fi";
+import { FiCopy, FiEdit2, FiRefreshCw, FiX } from "react-icons/fi";
 import { Modal } from "@/components/Modal";
 import { Spinner } from "@/components/Spinner";
 import { deleteApiKey, regenerateApiKey } from "./lib";
@@ -194,7 +194,7 @@ function Main() {
                   text-sm`}
                   onClick={() => handleEdit(apiKey)}
                 >
-                  <FiEdit className="my-auto mr-2" />
+                  <FiEdit2 className="my-auto mr-2" />
                   {apiKey.api_key_name || <i>null</i>}
                 </div>
               </TableCell>
