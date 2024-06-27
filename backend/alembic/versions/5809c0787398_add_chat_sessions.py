@@ -75,7 +75,6 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["chat_session_id"],
             ["chat_session.id"],
-            ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("chat_session_id", "message_number", "edit_number"),
     )
