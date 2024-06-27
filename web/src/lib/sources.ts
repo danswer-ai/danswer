@@ -224,7 +224,7 @@ const SOURCE_METADATA_MAP: SourceMap = {
   },
   oci_storage: {
     icon: OCIStorageIcon,
-    displayName: "OCI Storage",
+    displayName: "Oracle Storage",
     category: SourceCategory.AppConnection,
   },
   google_cloud_storage: {

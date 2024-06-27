@@ -78,7 +78,7 @@ const S3Main = () => {
 
   const s3Credential: Credential<S3CredentialJson> | undefined =
     credentialsData.find(
-      (credential) => credential.credential_json?.aws_profile_name
+      (credential) => credential.credential_json?.aws_access_key_id
     );
 
   return (
@@ -141,7 +141,6 @@ const S3Main = () => {
                     name="aws_secret_access_key"
                     label="AWS Secret Access Key:"
                   />
-                  <TextFormField name="profile_name" label="Profile Name:" />
                 </>
               }
               validationSchema={Yup.object().shape({
