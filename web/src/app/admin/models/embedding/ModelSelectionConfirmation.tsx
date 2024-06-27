@@ -19,14 +19,14 @@ export function ModelSelectionConfirmaion({
       </Text>
       <Text className="text-lg mb-2">
         We will re-index all your documents in the background so you will be
-        able to continue to use Danswer as normal with the old model in the
+        able to continue to use enMedD CHP as normal with the old model in the
         meantime. Depending on how many documents you have indexed, this may
         take a while.
       </Text>
       <Text className="text-lg mb-2">
         <i>NOTE:</i> this re-indexing process will consume more resources than
         normal. If you are self-hosting, we recommend that you allocate at least
-        16GB of RAM to Danswer during this process.
+        16GB of RAM to enMedD CHP during this process.
       </Text>
 
       {isCustom && (

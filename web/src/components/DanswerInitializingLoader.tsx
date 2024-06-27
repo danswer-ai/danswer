@@ -8,10 +8,11 @@ export function DanswerInitializingLoader() {
 
   return (
     <div className="mx-auto animate-pulse">
+      {/* TODO: Remove Enterprise Settings */}
       <Logo height={96} width={96} className="mx-auto mb-3" />
       <Bold>
         Initializing{" "}
-        {settings?.enterpriseSettings?.application_name ?? "Danswer"}
+        {settings?.enterpriseSettings?.application_name ?? "enMedD CHP"}
       </Bold>
     </div>
   );

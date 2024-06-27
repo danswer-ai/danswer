@@ -89,12 +89,12 @@ export const ChatSidebar = ({
 
                   {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
                     <p className="text-xs text-subtle -mt-1.5">
-                      Powered by Danswer
+                      Powered by enMedD CHP
                     </p>
                   )}
                 </div>
               ) : (
-                <HeaderTitle>Danswer</HeaderTitle>
+                <HeaderTitle>enMedD CHP</HeaderTitle>
               )}
             </div>
           </Link>

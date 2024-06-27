@@ -12,6 +12,8 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+// TODO: Make Enterprise settings normal settings / make it not enterprise
+// since our only license is Copyright license
 export async function generateMetadata(): Promise<Metadata> {
   const dynamicSettings = await getCombinedSettings({ forceRetrieval: true });
   const logoLocation =
@@ -21,8 +23,8 @@ export async function generateMetadata(): Promise<Metadata> {
       : buildClientUrl("/danswer.ico");
 
   return {
-    title: dynamicSettings.enterpriseSettings?.application_name ?? "Danswer",
-    description: "Question answering for your documents",
+    title: dynamicSettings.enterpriseSettings?.application_name ?? "enMedD CHP",
+    description: "enMedD Conversational Health Platform",
     icons: {
       icon: logoLocation,
     },

@@ -130,7 +130,7 @@ const Main = () => {
                 <>
                   <TextFormField
                     name="zendesk_subdomain"
-                    label="Zendesk Domain (ie. https://danswer.zendesk.com):"
+                    label="Zendesk Domain (ie. https://chp.zendesk.com):"
                   />
                   <TextFormField
                     name="zendesk_email"

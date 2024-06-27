@@ -21,13 +21,13 @@ metadata:
 
 questions:
   - id: 1
-    question: "What is Danswer?"
-    expected_answer: "Danswer is an open source question-answering system."
+    question: "What is enMedD CHP?"
+    expected_answer: "enMedD CHP is an open source question-answering system."
     notes: "This comes directly from the docs, the actual answer should be more informative"
 
   - id: 2
-    question: "What is Danswer licensed under?"
-    expected_answer: "Danswer is MIT licensed"
+    question: "What is enMedD CHP licensed under?"
+    expected_answer: "enMedD CHP is MIT licensed"
     notes: "This info can be found in many places"
 
   - id: 3
@@ -86,11 +86,11 @@ questions:
     notes: "This is in Github PR #161"
 
   - id: 14
-    question: "Does Danswer support PDFs in Google Drive?"
+    question: "Does enMedD CHP support PDFs in Google Drive?"
     expected_answer: "Yes"
     notes: "This question is in Slack, if the message expires due to using free slack version, the info may be gone as well"
 
   - id: 15
-    question: "I deleted a connector in Danswer but some deleted docs are still showing in search"
+    question: "I deleted a connector in enMedD CHP but some deleted docs are still showing in search"
     expected_answer: "The issue was fixed via a code change, it should go away after pulling the latest code"
     notes: "This question is in Slack, if the message expires due to using free slack version, the info may be gone as well"

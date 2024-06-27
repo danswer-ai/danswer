@@ -21,7 +21,7 @@ def _build_weak_llm_quotes_prompt(
     prompt: PromptConfig,
     use_language_hint: bool,
 ) -> HumanMessage:
-    """Since Danswer supports a variety of LLMs, this less demanding prompt is provided
+    """Since enMedD CHP supports a variety of LLMs, this less demanding prompt is provided
     as an option to use with weaker LLMs such as small version, low float precision, quantized,
     or distilled models. It only uses one context document and has very weak requirements of
     output format.

@@ -172,7 +172,7 @@ export const AIMessage = ({
             </div>
 
             <div className="font-bold text-emphasis ml-2 my-auto">
-              {personaName || "Danswer"}
+              {personaName || "enMedD CHP"}
             </div>
 
             {query === undefined &&

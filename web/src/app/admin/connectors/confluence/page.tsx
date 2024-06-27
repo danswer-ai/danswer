@@ -209,9 +209,10 @@ const Main = () => {
             &quot;Index&quot; to Index. Based on the provided link, we will
             index the ENTIRE SPACE, not just the specified page. For example,
             entering{" "}
-            <i>
-              https://danswer.atlassian.net/wiki/spaces/Engineering/overview
-            </i>{" "}
+            <a href="https://danswer.atlassian.net/wiki/spaces/Engineering/overview">
+              <i>
+                Atlassian engineering overview
+              </i>{" "}</a>
             and clicking the Index button will index the whole{" "}
             <i>Engineering</i> Confluence space.
           </p>
@@ -293,7 +294,7 @@ const Main = () => {
               }
               validationSchema={Yup.object().shape({
                 wiki_page_url: Yup.string().required(
-                  "Please enter any link to your confluence e.g. https://danswer.atlassian.net/wiki/spaces/Engineering/overview"
+                  "Please enter any link to your confluence"
                 ),
               })}
               initialValues={{

@@ -21,6 +21,7 @@ const Page = async () => {
       </div>
 
       <div>
+        <p className="font-bold text-lg my-auto mb-2">enMedD CHP</p>
         <div className="flex mb-2">
           <p className="my-auto mr-1">Backend Version: </p>
           <p className="text-base my-auto text-slate-400 italic">

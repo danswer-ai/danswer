@@ -37,6 +37,7 @@ export function Header({ user }: HeaderProps) {
         >
           <div className="flex my-auto">
             <div className="mr-1 my-auto">
+              {/* TODO: Remove Enterprise Settings */}
               <Logo />
             </div>
             <div className="my-auto">
@@ -47,12 +48,12 @@ export function Header({ user }: HeaderProps) {
                   </HeaderTitle>
                   {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
                     <p className="text-xs text-subtle -mt-1.5">
-                      Powered by Danswer
+                      Powered by enMedD CHP
                     </p>
                   )}
                 </div>
               ) : (
-                <HeaderTitle>Danswer</HeaderTitle>
+                <HeaderTitle>enMedD CHP</HeaderTitle>
               )}
             </div>
           </div>
@@ -60,29 +61,29 @@ export function Header({ user }: HeaderProps) {
 
         {(!settings ||
           (settings.search_page_enabled && settings.chat_page_enabled)) && (
-          <>
-            <Link
-              href="/search"
-              className={"ml-6 h-full flex flex-col hover:bg-hover"}
-            >
-              <div className="w-24 flex my-auto">
-                <div className={"mx-auto flex text-strong px-2"}>
-                  <FiSearch className="my-auto mr-1" />
-                  <h1 className="flex text-sm font-bold my-auto">Search</h1>
+            <>
+              <Link
+                href="/search"
+                className={"ml-6 h-full flex flex-col hover:bg-hover"}
+              >
+                <div className="w-24 flex my-auto">
+                  <div className={"mx-auto flex text-strong px-2"}>
+                    <FiSearch className="my-auto mr-1" />
+                    <h1 className="flex text-sm font-bold my-auto">Search</h1>
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
 
-            <Link href="/chat" className="h-full flex flex-col hover:bg-hover">
-              <div className="w-24 flex my-auto">
-                <div className="mx-auto flex text-strong px-2">
-                  <FiMessageSquare className="my-auto mr-1" />
-                  <h1 className="flex text-sm font-bold my-auto">Chat</h1>
+              <Link href="/chat" className="h-full flex flex-col hover:bg-hover">
+                <div className="w-24 flex my-auto">
+                  <div className="mx-auto flex text-strong px-2">
+                    <FiMessageSquare className="my-auto mr-1" />
+                    <h1 className="flex text-sm font-bold my-auto">Chat</h1>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          </>
-        )}
+              </Link>
+            </>
+          )}
 
         <div className="ml-auto h-full flex flex-col">
           <div className="my-auto">

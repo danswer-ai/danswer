@@ -540,7 +540,7 @@ export function AssistantEditor({
                                       <>
                                         If this functionality would be useful,
                                         reach out to the administrators of
-                                        Danswer for assistance.
+                                        enMedD CHP for assistance.
                                       </>
                                     )}
                                   </Italic>

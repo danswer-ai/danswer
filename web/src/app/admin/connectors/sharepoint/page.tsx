@@ -87,7 +87,7 @@ const MainSection = () => {
         The Sharepoint connector allows you to index and search through your
         Sharepoint files. Once setup, your Word documents, Excel files,
         PowerPoint presentations, OneNote notebooks, PDFs, and uploaded files
-        will be queryable within Danswer.
+        will be queryable within enMedD CHP.
       </Text>
 
       <Title className="mb-2 mt-6 ml-auto mr-auto">
@@ -241,16 +241,6 @@ const MainSection = () => {
                       • If no sites are specified, all sites in your
                       organization will be indexed (Sites.Read.All permission
                       required).
-                    </li>
-                    <li>
-                      • Specifying
-                      &apos;https://danswerai.sharepoint.com/sites/support&apos;
-                      for example will only index documents within this site.
-                    </li>
-                    <li>
-                      • Specifying
-                      &apos;https://danswerai.sharepoint.com/sites/support/subfolder&apos;
-                      for example will only index documents within this folder.
                     </li>
                   </ul>
                 </>

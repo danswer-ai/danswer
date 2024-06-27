@@ -64,7 +64,7 @@ If using a lower version, modifications will have to be made to the code.
 If using a higher version, the version of Tensorflow we use may not be available for your platform.
 
 
-#### Installing Requirements
+## Installing Requirements
 Currently, we use pip and recommend creating a virtual environment.
 
 For convenience here's a command for it:
@@ -87,9 +87,9 @@ If using PowerShell, the command slightly differs:
 
 Install the required python dependencies:
 ```bash
-pip install -r danswer/backend/requirements/default.txt
-pip install -r danswer/backend/requirements/dev.txt
-pip install -r danswer/backend/requirements/model_server.txt
+pip install -r ConversationalHealthPlatform/backend/requirements/default.txt
+pip install -r ConversationalHealthPlatform/backend/requirements/dev.txt
+pip install -r ConversationalHealthPlatform/backend/requirements/model_server.txt
 ```
 
 Install [Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) for the frontend.
@@ -109,19 +109,49 @@ playwright install
 ```
 
 
-#### Dependent Docker Containers
-First navigate to `danswer/deployment/docker_compose`, then start up Vespa and Postgres with:
-```bash
-docker compose -f docker-compose.dev.yml -p danswer-stack up -d index relational_db
-```
-(index refers to Vespa and relational_db refers to Postgres)
+## Dependent Docker Containers
 
-#### Running Danswer
+### Developing in fullstack. Both backend and the frontend of enMedD CHP.
+
+If you only want to dockerize the database. This will be the case if you wanted to develop also into the backend. You just need to start up the docker container of both the `index` - which is the Vespa vector database, and the `relational_db` - which is the postgres relational database from the `docker-compose.dev.yaml file`. 
+
+Navigate to `danswer/deployment/docker_compose`, then start up Vespa and Postgres with:
+```bash
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build index relational_db
+```
+Then you will just run the inference model server, api server, and the NextJS web project in you console by following the steps below.
+
+### Side note: Connecting pgadmin to dockerized relational db
+
+If you will be taking a look into the database through pgadmin, you can do that by getting the port number of the docker container of `relational_db`, which is in default in port `5432`.
+
+### Developing just in the frontend
+
+If you only want to modify the frontend, you can also dockerize the also the backend, which is the model server or the `inference_model_server` docker container, and the api server docker containers, or the `api_server`, from the `docker-compose.dev.yaml` file. 
+
+```bash
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build index relational_db inference_model_server api_server
+```
+
+It will also be required for you to add you environment variable if you wanted to containerize the backend, which is done by creating `.env` file in the `deployment/docker_compose` directory. This will then be read by docker compose while created its own container for each application. Example use case is if you want to modify the type of authentication (if basic, google_oauth, etc.). 
+
+Then you only by running the NextJS web project by following the steps below. 
+
+If it happens that you modified the environment variables in the `.env` file throughout your development process, you must rebuild you docker container for it to be reflected in it. You can do that by:
+```bash
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build index relational_db inference_model_server api_server --forcce-recreate
+```
+
+
+
+## Running Danswer
+
+### Running the NextJS frontend web app
 To start the frontend, navigate to `danswer/web` and run:
 ```bash
 npm run dev
 ```
-
+### Running the Inference Model Server [port 9000]
 Next, start the model server which runs the local NLP models.
 Navigate to `danswer/backend` and run:
 ```bash
@@ -133,7 +163,7 @@ powershell -Command "
     uvicorn model_server.main:app --reload --port 9000
 "
 ```
-
+### Running the background jobs app
 The first time running Danswer, you will need to run the DB migrations for Postgres.
 After the first time, this is no longer required unless the DB models change.
 
@@ -149,7 +179,7 @@ Still in `danswer/backend`, run:
 ```bash
 python ./scripts/dev_run_background_jobs.py
 ```
-
+### Running the API Server [post 8080]
 To run the backend API server, navigate back to `danswer/backend` and run:
 ```bash
 AUTH_TYPE=disabled uvicorn danswer.main:app --reload --port 8080
@@ -164,7 +194,9 @@ powershell -Command "
 
 Note: if you need finer logging, add the additional environment variable `LOG_LEVEL=DEBUG` to the relevant services.
 
-### Formatting and Linting
+
+
+### [For contributing] Formatting and Linting
 #### Backend
 For the backend, you'll need to setup pre-commit hooks (black / reorder-python-imports).
 First, install pre-commit (if you don't have it already) following the instructions

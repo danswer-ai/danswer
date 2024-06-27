@@ -227,9 +227,9 @@ const Main = () => {
             Specify any link to a Jira page below and click &quot;Index&quot; to
             Index. Based on the provided link, we will index the ENTIRE PROJECT,
             not just the specified page. For example, entering{" "}
-            <i>
-              https://danswer.atlassian.net/jira/software/projects/DAN/boards/1
-            </i>{" "}
+            <a href="https://danswer.atlassian.net/jira/software/projects/DAN/boards/1"><i>
+              Atlassian Jira
+            </i>{" "}</a>
             and clicking the Index button will index the whole <i>DAN</i> Jira
             project.
           </Text>
@@ -332,7 +332,7 @@ const Main = () => {
               }}
               validationSchema={Yup.object().shape({
                 jira_project_url: Yup.string().required(
-                  "Please enter any link to your jira project e.g. https://danswer.atlassian.net/jira/software/projects/DAN/boards/1"
+                  "Please enter any link to your jira project"
                 ),
                 comment_email_blacklist: Yup.array()
                   .of(Yup.string().required("Emails names must be strings"))
