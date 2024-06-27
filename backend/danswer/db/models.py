@@ -739,18 +739,16 @@ class ChatMessage(Base):
     chat_message_feedbacks: Mapped[list["ChatMessageFeedback"]] = relationship(
         "ChatMessageFeedback",
         back_populates="chat_message",
-        cascade="delete",
     )
     document_feedbacks: Mapped[list["DocumentRetrievalFeedback"]] = relationship(
         "DocumentRetrievalFeedback",
         back_populates="chat_message",
-        cascade="delete",
     )
     search_docs: Mapped[list["SearchDoc"]] = relationship(
         "SearchDoc",
         secondary="chat_message__search_doc",
         back_populates="chat_messages",
-        cascade="delete",
+        cascade="all, delete-orphan",
     )
     tool_calls: Mapped[list["ToolCall"]] = relationship(
         "ToolCall",

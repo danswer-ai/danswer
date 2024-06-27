@@ -30,6 +30,13 @@ def get_pgfilestore_by_file_name(
     return pgfilestore
 
 
+def delete_pgfilestore_by_file_name(
+    file_name: str,
+    db_session: Session,
+) -> None:
+    db_session.query(PGFileStore).filter_by(file_name=file_name).delete()
+
+
 def create_populate_lobj(
     content: IO,
     db_session: Session,
@@ -89,14 +96,15 @@ def delete_lobj_by_name(
     lobj_name: str,
     db_session: Session,
 ) -> None:
-    pgfilestore = get_pgfilestore_by_file_name(lobj_name, db_session)
+    pgfilestore = db_session.query(PGFileStore).filter_by(file_name=lobj_name).first()
     if not pgfilestore:
-        raise ValueError(f"No file found with name: {lobj_name}")
+        logger.info(f"no file with name {lobj_name} found")
+        return
 
     pg_conn = get_pg_conn_from_session(db_session)
     pg_conn.lobject(pgfilestore.lobj_oid).unlink()
 
-    db_session.delete(pgfilestore)
+    delete_pgfilestore_by_file_name(lobj_name, db_session)
     db_session.commit()
 
 
@@ -139,10 +147,3 @@ def upsert_pgfilestore(
         db_session.commit()
 
     return pgfilestore
-
-
-def delete_pgfilestore_by_file_name(
-    file_name: str,
-    db_session: Session,
-) -> None:
-    db_session.query(PGFileStore).filter_by(file_name=file_name).delete()
