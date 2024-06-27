@@ -33,6 +33,8 @@ data:
   HYBRID_ALPHA: ""
   EDIT_KEYWORD_QUERY: ""
   MULTILINGUAL_QUERY_EXPANSION: ""
+  LANGUAGE_HINT: ""
+  LANGUAGE_CHAT_NAMING_HINT: ""
   QA_PROMPT_OVERRIDE: ""
   # Other Services
   POSTGRES_HOST: "relational-db-service"
