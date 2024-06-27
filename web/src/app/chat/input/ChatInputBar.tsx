@@ -177,14 +177,16 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-            <div className="flex items-center space-x-3  px-4 pb-2">
+            <div className="flex items-center space-x-3 mr-12 px-4 pb-2 overflow-hidden">
               <ChatInputOption
+                flexPriority="shrink"
                 name={selectedAssistant ? selectedAssistant.name : "Assistants"}
                 icon={FaBrain}
                 onClick={() => setConfigModalActiveTab("assistants")}
               />
 
               <ChatInputOption
+                flexPriority="second"
                 name={
                   llmOverrideManager.llmOverride.modelName ||
                   (selectedAssistant
@@ -194,14 +196,18 @@ export function ChatInputBar({
                 icon={FiCpu}
                 onClick={() => setConfigModalActiveTab("llms")}
               />
+
               {!retrievalDisabled && (
                 <ChatInputOption
+                  flexPriority="stiff"
                   name="Filters"
                   icon={FiFilter}
                   onClick={() => setConfigModalActiveTab("filters")}
                 />
               )}
+
               <ChatInputOption
+                flexPriority="stiff"
                 name="File"
                 icon={FiPlusCircle}
                 onClick={() => {
