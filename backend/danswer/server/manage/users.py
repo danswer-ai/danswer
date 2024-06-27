@@ -6,6 +6,9 @@ from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import status
 from pydantic import BaseModel
+from sqlalchemy import Column
+from sqlalchemy import desc
+from sqlalchemy import select
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
@@ -22,6 +25,7 @@ from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
 from danswer.db.engine import get_session
+from danswer.db.models import AccessToken
 from danswer.db.models import User
 from danswer.db.users import get_user_by_email
 from danswer.db.users import list_users
@@ -245,10 +249,33 @@ async def get_user_role(user: User = Depends(current_user)) -> UserRoleResponse:
         raise ValueError("Invalid or missing user.")
     return UserRoleResponse(role=user.role)
 
+def get_current_token_info(user: User | None, db_session: Session):
+    if not isinstance(user, User):
+        return None, None
+    try:
+        result = db_session.execute(
+            select(AccessToken)
+            .where(AccessToken.user_id == user.id)
+            .order_by(desc(Column("created_at")))
+            .limit(1)
+        )
+        access_token = result.scalar_one_or_none()
+
+        if access_token:
+            return access_token.expiry_length, access_token.created_at
+        else:
+            logger.error("No AccessToken found for user")
+            return None, None
+
+    except Exception as e:
+        logger.error(f"Error fetching AccessToken: {e}")
+        return None, None
+
 
 @router.get("/me")
-def verify_user_logged_in(
+async def verify_user_logged_in(
     user: User | None = Depends(optional_user),
+    db_session: Session = Depends(get_session),
 ) -> UserInfo:
     # NOTE: this does not use `current_user` / `current_admin_user` because we don't want
     # to enforce user verification here - the frontend always wants to get the info about
@@ -264,7 +291,14 @@ def verify_user_logged_in(
             status_code=status.HTTP_403_FORBIDDEN, detail="User Not Authenticated"
         )
 
-    return UserInfo.from_model(user)
+    token_expiry_length, token_created_at = get_current_token_info(user, db_session)
+    user_info = UserInfo.from_model(
+        user,
+        current_token_created_at=token_created_at,
+        current_token_expiry_length=token_expiry_length,
+    )
+    return user_info
+
 
 
 """APIs to adjust user preferences"""

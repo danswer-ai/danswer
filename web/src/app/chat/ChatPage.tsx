@@ -73,6 +73,7 @@ import FunctionalHeader from "@/components/chat_search/Header";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
+import { getSecondsUntilExpiration } from "@/lib/time";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -391,10 +392,24 @@ export function ChatPage({
     useState<number | null>(null);
   const { aiMessage } = selectedMessageForDocDisplay
     ? getHumanAndAIMessageFromMessageNumber(
-        messageHistory,
-        selectedMessageForDocDisplay
-      )
+      messageHistory,
+      selectedMessageForDocDisplay
+    )
     : { aiMessage: null };
+
+  const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
+    existingChatSessionPersonaId !== undefined
+      ? filteredAssistants.find(
+          (persona) => persona.id === existingChatSessionPersonaId
+        )
+      : defaultSelectedPersonaId !== undefined
+        ? filteredAssistants.find(
+            (persona) => persona.id === defaultSelectedPersonaId
+          )
+        : undefined
+  );
+  const livePersona =
+    selectedPersona || filteredAssistants[0] || availablePersonas[0];
 
   const [chatSessionSharedStatus, setChatSessionSharedStatus] =
     useState<ChatSessionSharedStatus>(ChatSessionSharedStatus.Private);
@@ -1086,6 +1101,7 @@ export function ChatPage({
   });
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
+  const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
   const currentPersona = alternativeAssistant || liveAssistant;
 
@@ -1117,6 +1133,9 @@ export function ChatPage({
     <>
       <HealthCheckBanner />
       <InstantSSRAutoRefresh />
+      <div className="m-3">
+        <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
+      </div>
 
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}

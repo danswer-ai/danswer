@@ -119,6 +119,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     chosen_assistants: Mapped[list[int]] = mapped_column(
         postgresql.ARRAY(Integer), nullable=True
     )
+    oidc_expiry: Mapped[int] = mapped_column(Integer, nullable=True)
 
     # relationships
     credentials: Mapped[list["Credential"]] = relationship(
@@ -139,7 +140,8 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
-    pass
+    expiry_length: Mapped[int] = mapped_column(Integer, nullable=False)
+
 
 
 class ApiKey(Base):

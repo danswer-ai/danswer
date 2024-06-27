@@ -173,7 +173,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         verify_email_in_whitelist(account_email)
         verify_email_domain(account_email)
 
-        return await super().oauth_callback(  # type: ignore
+        user = await super().oauth_callback(  # type: ignore
             oauth_name=oauth_name,
             access_token=access_token,
             account_id=account_id,
@@ -184,6 +184,13 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             associate_by_email=associate_by_email,
             is_verified_by_default=is_verified_by_default,
         )
+        
+        if expires_at:
+            user.oidc_expiry = expires_at
+            await self.user_db.update(user, update_dict={"oidc_expiry": expires_at})
+
+        return user
+
 
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
@@ -227,9 +234,26 @@ cookie_transport = CookieTransport(
 def get_database_strategy(
     access_token_db: AccessTokenDatabase[AccessToken] = Depends(get_access_token_db),
 ) -> DatabaseStrategy:
-    return DatabaseStrategy(
+    strategy = DatabaseStrategy(
         access_token_db, lifetime_seconds=SESSION_EXPIRE_TIME_SECONDS  # type: ignore
     )
+
+    original_write_token = strategy.write_token
+
+    async def write_token_with_expiry(user: User) -> str:
+        token = await original_write_token(user)
+        expiry_length = SESSION_EXPIRE_TIME_SECONDS
+        access_token = await access_token_db.get_by_token(token)
+        if access_token:
+            print("WRITING TOKEN")
+            await access_token_db.update(
+                access_token, update_dict={"expiry_length": expiry_length}
+            )
+
+        return token
+
+    strategy.write_token = write_token_with_expiry
+    return strategy
 
 
 auth_backend = AuthenticationBackend(

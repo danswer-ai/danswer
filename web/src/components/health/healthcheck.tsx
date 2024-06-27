@@ -4,16 +4,30 @@ import { errorHandlingFetcher, FetchError, RedirectError } from "@/lib/fetcher";
 import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import { Modal } from "../Modal";
+import { useState } from "react";
 
-export const HealthCheckBanner = () => {
-  const router = useRouter();
+export const HealthCheckBanner = ({
+  secondsUntilExpiration,
+}: {
+  secondsUntilExpiration?: number | null;
+}) => {
   const { error } = useSWR("/api/health", errorHandlingFetcher);
+  const [expired, setExpired] = useState(false);
 
-  if (!error) {
+  if (secondsUntilExpiration) {
+    setTimeout(
+      () => {
+        setExpired(true);
+      },
+      (secondsUntilExpiration - 2) * 1000
+    );
+  }
+
+  if (!error && !expired) {
     return null;
   }
 
-  if (error instanceof RedirectError) {
+  if (error instanceof RedirectError || expired) {
     return (
       <Modal
         width="w-1/4"
