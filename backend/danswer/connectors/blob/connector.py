@@ -3,10 +3,11 @@ from datetime import datetime
 from datetime import timezone
 from io import BytesIO
 from typing import Any
+from typing import Optional
 
 import boto3
-from botocore.client import BaseClient
 from botocore.client import Config
+from mypy_boto3_s3 import S3Client
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -35,7 +36,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         self.bucket_name = bucket_name
         self.prefix = prefix if not prefix or prefix.endswith("/") else prefix + "/"
         self.batch_size = batch_size
-        self.s3_client: BaseClient | None = None
+        self.s3_client: Optional[S3Client] = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         """Checks for boto3 credentials based on the bucket type.
@@ -126,16 +127,16 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         object = self.s3_client.get_object(Bucket=self.bucket_name, Key=key)
         return object["Body"].read()
 
-    def _get_presigned_url(self, key: str) -> str:
-        if self.s3_client is None:
-            raise ConnectorMissingCredentialError("Blog storage")
+    # def _get_presigned_url(self, key: str) -> str:
+    #     if self.s3_client is None:
+    #         raise ConnectorMissingCredentialError("Blog storage")
 
-        url = self.s3_client.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": self.bucket_name, "Key": key},
-            ExpiresIn=self.presign_length,
-        )
-        return url
+    #     url = self.s3_client.generate_presigned_url(
+    #         "get_object",
+    #         Params={"Bucket": self.bucket_name, "Key": key},
+    #         ExpiresIn=self.presign_length,
+    #     )
+    #     return url
 
     def _get_blob_link(self, key: str) -> str:
         if self.s3_client is None:
@@ -246,8 +247,8 @@ if __name__ == "__main__":
 
     # Initialize the connector
     connector = BlobStorageConnector(
-        bucket_type=os.environ.get("BUCKET_TYPE"),
-        bucket_name=os.environ.get("BUCKET_NAME"),
+        bucket_type=os.environ.get("BUCKET_TYPE") or "s3",
+        bucket_name=os.environ.get("BUCKET_NAME") or "test",
         prefix="",
     )
 
