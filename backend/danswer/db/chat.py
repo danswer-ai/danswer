@@ -87,27 +87,18 @@ def get_chat_sessions_by_user(
     return list(chat_sessions)
 
 
-def delete_files_from_chat_session(chat_session_id: int, db_session: Session) -> None:
-    # Select messages older than cutoff_time with files
-    messages_with_files = db_session.execute(
-        select(ChatMessage.id, ChatMessage.files).where(
-            ChatMessage.chat_session_id == chat_session_id,
-            ChatMessage.files.isnot(None),
-        )
-    ).fetchall()
-
-    for _, files in messages_with_files:
-        for file_info in files or {}:
-            lobj_name = file_info.get("id")
-            if lobj_name:
-                logger.info(f"Deleting file with name: {lobj_name}")
-                delete_lobj_by_name(lobj_name, db_session)
+def delete_search_doc_message_relationship(
+    message_id: int, db_session: Session
+) -> None:
+    db_session.query(ChatMessage__SearchDoc).filter(
+        ChatMessage__SearchDoc.chat_message_id == message_id
+    ).delete(synchronize_session=False)
 
     db_session.commit()
 
 
 def delete_orphaned_search_docs(db_session: Session) -> None:
-    orphaned_docs = orphaned_docs = (
+    orphaned_docs = (
         db_session.query(SearchDoc)
         .outerjoin(ChatMessage__SearchDoc)
         .filter(ChatMessage__SearchDoc.chat_message_id.is_(None))
@@ -116,6 +107,32 @@ def delete_orphaned_search_docs(db_session: Session) -> None:
     for doc in orphaned_docs:
         db_session.delete(doc)
     db_session.commit()
+
+
+def delete_messages_and_files_from_chat_session(
+    chat_session_id: int, db_session: Session
+) -> None:
+    # Select messages older than cutoff_time with files
+    messages_with_files = db_session.execute(
+        select(ChatMessage.id, ChatMessage.files).where(
+            ChatMessage.chat_session_id == chat_session_id,
+        )
+    ).fetchall()
+
+    for id, files in messages_with_files:
+        delete_search_doc_message_relationship(message_id=id, db_session=db_session)
+        for file_info in files or {}:
+            lobj_name = file_info.get("id")
+            if lobj_name:
+                logger.info(f"Deleting file with name: {lobj_name}")
+                delete_lobj_by_name(lobj_name, db_session)
+
+    db_session.execute(
+        delete(ChatMessage).where(ChatMessage.chat_session_id == chat_session_id)
+    )
+    db_session.commit()
+
+    delete_orphaned_search_docs(db_session)
 
 
 def create_chat_session(
@@ -175,11 +192,8 @@ def delete_chat_session(
     hard_delete: bool = HARD_DELETE_CHATS,
 ) -> None:
     if hard_delete:
-        delete_files_from_chat_session(chat_session_id, db_session)
-
+        delete_messages_and_files_from_chat_session(chat_session_id, db_session)
         db_session.execute(delete(ChatSession).where(ChatSession.id == chat_session_id))
-
-        delete_orphaned_search_docs(db_session)
     else:
         chat_session = get_chat_session_by_id(
             chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
