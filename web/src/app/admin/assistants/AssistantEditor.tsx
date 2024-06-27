@@ -401,10 +401,6 @@ export function AssistantEditor({
               : false;
           }
 
-          function useRecentDocumentsEnabled() {
-            return searchTool && values.recent_documents_enabled;
-          }
-
           return (
             <Form>
               <div className="pb-6">
@@ -611,7 +607,7 @@ export function AssistantEditor({
                                     }}
                                   />
 
-                                  {useRecentDocumentsEnabled() && (
+                                  {values.recent_documents_enabled && (
                                     <div className="pl-4 border-l-2 ml-4 border-border">
                                       <TextFormField
                                         name="num_days"
