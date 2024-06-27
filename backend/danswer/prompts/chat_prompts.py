@@ -188,7 +188,7 @@ Query:
 
 
 CHAT_NAMING = f"""
-Given the following conversation, provide a SHORT name for the conversation.
+Given the following conversation, provide a SHORT name for the conversation.{{language_hint_or_empty}}
 IMPORTANT: TRY NOT TO USE MORE THAN 5 WORDS, MAKE IT AS CONCISE AS POSSIBLE.
 Focus the name on the important keywords to convey the topic of the conversation.
 
