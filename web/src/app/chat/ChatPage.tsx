@@ -813,14 +813,6 @@ export function ChatPage({
                   };
                 }
               );
-            } else if (Object.hasOwn(packet, "tool_name")) {
-              toolCalls = [
-                {
-                  tool_name: (packet as ToolCallMetadata).tool_name,
-                  tool_args: (packet as ToolCallMetadata).tool_args,
-                  tool_result: (packet as ToolCallMetadata).tool_result,
-                },
-              ];
             } else if (Object.hasOwn(packet, "error")) {
               error = (packet as StreamingError).error;
             } else if (Object.hasOwn(packet, "message_id")) {
