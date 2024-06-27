@@ -26,11 +26,10 @@ export function AssistantIcon({
   return (
     <div
       className={`
-    
-     ${border && " border border-.5 border-neutral-400 "}
+      ${border && " border border-.5 border-neutral-400 "}
       ${(!size || size == "large") && "w-6 h-6"}
       ${size == "small" && "w-6 h-6"}
-        rounded-lg
+      rounded-lg
       `}
       style={{ backgroundColor: color }}
     />

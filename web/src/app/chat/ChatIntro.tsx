@@ -8,7 +8,6 @@ import { HoverPopup } from "@/components/HoverPopup";
 import { Modal } from "@/components/Modal";
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
-import { useChatContext } from "@/components/context/ChatContext";
 
 const MAX_PERSONAS_TO_DISPLAY = 4;
 
