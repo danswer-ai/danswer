@@ -2,10 +2,11 @@ import abc
 from collections.abc import Iterator
 from typing import Literal
 
-from danswer.utils.logger import setup_logger
 from langchain.schema.language_model import LanguageModelInput
 from langchain_core.messages import BaseMessage
 from pydantic import BaseModel
+
+from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()

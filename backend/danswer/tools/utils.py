@@ -1,8 +1,9 @@
 import json
 
+from tiktoken import Encoding
+
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.tools.tool import Tool
-from tiktoken import Encoding
 
 
 OPEN_AI_TOOL_CALLING_MODELS = {"gpt-3.5-turbo", "gpt-4-turbo", "gpt-4"}

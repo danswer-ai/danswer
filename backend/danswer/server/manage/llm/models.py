@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING
 
-from danswer.llm.llm_provider_options import fetch_models_for_provider
 from pydantic import BaseModel
+
+from danswer.llm.llm_provider_options import fetch_models_for_provider
 
 if TYPE_CHECKING:
     from danswer.db.models import LLMProvider as LLMProviderModel

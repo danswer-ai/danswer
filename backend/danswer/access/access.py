@@ -1,3 +1,5 @@
+from sqlalchemy.orm import Session
+
 from danswer.access.models import DocumentAccess
 from danswer.access.utils import prefix_user
 from danswer.configs.constants import PUBLIC_DOC_PAT
@@ -5,7 +7,6 @@ from danswer.db.document import get_acccess_info_for_documents
 from danswer.db.models import User
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.variable_functionality import fetch_versioned_implementation
-from sqlalchemy.orm import Session
 
 
 def _get_access_for_documents(

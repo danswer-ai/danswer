@@ -1,3 +1,7 @@
+from fastapi import APIRouter
+from fastapi import Depends
+from sqlalchemy.orm import Session
+
 from danswer.auth.users import current_admin_user
 from danswer.db.engine import get_session
 from danswer.db.models import User
@@ -8,9 +12,6 @@ from ee.danswer.db.token_limit import delete_token_rate_limit
 from ee.danswer.db.token_limit import fetch_all_global_token_rate_limits
 from ee.danswer.db.token_limit import insert_global_token_rate_limit
 from ee.danswer.db.token_limit import update_token_rate_limit
-from fastapi import APIRouter
-from fastapi import Depends
-from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/admin/token-rate-limits")
 

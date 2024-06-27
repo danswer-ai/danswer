@@ -1,16 +1,17 @@
 from typing import Type
 from typing import TypedDict
 
+from sqlalchemy import not_
+from sqlalchemy import or_
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from danswer.db.models import Persona
 from danswer.db.models import Tool as ToolDBModel
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
 from danswer.tools.search.search_tool import SearchTool
 from danswer.tools.tool import Tool
 from danswer.utils.logger import setup_logger
-from sqlalchemy import not_
-from sqlalchemy import or_
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

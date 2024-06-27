@@ -1,5 +1,9 @@
 from typing import Any
 
+from pydantic import BaseModel
+from pydantic import Field
+from pydantic import root_validator
+
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
@@ -7,9 +11,6 @@ from danswer.chat.models import QADocsResponse
 from danswer.configs.constants import MessageType
 from danswer.search.models import ChunkContext
 from danswer.search.models import RetrievalDetails
-from pydantic import BaseModel
-from pydantic import Field
-from pydantic import root_validator
 
 
 class QueryRephrase(BaseModel):

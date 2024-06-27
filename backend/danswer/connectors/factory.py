@@ -1,6 +1,8 @@
 from typing import Any
 from typing import Type
 
+from sqlalchemy.orm import Session
+
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.axero.connector import AxeroConnector
 from danswer.connectors.bookstack.connector import BookstackConnector
@@ -42,7 +44,6 @@ from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
 from danswer.db.credentials import backend_update_credential_json
 from danswer.db.models import Credential
-from sqlalchemy.orm import Session
 
 
 class ConnectorMissingException(Exception):

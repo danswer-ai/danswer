@@ -2,6 +2,11 @@ from datetime import timezone
 from io import BytesIO
 from typing import Any
 
+from dropbox import Dropbox  # type: ignore
+from dropbox.exceptions import ApiError  # type:ignore
+from dropbox.files import FileMetadata  # type:ignore
+from dropbox.files import FolderMetadata  # type:ignore
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -13,10 +18,6 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.utils.logger import setup_logger
-from dropbox import Dropbox  # type: ignore
-from dropbox.exceptions import ApiError  # type:ignore
-from dropbox.files import FileMetadata  # type:ignore
-from dropbox.files import FolderMetadata  # type:ignore
 
 
 logger = setup_logger()

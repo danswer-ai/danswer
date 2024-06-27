@@ -6,6 +6,26 @@ from email.mime.text import MIMEText
 from typing import Optional
 from typing import Tuple
 
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import Request
+from fastapi import Response
+from fastapi import status
+from fastapi_users import BaseUserManager
+from fastapi_users import FastAPIUsers
+from fastapi_users import models
+from fastapi_users import schemas
+from fastapi_users import UUIDIDMixin
+from fastapi_users.authentication import AuthenticationBackend
+from fastapi_users.authentication import CookieTransport
+from fastapi_users.authentication import Strategy
+from fastapi_users.authentication.strategy.db import AccessTokenDatabase
+from fastapi_users.authentication.strategy.db import DatabaseStrategy
+from fastapi_users.openapi import OpenAPIResponseType
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from sqlalchemy.orm import Session
+
 from danswer.auth.invited_users import get_invited_users
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
@@ -38,25 +58,6 @@ from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import (
     fetch_versioned_implementation,
 )
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import Response
-from fastapi import status
-from fastapi_users import BaseUserManager
-from fastapi_users import FastAPIUsers
-from fastapi_users import models
-from fastapi_users import schemas
-from fastapi_users import UUIDIDMixin
-from fastapi_users.authentication import AuthenticationBackend
-from fastapi_users.authentication import CookieTransport
-from fastapi_users.authentication import Strategy
-from fastapi_users.authentication.strategy.db import AccessTokenDatabase
-from fastapi_users.authentication.strategy.db import DatabaseStrategy
-from fastapi_users.openapi import OpenAPIResponseType
-from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
-from sqlalchemy.orm import Session
 
 
 logger = setup_logger()

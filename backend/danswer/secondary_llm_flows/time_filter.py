@@ -3,13 +3,14 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 
+from dateutil.parser import parse
+
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import message_to_string
 from danswer.prompts.filter_extration import TIME_FILTER_PROMPT
 from danswer.prompts.prompt_utils import get_current_llm_day_time
 from danswer.utils.logger import setup_logger
-from dateutil.parser import parse
 
 logger = setup_logger()
 

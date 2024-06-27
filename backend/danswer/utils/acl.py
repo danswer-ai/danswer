@@ -1,5 +1,8 @@
 from threading import Thread
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from danswer.access.access import get_access_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import Document
@@ -10,8 +13,6 @@ from danswer.document_index.vespa.index import VespaIndex
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.utils.logger import setup_logger
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

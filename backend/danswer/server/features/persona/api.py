@@ -1,5 +1,10 @@
 from uuid import UUID
 
+from fastapi import APIRouter
+from fastapi import Depends
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
@@ -18,10 +23,6 @@ from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.features.persona.models import PromptTemplateResponse
 from danswer.server.models import DisplayPriorityRequest
 from danswer.utils.logger import setup_logger
-from fastapi import APIRouter
-from fastapi import Depends
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

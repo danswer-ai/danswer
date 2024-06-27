@@ -1,3 +1,5 @@
+from sqlalchemy.orm import Session
+
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.embedding_model import get_current_db_embedding_model
@@ -9,7 +11,6 @@ from danswer.db.index_attempt import (
     count_unique_cc_pairs_with_successful_index_attempts,
 )
 from danswer.utils.logger import setup_logger
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

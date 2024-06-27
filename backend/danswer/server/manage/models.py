@@ -1,6 +1,10 @@
 from typing import Any
 from typing import TYPE_CHECKING
 
+from pydantic import BaseModel
+from pydantic import root_validator
+from pydantic import validator
+
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import AuthType
 from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
@@ -12,9 +16,6 @@ from danswer.indexing.models import EmbeddingModelDetail
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
-from pydantic import BaseModel
-from pydantic import root_validator
-from pydantic import validator
 
 if TYPE_CHECKING:
     from danswer.db.models import User as UserModel

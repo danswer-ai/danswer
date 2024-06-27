@@ -1,5 +1,10 @@
 from collections.abc import Callable
 
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
@@ -19,10 +24,6 @@ from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.manage.llm.models import TestLLMRequest
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

@@ -2,6 +2,8 @@ from datetime import timedelta
 from typing import cast
 
 from celery import Celery  # type: ignore
+from sqlalchemy.orm import Session
+
 from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
 from danswer.background.celery.celery_utils import should_prune_cc_pair
 from danswer.background.celery.celery_utils import should_sync_doc_set
@@ -33,7 +35,6 @@ from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.utils.logger import setup_logger
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

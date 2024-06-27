@@ -1,12 +1,13 @@
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.models import User
 from danswer.server.settings.models import Settings
 from danswer.server.settings.store import load_settings
 from danswer.server.settings.store import store_settings
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
 
 
 admin_router = APIRouter(prefix="/admin/settings")

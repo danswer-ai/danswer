@@ -7,6 +7,9 @@ from typing import Any
 from typing import ClassVar
 
 import pywikibot.time  # type: ignore[import-untyped]
+from pywikibot import pagegenerators  # type: ignore[import-untyped]
+from pywikibot import textlib  # type: ignore[import-untyped]
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -16,8 +19,6 @@ from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.mediawiki.family import family_class_dispatch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from pywikibot import pagegenerators  # type: ignore[import-untyped]
-from pywikibot import textlib  # type: ignore[import-untyped]
 
 
 def pywikibot_timestamp_to_utc_datetime(

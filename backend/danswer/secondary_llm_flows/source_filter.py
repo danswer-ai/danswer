@@ -1,6 +1,8 @@
 import json
 import random
 
+from sqlalchemy.orm import Session
+
 from danswer.configs.constants import DocumentSource
 from danswer.db.connector import fetch_unique_document_sources
 from danswer.db.engine import get_sqlalchemy_engine
@@ -13,7 +15,6 @@ from danswer.prompts.filter_extration import SOURCE_FILTER_PROMPT
 from danswer.prompts.filter_extration import WEB_SOURCE_WARNING
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
