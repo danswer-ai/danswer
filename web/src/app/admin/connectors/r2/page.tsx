@@ -240,7 +240,7 @@ const R2Main = () => {
                 bucket_name: "",
                 prefix: "",
               }}
-              refreshFreq={10 * 60} // 10 minutes
+              refreshFreq={60 * 60 * 24} // 1 day
               credentialId={r2Credential.id}
             />
           </Card>

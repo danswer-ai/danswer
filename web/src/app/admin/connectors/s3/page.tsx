@@ -233,7 +233,7 @@ const S3Main = () => {
                 bucket_name: "",
                 prefix: "",
               }}
-              refreshFreq={10 * 60} // 10 minutes
+              refreshFreq={60 * 60 * 24} // 1 day
               credentialId={s3Credential.id}
             />
           </Card>
