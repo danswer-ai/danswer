@@ -17,7 +17,7 @@ export default async function Page() {
     );
   } else {
     body = (
-      <Card className="max-w-4xl">
+      <Card>
         <AssistantEditor
           {...values}
           defaultPublic={true}
@@ -31,7 +31,7 @@ export default async function Page() {
     <div>
       <BackButton />
       <AdminPageTitle
-        title="Create a New Persona"
+        title="Create a New Assistant"
         icon={<RobotIcon size={32} />}
       />
       {body}

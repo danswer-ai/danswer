@@ -26,7 +26,7 @@ import {
   getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
   getLastSuccessfulMessageId,
-  handleChatFeedback, 
+  handleChatFeedback,
   nameChatSession,
   PacketType,
   personaIncludesRetrieval,
