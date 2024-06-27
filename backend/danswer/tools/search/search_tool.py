@@ -120,7 +120,9 @@ class SearchTool(Tool):
     def build_tool_message_content(
         self, *args: ToolResponse
     ) -> str | list[str | dict[str, Any]]:
-        final_context_docs_response = args[2]
+        final_context_docs_response = next(
+            response for response in args if response.id == FINAL_CONTEXT_DOCUMENTS
+        )
         final_context_docs = cast(list[LlmDoc], final_context_docs_response.response)
 
         return json.dumps(
