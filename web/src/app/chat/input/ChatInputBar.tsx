@@ -161,14 +161,14 @@ export function ChatInputBar({
             />
             <div className="flex items-center space-x-3 mr-12 px-4 pb-2 overflow-hidden">
               <ChatInputOption
-                flexPriority={"shrink"}
+                flexPriority="shrink"
                 name={selectedAssistant ? selectedAssistant.name : "Assistants"}
                 icon={FaBrain}
                 onClick={() => setConfigModalActiveTab("assistants")}
               />
 
               <ChatInputOption
-                flexPriority={"second"}
+                flexPriority="second"
                 name={
                   llmOverrideManager.llmOverride.modelName ||
                   (selectedAssistant
@@ -189,7 +189,7 @@ export function ChatInputBar({
               )}
 
               <ChatInputOption
-                flexPriority={"stiff"}
+                flexPriority="stiff"
                 name="File"
                 icon={FiPlusCircle}
                 onClick={() => {
