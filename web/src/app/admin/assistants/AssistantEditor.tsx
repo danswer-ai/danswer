@@ -37,13 +37,14 @@ import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
-import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@radix-ui/react-tooltip";
 
-import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip";
-
-
-import { EE_ENABLED } from "@/lib/constants";
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
 }
@@ -820,14 +821,11 @@ export function AssistantEditor({
                   />
                 </div>
 
-
-
                 {isPaidEnterpriseFeaturesEnabled &&
                   userGroups &&
                   (!user || user.role === "admin") && (
                     <>
-
-                    <Divider />
+                      <Divider />
 
                       <BooleanFormField
                         small
