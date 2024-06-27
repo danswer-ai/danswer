@@ -82,12 +82,8 @@ def load_personas_from_yaml(
                 persona_id=(-1 * p_id) if p_id is not None else None,
                 name=persona["name"],
                 description=persona["description"],
-                num_chunks=persona.get("num_chunks")
-                if persona.get("num_chunks") is not None
-                else default_chunks,
-                use_recent_documents=persona["use_recent_documents"]
-                if persona["use_recent_documents"] is not None
-                else False,
+                num_chunks=persona.get("num_chunks", default_chunks),
+                use_recent_documents=persona.get("use_recent_documents", False),
                 num_days=persona.get("num_days"),
                 llm_relevance_filter=persona.get("llm_relevance_filter"),
                 starter_messages=persona.get("starter_messages"),

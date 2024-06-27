@@ -248,20 +248,8 @@ class Answer:
             )
 
             if tool.name() == SearchTool.NAME:
-                final_context_documents = None
-                for response in tool_runner.tool_responses():
-                    if response.id == FINAL_CONTEXT_DOCUMENTS:
-                        final_context_documents = cast(list[LlmDoc], response.response)
-                    yield response
+                self._update_prompt_builder_for_search_tool(prompt_builder, [])
 
-                if final_context_documents is None:
-                    raise RuntimeError(
-                        "SearchTool did not return final context documents"
-                    )
-
-                self._update_prompt_builder_for_search_tool(
-                    prompt_builder, final_context_documents
-                )
             elif tool.name() == ImageGenerationTool.NAME:
                 prompt_builder.update_user_prompt(
                     build_image_generation_user_prompt(
