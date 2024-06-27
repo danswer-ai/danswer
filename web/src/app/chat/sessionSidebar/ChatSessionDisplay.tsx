@@ -9,8 +9,7 @@ import { BasicSelectable } from "@/components/BasicClickable";
 import Link from "next/link";
 import {
   FiCheck,
-  FiEdit,
-  FiMessageSquare,
+  FiEdit2,
   FiMoreHorizontal,
   FiShare2,
   FiTrash,
@@ -174,7 +173,7 @@ export function ChatSessionDisplay({
                               />
                               <DefaultDropdownElement
                                 name="Rename"
-                                icon={FiEdit}
+                                icon={FiEdit2}
                                 onSelect={() => setIsRenamingChat(true)}
                               />
                             </div>

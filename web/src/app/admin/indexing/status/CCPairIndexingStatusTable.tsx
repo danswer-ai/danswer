@@ -17,7 +17,7 @@ import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
 import Link from "next/link";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
-import { FiCheck, FiEdit, FiXCircle } from "react-icons/fi";
+import { FiCheck, FiEdit2, FiXCircle } from "react-icons/fi";
 
 const NUM_IN_PAGE = 20;
 
@@ -102,7 +102,7 @@ export function CCPairIndexingStatusTable({
               >
                 <TableCell>
                   <div className="flex my-auto">
-                    <FiEdit className="mr-4 my-auto" />
+                    <FiEdit2 className="mr-4 my-auto" />
                     <div className="whitespace-normal break-all max-w-3xl">
                       <ConnectorTitle
                         connector={ccPairsIndexingStatus.connector}

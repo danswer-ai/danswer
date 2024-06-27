@@ -7,7 +7,7 @@ import {
   FiChevronDown,
   FiChevronRight,
   FiFolder,
-  FiEdit,
+  FiEdit2,
   FiCheck,
   FiX,
   FiTrash, // Import the trash icon
@@ -170,7 +170,7 @@ const FolderItem = ({
                     onClick={handleEditFolderName}
                     className="hover:bg-black/10 p-1 -m-1 rounded"
                   >
-                    <FiEdit size={16} />
+                    <FiEdit2 size={16} />
                   </div>
                   <div
                     onClick={deleteFolderHandler}

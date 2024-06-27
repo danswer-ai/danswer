@@ -18,7 +18,7 @@ import {
   FiCheck,
   FiChevronsDown,
   FiChevronsUp,
-  FiEdit,
+  FiEdit2,
   FiFile,
   FiGlobe,
   FiThumbsDown,
@@ -187,7 +187,7 @@ export const EditIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiEdit size={size} className={className} />;
+  return <FiEdit2 size={size} className={className} />;
 };
 
 export const XIcon = ({
