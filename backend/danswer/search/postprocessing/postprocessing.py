@@ -209,11 +209,9 @@ def search_postprocessing(
 
     llm_chunk_selection = cast(
         list[str] | None,
-        (
-            post_processing_results.get(str(llm_filter_task_id))
-            if llm_filter_task_id
-            else None
-        ),
+        post_processing_results.get(str(llm_filter_task_id))
+        if llm_filter_task_id
+        else None,
     )
     if llm_chunk_selection is not None:
         yield [

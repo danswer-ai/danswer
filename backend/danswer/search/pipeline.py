@@ -58,9 +58,8 @@ class SearchPipeline:
         llm: LLM,
         db_session: Session,
         bypass_acl: bool = False,  # NOTE: VERY DANGEROUS, USE WITH CAUTION
-        retrieval_metrics_callback: (
-            Callable[[RetrievalMetricsContainer], None] | None
-        ) = None,
+        retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
+        | None = None,
         rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
     ):
         self.search_request = search_request
@@ -92,9 +91,9 @@ class SearchPipeline:
         self.ran_merge_chunk = False
 
         # generator state
-        self._postprocessing_generator: (
-            Generator[list[InferenceChunk] | list[str], None, None] | None
-        ) = None
+        self._postprocessing_generator: Generator[
+            list[InferenceChunk] | list[str], None, None
+        ] | None = None
 
     def _combine_chunks(self, post_rerank: bool) -> list[InferenceSection]:
         if not post_rerank and self._retrieved_sections:

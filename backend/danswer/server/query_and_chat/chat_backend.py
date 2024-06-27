@@ -138,6 +138,7 @@ def get_chat_session(
         )
     except ValueError:
         raise ValueError("Chat session does not exist or has been deleted")
+
     # for chat-seeding: if the session is unassigned, assign it now. This is done here
     # to avoid another back and forth between FE -> BE before starting the first
     # message generation

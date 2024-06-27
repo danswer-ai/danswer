@@ -140,7 +140,7 @@ def get_embedding_models(
     next_model = get_secondary_db_embedding_model(db_session)
     return FullModelVersionResponse(
         current_model=EmbeddingModelDetail.from_model(current_model),
-        secondary_model=(
-            EmbeddingModelDetail.from_model(next_model) if next_model else None
-        ),
+        secondary_model=EmbeddingModelDetail.from_model(next_model)
+        if next_model
+        else None,
     )

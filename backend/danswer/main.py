@@ -222,11 +222,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         logger.info("Verifying Document Index(s) is/are available.")
         document_index = get_default_document_index(
             primary_index_name=db_embedding_model.index_name,
-            secondary_index_name=(
-                secondary_db_embedding_model.index_name
-                if secondary_db_embedding_model
-                else None
-            ),
+            secondary_index_name=secondary_db_embedding_model.index_name
+            if secondary_db_embedding_model
+            else None,
         )
         # Vespa startup is a bit slow, so give it a few seconds
         wait_time = 5
@@ -234,11 +232,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
             try:
                 document_index.ensure_indices_exist(
                     index_embedding_dim=db_embedding_model.model_dim,
-                    secondary_index_embedding_dim=(
-                        secondary_db_embedding_model.model_dim
-                        if secondary_db_embedding_model
-                        else None
-                    ),
+                    secondary_index_embedding_dim=secondary_db_embedding_model.model_dim
+                    if secondary_db_embedding_model
+                    else None,
                 )
                 break
             except Exception:

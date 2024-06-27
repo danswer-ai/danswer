@@ -632,13 +632,11 @@ def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[Inferenc
 
     params = dict(
         **query_params,
-        **(
-            {
-                "presentation.timing": True,
-            }
-            if LOG_VESPA_TIMING_INFORMATION
-            else {}
-        ),
+        **{
+            "presentation.timing": True,
+        }
+        if LOG_VESPA_TIMING_INFORMATION
+        else {},
     )
 
     response = requests.post(
@@ -1112,14 +1110,12 @@ class VespaIndex(DocumentIndex):
             "query": query_keywords,
             "input.query(query_embedding)": str(query_embedding),
             "input.query(decay_factor)": str(DOC_TIME_DECAY * time_decay_multiplier),
-            "input.query(alpha)": (
-                hybrid_alpha if hybrid_alpha is not None else HYBRID_ALPHA
-            ),
-            "input.query(title_content_ratio)": (
-                title_content_ratio
-                if title_content_ratio is not None
-                else TITLE_CONTENT_RATIO
-            ),
+            "input.query(alpha)": hybrid_alpha
+            if hybrid_alpha is not None
+            else HYBRID_ALPHA,
+            "input.query(title_content_ratio)": title_content_ratio
+            if title_content_ratio is not None
+            else TITLE_CONTENT_RATIO,
             "hits": num_to_retrieve,
             "offset": offset,
             "ranking.profile": f"hybrid_search{len(query_embedding)}",
