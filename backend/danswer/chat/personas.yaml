@@ -15,6 +15,12 @@ personas:
     # Remove the field to set to the system default number of chunks/tokens to pass to Gen AI
     # Each chunk is 512 tokens long
     num_chunks: 10
+    # Flag to limit all searches to most recent documents by last_updated_time
+    use_recent_documents: false
+    # Specifies how young a document should be to be included in search context
+    # If a documents last_updated_time is over the current time + num_days it is excluded
+    # Field unused if use_recent_documents is set to false
+    num_days: null
     # Enable/Disable usage of the LLM chunk filter feature whereby each chunk is passed to the LLM to determine
     # if the chunk is useful or not towards the latest user query
     # This feature can be overriden for all personas via DISABLE_LLM_CHUNK_FILTER env variable
@@ -46,6 +52,7 @@ personas:
     prompts:
       - "OnlyLLM"
     num_chunks: 0
+    use_recent_documents: false
     llm_relevance_filter: true
     llm_filter_extraction: true
     recency_bias: "auto"
@@ -59,6 +66,7 @@ personas:
     prompts:
       - "Paraphrase"
     num_chunks: 10
+    use_recent_documents: false
     llm_relevance_filter: true
     llm_filter_extraction: true
     recency_bias: "auto"

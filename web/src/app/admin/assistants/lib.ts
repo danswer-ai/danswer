@@ -7,6 +7,8 @@ interface PersonaCreationRequest {
   task_prompt: string;
   document_set_ids: number[];
   num_chunks: number | null;
+  use_recent_documents: boolean;
+  num_days: number | null;
   include_citations: boolean;
   is_public: boolean;
   llm_relevance_filter: boolean | null;
@@ -27,6 +29,8 @@ interface PersonaUpdateRequest {
   task_prompt: string;
   document_set_ids: number[];
   num_chunks: number | null;
+  use_recent_documents: boolean;
+  num_days: number | null;
   include_citations: boolean;
   is_public: boolean;
   llm_relevance_filter: boolean | null;
@@ -105,6 +109,8 @@ function buildPersonaAPIBody(
     description,
     document_set_ids,
     num_chunks,
+    use_recent_documents,
+    num_days,
     llm_relevance_filter,
     is_public,
     groups,
@@ -116,6 +122,8 @@ function buildPersonaAPIBody(
     name,
     description,
     num_chunks,
+    use_recent_documents,
+    num_days,
     llm_relevance_filter,
     llm_filter_extraction: false,
     is_public,

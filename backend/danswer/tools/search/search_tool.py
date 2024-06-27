@@ -20,6 +20,7 @@ from danswer.llm.answering.models import PromptConfig
 from danswer.llm.interfaces import LLM
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
+from danswer.search.models import BaseFilters
 from danswer.search.models import IndexFilters
 from danswer.search.models import InferenceSection
 from danswer.search.models import RetrievalDetails
@@ -193,11 +194,16 @@ class SearchTool(Tool):
             yield from self._build_response_for_specified_sections(query)
             return
 
+        persona_filter = BaseFilters.from_persona(self.persona)
+        retrieval_filter = (
+            self.retrieval_options.filters if self.retrieval_options else None
+        )
+
         search_pipeline = SearchPipeline(
             search_request=SearchRequest(
                 query=query,
-                human_selected_filters=(
-                    self.retrieval_options.filters if self.retrieval_options else None
+                human_selected_filters=BaseFilters.merge(
+                    retrieval_filter=retrieval_filter, persona_filter=persona_filter
                 ),
                 persona=self.persona,
                 offset=self.retrieval_options.offset

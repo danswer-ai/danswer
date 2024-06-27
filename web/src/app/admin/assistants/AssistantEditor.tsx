@@ -176,6 +176,8 @@ export function AssistantEditor({
       existingPersona?.document_sets?.map((documentSet) => documentSet.id) ??
       ([] as number[]),
     num_chunks: existingPersona?.num_chunks ?? null,
+    recent_documents_enabled: existingPersona?.use_recent_documents ?? false,
+    num_days: existingPersona?.num_days ?? null,
     include_citations: existingPersona?.prompts[0]?.include_citations ?? true,
     llm_relevance_filter: existingPersona?.llm_relevance_filter ?? false,
     llm_model_provider_override:
@@ -211,6 +213,8 @@ export function AssistantEditor({
             is_public: Yup.boolean().required(),
             document_set_ids: Yup.array().of(Yup.number()),
             num_chunks: Yup.number().nullable(),
+            recent_documents_enabled: Yup.boolean().nullable(),
+            num_days: Yup.number().nullable(),
             include_citations: Yup.boolean().required(),
             llm_relevance_filter: Yup.boolean().required(),
             llm_model_version_override: Yup.string().nullable(),
@@ -298,6 +302,10 @@ export function AssistantEditor({
           // if disable_retrieval is set, set num_chunks to 0
           // to tell the backend to not fetch any documents
           const numChunks = searchToolEnabled ? values.num_chunks || 10 : 0;
+          const numDays = searchToolEnabled ? values.num_days || 30 : 0;
+          const useRecentDocuments = searchToolEnabled
+            ? values.recent_documents_enabled
+            : false;
 
           // don't set groups if marked as public
           const groups = values.is_public ? [] : values.groups;
@@ -310,6 +318,8 @@ export function AssistantEditor({
               existingPromptId: existingPrompt?.id,
               ...values,
               num_chunks: numChunks,
+              use_recent_documents: useRecentDocuments,
+              num_days: numDays,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,
@@ -319,6 +329,8 @@ export function AssistantEditor({
             [promptResponse, personaResponse] = await createPersona({
               ...values,
               num_chunks: numChunks,
+              use_recent_documents: useRecentDocuments,
+              num_days: numDays,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,
@@ -387,6 +399,10 @@ export function AssistantEditor({
             return searchTool && values.enabled_tools_map[searchTool.id]
               ? true
               : false;
+          }
+
+          function useRecentDocumentsEnabled() {
+            return searchTool && values.recent_documents_enabled;
           }
 
           return (
@@ -579,6 +595,47 @@ export function AssistantEditor({
                                       "If enabled, the LLM will filter out chunks that are not relevant to the user query."
                                     }
                                   />
+
+                                  <BooleanFormField
+                                    name={`recent_documents_enabled`}
+                                    label="Only Use Recent Documents"
+                                    subtext={
+                                      "If enabled, only recent documents will be used for context."
+                                    }
+                                    onChange={() => {
+                                      setFieldValue("num_days", null);
+                                      setFieldValue(
+                                        "recent_documents_enabled",
+                                        !values.recent_documents_enabled
+                                      );
+                                    }}
+                                  />
+
+                                  {useRecentDocumentsEnabled() && (
+                                    <div className="pl-4 border-l-2 ml-4 border-border">
+                                      <TextFormField
+                                        name="num_days"
+                                        label="Number of Days"
+                                        placeholder="Defaults to last 30 days."
+                                        subtext={
+                                          <div>
+                                            How recent should the documents be
+                                            that are used for context?
+                                          </div>
+                                        }
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          // Allow only integer values
+                                          if (
+                                            value === "" ||
+                                            /^[0-9]+$/.test(value)
+                                          ) {
+                                            setFieldValue("num_days", value);
+                                          }
+                                        }}
+                                      />
+                                    </div>
+                                  )}
 
                                   <BooleanFormField
                                     name="include_citations"

@@ -1,4 +1,6 @@
 from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 from typing import Any
 
 from pydantic import BaseModel
@@ -31,6 +33,37 @@ class BaseFilters(BaseModel):
     document_set: list[str] | None = None
     time_cutoff: datetime | None = None
     tags: list[Tag] | None = None
+
+    @classmethod
+    def from_persona(cls, persona: Persona) -> "BaseFilters | None":
+        if persona.use_recent_documents and persona.num_days is not None:
+            from_date = datetime.now(timezone.utc) - timedelta(days=persona.num_days)
+            return cls(time_cutoff=from_date)
+        else:
+            return None
+
+    # Merges two filters into one, giving preference to the human-specified retrieval filters
+    @classmethod
+    def merge(
+        cls,
+        retrieval_filter: "BaseFilters | None",
+        persona_filter: "BaseFilters | None",
+    ) -> "BaseFilters | None":
+        if retrieval_filter is None and persona_filter is None:
+            return None
+        elif retrieval_filter is None:
+            return persona_filter
+        elif persona_filter is None:
+            return retrieval_filter
+        else:
+            return cls(
+                source_type=retrieval_filter.source_type,
+                document_set=retrieval_filter.document_set,
+                time_cutoff=retrieval_filter.time_cutoff
+                if retrieval_filter.time_cutoff is not None
+                else persona_filter.time_cutoff,
+                tags=retrieval_filter.tags,
+            )
 
 
 class IndexFilters(BaseFilters):

@@ -383,3 +383,14 @@ def get_documents_by_cc_pair(
         .filter(ConnectorCredentialPair.id == cc_pair_id)
         .all()
     )
+
+
+"""
+def get_documents_by_doc_updated_at(
+    db_session: Session,
+    delay_seconds: int,
+) -> list[DbDocument]:
+    stmt = select(DbDocument).where(DbDocument.doc_updated_at <= datetime.now()-timedelta(seconds=delay_seconds))
+    documents = db_session.execute(stmt).all()
+    return list(documents)
+"""
