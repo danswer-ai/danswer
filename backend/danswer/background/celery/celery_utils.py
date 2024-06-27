@@ -20,8 +20,9 @@ from danswer.db.engine import get_db_current_time
 from danswer.db.models import Connector
 from danswer.db.models import Credential
 from danswer.db.models import DocumentSet
-from danswer.db.tasks import check_live_task_not_timed_out
+from danswer.db.tasks import check_task_is_live_and_not_timed_out
 from danswer.db.tasks import get_latest_task
+from danswer.db.tasks import get_latest_task_by_type
 from danswer.server.documents.models import DeletionAttemptSnapshot
 from danswer.utils.logger import setup_logger
 
@@ -53,7 +54,7 @@ def should_sync_doc_set(document_set: DocumentSet, db_session: Session) -> bool:
     task_name = name_document_set_sync_task(document_set.id)
     latest_sync = get_latest_task(task_name, db_session)
 
-    if latest_sync and check_live_task_not_timed_out(latest_sync, db_session):
+    if latest_sync and check_task_is_live_and_not_timed_out(latest_sync, db_session):
         logger.info(f"Document set '{document_set.id}' is already syncing. Skipping.")
         return False
 
@@ -70,13 +71,7 @@ def should_prune_cc_pair(
     pruning_task_name = name_cc_prune_task(
         connector_id=connector.id, credential_id=credential.id
     )
-    generic_pruning_task_name = name_cc_prune_task()
-
     last_pruning_task = get_latest_task(pruning_task_name, db_session)
-    most_recent_generic_pruning_task = get_latest_task(
-        generic_pruning_task_name, db_session
-    )
-
     current_db_time = get_db_current_time(db_session)
 
     if not last_pruning_task:
@@ -85,12 +80,19 @@ def should_prune_cc_pair(
             return True
         return False
 
-    if PREVENT_SIMULTANEOUS_PRUNING and most_recent_generic_pruning_task:
-        if check_live_task_not_timed_out(most_recent_generic_pruning_task, db_session):
+    if PREVENT_SIMULTANEOUS_PRUNING:
+        pruning_type_task_name = name_cc_prune_task()
+        last_pruning_type_task = get_latest_task_by_type(
+            pruning_type_task_name, db_session
+        )
+
+        if last_pruning_type_task and check_task_is_live_and_not_timed_out(
+            last_pruning_type_task, db_session
+        ):
             logger.info("Another Connector is already pruning. Skipping.")
             return False
 
-    if check_live_task_not_timed_out(last_pruning_task, db_session):
+    if check_task_is_live_and_not_timed_out(last_pruning_task, db_session):
         logger.info(f"Connector '{connector.name}' is already pruning. Skipping.")
         return False
 
@@ -101,7 +103,7 @@ def should_prune_cc_pair(
     return time_since_last_pruning.total_seconds() >= connector.prune_freq
 
 
-def rate_limit_doc_generation(doc_batch: list[Document]) -> set[str]:
+def document_batch_to_ids(doc_batch: list[Document]) -> set[str]:
     return {doc.id for doc in doc_batch}
 
 
@@ -125,11 +127,11 @@ def extract_ids_from_runnable_connector(runnable_connector: BaseConnector) -> se
         raise RuntimeError("Pruning job could not find a valid runnable_connector.")
 
     if doc_batch_generator:
-        doc_generation_func = rate_limit_doc_generation
+        doc_generation_func = document_batch_to_ids
         if MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE:
             doc_generation_func = rate_limit_builder(
                 max_calls=MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE, period=60
-            )(rate_limit_doc_generation)
+            )(document_batch_to_ids)
         for doc_batch in doc_batch_generator:
             all_connector_doc_ids.update(doc_generation_func(doc_batch))
 
