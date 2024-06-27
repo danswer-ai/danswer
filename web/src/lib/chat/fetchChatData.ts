@@ -168,9 +168,7 @@ export async function fetchChatData(searchParams: {
   // if no connectors are setup, only show personas that are pure
   // passthrough and don't do any retrieval
   if (!hasAnyConnectors) {
-    personas = personas.filter(
-      (persona) => persona.num_chunks === 0 || persona.num_chunks === null
-    );
+    personas = personas.filter((persona) => persona.num_chunks === 0);
   }
 
   let folders: Folder[] = [];
