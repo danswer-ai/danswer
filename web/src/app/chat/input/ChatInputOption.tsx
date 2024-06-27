@@ -83,10 +83,10 @@ const ChatInputOption = ({
     return (
       <div
         onClick={onClick}
-        className={`
-          ${flexPriority == "shrink" && "flex-shrink-[10000] flex-grow-0 flex-basis-auto min-w-[3px] whitespace-nowrap overflow-hidden text-ellipsis"}
-          ${flexPriority == "second" && "flex-shrink  flex-basis-0 min-w-[30px] whitespace-nowrap overflow-hidden text-ellipsis"}
-          ${flexPriority == "stiff" && "flex-none whitespace-nowrap overflow-hidden text-ellipsis"}
+        className={`text-ellipsis
+          ${flexPriority == "shrink" && "flex-shrink-[10000] flex-grow-0 flex-basis-auto min-w-[3px] whitespace-nowrap overflow-hidden"}
+          ${flexPriority == "second" && "flex-shrink  flex-basis-0 min-w-[30px] whitespace-nowrap overflow-hidden"}
+          ${flexPriority == "stiff" && "flex-none whitespace-nowrap overflow-hidden"}
           `}
       >
         {option}
