@@ -204,7 +204,6 @@ export function ChatPage({
           submitOnLoadPerformed.current = true;
           await onSubmit();
         }
-
         return;
       }
 
