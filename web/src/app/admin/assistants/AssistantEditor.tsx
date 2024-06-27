@@ -25,7 +25,6 @@ import {
 } from "@/components/admin/connectors/Field";
 import { HidableSection } from "./HidableSection";
 import { FiPlus, FiX } from "react-icons/fi";
-import { EE_ENABLED } from "@/lib/constants";
 import { useUserGroups } from "@/lib/hooks";
 import { Bubble } from "@/components/Bubble";
 import { GroupsIcon } from "@/components/icons/icons";
@@ -37,6 +36,8 @@ import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -79,6 +80,8 @@ export function AssistantEditor({
 }) {
   const router = useRouter();
   const { popup, setPopup } = usePopup();
+
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   // EE only
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
@@ -868,7 +871,7 @@ export function AssistantEditor({
 
                 <Divider />
 
-                {EE_ENABLED &&
+                {isPaidEnterpriseFeaturesEnabled &&
                   userGroups &&
                   (!user || user.role === "admin") && (
                     <>

@@ -15,6 +15,7 @@ from requests import HTTPError
 
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
+from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -366,7 +367,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
                 if response.status_code == 200:
                     extract = extract_file_text(
-                        attachment["title"], io.BytesIO(response.content)
+                        attachment["title"],
+                        io.BytesIO(response.content),
+                        break_on_unprocessable=False,
                     )
                     files_attachment_content.append(extract)
 
@@ -402,10 +405,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
             if time_filter is None or time_filter(last_modified):
                 page_id = page["id"]
+                if self.labels_to_skip or not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING:
+                    page_labels = self._fetch_labels(self.confluence_client, page_id)
 
                 # check disallowed labels
                 if self.labels_to_skip:
-                    page_labels = self._fetch_labels(self.confluence_client, page_id)
                     label_intersection = self.labels_to_skip.intersection(page_labels)
                     if label_intersection:
                         logger.info(
@@ -433,6 +437,12 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 comments_text = self._fetch_comments(self.confluence_client, page_id)
                 page_text += comments_text
 
+                doc_metadata: dict[str, str | list[str]] = {
+                    "Wiki Space Name": self.space
+                }
+                if not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING and page_labels:
+                    doc_metadata["labels"] = page_labels
+
                 doc_batch.append(
                     Document(
                         id=page_url,
@@ -443,9 +453,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         primary_owners=[BasicExpertInfo(email=author)]
                         if author
                         else None,
-                        metadata={
-                            "Wiki Space Name": self.space,
-                        },
+                        metadata=doc_metadata,
                     )
                 )
         return doc_batch, len(batch)

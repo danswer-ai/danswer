@@ -7,6 +7,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.chat.chat_utils import llm_doc_from_inference_section
+from danswer.chat.models import DanswerContext
+from danswer.chat.models import DanswerContexts
 from danswer.chat.models import LlmDoc
 from danswer.db.models import Persona
 from danswer.db.models import User
@@ -30,6 +32,7 @@ from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
 
 SEARCH_RESPONSE_SUMMARY_ID = "search_response_summary"
+SEARCH_DOC_CONTENT_ID = "search_doc_content"
 SECTION_RELEVANCE_LIST_ID = "section_relevance_list"
 FINAL_CONTEXT_DOCUMENTS = "final_context_documents"
 
@@ -117,7 +120,9 @@ class SearchTool(Tool):
     def build_tool_message_content(
         self, *args: ToolResponse
     ) -> str | list[str | dict[str, Any]]:
-        final_context_docs_response = args[2]
+        final_context_docs_response = next(
+            response for response in args if response.id == FINAL_CONTEXT_DOCUMENTS
+        )
         final_context_docs = cast(list[LlmDoc], final_context_docs_response.response)
 
         return json.dumps(
@@ -219,6 +224,20 @@ class SearchTool(Tool):
                 predicted_search=search_pipeline.predicted_search_type,
                 final_filters=search_pipeline.search_query.filters,
                 recency_bias_multiplier=search_pipeline.search_query.recency_bias_multiplier,
+            ),
+        )
+        yield ToolResponse(
+            id=SEARCH_DOC_CONTENT_ID,
+            response=DanswerContexts(
+                contexts=[
+                    DanswerContext(
+                        content=section.content,
+                        document_id=section.document_id,
+                        semantic_identifier=section.semantic_identifier,
+                        blurb=section.blurb,
+                    )
+                    for section in search_pipeline.reranked_sections
+                ]
             ),
         )
         yield ToolResponse(

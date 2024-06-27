@@ -21,6 +21,23 @@ import { Persona } from "../admin/assistants/interfaces";
 import { ReadonlyURLSearchParams } from "next/navigation";
 import { SEARCH_PARAM_NAMES } from "./searchParams";
 
+export async function updateModelOverrideForChatSession(
+  chatSessionId: number,
+  newAlternateModel: string
+) {
+  const response = await fetch("/api/chat/update-chat-session-model", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      chat_session_id: chatSessionId,
+      new_alternate_model: newAlternateModel,
+    }),
+  });
+  return response;
+}
+
 export async function createChatSession(
   personaId: number,
   description: string | null

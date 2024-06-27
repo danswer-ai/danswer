@@ -371,10 +371,19 @@ def get_doc_query_identifiers_from_model(
         )
         raise ValueError("Docs references do not belong to user")
 
-    if any(
-        [doc.chat_messages[0].chat_session_id != chat_session.id for doc in search_docs]
-    ):
-        raise ValueError("Invalid reference doc, not from this chat session.")
+    try:
+        if any(
+            [
+                doc.chat_messages[0].chat_session_id != chat_session.id
+                for doc in search_docs
+            ]
+        ):
+            raise ValueError("Invalid reference doc, not from this chat session.")
+    except IndexError:
+        # This happens when the doc has no chat_messages associated with it.
+        # which happens as an edge case where the chat message failed to save
+        # This usually happens when the LLM fails either immediately or partially through.
+        raise RuntimeError("Chat session failed, please start a new session.")
 
     doc_query_identifiers = [(doc.document_id, doc.chunk_ind) for doc in search_docs]
 

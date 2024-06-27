@@ -11,7 +11,6 @@ import {
   Brain,
   X,
   Question,
-  Users,
   Gear,
   ArrowSquareOut,
 } from "@phosphor-icons/react";
@@ -36,7 +35,10 @@ import {
   FiCpu,
   FiInfo,
   FiUploadCloud,
+  FiUser,
   FiUsers,
+  FiBarChart2,
+  FiDatabase,
 } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
@@ -94,7 +96,7 @@ export const UsersIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <Users size={size} className={className} />;
+  return <FiUser size={size} className={className} />;
 };
 
 export const GroupsIcon = ({
@@ -705,3 +707,21 @@ export const WikipediaIcon = ({
     <Image src={wikipediaIcon} alt="Logo" width="96" height="96" />
   </div>
 );
+
+/* 
+EE Icons
+*/
+
+export const BarChartIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiBarChart2 size={size} className={className} />;
+};
+
+export const DatabaseIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiDatabase size={size} className={className} />;
+};

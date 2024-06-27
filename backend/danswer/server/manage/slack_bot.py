@@ -37,6 +37,9 @@ def _form_channel_config(
     respond_team_member_list = (
         slack_bot_config_creation_request.respond_team_member_list
     )
+    respond_slack_group_list = (
+        slack_bot_config_creation_request.respond_slack_group_list
+    )
     answer_filters = slack_bot_config_creation_request.answer_filters
     follow_up_tags = slack_bot_config_creation_request.follow_up_tags
 
@@ -58,7 +61,7 @@ def _form_channel_config(
             detail=str(e),
         )
 
-    if respond_tag_only and respond_team_member_list:
+    if respond_tag_only and (respond_team_member_list or respond_slack_group_list):
         raise ValueError(
             "Cannot set DanswerBot to only respond to tags only and "
             "also respond to a predetermined set of users."
@@ -71,6 +74,8 @@ def _form_channel_config(
         channel_config["respond_tag_only"] = respond_tag_only
     if respond_team_member_list:
         channel_config["respond_team_member_list"] = respond_team_member_list
+    if respond_slack_group_list:
+        channel_config["respond_slack_group_list"] = respond_slack_group_list
     if answer_filters:
         channel_config["answer_filters"] = answer_filters
     if follow_up_tags is not None:
@@ -140,7 +145,10 @@ def patch_slack_bot_config(
         existing_persona_id = existing_slack_bot_config.persona_id
         if existing_persona_id is not None:
             persona = get_persona_by_id(
-                persona_id=existing_persona_id, user=None, db_session=db_session
+                persona_id=existing_persona_id,
+                user=None,
+                db_session=db_session,
+                is_for_edit=False,
             )
 
             if not persona.name.startswith(SLACK_BOT_PERSONA_PREFIX):

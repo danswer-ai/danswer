@@ -41,10 +41,6 @@ DEFAULT_BOOST = 0
 SESSION_KEY = "session"
 QUERY_EVENT_ID = "query_event_id"
 LLM_CHUNKS = "llm_chunks"
-TOKEN_BUDGET = "token_budget"
-TOKEN_BUDGET_TIME_PERIOD = "token_budget_time_period"
-ENABLE_TOKEN_BUDGET = "enable_token_budget"
-TOKEN_BUDGET_SETTINGS = "token_budget_settings"
 
 # For chunking/processing chunks
 TITLE_SEPARATOR = "\n\r\n"
@@ -119,6 +115,11 @@ class AuthType(str, Enum):
     SAML = "saml"
 
 
+class QAFeedbackType(str, Enum):
+    LIKE = "like"  # User likes the answer, used for metrics
+    DISLIKE = "dislike"  # User dislikes the answer, used for metrics
+
+
 class SearchFeedbackType(str, Enum):
     ENDORSE = "endorse"  # boost this document for all future queries
     REJECT = "reject"  # down-boost this document for all future queries
@@ -144,4 +145,5 @@ class FileOrigin(str, Enum):
     CHAT_UPLOAD = "chat_upload"
     CHAT_IMAGE_GEN = "chat_image_gen"
     CONNECTOR = "connector"
+    GENERATED_REPORT = "generated_report"
     OTHER = "other"

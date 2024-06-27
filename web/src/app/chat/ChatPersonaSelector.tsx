@@ -130,8 +130,8 @@ export function ChatPersonaSelector({
         </div>
       }
     >
-      <div className="select-none text-xl text-strong font-bold flex px-2 py-1.5 rounded cursor-pointer hover:bg-hover-light">
-        <div className="my-auto">
+      <div className="select-none text-xl text-strong font-bold flex px-2 rounded cursor-pointer hover:bg-hover-light">
+        <div className="mt-auto">
           {currentlySelectedPersona?.name || "Default"}
         </div>
         <FiChevronDown className="my-auto ml-1" />

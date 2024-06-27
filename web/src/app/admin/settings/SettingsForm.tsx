@@ -5,6 +5,8 @@ import { Title } from "@tremor/react";
 import { Settings } from "./interfaces";
 import { useRouter } from "next/navigation";
 import { DefaultDropdown, Option } from "@/components/Dropdown";
+import { useContext } from "react";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 function Checkbox({
   label,
@@ -62,8 +64,14 @@ function Selector({
   );
 }
 
-export function SettingsForm({ settings }: { settings: Settings }) {
+export function SettingsForm() {
   const router = useRouter();
+
+  const combinedSettings = useContext(SettingsContext);
+  if (!combinedSettings) {
+    return null;
+  }
+  const settings = combinedSettings.settings;
 
   async function updateSettingField(
     updateRequests: { fieldName: keyof Settings; newValue: any }[]

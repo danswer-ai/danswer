@@ -286,6 +286,9 @@ export const AIMessage = ({
                       code: (props) => (
                         <CodeBlock {...props} content={content as string} />
                       ),
+                      p: ({ node, ...props }) => (
+                        <p {...props} className="text-default" />
+                      ),
                     }}
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
@@ -494,6 +497,7 @@ export const HumanMessage = ({
                       placeholder-gray-400 
                       resize-none
                       pl-4
+                      overflow-y-auto
                       pr-12 
                       py-4`}
                       aria-multiline
@@ -502,7 +506,6 @@ export const HumanMessage = ({
                       style={{ scrollbarWidth: "thin" }}
                       onChange={(e) => {
                         setEditedContent(e.target.value);
-                        e.target.style.height = "auto";
                         e.target.style.height = `${e.target.scrollHeight}px`;
                       }}
                       onKeyDown={(e) => {
@@ -510,6 +513,10 @@ export const HumanMessage = ({
                           e.preventDefault();
                           setEditedContent(content);
                           setIsEditing(false);
+                        }
+                        // Submit edit if "Command Enter" is pressed, like in ChatGPT
+                        if (e.key === "Enter" && e.metaKey) {
+                          handleEditSubmit();
                         }
                       }}
                       // ref={(textarea) => {

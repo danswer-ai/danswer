@@ -105,5 +105,25 @@ Efficiently pulls the latest changes from:
   * Websites
   * And more ...
 
+## 📚 Editions
+
+There are two editions of Danswer:
+
+  * Danswer Community Edition (CE) is available freely under the MIT Expat license. This version has ALL the core features discussed above. This is the version of Danswer you will get if you follow the Deployment guide above.
+  * Danswer Enterprise Edition (EE) includes extra features that are primarily useful for larger organizations. Specifically, this includes:
+    * Single Sign-On (SSO), with support for both SAML and OIDC
+    * Role-based access control
+    * Document permission inheritance from connected sources
+    * Admin usage analytics / global query history
+    * Whitelabeling
+    * API key authentication
+    * Encryption of secrets
+    * Any many more! Checkout [our website](https://www.danswer.ai/) for the latest.
+
+To try the Danswer Enterprise Edition: 
+
+  1. Checkout our [Cloud product](https://app.danswer.ai/signup).
+  2. For self-hosting, contact us at [founders@danswer.ai](mailto:founders@danswer.ai) or book a call with us on our [Cal](https://cal.com/team/danswer/founders).
+
 ## 💡 Contributing
 Looking to contribute? Please check out the [Contribution Guide](CONTRIBUTING.md) for more details.

@@ -46,6 +46,7 @@ from danswer.tools.images.prompt import build_image_generation_user_prompt
 from danswer.tools.message import build_tool_message
 from danswer.tools.message import ToolCallSummary
 from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS
+from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
 from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
@@ -101,6 +102,8 @@ class Answer:
         force_use_tool: ForceUseTool | None = None,
         # if set to True, then never use the LLMs provided tool-calling functonality
         skip_explicit_tool_calling: bool = False,
+        # Returns the full document sections text from the search tool
+        return_contexts: bool = False,
     ) -> None:
         if single_message_history and message_history:
             raise ValueError(
@@ -132,6 +135,8 @@ class Answer:
         self._processed_stream: list[
             AnswerQuestionPossibleReturn | ToolResponse | ToolCallKickoff
         ] | None = None
+
+        self._return_contexts = return_contexts
 
     def _update_prompt_builder_for_search_tool(
         self, prompt_builder: AnswerPromptBuilder, final_context_documents: list[LlmDoc]
@@ -352,7 +357,7 @@ class Answer:
                         list[ImageGenerationResponse], response.response
                     )
                     img_urls = [img.url for img in img_generation_response]
-                    break
+
                 yield response
 
             prompt_builder.update_user_prompt(
@@ -420,6 +425,12 @@ class Answer:
                         ]
                     elif message.id == FINAL_CONTEXT_DOCUMENTS:
                         final_context_docs = cast(list[LlmDoc], message.response)
+                    elif (
+                        message.id == SEARCH_DOC_CONTENT_ID
+                        and not self._return_contexts
+                    ):
+                        continue
+
                     yield message
                 else:
                     # assumes all tool responses will come first, then the final answer

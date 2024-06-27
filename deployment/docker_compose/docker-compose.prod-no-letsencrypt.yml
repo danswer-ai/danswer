@@ -17,7 +17,7 @@ services:
     env_file:
       - .env
     environment:
-      - AUTH_TYPE=${AUTH_TYPE:-google_oauth}
+      - AUTH_TYPE=${AUTH_TYPE:-oidc}
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
@@ -35,7 +35,7 @@ services:
     build:
       context: ../../backend
       dockerfile: Dockerfile
-    command: /usr/bin/supervisord
+    command: /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
     depends_on:
       - relational_db
       - index
@@ -45,7 +45,7 @@ services:
     env_file:
       - .env
     environment:
-      - AUTH_TYPE=${AUTH_TYPE:-google_oauth}
+      - AUTH_TYPE=${AUTH_TYPE:-oidc}
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
@@ -70,6 +70,7 @@ services:
         - NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS=${NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS:-}
         - NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS=${NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS:-}
         - NEXT_PUBLIC_DISABLE_LOGOUT=${NEXT_PUBLIC_DISABLE_LOGOUT:-}
+        - NEXT_PUBLIC_THEME=${NEXT_PUBLIC_THEME:-}
     depends_on:
       - api_server
     restart: always
