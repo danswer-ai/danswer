@@ -9,7 +9,7 @@ import {
   TableCell,
 } from "@tremor/react";
 import { CCPairStatus, IndexAttemptStatus } from "@/components/Status";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageSelector } from "@/components/PageSelector";
 import { timeAgo } from "@/lib/time";
 import { ConnectorIndexingStatus } from "@/lib/types";
@@ -78,6 +78,10 @@ function ClickableTableRow({
   [key: string]: any; // This allows for any additional props
 }) {
   const router = useRouter();
+
+  useEffect(() => {
+    router.prefetch(url);
+  }, [router]);
 
   const navigate = () => {
     router.push(url);
