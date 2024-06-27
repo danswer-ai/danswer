@@ -219,15 +219,15 @@ const GCSMain = () => {
               )}
               validationSchema={Yup.object().shape({
                 bucket_type: Yup.string()
-                  .oneOf(["GOOGLE_CLOUD_STORAGE"])
-                  .required("Bucket type must be GOOGLE_CLOUD_STORAGE"),
+                  .oneOf(["google_cloud_storage"])
+                  .required("Bucket type must be google_cloud_storage"),
                 bucket_name: Yup.string().required(
                   "Please enter the name of the GCS bucket to index, e.g. my-gcs-bucket"
                 ),
                 prefix: Yup.string().default(""),
               })}
               initialValues={{
-                bucket_type: "GOOGLE_CLOUD_STORAGE",
+                bucket_type: "google_cloud_storage",
                 bucket_name: "",
                 prefix: "",
               }}

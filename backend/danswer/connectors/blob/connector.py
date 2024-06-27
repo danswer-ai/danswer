@@ -10,6 +10,7 @@ from botocore.client import Config
 from mypy_boto3_s3 import S3Client
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
+from danswer.configs.constants import BlobType
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -32,7 +33,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         prefix: str = "",
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
-        self.bucket_type = bucket_type
+        self.bucket_type: BlobType = BlobType(bucket_type)
         self.bucket_name = bucket_name
         self.prefix = prefix if not prefix or prefix.endswith("/") else prefix + "/"
         self.batch_size = batch_size
@@ -59,7 +60,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
             f"Loading credentials for {self.bucket_name} or type {self.bucket_type}"
         )
 
-        if self.bucket_type == "R2":
+        if self.bucket_type == BlobType.R2:
             if not all(
                 credentials.get(key)
                 for key in ["r2_access_key_id", "r2_secret_access_key", "account_id"]
@@ -74,7 +75,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                 config=Config(signature_version="s3v4"),
             )
 
-        elif self.bucket_type == "S3":
+        elif self.bucket_type == BlobType.S3:
             if not all(
                 credentials.get(key)
                 for key in ["aws_access_key_id", "aws_secret_access_key"]
@@ -87,7 +88,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
             )
             self.s3_client = session.client("s3")
 
-        elif self.bucket_type == "GOOGLE_CLOUD_STORAGE":
+        elif self.bucket_type == BlobType.GOOGLE_CLOUD_STORAGE:
             if not all(
                 credentials.get(key) for key in ["access_key_id", "secret_access_key"]
             ):
@@ -101,7 +102,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                 region_name="auto",
             )
 
-        elif self.bucket_type == "OCI_STORAGE":
+        elif self.bucket_type == BlobType.OCI_STORAGE:
             if not all(
                 credentials.get(key)
                 for key in ["namespace", "region", "access_key_id", "secret_access_key"]
@@ -127,6 +128,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         object = self.s3_client.get_object(Bucket=self.bucket_name, Key=key)
         return object["Body"].read()
 
+    # NOTE: Left in as may be useful for one-off access to documents and sharing across orgs.
     # def _get_presigned_url(self, key: str) -> str:
     #     if self.s3_client is None:
     #         raise ConnectorMissingCredentialError("Blog storage")
@@ -142,18 +144,18 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         if self.s3_client is None:
             raise ConnectorMissingCredentialError("Blob storage")
 
-        if self.bucket_type == "R2":
+        if self.bucket_type == BlobType.R2:
             account_id = self.s3_client.meta.endpoint_url.split("//")[1].split(".")[0]
             return f"https://{account_id}.r2.cloudflarestorage.com/{self.bucket_name}/{key}"
 
-        elif self.bucket_type == "S3":
+        elif self.bucket_type == BlobType.S3:
             region = self.s3_client.meta.region_name
             return f"https://{self.bucket_name}.s3.{region}.amazonaws.com/{key}"
 
-        elif self.bucket_type == "GOOGLE_CLOUD_STORAGE":
+        elif self.bucket_type == BlobType.GOOGLE_CLOUD_STORAGE:
             return f"https://storage.cloud.google.com/{self.bucket_name}/{key}"
 
-        elif self.bucket_type == "OCI_STORAGE":
+        elif self.bucket_type == BlobType.OCI_STORAGE:
             namespace = self.s3_client.meta.endpoint_url.split("//")[1].split(".")[0]
             region = self.s3_client.meta.region_name
             return f"https://objectstorage.{region}.oraclecloud.com/n/{namespace}/b/{self.bucket_name}/o/{key}"
@@ -200,10 +202,10 @@ class BlobStorageConnector(LoadConnector, PollConnector):
                         Document(
                             id=f"{self.bucket_type}:{self.bucket_name}:{obj['Key']}",
                             sections=[Section(link=link, text=text)],
-                            source=DocumentSource(self.bucket_type.lower()),
+                            source=DocumentSource(self.bucket_type.value),
                             semantic_identifier=name,
                             doc_updated_at=last_modified,
-                            metadata={"type": "blob"},
+                            metadata={},
                         )
                     )
                     if len(batch) == self.batch_size:

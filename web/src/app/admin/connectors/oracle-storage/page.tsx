@@ -234,15 +234,15 @@ const OCIMain = () => {
               )}
               validationSchema={Yup.object().shape({
                 bucket_type: Yup.string()
-                  .oneOf(["OCI_STORAGE"])
-                  .required("Bucket type must be OCI_STORAGE"),
+                  .oneOf(["oci_storage"])
+                  .required("Bucket type must be oci_storage"),
                 bucket_name: Yup.string().required(
                   "Please enter the name of the OCI bucket to index, e.g. my-test-bucket"
                 ),
                 prefix: Yup.string().default(""),
               })}
               initialValues={{
-                bucket_type: "OCI_STORAGE",
+                bucket_type: "oci_storage",
                 bucket_name: "",
                 prefix: "",
               }}

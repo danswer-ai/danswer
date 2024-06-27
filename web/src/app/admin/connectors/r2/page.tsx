@@ -228,15 +228,15 @@ const R2Main = () => {
               )}
               validationSchema={Yup.object().shape({
                 bucket_type: Yup.string()
-                  .oneOf(["R2"])
-                  .required("Bucket type must be R2"),
+                  .oneOf(["r2"])
+                  .required("Bucket type must be r2"),
                 bucket_name: Yup.string().required(
-                  "Please enter the name of the R2 bucket to index, e.g. my-test-bucket"
+                  "Please enter the name of the r2 bucket to index, e.g. my-test-bucket"
                 ),
                 prefix: Yup.string().default(""),
               })}
               initialValues={{
-                bucket_type: "R2",
+                bucket_type: "r2",
                 bucket_name: "",
                 prefix: "",
               }}

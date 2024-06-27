@@ -220,15 +220,15 @@ const S3Main = () => {
               )}
               validationSchema={Yup.object().shape({
                 bucket_type: Yup.string()
-                  .oneOf(["S3"])
-                  .required("Bucket type must be S3"),
+                  .oneOf(["s3"])
+                  .required("Bucket type must be s3"),
                 bucket_name: Yup.string().required(
-                  "Please enter the name of the S3 bucket to index, e.g. my-test-bucket"
+                  "Please enter the name of the s3 bucket to index, e.g. my-test-bucket"
                 ),
                 prefix: Yup.string().default(""),
               })}
               initialValues={{
-                bucket_type: "S3",
+                bucket_type: "s3",
                 bucket_name: "",
                 prefix: "",
               }}

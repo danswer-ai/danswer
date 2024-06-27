@@ -226,25 +226,25 @@ export interface DropboxConfig {}
 export type BlobType = "S3" | "R2" | "GOOGLE_CLOUD_STORAGE" | "OCI_STORAGE";
 
 export interface S3Config {
-  bucket_type: "S3";
+  bucket_type: "s3";
   bucket_name: string;
   prefix: string;
 }
 
 export interface R2Config {
-  bucket_type: "R2";
+  bucket_type: "r2";
   bucket_name: string;
   prefix: string;
 }
 
 export interface GCSConfig {
-  bucket_type: "GOOGLE_CLOUD_STORAGE";
+  bucket_type: "google_cloud_storage";
   bucket_name: string;
   prefix: string;
 }
 
 export interface OCIConfig {
-  bucket_type: "OCI_STORAGE";
+  bucket_type: "oci_storage";
   bucket_name: string;
   prefix: string;
 }
