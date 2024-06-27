@@ -5,6 +5,7 @@ import {
   getAuthTypeMetadataSS,
   getCurrentUserSS,
 } from "@/lib/userSS";
+import { getSecondsUntilExpiration } from "@/lib/time";
 import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
@@ -124,7 +125,7 @@ export default async function Home() {
     | undefined;
   let searchTypeDefault: SearchType =
     storedSearchType !== undefined &&
-    SearchType.hasOwnProperty(storedSearchType)
+      SearchType.hasOwnProperty(storedSearchType)
       ? (storedSearchType as SearchType)
       : SearchType.SEMANTIC; // default to semantic
 
@@ -146,11 +147,13 @@ export default async function Home() {
     !shouldDisplayNoSourcesModal &&
     !shouldShowWelcomeModal;
 
+  const secondsUntilExpiration = getSecondsUntilExpiration(user);
+
   return (
     <>
       <Header user={user} />
       <div className="m-3">
-        <HealthCheckBanner />
+        <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
       </div>
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
 

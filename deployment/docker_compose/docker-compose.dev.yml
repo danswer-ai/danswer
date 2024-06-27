@@ -231,6 +231,9 @@ services:
 
       # Enterprise Edition only
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
+    tty: true
+    stdin_open: true
+
 
 
   inference_model_server:
