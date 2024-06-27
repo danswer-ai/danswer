@@ -21,7 +21,7 @@ from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.db.models import ToolCall
 from danswer.db.models import User
-from danswer.db.pg_file_store import delete_lobj_by_id
+from danswer.db.pg_file_store import delete_lobj_by_name
 from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
@@ -86,27 +86,22 @@ def get_chat_sessions_by_user(
     return list(chat_sessions)
 
 
-def delete_chats_and_their_files_older_than(days_old: int, db_session: Session) -> None:
-    cutoff_time = datetime.utcnow() - timedelta(days=days_old)
-
+def delete_files_from_chat_session(chat_session_id: int, db_session: Session) -> None:
     # Select messages older than cutoff_time with files
     messages_with_files = db_session.execute(
         select(ChatMessage.id, ChatMessage.files).where(
-            ChatMessage.time_sent < cutoff_time, ChatMessage.files.isnot(None)
+            ChatMessage.chat_session_id == chat_session_id,
+            ChatMessage.files.isnot(None),
         )
     ).fetchall()
 
-    # Delete files associated with each message
     for _, files in messages_with_files:
-        if files:
-            for file_info in files:
-                lobj_oid = file_info.get("lobj_oid")
-                if lobj_oid:
-                    delete_lobj_by_id(lobj_oid, db_session)
+        for file_info in files or {}:
+            lobj_name = file_info.get("id")
+            if lobj_name:
+                logger.info(f"Deleting file with name: {lobj_name}")
+                delete_lobj_by_name(lobj_name, db_session)
 
-    # Delete the chat messages
-    stmt = delete(ChatMessage).where(ChatMessage.time_sent < cutoff_time)
-    db_session.execute(stmt)
     db_session.commit()
 
 
@@ -166,20 +161,14 @@ def delete_chat_session(
     db_session: Session,
     hard_delete: bool = HARD_DELETE_CHATS,
 ) -> None:
-    chat_session = get_chat_session_by_id(
-        chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
-    )
-
     if hard_delete:
-        stmt_messages = delete(ChatMessage).where(
-            ChatMessage.chat_session_id == chat_session_id
-        )
-        db_session.execute(stmt_messages)
+        delete_files_from_chat_session(chat_session_id, db_session)
 
-        stmt = delete(ChatSession).where(ChatSession.id == chat_session_id)
-        db_session.execute(stmt)
-
+        db_session.execute(delete(ChatSession).where(ChatSession.id == chat_session_id))
     else:
+        chat_session = get_chat_session_by_id(
+            chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
+        )
         chat_session.deleted = True
 
     db_session.commit()
@@ -187,19 +176,14 @@ def delete_chat_session(
 
 def delete_chat_sessions_older_than(days_old: int, db_session: Session) -> None:
     cutoff_time = datetime.utcnow() - timedelta(days=days_old)
-
-    deleted_count = (
-        db_session.query(ChatSession)
-        .filter(ChatSession.time_created < cutoff_time)
-        .delete()
-    )
-
-    if deleted_count:
-        logger.info(
-            f"Deleted {deleted_count} chat sessions older than {days_old} days."
+    old_sessions = db_session.execute(
+        select(ChatSession.user_id, ChatSession.id).where(
+            ChatSession.time_created < cutoff_time
         )
+    ).fetchall()
 
-    db_session.commit()
+    for user_id, session_id in old_sessions:
+        delete_chat_session(user_id, session_id, db_session, hard_delete=True)
 
 
 def get_chat_message(

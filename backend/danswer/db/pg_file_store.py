@@ -1,6 +1,4 @@
 import tempfile
-from datetime import datetime
-from datetime import timezone
 from io import BytesIO
 from typing import IO
 
@@ -18,6 +16,18 @@ logger = setup_logger()
 
 def get_pg_conn_from_session(db_session: Session) -> connection:
     return db_session.connection().connection.connection  # type: ignore
+
+
+def get_pgfilestore_by_file_name(
+    file_name: str,
+    db_session: Session,
+) -> PGFileStore:
+    pgfilestore = db_session.query(PGFileStore).filter_by(file_name=file_name).first()
+
+    if not pgfilestore:
+        raise RuntimeError(f"File by name {file_name} does not exist or was deleted")
+
+    return pgfilestore
 
 
 def create_populate_lobj(
@@ -75,6 +85,21 @@ def delete_lobj_by_id(
     pg_conn.lobject(lobj_oid).unlink()
 
 
+def delete_lobj_by_name(
+    lobj_name: str,
+    db_session: Session,
+) -> None:
+    pgfilestore = get_pgfilestore_by_file_name(lobj_name, db_session)
+    if not pgfilestore:
+        raise ValueError(f"No file found with name: {lobj_name}")
+
+    pg_conn = get_pg_conn_from_session(db_session)
+    pg_conn.lobject(pgfilestore.lobj_oid).unlink()
+
+    db_session.delete(pgfilestore)
+    db_session.commit()
+
+
 def upsert_pgfilestore(
     file_name: str,
     display_name: str | None,
@@ -83,7 +108,6 @@ def upsert_pgfilestore(
     lobj_oid: int,
     db_session: Session,
     commit: bool = False,
-    uploaded_at: datetime | None = None,
     file_metadata: dict | None = None,
 ) -> PGFileStore:
     pgfilestore = db_session.query(PGFileStore).filter_by(file_name=file_name).first()
@@ -101,33 +125,18 @@ def upsert_pgfilestore(
 
         pgfilestore.lobj_oid = lobj_oid
     else:
-        if not uploaded_at:
-            uploaded_at = datetime.now(tz=timezone.utc)
         pgfilestore = PGFileStore(
             file_name=file_name,
             display_name=display_name,
             file_origin=file_origin,
             file_type=file_type,
             file_metadata=file_metadata,
-            uploaded_at=uploaded_at,
             lobj_oid=lobj_oid,
         )
         db_session.add(pgfilestore)
 
     if commit:
         db_session.commit()
-
-    return pgfilestore
-
-
-def get_pgfilestore_by_file_name(
-    file_name: str,
-    db_session: Session,
-) -> PGFileStore:
-    pgfilestore = db_session.query(PGFileStore).filter_by(file_name=file_name).first()
-
-    if not pgfilestore:
-        raise RuntimeError(f"File by name {file_name} does not exist or was deleted")
 
     return pgfilestore
 

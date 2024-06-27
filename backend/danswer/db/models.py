@@ -690,7 +690,7 @@ class ChatSession(Base):
         "ChatFolder", back_populates="chat_sessions"
     )
     messages: Mapped[list["ChatMessage"]] = relationship(
-        "ChatMessage", back_populates="chat_session", cascade="delete"
+        "ChatMessage", back_populates="chat_session", cascade="all, delete-orphan"
     )
     persona: Mapped["Persona"] = relationship("Persona")
 
@@ -737,19 +737,25 @@ class ChatMessage(Base):
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
     prompt: Mapped[Optional["Prompt"]] = relationship("Prompt")
     chat_message_feedbacks: Mapped[list["ChatMessageFeedback"]] = relationship(
-        "ChatMessageFeedback", back_populates="chat_message"
+        "ChatMessageFeedback",
+        back_populates="chat_message",
+        cascade="delete",
     )
     document_feedbacks: Mapped[list["DocumentRetrievalFeedback"]] = relationship(
-        "DocumentRetrievalFeedback", back_populates="chat_message"
+        "DocumentRetrievalFeedback",
+        back_populates="chat_message",
+        cascade="delete",
     )
     search_docs: Mapped[list["SearchDoc"]] = relationship(
         "SearchDoc",
         secondary="chat_message__search_doc",
         back_populates="chat_messages",
+        cascade="delete",
     )
     tool_calls: Mapped[list["ToolCall"]] = relationship(
         "ToolCall",
         back_populates="message",
+        cascade="delete",
     )
 
 
