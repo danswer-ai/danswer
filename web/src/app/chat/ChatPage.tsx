@@ -43,10 +43,6 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
-import {
-  useFilters,
-  useLlmOverride,
-} from "@/lib/hooks";
 import { useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { FeedbackType } from "./types";
@@ -491,11 +487,14 @@ export function ChatPage({
     }, 100);
   };
 
-  const clientScrollToBottom = () => {
-    setTimeout(() => {
-      endDivRef.current?.scrollIntoView({ behavior: "smooth" });
-      setHasPerformedInitialScroll(true);
-    }, 500);
+  const clientScrollToBottom = (fast?: boolean) => {
+    setTimeout(
+      () => {
+        endDivRef.current?.scrollIntoView({ behavior: "smooth" });
+        setHasPerformedInitialScroll(true);
+      },
+      fast ? 50 : 500
+    );
   };
 
   const isCancelledRef = useRef<boolean>(isCancelled); // scroll is cancelled
@@ -567,7 +566,7 @@ export function ChatPage({
     documentSidebarInitialWidth = Math.min(700, maxDocumentSidebarWidth);
   }
 
-  class CurrentMessageStack {
+  class CurrentMessageFIFO {
     private stack: PacketType[] = [];
     isComplete: boolean = false;
     error: string | null = null;
@@ -576,7 +575,7 @@ export function ChatPage({
       this.stack.push(packetBunch);
     }
 
-    pop(): PacketType | undefined {
+    nextPacket(): PacketType | undefined {
       return this.stack.shift();
     }
 
@@ -584,8 +583,8 @@ export function ChatPage({
       return this.stack.length === 0;
     }
   }
-  async function updateCurrentMessageStack(
-    stack: CurrentMessageStack,
+  async function updateCurrentMessageFIFO(
+    stack: CurrentMessageFIFO,
     params: any
   ) {
     try {
@@ -726,8 +725,8 @@ export function ChatPage({
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
 
-      const stack = new CurrentMessageStack();
-      updateCurrentMessageStack(stack, {
+      const stack = new CurrentMessageFIFO();
+      updateCurrentMessageFIFO(stack, {
         message: currMessage,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
@@ -783,7 +782,8 @@ export function ChatPage({
         await delay(2);
 
         if (!stack.isEmpty()) {
-          const packet = stack.pop();
+          const packet = stack.nextPacket();
+
           if (packet) {
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
@@ -1449,7 +1449,7 @@ export function ChatPage({
                         {aboveHorizon && (
                           <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
                             <button
-                              onClick={() => clientScrollToBottom()}
+                              onClick={() => clientScrollToBottom(true)}
                               className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2 mx-auto "
                             >
                               <FiArrowDown size={18} />
