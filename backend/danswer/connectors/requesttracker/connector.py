@@ -134,6 +134,8 @@ if __name__ == "__main__":
     import os
     from dotenv import load_dotenv
 
+    # TODO: Why is there a random(?) load dot env here?
+
     load_dotenv()
     logger.setLevel(LOG_LVL_DEBUG)
     rt_connector = RequestTrackerConnector()
