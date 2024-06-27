@@ -158,27 +158,16 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-            <div className="flex  items-center space-x-3 mr-10 px-4 pb-2 overflow-hidden">
+            <div className="flex items-center space-x-3 mr-12 px-4 pb-2 overflow-hidden">
               <ChatInputOption
-                fullText1={true}
+                flexPriority={"shrink"}
                 name={selectedAssistant ? selectedAssistant.name : "Assistants"}
                 icon={FaBrain}
                 onClick={() => setConfigModalActiveTab("assistants")}
               />
 
-
-
-
-              {!retrievalDisabled && (
-                <ChatInputOption
-                  name="Filters"
-                  icon={FiFilter}
-                  onClick={() => setConfigModalActiveTab("filters")}
-                />
-              )}
-
               <ChatInputOption
-                fullText2={true}
+                flexPriority={"second"}
                 name={
                   llmOverrideManager.llmOverride.modelName ||
                   (selectedAssistant
@@ -188,8 +177,18 @@ export function ChatInputBar({
                 icon={FiCpu}
                 onClick={() => setConfigModalActiveTab("llms")}
               />
+
+              {!retrievalDisabled && (
+                <ChatInputOption
+                  flexPriority="stiff"
+                  name="Filters"
+                  icon={FiFilter}
+                  onClick={() => setConfigModalActiveTab("filters")}
+                />
+              )}
+
               <ChatInputOption
-                fullText3={true}
+                flexPriority={"stiff"}
                 name="File"
                 icon={FiPlusCircle}
                 onClick={() => {
@@ -207,7 +206,6 @@ export function ChatInputBar({
                   input.click();
                 }}
               />
-
             </div>
             <div className="absolute bottom-2.5 right-10">
               <div
@@ -222,97 +220,14 @@ export function ChatInputBar({
                   }
                 }}
               >
-
                 <FiSend
                   size={18}
                   className={`text-emphasis w-9 h-9 p-2 rounded-lg ${message ? "bg-blue-200" : ""
                     }`}
                 />
-
               </div>
             </div>
           </div>
-
-          <div className="flex  items-center space-x-3 mr-10 px-4 pb-2 overflow-hidden">
-            <ChatInputOption
-              fullText1
-              name={selectedAssistant ? selectedAssistant.name : "Assistants"}
-              icon={FaBrain}
-              onClick={() => setConfigModalActiveTab("assistants")}
-            />
-
-
-
-
-            {!retrievalDisabled && (
-              <ChatInputOption
-                name="Filters"
-                icon={FiFilter}
-                onClick={() => setConfigModalActiveTab("filters")}
-              />
-            )}
-
-            <ChatInputOption
-              fullText2
-              name={
-                llmOverrideManager.llmOverride.modelName ||
-                (selectedAssistant
-                  ? selectedAssistant.llm_model_version_override || llmName
-                  : llmName)
-              }
-              icon={FiCpu}
-              onClick={() => setConfigModalActiveTab("llms")}
-            />
-            <ChatInputOption
-              fullText3={true}
-              name="File"
-              icon={FiPlusCircle}
-              onClick={() => {
-                const input = document.createElement("input");
-                input.type = "file";
-                input.multiple = true; // Allow multiple files
-                input.onchange = (event: any) => {
-                  const files = Array.from(
-                    event?.target?.files || []
-                  ) as File[];
-                  if (files.length > 0) {
-                    handleFileUpload(files);
-                  }
-                };
-                input.click();
-              }}
-            />
-          </div>
-
-          <div className="flex items-center space-x-3 mr-10 px-4 pb-2 overflow-hidden">
-            <div className="flex-shrink-[10000] flex-grow-0 flex-basis-auto min-w-[3px] whitespace-nowrap overflow-hidden text-ellipsis">
-              111111111111111111111111111111
-            </div>
-            <div className="flex-shrink flex-grow flex-basis-0 min-w-[30px] whitespace-nowrap overflow-hidden text-ellipsis">
-              22222222222222222
-            </div>
-            <div className="flex-none w-[500px] bg-black whitespace-nowrap overflow-hidden text-ellipsis">
-              3333333333333333
-            </div>
-          </div>
-          {/* <div className="flex items-center space-x-3 mr-10 px-4 pb-2 overflow-hidden">
-
-            <div className="flex-shrink flex-grow-0 min-w-[10px] text-ellipsis overflow-hidden">
-              111111111111111111111111111111
-
-            </div>
-
-            <div className="flex-shrink flex-grow min-w-[30px]  text-ellipsis overflow-hidden">
-              22222222222222222
-
-            </div>
-
-            <div className="flex-none w-[500px] bg-black">
-              3333333333333333
-            </div>
-
-          </div> */}
-
         </div>
       </div>
       {/* <div className="text-center text-sm text-subtle mt-2">
