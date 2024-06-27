@@ -3,6 +3,7 @@ from datetime import timedelta
 from uuid import UUID
 
 from sqlalchemy import delete
+from sqlalchemy import null
 from sqlalchemy import nullsfirst
 from sqlalchemy import or_
 from sqlalchemy import select
@@ -14,6 +15,7 @@ from danswer.auth.schemas import UserRole
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
+from danswer.db.models import ChatMessage__SearchDoc
 from danswer.db.models import ChatSession
 from danswer.db.models import ChatSessionSharedStatus
 from danswer.db.models import Prompt
@@ -105,6 +107,18 @@ def delete_files_from_chat_session(chat_session_id: int, db_session: Session) ->
     db_session.commit()
 
 
+def delete_orphaned_search_docs(db_session: Session) -> None:
+    orphaned_docs = orphaned_docs = (
+        db_session.query(SearchDoc)
+        .outerjoin(ChatMessage__SearchDoc)
+        .filter(ChatMessage__SearchDoc.chat_message_id == null)
+        .all()
+    )
+    for doc in orphaned_docs:
+        db_session.delete(doc)
+    db_session.commit()
+
+
 def create_chat_session(
     db_session: Session,
     description: str,
@@ -165,6 +179,8 @@ def delete_chat_session(
         delete_files_from_chat_session(chat_session_id, db_session)
 
         db_session.execute(delete(ChatSession).where(ChatSession.id == chat_session_id))
+
+        delete_orphaned_search_docs(db_session)
     else:
         chat_session = get_chat_session_by_id(
             chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
