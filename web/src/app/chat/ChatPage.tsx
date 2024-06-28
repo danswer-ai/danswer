@@ -1119,10 +1119,8 @@ export function ChatPage({
                       <ChatBanner />
 
                       {livePersona && (
-                        <div
-                          className={`sticky top-0 mobile:left-0 mobile:w-[90%] mobile:mx-auto desktop:left-2 z-10 w-full bg-background flex`}
-                        >
-                          <div className="mt-2  desktop:flex mobile:grid mobile:grid-cols-3 w-full">
+                        <div className="sticky top-0 mobile:left-0 mobile:w-[90%] mobile:mx-auto desktop:left-2 z-10 w-full bg-background flex">
+                          <div className="mt-2 desktop:flex mobile:grid mobile:grid-cols-3 w-full">
                             <div className="mr-auto desktop:hidden">
                               {!isChatSidebarOpen && (
                                 <MobileHeaderToggle
