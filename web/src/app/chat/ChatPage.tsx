@@ -1105,7 +1105,7 @@ export function ChatPage({
                     {...getRootProps()}
                   >
                     <div
-                      className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden  relative`}
+                      className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
                       ref={scrollableDivRef}
                     >
                       {/* ChatBanner is a custom banner that displays a admin-specified message at 
@@ -1177,7 +1177,7 @@ export function ChatPage({
 
                       <div
                         className={
-                          " mx-auto mt-4 pt-12 sm:pt-0 px-4  w-[90%] max-w-[800px]" +
+                          "mx-auto mt-4 pt-12 sm:pt-0 px-4 w-[90%] max-w-[800px]" +
                           (hasPerformedInitialScroll ? "" : " invisible")
                         }
                       >
