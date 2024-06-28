@@ -15,7 +15,7 @@ branch_labels = None  # type: ignore
 depends_on = None  # type: ignore
 
 
-def upgrade():
+def upgrade() -> None:
     with op.batch_alter_table("chat_feedback", schema=None) as batch_op:
         batch_op.drop_constraint("chat_feedback__chat_message_fk", type_="foreignkey")
         batch_op.create_foreign_key(
@@ -47,7 +47,7 @@ def upgrade():
     )
 
 
-def downgrade():
+def downgrade() -> None:
     with op.batch_alter_table("chat_feedback", schema=None) as batch_op:
         batch_op.drop_constraint("chat_feedback__chat_message_fk", type_="foreignkey")
         batch_op.create_foreign_key(
@@ -55,7 +55,6 @@ def downgrade():
             "chat_message",
             ["chat_message_id"],
             ["id"],
-            ondelete="CASCADE",
         )
     op.alter_column(
         "chat_feedback", "chat_message_id", existing_type=sa.Integer(), nullable=False
@@ -69,7 +68,6 @@ def downgrade():
             "chat_message",
             ["chat_message_id"],
             ["id"],
-            ondelete="CASCADE",
         )
     op.alter_column(
         "document_retrieval_feedback",
