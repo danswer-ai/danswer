@@ -35,6 +35,8 @@ module.exports = {
       },
       maxWidth: {
         "document-sidebar": "1000px",
+        "message-max": "600px",
+        "searchbar-max": "750px",
       },
       colors: {
         // background
