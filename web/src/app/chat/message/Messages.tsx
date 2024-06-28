@@ -12,7 +12,7 @@ import {
   FiTool,
 } from "react-icons/fi";
 import { FeedbackType } from "../types";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { DanswerDocument } from "@/lib/search/interfaces";
 import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
@@ -38,6 +38,7 @@ import Prism from "prismjs";
 
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -159,9 +160,10 @@ export const AIMessage = ({
       />
     </div>
   ) : undefined;
+  const combinedSettings = useContext(SettingsContext);
 
   return (
-    <div className={"py-5 px-5 flex -mr-6 w-full"}>
+    <div className={"py-5 sm:px-5 flex -mr-6 w-full"}>
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
         <div className="ml-8">
           <div className="flex">
@@ -347,7 +349,14 @@ export const AIMessage = ({
             )}
           </div>
           {handleFeedback && (
-            <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1.5">
+            <div
+              className={`flex 
+            
+                      ${!combinedSettings?.isMobile && " flex-col"}
+            
+            
+                       md:flex-row gap-x-0.5 ml-8 mt-1.5`}
+            >
               <CopyButton content={content.toString()} />
               <Hoverable
                 icon={FiThumbsUp}
@@ -414,6 +423,8 @@ export const HumanMessage = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
 
+  const combinedSettings = useContext(SettingsContext);
+
   useEffect(() => {
     if (!isEditing) {
       setEditedContent(content);
@@ -443,7 +454,7 @@ export const HumanMessage = ({
 
   return (
     <div
-      className="pt-5 pb-1 px-5 flex -mr-6 w-full relative"
+      className="pt-5 pb-1 sm:px-5 flex -mr-6 w-full relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -570,7 +581,12 @@ export const HumanMessage = ({
               )}
             </div>
           </div>
-          <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1">
+          <div
+            className={`flex 
+        
+${!combinedSettings?.isMobile && " flex-col"}
+           md:flex-row gap-x-0.5 ml-8 mt-1`}
+          >
             {currentMessageInd !== undefined &&
               onMessageSelection &&
               otherMessagesCanSwitchTo &&

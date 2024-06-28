@@ -108,8 +108,6 @@ export function ChatPage({
 
   const combinedSettings = useContext(SettingsContext);
 
-  const settings = combinedSettings?.settings;
-
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
 
   const router = useRouter();
@@ -1102,7 +1100,7 @@ export function ChatPage({
                 <>
                   <div
                     className={`
-    h-[calc(100dvh)]  
+                    h-[calc(100dvh)]  
                       w-full sm:relative  ${
                         retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
                       }
@@ -1191,7 +1189,7 @@ export function ChatPage({
 
                       <div
                         className={
-                          "mt-4 pt-12 sm:pt-0 mx-8" +
+                          "mt-4 pt-12 sm:pt-0  " +
                           (hasPerformedInitialScroll ? "" : " invisible")
                         }
                       >

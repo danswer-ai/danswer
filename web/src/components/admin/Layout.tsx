@@ -1,16 +1,6 @@
 import { Header } from "@/components/header/Header";
 import { AdminSidebar } from "@/components/admin/connectors/AdminSidebar";
-import {
-  NotebookIcon,
-  UsersIcon,
-  ThumbsUpIcon,
-  BookmarkIcon,
-  ZoomInIcon,
-  RobotIcon,
-  ConnectorIcon,
-  GroupsIcon,
-  KeyIcon,
-} from "@/components/icons/icons";
+
 import { User } from "@/lib/types";
 import {
   AuthTypeMetadata,
@@ -18,17 +8,7 @@ import {
   getCurrentUserSS,
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
-import {
-  FiActivity,
-  FiBarChart2,
-  FiCpu,
-  FiImage,
-  FiPackage,
-  FiSettings,
-  FiShield,
-  FiSlack,
-  FiTool,
-} from "react-icons/fi";
+
 import { useState } from "react";
 import { ClientLayout } from "./ClientLayout";
 
