@@ -1,13 +1,14 @@
 import os
 
-from backend.danswer.db.persona import get_personas
-from backend.danswer.db.persona import upsert_persona
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.llm import upsert_llm_provider
+from danswer.db.persona import get_personas
+from danswer.db.persona import upsert_persona
+from danswer.search.enums import RecencyBiasSetting
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.settings.models import Settings
@@ -76,7 +77,7 @@ def _seed_personas(db_session: Session, personas: list[PersonaSnapshot]) -> None
             num_chunks=persona.num_chunks,
             llm_relevance_filter=persona.llm_relevance_filter,
             llm_filter_extraction=persona.llm_filter_extraction,
-            recency_bias=persona.recency_bias,
+            recency_bias=RecencyBiasSetting.AUTO,
             prompts=persona.prompts,
             document_sets=persona.document_sets,
             llm_model_provider_override=persona.llm_model_provider_override,
