@@ -114,7 +114,7 @@ There are two editions of Danswer:
     * Single Sign-On (SSO), with support for both SAML and OIDC
     * Role-based access control
     * Document permission inheritance from connected sources
-    * Admin usage analytics / global query history
+    * Usage analytics and query history accessible to admins
     * Whitelabeling
     * API key authentication
     * Encryption of secrets
