@@ -458,7 +458,7 @@ export const HumanMessage = ({
           </div>
           <div className="font-bold text-emphasis ml-2 my-auto">You</div>
         </div>
-        <div className="mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default flex flex-wrap">
+        <div className="mx-auto mt-1 ml-8 flex flex-wrap">
           <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
             <FileDisplay files={files || []} />
 

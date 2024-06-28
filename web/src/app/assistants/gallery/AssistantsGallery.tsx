@@ -43,7 +43,7 @@ export function AssistantsGallery({
   return (
     <>
       {popup}
-      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
+      <div className="mx-auto w-[95%] max-w-screen-md">
         <AssistantsPageTitle>Assistant Gallery</AssistantsPageTitle>
         <div className="flex justify-center mb-6">
           <Link href="/assistants/mine">

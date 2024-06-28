@@ -258,7 +258,7 @@ export const SearchSection = ({
           />
         </div>
       </div>
-      <div className="w-[720px] 3xl:w-[800px] mx-auto">
+      <div className="max-w-screen-md mx-auto">
         {personas.length > 0 ? (
           <div className="flex mb-2 w-fit">
             <PersonaSelector
