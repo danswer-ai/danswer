@@ -34,7 +34,7 @@ export function AdminSidebar({
 }) {
   return (
     <Sidebar onToggle={toggleAdminSidebar} padded isOpen={isOpen}>
-      <aside className="pl-4">
+      <aside className="pt-8 pl-4">
         <nav className="space-y-2 pl-4">
           {collections.map((collection, collectionInd) => (
             <div key={collectionInd}>

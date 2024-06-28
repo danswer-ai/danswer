@@ -3,7 +3,7 @@
 import { User } from "@/lib/types";
 import Link from "next/link";
 import React, { useContext } from "react";
-import { FiMessageSquare, FiSearch } from "react-icons/fi";
+import { FiMenu, FiMessageSquare, FiSearch } from "react-icons/fi";
 import { HeaderWrapper } from "./HeaderWrapper";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { UserDropdown } from "../UserDropdown";
@@ -16,9 +16,11 @@ export function HeaderTitle({ children }: { children: JSX.Element | string }) {
 
 interface HeaderProps {
   user: User | null;
+  toggleSidebar?: () => void;
+  hideToggle?: boolean;
 }
 
-export function Header({ user }: HeaderProps) {
+export function Header({ user, toggleSidebar, hideToggle }: HeaderProps) {
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -57,6 +59,20 @@ export function Header({ user }: HeaderProps) {
             </div>
           </div>
         </Link>
+
+        {toggleSidebar && (
+          <div
+            onClick={toggleSidebar}
+            className={`
+                    rounded
+                    cursor-pointer
+                    my-auto
+                    hover:bg-hover-light
+                  `}
+          >
+            <FiMenu size={24} />
+          </div>
+        )}
 
         {!combinedSettings.isMobile &&
           (!settings ||

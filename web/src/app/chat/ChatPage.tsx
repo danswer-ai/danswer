@@ -1119,7 +1119,9 @@ export function ChatPage({
                       <ChatBanner />
 
                       {livePersona && (
-                        <div className="sticky top-0 left-80 z-10 w-full bg-background flex">
+                        <div
+                          className={`sticky top-0 ${!combinedSettings?.isMobile ? "left-0" : "left-2"} z-10 w-full bg-background flex`}
+                        >
                           <div className="mt-2 flex w-full">
                             <div className="ml-2 p-1 rounded w-fit">
                               <ChatPersonaSelector
