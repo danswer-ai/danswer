@@ -73,7 +73,7 @@ def _seed_personas(db_session: Session, personas: list[Persona]) -> None:
             user=None,  # Seeding is done as admin
             name=persona.name,
             description=persona.description,
-            num_chunks=persona.num_chunks,
+            num_chunks=persona.num_chunks if persona.num_chunks is not None else 0.0,
             llm_relevance_filter=persona.llm_relevance_filter,
             llm_filter_extraction=persona.llm_filter_extraction,
             recency_bias=persona.recency_bias,
