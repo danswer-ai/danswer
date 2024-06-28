@@ -7,6 +7,7 @@ import { FiBookmark, FiCpu, FiInfo, FiX, FiZoomIn } from "react-icons/fi";
 import { HoverPopup } from "@/components/HoverPopup";
 import { Modal } from "@/components/Modal";
 import { useState } from "react";
+import { FaCaretDown, FaCaretRight } from "react-icons/fa";
 import { Logo } from "@/components/Logo";
 
 const MAX_PERSONAS_TO_DISPLAY = 4;
@@ -36,6 +37,8 @@ export function ChatIntro({
   selectedPersona: Persona;
 }) {
   const availableSourceMetadata = getSourceMetadataForSources(availableSources);
+
+  const [displaySources, setDisplaySources] = useState(false);
 
   return (
     <>
@@ -90,12 +93,13 @@ export function ChatIntro({
                     </div>
                   </div>
                 )}
+
                 {availableSources.length > 0 && (
-                  <div className="mt-2">
+                  <div className="mt-1">
                     <p className="font-bold mb-1 mt-4 text-emphasis">
                       Connected Sources:{" "}
                     </p>
-                    <div className="flex flex-wrap gap-2">
+                    <div className={`flex flex-wrap gap-2`}>
                       {availableSourceMetadata.map((sourceMetadata) => (
                         <span
                           key={sourceMetadata.internalName}

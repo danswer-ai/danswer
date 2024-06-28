@@ -96,8 +96,9 @@ def delete_lobj_by_name(
     lobj_name: str,
     db_session: Session,
 ) -> None:
-    pgfilestore = db_session.query(PGFileStore).filter_by(file_name=lobj_name).first()
-    if not pgfilestore:
+    try:
+        pgfilestore = get_pgfilestore_by_file_name(lobj_name, db_session)
+    except RuntimeError:
         logger.info(f"no file with name {lobj_name} found")
         return
 

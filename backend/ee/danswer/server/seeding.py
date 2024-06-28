@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_existing_llm_providers
+from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.utils.logger import setup_logger
@@ -42,8 +43,11 @@ def _seed_llms(
         return
 
     logger.info("Seeding LLMs")
-    for llm_upsert_request in llm_upsert_requests:
+    seeded_providers = [
         upsert_llm_provider(db_session, llm_upsert_request)
+        for llm_upsert_request in llm_upsert_requests
+    ]
+    update_default_provider(db_session, seeded_providers[0].id)
 
 
 def get_seed_config() -> SeedConfiguration | None:

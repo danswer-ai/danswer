@@ -690,7 +690,7 @@ class ChatSession(Base):
         "ChatFolder", back_populates="chat_sessions"
     )
     messages: Mapped[list["ChatMessage"]] = relationship(
-        "ChatMessage", back_populates="chat_session", cascade="all, delete-orphan"
+        "ChatMessage", back_populates="chat_session"
     )
     persona: Mapped["Persona"] = relationship("Persona")
 
@@ -791,7 +791,9 @@ class DocumentRetrievalFeedback(Base):
     __tablename__ = "document_retrieval_feedback"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
+    chat_message_id: Mapped[int | None] = mapped_column(
+        ForeignKey("chat_message.id", ondelete="SET NULL"), nullable=True
+    )
     document_id: Mapped[str] = mapped_column(ForeignKey("document.id"))
     # How high up this document is in the results, 1 for first
     document_rank: Mapped[int] = mapped_column(Integer)
@@ -801,7 +803,9 @@ class DocumentRetrievalFeedback(Base):
     )
 
     chat_message: Mapped[ChatMessage] = relationship(
-        "ChatMessage", back_populates="document_feedbacks"
+        "ChatMessage",
+        back_populates="document_feedbacks",
+        foreign_keys=[chat_message_id],
     )
     document: Mapped[Document] = relationship(
         "Document", back_populates="retrieval_feedbacks"
@@ -812,14 +816,18 @@ class ChatMessageFeedback(Base):
     __tablename__ = "chat_feedback"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
+    chat_message_id: Mapped[int | None] = mapped_column(
+        ForeignKey("chat_message.id", ondelete="SET NULL"), nullable=True
+    )
     is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     required_followup: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     feedback_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     predefined_feedback: Mapped[str | None] = mapped_column(String, nullable=True)
 
     chat_message: Mapped[ChatMessage] = relationship(
-        "ChatMessage", back_populates="chat_message_feedbacks"
+        "ChatMessage",
+        back_populates="chat_message_feedbacks",
+        foreign_keys=[chat_message_id],
     )
 
 
