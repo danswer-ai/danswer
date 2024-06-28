@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Divider, Text } from "@tremor/react";
-import { Modal } from "../../Modal";
+import { Modal } from "@/components/Modal";
 import Link from "next/link";
 import { FiMessageSquare, FiShare2 } from "react-icons/fi";
 import { useState } from "react";

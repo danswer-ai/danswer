@@ -1,4 +1,4 @@
-import { BackendMessage } from "@/app/chat/interfaces";
+import { BackendMessage } from "@/components/chatPageComponents/interfaces";
 import {
   AnswerPiecePacket,
   DanswerDocument,

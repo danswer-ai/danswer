@@ -18,10 +18,10 @@ import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 import { ConnectorIndexingStatus, DocumentSet } from "@/lib/types";
 import { useState } from "react";
 import { useDocumentSets } from "./hooks";
-import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
+import { ConnectorTitle } from "@/components/adminPageComponents/connectors/ConnectorTitle";
 import { deleteDocumentSet } from "./lib";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { PopupSpec, usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { Button, Text } from "@tremor/react";
 import {
   FiAlertTriangle,

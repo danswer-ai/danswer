@@ -1,4 +1,4 @@
-import { PopupSpec } from "@/components/admin/connectors/Popup";
+import { PopupSpec } from "@/components/adminPageComponents/connectors/Popup";
 import { DeletionAttemptSnapshot } from "./types";
 
 export async function scheduleDeletionJobForConnector(

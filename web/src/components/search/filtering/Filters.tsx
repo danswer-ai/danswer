@@ -2,7 +2,7 @@ import React from "react";
 import { DocumentSet, Tag, ValidSources } from "@/lib/types";
 import { SourceMetadata } from "@/lib/search/interfaces";
 import { InfoIcon, defaultTailwindCSS } from "../../icons/icons";
-import { HoverPopup } from "../../HoverPopup";
+import { HoverPopup } from "@/components/HoverPopup";
 import { FiBook, FiBookmark, FiFilter, FiMap, FiX } from "react-icons/fi";
 import { DateRangeSelector } from "../DateRangeSelector";
 import { DateRangePickerValue } from "@tremor/react";

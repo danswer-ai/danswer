@@ -3,10 +3,10 @@ import { Card, Text, Title } from "@tremor/react";
 import { HeaderWrapper } from "@/components/header/HeaderWrapper";
 import { FiChevronLeft } from "react-icons/fi";
 import Link from "next/link";
-import { AssistantEditor } from "@/components/admin/assistants/AdminAssistantsEditor";
+import { AssistantEditor } from "@/components/adminPageComponents/assistants/AdminAssistantsEditor";
 import { SuccessfulPersonaUpdateRedirectType } from "@/app/admin/assistants/enums";
 import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
-import { DeletePersonaButton } from "@/components/admin/assistants/AdminAssistantsDeletePersonaButton";
+import { DeletePersonaButton } from "@/components/adminPageComponents/assistants/AdminAssistantsDeletePersonaButton";
 
 export default async function Page({ params }: { params: { id: string } }) {
   const [values, error] = await fetchAssistantEditorInfoSS(params.id);

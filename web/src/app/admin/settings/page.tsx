@@ -1,8 +1,8 @@
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { FiSettings } from "react-icons/fi";
 import { Settings } from "./interfaces";
 import { fetchSS } from "@/lib/utilsSS";
-import { SettingsForm } from "@/components/admin/settings/AdminSettingsForm";
+import { SettingsForm } from "@/components/adminPageComponents/settings/AdminSettingsForm";
 import { Callout, Text } from "@tremor/react";
 
 export default async function Page() {

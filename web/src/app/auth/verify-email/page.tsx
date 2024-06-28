@@ -3,7 +3,7 @@ import {
   getAuthTypeMetadataSS,
   getCurrentUserSS,
 } from "@/lib/userSS";
-import { EmailVerificationComponent } from "@/components/auth/signup/AuthSignupVerification";
+import { EmailVerificationComponent } from "@/components/authPageComponents/signup/AuthSignupVerification";
 import { User } from "@/lib/types";
 import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";

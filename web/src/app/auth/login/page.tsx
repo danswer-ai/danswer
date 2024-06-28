@@ -8,8 +8,8 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import Image from "next/image";
-import { SignInButton } from "@/components/auth/login/AuthLoginSignInButton";
-import { EmailPasswordForm } from "@/components/auth/login/AuthLoginEmailPasswordForm";
+import { SignInButton } from "@/components/authPageComponents/login/AuthLoginSignInButton";
+import { EmailPasswordForm } from "@/components/authPageComponents/login/AuthLoginEmailPasswordForm";
 import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
 

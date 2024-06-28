@@ -7,13 +7,13 @@ import {
   useUserGroups,
 } from "@/lib/hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { BookmarkIcon } from "@/components/icons/icons";
 import { BackButton } from "@/components/BackButton";
 import { Card } from "@tremor/react";
-import { DocumentSetCreationForm } from "@/components/admin/documents/sets/AdminDocumentsSetsCreationForm";
+import { DocumentSetCreationForm } from "@/components/adminPageComponents/documents/AdminDocumentsSetsCreationForm";
 import { useRouter } from "next/navigation";
-import { usePopup } from "@/components/admin/connectors/Popup";
+import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
 
 function Main({ documentSetId }: { documentSetId: number }) {
   const router = useRouter();

@@ -13,12 +13,12 @@ import { fetcher } from "@/lib/fetcher";
 import {
   SelectorFormField,
   TextFormField,
-} from "@/components/admin/connectors/Field";
+} from "@/components/adminPageComponents/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus, WebConfig } from "@/lib/types";
-import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
-import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { ConnectorsTable } from "@/components/adminPageComponents/connectors/table/ConnectorsTable";
+import { ConnectorForm } from "@/components/adminPageComponents/connectors/ConnectorForm";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { Card, Title } from "@tremor/react";
 
 const SCRAPE_TYPE_TO_PRETTY_NAME = {

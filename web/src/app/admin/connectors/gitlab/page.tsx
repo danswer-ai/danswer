@@ -2,7 +2,7 @@
 
 import * as Yup from "yup";
 import { GitlabIcon, TrashIcon } from "@/components/icons/icons";
-import { TextFormField } from "@/components/admin/connectors/Field";
+import { TextFormField } from "@/components/adminPageComponents/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
@@ -12,14 +12,14 @@ import {
   Credential,
   ConnectorIndexingStatus,
 } from "@/lib/types";
-import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
+import { ConnectorForm } from "@/components/adminPageComponents/connectors/ConnectorForm";
 import { LoadingAnimation } from "@/components/Loading";
-import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
+import { CredentialForm } from "@/components/adminPageComponents/connectors/CredentialForm";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
-import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
+import { ConnectorsTable } from "@/components/adminPageComponents/connectors/table/ConnectorsTable";
 import { usePublicCredentials } from "@/lib/hooks";
 import { Card, Divider, Text, Title } from "@tremor/react";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 
 const Main = () => {
   const { mutate } = useSWRConfig();

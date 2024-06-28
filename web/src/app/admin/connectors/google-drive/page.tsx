@@ -5,7 +5,7 @@ import { GoogleDriveIcon } from "@/components/icons/icons";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
+import { PopupSpec, usePopup } from "@/components/adminPageComponents/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
   ConnectorIndexingStatus,
@@ -15,16 +15,16 @@ import {
   GoogleDriveServiceAccountCredentialJson,
 } from "@/lib/types";
 import { linkCredential } from "@/lib/credential";
-import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
+import { ConnectorForm } from "@/components/adminPageComponents/connectors/ConnectorForm";
 import {
   BooleanFormField,
   TextArrayFieldBuilder,
-} from "@/components/admin/connectors/Field";
-import { GoogleDriveConnectorsTable } from "@/components/admin/connectors/google-drive/AdminConnectorsGoogleDriveTable";
+} from "@/components/adminPageComponents/connectors/Field";
+import { GoogleDriveConnectorsTable } from "@/components/adminPageComponents/connectors/google-drive/AdminConnectorsGoogleDriveTable";
 import { googleDriveConnectorNameBuilder } from "./utils";
-import { DriveOAuthSection, DriveJsonUploadSection } from "@/components/admin/connectors/google-drive/AdminConnectorGoogleDriveCredential";
+import { DriveOAuthSection, DriveJsonUploadSection } from "@/components/adminPageComponents/connectors/google-drive/AdminConnectorGoogleDriveCredential";
 import { usePublicCredentials } from "@/lib/hooks";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { Card, Divider, Text, Title } from "@tremor/react";
 
 interface GoogleDriveConnectorManagementProps {

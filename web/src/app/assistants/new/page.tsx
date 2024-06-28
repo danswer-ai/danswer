@@ -2,7 +2,7 @@ import { Card } from "@tremor/react";
 import { HeaderWrapper } from "@/components/header/HeaderWrapper";
 import { FiChevronLeft } from "react-icons/fi";
 import Link from "next/link";
-import { AssistantEditor } from "@/components/admin/assistants/AdminAssistantsEditor";
+import { AssistantEditor } from "@/components/adminPageComponents/assistants/AdminAssistantsEditor";
 import { SuccessfulPersonaUpdateRedirectType } from "@/app/admin/assistants/enums";
 import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
 import { ErrorCallout } from "@/components/ErrorCallout";

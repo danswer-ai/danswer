@@ -1,12 +1,12 @@
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { CPUIcon } from "@/components/icons/icons";
-import { SlackBotCreationForm } from "@/components/admin/slackbot/SlackBotConfigCreationForm";
+import { SlackBotCreationForm } from "@/components/adminPageComponents/slackbot/SlackBotConfigCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { DocumentSet, SlackBotConfig } from "@/lib/types";
 import { Text } from "@tremor/react";
 import { BackButton } from "@/components/BackButton";
-import { Persona } from "../../assistants/interfaces";
+import { Persona } from "@/assistants/interfaces";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 
 async function Page({ params }: { params: { id: string } }) {

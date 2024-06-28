@@ -1,14 +1,14 @@
 "use client";
 
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { BookmarkIcon } from "@/components/icons/icons";
-import { DocumentSetCreationForm } from "@/components/admin/documents/sets/AdminDocumentsSetsCreationForm";
+import { DocumentSetCreationForm } from "@/components/adminPageComponents/documents/AdminDocumentsSetsCreationForm";
 import {
   useConnectorCredentialIndexingStatus,
   useUserGroups,
 } from "@/lib/hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
-import { usePopup } from "@/components/admin/connectors/Popup";
+import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
 import { Card } from "@tremor/react";
 import { BackButton } from "@/components/BackButton";
 import { ErrorCallout } from "@/components/ErrorCallout";

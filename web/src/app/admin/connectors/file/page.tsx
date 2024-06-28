@@ -9,17 +9,17 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus, FileConfig } from "@/lib/types";
 import { createCredential, linkCredential } from "@/lib/credential";
 import { useState } from "react";
-import { usePopup } from "@/components/admin/connectors/Popup";
+import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { Spinner } from "@/components/Spinner";
-import { SingleUseConnectorsTable } from "@/components/admin/connectors/table/SingleUseConnectorsTable";
+import { SingleUseConnectorsTable } from "@/components/adminPageComponents/connectors/table/SingleUseConnectorsTable";
 import { LoadingAnimation } from "@/components/Loading";
 import { Form, Formik } from "formik";
-import { TextFormField } from "@/components/admin/connectors/Field";
-import { FileUpload } from "@/components/admin/connectors/FileUpload";
+import { TextFormField } from "@/components/adminPageComponents/connectors/Field";
+import { FileUpload } from "@/components/adminPageComponents/connectors/FileUpload";
 import { getNameFromPath } from "@/lib/fileUtils";
 import { Button, Card, Divider, Text } from "@tremor/react";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 
 const Main = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);

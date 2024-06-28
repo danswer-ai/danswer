@@ -1,5 +1,5 @@
 import { FiCheck, FiChevronDown } from "react-icons/fi";
-import { CustomDropdown } from "../../Dropdown";
+import { CustomDropdown } from "@/components/Dropdown";
 
 interface Option {
   key: string;

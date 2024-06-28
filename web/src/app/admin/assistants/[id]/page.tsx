@@ -1,12 +1,12 @@
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { AssistantEditor } from "@/components/admin/assistants/AdminAssistantsEditor";
+import { AssistantEditor } from "@/components/adminPageComponents/assistants/AdminAssistantsEditor";
 import { BackButton } from "@/components/BackButton";
 import { Card, Title } from "@tremor/react";
-import { DeletePersonaButton } from "@/components/admin/assistants/AdminAssistantsDeletePersonaButton";
+import { DeletePersonaButton } from "@/components/adminPageComponents/assistants/AdminAssistantsDeletePersonaButton";
 import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
 import { SuccessfulPersonaUpdateRedirectType } from "../enums";
 import { RobotIcon } from "@/components/icons/icons";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 
 export default async function Page({ params }: { params: { id: string } }) {
   const [values, error] = await fetchAssistantEditorInfoSS(params.id);

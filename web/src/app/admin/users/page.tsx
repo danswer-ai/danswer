@@ -10,8 +10,8 @@ import {
   Button,
 } from "@tremor/react";
 import { LoadingAnimation } from "@/components/Loading";
-import { AdminPageTitle } from "@/components/admin/Title";
-import { usePopup } from "@/components/admin/connectors/Popup";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
+import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
 import { UsersIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import { User } from "@/lib/types";

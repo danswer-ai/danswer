@@ -2,9 +2,9 @@
 
 import * as Yup from "yup";
 import { ConfluenceIcon, TrashIcon } from "@/components/icons/icons";
-import { TextFormField } from "@/components/admin/connectors/Field";
+import { TextFormField } from "@/components/adminPageComponents/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
+import { CredentialForm } from "@/components/adminPageComponents/connectors/CredentialForm";
 import {
   ConfluenceCredentialJson,
   ConfluenceConfig,
@@ -15,12 +15,12 @@ import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
-import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
-import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
-import { usePopup } from "@/components/admin/connectors/Popup";
+import { ConnectorForm } from "@/components/adminPageComponents/connectors/ConnectorForm";
+import { ConnectorsTable } from "@/components/adminPageComponents/connectors/table/ConnectorsTable";
+import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
 import { Card, Divider, Text, Title } from "@tremor/react";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 
 const extractSpaceFromCloudUrl = (wikiUrl: string): string => {
   const parsedUrl = new URL(wikiUrl);

@@ -1,6 +1,6 @@
 "use client";
 
-import { Modal } from "../../Modal";
+import { Modal } from "@/components/Modal";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CCPairBasicInfo } from "@/lib/types";
