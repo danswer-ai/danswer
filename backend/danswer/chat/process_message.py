@@ -444,7 +444,10 @@ def stream_chat_message_objects(
                             )
                         dalle_key = openai_provider.api_key
                     tool_dict[db_tool_model.id] = [
-                        ImageGenerationTool(api_key=dalle_key)
+                        ImageGenerationTool(
+                            api_key=dalle_key,
+                            additional_headers=litellm_additional_headers,
+                        )
                     ]
 
                 continue

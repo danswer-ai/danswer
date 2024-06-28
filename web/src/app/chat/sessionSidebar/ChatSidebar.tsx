@@ -7,10 +7,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { BasicClickable, BasicSelectable } from "@/components/BasicClickable";
 import { ChatSession } from "../interfaces";
+
 import {
-  NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
   NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
+  NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
 } from "@/lib/constants";
+
 import { ChatTab } from "./ChatTab";
 import { Folder } from "../folders/interfaces";
 import { createFolder } from "../folders/FolderManagement";
@@ -56,8 +58,10 @@ export const ChatSidebar = ({
       {popup}
       <div
         className={`
-        flex-none
         w-64
+        flex
+        flex-none
+        bg-background-weak
         3xl:w-72
         border-r 
         border-border 

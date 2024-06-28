@@ -18,7 +18,7 @@ import {
   FiCheck,
   FiChevronsDown,
   FiChevronsUp,
-  FiEdit,
+  FiEdit2,
   FiFile,
   FiGlobe,
   FiThumbsDown,
@@ -44,6 +44,8 @@ import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
+import OCIStorageSVG from "../../../public/OCI.svg";
+import googleCloudStorageIcon from "../../../public/GoogleCloudStorage.png";
 import guruIcon from "../../../public/Guru.svg";
 import gongIcon from "../../../public/Gong.png";
 import requestTrackerIcon from "../../../public/RequestTracker.png";
@@ -54,6 +56,8 @@ import document360Icon from "../../../public/Document360.png";
 import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
 import dropboxIcon from "../../../public/Dropbox.png";
+import s3Icon from "../../../public/S3.png";
+import r2Icon from "../../../public/r2.webp";
 import salesforceIcon from "../../../public/Salesforce.png";
 import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";
@@ -187,7 +191,7 @@ export const EditIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiEdit size={size} className={className} />;
+  return <FiEdit2 size={size} className={className} />;
 };
 
 export const XIcon = ({
@@ -423,6 +427,20 @@ export const ConfluenceIcon = ({
   );
 };
 
+export const OCIStorageIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={OCIStorageSVG} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
 export const JiraIcon = ({
   size = 16,
   className = defaultTailwindCSS,
@@ -448,6 +466,20 @@ export const ZulipIcon = ({
       className={`w-[${size}px] h-[${size}px] ` + className}
     >
       <Image src={zulipIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const GoogleStorageIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={googleCloudStorageIcon} alt="Logo" width="96" height="96" />
     </div>
   );
 };
@@ -540,6 +572,30 @@ export const SalesforceIcon = ({
     className={`w-[${size}px] h-[${size}px] ` + className}
   >
     <Image src={salesforceIcon} alt="Logo" width="96" height="96" />
+  </div>
+);
+
+export const R2Icon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={r2Icon} alt="Logo" width="96" height="96" />
+  </div>
+);
+
+export const S3Icon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={s3Icon} alt="Logo" width="96" height="96" />
   </div>
 );
 
