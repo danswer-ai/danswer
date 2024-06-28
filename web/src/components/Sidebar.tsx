@@ -1,6 +1,5 @@
-import { useContext, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { FiX } from "react-icons/fi";
-import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 interface SidebarProps {
   onToggle?: () => void;
@@ -21,12 +20,7 @@ export default function Sidebar({
   padded,
   hideonDesktop,
 }: SidebarProps) {
-  const combinedSettings = useContext(SettingsContext);
   const sidebarRef = useRef<HTMLDivElement>(null);
-
-  if (!combinedSettings) {
-    return null;
-  }
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
