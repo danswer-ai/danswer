@@ -18,6 +18,25 @@ def get_pg_conn_from_session(db_session: Session) -> connection:
     return db_session.connection().connection.connection  # type: ignore
 
 
+def get_pgfilestore_by_file_name(
+    file_name: str,
+    db_session: Session,
+) -> PGFileStore:
+    pgfilestore = db_session.query(PGFileStore).filter_by(file_name=file_name).first()
+
+    if not pgfilestore:
+        raise RuntimeError(f"File by name {file_name} does not exist or was deleted")
+
+    return pgfilestore
+
+
+def delete_pgfilestore_by_file_name(
+    file_name: str,
+    db_session: Session,
+) -> None:
+    db_session.query(PGFileStore).filter_by(file_name=file_name).delete()
+
+
 def create_populate_lobj(
     content: IO,
     db_session: Session,
@@ -73,6 +92,23 @@ def delete_lobj_by_id(
     pg_conn.lobject(lobj_oid).unlink()
 
 
+def delete_lobj_by_name(
+    lobj_name: str,
+    db_session: Session,
+) -> None:
+    try:
+        pgfilestore = get_pgfilestore_by_file_name(lobj_name, db_session)
+    except RuntimeError:
+        logger.info(f"no file with name {lobj_name} found")
+        return
+
+    pg_conn = get_pg_conn_from_session(db_session)
+    pg_conn.lobject(pgfilestore.lobj_oid).unlink()
+
+    delete_pgfilestore_by_file_name(lobj_name, db_session)
+    db_session.commit()
+
+
 def upsert_pgfilestore(
     file_name: str,
     display_name: str | None,
@@ -112,22 +148,3 @@ def upsert_pgfilestore(
         db_session.commit()
 
     return pgfilestore
-
-
-def get_pgfilestore_by_file_name(
-    file_name: str,
-    db_session: Session,
-) -> PGFileStore:
-    pgfilestore = db_session.query(PGFileStore).filter_by(file_name=file_name).first()
-
-    if not pgfilestore:
-        raise RuntimeError(f"File by name {file_name} does not exist or was deleted")
-
-    return pgfilestore
-
-
-def delete_pgfilestore_by_file_name(
-    file_name: str,
-    db_session: Session,
-) -> None:
-    db_session.query(PGFileStore).filter_by(file_name=file_name).delete()
