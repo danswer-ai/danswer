@@ -39,24 +39,29 @@ module.exports = {
       colors: {
         // background
         background: "#f9fafb", // gray-50
+        "background-subtle": "#e5e7eb", // gray-200
         "background-emphasis": "#f6f7f8",
         "background-strong": "#eaecef",
         "background-search": "#ffffff",
         "background-custom-header": "#f3f4f6",
         "background-inverted": "#000000",
         "background-weak": "#f3f4f6", // gray-100
+        "background-dark": "#111827", // gray-900
 
         // text or icons
+        light: "#e5e7eb", // gray-200
         link: "#3b82f6", // blue-500
         "link-hover": "#1d4ed8", // blue-700
         subtle: "#6b7280", // gray-500
         default: "#4b5563", // gray-600
+        emphasis: "#374151", // gray-700
         emphasis: "#374151", // gray-700
         strong: "#111827", // gray-900
         inverted: "#ffffff", // white
         error: "#ef4444", // red-500
         success: "#059669", // emerald-600
         alert: "#f59e0b", // amber-600
+
         accent: "#6671d0",
 
         // borders
