@@ -10,6 +10,7 @@ import { useContext } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import React, { useState, useEffect } from "react";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { Button } from "@tremor/react";
 
 function Checkbox({
   label,
@@ -94,7 +95,7 @@ function IntegerInput({
         min="1"
         step="1"
         id={id}
-        placeholder={placeholder} // Set the placeholder attribute
+        placeholder={placeholder}
       />
     </label>
   );
@@ -254,18 +255,17 @@ export function SettingsForm() {
             id="chatRetentionInput"
             placeholder="Infinite Retention"
           />
-          <button
+          <Button
             onClick={handleSetChatRetention}
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            color="green"
+            size="xs"
+            className="mr-3"
           >
-            Set
-          </button>
-          <button
-            onClick={handleClearChatRetention}
-            className="mt-2 ml-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-          >
+            Set Retention Limit (Days)
+          </Button>
+          <Button onClick={handleClearChatRetention} color="blue" size="xs">
             Retain All
-          </button>
+          </Button>
         </>
       )}
     </div>
