@@ -96,6 +96,7 @@ export const AIMessage = ({
   handleSearchQueryEdit,
   handleForceSearch,
   retrievalDisabled,
+  isMobile,
 }: {
   messageId: number | null;
   content: string | JSX.Element;
@@ -112,6 +113,7 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
+  isMobile?: boolean;
 }) => {
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {
@@ -160,7 +162,6 @@ export const AIMessage = ({
       />
     </div>
   ) : undefined;
-  const combinedSettings = useContext(SettingsContext);
 
   return (
     <div className={"py-5 sm:px-5 flex -mr-6 w-full"}>
@@ -256,7 +257,6 @@ export const AIMessage = ({
             {content ? (
               <>
                 <FileDisplay files={files || []} />
-
                 {typeof content === "string" ? (
                   <ReactMarkdown
                     key={messageId}
@@ -350,12 +350,7 @@ export const AIMessage = ({
           </div>
           {handleFeedback && (
             <div
-              className={`flex 
-            
-                      ${!combinedSettings?.isMobile && " flex-col"}
-            
-            
-                       md:flex-row gap-x-0.5 ml-8 mt-1.5`}
+              className={`flex ${isMobile && "flex-col"} md:flex-row gap-x-0.5 ml-8 mt-1.5`}
             >
               <CopyButton content={content.toString()} />
               <Hoverable
@@ -409,6 +404,7 @@ export const HumanMessage = ({
   otherMessagesCanSwitchTo,
   onEdit,
   onMessageSelection,
+  isMobile,
 }: {
   content: string;
   files?: FileDescriptor[];
@@ -416,14 +412,13 @@ export const HumanMessage = ({
   otherMessagesCanSwitchTo?: number[];
   onEdit?: (editedContent: string) => void;
   onMessageSelection?: (messageId: number) => void;
+  isMobile?: boolean;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
-
-  const combinedSettings = useContext(SettingsContext);
 
   useEffect(() => {
     if (!isEditing) {
@@ -466,7 +461,6 @@ export const HumanMessage = ({
                 <FiUser size={16} className="my-auto mx-auto" />
               </div>
             </div>
-
             <div className="font-bold text-emphasis ml-2 my-auto">You</div>
           </div>
           <div className="mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default flex flex-wrap">
@@ -582,10 +576,7 @@ export const HumanMessage = ({
             </div>
           </div>
           <div
-            className={`flex 
-        
-${!combinedSettings?.isMobile && " flex-col"}
-           md:flex-row gap-x-0.5 ml-8 mt-1`}
+            className={`flex ${isMobile && " flex-col"} md:flex-row gap-x-0.5 ml-8 mt-1`}
           >
             {currentMessageInd !== undefined &&
               onMessageSelection &&
