@@ -106,6 +106,12 @@ export function ChatPage({
     openedFolders,
   } = useChatContext();
 
+  const combinedSettings = useContext(SettingsContext);
+  if (!combinedSettings) {
+    return null;
+  }
+  const settings = combinedSettings.settings;
+
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
 
   const router = useRouter();
@@ -1002,10 +1008,6 @@ export function ChatPage({
   // NOTE: this must be done here, in a client component since
   // settings are passed in via Context and therefore aren't
   // available in server-side components
-  const settings = useContext(SettingsContext);
-  if (settings?.settings?.chat_page_enabled === false) {
-    router.push("/search");
-  }
 
   const [showDocSidebar, setShowDocSidebar] = useState(true); // State to track if sidebar is open
 
@@ -1040,7 +1042,7 @@ export function ChatPage({
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      <div className="flex relative bg-background text-default overflow-x-hidden">
+      <div className="flex relative bg-background text-default h-full overflow-x-hidden">
         <ChatSidebar
           isChatSidebarOpen={isChatSidebarOpen}
           toggleChatSideBar={toggleChatSideBar}
@@ -1101,9 +1103,11 @@ export function ChatPage({
               {({ getRootProps }) => (
                 <>
                   <div
-                    className={`w-full sm:relative h-screen ${
-                      retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
-                    }
+                    className={`
+    h-[calc(100dvh)]  
+                      w-full sm:relative  ${
+                        retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
+                      }
                       flex-auto transition-margin duration-300 
                       overflow-x-auto
                       `}
@@ -1111,7 +1115,7 @@ export function ChatPage({
                   >
                     {/* <input {...getInputProps()} /> */}
                     <div
-                      className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                      className={`w-full h-full  flex flex-col overflow-y-auto overflow-x-hidden relative`}
                       ref={scrollableDivRef}
                     >
                       {/* ChatBanner is a custom banner that displays a admin-specified message at 
@@ -1130,19 +1134,20 @@ export function ChatPage({
                               />
                             </div>
 
-                            {settings?.isMobile && !isChatSidebarOpen && (
-                              <div
-                                onClick={toggleChatSideBar}
-                                className={`
+                            {combinedSettings?.isMobile &&
+                              !isChatSidebarOpen && (
+                                <div
+                                  onClick={toggleChatSideBar}
+                                  className={`
                                     rounded
                                     cursor-pointer
                                     my-auto
                                     hover:bg-hover-light
                                   `}
-                              >
-                                <FiMenu size={24} />
-                              </div>
-                            )}
+                                >
+                                  <FiMenu size={24} />
+                                </div>
+                              )}
 
                             <div className="ml-auto mr-6 flex">
                               {chatSessionId !== null && (

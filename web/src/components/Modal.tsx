@@ -1,5 +1,7 @@
 import { Divider } from "@tremor/react";
+import { useContext } from "react";
 import { FiX } from "react-icons/fi";
+import { SettingsContext } from "./settings/SettingsProvider";
 
 interface ModalProps {
   children: JSX.Element | string;
@@ -22,6 +24,12 @@ export function Modal({
   hideDividerForTitle,
   noPadding,
 }: ModalProps) {
+  const combinedSettings = useContext(SettingsContext);
+  if (!combinedSettings) {
+    return null;
+  }
+  const settings = combinedSettings.settings;
+
   return (
     <div>
       <div
@@ -34,7 +42,8 @@ export function Modal({
         <div
           className={`
           bg-background rounded shadow-lg
-          relative ${width ?? "w-1/2"} text-sm 
+          relative 
+        ${combinedSettings.isMobile ? "w-[95%] mx-12" : width ?? "w-1/2"}} text-sm 
           ${noPadding ? "" : "p-8"}
           ${className}
         `}
