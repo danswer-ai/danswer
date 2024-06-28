@@ -1,9 +1,9 @@
-import { Layout } from "@/components/admin/Layout";
+import { SharedServerLayout } from "@/components/admin/SharedServerLayout";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return await Layout({ children });
+  return await SharedServerLayout({ children });
 }

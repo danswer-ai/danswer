@@ -2,7 +2,6 @@
 
 import { AdminSidebar } from "@/components/admin/connectors/AdminSidebar";
 import { User } from "@/lib/types";
-import { FiCpu, FiPackage, FiSettings, FiSlack, FiTool } from "react-icons/fi";
 import { useState } from "react";
 import { Header } from "../header/Header";
 

@@ -1,3 +1,5 @@
+"use server";
+
 import { User } from "@/lib/types";
 import {
   AuthTypeMetadata,
@@ -5,11 +7,13 @@ import {
   getCurrentUserSS,
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
-
-import { useState } from "react";
 import { ClientLayout } from "./ClientLayout";
 
-export async function Layout({ children }: { children: React.ReactNode }) {
+export async function SharedServerLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const tasks = [getAuthTypeMetadataSS(), getCurrentUserSS()];
 
   // catch cases where the backend is completely unreachable here
