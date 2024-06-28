@@ -159,36 +159,49 @@ def _convert_issue_to_document(issue: Issue) -> Document:
     )
 
 
-def _convert_code_to_document(file: ContentFile.ContentFile) -> Document | None:
-    text = extract_file_text(
-        file.name,
-        io.BytesIO(file.decoded_content),
-        break_on_unprocessable=False,
-    )
-
-    if not text:
-        # Heuristic #1: Skip definite images and videos (for example, SVG is
-        # a plain-text format but we don't want to index it regardless)
-        content_type, _ = mimetypes.guess_type(file.name)
-        if content_type and content_type.split("/")[0] in ["image", "video"]:
-            logger.debug(f"Skipping non-indexable content: {file.html_url}")
-            return None
-
-        # Heuristic #2: Skip non-UTF-8 content, which is usually binary files
+def _convert_code_to_document(file: ContentFile.ContentFile) -> Document:
+    def _extract_content_file_text(file: ContentFile.ContentFile) -> str:
         try:
-            text = file.decoded_content.decode("utf-8")
-        except UnicodeDecodeError:
-            logger.debug(f"Skipping non-UTF-8 content: {file.html_url}")
-            return None
+            decoded_content = file.decoded_content
+        except Exception as e:
+            logger.warning(f"Cannot decode code file {file.html_url} due to {e}")
+            return ""
 
+        text = extract_file_text(
+            file.name,
+            io.BytesIO(decoded_content),
+            break_on_unprocessable=False,
+        )
+
+        if not text:
+            # Heuristic #1: Skip definite images and videos (for example, SVG
+            # is a plain-text format but we don't want to index it regardless)
+            content_type, _ = mimetypes.guess_type(file.name)
+            if content_type and content_type.split("/")[0] in ["image", "video"]:
+                logger.debug(f"Skipping non-indexable content: {file.html_url}")
+                return ""
+
+            # Heuristic #2: Skip non-UTF-8 content, which is usually binary
+            # files
+            try:
+                text = decoded_content.decode("utf-8")
+            except UnicodeDecodeError:
+                logger.debug(f"Skipping non-UTF-8 content: {file.html_url}")
+                return ""
+
+        return text
+
+    # We create a document for each repository file; it's just that not all
+    # documents will have indexable textual content
     doc = Document(
         id=file.html_url,
-        sections=[Section(link=file.html_url, text=text)],
+        sections=[Section(link=file.html_url, text=_extract_content_file_text(file))],
         source=DocumentSource.GITHUB,
         semantic_identifier=file.name,
         doc_updated_at=None,
         metadata={
-            "type": "code"
+            "type": "code",
+            "path": file.path,
         },
     )
     return doc
@@ -271,9 +284,7 @@ class GithubConnector(LoadConnector, PollConnector):
                             continue
 
                         if file.type == "file":
-                            doc = _convert_code_to_document(file)
-                            if doc:
-                                code_doc_batch.append(doc)
+                            code_doc_batch.append(_convert_code_to_document(file))
                         elif file.type == "dir":
                             queue.append(file.path)
 
