@@ -11,7 +11,7 @@ from danswer.db.persona import upsert_persona
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.settings.models import Settings
-from danswer.server.settings.store import store_settings as store_base_settiongs
+from danswer.server.settings.store import store_settings as store_base_settings
 from danswer.utils.logger import setup_logger
 from ee.danswer.server.enterprise_settings.models import EnterpriseSettings
 from ee.danswer.server.enterprise_settings.store import (
@@ -93,7 +93,7 @@ def _seed_settings(settings: Settings) -> None:
     logger.info("Seeding Settings")
     try:
         settings.check_validity()
-        store_base_settiongs(settings)
+        store_base_settings(settings)
         logger.info("Successfully seeded Settings")
     except ValueError as e:
         logger.error(f"Failed to seed Settings: {str(e)}")
