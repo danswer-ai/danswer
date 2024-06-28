@@ -12,6 +12,7 @@ import { ModelSelectionConfirmaionModal } from "./ModelSelectionConfirmation";
 import { ReindexingProgressTable } from "./ReindexingProgressTable";
 import { Modal } from "@/components/Modal";
 import {
+  AVAILABLE_CLOUD_MODELS,
   AVAILABLE_MODELS,
   EmbeddingModelDescriptor,
   INVALID_OLD_MODEL,
@@ -68,6 +69,7 @@ function Main() {
       setTentativeNewEmbeddingModel(model);
     }
   };
+
 
   const onConfirm = async (model: EmbeddingModelDescriptor) => {
     const response = await fetch(
@@ -126,8 +128,8 @@ function Main() {
 
   const newModelSelection = futureEmbeddingModel
     ? AVAILABLE_MODELS.find(
-        (model) => model.model_name === futureEmbeddingModel.model_name
-      ) || fillOutEmeddingModelDescriptor(futureEmbeddingModel)
+      (model) => model.model_name === futureEmbeddingModel.model_name
+    ) || fillOutEmeddingModelDescriptor(futureEmbeddingModel)
     : null;
 
   return (
@@ -255,6 +257,20 @@ function Main() {
               )}
               setSelectedModel={onSelect}
             />
+
+            <Title className="mt-8">Alternatively, here are some cloud-based models to choose from!</Title>
+
+            <Text className="mb-4">
+              They require API keys and run in the cloud of the respective prodivers.
+            </Text>
+
+            <ModelSelector
+              modelOptions={AVAILABLE_CLOUD_MODELS.filter(
+                (modelOption) => modelOption.model_name !== currentModelName
+              )}
+              setSelectedModel={onSelect}
+            />
+
 
             <Text className="mt-6">
               Alternatively, (if you know what you&apos;re doing) you can

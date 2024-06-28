@@ -15,11 +15,101 @@ export interface EmbeddingModelDescriptor {
   passage_prefix?: string;
 }
 
+
 export interface FullEmbeddingModelDescriptor extends EmbeddingModelDescriptor {
   description: string;
   isDefault?: boolean;
   link?: string;
 }
+
+
+
+export interface FullCloudbasedEmbeddingModelDescriptor extends FullEmbeddingModelDescriptor {
+  description: string;
+  isDefault?: boolean;
+  link?: string;
+  pricePerMillion?: number;
+  docs_link?: string;
+  
+}
+
+
+export const AVAILABLE_CLOUD_MODELS: FullCloudbasedEmbeddingModelDescriptor[] = [
+  {
+    model_name: "text-embedding-3-small",
+    model_dim: 1536,
+    normalize: true,
+    description: "OpenAI's newer, more efficient embedding model. Good balance of performance and cost.",
+    link: "https://platform.openai.com/docs/guides/embeddings",
+    query_prefix: "",
+    passage_prefix: "",
+    pricePerMillion: 0.02
+  },
+  {
+    model_name: "text-embedding-3-large",
+    model_dim: 3072,
+    normalize: true,
+    description: "OpenAI's large embedding model. Best performance, but more expensive.",
+    link: "https://platform.openai.com/docs/guides/embeddings",
+    query_prefix: "",
+    passage_prefix: "",
+    pricePerMillion: 0.13
+  },
+  {
+    model_name: "embed-english-v3.0",
+    model_dim: 1024,
+    normalize: true,
+    description: "Cohere's English embedding model. Good performance for English-language tasks.",
+    link: "https://docs.cohere.com/docs/cohere-embed",
+    query_prefix: "",
+    passage_prefix: "",
+    pricePerMillion: 0.1
+  },
+  {
+    model_name: "embed-english-light-v3.0",
+    model_dim: 384,
+    normalize: true,
+    description: "Cohere's lightweight English embedding model. Faster and more efficient for simpler tasks.",
+    link: "https://docs.cohere.com/docs/cohere-embed",
+    query_prefix: "",
+    passage_prefix: "",
+    pricePerMillion: 0.1
+  },
+  {
+    model_name: "voyage-large-2-instruct",
+    model_dim: 1024,
+    normalize: true,
+    description: "Voyage AI's large embedding model. High performance with instruction fine-tuning.",
+    link: "https://docs.voyageai.com/docs/embeddings",
+    query_prefix: "",
+    passage_prefix: "",
+    pricePerMillion: 0.12
+  },
+  {
+    model_name: "voyage-light-2-instruct",
+    model_dim: 1024,
+    normalize: true,
+    description: "Voyage AI's lightweight embedding model. Good balance of performance and efficiency.",
+    link: "https://docs.voyageai.com/docs/embeddings",
+    query_prefix: "",
+    passage_prefix: "",
+    pricePerMillion: 0.12
+  },
+  {
+    model_name: "gecko",
+    model_dim: 768,
+    normalize: true,
+    description: "Google's Gecko embedding model. Powerful and efficient, but requires more setup.",
+    link: "https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/text-embeddings",
+    query_prefix: "",
+    passage_prefix: "",
+    pricePerMillion: 0.025 // Note: This is per character, not per token
+  }
+];
+
+
+
+
 
 export const AVAILABLE_MODELS: FullEmbeddingModelDescriptor[] = [
   {

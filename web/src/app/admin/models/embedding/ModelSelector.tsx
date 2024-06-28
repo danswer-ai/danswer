@@ -2,6 +2,7 @@ import { DefaultDropdown, StringOrNumberOption } from "@/components/Dropdown";
 import { Title, Text, Divider, Card } from "@tremor/react";
 import {
   EmbeddingModelDescriptor,
+  FullCloudbasedEmbeddingModelDescriptor,
   FullEmbeddingModelDescriptor,
 } from "./embeddingModels";
 import { FiStar } from "react-icons/fi";
@@ -85,3 +86,7 @@ export function ModelSelector({
     </div>
   );
 }
+
+
+
+
