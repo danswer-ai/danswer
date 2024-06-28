@@ -30,12 +30,10 @@ export default async function Page() {
   return (
     <div>
       <BackButton />
-
       <AdminPageTitle
-        title="Create a New Persona"
+        title="Create a New Assistant"
         icon={<RobotIcon size={32} />}
       />
-
       {body}
     </div>
   );

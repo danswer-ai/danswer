@@ -8,6 +8,7 @@ export interface Option<T> {
   value: T;
   description?: string;
   metadata?: { [key: string]: any };
+  icon?: React.FC<{ size?: number; className?: string }>;
 }
 
 export type StringOrNumberOption = Option<string | number>;
@@ -24,9 +25,7 @@ function StandardDropdownOption<T>({
   return (
     <button
       onClick={() => handleSelect(option)}
-      className={`w-full text-left block px-4 py-2.5 text-sm hover:bg-gray-800 ${
-        index !== 0 ? " border-t-2 border-gray-600" : ""
-      }`}
+      className={`w-full text-left block px-4 py-2.5 text-sm hover:bg-gray-800 ${index !== 0 ? " border-t-2 border-gray-600" : ""}`}
       role="menuitem"
     >
       <p className="font-medium">{option.name}</p>
@@ -216,9 +215,7 @@ export const CustomDropdown = ({
       {isOpen && (
         <div
           onClick={() => setIsOpen(!isOpen)}
-          className={`absolute ${
-            direction === "up" ? "bottom-full pb-2" : "pt-2 "
-          } w-full z-30 box-shadow`}
+          className={`absolute ${direction === "up" ? "bottom-full pb-2" : "pt-2"} w-full z-30 box-shadow`}
         >
           {dropdown}
         </div>
@@ -269,7 +266,7 @@ export function DefaultDropdownElement({
               onChange={() => null}
             />
           )}
-          {icon && icon({ size: 16, className: "mr-2 my-auto" })}
+          {icon && icon({ size: 16, className: "mr-2 h-4 w-4 my-auto" })}
           {name}
         </div>
         {description && <div className="text-xs">{description}</div>}
@@ -290,11 +287,13 @@ export function DefaultDropdown({
   includeDefault = false,
   side,
   maxHeight,
+  defaultValue,
 }: {
   options: StringOrNumberOption[];
   selected: string | null;
   onSelect: (value: string | number | null) => void;
   includeDefault?: boolean;
+  defaultValue?: string;
   side?: "top" | "right" | "bottom" | "left";
   maxHeight?: string;
 }) {
@@ -316,7 +315,7 @@ export function DefaultDropdown({
     >
       <p className="line-clamp-1">
         {selectedOption?.name ||
-          (includeDefault ? "Default" : "Select an option...")}
+          (includeDefault ? defaultValue ?? "Default" : "Select an option...")}
       </p>
       <FiChevronDown className="my-auto ml-auto" />
     </div>
@@ -354,6 +353,7 @@ export function DefaultDropdown({
             description={option.description}
             onSelect={() => onSelect(option.value)}
             isSelected={isSelected}
+            icon={option.icon}
           />
         );
       })}

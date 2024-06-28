@@ -44,6 +44,9 @@ import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
+import openAISVG from "../../../public/Openai.svg";
+import anthropicSVG from "../../../public/Anthropic.svg";
+
 import guruIcon from "../../../public/Guru.svg";
 import gongIcon from "../../../public/Gong.png";
 import requestTrackerIcon from "../../../public/RequestTracker.png";
@@ -70,6 +73,34 @@ interface IconProps {
 
 export const defaultTailwindCSS = "my-auto flex flex-shrink-0 text-default";
 export const defaultTailwindCSSBlue = "my-auto flex flex-shrink-0 text-link";
+
+export const OpenAIIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={openAISVG} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const AnthropicIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={anthropicSVG} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
 
 export const PlugIcon = ({
   size = 16,
