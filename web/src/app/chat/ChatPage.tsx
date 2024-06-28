@@ -51,7 +51,7 @@ import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoade
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { ChatPersonaSelector } from "./ChatPersonaSelector";
-import { FiArrowDown, FiMenu } from "react-icons/fi"; 
+import { FiArrowDown, FiMenu, FiShare2 } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { ThreeDots } from "react-loader-spinner";
