@@ -40,18 +40,18 @@ export default function Sidebar({
 
   const sidebarClasses = `
       ${width} ${wideWidth}
+      ${
+        isMobile
+          ? `fixed top-0 left-0 z-40 ${padded && "mt-16 pt-4"} ${isOpen ? "translate-x-0" : "-translate-x-full"} shadow-lg`
+          : "translate-x-0"
+      }
       flex flex-none
       bg-background-weak
       border-r border-border
       flex flex-col
       h-screen
       transition-transform duration-300 ease-in-out
-      ${
-        isMobile
-          ? `fixed top-0 left-0 z-40 ${padded && "mt-16 pt-4"} ${isOpen ? "translate-x-0" : "-translate-x-full"} shadow-lg`
-          : "translate-x-0"
-      }
-    `;
+      `;
 
   return (
     <div className={sidebarClasses} id="sidebar">

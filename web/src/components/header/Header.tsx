@@ -9,6 +9,7 @@ import { SettingsContext } from "../settings/SettingsProvider";
 import { UserDropdown } from "../UserDropdown";
 import { Logo } from "../Logo";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
+import MobileHeaderToggle from "./MobileHeaderToggle";
 
 export function HeaderTitle({ children }: { children: JSX.Element | string }) {
   return <h1 className="flex text-2xl text-strong font-bold">{children}</h1>;
@@ -60,18 +61,8 @@ export function Header({ user, toggleSidebar, hideToggle }: HeaderProps) {
           </div>
         </Link>
 
-        {toggleSidebar && (
-          <div
-            onClick={toggleSidebar}
-            className={`
-                    rounded
-                    cursor-pointer
-                    my-auto
-                    hover:bg-hover-light
-                  `}
-          >
-            <FiMenu size={24} />
-          </div>
+        {toggleSidebar && !hideToggle && (
+          <MobileHeaderToggle toggle={toggleSidebar} />
         )}
 
         {!combinedSettings.isMobile &&
@@ -113,7 +104,3 @@ export function Header({ user, toggleSidebar, hideToggle }: HeaderProps) {
     </HeaderWrapper>
   );
 }
-
-/* 
-
-*/

@@ -164,7 +164,7 @@ export const AIMessage = ({
   ) : undefined;
 
   return (
-    <div className={"py-5 sm:px-5 flex -mr-6 relative w-full"}>
+    <div className={"py-5 flex relative w-full"}>
       <div className="ml-8">
         <div className="flex">
           <div className="p-1 bg-ai rounded-lg h-fit my-auto">
@@ -194,7 +194,7 @@ export const AIMessage = ({
             )}
         </div>
 
-        <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
+        <div className="break-words mt-1 ml-8">
           {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
             <>
               {query !== undefined &&
@@ -445,7 +445,7 @@ export const HumanMessage = ({
 
   return (
     <div
-      className="pt-5 pb-1 sm:px-5 flex -mr-6 w-full relative"
+      className="pt-5 pb-1 flex -mr-6 w-full relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

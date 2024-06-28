@@ -79,6 +79,7 @@ import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 
 import ResizableSection from "@/components/resizable/ResizableSection";
 import { Button } from "@tremor/react";
+import MobileHeaderToggle from "@/components/header/MobileHeaderToggle";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -1099,19 +1100,12 @@ export function ChatPage({
               {({ getRootProps }) => (
                 <>
                   <div
-                    className={`
-                    h-[calc(100dvh)]  
-                      w-full sm:relative  ${
-                        retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
-                      }
-                      flex-auto transition-margin duration-300 
-                      overflow-x-auto
-                      `}
+                    className={`h-[calc(100dvh)] w-full sm:relative flex-auto transition-margin duration-300  overflow-x-auto 
+                  ${retrievalDisabled ? "pb-[111px]" : "pb-[140px]"}`}
                     {...getRootProps()}
                   >
-                    {/* <input {...getInputProps()} /> */}
                     <div
-                      className={`w-full h-full  flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                      className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden  relative`}
                       ref={scrollableDivRef}
                     >
                       {/* ChatBanner is a custom banner that displays a admin-specified message at 
@@ -1134,17 +1128,9 @@ export function ChatPage({
 
                             {combinedSettings?.isMobile &&
                               !isChatSidebarOpen && (
-                                <div
-                                  onClick={toggleChatSideBar}
-                                  className={`
-                                    rounded
-                                    cursor-pointer
-                                    my-auto
-                                    hover:bg-hover-light
-                                  `}
-                                >
-                                  <FiMenu size={24} />
-                                </div>
+                                <MobileHeaderToggle
+                                  toggle={toggleChatSideBar}
+                                />
                               )}
 
                             <div className="ml-auto mr-6 flex">
@@ -1184,14 +1170,14 @@ export function ChatPage({
                         !isStreaming && (
                           <ChatIntro
                             availableSources={finalAvailableSources}
-                            availablePersonass={filteredAssistants}
+                            availablePersonas={filteredAssistants}
                             selectedPersona={livePersona}
                           />
                         )}
 
                       <div
                         className={
-                          "mt-4 pt-12 sm:pt-0 px-4 w-[90%] max-w-[600px]" +
+                          " mx-auto mt-4 pt-12 sm:pt-0 px-4  w-[90%] max-w-[800px]" +
                           (hasPerformedInitialScroll ? "" : " invisible")
                         }
                       >
