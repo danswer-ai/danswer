@@ -259,7 +259,7 @@ export const SearchSection = ({
         </div>
       </div>
 
-      <div className="max-w-search-max w-[90%] mx-auto">
+      <div className=" w-[720px] 3xl:w-[800px] max-w-[90%] mx-auto">
         {personas.length > 0 ? (
           <div className="flex mb-2 w-fit">
             <PersonaSelector

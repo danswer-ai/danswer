@@ -269,6 +269,8 @@ export function ChatPage({
   );
 
   const updateSidebarWidth = (newWidth: number) => {
+    console.log("Updating to....");
+    console.log(newWidth);
     setUsedSidebarWidth(newWidth);
     if (sidebarElementRef.current && innerSidebarElementRef.current) {
       sidebarElementRef.current.style.transition = "";

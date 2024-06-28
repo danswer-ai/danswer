@@ -39,10 +39,12 @@ export function AdminSidebar({
   hideonDesktop,
   isOpen,
   toggleAdminSidebar,
+  padded,
 }: {
   hideonDesktop?: boolean;
   isOpen: boolean;
   toggleAdminSidebar: () => void;
+  padded?: boolean;
 }) {
   const collections = [
     {
@@ -191,7 +193,7 @@ export function AdminSidebar({
     <Sidebar
       hideonDesktop={hideonDesktop}
       onToggle={toggleAdminSidebar}
-      padded
+      padded={padded}
       isOpen={isOpen}
     >
       <div className="desktop:hidden pt-6 flex">

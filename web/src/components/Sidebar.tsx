@@ -50,7 +50,7 @@ export default function Sidebar({
       ${hideonDesktop && "desktop:hidden"}
       ${width} ${wideWidth}
 
-      mobile:fixed mobile:top-0 mobile:left-0 mobile:z-[100]  ${isOpen ? "mobile:translate-x-0" : "mobile:-translate-x-full"} mobile:shadow-lg
+      mobile:fixed mobile:top-0 mobile:left-0 mobile:z-[100]   ${padded && "desktop:pt-16"} ${isOpen ? "mobile:translate-x-0" : "mobile:-translate-x-full"} mobile:shadow-lg
       desktop:translate-x-0
       flex flex-none
       bg-background-weak

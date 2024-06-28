@@ -26,7 +26,7 @@ export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
   };
 
   return (
-    <div className="flex items-center w-full opacity-100 border-2 border-border rounded-lg px-4 py-2 focus-within:border-accent bg-background-search">
+    <div className="flex items-center w-full opacity-100 border-2 max-w-searchbar-max border-border rounded-lg px-4 py-2 focus-within:border-accent bg-background-search">
       <MagnifyingGlass className="text-emphasis" />
       <textarea
         autoFocus

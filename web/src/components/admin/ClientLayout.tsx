@@ -29,7 +29,7 @@ export function ClientLayout({
       </div>
       <div className="flex h-full bg-background ">
         <AdminSidebar
-          hideonDesktop
+          padded
           isOpen={isOpenAdminSidebar}
           toggleAdminSidebar={toggleAdminSidebar}
         />
