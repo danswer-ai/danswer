@@ -6,10 +6,9 @@ from sqlalchemy.orm import Session
 from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.llm import upsert_llm_provider
+from danswer.db.models import Persona
 from danswer.db.persona import get_personas
 from danswer.db.persona import upsert_persona
-from danswer.search.enums import RecencyBiasSetting
-from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.settings.models import Settings
 from danswer.server.settings.store import store_settings as store_base_settings
@@ -31,7 +30,7 @@ class SeedConfiguration(BaseModel):
     admin_user_emails: list[str] | None = None
     seeded_name: str | None = None
     seeded_logo_path: str | None = None
-    personas: list[PersonaSnapshot] | None = None
+    personas: list[Persona] | None = None
     settings: Settings | None = None
 
 
@@ -56,7 +55,7 @@ def _seed_llms(
         upsert_llm_provider(db_session, llm_upsert_request)
 
 
-def _seed_personas(db_session: Session, personas: list[PersonaSnapshot]) -> None:
+def _seed_personas(db_session: Session, personas: list[Persona]) -> None:
     # don't seed personas if we've already done this
     existing_personas = get_personas(
         user_id=None,  # Admin view
@@ -77,7 +76,7 @@ def _seed_personas(db_session: Session, personas: list[PersonaSnapshot]) -> None
             num_chunks=persona.num_chunks,
             llm_relevance_filter=persona.llm_relevance_filter,
             llm_filter_extraction=persona.llm_filter_extraction,
-            recency_bias=RecencyBiasSetting.AUTO,
+            recency_bias=persona.recency_bias,
             prompts=persona.prompts,
             document_sets=persona.document_sets,
             llm_model_provider_override=persona.llm_model_provider_override,
