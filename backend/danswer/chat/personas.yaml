@@ -17,7 +17,7 @@ personas:
     num_chunks: 10
     # Specifies how young a document should be to be included in search context
     # If a documents last_updated_time is over the current time + num_days it is excluded
-    # Field unused if use_recent_documents is set to false
+    # Field unused if set to null
     num_days: null
     # Enable/Disable usage of the LLM chunk filter feature whereby each chunk is passed to the LLM to determine
     # if the chunk is useful or not towards the latest user query
