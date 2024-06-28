@@ -748,12 +748,10 @@ class ChatMessage(Base):
         "SearchDoc",
         secondary="chat_message__search_doc",
         back_populates="chat_messages",
-        cascade="all",
     )
     tool_calls: Mapped[list["ToolCall"]] = relationship(
         "ToolCall",
         back_populates="message",
-        cascade="delete",
     )
 
 
