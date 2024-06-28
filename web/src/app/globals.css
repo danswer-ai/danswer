@@ -10,43 +10,59 @@
 
   /* Hide scrollbar for IE, Edge and Firefox */
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
 }
 
 ::-webkit-scrollbar-track {
-  background: theme("colors.scrollbar.track"); /* Track background color */
+  background: theme("colors.scrollbar.track");
+  /* Track background color */
 }
 
 /* Style the scrollbar handle */
 ::-webkit-scrollbar-thumb {
-  background: theme("colors.scrollbar.thumb"); /* Handle color */
+  background: theme("colors.scrollbar.thumb");
+  /* Handle color */
   border-radius: 10px;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: theme("colors.scrollbar.thumb-hover"); /* Handle color on hover */
+  background: theme("colors.scrollbar.thumb-hover");
+  /* Handle color on hover */
 }
 
 .dark-scrollbar::-webkit-scrollbar-thumb {
-  background: theme("colors.scrollbar.dark.thumb"); /* Handle color */
+  background: theme("colors.scrollbar.dark.thumb");
+  /* Handle color */
   border-radius: 10px;
 }
 
 .dark-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: theme(
-    "colors.scrollbar.dark.thumb-hover"
-  ); /* Handle color on hover */
+  background: theme("colors.scrollbar.dark.thumb-hover");
+  /* Handle color on hover */
 }
 
 ::-webkit-scrollbar {
-  width: 8px; /* Vertical scrollbar width */
-  height: 8px; /* Horizontal scrollbar height */
+  width: 8px;
+  /* Vertical scrollbar width */
+  height: 8px;
+  /* Horizontal scrollbar height */
 }
 
 /* Used to create alternatie to React Markdown */
 .preserve-lines {
-  white-space: pre-wrap; /* Preserves whitespace and wraps text */
+  white-space: pre-wrap;
+  /* Preserves whitespace and wraps text */
+}
+
+.full_width_padding {
+  @apply max-w-screen-md;
+}
+
+.full_width {
+  @apply max-w-[800px];
 }

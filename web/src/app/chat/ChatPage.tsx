@@ -1177,8 +1177,8 @@ export function ChatPage({
 
                       <div
                         className={
-                          "mx-auto mt-4 pt-12 sm:pt-0 px-4 w-[90%] max-w-[800px]" +
-                          (hasPerformedInitialScroll ? "" : " invisible")
+                          "md:mx-8 mt-4 pt-12 sm:pt-0" +
+                          +(hasPerformedInitialScroll ? "" : " invisible")
                         }
                       >
                         {messageHistory.map((message, i) => {
@@ -1409,8 +1409,7 @@ export function ChatPage({
                               className={`
                               mx-auto 
                               px-4 
-                              w-[90%]
-                              max-w-[600px]
+                              max-w-searchbar-max
                               grid 
                               gap-4 
                               grid-cols-1 

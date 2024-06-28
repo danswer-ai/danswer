@@ -84,7 +84,6 @@ export function ChatInputBar({
             shrink
             relative
             px-4
-
             mx-auto
           "
         >
@@ -138,9 +137,8 @@ export function ChatInputBar({
                 bg-background-weak
                 ${
                   textAreaRef.current &&
-                  textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT
-                    ? "overflow-y-auto mt-2"
-                    : ""
+                  textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT &&
+                  "overflow-y-auto mt-2"
                 }
                 overflow-hidden
                 whitespace-normal
