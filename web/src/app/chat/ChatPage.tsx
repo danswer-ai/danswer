@@ -1184,14 +1184,14 @@ export function ChatPage({
                         !isStreaming && (
                           <ChatIntro
                             availableSources={finalAvailableSources}
-                            availablePersonas={filteredAssistants}
+                            availablePersonass={filteredAssistants}
                             selectedPersona={livePersona}
                           />
                         )}
 
                       <div
                         className={
-                          "mt-4 pt-12 sm:pt-0  " +
+                          "mt-4 pt-12 sm:pt-0 px-4 w-[90%] max-w-[600px]" +
                           (hasPerformedInitialScroll ? "" : " invisible")
                         }
                       >
@@ -1423,9 +1423,8 @@ export function ChatPage({
                               className={`
                               mx-auto 
                               px-4 
-                              w-searchbar-xs 
-                              2xl:w-searchbar-sm 
-                              3xl:w-searchbar 
+                              w-[90%]
+                              max-w-[600px]
                               grid 
                               gap-4 
                               grid-cols-1 

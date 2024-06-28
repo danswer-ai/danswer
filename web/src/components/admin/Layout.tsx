@@ -1,6 +1,3 @@
-import { Header } from "@/components/header/Header";
-import { AdminSidebar } from "@/components/admin/connectors/AdminSidebar";
-
 import { User } from "@/lib/types";
 import {
   AuthTypeMetadata,

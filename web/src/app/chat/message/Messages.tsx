@@ -164,206 +164,202 @@ export const AIMessage = ({
   ) : undefined;
 
   return (
-    <div className={"py-5 sm:px-5 flex -mr-6 w-full"}>
-      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
-        <div className="ml-8">
-          <div className="flex">
-            <div className="p-1 bg-ai rounded-lg h-fit my-auto">
-              <div className="text-inverted">
-                <FiCpu size={16} className="my-auto mx-auto" />
+    <div className={"py-5 sm:px-5 flex -mr-6 relative w-full"}>
+      <div className="ml-8">
+        <div className="flex">
+          <div className="p-1 bg-ai rounded-lg h-fit my-auto">
+            <div className="text-inverted">
+              <FiCpu size={16} className="my-auto mx-auto" />
+            </div>
+          </div>
+
+          <div className="font-bold text-emphasis ml-2 my-auto">
+            {personaName || "Danswer"}
+          </div>
+
+          {query === undefined &&
+            hasDocs &&
+            handleShowRetrieved !== undefined &&
+            isCurrentlyShowingRetrieved !== undefined &&
+            !retrievalDisabled && (
+              <div className="flex w-message-xs 2xl:w-message-sm 3xl:w-message-default absolute ml-8">
+                <div className="ml-auto">
+                  <ShowHideDocsButton
+                    messageId={messageId}
+                    isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
+                    handleShowRetrieved={handleShowRetrieved}
+                  />
+                </div>
               </div>
-            </div>
+            )}
+        </div>
 
-            <div className="font-bold text-emphasis ml-2 my-auto">
-              {personaName || "Danswer"}
-            </div>
-
-            {query === undefined &&
-              hasDocs &&
-              handleShowRetrieved !== undefined &&
-              isCurrentlyShowingRetrieved !== undefined &&
-              !retrievalDisabled && (
-                <div className="flex w-message-xs 2xl:w-message-sm 3xl:w-message-default absolute ml-8">
-                  <div className="ml-auto">
-                    <ShowHideDocsButton
+        <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
+          {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
+            <>
+              {query !== undefined &&
+                handleShowRetrieved !== undefined &&
+                isCurrentlyShowingRetrieved !== undefined &&
+                !retrievalDisabled && (
+                  <div className="my-1">
+                    <SearchSummary
+                      query={query}
+                      hasDocs={hasDocs || false}
                       messageId={messageId}
                       isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
                       handleShowRetrieved={handleShowRetrieved}
+                      handleSearchQueryEdit={handleSearchQueryEdit}
                     />
                   </div>
-                </div>
-              )}
-          </div>
-
-          <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
-            {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
-              <>
-                {query !== undefined &&
-                  handleShowRetrieved !== undefined &&
-                  isCurrentlyShowingRetrieved !== undefined &&
-                  !retrievalDisabled && (
-                    <div className="my-1">
-                      <SearchSummary
-                        query={query}
-                        hasDocs={hasDocs || false}
-                        messageId={messageId}
-                        isCurrentlyShowingRetrieved={
-                          isCurrentlyShowingRetrieved
-                        }
-                        handleShowRetrieved={handleShowRetrieved}
-                        handleSearchQueryEdit={handleSearchQueryEdit}
-                      />
-                    </div>
-                  )}
-                {handleForceSearch &&
-                  content &&
-                  query === undefined &&
-                  !hasDocs &&
-                  !retrievalDisabled && (
-                    <div className="my-1">
-                      <SkippedSearch handleForceSearch={handleForceSearch} />
-                    </div>
-                  )}
-              </>
-            )}
-
-            {toolCall &&
-              !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
-                <div className="my-2">
-                  <ToolRunDisplay
-                    toolName={
-                      toolCall.tool_result && content
-                        ? `Used "${toolCall.tool_name}"`
-                        : `Using "${toolCall.tool_name}"`
-                    }
-                    toolLogo={<FiTool size={15} className="my-auto mr-1" />}
-                    isRunning={!toolCall.tool_result || !content}
-                  />
-                </div>
-              )}
-
-            {toolCall &&
-              toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
-              !toolCall.tool_result && (
-                <div className="my-2">
-                  <ToolRunDisplay
-                    toolName={`Generating images`}
-                    toolLogo={<FiImage size={15} className="my-auto mr-1" />}
-                    isRunning={!toolCall.tool_result}
-                  />
-                </div>
-              )}
-
-            {content ? (
-              <>
-                <FileDisplay files={files || []} />
-                {typeof content === "string" ? (
-                  <ReactMarkdown
-                    key={messageId}
-                    className="prose max-w-full"
-                    components={{
-                      a: (props) => {
-                        const { node, ...rest } = props;
-                        // for some reason <a> tags cause the onClick to not apply
-                        // and the links are unclickable
-                        // TODO: fix the fact that you have to double click to follow link
-                        // for the first link
-                        return (
-                          <a
-                            key={node?.position?.start?.offset}
-                            onClick={() =>
-                              rest.href
-                                ? window.open(rest.href, "_blank")
-                                : undefined
-                            }
-                            className="cursor-pointer text-link hover:text-link-hover"
-                            // href={rest.href}
-                            // target="_blank"
-                            // rel="noopener noreferrer"
-                          >
-                            {rest.children}
-                          </a>
-                        );
-                      },
-                      code: (props) => (
-                        <CodeBlock {...props} content={content as string} />
-                      ),
-                      p: ({ node, ...props }) => (
-                        <p {...props} className="text-default" />
-                      ),
-                    }}
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
-                  >
-                    {content}
-                  </ReactMarkdown>
-                ) : (
-                  content
                 )}
-              </>
-            ) : isComplete ? null : (
-              defaultLoader
-            )}
-            {citedDocuments && citedDocuments.length > 0 && (
-              <div className="mt-2">
-                <b className="text-sm text-emphasis">Sources:</b>
-                <div className="flex flex-wrap gap-2">
-                  {citedDocuments
-                    .filter(([_, document]) => document.semantic_identifier)
-                    .map(([citationKey, document], ind) => {
-                      const display = (
-                        <div className="max-w-350 text-ellipsis flex text-sm border border-border py-1 px-2 rounded flex">
-                          <div className="mr-1 my-auto">
-                            <SourceIcon
-                              sourceType={document.source_type}
-                              iconSize={16}
-                            />
-                          </div>
-                          [{citationKey}] {document!.semantic_identifier}
-                        </div>
-                      );
-                      if (document.link) {
-                        return (
-                          <a
-                            key={document.document_id}
-                            href={document.link}
-                            target="_blank"
-                            className="cursor-pointer hover:bg-hover"
-                          >
-                            {display}
-                          </a>
-                        );
-                      } else {
-                        return (
-                          <div
-                            key={document.document_id}
-                            className="cursor-default"
-                          >
-                            {display}
-                          </div>
-                        );
-                      }
-                    })}
-                </div>
+              {handleForceSearch &&
+                content &&
+                query === undefined &&
+                !hasDocs &&
+                !retrievalDisabled && (
+                  <div className="my-1">
+                    <SkippedSearch handleForceSearch={handleForceSearch} />
+                  </div>
+                )}
+            </>
+          )}
+
+          {toolCall &&
+            !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
+              <div className="my-2">
+                <ToolRunDisplay
+                  toolName={
+                    toolCall.tool_result && content
+                      ? `Used "${toolCall.tool_name}"`
+                      : `Using "${toolCall.tool_name}"`
+                  }
+                  toolLogo={<FiTool size={15} className="my-auto mr-1" />}
+                  isRunning={!toolCall.tool_result || !content}
+                />
               </div>
             )}
-          </div>
-          {handleFeedback && (
-            <div
-              className={`flex ${isMobile && "flex-col"} md:flex-row gap-x-0.5 ml-8 mt-1.5`}
-            >
-              <CopyButton content={content.toString()} />
-              <Hoverable
-                icon={FiThumbsUp}
-                onClick={() => handleFeedback("like")}
-              />
-              <Hoverable
-                icon={FiThumbsDown}
-                onClick={() => handleFeedback("dislike")}
-              />
+
+          {toolCall &&
+            toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
+            !toolCall.tool_result && (
+              <div className="my-2">
+                <ToolRunDisplay
+                  toolName={`Generating images`}
+                  toolLogo={<FiImage size={15} className="my-auto mr-1" />}
+                  isRunning={!toolCall.tool_result}
+                />
+              </div>
+            )}
+
+          {content ? (
+            <>
+              <FileDisplay files={files || []} />
+              {typeof content === "string" ? (
+                <ReactMarkdown
+                  key={messageId}
+                  className="prose max-w-full"
+                  components={{
+                    a: (props) => {
+                      const { node, ...rest } = props;
+                      // for some reason <a> tags cause the onClick to not apply
+                      // and the links are unclickable
+                      // TODO: fix the fact that you have to double click to follow link
+                      // for the first link
+                      return (
+                        <a
+                          key={node?.position?.start?.offset}
+                          onClick={() =>
+                            rest.href
+                              ? window.open(rest.href, "_blank")
+                              : undefined
+                          }
+                          className="cursor-pointer text-link hover:text-link-hover"
+                          // href={rest.href}
+                          // target="_blank"
+                          // rel="noopener noreferrer"
+                        >
+                          {rest.children}
+                        </a>
+                      );
+                    },
+                    code: (props) => (
+                      <CodeBlock {...props} content={content as string} />
+                    ),
+                    p: ({ node, ...props }) => (
+                      <p {...props} className="text-default" />
+                    ),
+                  }}
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+                >
+                  {content}
+                </ReactMarkdown>
+              ) : (
+                content
+              )}
+            </>
+          ) : isComplete ? null : (
+            defaultLoader
+          )}
+          {citedDocuments && citedDocuments.length > 0 && (
+            <div className="mt-2">
+              <b className="text-sm text-emphasis">Sources:</b>
+              <div className="flex flex-wrap gap-2">
+                {citedDocuments
+                  .filter(([_, document]) => document.semantic_identifier)
+                  .map(([citationKey, document], ind) => {
+                    const display = (
+                      <div className="max-w-350 text-ellipsis flex text-sm border border-border py-1 px-2 rounded flex">
+                        <div className="mr-1 my-auto">
+                          <SourceIcon
+                            sourceType={document.source_type}
+                            iconSize={16}
+                          />
+                        </div>
+                        [{citationKey}] {document!.semantic_identifier}
+                      </div>
+                    );
+                    if (document.link) {
+                      return (
+                        <a
+                          key={document.document_id}
+                          href={document.link}
+                          target="_blank"
+                          className="cursor-pointer hover:bg-hover"
+                        >
+                          {display}
+                        </a>
+                      );
+                    } else {
+                      return (
+                        <div
+                          key={document.document_id}
+                          className="cursor-default"
+                        >
+                          {display}
+                        </div>
+                      );
+                    }
+                  })}
+              </div>
             </div>
           )}
         </div>
+        {handleFeedback && (
+          <div
+            className={`flex ${isMobile && "flex-col"} md:flex-row gap-x-0.5 ml-8 mt-1.5`}
+          >
+            <CopyButton content={content.toString()} />
+            <Hoverable
+              icon={FiThumbsUp}
+              onClick={() => handleFeedback("like")}
+            />
+            <Hoverable
+              icon={FiThumbsDown}
+              onClick={() => handleFeedback("dislike")}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -453,24 +449,23 @@ export const HumanMessage = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-        <div className="ml-8">
-          <div className="flex">
-            <div className="p-1 bg-user rounded-lg h-fit">
-              <div className="text-inverted">
-                <FiUser size={16} className="my-auto mx-auto" />
-              </div>
+      <div className="ml-8">
+        <div className="flex">
+          <div className="p-1 bg-user rounded-lg h-fit">
+            <div className="text-inverted">
+              <FiUser size={16} className="my-auto mx-auto" />
             </div>
-            <div className="font-bold text-emphasis ml-2 my-auto">You</div>
           </div>
-          <div className="mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default flex flex-wrap">
-            <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
-              <FileDisplay files={files || []} />
+          <div className="font-bold text-emphasis ml-2 my-auto">You</div>
+        </div>
+        <div className="mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default flex flex-wrap">
+          <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
+            <FileDisplay files={files || []} />
 
-              {isEditing ? (
-                <div>
-                  <div
-                    className={`
+            {isEditing ? (
+              <div>
+                <div
+                  className={`
                       opacity-100
                       w-full
                       flex
@@ -483,10 +478,10 @@ export const HumanMessage = ({
                       [&:has(textarea:focus)]::ring-1
                       [&:has(textarea:focus)]::ring-black
                     `}
-                  >
-                    <textarea
-                      ref={textareaRef}
-                      className={`
+                >
+                  <textarea
+                    ref={textareaRef}
+                    className={`
                       m-0 
                       w-full 
                       h-auto
@@ -505,35 +500,35 @@ export const HumanMessage = ({
                       overflow-y-auto
                       pr-12 
                       py-4`}
-                      aria-multiline
-                      role="textarea"
-                      value={editedContent}
-                      style={{ scrollbarWidth: "thin" }}
-                      onChange={(e) => {
-                        setEditedContent(e.target.value);
-                        e.target.style.height = `${e.target.scrollHeight}px`;
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                          e.preventDefault();
-                          setEditedContent(content);
-                          setIsEditing(false);
-                        }
-                        // Submit edit if "Command Enter" is pressed, like in ChatGPT
-                        if (e.key === "Enter" && e.metaKey) {
-                          handleEditSubmit();
-                        }
-                      }}
-                      // ref={(textarea) => {
-                      //   if (textarea) {
-                      //     textarea.selectionStart = textarea.selectionEnd =
-                      //       textarea.value.length;
-                      //   }
-                      // }}
-                    />
-                    <div className="flex justify-end mt-2 gap-2 pr-4">
-                      <button
-                        className={`
+                    aria-multiline
+                    role="textarea"
+                    value={editedContent}
+                    style={{ scrollbarWidth: "thin" }}
+                    onChange={(e) => {
+                      setEditedContent(e.target.value);
+                      e.target.style.height = `${e.target.scrollHeight}px`;
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        setEditedContent(content);
+                        setIsEditing(false);
+                      }
+                      // Submit edit if "Command Enter" is pressed, like in ChatGPT
+                      if (e.key === "Enter" && e.metaKey) {
+                        handleEditSubmit();
+                      }
+                    }}
+                    // ref={(textarea) => {
+                    //   if (textarea) {
+                    //     textarea.selectionStart = textarea.selectionEnd =
+                    //       textarea.value.length;
+                    //   }
+                    // }}
+                  />
+                  <div className="flex justify-end mt-2 gap-2 pr-4">
+                    <button
+                      className={`
                           w-fit 
                           p-1 
                           bg-accent 
@@ -542,12 +537,12 @@ export const HumanMessage = ({
                           rounded-lg 
                           hover:bg-accent-hover
                         `}
-                        onClick={handleEditSubmit}
-                      >
-                        Submit
-                      </button>
-                      <button
-                        className={`
+                      onClick={handleEditSubmit}
+                    >
+                      Submit
+                    </button>
+                    <button
+                      className={`
                           w-fit 
                           p-1 
                           bg-hover
@@ -556,64 +551,63 @@ export const HumanMessage = ({
                           rounded-lg
                           hover:bg-hover-emphasis
                         `}
-                        onClick={() => {
-                          setEditedContent(content);
-                          setIsEditing(false);
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                      onClick={() => {
+                        setEditedContent(content);
+                        setIsEditing(false);
+                      }}
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
-              ) : typeof content === "string" ? (
-                <div className="flex flex-col preserve-lines prose max-w-full">
-                  {content}
-                </div>
-              ) : (
-                content
-              )}
-            </div>
-          </div>
-          <div
-            className={`flex ${isMobile && " flex-col"} md:flex-row gap-x-0.5 ml-8 mt-1`}
-          >
-            {currentMessageInd !== undefined &&
-              onMessageSelection &&
-              otherMessagesCanSwitchTo &&
-              otherMessagesCanSwitchTo.length > 1 && (
-                <div className="mr-2">
-                  <MessageSwitcher
-                    currentPage={currentMessageInd + 1}
-                    totalPages={otherMessagesCanSwitchTo.length}
-                    handlePrevious={() =>
-                      onMessageSelection(
-                        otherMessagesCanSwitchTo[currentMessageInd - 1]
-                      )
-                    }
-                    handleNext={() =>
-                      onMessageSelection(
-                        otherMessagesCanSwitchTo[currentMessageInd + 1]
-                      )
-                    }
-                  />
-                </div>
-              )}
-            {onEdit &&
-            isHovered &&
-            !isEditing &&
-            (!files || files.length === 0) ? (
-              <Hoverable
-                icon={FiEdit2}
-                onClick={() => {
-                  setIsEditing(true);
-                  setIsHovered(false);
-                }}
-              />
+              </div>
+            ) : typeof content === "string" ? (
+              <div className="flex flex-col preserve-lines prose max-w-full">
+                {content}
+              </div>
             ) : (
-              <div className="h-[27px]" />
+              content
             )}
           </div>
+        </div>
+        <div
+          className={`flex ${isMobile && " flex-col"} md:flex-row gap-x-0.5 ml-8 mt-1`}
+        >
+          {currentMessageInd !== undefined &&
+            onMessageSelection &&
+            otherMessagesCanSwitchTo &&
+            otherMessagesCanSwitchTo.length > 1 && (
+              <div className="mr-2">
+                <MessageSwitcher
+                  currentPage={currentMessageInd + 1}
+                  totalPages={otherMessagesCanSwitchTo.length}
+                  handlePrevious={() =>
+                    onMessageSelection(
+                      otherMessagesCanSwitchTo[currentMessageInd - 1]
+                    )
+                  }
+                  handleNext={() =>
+                    onMessageSelection(
+                      otherMessagesCanSwitchTo[currentMessageInd + 1]
+                    )
+                  }
+                />
+              </div>
+            )}
+          {onEdit &&
+          isHovered &&
+          !isEditing &&
+          (!files || files.length === 0) ? (
+            <Hoverable
+              icon={FiEdit2}
+              onClick={() => {
+                setIsEditing(true);
+                setIsHovered(false);
+              }}
+            />
+          ) : (
+            <div className="h-[27px]" />
+          )}
         </div>
       </div>
     </div>
