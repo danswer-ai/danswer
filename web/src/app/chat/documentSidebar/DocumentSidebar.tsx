@@ -23,7 +23,7 @@ function SectionHeader({
 }) {
   return (
     <div
-      className={`w-full mt-3 flex text-lg text-emphasis font-medium flex mb-3.5 font-bold flex items-end`}
+      className={`w-full mt-3 flex desktop:text-lg text-emphasis font-medium flex mb-3.5 font-bold flex items-end`}
     >
       <div className="flex mt-auto justify-between w-full">
         <p className="flex">

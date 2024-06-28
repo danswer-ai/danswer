@@ -270,6 +270,8 @@ export function ChatPage({
 
   const updateSidebarWidth = (newWidth: number) => {
     console.log("Updating to....");
+    console.log(usedSidebarWidth);
+    console.log(maxDocumentSidebarWidth);
     console.log(newWidth);
     setUsedSidebarWidth(newWidth);
     if (sidebarElementRef.current && innerSidebarElementRef.current) {
@@ -549,11 +551,17 @@ export function ChatPage({
       // screen sizes. `1700` corresponds to the custom "3xl" tailwind breakpoint
       // NOTE: some buffer is needed to account for scroll bars
       if (document.documentElement.clientWidth > 1700) {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 950);
+        setMaxDocumentSidebarWidth(
+          Math.max(300, masterFlexboxRef.current.clientWidth - 950)
+        );
       } else if (document.documentElement.clientWidth > 1420) {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 760);
+        setMaxDocumentSidebarWidth(
+          Math.max(300, masterFlexboxRef.current.clientWidth - 760)
+        );
       } else {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 660);
+        setMaxDocumentSidebarWidth(
+          Math.max(300, masterFlexboxRef.current.clientWidth - 660)
+        );
       }
     }
   };
@@ -1118,7 +1126,7 @@ export function ChatPage({
                         <div
                           className={`sticky top-0 mobile:left-0 mobile:w-[90%] mobile:mx-auto desktop:left-2 z-10 w-full bg-background flex`}
                         >
-                          <div className="mt-2 mobile:items-end desktop:flex mobile:grid mobile:grid-cols-3 w-full">
+                          <div className="mt-2  desktop:flex mobile:grid mobile:grid-cols-3 w-full">
                             <div className="mr-auto desktop:hidden">
                               {!isChatSidebarOpen && (
                                 <MobileHeaderToggle
@@ -1127,7 +1135,7 @@ export function ChatPage({
                               )}
                             </div>
 
-                            <div className="mobile:mx-auto desktop:ml-2 p-1 rounded w-fit">
+                            <div className="mobile:hidden desktop:ml-2 p-1 rounded w-fit">
                               <ChatPersonaSelector
                                 personas={filteredAssistants}
                                 selectedPersonaId={livePersona.id}
@@ -1135,6 +1143,13 @@ export function ChatPage({
                                 userId={user?.id}
                               />
                             </div>
+
+                            <a
+                              href="/search"
+                              className="desktop:hidden my-auto mobile:mx-auto text-xl text-strong font-bold   p-1 rounded w-fit px-2 rounded cursor-pointer hover:bg-hover-light"
+                            >
+                              Danswer
+                            </a>
 
                             <div className="ml-auto desktop:mr-6 flex">
                               {chatSessionId !== null && (
@@ -1490,7 +1505,7 @@ export function ChatPage({
                         updateSidebarWidth={updateSidebarWidth}
                         intialWidth={usedSidebarWidth}
                         minWidth={300}
-                        maxWidth={maxDocumentSidebarWidth || 300}
+                        maxWidth={maxDocumentSidebarWidth || undefined}
                       >
                         <DocumentSidebar
                           initialWidth={showDocSidebar ? usedSidebarWidth : 0}
