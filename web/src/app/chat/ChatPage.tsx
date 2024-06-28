@@ -107,10 +107,8 @@ export function ChatPage({
   } = useChatContext();
 
   const combinedSettings = useContext(SettingsContext);
-  if (!combinedSettings) {
-    return null;
-  }
-  const settings = combinedSettings.settings;
+
+  const settings = combinedSettings?.settings;
 
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
 
