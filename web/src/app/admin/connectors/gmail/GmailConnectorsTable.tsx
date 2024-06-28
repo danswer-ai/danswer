@@ -42,14 +42,14 @@ export const GmailConnectorsTable = ({
 
   return (
     <div>
-      <Table className="overflow-visible">
+      <Table className="desktop:overflow-visible">
         <TableHead>
           <TableRow>
             <TableHeaderCell>Status</TableHeaderCell>
             <TableHeaderCell>Delete</TableHeaderCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           {sortedGmailConnectorIndexingStatuses.map(
             (connectorIndexingStatus) => {
               return (

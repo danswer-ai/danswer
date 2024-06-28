@@ -94,7 +94,7 @@ export const DocumentFeedbackTable = ({
 
   return (
     <div>
-      <Table className="overflow-visible">
+      <Table className="desktop:overflow-visible">
         <TableHead>
           <TableRow>
             <TableHeaderCell>Document Name</TableHeaderCell>
@@ -102,7 +102,7 @@ export const DocumentFeedbackTable = ({
             <TableHeaderCell>Score</TableHeaderCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           {documents
             .slice((page - 1) * numToDisplay, page * numToDisplay)
             .map((document) => {

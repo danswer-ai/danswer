@@ -103,7 +103,7 @@ export function Header({ user, toggleSidebar, hideToggle }: HeaderProps) {
           )}
         </div>
         <Link
-          className="py-3 flex flex-col"
+          className="py-3 flex flex-col items-center justify-center"
           href={
             settings && settings.default_page === "chat" ? "/chat" : "/search"
           }

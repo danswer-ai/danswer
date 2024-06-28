@@ -84,7 +84,7 @@ export const GoogleDriveConnectorsTable = ({
 
   return (
     <div>
-      <Table className="overflow-visible">
+      <Table className="desktop:overflow-visible">
         <TableHead>
           <TableRow>
             <TableHeaderCell>Edit</TableHeaderCell>
@@ -96,7 +96,7 @@ export const GoogleDriveConnectorsTable = ({
             <TableHeaderCell>Delete</TableHeaderCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           {sortedGoogleDriveConnectorIndexingStatuses.map(
             (connectorIndexingStatus) => {
               return (

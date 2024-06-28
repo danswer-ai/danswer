@@ -103,7 +103,7 @@ const DocumentSetTable = ({
   return (
     <div>
       <Title>Existing Document Sets</Title>
-      <Table className="overflow-visible mt-2">
+      <Table className="desktop:overflow-visible mt-2">
         <TableHead>
           <TableRow>
             <TableHeaderCell>Name</TableHeaderCell>
@@ -112,7 +112,7 @@ const DocumentSetTable = ({
             <TableHeaderCell>Delete</TableHeaderCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           {documentSets
             .slice((page - 1) * numToDisplay, page * numToDisplay)
             .map((documentSet) => {

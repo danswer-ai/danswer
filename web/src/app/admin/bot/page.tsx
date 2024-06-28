@@ -71,7 +71,7 @@ const SlackBotConfigsTable = ({
             <TableHeaderCell>Delete</TableHeaderCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           {slackBotConfigs
             .slice(numToDisplay * (page - 1), numToDisplay * page)
             .map((slackBotConfig) => {

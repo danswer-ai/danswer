@@ -66,7 +66,7 @@ export const UserGroupsTable = ({
             <TableHeaderCell>Delete</TableHeaderCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           {userGroups
             .filter((userGroup) => !userGroup.is_up_for_deletion)
             .map((userGroup) => {

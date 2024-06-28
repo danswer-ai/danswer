@@ -138,7 +138,7 @@ export function QueryHistoryTable() {
                 <TableHeaderCell>Date</TableHeaderCell>
               </TableRow>
             </TableHead>
-            <TableBody>
+            <TableBody className="mobile:overflow-scroll">
               {chatSessionData
                 .slice(NUM_IN_PAGE * (page - 1), NUM_IN_PAGE * page)
                 .map((chatSessionMinimal) => (

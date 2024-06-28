@@ -33,7 +33,7 @@ export function ReindexingProgressTable({
             <TableHeaderCell>Error Message</TableHeaderCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           {reindexingProgress
             .slice(numToDisplay * (page - 1), numToDisplay * page)
             .map((reindexingProgress) => {

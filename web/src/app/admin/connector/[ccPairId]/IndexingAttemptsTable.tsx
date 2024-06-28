@@ -84,7 +84,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
             <TableHeaderCell>Error Msg</TableHeaderCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           {ccPair.index_attempts
             .slice(NUM_IN_PAGE * (page - 1), NUM_IN_PAGE * page)
             .map((indexAttempt) => {

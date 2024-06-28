@@ -94,7 +94,7 @@ export function DraggableTable({
           </TableRow>
         </TableHead>
 
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           <SortableContext items={items} strategy={verticalListSortingStrategy}>
             {rows.map((row) => {
               return <DraggableRow key={row.id} row={row} />;
@@ -104,7 +104,7 @@ export function DraggableTable({
           <DragOverlay>
             {selectedRow && (
               <Table className="overflow-y-visible">
-                <TableBody>
+                <TableBody className="mobile:overflow-scroll">
                   <StaticRow key={selectedRow.id} row={selectedRow} />
                 </TableBody>
               </Table>

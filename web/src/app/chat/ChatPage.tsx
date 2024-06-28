@@ -269,10 +269,6 @@ export function ChatPage({
   );
 
   const updateSidebarWidth = (newWidth: number) => {
-    console.log("Updating to....");
-    console.log(usedSidebarWidth);
-    console.log(maxDocumentSidebarWidth);
-    console.log(newWidth);
     setUsedSidebarWidth(newWidth);
     if (sidebarElementRef.current && innerSidebarElementRef.current) {
       sidebarElementRef.current.style.transition = "";
@@ -1016,7 +1012,7 @@ export function ChatPage({
   // settings are passed in via Context and therefore aren't
   // available in server-side components
 
-  const [showDocSidebar, setShowDocSidebar] = useState(true); // State to track if sidebar is open
+  const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
 
   const toggleSidebar = () => {
     if (sidebarElementRef.current) {
@@ -1146,7 +1142,7 @@ export function ChatPage({
 
                             <a
                               href="/search"
-                              className="desktop:hidden my-auto mobile:mx-auto text-xl text-strong font-bold   p-1 rounded w-fit px-2 rounded cursor-pointer hover:bg-hover-light"
+                              className="desktop:hidden my-auto mobile:mx-auto text-xl text-strong font-bold p-1 rounded w-fit px-2 rounded cursor-pointer hover:bg-hover-light"
                             >
                               Danswer
                             </a>

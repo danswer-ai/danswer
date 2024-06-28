@@ -177,7 +177,7 @@ function Main() {
             <TableHeaderCell>Delete</TableHeaderCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           {apiKeys.map((apiKey) => (
             <TableRow key={apiKey.api_key_id}>
               <TableCell>

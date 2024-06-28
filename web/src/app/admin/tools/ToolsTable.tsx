@@ -36,7 +36,7 @@ export function ToolsTable({ tools }: { tools: ToolSnapshot[] }) {
             <TableHeaderCell>Delete</TableHeaderCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           {sortedTools.map((tool) => (
             <TableRow key={tool.id.toString()}>
               <TableCell>

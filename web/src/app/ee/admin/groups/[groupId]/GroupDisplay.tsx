@@ -76,7 +76,7 @@ export const GroupDisplay = ({
                   </TableHeaderCell>
                 </TableRow>
               </TableHead>
-              <TableBody>
+              <TableBody className="mobile:overflow-scroll">
                 {userGroup.users.map((user) => {
                   return (
                     <TableRow key={user.id}>
@@ -171,7 +171,7 @@ export const GroupDisplay = ({
                   </TableHeaderCell>
                 </TableRow>
               </TableHead>
-              <TableBody>
+              <TableBody className="mobile:overflow-scroll">
                 {userGroup.cc_pairs.map((ccPair) => {
                   return (
                     <TableRow key={ccPair.id}>

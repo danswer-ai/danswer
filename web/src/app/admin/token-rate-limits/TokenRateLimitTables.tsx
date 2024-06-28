@@ -91,7 +91,7 @@ export const TokenRateLimitTable = ({
             <TableHeaderCell>Delete</TableHeaderCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           {tokenRateLimits.map((tokenRateLimit) => {
             return (
               <TableRow key={tokenRateLimit.token_id}>

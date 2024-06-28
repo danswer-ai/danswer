@@ -200,7 +200,7 @@ function UsageReportsTable() {
               </TableRow>
             </TableHead>
 
-            <TableBody>
+            <TableBody className="mobile:overflow-scroll">
               {paginatedReports.map((r) => (
                 <TableRow key={r.report_name}>
                   <TableCell>

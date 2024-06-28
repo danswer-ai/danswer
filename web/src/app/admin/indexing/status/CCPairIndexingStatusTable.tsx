@@ -107,7 +107,7 @@ export function CCPairIndexingStatusTable({
 
   return (
     <div>
-      <Table className="overflow-visible">
+      <Table className="desktop:overflow-visible">
         <TableHead>
           <TableRow>
             <TableHeaderCell>Connector</TableHeaderCell>
@@ -117,7 +117,7 @@ export function CCPairIndexingStatusTable({
             <TableHeaderCell>Docs Indexed</TableHeaderCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           {ccPairsIndexingStatusesForPage.map((ccPairsIndexingStatus) => {
             return (
               <ClickableTableRow

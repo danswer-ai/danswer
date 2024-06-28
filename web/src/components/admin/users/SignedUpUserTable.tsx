@@ -149,7 +149,7 @@ const SignedUpUserTable = ({
               </TableHeaderCell>
             </TableRow>
           </TableHead>
-          <TableBody>
+          <TableBody className="mobile:overflow-scroll">
             {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.email}</TableCell>

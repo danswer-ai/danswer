@@ -76,7 +76,7 @@ export function DraggableTableBody({
       collisionDetection={closestCenter}
       modifiers={[restrictToVerticalAxis]}
     >
-      <TableBody>
+      <TableBody className="mobile:overflow-scroll">
         <SortableContext items={items} strategy={verticalListSortingStrategy}>
           {rows.map((row) => {
             return <DraggableRow key={row.id} row={row} />;

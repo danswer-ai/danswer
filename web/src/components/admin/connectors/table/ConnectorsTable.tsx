@@ -176,7 +176,7 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
             <TableHeaderCell>Remove</TableHeaderCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="mobile:overflow-scroll">
           {connectorIndexingStatuses.map((connectorIndexingStatus) => {
             const connector = connectorIndexingStatus.connector;
             // const credential = connectorIndexingStatus.credential;
