@@ -971,8 +971,6 @@ class Persona(Base):
     )
     # Number of chunks to pass to the LLM for generation.
     num_chunks: Mapped[float | None] = mapped_column(Float, nullable=True)
-    # True if persona should only use context from recent documents, false by default
-    use_recent_documents: Mapped[bool] = mapped_column(Boolean)
     # Number of days old for last_updated documents, only used if use_recent_documents is true
     num_days: Mapped[float | None] = mapped_column(Float, nullable=True)
     # Pass every chunk through LLM for evaluation, fairly expensive

@@ -48,7 +48,7 @@ class BaseFilters(BaseModel):
 
     @classmethod
     def from_persona(cls, persona: Persona) -> "BaseFilters | None":
-        if persona.use_recent_documents and persona.num_days is not None:
+        if persona.num_days is not None:
             from_date = datetime.now(timezone.utc) - timedelta(days=persona.num_days)
             return cls(time_cutoff=from_date)
         else:

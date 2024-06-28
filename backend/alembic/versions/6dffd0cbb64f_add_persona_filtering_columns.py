@@ -17,14 +17,8 @@ depends_on: None = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "persona", sa.Column("use_recent_documents", sa.Boolean(), nullable=True)
-    )
-    op.execute("UPDATE persona SET use_recent_documents = false")
-    op.alter_column("persona", "use_recent_documents", nullable=False)
     op.add_column("persona", sa.Column("num_days", sa.Float(), nullable=True))
 
 
 def downgrade() -> None:
-    op.drop_column("persona", "use_recent_documents")
     op.drop_column("persona", "num_days")

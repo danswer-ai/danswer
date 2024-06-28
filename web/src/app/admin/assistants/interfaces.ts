@@ -36,7 +36,7 @@ export interface Persona {
   llm_model_version_override?: string;
   starter_messages: StarterMessage[] | null;
   use_recent_documents: boolean;
-  num_days?: number;
+  num_days: number | null;
   default_persona: boolean;
   users: MinimalUserSnapshot[];
   groups: number[];

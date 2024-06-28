@@ -176,7 +176,7 @@ export function AssistantEditor({
       existingPersona?.document_sets?.map((documentSet) => documentSet.id) ??
       ([] as number[]),
     num_chunks: existingPersona?.num_chunks ?? null,
-    recent_documents_enabled: existingPersona?.use_recent_documents ?? false,
+    recent_documents_enabled: existingPersona?.num_days != null,
     num_days: existingPersona?.num_days ?? null,
     include_citations: existingPersona?.prompts[0]?.include_citations ?? true,
     llm_relevance_filter: existingPersona?.llm_relevance_filter ?? false,
@@ -318,7 +318,6 @@ export function AssistantEditor({
               existingPromptId: existingPrompt?.id,
               ...values,
               num_chunks: numChunks,
-              use_recent_documents: useRecentDocuments,
               num_days: numDays,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
@@ -329,7 +328,6 @@ export function AssistantEditor({
             [promptResponse, personaResponse] = await createPersona({
               ...values,
               num_chunks: numChunks,
-              use_recent_documents: useRecentDocuments,
               num_days: numDays,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,

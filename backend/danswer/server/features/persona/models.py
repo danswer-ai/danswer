@@ -19,7 +19,6 @@ class CreatePersonaRequest(BaseModel):
     name: str
     description: str
     num_chunks: float
-    use_recent_documents: bool
     num_days: float
     llm_relevance_filter: bool
     is_public: bool
@@ -46,7 +45,6 @@ class PersonaSnapshot(BaseModel):
     display_priority: int | None
     description: str
     num_chunks: float | None
-    use_recent_documents: bool
     num_days: float | None
     llm_relevance_filter: bool
     llm_filter_extraction: bool
@@ -84,7 +82,6 @@ class PersonaSnapshot(BaseModel):
             display_priority=persona.display_priority,
             description=persona.description,
             num_chunks=persona.num_chunks,
-            use_recent_documents=persona.use_recent_documents,
             num_days=persona.num_days,
             llm_relevance_filter=persona.llm_relevance_filter,
             llm_filter_extraction=persona.llm_filter_extraction,
