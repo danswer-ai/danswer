@@ -726,7 +726,7 @@ export function ChatPage({
       ? alternativeAssistant.id
       : selectedAssistant?.id;
 
-      resetInputBar();
+    resetInputBar();
 
     setIsStreaming(true);
     let answer = "";
@@ -867,7 +867,7 @@ export function ChatPage({
                 files: finalMessage?.files || aiMessageImages || [],
                 toolCalls: finalMessage?.tool_calls || toolCalls,
                 parentMessageId: newUserMessageId,
-                alternateAssistantID: selectedAssistant?.id
+                alternateAssistantID: selectedAssistant?.id,
               },
             ]);
           }
@@ -875,7 +875,6 @@ export function ChatPage({
             setIsCancelled(false);
             break;
           }
-
         }
       }
     } catch (e: any) {
@@ -1292,21 +1291,19 @@ export function ChatPage({
                                 : null;
 
                             return (
-
                               <div
-                              key={`${i}-${existingChatSessionId}`}
-                              ref={
-                                i == messageHistory.length - 1
-                                  ? lastMessageRef
-                                  : null}
-                                  >
-                              
-
-                                <AIMessage
-                                currentPersona={livePersona}
-                                 alternativeAssistant={
-                                  currentAlternativeAssistant
+                                key={`${i}-${existingChatSessionId}`}
+                                ref={
+                                  i == messageHistory.length - 1
+                                    ? lastMessageRef
+                                    : null
                                 }
+                              >
+                                <AIMessage
+                                  currentPersona={livePersona}
+                                  alternativeAssistant={
+                                    currentAlternativeAssistant
+                                  }
                                   messageId={message.messageId}
                                   content={message.message}
                                   files={message.files}
@@ -1349,70 +1346,72 @@ export function ChatPage({
                                             return;
                                           }
 
-                                        if (
-                                          previousMessage.messageId === null
-                                        ) {
-                                          setPopup({
-                                            type: "error",
-                                            message:
-                                              "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                          if (
+                                            previousMessage.messageId === null
+                                          ) {
+                                            setPopup({
+                                              type: "error",
+                                              message:
+                                                "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                            });
+                                            return;
+                                          }
+                                          onSubmit({
+                                            messageIdToResend:
+                                              previousMessage.messageId,
+                                            queryOverride: newQuery,
+                                            alternativeAssistant:
+                                              currentAlternativeAssistant,
                                           });
-                                          return;
                                         }
-                                        onSubmit({
-                                          messageIdToResend:
-                                            previousMessage.messageId,
-                                          queryOverride: newQuery,
-                                          alternativeAssistant:
-                                            currentAlternativeAssistant,
-                                        });
-                                      }
-                                    : undefined
-                                }
-                                isCurrentlyShowingRetrieved={isShowingRetrieved}
-                                handleShowRetrieved={(messageNumber) => {
-                                  if (isShowingRetrieved) {
-                                    setSelectedMessageForDocDisplay(null);
-                                  } else {
-                                    if (messageNumber !== null) {
-                                      setSelectedMessageForDocDisplay(
-                                        messageNumber
-                                      );
+                                      : undefined
+                                  }
+                                  isCurrentlyShowingRetrieved={
+                                    isShowingRetrieved
+                                  }
+                                  handleShowRetrieved={(messageNumber) => {
+                                    if (isShowingRetrieved) {
+                                      setSelectedMessageForDocDisplay(null);
                                     } else {
-                                      setSelectedMessageForDocDisplay(-1);
+                                      if (messageNumber !== null) {
+                                        setSelectedMessageForDocDisplay(
+                                          messageNumber
+                                        );
+                                      } else {
+                                        setSelectedMessageForDocDisplay(-1);
+                                      }
                                     }
+                                  }}
+                                  handleForceSearch={() => {
+                                    if (
+                                      previousMessage &&
+                                      previousMessage.messageId
+                                    ) {
+                                      onSubmit({
+                                        messageIdToResend:
+                                          previousMessage.messageId,
+                                        forceSearch: true,
+                                        alternativeAssistant:
+                                          currentAlternativeAssistant,
+                                      });
+                                    } else {
+                                      setPopup({
+                                        type: "error",
+                                        message:
+                                          "Failed to force search - please refresh the page and try again.",
+                                      });
+                                    }
+                                  }}
+                                  retrievalDisabled={
+                                    currentAlternativeAssistant
+                                      ? !personaIncludesRetrieval(
+                                          currentAlternativeAssistant!
+                                        )
+                                      : !retrievalEnabled
                                   }
-                                }}
-                                handleForceSearch={() => {
-                                  if (
-                                    previousMessage &&
-                                    previousMessage.messageId
-                                  ) {
-                                    onSubmit({
-                                      messageIdToResend:
-                                        previousMessage.messageId,
-                                      forceSearch: true,
-                                      alternativeAssistant:
-                                        currentAlternativeAssistant,
-                                    });
-                                  } else {
-                                    setPopup({
-                                      type: "error",
-                                      message:
-                                        "Failed to force search - please refresh the page and try again.",
-                                    });
-                                  }
-                                }}
-                                retrievalDisabled={
-                                  currentAlternativeAssistant
-                                    ? !personaIncludesRetrieval(
-                                        currentAlternativeAssistant!
-                                      )
-                                    : !retrievalEnabled
-                                }
-                              />
-                            </div>
-                            )
+                                />
+                              </div>
+                            );
                           } else {
                             return (
                               <div key={`${i}-${existingChatSessionId}`}>
