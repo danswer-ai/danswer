@@ -263,7 +263,7 @@ export function ChatInputBar({
             "
           >
             {alternativeAssistant && (
-              <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full  ">
+              <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full">
                 <div
                   ref={interactionsRef}
                   className="bg-background-subtle p-2 rounded-t-lg  items-center flex w-full"

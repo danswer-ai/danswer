@@ -61,7 +61,6 @@ module.exports = {
         error: "#ef4444", // red-500
         success: "#059669", // emerald-600
         alert: "#f59e0b", // amber-600
-
         accent: "#6671d0",
 
         // borders
