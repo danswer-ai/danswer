@@ -789,7 +789,7 @@ class DocumentRetrievalFeedback(Base):
     __tablename__ = "document_retrieval_feedback"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    chat_message_id: Mapped[int] = mapped_column(
+    chat_message_id: Mapped[int | None] = mapped_column(
         ForeignKey("chat_message.id", ondelete="SET NULL"), nullable=True
     )
     document_id: Mapped[str] = mapped_column(ForeignKey("document.id"))
@@ -814,7 +814,7 @@ class ChatMessageFeedback(Base):
     __tablename__ = "chat_feedback"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    chat_message_id: Mapped[int] = mapped_column(
+    chat_message_id: Mapped[int | None] = mapped_column(
         ForeignKey("chat_message.id", ondelete="SET NULL"), nullable=True
     )
     is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)

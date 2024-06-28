@@ -9,6 +9,7 @@ import { DefaultDropdown, Option } from "@/components/Dropdown";
 import { useContext } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import React, { useState, useEffect } from "react";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 function Checkbox({
   label,
@@ -104,6 +105,7 @@ export function SettingsForm() {
   const combinedSettings = useContext(SettingsContext);
   const [chatRetention, setChatRetention] = useState("");
   const { popup, setPopup } = usePopup();
+  const isEnterpriseEnabled = usePaidEnterpriseFeaturesEnabled();
 
   useEffect(() => {
     if (combinedSettings?.settings.maximum_chat_retention_days !== undefined) {
@@ -234,34 +236,38 @@ export function SettingsForm() {
             ]);
         }}
       />
-      <Title className="mb-4">Chat Settings</Title>
-      <IntegerInput
-        label="Chat Retention"
-        sublabel="Enter the maximum number of days you would like Danswer to retain chat messages. Leaving this field empty will cause Danswer to never delete chat messages."
-        value={chatRetention === "" ? null : Number(chatRetention)}
-        onChange={(e) => {
-          const numValue = parseInt(e.target.value, 10);
-          if (numValue >= 1) {
-            setChatRetention(numValue.toString());
-          } else if (e.target.value === "") {
-            setChatRetention("");
-          }
-        }}
-        id="chatRetentionInput"
-        placeholder="Infinite Retention"
-      />
-      <button
-        onClick={handleSetChatRetention}
-        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-      >
-        Set
-      </button>
-      <button
-        onClick={handleClearChatRetention}
-        className="mt-2 ml-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-      >
-        Retain All
-      </button>
+      {isEnterpriseEnabled && (
+        <>
+          <Title className="mb-4">Chat Settings</Title>
+          <IntegerInput
+            label="Chat Retention"
+            sublabel="Enter the maximum number of days you would like Danswer to retain chat messages. Leaving this field empty will cause Danswer to never delete chat messages."
+            value={chatRetention === "" ? null : Number(chatRetention)}
+            onChange={(e) => {
+              const numValue = parseInt(e.target.value, 10);
+              if (numValue >= 1) {
+                setChatRetention(numValue.toString());
+              } else if (e.target.value === "") {
+                setChatRetention("");
+              }
+            }}
+            id="chatRetentionInput"
+            placeholder="Infinite Retention"
+          />
+          <button
+            onClick={handleSetChatRetention}
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Set
+          </button>
+          <button
+            onClick={handleClearChatRetention}
+            className="mt-2 ml-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Retain All
+          </button>
+        </>
+      )}
     </div>
   );
 }
