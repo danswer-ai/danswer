@@ -10,6 +10,7 @@ from danswer.chat.chat_utils import combine_message_chain
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.dynamic_configs.interface import JSON_ro
 from danswer.llm.answering.models import PreviousMessage
+from danswer.llm.headers import build_llm_extra_headers
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import build_content_with_imgs
 from danswer.llm.utils import message_to_string
@@ -57,11 +58,17 @@ class ImageGenerationTool(Tool):
     NAME = "run_image_generation"
 
     def __init__(
-        self, api_key: str, model: str = "dall-e-3", num_imgs: int = 2
+        self,
+        api_key: str,
+        model: str = "dall-e-3",
+        num_imgs: int = 2,
+        additional_headers: dict[str, str] | None = None,
     ) -> None:
         self.api_key = api_key
         self.model = model
         self.num_imgs = num_imgs
+
+        self.additional_headers = additional_headers
 
     def name(self) -> str:
         return self.NAME
@@ -142,6 +149,7 @@ class ImageGenerationTool(Tool):
             model=self.model,
             api_key=self.api_key,
             n=1,
+            extra_headers=build_llm_extra_headers(self.additional_headers),
         )
         return ImageGenerationResponse(
             revised_prompt=response.data[0]["revised_prompt"],

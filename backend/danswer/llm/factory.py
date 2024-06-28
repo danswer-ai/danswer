@@ -1,13 +1,13 @@
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.model_configs import GEN_AI_TEMPERATURE
-from danswer.configs.model_configs import LITELLM_EXTRA_HEADERS
 from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_default_provider
 from danswer.db.llm import fetch_provider
 from danswer.db.models import Persona
 from danswer.llm.chat_llm import DefaultMultiLLM
 from danswer.llm.exceptions import GenAIDisabledException
+from danswer.llm.headers import build_llm_extra_headers
 from danswer.llm.interfaces import LLM
 from danswer.llm.override_models import LLMOverride
 
@@ -84,12 +84,6 @@ def get_llm(
     timeout: int = QA_TIMEOUT,
     additional_headers: dict[str, str] | None = None,
 ) -> LLM:
-    extra_headers = {}
-    if additional_headers:
-        extra_headers.update(additional_headers)
-    if LITELLM_EXTRA_HEADERS:
-        extra_headers.update(LITELLM_EXTRA_HEADERS)
-
     return DefaultMultiLLM(
         model_provider=provider,
         model_name=model,
@@ -99,5 +93,5 @@ def get_llm(
         timeout=timeout,
         temperature=temperature,
         custom_config=custom_config,
-        extra_headers=extra_headers,
+        extra_headers=build_llm_extra_headers(additional_headers),
     )
