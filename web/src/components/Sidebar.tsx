@@ -25,7 +25,6 @@ export default function Sidebar({
   if (!combinedSettings) {
     return null;
   }
-  const isMobile = combinedSettings.isMobile;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -46,39 +45,41 @@ export default function Sidebar({
   }, [isOpen, onToggle]);
 
   const sidebarClasses = `
-    ${width} ${wideWidth}
-    ${
-      isMobile
-        ? `fixed top-0 left-0 z-40 ${padded && "mt-16 pt-4"} ${isOpen ? "translate-x-0" : "-translate-x-full"} shadow-lg`
-        : "translate-x-0"
-    }
-    flex flex-none
-    bg-background-weak
-    border-r border-border
-    flex flex-col
-    h-screen
-    transition-transform duration-300 ease-in-out
+      ${width} ${wideWidth}
+      mobile:fixed mobile:top-0 mobile:left-0 mobile:z-40 ${padded && "mobile:mt-16 mobile:pt-4"} ${isOpen ? "mobile:translate-x-0" : "mobile:-translate-x-full"} mobile:shadow-lg
+      desktop:translate-x-0
+      flex flex-none
+      bg-background-weak
+      border-r border-border
+      flex flex-col
+      h-screen
+      transition-transform duration-300 ease-in-out
   `;
 
   return (
     <>
-      {isOpen && isMobile && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30"
-          aria-hidden="true"
-        />
-      )}
+      <div className="desktop:hidden">
+        {isOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-30"
+            aria-hidden="true"
+          />
+        )}
+      </div>
+
       <div className={sidebarClasses} id="sidebar" ref={sidebarRef}>
         {children}
-        {isMobile && onToggle && (
-          <button
-            onClick={onToggle}
-            className="absolute top-4 right-4 text-strong"
-            aria-label="Close sidebar"
-          >
-            <FiX size={24} />
-          </button>
-        )}
+        <div className="desktop:hidden">
+          {onToggle && (
+            <button
+              onClick={onToggle}
+              className="absolute top-4 right-4 text-strong"
+              aria-label="Close sidebar"
+            >
+              <FiX size={24} />
+            </button>
+          )}
+        </div>
       </div>
     </>
   );

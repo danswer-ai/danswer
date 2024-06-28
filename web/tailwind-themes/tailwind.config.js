@@ -15,10 +15,13 @@ module.exports = {
   theme: {
     transparent: "transparent",
     current: "currentColor",
+
     extend: {
       screens: {
         "2xl": "1420px",
         "3xl": "1700px",
+        mobile: { max: "767px" },
+        desktop: "768px",
       },
       fontFamily: {
         sans: ["var(--font-inter)"],

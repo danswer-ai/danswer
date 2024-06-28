@@ -1100,7 +1100,7 @@ export function ChatPage({
               {({ getRootProps }) => (
                 <>
                   <div
-                    className={`h-[calc(100dvh)] w-full sm:relative flex-auto transition-margin duration-300  overflow-x-auto 
+                    className={`h-[calc(100dvh)]  w-full relative flex-auto transition-margin duration-300  overflow-x-auto 
                   ${retrievalDisabled ? "pb-[111px]" : "pb-[140px]"}`}
                     {...getRootProps()}
                   >
@@ -1114,10 +1114,18 @@ export function ChatPage({
 
                       {livePersona && (
                         <div
-                          className={`sticky top-0 ${!combinedSettings?.isMobile ? "left-0" : "left-2"} z-10 w-full bg-background flex`}
+                          className={`sticky top-0 mobile:left-0 mobile:w-[90%] mobile:mx-auto desktop:left-2 z-10 w-full bg-background flex`}
                         >
-                          <div className="mt-2 flex w-full">
-                            <div className="ml-2 p-1 rounded w-fit">
+                          <div className="mt-2 mobile:items-end desktop:flex mobile:grid mobile:grid-cols-3 w-full">
+                            <div className="mr-auto desktop:hidden">
+                              {!isChatSidebarOpen && (
+                                <MobileHeaderToggle
+                                  toggle={toggleChatSideBar}
+                                />
+                              )}
+                            </div>
+
+                            <div className="mobile:mx-auto desktop:ml-2 p-1 rounded w-fit">
                               <ChatPersonaSelector
                                 personas={filteredAssistants}
                                 selectedPersonaId={livePersona.id}
@@ -1126,14 +1134,7 @@ export function ChatPage({
                               />
                             </div>
 
-                            {combinedSettings?.isMobile &&
-                              !isChatSidebarOpen && (
-                                <MobileHeaderToggle
-                                  toggle={toggleChatSideBar}
-                                />
-                              )}
-
-                            <div className="ml-auto mr-6 flex">
+                            <div className="ml-auto desktop:mr-6 flex">
                               {chatSessionId !== null && (
                                 <div
                                   onClick={() => setSharingModalVisible(true)}
@@ -1446,7 +1447,7 @@ export function ChatPage({
                       ref={inputRef}
                       className="absolute bottom-0 z-10 w-full"
                     >
-                      <div className="w-full relative pb-4">
+                      <div className="w-full relative pb-4 ">
                         {aboveHorizon && (
                           <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
                             <button
@@ -1487,7 +1488,7 @@ export function ChatPage({
                         updateSidebarWidth={updateSidebarWidth}
                         intialWidth={usedSidebarWidth}
                         minWidth={300}
-                        maxWidth={maxDocumentSidebarWidth || undefined}
+                        maxWidth={maxDocumentSidebarWidth || 300}
                       >
                         <DocumentSidebar
                           initialWidth={showDocSidebar ? usedSidebarWidth : 0}

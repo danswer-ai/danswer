@@ -4,7 +4,7 @@ export default function MobileHeaderToggle({ toggle }: { toggle: () => void }) {
   return (
     <div
       onClick={toggle}
-      className="rounded cursor-pointer my-auto hover:bg-hover-light"
+      className="my-auto p-2 rounded cursor-pointer hover:bg-hover-light"
     >
       <FiMenu size={24} />
     </div>

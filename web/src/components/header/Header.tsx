@@ -65,8 +65,8 @@ export function Header({ user, toggleSidebar, hideToggle }: HeaderProps) {
           <MobileHeaderToggle toggle={toggleSidebar} />
         )}
 
-        {!combinedSettings.isMobile &&
-          (!settings ||
+        <div className="mobile:hidden">
+          {(!settings ||
             (settings.search_page_enabled && settings.chat_page_enabled)) && (
             <>
               <Link
@@ -94,8 +94,8 @@ export function Header({ user, toggleSidebar, hideToggle }: HeaderProps) {
               </Link>
             </>
           )}
-
-        <div className="ml-auto h-full flex flex-col">
+        </div>
+        <div className="mobile:hidden  ml-auto h-full flex flex-col">
           <div className="my-auto">
             <UserDropdown user={user} hideChatAndSearch />
           </div>

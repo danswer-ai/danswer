@@ -43,7 +43,8 @@ export function Modal({
           className={`
           bg-background rounded shadow-lg
           relative 
-        ${combinedSettings.isMobile ? "w-[95%] mx-12" : width ?? "w-1/2"}} text-sm 
+          mobile:w-[95%] mobile:mx-12
+          ${width ?? "w-1/2"} text-sm 
           ${noPadding ? "" : "p-8"}
           ${className}
         `}

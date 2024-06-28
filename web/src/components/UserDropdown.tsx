@@ -44,7 +44,7 @@ export function UserDropdown({
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
 
   return (
-    <div className="relative" ref={userInfoRef}>
+    <div className="relative mobile:hidden" ref={userInfoRef}>
       <Popover
         open={userInfoVisible}
         onOpenChange={setUserInfoVisible}

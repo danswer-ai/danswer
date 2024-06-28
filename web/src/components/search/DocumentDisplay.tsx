@@ -177,7 +177,7 @@ export const DocumentDisplay = ({
         {document.score !== null && (
           <div
             className={
-              "absolute top-2/4 -translate-y-2/4 flex " +
+              "mobile:hidden absolute top-2/4 -translate-y-2/4 flex " +
               (isSelected ? "-left-14 w-14" : "-left-10 w-10")
             }
           >
