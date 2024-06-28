@@ -80,10 +80,11 @@ export function ChatInputBar({
       <div className="flex justify-center pb-2 max-w-screen-md mx-auto mb-2">
         <div
           className="
-            w-full
+            w-[90%]
             shrink
             relative
             px-4
+            max-w-searchbar-max
             mx-auto
           "
         >

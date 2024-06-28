@@ -9,6 +9,7 @@ interface SidebarProps {
   width?: string;
   wideWidth?: string;
   padded?: boolean;
+  hideonDesktop?: boolean;
 }
 
 export default function Sidebar({
@@ -18,6 +19,7 @@ export default function Sidebar({
   width = "w-64",
   wideWidth = "3xl:w-72",
   padded,
+  hideonDesktop,
 }: SidebarProps) {
   const combinedSettings = useContext(SettingsContext);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -45,8 +47,10 @@ export default function Sidebar({
   }, [isOpen, onToggle]);
 
   const sidebarClasses = `
+      ${hideonDesktop && "desktop:hidden"}
       ${width} ${wideWidth}
-      mobile:fixed mobile:top-0 mobile:left-0 mobile:z-40 ${padded && "mobile:mt-16 mobile:pt-4"} ${isOpen ? "mobile:translate-x-0" : "mobile:-translate-x-full"} mobile:shadow-lg
+
+      mobile:fixed mobile:top-0 mobile:left-0 mobile:z-[100]  ${isOpen ? "mobile:translate-x-0" : "mobile:-translate-x-full"} mobile:shadow-lg
       desktop:translate-x-0
       flex flex-none
       bg-background-weak
@@ -61,7 +65,7 @@ export default function Sidebar({
       <div className="desktop:hidden">
         {isOpen && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-30"
+            className="fixed inset-0 bg-black bg-opacity-50 z-[100]"
             aria-hidden="true"
           />
         )}

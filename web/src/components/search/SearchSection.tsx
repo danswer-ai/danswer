@@ -258,6 +258,7 @@ export const SearchSection = ({
           />
         </div>
       </div>
+
       <div className="max-w-search-max w-[90%] mx-auto">
         {personas.length > 0 ? (
           <div className="flex mb-2 w-fit">

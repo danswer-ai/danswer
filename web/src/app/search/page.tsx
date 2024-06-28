@@ -24,6 +24,7 @@ import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingM
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatPopup } from "../chat/ChatPopup";
+import ClientHome from "./ClientPage";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -148,7 +149,6 @@ export default async function Home() {
 
   return (
     <>
-      <Header user={user} />
       <div className="m-3">
         <HealthCheckBanner />
       </div>
@@ -169,18 +169,14 @@ export default async function Home() {
       <ChatPopup />
 
       <InstantSSRAutoRefresh />
-
-      <div className="desktop:px-24 desktop:pt-10 flex flex-col items-center min-h-screen">
-        <div className="w-full">
-          <SearchSection
-            ccPairs={ccPairs}
-            documentSets={documentSets}
-            personas={personas}
-            tags={tags}
-            defaultSearchType={searchTypeDefault}
-          />
-        </div>
-      </div>
+      <ClientHome
+        user={user}
+        ccPairs={ccPairs}
+        documentSets={documentSets}
+        personas={personas}
+        tags={tags}
+        searchTypeDefault={searchTypeDefault}
+      />
     </>
   );
 }
