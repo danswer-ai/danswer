@@ -31,11 +31,13 @@ def upgrade() -> None:
         "chat_feedback", "chat_message_id", existing_type=sa.Integer(), nullable=True
     )
     op.drop_constraint(
-        "document_retrieval__chat_message_fk", "document_retrieval", type_="foreignkey"
+        "document_retrieval_feedback__chat_message_fk",
+        "document_retrieval_feedback",
+        type_="foreignkey",
     )
     op.create_foreign_key(
-        "document_retrieval__chat_message_fk",
-        "document_retrieval",
+        "document_retrieval_feedback__chat_message_fk",
+        "document_retrieval_feedback",
         "chat_message",
         ["chat_message_id"],
         ["id"],
@@ -71,10 +73,12 @@ def downgrade() -> None:
         nullable=False,
     )
     op.drop_constraint(
-        "document_retrieval__chat_message_fk", "document_retrieval", type_="foreignkey"
+        "document_retrieval_feedback__chat_message_fk",
+        "document_retrieval_feedback",
+        type_="foreignkey",
     )
     op.create_foreign_key(
-        "document_retrieval__chat_message_fk",
+        "document_retrieval_feedback__chat_message_fk",
         "document_retrieval",
         "chat_message",
         ["chat_message_id"],
