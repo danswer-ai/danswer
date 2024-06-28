@@ -106,7 +106,7 @@ class DocumentSource(str, Enum):
     OCI_STORAGE = "oci_storage"
 
 
-class BlobType(Enum):
+class BlobType(str, Enum):
     R2 = "r2"
     S3 = "s3"
     GOOGLE_CLOUD_STORAGE = "google_cloud_storage"

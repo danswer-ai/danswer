@@ -223,8 +223,6 @@ export interface ZendeskConfig {}
 
 export interface DropboxConfig {}
 
-export type BlobType = "S3" | "R2" | "GOOGLE_CLOUD_STORAGE" | "OCI_STORAGE";
-
 export interface S3Config {
   bucket_type: "s3";
   bucket_name: string;
