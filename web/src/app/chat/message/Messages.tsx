@@ -163,7 +163,7 @@ export const AIMessage = ({
   return (
     <div className={"py-5 px-2 lg:px-5  flex -mr-6 w-full"}>
       <div className="mx-auto w-[90%] max-w-searchbar-max relative">
-        <div className="lg:ml-4 xl:ml-8">
+        <div className="xl:ml-8">
           <div className="flex">
             <div className="p-1 bg-ai rounded-lg h-fit my-auto">
               <div className="text-inverted">
@@ -448,7 +448,7 @@ export const HumanMessage = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="mx-auto w-[90%] max-w-searchbar-max">
-        <div className="lg:ml-4 xl:ml-8">
+        <div className="xl:ml-8">
           <div className="flex">
             <div className="p-1 bg-user rounded-lg h-fit">
               <div className="text-inverted">
