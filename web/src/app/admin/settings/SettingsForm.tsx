@@ -261,7 +261,7 @@ export function SettingsForm() {
             size="xs"
             className="mr-3"
           >
-            Set Retention Limit (Days)
+            Set Retention Limit
           </Button>
           <Button onClick={handleClearChatRetention} color="blue" size="xs">
             Retain All
