@@ -11,14 +11,13 @@ import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 export default async function Page({ params }: { params: { id: string } }) {
   const [values, error] = await fetchAssistantEditorInfoSS(params.id);
 
-  let body;
-  if (!values) {
-    body = (
-      <ErrorCallout errorTitle="Something went wrong :(" errorMsg={error} />
-    );
-  } else {
-    body = (
-      <>
+  return (
+    <div>
+      <BackButton />
+
+      <AdminPageTitle title="Edit Assistant" icon={<RobotIcon size={32} />} />
+      {!values && error && (<ErrorCallout errorTitle="Something went wrong :(" errorMsg={error} />)}
+      {values && (<>
         <Card>
           <AssistantEditor
             {...values}
@@ -36,17 +35,7 @@ export default async function Page({ params }: { params: { id: string } }) {
             />
           </div>
         </div>
-      </>
-    );
-  }
-
-  return (
-    <div>
-      <BackButton />
-
-      <AdminPageTitle title="Edit Assistant" icon={<RobotIcon size={32} />} />
-
-      {body}
+      </>)}
     </div>
   );
 }
