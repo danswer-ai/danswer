@@ -4,9 +4,8 @@ import {
 } from "@/components/admin/connectors/Field";
 import { Button } from "@tremor/react";
 import { Form, Formik } from "formik";
-
 import * as Yup from "yup";
-import { CloudEmbeddingProvider, CloudEmbeddingModel, EmbeddingModelDescriptor } from "./embeddingModels";
+import { EmbeddingModelDescriptor } from "./types";
 
 export function CustomModelForm({
   onSubmit,

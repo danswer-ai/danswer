@@ -1,8 +1,3 @@
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
-
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.document_set import check_document_sets_are_public
@@ -21,6 +16,10 @@ from danswer.server.features.document_set.models import CheckDocSetPublicRespons
 from danswer.server.features.document_set.models import DocumentSet
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from danswer.server.features.document_set.models import DocumentSetUpdateRequest
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
 
 router = APIRouter(prefix="/manage")

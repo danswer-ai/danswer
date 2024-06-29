@@ -1,12 +1,11 @@
 import json
 from typing import Any
 
+from danswer.llm.utils import get_default_llm_tokenizer
 from langchain_core.messages.ai import AIMessage
 from langchain_core.messages.tool import ToolCall
 from langchain_core.messages.tool import ToolMessage
 from pydantic import BaseModel
-
-from danswer.llm.utils import get_default_llm_tokenizer
 
 
 def build_tool_message(

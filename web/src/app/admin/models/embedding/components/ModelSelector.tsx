@@ -1,10 +1,8 @@
-import { DefaultDropdown, StringOrNumberOption } from "@/components/Dropdown";
-import { Title, Text, Divider, Card } from "@tremor/react";
+
 import {
   FullEmbeddingModelDescriptor,
-} from "./embeddingModels";
+} from "./types";
 import { FiStar } from "react-icons/fi";
-import { CustomModelForm } from "./CustomModelForm";
 
 export function ModelOption({
   model,

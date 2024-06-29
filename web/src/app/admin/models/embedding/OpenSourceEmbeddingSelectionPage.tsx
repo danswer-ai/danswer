@@ -1,35 +1,11 @@
 "use client";
-
-import { ThreeDotsLoader } from "@/components/Loading";
-import { AdminPageTitle } from "@/components/admin/Title";
-import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Button, Card, Text, Title } from "@tremor/react";
-import { FiPackage } from "react-icons/fi";
-import useSWR, { mutate } from "swr";
-import { ModelOption, ModelSelector } from "./components/ModelSelector";
-import { useState } from "react";
-import { ModelSelectionConfirmationModal, ProviderCreationModal } from "./components/ModelSelectionConfirmation";
-import { ReindexingProgressTable } from "./components/ReindexingProgressTable";
-import { Modal } from "@/components/Modal";
+import { Card, Text, Title } from "@tremor/react";
+import { ModelSelector } from "./components/ModelSelector";
 import {
-    CloudEmbeddingProvider,
-    CloudEmbeddingModel,
-    AVAILABLE_CLOUD_MODELS,
     AVAILABLE_MODELS,
-    INVALID_OLD_MODEL,
-    checkModelNameIsValid,
-    fillOutEmeddingModelDescriptor,
     EmbeddingModelDescriptor
-} from "./components/embeddingModels";
-import { ErrorCallout } from "@/components/ErrorCallout";
-import { Connector, ConnectorIndexingStatus } from "@/lib/types";
-import Link from "next/link";
+} from "./components/types";
 import { CustomModelForm } from "./components/CustomModelForm";
-import { FaLock } from "react-icons/fa";
-import { ChangeCredentialsModal, ChangeModelModal, DeleteCredentialsModal, ModelNotConfiguredModal, SelectModelModal } from "./components/Providers";
-
-
-
 
 export default function OpenSourceEmbeddingSelectionPage(
     { onSelectOpenSource, currentModelName }: {
@@ -45,7 +21,6 @@ export default function OpenSourceEmbeddingSelectionPage(
                 )}
                 setSelectedModel={onSelectOpenSource}
             />
-
 
             <Title className="mt-8">Alternatively, here are some cloud-based models to choose from!</Title>
             <Text className="mb-4">

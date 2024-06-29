@@ -1,14 +1,5 @@
 import re
 
-from fastapi import APIRouter
-from fastapi import Body
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import status
-from pydantic import BaseModel
-from sqlalchemy import update
-from sqlalchemy.orm import Session
-
 from danswer.auth.invited_users import get_invited_users
 from danswer.auth.invited_users import write_invited_users
 from danswer.auth.noauth_user import fetch_no_auth_user
@@ -35,6 +26,14 @@ from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.api_key import is_api_key_email_address
+from fastapi import APIRouter
+from fastapi import Body
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import status
+from pydantic import BaseModel
+from sqlalchemy import update
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

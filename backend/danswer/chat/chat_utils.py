@@ -2,8 +2,6 @@ import re
 from collections.abc import Sequence
 from typing import cast
 
-from sqlalchemy.orm import Session
-
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import LlmDoc
 from danswer.db.chat import get_chat_messages_by_session
@@ -12,6 +10,7 @@ from danswer.llm.answering.models import PreviousMessage
 from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceSection
 from danswer.utils.logger import setup_logger
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

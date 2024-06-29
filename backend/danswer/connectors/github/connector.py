@@ -6,13 +6,6 @@ from datetime import timezone
 from typing import Any
 from typing import cast
 
-from github import Github
-from github import RateLimitExceededException
-from github import Repository
-from github.Issue import Issue
-from github.PaginatedList import PaginatedList
-from github.PullRequest import PullRequest
-
 from danswer.configs.app_configs import GITHUB_CONNECTOR_BASE_URL
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -25,6 +18,12 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
+from github import Github
+from github import RateLimitExceededException
+from github import Repository
+from github.Issue import Issue
+from github.PaginatedList import PaginatedList
+from github.PullRequest import PullRequest
 
 
 logger = setup_logger()
