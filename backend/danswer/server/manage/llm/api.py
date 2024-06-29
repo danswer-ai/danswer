@@ -1,18 +1,28 @@
 from collections.abc import Callable
 
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
 from danswer.db.llm import fetch_existing_embedding_providers
 from danswer.db.llm import fetch_existing_llm_providers
+from danswer.db.llm import remove_embedding_provider
 from danswer.db.llm import remove_llm_provider
 from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_cloud_embedding_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.db.models import User
 from danswer.llm.factory import Embedding
+<<<<<<< HEAD
 from danswer.llm.factory import get_default_llms
 from danswer.llm.factory import get_embedding
+=======
+from danswer.llm.factory import get_default_llm
+>>>>>>> 061616e2 (add alter + delete endpoints)
 from danswer.llm.factory import get_llm
 from danswer.llm.llm_provider_options import fetch_available_well_known_llms
 from danswer.llm.llm_provider_options import WellKnownLLMProviderDescriptor
@@ -26,10 +36,6 @@ from danswer.server.manage.llm.models import TestEmbeddingRequest
 from danswer.server.manage.llm.models import TestLLMRequest
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
@@ -141,7 +147,6 @@ def list_embedding_providers(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[FullCloudEmbeddingProvider]:
-
     return [
         FullCloudEmbeddingProvider.from_request(embedding_provider_model)
         for embedding_provider_model in fetch_existing_embedding_providers(db_session)
@@ -154,8 +159,16 @@ def put_llm_provider(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> FullLLMProvider:
-
     return upsert_llm_provider(db_session, llm_provider)
+
+
+@admin_router.delete("/embedding-provider/{embedding_provider_name}")
+def delete_embedding_provider(
+    embedding_provider_name: str,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    remove_embedding_provider(db_session, embedding_provider_name)
 
 
 @admin_router.delete("/provider/{provider_id}")
@@ -189,6 +202,7 @@ def list_llm_provider_basics(
         for llm_provider_model in fetch_existing_llm_providers(db_session)
     ]
 
+
 @admin_router.get("/built-in/options")
 def fetch_llm_options(
     _: User | None = Depends(current_admin_user),
@@ -197,7 +211,7 @@ def fetch_llm_options(
 
 
 @basic_router.get("/embedding-provider")
-def list_llm_provider_basics(
+def list_embedding_provider_basics(
     _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> list[LLMProviderDescriptor]:

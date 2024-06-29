@@ -3,17 +3,23 @@ import { Modal } from "@/components/Modal";
 import { Button, Text, Callout, Subtitle, Divider } from "@tremor/react";
 import { Label } from "@/components/admin/connectors/Field";
 import { CloudEmbeddingProvider } from "../components/types";
-import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../../llm/constants";
+import {
+  EMBEDDING_PROVIDERS_ADMIN_URL,
+  LLM_PROVIDERS_ADMIN_URL,
+} from "../../llm/constants";
 import { LoadingAnimation } from "@/components/Loading";
+import { mutate } from "swr";
 
 export function ChangeCredentialsModal({
   provider,
   onConfirm,
   onCancel,
+  onDeleted,
 }: {
   provider: CloudEmbeddingProvider;
   onConfirm: () => void;
   onCancel: () => void;
+  onDeleted: () => void;
 }) {
   const [apiKey, setApiKey] = useState("");
   const [isTesting, setIsTesting] = useState(false);
@@ -134,7 +140,30 @@ export function ChangeCredentialsModal({
           This is only possible if you have already switched to a different
           embedding type!
         </Text>
-        <Button color="red">Delete key</Button>
+
+        <Button
+          onClick={async () => {
+            const response = await fetch(
+              `${EMBEDDING_PROVIDERS_ADMIN_URL}/${provider.name}`,
+              {
+                method: "DELETE",
+              }
+            );
+
+            console.log(response);
+            if (!response.ok) {
+              const errorMsg = (await response.json()).detail;
+              alert(`Failed to delete provider: ${errorMsg}`);
+              return;
+            }
+
+            mutate(LLM_PROVIDERS_ADMIN_URL);
+            onDeleted();
+          }}
+          color="red"
+        >
+          Delete key
+        </Button>
       </div>
     </Modal>
   );
