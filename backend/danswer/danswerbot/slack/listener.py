@@ -1,4 +1,6 @@
+import threading
 import time
+
 from threading import Event
 from typing import Any
 from typing import cast
@@ -34,7 +36,6 @@ from danswer.danswerbot.slack.handlers.handle_message import (
 )
 from danswer.danswerbot.slack.handlers.handle_message import schedule_feedback_reminder
 from danswer.danswerbot.slack.models import SlackMessageInfo
-from danswer.danswerbot.slack.tokens import fetch_tokens
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import decompose_action_id
 from danswer.danswerbot.slack.utils import get_channel_name_from_id
@@ -44,6 +45,7 @@ from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
 from danswer.danswerbot.slack.utils import rephrase_slack_message
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.engine import get_session_context_manager
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.one_shot_answer.models import ThreadMessage
@@ -53,6 +55,8 @@ from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
+
+from danswer.db.slack_app import fetch_slack_app, fetch_slack_apps
 
 logger = setup_logger()
 
@@ -442,53 +446,138 @@ def _initialize_socket_client(socket_client: SocketModeClient) -> None:
 #
 # NOTE: we are using Web Sockets so that you can run this from within a firewalled VPC
 # without issue.
-if __name__ == "__main__":
+def worker_thread(app_id, stop_event):
     slack_bot_tokens: SlackBotTokens | None = None
     socket_client: SocketModeClient | None = None
+
+    LOOP_TIMEOUT = 60
 
     logger.info("Verifying query preprocessing (NLTK) data is downloaded")
     download_nltk_data()
 
-    while True:
-        try:
-            latest_slack_bot_tokens = fetch_tokens()
+    with get_session_context_manager() as db_session:
+        while True:
+            if stop_event.is_set():
+                break
 
-            if latest_slack_bot_tokens != slack_bot_tokens:
-                if slack_bot_tokens is not None:
-                    logger.info("Slack Bot tokens have changed - reconnecting")
-                else:
-                    # This happens on the very first time the listener process comes up
-                    # or the tokens have updated (set up for the first time)
-                    with Session(get_sqlalchemy_engine()) as db_session:
-                        embedding_model = get_current_db_embedding_model(db_session)
+            try:
+                app = fetch_slack_app(db_session=db_session, slack_app_id=app_id)
+                if not app:
+                    raise ConfigNotFoundError
 
-                        warm_up_encoders(
-                            model_name=embedding_model.model_name,
-                            normalize=embedding_model.normalize,
-                            model_server_host=MODEL_SERVER_HOST,
-                            model_server_port=MODEL_SERVER_PORT,
-                        )
+                latest_slack_bot_tokens = SlackBotTokens(bot_token=app.bot_token, app_token=app.app_token)
 
-                slack_bot_tokens = latest_slack_bot_tokens
-                # potentially may cause a message to be dropped, but it is complicated
-                # to avoid + (1) if the user is changing tokens, they are likely okay with some
-                # "migration downtime" and (2) if a single message is lost it is okay
-                # as this should be a very rare occurrence
+                if latest_slack_bot_tokens != slack_bot_tokens:
+                    if slack_bot_tokens is not None:
+                        logger.info("Slack Bot tokens have changed - reconnecting")
+                    else:
+                        # This happens on the very first time the listener process comes up
+                        # or the tokens have updated (set up for the first time)
+                        with Session(get_sqlalchemy_engine()) as db_session:
+                            embedding_model = get_current_db_embedding_model(db_session)
+
+                            warm_up_encoders(
+                                model_name=embedding_model.model_name,
+                                normalize=embedding_model.normalize,
+                                model_server_host=MODEL_SERVER_HOST,
+                                model_server_port=MODEL_SERVER_PORT,
+                            )
+
+                    slack_bot_tokens = latest_slack_bot_tokens
+                    # potentially may cause a message to be dropped, but it is complicated
+                    # to avoid + (1) if the user is changing tokens, they are likely okay with some
+                    # "migration downtime" and (2) if a single message is lost it is okay
+                    # as this should be a very rare occurrence
+                    if socket_client:
+                        socket_client.close()
+
+                    socket_client = _get_socket_client(slack_bot_tokens)
+                    _initialize_socket_client(socket_client)
+
+                # Let the handlers run in the background + re-check for token updates every 60 seconds
+                stop_event.wait(timeout=LOOP_TIMEOUT)
+            except ConfigNotFoundError:
+                # try again every LOOP_TIMEOUT seconds. This is needed since the user may add tokens
+                # via the UI at any point in the programs lifecycle - if we just allow it to
+                # fail, then the user will need to restart the containers after adding tokens
+                logger.debug(
+                    f"Missing Slack Bot tokens - waiting {LOOP_TIMEOUT} seconds and trying again"
+                )
                 if socket_client:
-                    socket_client.close()
+                    socket_client.disconnect()
+                stop_event.wait(timeout=LOOP_TIMEOUT)
 
-                socket_client = _get_socket_client(slack_bot_tokens)
-                _initialize_socket_client(socket_client)
+    return
 
-            # Let the handlers run in the background + re-check for token updates every 60 seconds
-            Event().wait(timeout=60)
-        except ConfigNotFoundError:
-            # try again every 30 seconds. This is needed since the user may add tokens
-            # via the UI at any point in the programs lifecycle - if we just allow it to
-            # fail, then the user will need to restart the containers after adding tokens
-            logger.debug(
-                "Missing Slack Bot tokens - waiting 60 seconds and trying again"
-            )
-            if socket_client:
-                socket_client.disconnect()
-            time.sleep(60)
+
+if __name__ == "__main__":
+    MAIN_LOOP_TIMEOUT = 60
+    JOIN_TIMEOUT = 15
+
+    active_threads: dict = {}  # map of app id's to thread metadata
+
+    with get_session_context_manager() as db_session:
+        while True:
+            apps = fetch_slack_apps(db_session=db_session)
+            m_apps = {}
+
+            active_thread_keys = list(active_threads.keys())
+            active_thread_keys_not_found = list(active_thread_keys)
+
+            apps_to_activate = []
+            apps_to_deactivate = []
+
+            # build a list of app threads that should be activated or deactivated
+            for a in apps:
+                m_apps[a.id] = a
+
+                # any entry in active_thread_keys that isn't eventually found should be deactivated
+                try:
+                    active_thread_keys_not_found.remove(a.id)
+                except ValueError:
+                    pass  # Element not in list, so do nothing
+
+                if a.enabled:
+                    # activate if a is enabled and not in active_thread_keys
+                    if a.id not in active_thread_keys:
+                        apps_to_activate.append(a.id)    
+                    continue
+                else:
+                    # deactivate if a is disabled and in active_thread_keys
+                    if a.id in active_thread_keys:
+                        apps_to_deactivate.append(a.id)    
+                    continue
+
+            apps_to_deactivate.extend(active_thread_keys_not_found)
+
+            for a_id in apps_to_deactivate:
+                tm = active_threads[a_id]
+                tm['stop'].set()
+                tm['thread'].join(timeout=JOIN_TIMEOUT)
+                if tm['thread'].is_alive():
+                    logger.debug(f"Slack app worker thread is still alive after {JOIN_TIMEOUT} seconds. id={a_id} name={tm['name']}")
+
+                active_threads.pop(a_id)
+                
+            for a_id in apps_to_activate:
+                a = m_apps[a_id]
+
+                tm = {}
+                stop_event = threading.Event()
+
+                kwargs = {
+                    'app_id': a_id,
+                    'stop_event': stop_event,
+                }
+                
+                t = threading.Thread(target=worker_thread, kwargs=kwargs)
+                t.start()
+
+                tm['name'] = a.name
+                tm['stop'] = threading.Event()
+                tm['thread'] = t
+
+                active_threads[a_id] = tm
+
+            Event().wait(timeout=MAIN_LOOP_TIMEOUT)
+    

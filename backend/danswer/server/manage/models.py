@@ -10,6 +10,7 @@ from danswer.configs.constants import AuthType
 from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
+from danswer.db.models import SlackApp as SlackAppModel
 from danswer.db.models import SlackBotConfig as SlackBotConfigModel
 from danswer.db.models import SlackBotResponseType
 from danswer.indexing.models import EmbeddingModelDetail
@@ -83,6 +84,14 @@ class HiddenUpdateRequest(BaseModel):
     document_id: str
     hidden: bool
 
+class SlackAppCreationRequest(BaseModel):
+    name: str
+    description: str
+    enabled: bool
+
+    bot_token: str
+    app_token: str
+    
 
 class SlackBotTokens(BaseModel):
     bot_token: str
@@ -98,7 +107,9 @@ class SlackBotConfigCreationRequest(BaseModel):
     # by an optional `PersonaSnapshot` object. Keeping it like this
     # for now for simplicity / speed of development
     document_sets: list[int] | None
-    persona_id: int | None  # NOTE: only one of `document_sets` / `persona_id` should be set
+    persona_id: (
+        int | None
+    )  # NOTE: only one of `document_sets` / `persona_id` should be set
     channel_names: list[str]
     respond_tag_only: bool = False
     respond_to_bots: bool = False
@@ -150,6 +161,45 @@ class SlackBotConfig(BaseModel):
             channel_config=slack_bot_config_model.channel_config,
             response_type=slack_bot_config_model.response_type,
         )
+
+
+class SlackApp(BaseModel):
+    id: int
+    name: str
+    description: str
+    enabled: bool
+
+    bot_token: str
+    app_token: str
+
+    @classmethod
+    def from_model(
+        cls, slack_app_model: SlackAppModel
+    ) -> "SlackApp":
+        return cls(
+            id=slack_app_model.id,
+            name=slack_app_model.name,
+            description=slack_app_model.description,
+            enabled=slack_app_model.enabled,
+            bot_token=slack_app_model.bot_token,
+            app_token=slack_app_model.app_token,
+        )
+
+# export interface SlackApp {
+#   id: number;
+#   name: string;
+#   description: string;
+#   enabled: boolean;
+
+#   // tokens
+#   bot_token: string,
+#   app_token: string;
+
+#   // bot config
+#   persona: Persona | null;
+#   channel_config: ChannelConfig;
+#   response_type: SlackBotResponseType;
+# }
 
 
 class FullModelVersionResponse(BaseModel):
