@@ -31,6 +31,7 @@ import {
   ZendeskIcon,
   ZulipIcon,
   MediaWikiIcon,
+  WebOktaIcon,
   WikipediaIcon,
   S3Icon,
   OCIStorageIcon,
@@ -55,6 +56,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   web: {
     icon: GlobeIcon,
     displayName: "Web",
+    category: SourceCategory.ImportedKnowledge,
+  },
+  web_okta: {
+    icon: WebOktaIcon,
+    displayName: "Web (Okta)",
     category: SourceCategory.ImportedKnowledge,
   },
   file: {

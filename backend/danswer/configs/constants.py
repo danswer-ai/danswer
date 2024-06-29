@@ -70,6 +70,7 @@ class DocumentSource(str, Enum):
     INGESTION_API = "ingestion_api"
     SLACK = "slack"
     WEB = "web"
+    WEB_OKTA = "web_okta"
     GOOGLE_DRIVE = "google_drive"
     GMAIL = "gmail"
     REQUESTTRACKER = "requesttracker"
