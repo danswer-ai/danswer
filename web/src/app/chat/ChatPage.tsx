@@ -22,6 +22,7 @@ import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import {
   buildChatUrl,
   buildLatestMessageChain,
+  checkAnyAssistantHasSearch,
   createChatSession,
   getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
@@ -62,7 +63,6 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
 import {
   checkLLMSupportsImageInput,
-  destructureValue,
   getFinalLLM,
   structureValue,
 } from "@/lib/llm/utils";
@@ -78,9 +78,7 @@ import { TbLayoutSidebarRightExpand } from "react-icons/tb";
 import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 
 import ResizableSection from "@/components/resizable/ResizableSection";
-import { Button } from "@tremor/react";
 
-const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
 const SYSTEM_MESSAGE_ID = -3;
@@ -107,6 +105,12 @@ export function ChatPage({
   } = useChatContext();
 
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
+
+  const [selectedAssistant, setSelectedAssistant] = useState<Persona | null>(
+    null
+  );
+  const [alternativeGeneratingAssistant, setAlternativeGeneratingAssistant] =
+    useState<Persona | null>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -213,6 +217,7 @@ export function ChatPage({
       const response = await fetch(
         `/api/chat/get-chat-session/${existingChatSessionId}`
       );
+
       const chatSession = (await response.json()) as BackendChatSession;
 
       setSelectedPersona(
@@ -350,6 +355,7 @@ export function ChatPage({
     setCompleteMessageMap(newCompleteMessageMap);
     return newCompleteMessageMap;
   };
+
   const messageHistory = buildLatestMessageChain(completeMessageMap);
   const [isStreaming, setIsStreaming] = useState(false);
 
@@ -405,6 +411,7 @@ export function ChatPage({
   // just choose a conservative default, this will be updated in the
   // background on initial load / on persona change
   const [maxTokens, setMaxTokens] = useState<number>(4096);
+
   // fetch # of allowed document tokens for the selected Persona
   useEffect(() => {
     async function fetchMaxTokens() {
@@ -619,13 +626,17 @@ export function ChatPage({
     queryOverride,
     forceSearch,
     isSeededChat,
+    alternativeAssistant = null,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
     queryOverride?: string;
     forceSearch?: boolean;
     isSeededChat?: boolean;
+    alternativeAssistant?: Persona | null;
   } = {}) => {
+    setAlternativeGeneratingAssistant(alternativeAssistant);
+
     clientScrollToBottom();
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
@@ -645,6 +656,7 @@ export function ChatPage({
     const messageToResend = messageHistory.find(
       (message) => message.messageId === messageIdToResend
     );
+
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
       messageToResend?.parentMessageId !== undefined
@@ -703,12 +715,19 @@ export function ChatPage({
     const frozenCompleteMessageMap = upsertToCompleteMessageMap({
       messages: messageUpdates,
     });
+
     // on initial message send, we insert a dummy system message
     // set this as the parent here if no parent is set
     if (!parentMessage && frozenCompleteMessageMap.size === 2) {
       parentMessage = frozenCompleteMessageMap.get(SYSTEM_MESSAGE_ID) || null;
     }
+
+    const currentAssistantId = alternativeAssistant
+      ? alternativeAssistant.id
+      : selectedAssistant?.id;
+
     resetInputBar();
+
     setIsStreaming(true);
     let answer = "";
     let query: string | null = null;
@@ -721,6 +740,7 @@ export function ChatPage({
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
     let toolCalls: ToolCallMetadata[] = [];
+
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
@@ -728,6 +748,7 @@ export function ChatPage({
       const stack = new CurrentMessageFIFO();
       updateCurrentMessageFIFO(stack, {
         message: currMessage,
+        alternateAssistantId: currentAssistantId,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
@@ -846,6 +867,7 @@ export function ChatPage({
                 files: finalMessage?.files || aiMessageImages || [],
                 toolCalls: finalMessage?.tool_calls || toolCalls,
                 parentMessageId: newUserMessageId,
+                alternateAssistantID: selectedAssistant?.id,
               },
             ]);
           }
@@ -905,6 +927,7 @@ export function ChatPage({
     ) {
       setSelectedMessageForDocDisplay(finalMessage.message_id);
     }
+    setAlternativeGeneratingAssistant(null);
   };
 
   const onFeedback = async (
@@ -1021,9 +1044,36 @@ export function ChatPage({
     setShowDocSidebar((showDocSidebar) => !showDocSidebar); // Toggle the state which will in turn toggle the class
   };
 
-  const retrievalDisabled = !personaIncludesRetrieval(livePersona);
+  useEffect(() => {
+    const includes = checkAnyAssistantHasSearch(
+      messageHistory,
+      availablePersonas,
+      livePersona
+    );
+    setRetrievalEnabled(includes);
+  }, [messageHistory, availablePersonas, livePersona]);
+
+  const [retrievalEnabled, setRetrievalEnabled] = useState(() => {
+    return checkAnyAssistantHasSearch(
+      messageHistory,
+      availablePersonas,
+      livePersona
+    );
+  });
+  const [editingRetrievalEnabled, setEditingRetrievalEnabled] = useState(false);
   const sidebarElementRef = useRef<HTMLDivElement>(null);
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
+
+  const currentPersona = selectedAssistant || livePersona;
+
+  const updateSelectedAssistant = (newAssistant: Persona | null) => {
+    setSelectedAssistant(newAssistant);
+    if (newAssistant) {
+      setEditingRetrievalEnabled(personaIncludesRetrieval(newAssistant));
+    } else {
+      setEditingRetrievalEnabled(false);
+    }
+  };
 
   return (
     <>
@@ -1094,7 +1144,7 @@ export function ChatPage({
                 <>
                   <div
                     className={`w-full sm:relative h-screen ${
-                      retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
+                      !retrievalEnabled ? "pb-[111px]" : "pb-[140px]"
                     }
                       flex-auto transition-margin duration-300 
                       overflow-x-auto
@@ -1102,6 +1152,7 @@ export function ChatPage({
                     {...getRootProps()}
                   >
                     {/* <input {...getInputProps()} /> */}
+
                     <div
                       className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
                       ref={scrollableDivRef}
@@ -1140,7 +1191,7 @@ export function ChatPage({
 
                               <div className="ml-4 flex my-auto">
                                 <UserDropdown user={user} />
-                                {!retrievalDisabled && !showDocSidebar && (
+                                {retrievalEnabled && !showDocSidebar && (
                                   <button
                                     className="ml-4 mt-auto"
                                     onClick={() => toggleSidebar()}
@@ -1159,7 +1210,6 @@ export function ChatPage({
                         !isStreaming && (
                           <ChatIntro
                             availableSources={finalAvailableSources}
-                            availablePersonas={filteredAssistants}
                             selectedPersona={livePersona}
                           />
                         )}
@@ -1231,6 +1281,15 @@ export function ChatPage({
                                 i === messageHistory.length - 1);
                             const previousMessage =
                               i !== 0 ? messageHistory[i - 1] : null;
+
+                            const currentAlternativeAssistant =
+                              message.alternateAssistantID != null
+                                ? availablePersonas.find(
+                                    (persona) =>
+                                      persona.id == message.alternateAssistantID
+                                  )
+                                : null;
+
                             return (
                               <div
                                 key={`${i}-${existingChatSessionId}`}
@@ -1241,6 +1300,10 @@ export function ChatPage({
                                 }
                               >
                                 <AIMessage
+                                  currentPersona={livePersona}
+                                  alternativeAssistant={
+                                    currentAlternativeAssistant
+                                  }
                                   messageId={message.messageId}
                                   content={message.message}
                                   files={message.files}
@@ -1297,6 +1360,8 @@ export function ChatPage({
                                             messageIdToResend:
                                               previousMessage.messageId,
                                             queryOverride: newQuery,
+                                            alternativeAssistant:
+                                              currentAlternativeAssistant,
                                           });
                                         }
                                       : undefined
@@ -1326,6 +1391,8 @@ export function ChatPage({
                                         messageIdToResend:
                                           previousMessage.messageId,
                                         forceSearch: true,
+                                        alternativeAssistant:
+                                          currentAlternativeAssistant,
                                       });
                                     } else {
                                       setPopup({
@@ -1335,7 +1402,13 @@ export function ChatPage({
                                       });
                                     }
                                   }}
-                                  retrievalDisabled={retrievalDisabled}
+                                  retrievalDisabled={
+                                    currentAlternativeAssistant
+                                      ? !personaIncludesRetrieval(
+                                          currentAlternativeAssistant!
+                                        )
+                                      : !retrievalEnabled
+                                  }
                                 />
                               </div>
                             );
@@ -1343,6 +1416,7 @@ export function ChatPage({
                             return (
                               <div key={`${i}-${existingChatSessionId}`}>
                                 <AIMessage
+                                  currentPersona={livePersona}
                                   messageId={message.messageId}
                                   personaName={livePersona.name}
                                   content={
@@ -1355,7 +1429,6 @@ export function ChatPage({
                             );
                           }
                         })}
-
                         {isStreaming &&
                           messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
@@ -1364,6 +1437,11 @@ export function ChatPage({
                               key={`${messageHistory.length}-${existingChatSessionId}`}
                             >
                               <AIMessage
+                                currentPersona={livePersona}
+                                alternativeAssistant={
+                                  alternativeGeneratingAssistant ??
+                                  selectedAssistant
+                                }
                                 messageId={null}
                                 personaName={livePersona.name}
                                 content={
@@ -1388,33 +1466,30 @@ export function ChatPage({
                         <div ref={endPaddingRef} className=" h-[95px]" />
                         <div ref={endDivRef}></div>
 
-                        {livePersona &&
-                          livePersona.starter_messages &&
-                          livePersona.starter_messages.length > 0 &&
+                        {currentPersona &&
+                          currentPersona.starter_messages &&
+                          currentPersona.starter_messages.length > 0 &&
                           selectedPersona &&
                           messageHistory.length === 0 &&
                           !isFetchingChatMessages && (
                             <div
                               className={`
-                              mx-auto 
-                              px-4 
-                              w-searchbar-xs 
-                              2xl:w-searchbar-sm 
-                              3xl:w-searchbar 
-                              grid 
-                              gap-4 
-                              grid-cols-1 
-                              grid-rows-1 
-                              mt-4 
-                              md:grid-cols-2 
-                              mb-6`}
+                            mx-auto 
+                            px-4 
+                            w-searchbar-xs 
+                            2xl:w-searchbar-sm 
+                            3xl:w-searchbar 
+                            grid 
+                            gap-4 
+                            grid-cols-1 
+                            grid-rows-1 
+                            mt-4 
+                            md:grid-cols-2 
+                            mb-6`}
                             >
-                              {livePersona.starter_messages.map(
+                              {currentPersona.starter_messages.map(
                                 (starterMessage, i) => (
-                                  <div
-                                    key={`${i}-${existingChatSessionId}`}
-                                    className="w-full"
-                                  >
+                                  <div key={i} className="w-full">
                                     <StarterMessage
                                       starterMessage={starterMessage}
                                       onClick={() =>
@@ -1433,28 +1508,24 @@ export function ChatPage({
                       </div>
                     </div>
 
-                    <div
-                      ref={inputRef}
-                      className="absolute bottom-0 z-10 w-full"
-                    >
-                      <div className="w-full relative pb-4">
-                        {aboveHorizon && (
-                          <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
-                            <button
-                              onClick={() => clientScrollToBottom(true)}
-                              className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2 mx-auto "
-                            >
-                              <FiArrowDown size={18} />
-                            </button>
-                          </div>
-                        )}
+                    <div className="absolute bottom-0 z-10 w-full">
+                      <div className="w-full pb-4">
                         <ChatInputBar
+                          onSetSelectedAssistant={(
+                            alternativeAssistant: Persona | null
+                          ) => {
+                            updateSelectedAssistant(alternativeAssistant);
+                          }}
+                          alternativeAssistant={selectedAssistant}
+                          personas={filteredAssistants}
                           message={message}
                           setMessage={setMessage}
                           onSubmit={onSubmit}
                           isStreaming={isStreaming}
                           setIsCancelled={setIsCancelled}
-                          retrievalDisabled={retrievalDisabled}
+                          retrievalDisabled={
+                            !personaIncludesRetrieval(currentPersona)
+                          }
                           filterManager={filterManager}
                           llmOverrideManager={llmOverrideManager}
                           selectedAssistant={livePersona}
@@ -1468,7 +1539,7 @@ export function ChatPage({
                     </div>
                   </div>
 
-                  {!retrievalDisabled ? (
+                  {retrievalEnabled || editingRetrievalEnabled ? (
                     <div
                       ref={sidebarElementRef}
                       className={`relative flex-none  overflow-y-hidden sidebar bg-background-weak h-screen`}

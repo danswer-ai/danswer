@@ -34,6 +34,7 @@ from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import ToolCall
 from danswer.db.models import User
+from danswer.db.persona import get_persona_by_id
 from danswer.document_index.factory import get_default_document_index
 from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import FileDescriptor
@@ -223,7 +224,15 @@ def stream_chat_message_objects(
         parent_id = new_msg_req.parent_message_id
         reference_doc_ids = new_msg_req.search_doc_ids
         retrieval_options = new_msg_req.retrieval_options
-        persona = chat_session.persona
+        alternate_assistant_id = new_msg_req.alternate_assistant_id
+
+        # use alternate persona if alternative assistant id is passed in
+        if alternate_assistant_id is not None:
+            persona = get_persona_by_id(
+                alternate_assistant_id, user=user, db_session=db_session
+            )
+        else:
+            persona = chat_session.persona
 
         prompt_id = new_msg_req.prompt_id
         if prompt_id is None and persona.prompts:
@@ -380,6 +389,7 @@ def stream_chat_message_objects(
             # rephrased_query=,
             # token_count=,
             message_type=MessageType.ASSISTANT,
+            alternate_assistant_id=new_msg_req.alternate_assistant_id,
             # error=,
             # reference_docs=,
             db_session=db_session,
@@ -389,11 +399,15 @@ def stream_chat_message_objects(
         if not final_msg.prompt:
             raise RuntimeError("No Prompt found")
 
-        prompt_config = PromptConfig.from_model(
-            final_msg.prompt,
-            prompt_override=(
-                new_msg_req.prompt_override or chat_session.prompt_override
-            ),
+        prompt_config = (
+            PromptConfig.from_model(
+                final_msg.prompt,
+                prompt_override=(
+                    new_msg_req.prompt_override or chat_session.prompt_override
+                ),
+            )
+            if not persona
+            else PromptConfig.from_model(persona.prompts[0])
         )
 
         # find out what tools to use

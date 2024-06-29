@@ -316,6 +316,7 @@ def create_new_chat_message(
     rephrased_query: str | None = None,
     error: str | None = None,
     reference_docs: list[DBSearchDoc] | None = None,
+    alternate_assistant_id: int | None = None,
     # Maps the citation number [n] to the DB SearchDoc
     citations: dict[int, int] | None = None,
     tool_calls: list[ToolCall] | None = None,
@@ -334,6 +335,7 @@ def create_new_chat_message(
         files=files,
         tool_calls=tool_calls if tool_calls else [],
         error=error,
+        alternate_assistant_id=alternate_assistant_id,
     )
 
     # SQL Alchemy will propagate this to update the reference_docs' foreign keys
@@ -497,14 +499,14 @@ def translate_db_search_doc_to_server_search_doc(
         hidden=db_search_doc.hidden,
         metadata=db_search_doc.doc_metadata if not remove_doc_content else {},
         score=db_search_doc.score,
-        match_highlights=db_search_doc.match_highlights
-        if not remove_doc_content
-        else [],
+        match_highlights=(
+            db_search_doc.match_highlights if not remove_doc_content else []
+        ),
         updated_at=db_search_doc.updated_at if not remove_doc_content else None,
         primary_owners=db_search_doc.primary_owners if not remove_doc_content else [],
-        secondary_owners=db_search_doc.secondary_owners
-        if not remove_doc_content
-        else [],
+        secondary_owners=(
+            db_search_doc.secondary_owners if not remove_doc_content else []
+        ),
     )
 
 
@@ -545,6 +547,7 @@ def translate_db_message_to_chat_message_detail(
             )
             for tool_call in chat_message.tool_calls
         ],
+        alternate_assistant_id=chat_message.alternate_assistant_id,
     )
 
     return chat_msg_detail

@@ -708,6 +708,11 @@ class ChatMessage(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_session_id: Mapped[int] = mapped_column(ForeignKey("chat_session.id"))
+
+    alternate_assistant_id = mapped_column(
+        Integer, ForeignKey("persona.id"), nullable=True
+    )
+
     parent_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latest_child_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     message: Mapped[str] = mapped_column(Text)
@@ -736,10 +741,12 @@ class ChatMessage(Base):
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
     prompt: Mapped[Optional["Prompt"]] = relationship("Prompt")
+
     chat_message_feedbacks: Mapped[list["ChatMessageFeedback"]] = relationship(
         "ChatMessageFeedback",
         back_populates="chat_message",
     )
+
     document_feedbacks: Mapped[list["DocumentRetrievalFeedback"]] = relationship(
         "DocumentRetrievalFeedback",
         back_populates="chat_message",
