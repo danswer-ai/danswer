@@ -58,7 +58,8 @@ export default function Web() {
         Step 1: Specify which websites to index
       </Title>
       <p className="text-sm mb-2">
-        We re-fetch the latest state of the website once a day.
+        We re-fetch the latest state of the website once a day.<br>
+        This will also index pdf files (but will not follow links inside the documents).
       </p>
       <Card>
         <ConnectorForm<WebConfig>
