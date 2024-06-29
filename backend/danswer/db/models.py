@@ -131,6 +131,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     chat_folders: Mapped[list["ChatFolder"]] = relationship(
         "ChatFolder", back_populates="user"
     )
+
     prompts: Mapped[list["Prompt"]] = relationship("Prompt", back_populates="user")
     # Personas owned by this user
     personas: Mapped[list["Persona"]] = relationship("Persona", back_populates="user")

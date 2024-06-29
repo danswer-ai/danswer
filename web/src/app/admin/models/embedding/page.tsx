@@ -33,6 +33,7 @@ import { SelectModelModal } from "./modals/SelectModel";
 import { ChangeCredentialsModal } from "./modals/ChangeCredentials";
 import { ModelSelectionConfirmationModal } from "./modals/ModelSelection";
 import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../llm/constants";
+import { AlreadyPickedModal } from "./modals/AlreadyPickedModal";
 
 export interface EmbeddingDetails {
   api_key: string;
@@ -50,6 +51,8 @@ function Main() {
   const [newUnenabledProviders, setNewUnenabledProviders] = useState<string[]>(
     []
   );
+  const [alreadyPicked, setAlreadyPicked] =
+    useState<CloudEmbeddingModel | null>(null);
 
   const [showModelNotConfiguredModal, setShowModelNotConfiguredModal] =
     useState<CloudEmbeddingProvider | null>(null);
@@ -237,6 +240,12 @@ function Main() {
         which then power Danswer&apos;s search.
       </Text>
 
+      {alreadyPicked && (
+        <AlreadyPickedModal
+          model={alreadyPicked}
+          onClose={() => setAlreadyPicked(null)}
+        />
+      )}
       {tentativeNewOpenmbeddingModel && (
         <ModelSelectionConfirmationModal
           selectedModel={tentativeNewOpenmbeddingModel}
@@ -344,14 +353,14 @@ function Main() {
               onClick={() => setOpenToggle(true)}
               className={` mx-2 p-2 font-bold  ${openToggle ? "rounded bg-neutral-900 text-neutral-100 underline" : "hover:underline"}`}
             >
-              Open source
+              Self-hosted
             </button>
             <div className="px-2 ">
               <button
                 onClick={() => setOpenToggle(false)}
                 className={`mx-2 p-2 font-bold  ${!openToggle ? "rounded bg-neutral-900   text-neutral-100 underline" : " hover:underline"}`}
               >
-                Hosted
+                Cloud-based
               </button>
             </div>
           </div>
@@ -367,6 +376,7 @@ function Main() {
           />
         ) : (
           <CloudEmbeddingPage
+            setAlreadyPicked={setAlreadyPicked}
             embeddingProviderDetails={embeddingProviderDetails}
             newEnabledProviders={newEnabledProviders}
             newUnenabledProviders={newUnenabledProviders}

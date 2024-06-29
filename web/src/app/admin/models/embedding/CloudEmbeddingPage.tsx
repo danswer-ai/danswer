@@ -10,6 +10,9 @@ import {
 } from "./components/types";
 import { FaLock } from "react-icons/fa";
 import { EmbeddingDetails } from "./page";
+import { FiInfo, FiRadio } from "react-icons/fi";
+import { HoverPopup } from "@/components/HoverPopup";
+import { Dispatch, SetStateAction } from "react";
 
 export default function CloudEmbeddingPage({
   embeddingProviderDetails,
@@ -20,7 +23,9 @@ export default function CloudEmbeddingPage({
   selectedModel,
   setShowModelNotConfiguredModal,
   setChangeCredentials,
+  setAlreadyPicked,
 }: {
+  setAlreadyPicked: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
   newUnenabledProviders: string[];
   embeddingProviderDetails?: EmbeddingDetails[];
   newEnabledProviders: string[];
@@ -62,7 +67,6 @@ export default function CloudEmbeddingPage({
 
   return (
     <div>
-      <Title className="mt-8">Configure Credentials</Title>
       <div className="gap-4 mt-2 pb-10 flex content-start flex-wrap">
         {providers.map((provider, ind) => (
           <div
@@ -79,24 +83,62 @@ export default function CloudEmbeddingPage({
                 }}
                 className="cursor-pointer ml-auto"
               >
-                {!provider.configured && <FaLock />}
+                <a className="my-auto hover:underline cursor-pointer">
+                  <HoverPopup
+                    mainContent={
+                      <FiInfo className="cusror-pointer" size={20} />
+                    }
+                    popupContent={
+                      <div className="text-sm text-neutral-800 w-52 flex">
+                        <div className="flex mx-auto">
+                          <div className="my-auto">{provider.description}</div>
+                        </div>
+                      </div>
+                    }
+                    direction="left-top"
+                    style="dark"
+                  />
+                </a>
+                {/* {!provider.configured &&
+                
+                 
+                  //  <FaLock />
+                } */}
               </button>
             </div>
-            <div>{provider.description}</div>
+            <button
+              onClick={() => {
+                if (!provider.configured) {
+                  setTentativelyNewProvider(provider);
+                } else {
+                  setChangeCredentials(provider);
+                }
+              }}
+              className="hover:underline my-2 mr-auto cursor-pointer"
+            >
+              {provider.configured
+                ? "Modify credentials"
+                : "Configure credentials"}
+            </button>
+            {/* <div>{provider.description}</div> */}
 
-            <div className="mt-4">
+            <div>
               {provider.embedding_models.map((model, index) => (
                 <div
                   key={index}
-                  className={`p-3 mb-2 border-2 border-neutral-300 border-opacity-40 rounded-md rounded cursor-pointer ${
-                    provider.configured
-                      ? selectedModel?.name === model.name
-                        ? "bg-teal-50 border border-blue-300"
-                        : "hover:bg-blue-50"
-                      : "hover:bg-rose-50"
-                  }`}
+                  className={`p-3 mb-2 border-2 border-neutral-300 border-opacity-40 rounded-md rounded cursor-pointer  
+                    ${model.enabled ? "bg-background-stronger" : "hover:bg-background-strong"} 
+                    ${
+                      provider.configured
+                      // ? selectedModel?.name === model.name
+                      // ? "bg-teal-50 border border-blue-300"
+                      // : "hover:bg-blue-50"
+                      // : "hover:bg-rose-50"
+                    }`}
                   onClick={() => {
-                    if (!provider.configured) {
+                    if (model.enabled) {
+                      setAlreadyPicked(model);
+                    } else if (!provider.configured) {
                       setShowModelNotConfiguredModal(provider);
                     } else {
                       setTentativeNewEmbeddingModel(model);
@@ -105,12 +147,15 @@ export default function CloudEmbeddingPage({
                 >
                   <div className="flex justify-between">
                     <div className="font-medium">{model.name}</div>
-                    <p className="text-sm flex-none">
+                    {/* <p className="text-sm flex-none">
                       {provider.configured
                         ? model.enabled
                           ? "Selected"
                           : "Unselected"
                         : "Unconfigured"}
+                    </p> */}
+                    <p className="text-sm flex-none">
+                      ${model.pricePerMillion}/M tokens
                     </p>
                   </div>
                   <div className="text-sm text-gray-600">
@@ -120,22 +165,8 @@ export default function CloudEmbeddingPage({
               ))}
             </div>
 
-            <div className="text-sm flex justify-between mt-1 mx-2">
-              <button
-                onClick={() => {
-                  if (!provider.configured) {
-                    setTentativelyNewProvider(provider);
-                  } else {
-                    setChangeCredentials(provider);
-                  }
-                }}
-                className="hover:underline cursor-pointer"
-              >
-                {provider.configured
-                  ? "Modify credentials"
-                  : "Configure credentials"}
-              </button>
-              <a className="hover:underline cursor-pointer">Learn more</a>
+            <div className="text-sm font-semibold flex justify-between mt-1 mx-2">
+              {/* <a className="hover:underline cursor-pointer">Learn more</a> */}
             </div>
           </div>
         ))}

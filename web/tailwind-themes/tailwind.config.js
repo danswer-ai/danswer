@@ -42,6 +42,7 @@ module.exports = {
         "background-subtle": "#e5e7eb", // gray-200
         "background-emphasis": "#f6f7f8",
         "background-strong": "#eaecef",
+        "background-stronger": "#d1d5db",
         "background-search": "#ffffff",
         "background-custom-header": "#f3f4f6",
         "background-inverted": "#000000",
