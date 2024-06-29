@@ -1,4 +1,4 @@
-import { Persona } from "@/lib/admin/interfaces";
+import { Persona } from "@/interfaces/persona";
 import { Bubble } from "@/components/Bubble";
 import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";

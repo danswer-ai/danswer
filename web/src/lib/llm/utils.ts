@@ -1,4 +1,4 @@
-import { Persona } from "@/lib/admin/interfaces";
+import { Persona } from "@/interfaces/persona";
 import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 
 export function getFinalLLM(

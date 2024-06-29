@@ -1,7 +1,7 @@
 "use client";
 
 import { Text } from "@tremor/react";
-import { Persona } from "@/lib/admin/interfaces";
+import { Persona } from "@/interfaces/persona";
 import { useRouter } from "next/navigation";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
 import { usePopup } from "@/components/adminPageComponents/connectors/Popup";

@@ -28,7 +28,7 @@ import {
   Text,
 } from "@tremor/react";
 import { useRouter } from "next/navigation";
-import { Persona } from "@/lib/admin/interfaces";
+import { Persona } from "@/interfaces/persona";
 import { useState } from "react";
 import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
 
@@ -82,7 +82,7 @@ export const SlackBotCreationForm = ({
             document_sets:
               existingSlackBotConfig && existingSlackBotConfig.persona
                 ? existingSlackBotConfig.persona.document_sets.map(
-                    (documentSet) => documentSet.id
+                    (documentSet: { id: any; }) => documentSet.id
                   )
                 : ([] as number[]),
             persona_id:

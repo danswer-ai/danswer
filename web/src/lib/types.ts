@@ -1,4 +1,4 @@
-import { Persona } from "@/lib/admin/interfaces";
+import { Persona } from "@/interfaces/persona";
 
 export interface User {
   id: string;

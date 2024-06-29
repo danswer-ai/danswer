@@ -4,7 +4,7 @@ import React, { useCallback, useRef, useState } from "react";
 import { debounce } from "lodash";
 import { DefaultDropdown } from "@/components/Dropdown";
 import { Text } from "@tremor/react";
-import { Persona } from "@/lib/admin/interfaces";
+import { Persona } from "@/interfaces/persona";
 import { getFinalLLM } from "@/lib/llm/utils";
 
 export function LlmTab({

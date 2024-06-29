@@ -1,3 +1,6 @@
+import { ToolSnapshot } from "@/lib/tools/interfaces";
+import { DocumentSet, MinimalUserSnapshot } from "@/lib/types";
+
 export interface StarterMessage {
   name: string;
   description: string | null;
@@ -14,6 +17,8 @@ export interface Prompt {
   datetime_aware: boolean;
   default_prompt: boolean;
 }
+
+
 
 export interface PersonaCreationRequest {
   name: string;

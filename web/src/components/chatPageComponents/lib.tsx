@@ -17,7 +17,8 @@ import {
   StreamingError,
   ToolRunKickoff,
 } from "./interfaces";
-import { Persona } from "@/lib/admin/interfaces";
+
+import { Persona } from "@/interfaces/persona";
 import { ReadonlyURLSearchParams } from "next/navigation";
 import { SEARCH_PARAM_NAMES } from "./searchParams";
 
