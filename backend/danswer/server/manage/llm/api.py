@@ -12,6 +12,9 @@ from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.llm import remove_llm_provider
 from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_llm_provider
+from danswer.db.llm import upsert_cloud_embedding_provider
+
+
 from danswer.db.models import User
 from danswer.llm.factory import get_default_llms
 from danswer.llm.factory import get_llm
@@ -21,6 +24,10 @@ from danswer.llm.utils import test_llm
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderDescriptor
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
+from danswer.server.manage.llm.models import CloudEmbeddingProviderUpsertRequest
+from danswer.server.manage.llm.models import FullCloudEmbeddingProvider
+
+
 from danswer.server.manage.llm.models import TestLLMRequest
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
@@ -154,3 +161,14 @@ def list_llm_provider_basics(
         LLMProviderDescriptor.from_model(llm_provider_model)
         for llm_provider_model in fetch_existing_llm_providers(db_session)
     ]
+
+
+
+
+@admin_router.put("/embedding-provider")
+def put_cloud_embedding_provider(
+    provider: CloudEmbeddingProviderUpsertRequest,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session)
+) -> FullCloudEmbeddingProvider:
+    return upsert_cloud_embedding_provider(db_session, provider)

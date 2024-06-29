@@ -91,3 +91,25 @@ class FullLLMProvider(LLMProvider):
                 or [llm_provider_model.default_model_name]
             ),
         )
+
+
+class CloudEmbeddingProviderBase(BaseModel):
+    name: str
+    api_key: str | None
+    api_base: str | None
+    api_version: str | None
+    custom_config: dict[str, str] | None
+    default_model_name: str
+    default_model_name: str
+    is_configured: bool = False
+    is_default_provider: bool
+
+class CloudEmbeddingProviderUpsertRequest(CloudEmbeddingProviderBase):
+    model_names: list[str]
+
+class FullCloudEmbeddingProvider(CloudEmbeddingProviderBase):
+    id: int
+    model_names: list[str]
+
+    class Config:
+        orm_mode = True

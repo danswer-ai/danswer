@@ -13,7 +13,7 @@ export function ModelOption({
   onSelect,
 }: {
   model: FullEmbeddingModelDescriptor;
-  onSelect?: (model: EmbeddingModelDescriptor) => void;
+  onSelect?: (model: FullEmbeddingModelDescriptor) => void;
 }) {
   return (
     <div
@@ -70,7 +70,7 @@ export function ModelSelector({
   setSelectedModel,
 }: {
   modelOptions: FullEmbeddingModelDescriptor[];
-  setSelectedModel: (model: EmbeddingModelDescriptor) => void;
+  setSelectedModel: (model: FullEmbeddingModelDescriptor) => void;
 }) {
   return (
     <div>
