@@ -1,7 +1,4 @@
-
-import {
-  FullEmbeddingModelDescriptor,
-} from "./types";
+import { FullEmbeddingModelDescriptor } from "./types";
 import { FiStar } from "react-icons/fi";
 
 export function ModelOption({
@@ -82,7 +79,3 @@ export function ModelSelector({
     </div>
   );
 }
-
-
-
-

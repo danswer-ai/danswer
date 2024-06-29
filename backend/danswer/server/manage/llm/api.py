@@ -17,12 +17,10 @@ from danswer.db.llm import upsert_cloud_embedding_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.db.models import User
 from danswer.llm.factory import Embedding
-<<<<<<< HEAD
 from danswer.llm.factory import get_default_llms
 from danswer.llm.factory import get_embedding
-=======
+from danswer.llm.factory import CloudEmbedding
 from danswer.llm.factory import get_default_llm
->>>>>>> 061616e2 (add alter + delete endpoints)
 from danswer.llm.factory import get_llm
 from danswer.llm.llm_provider_options import fetch_available_well_known_llms
 from danswer.llm.llm_provider_options import WellKnownLLMProviderDescriptor
@@ -50,7 +48,7 @@ def test_embedding_configuration(
     _: User | None = Depends(current_admin_user),
 ) -> None:
     try:
-        embedding = Embedding.create(
+        embedding = CloudEmbedding.create(
             api_key=test_llm_request.api_key, provider=test_llm_request.provider
         )
         result = embedding.embed("Test embedding")

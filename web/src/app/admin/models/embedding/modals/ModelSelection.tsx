@@ -188,7 +188,7 @@ export function ProviderCreation({
             target="_blank"
             className="underline cursor-pointer"
           >
-            Learn more here
+            Model dashboard here
           </a>
         </div>
       </Callout>

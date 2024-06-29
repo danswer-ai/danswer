@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
 
+from pydantic import BaseModel
+
 from danswer.access.models import DocumentAccess
 from danswer.connectors.models import Document
 from danswer.utils.logger import setup_logger
-from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from danswer.db.models import EmbeddingModel
@@ -86,6 +87,7 @@ class EmbeddingModelDetail(BaseModel):
     normalize: bool
     query_prefix: str | None
     passage_prefix: str | None
+    cloud_provider_id: int | None
 
     @classmethod
     def from_model(cls, embedding_model: "EmbeddingModel") -> "EmbeddingModelDetail":
@@ -95,4 +97,5 @@ class EmbeddingModelDetail(BaseModel):
             normalize=embedding_model.normalize,
             query_prefix=embedding_model.query_prefix,
             passage_prefix=embedding_model.passage_prefix,
+            cloud_provider_id=embedding_model.cloud_provider_id,
         )

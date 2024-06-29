@@ -5,6 +5,15 @@ from typing import Any
 from typing import cast
 
 import uvicorn
+from fastapi import APIRouter
+from fastapi import FastAPI
+from fastapi import Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from httpx_oauth.clients.google import GoogleOAuth2
+from sqlalchemy.orm import Session
+
 from danswer import __version__
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
@@ -85,17 +94,9 @@ from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
-from fastapi import APIRouter
-from fastapi import FastAPI
-from fastapi import Request
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from httpx_oauth.clients.google import GoogleOAuth2
 from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
-from sqlalchemy.orm import Session
 
 
 logger = setup_logger()
@@ -246,6 +247,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                 time.sleep(wait_time)
 
     logger.info(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
+    print(db_embedding_model.__dict__)
+    # if db_embedding_model.cloud_provider_id is None:
     warm_up_encoders(
         model_name=db_embedding_model.model_name,
         normalize=db_embedding_model.normalize,

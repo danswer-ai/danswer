@@ -43,9 +43,13 @@ export interface EmbeddingDetails {
 
 function Main() {
   const [openToggle, setOpenToggle] = useState(true);
-  const [tenativelyNewProvider, setTentativelyNewProvider] =
+  const [tentativelyNewProvider, setTentativelyNewProvider] =
     useState<CloudEmbeddingProvider | null>(null);
-  const [newEnabledProviders, setNewEnabledProvides] = useState<string[]>([]);
+
+  const [newEnabledProviders, setNewEnabledProviders] = useState<string[]>([]);
+  const [newUnenabledProviders, setNewUnenabledProviders] = useState<string[]>(
+    []
+  );
 
   const [showModelNotConfiguredModal, setShowModelNotConfiguredModal] =
     useState<CloudEmbeddingProvider | null>(null);
@@ -103,6 +107,11 @@ function Main() {
   const onConfirm = async (
     model: CloudEmbeddingModel | EmbeddingModelDescriptor
   ) => {
+    if (!model.model_name) {
+      model.model_name = model?.name;
+      model.cloud_provider_id = 0;
+    }
+    // model.model_name = model.name
     const response = await fetch(
       "/api/secondary-index/set-new-embedding-model",
       {
@@ -178,12 +187,6 @@ function Main() {
     AVAILABLE_MODELS.find((model) => model.model_name === currentModelName) ||
     fillOutEmeddingModelDescriptor(currentEmeddingModel);
 
-  const newModelSelection = futureEmbeddingModel
-    ? AVAILABLE_MODELS.find(
-        (model) => model.model_name === futureEmbeddingModel.model_name
-      ) || fillOutEmeddingModelDescriptor(futureEmbeddingModel)
-    : null;
-
   const onSelectOpenSource = async (model: EmbeddingModelDescriptor) => {
     if (currentEmeddingModel?.model_name === INVALID_OLD_MODEL) {
       await onConfirmSelection(model);
@@ -196,9 +199,35 @@ function Main() {
 
   const handleChangeCredentials = async (apiKey: string) => {
     console.log(
-      `Changing credentials for ${tenativelyNewProvider?.name} with new API key: ${apiKey}`
+      `Changing credentials for ${tentativelyNewProvider?.name} with new API key: ${apiKey}`
     );
     setChangeCredentials(null);
+  };
+
+  const clientsideAddProvider = (provider: CloudEmbeddingProvider) => {
+    const providerName = provider.name;
+    setNewEnabledProviders((newEnabledProviders) => [
+      ...newEnabledProviders,
+      providerName,
+    ]);
+    setNewUnenabledProviders((newUnenabledProviders) =>
+      newUnenabledProviders.filter(
+        (givenProvidername) => givenProvidername != providerName
+      )
+    );
+  };
+
+  const clientsideRemoveProvider = (provider: CloudEmbeddingProvider) => {
+    const providerName = provider.name;
+    setNewEnabledProviders((newEnabledProviders) =>
+      newEnabledProviders.filter(
+        (givenProvidername) => givenProvidername != providerName
+      )
+    );
+    setNewUnenabledProviders((newUnenabledProviders) => [
+      ...newUnenabledProviders,
+      providerName,
+    ]);
   };
 
   return (
@@ -232,16 +261,13 @@ function Main() {
         />
       )}
 
-      {tenativelyNewProvider && (
+      {tentativelyNewProvider && (
         <ProviderCreationModal2
-          selectedProvider={tenativelyNewProvider}
+          selectedProvider={tentativelyNewProvider}
           onConfirm={() => {
             setTentativelyNewProvider(showModelNotConfiguredModal);
             setShowModelNotConfiguredModal(null);
-            setNewEnabledProvides((newEnabledProviders) => [
-              ...newEnabledProviders,
-              tenativelyNewProvider.name,
-            ]);
+            clientsideAddProvider(tentativelyNewProvider);
           }}
           onCancel={() => setTentativelyNewProvider(null)}
         />
@@ -249,6 +275,7 @@ function Main() {
       {changeCredentials && (
         <ChangeCredentialsModal
           onDeleted={() => {
+            clientsideRemoveProvider(changeCredentials);
             setChangeCredentials(null);
           }}
           provider={changeCredentials}
@@ -281,7 +308,7 @@ function Main() {
 
       {showDeleteCredentialsModal && (
         <DeleteCredentialsModal
-          modelProvider={tenativelyNewProvider!}
+          modelProvider={tentativelyNewProvider!}
           onConfirm={() => {
             setShowDeleteCredentialsModal(false);
           }}
@@ -312,19 +339,21 @@ function Main() {
             monitor the progress of the re-indexing on this page.
           </Text>
 
-          <div className="mt-8 w-full mb-12 divide-x-2 divide-solid divide-black grid grid-cols-2 gap-x-2">
+          <div className="mt-8 text-sm  mr-auto  mb-12 divide-x-2  flex   ">
             <button
               onClick={() => setOpenToggle(true)}
-              className={`py-4 font-bold ${openToggle ? " underline" : "hover:underline"}`}
+              className={` mx-2 p-2 font-bold  ${openToggle ? "rounded bg-neutral-900 text-neutral-100 underline" : "hover:underline"}`}
             >
               Open source
             </button>
-            <button
-              onClick={() => setOpenToggle(false)}
-              className={`font-bold ${!openToggle ? " underline" : "hover:underline"}`}
-            >
-              Hosted
-            </button>
+            <div className="px-2 ">
+              <button
+                onClick={() => setOpenToggle(false)}
+                className={`mx-2 p-2 font-bold  ${!openToggle ? "rounded bg-neutral-900   text-neutral-100 underline" : " hover:underline"}`}
+              >
+                Hosted
+              </button>
+            </div>
           </div>
         </>
       )}
@@ -340,6 +369,7 @@ function Main() {
           <CloudEmbeddingPage
             embeddingProviderDetails={embeddingProviderDetails}
             newEnabledProviders={newEnabledProviders}
+            newUnenabledProviders={newUnenabledProviders}
             setTentativeNewEmbeddingModel={setTentativeNewCloudEmbeddingModel}
             setTentativelyNewProvider={setTentativelyNewProvider}
             selectedModel={selectedModel}

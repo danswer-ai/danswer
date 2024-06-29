@@ -5,6 +5,8 @@ from typing import Optional
 from typing import TYPE_CHECKING
 
 import requests
+from transformers import logging as transformer_logging  # type:ignore
+
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.search.enums import EmbedTextType
@@ -17,7 +19,6 @@ from shared_configs.model_server_models import IntentRequest
 from shared_configs.model_server_models import IntentResponse
 from shared_configs.model_server_models import RerankRequest
 from shared_configs.model_server_models import RerankResponse
-from transformers import logging as transformer_logging  # type:ignore
 
 transformer_logging.set_verbosity_error()
 
@@ -80,6 +81,27 @@ def build_model_server_url(
     return f"http://{model_server_url}"
 
 
+# class BaseEmbedding(ABC):
+#     def __init__(
+#         self,
+#         model_name: str,
+#         query_prefix: Optional[str],
+#         passage_prefix: Optional[str],
+#         normalize: bool,
+#         max_seq_length: int = 512,
+#     ):
+#         self.model_name = model_name
+#         self.max_seq_length = max_seq_length
+#         self.query_prefix = query_prefix
+#         self.passage_prefix = passage_prefix
+#         self.normalize = normalize
+
+#     @abstractmethod
+#     def encode(self, texts: list[str], text_type: EmbedTextType) -> list[list[float]]:
+#         pass
+
+
+# class EmbeddingModel(BaseEmbedding):
 class EmbeddingModel:
     def __init__(
         self,
