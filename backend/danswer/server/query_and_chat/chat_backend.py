@@ -43,7 +43,7 @@ from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
 from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_default_llm
+from danswer.llm.factory import get_default_llms
 from danswer.llm.headers import get_litellm_additional_request_headers
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.secondary_llm_flows.chat_session_naming import (
@@ -224,7 +224,7 @@ def rename_chat_session(
     full_history = history_msgs + [final_msg]
 
     try:
-        llm = get_default_llm(
+        llm, _ = get_default_llms(
             additional_headers=get_litellm_additional_request_headers(request.headers)
         )
     except GenAIDisabledException:
