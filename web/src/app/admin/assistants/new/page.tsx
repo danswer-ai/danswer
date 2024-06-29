@@ -10,23 +10,6 @@ import { SuccessfulPersonaUpdateRedirectType } from "../enums";
 export default async function Page() {
   const [values, error] = await fetchAssistantEditorInfoSS();
 
-  let body;
-  if (!values) {
-    body = (
-      <ErrorCallout errorTitle="Something went wrong :(" errorMsg={error} />
-    );
-  } else {
-    body = (
-      <Card>
-        <AssistantEditor
-          {...values}
-          defaultPublic={true}
-          redirectType={SuccessfulPersonaUpdateRedirectType.ADMIN}
-        />
-      </Card>
-    );
-  }
-
   return (
     <div>
       <BackButton />
@@ -35,8 +18,15 @@ export default async function Page() {
         title="Create a New Persona"
         icon={<RobotIcon size={32} />}
       />
-
-      {body}
+      {!values && error && (<ErrorCallout errorTitle="Something went wrong :(" errorMsg={error} />)}
+      {values && (      
+        <Card>
+          <AssistantEditor
+            {...values}
+            defaultPublic={true}
+            redirectType={SuccessfulPersonaUpdateRedirectType.ADMIN}
+          />
+        </Card>)}
     </div>
   );
 }
