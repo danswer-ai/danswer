@@ -8,16 +8,6 @@ from typing import Union
 
 import litellm  # type: ignore
 import tiktoken
-from langchain.prompts.base import StringPromptValue
-from langchain.prompts.chat import ChatPromptValue
-from langchain.schema import PromptValue
-from langchain.schema.language_model import LanguageModelInput
-from langchain.schema.messages import AIMessage
-from langchain.schema.messages import BaseMessage
-from langchain.schema.messages import HumanMessage
-from langchain.schema.messages import SystemMessage
-from tiktoken.core import Encoding
-
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
@@ -30,7 +20,16 @@ from danswer.llm.interfaces import LLM
 from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.search.models import InferenceChunk
 from danswer.utils.logger import setup_logger
+from langchain.prompts.base import StringPromptValue
+from langchain.prompts.chat import ChatPromptValue
+from langchain.schema import PromptValue
+from langchain.schema.language_model import LanguageModelInput
+from langchain.schema.messages import AIMessage
+from langchain.schema.messages import BaseMessage
+from langchain.schema.messages import HumanMessage
+from langchain.schema.messages import SystemMessage
 from shared_configs.configs import LOG_LEVEL
+from tiktoken.core import Encoding
 
 if TYPE_CHECKING:
     from danswer.llm.answering.models import PreviousMessage

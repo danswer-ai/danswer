@@ -1,6 +1,5 @@
-from langchain_core.messages import HumanMessage
-
 from danswer.llm.utils import build_content_with_imgs
+from langchain_core.messages import HumanMessage
 
 
 NON_TOOL_CALLING_PROMPT = """

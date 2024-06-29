@@ -4,8 +4,6 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 
-from sqlalchemy.orm import Session
-
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
 from danswer.configs.app_configs import POLL_CONNECTOR_OFFSET
 from danswer.connectors.factory import instantiate_connector
@@ -32,6 +30,7 @@ from danswer.indexing.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

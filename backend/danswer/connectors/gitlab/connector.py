@@ -9,8 +9,6 @@ from typing import Any
 
 import gitlab
 import pytz
-from gitlab.v4.objects import Project
-
 from danswer.configs.app_configs import GITLAB_CONNECTOR_INCLUDE_CODE_FILES
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -23,6 +21,7 @@ from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
+from gitlab.v4.objects import Project
 
 # List of directories/Files to exclude
 exclude_patterns = [

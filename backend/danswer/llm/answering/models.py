@@ -3,6 +3,11 @@ from collections.abc import Iterator
 from typing import Any
 from typing import TYPE_CHECKING
 
+from danswer.chat.models import AnswerQuestionStreamReturn
+from danswer.configs.constants import MessageType
+from danswer.file_store.models import InMemoryChatFile
+from danswer.llm.override_models import PromptOverride
+from danswer.llm.utils import build_content_with_imgs
 from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
@@ -10,12 +15,6 @@ from langchain.schema.messages import SystemMessage
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import root_validator
-
-from danswer.chat.models import AnswerQuestionStreamReturn
-from danswer.configs.constants import MessageType
-from danswer.file_store.models import InMemoryChatFile
-from danswer.llm.override_models import PromptOverride
-from danswer.llm.utils import build_content_with_imgs
 
 if TYPE_CHECKING:
     from danswer.db.models import ChatMessage

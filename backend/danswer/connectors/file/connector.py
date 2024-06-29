@@ -6,8 +6,6 @@ from pathlib import Path
 from typing import Any
 from typing import IO
 
-from sqlalchemy.orm import Session
-
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
@@ -27,6 +25,7 @@ from danswer.file_processing.extract_file_text import pdf_to_text
 from danswer.file_processing.extract_file_text import read_text_file
 from danswer.file_store.file_store import get_default_file_store
 from danswer.utils.logger import setup_logger
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

@@ -5,9 +5,6 @@ from typing import Any
 from typing import List
 from typing import Optional
 
-from rt.rest1 import ALL_QUEUES
-from rt.rest1 import Rt
-
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -17,6 +14,8 @@ from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
+from rt.rest1 import ALL_QUEUES
+from rt.rest1 import Rt
 
 logger = setup_logger()
 

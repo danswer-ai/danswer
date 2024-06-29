@@ -3,11 +3,6 @@ from datetime import timedelta
 from datetime import timezone
 from typing import cast
 
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
-
 from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import DocumentSource
@@ -31,6 +26,10 @@ from danswer.server.manage.models import BoostDoc
 from danswer.server.manage.models import BoostUpdateRequest
 from danswer.server.manage.models import HiddenUpdateRequest
 from danswer.utils.logger import setup_logger
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/manage")
 logger = setup_logger()

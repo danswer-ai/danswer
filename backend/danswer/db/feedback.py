@@ -1,11 +1,5 @@
 from uuid import UUID
 
-from sqlalchemy import asc
-from sqlalchemy import delete
-from sqlalchemy import desc
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.db.chat import get_chat_message
@@ -14,6 +8,11 @@ from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentRetrievalFeedback
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
+from sqlalchemy import asc
+from sqlalchemy import delete
+from sqlalchemy import desc
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 
 def fetch_db_doc_by_id(doc_id: str, db_session: Session) -> DbDocument:

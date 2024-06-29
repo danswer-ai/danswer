@@ -5,8 +5,6 @@ from typing import Any
 from typing import List
 from typing import Tuple
 
-from zulip import Client
-
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -22,6 +20,7 @@ from danswer.connectors.zulip.utils import build_search_narrow
 from danswer.connectors.zulip.utils import call_api
 from danswer.connectors.zulip.utils import encode_zulip_narrow_operand
 from danswer.utils.logger import setup_logger
+from zulip import Client
 
 # Potential improvements
 # 1. Group documents messages into topics, make 1 document per topic per week

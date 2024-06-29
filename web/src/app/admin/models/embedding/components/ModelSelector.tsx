@@ -1,18 +1,12 @@
-import { DefaultDropdown, StringOrNumberOption } from "@/components/Dropdown";
-import { Title, Text, Divider, Card } from "@tremor/react";
-import {
-  EmbeddingModelDescriptor,
-  FullEmbeddingModelDescriptor,
-} from "./embeddingModels";
+import { FullEmbeddingModelDescriptor } from "./types";
 import { FiStar } from "react-icons/fi";
-import { CustomModelForm } from "./CustomModelForm";
 
 export function ModelOption({
   model,
   onSelect,
 }: {
   model: FullEmbeddingModelDescriptor;
-  onSelect?: (model: EmbeddingModelDescriptor) => void;
+  onSelect?: (model: FullEmbeddingModelDescriptor) => void;
 }) {
   return (
     <div
@@ -69,7 +63,7 @@ export function ModelSelector({
   setSelectedModel,
 }: {
   modelOptions: FullEmbeddingModelDescriptor[];
-  setSelectedModel: (model: EmbeddingModelDescriptor) => void;
+  setSelectedModel: (model: FullEmbeddingModelDescriptor) => void;
 }) {
   return (
     <div>

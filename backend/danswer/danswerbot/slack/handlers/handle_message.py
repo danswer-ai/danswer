@@ -7,13 +7,6 @@ from typing import cast
 from typing import Optional
 from typing import TypeVar
 
-from retry import retry
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
-from slack_sdk.models.blocks import DividerBlock
-from slack_sdk.models.blocks import SectionBlock
-from sqlalchemy.orm import Session
-
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.danswerbot_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_COT
@@ -60,7 +53,13 @@ from danswer.search.models import BaseFilters
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
 from danswer.utils.logger import setup_logger
+from retry import retry
 from shared_configs.configs import ENABLE_RERANKING_ASYNC_FLOW
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+from slack_sdk.models.blocks import DividerBlock
+from slack_sdk.models.blocks import SectionBlock
+from sqlalchemy.orm import Session
 
 logger_base = setup_logger()
 

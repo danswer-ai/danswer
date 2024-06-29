@@ -1,9 +1,8 @@
 from collections.abc import Sequence
 
+from danswer.db.models import User
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import Column
-
-from danswer.db.models import User
 
 
 def list_users(db_session: Session, q: str = "") -> Sequence[User]:

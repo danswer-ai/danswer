@@ -3,7 +3,6 @@ from collections.abc import Generator
 from typing import cast
 
 import numpy
-
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
 from danswer.document_index.document_index_utils import (

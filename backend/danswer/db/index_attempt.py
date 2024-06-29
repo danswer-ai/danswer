@@ -1,5 +1,13 @@
 from collections.abc import Sequence
 
+from danswer.db.models import EmbeddingModel
+from danswer.db.models import IndexAttempt
+from danswer.db.models import IndexingStatus
+from danswer.db.models import IndexModelStatus
+from danswer.server.documents.models import ConnectorCredentialPairIdentifier
+from danswer.utils.logger import setup_logger
+from danswer.utils.telemetry import optional_telemetry
+from danswer.utils.telemetry import RecordType
 from sqlalchemy import and_
 from sqlalchemy import ColumnElement
 from sqlalchemy import delete
@@ -10,15 +18,6 @@ from sqlalchemy import select
 from sqlalchemy import update
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
-
-from danswer.db.models import EmbeddingModel
-from danswer.db.models import IndexAttempt
-from danswer.db.models import IndexingStatus
-from danswer.db.models import IndexModelStatus
-from danswer.server.documents.models import ConnectorCredentialPairIdentifier
-from danswer.utils.logger import setup_logger
-from danswer.utils.telemetry import optional_telemetry
-from danswer.utils.telemetry import RecordType
 
 logger = setup_logger()
 

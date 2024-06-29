@@ -2,15 +2,6 @@ from collections.abc import Sequence
 from functools import lru_cache
 from uuid import UUID
 
-from fastapi import HTTPException
-from sqlalchemy import delete
-from sqlalchemy import func
-from sqlalchemy import not_
-from sqlalchemy import or_
-from sqlalchemy import select
-from sqlalchemy import update
-from sqlalchemy.orm import Session
-
 from danswer.auth.schemas import UserRole
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.document_set import get_document_sets_by_ids
@@ -29,6 +20,14 @@ from danswer.server.features.persona.models import CreatePersonaRequest
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from fastapi import HTTPException
+from sqlalchemy import delete
+from sqlalchemy import func
+from sqlalchemy import not_
+from sqlalchemy import or_
+from sqlalchemy import select
+from sqlalchemy import update
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

@@ -1,11 +1,10 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from danswer.db.models import Tool
 from danswer.utils.logger import setup_logger
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

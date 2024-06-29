@@ -1,7 +1,3 @@
-from langchain.schema import BaseMessage
-from langchain.schema import HumanMessage
-from langchain.schema import SystemMessage
-
 from danswer.chat.chat_utils import combine_message_chain
 from danswer.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
@@ -17,6 +13,9 @@ from danswer.prompts.chat_prompts import REQUIRE_SEARCH_HINT
 from danswer.prompts.chat_prompts import REQUIRE_SEARCH_SYSTEM_MSG
 from danswer.prompts.chat_prompts import SKIP_SEARCH
 from danswer.utils.logger import setup_logger
+from langchain.schema import BaseMessage
+from langchain.schema import HumanMessage
+from langchain.schema import SystemMessage
 
 
 logger = setup_logger()

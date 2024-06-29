@@ -4,10 +4,6 @@ from typing import Any
 from typing import cast
 
 import requests
-from langchain_core.messages import HumanMessage
-from langchain_core.messages import SystemMessage
-from pydantic import BaseModel
-
 from danswer.dynamic_configs.interface import JSON_ro
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.interfaces import LLM
@@ -26,6 +22,9 @@ from danswer.tools.custom.openapi_parsing import validate_openapi_schema
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
 from danswer.utils.logger import setup_logger
+from langchain_core.messages import HumanMessage
+from langchain_core.messages import SystemMessage
+from pydantic import BaseModel
 
 logger = setup_logger()
 

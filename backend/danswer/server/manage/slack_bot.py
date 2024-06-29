@@ -1,8 +1,3 @@
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
-
 from danswer.auth.users import current_admin_user
 from danswer.danswerbot.slack.config import validate_channel_names
 from danswer.danswerbot.slack.tokens import fetch_tokens
@@ -22,6 +17,10 @@ from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.manage.models import SlackBotConfig
 from danswer.server.manage.models import SlackBotConfigCreationRequest
 from danswer.server.manage.models import SlackBotTokens
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
 
 router = APIRouter(prefix="/manage")

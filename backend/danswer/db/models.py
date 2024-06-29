@@ -8,30 +8,6 @@ from typing import Optional
 from typing import TypedDict
 from uuid import UUID
 
-from fastapi_users_db_sqlalchemy import SQLAlchemyBaseOAuthAccountTableUUID
-from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
-from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
-from sqlalchemy import Boolean
-from sqlalchemy import DateTime
-from sqlalchemy import Enum
-from sqlalchemy import Float
-from sqlalchemy import ForeignKey
-from sqlalchemy import func
-from sqlalchemy import Index
-from sqlalchemy import Integer
-from sqlalchemy import Sequence
-from sqlalchemy import String
-from sqlalchemy import Text
-from sqlalchemy import UniqueConstraint
-from sqlalchemy.dialects import postgresql
-from sqlalchemy.engine.interfaces import Dialect
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
-from sqlalchemy.types import LargeBinary
-from sqlalchemy.types import TypeDecorator
-
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
@@ -53,6 +29,30 @@ from danswer.search.enums import RecencyBiasSetting
 from danswer.search.enums import SearchType
 from danswer.utils.encryption import decrypt_bytes_to_string
 from danswer.utils.encryption import encrypt_string_to_bytes
+from fastapi_users_db_sqlalchemy import SQLAlchemyBaseOAuthAccountTableUUID
+from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
+from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
+from sqlalchemy import Boolean
+from sqlalchemy import DateTime
+from sqlalchemy import Enum
+from sqlalchemy import Float
+from sqlalchemy import ForeignKey
+from sqlalchemy import func
+from sqlalchemy import Index
+from sqlalchemy import Integer
+from sqlalchemy import JSON
+from sqlalchemy import Sequence
+from sqlalchemy import String
+from sqlalchemy import Text
+from sqlalchemy import UniqueConstraint
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.engine.interfaces import Dialect
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import relationship
+from sqlalchemy.types import LargeBinary
+from sqlalchemy.types import TypeDecorator
 
 
 class Base(DeclarativeBase):
@@ -433,10 +433,9 @@ class Credential(Base):
     )
     user: Mapped[User | None] = relationship("User", back_populates="credentials")
 
-
 class EmbeddingModel(Base):
     __tablename__ = "embedding_model"
-    # ID is used also to indicate the order that the models are configured by the admin
+
     id: Mapped[int] = mapped_column(primary_key=True)
     model_name: Mapped[str] = mapped_column(String)
     model_dim: Mapped[int] = mapped_column(Integer)
@@ -447,6 +446,10 @@ class EmbeddingModel(Base):
         Enum(IndexModelStatus, native_enum=False)
     )
     index_name: Mapped[str] = mapped_column(String)
+
+    # New field for cloud provider relationship
+    cloud_provider_id: Mapped[int | None] = mapped_column(ForeignKey("embedding_provider.id"), nullable=True)
+    cloud_provider: Mapped["CloudEmbeddingProvider"] = relationship("CloudEmbeddingProvider", back_populates="embedding_models", foreign_keys=[cloud_provider_id])
 
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="embedding_model"
@@ -466,6 +469,10 @@ class EmbeddingModel(Base):
             postgresql_where=(status == IndexModelStatus.FUTURE),
         ),
     )
+
+    def __repr__(self):
+        return f"<EmbeddingModel(model_name='{self.model_name}', status='{self.status}', cloud_provider='{self.cloud_provider.name if self.cloud_provider else 'None'}')>"
+
 
 
 class IndexAttempt(Base):
@@ -836,9 +843,6 @@ class ChatMessageFeedback(Base):
     )
 
 
-"""
-Structures, Organizational, Configurations Tables
-"""
 
 
 class LLMProvider(Base):
@@ -868,6 +872,23 @@ class LLMProvider(Base):
     # should only be set for a single provider
     is_default_provider: Mapped[bool | None] = mapped_column(Boolean, unique=True)
 
+
+class CloudEmbeddingProvider(Base):
+    __tablename__ = "embedding_provider"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    api_key: Mapped[str | None] = mapped_column(EncryptedString(), nullable=True)
+    custom_config: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)
+    default_model_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("embedding_model.id"), nullable=True)
+
+    embedding_models: Mapped[list["EmbeddingModel"]] = relationship("EmbeddingModel", back_populates="cloud_provider", foreign_keys="EmbeddingModel.cloud_provider_id")
+    default_model: Mapped["EmbeddingModel"] = relationship("EmbeddingModel", foreign_keys=[default_model_id])
+
+    def __repr__(self):
+        return f"<EmbeddingProvider(name='{self.name}')>"
+
+# provider_id, name, api_key, custom_config, default_model (which should reference a model in the EmbeddingModel table), and also keep in mind that each entry in EmbedingModel references it as a foreign key
 
 class DocumentSet(Base):
     __tablename__ = "document_set"

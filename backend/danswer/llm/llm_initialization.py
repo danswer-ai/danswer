@@ -1,5 +1,3 @@
-from sqlalchemy.orm import Session
-
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
@@ -15,6 +13,7 @@ from danswer.llm.llm_provider_options import BEDROCK_PROVIDER_NAME
 from danswer.llm.llm_provider_options import fetch_available_well_known_llms
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.utils.logger import setup_logger
+from sqlalchemy.orm import Session
 
 
 logger = setup_logger()

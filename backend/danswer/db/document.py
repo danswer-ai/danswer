@@ -5,16 +5,6 @@ from collections.abc import Sequence
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import and_
-from sqlalchemy import delete
-from sqlalchemy import func
-from sqlalchemy import or_
-from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.engine.util import TransactionalContext
-from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import Session
-
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.db.feedback import delete_document_feedback_for_documents__no_commit
 from danswer.db.models import ConnectorCredentialPair
@@ -26,6 +16,15 @@ from danswer.db.utils import model_to_dict
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
+from sqlalchemy import and_
+from sqlalchemy import delete
+from sqlalchemy import func
+from sqlalchemy import or_
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.engine.util import TransactionalContext
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
