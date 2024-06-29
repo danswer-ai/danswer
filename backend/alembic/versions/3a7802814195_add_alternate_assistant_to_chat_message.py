@@ -1,7 +1,7 @@
 """add alternate assistant to chat message
 
 Revision ID: 3a7802814195
-Revises: b85f02ec1308
+Revises: 23957775e5f5
 Create Date: 2024-06-05 11:18:49.966333
 
 """

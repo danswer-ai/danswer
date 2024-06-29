@@ -55,7 +55,6 @@ module.exports = {
         subtle: "#6b7280", // gray-500
         default: "#4b5563", // gray-600
         emphasis: "#374151", // gray-700
-        emphasis: "#374151", // gray-700
         strong: "#111827", // gray-900
         inverted: "#ffffff", // white
         error: "#ef4444", // red-500
