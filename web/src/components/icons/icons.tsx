@@ -72,11 +72,19 @@ import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";
 import mediawikiIcon from "../../../public/MediaWiki.svg";
 import wikipediaIcon from "../../../public/Wikipedia.svg";
+import openaiIcon from "../../../public/Openai.svg";
+
 import discourseIcon from "../../../public/Discourse.png";
 import clickupIcon from "../../../public/Clickup.svg";
+import cohereIcon from "../../../public/Cohere.svg";
+import voyageIcon from "../../../public/Voyage.png";
+import googleIcon from "../../../public/Google.webp";
+
+
+
 import { FaRobot } from "react-icons/fa";
 
-interface IconProps {
+export interface IconProps {
   size?: number;
   className?: string;
 }
@@ -527,6 +535,65 @@ export const ZulipIcon = ({
     </div>
   );
 };
+
+export const OpenAIIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src={openaiIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+
+export const VoyageIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src={voyageIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+
+export const GoogleIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src={googleIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const CohereIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src={cohereIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
 
 export const GoogleStorageIcon = ({
   size = 16,

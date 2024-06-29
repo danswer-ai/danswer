@@ -1,3 +1,6 @@
+import { CohereIcon, GoogleIcon, IconProps, OpenAIIcon, VoyageIcon } from "@/components/icons/icons";
+import { boolean } from "yup";
+
 export interface EmbeddingModelResponse {
   model_name: string | null;
 }
@@ -30,23 +33,80 @@ export interface FullCloudbasedEmbeddingModelDescriptor extends FullEmbeddingMod
   link?: string;
   pricePerMillion?: number;
   docs_link?: string;
-  
+  provider_id: ProviderId
+  enabled?: boolean
 }
 
+export interface AIProvider {
+  id: string;
+  name: string;
+  website: string;
+  icon: ({ size, className, }: IconProps) => JSX.Element;
+  description: string;
+  configured: boolean
+  apiLink: string
+  costslink?: string
+}
+
+
+
+export type ProviderId = "openai" | "cohere" | "voyage" | "google";
+
+export const providers: AIProvider[] = [
+  {
+    id: "openai",
+    name: "OpenAI",
+    website: "https://openai.com",
+    icon: OpenAIIcon,
+    description: "Leading AI research company known for GPT models and DALL-E.",
+    configured: true,
+    apiLink: "https://platform.openai.com/api-keys"
+  },
+  {
+    id: "cohere",
+    name: "Cohere",
+    website: "https://cohere.ai",
+    icon: CohereIcon,
+    description: "Specializes in NLP models for various text-based tasks.",
+    configured: true,
+    apiLink: "https://platform.openai.com/api-keys"
+  },
+  {
+    id: "voyage",
+    name: "Voyage AI",
+    website: "https://www.voyageai.com",
+    icon: VoyageIcon,
+    description: "Focuses on advanced language models and embeddings.",
+    configured: true,
+    apiLink: "https://platform.openai.com/api-keys"
+  },
+  {
+    id: "google",
+    name: "Google AI",
+    website: "https://ai.google",
+    icon: GoogleIcon,
+    description: "Offers a wide range of AI services including language and vision models.",
+    configured: false,
+    apiLink: "https://platform.openai.com/api-keys"
+  },
+];
 
 export const AVAILABLE_CLOUD_MODELS: FullCloudbasedEmbeddingModelDescriptor[] = [
   {
     model_name: "text-embedding-3-small",
+    provider_id: "openai",
     model_dim: 1536,
     normalize: true,
     description: "OpenAI's newer, more efficient embedding model. Good balance of performance and cost.",
     link: "https://platform.openai.com/docs/guides/embeddings",
     query_prefix: "",
     passage_prefix: "",
-    pricePerMillion: 0.02
+    pricePerMillion: 0.02,
+    enabled: true
   },
   {
     model_name: "text-embedding-3-large",
+    provider_id: "openai",
     model_dim: 3072,
     normalize: true,
     description: "OpenAI's large embedding model. Best performance, but more expensive.",
@@ -57,6 +117,7 @@ export const AVAILABLE_CLOUD_MODELS: FullCloudbasedEmbeddingModelDescriptor[] = 
   },
   {
     model_name: "embed-english-v3.0",
+    provider_id: "cohere",
     model_dim: 1024,
     normalize: true,
     description: "Cohere's English embedding model. Good performance for English-language tasks.",
@@ -67,6 +128,7 @@ export const AVAILABLE_CLOUD_MODELS: FullCloudbasedEmbeddingModelDescriptor[] = 
   },
   {
     model_name: "embed-english-light-v3.0",
+    provider_id: "cohere",
     model_dim: 384,
     normalize: true,
     description: "Cohere's lightweight English embedding model. Faster and more efficient for simpler tasks.",
@@ -77,6 +139,7 @@ export const AVAILABLE_CLOUD_MODELS: FullCloudbasedEmbeddingModelDescriptor[] = 
   },
   {
     model_name: "voyage-large-2-instruct",
+    provider_id: "voyage",
     model_dim: 1024,
     normalize: true,
     description: "Voyage AI's large embedding model. High performance with instruction fine-tuning.",
@@ -87,6 +150,7 @@ export const AVAILABLE_CLOUD_MODELS: FullCloudbasedEmbeddingModelDescriptor[] = 
   },
   {
     model_name: "voyage-light-2-instruct",
+    provider_id: "voyage",
     model_dim: 1024,
     normalize: true,
     description: "Voyage AI's lightweight embedding model. Good balance of performance and efficiency.",
@@ -97,13 +161,14 @@ export const AVAILABLE_CLOUD_MODELS: FullCloudbasedEmbeddingModelDescriptor[] = 
   },
   {
     model_name: "gecko",
+    provider_id: "google",
     model_dim: 768,
     normalize: true,
     description: "Google's Gecko embedding model. Powerful and efficient, but requires more setup.",
     link: "https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/text-embeddings",
     query_prefix: "",
     passage_prefix: "",
-    pricePerMillion: 0.025 // Note: This is per character, not per token
+    pricePerMillion: 0.025
   }
 ];
 
