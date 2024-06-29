@@ -17,7 +17,7 @@ import {
 } from "./interfaces";
 import { ChatSidebar } from "./sessionSidebar/ChatSessionSidebar";
 import { DocumentSet, Tag, User, ValidSources } from "@/lib/types";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/lib/admin/interfaces";
 import { Header } from "@/components/header/Header";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";

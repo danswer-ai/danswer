@@ -1,7 +1,7 @@
 import { getSourceMetadataForSources, listSourceMetadata } from "@/lib/sources";
 import { ValidSources } from "@/lib/types";
 import Image from "next/image";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/lib/admin/interfaces";
 import { Divider } from "@tremor/react";
 import { FiBookmark, FiCpu, FiInfo, FiX, FiZoomIn } from "react-icons/fi";
 import { HoverPopup } from "@/components/HoverPopup";

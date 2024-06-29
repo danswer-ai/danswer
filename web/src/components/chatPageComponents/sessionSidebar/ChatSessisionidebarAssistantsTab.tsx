@@ -1,4 +1,4 @@
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/lib/admin/interfaces";
 import { BasicSelectable } from "@/components/BasicClickable";
 import { User } from "@/lib/types";
 import { Text } from "@tremor/react";

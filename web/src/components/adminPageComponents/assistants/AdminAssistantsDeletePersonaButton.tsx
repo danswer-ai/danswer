@@ -2,7 +2,7 @@
 
 import { Button } from "@tremor/react";
 import { FiTrash } from "react-icons/fi";
-import { deletePersona } from "@/app/admin/assistants/lib";
+import { deletePersona } from "@/lib/admin/helpers";
 import { useRouter } from "next/navigation";
 import { SuccessfulPersonaUpdateRedirectType } from "@/app/admin/assistants/enums";
 

@@ -8,7 +8,7 @@ import { FiCpu, FiFilter, FiX } from "react-icons/fi";
 import { IconType } from "react-icons";
 import { FaBrain } from "react-icons/fa";
 import { AssistantsTab } from "./ChatModalAssistantsTab";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/lib/admin/interfaces";
 import { LlmTab } from "./ChatModalLlmTab";
 
 const TabButton = ({
