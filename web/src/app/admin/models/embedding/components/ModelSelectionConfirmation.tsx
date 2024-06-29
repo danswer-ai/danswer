@@ -1,6 +1,6 @@
 import { Modal } from "@/components/Modal";
 import { Button, Text, Callout } from "@tremor/react";
-import { AIProvider, EmbeddingModelDescriptor, FullCloudbasedEmbeddingModelDescriptor } from "./embeddingModels";
+import { CloudEmbeddingProvider, EmbeddingModelDescriptor } from "./embeddingModels";
 import { Label } from "@/components/admin/connectors/Field";
 
 export function ModelSelectionConfirmation({
@@ -8,7 +8,7 @@ export function ModelSelectionConfirmation({
   isCustom,
   onConfirm,
 }: {
-  selectedModel: EmbeddingModelDescriptor | FullCloudbasedEmbeddingModelDescriptor;
+  selectedModel: EmbeddingModelDescriptor;
   isCustom: boolean;
   onConfirm: () => void;
 }) {
@@ -87,7 +87,7 @@ export function ProviderCreation({
   selectedProvider,
   onConfirm,
 }: {
-  selectedProvider: AIProvider;
+  selectedProvider: CloudEmbeddingProvider;
   onConfirm: () => void;
 }) {
 
@@ -95,7 +95,7 @@ export function ProviderCreation({
     <div className="mb-4">
 
       <Text className="text-lg mb-2">
-        You are setting the credentials for this provider. To access this information, follow the instructions <a className="cursor-pointer underline" target="_blank" href={selectedProvider.apiLink}>here</a>  and gather your "API KEY".
+        You are setting the credentials for this provider. To access this information, follow the instructions <a className="cursor-pointer underline" target="_blank" href={selectedProvider.apiLink}>here</a>  and gather your &quot;API KEY&quot;.
       </Text>
 
       <p>
@@ -127,7 +127,7 @@ export function ProviderCreationModal({
   onConfirm,
   onCancel,
 }: {
-  selectedProvider: AIProvider;
+  selectedProvider: CloudEmbeddingProvider;
   onConfirm: () => void;
   onCancel: () => void;
 }) {

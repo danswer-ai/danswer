@@ -6,12 +6,12 @@ import { Button } from "@tremor/react";
 import { Form, Formik } from "formik";
 
 import * as Yup from "yup";
-import { CloudEmbeddingProvider, CloudEmbeddingModel } from "./embeddingModels";
+import { CloudEmbeddingProvider, CloudEmbeddingModel, EmbeddingModelDescriptor } from "./embeddingModels";
 
 export function CustomModelForm({
   onSubmit,
 }: {
-  onSubmit: (model: CloudEmbeddingModel) => void;
+  onSubmit: (model: EmbeddingModelDescriptor) => void;
 }) {
   return (
     <div>
