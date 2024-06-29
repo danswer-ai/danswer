@@ -1,18 +1,23 @@
-from danswer.db.models import CloudEmbeddingProvider
+from sqlalchemy import delete
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
 from danswer.db.models import LLMProvider as LLMProviderModel
 from danswer.server.manage.llm.models import CloudEmbeddingProviderCreate
 from danswer.server.manage.llm.models import FullCloudEmbeddingProvider
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
-from sqlalchemy import delete
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 
-
-
-def upsert_cloud_embedding_provider(db_session: Session, provider: CloudEmbeddingProviderCreate) -> CloudEmbeddingProvider:
-    existing_provider = db_session.query(CloudEmbeddingProvider).filter_by(name=provider.name).first()
+def upsert_cloud_embedding_provider(
+    db_session: Session, provider: CloudEmbeddingProviderCreate
+) -> CloudEmbeddingProviderModel:
+    existing_provider = (
+        db_session.query(CloudEmbeddingProviderModel)
+        .filter_by(name=provider.name)
+        .first()
+    )
 
     if existing_provider:
         # Update existing provider
@@ -21,7 +26,7 @@ def upsert_cloud_embedding_provider(db_session: Session, provider: CloudEmbeddin
 
     else:
         # Create new provider
-        new_provider = CloudEmbeddingProvider(**provider.dict())
+        new_provider = CloudEmbeddingProviderModel(**provider.dict())
         db_session.add(new_provider)
         existing_provider = new_provider
 
@@ -29,10 +34,10 @@ def upsert_cloud_embedding_provider(db_session: Session, provider: CloudEmbeddin
     db_session.refresh(existing_provider)
 
     return FullCloudEmbeddingProvider.from_request(existing_provider)
-    
+
     # return CloudEmbeddingProvider.from_orm(existing_provider)
 
- 
+
 def upsert_llm_provider(
     db_session: Session, llm_provider: LLMProviderUpsertRequest
 ) -> FullLLMProvider:
@@ -71,8 +76,12 @@ def upsert_llm_provider(
 
     return FullLLMProvider.from_model(llm_provider_model)
 
-def fetch_existing_embedding_providers(db_session: Session) -> list[CloudEmbeddingProvider]:
-    return list(db_session.scalars(select(CloudEmbeddingProvider)).all())
+
+def fetch_existing_embedding_providers(
+    db_session: Session,
+) -> list[CloudEmbeddingProviderModel]:
+    return list(db_session.scalars(select(CloudEmbeddingProviderModel)).all())
+
 
 def fetch_existing_llm_providers(db_session: Session) -> list[LLMProviderModel]:
     return list(db_session.scalars(select(LLMProviderModel)).all())
@@ -96,6 +105,17 @@ def fetch_provider(db_session: Session, provider_name: str) -> FullLLMProvider |
     if not provider_model:
         return None
     return FullLLMProvider.from_model(provider_model)
+
+
+def remove_embedding_provider(
+    db_session: Session, embedding_provider_name: str
+) -> None:
+    db_session.execute(
+        delete(CloudEmbeddingProviderModel).where(
+            CloudEmbeddingProviderModel.name == embedding_provider_name
+        )
+    )
+    db_session.commit()
 
 
 def remove_llm_provider(db_session: Session, provider_id: int) -> None:
