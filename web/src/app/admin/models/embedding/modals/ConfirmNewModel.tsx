@@ -1,8 +1,8 @@
 import { Modal } from "@/components/Modal";
 import { Button, Text, Callout } from "@tremor/react";
-import { EmbeddingModelDescriptor } from "./embeddingModels";
+import { EmbeddingModelDescriptor } from "../components/types";
 
-export function CloudModelSelectionConfirmation({
+export function ConfirmNewModelModal({
   selectedModel,
   isCustom,
   onConfirm,
@@ -49,7 +49,7 @@ export function CloudModelSelectionConfirmation({
   );
 }
 
-export function CloudModelSelectionConfirmationModal({
+export function ConfirmNewModelModalModal({
   selectedModel,
   isCustom,
   onConfirm,
@@ -63,7 +63,7 @@ export function CloudModelSelectionConfirmationModal({
   return (
     <Modal title="Update Embedding Model" onOutsideClick={onCancel}>
       <div>
-        <CloudModelSelectionConfirmation
+        <ConfirmNewModelModal
           selectedModel={selectedModel}
           isCustom={isCustom}
           onConfirm={onConfirm}

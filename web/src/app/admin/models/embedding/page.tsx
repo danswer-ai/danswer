@@ -3,12 +3,11 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Button, Card, Text, Title } from "@tremor/react";
+import { Button, Text, Title } from "@tremor/react";
 import { FiPackage } from "react-icons/fi";
 import useSWR, { mutate } from "swr";
-import { ModelOption, ModelSelector } from "./components/ModelSelector";
+import { ModelOption } from "./components/ModelSelector";
 import { useState } from "react";
-import { ModelSelectionConfirmationModal, ProviderCreationModal } from "./components/ModelSelectionConfirmation";
 import { ReindexingProgressTable } from "./components/ReindexingProgressTable";
 import { Modal } from "@/components/Modal";
 import {
@@ -17,30 +16,43 @@ import {
   AVAILABLE_CLOUD_MODELS,
   AVAILABLE_MODELS,
   INVALID_OLD_MODEL,
-  checkModelNameIsValid,
   fillOutEmeddingModelDescriptor,
   EmbeddingModelDescriptor
-} from "./components/embeddingModels";
+} from "./components/types";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Connector, ConnectorIndexingStatus } from "@/lib/types";
 import Link from "next/link";
-import { CustomModelForm } from "./components/CustomModelForm";
-import { FaLock } from "react-icons/fa";
-import { ChangeCredentialsModal, ChangeModelModal, DeleteCredentialsModal, ModelNotConfiguredModal, SelectModelModal } from "./components/Providers";
+
 import OpenSourceEmbeddingSelectionPage from "./OpenSourceEmbeddingSelectionPage";
 import CloudEmbeddingPage from "./CloudEmbeddingPage";
+import { ProviderCreationModal2 } from "./modals/ProviderCreation";
+import { ModelNotConfiguredModal } from "./modals/ModelNotConfigured";
+import { DeleteCredentialsModal } from "./modals/DeleteCredentials";
+import { ChangeModelModal } from "./modals/ChangeModel";
+import { SelectModelModal } from "./modals/SelectModel";
+import { ChangeCredentialsModal } from "./modals/ChangeCredentials";
+import { ModelSelectionConfirmationModal } from "./modals/ModelSelection";
+import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../llm/constants";
+
+export interface EmbeddingDetails {
+  api_key: string,
+  custom_config: any,
+  default_model_id?: number,
+  name: string
+}
+
 
 function Main() {
   const [openToggle, setOpenToggle] = useState(true);
-  const [tenativelyNewProvider, setTenativelyNewProvider] = useState<CloudEmbeddingProvider | null>(null);
+  const [tenativelyNewProvider, setTentativelyNewProvider] = useState<CloudEmbeddingProvider | null>(null);
+  const [newEnabledProviders, setNewEnabledProvides] = useState<string[]>([])
+
   const [showModelNotConfiguredModal, setShowModelNotConfiguredModal] = useState<CloudEmbeddingProvider | null>(null);
-  const [showSelectModelModal, setShowSelectModelModal] = useState(false);
   const [showChangeModelModal, setShowChangeModelModal] = useState(false);
   const [showDeleteCredentialsModal, setShowDeleteCredentialsModal] = useState(false);
   const [changeCredentials, setChangeCredentials] = useState<CloudEmbeddingProvider | null>(null);
   const [tentativeNewCloudEmbeddingModel, setTentativeNewCloudEmbeddingModel] = useState<CloudEmbeddingModel | null>(null);
-  const [tentativeNewEmbeddingModel, setTentativeNewEmbeddingModel] = useState<CloudEmbeddingModel | null>(null);
-  const [tentativeNewOpenmbeddingModel, setTentativeNewOpenmbeddingModel] = useState<EmbeddingModelDescriptor | null>(null);
+  const [tentativeNewOpenmbeddingModel, setTentativeNewOpenEmbeddingModel] = useState<EmbeddingModelDescriptor | null>(null);
   const [isCancelling, setIsCancelling] = useState<boolean>(false);
   const [showAddConnectorPopup, setShowAddConnectorPopup] = useState<boolean>(false);
 
@@ -53,6 +65,13 @@ function Main() {
     "/api/secondary-index/get-current-embedding-model",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
+  );
+
+
+
+  const { data: embeddingProviderDetails } = useSWR<EmbeddingDetails[]>(
+    EMBEDDING_PROVIDERS_ADMIN_URL,
+    errorHandlingFetcher
   );
 
 
@@ -79,51 +98,8 @@ function Main() {
     { refreshInterval: 5000 } // 5 seconds
   );
 
-  // const {
-  //   data: currentEmeddingModel,
-  //   isLoading: isLoadingCurrentModel,
-  //   error: currentEmeddingModelError,
-  // } = useSWR<CloudEmbeddingModel>(
-  //   "/api/secondary-index/get-current-embedding-model",
-  //   errorHandlingFetcher,
-  //   { refreshInterval: 5000 }
-  // );
 
-  // const {
-  //   data: futureEmbeddingModel,
-  //   isLoading: isLoadingFutureModel,
-  //   error: futureEmeddingModelError,
-  // } = useSWR<CloudEmbeddingModel | null>(
-  //   "/api/secondary-index/get-secondary-embedding-model",
-  //   errorHandlingFetcher,
-  //   { refreshInterval: 5000 }
-  // );
-
-  // const {
-  //   data: ongoingReIndexingStatus,
-  //   isLoading: isLoadingOngoingReIndexingStatus,
-  // } = useSWR<ConnectorIndexingStatus<any, any>[]>(
-  //   "/api/manage/admin/connector/indexing-status?secondary_index=true",
-  //   errorHandlingFetcher,
-  //   { refreshInterval: 5000 }
-  // );
-
-  // const { data: connectors } = useSWR<Connector<any>[]>(
-  //   "/api/manage/connector",
-  //   errorHandlingFetcher,
-  //   { refreshInterval: 5000 }
-  // );
-
-
-  // const onSelect = async (model: CloudEmbeddingModel) => {
-  //   if (currentEmeddingModel?.name === INVALID_OLD_MODEL) {
-  //     await onConfirm(model);
-  //   } else {
-  //     setTentativeNewEmbeddingModel(model);
-  //   }
-  // };
-
-  const onConfirm = async (model: CloudEmbeddingModel) => {
+  const onConfirm = async (model: CloudEmbeddingModel | EmbeddingModelDescriptor) => {
     const response = await fetch(
       "/api/secondary-index/set-new-embedding-model",
       {
@@ -135,7 +111,7 @@ function Main() {
       }
     );
     if (response.ok) {
-      setTentativeNewEmbeddingModel(null);
+      setTentativeNewCloudEmbeddingModel(null);
       mutate("/api/secondary-index/get-secondary-embedding-model");
       if (!connectors || !connectors.length) {
         setShowAddConnectorPopup(true);
@@ -150,7 +126,7 @@ function Main() {
       method: "POST",
     });
     if (response.ok) {
-      setTentativeNewEmbeddingModel(null);
+      setTentativeNewCloudEmbeddingModel(null);
       mutate("/api/secondary-index/get-secondary-embedding-model");
     } else {
       alert(
@@ -185,7 +161,7 @@ function Main() {
       }
     );
     if (response.ok) {
-      setTentativeNewEmbeddingModel(null);
+      setTentativeNewCloudEmbeddingModel(null);
       mutate("/api/secondary-index/get-secondary-embedding-model");
       if (!connectors || !connectors.length) {
         setShowAddConnectorPopup(true);
@@ -212,14 +188,10 @@ function Main() {
     if (currentEmeddingModel?.model_name === INVALID_OLD_MODEL) {
       await onConfirmSelection(model);
     } else {
-      setTentativeNewOpenmbeddingModel(model);
+      setTentativeNewOpenEmbeddingModel(model);
     }
   };
 
-
-
-  // const currentModelName = currentEmeddingModel.name;
-  // const currentModel = AVAILABLE_CLOUD_MODELS[0].models[0];
   const selectedModel = AVAILABLE_CLOUD_MODELS[0];
 
   const handleChangeCredentials = async (apiKey: string) => {
@@ -234,17 +206,45 @@ function Main() {
         which then power Danswer&apos;s search.
       </Text>
 
+
+      {tentativeNewOpenmbeddingModel && (
+        <ModelSelectionConfirmationModal
+          selectedModel={tentativeNewOpenmbeddingModel}
+          isCustom={
+            AVAILABLE_MODELS.find(
+              (model) =>
+                model.model_name === tentativeNewOpenmbeddingModel.model_name
+            ) === undefined
+          }
+          onConfirm={() => onConfirm(tentativeNewOpenmbeddingModel)}
+          onCancel={() => setTentativeNewOpenEmbeddingModel(null)}
+        />
+      )}
       {showModelNotConfiguredModal && (
         <ModelNotConfiguredModal
           modelProvider={showModelNotConfiguredModal}
           onConfirm={() => {
-            setTenativelyNewProvider(showModelNotConfiguredModal);
+            setTentativelyNewProvider(showModelNotConfiguredModal);
             setShowModelNotConfiguredModal(null);
           }}
           onCancel={() => setShowModelNotConfiguredModal(null)}
         />
       )}
 
+
+      {tenativelyNewProvider && (
+
+        <ProviderCreationModal2
+          selectedProvider={tenativelyNewProvider}
+          onConfirm={() => {
+            setTentativelyNewProvider(showModelNotConfiguredModal);
+            setShowModelNotConfiguredModal(null)
+            setNewEnabledProvides(newEnabledProviders => [...newEnabledProviders, tenativelyNewProvider.name])
+          }
+          }
+          onCancel={() => setTentativelyNewProvider(null)}
+        />
+      )}
       {changeCredentials && (
         <ChangeCredentialsModal
           provider={changeCredentials}
@@ -253,14 +253,13 @@ function Main() {
         />
       )}
 
-      {showSelectModelModal && tentativeNewCloudEmbeddingModel && (
+      {tentativeNewCloudEmbeddingModel && (
         <SelectModelModal
           model={tentativeNewCloudEmbeddingModel}
           onConfirm={() => {
-            setShowSelectModelModal(false);
             onConfirm(tentativeNewCloudEmbeddingModel);
           }}
-          onCancel={() => setShowSelectModelModal(false)}
+          onCancel={() => setTentativeNewCloudEmbeddingModel(null)}
         />
       )}
 
@@ -294,6 +293,15 @@ function Main() {
           </Text>
 
 
+
+        </>
+      ) : (
+        <Title className="mt-8 mb-4">Choose your Embedding Model</Title>
+      )}
+
+      {!(futureEmbeddingModel && connectors && connectors.length > 0)
+        &&
+        <>
           <Title className="mt-8">Switch your Embedding Model</Title>
           <Text className="mb-4">
             If the current model is not working for you, you can update
@@ -305,19 +313,17 @@ function Main() {
             re-indexing on this page.
           </Text>
 
+          <div className="mt-8 w-full mb-12 divide-x-2 divide-solid divide-black grid grid-cols-2 gap-x-2">
+            <button onClick={() => setOpenToggle(true)} className={`py-4 font-bold ${openToggle ? " underline" : "hover:underline"}`}>
+              Open source
+            </button>
+            <button onClick={() => setOpenToggle(false)} className={`font-bold ${!openToggle ? " underline" : "hover:underline"}`}>
+              Hosted
+            </button>
+          </div>
         </>
-      ) : (
-        <Title className="mt-8 mb-4">Choose your Embedding Model</Title>
-      )}
 
-      <div className="mt-8 w-full mb-12 divide-x-2 divide-solid divide-black grid grid-cols-2 gap-x-2">
-        <button onClick={() => setOpenToggle(true)} className={`py-4 font-bold ${openToggle ? " underline" : "hover:underline"}`}>
-          Open source
-        </button>
-        <button onClick={() => setOpenToggle(false)} className={`font-bold ${!openToggle ? " underline" : "hover:underline"}`}>
-          Hosted
-        </button>
-      </div>
+      }
 
       {!showAddConnectorPopup && !futureEmbeddingModel && (
         openToggle ? (
@@ -325,8 +331,10 @@ function Main() {
           <OpenSourceEmbeddingSelectionPage onSelectOpenSource={onSelectOpenSource} currentModelName={currentModelName} />
         ) : (
           <CloudEmbeddingPage
-            setTentativeNewEmbeddingModel={setTentativeNewEmbeddingModel}
-            setTenativelyNewProvider={setTenativelyNewProvider}
+            embeddingProviderDetails={embeddingProviderDetails}
+            newEnabledProviders={newEnabledProviders}
+            setTentativeNewEmbeddingModel={setTentativeNewCloudEmbeddingModel}
+            setTentativelyNewProvider={setTentativelyNewProvider}
             selectedModel={selectedModel}
             setShowModelNotConfiguredModal={setShowModelNotConfiguredModal}
             setChangeCredentials={setChangeCredentials}
@@ -335,24 +343,6 @@ function Main() {
         )
       )}
 
-      {/* {tentativeNewEmbeddingModel && (
-        <ModelSelectionConfirmationModal
-          selectedModel={tentativeNewEmbeddingModel}
-          isCustom={!AVAILABLE_CLOUD_MODELS.flatMap(provider => provider.models).some(
-            (model) => model.name === tentativeNewEmbeddingModel.name
-          )}
-          onConfirm={() => onConfirm(tentativeNewEmbeddingModel)}
-          onCancel={() => setTentativeNewEmbeddingModel(null)}
-        />
-      )} */}
-
-      {tenativelyNewProvider && (
-        <ProviderCreationModal
-          selectedProvider={tenativelyNewProvider}
-          onConfirm={() => null}
-          onCancel={() => setTenativelyNewProvider(null)}
-        />
-      )}
 
       {openToggle && (
         <>
@@ -361,9 +351,6 @@ function Main() {
               <div>
                 <div>
                   <b className="text-base">Embedding model successfully selected</b>{" "}
-
-
-
                   🙌
                   <br />
                   <br />
@@ -415,7 +402,7 @@ function Main() {
           <Title className="mt-8">Current Upgrade Status</Title>
           <div className="mt-4">
             <div className="italic text-sm mb-2">
-              Currently in the process of switching to:
+              Currently in the process of switching to: {futureEmbeddingModel.model_name}
             </div>
             {/* <ModelOption model={futureEmbeddingModel} /> */}
 

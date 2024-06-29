@@ -4,6 +4,12 @@ from collections.abc import Generator
 from datetime import datetime
 from typing import ContextManager
 
+from danswer.configs.app_configs import POSTGRES_DB
+from danswer.configs.app_configs import POSTGRES_HOST
+from danswer.configs.app_configs import POSTGRES_PASSWORD
+from danswer.configs.app_configs import POSTGRES_PORT
+from danswer.configs.app_configs import POSTGRES_USER
+from danswer.utils.logger import setup_logger
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
 from sqlalchemy.engine import Engine
@@ -12,13 +18,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
-
-from danswer.configs.app_configs import POSTGRES_DB
-from danswer.configs.app_configs import POSTGRES_HOST
-from danswer.configs.app_configs import POSTGRES_PASSWORD
-from danswer.configs.app_configs import POSTGRES_PORT
-from danswer.configs.app_configs import POSTGRES_USER
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

@@ -13,7 +13,7 @@ import {
 } from "@/lib/types";
 import { ChatSession } from "@/app/chat/interfaces";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { FullEmbeddingModelResponse } from "@/app/admin/models/embedding/components/embeddingModels";
+import { FullEmbeddingModelResponse } from "@/app/admin/models/embedding/components/types";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
 import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";

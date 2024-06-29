@@ -1,25 +1,24 @@
+from danswer.db.models import CloudEmbeddingProvider
+from danswer.db.models import LLMProvider as LLMProviderModel
+from danswer.server.manage.llm.models import CloudEmbeddingProviderCreate
+from danswer.server.manage.llm.models import FullCloudEmbeddingProvider
+from danswer.server.manage.llm.models import FullLLMProvider
+from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from sqlalchemy import delete
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from danswer.db.models import LLMProvider as LLMProviderModel
-from danswer.server.manage.llm.models import FullLLMProvider
-from danswer.server.manage.llm.models import LLMProviderUpsertRequest
-from danswer.db.models import CloudEmbeddingProvider
-from danswer.server.manage.llm.models import FullCloudEmbeddingProvider
-from danswer.server.manage.llm.models import CloudEmbeddingProviderUpsertRequest
 
 
 
-
-def upsert_cloud_embedding_provider(db_session: Session, provider: CloudEmbeddingProviderUpsertRequest) -> FullCloudEmbeddingProvider:
+def upsert_cloud_embedding_provider(db_session: Session, provider: CloudEmbeddingProviderCreate) -> CloudEmbeddingProvider:
     existing_provider = db_session.query(CloudEmbeddingProvider).filter_by(name=provider.name).first()
 
     if existing_provider:
         # Update existing provider
-        for key, value in provider.dict(exclude={'model_names'}).items():
+        for key, value in provider.dict().items():
             setattr(existing_provider, key, value)
-        existing_provider.model_names = provider.model_names
+
     else:
         # Create new provider
         new_provider = CloudEmbeddingProvider(**provider.dict())
@@ -29,7 +28,9 @@ def upsert_cloud_embedding_provider(db_session: Session, provider: CloudEmbeddin
     db_session.commit()
     db_session.refresh(existing_provider)
 
-    return FullCloudEmbeddingProvider.from_orm(existing_provider)
+    return FullCloudEmbeddingProvider.from_request(existing_provider)
+    
+    # return CloudEmbeddingProvider.from_orm(existing_provider)
 
  
 def upsert_llm_provider(
@@ -70,6 +71,8 @@ def upsert_llm_provider(
 
     return FullLLMProvider.from_model(llm_provider_model)
 
+def fetch_existing_embedding_providers(db_session: Session) -> list[CloudEmbeddingProvider]:
+    return list(db_session.scalars(select(CloudEmbeddingProvider)).all())
 
 def fetch_existing_llm_providers(db_session: Session) -> list[LLMProviderModel]:
     return list(db_session.scalars(select(LLMProviderModel)).all())

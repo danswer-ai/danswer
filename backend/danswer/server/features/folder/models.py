@@ -1,6 +1,5 @@
-from pydantic import BaseModel
-
 from danswer.server.query_and_chat.models import ChatSessionDetails
+from pydantic import BaseModel
 
 
 class FolderResponse(BaseModel):

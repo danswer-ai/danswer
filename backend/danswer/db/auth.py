@@ -3,14 +3,6 @@ from collections.abc import Callable
 from typing import Any
 from typing import Dict
 
-from fastapi import Depends
-from fastapi_users.models import UP
-from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
-from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyAccessTokenDatabase
-from sqlalchemy import func
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-
 from danswer.auth.schemas import UserRole
 from danswer.db.engine import get_async_session
 from danswer.db.engine import get_sqlalchemy_async_engine
@@ -20,6 +12,13 @@ from danswer.db.models import User
 from danswer.utils.variable_functionality import (
     fetch_versioned_implementation_with_fallback,
 )
+from fastapi import Depends
+from fastapi_users.models import UP
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyAccessTokenDatabase
+from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 
 def get_default_admin_user_emails() -> list[str]:
