@@ -1,6 +1,8 @@
 import io
 import ipaddress
 import socket
+from datetime import datetime
+from datetime import timezone
 from enum import Enum
 from typing import Any
 from typing import cast
@@ -175,6 +177,13 @@ def _read_urls_file(location: str) -> list[str]:
     return urls
 
 
+def _get_datetime_from_last_modified_header(lase_modified: str) -> datetime | None:
+    try:
+        return datetime.strptime(lase_modified, "%a, %d %b %Y %H:%M:%S %Z").replace(tzinfo=timezone.utc)
+    except (ValueError, TypeError):
+        return None
+
+
 class WebConnector(LoadConnector):
     def __init__(
         self,
@@ -258,6 +267,7 @@ class WebConnector(LoadConnector):
                     # PDF files are not checked for links
                     response = requests.get(current_url)
                     page_text = pdf_to_text(file=io.BytesIO(response.content))
+                    last_modified = response.headers.get("Last-Modified")
 
                     doc_batch.append(
                         Document(
@@ -266,12 +276,14 @@ class WebConnector(LoadConnector):
                             source=DocumentSource.WEB,
                             semantic_identifier=current_url.split(".")[-1],
                             metadata={},
+                            doc_updated_at=_get_datetime_from_last_modified_header(last_modified),
                         )
                     )
                     continue
 
                 page = context.new_page()
                 page_response = page.goto(current_url)
+                last_modified = page_response.header_value("Last-Modified")
                 final_page = page.url
                 if final_page != current_url:
                     logger.info(f"Redirected to {final_page}")
@@ -307,6 +319,7 @@ class WebConnector(LoadConnector):
                         source=DocumentSource.WEB,
                         semantic_identifier=parsed_html.title or current_url,
                         metadata={},
+                        doc_updated_at=_get_datetime_from_last_modified_header(last_modified),
                     )
                 )
 
