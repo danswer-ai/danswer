@@ -18,14 +18,14 @@ export function ModelNotConfiguredModal({
     <Modal title={`${modelProvider.name} Configuration Required`} onOutsideClick={onCancel}>
       <div className="mb-4">
         <Text className="text-lg mb-2">
-          Heads up: {modelProvider.name} isn't configured yet. Want to unleash its potential now?
+          Heads up: {modelProvider.name} isn&apos;t configured yet. Want to unleash its potential now?
         </Text>
         <Text className="text-sm mb-2">
           Pro tip: Setting this up now could save you 30% on compute costs. Your future self will thank you.
         </Text>
         <div className="flex mt-8 justify-between">
           <Button color="gray" onClick={onCancel}>Maybe Later</Button>
-          <Button color="blue" onClick={onConfirm}>Let's Do This</Button>
+          <Button color="blue" onClick={onConfirm}>Let&apos;s Do This</Button>
         </div>
       </div>
     </Modal>
@@ -46,12 +46,12 @@ export function SelectModelModal({
     <Modal title={`Elevate Your Game with ${model.model_name}`} onOutsideClick={onCancel}>
       <div className="mb-4">
         <Text className="text-lg mb-2">
-          You're about to supercharge your setup with {model.model_name} from {model.provider_id}. Ready to push the envelope?
+          You&apos;re about to supercharge your setup with {model.model_name} from {model.provider_id}. Ready to push the envelope?
         </Text>
         <Callout title="Model Specs" color="blue" className="mt-4">
           <div className="flex flex-col gap-y-2">
             <p>TL;DR: {model.description}</p>
-            <p>Dimensions: {model.model_dim} (That's {model.model_dim > 1000 ? 'beefy' : 'lean'})</p>
+            <p>Dimensions: {model.model_dim} (That&apos;s {model.model_dim > 1000 ? 'beefy' : 'lean'})</p>
             <p>Damage to your wallet: ${model.pricePerMillion}/million tokens (Estimated monthly burn rate: $50-$500)</p>
           </div>
         </Callout>
@@ -80,13 +80,13 @@ export function ChangeModelModal({
     <Modal title="Model Swap: Upgrade or Sidegrade?" onOutsideClick={onCancel}>
       <div className="mb-4">
         <Text className="text-lg mb-2">
-          You're about to trade in your {existingModel.model_name} for a shiny new {newModel.model_name}. Bold move.
+          You&apos;re about to trade in your {existingModel.model_name} for a shiny new {newModel.model_name}. Bold move.
         </Text>
         <Callout title="New Hotness Specs" color="blue" className="mt-4">
           <div className="flex flex-col gap-y-2">
             <p>Elevator pitch: {newModel.description}</p>
-            <p>Dimensions: {newModel.model_dim} (That's a {Math.abs(newModel.model_dim - existingModel.model_dim)} dimension {newModel.model_dim > existingModel.model_dim ? 'upgrade' : 'downgrade'})</p>
-            <p>Cost delta: ${( newModel?.pricePerMillion! - existingModel?.pricePerMillion!).toFixed(3)}/million tokens (Could save/cost you ~$100/month)</p>
+            <p>Dimensions: {newModel.model_dim} (That&apos;s a {Math.abs(newModel.model_dim - existingModel.model_dim)} dimension {newModel.model_dim > existingModel.model_dim ? 'upgrade' : 'downgrade'})</p>
+            <p>Cost delta: ${(newModel?.pricePerMillion! - existingModel?.pricePerMillion!).toFixed(3)}/million tokens (Could save/cost you ~$100/month)</p>
           </div>
         </Callout>
         <div className="flex mt-8 justify-between">
@@ -112,14 +112,14 @@ export function DeleteCredentialsModal({
     <Modal title={`Nuke ${modelProvider.name} Credentials?`} onOutsideClick={onCancel}>
       <div className="mb-4">
         <Text className="text-lg mb-2">
-          You're about to send your {modelProvider.name} credentials to /dev/null. Sure about this?
+          You&apos;re about to send your {modelProvider.name} credentials to /dev/null. Sure about this?
         </Text>
         <Callout title="Point of No Return" color="red" className="mt-4">
-          <p>This is a one-way ticket. You'll need to go through the whole song and dance of reconfiguring if you change your mind. Estimated setup time: 10 minutes of your life you'll never get back.</p>
+          <p>This is a one-way ticket. You&apos;ll need to go through the whole song and dance of reconfiguring if you change your mind. Estimated setup time: 10 minutes of your life you&apos;ll never get back.</p>
         </Callout>
         <div className="flex mt-8 justify-between">
-          <Button color="gray" onClick={onCancel}>Keep 'em</Button>
-          <Button color="red" onClick={onConfirm}>Nuke 'em</Button>
+          <Button color="gray" onClick={onCancel}>Keep &apos;em</Button>
+          <Button color="red" onClick={onConfirm}>Nuke &apos;em</Button>
         </div>
       </div>
     </Modal>
@@ -145,7 +145,7 @@ export function ChangeCredentialsModal({
           </Text>
           <Callout title="Read the Fine Print" color="blue" className="mt-4">
             <div className="flex flex-col gap-y-2">
-              <p>This isn't just a local change. Every model tied to this provider will feel the ripple effect.</p>
+              <p>This isn&apos;t just a local change. Every model tied to this provider will feel the ripple effect.</p>
               <Label>Your Shiny New API Key</Label>
               <input 
                 type="password" 
@@ -160,7 +160,7 @@ export function ChangeCredentialsModal({
             </div>
           </Callout>
           <Text className="text-sm mt-4">
-            Fun fact: This key swap could save you up to 15% on your API calls. Or not. We're developers, not fortune tellers.
+            Fun fact: This key swap could save you up to 15% on your API calls. Or not. We&apos;re developers, not fortune tellers.
           </Text>
           <div className="flex mt-8 justify-between">
             <Button color="gray" onClick={onCancel}>Abort Key Swap</Button>

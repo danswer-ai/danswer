@@ -2,16 +2,16 @@ import {
   BooleanFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
-import { Button, Divider, Text } from "@tremor/react";
+import { Button } from "@tremor/react";
 import { Form, Formik } from "formik";
 
 import * as Yup from "yup";
-import { EmbeddingModelDescriptor } from "./embeddingModels";
+import { CloudEmbeddingProvider, CloudEmbeddingModel } from "./embeddingModels";
 
 export function CustomModelForm({
   onSubmit,
 }: {
-  onSubmit: (model: EmbeddingModelDescriptor) => void;
+  onSubmit: (model: CloudEmbeddingModel) => void;
 }) {
   return (
     <div>
@@ -35,7 +35,7 @@ export function CustomModelForm({
           normalize: Yup.boolean().required(),
         })}
         onSubmit={async (values, formikHelpers) => {
-          onSubmit({ ...values, model_dim: parseInt(values.model_dim) });
+          // onSubmit({ ...values, description: "", model_dim: parseInt(values.model_dim) });
         }}
       >
         {({ isSubmitting, setFieldValue }) => (
@@ -62,7 +62,6 @@ export function CustomModelForm({
                 }
               }}
             />
-
             <TextFormField
               name="query_prefix"
               label="[Optional] Query Prefix:"
@@ -77,7 +76,6 @@ export function CustomModelForm({
               placeholder="E.g. 'query: '"
               autoCompleteDisabled={true}
             />
-
             <TextFormField
               name="passage_prefix"
               label="[Optional] Passage Prefix:"

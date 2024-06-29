@@ -31,6 +31,7 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import LargeBinary
 from sqlalchemy.types import TypeDecorator
+from sqlalchemy import Integer, String, Boolean, JSON
 
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DEFAULT_BOOST
@@ -466,10 +467,9 @@ class Credential(Base):
     )
     user: Mapped[User | None] = relationship("User", back_populates="credentials")
 
-
 class EmbeddingModel(Base):
     __tablename__ = "embedding_model"
-    # ID is used also to indicate the order that the models are configured by the admin
+
     id: Mapped[int] = mapped_column(primary_key=True)
     model_name: Mapped[str] = mapped_column(String)
     model_dim: Mapped[int] = mapped_column(Integer)
@@ -480,6 +480,11 @@ class EmbeddingModel(Base):
         Enum(IndexModelStatus, native_enum=False)
     )
     index_name: Mapped[str] = mapped_column(String)
+
+    # New field for cloud provider relationship
+    cloud_provider_id: Mapped[int | None] = mapped_column(ForeignKey("embedding_provider.id"), nullable=True)
+    cloud_provider: Mapped["CloudEmbeddingProvider | None"] = relationship("CloudEmbeddingProvider", back_populates="embedding_models")
+
 
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="embedding_model"
@@ -499,6 +504,10 @@ class EmbeddingModel(Base):
             postgresql_where=(status == IndexModelStatus.FUTURE),
         ),
     )
+
+    def __repr__(self):
+        return f"<EmbeddingModel(model_name='{self.model_name}', status='{self.status}', cloud_provider='{self.cloud_provider.name if self.cloud_provider else 'None'}')>"
+
 
 
 class IndexAttempt(Base):
@@ -879,9 +888,6 @@ class ChatMessageFeedback(Base):
     )
 
 
-"""
-Structures, Organizational, Configurations Tables
-"""
 
 
 class LLMProvider(Base):
@@ -910,6 +916,41 @@ class LLMProvider(Base):
 
     # should only be set for a single provider
     is_default_provider: Mapped[bool | None] = mapped_column(Boolean, unique=True)
+
+
+class CloudEmbeddingProvider(Base):
+    __tablename__ = "embedding_provider"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    provider_id: Mapped[str] = mapped_column(String, unique=True)
+    api_key: Mapped[str | None] = mapped_column(String, nullable=True)
+    api_base: Mapped[str | None] = mapped_column(String, nullable=True)
+    api_version: Mapped[str | None] = mapped_column(String, nullable=True)
+    
+    # Custom configurations for the provider (e.g., region for AWS)
+    custom_config: Mapped[dict[str, str] | None] = mapped_column(
+        JSON, nullable=True
+    )
+    
+    # Default model for this provider
+    default_model_name: Mapped[str] = mapped_column(String)
+    
+    # Available model names for this provider
+    model_names: Mapped[list[str]] = mapped_column(
+        postgresql.ARRAY(String)
+    )
+    
+    # Whether the provider is currently configured
+    is_configured: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_default_provider: Mapped[bool | None] = mapped_column(Boolean, unique=True)
+    embedding_models: Mapped[list["EmbeddingModel"]] = relationship("EmbeddingModel", back_populates="cloud_provider")
+
+    
+
+    def __repr__(self):
+        return f"<EmbeddingProvider(name='{self.name}', provider_id='{self.provider_id}', default_model='{self.default_model_name}')>"
+
 
 
 class DocumentSet(Base):
