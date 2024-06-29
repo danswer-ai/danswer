@@ -1,4 +1,10 @@
-import { CohereIcon, GoogleIcon, IconProps, OpenAIIcon, VoyageIcon } from "@/components/icons/icons";
+import {
+  CohereIcon,
+  GoogleIcon,
+  IconProps,
+  OpenAIIcon,
+  VoyageIcon,
+} from "@/components/icons/icons";
 
 export type ProviderId = "openai" | "cohere" | "voyage" | "google";
 
@@ -7,6 +13,7 @@ export interface CloudEmbeddingModel {
   description: string;
   model_dim: number;
   normalize: boolean;
+  cloud_provider_id?: number;
   link: string;
   query_prefix: string;
   passage_prefix: string;
@@ -29,14 +36,14 @@ export interface CloudEmbeddingProvider {
   api_key?: string;
   custom_config?: Record<string, string>;
   default_model_id?: number;
-  
+
   // Frontend-specific properties
   website: string;
   icon: ({ size, className }: IconProps) => JSX.Element;
   description: string;
   apiLink: string;
   costslink?: string;
-  
+
   // Relationships
   embedding_models: CloudEmbeddingModel[];
   default_model?: CloudEmbeddingModel;
@@ -109,8 +116,8 @@ export const AVAILABLE_MODELS: FullEmbeddingModelDescriptor[] = [
   },
 ];
 
-export interface CloudEmbeddingProviderFull extends CloudEmbeddingProvider{
-  configured: boolean
+export interface CloudEmbeddingProviderFull extends CloudEmbeddingProvider {
+  configured: boolean;
 }
 
 export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
@@ -125,8 +132,9 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
     embedding_models: [
       {
         name: "text-embedding-3-small",
-        description: "OpenAI's newer, more efficient embedding model. Good balance of performance and cost.",
-        
+        description:
+          "OpenAI's newer, more efficient embedding model. Good balance of performance and cost.",
+
         model_dim: 1536,
         normalize: true,
         link: "https://platform.openai.com/docs/guides/embeddings",
@@ -137,12 +145,13 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
         mtebScore: 62.3,
         maxContext: 8191,
         latency1k: 0.42,
-        similarityMetric: "Cosine Similarity"
+        similarityMetric: "Cosine Similarity",
       },
       {
         name: "text-embedding-3-large",
-        description: "OpenAI's large embedding model. Best performance, but more expensive.",
-        
+        description:
+          "OpenAI's large embedding model. Best performance, but more expensive.",
+
         model_dim: 3072,
         normalize: true,
         link: "https://platform.openai.com/docs/guides/embeddings",
@@ -154,9 +163,9 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
         latency1k: 0.63,
         similarityMetric: "Cosine Similarity",
         enabled: false,
-      }
+      },
     ],
-    default_model_id: 0,  // Assuming the first model is the default
+    default_model_id: 0, // Assuming the first model is the default
   },
   {
     id: 1,
@@ -169,8 +178,9 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
     embedding_models: [
       {
         name: "embed-english-v3.0",
-        description: "Cohere's English embedding model. Good performance for English-language tasks.",
-        
+        description:
+          "Cohere's English embedding model. Good performance for English-language tasks.",
+
         model_dim: 1024,
         normalize: true,
         link: "https://docs.cohere.com/docs/cohere-embed",
@@ -179,15 +189,16 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
         pricePerMillion: 0.1,
         mtebScore: 64.5,
         maxContext: 512,
-        latency1k: 0.30,
+        latency1k: 0.3,
         latency8k: 0.54,
         similarityMetric: "Cosine Similarity",
-        enabled: false
+        enabled: false,
       },
       {
         name: "embed-english-light-v3.0",
-        description: "Cohere's lightweight English embedding model. Faster and more efficient for simpler tasks.",
-        
+        description:
+          "Cohere's lightweight English embedding model. Faster and more efficient for simpler tasks.",
+
         model_dim: 384,
         normalize: true,
         link: "https://docs.cohere.com/docs/cohere-embed",
@@ -200,9 +211,9 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
         latency8k: 0.51,
         similarityMetric: "Cosine Similarity",
         enabled: false,
-      }
+      },
     ],
-    default_model_id: 0,  // Assuming the first model is the default
+    default_model_id: 0, // Assuming the first model is the default
   },
   {
     id: 2,
@@ -215,8 +226,9 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
     embedding_models: [
       {
         name: "voyage-large-2-instruct",
-        description: "Voyage AI's large embedding model. High performance with instruction fine-tuning.",
-        
+        description:
+          "Voyage AI's large embedding model. High performance with instruction fine-tuning.",
+
         model_dim: 1024,
         normalize: true,
         link: "https://docs.voyageai.com/docs/embeddings",
@@ -233,8 +245,9 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
       },
       {
         name: "voyage-light-2-instruct",
-        description: "Voyage AI's lightweight embedding model. Good balance of performance and efficiency.",
-        
+        description:
+          "Voyage AI's lightweight embedding model. Good balance of performance and efficiency.",
+
         model_dim: 1024,
         normalize: true,
         link: "https://docs.voyageai.com/docs/embeddings",
@@ -246,22 +259,24 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
         latency1k: 1.07,
         similarityMetric: "Cosine Similarity",
         enabled: false,
-      }
+      },
     ],
-    default_model_id: 0,  // Assuming the first model is the default
+    default_model_id: 0, // Assuming the first model is the default
   },
   {
     id: 3,
     name: "Google AI",
     website: "https://ai.google",
     icon: GoogleIcon,
-    description: "Offers a wide range of AI services including language and vision models.",
+    description:
+      "Offers a wide range of AI services including language and vision models.",
     apiLink: "https://console.cloud.google.com/apis/credentials",
     costslink: "https://cloud.google.com/vertex-ai/pricing",
     embedding_models: [
       {
         name: "gecko",
-        description: "Google's Gecko embedding model. Powerful and efficient, but requires more setup.",
+        description:
+          "Google's Gecko embedding model. Powerful and efficient, but requires more setup.",
         model_dim: 768,
         normalize: true,
         link: "https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/text-embeddings",
@@ -273,19 +288,20 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
         similarityMetric: "Cosine Similarity",
         numParameters: "1.2B",
         memoryUsage: "4.4GB",
-        notes: "Price is per character, not token. Longer setup time, need to configure Google Cloud Console with project ID, etc.",
+        notes:
+          "Price is per character, not token. Longer setup time, need to configure Google Cloud Console with project ID, etc.",
         enabled: false,
-      }
+      },
     ],
-    default_model_id: 0,  // Assuming the first model is the default
+    default_model_id: 0, // Assuming the first model is the default
   },
 ];
 
-
-
 export const INVALID_OLD_MODEL = "thenlper/gte-small";
 
-export function checkModelNameIsValid(modelName: string | undefined | null): boolean {
+export function checkModelNameIsValid(
+  modelName: string | undefined | null
+): boolean {
   return !!modelName && modelName !== INVALID_OLD_MODEL;
 }
 

@@ -1,6 +1,8 @@
 from abc import ABC
 from abc import abstractmethod
 
+from sqlalchemy.orm import Session
+
 from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
@@ -18,7 +20,6 @@ from danswer.utils.batching import batch_list
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
-from sqlalchemy.orm import Session
 
 
 logger = setup_logger()
@@ -49,6 +50,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         normalize: bool,
         query_prefix: str | None,
         passage_prefix: str | None,
+        api_key,
     ):
         super().__init__(model_name, normalize, query_prefix, passage_prefix)
         self.max_seq_length = DOC_EMBEDDING_CONTEXT_SIZE  # Currently not customizable

@@ -80,8 +80,6 @@ import cohereIcon from "../../../public/Cohere.svg";
 import voyageIcon from "../../../public/Voyage.png";
 import googleIcon from "../../../public/Google.webp";
 
-
-
 import { FaRobot } from "react-icons/fa";
 
 export interface IconProps {
@@ -550,7 +548,6 @@ export const OpenAIIcon = ({
   );
 };
 
-
 export const VoyageIcon = ({
   size = 16,
   className = defaultTailwindCSS,
@@ -564,7 +561,6 @@ export const VoyageIcon = ({
     </div>
   );
 };
-
 
 export const GoogleIcon = ({
   size = 16,
@@ -593,7 +589,6 @@ export const CohereIcon = ({
     </div>
   );
 };
-
 
 export const GoogleStorageIcon = ({
   size = 16,

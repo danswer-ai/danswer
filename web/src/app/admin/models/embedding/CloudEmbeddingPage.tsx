@@ -14,12 +14,14 @@ import { EmbeddingDetails } from "./page";
 export default function CloudEmbeddingPage({
   embeddingProviderDetails,
   newEnabledProviders,
+  newUnenabledProviders,
   setTentativeNewEmbeddingModel,
   setTentativelyNewProvider,
   selectedModel,
   setShowModelNotConfiguredModal,
   setChangeCredentials,
 }: {
+  newUnenabledProviders: string[];
   embeddingProviderDetails?: EmbeddingDetails[];
   newEnabledProviders: string[];
   selectedModel: CloudEmbeddingProvider;
@@ -50,9 +52,10 @@ export default function CloudEmbeddingPage({
     let temporary_model: CloudEmbeddingProviderFull = {
       ...model,
       configured:
-        newEnabledProviders.includes(model.name) ||
-        (embeddingProviderDetails &&
-          hasNameInArray(embeddingProviderDetails, model.name))!,
+        !newUnenabledProviders.includes(model.name) &&
+        (newEnabledProviders.includes(model.name) ||
+          (embeddingProviderDetails &&
+            hasNameInArray(embeddingProviderDetails, model.name))!),
     };
     providers.push(temporary_model);
   });

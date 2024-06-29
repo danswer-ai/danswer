@@ -8,27 +8,6 @@ from typing import Optional
 from typing import TypedDict
 from uuid import UUID
 
-from danswer.auth.schemas import UserRole
-from danswer.configs.constants import DEFAULT_BOOST
-from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import FileOrigin
-from danswer.configs.constants import MessageType
-from danswer.configs.constants import SearchFeedbackType
-from danswer.configs.constants import TokenRateLimitScope
-from danswer.connectors.models import InputType
-from danswer.db.enums import ChatSessionSharedStatus
-from danswer.db.enums import IndexingStatus
-from danswer.db.enums import IndexModelStatus
-from danswer.db.enums import TaskStatus
-from danswer.db.pydantic_type import PydanticType
-from danswer.dynamic_configs.interface import JSON_ro
-from danswer.file_store.models import FileDescriptor
-from danswer.llm.override_models import LLMOverride
-from danswer.llm.override_models import PromptOverride
-from danswer.search.enums import RecencyBiasSetting
-from danswer.search.enums import SearchType
-from danswer.utils.encryption import decrypt_bytes_to_string
-from danswer.utils.encryption import encrypt_string_to_bytes
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseOAuthAccountTableUUID
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
@@ -53,6 +32,28 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import LargeBinary
 from sqlalchemy.types import TypeDecorator
+
+from danswer.auth.schemas import UserRole
+from danswer.configs.constants import DEFAULT_BOOST
+from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import FileOrigin
+from danswer.configs.constants import MessageType
+from danswer.configs.constants import SearchFeedbackType
+from danswer.configs.constants import TokenRateLimitScope
+from danswer.connectors.models import InputType
+from danswer.db.enums import ChatSessionSharedStatus
+from danswer.db.enums import IndexingStatus
+from danswer.db.enums import IndexModelStatus
+from danswer.db.enums import TaskStatus
+from danswer.db.pydantic_type import PydanticType
+from danswer.dynamic_configs.interface import JSON_ro
+from danswer.file_store.models import FileDescriptor
+from danswer.llm.override_models import LLMOverride
+from danswer.llm.override_models import PromptOverride
+from danswer.search.enums import RecencyBiasSetting
+from danswer.search.enums import SearchType
+from danswer.utils.encryption import decrypt_bytes_to_string
+from danswer.utils.encryption import encrypt_string_to_bytes
 
 
 class Base(DeclarativeBase):
@@ -466,6 +467,7 @@ class Credential(Base):
     )
     user: Mapped[User | None] = relationship("User", back_populates="credentials")
 
+
 class EmbeddingModel(Base):
     __tablename__ = "embedding_model"
 
@@ -481,8 +483,14 @@ class EmbeddingModel(Base):
     index_name: Mapped[str] = mapped_column(String)
 
     # New field for cloud provider relationship
-    cloud_provider_id: Mapped[int | None] = mapped_column(ForeignKey("embedding_provider.id"), nullable=True)
-    cloud_provider: Mapped["CloudEmbeddingProvider"] = relationship("CloudEmbeddingProvider", back_populates="embedding_models", foreign_keys=[cloud_provider_id])
+    cloud_provider_id: Mapped[int | None] = mapped_column(
+        ForeignKey("embedding_provider.id"), nullable=True
+    )
+    cloud_provider: Mapped["CloudEmbeddingProvider"] = relationship(
+        "CloudEmbeddingProvider",
+        back_populates="embedding_models",
+        foreign_keys=[cloud_provider_id],
+    )
 
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="embedding_model"
@@ -504,8 +512,8 @@ class EmbeddingModel(Base):
     )
 
     def __repr__(self):
-        return f"<EmbeddingModel(model_name='{self.model_name}', status='{self.status}', cloud_provider='{self.cloud_provider.name if self.cloud_provider else 'None'}')>"
-
+        return f"<EmbeddingModel(model_name='{self.model_name}', status='{self.status}',\
+          cloud_provider='{self.cloud_provider.name if self.cloud_provider else 'None'}')>"
 
 
 class IndexAttempt(Base):
@@ -886,8 +894,6 @@ class ChatMessageFeedback(Base):
     )
 
 
-
-
 class LLMProvider(Base):
     __tablename__ = "llm_provider"
 
@@ -923,15 +929,27 @@ class CloudEmbeddingProvider(Base):
     name: Mapped[str] = mapped_column(String, unique=True)
     api_key: Mapped[str | None] = mapped_column(EncryptedString(), nullable=True)
     custom_config: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)
-    default_model_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("embedding_model.id"), nullable=True)
+    default_model_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("embedding_model.id"), nullable=True
+    )
 
-    embedding_models: Mapped[list["EmbeddingModel"]] = relationship("EmbeddingModel", back_populates="cloud_provider", foreign_keys="EmbeddingModel.cloud_provider_id")
-    default_model: Mapped["EmbeddingModel"] = relationship("EmbeddingModel", foreign_keys=[default_model_id])
+    embedding_models: Mapped[list["EmbeddingModel"]] = relationship(
+        "EmbeddingModel",
+        back_populates="cloud_provider",
+        foreign_keys="EmbeddingModel.cloud_provider_id",
+    )
+    default_model: Mapped["EmbeddingModel"] = relationship(
+        "EmbeddingModel", foreign_keys=[default_model_id]
+    )
 
     def __repr__(self):
         return f"<EmbeddingProvider(name='{self.name}')>"
 
-# provider_id, name, api_key, custom_config, default_model (which should reference a model in the EmbeddingModel table), and also keep in mind that each entry in EmbedingModel references it as a foreign key
+
+# provider_id, name, api_key, custom_config, default_model
+# (which should reference a model in the EmbeddingModel table),
+# and also keep in mind that each entry in EmbedingModel references it as a foreign key
+
 
 class DocumentSet(Base):
     __tablename__ = "document_set"

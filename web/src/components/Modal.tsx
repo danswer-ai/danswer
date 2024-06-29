@@ -47,13 +47,14 @@ export function Modal({
             <>
               <div className="flex mb-4">
                 <h2
-                  className={"my-auto flex content-start gap-x-4 font-bold " + (titleSize || "text-2xl")}
+                  className={
+                    "my-auto flex content-start gap-x-4 font-bold " +
+                    (titleSize || "text-2xl")
+                  }
                 >
                   {title}
                   {icon && icon({ size: 30 })}
                 </h2>
-
-
 
                 {onOutsideClick && (
                   <div

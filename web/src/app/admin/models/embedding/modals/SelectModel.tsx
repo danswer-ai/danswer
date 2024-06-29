@@ -1,8 +1,7 @@
-import React from 'react';
+import React from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text, Callout } from "@tremor/react";
-import { CloudEmbeddingModel } from '../components/types';
-
+import { CloudEmbeddingModel } from "../components/types";
 
 // 2. Select Model
 export function SelectModelModal({
@@ -15,13 +14,15 @@ export function SelectModelModal({
   onCancel: () => void;
 }) {
   return (
-    <Modal title={`Elevate Your Game with ${model.name}`} onOutsideClick={onCancel}>
+    <Modal
+      title={`Elevate Your Game with ${model.name}`}
+      onOutsideClick={onCancel}
+    >
       <div className="mb-4">
         <Text className="text-lg mb-2">
           You&apos;re about to supercharge your setup with {model.name}.
           <br />
           Ready to push the envelope?
-
         </Text>
         <Callout title="Model Specs" color="blue" className="mt-4">
           <div className="flex flex-col gap-y-2">
@@ -31,8 +32,12 @@ export function SelectModelModal({
           </div>
         </Callout>
         <div className="flex mt-8 justify-between">
-          <Button color="gray" onClick={onCancel}>Exit</Button>
-          <Button color="green" onClick={onConfirm}>Switch</Button>
+          <Button color="gray" onClick={onCancel}>
+            Exit
+          </Button>
+          <Button color="green" onClick={onConfirm}>
+            Switch
+          </Button>
         </div>
       </div>
     </Modal>
