@@ -30,7 +30,7 @@ from danswer.danswerbot.slack.tokens import fetch_tokens
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.users import get_user_by_email
 from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_default_llm
+from danswer.llm.factory import get_default_llms
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import message_to_string
 from danswer.one_shot_answer.models import ThreadMessage
@@ -58,7 +58,7 @@ def rephrase_slack_message(msg: str) -> str:
         return messages
 
     try:
-        llm = get_default_llm(use_fast_llm=False, timeout=5)
+        llm, _ = get_default_llms(timeout=5)
     except GenAIDisabledException:
         logger.warning("Unable to rephrase Slack user message, Gen AI disabled")
         return msg

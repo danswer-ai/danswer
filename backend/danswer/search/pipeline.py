@@ -56,6 +56,7 @@ class SearchPipeline:
         search_request: SearchRequest,
         user: User | None,
         llm: LLM,
+        fast_llm: LLM,
         db_session: Session,
         bypass_acl: bool = False,  # NOTE: VERY DANGEROUS, USE WITH CAUTION
         retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
@@ -65,6 +66,7 @@ class SearchPipeline:
         self.search_request = search_request
         self.user = user
         self.llm = llm
+        self.fast_llm = fast_llm
         self.db_session = db_session
         self.bypass_acl = bypass_acl
         self.retrieval_metrics_callback = retrieval_metrics_callback
@@ -298,6 +300,7 @@ class SearchPipeline:
         self._postprocessing_generator = search_postprocessing(
             search_query=self.search_query,
             retrieved_chunks=self.retrieved_chunks,
+            llm=self.fast_llm,  # use fast_llm for relevance, since it is a relatively easier task
             rerank_metrics_callback=self.rerank_metrics_callback,
         )
         self._reranked_chunks = cast(

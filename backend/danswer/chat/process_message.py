@@ -46,7 +46,8 @@ from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_llm_for_persona
+from danswer.llm.factory import get_llms_for_persona
+from danswer.llm.factory import get_main_llm_from_tuple
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.retrieval.search_runner import inference_documents_from_ids
@@ -235,7 +236,7 @@ def stream_chat_message_objects(
             )
 
         try:
-            llm = get_llm_for_persona(
+            llm, fast_llm = get_llms_for_persona(
                 persona=persona,
                 llm_override=new_msg_req.llm_override or chat_session.llm_override,
                 additional_headers=litellm_additional_headers,
@@ -411,6 +412,7 @@ def stream_chat_message_objects(
                         retrieval_options=retrieval_options,
                         prompt_config=prompt_config,
                         llm=llm,
+                        fast_llm=fast_llm,
                         pruning_config=document_pruning_config,
                         selected_docs=selected_llm_docs,
                         chunks_above=new_msg_req.chunks_above,
@@ -484,10 +486,14 @@ def stream_chat_message_objects(
             prompt_config=prompt_config,
             llm=(
                 llm
-                or get_llm_for_persona(
-                    persona=persona,
-                    llm_override=new_msg_req.llm_override or chat_session.llm_override,
-                    additional_headers=litellm_additional_headers,
+                or get_main_llm_from_tuple(
+                    get_llms_for_persona(
+                        persona=persona,
+                        llm_override=(
+                            new_msg_req.llm_override or chat_session.llm_override
+                        ),
+                        additional_headers=litellm_additional_headers,
+                    )
                 )
             ),
             message_history=[
