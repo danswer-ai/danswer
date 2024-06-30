@@ -14,7 +14,7 @@ import { DocumentDisplay } from "./DocumentDisplay";
 import { QuotesSection } from "./results/QuotesSection";
 import { AnswerSection } from "./results/AnswerSection";
 import { ThreeDots } from "react-loader-spinner";
-import { usePopup } from "../adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { AlertIcon } from "../icons/icons";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 
