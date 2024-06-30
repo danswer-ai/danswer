@@ -613,7 +613,7 @@ export async function useScrollonStream({
       const heightDifference = newHeight - previousScroll.current;
       previousScroll.current = newHeight;
 
-      // Prevent streaming scroll
+      // Prevent streaming scroll 
       if (heightDifference < 0 && !preventScroll.current) {
         scrollableDivRef.current.style.scrollBehavior = "auto";
         scrollableDivRef.current.scrollTop = scrollableDivRef.current.scrollTop;
