@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.llm.answering.doc_pruning import reorder_docs
-from danswer.llm.factory import get_default_llm
+from danswer.llm.factory import get_default_llms
 from danswer.search.models import InferenceChunk
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
@@ -83,12 +83,14 @@ def get_search_results(
     rerank_metrics = MetricsHander[RerankMetricsContainer]()
 
     with Session(get_sqlalchemy_engine()) as db_session:
+        llm, fast_llm = get_default_llms()
         search_pipeline = SearchPipeline(
             search_request=SearchRequest(
                 query=query,
             ),
             user=None,
-            llm=get_default_llm(),
+            llm=llm,
+            fast_llm=fast_llm,
             db_session=db_session,
             retrieval_metrics_callback=retrieval_metrics.record_metric,
             rerank_metrics_callback=rerank_metrics.record_metric,

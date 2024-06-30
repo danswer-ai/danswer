@@ -9,13 +9,13 @@ import {
   TableCell,
 } from "@tremor/react";
 import { CCPairStatus, IndexAttemptStatus } from "@/components/Status";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageSelector } from "@/components/PageSelector";
 import { timeAgo } from "@/lib/time";
 import { ConnectorIndexingStatus } from "@/lib/types";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
 import { FiCheck, FiEdit2, FiXCircle } from "react-icons/fi";
 
@@ -68,6 +68,32 @@ function CCPairIndexingStatusDisplay({
   );
 }
 
+function ClickableTableRow({
+  url,
+  children,
+  ...props
+}: {
+  url: string;
+  children: React.ReactNode;
+  [key: string]: any; // This allows for any additional props
+}) {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.prefetch(url);
+  }, [router]);
+
+  const navigate = () => {
+    router.push(url);
+  };
+
+  return (
+    <TableRow {...props} onClick={navigate}>
+      {children}
+    </TableRow>
+  );
+}
+
 export function CCPairIndexingStatusTable({
   ccPairsIndexingStatuses,
 }: {
@@ -94,7 +120,8 @@ export function CCPairIndexingStatusTable({
         <TableBody>
           {ccPairsIndexingStatusesForPage.map((ccPairsIndexingStatus) => {
             return (
-              <TableRow
+              <ClickableTableRow
+                url={`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`}
                 key={ccPairsIndexingStatus.cc_pair_id}
                 className={
                   "hover:bg-hover-light bg-background cursor-pointer relative"
@@ -128,14 +155,7 @@ export function CCPairIndexingStatusTable({
                   {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
                 </TableCell>
                 <TableCell>{ccPairsIndexingStatus.docs_indexed}</TableCell>
-                {/* Wrapping in <td> to avoid console warnings */}
-                <td className="w-0 p-0">
-                  <Link
-                    href={`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`}
-                    className="absolute w-full h-full left-0"
-                  ></Link>
-                </td>
-              </TableRow>
+              </ClickableTableRow>
             );
           })}
         </TableBody>

@@ -34,6 +34,7 @@ from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import ToolCall
 from danswer.db.models import User
+from danswer.db.persona import get_persona_by_id
 from danswer.document_index.factory import get_default_document_index
 from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import FileDescriptor
@@ -46,7 +47,8 @@ from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_llm_for_persona
+from danswer.llm.factory import get_llms_for_persona
+from danswer.llm.factory import get_main_llm_from_tuple
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.retrieval.search_runner import inference_documents_from_ids
@@ -223,7 +225,15 @@ def stream_chat_message_objects(
         parent_id = new_msg_req.parent_message_id
         reference_doc_ids = new_msg_req.search_doc_ids
         retrieval_options = new_msg_req.retrieval_options
-        persona = chat_session.persona
+        alternate_assistant_id = new_msg_req.alternate_assistant_id
+
+        # use alternate persona if alternative assistant id is passed in
+        if alternate_assistant_id is not None:
+            persona = get_persona_by_id(
+                alternate_assistant_id, user=user, db_session=db_session
+            )
+        else:
+            persona = chat_session.persona
 
         prompt_id = new_msg_req.prompt_id
         if prompt_id is None and persona.prompts:
@@ -235,7 +245,7 @@ def stream_chat_message_objects(
             )
 
         try:
-            llm = get_llm_for_persona(
+            llm, fast_llm = get_llms_for_persona(
                 persona=persona,
                 llm_override=new_msg_req.llm_override or chat_session.llm_override,
                 additional_headers=litellm_additional_headers,
@@ -380,6 +390,7 @@ def stream_chat_message_objects(
             # rephrased_query=,
             # token_count=,
             message_type=MessageType.ASSISTANT,
+            alternate_assistant_id=new_msg_req.alternate_assistant_id,
             # error=,
             # reference_docs=,
             db_session=db_session,
@@ -389,11 +400,15 @@ def stream_chat_message_objects(
         if not final_msg.prompt:
             raise RuntimeError("No Prompt found")
 
-        prompt_config = PromptConfig.from_model(
-            final_msg.prompt,
-            prompt_override=(
-                new_msg_req.prompt_override or chat_session.prompt_override
-            ),
+        prompt_config = (
+            PromptConfig.from_model(
+                final_msg.prompt,
+                prompt_override=(
+                    new_msg_req.prompt_override or chat_session.prompt_override
+                ),
+            )
+            if not persona
+            else PromptConfig.from_model(persona.prompts[0])
         )
 
         # find out what tools to use
@@ -411,6 +426,7 @@ def stream_chat_message_objects(
                         retrieval_options=retrieval_options,
                         prompt_config=prompt_config,
                         llm=llm,
+                        fast_llm=fast_llm,
                         pruning_config=document_pruning_config,
                         selected_docs=selected_llm_docs,
                         chunks_above=new_msg_req.chunks_above,
@@ -444,7 +460,10 @@ def stream_chat_message_objects(
                             )
                         dalle_key = openai_provider.api_key
                     tool_dict[db_tool_model.id] = [
-                        ImageGenerationTool(api_key=dalle_key)
+                        ImageGenerationTool(
+                            api_key=dalle_key,
+                            additional_headers=litellm_additional_headers,
+                        )
                     ]
 
                 continue
@@ -481,10 +500,14 @@ def stream_chat_message_objects(
             prompt_config=prompt_config,
             llm=(
                 llm
-                or get_llm_for_persona(
-                    persona=persona,
-                    llm_override=new_msg_req.llm_override or chat_session.llm_override,
-                    additional_headers=litellm_additional_headers,
+                or get_main_llm_from_tuple(
+                    get_llms_for_persona(
+                        persona=persona,
+                        llm_override=(
+                            new_msg_req.llm_override or chat_session.llm_override
+                        ),
+                        additional_headers=litellm_additional_headers,
+                    )
                 )
             ),
             message_history=[

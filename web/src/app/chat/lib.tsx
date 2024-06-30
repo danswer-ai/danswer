@@ -95,6 +95,7 @@ export async function* sendMessage({
   temperature,
   systemPromptOverride,
   useExistingUserMessage,
+  alternateAssistantId,
 }: {
   message: string;
   fileDescriptors: FileDescriptor[];
@@ -114,15 +115,18 @@ export async function* sendMessage({
   // if specified, will use the existing latest user message
   // and will ignore the specified `message`
   useExistingUserMessage?: boolean;
+  alternateAssistantId?: number;
 }) {
   const documentsAreSelected =
     selectedDocumentIds && selectedDocumentIds.length > 0;
+
   const sendMessageResponse = await fetch("/api/chat/send-message", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      alternate_assistant_id: alternateAssistantId,
       chat_session_id: chatSessionId,
       parent_message_id: parentMessageId,
       message: message,
@@ -381,6 +385,7 @@ export function processRawChatHistory(
       message: messageInfo.message,
       type: messageInfo.message_type as "user" | "assistant",
       files: messageInfo.files,
+      alternateAssistantID: Number(messageInfo.alternate_assistant_id),
       // only include these fields if this is an assistant message so that
       // this is identical to what is computed at streaming time
       ...(messageInfo.message_type === "assistant"
@@ -494,6 +499,32 @@ export function removeMessage(
   }
 
   completeMessageMap.delete(messageId);
+}
+
+export function checkAnyAssistantHasSearch(
+  messageHistory: Message[],
+  availablePersonas: Persona[],
+  livePersona: Persona
+): boolean {
+  const response =
+    messageHistory.some((message) => {
+      if (
+        message.type !== "assistant" ||
+        message.alternateAssistantID === null
+      ) {
+        return false;
+      }
+
+      const alternateAssistant = availablePersonas.find(
+        (persona) => persona.id === message.alternateAssistantID
+      );
+
+      return alternateAssistant
+        ? personaIncludesRetrieval(alternateAssistant)
+        : false;
+    }) || personaIncludesRetrieval(livePersona);
+
+  return response;
 }
 
 export function personaIncludesRetrieval(selectedPersona: Persona) {
