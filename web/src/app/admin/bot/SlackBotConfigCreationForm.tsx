@@ -1,9 +1,5 @@
 "use client";
 
-import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
-import * as Yup from "yup";
-import { usePopup } from "@/components/admin/connectors/Popup";
-import { DocumentSet, SlackBotConfig } from "@/lib/types";
 import {
   BooleanFormField,
   SectionHeader,
@@ -11,11 +7,9 @@ import {
   SubLabel,
   TextArrayField,
 } from "@/components/admin/connectors/Field";
-import {
-  createSlackBotConfig,
-  isPersonaASlackBotPersona,
-  updateSlackBotConfig,
-} from "./lib";
+import { usePopup } from "@/components/admin/connectors/Popup";
+import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
+import { DocumentSet, SlackBotConfig } from "@/lib/types";
 import {
   Button,
   Card,
@@ -27,16 +21,24 @@ import {
   TabPanels,
   Text,
 } from "@tremor/react";
+import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
-import { Persona } from "../assistants/interfaces";
 import { useState } from "react";
-import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
+import * as Yup from "yup";
+import { Persona } from "../assistants/interfaces";
+import {
+  createSlackBotConfig,
+  isPersonaASlackBotPersona,
+  updateSlackBotConfig,
+} from "./lib";
 
 export const SlackBotCreationForm = ({
+  app_id,
   documentSets,
   personas,
   existingSlackBotConfig,
 }: {
+  app_id: String;
   documentSets: DocumentSet[];
   personas: Persona[];
   existingSlackBotConfig?: SlackBotConfig;
@@ -58,6 +60,7 @@ export const SlackBotCreationForm = ({
         {popup}
         <Formik
           initialValues={{
+            app_id: Number(app_id),
             channel_names: existingSlackBotConfig
               ? existingSlackBotConfig.channel_config.channel_names
               : ([] as string[]),
@@ -86,17 +89,18 @@ export const SlackBotCreationForm = ({
             document_sets:
               existingSlackBotConfig && existingSlackBotConfig.persona
                 ? existingSlackBotConfig.persona.document_sets.map(
-                    (documentSet) => documentSet.id
-                  )
+                  (documentSet) => documentSet.id
+                )
                 : ([] as number[]),
             persona_id:
               existingSlackBotConfig?.persona &&
-              !isPersonaASlackBotPersona(existingSlackBotConfig.persona)
+                !isPersonaASlackBotPersona(existingSlackBotConfig.persona)
                 ? existingSlackBotConfig.persona.id
                 : null,
             response_type: existingSlackBotConfig?.response_type || "citations",
           }}
           validationSchema={Yup.object().shape({
+            app_id: Yup.number().required(),
             channel_names: Yup.array().of(Yup.string()),
             response_type: Yup.string()
               .oneOf(["quotes", "citations"])
@@ -113,6 +117,8 @@ export const SlackBotCreationForm = ({
           })}
           onSubmit={async (values, formikHelpers) => {
             formikHelpers.setSubmitting(true);
+
+            console.log("onSubmit starts.")
 
             // remove empty channel names
             const cleanedValues = {
@@ -149,7 +155,7 @@ export const SlackBotCreationForm = ({
             }
             formikHelpers.setSubmitting(false);
             if (response.ok) {
-              router.push(`/admin/bot?u=${Date.now()}`);
+              router.push(`/admin/bot/app/${app_id}?u=${Date.now()}`);
             } else {
               const responseJson = await response.json();
               const errorMsg = responseJson.detail || responseJson.message;
@@ -289,18 +295,20 @@ export const SlackBotCreationForm = ({
                     Use either a Persona <b>or</b> Document Sets to control how
                     DanswerBot answers.
                   </Text>
-                  <Text>
-                    <ul className="list-disc mt-2 ml-4">
-                      <li>
+                  <ul className="list-disc mt-2 ml-4">
+                    <li>
+                      <Text>
                         You should use a Persona if you also want to customize
                         the prompt and retrieval settings.
-                      </li>
-                      <li>
+                      </Text>
+                    </li>
+                    <li>
+                      <Text>
                         You should use Document Sets if you just want to control
                         which documents DanswerBot uses as references.
-                      </li>
-                    </ul>
-                  </Text>
+                      </Text>
+                    </li>
+                  </ul>
                   <Text className="mt-2">
                     <b>NOTE:</b> whichever tab you are when you submit the form
                     will be the one that is used. For example, if you are on the

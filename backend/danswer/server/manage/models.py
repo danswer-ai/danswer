@@ -102,6 +102,7 @@ class SlackBotTokens(BaseModel):
 
 
 class SlackBotConfigCreationRequest(BaseModel):
+    app_id: int
     # currently, a persona is created for each slack bot config
     # in the future, `document_sets` will probably be replaced
     # by an optional `PersonaSnapshot` object. Keeping it like this
@@ -141,6 +142,7 @@ class SlackBotConfigCreationRequest(BaseModel):
 
 class SlackBotConfig(BaseModel):
     id: int
+    app_id: int
     persona: PersonaSnapshot | None
     channel_config: ChannelConfig
     response_type: SlackBotResponseType
@@ -151,6 +153,7 @@ class SlackBotConfig(BaseModel):
     ) -> "SlackBotConfig":
         return cls(
             id=slack_bot_config_model.id,
+            app_id=slack_bot_config_model.app_id,
             persona=(
                 PersonaSnapshot.from_model(
                     slack_bot_config_model.persona, allow_deleted=True
@@ -184,22 +187,6 @@ class SlackApp(BaseModel):
             bot_token=slack_app_model.bot_token,
             app_token=slack_app_model.app_token,
         )
-
-# export interface SlackApp {
-#   id: number;
-#   name: string;
-#   description: string;
-#   enabled: boolean;
-
-#   // tokens
-#   bot_token: string,
-#   app_token: string;
-
-#   // bot config
-#   persona: Persona | null;
-#   channel_config: ChannelConfig;
-#   response_type: SlackBotResponseType;
-# }
 
 
 class FullModelVersionResponse(BaseModel):

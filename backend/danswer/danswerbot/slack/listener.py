@@ -15,7 +15,7 @@ from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
-from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
+from danswer.danswerbot.slack.config import get_slack_bot_config_for_app_and_channel
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
@@ -77,7 +77,7 @@ _SLACK_GREETINGS_TO_IGNORE = {
 _OFFICIAL_SLACKBOT_USER_ID = "USLACKBOT"
 
 
-def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool:
+def prefilter_requests(app_id: int, req: SocketModeRequest, client: SocketModeClient) -> bool:
     """True to keep going, False to ignore this Slack request"""
     if req.type == "events_api":
         # Verify channel is valid
@@ -143,8 +143,8 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
 
             engine = get_sqlalchemy_engine()
             with Session(engine) as db_session:
-                slack_bot_config = get_slack_bot_config_for_channel(
-                    channel_name=channel_name, db_session=db_session
+                slack_bot_config = get_slack_bot_config_for_app_and_channel(
+                    app_id=app_id, channel_name=channel_name, db_session=db_session
                 )
             if not slack_bot_config or not slack_bot_config.channel_config.get(
                 "respond_to_bots"
@@ -158,7 +158,7 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
         message_subtype = event.get("subtype")
         if message_subtype not in [None, "file_share"]:
             channel_specific_logger.info(
-                f"Ignoring message with subtype '{message_subtype}' since is is a special message type"
+                f"Ignoring message with subtype '{message_subtype}' since it is a special message type"
             )
             return False
 
@@ -309,6 +309,7 @@ def apologize_for_fail(
 
 
 def process_message(
+    app_id: int,
     req: SocketModeRequest,
     client: SocketModeClient,
     respond_every_channel: bool = DANSWER_BOT_RESPOND_EVERY_CHANNEL,
@@ -317,7 +318,7 @@ def process_message(
     logger.debug(f"Received Slack request of type: '{req.type}'")
 
     # Throw out requests that can't or shouldn't be handled
-    if not prefilter_requests(req, client):
+    if not prefilter_requests(app_id, req, client):
         return
 
     details = build_request_details(req, client)
@@ -328,8 +329,8 @@ def process_message(
 
     engine = get_sqlalchemy_engine()
     with Session(engine) as db_session:
-        slack_bot_config = get_slack_bot_config_for_channel(
-            channel_name=channel_name, db_session=db_session
+        slack_bot_config = get_slack_bot_config_for_app_and_channel(
+            app_id=app_id, channel_name=channel_name, db_session=db_session
         )
 
         # Be careful about this default, don't want to accidentally spam every channel
@@ -401,23 +402,24 @@ def view_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
         if view["callback_id"] == VIEW_DOC_FEEDBACK_ID:
             return process_feedback(req, client)
 
+def create_process_slack_event(app_id: int):
+    def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
+        # Always respond right away, if Slack doesn't receive these frequently enough
+        # it will assume the Bot is DEAD!!! :(
+        acknowledge_message(req, client)
 
-def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
-    # Always respond right away, if Slack doesn't receive these frequently enough
-    # it will assume the Bot is DEAD!!! :(
-    acknowledge_message(req, client)
+        try:
+            if req.type == "interactive":
+                if req.payload.get("type") == "block_actions":
+                    return action_routing(req, client)
+                elif req.payload.get("type") == "view_submission":
+                    return view_routing(req, client)
+            elif req.type == "events_api" or req.type == "slash_commands":
+                return process_message(app_id, req, client)
+        except Exception:
+            logger.exception("Failed to process slack event")
 
-    try:
-        if req.type == "interactive":
-            if req.payload.get("type") == "block_actions":
-                return action_routing(req, client)
-            elif req.payload.get("type") == "view_submission":
-                return view_routing(req, client)
-        elif req.type == "events_api" or req.type == "slash_commands":
-            return process_message(req, client)
-    except Exception:
-        logger.exception("Failed to process slack event")
-
+    return process_slack_event
 
 def _get_socket_client(slack_bot_tokens: SlackBotTokens) -> SocketModeClient:
     # For more info on how to set this up, checkout the docs:
@@ -429,7 +431,8 @@ def _get_socket_client(slack_bot_tokens: SlackBotTokens) -> SocketModeClient:
     )
 
 
-def _initialize_socket_client(socket_client: SocketModeClient) -> None:
+def _initialize_socket_client(app_id: int, socket_client: SocketModeClient) -> None:
+
     socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
 
     # Establish a WebSocket connection to the Socket Mode servers
@@ -492,7 +495,7 @@ def worker_thread(app_id, stop_event):
                         socket_client.close()
 
                     socket_client = _get_socket_client(slack_bot_tokens)
-                    _initialize_socket_client(socket_client)
+                    _initialize_socket_client(app_id, socket_client)
 
                 # Let the handlers run in the background + re-check for token updates every 60 seconds
                 stop_event.wait(timeout=LOOP_TIMEOUT)
@@ -552,6 +555,7 @@ if __name__ == "__main__":
 
             for a_id in apps_to_deactivate:
                 tm = active_threads[a_id]
+                logger.info(f"Deactivating app: id={a_id} name={tm['name']}")
                 tm['stop'].set()
                 tm['thread'].join(timeout=JOIN_TIMEOUT)
                 if tm['thread'].is_alive():
@@ -560,6 +564,8 @@ if __name__ == "__main__":
                 active_threads.pop(a_id)
                 
             for a_id in apps_to_activate:
+                logger.info(f"Activating app: id={a_id} name={a.name}")
+
                 a = m_apps[a_id]
 
                 tm = {}
@@ -580,4 +586,3 @@ if __name__ == "__main__":
                 active_threads[a_id] = tm
 
             Event().wait(timeout=MAIN_LOOP_TIMEOUT)
-    

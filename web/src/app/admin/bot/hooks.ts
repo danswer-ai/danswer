@@ -1,5 +1,5 @@
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { SlackBotConfig, SlackBotTokens } from "@/lib/types";
+import { SlackApp, SlackBotConfig, SlackBotTokens } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 
 export const useSlackBotConfigs = () => {
@@ -19,5 +19,35 @@ export const useSlackBotTokens = () => {
   return {
     ...swrResponse,
     refreshSlackBotTokens: () => mutate(url),
+  };
+};
+
+export const useSlackApps = () => {
+  const url = "/api/manage/admin/slack-bot/apps";
+  const swrResponse = useSWR<SlackApp[]>(url, errorHandlingFetcher);
+
+  return {
+    ...swrResponse,
+    refreshSlackApps: () => mutate(url),
+  };
+};
+
+export const useSlackApp = (appId: number) => {
+  const url = `/api/manage/admin/slack-bot/apps/${appId}`;
+  const swrResponse = useSWR<SlackApp>(url, errorHandlingFetcher);
+
+  return {
+    ...swrResponse,
+    refreshSlackApp: () => mutate(url),
+  };
+};
+
+export const useSlackAppConfigs = (appId: number) => {
+  const url = `/api/manage/admin/slack-bot/apps/${appId}/config`;
+  const swrResponse = useSWR<SlackBotConfig[]>(url, errorHandlingFetcher);
+
+  return {
+    ...swrResponse,
+    refreshSlackAppConfigs: () => mutate(url),
   };
 };

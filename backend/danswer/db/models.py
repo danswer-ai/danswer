@@ -1077,7 +1077,7 @@ class SlackBotConfig(Base):
     __tablename__ = "slack_bot_config"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    app_id: Mapped[int | None] = mapped_column(
+    app_id: Mapped[int] = mapped_column(
         ForeignKey("slack_app.id"), nullable=True
     )
     persona_id: Mapped[int | None] = mapped_column(
