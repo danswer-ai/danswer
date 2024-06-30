@@ -39,7 +39,7 @@ import {
   updateParentChildren,
   uploadFilesForChat,
   useScrollonStream,
-} from "./lib";
+} from "./lib"; 
 import { useContext, useEffect, useRef, useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
