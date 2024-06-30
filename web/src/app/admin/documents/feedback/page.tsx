@@ -2,7 +2,6 @@ import { ThumbsUpIcon } from "@/components/icons/icons";
 import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import DocumentsFeedbackTablesHOC from "@/components/adminPageComponents/documents/AdminDocumentsFeedbackTablesHOC";
 
-
 const Page = () => {
   return (
     <div className="container mx-auto">

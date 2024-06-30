@@ -1,11 +1,7 @@
-"use client";
-
 import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { BookmarkIcon } from "@/components/icons/icons";
 import { BackButton } from "@/components/BackButton";
 import DocumentsNewSetCreationFormHOC from "@/components/adminPageComponents/documents/AdminDocumentsNewSetCreationFormHOC";
-
-
 
 const Page = () => {
   return (
