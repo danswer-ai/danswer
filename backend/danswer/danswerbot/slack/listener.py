@@ -368,7 +368,7 @@ def acknowledge_message(req: SocketModeRequest, client: SocketModeClient) -> Non
     client.send_socket_mode_response(response)
 
 
-def action_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
+def action_routing(app_id: int, req: SocketModeRequest, client: SocketModeClient) -> None:
     if actions := req.payload.get("actions"):
         action = cast(dict[str, Any], actions[0])
 
@@ -379,7 +379,7 @@ def action_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
             # Activation of the "source feedback" button
             return handle_doc_feedback_button(req, client)
         elif action["action_id"] == FOLLOWUP_BUTTON_ACTION_ID:
-            return handle_followup_button(req, client)
+            return handle_followup_button(app_id, req, client)
         elif action["action_id"] == IMMEDIATE_RESOLVED_BUTTON_ACTION_ID:
             return handle_followup_resolved_button(req, client, immediate=True)
         elif action["action_id"] == FOLLOWUP_BUTTON_RESOLVED_ACTION_ID:
@@ -400,7 +400,7 @@ def create_process_slack_event(app_id: int):
         try:
             if req.type == "interactive":
                 if req.payload.get("type") == "block_actions":
-                    return action_routing(req, client)
+                    return action_routing(app_id, req, client)
                 elif req.payload.get("type") == "view_submission":
                     return view_routing(req, client)
             elif req.type == "events_api" or req.type == "slash_commands":
