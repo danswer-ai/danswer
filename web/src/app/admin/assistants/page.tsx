@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Divider, Text, Title } from "@tremor/react";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { Persona } from "./interfaces";
+import { Persona } from "@/interfaces/persona";
 import { RobotIcon } from "@/components/icons/icons";
 import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 

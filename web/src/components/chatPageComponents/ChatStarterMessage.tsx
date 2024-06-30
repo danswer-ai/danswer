@@ -1,4 +1,4 @@
-import { StarterMessage } from "@/app/admin/assistants/interfaces";
+import { StarterMessage } from "@/lib/admin/interfaces";
 
 export function StarterMessage({
   starterMessage,

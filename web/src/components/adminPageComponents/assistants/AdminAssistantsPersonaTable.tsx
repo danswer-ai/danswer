@@ -1,14 +1,14 @@
 "use client";
 
 import { Text } from "@tremor/react";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/interfaces/persona";
 import { useRouter } from "next/navigation";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
 import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
 import { useState } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { DraggableTable } from "@/components/table/DraggableTable";
-import { deletePersona, personaComparator } from "@/app/admin/assistants/lib";
+import { deletePersona, personaComparator } from "@/lib/admin/helpers";
 import { FiEdit } from "react-icons/fi";
 import { TrashIcon } from "@/components/icons/icons";
 

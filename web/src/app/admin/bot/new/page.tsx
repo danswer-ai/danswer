@@ -6,7 +6,7 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { DocumentSet } from "@/lib/types";
 import { BackButton } from "@/components/BackButton";
 import { Text } from "@tremor/react";
-import { Persona } from "@/assistants/interfaces";
+import { Persona } from "@/interfaces/persona";
 
 async function Page() {
   const tasks = [fetchSS("/manage/document-set"), fetchSS("/persona")];

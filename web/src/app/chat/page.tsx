@@ -14,7 +14,7 @@ import {
 } from "@/lib/types";
 import { ChatSession } from "@/components/chatPageComponents/interfaces";
 import { unstable_noStore as noStore } from "next/cache";
-import { Persona } from "../admin/assistants/interfaces";
+import { Persona } from "../../lib/admin/interfaces";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import {
   WelcomeModal,
@@ -23,7 +23,7 @@ import {
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { cookies } from "next/headers";
 import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
-import { personaComparator } from "../admin/assistants/lib";
+import { personaComparator } from "../../lib/admin/helpers";
 import { ChatPage } from "@/components/chatPageComponents/ChatPage";
 import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingModels";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";

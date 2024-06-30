@@ -1,4 +1,4 @@
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/interfaces/persona";
 import { FiCheck, FiChevronDown, FiPlusSquare, FiEdit } from "react-icons/fi";
 import { CustomDropdown, DefaultDropdownElement } from "@/components/Dropdown";
 import { useRouter } from "next/navigation";

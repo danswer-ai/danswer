@@ -12,10 +12,10 @@ import {
 } from "formik";
 
 import * as Yup from "yup";
-import { buildFinalPrompt, createPersona, updatePersona } from "@/app/admin/assistants/lib";
+import { buildFinalPrompt, createPersona, updatePersona } from "@/lib/admin/helpers";
 import { useRouter } from "next/navigation";
 import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
-import { Persona, StarterMessage } from "@/app/admin/assistants/interfaces";
+import { Persona, StarterMessage } from "@/lib/admin/interfaces";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {

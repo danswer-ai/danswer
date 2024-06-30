@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { FiSend, FiFilter, FiPlusCircle, FiCpu } from "react-icons/fi";
 import ChatInputOption from "./ChatInputOption";
 import { FaBrain } from "react-icons/fa";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/interfaces/persona";
 import { FilterManager, LlmOverride, LlmOverrideManager } from "@/lib/hooks";
 import { SelectedFilterDisplay } from "./ChatInputSelectedFilterDisplay";
 import { useChatContext } from "@/components/context/ChatContext";
