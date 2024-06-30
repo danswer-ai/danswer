@@ -1,7 +1,7 @@
 """Add standard_answer tables
 
 Revision ID: c18cdf4b497e
-Revises: b85f02ec1308
+Revises: 3a7802814195
 Create Date: 2024-06-06 15:15:02.000648
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "c18cdf4b497e"
-down_revision = "b85f02ec1308"
+down_revision = "3a7802814195"
 branch_labels = None
 depends_on = None
 
