@@ -8,13 +8,12 @@ import {
   useUserGroups,
 } from "@/lib/hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { Card } from "@tremor/react";
 import { BackButton } from "@/components/BackButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { useRouter } from "next/navigation";
-import { UserGroup } from "@/lib/types";
-import { refreshDocumentSets } from "../hooks";
+import { refreshDocumentSets } from "@/hooks/admin/documents/useDocumentsSets";
 
 function Main() {
   const { popup, setPopup } = usePopup();

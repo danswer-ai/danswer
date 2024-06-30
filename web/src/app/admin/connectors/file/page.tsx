@@ -9,7 +9,7 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus, FileConfig } from "@/lib/types";
 import { createCredential, linkCredential } from "@/lib/credential";
 import { useState } from "react";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { Spinner } from "@/components/Spinner";
 import { SingleUseConnectorsTable } from "@/components/adminPageComponents/connectors/table/SingleUseConnectorsTable";

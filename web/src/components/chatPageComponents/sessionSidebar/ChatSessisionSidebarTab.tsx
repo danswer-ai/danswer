@@ -5,7 +5,7 @@ import { removeChatFromFolder } from "../folders/ChatFolderManagement";
 import { FolderList } from "../folders/ChatFolderList";
 import { Folder } from "../folders/interfaces";
 import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 

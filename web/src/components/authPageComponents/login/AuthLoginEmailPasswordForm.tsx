@@ -1,7 +1,7 @@
 "use client";
 
 import { TextFormField } from "@/components/adminPageComponents/connectors/Field";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { basicLogin, basicSignup } from "@/lib/user";
 import { Button } from "@tremor/react";
 import { Form, Formik } from "formik";

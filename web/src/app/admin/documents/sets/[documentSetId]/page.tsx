@@ -1,7 +1,7 @@
 "use client";
 
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { refreshDocumentSets, useDocumentSets } from "../hooks";
+import { refreshDocumentSets, useDocumentSets } from "@/hooks/admin/documents/useDocumentsSets";
 import {
   useConnectorCredentialIndexingStatus,
   useUserGroups,
@@ -13,7 +13,7 @@ import { BackButton } from "@/components/BackButton";
 import { Card } from "@tremor/react";
 import { DocumentSetCreationForm } from "@/components/adminPageComponents/documents/AdminDocumentsSetsCreationForm";
 import { useRouter } from "next/navigation";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 
 function Main({ documentSetId }: { documentSetId: number }) {
   const router = useRouter();

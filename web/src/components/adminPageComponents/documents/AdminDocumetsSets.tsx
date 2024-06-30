@@ -1,4 +1,4 @@
-"use client;"
+"use client";
 
 import { ThreeDotsLoader } from "@/components/Loading";
 import {
@@ -6,7 +6,7 @@ import {
 } from "@tremor/react";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 import { useDocumentSets } from "@/hooks/admin/documents/useDocumentsSets";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import DocumentSetTable from "@/components/adminPageComponents/documents/AdminDocumentsSetsTable";
 
 export default function DocumentsSets (){

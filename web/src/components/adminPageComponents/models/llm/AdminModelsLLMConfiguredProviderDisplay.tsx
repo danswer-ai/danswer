@@ -1,4 +1,5 @@
-import { PopupSpec, usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { PopupSpec } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 import { Modal } from "@/components/Modal";
 import { LLMProviderUpdateForm } from "./AdminModelsLLMProviderUpdateForm";

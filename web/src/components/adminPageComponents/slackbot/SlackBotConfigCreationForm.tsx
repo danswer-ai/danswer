@@ -2,7 +2,7 @@
 
 import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import * as Yup from "yup";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { DocumentSet, SlackBotConfig } from "@/lib/types";
 import {
   BooleanFormField,
