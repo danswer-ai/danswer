@@ -4,9 +4,11 @@ import { LoadingAnimation } from "@/components/Loading";
 import { ThumbsUpIcon } from "@/components/icons/icons";
 import { useMostReactedToDocuments } from "@/lib/hooks";
 import { DocumentFeedbackTable } from "@/components/adminPageComponents/documents/AdminDocumentsFeedbackTable";
-import { numPages, numToDisplay } from "./constants";
 import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { Title } from "@tremor/react";
+
+const numPages = 8;
+const numToDisplay = 10;
 
 const Main = () => {
   const {
