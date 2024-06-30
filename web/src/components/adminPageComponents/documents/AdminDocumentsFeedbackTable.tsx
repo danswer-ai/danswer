@@ -1,3 +1,5 @@
+"use client";
+
 import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
 import { useState } from "react";
 import {
