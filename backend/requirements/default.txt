@@ -43,6 +43,7 @@ psutil==5.9.5
 psycopg2-binary==2.9.9
 pycryptodome==3.19.1
 pydantic==1.10.13
+pygit2==1.15.0
 PyGithub==1.58.2
 python-dateutil==2.8.2
 python-gitlab==3.9.0

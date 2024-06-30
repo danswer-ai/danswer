@@ -40,7 +40,7 @@ import {
   FiBarChart2,
   FiDatabase,
 } from "react-icons/fi";
-import { SiBookstack } from "react-icons/si";
+import { SiBookstack, SiGit } from "react-icons/si";
 import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
@@ -364,6 +364,12 @@ export const GitlabIcon = ({
     </div>
   );
 };
+export const GitIcon = ({
+    size = 16,
+    className = defaultTailwindCSS,
+    }: IconProps) => {
+    return <SiGit size={size} className={className + " text-[#0288D1]"} />;
+}
 export const GithubIcon = ({
   size = 16,
   className = defaultTailwindCSS,

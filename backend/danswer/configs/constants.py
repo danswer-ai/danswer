@@ -73,6 +73,7 @@ class DocumentSource(str, Enum):
     GOOGLE_DRIVE = "google_drive"
     GMAIL = "gmail"
     REQUESTTRACKER = "requesttracker"
+    GIT = "git"
     GITHUB = "github"
     GITLAB = "gitlab"
     GURU = "guru"
