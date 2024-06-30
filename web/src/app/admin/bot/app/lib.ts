@@ -1,10 +1,10 @@
 interface SlackAppCreationRequest {
-    name: string
-    description: string
-    enabled: boolean
+  name: string
+  description: string
+  enabled: boolean
 
-    bot_token: string
-    app_token: string
+  bot_token: string
+  app_token: string
 }
 
 const buildRequestBodyFromCreationRequest = (

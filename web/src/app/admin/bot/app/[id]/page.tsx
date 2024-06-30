@@ -12,6 +12,7 @@ import Link from "next/link";
 import { SlackBotConfigsTable } from "../../SlackBotConfigsTable";
 import { useSlackApp, useSlackBotConfigsByApp } from "../../hooks";
 import { SlackAppCreationForm } from "../SlackAppCreationForm";
+import { useEffect } from "react";
 
 function Page({ params }: { params: { id: number } }) {
   const { popup, setPopup } = usePopup();
@@ -29,6 +30,13 @@ function Page({ params }: { params: { id: number } }) {
     error: slackAppConfigsError,
     refreshSlackAppConfigs,
   } = useSlackBotConfigsByApp(params.id);
+
+  // this keeps the state of the page current after updating through it
+  useEffect(() => {
+    if (!isSlackAppLoading && !slackAppError) {
+      refreshSlackApp();
+    }
+  }, [isSlackAppLoading, slackAppError, refreshSlackApp]);
 
   if (isSlackAppLoading || isSlackAppConfigsLoading) {
     return <ThreeDotsLoader />;
@@ -73,6 +81,7 @@ function Page({ params }: { params: { id: number } }) {
 
       <SlackAppCreationForm
         existingSlackApp={slackApp}
+        refreshSlackApp={refreshSlackApp}
       />
 
       <br />

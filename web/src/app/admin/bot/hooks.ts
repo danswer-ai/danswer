@@ -42,7 +42,7 @@ export const useSlackApp = (appId: number) => {
   };
 };
 
-export const useSlackAppConfigs = (appId: number) => {
+export const useSlackBotConfigsByApp = (appId: number) => {
   const url = `/api/manage/admin/slack-bot/apps/${appId}/config`;
   const swrResponse = useSWR<SlackBotConfig[]>(url, errorHandlingFetcher);
 

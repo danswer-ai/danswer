@@ -83,7 +83,7 @@ const Main = () => {
           Add Slack App
         </Button>
       </Link>
-ß
+
       <SlackAppTable slackApps={slackApps}>
       </SlackAppTable>
     </div>

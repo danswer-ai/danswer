@@ -20,8 +20,10 @@ import {
 
 export const SlackAppCreationForm = ({
   existingSlackApp,
+  refreshSlackApp,
 }: {
   existingSlackApp?: SlackApp;
+  refreshSlackApp?: () => void;
 }) => {
   const isUpdate = existingSlackApp !== undefined;
   const { popup, setPopup } = usePopup();
@@ -69,6 +71,9 @@ export const SlackAppCreationForm = ({
             }
             formikHelpers.setSubmitting(false);
             if (response.ok) {
+              if (refreshSlackApp) {
+                refreshSlackApp();
+              }
               router.push(`/admin/bot?u=${Date.now()}`);
             } else {
               const responseJson = await response.json();
