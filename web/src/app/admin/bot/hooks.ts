@@ -12,16 +12,6 @@ export const useSlackBotConfigs = () => {
   };
 };
 
-export const useSlackBotTokens = () => {
-  const url = "/api/manage/admin/slack-bot/tokens";
-  const swrResponse = useSWR<SlackBotTokens>(url, errorHandlingFetcher);
-
-  return {
-    ...swrResponse,
-    refreshSlackBotTokens: () => mutate(url),
-  };
-};
-
 export const useSlackApps = () => {
   const url = "/api/manage/admin/slack-bot/apps";
   const swrResponse = useSWR<SlackApp[]>(url, errorHandlingFetcher);

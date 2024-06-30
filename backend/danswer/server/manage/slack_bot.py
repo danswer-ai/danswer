@@ -198,23 +198,6 @@ def list_slack_bot_configs(
         for slack_bot_config_model in slack_bot_config_models
     ]
 
-
-@router.put("/admin/slack-bot/tokens")
-def put_tokens(
-    tokens: SlackBotTokens,
-    _: User | None = Depends(current_admin_user),
-) -> None:
-    save_tokens(tokens=tokens)
-
-
-@router.get("/admin/slack-bot/tokens")
-def get_tokens(_: User | None = Depends(current_admin_user)) -> SlackBotTokens:
-    try:
-        return fetch_tokens()
-    except ConfigNotFoundError:
-        raise HTTPException(status_code=404, detail="No tokens found")
-
-
 @router.post("/admin/slack-bot/apps")
 def create_app(
     slack_app_creation_request: SlackAppCreationRequest,

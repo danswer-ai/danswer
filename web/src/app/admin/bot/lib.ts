@@ -87,16 +87,6 @@ export const deleteSlackBotConfig = async (id: number) => {
   });
 };
 
-export const setSlackBotTokens = async (slackBotTokens: SlackBotTokens) => {
-  return fetch(`/api/manage/admin/slack-bot/tokens`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(slackBotTokens),
-  });
-};
-
 export function isPersonaASlackBotPersona(persona: Persona) {
   return persona.name.startsWith("__slack_bot_persona__");
 }
