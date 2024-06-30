@@ -42,20 +42,22 @@ async function Page({ params }: { params: { id: string } }) {
   }
 
   if (!documentSetsResponse.ok) {
+    const errorText = await documentSetsResponse.text();
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch document sets - ${await documentSetsResponse.text()}`}
+        errorMsg={`Failed to fetch document sets - ${errorText}`}
       />
     );
   }
   const documentSets = (await documentSetsResponse.json()) as DocumentSet[];
 
   if (!personasResponse.ok) {
+    const errorText = await personasResponse.text();
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch personas - ${await personasResponse.text()}`}
+        errorMsg={`Failed to fetch personas - ${errorText}`}
       />
     );
   }
