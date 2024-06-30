@@ -370,20 +370,20 @@ export function ChatPage({
     useState<number | null>(null);
   const { aiMessage } = selectedMessageForDocDisplay
     ? getHumanAndAIMessageFromMessageNumber(
-        messageHistory,
-        selectedMessageForDocDisplay
-      )
+      messageHistory,
+      selectedMessageForDocDisplay
+    )
     : { aiMessage: null };
 
   const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
     existingChatSessionPersonaId !== undefined
       ? filteredAssistants.find(
-          (persona) => persona.id === existingChatSessionPersonaId
-        )
+        (persona) => persona.id === existingChatSessionPersonaId
+      )
       : defaultSelectedPersonaId !== undefined
         ? filteredAssistants.find(
-            (persona) => persona.id === defaultSelectedPersonaId
-          )
+          (persona) => persona.id === defaultSelectedPersonaId
+        )
         : undefined
   );
   const livePersona =
@@ -659,7 +659,7 @@ export function ChatPage({
 
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
-      messageToResend?.parentMessageId !== undefined
+        messageToResend?.parentMessageId !== undefined
         ? completeMessageMap.get(messageToResend.parentMessageId)
         : null;
     const messageToResendIndex = messageToResend
@@ -784,9 +784,9 @@ export function ChatPage({
       const updateFn = (messages: Message[]) => {
         const replacementsMap = finalMessage
           ? new Map([
-              [messages[0].messageId, TEMP_USER_MESSAGE_ID],
-              [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
-            ] as [number, number][])
+            [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+            [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+          ] as [number, number][])
           : null;
         upsertToCompleteMessageMap({
           messages: messages,
@@ -1143,9 +1143,8 @@ export function ChatPage({
               {({ getRootProps }) => (
                 <>
                   <div
-                    className={`w-full sm:relative h-screen ${
-                      !retrievalEnabled ? "pb-[111px]" : "pb-[140px]"
-                    }
+                    className={`w-full sm:relative h-screen ${!retrievalEnabled ? "pb-[111px]" : "pb-[140px]"
+                      }
                       flex-auto transition-margin duration-300 
                       overflow-x-auto
                       `}
@@ -1275,7 +1274,7 @@ export function ChatPage({
                             const isShowingRetrieved =
                               (selectedMessageForDocDisplay !== null &&
                                 selectedMessageForDocDisplay ===
-                                  message.messageId) ||
+                                message.messageId) ||
                               (selectedMessageForDocDisplay ===
                                 TEMP_USER_MESSAGE_ID &&
                                 i === messageHistory.length - 1);
@@ -1285,9 +1284,9 @@ export function ChatPage({
                             const currentAlternativeAssistant =
                               message.alternateAssistantID != null
                                 ? availablePersonas.find(
-                                    (persona) =>
-                                      persona.id == message.alternateAssistantID
-                                  )
+                                  (persona) =>
+                                    persona.id == message.alternateAssistantID
+                                )
                                 : null;
 
                             return (
@@ -1325,45 +1324,45 @@ export function ChatPage({
                                   }
                                   handleFeedback={
                                     i === messageHistory.length - 1 &&
-                                    isStreaming
+                                      isStreaming
                                       ? undefined
                                       : (feedbackType) =>
-                                          setCurrentFeedback([
-                                            feedbackType,
-                                            message.messageId as number,
-                                          ])
+                                        setCurrentFeedback([
+                                          feedbackType,
+                                          message.messageId as number,
+                                        ])
                                   }
                                   handleSearchQueryEdit={
                                     i === messageHistory.length - 1 &&
-                                    !isStreaming
+                                      !isStreaming
                                       ? (newQuery) => {
-                                          if (!previousMessage) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
-                                                "Cannot edit query of first message - please refresh the page and try again.",
-                                            });
-                                            return;
-                                          }
-
-                                          if (
-                                            previousMessage.messageId === null
-                                          ) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
-                                                "Cannot edit query of a pending message - please wait a few seconds and try again.",
-                                            });
-                                            return;
-                                          }
-                                          onSubmit({
-                                            messageIdToResend:
-                                              previousMessage.messageId,
-                                            queryOverride: newQuery,
-                                            alternativeAssistant:
-                                              currentAlternativeAssistant,
+                                        if (!previousMessage) {
+                                          setPopup({
+                                            type: "error",
+                                            message:
+                                              "Cannot edit query of first message - please refresh the page and try again.",
                                           });
+                                          return;
                                         }
+
+                                        if (
+                                          previousMessage.messageId === null
+                                        ) {
+                                          setPopup({
+                                            type: "error",
+                                            message:
+                                              "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                          });
+                                          return;
+                                        }
+                                        onSubmit({
+                                          messageIdToResend:
+                                            previousMessage.messageId,
+                                          queryOverride: newQuery,
+                                          alternativeAssistant:
+                                            currentAlternativeAssistant,
+                                        });
+                                      }
                                       : undefined
                                   }
                                   isCurrentlyShowingRetrieved={
@@ -1405,8 +1404,8 @@ export function ChatPage({
                                   retrievalDisabled={
                                     currentAlternativeAssistant
                                       ? !personaIncludesRetrieval(
-                                          currentAlternativeAssistant!
-                                        )
+                                        currentAlternativeAssistant!
+                                      )
                                       : !retrievalEnabled
                                   }
                                 />
@@ -1432,7 +1431,7 @@ export function ChatPage({
                         {isStreaming &&
                           messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
-                            "user" && (
+                          "user" && (
                             <div
                               key={`${messageHistory.length}-${existingChatSessionId}`}
                             >
@@ -1508,8 +1507,22 @@ export function ChatPage({
                       </div>
                     </div>
 
-                    <div className="absolute bottom-0 z-10 w-full">
-                      <div className="w-full pb-4">
+                    <div
+                      ref={inputRef}
+                      className="absolute bottom-0 z-10 w-full"
+                    >
+                      <div className="w-full relative pb-4">
+                        {aboveHorizon && (
+                          <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
+                            <button
+                              onClick={() => clientScrollToBottom(true)}
+                              className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2 mx-auto "
+                            >
+                              <FiArrowDown size={18} />
+                            </button>
+                          </div>
+                        )}
+                        
                         <ChatInputBar
                           onSetSelectedAssistant={(
                             alternativeAssistant: Persona | null
@@ -1566,9 +1579,9 @@ export function ChatPage({
                       </ResizableSection>
                     </div>
                   ) : // Another option is to use a div with the width set to the initial width, so that the
-                  // chat section appears in the same place as before
-                  // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
-                  null}
+                    // chat section appears in the same place as before
+                    // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
+                    null}
                 </>
               )}
             </Dropzone>
