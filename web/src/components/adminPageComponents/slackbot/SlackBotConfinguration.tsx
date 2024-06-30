@@ -18,8 +18,6 @@ import {
   } from "@tremor/react";
 import SlackBotConfigsTable from "./SlackBotConfigsTable";
 
-
-
 export default function SlackBotConfinguration (){
     const [slackBotTokensModalIsOpen, setSlackBotTokensModalIsOpen] =
       useState(false);

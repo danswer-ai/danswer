@@ -19,7 +19,7 @@ import {
   FiArrowUpRight,
 } from "react-icons/fi";
 
-import { deleteSlackBotConfig, isPersonaASlackBotPersona} from "@/app/admin/bot/lib";
+import { deleteSlackBotConfig, isPersonaASlackBotPersona} from "@/lib/bot/helpers";
 
 export default function SlackBotConfigsTable ({
     slackBotConfigs,

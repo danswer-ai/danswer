@@ -15,7 +15,7 @@ import {
   createSlackBotConfig,
   isPersonaASlackBotPersona,
   updateSlackBotConfig,
-} from "@/app/admin/bot/lib";
+} from "@/lib/bot/helpers"
 import {
   Button,
   Card,

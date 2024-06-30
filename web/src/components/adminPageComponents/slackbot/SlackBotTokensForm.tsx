@@ -3,14 +3,11 @@ import * as Yup from "yup";
 import { PopupSpec } from "@/components/adminPageComponents/connectors/Popup";
 import { SlackBotTokens } from "@/lib/types";
 import {
-  TextArrayField,
   TextFormField,
 } from "@/components/adminPageComponents/connectors/Field";
 import {
-  createSlackBotConfig,
   setSlackBotTokens,
-  updateSlackBotConfig,
-} from "@/app/admin/bot/lib";
+} from "@/lib/bot/helpers";
 import { Button, Card } from "@tremor/react";
 
 interface SlackBotTokensFormProps {
