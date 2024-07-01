@@ -18,8 +18,7 @@ def get_slack_bot_config_for_app_and_channel(
         return None
 
     slack_bot_configs = fetch_slack_bot_configs(
-        db_session=db_session,
-        slack_bot_app_id=app_id
+        db_session=db_session, slack_bot_app_id=app_id
     )
     for config in slack_bot_configs:
         if channel_name in config.channel_config["channel_names"]:
@@ -36,7 +35,9 @@ def validate_channel_names(
 ) -> list[str]:
     """Make sure that these channel_names don't exist in other slack bot configs.
     Returns a list of cleaned up channel names (e.g. '#' removed if present)"""
-    slack_bot_configs = fetch_slack_bot_configs(db_session=db_session, slack_bot_app_id=app_id)
+    slack_bot_configs = fetch_slack_bot_configs(
+        db_session=db_session, slack_bot_app_id=app_id
+    )
     cleaned_channel_names = [
         channel_name.lstrip("#").lower() for channel_name in channel_names
     ]

@@ -5,6 +5,7 @@ Revises: 3a7802814195
 Create Date: 2024-06-30 15:49:04.316346
 
 """
+
 import logging
 import json
 from typing import cast
@@ -22,8 +23,9 @@ branch_labels: None = None
 depends_on: None = None
 
 # Configure logging
-logger = logging.getLogger('alembic.runtime.migration')
+logger = logging.getLogger("alembic.runtime.migration")
 logger.setLevel(logging.INFO)
+
 
 def upgrade() -> None:
     logger.info(f"{revision}: Starting upgrade")
@@ -48,8 +50,10 @@ def upgrade() -> None:
 
     try:
         logger.info(f"{revision}: Migrating existing Slack bot.")
-    	
-        tokens = cast(dict, get_dynamic_config_store().load(_SLACK_BOT_TOKENS_CONFIG_KEY))
+
+        tokens = cast(
+            dict, get_dynamic_config_store().load(_SLACK_BOT_TOKENS_CONFIG_KEY)
+        )
 
         bot_token = tokens.get("bot_token")
         if not bot_token:
@@ -61,22 +65,25 @@ def upgrade() -> None:
             logger.info("app_token not found")
             raise ValueError("app_token not found")
 
-#         logger.info(f"{revision}: bot_token={bot_token} app_token={app_token}")
+        #         logger.info(f"{revision}: bot_token={bot_token} app_token={app_token}")
 
         logger.info(f"{revision}: Found bot and app tokens.")
 
         logger.info(f"{revision}: Migrating slack app settings.")
         op.execute(
-            sa.text("INSERT INTO slack_app \
+            sa.text(
+                "INSERT INTO slack_app \
                         (name, description, enabled, bot_token, app_token) VALUES \
-                        ('Slack App (Migrated)', 'Migrated app', TRUE, :bot_token, :app_token)")
-                        .bindparams(bot_token=bot_token, app_token=app_token)
+                        ('Slack App (Migrated)', 'Migrated app', TRUE, :bot_token, :app_token)"
+            ).bindparams(bot_token=bot_token, app_token=app_token)
         )
 
         # Get the ID of the first row in the source_table
-        first_row_id = op.get_bind().execute(
-            sa.text("SELECT id FROM slack_app ORDER BY id LIMIT 1")
-        ).scalar()
+        first_row_id = (
+            op.get_bind()
+            .execute(sa.text("SELECT id FROM slack_app ORDER BY id LIMIT 1"))
+            .scalar()
+        )
 
         logger.info(f"{revision}: The ID of the first row is: {first_row_id}")
 
@@ -84,8 +91,9 @@ def upgrade() -> None:
         if first_row_id is not None:
             logger.info(f"{revision}: Migrating slack bot configs.")
             op.execute(
-                sa.text("UPDATE slack_bot_config SET app_id = :first_row_id")
-                .bindparams(first_row_id=first_row_id)
+                sa.text(
+                    "UPDATE slack_bot_config SET app_id = :first_row_id"
+                ).bindparams(first_row_id=first_row_id)
             )
 
         # Delete the tokens in dynamic config
@@ -99,7 +107,6 @@ def upgrade() -> None:
 
     # op.alter_column('slack_bot_config', 'app_id', existing_type=sa.Integer(), nullable=False)
 
-
     logger.info(f"{revision}: Applying foreign key constraint to Slack bot configs.")
     sa.ForeignKeyConstraint(
         ["app_id"],
@@ -107,6 +114,7 @@ def upgrade() -> None:
     ),
 
     logger.info(f"{revision}: Migration complete.")
+
 
 def downgrade() -> None:
     op.drop_column("slack_bot_config", "app_id")
