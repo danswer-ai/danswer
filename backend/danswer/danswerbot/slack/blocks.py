@@ -359,10 +359,15 @@ def build_standard_answer_blocks(
 ) -> list[Block]:
     generate_button_block = ButtonElement(
         action_id=GENERATE_ANSWER_BUTTON_ACTION_ID,
-        text="Generate Answer",
+        text="Generate Full Answer",
     )
-    answer_block = SectionBlock(text=answer_message, accessory=generate_button_block)
-    return [answer_block]
+    answer_block = SectionBlock(text=answer_message)
+    return [
+        answer_block,
+        ActionsBlock(
+            elements=[generate_button_block],
+        ),
+    ]
 
 
 def build_qa_response_blocks(

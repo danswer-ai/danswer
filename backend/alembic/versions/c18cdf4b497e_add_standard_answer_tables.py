@@ -21,6 +21,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("keyword", sa.String(), nullable=False),
         sa.Column("answer", sa.String(), nullable=False),
+        sa.Column("active", sa.Boolean(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("keyword"),
     )
@@ -60,8 +61,14 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("slack_bot_config_id", "standard_answer_category_id"),
     )
 
+    op.add_column(
+        "chat_session", sa.Column("slack_thread_id", sa.String(), nullable=True)
+    )
+
 
 def downgrade() -> None:
+    op.drop_column("chat_session", "slack_thread_id")
+
     op.drop_table("slack_bot_config__standard_answer_category")
     op.drop_table("standard_answer__standard_answer_category")
     op.drop_table("standard_answer_category")

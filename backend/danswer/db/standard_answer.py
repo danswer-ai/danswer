@@ -1,8 +1,6 @@
 import string
 from collections.abc import Sequence
 
-from sqlalchemy import func
-from sqlalchemy import literal_column
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -85,7 +83,7 @@ def update_standard_answer(
 
     standard_answer.keyword = keyword
     standard_answer.answer = answer
-    standard_answer.categories = existing_categories
+    standard_answer.categories = list(existing_categories)
 
     db_session.commit()
 
@@ -173,29 +171,37 @@ def find_matching_standard_answers(
     query: str,
     db_session: Session,
 ) -> list[StandardAnswer]:
-    stmt = select(StandardAnswer).where(StandardAnswer.active is True)
-    cleaner = str.maketrans("", "", string.punctuation)
-    cleaned_query = query.translate(cleaner).lower()
-    keyphrase_words = func.unnest(
-        func.string_to_array(func.lower(StandardAnswer.keyword), " ")
-    ).alias("keyphrase_words")
-    query_words = func.unnest(func.string_to_array(cleaned_query, " ")).alias(
-        "query_words"
+    stmt = (
+        select(StandardAnswer)
+        .where(StandardAnswer.active.is_(True))
+        .where(StandardAnswer.id.in_(id_in))
     )
-    subquery = (
-        select(literal_column("1"))
-        .where(~keyphrase_words.in_(select(query_words)))
-        .exists()
-    )
-    stmt = stmt.where(~subquery)
-    if id_in:
-        stmt = stmt.where(StandardAnswer.id.in_(id_in))
-    return list(db_session.scalars(stmt).all())
+    possible_standard_answers = db_session.scalars(stmt).all()
+
+    matching_standard_answers: list[StandardAnswer] = []
+    for standard_answer in possible_standard_answers:
+        # Remove punctuation and split the keyword into individual words
+        keyword_words = "".join(
+            char
+            for char in standard_answer.keyword.lower()
+            if char not in string.punctuation
+        ).split()
+
+        # Remove punctuation and split the query into individual words
+        query_words = "".join(
+            char for char in query.lower() if char not in string.punctuation
+        ).split()
+
+        # Check if all of the keyword words are in the query words
+        if all(word in query_words for word in keyword_words):
+            matching_standard_answers.append(standard_answer)
+
+    return matching_standard_answers
 
 
 def fetch_standard_answers(db_session: Session) -> Sequence[StandardAnswer]:
     return db_session.scalars(
-        select(StandardAnswer).where(StandardAnswer.active is True)
+        select(StandardAnswer).where(StandardAnswer.active.is_(True))
     ).all()
 
 

@@ -270,6 +270,7 @@ def build_request_details(
             thread_messages=thread_messages,
             channel_to_respond=channel,
             msg_to_respond=cast(str, message_ts or thread_ts),
+            thread_to_respond=cast(str, thread_ts or message_ts),
             sender=event.get("user") or None,
             bypass_filters=tagged,
             is_bot_msg=False,
@@ -287,6 +288,7 @@ def build_request_details(
             thread_messages=[single_msg],
             channel_to_respond=channel,
             msg_to_respond=None,
+            thread_to_respond=None,
             sender=sender,
             bypass_filters=True,
             is_bot_msg=True,
@@ -356,7 +358,7 @@ def process_message(
 
         failed = handle_message(
             message_info=details,
-            channel_config=slack_bot_config,
+            slack_bot_config=slack_bot_config,
             client=client.web_client,
             feedback_reminder_id=feedback_reminder_id,
         )

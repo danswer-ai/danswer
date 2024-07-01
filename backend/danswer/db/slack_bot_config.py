@@ -131,7 +131,9 @@ def update_slack_bot_config(
     slack_bot_config.persona_id = persona_id
     slack_bot_config.channel_config = channel_config
     slack_bot_config.response_type = response_type
-    slack_bot_config.standard_answer_categories = existing_standard_answer_categories
+    slack_bot_config.standard_answer_categories = list(
+        existing_standard_answer_categories
+    )
 
     # if the persona has changed, then clean up the old persona
     if persona_id != existing_persona_id and existing_persona_id:
