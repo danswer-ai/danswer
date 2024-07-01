@@ -197,13 +197,11 @@ export function ChatInputBar({
       <div className="flex justify-center pb-2 max-w-screen-lg mx-auto mb-2">
         <div
           className="
-            w-full
+            w-[90%]
             shrink
             relative
             px-4
-            w-searchbar-xs
-            2xl:w-searchbar-sm
-            3xl:w-searchbar
+            max-w-searchbar-max
             mx-auto
           "
         >
@@ -372,7 +370,7 @@ export function ChatInputBar({
                 onClick={() => setConfigModalActiveTab("assistants")}
               />
 
-              <ChatInputOption
+              {/* <ChatInputOption
                 flexPriority="second"
                 name={
                   llmOverrideManager.llmOverride.modelName ||
@@ -382,16 +380,9 @@ export function ChatInputBar({
                 }
                 icon={FiCpu}
                 onClick={() => setConfigModalActiveTab("llms")}
-              />
+              /> */}
 
-              {!retrievalDisabled && (
-                <ChatInputOption
-                  flexPriority="stiff"
-                  name="Filters"
-                  icon={FiFilter}
-                  onClick={() => setConfigModalActiveTab("filters")}
-                />
-              )}
+
 
               <ChatInputOption
                 flexPriority="stiff"
