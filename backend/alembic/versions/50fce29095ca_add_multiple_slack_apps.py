@@ -49,19 +49,19 @@ def upgrade() -> None:
     try:
         logger.info(f"{revision}: Migrating existing Slack bot.")
     	
-        tokens = cast(
-            str, get_dynamic_config_store().load(_SLACK_BOT_TOKENS_CONFIG_KEY)
-        )
+        tokens = cast(dict, get_dynamic_config_store().load(_SLACK_BOT_TOKENS_CONFIG_KEY))
 
-        bot_token = tokens["bot_token"]
+        bot_token = tokens.get("bot_token")
         if not bot_token:
             logger.info(f"bot_token not found")
-            raise
+            raise ValueError("bot_token not found")
 
-        app_token = tokens["app_token"]
+        app_token = tokens.get("app_token")
         if not app_token:
             logger.info(f"app_token not found")
-            raise
+            raise ValueError("app_token not found")
+
+#         logger.info(f"{revision}: bot_token={bot_token} app_token={app_token}")
 
         logger.info(f"{revision}: Found bot and app tokens.")
 
