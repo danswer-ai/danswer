@@ -1117,8 +1117,8 @@ class SlackApp(Base):
     description: Mapped[str] = mapped_column(String)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    bot_token: Mapped[str] = mapped_column(String)
-    app_token: Mapped[str] = mapped_column(String)
+    bot_token: Mapped[str] = mapped_column(EncryptedString(), unique=True)
+    app_token: Mapped[str] = mapped_column(EncryptedString(), unique=True)
 
     config: Mapped[SlackBotConfig | None] = relationship("SlackBotConfig")
 

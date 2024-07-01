@@ -10,8 +10,10 @@ import logging
 from typing import cast
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.orm import Session
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.danswerbot.slack.tokens import _SLACK_BOT_TOKENS_CONFIG_KEY
+from danswer.db.models import SlackApp
 
 # revision identifiers, used by Alembic.
 revision = "50fce29095ca"
@@ -35,6 +37,8 @@ def upgrade() -> None:
         sa.Column("bot_token", sa.String(), nullable=False),
         sa.Column("app_token", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("bot_token", name="uq_bot_token"),
+        sa.UniqueConstraint("app_token", name="uq_app_token"),
     )
 
     logger.info(f"{revision}: add_column: slack_bot_config.app_id")
@@ -67,35 +71,40 @@ def upgrade() -> None:
         logger.info(f"{revision}: This is OK if there was not an existing Slack bot.")
 
     logger.info(f"{revision}: Migrating slack app settings.")
-    op.execute(
-        sa.text(
-            "INSERT INTO slack_app \
-                    (name, description, enabled, bot_token, app_token) VALUES \
-                    ('Slack App (Migrated)', 'Migrated app', TRUE, :bot_token, :app_token)"
-        ).bindparams(bot_token=bot_token, app_token=app_token)
-    )
 
-    # Get the ID of the first row in the source_table
-    first_row_id = (
-        op.get_bind()
-        .execute(sa.text("SELECT id FROM slack_app ORDER BY id LIMIT 1"))
-        .scalar()
-    )
+    bind = op.get_bind()
+    session = Session(bind=bind)
 
-    logger.info(f"{revision}: The ID of the first row is: {first_row_id}")
-
-    # Update all rows in the slack_bot_config to set the foreign key app_id to first_row_id
-    if not first_row_id:
-        raise RuntimeError(
-            f"{revision}: Migrated slack bot, but could not find a row in slack_app!"
+    try:
+        new_slack_app = SlackApp(
+            name="Slack App (Migrated)",
+            description="Migrated app",
+            enabled=True,
+            bot_token=bot_token,
+            app_token=app_token,
         )
+        session.add(new_slack_app)
+        session.commit()
 
-    logger.info(f"{revision}: Migrating slack bot configs.")
-    op.execute(
-        sa.text("UPDATE slack_bot_config SET app_id = :first_row_id").bindparams(
-            first_row_id=first_row_id
+        first_row_id = new_slack_app.id
+        # Update all rows in the slack_bot_config to set the foreign key app_id to first_row_id
+        if not first_row_id:
+            raise RuntimeError(
+                f"{revision}: Migrated slack bot, but could not find a row in slack_app!"
+            )
+
+        logger.info(f"{revision}: Migrating slack bot configs.")
+        op.execute(
+            sa.text("UPDATE slack_bot_config SET app_id = :first_row_id").bindparams(
+                first_row_id=first_row_id
+            )
         )
-    )
+    except Exception as e:
+        session.rollback()
+        logger.exception(f"{revision}: Exception during migration: {e}")
+        raise
+    finally:
+        session.close()
 
     # Delete the tokens in dynamic config
     if bot_token and app_token:
