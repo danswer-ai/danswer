@@ -1,3 +1,9 @@
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import status
+from sqlalchemy.orm import Session
+
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
@@ -16,11 +22,6 @@ from danswer.indexing.models import EmbeddingModelDetail
 from danswer.server.manage.models import FullModelVersionResponse
 from danswer.server.models import IdReturn
 from danswer.utils.logger import setup_logger
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import status
-from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/secondary-index")
 logger = setup_logger()
@@ -35,6 +36,8 @@ def set_new_embedding_model(
     """Creates a new EmbeddingModel row and cancels the previous secondary indexing if any
     Gives an error if the same model name is used as the current or secondary index
     """
+    print("embed_model_details")
+    print(embed_model_details)
     current_model = get_current_db_embedding_model(db_session)
 
     if embed_model_details.model_name == current_model.model_name:

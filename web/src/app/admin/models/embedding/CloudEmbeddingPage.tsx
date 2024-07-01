@@ -7,6 +7,8 @@ import {
   CloudEmbeddingModel,
   AVAILABLE_CLOUD_MODELS,
   CloudEmbeddingProviderFull,
+  FullEmbeddingModelDescriptor,
+  EmbeddingModelDescriptor,
 } from "./components/types";
 import { FaLock } from "react-icons/fa";
 import { EmbeddingDetails } from "./page";
@@ -15,6 +17,7 @@ import { HoverPopup } from "@/components/HoverPopup";
 import { Dispatch, SetStateAction } from "react";
 
 export default function CloudEmbeddingPage({
+  currentModel,
   embeddingProviderDetails,
   newEnabledProviders,
   newUnenabledProviders,
@@ -25,6 +28,7 @@ export default function CloudEmbeddingPage({
   setChangeCredentials,
   setAlreadyPicked,
 }: {
+  currentModel: EmbeddingModelDescriptor | CloudEmbeddingModel;
   setAlreadyPicked: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
   newUnenabledProviders: string[];
   embeddingProviderDetails?: EmbeddingDetails[];
@@ -64,6 +68,8 @@ export default function CloudEmbeddingPage({
     };
     providers.push(temporary_model);
   });
+  console.log(providers);
+  console.log(embeddingProviderDetails);
 
   return (
     <div>
@@ -99,11 +105,6 @@ export default function CloudEmbeddingPage({
                     style="dark"
                   />
                 </a>
-                {/* {!provider.configured &&
-                
-                 
-                  //  <FaLock />
-                } */}
               </button>
             </div>
             <button
@@ -120,53 +121,37 @@ export default function CloudEmbeddingPage({
                 ? "Modify credentials"
                 : "Configure credentials"}
             </button>
-            {/* <div>{provider.description}</div> */}
 
             <div>
-              {provider.embedding_models.map((model, index) => (
-                <div
-                  key={index}
-                  className={`p-3 mb-2 border-2 border-neutral-300 border-opacity-40 rounded-md rounded cursor-pointer  
-                    ${model.enabled ? "bg-background-stronger" : "hover:bg-background-strong"} 
-                    ${
-                      provider.configured
-                      // ? selectedModel?.name === model.name
-                      // ? "bg-teal-50 border border-blue-300"
-                      // : "hover:bg-blue-50"
-                      // : "hover:bg-rose-50"
-                    }`}
-                  onClick={() => {
-                    if (model.enabled) {
-                      setAlreadyPicked(model);
-                    } else if (!provider.configured) {
-                      setShowModelNotConfiguredModal(provider);
-                    } else {
-                      setTentativeNewEmbeddingModel(model);
-                    }
-                  }}
-                >
-                  <div className="flex justify-between">
-                    <div className="font-medium">{model.name}</div>
-                    {/* <p className="text-sm flex-none">
-                      {provider.configured
-                        ? model.enabled
-                          ? "Selected"
-                          : "Unselected"
-                        : "Unconfigured"}
-                    </p> */}
-                    <p className="text-sm flex-none">
-                      ${model.pricePerMillion}/M tokens
-                    </p>
+              {provider.embedding_models.map((model, index) => {
+                const enabled = model.name == currentModel.model_name;
+                return (
+                  <div
+                    key={index}
+                    className={`p-3 mb-2 border-2 border-neutral-300 border-opacity-40 rounded-md rounded cursor-pointer  
+                    ${!provider.configured ? "opacity-80 hover:opacity-100" : enabled ? "bg-background-stronger" : "hover:bg-background-strong"}`}
+                    onClick={() => {
+                      if (enabled) {
+                        setAlreadyPicked(model);
+                      } else if (!provider.configured) {
+                        setShowModelNotConfiguredModal(provider);
+                      } else {
+                        setTentativeNewEmbeddingModel(model);
+                      }
+                    }}
+                  >
+                    <div className="flex justify-between">
+                      <div className="font-medium">{model.name}</div>
+                      <p className="text-sm flex-none">
+                        ${model.pricePerMillion}/M tokens
+                      </p>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {model.description}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-600">
-                    {model.description}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="text-sm font-semibold flex justify-between mt-1 mx-2">
-              {/* <a className="hover:underline cursor-pointer">Learn more</a> */}
+                );
+              })}
             </div>
           </div>
         ))}

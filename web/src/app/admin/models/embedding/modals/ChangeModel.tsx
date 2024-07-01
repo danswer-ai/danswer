@@ -15,7 +15,7 @@ export function ChangeModelModal({
   onConfirm,
   onCancel,
 }: {
-  existingModel: FullEmbeddingModelDescriptor;
+  existingModel: FullEmbeddingModelDescriptor | CloudEmbeddingModel;
   newModel: CloudEmbeddingModel;
   onConfirm: () => void;
   onCancel: () => void;
