@@ -7,12 +7,9 @@ Create Date: 2024-06-30 15:49:04.316346
 """
 
 import logging
-import json
 from typing import cast
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
-from sqlalchemy.orm import Session
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.danswerbot.slack.tokens import _SLACK_BOT_TOKENS_CONFIG_KEY
 

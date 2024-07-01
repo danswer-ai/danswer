@@ -5,8 +5,6 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.danswerbot.slack.config import validate_channel_names
-from danswer.danswerbot.slack.tokens import fetch_tokens
-from danswer.danswerbot.slack.tokens import save_tokens
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.engine import get_session
 from danswer.db.models import ChannelConfig
@@ -23,12 +21,10 @@ from danswer.db.slack_bot_config import fetch_slack_bot_configs
 from danswer.db.slack_bot_config import insert_slack_bot_config
 from danswer.db.slack_bot_config import remove_slack_bot_config
 from danswer.db.slack_bot_config import update_slack_bot_config
-from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.manage.models import SlackApp
 from danswer.server.manage.models import SlackAppCreationRequest
 from danswer.server.manage.models import SlackBotConfig
 from danswer.server.manage.models import SlackBotConfigCreationRequest
-from danswer.server.manage.models import SlackBotTokens
 
 router = APIRouter(prefix="/manage")
 
