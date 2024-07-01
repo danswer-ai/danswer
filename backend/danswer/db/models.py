@@ -397,9 +397,9 @@ class Connector(Base):
         back_populates="connector",
         cascade="all, delete-orphan",
     )
-    documents_by_connector: Mapped[list["DocumentByConnectorCredentialPair"]] = (
-        relationship("DocumentByConnectorCredentialPair", back_populates="connector")
-    )
+    documents_by_connector: Mapped[
+        list["DocumentByConnectorCredentialPair"]
+    ] = relationship("DocumentByConnectorCredentialPair", back_populates="connector")
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="connector"
     )
@@ -425,9 +425,9 @@ class Credential(Base):
         back_populates="credential",
         cascade="all, delete-orphan",
     )
-    documents_by_credential: Mapped[list["DocumentByConnectorCredentialPair"]] = (
-        relationship("DocumentByConnectorCredentialPair", back_populates="credential")
-    )
+    documents_by_credential: Mapped[
+        list["DocumentByConnectorCredentialPair"]
+    ] = relationship("DocumentByConnectorCredentialPair", back_populates="credential")
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="credential"
     )
@@ -1263,11 +1263,11 @@ class UserGroup(Base):
         secondary=UserGroup__ConnectorCredentialPair.__table__,
         viewonly=True,
     )
-    cc_pair_relationships: Mapped[list[UserGroup__ConnectorCredentialPair]] = (
-        relationship(
-            "UserGroup__ConnectorCredentialPair",
-            viewonly=True,
-        )
+    cc_pair_relationships: Mapped[
+        list[UserGroup__ConnectorCredentialPair]
+    ] = relationship(
+        "UserGroup__ConnectorCredentialPair",
+        viewonly=True,
     )
     personas: Mapped[list[Persona]] = relationship(
         "Persona",

@@ -89,9 +89,9 @@ def _form_channel_config(
     if follow_up_tags is not None:
         channel_config["follow_up_tags"] = follow_up_tags
 
-    channel_config["respond_to_bots"] = (
-        slack_bot_config_creation_request.respond_to_bots
-    )
+    channel_config[
+        "respond_to_bots"
+    ] = slack_bot_config_creation_request.respond_to_bots
 
     return channel_config
 
@@ -214,7 +214,6 @@ def create_app(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> SlackApp:
-
     slack_app_model = insert_slack_app(
         name=slack_app_creation_request.name,
         description=slack_app_creation_request.description,
@@ -233,7 +232,6 @@ def patch_app(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> SlackApp:
-
     slack_app_model = update_slack_app(
         slack_app_id=slack_app_id,
         name=slack_app_creation_request.name,
