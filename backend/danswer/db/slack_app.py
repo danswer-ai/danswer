@@ -1,8 +1,10 @@
 from collections.abc import Sequence
 
-from danswer.db.models import SlackApp, User
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
+from danswer.db.models import SlackApp
+from danswer.db.models import User
 
 
 def insert_slack_app(

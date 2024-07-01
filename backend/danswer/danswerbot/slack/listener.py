@@ -1,63 +1,58 @@
 import threading
 import time
 from threading import Event
-from typing import Any, cast
+from typing import Any
+from typing import cast
 
-from danswer.configs.constants import MessageType
-from danswer.configs.danswerbot_configs import (
-    DANSWER_BOT_REPHRASE_MESSAGE,
-    DANSWER_BOT_RESPOND_EVERY_CHANNEL,
-    NOTIFY_SLACKBOT_NO_ANSWER,
-)
-from danswer.danswerbot.slack.config import get_slack_bot_config_for_app_and_channel
-from danswer.danswerbot.slack.constants import (
-    DISLIKE_BLOCK_ACTION_ID,
-    FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID,
-    FOLLOWUP_BUTTON_ACTION_ID,
-    FOLLOWUP_BUTTON_RESOLVED_ACTION_ID,
-    IMMEDIATE_RESOLVED_BUTTON_ACTION_ID,
-    LIKE_BLOCK_ACTION_ID,
-    SLACK_CHANNEL_ID,
-    VIEW_DOC_FEEDBACK_ID,
-)
-from danswer.danswerbot.slack.handlers.handle_buttons import (
-    handle_doc_feedback_button,
-    handle_followup_button,
-    handle_followup_resolved_button,
-    handle_slack_feedback,
-)
-from danswer.danswerbot.slack.handlers.handle_message import (
-    handle_message,
-    remove_scheduled_feedback_reminder,
-    schedule_feedback_reminder,
-)
-from danswer.danswerbot.slack.models import SlackMessageInfo
-from danswer.danswerbot.slack.utils import (
-    ChannelIdAdapter,
-    decompose_action_id,
-    get_channel_name_from_id,
-    get_danswer_bot_app_id,
-    read_slack_thread,
-    remove_danswer_bot_tag,
-    rephrase_slack_message,
-    respond_in_thread,
-)
-from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.engine import get_session_context_manager, get_sqlalchemy_engine
-from danswer.db.slack_app import fetch_slack_app, fetch_slack_apps
-from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.one_shot_answer.models import ThreadMessage
-from danswer.search.retrieval.search_runner import download_nltk_data
-from danswer.search.search_nlp_models import warm_up_encoders
-from danswer.server.manage.models import SlackBotTokens
-from danswer.utils.logger import setup_logger
-from shared_configs.configs import MODEL_SERVER_HOST, MODEL_SERVER_PORT
 from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 from sortedcontainers import SortedDict
 from sqlalchemy.orm import Session
+
+from danswer.configs.constants import MessageType
+from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
+from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
+from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
+from danswer.danswerbot.slack.config import get_slack_bot_config_for_app_and_channel
+from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
+from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
+from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
+from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_ID
+from danswer.danswerbot.slack.constants import IMMEDIATE_RESOLVED_BUTTON_ACTION_ID
+from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
+from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
+from danswer.danswerbot.slack.constants import VIEW_DOC_FEEDBACK_ID
+from danswer.danswerbot.slack.handlers.handle_buttons import handle_doc_feedback_button
+from danswer.danswerbot.slack.handlers.handle_buttons import handle_followup_button
+from danswer.danswerbot.slack.handlers.handle_buttons import handle_followup_resolved_button
+from danswer.danswerbot.slack.handlers.handle_buttons import handle_slack_feedback
+from danswer.danswerbot.slack.handlers.handle_message import handle_message
+from danswer.danswerbot.slack.handlers.handle_message import remove_scheduled_feedback_reminder
+from danswer.danswerbot.slack.handlers.handle_message import schedule_feedback_reminder
+from danswer.danswerbot.slack.models import SlackMessageInfo
+from danswer.danswerbot.slack.utils import ChannelIdAdapter
+from danswer.danswerbot.slack.utils import decompose_action_id
+from danswer.danswerbot.slack.utils import get_channel_name_from_id
+from danswer.danswerbot.slack.utils import get_danswer_bot_app_id
+from danswer.danswerbot.slack.utils import read_slack_thread
+from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
+from danswer.danswerbot.slack.utils import rephrase_slack_message
+from danswer.danswerbot.slack.utils import respond_in_thread
+from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.engine import get_session_context_manager
+from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.slack_app import fetch_slack_app
+from danswer.db.slack_app import fetch_slack_apps
+from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.one_shot_answer.models import ThreadMessage
+from danswer.search.retrieval.search_runner import download_nltk_data
+from danswer.search.search_nlp_models import warm_up_encoders
+from danswer.server.manage.models import SlackBotTokens
+from danswer.utils.logger import setup_logger
+from shared_configs.configs import MODEL_SERVER_HOST
+from shared_configs.configs import MODEL_SERVER_PORT
 
 logger = setup_logger()
 
