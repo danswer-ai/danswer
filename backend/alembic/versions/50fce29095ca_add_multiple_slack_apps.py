@@ -53,12 +53,12 @@ def upgrade() -> None:
 
         bot_token = tokens.get("bot_token")
         if not bot_token:
-            logger.info(f"bot_token not found")
+            logger.info("bot_token not found")
             raise ValueError("bot_token not found")
 
         app_token = tokens.get("app_token")
         if not app_token:
-            logger.info(f"app_token not found")
+            logger.info("app_token not found")
             raise ValueError("app_token not found")
 
 #         logger.info(f"{revision}: bot_token={bot_token} app_token={app_token}")
