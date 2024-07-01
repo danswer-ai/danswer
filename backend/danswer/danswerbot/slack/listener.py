@@ -2,12 +2,13 @@ import threading
 from threading import Event
 from typing import Any
 from typing import cast
+from typing import Callable
 
 from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
-from sortedcontainers import SortedDict
+from sortedcontainers import SortedDict  # type: ignore
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import MessageType
@@ -406,7 +407,9 @@ def view_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
             return process_feedback(req, client)
 
 
-def create_process_slack_event(app_id: int):
+def create_process_slack_event(
+    app_id: int,
+) -> Callable[[SocketModeClient, SocketModeRequest], None]:
     def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
         # Always respond right away, if Slack doesn't receive these frequently enough
         # it will assume the Bot is DEAD!!! :(
@@ -454,7 +457,7 @@ def _initialize_socket_client(app_id: int, socket_client: SocketModeClient) -> N
 #
 # NOTE: we are using Web Sockets so that you can run this from within a firewalled VPC
 # without issue.
-def worker_thread(app_id, stop_event):
+def worker_thread(app_id: int, stop_event: threading.Event) -> None:
     slack_bot_tokens: SlackBotTokens | None = None
     socket_client: SocketModeClient | None = None
 
@@ -520,7 +523,7 @@ def worker_thread(app_id, stop_event):
     return
 
 
-def main_worker(active_threads):
+def main_worker(active_threads: SortedDict) -> None:
     try:
         with get_session_context_manager() as db_session:
             apps = fetch_slack_apps(db_session=db_session)
