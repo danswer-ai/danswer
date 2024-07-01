@@ -1,8 +1,8 @@
 import threading
+from collections.abc import Callable
 from threading import Event
 from typing import Any
 from typing import cast
-from typing import Callable
 
 from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
