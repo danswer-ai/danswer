@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_existing_llm_providers
+from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.db.models import Persona
 from danswer.db.persona import get_personas
