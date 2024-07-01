@@ -57,7 +57,7 @@ export function Header({ user }: HeaderProps) {
             </div>
           </div>
         </Link>
-
+        {/* 
         {(!settings ||
           (settings.search_page_enabled && settings.chat_page_enabled)) && (
           <>
@@ -82,7 +82,7 @@ export function Header({ user }: HeaderProps) {
               </div>
             </Link>
           </>
-        )}
+        )} */}
 
         <div className="ml-auto h-full flex flex-col">
           <div className="my-auto">
