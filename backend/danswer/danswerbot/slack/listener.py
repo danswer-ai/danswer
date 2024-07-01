@@ -397,9 +397,6 @@ def action_routing(
             return handle_followup_resolved_button(req, client, immediate=False)
 
 
-ß
-
-
 def view_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
     if view := req.payload.get("view"):
         if view["callback_id"] == VIEW_DOC_FEEDBACK_ID:
