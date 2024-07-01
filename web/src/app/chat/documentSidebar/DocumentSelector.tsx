@@ -32,7 +32,6 @@ export function DocumentSelector({
         }
         onClick={onClick}
       >
-        <p className="mr-2 my-auto">Select</p>
         <input
           className="my-auto"
           type="checkbox"

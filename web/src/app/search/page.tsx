@@ -29,11 +29,8 @@ import {
   fetchAssistantsSS,
 } from "@/lib/assistants/fetchAssistantsSS";
 import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
-// import {  useState } from "react";
-import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
-import { useChatContext } from "@/components/context/ChatContext";
-
-import { UserDropdown } from "@/components/UserDropdown";
+import { ChatSession } from "../chat/interfaces";
+import { SEARCH_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -49,6 +46,7 @@ export default async function Home() {
     fetchAssistantsSS(),
     fetchSS("/query/valid-tags"),
     fetchSS("/secondary-index/get-embedding-models"),
+    fetchSS("/chat/get-user-searches"),
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -75,6 +73,7 @@ export default async function Home() {
     results[4] as FetchAssistantsResponse;
   const tagsResponse = results[5] as Response | null;
   const embeddingModelResponse = results[6] as Response | null;
+  const queryResponse = results[7] as Response | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -100,6 +99,14 @@ export default async function Home() {
       `Failed to fetch document sets - ${documentSetsResponse?.status}`
     );
   }
+
+  let querySessions: ChatSession[] = [];
+  if (queryResponse?.ok) {
+    querySessions = (await queryResponse.json()).sessions;
+  } else {
+    console.log(`Failed to fetch chat sessions - ${queryResponse?.text()}`);
+  }
+
 
   let assistants: Persona[] = initialAssistantsList;
   if (assistantsFetchError) {
@@ -135,7 +142,7 @@ export default async function Home() {
     | undefined;
   let searchTypeDefault: SearchType =
     storedSearchType !== undefined &&
-      SearchType.hasOwnProperty(storedSearchType)
+    SearchType.hasOwnProperty(storedSearchType)
       ? (storedSearchType as SearchType)
       : SearchType.SEMANTIC; // default to semantic
 
@@ -157,69 +164,14 @@ export default async function Home() {
     !shouldDisplayNoSourcesModal &&
     !shouldShowWelcomeModal;
 
-  // const [showDocSidebar, setShowDocSidebar] = useState(false)
-  // const toggleSidebar = () => {
-  //   setShowDocSidebar(showDocSidebar => !showDocSidebar)
+  const searchSidebarToggle = cookies().get(SEARCH_TOGGLED_COOKIE_NAME);
 
-  // }
-  const showDocSidebar = false
-
-  // let {
-
-  //   chatSessions,
-  //   availableSources,
-  //   availableDocumentSets,
-  //   availablePersonas,
-  //   llmProviders,
-  //   folders,
-  //   openedFolders,
-  // } = useChatContext();
-
-
-
-
-  // const searchParams = useSearchParams();
-  // const existingChatIdRaw = searchParams.get("chatId");
-  // const existingChatSessionId = existingChatIdRaw
-  //   ? parseInt(existingChatIdRaw)
-  //   : null;
-  // const selectedChatSession = chatSessions.find(
-  //   (chatSession) => chatSession.id === existingChatSessionId
-  // );
-  // const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
-
-
-  // const existingChatSessionPersonaId = selectedChatSession?.persona_id;
-
-
-
-
-
+  const toggleSearchSidebar = searchSidebarToggle
+    ? searchSidebarToggle.value.toLocaleLowerCase() == "true" ?? false
+    : false;
 
   return (
     <>
-      {/* <Header user={user} />
-      <> */}
-      <>
-        <div className=" left-0 sticky top-0 z-10 w-full  bg-opacity-30 backdrop-blur-sm flex">
-          <div className="mt-2 flex w-full">
-            {!showDocSidebar && (
-              <button
-                className="ml-4 mt-auto"
-              // onClick={() => toggleSidebar()}
-              >
-                <TbLayoutSidebarLeftExpand size={24} />
-              </button>
-            )}
-
-            <div className="flex mr-4 ml-auto my-auto">
-              <UserDropdown user={user} />
-            </div>
-
-          </div>
-        </div>
-
-      </>
       <div className="m-3">
         <HealthCheckBanner />
       </div>
@@ -246,6 +198,9 @@ export default async function Home() {
       <div className="px-24 pt-10 flex flex-col items-center min-h-screen">
         <div className="w-full">
           <SearchSection
+          toggleSearchSidebar={toggleSearchSidebar}
+          querySessions={querySessions}
+          user={user}
             ccPairs={ccPairs}
             documentSets={documentSets}
             personas={assistants}

@@ -67,7 +67,7 @@ const Page = () => {
       <BackButton />
 
       <AdminPageTitle
-        icon={<BookmarkIcon size={32} />}
+        icon={<BookmarkIcon size={32} className="" />}
         title="New Document Set"
       />
 

@@ -271,7 +271,10 @@ const Main = () => {
 const Page = () => {
   return (
     <div className="container mx-auto">
-      <AdminPageTitle icon={<BookmarkIcon size={32} />} title="Document Sets" />
+      <AdminPageTitle
+        icon={<BookmarkIcon size={32} className="" />}
+        title="Document Sets"
+      />
 
       <Main />
     </div>

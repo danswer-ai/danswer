@@ -30,7 +30,7 @@ export function FiltersTab({
   );
 
   return (
-    <div className="overflow-hidden flex flex-col">
+    <div className="overflow-hidden  flex flex-col">
       <div className="overflow-y-auto">
         <div>
           <div className="pb-4">

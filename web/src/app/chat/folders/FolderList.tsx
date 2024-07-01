@@ -130,9 +130,8 @@ const FolderItem = ({
       }}
       onDragLeave={() => setIsDragOver(false)}
       onDrop={handleDrop}
-      className={`transition duration-300 ease-in-out rounded-md ${
-        isDragOver ? "bg-hover" : ""
-      }`}
+      className={`transition duration-300 ease-in-out rounded-md ${isDragOver ? "bg-hover" : ""
+        }`}
     >
       <BasicSelectable fullWidth selected={false}>
         <div
@@ -223,7 +222,7 @@ export const FolderList = ({
 }: {
   folders: Folder[];
   currentChatId?: number;
-  openedFolders: { [key: number]: boolean };
+  openedFolders?: { [key: number]: boolean };
 }) => {
   if (folders.length === 0) {
     return null;
@@ -236,7 +235,7 @@ export const FolderList = ({
           key={folder.folder_id}
           folder={folder}
           currentChatId={currentChatId}
-          isInitiallyExpanded={openedFolders[folder.folder_id] || false}
+          isInitiallyExpanded={openedFolders ? openedFolders[folder.folder_id] || false : false}
         />
       ))}
     </div>

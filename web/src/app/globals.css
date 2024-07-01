@@ -10,43 +10,145 @@
 
   /* Hide scrollbar for IE, Edge and Firefox */
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
 }
 
+.weakbackground {
+  scrollbar-color: black;
+  scrollbar-width: thin;
+}
+.weakbackground::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+.inputscroll::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  /* scrollbar-width:none;  "auto" by default, "thin", or "none" */
+}
+
+/* .my-container {
+  scrollbar-color: #888 #f1f1f1;
+} */
+
 ::-webkit-scrollbar-track {
-  background: theme("colors.scrollbar.track"); /* Track background color */
+  background: theme("colors.scrollbar.track");
+  /* Track background color */
 }
 
 /* Style the scrollbar handle */
 ::-webkit-scrollbar-thumb {
-  background: theme("colors.scrollbar.thumb"); /* Handle color */
+  background: theme("colors.scrollbar.thumb");
+  /* Handle color */
   border-radius: 10px;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: theme("colors.scrollbar.thumb-hover"); /* Handle color on hover */
+  background: theme("colors.scrollbar.thumb-hover");
+  /* Handle color on hover */
 }
 
 .dark-scrollbar::-webkit-scrollbar-thumb {
-  background: theme("colors.scrollbar.dark.thumb"); /* Handle color */
+  background: theme("colors.scrollbar.dark.thumb");
+  /* Handle color */
   border-radius: 10px;
 }
 
 .dark-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: theme(
-    "colors.scrollbar.dark.thumb-hover"
-  ); /* Handle color on hover */
+  background: theme("colors.scrollbar.dark.thumb-hover");
+  /* Handle color on hover */
 }
 
 ::-webkit-scrollbar {
-  width: 8px; /* Vertical scrollbar width */
-  height: 8px; /* Horizontal scrollbar height */
+  width: 8px;
+  /* Vertical scrollbar width */
+  height: 8px;
+  /* Horizontal scrollbar height */
 }
 
 /* Used to create alternatie to React Markdown */
 .preserve-lines {
-  white-space: pre-wrap; /* Preserves whitespace and wraps text */
+  white-space: pre-wrap;
+  /* Preserves whitespace and wraps text */
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer-text {
+  display: inline-block;
+  color: #e5e5e5;
+
+  background: linear-gradient(
+    -90deg,
+    #d4d4d4 0%,
+    #d4d4d4 2%,
+    #000000 7%,
+    #d4d4d4 12%,
+    #d4d4d4 100%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: flowingShimmer 2s ease-out infinite;
+}
+
+@keyframes flowingShimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.collapsible {
+  max-height: 300px;
+  transition:
+    max-height 0.5s ease-in-out,
+    opacity 0.5s ease-in-out;
+  opacity: 1;
+}
+
+.collapsible-closed {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+/* Add this new class for the container */
+.collapsible-container {
+  transition:
+    transform 0.5s ease-in-out,
+    opacity 0.5s ease-in-out;
+}
+
+.collapsible-container.hidden {
+  transform: translateX(100%);
+  opacity: 0;
 }

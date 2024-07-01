@@ -1,4 +1,11 @@
-import { ChangeEvent, FC, useEffect, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  FC,
+  forwardRef,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { ChevronDownIcon } from "./icons/icons";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
 import { Popover } from "./popover/Popover";
@@ -280,15 +287,8 @@ export function DefaultDropdownElement({
   );
 }
 
-export function DefaultDropdown({
-  options,
-  selected,
-  onSelect,
-  includeDefault = false,
-  side,
-  maxHeight,
-  defaultValue,
-}: {
+
+type DefaultDropdownProps = {
   options: StringOrNumberOption[];
   selected: string | null;
   onSelect: (value: string | number | null) => void;
@@ -296,13 +296,17 @@ export function DefaultDropdown({
   defaultValue?: string;
   side?: "top" | "right" | "bottom" | "left";
   maxHeight?: string;
-}) {
-  const selectedOption = options.find((option) => option.value === selected);
-  const [isOpen, setIsOpen] = useState(false);
 
-  const Content = (
-    <div
-      className={`
+};
+
+export const DefaultDropdown = forwardRef<HTMLDivElement, DefaultDropdownProps>(
+  ({ options, selected, onSelect, includeDefault, defaultValue, side, maxHeight }, ref) => {
+    const selectedOption = options.find((option) => option.value === selected);
+    const [isOpen, setIsOpen] = useState(false);
+
+    const Content = (
+      <div
+        className={`
       flex 
       text-sm 
       bg-background 
@@ -321,9 +325,10 @@ export function DefaultDropdown({
     </div>
   );
 
-  const Dropdown = (
-    <div
-      className={`
+    const Dropdown = (
+      <div
+        ref={ref}
+        className={`
         border 
         border 
         rounded-lg 
@@ -360,22 +365,23 @@ export function DefaultDropdown({
     </div>
   );
 
-  return (
-    <div onClick={() => setIsOpen(!isOpen)}>
-      <Popover
-        open={isOpen}
-        onOpenChange={(open) => setIsOpen(open)}
-        content={Content}
-        popover={Dropdown}
-        align="start"
-        side={side}
-        sideOffset={5}
-        matchWidth
-        triggerMaxWidth
-      />
-    </div>
-  );
-}
+    return (
+      <div onClick={() => setIsOpen(!isOpen)}>
+        <Popover
+          open={isOpen}
+          onOpenChange={(open) => setIsOpen(open)}
+          content={Content}
+          popover={Dropdown}
+          align="start"
+          side={side}
+          sideOffset={5}
+          matchWidth
+          triggerMaxWidth
+        />
+      </div>
+    );
+  }
+);
 
 export function ControlledPopup({
   children,
@@ -430,3 +436,4 @@ export function ControlledPopup({
     </div>
   );
 }
+

@@ -246,7 +246,7 @@ export default function Page() {
       </div>
 
       <AdminPageTitle
-        icon={<RequestTrackerIcon size={32} />}
+        icon={<RequestTrackerIcon size={32} className="" />}
         title="Request Tracker"
       />
 

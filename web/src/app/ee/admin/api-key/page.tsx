@@ -276,7 +276,10 @@ function Main() {
 export default function Page() {
   return (
     <div className="mx-auto container">
-      <AdminPageTitle title="API Keys" icon={<KeyIcon size={32} />} />
+      <AdminPageTitle
+        title="API Keys"
+        icon={<KeyIcon className="" size={32} />}
+      />
 
       <Main />
     </div>
