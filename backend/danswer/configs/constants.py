@@ -100,6 +100,17 @@ class DocumentSource(str, Enum):
     CLICKUP = "clickup"
     MEDIAWIKI = "mediawiki"
     WIKIPEDIA = "wikipedia"
+    S3 = "s3"
+    R2 = "r2"
+    GOOGLE_CLOUD_STORAGE = "google_cloud_storage"
+    OCI_STORAGE = "oci_storage"
+
+
+class BlobType(str, Enum):
+    R2 = "r2"
+    S3 = "s3"
+    GOOGLE_CLOUD_STORAGE = "google_cloud_storage"
+    OCI_STORAGE = "oci_storage"
 
 
 class DocumentIndexType(str, Enum):

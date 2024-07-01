@@ -50,7 +50,7 @@ from danswer.db.persona import fetch_persona_by_id
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
-from danswer.llm.factory import get_llm_for_persona
+from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.utils import check_number_of_tokens
 from danswer.llm.utils import get_max_input_tokens
 from danswer.one_shot_answer.answer_question import get_search_answer
@@ -324,7 +324,7 @@ def handle_message(
                     Persona,
                     fetch_persona_by_id(db_session, new_message_request.persona_id),
                 )
-                llm = get_llm_for_persona(persona)
+                llm, _ = get_llms_for_persona(persona)
 
                 # In cases of threads, split the available tokens between docs and thread context
                 input_tokens = get_max_input_tokens(

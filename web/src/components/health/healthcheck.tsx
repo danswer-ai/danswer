@@ -27,7 +27,7 @@ export const HealthCheckBanner = () => {
           </p>
           <a
             href="/auth/login"
-            className="w-full mt-4 mx-auto rounded-md text-neutral-200 py-2 bg-neutral-800 text-center hover:bg-neutral-700 animtate duration-300 transition-bg  "
+            className="w-full mt-4 mx-auto rounded-md text-light py-2 bg-background-dark text-center hover:bg-emphasis animtate duration-300 transition-bg  "
           >
             Log in
           </a>
@@ -36,7 +36,7 @@ export const HealthCheckBanner = () => {
     );
   } else {
     return (
-      <div className="text-xs mx-auto bg-gradient-to-r from-red-900 to-red-700 p-2 rounded-sm border-hidden text-gray-300">
+      <div className="text-xs mx-auto bg-gradient-to-r from-red-900 to-red-700 p-2 rounded-sm border-hidden text-light">
         <p className="font-bold pb-1">The backend is currently unavailable.</p>
 
         <p className="px-1">

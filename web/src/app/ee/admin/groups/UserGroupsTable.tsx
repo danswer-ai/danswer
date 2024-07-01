@@ -15,7 +15,7 @@ import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { TrashIcon } from "@/components/icons/icons";
 import { deleteUserGroup } from "./lib";
 import { useRouter } from "next/navigation";
-import { FiEdit, FiUser } from "react-icons/fi";
+import { FiEdit2, FiUser } from "react-icons/fi";
 import { User, UserGroup } from "@/lib/types";
 import Link from "next/link";
 import { DeleteButton } from "@/components/DeleteButton";
@@ -77,7 +77,7 @@ export const UserGroupsTable = ({
                       className="whitespace-normal break-all flex cursor-pointer p-2 rounded hover:bg-hover w-fit"
                       href={`/admin/groups/${userGroup.id}`}
                     >
-                      <FiEdit className="my-auto mr-2" />
+                      <FiEdit2 className="my-auto mr-2" />
                       <p className="text font-medium">{userGroup.name}</p>
                     </Link>
                   </TableCell>

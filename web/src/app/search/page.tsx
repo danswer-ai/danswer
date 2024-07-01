@@ -90,6 +90,7 @@ export default async function Home() {
   }
 
   let personas: Persona[] = [];
+
   if (personaResponse?.ok) {
     personas = await personaResponse.json();
   } else {
