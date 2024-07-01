@@ -520,8 +520,6 @@ def worker_thread(app_id: int, stop_event: threading.Event) -> None:
                 socket_client.disconnect()
             stop_event.wait(timeout=LOOP_TIMEOUT)
 
-    return
-
 
 def main_worker(active_threads: SortedDict) -> None:
     try:
@@ -530,10 +528,10 @@ def main_worker(active_threads: SortedDict) -> None:
         if not apps:
             return
     except Exception as ex:
-        logger.info(f"Exception: {ex}")
+        logger.exception(f"Exception: {ex}")
         return
 
-    m_apps = {}
+    id_to_apps = {}  # map of app id to app
 
     active_thread_keys = list(active_threads.keys())
     active_thread_keys_not_found = list(active_thread_keys)
@@ -543,7 +541,7 @@ def main_worker(active_threads: SortedDict) -> None:
 
     # build a list of app threads that should be activated or deactivated
     for a in apps:
-        m_apps[a.id] = a
+        id_to_apps[a.id] = a
 
         # any entry in active_thread_keys that isn't eventually found should be deactivated
         try:
@@ -589,7 +587,7 @@ def main_worker(active_threads: SortedDict) -> None:
 
     # process the activation list
     for a_id in apps_to_activate:
-        a = m_apps[a_id]
+        a = id_to_apps[a_id]
         logger.info(f"Activating app: id={a_id} name={a.name}")
 
         tm = {}
@@ -614,8 +612,6 @@ def main_worker(active_threads: SortedDict) -> None:
         logger.info(f"Active bot count: {len(active_threads)}")
         for k, v in active_threads.items():
             logger.info(f"  ID: {k} Name: {v['name']}")
-
-    return
 
 
 if __name__ == "__main__":

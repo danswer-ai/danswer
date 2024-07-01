@@ -25,8 +25,6 @@ logger.setLevel(logging.INFO)
 
 
 def upgrade() -> None:
-    logger.info(f"{revision}: Starting upgrade")
-
     logger.info(f"{revision}: create_table: slack_app")
     op.create_table(
         "slack_app",
@@ -46,7 +44,7 @@ def upgrade() -> None:
     )
 
     try:
-        logger.info(f"{revision}: Migrating existing Slack bot.")
+        logger.info(f"{revision}: Checking for existing Slack bot.")
 
         tokens = cast(
             dict, get_dynamic_config_store().load(_SLACK_BOT_TOKENS_CONFIG_KEY)
@@ -62,47 +60,45 @@ def upgrade() -> None:
             logger.info("app_token not found")
             raise ValueError("app_token not found")
 
-        #         logger.info(f"{revision}: bot_token={bot_token} app_token={app_token}")
-
         logger.info(f"{revision}: Found bot and app tokens.")
-
-        logger.info(f"{revision}: Migrating slack app settings.")
-        op.execute(
-            sa.text(
-                "INSERT INTO slack_app \
-                        (name, description, enabled, bot_token, app_token) VALUES \
-                        ('Slack App (Migrated)', 'Migrated app', TRUE, :bot_token, :app_token)"
-            ).bindparams(bot_token=bot_token, app_token=app_token)
-        )
-
-        # Get the ID of the first row in the source_table
-        first_row_id = (
-            op.get_bind()
-            .execute(sa.text("SELECT id FROM slack_app ORDER BY id LIMIT 1"))
-            .scalar()
-        )
-
-        logger.info(f"{revision}: The ID of the first row is: {first_row_id}")
-
-        # Update all rows in the slack_bot_config to set the foreign key app_id to first_row_id
-        if first_row_id is not None:
-            logger.info(f"{revision}: Migrating slack bot configs.")
-            op.execute(
-                sa.text(
-                    "UPDATE slack_bot_config SET app_id = :first_row_id"
-                ).bindparams(first_row_id=first_row_id)
-            )
-
-        # Delete the tokens in dynamic config
-        logger.info(f"{revision}: Removing old bot and app tokens.")
-        get_dynamic_config_store().delete(_SLACK_BOT_TOKENS_CONFIG_KEY)
-
-    except Exception as ex:
+    except ValueError as vex:
         # Ignore if the dynamic config is not found
-        logger.info(f"{revision}: Exception: {ex}")
+        logger.exception(f"{revision}: Exception: {vex}")
         logger.info(f"{revision}: This is OK if there was not an existing Slack bot.")
 
-    # op.alter_column('slack_bot_config', 'app_id', existing_type=sa.Integer(), nullable=False)
+    logger.info(f"{revision}: Migrating slack app settings.")
+    op.execute(
+        sa.text(
+            "INSERT INTO slack_app \
+                    (name, description, enabled, bot_token, app_token) VALUES \
+                    ('Slack App (Migrated)', 'Migrated app', TRUE, :bot_token, :app_token)"
+        ).bindparams(bot_token=bot_token, app_token=app_token)
+    )
+
+    # Get the ID of the first row in the source_table
+    first_row_id = (
+        op.get_bind()
+        .execute(sa.text("SELECT id FROM slack_app ORDER BY id LIMIT 1"))
+        .scalar()
+    )
+
+    logger.info(f"{revision}: The ID of the first row is: {first_row_id}")
+
+    # Update all rows in the slack_bot_config to set the foreign key app_id to first_row_id
+    if not first_row_id:
+        raise RuntimeError(f"{revision}: Migrated slack bot, but could not find a row in slack_app!")
+
+    logger.info(f"{revision}: Migrating slack bot configs.")
+    op.execute(
+        sa.text(
+            "UPDATE slack_bot_config SET app_id = :first_row_id"
+        ).bindparams(first_row_id=first_row_id)
+    )
+
+    # Delete the tokens in dynamic config
+    if bot_token and app_token:
+        logger.info(f"{revision}: Removing old bot and app tokens.")
+        get_dynamic_config_store().delete(_SLACK_BOT_TOKENS_CONFIG_KEY)
 
     logger.info(f"{revision}: Applying foreign key constraint to Slack bot configs.")
     sa.ForeignKeyConstraint(
