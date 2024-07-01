@@ -26,10 +26,14 @@ from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
 from danswer.danswerbot.slack.constants import VIEW_DOC_FEEDBACK_ID
 from danswer.danswerbot.slack.handlers.handle_buttons import handle_doc_feedback_button
 from danswer.danswerbot.slack.handlers.handle_buttons import handle_followup_button
-from danswer.danswerbot.slack.handlers.handle_buttons import handle_followup_resolved_button
+from danswer.danswerbot.slack.handlers.handle_buttons import (
+    handle_followup_resolved_button,
+)
 from danswer.danswerbot.slack.handlers.handle_buttons import handle_slack_feedback
 from danswer.danswerbot.slack.handlers.handle_message import handle_message
-from danswer.danswerbot.slack.handlers.handle_message import remove_scheduled_feedback_reminder
+from danswer.danswerbot.slack.handlers.handle_message import (
+    remove_scheduled_feedback_reminder,
+)
 from danswer.danswerbot.slack.handlers.handle_message import schedule_feedback_reminder
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
