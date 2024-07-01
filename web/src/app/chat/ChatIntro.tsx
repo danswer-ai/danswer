@@ -43,9 +43,7 @@ export function ChatIntro({
         <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
           <div className="flex">
             <div className="mx-auto">
-              <Logo height={80} width={80} className="m-auto" />
-
-              <div className="m-auto text-3xl font-bold text-strong mt-4 w-fit">
+              <div className="m-auto text-3xl font-bold text-strong w-fit">
                 {selectedPersona?.name || "How can I help you today?"}
               </div>
               {selectedPersona && (

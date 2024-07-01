@@ -24,7 +24,10 @@ export default async function Page() {
 
   return (
     <div className="mx-auto container">
-      <AdminPageTitle icon={<RobotIcon size={32} />} title="Assistants" />
+      <AdminPageTitle
+        icon={<RobotIcon size={32} className="" />}
+        title="Assistants"
+      />
 
       <Text className="mb-2">
         Assistants are a way to build custom search/question-answering

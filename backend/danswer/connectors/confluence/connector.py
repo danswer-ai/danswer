@@ -84,6 +84,7 @@ def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, st
         + parsed_url.netloc
         + parsed_url.path.split(DISPLAY)[0]
     )
+
     space = DISPLAY.join(parsed_url.path.split(DISPLAY)[1:]).split("/")[0]
     page_id = ""
     if (content := parsed_url.path.split(PAGE)) and len(content) > 1:

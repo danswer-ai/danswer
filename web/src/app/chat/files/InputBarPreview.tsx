@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChatFileType, FileDescriptor } from "../interfaces";
-import { DocumentPreview } from "./documents/DocumentPreview";
+import {
+  DocumentPreview,
+  InputDocumentPreview,
+} from "./documents/DocumentPreview";
+import { FiX, FiLoader, FiFileText } from "react-icons/fi";
 import { InputBarPreviewImage } from "./images/InputBarPreviewImage";
-import { FiX, FiLoader } from "react-icons/fi";
+import { Tooltip } from "@/components/tooltip/Tooltip";
 
 function DeleteButton({ onDelete }: { onDelete: () => void }) {
   return (
@@ -15,7 +19,7 @@ function DeleteButton({ onDelete }: { onDelete: () => void }) {
         cursor-pointer
         border-none
         bg-hover
-        p-1
+        p-.5
         rounded-full
         z-10
       "
@@ -25,7 +29,7 @@ function DeleteButton({ onDelete }: { onDelete: () => void }) {
   );
 }
 
-export function InputBarPreview({
+export function InputBarPreviewImageProvider({
   file,
   onDelete,
   isUploading,
@@ -35,13 +39,6 @@ export function InputBarPreview({
   isUploading: boolean;
 }) {
   const [isHovered, setIsHovered] = useState(false);
-
-  const renderContent = () => {
-    if (file.type === ChatFileType.IMAGE) {
-      return <InputBarPreviewImage fileId={file.id} />;
-    }
-    return <DocumentPreview fileName={file.name || file.id} />;
-  };
 
   return (
     <div
@@ -67,7 +64,111 @@ export function InputBarPreview({
           <FiLoader className="animate-spin text-white" />
         </div>
       )}
-      {renderContent()}
+      <InputBarPreviewImage fileId={file.id} />
+    </div>
+  );
+}
+
+export function InputBarPreview({
+  file,
+  onDelete,
+  isUploading,
+}: {
+  file: FileDescriptor;
+  onDelete: () => void;
+  isUploading: boolean;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const fileNameRef = useRef<HTMLDivElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useEffect(() => {
+    if (fileNameRef.current) {
+      setIsOverflowing(
+        fileNameRef.current.scrollWidth > fileNameRef.current.clientWidth
+      );
+    }
+  }, [file.name]);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {isUploading && (
+        <div
+          className="
+            absolute
+            inset-0
+            flex
+            items-center
+            justify-center
+            bg-black
+            bg-opacity-50
+            rounded-lg
+            z-0
+          "
+        >
+          <FiLoader className="animate-spin text-white" />
+        </div>
+      )}
+      <div
+        className={`
+        flex
+        items-center
+        p-2
+        bg-hover
+        border
+        border-border
+        rounded-md
+        box-border
+        h-10
+      `}
+      >
+        <div className="flex-shrink-0">
+          <div
+            className="
+            w-6
+            h-6
+            bg-document
+            flex
+            items-center
+            justify-center
+            rounded-md
+          "
+          >
+            <FiFileText className="w-4 h-4 text-white" />
+          </div>
+        </div>
+        <div className="ml-2 relative">
+          <Tooltip content={file.name} side="top" align="start">
+            <div
+              ref={fileNameRef}
+              className={`font-medium text-sm line-clamp-1 break-all ellipses max-w-48
+                }`}
+            >
+              {file.name}
+            </div>
+          </Tooltip>
+        </div>
+        <button
+          onClick={onDelete}
+          className="
+
+
+        cursor-pointer
+        border-none
+        bg-hover
+        p-1
+        rounded-full
+        z-10
+      "
+        >
+          <FiX />
+        </button>
+      </div>
     </div>
   );
 }

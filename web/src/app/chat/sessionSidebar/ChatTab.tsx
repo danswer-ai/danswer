@@ -10,17 +10,21 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function ChatTab({
+  search,
   existingChats,
   currentChatId,
   folders,
   openedFolders,
 }: {
-  existingChats: ChatSession[];
+  search?: boolean;
+  existingChats?: ChatSession[];
   currentChatId?: number;
-  folders: Folder[];
-  openedFolders: { [key: number]: boolean };
+  folders?: Folder[];
+  openedFolders?: { [key: number]: boolean };
 }) {
-  const groupedChatSessions = groupSessionsByDateRange(existingChats);
+  const groupedChatSessions = existingChats
+    ? groupSessionsByDateRange(existingChats)
+    : [];
   const { setPopup } = usePopup();
   const router = useRouter();
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
@@ -50,9 +54,9 @@ export function ChatTab({
   };
 
   return (
-    <div className="mb-1 ml-3 overflow-y-auto h-full">
-      {folders.length > 0 && (
-        <div className="py-2 mr-3 border-b border-border">
+    <div className="mb-1 ml-3 weakbackground overflow-y-auto h-full">
+      {folders && folders.length > 0 && (
+        <div className="py-2 border-b border-border">
           <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-medium">
             Folders
           </div>
@@ -90,6 +94,7 @@ export function ChatTab({
                       return (
                         <div key={`${chat.id}-${chat.name}`}>
                           <ChatSessionDisplay
+                            search={search}
                             chatSession={chat}
                             isSelected={isSelected}
                             skipGradient={isDragOver}

@@ -1,4 +1,4 @@
-import { ChatSidebar } from "@/app/chat/sessionSidebar/ChatSidebar";
+import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { UserDropdown } from "@/components/UserDropdown";
 import { ChatProvider } from "@/components/context/ChatContext";
@@ -8,6 +8,7 @@ import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import { AssistantsList } from "./AssistantsList";
+import { Logo } from "@/components/Logo";
 
 export default async function GalleryPage({
   searchParams,
@@ -55,12 +56,14 @@ export default async function GalleryPage({
         }}
       >
         <div className="flex relative bg-background text-default overflow-x-hidden h-screen">
-          <ChatSidebar
-            existingChats={chatSessions}
-            currentChatSession={null}
-            folders={folders}
-            openedFolders={openedFolders}
-          />
+          <div className="max-w-[300px]">
+            <HistorySidebar
+              existingChats={chatSessions}
+              currentChatSession={null}
+              folders={folders}
+              openedFolders={openedFolders}
+            />
+          </div>
 
           <div
             className={`w-full h-screen flex flex-col overflow-y-auto overflow-x-hidden relative`}
@@ -75,6 +78,11 @@ export default async function GalleryPage({
               <AssistantsList user={user} assistants={assistants} />
             </div>
           </div>
+        </div>
+        {/* Temporary - fixed logo */}
+        <div className="absolute z-[100] left-4 top-2">
+          {" "}
+          <Logo />
         </div>
       </ChatProvider>
     </>

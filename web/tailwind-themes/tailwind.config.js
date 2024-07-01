@@ -12,13 +12,34 @@ module.exports = {
     // tremor
     "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
   ],
+
   theme: {
     transparent: "transparent",
     current: "currentColor",
     extend: {
+      transitionProperty: {
+        spacing: "margin, padding",
+      },
+
+      keyframes: {
+        pulse: {
+          "0%, 100%": { opacity: 0.9 },
+          "50%": { opacity: 0.4 },
+        },
+      },
+      animation: {
+        "fade-in-up": "fadeInUp 0.5s ease-out",
+
+        pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+      },
+
+      gradientColorStops: {
+        "neutral-10": "#e5e5e5 5%",
+      },
       screens: {
         "2xl": "1420px",
         "3xl": "1700px",
+        "4xl": "2000px",
       },
       fontFamily: {
         sans: ["var(--font-inter)"],
@@ -44,10 +65,13 @@ module.exports = {
         "background-subtle": "#e5e7eb", // gray-200
         "background-emphasis": "#f6f7f8",
         "background-strong": "#eaecef",
+        "background-stronger": "#d1d5db",
         "background-search": "#ffffff",
         "background-custom-header": "#f3f4f6",
         "background-inverted": "#000000",
         "background-weak": "#f3f4f6", // gray-100
+        "background-weakerish": "#F1F2F4", // gray-125
+        "background-weakish": "#EAEAEA", // gray-150
         "background-dark": "#111827", // gray-900
 
         // text or icons
@@ -62,7 +86,7 @@ module.exports = {
         error: "#ef4444", // red-500
         success: "#059669", // emerald-600
         alert: "#f59e0b", // amber-600
-        accent: "#6671d0",
+        accent: "#6366F1", //
 
         // borders
         border: "#e5e7eb", // gray-200
@@ -72,9 +96,11 @@ module.exports = {
 
         // hover
         "hover-light": "#f3f4f6", // gray-100
+        "hover-lightish": "#EAEBEF", // gray-160
+
         hover: "#e5e7eb", // gray-200
         "hover-emphasis": "#d1d5db", // gray-300
-        "accent-hover": "#5964c2",
+        "accent-hover": "#4F46E5",
 
         // keyword highlighting
         highlight: {
@@ -94,11 +120,11 @@ module.exports = {
         },
 
         // bubbles in chat for each "user"
-        user: "#fb7185", // yellow-400
+        user: "#F1F2F4", // near gray-100
         ai: "#60a5fa", // blue-400
 
         // for display documents
-        document: "#ec4899", // pink-500
+        document: "#f43f5e", // pink-500
 
         // light mode
         tremor: {

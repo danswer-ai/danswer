@@ -19,6 +19,7 @@ export const searchRequestStreamed = async ({
   timeRange,
   tags,
   persona,
+  agentic,
   updateCurrentAnswer,
   updateQuotes,
   updateDocs,
@@ -27,10 +28,14 @@ export const searchRequestStreamed = async ({
   updateSelectedDocIndices,
   updateError,
   updateMessageId,
+  finishedSearching,
+  updateDocumentRelevance, // New callback function
+  updateComments,
 }: SearchRequestArgs) => {
   let answer = "";
   let quotes: Quote[] | null = null;
   let relevantDocuments: DanswerDocument[] | null = null;
+
   try {
     const filters = buildFilters(sources, documentSets, timeRange, tags);
 
@@ -45,6 +50,7 @@ export const searchRequestStreamed = async ({
       body: JSON.stringify({
         messages: [threadMessage],
         persona_id: persona.id,
+        agentic,
         prompt_id: persona.id === 0 ? null : persona.prompts[0]?.id,
         retrieval_options: {
           run_search: "always",
@@ -150,18 +156,19 @@ export const searchRequestStreamed = async ({
           return;
         }
 
-        // check for message ID section
-        if (Object.hasOwn(chunk, "message_id")) {
-          updateMessageId((chunk as BackendMessage).message_id);
-          return;
+        // Is a bakcend message- handle all backend message related updates here
+        if (Object.hasOwn(chunk, "relevance")) {
+          const backendChunk = chunk as BackendMessage;
+          updateDocumentRelevance(backendChunk.relevance);
+          updateComments(backendChunk.comments);
+          updateMessageId(backendChunk.message_id);
+          finishedSearching();
         }
-
-        // should never reach this
-        console.log("Unknown chunk:", chunk);
       });
     }
   } catch (err) {
     console.error("Fetch error:", err);
   }
+
   return { answer, quotes, relevantDocuments };
 };

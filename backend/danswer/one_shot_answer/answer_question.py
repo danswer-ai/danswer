@@ -1,7 +1,12 @@
+import json
+import os
+from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Iterator
+from typing import Any
 from typing import cast
 
+from openai import OpenAI
 from sqlalchemy.orm import Session
 
 from danswer.chat.chat_utils import reorganize_citations
@@ -36,9 +41,11 @@ from danswer.llm.utils import get_default_llm_token_encode
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.one_shot_answer.models import QueryRephrase
+from danswer.one_shot_answer.models import ThreadMessage
 from danswer.one_shot_answer.qa_utils import combine_message_thread
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
+from danswer.search.models import SavedSearchDoc
 from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.search.utils import dedupe_documents
 from danswer.search.utils import drop_llm_indices
@@ -73,6 +80,140 @@ AnswerObjectIterator = Iterator[
 ]
 
 
+def evaluate_relevance(
+    top_documents: list[SavedSearchDoc],
+    query: ThreadMessage,
+    agentic: bool,
+    # top_documents: List[Any],
+    # query: str,
+    # client: OpenAI,
+    # logger: Logger
+) -> tuple[dict[str, Any], dict[str, str]]:
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    # Group documents by document_id
+    document_groups = defaultdict(list)
+    for doc in top_documents:
+        document_groups[doc.document_id].append(doc.blurb)
+
+    results = {}
+    agentic_comments = {}
+
+    for document_id, blurbs in document_groups.items():
+        combined_blurb = "\n".join(blurbs)
+
+        prompt = f"""
+        Given the following document blurb(s) and query, determine if the document is relevant to the search term.
+
+        Document blurb(s):
+        ```
+        {combined_blurb}
+        ```
+
+        Query:
+        ```
+        {query}
+        ```
+        Is this document relevant? Respond with a
+        JSON object containing a single key "response"
+        with a value of either true if it's somewhat relevant or false if it's not relevant.
+        """
+
+        try:
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                response_format={"type": "json_object"},
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """You are a helpful assistant that determines
+                        document relevance. Always respond with a JSON object.""",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=20,
+                n=1,
+                temperature=0.3,
+            )
+
+            content = cast(str, response.choices[0].message.content)
+            parsed_response = json.loads(content)
+
+            if "response" in parsed_response:
+                results[document_id] = parsed_response["response"]
+            else:
+                logger.error(
+                    f"Error: 'response' key not found in JSON for document {document_id}"
+                )
+                results[document_id] = False
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON for document {document_id}: {str(e)}")
+            results[document_id] = False
+        except Exception as e:
+            logger.error(f"Error processing document {document_id}: {str(e)}")
+            results[document_id] = False
+
+        if agentic and results[document_id]:
+            prompt = f"""
+            Given the following document blurb(s) and query,
+            explain WHY the content is relevant to the search term. Be concise but informative.
+
+            Document blurb(s):
+            ```
+            {combined_blurb}
+            ```
+
+            Query:
+            ```
+            {query}
+            ```
+
+            Provide a brief explanation of the content's relevance to the query, highlighting key information.
+            """
+
+            system_message = """
+            You are a sharp, insightful assistant that quickly grasps the essence of
+              content and its relevance to queries.
+            Your task is to provide brief yet informative explanations of why the given content matters for a given query.
+            Be direct and to the point, but include enough detail to be genuinely helpful.
+            Highlight the most relevant information or connections that make the content useful for the query.
+
+            IMPORTANT:
+            - Never start your response with phrases like "The document", "This text", or any similar references.
+            - Begin directly with the relevant information or insight.
+            - Aim for 1-2 short sentences or about 15-25 words.
+            - Focus on why the content is relevant to the specific query.
+
+            Examples:
+            - "Contains Q3 financial metrics, including revenue growth ."
+            - "Lists completed tasks from the past week."
+            - "Outlines recent AI breakthroughs in natural language processing."
+            """
+
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": prompt},
+                    ],
+                    max_tokens=50,
+                    n=1,
+                    temperature=0.4,
+                )
+
+                content = cast(str, response.choices[0].message.content)
+                if "not relevant" in content.lower():
+                    agentic_comments[document_id] = "Not relevant"
+                else:
+                    agentic_comments[document_id] = content
+            except Exception as e:
+                print(f"Issue with agentic search: {e}")
+                agentic_comments[document_id] = "Error in processing"
+
+    return results, agentic_comments
+
+
 def stream_answer_objects(
     query_req: DirectQARequest,
     user: User | None,
@@ -88,8 +229,9 @@ def stream_answer_objects(
     bypass_acl: bool = False,
     use_citations: bool = False,
     danswerbot_flow: bool = False,
-    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-    | None = None,
+    retrieval_metrics_callback: (
+        Callable[[RetrievalMetricsContainer], None] | None
+    ) = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> AnswerObjectIterator:
     """Streams in order:
@@ -205,8 +347,11 @@ def stream_answer_objects(
         skip_explicit_tool_calling=True,
         return_contexts=query_req.return_contexts,
     )
+
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
     dropped_inds: list[int] = []
+    search_response = []
+
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
         # for one-shot flow, don't currently do anything with these
         if isinstance(packet, ToolResponse):
@@ -232,6 +377,7 @@ def stream_answer_objects(
                     for db_search_doc in reference_db_search_docs
                 ]
 
+                search_response = response_docs
                 initial_response = QADocsResponse(
                     rephrased_query=rephrased_query,
                     top_documents=response_docs,
@@ -258,6 +404,10 @@ def stream_answer_objects(
         else:
             yield packet
 
+    relevance, comments = evaluate_relevance(
+        search_response, query=query_msg, agentic=query_req.agentic or False
+    )
+
     # Saving Gen AI answer and responding with message info
     gen_ai_response_message = create_new_chat_message(
         chat_session_id=chat_session.id,
@@ -273,9 +423,8 @@ def stream_answer_objects(
     )
 
     msg_detail_response = translate_db_message_to_chat_message_detail(
-        gen_ai_response_message
+        gen_ai_response_message, relevance=relevance, comments=comments
     )
-
     yield msg_detail_response
 
 
@@ -309,8 +458,9 @@ def get_search_answer(
     bypass_acl: bool = False,
     use_citations: bool = False,
     danswerbot_flow: bool = False,
-    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-    | None = None,
+    retrieval_metrics_callback: (
+        Callable[[RetrievalMetricsContainer], None] | None
+    ) = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> OneShotQAResponse:
     """Collects the streamed one shot answer responses into a single object"""
