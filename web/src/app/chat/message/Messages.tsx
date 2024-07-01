@@ -195,7 +195,7 @@ export const AIMessage = ({
                       handleShowRetrieved={handleShowRetrieved}
                     />
                   </div>
-                </div>
+                </divch>
               )} */}
           </div>
 

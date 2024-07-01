@@ -28,10 +28,10 @@ import { TbLayoutSidebarLeftExpand, TbLayoutSidebarRightExpand } from "react-ico
 
 interface ChatSideBarProps {
   closeSidebar: () => void;
-  existingChats: ChatSession[];
-  currentChatSession: ChatSession | null | undefined;
-  folders: Folder[];
-  openedFolders: { [key: number]: boolean };
+  existingChats?: ChatSession[];
+  currentChatSession?: ChatSession | null | undefined;
+  folders?: Folder[];
+  openedFolders?: { [key: number]: boolean };
   initialWidth: number
 
 }

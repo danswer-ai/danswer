@@ -1,10 +1,10 @@
 "use client";
 
-import { useContext, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { SearchBar } from "./SearchBar";
 import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./filtering/Filters";
-import { CCPairBasicInfo, Connector, DocumentSet, Tag } from "@/lib/types";
+import { CCPairBasicInfo, Connector, DocumentSet, Tag, User } from "@/lib/types";
 import {
   DanswerDocument,
   Quote,
@@ -25,6 +25,12 @@ import { PersonaSelector } from "./PersonaSelector";
 import { computeAvailableFilters } from "@/lib/filters";
 import { useRouter } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
+import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
+import { UserDropdown } from "../UserDropdown";
+import ResizableSection from "../resizable/ResizableSection";
+import { ChatSidebar } from "@/app/chat/sessionSidebar/ChatSidebar";
+import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
+import { ChatSession } from "@/app/chat/interfaces";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -42,14 +48,19 @@ interface SearchSectionProps {
   documentSets: DocumentSet[];
   personas: Persona[];
   tags: Tag[];
+
+  querySessions: ChatSession[]
   defaultSearchType: SearchType;
+  user: User | null
 }
 
 export const SearchSection = ({
   ccPairs,
   documentSets,
   personas,
+  user,
   tags,
+  querySessions,
   defaultSearchType,
 }: SearchSectionProps) => {
   // Search Bar
@@ -222,96 +233,195 @@ export const SearchSection = ({
   if (settings?.settings?.search_page_enabled === false) {
     router.push("/chat");
   }
+  const sidebarElementRef = useRef<HTMLDivElement>(null);
+  const innerSidebarElementRef = useRef<HTMLDivElement>(null);
+
 
   const [filters, setFilters] = useState(false)
   const toggleFilters = () => {
     setFilters(filters => !filters)
   }
-  return (
-    <div className="relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
-      <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64">
 
-      </div>
-      <div className="max-w-searchbar-max w-[90%] mx-auto">
-        {personas.length > 0 ? (
-          <div className="flex mb-2 w-fit">
-            <PersonaSelector
-              personas={personas}
-              selectedPersonaId={selectedPersona}
-              onPersonaChange={(persona) => setSelectedPersona(persona.id)}
+  const [showDocSidebar, setShowDocSidebar] = useState(false)
+  const toggleSidebar = () => {
+    setShowDocSidebar(showDocSidebar => !showDocSidebar)
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey) {
+        switch (event.key.toLowerCase()) {
+          case 'e':
+            event.preventDefault();
+            toggleSidebar()
+            break;
+
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [router]);
+
+
+  const [usedSidebarWidth, setUsedSidebarWidth] = useState<number>(
+    300 || parseInt(SIDEBAR_WIDTH_CONST)
+  );
+
+  const updateSidebarWidth = (newWidth: number) => {
+    setUsedSidebarWidth(newWidth);
+    if (sidebarElementRef.current && innerSidebarElementRef.current) {
+      sidebarElementRef.current.style.transition = "";
+      sidebarElementRef.current.style.width = `${newWidth}px`;
+      innerSidebarElementRef.current.style.width = `${newWidth}px`;
+    }
+  };
+
+
+  console.log(querySessions)
+  return (
+    <>
+
+      <div
+        ref={sidebarElementRef}
+        className={`  flex-none absolute left-0 z-[100]  overflow-y-hidden sidebar bg-background-weak h-screen`}
+        style={{ width: showDocSidebar ? usedSidebarWidth : 0 }}
+      >
+        <ResizableSection
+          updateSidebarWidth={updateSidebarWidth}
+          intialWidth={usedSidebarWidth}
+          minWidth={200}
+          maxWidth={300 || undefined}
+        >
+          <div className="w-full relative">
+
+            {/* <ChatSidebar /> */}
+            <ChatSidebar
+
+
+              initialWidth={usedSidebarWidth}
+              ref={innerSidebarElementRef}
+              closeSidebar={() => toggleSidebar()}
+              existingChats={querySessions}
+            // currentChatSession={selectedChatSession}
+            // folders={folders}
+            // openedFolders={openedFolders}
             />
           </div>
-        ) : (
-          <div className="pt-3" />
-        )}
 
-        <SearchBar
-          query={query}
-          setQuery={setQuery}
-          onSearch={async () => {
-            setFilters(false)
-            setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
-            await onSearch({ offset: 0 });
-          }}
-        />
-        <div className="flex gap-x-4 flex-wrap w-full">
+        </ResizableSection>
 
-          <div className="block 2xl:block w-52 3xl:w-64 mt-4">
-            {(ccPairs.length > 0 || documentSets.length > 0) && (
-              <SourceSelector
-                {...filterManager}
-                toggled={filters}
-                toggleFilters={toggleFilters}
-                availableDocumentSets={finalAvailableDocumentSets}
-                existingSources={finalAvailableSources}
-                availableTags={tags}
-              />
-            )}
+      </div>
+      <div className=" left-0 sticky top-0 z-10 w-full bg-opacity-30 backdrop-blur-sm flex">
+        <div className="mt-2 flex w-full">
+          {!showDocSidebar && (
+            <button
+              className="ml-4 mt-auto"
+              onClick={() => toggleSidebar()}
+            >
+              <TbLayoutSidebarLeftExpand size={24} />
+            </button>
+          )}
 
+          <div className="flex mr-4 ml-auto my-auto">
+            <UserDropdown user={user} />
           </div>
 
-          <div className="block 2xl:block w-52 3xl:w-64 mt-4">
-
-            <div className="mt-10 pr-5">
-              <SearchHelper
-                isFetching={isFetching}
-                searchResponse={searchResponse}
-                selectedSearchType={selectedSearchType}
-                setSelectedSearchType={setSelectedSearchType}
-                defaultOverrides={defaultOverrides}
-                restartSearch={onSearch}
-                forceQADisplay={() =>
-                  setDefaultOverrides((prevState) => ({
-                    ...(prevState || SEARCH_DEFAULT_OVERRIDES_START),
-                    forceDisplayQA: true,
-                  }))
-                }
-                setOffset={(offset) => {
-                  setDefaultOverrides((prevState) => ({
-                    ...(prevState || SEARCH_DEFAULT_OVERRIDES_START),
-                    offset,
-                  }));
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-
-        <div className="mt-2">
-          <SearchResultsDisplay
-            searchResponse={searchResponse}
-            validQuestionResponse={validQuestionResponse}
-            isFetching={isFetching}
-            defaultOverrides={defaultOverrides}
-            personaName={
-              selectedPersona
-                ? personas.find((p) => p.id === selectedPersona)?.name
-                : null
-            }
-          />
         </div>
       </div>
-    </div>
+
+
+
+      <div className=" px-24 pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
+
+        <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64">
+
+        </div>
+        <div className="max-w-searchbar-max w-[90%] mx-auto">
+          {personas.length > 0 ? (
+            <div className="flex mb-2 w-fit">
+              <PersonaSelector
+                personas={personas}
+                selectedPersonaId={selectedPersona}
+                onPersonaChange={(persona) => setSelectedPersona(persona.id)}
+              />
+            </div>
+          ) : (
+            <div className="pt-3" />
+          )}
+
+          <SearchBar
+            query={query}
+            setQuery={setQuery}
+            onSearch={async () => {
+              setFilters(false)
+              setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
+              await onSearch({ offset: 0 });
+            }}
+          />
+          <div className="flex gap-x-4 flex-wrap w-full">
+
+            <div className="block 2xl:block w-52 3xl:w-64 mt-4">
+              {(ccPairs.length > 0 || documentSets.length > 0) && (
+                <SourceSelector
+                  {...filterManager}
+                  toggled={filters}
+                  toggleFilters={toggleFilters}
+                  availableDocumentSets={finalAvailableDocumentSets}
+                  existingSources={finalAvailableSources}
+                  availableTags={tags}
+                />
+              )}
+
+            </div>
+
+            <div className="block 2xl:block w-52 3xl:w-64 mt-4">
+
+              <div className="mt-10 pr-5">
+                <SearchHelper
+                  isFetching={isFetching}
+                  searchResponse={searchResponse}
+                  selectedSearchType={selectedSearchType}
+                  setSelectedSearchType={setSelectedSearchType}
+                  defaultOverrides={defaultOverrides}
+                  restartSearch={onSearch}
+                  forceQADisplay={() =>
+                    setDefaultOverrides((prevState) => ({
+                      ...(prevState || SEARCH_DEFAULT_OVERRIDES_START),
+                      forceDisplayQA: true,
+                    }))
+                  }
+                  setOffset={(offset) => {
+                    setDefaultOverrides((prevState) => ({
+                      ...(prevState || SEARCH_DEFAULT_OVERRIDES_START),
+                      offset,
+                    }));
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+
+          <div className="mt-2">
+            <SearchResultsDisplay
+              searchResponse={searchResponse}
+              validQuestionResponse={validQuestionResponse}
+              isFetching={isFetching}
+              defaultOverrides={defaultOverrides}
+              personaName={
+                selectedPersona
+                  ? personas.find((p) => p.id === selectedPersona)?.name
+                  : null
+              }
+            />
+          </div>
+        </div>
+      </div>
+    </>
+
   );
 };

@@ -30,6 +30,7 @@ import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
 import { useChatContext } from "@/components/context/ChatContext";
 
 import { UserDropdown } from "@/components/UserDropdown";
+import { ChatSession } from "../chat/interfaces";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -45,7 +46,11 @@ export default async function Home() {
     fetchSS("/persona"),
     fetchSS("/query/valid-tags"),
     fetchSS("/secondary-index/get-embedding-models"),
+    fetchSS("/chat/get-user-searches"),
+    fetchSS("/query/valid-tags"),
+
   ];
+
 
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
@@ -69,6 +74,7 @@ export default async function Home() {
   const personaResponse = results[4] as Response | null;
   const tagsResponse = results[5] as Response | null;
   const embeddingModelResponse = results[6] as Response | null;
+  const queryResponse = results[7] as Response | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -92,6 +98,15 @@ export default async function Home() {
   } else {
     console.log(
       `Failed to fetch document sets - ${documentSetsResponse?.status}`
+    );
+  }
+
+  let querySessions: ChatSession[] = [];
+  if (queryResponse?.ok) {
+    querySessions = (await queryResponse.json()).sessions;
+  } else {
+    console.log(
+      `Failed to fetch chat sessions - ${queryResponse?.text()}`
     );
   }
 
@@ -190,32 +205,12 @@ export default async function Home() {
 
 
 
-
+  console.log(querySessions)
 
   return (
     <>
       {/* <Header user={user} />
       <> */}
-      <>
-        <div className=" left-0 sticky top-0 z-10 w-full  bg-opacity-30 backdrop-blur-sm flex">
-          <div className="mt-2 flex w-full">
-            {!showDocSidebar && (
-              <button
-                className="ml-4 mt-auto"
-              // onClick={() => toggleSidebar()}
-              >
-                <TbLayoutSidebarLeftExpand size={24} />
-              </button>
-            )}
-
-            <div className="flex mr-4 ml-auto my-auto">
-              <UserDropdown user={user} />
-            </div>
-
-          </div>
-        </div>
-
-      </>
       <div className="m-3">
         <HealthCheckBanner />
       </div>
@@ -237,9 +232,11 @@ export default async function Home() {
 
       <InstantSSRAutoRefresh />
       <FunctionalWrapper>
-        <div className="px-24 pt-10 flex flex-col items-center min-h-screen">
+        <div className="relative flex flex-col items-center min-h-screen">
           <div className="w-full">
             <SearchSection
+              querySessions={querySessions}
+              user={user}
               ccPairs={ccPairs}
               documentSets={documentSets}
               personas={personas}

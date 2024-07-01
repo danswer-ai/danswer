@@ -26,6 +26,7 @@ import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/Wel
 interface FetchChatDataResult {
   user: User | null;
   chatSessions: ChatSession[];
+
   ccPairs: CCPairBasicInfo[];
   availableSources: ValidSources[];
   documentSets: DocumentSet[];
@@ -53,6 +54,7 @@ export async function fetchChatData(searchParams: {
     fetchSS("/query/valid-tags"),
     fetchLLMProvidersSS(),
     fetchSS("/folder"),
+
   ];
 
   let results: (
@@ -76,6 +78,7 @@ export async function fetchChatData(searchParams: {
   const documentSetsResponse = results[3] as Response | null;
   const personasResponse = results[4] as Response | null;
   const chatSessionsResponse = results[5] as Response | null;
+
   const tagsResponse = results[6] as Response | null;
   const llmProviders = (results[7] || []) as LLMProviderDescriptor[];
   const foldersResponse = results[8] as Response | null; // Handle folders result
@@ -101,6 +104,8 @@ export async function fetchChatData(searchParams: {
       availableSources.push(ccPair.source);
     }
   });
+
+
 
   let chatSessions: ChatSession[] = [];
   if (chatSessionsResponse?.ok) {
