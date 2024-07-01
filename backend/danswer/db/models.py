@@ -397,9 +397,9 @@ class Connector(Base):
         back_populates="connector",
         cascade="all, delete-orphan",
     )
-    documents_by_connector: Mapped[
-        list["DocumentByConnectorCredentialPair"]
-    ] = relationship("DocumentByConnectorCredentialPair", back_populates="connector")
+    documents_by_connector: Mapped[list["DocumentByConnectorCredentialPair"]] = (
+        relationship("DocumentByConnectorCredentialPair", back_populates="connector")
+    )
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="connector"
     )
@@ -425,9 +425,9 @@ class Credential(Base):
         back_populates="credential",
         cascade="all, delete-orphan",
     )
-    documents_by_credential: Mapped[
-        list["DocumentByConnectorCredentialPair"]
-    ] = relationship("DocumentByConnectorCredentialPair", back_populates="credential")
+    documents_by_credential: Mapped[list["DocumentByConnectorCredentialPair"]] = (
+        relationship("DocumentByConnectorCredentialPair", back_populates="credential")
+    )
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="credential"
     )
@@ -1094,9 +1094,7 @@ class SlackBotConfig(Base):
     __tablename__ = "slack_bot_config"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    app_id: Mapped[int] = mapped_column(
-        ForeignKey("slack_app.id"), nullable=True
-    )
+    app_id: Mapped[int] = mapped_column(ForeignKey("slack_app.id"), nullable=True)
     persona_id: Mapped[int | None] = mapped_column(
         ForeignKey("persona.id"), nullable=True
     )
@@ -1117,7 +1115,7 @@ class SlackApp(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
-    enabled: Mapped[bool] = mapped_column(Boolean, default=True)   
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
     bot_token: Mapped[str] = mapped_column(String)
     app_token: Mapped[str] = mapped_column(String)
@@ -1265,11 +1263,11 @@ class UserGroup(Base):
         secondary=UserGroup__ConnectorCredentialPair.__table__,
         viewonly=True,
     )
-    cc_pair_relationships: Mapped[
-        list[UserGroup__ConnectorCredentialPair]
-    ] = relationship(
-        "UserGroup__ConnectorCredentialPair",
-        viewonly=True,
+    cc_pair_relationships: Mapped[list[UserGroup__ConnectorCredentialPair]] = (
+        relationship(
+            "UserGroup__ConnectorCredentialPair",
+            viewonly=True,
+        )
     )
     personas: Mapped[list[Persona]] = relationship(
         "Persona",

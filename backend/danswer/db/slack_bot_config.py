@@ -181,9 +181,12 @@ def fetch_slack_bot_config(
     )
 
 
-def fetch_slack_bot_configs(db_session: Session, slack_bot_app_id: Optional[int] = None) -> Sequence[SlackBotConfig]:
+def fetch_slack_bot_configs(
+    db_session: Session, slack_bot_app_id: Optional[int] = None
+) -> Sequence[SlackBotConfig]:
     if not slack_bot_app_id:
         return db_session.scalars(select(SlackBotConfig)).all()
-    
-    return db_session.scalars(select(SlackBotConfig).where(SlackBotConfig.app_id == slack_bot_app_id)).all()
 
+    return db_session.scalars(
+        select(SlackBotConfig).where(SlackBotConfig.app_id == slack_bot_app_id)
+    ).all()

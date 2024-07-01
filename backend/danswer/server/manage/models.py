@@ -84,6 +84,7 @@ class HiddenUpdateRequest(BaseModel):
     document_id: str
     hidden: bool
 
+
 class SlackAppCreationRequest(BaseModel):
     name: str
     description: str
@@ -91,7 +92,7 @@ class SlackAppCreationRequest(BaseModel):
 
     bot_token: str
     app_token: str
-    
+
 
 class SlackBotTokens(BaseModel):
     bot_token: str
@@ -176,9 +177,7 @@ class SlackApp(BaseModel):
     app_token: str
 
     @classmethod
-    def from_model(
-        cls, slack_app_model: SlackAppModel
-    ) -> "SlackApp":
+    def from_model(cls, slack_app_model: SlackAppModel) -> "SlackApp":
         return cls(
             id=slack_app_model.id,
             name=slack_app_model.name,

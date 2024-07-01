@@ -5,20 +5,29 @@ from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.engine import get_session
 from danswer.db.models import ChannelConfig, User
 from danswer.db.persona import get_persona_by_id
-from danswer.db.slack_app import (fetch_slack_app, fetch_slack_apps,
-                                  insert_slack_app, remove_slack_app,
-                                  update_slack_app)
-from danswer.db.slack_bot_config import (create_slack_bot_persona,
-                                         fetch_slack_bot_config,
-                                         fetch_slack_bot_configs,
-                                         insert_slack_bot_config,
-                                         remove_slack_bot_config,
-                                         update_slack_bot_config)
+from danswer.db.slack_app import (
+    fetch_slack_app,
+    fetch_slack_apps,
+    insert_slack_app,
+    remove_slack_app,
+    update_slack_app,
+)
+from danswer.db.slack_bot_config import (
+    create_slack_bot_persona,
+    fetch_slack_bot_config,
+    fetch_slack_bot_configs,
+    insert_slack_bot_config,
+    remove_slack_bot_config,
+    update_slack_bot_config,
+)
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.server.manage.models import (SlackApp, SlackAppCreationRequest,
-                                          SlackBotConfig,
-                                          SlackBotConfigCreationRequest,
-                                          SlackBotTokens)
+from danswer.server.manage.models import (
+    SlackApp,
+    SlackAppCreationRequest,
+    SlackBotConfig,
+    SlackBotConfigCreationRequest,
+    SlackBotTokens,
+)
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -198,6 +207,7 @@ def list_slack_bot_configs(
         for slack_bot_config_model in slack_bot_config_models
     ]
 
+
 @router.post("/admin/slack-bot/apps")
 def create_app(
     slack_app_creation_request: SlackAppCreationRequest,
@@ -242,9 +252,8 @@ def delete_app(
     db_session: Session = Depends(get_session),
     user: User | None = Depends(current_admin_user),
 ) -> None:
-    remove_slack_app(
-        slack_app_id=slack_app_id, user=user, db_session=db_session
-    )
+    remove_slack_app(slack_app_id=slack_app_id, user=user, db_session=db_session)
+
 
 @router.get("/admin/slack-bot/apps/{app_id}")
 def get_app_by_id(
@@ -255,6 +264,7 @@ def get_app_by_id(
     slack_app_model = fetch_slack_app(db_session=db_session, slack_app_id=app_id)
     return SlackApp.from_model(slack_app_model)
 
+
 @router.get("/admin/slack-bot/apps")
 def list_apps(
     db_session: Session = Depends(get_session),
@@ -262,9 +272,9 @@ def list_apps(
 ) -> list[SlackApp]:
     slack_app_models = fetch_slack_apps(db_session=db_session)
     return [
-        SlackApp.from_model(slack_app_model)
-        for slack_app_model in slack_app_models
+        SlackApp.from_model(slack_app_model) for slack_app_model in slack_app_models
     ]
+
 
 @router.get("/admin/slack-bot/apps/{slack_app_id}/config")
 def list_app_configs(
@@ -272,7 +282,9 @@ def list_app_configs(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> list[SlackBotConfig]:
-    slack_bot_config_models = fetch_slack_bot_configs(db_session=db_session, slack_bot_app_id=slack_app_id)
+    slack_bot_config_models = fetch_slack_bot_configs(
+        db_session=db_session, slack_bot_app_id=slack_app_id
+    )
     return [
         SlackBotConfig.from_model(slack_bot_config_model)
         for slack_bot_config_model in slack_bot_config_models

@@ -5,33 +5,45 @@ from typing import Any, cast
 
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import (
-    DANSWER_BOT_REPHRASE_MESSAGE, DANSWER_BOT_RESPOND_EVERY_CHANNEL,
-    NOTIFY_SLACKBOT_NO_ANSWER)
-from danswer.danswerbot.slack.config import \
-    get_slack_bot_config_for_app_and_channel
+    DANSWER_BOT_REPHRASE_MESSAGE,
+    DANSWER_BOT_RESPOND_EVERY_CHANNEL,
+    NOTIFY_SLACKBOT_NO_ANSWER,
+)
+from danswer.danswerbot.slack.config import get_slack_bot_config_for_app_and_channel
 from danswer.danswerbot.slack.constants import (
-    DISLIKE_BLOCK_ACTION_ID, FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID,
-    FOLLOWUP_BUTTON_ACTION_ID, FOLLOWUP_BUTTON_RESOLVED_ACTION_ID,
-    IMMEDIATE_RESOLVED_BUTTON_ACTION_ID, LIKE_BLOCK_ACTION_ID,
-    SLACK_CHANNEL_ID, VIEW_DOC_FEEDBACK_ID)
+    DISLIKE_BLOCK_ACTION_ID,
+    FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID,
+    FOLLOWUP_BUTTON_ACTION_ID,
+    FOLLOWUP_BUTTON_RESOLVED_ACTION_ID,
+    IMMEDIATE_RESOLVED_BUTTON_ACTION_ID,
+    LIKE_BLOCK_ACTION_ID,
+    SLACK_CHANNEL_ID,
+    VIEW_DOC_FEEDBACK_ID,
+)
 from danswer.danswerbot.slack.handlers.handle_buttons import (
-    handle_doc_feedback_button, handle_followup_button,
-    handle_followup_resolved_button, handle_slack_feedback)
+    handle_doc_feedback_button,
+    handle_followup_button,
+    handle_followup_resolved_button,
+    handle_slack_feedback,
+)
 from danswer.danswerbot.slack.handlers.handle_message import (
-    handle_message, remove_scheduled_feedback_reminder,
-    schedule_feedback_reminder)
+    handle_message,
+    remove_scheduled_feedback_reminder,
+    schedule_feedback_reminder,
+)
 from danswer.danswerbot.slack.models import SlackMessageInfo
-from danswer.danswerbot.slack.utils import (ChannelIdAdapter,
-                                            decompose_action_id,
-                                            get_channel_name_from_id,
-                                            get_danswer_bot_app_id,
-                                            read_slack_thread,
-                                            remove_danswer_bot_tag,
-                                            rephrase_slack_message,
-                                            respond_in_thread)
+from danswer.danswerbot.slack.utils import (
+    ChannelIdAdapter,
+    decompose_action_id,
+    get_channel_name_from_id,
+    get_danswer_bot_app_id,
+    read_slack_thread,
+    remove_danswer_bot_tag,
+    rephrase_slack_message,
+    respond_in_thread,
+)
 from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.engine import (get_session_context_manager,
-                               get_sqlalchemy_engine)
+from danswer.db.engine import get_session_context_manager, get_sqlalchemy_engine
 from danswer.db.slack_app import fetch_slack_app, fetch_slack_apps
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.one_shot_answer.models import ThreadMessage
@@ -66,7 +78,9 @@ _SLACK_GREETINGS_TO_IGNORE = {
 _OFFICIAL_SLACKBOT_USER_ID = "USLACKBOT"
 
 
-def prefilter_requests(app_id: int, req: SocketModeRequest, client: SocketModeClient) -> bool:
+def prefilter_requests(
+    app_id: int, req: SocketModeRequest, client: SocketModeClient
+) -> bool:
     """True to keep going, False to ignore this Slack request"""
     if req.type == "events_api":
         # Verify channel is valid
@@ -368,7 +382,9 @@ def acknowledge_message(req: SocketModeRequest, client: SocketModeClient) -> Non
     client.send_socket_mode_response(response)
 
 
-def action_routing(app_id: int, req: SocketModeRequest, client: SocketModeClient) -> None:
+def action_routing(
+    app_id: int, req: SocketModeRequest, client: SocketModeClient
+) -> None:
     if actions := req.payload.get("actions"):
         action = cast(dict[str, Any], actions[0])
 
@@ -385,11 +401,12 @@ def action_routing(app_id: int, req: SocketModeRequest, client: SocketModeClient
         elif action["action_id"] == FOLLOWUP_BUTTON_RESOLVED_ACTION_ID:
             return handle_followup_resolved_button(req, client, immediate=False)
 
-
+ß
 def view_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
     if view := req.payload.get("view"):
         if view["callback_id"] == VIEW_DOC_FEEDBACK_ID:
             return process_feedback(req, client)
+
 
 def create_process_slack_event(app_id: int):
     def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
@@ -409,6 +426,7 @@ def create_process_slack_event(app_id: int):
             logger.exception("Failed to process slack event")
 
     return process_slack_event
+
 
 def _get_socket_client(slack_bot_tokens: SlackBotTokens) -> SocketModeClient:
     # For more info on how to set this up, checkout the docs:
@@ -457,7 +475,9 @@ def worker_thread(app_id, stop_event):
                 if not app:
                     raise ConfigNotFoundError
 
-            latest_slack_bot_tokens = SlackBotTokens(bot_token=app.bot_token, app_token=app.app_token)
+            latest_slack_bot_tokens = SlackBotTokens(
+                bot_token=app.bot_token, app_token=app.app_token
+            )
 
             if latest_slack_bot_tokens != slack_bot_tokens:
                 if slack_bot_tokens is not None:
@@ -501,6 +521,7 @@ def worker_thread(app_id, stop_event):
 
     return
 
+
 def main_worker(active_threads):
     try:
         with get_session_context_manager() as db_session:
@@ -532,12 +553,12 @@ def main_worker(active_threads):
         if a.enabled:
             # activate if a is enabled and not in active_thread_keys
             if a.id not in active_thread_keys:
-                apps_to_activate.append(a.id)    
+                apps_to_activate.append(a.id)
             continue
         else:
             # deactivate if a is disabled and in active_thread_keys
             if a.id in active_thread_keys:
-                apps_to_deactivate.append(a.id)    
+                apps_to_deactivate.append(a.id)
             continue
 
     apps_to_deactivate.extend(active_thread_keys_not_found)
@@ -547,18 +568,22 @@ def main_worker(active_threads):
         tm = active_threads[a_id]
         logger.info(f"Deactivating app: id={a_id} name={tm['name']}")
 
-        tm['stop'].set()
-        tm['thread'].join(timeout=JOIN_TIMEOUT)
-        if tm['thread'].is_alive():
-            logger.debug(f"Slack app worker thread is still alive after {JOIN_TIMEOUT} seconds. id={a_id} name={tm['name']}")
+        tm["stop"].set()
+        tm["thread"].join(timeout=JOIN_TIMEOUT)
+        if tm["thread"].is_alive():
+            logger.debug(
+                f"Slack app worker thread is still alive after {JOIN_TIMEOUT} seconds. id={a_id} name={tm['name']}"
+            )
 
         active_threads.pop(a_id)
-        
+
     # every entry in active threads should be alive. if not, reactivate them
-    for a_id,v in active_threads.items():
-        t = v['thread']
+    for a_id, v in active_threads.items():
+        t = v["thread"]
         if not t.is_alive():
-            logger.info(f"App {a_id}: Not alive, but should be. Adding to activation list.")
+            logger.info(
+                f"App {a_id}: Not alive, but should be. Adding to activation list."
+            )
             apps_to_activate.append(a_id)
 
     # process the activation list
@@ -570,23 +595,23 @@ def main_worker(active_threads):
         stop_event = threading.Event()
 
         kwargs = {
-            'app_id': a_id,
-            'stop_event': stop_event,
+            "app_id": a_id,
+            "stop_event": stop_event,
         }
-        
+
         t = threading.Thread(target=worker_thread, kwargs=kwargs)
         t.start()
 
-        tm['name'] = a.name
-        tm['stop'] = stop_event
-        tm['thread'] = t
+        tm["name"] = a.name
+        tm["stop"] = stop_event
+        tm["thread"] = t
 
         active_threads[a_id] = tm
 
     # Print final state if any state changed
     if len(apps_to_deactivate) > 0 or len(apps_to_activate) > 0:
         logger.info(f"Active bot count: {len(active_threads)}")
-        for k,v in active_threads.items():
+        for k, v in active_threads.items():
             logger.info(f"  ID: {k} Name: {v['name']}")
 
     return
