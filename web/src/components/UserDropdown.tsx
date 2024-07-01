@@ -81,24 +81,8 @@ export function UserDropdown({
           >
             {!hideChatAndSearch && (
               <>
-                {settings.search_page_enabled && (
-                  <Link
-                    href="/search"
-                    className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
-                  >
-                    <FiSearch className="my-auto mr-2 text-lg" />
-                    Danswer Search
-                  </Link>
-                )}
                 {settings.chat_page_enabled && (
                   <>
-                    <Link
-                      href="/chat"
-                      className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
-                    >
-                      <FiMessageSquare className="my-auto mr-2 text-lg" />
-                      Danswer Chat
-                    </Link>
                     <Link
                       href="/assistants/mine"
                       className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
