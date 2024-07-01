@@ -114,22 +114,6 @@ def remove_scheduled_feedback_reminder(
             )
 
 
-def send_team_member_message(
-    client: WebClient,
-    channel: str,
-    thread_ts: str,
-) -> None:
-    respond_in_thread(
-        client=client,
-        channel=channel,
-        text=(
-            "👋 Hi, we've just gathered and forwarded the relevant "
-            + "information to the team. They'll get back to you shortly!"
-        ),
-        thread_ts=thread_ts,
-    )
-
-
 def handle_message(
     message_info: SlackMessageInfo,
     slack_bot_config: SlackBotConfig | None,
@@ -244,7 +228,6 @@ def handle_message(
             receiver_ids=send_to,
             slack_bot_config=slack_bot_config,
             prompt=prompt,
-            respond_team_member_list=respond_team_member_list,
             logger=logger,
             client=client,
             db_session=db_session,

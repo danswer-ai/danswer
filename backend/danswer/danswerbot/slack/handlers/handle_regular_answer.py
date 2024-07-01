@@ -29,7 +29,7 @@ from danswer.danswerbot.slack.blocks import build_follow_up_block
 from danswer.danswerbot.slack.blocks import build_qa_response_blocks
 from danswer.danswerbot.slack.blocks import build_sources_blocks
 from danswer.danswerbot.slack.blocks import get_restate_blocks
-from danswer.danswerbot.slack.handlers.handle_message import send_team_member_message
+from danswer.danswerbot.slack.handlers.utils import send_team_member_message
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.danswerbot.slack.utils import SlackRateLimiter

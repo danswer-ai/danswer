@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 from typing import cast
 
@@ -8,6 +9,7 @@ from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from sqlalchemy.orm import Session
 
+from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.danswerbot_configs import DANSWER_FOLLOWUP_EMOJI
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
@@ -21,12 +23,17 @@ from danswer.danswerbot.slack.constants import VIEW_DOC_FEEDBACK_ID
 from danswer.danswerbot.slack.handlers.handle_message import (
     remove_scheduled_feedback_reminder,
 )
+from danswer.danswerbot.slack.handlers.handle_regular_answer import (
+    handle_regular_answer,
+)
+from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import build_feedback_id
 from danswer.danswerbot.slack.utils import decompose_action_id
 from danswer.danswerbot.slack.utils import fetch_groupids_from_names
 from danswer.danswerbot.slack.utils import fetch_userids_from_emails
 from danswer.danswerbot.slack.utils import get_channel_name_from_id
 from danswer.danswerbot.slack.utils import get_feedback_visibility
+from danswer.danswerbot.slack.utils import read_slack_thread
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
@@ -76,13 +83,50 @@ def handle_generate_answer_button(
     req: SocketModeRequest,
     client: SocketModeClient,
 ) -> None:
-    req.payload["container"]["channel_id"]
-    req.payload["container"]["message_ts"]
-    req.payload["container"]["thread_ts"]
-    # TODO: handle how to generate AI answer from this button
-    # Ideally, want to use the process_message function
-    # in listener.py.
-    raise NotImplementedError("Not implemented yet")
+    channel_id = req.payload["channel"]["id"]
+    channel_name = req.payload["channel"]["name"]
+    message_ts = req.payload["message"]["ts"]
+    thread_ts = req.payload["container"]["thread_ts"]
+    user_id = req.payload["user"]["id"]
+
+    if not thread_ts:
+        raise ValueError("Missing thread_ts in the payload")
+
+    thread_messages = read_slack_thread(
+        channel=channel_id, thread=thread_ts, client=client.web_client
+    )
+    # remove all assistant messages till we get to the last user message
+    # we want the new answer to be generated off of the last "question" in
+    # the thread
+    for i in range(len(thread_messages) - 1, -1, -1):
+        if thread_messages[i].role == MessageType.USER:
+            break
+        if thread_messages[i].role == MessageType.ASSISTANT:
+            thread_messages.pop(i)
+
+    with Session(get_sqlalchemy_engine()) as db_session:
+        slack_bot_config = get_slack_bot_config_for_channel(
+            channel_name=channel_name, db_session=db_session
+        )
+
+        handle_regular_answer(
+            message_info=SlackMessageInfo(
+                thread_messages=thread_messages,
+                channel_to_respond=channel_id,
+                msg_to_respond=cast(str, message_ts or thread_ts),
+                thread_to_respond=cast(str, thread_ts or message_ts),
+                sender=user_id or None,
+                bypass_filters=True,
+                is_bot_msg=False,
+                is_bot_dm=False,
+            ),
+            slack_bot_config=slack_bot_config,
+            receiver_ids=None,
+            client=client.web_client,
+            channel=channel_id,
+            logger=cast(logging.Logger, logger_base),
+            feedback_reminder_id=None,
+        )
 
 
 def handle_slack_feedback(

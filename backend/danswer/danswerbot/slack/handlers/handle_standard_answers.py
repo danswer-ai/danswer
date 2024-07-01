@@ -7,7 +7,7 @@ from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.danswerbot.slack.blocks import build_standard_answer_blocks
 from danswer.danswerbot.slack.blocks import get_restate_blocks
-from danswer.danswerbot.slack.handlers.handle_message import send_team_member_message
+from danswer.danswerbot.slack.handlers.utils import send_team_member_message
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.danswerbot.slack.utils import update_emote_react
