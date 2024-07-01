@@ -223,42 +223,16 @@ export const SearchSection = ({
     router.push("/chat");
   }
 
+  const [filters, setFilters] = useState(false)
+  const toggleFilters = () => {
+    setFilters(filters => !filters)
+  }
   return (
     <div className="relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
       <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64">
-        {(ccPairs.length > 0 || documentSets.length > 0) && (
-          <SourceSelector
-            {...filterManager}
-            availableDocumentSets={finalAvailableDocumentSets}
-            existingSources={finalAvailableSources}
-            availableTags={tags}
-          />
-        )}
 
-        <div className="mt-10 pr-5">
-          <SearchHelper
-            isFetching={isFetching}
-            searchResponse={searchResponse}
-            selectedSearchType={selectedSearchType}
-            setSelectedSearchType={setSelectedSearchType}
-            defaultOverrides={defaultOverrides}
-            restartSearch={onSearch}
-            forceQADisplay={() =>
-              setDefaultOverrides((prevState) => ({
-                ...(prevState || SEARCH_DEFAULT_OVERRIDES_START),
-                forceDisplayQA: true,
-              }))
-            }
-            setOffset={(offset) => {
-              setDefaultOverrides((prevState) => ({
-                ...(prevState || SEARCH_DEFAULT_OVERRIDES_START),
-                offset,
-              }));
-            }}
-          />
-        </div>
       </div>
-      <div className="w-[720px] 3xl:w-[800px] mx-auto">
+      <div className="max-w-searchbar-max w-[90%] mx-auto">
         {personas.length > 0 ? (
           <div className="flex mb-2 w-fit">
             <PersonaSelector
@@ -275,10 +249,54 @@ export const SearchSection = ({
           query={query}
           setQuery={setQuery}
           onSearch={async () => {
+            setFilters(false)
             setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
             await onSearch({ offset: 0 });
           }}
         />
+        <div className="flex gap-x-4 flex-wrap w-full">
+
+          <div className="block 2xl:block w-52 3xl:w-64 mt-4">
+            {(ccPairs.length > 0 || documentSets.length > 0) && (
+              <SourceSelector
+                {...filterManager}
+                toggled={filters}
+                toggleFilters={toggleFilters}
+                availableDocumentSets={finalAvailableDocumentSets}
+                existingSources={finalAvailableSources}
+                availableTags={tags}
+              />
+            )}
+
+          </div>
+
+          <div className="block 2xl:block w-52 3xl:w-64 mt-4">
+
+            <div className="mt-10 pr-5">
+              <SearchHelper
+                isFetching={isFetching}
+                searchResponse={searchResponse}
+                selectedSearchType={selectedSearchType}
+                setSelectedSearchType={setSelectedSearchType}
+                defaultOverrides={defaultOverrides}
+                restartSearch={onSearch}
+                forceQADisplay={() =>
+                  setDefaultOverrides((prevState) => ({
+                    ...(prevState || SEARCH_DEFAULT_OVERRIDES_START),
+                    forceDisplayQA: true,
+                  }))
+                }
+                setOffset={(offset) => {
+                  setDefaultOverrides((prevState) => ({
+                    ...(prevState || SEARCH_DEFAULT_OVERRIDES_START),
+                    offset,
+                  }));
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
 
         <div className="mt-2">
           <SearchResultsDisplay

@@ -173,9 +173,9 @@ export const AIMessage = ({
   ) : undefined;
 
   return (
-    <div className={"py-5 px-5 flex -mr-6 w-full"}>
-      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
-        <div className="ml-8">
+    <div className={"py-5 px-2 lg:px-5  flex -mr-6 w-full"}>
+      <div className="mx-auto w-[90%] max-w-searchbar-max relative">
+        <div className="xl:ml-8">
           <div className="flex">
             <AssistantIcon
               size="small"
@@ -188,12 +188,12 @@ export const AIMessage = ({
                 : personaName || "Danswer"}
             </div>
 
-            {query === undefined &&
+            {/* {query === undefined &&
               hasDocs &&
               handleShowRetrieved !== undefined &&
               isCurrentlyShowingRetrieved !== undefined &&
               !retrievalDisabled && (
-                <div className="flex w-message-xs 2xl:w-message-sm 3xl:w-message-default absolute ml-8">
+                <div className="flex w-full max-w-message-max absolute ml-8">
                   <div className="ml-auto">
                     <ShowHideDocsButton
                       messageId={messageId}
@@ -202,10 +202,10 @@ export const AIMessage = ({
                     />
                   </div>
                 </div>
-              )}
+              )} */}
           </div>
 
-          <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
+          <div className="max-w-message-max break-words mt-1 ml-8">
             {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
               danswerSearchToolEnabledForPersona && (
                 <>
@@ -303,9 +303,9 @@ export const AIMessage = ({
                                 : undefined
                             }
                             className="cursor-pointer text-link hover:text-link-hover"
-                            // href={rest.href}
-                            // target="_blank"
-                            // rel="noopener noreferrer"
+                          // href={rest.href}
+                          // target="_blank"
+                          // rel="noopener noreferrer"
                           >
                             {rest.children}
                           </a>
@@ -379,7 +379,7 @@ export const AIMessage = ({
             )}
           </div>
           {handleFeedback && (
-            <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1.5">
+            <div className="flex md:flex-row gap-x-0.5 ml-8 mt-1.5">
               <CopyButton content={content.toString()} />
               <Hoverable
                 icon={FiThumbsUp}
@@ -475,12 +475,12 @@ export const HumanMessage = ({
 
   return (
     <div
-      className="pt-5 pb-1 px-5 flex -mr-6 w-full relative"
+    className="pt-5 pb-1 px-2 lg:px-5 flex -mr-6 w-full relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-        <div className="ml-8">
+      <div className="mx-auto w-full max-w-searchbar-max">
+        <div className="xl:ml-8">
           <div className="flex">
             <div className="p-1 bg-user rounded-lg h-fit">
               <div className="text-inverted">
@@ -490,8 +490,8 @@ export const HumanMessage = ({
 
             <div className="font-bold text-emphasis ml-2 my-auto">You</div>
           </div>
-          <div className="mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default flex flex-wrap">
-            <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
+          <div className="mx-auto mt-1 ml-8 mx-4 max-w-searchbar-max flex flex-wrap">
+            <div className="w-full max-w-message-max break-words">
               <FileDisplay files={files || []} />
 
               {isEditing ? (
@@ -619,9 +619,9 @@ export const HumanMessage = ({
                 </div>
               )}
             {onEdit &&
-            isHovered &&
-            !isEditing &&
-            (!files || files.length === 0) ? (
+              isHovered &&
+              !isEditing &&
+              (!files || files.length === 0) ? (
               <Hoverable
                 icon={FiEdit2}
                 onClick={() => {
