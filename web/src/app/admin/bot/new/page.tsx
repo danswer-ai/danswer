@@ -7,7 +7,7 @@ import { DocumentSet } from "@/lib/types";
 import { BackButton } from "@/components/BackButton";
 import { Text } from "@tremor/react";
 import { Persona } from "../../assistants/interfaces";
-import { redirect } from 'next/navigation';
+import { redirect } from "next/navigation";
 
 async function Page({
   params,
@@ -16,9 +16,9 @@ async function Page({
   params: { slug: string };
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
-  const app_id = searchParams?.app_id || null
-  if (!app_id || typeof app_id !== 'string') {
-    redirect('/admin/bot'); // Redirect if app_id is missing
+  const app_id = searchParams?.app_id || null;
+  if (!app_id || typeof app_id !== "string") {
+    redirect("/admin/bot"); // Redirect if app_id is missing
     return null; // Return null after redirect
   }
 
@@ -58,7 +58,11 @@ async function Page({
         DanswerBot behaves in the specified channels.
       </Text>
 
-      <SlackBotCreationForm app_id={app_id} documentSets={documentSets} personas={personas} />
+      <SlackBotCreationForm
+        app_id={app_id}
+        documentSets={documentSets}
+        personas={personas}
+      />
     </div>
   );
 }

@@ -2,10 +2,7 @@
 
 import { PageSelector } from "@/components/PageSelector";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import {
-  EditIcon,
-  TrashIcon,
-} from "@/components/icons/icons";
+import { EditIcon, TrashIcon } from "@/components/icons/icons";
 import { SlackBotConfig } from "@/lib/types";
 import {
   Table,
@@ -146,4 +143,4 @@ export function SlackBotConfigsTable({
       </div>
     </div>
   );
-};
+}

@@ -6,17 +6,11 @@ import {
 } from "@/components/admin/connectors/Field";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SlackApp } from "@/lib/types";
-import {
-  Button,
-  Card
-} from "@tremor/react";
+import { Button, Card } from "@tremor/react";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
-import {
-  createSlackApp,
-  updateSlackApp,
-} from "./lib";
+import { createSlackApp, updateSlackApp } from "./lib";
 
 export const SlackAppCreationForm = ({
   existingSlackApp,
@@ -29,19 +23,17 @@ export const SlackAppCreationForm = ({
   const { popup, setPopup } = usePopup();
   const router = useRouter();
 
-  let initialValues
+  let initialValues;
   if (isUpdate) {
-    initialValues = existingSlackApp
-  }
-  else {
-    initialValues =
-    {
+    initialValues = existingSlackApp;
+  } else {
+    initialValues = {
       name: "",
       description: "",
       enabled: true,
       bot_token: "",
       app_token: "",
-    }
+    };
   }
 
   return (
@@ -62,10 +54,7 @@ export const SlackAppCreationForm = ({
 
             let response;
             if (isUpdate) {
-              response = await updateSlackApp(
-                existingSlackApp.id,
-                values
-              );
+              response = await updateSlackApp(existingSlackApp.id, values);
             } else {
               response = await createSlackApp(values);
             }
@@ -89,10 +78,7 @@ export const SlackAppCreationForm = ({
         >
           {({ isSubmitting, values }) => (
             <Form>
-              <TextFormField
-                name="name"
-                label="Name of this Slack app"
-              />
+              <TextFormField name="name" label="Name of this Slack app" />
               <TextFormField
                 name="description"
                 label="Enter a description of this Slack app (optional)"

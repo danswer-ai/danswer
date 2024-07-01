@@ -89,12 +89,12 @@ export const SlackBotCreationForm = ({
             document_sets:
               existingSlackBotConfig && existingSlackBotConfig.persona
                 ? existingSlackBotConfig.persona.document_sets.map(
-                  (documentSet) => documentSet.id
-                )
+                    (documentSet) => documentSet.id
+                  )
                 : ([] as number[]),
             persona_id:
               existingSlackBotConfig?.persona &&
-                !isPersonaASlackBotPersona(existingSlackBotConfig.persona)
+              !isPersonaASlackBotPersona(existingSlackBotConfig.persona)
                 ? existingSlackBotConfig.persona.id
                 : null,
             response_type: existingSlackBotConfig?.response_type || "citations",
@@ -118,7 +118,7 @@ export const SlackBotCreationForm = ({
           onSubmit={async (values, formikHelpers) => {
             formikHelpers.setSubmitting(true);
 
-            console.log("onSubmit starts.")
+            console.log("onSubmit starts.");
 
             // remove empty channel names
             const cleanedValues = {

@@ -8,13 +8,10 @@ async function Page() {
   return (
     <div className="container mx-auto">
       <BackButton />
-      <AdminPageTitle
-        icon={<CPUIcon size={32} />}
-        title="New Slack App"
-      />
+      <AdminPageTitle icon={<CPUIcon size={32} />} title="New Slack App" />
 
       <Text className="mb-6">
-      Define a new Slack app below. Follow the{" "}
+        Define a new Slack app below. Follow the{" "}
         <a
           className="text-blue-500"
           href="https://docs.danswer.dev/slack_bot_setup"

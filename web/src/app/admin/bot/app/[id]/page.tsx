@@ -43,7 +43,10 @@ function Page({ params }: { params: { id: number } }) {
   }
 
   if (slackAppError || !slackApp) {
-    const errorMsg = slackAppError?.info?.message || slackAppError?.info?.detail || 'An unknown error occurred';
+    const errorMsg =
+      slackAppError?.info?.message ||
+      slackAppError?.info?.detail ||
+      "An unknown error occurred";
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
@@ -53,7 +56,10 @@ function Page({ params }: { params: { id: number } }) {
   }
 
   if (slackAppConfigsError || !slackAppConfigs) {
-    const errorMsg = slackAppConfigsError?.info?.message || slackAppConfigsError?.info?.detail || 'An unknown error occurred';
+    const errorMsg =
+      slackAppConfigsError?.info?.message ||
+      slackAppConfigsError?.info?.detail ||
+      "An unknown error occurred";
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
@@ -67,14 +73,11 @@ function Page({ params }: { params: { id: number } }) {
       <InstantSSRAutoRefresh />
 
       <BackButton />
-      <AdminPageTitle
-        icon={<CPUIcon size={32} />}
-        title="Edit Slack App"
-      />
+      <AdminPageTitle icon={<CPUIcon size={32} />} title="Edit Slack App" />
 
       <Text className="mb-8">
-        Edit the Slack App settings below! These settings enable the bot
-        to connect to your Slack instance.
+        Edit the Slack App settings below! These settings enable the bot to
+        connect to your Slack instance.
       </Text>
 
       <Title>Slack App Configuration</Title>
@@ -87,8 +90,8 @@ function Page({ params }: { params: { id: number } }) {
       <br />
 
       <Text className="mb-8">
-        The below configurations will determine how
-        DanswerBot behaves in the specified channels.
+        The below configurations will determine how DanswerBot behaves in the
+        specified channels.
       </Text>
 
       <Title>Slack Bot Configurations</Title>

@@ -1,5 +1,4 @@
 import threading
-import time
 from threading import Event
 from typing import Any
 from typing import cast

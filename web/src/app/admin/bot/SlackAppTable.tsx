@@ -42,11 +42,7 @@ function ClickableTableRow({
   );
 }
 
-export function SlackAppTable({
-  slackApps,
-}: {
-    slackApps: SlackApp[];
-}) {
+export function SlackAppTable({ slackApps }: { slackApps: SlackApp[] }) {
   const [page, setPage] = useState(1);
 
   // sort by id for consistent ordering
@@ -91,9 +87,7 @@ export function SlackAppTable({
                     {slackApp.name}
                   </div>
                 </TableCell>
-                <TableCell>
-                    {slackApp.description}
-                </TableCell>
+                <TableCell>{slackApp.description}</TableCell>
                 <TableCell>
                   {slackApp.enabled ? (
                     <FiCheck className="my-auto text-emerald-600" size="18" />
@@ -110,9 +104,7 @@ export function SlackAppTable({
         <div className="mt-3 flex">
           <div className="mx-auto">
             <PageSelector
-              totalPages={Math.ceil(
-                slackApps.length / NUM_IN_PAGE
-              )}
+              totalPages={Math.ceil(slackApps.length / NUM_IN_PAGE)}
               currentPage={page}
               onPageChange={(newPage) => {
                 setPage(newPage);

@@ -1,23 +1,16 @@
 "use client";
 
-
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { AdminPageTitle } from "@/components/admin/Title";
-import {
-  Button,
-  Text
-} from "@tremor/react";
+import { Button, Text } from "@tremor/react";
 import Link from "next/link";
-import {
-  FiSlack
-} from "react-icons/fi";
+import { FiSlack } from "react-icons/fi";
 import { SlackAppTable } from "./SlackAppTable";
 import { useSlackApps } from "./hooks";
 
 const Main = () => {
-
   const {
     data: slackApps,
     isLoading: isSlackAppsLoading,
@@ -30,13 +23,13 @@ const Main = () => {
   }
 
   if (slackAppsError || !slackApps) {
-    const errorMsg = slackAppsError?.info?.message || slackAppsError?.info?.detail || 'An unknown error occurred';
+    const errorMsg =
+      slackAppsError?.info?.message ||
+      slackAppsError?.info?.detail ||
+      "An unknown error occurred";
 
     return (
-      <ErrorCallout
-        errorTitle="Error loading apps"
-        errorMsg={`${errorMsg}`}
-      />
+      <ErrorCallout errorTitle="Error loading apps" errorMsg={`${errorMsg}`} />
     );
   }
 
@@ -84,8 +77,7 @@ const Main = () => {
         </Button>
       </Link>
 
-      <SlackAppTable slackApps={slackApps}>
-      </SlackAppTable>
+      <SlackAppTable slackApps={slackApps}></SlackAppTable>
     </div>
   );
 };
