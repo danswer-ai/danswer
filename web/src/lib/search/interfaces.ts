@@ -50,8 +50,12 @@ export interface DanswerDocument {
   updated_at: string | null;
   db_doc_id?: number;
   is_internet: boolean;
+  validationState?: null | "good" | "bad";
 }
 
+export interface FilteredDanswerDocument extends DanswerDocument {
+  included: boolean;
+}
 export interface DocumentInfoPacket {
   top_documents: DanswerDocument[];
   predicted_flow: FlowType | null;
@@ -102,11 +106,13 @@ export interface Filters {
 
 export interface SearchRequestArgs {
   query: string;
+  agentic?: boolean;
   sources: SourceMetadata[];
   documentSets: string[];
   timeRange: DateRangePickerValue | null;
   tags: Tag[];
   persona: Persona;
+  updateDocumentRelevance: (relevance: any) => void; // New callback function
   updateCurrentAnswer: (val: string) => void;
   updateQuotes: (quotes: Quote[]) => void;
   updateDocs: (documents: DanswerDocument[]) => void;
@@ -115,12 +121,16 @@ export interface SearchRequestArgs {
   updateSuggestedFlowType: (flowType: FlowType) => void;
   updateError: (error: string) => void;
   updateMessageId: (messageId: number) => void;
+  finishedSearching: () => void;
+  updateComments: (comments: any) => void;
   selectedSearchType: SearchType | null;
 }
 
 export interface SearchRequestOverrides {
   searchType?: SearchType;
   offset?: number;
+  overrideMessage?: string;
+  agentic?: boolean;
 }
 
 export interface ValidQuestionResponse {

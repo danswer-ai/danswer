@@ -1,6 +1,6 @@
 import { HoverPopup } from "@/components/HoverPopup";
 import { SourceIcon } from "@/components/SourceIcon";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
+import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { DocumentFeedbackBlock } from "@/components/search/DocumentFeedbackBlock";
 import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
 import { DanswerDocument } from "@/lib/search/interfaces";
@@ -11,6 +11,7 @@ import {
   buildDocumentSummaryDisplay,
 } from "@/components/search/DocumentDisplay";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import { useState } from "react";
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
@@ -32,18 +33,38 @@ export function ChatDocumentDisplay({
   tokenLimitReached,
 }: DocumentDisplayProps) {
   const isInternet = document.is_internet;
+  // Consider reintroducing null scored docs in the future
+
+  if (document.score === null) {
+    return null;
+  }
+
+  const disabled = tokenLimitReached && !isSelected;
 
   return (
-    <div key={document.semantic_identifier} className="text-sm px-3">
-      <div className="flex relative w-full overflow-y-visible">
+    <button
+      // disabled={disabled}
+      onClick={() => {
+        if (disabled) {
+          setPopup({
+            message:
+              "LLM context limit reached 😔 If you want to chat with this document, please de-select others to free up space.",
+            type: "error",
+          });
+          // setShowDisclosure(true)
+        } else {
+          handleSelect(document.document_id);
+        }
+      }}
+      key={document.semantic_identifier}
+      className={`p-2 w-[350px] justify-start cursor-pointer  rounded-md ${isSelected ? "bg-neutral-200" : "hover:bg-background-weakish bg-background-weakerish"}   text-sm mx-3`}
+    >
+      <div className=" flex relative justify-start  overflow-y-visible">
         <a
           className={
-            "rounded-lg flex font-bold flex-shrink truncate items-center " +
+            "rounded-lg flex font-bold flex-shrink truncate" +
             (document.link ? "" : "pointer-events-none")
           }
-          href={document.link}
-          target="_blank"
-          rel="noopener noreferrer"
         >
           {isInternet ? (
             <InternetSearchIcon url={document.link} />
@@ -75,6 +96,21 @@ export function ChatDocumentDisplay({
                 />
               </div>
             )}
+            <div
+              className={`
+                text-xs
+                text-emphasis
+                bg-hover
+                rounded
+                p-0.5
+                w-fit
+                my-auto
+                select-none
+                my-auto
+                mr-2`}
+            >
+              {Math.abs(document.score).toFixed(2)}
+            </div>
           </div>
         )}
 
@@ -91,7 +127,7 @@ export function ChatDocumentDisplay({
           <DocumentMetadataBlock document={document} />
         </div>
       </div>
-      <p className="pl-1 pt-2 pb-1 break-words">
+      <p className=" line-clamp-3 pl-1 pt-2 pb-1 text-start break-words">
         {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
       </p>
       <div className="mb-2">
@@ -105,6 +141,6 @@ export function ChatDocumentDisplay({
           />
         )} */}
       </div>
-    </div>
+    </button>
   );
 }

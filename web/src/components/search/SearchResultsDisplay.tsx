@@ -1,22 +1,19 @@
 "use client";
 
-import React from "react";
+import { removeDuplicateDocs } from "@/lib/documentUtils";
 import {
   DanswerDocument,
-  SearchResponse,
-  Quote,
   FlowType,
+  Quote,
   SearchDefaultOverrides,
+  SearchResponse,
   ValidQuestionResponse,
 } from "@/lib/search/interfaces";
-import { QAFeedbackBlock } from "./QAFeedback";
-import { DocumentDisplay } from "./DocumentDisplay";
-import { QuotesSection } from "./results/QuotesSection";
-import { AnswerSection } from "./results/AnswerSection";
-import { ThreeDots } from "react-loader-spinner";
 import { usePopup } from "../admin/connectors/Popup";
-import { AlertIcon } from "../icons/icons";
-import { removeDuplicateDocs } from "@/lib/documentUtils";
+import { AlertIcon, BroomIcon, UndoIcon } from "../icons/icons";
+import { AgenticDocumentDisplay, DocumentDisplay } from "./DocumentDisplay";
+import { searchState } from "./SearchSection";
+import { useEffect, useState } from "react";
 
 const getSelectedDocumentIds = (
   documents: DanswerDocument[],
@@ -30,44 +27,60 @@ const getSelectedDocumentIds = (
 };
 
 export const SearchResultsDisplay = ({
+  agenticResults,
   searchResponse,
+  searchState,
   validQuestionResponse,
   isFetching,
   defaultOverrides,
   personaName = null,
+  relevance,
+  performSweep,
+  sweep,
+  comments,
 }: {
+  agenticResults?: boolean | null;
+  performSweep: () => void;
+  sweep?: boolean;
+  searchState: searchState;
   searchResponse: SearchResponse | null;
   validQuestionResponse: ValidQuestionResponse;
   isFetching: boolean;
   defaultOverrides: SearchDefaultOverrides;
   personaName?: string | null;
+  relevance: any;
+  comments: any;
 }) => {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey) {
+        switch (event.key.toLowerCase()) {
+          case "o":
+            event.preventDefault();
+            // if (relevance!=null) {
+            performSweep();
+            // }
+            break;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   const { popup, setPopup } = usePopup();
 
   if (!searchResponse) {
     return null;
   }
 
-  const isPersona = personaName !== null;
   const { answer, quotes, documents, error, messageId } = searchResponse;
 
   if (isFetching && !answer && !documents) {
-    return (
-      <div className="flex">
-        <div className="mx-auto">
-          <ThreeDots
-            height="30"
-            width="40"
-            color="#3b82f6"
-            ariaLabel="grid-loading"
-            radius="12.5"
-            wrapperStyle={{}}
-            wrapperClass=""
-            visible={true}
-          />
-        </div>
-      </div>
-    );
+    return null;
   }
 
   if (
@@ -115,68 +128,111 @@ export const SearchResultsDisplay = ({
   return (
     <>
       {popup}
-      {shouldDisplayQA && (
-        <div className="min-h-[16rem] p-4 border-2 border-border rounded-lg relative">
-          <div>
-            <div className="flex mb-1">
-              <h2 className="text-emphasis font-bold my-auto mb-1 w-full">
-                AI Answer
-              </h2>
-            </div>
-
-            <div className="mb-2 pt-1 border-t border-border w-full">
-              <AnswerSection
-                answer={answer}
-                quotes={quotes}
-                error={error}
-                nonAnswerableReason={
-                  validQuestionResponse.answerable === false && !isPersona
-                    ? validQuestionResponse.reasoning
-                    : ""
-                }
-                isFetching={isFetching}
-              />
-            </div>
-
-            {quotes !== null && answer && !isPersona && (
-              <div className="pt-1 border-t border-border w-full">
-                <QuotesSection
-                  quotes={dedupedQuotes}
-                  isFetching={isFetching}
-                  isAnswerable={validQuestionResponse.answerable}
-                />
-
-                {searchResponse.messageId !== null && (
-                  <div className="absolute right-3 bottom-3">
-                    <QAFeedbackBlock
-                      messageId={searchResponse.messageId}
-                      setPopup={setPopup}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {documents && documents.length > 0 && (
         <div className="mt-4">
-          <div className="font-bold text-emphasis border-b mb-3 pb-1 border-border text-lg">
-            Results
+          <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
+            <p>Results</p>
+            {relevance && !agenticResults && (
+              <button
+                onClick={() => performSweep()}
+                className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
+                  !sweep
+                    ? "bg-green-500 text-neutral-800"
+                    : "bg-rose-700 text-neutral-100"
+                }`}
+                style={{
+                  transform: sweep ? "rotateZ(180deg)" : "rotateZ(0deg)",
+                }}
+              >
+                <div
+                  className={`flex items-center ${sweep ? "rotate-180" : ""}`}
+                >
+                  {/* <span>⌘O</span> */}
+                  <span></span>
+                  {!sweep ? "hide" : "undo"}
+                  {!sweep ? (
+                    <BroomIcon className="h-4 w-4" />
+                  ) : (
+                    <UndoIcon className="h-4 w-4" />
+                  )}
+                </div>
+              </button>
+            )}
           </div>
-          {removeDuplicateDocs(documents).map((document, ind) => (
-            <DocumentDisplay
-              key={document.document_id}
-              document={document}
-              documentRank={ind + 1}
-              messageId={messageId}
-              isSelected={selectedDocumentIds.has(document.document_id)}
-              setPopup={setPopup}
-            />
-          ))}
+          {removeDuplicateDocs(documents, agenticResults!, relevance).length ==
+            0 && (
+            <p>
+              No relevant documents found! Try another query or hit the button
+              below!
+            </p>
+          )}
+
+          {removeDuplicateDocs(documents, agenticResults!, relevance).map(
+            (document, ind) => {
+              return agenticResults ? (
+                <AgenticDocumentDisplay
+                  comments={comments}
+                  index={ind}
+                  hide={sweep && relevance && !relevance[document.document_id]}
+                  relevance={relevance}
+                  key={document.document_id}
+                  document={document}
+                  documentRank={ind + 1}
+                  messageId={messageId}
+                  isSelected={selectedDocumentIds.has(document.document_id)}
+                  setPopup={setPopup}
+                />
+              ) : (
+                <DocumentDisplay
+                  index={ind}
+                  hide={sweep && relevance && !relevance[document.document_id]}
+                  relevance={relevance}
+                  key={document.document_id}
+                  document={document}
+                  documentRank={ind + 1}
+                  messageId={messageId}
+                  isSelected={selectedDocumentIds.has(document.document_id)}
+                  setPopup={setPopup}
+                />
+              );
+            }
+          )}
         </div>
       )}
+      <div
+        className={`flex mt-4 justify-center transition-all duration-500 ${searchState == "input" ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+      >
+        <button className="duration-300 transition-bg cursor-pointer z-[100] hover:bg-neutral-700 bg-neutral-800 text-neutral-200 h-8 rounded-md px-3 text-xs">
+          Analyze 20 more
+        </button>
+        <button className=" pl-5 transition-all cursor-pointer -ml-2 bg-neutral-200 text-neutral-600 h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs">
+          <p className=" relative after:bg-neutral-600 after:absolute after:h-[1px] after:w-0 after:bottom-0 after:left-0 hover:after:w-full after:transition-all after:duration-300 duration-300">
+            Show me all
+          </p>
+        </button>
+      </div>
     </>
   );
 };
+
+export function AgenticDisclaimer({
+  forceNonAgentic,
+}: {
+  forceNonAgentic: () => void;
+}) {
+  return (
+    <div className="ml-auto mx-12 flex transition-all duration-300 animate-fade-in flex-col gap-y-2">
+      <p className="text-sm">
+        Please note that agentic quries can take substantially longer than
+        non-agentic queries. You can click <i>non-agentic</i> to re-submit your
+        query without agentic capabilities.
+      </p>
+      <button
+        onClick={forceNonAgentic}
+        className="p-2 bg-neutral-900 mr-auto text-neutral-200 rounded-lg text-xs my-auto"
+      >
+        Non-agentic
+      </button>
+    </div>
+  );
+}

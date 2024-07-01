@@ -39,6 +39,7 @@ export interface EmbeddingDetails {
   default_model_id?: number;
   name: string;
 }
+import { EmbeddingIcon, PackageIcon } from "@/components/icons/icons";
 
 function Main() {
   const [openToggle, setOpenToggle] = useState(true);
@@ -516,7 +517,7 @@ function Page() {
     <div className="mx-auto container">
       <AdminPageTitle
         title="Embedding"
-        icon={<FiPackage size={32} className="my-auto" />}
+        icon={<EmbeddingIcon size={32} className="my-auto" />}
       />
 
       <Main />

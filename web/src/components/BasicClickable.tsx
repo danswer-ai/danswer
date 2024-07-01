@@ -2,9 +2,11 @@ export function BasicClickable({
   children,
   onClick,
   fullWidth = false,
+  inset,
 }: {
   children: string | JSX.Element;
   onClick?: () => void;
+  inset?: boolean;
   fullWidth?: boolean;
 }) {
   return (
@@ -12,16 +14,17 @@ export function BasicClickable({
       onClick={onClick}
       className={`
         border 
-        border-border 
-        shadow-md
+        border-border
         rounded
         font-medium 
         text-emphasis 
         text-sm
-        p-1
+        relative
+        px-1 py-1.5
         h-full
         bg-background
         select-none
+        overflow-hidden
         hover:bg-hover-light
         ${fullWidth ? "w-full" : ""}`}
     >
@@ -44,16 +47,14 @@ export function EmphasizedClickable({
       onClick={onClick}
       className={`
         border 
-        border-border 
-        shadow-md
-        rounded
-        font-medium 
-        text-emphasis
+        border-neutral-300 
+        hover:shadow-sm
+        rounded-smf
         text-sm
         p-1
         select-none
-        bg-hover-light
-        hover:bg-hover
+        bg-neutral-100
+        hover:bg-background-weakerish
         ${fullWidth ? "w-full" : ""}`}
     >
       {children}
@@ -66,13 +67,13 @@ export function BasicSelectable({
   selected,
   hasBorder,
   fullWidth = false,
-  padding = true,
+  padding = "normal",
 }: {
   children: string | JSX.Element;
   selected: boolean;
   hasBorder?: boolean;
   fullWidth?: boolean;
-  padding?: boolean;
+  padding?: "none" | "normal" | "extra";
 }) {
   return (
     <div
@@ -81,7 +82,8 @@ export function BasicSelectable({
         font-medium 
         text-emphasis 
         text-sm
-        ${padding && "p-1"}
+        ${padding == "normal" && "p-1"}
+        ${padding == "extra" && "p-1.5"}
         select-none
         ${hasBorder ? "border border-border" : ""}
         ${selected ? "bg-hover" : "hover:bg-hover"}

@@ -86,8 +86,9 @@ export function SearchSummary({
 
   const searchingForDisplay = (
     <div className={`flex p-1 rounded ${isOverflowed && "cursor-default"}`}>
-      <FiSearch className="mr-2 my-auto" size={14} />
+      <FiSearch className="flex-none mr-2 my-auto" size={14} />
       <div className="line-clamp-1 break-all px-0.5" ref={searchingForRef}>
+        {/* {!hasDocs ? "Searching for" : "Searched for"} */}
         Searching for: <i>{finalQuery}</i>
       </div>
     </div>
@@ -147,7 +148,7 @@ export function SearchSummary({
         editInput
       ) : (
         <>
-          <div className="text-sm my-2">
+          <div className="text-sm">
             {isOverflowed ? (
               <HoverPopup
                 mainContent={searchingForDisplay}

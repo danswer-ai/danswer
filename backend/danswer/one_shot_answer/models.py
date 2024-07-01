@@ -27,6 +27,7 @@ class DirectQARequest(ChunkContext):
     messages: list[ThreadMessage]
     prompt_id: int | None
     persona_id: int
+    agentic: bool | None = None
     retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
     # This is to forcibly skip (or run) the step, if None it uses the system defaults
     skip_rerank: bool | None = None

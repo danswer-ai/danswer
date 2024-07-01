@@ -20,6 +20,7 @@ export interface SourceSelectorProps {
   setTimeRange: React.Dispatch<
     React.SetStateAction<DateRangePickerValue | null>
   >;
+  showDocSidebar?: boolean;
   selectedSources: SourceMetadata[];
   setSelectedSources: React.Dispatch<React.SetStateAction<SourceMetadata[]>>;
   selectedDocumentSets: string[];
@@ -29,8 +30,8 @@ export interface SourceSelectorProps {
   availableDocumentSets: DocumentSet[];
   existingSources: ValidSources[];
   availableTags: Tag[];
-  toggleFilters: () => void;
-  toggled: boolean
+  toggleFilters?: () => void;
+  toggled?: boolean;
 }
 
 export function SourceSelector({
@@ -47,6 +48,7 @@ export function SourceSelector({
   availableDocumentSets,
   existingSources,
   availableTags,
+  showDocSidebar,
 }: SourceSelectorProps) {
   const handleSelect = (source: SourceMetadata) => {
     setSelectedSources((prev: SourceMetadata[]) => {
@@ -70,108 +72,121 @@ export function SourceSelector({
     });
   };
 
-
   return (
-    <div>
-      <div onClick={toggleFilters} className="cursor-pointer flex mb-4 pb-2 border-b border-border text-emphasis">
+    <div
+      className={`hidden  ${showDocSidebar ? "4xl:block" : "!block"} duration-1000 ease-out transition-all transform origin-top-right`}
+    >
+      <div
+        onClick={toggleFilters}
+        className="cursor-pointer flex mb-4 pb-2 border-b border-border text-emphasis"
+      >
         <h2 className="font-bold my-auto">Filters</h2>
         <FiFilter className="my-auto ml-2" size="16" />
       </div>
-      {toggled && <>
+      {toggled && (
         <>
-          <SectionTitle>Time Range</SectionTitle>
-          <div className="mt-2">
-            <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
-          </div>
-        </>
+          <>
+            <SectionTitle>Time Range</SectionTitle>
+            <div className="mt-2">
+              <DateRangeSelector
+                value={timeRange}
+                onValueChange={setTimeRange}
+              />
+            </div>
+          </>
 
-        {existingSources.length > 0 && (
-          <div className="mt-4">
-            <SectionTitle>Sources</SectionTitle>
-            <div className="px-1">
-              {listSourceMetadata()
-                .filter((source) => existingSources.includes(source.internalName))
-                .map((source) => (
-                  <div
-                    key={source.internalName}
-                    className={
-                      "flex cursor-pointer w-full items-center " +
-                      "py-1.5 my-1.5 rounded-lg px-2 select-none " +
-                      (selectedSources
-                        .map((source) => source.internalName)
-                        .includes(source.internalName)
-                        ? "bg-hover"
-                        : "hover:bg-hover-light")
-                    }
-                    onClick={() => handleSelect(source)}
-                  >
-                    <SourceIcon sourceType={source.internalName} iconSize={16} />
-                    <span className="ml-2 text-sm text-default">
-                      {source.displayName}
-                    </span>
+          {existingSources.length > 0 && (
+            <div className="mt-4">
+              <SectionTitle>Sources</SectionTitle>
+              <div className="px-1">
+                {listSourceMetadata()
+                  .filter((source) =>
+                    existingSources.includes(source.internalName)
+                  )
+                  .map((source) => (
+                    <div
+                      key={source.internalName}
+                      className={
+                        "flex cursor-pointer w-full items-center " +
+                        "py-1.5 my-1.5 rounded-lg px-2 select-none " +
+                        (selectedSources
+                          .map((source) => source.internalName)
+                          .includes(source.internalName)
+                          ? "bg-hover"
+                          : "hover:bg-hover-light")
+                      }
+                      onClick={() => handleSelect(source)}
+                    >
+                      <SourceIcon
+                        sourceType={source.internalName}
+                        iconSize={16}
+                      />
+                      <span className="ml-2 text-sm text-default">
+                        {source.displayName}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {availableDocumentSets.length > 0 && (
+            <>
+              <div className="mt-4">
+                <SectionTitle>Knowledge Sets</SectionTitle>
+              </div>
+              <div className="px-1">
+                {availableDocumentSets.map((documentSet) => (
+                  <div key={documentSet.name} className="my-1.5 flex">
+                    <div
+                      key={documentSet.name}
+                      className={
+                        "flex cursor-pointer w-full items-center " +
+                        "py-1.5 rounded-lg px-2 " +
+                        (selectedDocumentSets.includes(documentSet.name)
+                          ? "bg-hover"
+                          : "hover:bg-hover-light")
+                      }
+                      onClick={() => handleDocumentSetSelect(documentSet.name)}
+                    >
+                      <HoverPopup
+                        mainContent={
+                          <div className="flex my-auto mr-2">
+                            <InfoIcon className={defaultTailwindCSS} />
+                          </div>
+                        }
+                        popupContent={
+                          <div className="text-sm w-64">
+                            <div className="flex font-medium">Description</div>
+                            <div className="mt-1">
+                              {documentSet.description}
+                            </div>
+                          </div>
+                        }
+                        classNameModifications="-ml-2"
+                      />
+                      <span className="text-sm">{documentSet.name}</span>
+                    </div>
                   </div>
                 ))}
-            </div>
-          </div>
-        )}
+              </div>
+            </>
+          )}
 
-        {availableDocumentSets.length > 0 && (
-          <>
-            <div className="mt-4">
-              <SectionTitle>Knowledge Sets</SectionTitle>
-            </div>
-            <div className="px-1">
-              {availableDocumentSets.map((documentSet) => (
-                <div key={documentSet.name} className="my-1.5 flex">
-                  <div
-                    key={documentSet.name}
-                    className={
-                      "flex cursor-pointer w-full items-center " +
-                      "py-1.5 rounded-lg px-2 " +
-                      (selectedDocumentSets.includes(documentSet.name)
-                        ? "bg-hover"
-                        : "hover:bg-hover-light")
-                    }
-                    onClick={() => handleDocumentSetSelect(documentSet.name)}
-                  >
-                    <HoverPopup
-                      mainContent={
-                        <div className="flex my-auto mr-2">
-                          <InfoIcon className={defaultTailwindCSS} />
-                        </div>
-                      }
-                      popupContent={
-                        <div className="text-sm w-64">
-                          <div className="flex font-medium">Description</div>
-                          <div className="mt-1">{documentSet.description}</div>
-                        </div>
-                      }
-                      classNameModifications="-ml-2"
-                    />
-                    <span className="text-sm">{documentSet.name}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {availableTags.length > 0 && (
-          <>
-            <div className="mt-4 mb-2">
-              <SectionTitle>Tags</SectionTitle>
-            </div>
-            <TagFilter
-              tags={availableTags}
-              selectedTags={selectedTags}
-              setSelectedTags={setSelectedTags}
-            />
-          </>
-        )}
-
-      </>}
-
-
+          {availableTags.length > 0 && (
+            <>
+              <div className="mt-4 mb-2">
+                <SectionTitle>Tags</SectionTitle>
+              </div>
+              <TagFilter
+                tags={availableTags}
+                selectedTags={selectedTags}
+                setSelectedTags={setSelectedTags}
+              />
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }

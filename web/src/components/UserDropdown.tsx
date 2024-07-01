@@ -12,6 +12,7 @@ import { FaBrain } from "react-icons/fa";
 import { LOGOUT_DISABLED } from "@/lib/constants";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { SettingsContext } from "./settings/SettingsProvider";
+import { LightSettingsIcon } from "./icons/icons";
 
 export function UserDropdown({
   user,
@@ -44,25 +45,25 @@ export function UserDropdown({
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
 
   return (
-    <div className="relative" ref={userInfoRef}>
+    <div className="group relative" ref={userInfoRef}>
       <Popover
         open={userInfoVisible}
         onOpenChange={setUserInfoVisible}
         content={
-          <BasicSelectable padding={false} selected={false}>
-            <div
-              onClick={() => setUserInfoVisible(!userInfoVisible)}
-              className="flex cursor-pointer"
-            >
-              <div className="my-auto bg-user hover:bg-user-hover rounded-lg px-2 text-base font-normal">
-                {user && user.email ? user.email[0].toUpperCase() : "A"}
-              </div>
+          <div
+            onClick={() => setUserInfoVisible(!userInfoVisible)}
+            className="flex cursor-pointer"
+          >
+            <div className="my-auto  bg-background-strong  ring-2 ring-transparent group-hover:ring-background-stronger/50 transition-ring duration-150  rounded-lg  inline-block flex-none px-2 text-base font-normal">
+              {user && user.email ? user.email[0].toUpperCase() : "A"}
             </div>
-          </BasicSelectable>
+          </div>
         }
         popover={
           <div
             className={`
+              p-2
+              min-w-[200px]
                 text-strong 
                 text-sm
                 border 
@@ -81,29 +82,28 @@ export function UserDropdown({
           >
             {!hideChatAndSearch && (
               <>
-                {settings.search_page_enabled && (
-                  <Link
-                    href="/search"
-                    className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
-                  >
-                    <FiSearch className="my-auto mr-2 text-lg" />
-                    Danswer Search
-                  </Link>
-                )}
                 {settings.chat_page_enabled && (
                   <>
-                    <Link
-                      href="/chat"
-                      className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
-                    >
-                      <FiMessageSquare className="my-auto mr-2 text-lg" />
-                      Danswer Chat
-                    </Link>
                     <Link
                       href="/assistants/mine"
                       className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
                     >
-                      <FaBrain className="my-auto mr-2 text-lg" />
+                      <svg
+                        className="h-5 w-5 text-neutral-500 my-auto mr-2"
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="200"
+                        height="200"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="1.5"
+                          d="M17.928 19.634h2.138a1.165 1.165 0 0 0 1.116-1.555a6.851 6.851 0 0 0-6.117-3.95m0-2.759a3.664 3.664 0 0 0 3.665-3.664a3.664 3.664 0 0 0-3.665-3.674m-1.04 16.795a1.908 1.908 0 0 0 1.537-3.035a8.026 8.026 0 0 0-6.222-3.196a8.026 8.026 0 0 0-6.222 3.197a1.909 1.909 0 0 0 1.536 3.034zM9.34 11.485a4.16 4.16 0 0 0 4.15-4.161a4.151 4.151 0 0 0-8.302 0a4.16 4.16 0 0 0 4.151 4.16"
+                        />
+                      </svg>
                       My Assistants
                     </Link>
                   </>
@@ -112,14 +112,11 @@ export function UserDropdown({
             )}
             {showAdminPanel && (
               <>
-                {!hideChatAndSearch && (
-                  <div className="border-t border-border my-1" />
-                )}
                 <Link
                   href="/admin/indexing/status"
                   className="flex py-3 px-4 cursor-pointer rounded hover:bg-hover-light"
                 >
-                  <FiTool className="my-auto mr-2 text-lg" />
+                  <LightSettingsIcon className="h-5 w-5 text-neutral-500 my-auto mr-2" />
                   Admin Panel
                 </Link>
               </>
