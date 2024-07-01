@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import Session
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.danswerbot.slack.tokens import _SLACK_BOT_TOKENS_CONFIG_KEY
-from danswer.db.models import SlackApp
+from danswer.db.models import EncryptedString, SlackApp
 
 # revision identifiers, used by Alembic.
 revision = "50fce29095ca"
@@ -34,8 +34,8 @@ def upgrade() -> None:
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("description", sa.String(), nullable=False),
         sa.Column("enabled", sa.Boolean(), nullable=False),
-        sa.Column("bot_token", sa.String(), nullable=False),
-        sa.Column("app_token", sa.String(), nullable=False),
+        sa.Column("bot_token", EncryptedString, nullable=False),
+        sa.Column("app_token", EncryptedString, nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("bot_token", name="uq_bot_token"),
         sa.UniqueConstraint("app_token", name="uq_app_token"),
