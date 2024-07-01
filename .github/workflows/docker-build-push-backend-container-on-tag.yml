@@ -10,7 +10,6 @@ env:
 
 jobs:
   build-and-push:
-    # for EE, run on special image-builders runners
     # TODO: make this a matrix build like the web containers
     runs-on: 
       group: amd64-image-builders

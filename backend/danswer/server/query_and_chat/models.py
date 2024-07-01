@@ -107,6 +107,9 @@ class CreateChatMessageRequest(ChunkContext):
     llm_override: LLMOverride | None = None
     prompt_override: PromptOverride | None = None
 
+    # allow user to specify an alternate assistnat
+    alternate_assistant_id: int | None = None
+
     # used for seeded chats to kick off the generation of an AI answer
     use_existing_user_message: bool = False
 
@@ -181,6 +184,7 @@ class ChatMessageDetail(BaseModel):
     context_docs: RetrievalDocs | None
     message_type: MessageType
     time_sent: datetime
+    alternate_assistant_id: str | None
     # Dict mapping citation number to db_doc_id
     citations: dict[int, int] | None
     files: list[FileDescriptor]

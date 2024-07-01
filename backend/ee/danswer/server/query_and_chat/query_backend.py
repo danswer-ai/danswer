@@ -10,8 +10,9 @@ from danswer.db.persona import get_persona_by_id
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
-from danswer.llm.factory import get_default_llm
-from danswer.llm.factory import get_llm_for_persona
+from danswer.llm.factory import get_default_llms
+from danswer.llm.factory import get_llms_for_persona
+from danswer.llm.factory import get_main_llm_from_tuple
 from danswer.llm.utils import get_max_input_tokens
 from danswer.one_shot_answer.answer_question import get_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
@@ -41,7 +42,7 @@ def handle_search_request(
     query = search_request.message
     logger.info(f"Received document search query: {query}")
 
-    llm = get_default_llm()
+    llm, fast_llm = get_default_llms()
     search_pipeline = SearchPipeline(
         search_request=SearchRequest(
             query=query,
@@ -59,6 +60,7 @@ def handle_search_request(
         ),
         user=user,
         llm=llm,
+        fast_llm=fast_llm,
         db_session=db_session,
         bypass_acl=False,
     )
@@ -104,7 +106,9 @@ def get_answer_with_quote(
         is_for_edit=False,
     )
 
-    llm = get_default_llm() if not persona else get_llm_for_persona(persona)
+    llm = get_main_llm_from_tuple(
+        get_default_llms() if not persona else get_llms_for_persona(persona)
+    )
     input_tokens = get_max_input_tokens(
         model_name=llm.config.model_name, model_provider=llm.config.model_provider
     )

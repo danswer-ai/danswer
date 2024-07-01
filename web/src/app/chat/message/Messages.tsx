@@ -38,6 +38,9 @@ import Prism from "prismjs";
 
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
+import { Persona } from "@/app/admin/assistants/interfaces";
+import { Button } from "@tremor/react";
+import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -80,6 +83,7 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 }
 
 export const AIMessage = ({
+  alternativeAssistant,
   messageId,
   content,
   files,
@@ -95,7 +99,10 @@ export const AIMessage = ({
   handleSearchQueryEdit,
   handleForceSearch,
   retrievalDisabled,
+  currentPersona,
 }: {
+  alternativeAssistant?: Persona | null;
+  currentPersona: Persona;
   messageId: number | null;
   content: string | JSX.Element;
   files?: FileDescriptor[];
@@ -143,8 +150,7 @@ export const AIMessage = ({
   }
 
   const shouldShowLoader =
-    !toolCall ||
-    (toolCall.tool_name === SEARCH_TOOL_NAME && query === undefined);
+    !toolCall || (toolCall.tool_name === SEARCH_TOOL_NAME && !content);
   const defaultLoader = shouldShowLoader ? (
     <div className="text-sm my-auto">
       <ThreeDots
@@ -165,11 +171,10 @@ export const AIMessage = ({
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
         <div className="ml-8">
           <div className="flex">
-            <div className="p-1 bg-ai rounded-lg h-fit my-auto">
-              <div className="text-inverted">
-                <FiCpu size={16} className="my-auto mx-auto" />
-              </div>
-            </div>
+            <AssistantIcon
+              size="small"
+              assistant={alternativeAssistant || currentPersona}
+            />
 
             <div className="font-bold text-emphasis ml-2 my-auto">
               {personaName || "enMedD CHP"}
@@ -519,12 +524,6 @@ export const HumanMessage = ({
                           handleEditSubmit();
                         }
                       }}
-                      // ref={(textarea) => {
-                      //   if (textarea) {
-                      //     textarea.selectionStart = textarea.selectionEnd =
-                      //       textarea.value.length;
-                      //   }
-                      // }}
                     />
                     <div className="flex justify-end mt-2 gap-2 pr-4">
                       <button
