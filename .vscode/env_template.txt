@@ -25,11 +25,6 @@ OAUTH_CLIENT_SECRET=<REPLACE THIS>
 REQUIRE_EMAIL_VERIFICATION=False
 
 
-# Toggles on/off the EE Features
-# NOTE: DO NOT ENABLE THIS UNLESS YOU HAVE A PAID ENTERPRISE LICENSE
-ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=False
-
-
 # Set these so if you wipe the DB, you don't end up having to go through the UI every time
 GEN_AI_API_KEY=<REPLACE THIS>
 # If answer quality isn't important for dev, use 3.5 turbo due to it being cheaper
