@@ -46,7 +46,7 @@ import { useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { FeedbackType } from "./types";
 import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
-import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
+import { InitializingLoader } from "@/components/InitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { ChatPersonaSelector } from "./ChatPersonaSelector";
@@ -1602,7 +1602,7 @@ export function ChatPage({
           ) : (
             <div className="mx-auto h-full flex flex-col">
               <div className="my-auto">
-                <DanswerInitializingLoader />
+                <InitializingLoader />
               </div>
             </div>
           )}
