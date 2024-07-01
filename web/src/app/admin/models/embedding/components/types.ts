@@ -8,28 +8,6 @@ import {
 
 export type ProviderId = "openai" | "cohere" | "voyage" | "google";
 
-export interface CloudEmbeddingModel {
-  name: string;
-  description: string;
-  model_dim: number;
-  normalize: boolean;
-  cloud_provider_id?: number;
-  link: string;
-  query_prefix: string;
-  passage_prefix: string;
-  pricePerMillion: number;
-  enabled?: boolean;
-  mtebScore: number;
-  maxContext: number;
-  latency1k?: number;
-  latency8k?: number;
-  similarityMetric?: string;
-  numParameters?: string;
-  memoryUsage?: string;
-  notes?: string;
-  model_name?: string;
-}
-
 export interface CloudEmbeddingProvider {
   id: number;
   name: string;
@@ -66,10 +44,40 @@ export interface EmbeddingModelDescriptor {
   passage_prefix?: string;
 }
 
+export interface CloudEmbeddingModel {
+  name: string;
+  description: string;
+  model_dim: number;
+  normalize: boolean;
+  cloud_provider_id?: number | null;
+  link: string;
+  query_prefix?: string;
+  passage_prefix?: string;
+  pricePerMillion: number;
+  enabled?: boolean;
+  mtebScore: number;
+  maxContext: number;
+  latency1k?: number;
+  latency8k?: number;
+  similarityMetric?: string;
+  numParameters?: string;
+  memoryUsage?: string;
+  notes?: string;
+  model_name?: string;
+}
+
+export interface EnrichedCloudEmbeddingModel
+  extends CloudEmbeddingModel,
+    EmbeddingModelDescriptor {
+  model_name: string;
+  cloud_provider_id: number | null;
+}
+
 export interface FullEmbeddingModelDescriptor extends EmbeddingModelDescriptor {
   description: string;
   isDefault?: boolean;
   link?: string;
+  cloud_provider_id?: number;
 }
 
 export const AVAILABLE_MODELS: FullEmbeddingModelDescriptor[] = [
@@ -141,7 +149,7 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
         query_prefix: "",
         passage_prefix: "",
         pricePerMillion: 0.02,
-        enabled: true,
+        enabled: false,
         mtebScore: 62.3,
         maxContext: 8191,
         latency1k: 0.42,

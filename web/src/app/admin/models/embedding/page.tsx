@@ -18,11 +18,12 @@ import {
   INVALID_OLD_MODEL,
   fillOutEmeddingModelDescriptor,
   EmbeddingModelDescriptor,
+  EnrichedCloudEmbeddingModel,
+  FullEmbeddingModelDescriptor,
 } from "./components/types";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Connector, ConnectorIndexingStatus } from "@/lib/types";
 import Link from "next/link";
-
 import OpenSourceEmbeddingSelectionPage from "./OpenSourceEmbeddingSelectionPage";
 import CloudEmbeddingPage from "./CloudEmbeddingPage";
 import { ProviderCreationModal2 } from "./modals/ProviderCreation";
@@ -84,6 +85,8 @@ function Main() {
     errorHandlingFetcher
   );
 
+  console.log(embeddingProviderDetails);
+
   const {
     data: futureEmbeddingModel,
     isLoading: isLoadingFutureModel,
@@ -110,16 +113,36 @@ function Main() {
   const onConfirm = async (
     model: CloudEmbeddingModel | EmbeddingModelDescriptor
   ) => {
-    if (!model.model_name) {
-      model.model_name = model?.name;
-      model.cloud_provider_id = 0;
+    let newModel: EnrichedCloudEmbeddingModel;
+
+    if ("name" in model) {
+      // This is a CloudEmbeddingModel
+      newModel = {
+        ...model,
+        model_name: model.model_name || model.name,
+        cloud_provider_id: model.cloud_provider_id || 0,
+      };
+    } else {
+      // This is an EmbeddingModelDescriptor
+      newModel = {
+        ...model,
+        name: model.model_name,
+        description: "",
+        link: "",
+        pricePerMillion: 0,
+        mtebScore: 0,
+        maxContext: 0,
+        cloud_provider_id: null,
+      };
     }
+    console.log(newModel);
+    // return
     // model.model_name = model.name
     const response = await fetch(
       "/api/secondary-index/set-new-embedding-model",
       {
         method: "POST",
-        body: JSON.stringify(model),
+        body: JSON.stringify(newModel),
         headers: {
           "Content-Type": "application/json",
         },
@@ -186,9 +209,26 @@ function Main() {
   };
 
   const currentModelName = currentEmeddingModel?.model_name;
-  const currentModel =
+  const AVAILABLE_CLOUD_MODELS_FLATTENED = AVAILABLE_CLOUD_MODELS.flatMap(
+    (provider) =>
+      provider.embedding_models.map((model) => ({
+        ...model,
+        cloud_provider_id: provider.id,
+        model_name: model.name, // Ensure model_name is set for consistency
+      }))
+  );
+
+  const currentModel: FullEmbeddingModelDescriptor | CloudEmbeddingModel =
     AVAILABLE_MODELS.find((model) => model.model_name === currentModelName) ||
+    AVAILABLE_CLOUD_MODELS_FLATTENED.find(
+      (model) => model.model_name === currentEmeddingModel.model_name
+    ) ||
     fillOutEmeddingModelDescriptor(currentEmeddingModel);
+
+  // const currentModel =
+  //   AVAILABLE_MODELS.find((model) => model.model_name === currentModelName) ||
+  //   AVAILABLE_CLOUD_MODELS.find((model) => model.name === currentEmeddingModel.model_name) ||
+  //   fillOutEmeddingModelDescriptor(currentEmeddingModel) ;
 
   const onSelectOpenSource = async (model: EmbeddingModelDescriptor) => {
     if (currentEmeddingModel?.model_name === INVALID_OLD_MODEL) {
@@ -376,6 +416,7 @@ function Main() {
           />
         ) : (
           <CloudEmbeddingPage
+            currentModel={currentModel}
             setAlreadyPicked={setAlreadyPicked}
             embeddingProviderDetails={embeddingProviderDetails}
             newEnabledProviders={newEnabledProviders}
