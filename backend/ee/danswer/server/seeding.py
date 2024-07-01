@@ -39,6 +39,7 @@ def _parse_env() -> SeedConfiguration | None:
     seed_config_str = os.getenv(_SEED_CONFIG_ENV_VAR_NAME)
     if not seed_config_str:
         return None
+
     seed_config = SeedConfiguration.parse_raw(seed_config_str)
     return seed_config
 
