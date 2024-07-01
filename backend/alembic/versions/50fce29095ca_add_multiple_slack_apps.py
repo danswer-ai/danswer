@@ -86,13 +86,15 @@ def upgrade() -> None:
 
     # Update all rows in the slack_bot_config to set the foreign key app_id to first_row_id
     if not first_row_id:
-        raise RuntimeError(f"{revision}: Migrated slack bot, but could not find a row in slack_app!")
+        raise RuntimeError(
+            f"{revision}: Migrated slack bot, but could not find a row in slack_app!"
+        )
 
     logger.info(f"{revision}: Migrating slack bot configs.")
     op.execute(
-        sa.text(
-            "UPDATE slack_bot_config SET app_id = :first_row_id"
-        ).bindparams(first_row_id=first_row_id)
+        sa.text("UPDATE slack_bot_config SET app_id = :first_row_id").bindparams(
+            first_row_id=first_row_id
+        )
     )
 
     # Delete the tokens in dynamic config
