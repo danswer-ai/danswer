@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { redirect, useRouter, useSearchParams } from "next/navigation";
 import {
   BackendChatSession,
   BackendMessage,
@@ -68,8 +68,13 @@ import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";
 import { ChatBanner } from "./ChatBanner";
-import { TbLayoutSidebarRightExpand } from "react-icons/tb";
+import { TbLayoutSidebarLeftExpand, TbLayoutSidebarRightExpand } from "react-icons/tb";
 import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
+
+
+
+
+
 
 import ResizableSection from "@/components/resizable/ResizableSection";
 
@@ -375,20 +380,20 @@ export function ChatPage({
     useState<number | null>(null);
   const { aiMessage } = selectedMessageForDocDisplay
     ? getHumanAndAIMessageFromMessageNumber(
-        messageHistory,
-        selectedMessageForDocDisplay
-      )
+      messageHistory,
+      selectedMessageForDocDisplay
+    )
     : { aiMessage: null };
 
   const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
     existingChatSessionPersonaId !== undefined
       ? filteredAssistants.find(
-          (persona) => persona.id === existingChatSessionPersonaId
-        )
+        (persona) => persona.id === existingChatSessionPersonaId
+      )
       : defaultSelectedPersonaId !== undefined
         ? filteredAssistants.find(
-            (persona) => persona.id === defaultSelectedPersonaId
-          )
+          (persona) => persona.id === defaultSelectedPersonaId
+        )
         : undefined
   );
   const livePersona =
@@ -666,7 +671,7 @@ export function ChatPage({
     const messageMap = completeMessageDetail.messageMap;
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
-      messageToResend?.parentMessageId !== undefined
+        messageToResend?.parentMessageId !== undefined
         ? messageMap.get(messageToResend.parentMessageId)
         : null;
     const messageToResendIndex = messageToResend
@@ -791,9 +796,9 @@ export function ChatPage({
       const updateFn = (messages: Message[]) => {
         const replacementsMap = finalMessage
           ? new Map([
-              [messages[0].messageId, TEMP_USER_MESSAGE_ID],
-              [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
-            ] as [number, number][])
+            [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+            [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+          ] as [number, number][])
           : null;
         upsertToCompleteMessageMap({
           messages: messages,
@@ -1039,7 +1044,7 @@ export function ChatPage({
     router.push("/search");
   }
 
-  const [showDocSidebar, setShowDocSidebar] = useState(true); // State to track if sidebar is open
+  const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
 
   const toggleSidebar = () => {
     if (sidebarElementRef.current) {
@@ -1083,7 +1088,25 @@ export function ChatPage({
       setEditingRetrievalEnabled(false);
     }
   };
-  console.log(hasPerformedInitialScroll);
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey) {
+        switch (event.key.toLowerCase()) {
+          case 'e':
+            event.preventDefault();
+            toggleSidebar()
+            break;
+
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [router]);
+
   return (
     <>
       <HealthCheckBanner />
@@ -1094,13 +1117,36 @@ export function ChatPage({
       <ChatPopup />
 
       <div className="flex relative bg-background text-default overflow-x-hidden">
-        <ChatSidebar
-          existingChats={chatSessions}
-          currentChatSession={selectedChatSession}
-          folders={folders}
-          openedFolders={openedFolders}
-        />
 
+        <div
+          ref={sidebarElementRef}
+          className={`  flex-none absolute left-0 z-[100]  overflow-y-hidden sidebar bg-background-weak h-screen`}
+          style={{ width: showDocSidebar ? usedSidebarWidth : 0 }}
+        >
+          <ResizableSection
+            updateSidebarWidth={updateSidebarWidth}
+            intialWidth={usedSidebarWidth}
+            minWidth={200}
+            maxWidth={maxDocumentSidebarWidth || undefined}
+          >
+            <div className="w-full relative">
+
+              {/* <ChatSidebar /> */}
+              <ChatSidebar
+              
+                initialWidth={usedSidebarWidth }
+                ref={innerSidebarElementRef}
+                closeSidebar={() => toggleSidebar()}
+                existingChats={chatSessions}
+                currentChatSession={selectedChatSession}
+                folders={folders}
+                openedFolders={openedFolders}
+              />
+            </div>
+
+          </ResizableSection>
+
+        </div>
         <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
           {popup}
           {currentFeedback && (
@@ -1134,6 +1180,8 @@ export function ChatPage({
             />
           )}
 
+
+
           <ConfigurationModal
             chatSessionId={chatSessionIdRef.current!}
             activeTab={configModalActiveTab}
@@ -1147,17 +1195,13 @@ export function ChatPage({
             llmOverrideManager={llmOverrideManager}
           />
 
+
           {documentSidebarInitialWidth !== undefined ? (
             <Dropzone onDrop={handleImageUpload} noClick>
               {({ getRootProps }) => (
                 <>
                   <div
-                    className={`w-full sm:relative h-screen ${
-                      !retrievalEnabled ? "pb-[111px]" : "pb-[140px]"
-                    }
-                      flex-auto transition-margin duration-300 
-                      overflow-x-auto
-                      `}
+                    className={`h-[calc(100dvh)] w-full relative flex-auto transition-margin duration-300  overflow-x-auto pb-[140px]`}
                     {...getRootProps()}
                   >
                     {/* <input {...getInputProps()} /> */}
@@ -1171,18 +1215,28 @@ export function ChatPage({
                       <ChatBanner />
 
                       {livePersona && (
-                        <div className="sticky top-0 left-80 z-10 w-full bg-background flex">
+                        <div className="sticky top-0 left-80 z-10 w-full bg-background  bg-opacity-30 backdrop-blur-sm flex">
                           <div className="mt-2 flex w-full">
+                            {!showDocSidebar && (
+                              <button
+                                className="ml-4 mt-auto"
+                                onClick={() => toggleSidebar()}
+                              >
+                                <TbLayoutSidebarLeftExpand size={24} />
+                              </button>
+                            )}
+                            {/*
                             <div className="ml-2 p-1 rounded w-fit">
+                              
                               <ChatPersonaSelector
                                 personas={filteredAssistants}
                                 selectedPersonaId={livePersona.id}
                                 onPersonaChange={onPersonaChange}
                                 userId={user?.id}
-                              />
-                            </div>
+                              /> 
+                            </div>*/}
 
-                            <div className="ml-auto mr-6 flex">
+                            <div className="ml-auto mr-4 flex">
                               {chatSessionIdRef.current !== null && (
                                 <div
                                   onClick={() => setSharingModalVisible(true)}
@@ -1198,16 +1252,9 @@ export function ChatPage({
                                 </div>
                               )}
 
-                              <div className="ml-4 flex my-auto">
+                              <div className="ml flex my-auto">
                                 <UserDropdown user={user} />
-                                {retrievalEnabled && !showDocSidebar && (
-                                  <button
-                                    className="ml-4 mt-auto"
-                                    onClick={() => toggleSidebar()}
-                                  >
-                                    <TbLayoutSidebarRightExpand size={24} />
-                                  </button>
-                                )}
+
                               </div>
                             </div>
                           </div>
@@ -1225,7 +1272,7 @@ export function ChatPage({
 
                       <div
                         className={
-                          "mt-4 pt-12 sm:pt-0 mx-8" +
+                          "mt-4  w-full mx-auto" + "bg-black  absolute top-12  left-1/2 transform -translate-x-1/2" +
                           (hasPerformedInitialScroll ? "" : " invisible")
                         }
                       >
@@ -1288,7 +1335,7 @@ export function ChatPage({
                             const isShowingRetrieved =
                               (selectedMessageForDocDisplay !== null &&
                                 selectedMessageForDocDisplay ===
-                                  message.messageId) ||
+                                message.messageId) ||
                               (selectedMessageForDocDisplay ===
                                 TEMP_USER_MESSAGE_ID &&
                                 i === messageHistory.length - 1);
@@ -1298,9 +1345,9 @@ export function ChatPage({
                             const currentAlternativeAssistant =
                               message.alternateAssistantID != null
                                 ? availablePersonas.find(
-                                    (persona) =>
-                                      persona.id == message.alternateAssistantID
-                                  )
+                                  (persona) =>
+                                    persona.id == message.alternateAssistantID
+                                )
                                 : null;
 
                             return (
@@ -1338,45 +1385,45 @@ export function ChatPage({
                                   }
                                   handleFeedback={
                                     i === messageHistory.length - 1 &&
-                                    isStreaming
+                                      isStreaming
                                       ? undefined
                                       : (feedbackType) =>
-                                          setCurrentFeedback([
-                                            feedbackType,
-                                            message.messageId as number,
-                                          ])
+                                        setCurrentFeedback([
+                                          feedbackType,
+                                          message.messageId as number,
+                                        ])
                                   }
                                   handleSearchQueryEdit={
                                     i === messageHistory.length - 1 &&
-                                    !isStreaming
+                                      !isStreaming
                                       ? (newQuery) => {
-                                          if (!previousMessage) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
-                                                "Cannot edit query of first message - please refresh the page and try again.",
-                                            });
-                                            return;
-                                          }
-
-                                          if (
-                                            previousMessage.messageId === null
-                                          ) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
-                                                "Cannot edit query of a pending message - please wait a few seconds and try again.",
-                                            });
-                                            return;
-                                          }
-                                          onSubmit({
-                                            messageIdToResend:
-                                              previousMessage.messageId,
-                                            queryOverride: newQuery,
-                                            alternativeAssistant:
-                                              currentAlternativeAssistant,
+                                        if (!previousMessage) {
+                                          setPopup({
+                                            type: "error",
+                                            message:
+                                              "Cannot edit query of first message - please refresh the page and try again.",
                                           });
+                                          return;
                                         }
+
+                                        if (
+                                          previousMessage.messageId === null
+                                        ) {
+                                          setPopup({
+                                            type: "error",
+                                            message:
+                                              "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                          });
+                                          return;
+                                        }
+                                        onSubmit({
+                                          messageIdToResend:
+                                            previousMessage.messageId,
+                                          queryOverride: newQuery,
+                                          alternativeAssistant:
+                                            currentAlternativeAssistant,
+                                        });
+                                      }
                                       : undefined
                                   }
                                   isCurrentlyShowingRetrieved={
@@ -1418,8 +1465,8 @@ export function ChatPage({
                                   retrievalDisabled={
                                     currentAlternativeAssistant
                                       ? !personaIncludesRetrieval(
-                                          currentAlternativeAssistant!
-                                        )
+                                        currentAlternativeAssistant!
+                                      )
                                       : !retrievalEnabled
                                   }
                                 />
@@ -1445,7 +1492,7 @@ export function ChatPage({
                         {isStreaming &&
                           messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
-                            "user" && (
+                          "user" && (
                             <div
                               key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                             >
@@ -1565,37 +1612,6 @@ export function ChatPage({
                       </div>
                     </div>
                   </div>
-
-                  {retrievalEnabled || editingRetrievalEnabled ? (
-                    <div
-                      ref={sidebarElementRef}
-                      className={`relative flex-none  overflow-y-hidden sidebar bg-background-weak h-screen`}
-                      style={{ width: showDocSidebar ? usedSidebarWidth : 0 }}
-                    >
-                      <ResizableSection
-                        updateSidebarWidth={updateSidebarWidth}
-                        intialWidth={usedSidebarWidth}
-                        minWidth={300}
-                        maxWidth={maxDocumentSidebarWidth || undefined}
-                      >
-                        <DocumentSidebar
-                          initialWidth={showDocSidebar ? usedSidebarWidth : 0}
-                          ref={innerSidebarElementRef}
-                          closeSidebar={() => toggleSidebar()}
-                          selectedMessage={aiMessage}
-                          selectedDocuments={selectedDocuments}
-                          toggleDocumentSelection={toggleDocumentSelection}
-                          clearSelectedDocuments={clearSelectedDocuments}
-                          selectedDocumentTokens={selectedDocumentTokens}
-                          maxTokens={maxTokens}
-                          isLoading={isFetchingChatMessages}
-                        />
-                      </ResizableSection>
-                    </div>
-                  ) : // Another option is to use a div with the width set to the initial width, so that the
-                  // chat section appears in the same place as before
-                  // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
-                  null}
                 </>
               )}
             </Dropzone>
@@ -1607,7 +1623,7 @@ export function ChatPage({
             </div>
           )}
         </div>
-      </div>
+      </div >
     </>
   );
 }

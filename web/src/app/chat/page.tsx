@@ -7,6 +7,7 @@ import { ChatPage } from "./ChatPage";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatProvider } from "@/components/context/ChatContext";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
+import FunctionalWrapper from "./shared_chat_search/FunctionalWrapper";
 
 export default async function Page({
   searchParams,
@@ -48,6 +49,7 @@ export default async function Page({
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
+
       <ChatProvider
         value={{
           user,
@@ -61,11 +63,15 @@ export default async function Page({
           openedFolders,
         }}
       >
-        <ChatPage
-          defaultSelectedPersonaId={defaultPersonaId}
-          documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
-        />
+        <FunctionalWrapper>
+          <ChatPage
+            defaultSelectedPersonaId={defaultPersonaId}
+            documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
+          />
+        </FunctionalWrapper >
       </ChatProvider>
+
+
     </>
   );
 }

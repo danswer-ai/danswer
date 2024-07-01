@@ -24,6 +24,12 @@ import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingM
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatPopup } from "../chat/ChatPopup";
+import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
+// import {  useState } from "react";
+import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
+import { useChatContext } from "@/components/context/ChatContext";
+
+import { UserDropdown } from "@/components/UserDropdown";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -125,7 +131,7 @@ export default async function Home() {
     | undefined;
   let searchTypeDefault: SearchType =
     storedSearchType !== undefined &&
-    SearchType.hasOwnProperty(storedSearchType)
+      SearchType.hasOwnProperty(storedSearchType)
       ? (storedSearchType as SearchType)
       : SearchType.SEMANTIC; // default to semantic
 
@@ -147,9 +153,69 @@ export default async function Home() {
     !shouldDisplayNoSourcesModal &&
     !shouldShowWelcomeModal;
 
+  // const [showDocSidebar, setShowDocSidebar] = useState(false)
+  // const toggleSidebar = () => {
+  //   setShowDocSidebar(showDocSidebar => !showDocSidebar)
+
+  // }
+  const showDocSidebar = false
+
+  // let {
+
+  //   chatSessions,
+  //   availableSources,
+  //   availableDocumentSets,
+  //   availablePersonas,
+  //   llmProviders,
+  //   folders,
+  //   openedFolders,
+  // } = useChatContext();
+
+
+
+
+  // const searchParams = useSearchParams();
+  // const existingChatIdRaw = searchParams.get("chatId");
+  // const existingChatSessionId = existingChatIdRaw
+  //   ? parseInt(existingChatIdRaw)
+  //   : null;
+  // const selectedChatSession = chatSessions.find(
+  //   (chatSession) => chatSession.id === existingChatSessionId
+  // );
+  // const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
+
+
+  // const existingChatSessionPersonaId = selectedChatSession?.persona_id;
+
+
+
+
+
+
   return (
     <>
-      <Header user={user} />
+      {/* <Header user={user} />
+      <> */}
+      <>
+        <div className=" left-0 sticky top-0 z-10 w-full  bg-opacity-30 backdrop-blur-sm flex">
+          <div className="mt-2 flex w-full">
+            {!showDocSidebar && (
+              <button
+                className="ml-4 mt-auto"
+              // onClick={() => toggleSidebar()}
+              >
+                <TbLayoutSidebarLeftExpand size={24} />
+              </button>
+            )}
+
+            <div className="flex mr-4 ml-auto my-auto">
+              <UserDropdown user={user} />
+            </div>
+
+          </div>
+        </div>
+
+      </>
       <div className="m-3">
         <HealthCheckBanner />
       </div>
@@ -170,18 +236,20 @@ export default async function Home() {
       <ChatPopup />
 
       <InstantSSRAutoRefresh />
-
-      <div className="px-24 pt-10 flex flex-col items-center min-h-screen">
-        <div className="w-full">
-          <SearchSection
-            ccPairs={ccPairs}
-            documentSets={documentSets}
-            personas={personas}
-            tags={tags}
-            defaultSearchType={searchTypeDefault}
-          />
+      <FunctionalWrapper>
+        <div className="px-24 pt-10 flex flex-col items-center min-h-screen">
+          <div className="w-full">
+            <SearchSection
+              ccPairs={ccPairs}
+              documentSets={documentSets}
+              personas={personas}
+              tags={tags}
+              defaultSearchType={searchTypeDefault}
+            />
+          </div>
         </div>
-      </div>
+      </FunctionalWrapper>
+
     </>
   );
 }
