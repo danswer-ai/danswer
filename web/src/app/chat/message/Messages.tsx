@@ -85,6 +85,7 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 
 export const AIMessage = ({
   alternativeAssistant,
+  docs,
   messageId,
   content,
   files,
@@ -102,6 +103,7 @@ export const AIMessage = ({
   retrievalDisabled,
   currentPersona,
 }: {
+  docs?: DanswerDocument[] | null,
   alternativeAssistant?: Persona | null;
   currentPersona: Persona;
   messageId: number | null;
@@ -169,6 +171,8 @@ export const AIMessage = ({
 
   return (
     <div className={"py-5 px-2 lg:px-5  flex -mr-6 w-full"}>
+
+
       <div className="mx-auto w-[90%] max-w-searchbar-max relative">
         <div className="xl:ml-8">
           <div className="flex">
@@ -177,11 +181,13 @@ export const AIMessage = ({
               assistant={alternativeAssistant || currentPersona}
             />
 
+
             <div className="font-bold text-emphasis ml-2 my-auto">
               {alternativeAssistant
                 ? alternativeAssistant.name
                 : personaName || "Danswer"}
             </div>
+
 
             {/* {query === undefined &&
               hasDocs &&
@@ -259,12 +265,43 @@ export const AIMessage = ({
                 </div>
               )}
 
+            {docs && docs.length > 0
+              &&
+              <div className="w-full flex flex-col">
+
+                <div className="w-full flex gap-x-2 overflow-x-scroll">
+                  {docs
+                    .filter((doc, index, self) =>
+                      doc.document_id &&
+                      doc.document_id !== "" &&
+                      index === self.findIndex((d) => d.document_id === doc.document_id)
+                    )
+                    .map((doc) => (
+                      <div key={doc.document_id} className={`w-[250px] transition-all duration-500 opacity-90 bg-neutral-100 px-4 py-2  border-b 
+                        ${citedDocuments &&
+                        (Array.isArray(citedDocuments) &&
+                          citedDocuments.some(([_, obj]) => obj.document_id === doc.document_id)
+                          ? "!opacity-100"
+                          : "!opacity-20")}
+                    `}>
+
+                        <h2 className="text-sm font-semibold text-neutral-800">
+                          {doc.document_id.split("/")[doc.document_id.split("/").length - 1]}
+                        </h2>
+                        <div className="line-clamp-3 text-xs py-4">{doc.blurb}</div>
+                        {/* <a className="w-full line-clamp-1 ellipses">{doc.link}</a> */}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            }
+
             {content ? (
               <>
                 <FileDisplay files={files || []} />
 
                 {typeof content === "string" ? (
-                  <ReactMarkdown 
+                  <ReactMarkdown
 
                     key={messageId}
                     className="prose max-w-full"

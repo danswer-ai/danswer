@@ -793,6 +793,7 @@ export function ChatPage({
           searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
         useExistingUserMessage: isSeededChat,
       });
+
       const updateFn = (messages: Message[]) => {
         const replacementsMap = finalMessage
           ? new Map([
@@ -818,6 +819,7 @@ export function ChatPage({
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();
 
+
           if (packet) {
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
@@ -831,6 +833,8 @@ export function ChatPage({
                 setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
               }
             } else if (Object.hasOwn(packet, "tool_name")) {
+
+
               toolCalls = [
                 {
                   tool_name: (packet as ToolCallMetadata).tool_name,
@@ -839,6 +843,9 @@ export function ChatPage({
                 },
               ];
             } else if (Object.hasOwn(packet, "file_ids")) {
+              console.log("FILE")
+
+
               aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
                 (fileId) => {
                   return {
@@ -1133,8 +1140,8 @@ export function ChatPage({
 
               {/* <ChatSidebar /> */}
               <ChatSidebar
-              
-                initialWidth={usedSidebarWidth }
+
+                initialWidth={usedSidebarWidth}
                 ref={innerSidebarElementRef}
                 closeSidebar={() => toggleSidebar()}
                 existingChats={chatSessions}
@@ -1360,6 +1367,7 @@ export function ChatPage({
                                 }
                               >
                                 <AIMessage
+                                  docs={message.documents}
                                   currentPersona={livePersona}
                                   alternativeAssistant={
                                     currentAlternativeAssistant
