@@ -7,9 +7,6 @@ from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_llm_provider
-from danswer.db.models import Persona
-from danswer.db.persona import get_personas
-from danswer.db.persona import upsert_persona
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.settings.models import Settings
 from danswer.server.settings.store import store_settings as store_base_settings
@@ -31,7 +28,7 @@ class SeedConfiguration(BaseModel):
     admin_user_emails: list[str] | None = None
     seeded_name: str | None = None
     seeded_logo_path: str | None = None
-    personas: list[Persona] | None = None
+    # personas: list[Persona] | None = None
     settings: Settings | None = None
 
 
@@ -60,38 +57,38 @@ def _seed_llms(
     update_default_provider(db_session, seeded_providers[0].id)
 
 
-def _seed_personas(db_session: Session, personas: list[Persona]) -> None:
-    # don't seed personas if we've already done this
-    existing_personas = get_personas(
-        user_id=None,  # Admin view
-        db_session=db_session,
-        include_default=True,
-        include_slack_bot_personas=True,
-        include_deleted=False,
-    )
-    if existing_personas:
-        return
+# def _seed_personas(db_session: Session, personas: list[Persona]) -> None:
+#     # don't seed personas if we've already done this
+#     existing_personas = get_personas(
+#         user_id=None,  # Admin view
+#         db_session=db_session,
+#         include_default=True,
+#         include_slack_bot_personas=True,
+#         include_deleted=False,
+#     )
+#     if existing_personas:
+#         return
 
-    logger.info("Seeding Personas")
-    for persona in personas:
-        upsert_persona(
-            user=None,  # Seeding is done as admin
-            name=persona.name,
-            description=persona.description,
-            num_chunks=persona.num_chunks if persona.num_chunks is not None else 0.0,
-            llm_relevance_filter=persona.llm_relevance_filter,
-            llm_filter_extraction=persona.llm_filter_extraction,
-            recency_bias=persona.recency_bias,
-            prompts=persona.prompts,
-            document_sets=persona.document_sets,
-            llm_model_provider_override=persona.llm_model_provider_override,
-            llm_model_version_override=persona.llm_model_version_override,
-            starter_messages=persona.starter_messages,
-            is_public=persona.is_public,
-            db_session=db_session,
-            tool_ids=[tool.id for tool in persona.tools],
-            default_persona=persona.default_persona,
-        )
+#     logger.info("Seeding Personas")
+#     for persona in personas:
+#         upsert_persona(
+#             user=None,  # Seeding is done as admin
+#             name=persona.name,
+#             description=persona.description,
+#             num_chunks=persona.num_chunks if persona.num_chunks is not None else 0.0,
+#             llm_relevance_filter=persona.llm_relevance_filter,
+#             llm_filter_extraction=persona.llm_filter_extraction,
+#             recency_bias=persona.recency_bias,
+#             prompts=persona.prompts,
+#             document_sets=persona.document_sets,
+#             llm_model_provider_override=persona.llm_model_provider_override,
+#             llm_model_version_override=persona.llm_model_version_override,
+#             starter_messages=persona.starter_messages,
+#             is_public=persona.is_public,
+#             db_session=db_session,
+#             tool_ids=[tool.id for tool in persona.tools],
+#             default_persona=persona.default_persona,
+#         )
 
 
 def _seed_settings(settings: Settings) -> None:
@@ -118,8 +115,8 @@ def seed_db() -> None:
     with get_session_context_manager() as db_session:
         if seed_config.llms is not None:
             _seed_llms(db_session, seed_config.llms)
-        if seed_config.personas is not None:
-            _seed_personas(db_session, seed_config.personas)
+        # if seed_config.personas is not None:
+        #     _seed_personas(db_session, seed_config.personas)
         if seed_config.settings is not None:
             _seed_settings(seed_config.settings)
 
