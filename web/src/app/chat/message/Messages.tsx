@@ -41,6 +41,7 @@ import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { Button } from "@tremor/react";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
+import Citation from "@/components/search/results/Citation";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -263,7 +264,8 @@ export const AIMessage = ({
                 <FileDisplay files={files || []} />
 
                 {typeof content === "string" ? (
-                  <ReactMarkdown
+                  <ReactMarkdown 
+
                     key={messageId}
                     className="prose max-w-full"
                     components={{
@@ -274,20 +276,21 @@ export const AIMessage = ({
                         // TODO: fix the fact that you have to double click to follow link
                         // for the first link
                         return (
-                          <a
-                            key={node?.position?.start?.offset}
-                            onClick={() =>
-                              rest.href
-                                ? window.open(rest.href, "_blank")
-                                : undefined
-                            }
-                            className="cursor-pointer text-link hover:text-link-hover"
-                          // href={rest.href}
-                          // target="_blank"
-                          // rel="noopener noreferrer"
-                          >
+                          <Citation link={rest?.href} key={node?.position?.start?.offset} >
                             {rest.children}
-                          </a>
+                          </Citation>
+                          // <as
+                          //   key={node?.position?.start?.offset}
+                          //   onClick={() =>
+                          //     rest.href
+                          //       ? window.open(rest.href, "_blank")
+                          //       : undefined
+                          //   }
+                          //   className="cursor-pointer text-link hover:text-link-hover"
+
+                          // >
+                          //   {rest.children}
+                          // </a>
                         );
                       },
                       code: (props) => (
@@ -335,6 +338,7 @@ export const AIMessage = ({
                             target="_blank"
                             className="cursor-pointer hover:bg-hover"
                           >
+
                             {display}
                           </a>
                         );
@@ -450,7 +454,7 @@ export const HumanMessage = ({
 
   return (
     <div
-    className="pt-5 pb-1 px-2 lg:px-5 flex -mr-6 w-full relative"
+      className="pt-5 pb-1 px-2 lg:px-5 flex -mr-6 w-full relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
