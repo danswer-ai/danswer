@@ -106,39 +106,6 @@ def get_user_chat_sessions(
         ]
     )
 
-# @router.get("/get-user-searches")
-# def get_user_query_sessions(
-#     user: User | None = Depends(current_user),
-#     db_session: Session = Depends(get_session),
-# ) -> ChatSessionsResponse:
-#     user_id = user.id if user is not None else None
-
-#     try:
-#         chat_sessions = get_chat_sessions_by_user(
-#             user_id=user_id, deleted=False, db_session=db_session, only_one_shot=True
-#         )
-
-
-#     except ValueError:
-#         raise ValueError("Chat session does not exist or has been deleted")
-#     response = ChatSessionsResponse(
-#         sessions=[
-#             ChatSessionDetails(
-#                 id=chat.id,
-#                 name=chat.description,
-#                 persona_id=chat.persona_id,
-#                 time_created=chat.time_created.isoformat(),
-#                 shared_status=chat.shared_status,
-#                 folder_id=chat.folder_id,
-#                 current_alternate_model=chat.current_alternate_model,
-#             )
-#             for chat in chat_sessions
-#         ]
-#     )
-
-
-#     return response
-
 @router.get("/get-user-searches")
 def get_user_query_sessions(
     user: User | None = Depends(current_user),

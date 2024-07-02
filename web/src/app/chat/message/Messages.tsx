@@ -311,9 +311,6 @@ export const AIMessage = ({
                       a: (props) => {
                         const { node, ...rest } = props;
                         const value = rest.children
-                        console.log("zzz")
-
-                        console.log(value)
                         if (value?.toString().startsWith("[")) {
 
                           // for some reason <a> tags cause the onClick to not apply

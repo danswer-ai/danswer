@@ -107,7 +107,6 @@ export const SearchSection = ({
     : null;
 
   useEffect(() => {
-    console.log("EFFECT")
     function extractFirstUserMessage(chatSession: BackendChatSession): string | null {
       const userMessage = chatSession?.messages.find(msg => msg.message_type === 'user');
       return userMessage ? userMessage.message : null;
@@ -117,7 +116,6 @@ export const SearchSection = ({
       const response = await fetch(
         `/api/chat/get-chat-session/${existingSearchessionId}`
       );
-
       const searchSession = (await response.json()) as BackendChatSession;
       const message = extractFirstUserMessage(searchSession)
       if (message) {
@@ -125,9 +123,6 @@ export const SearchSection = ({
         setQuery(message)
         onSearch({overrideMessage: message})
       }
-
-
-
     }
     initialSessionFetch()
 

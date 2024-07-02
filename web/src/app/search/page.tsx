@@ -168,43 +168,6 @@ export default async function Home() {
     !shouldDisplayNoSourcesModal &&
     !shouldShowWelcomeModal;
 
-  // const [showDocSidebar, setShowDocSidebar] = useState(false)
-  // const toggleSidebar = () => {
-  //   setShowDocSidebar(showDocSidebar => !showDocSidebar)
-
-  // }
-  const showDocSidebar = false
-
-  // let {
-
-  //   chatSessions,
-  //   availableSources,
-  //   availableDocumentSets,
-  //   availablePersonas,
-  //   llmProviders,
-  //   folders,
-  //   openedFolders,
-  // } = useChatContext();
-
-
-
-
-  // const searchParams = useSearchParams();
-  // const existingChatIdRaw = searchParams.get("chatId");
-  // const existingChatSessionId = existingChatIdRaw
-  //   ? parseInt(existingChatIdRaw)
-  //   : null;
-  // const selectedChatSession = chatSessions.find(
-  //   (chatSession) => chatSession.id === existingChatSessionId
-  // );
-  // const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
-
-
-  // const existingChatSessionPersonaId = selectedChatSession?.persona_id;
-
-
-
-  console.log(querySessions)
 
   return (
     <>

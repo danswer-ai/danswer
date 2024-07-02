@@ -179,7 +179,7 @@ export function ChatPage({
     }
 
     async function initialSessionFetch() {
-      
+
       if (existingChatSessionId === null) {
         setIsFetchingChatMessages(false);
         if (defaultSelectedPersonaId !== undefined) {
@@ -834,8 +834,6 @@ export function ChatPage({
                 setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
               }
             } else if (Object.hasOwn(packet, "tool_name")) {
-
-
               toolCalls = [
                 {
                   tool_name: (packet as ToolCallMetadata).tool_name,
@@ -844,9 +842,6 @@ export function ChatPage({
                 },
               ];
             } else if (Object.hasOwn(packet, "file_ids")) {
-              console.log("FILE")
-
-
               aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
                 (fileId) => {
                   return {
