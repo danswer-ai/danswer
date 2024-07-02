@@ -7,3 +7,4 @@ tensorflow==2.15.0
 torch==2.0.1
 transformers==4.39.2
 uvicorn==0.21.1
+python-dotenv==1.0.0
