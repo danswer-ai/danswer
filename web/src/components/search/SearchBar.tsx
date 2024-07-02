@@ -125,7 +125,7 @@ export const SearchBar = ({
         style={{ scrollbarWidth: "thin" }}
         role="textarea"
         aria-multiline
-        placeholder="Send a message..."
+        placeholder="Search for something..."
         value={query}
         onChange={handleChange}
         onKeyDown={(event) => {}}

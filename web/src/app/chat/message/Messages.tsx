@@ -334,18 +334,6 @@ export const AIMessage = ({
                             >
                               {rest.children}
                             </Citation>
-                            // <as
-                            //   key={node?.position?.start?.offset}
-                            //   onClick={() =>
-                            //     rest.href
-                            //       ? window.open(rest.href, "_blank")
-                            //       : undefined
-                            //   }
-                            //   className="cursor-pointer text-link hover:text-link-hover"
-
-                            // >
-                            //   {rest.children}
-                            // </a>
                           );
                         } else {
                           return (
@@ -370,8 +358,8 @@ export const AIMessage = ({
                         <p {...props} className="text-default" />
                       ),
                     }}
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+                    // remarkPlugins={[remarkGfm]}
+                    // rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
                   >
                     {content}
                   </ReactMarkdown>
