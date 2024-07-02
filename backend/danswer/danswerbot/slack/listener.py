@@ -1,4 +1,5 @@
-import time
+import threading
+from collections.abc import Callable
 from threading import Event
 from typing import Any
 from typing import cast
@@ -7,13 +8,14 @@ from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
+from sortedcontainers import SortedDict  # type: ignore
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
-from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
+from danswer.danswerbot.slack.config import get_slack_bot_config_for_app_and_channel
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
@@ -34,7 +36,6 @@ from danswer.danswerbot.slack.handlers.handle_message import (
 )
 from danswer.danswerbot.slack.handlers.handle_message import schedule_feedback_reminder
 from danswer.danswerbot.slack.models import SlackMessageInfo
-from danswer.danswerbot.slack.tokens import fetch_tokens
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import decompose_action_id
 from danswer.danswerbot.slack.utils import get_channel_name_from_id
@@ -44,7 +45,10 @@ from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
 from danswer.danswerbot.slack.utils import rephrase_slack_message
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.engine import get_session_context_manager
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.slack_app import fetch_slack_app
+from danswer.db.slack_app import fetch_slack_apps
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.retrieval.search_runner import download_nltk_data
@@ -73,7 +77,9 @@ _SLACK_GREETINGS_TO_IGNORE = {
 _OFFICIAL_SLACKBOT_USER_ID = "USLACKBOT"
 
 
-def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool:
+def prefilter_requests(
+    app_id: int, req: SocketModeRequest, client: SocketModeClient
+) -> bool:
     """True to keep going, False to ignore this Slack request"""
     if req.type == "events_api":
         # Verify channel is valid
@@ -139,8 +145,8 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
 
             engine = get_sqlalchemy_engine()
             with Session(engine) as db_session:
-                slack_bot_config = get_slack_bot_config_for_channel(
-                    channel_name=channel_name, db_session=db_session
+                slack_bot_config = get_slack_bot_config_for_app_and_channel(
+                    app_id=app_id, channel_name=channel_name, db_session=db_session
                 )
             if not slack_bot_config or not slack_bot_config.channel_config.get(
                 "respond_to_bots"
@@ -154,7 +160,7 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
         message_subtype = event.get("subtype")
         if message_subtype not in [None, "file_share"]:
             channel_specific_logger.info(
-                f"Ignoring message with subtype '{message_subtype}' since is is a special message type"
+                f"Ignoring message with subtype '{message_subtype}' since it is a special message type"
             )
             return False
 
@@ -305,6 +311,7 @@ def apologize_for_fail(
 
 
 def process_message(
+    app_id: int,
     req: SocketModeRequest,
     client: SocketModeClient,
     respond_every_channel: bool = DANSWER_BOT_RESPOND_EVERY_CHANNEL,
@@ -313,7 +320,7 @@ def process_message(
     logger.debug(f"Received Slack request of type: '{req.type}'")
 
     # Throw out requests that can't or shouldn't be handled
-    if not prefilter_requests(req, client):
+    if not prefilter_requests(app_id, req, client):
         return
 
     details = build_request_details(req, client)
@@ -324,8 +331,8 @@ def process_message(
 
     engine = get_sqlalchemy_engine()
     with Session(engine) as db_session:
-        slack_bot_config = get_slack_bot_config_for_channel(
-            channel_name=channel_name, db_session=db_session
+        slack_bot_config = get_slack_bot_config_for_app_and_channel(
+            app_id=app_id, channel_name=channel_name, db_session=db_session
         )
 
         # Be careful about this default, don't want to accidentally spam every channel
@@ -374,7 +381,9 @@ def acknowledge_message(req: SocketModeRequest, client: SocketModeClient) -> Non
     client.send_socket_mode_response(response)
 
 
-def action_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
+def action_routing(
+    app_id: int, req: SocketModeRequest, client: SocketModeClient
+) -> None:
     if actions := req.payload.get("actions"):
         action = cast(dict[str, Any], actions[0])
 
@@ -385,7 +394,7 @@ def action_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
             # Activation of the "source feedback" button
             return handle_doc_feedback_button(req, client)
         elif action["action_id"] == FOLLOWUP_BUTTON_ACTION_ID:
-            return handle_followup_button(req, client)
+            return handle_followup_button(app_id, req, client)
         elif action["action_id"] == IMMEDIATE_RESOLVED_BUTTON_ACTION_ID:
             return handle_followup_resolved_button(req, client, immediate=True)
         elif action["action_id"] == FOLLOWUP_BUTTON_RESOLVED_ACTION_ID:
@@ -398,21 +407,26 @@ def view_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
             return process_feedback(req, client)
 
 
-def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
-    # Always respond right away, if Slack doesn't receive these frequently enough
-    # it will assume the Bot is DEAD!!! :(
-    acknowledge_message(req, client)
+def create_process_slack_event(
+    app_id: int,
+) -> Callable[[SocketModeClient, SocketModeRequest], None]:
+    def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
+        # Always respond right away, if Slack doesn't receive these frequently enough
+        # it will assume the Bot is DEAD!!! :(
+        acknowledge_message(req, client)
 
-    try:
-        if req.type == "interactive":
-            if req.payload.get("type") == "block_actions":
-                return action_routing(req, client)
-            elif req.payload.get("type") == "view_submission":
-                return view_routing(req, client)
-        elif req.type == "events_api" or req.type == "slash_commands":
-            return process_message(req, client)
-    except Exception:
-        logger.exception("Failed to process slack event")
+        try:
+            if req.type == "interactive":
+                if req.payload.get("type") == "block_actions":
+                    return action_routing(app_id, req, client)
+                elif req.payload.get("type") == "view_submission":
+                    return view_routing(req, client)
+            elif req.type == "events_api" or req.type == "slash_commands":
+                return process_message(app_id, req, client)
+        except Exception:
+            logger.exception("Failed to process slack event")
+
+    return process_slack_event
 
 
 def _get_socket_client(slack_bot_tokens: SlackBotTokens) -> SocketModeClient:
@@ -425,11 +439,12 @@ def _get_socket_client(slack_bot_tokens: SlackBotTokens) -> SocketModeClient:
     )
 
 
-def _initialize_socket_client(socket_client: SocketModeClient) -> None:
+def _initialize_socket_client(app_id: int, socket_client: SocketModeClient) -> None:
+    process_slack_event = create_process_slack_event(app_id)
     socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
 
     # Establish a WebSocket connection to the Socket Mode servers
-    logger.info("Listening for messages from Slack...")
+    logger.info(f"App {app_id}: Listening for messages from Slack...")
     socket_client.connect()
 
 
@@ -442,16 +457,28 @@ def _initialize_socket_client(socket_client: SocketModeClient) -> None:
 #
 # NOTE: we are using Web Sockets so that you can run this from within a firewalled VPC
 # without issue.
-if __name__ == "__main__":
+def worker_thread(app_id: int, stop_event: threading.Event) -> None:
     slack_bot_tokens: SlackBotTokens | None = None
     socket_client: SocketModeClient | None = None
+
+    LOOP_TIMEOUT = 60
 
     logger.info("Verifying query preprocessing (NLTK) data is downloaded")
     download_nltk_data()
 
     while True:
+        if stop_event.is_set():
+            break
+
         try:
-            latest_slack_bot_tokens = fetch_tokens()
+            with get_session_context_manager() as db_session:
+                app = fetch_slack_app(db_session=db_session, slack_app_id=app_id)
+                if not app:
+                    raise ConfigNotFoundError
+
+            latest_slack_bot_tokens = SlackBotTokens(
+                bot_token=app.bot_token, app_token=app.app_token
+            )
 
             if latest_slack_bot_tokens != slack_bot_tokens:
                 if slack_bot_tokens is not None:
@@ -478,17 +505,121 @@ if __name__ == "__main__":
                     socket_client.close()
 
                 socket_client = _get_socket_client(slack_bot_tokens)
-                _initialize_socket_client(socket_client)
+                _initialize_socket_client(app_id, socket_client)
 
             # Let the handlers run in the background + re-check for token updates every 60 seconds
-            Event().wait(timeout=60)
+            stop_event.wait(timeout=LOOP_TIMEOUT)
         except ConfigNotFoundError:
-            # try again every 30 seconds. This is needed since the user may add tokens
+            # try again every LOOP_TIMEOUT seconds. This is needed since the user may add tokens
             # via the UI at any point in the programs lifecycle - if we just allow it to
             # fail, then the user will need to restart the containers after adding tokens
             logger.debug(
-                "Missing Slack Bot tokens - waiting 60 seconds and trying again"
+                f"Missing Slack Bot tokens - waiting {LOOP_TIMEOUT} seconds and trying again"
             )
             if socket_client:
                 socket_client.disconnect()
-            time.sleep(60)
+            stop_event.wait(timeout=LOOP_TIMEOUT)
+
+
+def main_worker(active_threads: SortedDict) -> None:
+    try:
+        with get_session_context_manager() as db_session:
+            apps = fetch_slack_apps(db_session=db_session)
+        if not apps:
+            return
+    except Exception as ex:
+        logger.exception(f"Exception: {ex}")
+        return
+
+    id_to_apps = {}  # map of app id to app
+
+    active_thread_keys = list(active_threads.keys())
+    active_thread_keys_not_found = list(active_thread_keys)
+
+    apps_to_activate = []
+    apps_to_deactivate = []
+
+    # build a list of app threads that should be activated or deactivated
+    for a in apps:
+        id_to_apps[a.id] = a
+
+        # any entry in active_thread_keys that isn't eventually found should be deactivated
+        try:
+            active_thread_keys_not_found.remove(a.id)
+        except ValueError:
+            pass  # Element not in list, so do nothing
+
+        if a.enabled:
+            # activate if a is enabled and not in active_thread_keys
+            if a.id not in active_thread_keys:
+                apps_to_activate.append(a.id)
+            continue
+        else:
+            # deactivate if a is disabled and in active_thread_keys
+            if a.id in active_thread_keys:
+                apps_to_deactivate.append(a.id)
+            continue
+
+    apps_to_deactivate.extend(active_thread_keys_not_found)
+
+    # process the deactivation list
+    for a_id in apps_to_deactivate:
+        tm = active_threads[a_id]
+        logger.info(f"Deactivating app: id={a_id} name={tm['name']}")
+
+        tm["stop"].set()
+        tm["thread"].join(timeout=JOIN_TIMEOUT)
+        if tm["thread"].is_alive():
+            logger.debug(
+                f"Slack app worker thread is still alive after {JOIN_TIMEOUT} seconds. id={a_id} name={tm['name']}"
+            )
+
+        active_threads.pop(a_id)
+
+    # every entry in active threads should be alive. if not, reactivate them
+    for a_id, v in active_threads.items():
+        t = v["thread"]
+        if not t.is_alive():
+            logger.info(
+                f"App {a_id}: Not alive, but should be. Adding to activation list."
+            )
+            apps_to_activate.append(a_id)
+
+    # process the activation list
+    for a_id in apps_to_activate:
+        a = id_to_apps[a_id]
+        logger.info(f"Activating app: id={a_id} name={a.name}")
+
+        tm = {}
+        stop_event = threading.Event()
+
+        kwargs = {
+            "app_id": a_id,
+            "stop_event": stop_event,
+        }
+
+        t = threading.Thread(target=worker_thread, kwargs=kwargs)
+        t.start()
+
+        tm["name"] = a.name
+        tm["stop"] = stop_event
+        tm["thread"] = t
+
+        active_threads[a_id] = tm
+
+    # Print final state if any state changed
+    if len(apps_to_deactivate) > 0 or len(apps_to_activate) > 0:
+        logger.info(f"Active bot count: {len(active_threads)}")
+        for k, v in active_threads.items():
+            logger.info(f"  ID: {k} Name: {v['name']}")
+
+
+if __name__ == "__main__":
+    MAIN_LOOP_TIMEOUT = 60
+    JOIN_TIMEOUT = 15
+
+    active_threads: SortedDict = SortedDict()  # map of app id's to thread metadata
+
+    while True:
+        main_worker(active_threads)
+        Event().wait(timeout=MAIN_LOOP_TIMEOUT)
