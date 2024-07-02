@@ -12,25 +12,32 @@ interface SearchBarProps {
   query: string;
   setQuery: (query: string) => void;
   onSearch: () => void;
-  searchState: searchState
+  searchState?: searchState;
 }
 
 // import React from 'react';
 // import { Switch } from 'lucide-react';'
-const AnimatedToggle = ({ isOn, handleToggle }: { isOn: boolean, handleToggle: () => void }) => {
+const AnimatedToggle = ({
+  isOn,
+  handleToggle,
+}: {
+  isOn: boolean;
+  handleToggle: () => void;
+}) => {
   return (
-    <div
-      className="flex items-center cursor-pointer"
-      onClick={handleToggle}
-    >
-      <div className={`
+    <div className="flex items-center cursor-pointer" onClick={handleToggle}>
+      <div
+        className={`
         w-10 h-6 flex items-center rounded-full p-1 duration-300 ease-in-out
-        ${isOn ? 'bg-neutral-400' : 'bg-neutral-200'}
-      `}>
-        <div className={`
+        ${isOn ? "bg-neutral-400" : "bg-neutral-200"}
+      `}
+      >
+        <div
+          className={`
           bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out
-          ${isOn ? 'translate-x-4' : ''}
-        `}></div>
+          ${isOn ? "translate-x-4" : ""}
+        `}
+        ></div>
       </div>
       <span className="ml-2 text-sm">
         Agentic
@@ -42,10 +49,12 @@ const AnimatedToggle = ({ isOn, handleToggle }: { isOn: boolean, handleToggle: (
 
 export default AnimatedToggle;
 
-
-
-
-export const SearchBar = ({ searchState, query, setQuery, onSearch }: SearchBarProps) => {
+export const SearchBar = ({
+  searchState,
+  query,
+  setQuery,
+  onSearch,
+}: SearchBarProps) => {
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const target = event.target;
     setQuery(target.value);
@@ -58,13 +67,12 @@ export const SearchBar = ({ searchState, query, setQuery, onSearch }: SearchBarP
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
-
       onSearch();
       event.preventDefault();
     }
   };
 
-  const [fast, setFast] = useState(false)
+  const [fast, setFast] = useState(false);
 
   const handleToggle = () => {
     setFast(!fast);
@@ -87,9 +95,6 @@ export const SearchBar = ({ searchState, query, setQuery, onSearch }: SearchBarP
               [&:has(textarea:focus)]::ring-black
             "
     >
-
-
-
       <textarea
         onKeyDownCapture={handleKeyDown}
         className={`
@@ -121,46 +126,33 @@ export const SearchBar = ({ searchState, query, setQuery, onSearch }: SearchBarP
         role="textarea"
         aria-multiline
         placeholder="Send a message..."
-
         value={query}
         onChange={handleChange}
-        onKeyDown={(event) => {
-
-        }}
+        onKeyDown={(event) => {}}
         suppressContentEditableWarning={true}
       />
 
       <div className="flex justify-end w-full items-center space-x-3 mr-12 px-4  pb-2 overflow-hidden">
-        {
-          searchState == "analyzing" &&
+        {searchState == "analyzing" && (
           <div className="mr-auto relative inline-block">
             <span className=" text-transparent bg-clip-text bg-gradient-to-r from-black to-black via-neutral-10 animate-shimmer">
               Analyzing text...
             </span>
           </div>
-        }
-        {
-          searchState == "searching" &&
+        )}
+        {searchState == "searching" && (
           <div className="mr-auto relative inline-block">
             <span className=" text-transparent bg-clip-text bg-gradient-to-r from-black to-black via-neutral-10 animate-shimmer">
               Searching...
             </span>
           </div>
-        }
-
+        )}
 
         <AnimatedToggle isOn={fast} handleToggle={handleToggle} />
 
-
         {/* <Icon icon={FiCamera} size="sm" className="flex-none" /> */}
-
-
-
-
-
       </div>
-      <div className="absolute bottom-2.5 right-10">
-      </div>
+      <div className="absolute bottom-2.5 right-10"></div>
     </div>
     // <div className="flex justify-center">
     //   <div className="flex mx-auto items-center w-full opacity-100 border-2 border-border rounded-lg px-4 py-2 focus-within:border-accent bg-background-weak">

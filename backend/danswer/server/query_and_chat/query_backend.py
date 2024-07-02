@@ -152,7 +152,6 @@ def get_answer_with_quote(
     user: User = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
 ) -> StreamingResponse:
-
     query = query_request.messages[0].message
     print(f"|{query}")
     logger.info(f"Received query for one shot answer with quotes: {query}")

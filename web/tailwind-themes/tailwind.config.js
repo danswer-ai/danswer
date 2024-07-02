@@ -16,8 +16,18 @@ module.exports = {
     transparent: "transparent",
     current: "currentColor",
     extend: {
+      keyframes: {
+        pulse: {
+          "0%, 100%": { opacity: 0.9 },
+          "50%": { opacity: 0.4 },
+        },
+      },
+      animation: {
+        pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+      },
+
       gradientColorStops: {
-        'neutral-10': '#e5e5e5 5%',
+        "neutral-10": "#e5e5e5 5%",
       },
       screens: {
         "2xl": "1420px",
@@ -77,7 +87,7 @@ module.exports = {
         // hover
         "hover-light": "#f3f4f6", // gray-100
         "hover-lightish": "#EAEBEF", // gray-160
-        
+
         hover: "#e5e7eb", // gray-200
         "hover-emphasis": "#d1d5db", // gray-300
         "accent-hover": "#5964c2",

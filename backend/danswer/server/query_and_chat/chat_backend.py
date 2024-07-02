@@ -24,11 +24,11 @@ from danswer.db.chat import get_chat_message
 from danswer.db.chat import get_chat_messages_by_session
 from danswer.db.chat import get_chat_session_by_id
 from danswer.db.chat import get_chat_sessions_by_user
+from danswer.db.chat import get_first_messages_for_chat_sessions
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import set_as_latest_chat_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import update_chat_session
-from danswer.db.chat import get_first_messages_for_chat_sessions
 from danswer.db.engine import get_session
 from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.feedback import create_doc_retrieval_feedback
@@ -52,9 +52,6 @@ from danswer.secondary_llm_flows.chat_session_naming import (
 )
 from danswer.server.query_and_chat.models import ChatFeedbackRequest
 from danswer.server.query_and_chat.models import ChatMessageIdentifier
-from danswer.server.query_and_chat.models import ChatMessageDetail
-
-
 from danswer.server.query_and_chat.models import ChatRenameRequest
 from danswer.server.query_and_chat.models import ChatSessionCreationRequest
 from danswer.server.query_and_chat.models import ChatSessionDetailResponse
@@ -106,27 +103,30 @@ def get_user_chat_sessions(
         ]
     )
 
+
 @router.get("/get-user-searches")
 def get_user_query_sessions(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ChatSessionsResponse:
     user_id = user.id if user is not None else None
-    
+
     try:
         chat_sessions = get_chat_sessions_by_user(
             user_id=user_id, deleted=False, db_session=db_session, only_one_shot=True
         )
     except ValueError:
-        raise HTTPException(status_code=404, detail="Chat session does not exist or has been deleted")
-    
+        raise HTTPException(
+            status_code=404, detail="Chat session does not exist or has been deleted"
+        )
+
     # Fetch the first message for each chat session using the new function
     chat_session_ids = [chat.id for chat in chat_sessions]
     first_messages = get_first_messages_for_chat_sessions(chat_session_ids, db_session)
-    
+
     # Create a dictionary for quick lookup
     first_messages_dict = dict(first_messages)
-    
+
     print(first_messages_dict)
     response = ChatSessionsResponse(
         sessions=[
@@ -143,10 +143,7 @@ def get_user_query_sessions(
         ]
     )
 
-    
     return response
-
-
 
 
 @router.put("/update-chat-session-model")

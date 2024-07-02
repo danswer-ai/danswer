@@ -2,13 +2,13 @@ from datetime import datetime
 from datetime import timedelta
 from uuid import UUID
 
-from sqlalchemy import delete
-from sqlalchemy import nullsfirst
-from sqlalchemy import or_
 from sqlalchemy import and_
-from sqlalchemy import select
+from sqlalchemy import delete
 from sqlalchemy import desc
 from sqlalchemy import func
+from sqlalchemy import nullsfirst
+from sqlalchemy import or_
+from sqlalchemy import select
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
@@ -69,37 +69,30 @@ def get_chat_session_by_id(
 
     return chat_session
 
+
 def get_first_messages_for_chat_sessions(
-    chat_session_ids: list[int],
-    db_session: Session
+    chat_session_ids: list[int], db_session: Session
 ) -> list[tuple[int, str]]:
     subquery = (
-        select(
-            ChatMessage.chat_session_id,
-            func.min(ChatMessage.id).label('min_id')
+        select(ChatMessage.chat_session_id, func.min(ChatMessage.id).label("min_id"))
+        .where(
+            and_(
+                ChatMessage.chat_session_id.in_(chat_session_ids),
+                ChatMessage.message_type == MessageType.USER,  # Select USER messages
+            )
         )
-        .where(and_(
-            ChatMessage.chat_session_id.in_(chat_session_ids),
-            ChatMessage.message_type == MessageType.USER  # Select USER messages
-        ))
-
         .group_by(ChatMessage.chat_session_id)
         .subquery()
     )
 
-    query = (
-        select(ChatMessage.chat_session_id, ChatMessage.message)
-        .join(subquery, 
-              (ChatMessage.chat_session_id == subquery.c.chat_session_id) & 
-              (ChatMessage.id == subquery.c.min_id))
+    query = select(ChatMessage.chat_session_id, ChatMessage.message).join(
+        subquery,
+        (ChatMessage.chat_session_id == subquery.c.chat_session_id)
+        & (ChatMessage.id == subquery.c.min_id),
     )
 
     first_messages = db_session.execute(query).all()
     return first_messages
-
-
-
-
 
 
 def get_chat_sessions_by_user(
@@ -107,17 +100,16 @@ def get_chat_sessions_by_user(
     deleted: bool | None,
     db_session: Session,
     include_one_shot: bool = False,
-    only_one_shot: bool = False
+    only_one_shot: bool = False,
 ) -> list[ChatSession]:
     stmt = select(ChatSession).where(ChatSession.user_id == user_id)
 
     if not include_one_shot and not only_one_shot:
         stmt = stmt.where(ChatSession.one_shot.is_(False))
-    
+
     if only_one_shot:
         stmt = stmt.where(ChatSession.one_shot.is_(True))
         stmt = stmt.order_by(desc(ChatSession.id))
-
 
     if deleted is not None:
         stmt = stmt.where(ChatSession.deleted == deleted)

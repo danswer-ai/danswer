@@ -103,7 +103,7 @@ export const AIMessage = ({
   retrievalDisabled,
   currentPersona,
 }: {
-  docs?: DanswerDocument[] | null,
+  docs?: DanswerDocument[] | null;
   alternativeAssistant?: Persona | null;
   currentPersona: Persona;
   messageId: number | null;
@@ -171,8 +171,6 @@ export const AIMessage = ({
 
   return (
     <div className={"py-5 px-2 lg:px-5  flex -mr-6 w-full"}>
-
-
       <div className="mx-auto w-[90%] max-w-searchbar-max relative">
         <div className="xl:ml-8">
           <div className="flex">
@@ -181,13 +179,11 @@ export const AIMessage = ({
               assistant={alternativeAssistant || currentPersona}
             />
 
-
             <div className="font-bold text-emphasis ml-2 my-auto">
               {alternativeAssistant
                 ? alternativeAssistant.name
                 : personaName || "Danswer"}
             </div>
-
 
             {/* {query === undefined &&
               hasDocs &&
@@ -265,38 +261,54 @@ export const AIMessage = ({
                 </div>
               )}
 
-            {docs && docs.length > 0
-              &&
+            {docs && docs.length > 0 && (
               <div className="w-full flex flex-col">
-
                 <div className="w-full flex gap-x-2 overflow-x-scroll">
                   {docs
-                    .filter((doc, index, self) =>
-                      doc.document_id &&
-                      doc.document_id !== "" &&
-                      index === self.findIndex((d) => d.document_id === doc.document_id)
+                    .filter(
+                      (doc, index, self) =>
+                        doc.document_id &&
+                        doc.document_id !== "" &&
+                        index ===
+                          self.findIndex(
+                            (d) => d.document_id === doc.document_id
+                          )
                     )
                     .map((doc) => (
-                      <div key={doc.document_id} className={`w-[250px] transition-all duration-500 opacity-90 animate-pulse bg-neutral-100 px-4 py-2  border-b 
-                        ${isComplete && citedDocuments &&
-                        (Array.isArray(citedDocuments) &&
-                          citedDocuments.some(([_, obj]) => obj.document_id === doc.document_id)
-                          ? "!opacity-100"
-                          : "!opacity-20")
+                      <div
+                        key={doc.document_id}
+                        className={`w-[250px] transition-opacity duration-500 opacity-90  bg-neutral-100 px-4 py-2  border-b 
+                        ${
+                          !isComplete
+                            ? "animate-pulse"
+                            : citedDocuments &&
+                              (Array.isArray(citedDocuments) &&
+                              citedDocuments.some(
+                                ([_, obj]) =>
+                                  obj.document_id === doc.document_id
+                              )
+                                ? "!opacity-100"
+                                : "!opacity-20")
                         }
-                    `}>
-
+                    `}
+                      >
                         <h2 className="text-sm font-semibold text-neutral-800">
-                          {doc.document_id.split("/")[doc.document_id.split("/").length - 1]}
+                          {
+                            doc.document_id.split("/")[
+                              doc.document_id.split("/").length - 1
+                            ]
+                          }
                         </h2>
 
-                        <div className="line-clamp-3 text-xs py-4">{doc.blurb}</div>
+                        <div className="line-clamp-3 text-xs py-4">
+                          {doc.blurb}
+                        </div>
                         {/* <a className="w-full line-clamp-1 ellipses">{doc.link}</a> */}
                       </div>
                     ))}
                 </div>
               </div>
-            }
+            )}
 
             {content ? (
               <>
@@ -304,21 +316,22 @@ export const AIMessage = ({
 
                 {typeof content === "string" ? (
                   <ReactMarkdown
-
                     key={messageId}
                     className="prose max-w-full"
                     components={{
                       a: (props) => {
                         const { node, ...rest } = props;
-                        const value = rest.children
+                        const value = rest.children;
                         if (value?.toString().startsWith("[")) {
-
                           // for some reason <a> tags cause the onClick to not apply
                           // and the links are unclickable
                           // TODO: fix the fact that you have to double click to follow link
                           // for the first link
                           return (
-                            <Citation link={rest?.href} key={node?.position?.start?.offset} >
+                            <Citation
+                              link={rest?.href}
+                              key={node?.position?.start?.offset}
+                            >
                               {rest.children}
                             </Citation>
                             // <as
@@ -334,8 +347,7 @@ export const AIMessage = ({
                             //   {rest.children}
                             // </a>
                           );
-                        }
-                        else {
+                        } else {
                           return (
                             <a
                               key={node?.position?.start?.offset}
@@ -345,14 +357,11 @@ export const AIMessage = ({
                                   : undefined
                               }
                               className="cursor-pointer text-link hover:text-link-hover"
-
                             >
                               {rest.children}
                             </a>
-
-                          )
+                          );
                         }
-
                       },
                       code: (props) => (
                         <CodeBlock {...props} content={content as string} />
@@ -380,9 +389,6 @@ export const AIMessage = ({
                   {citedDocuments
                     .filter(([_, document]) => document.semantic_identifier)
                     .map(([citationKey, document], ind) => {
-
-
-
                       const display = (
                         <div className="max-w-350 text-ellipsis flex text-sm border border-border py-1 px-2 rounded flex">
                           <div className="mr-1 my-auto">
@@ -395,7 +401,6 @@ export const AIMessage = ({
                         </div>
                       );
 
-
                       if (document.link) {
                         return (
                           <a
@@ -404,7 +409,6 @@ export const AIMessage = ({
                             target="_blank"
                             className="cursor-pointer hover:bg-hover"
                           >
-
                             {display}
                           </a>
                         );
@@ -664,9 +668,9 @@ export const HumanMessage = ({
                 </div>
               )}
             {onEdit &&
-              isHovered &&
-              !isEditing &&
-              (!files || files.length === 0) ? (
+            isHovered &&
+            !isEditing &&
+            (!files || files.length === 0) ? (
               <Hoverable
                 icon={FiEdit2}
                 onClick={() => {

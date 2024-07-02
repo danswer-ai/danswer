@@ -1,7 +1,14 @@
 "use client";
 
 import { FiBook, FiEdit, FiFolderPlus, FiPlusSquare } from "react-icons/fi";
-import { ForwardedRef, forwardRef, useContext, useEffect, useRef, useState } from "react";
+import {
+  ForwardedRef,
+  forwardRef,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -23,18 +30,19 @@ import React from "react";
 import { FaBrain } from "react-icons/fa";
 import { Logo } from "@/components/Logo";
 import { HeaderTitle } from "@/components/header/Header";
-import { TbLayoutSidebarLeftExpand, TbLayoutSidebarRightExpand } from "react-icons/tb";
-
+import {
+  TbLayoutSidebarLeftExpand,
+  TbLayoutSidebarRightExpand,
+} from "react-icons/tb";
 
 interface ChatSideBarProps {
-  closeSidebar: () => void;
+  closeSidebar?: () => void;
   search?: boolean;
   existingChats?: ChatSession[];
   currentChatSession?: ChatSession | null | undefined;
   folders?: Folder[];
   openedFolders?: { [key: number]: boolean };
-  initialWidth: number
-
+  initialWidth?: number;
 }
 // forwardRef<HTMLDivElement, DocumentSidebarProps>(
 export const ChatSidebar = forwardRef<HTMLDivElement, ChatSideBarProps>(
@@ -46,7 +54,7 @@ export const ChatSidebar = forwardRef<HTMLDivElement, ChatSideBarProps>(
       currentChatSession,
       folders,
       openedFolders,
-      initialWidth
+      initialWidth,
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
@@ -83,27 +91,30 @@ export const ChatSidebar = forwardRef<HTMLDivElement, ChatSideBarProps>(
             flex 
             flex-col relative
             h-screen
-        transition-transform`}
+            transition-transform`}
           id="chat-sidebar"
         >
-
           <div className="pt-2  flex">
             <Link
               className="ml-4 w-full"
               href={
-                settings && settings.default_page === "chat" ? "/chat" : "/search"
+                settings && settings.default_page === "chat"
+                  ? "/chat"
+                  : "/search"
               }
             >
               <div className="flex pr-12 w-full">
-
-                <button className="mb-6" onClick={() => closeSidebar()}>
-                  <TbLayoutSidebarRightExpand size={24} />
-                </button>
+                {closeSidebar && (
+                  <button className="mb-6" onClick={() => closeSidebar()}>
+                    <TbLayoutSidebarRightExpand size={24} />
+                  </button>
+                )}
                 <div className="mx-auto pt-4 flex">
-
-
-                  <Logo height={32} width={30} className="ml-auto mr-1 my-auto" />
-
+                  <Logo
+                    height={32}
+                    width={30}
+                    className="ml-auto mr-1 my-auto"
+                  />
                   {enterpriseSettings && enterpriseSettings.application_name ? (
                     <div>
                       <HeaderTitle>
@@ -129,7 +140,7 @@ export const ChatSidebar = forwardRef<HTMLDivElement, ChatSideBarProps>(
               href={
                 "/chat" +
                 (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                  currentChatSession
+                currentChatSession
                   ? `?assistantId=${currentChatSession.persona_id}`
                   : "")
               }
@@ -187,4 +198,5 @@ export const ChatSidebar = forwardRef<HTMLDivElement, ChatSideBarProps>(
       </>
     );
   }
-)
+);
+ChatSidebar.displayName = "ChatSidebar";
