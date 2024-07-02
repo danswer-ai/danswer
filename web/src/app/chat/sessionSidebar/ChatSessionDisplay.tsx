@@ -92,7 +92,7 @@ export function ChatSessionDisplay({
       <Link
         className="flex my-1 relative"
         key={chatSession.id}
-        href={search ? `/search?searchsId=${chatSession.id}` : `/chat?chatId=${chatSession.id}`}
+        href={search ? `/search?searchId=${chatSession.id}` : `/chat?chatId=${chatSession.id}`}
         scroll={false}
         draggable="true"
         onDragStart={(event) => {

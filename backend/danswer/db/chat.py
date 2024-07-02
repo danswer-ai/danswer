@@ -7,6 +7,7 @@ from sqlalchemy import nullsfirst
 from sqlalchemy import or_
 from sqlalchemy import and_
 from sqlalchemy import select
+from sqlalchemy import desc
 from sqlalchemy import func
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import joinedload
@@ -115,6 +116,8 @@ def get_chat_sessions_by_user(
     
     if only_one_shot:
         stmt = stmt.where(ChatSession.one_shot.is_(True))
+        stmt = stmt.order_by(desc(ChatSession.id))
+
 
     if deleted is not None:
         stmt = stmt.where(ChatSession.deleted == deleted)

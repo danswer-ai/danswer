@@ -179,6 +179,7 @@ export function ChatPage({
     }
 
     async function initialSessionFetch() {
+      
       if (existingChatSessionId === null) {
         setIsFetchingChatMessages(false);
         if (defaultSelectedPersonaId !== undefined) {
@@ -206,6 +207,7 @@ export function ChatPage({
         }
         return;
       }
+
 
       setIsFetchingChatMessages(true);
       const response = await fetch(
@@ -514,7 +516,6 @@ export function ChatPage({
       } else {
         endDivRef.current?.scrollIntoView({ behavior: "smooth" });
       }
-
       setHasPerformedInitialScroll(true);
     }, 50);
   };
