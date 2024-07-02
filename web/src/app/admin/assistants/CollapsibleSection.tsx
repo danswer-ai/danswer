@@ -44,17 +44,11 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
             <FiSettings className="pointer-events-none my-auto" size={16} />
             {prompt}{" "}
           </span>
-        ) : (
+        ) :
           <>
             {children}
-            <Button
-              onClick={(e) => toggleCollapse()}
-              className="text-sm   p-1 rounded-lg"
-            >
-              Settings updated
-            </Button>
           </>
-        )}
+        }
       </div>
     </div>
   );

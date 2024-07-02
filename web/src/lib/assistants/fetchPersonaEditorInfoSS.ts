@@ -6,22 +6,22 @@ import { FullLLMProvider } from "@/app/admin/models/llm/interfaces";
 import { ToolSnapshot } from "../tools/interfaces";
 import { fetchToolsSS } from "../tools/fetchTools";
 import { IconManifestType } from "react-icons/lib";
-import { OpenAIIcon, AnthropicIcon } from "@/components/icons/icons";
+import { OpenAIIcon, AnthropicIcon, AWSIcon, AzureIcon, OpenSourceIcon } from "@/components/icons/icons";
 
 export async function fetchAssistantEditorInfoSS(
   personaId?: number | string
 ): Promise<
   | [
-      {
-        ccPairs: CCPairBasicInfo[];
-        documentSets: DocumentSet[];
-        llmProviders: FullLLMProvider[];
-        user: User | null;
-        existingPersona: Persona | null;
-        tools: ToolSnapshot[];
-      },
-      null,
-    ]
+    {
+      ccPairs: CCPairBasicInfo[];
+      documentSets: DocumentSet[];
+      llmProviders: FullLLMProvider[];
+      user: User | null;
+      existingPersona: Persona | null;
+      tools: ToolSnapshot[];
+    },
+    null,
+  ]
   | [null, string]
 > {
   const tasks = [
@@ -93,6 +93,15 @@ export async function fetchAssistantEditorInfoSS(
       provider.icon = OpenAIIcon;
     } else if (provider.provider == "anthropic") {
       provider.icon = AnthropicIcon;
+    }
+    else if (provider.provider == "bedrock") {
+      provider.icon = AzureIcon
+    }
+    else if (provider.provider == "azure") {
+      provider.icon = AWSIcon
+    }
+    else {
+      provider.icon = OpenSourceIcon
     }
   }
 

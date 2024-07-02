@@ -45,6 +45,11 @@ import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
 import openAISVG from "../../../public/Openai.svg";
+import openSourceIcon from "../../../public/openSource.png";
+
+import awsWEBP from "../../../public/amazon.webp";
+import azureIcon from "../../../public/azure.png";
+
 import anthropicSVG from "../../../public/Anthropic.svg";
 
 import OCIStorageSVG from "../../../public/OCI.svg";
@@ -88,6 +93,21 @@ export const OpenAIIcon = ({
       className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
     >
       <Image src={openAISVG} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+
+export const OpenSourceIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={openSourceIcon} alt="Logo" width="96" height="96" />
     </div>
   );
 };
@@ -525,6 +545,38 @@ export const ProductboardIcon = ({
       className={`w-[${size}px] h-[${size}px] ` + className}
     >
       <Image src="/Productboard.webp" alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+
+
+export const AWSIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      // Linear Icon has a bit more surrounding whitespace than other icons, which is why we need to adjust it here
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={awsWEBP} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const AzureIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      // Linear Icon has a bit more surrounding whitespace than other icons, which is why we need to adjust it here
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={azureIcon} alt="Logo" width="96" height="96" />
     </div>
   );
 };

@@ -202,9 +202,9 @@ export function AssistantEditor({
         initialValues={initialValues}
         validationSchema={Yup.object()
           .shape({
-            name: Yup.string().required("Must give the Assistant a name!"),
+            name: Yup.string().required("Must provide a name for the Assistant"),
             description: Yup.string().required(
-              "Must give the Assistant a description!"
+              "Must provide a description for the Assistant"
             ),
             system_prompt: Yup.string(),
             task_prompt: Yup.string(),
@@ -227,29 +227,26 @@ export function AssistantEditor({
           })
           .test(
             "system-prompt-or-task-prompt",
-            "Must provide a system prompt",
-            (values) => {
-              const systemPromptSpecified = values.system_prompt
-                ? values.system_prompt.length > 0
-                : false;
-              const taskPromptSpecified = values.task_prompt
-                ? values.task_prompt.length > 0
-                : false;
-              if (systemPromptSpecified || taskPromptSpecified) {
-                setFinalPromptError("");
-                return true;
-              } // Return true if at least one field has a value
+            "Must provide either System Prompt or Additional Instructions",
+            function (values) {
+              const systemPromptSpecified = values.system_prompt && values.system_prompt.trim().length > 0;
+              const taskPromptSpecified = values.task_prompt && values.task_prompt.trim().length > 0;
 
-              setFinalPromptError(
-                "Must provide System Prompt or Additional Instructions"
-              );
+              if (systemPromptSpecified || taskPromptSpecified) {
+                return true;
+              }
+
+              return this.createError({
+                path: 'system_prompt',
+                message: 'Must provide either System Prompt or Additional Instructions'
+              });
             }
           )}
         onSubmit={async (values, formikHelpers) => {
           if (finalPromptError) {
             setPopup({
               type: "error",
-              message: "Cannot submit while there are errors in the form!",
+              message: "Cannot submit while there are errors in the form",
             });
             return;
           }
@@ -284,8 +281,8 @@ export function AssistantEditor({
                 providerDisplayNameToProviderName.get(
                   values.llm_model_provider_override || ""
                 ) ||
-                  defaultProviderName ||
-                  "",
+                defaultProviderName ||
+                "",
                 values.llm_model_version_override || defaultModelName || ""
               )
             ) {
@@ -394,22 +391,23 @@ export function AssistantEditor({
               <div className="pb-6">
                 <TextFormField
                   name="name"
-                  tooltip="Users will be able to select based on this name."
+                  tooltip="Used to identify the Assistant in the UI."
                   label="Name"
                   disabled={isUpdate}
+                  placeholder="e.g. 'Email Assistant'"
                 />
                 <TextFormField
                   tooltip="Used for identifying assistants and their use cases."
                   name="description"
                   label="Description"
+                  placeholder="e.g. 'Use this Assistant to help draft professional emails'"
                 />
-
                 <TextFormField
                   tooltip="Gives your assistant a prime directive"
                   name="system_prompt"
                   label="System Prompt"
                   isTextArea={true}
-                  placeholder="Tell your assistant what it is used for"
+                  placeholder="e.g. 'You are a professional email writing assistant that always uses a polite enthusiastic tone, emphasizes action items, and leaves blanks for the human to fill in when you have unknowns'"
                   //
                   onChange={(e) => {
                     setFieldValue("system_prompt", e.target.value);
@@ -427,15 +425,14 @@ export function AssistantEditor({
                     <div className="block font-medium text-base">
                       LLM Provider{" "}
                     </div>
-                    <TooltipProvider>
+                    <TooltipProvider delayDuration={50}>
                       <Tooltip>
                         <TooltipTrigger>
                           <FiInfo size={12} />
                         </TooltipTrigger>
                         <TooltipContent side="top" align="center">
                           <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                            Select an LLM default instance to use for this
-                            assistant!
+                            Select a Large Language Model (Generative AI model) to power this Assistant
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -485,11 +482,11 @@ export function AssistantEditor({
                         providerDisplayNameToProviderName.get(
                           values.llm_model_provider_override || ""
                         ) ||
-                          defaultProviderName ||
-                          "",
+                        defaultProviderName ||
+                        "",
                         values.llm_model_version_override ||
-                          defaultModelName ||
-                          ""
+                        defaultModelName ||
+                        ""
                       ) && (
                         <BooleanFormField
                           noPadding
@@ -666,7 +663,7 @@ export function AssistantEditor({
                       name="task_prompt"
                       label="Additional instructions (Optional)"
                       isTextArea={true}
-                      placeholder="What should this assistant do in response to user query?"
+                      placeholder="e.g. 'Remember to reference all of the points mentioned in my message to you and focus on identifying action items that can move things forward'"
                       onChange={(e) => {
                         setFieldValue("task_prompt", e.target.value);
                         triggerFinalPromptUpdate(
