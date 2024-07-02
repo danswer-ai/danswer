@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 PROMPTS_YAML = "./danswer/chat/prompts.yaml"

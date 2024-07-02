@@ -15,7 +15,9 @@ from danswer.file_store.file_store import get_default_file_store
 from danswer.utils.logger import setup_logger
 from ee.danswer.server.enterprise_settings.models import AnalyticsScriptUpload
 from ee.danswer.server.enterprise_settings.models import EnterpriseSettings
+from dotenv import load_dotenv
 
+load_dotenv()
 
 _ENTERPRISE_SETTINGS_KEY = "danswer_enterprise_settings"
 logger = setup_logger()

@@ -33,6 +33,9 @@ from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import LLMConfig
 from danswer.llm.interfaces import ToolChoiceOptions
 from danswer.utils.logger import setup_logger
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 logger = setup_logger()

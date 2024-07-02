@@ -5,6 +5,9 @@ import urllib.parse
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentIndexType
 from danswer.file_processing.enums import HtmlBasedConnectorTransformLinksStrategy
+from dotenv import load_dotenv
+
+load_dotenv()
 
 #####
 # App Configs

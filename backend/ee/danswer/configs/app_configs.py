@@ -1,5 +1,7 @@
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
 # Applicable for OIDC Auth
 OPENID_CONFIG_URL = os.environ.get("OPENID_CONFIG_URL", "")
 
