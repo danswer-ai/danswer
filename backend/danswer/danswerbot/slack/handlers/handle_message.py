@@ -229,6 +229,7 @@ def handle_message(
     send_to: list[str] | None = None
     respond_tag_only = False
     respond_team_member_list = None
+    respond_slack_group_list = None
 
     bypass_acl = False
     if (
