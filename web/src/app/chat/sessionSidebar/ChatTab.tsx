@@ -10,11 +10,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function ChatTab({
+  search,
   existingChats,
   currentChatId,
   folders,
   openedFolders,
 }: {
+  search?: boolean
   existingChats?: ChatSession[];
   currentChatId?: number;
   folders?: Folder[];
@@ -90,6 +92,7 @@ export function ChatTab({
                       return (
                         <div key={`${chat.id}-${chat.name}`}>
                           <ChatSessionDisplay
+                            search={search}
                             chatSession={chat}
                             isSelected={isSelected}
                             skipGradient={isDragOver}

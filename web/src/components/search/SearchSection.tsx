@@ -23,7 +23,7 @@ import { questionValidationStreamed } from "@/lib/search/streamingQuestionValida
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { PersonaSelector } from "./PersonaSelector";
 import { computeAvailableFilters } from "@/lib/filters";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
 import { UserDropdown } from "../UserDropdown";
@@ -99,6 +99,20 @@ export const SearchSection = ({
       availableSources: availableSources,
       availableDocumentSets: documentSets,
     });
+
+  const searchParams = useSearchParams();
+  const existingSearchIdRaw = searchParams.get("chatId");
+  const existingSearchessionId = existingSearchIdRaw
+    ? parseInt(existingSearchIdRaw)
+    : null;
+
+  useEffect(() => {
+    async function initialSessionFetch() {
+
+    }
+    initialSessionFetch()
+
+  }, [existingSearchessionId])
 
   // Overrides for default behavior that only last a single query
   const [defaultOverrides, setDefaultOverrides] =
@@ -329,7 +343,6 @@ export const SearchSection = ({
 
   return (
     <>
-
       <div
         ref={sidebarElementRef}
         className={`  flex-none absolute left-0 z-[100]  overflow-y-hidden sidebar bg-background-weak h-screen`}
@@ -345,6 +358,7 @@ export const SearchSection = ({
 
 
             <ChatSidebar
+              search={true}
               initialWidth={usedSidebarWidth}
               ref={innerSidebarElementRef}
               closeSidebar={() => toggleSidebar()}

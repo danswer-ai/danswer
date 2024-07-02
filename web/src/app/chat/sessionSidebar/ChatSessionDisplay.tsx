@@ -22,11 +22,13 @@ import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
 
 export function ChatSessionDisplay({
   chatSession,
+  search,
   isSelected,
   skipGradient,
 }: {
   chatSession: ChatSession;
   isSelected: boolean;
+  search?: boolean;
   // needed when the parent is trying to apply some background effect
   // if not set, the gradient will still be applied and cause weirdness
   skipGradient?: boolean;
@@ -90,7 +92,7 @@ export function ChatSessionDisplay({
       <Link
         className="flex my-1 relative"
         key={chatSession.id}
-        href={`/chat?chatId=${chatSession.id}`}
+        href={search ? `/search?searchsId=${chatSession.id}` : `/chat?chatId=${chatSession.id}`}
         scroll={false}
         draggable="true"
         onDragStart={(event) => {

@@ -28,6 +28,7 @@ import { TbLayoutSidebarLeftExpand, TbLayoutSidebarRightExpand } from "react-ico
 
 interface ChatSideBarProps {
   closeSidebar: () => void;
+  search?: boolean;
   existingChats?: ChatSession[];
   currentChatSession?: ChatSession | null | undefined;
   folders?: Folder[];
@@ -39,6 +40,7 @@ interface ChatSideBarProps {
 export const ChatSidebar = forwardRef<HTMLDivElement, ChatSideBarProps>(
   (
     {
+      search,
       closeSidebar,
       existingChats,
       currentChatSession,
@@ -175,6 +177,7 @@ export const ChatSidebar = forwardRef<HTMLDivElement, ChatSideBarProps>(
           <div className="border-b border-border pb-4 mx-3" />
 
           <ChatTab
+            search={search}
             existingChats={existingChats}
             currentChatId={currentChatId}
             folders={folders}
