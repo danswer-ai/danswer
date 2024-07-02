@@ -5,7 +5,9 @@ from uuid import UUID
 from sqlalchemy import delete
 from sqlalchemy import nullsfirst
 from sqlalchemy import or_
+from sqlalchemy import and_
 from sqlalchemy import select
+from sqlalchemy import func
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
@@ -65,6 +67,38 @@ def get_chat_session_by_id(
         raise ValueError("Chat session has been deleted")
 
     return chat_session
+
+def get_first_messages_for_chat_sessions(
+    chat_session_ids: list[int],
+    db_session: Session
+) -> list[tuple[int, str]]:
+    subquery = (
+        select(
+            ChatMessage.chat_session_id,
+            func.min(ChatMessage.id).label('min_id')
+        )
+        .where(and_(
+            ChatMessage.chat_session_id.in_(chat_session_ids),
+            ChatMessage.message_type == MessageType.USER  # Select USER messages
+        ))
+
+        .group_by(ChatMessage.chat_session_id)
+        .subquery()
+    )
+
+    query = (
+        select(ChatMessage.chat_session_id, ChatMessage.message)
+        .join(subquery, 
+              (ChatMessage.chat_session_id == subquery.c.chat_session_id) & 
+              (ChatMessage.id == subquery.c.min_id))
+    )
+
+    first_messages = db_session.execute(query).all()
+    return first_messages
+
+
+
+
 
 
 def get_chat_sessions_by_user(

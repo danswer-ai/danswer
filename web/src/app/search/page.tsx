@@ -1,3 +1,4 @@
+
 import { SearchSection } from "@/components/search/SearchSection";
 import { Header } from "@/components/header/Header";
 import {
@@ -47,8 +48,7 @@ export default async function Home() {
     fetchSS("/query/valid-tags"),
     fetchSS("/secondary-index/get-embedding-models"),
     fetchSS("/chat/get-user-searches"),
-    fetchSS("/query/valid-tags"),
-
+    
   ];
 
 
@@ -201,7 +201,6 @@ export default async function Home() {
 
 
   // const existingChatSessionPersonaId = selectedChatSession?.persona_id;
-
 
 
 

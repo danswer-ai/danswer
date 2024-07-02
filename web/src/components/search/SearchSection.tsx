@@ -31,6 +31,9 @@ import ResizableSection from "../resizable/ResizableSection";
 import { ChatSidebar } from "@/app/chat/sessionSidebar/ChatSidebar";
 import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 import { ChatSession } from "@/app/chat/interfaces";
+import { FiBookmark, FiInfo } from "react-icons/fi";
+import { HoverPopup } from "../HoverPopup";
+import { Logo } from "../Logo";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -165,7 +168,7 @@ export const SearchSection = ({
     setIsFetching(true);
     setSearchResponse(initialSearchResponse);
     setValidQuestionResponse(VALID_QUESTION_RESPONSE_DEFAULT);
-
+    
     const searchFnArgs = {
       query,
       sources: filterManager.selectedSources,
@@ -280,8 +283,15 @@ export const SearchSection = ({
     }
   };
 
+  const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
+    if (e.propertyName === 'opacity' && !firstSearch) {
+      const target = e.target as HTMLDivElement;
+      target.style.display = 'none';
+    }
+  };
+  const [firstSearch, setFirstSearch] = useState(true)
 
-  console.log(querySessions)
+
   return (
     <>
 
@@ -300,8 +310,6 @@ export const SearchSection = ({
 
             {/* <ChatSidebar /> */}
             <ChatSidebar
-
-
               initialWidth={usedSidebarWidth}
               ref={innerSidebarElementRef}
               closeSidebar={() => toggleSidebar()}
@@ -335,28 +343,80 @@ export const SearchSection = ({
 
 
 
-      <div className=" px-24 pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
 
+      {/* <div className="block 2xl:block w-52 3xl:w-64 mt-4">
+        {(ccPairs.length > 0 || documentSets.length > 0) && (
+          <SourceSelector
+            {...filterManager}
+            toggled={filters}
+            toggleFilters={toggleFilters}
+            availableDocumentSets={finalAvailableDocumentSets}
+            existingSources={finalAvailableSources}
+            availableTags={tags}
+          />
+        )}
+
+      </div> */}
+
+      <div className="px-24 pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
+        <div className="absolute top-24 left-0 hidden 2xl:block w-52 3xl:w-64">
+          {(ccPairs.length > 0 || documentSets.length > 0) && (
+            <SourceSelector
+              {...filterManager}
+              toggled={filters}
+              toggleFilters={toggleFilters}
+              availableDocumentSets={finalAvailableDocumentSets}
+              existingSources={finalAvailableSources}
+              availableTags={tags}
+            />
+          )}
+        </div>
         <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64">
 
         </div>
         <div className="max-w-searchbar-max w-[90%] mx-auto">
-          {personas.length > 0 ? (
-            <div className="flex mb-2 w-fit">
-              <PersonaSelector
-                personas={personas}
-                selectedPersonaId={selectedPersona}
-                onPersonaChange={(persona) => setSelectedPersona(persona.id)}
-              />
+
+          <div
+            className={`transition-all duration-500 ease-in-out overflow-hidden ${firstSearch ? 'opacity-100 max-h-[500px]' : 'opacity-0 max-h-0'
+              }`}
+            onTransitionEnd={handleTransitionEnd}
+          >
+            <div className="mt-48 mb-8 flex justify-center items-center">
+              <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
+                <div className="flex">
+                  <div className="mx-auto">
+                    <Logo height={80} width={80} className="m-auto" />
+                    <div className="m-auto text-3xl font-bold text-strong mt-4 w-fit">
+                      Danswer
+                    </div>
+                    Unlocking your organization's knowledge.
+                  </div>
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="pt-3" />
-          )}
+          </div>
+          {/* {firstSearch &&
+          
+            <div className="mt-48 mb-8 flex justify-center items-center h-full">
+              <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
+                <div className="flex">
+                  <div className="mx-auto">
+                    <Logo height={80} width={80} className="m-auto" />
+                    <div className="m-auto text-3xl font-bold text-strong mt-4 w-fit">
+                      Danswer
+                    </div>
+                    Unlocking your organization's knowlege.
+                  </div>
+                </div>
+              </div>
+            </div>
+          } */}
 
           <SearchBar
             query={query}
             setQuery={setQuery}
             onSearch={async () => {
+              setFirstSearch(false)
               setFilters(false)
               setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
               await onSearch({ offset: 0 });
@@ -365,22 +425,8 @@ export const SearchSection = ({
           <div className="flex gap-x-4 flex-wrap w-full">
 
             <div className="block 2xl:block w-52 3xl:w-64 mt-4">
-              {(ccPairs.length > 0 || documentSets.length > 0) && (
-                <SourceSelector
-                  {...filterManager}
-                  toggled={filters}
-                  toggleFilters={toggleFilters}
-                  availableDocumentSets={finalAvailableDocumentSets}
-                  existingSources={finalAvailableSources}
-                  availableTags={tags}
-                />
-              )}
 
-            </div>
-
-            <div className="block 2xl:block w-52 3xl:w-64 mt-4">
-
-              <div className="mt-10 pr-5">
+              <div className="pr-5">
                 <SearchHelper
                   isFetching={isFetching}
                   searchResponse={searchResponse}
@@ -420,7 +466,7 @@ export const SearchSection = ({
             />
           </div>
         </div>
-      </div>
+      </div >
     </>
 
   );
