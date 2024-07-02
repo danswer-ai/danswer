@@ -44,11 +44,9 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
             <FiSettings className="pointer-events-none my-auto" size={16} />
             {prompt}{" "}
           </span>
-        ) :
-          <>
-            {children}
-          </>
-        }
+        ) : (
+          <>{children}</>
+        )}
       </div>
     </div>
   );

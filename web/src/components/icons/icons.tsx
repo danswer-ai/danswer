@@ -97,7 +97,6 @@ export const OpenAIIcon = ({
   );
 };
 
-
 export const OpenSourceIcon = ({
   size = 16,
   className = defaultTailwindCSS,
@@ -548,8 +547,6 @@ export const ProductboardIcon = ({
     </div>
   );
 };
-
-
 
 export const AWSIcon = ({
   size = 16,

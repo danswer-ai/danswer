@@ -202,7 +202,9 @@ export function AssistantEditor({
         initialValues={initialValues}
         validationSchema={Yup.object()
           .shape({
-            name: Yup.string().required("Must provide a name for the Assistant"),
+            name: Yup.string().required(
+              "Must provide a name for the Assistant"
+            ),
             description: Yup.string().required(
               "Must provide a description for the Assistant"
             ),
@@ -229,16 +231,19 @@ export function AssistantEditor({
             "system-prompt-or-task-prompt",
             "Must provide either System Prompt or Additional Instructions",
             function (values) {
-              const systemPromptSpecified = values.system_prompt && values.system_prompt.trim().length > 0;
-              const taskPromptSpecified = values.task_prompt && values.task_prompt.trim().length > 0;
+              const systemPromptSpecified =
+                values.system_prompt && values.system_prompt.trim().length > 0;
+              const taskPromptSpecified =
+                values.task_prompt && values.task_prompt.trim().length > 0;
 
               if (systemPromptSpecified || taskPromptSpecified) {
                 return true;
               }
 
               return this.createError({
-                path: 'system_prompt',
-                message: 'Must provide either System Prompt or Additional Instructions'
+                path: "system_prompt",
+                message:
+                  "Must provide either System Prompt or Additional Instructions",
               });
             }
           )}
@@ -281,8 +286,8 @@ export function AssistantEditor({
                 providerDisplayNameToProviderName.get(
                   values.llm_model_provider_override || ""
                 ) ||
-                defaultProviderName ||
-                "",
+                  defaultProviderName ||
+                  "",
                 values.llm_model_version_override || defaultModelName || ""
               )
             ) {
@@ -432,7 +437,8 @@ export function AssistantEditor({
                         </TooltipTrigger>
                         <TooltipContent side="top" align="center">
                           <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                            Select a Large Language Model (Generative AI model) to power this Assistant
+                            Select a Large Language Model (Generative AI model)
+                            to power this Assistant
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -482,11 +488,11 @@ export function AssistantEditor({
                         providerDisplayNameToProviderName.get(
                           values.llm_model_provider_override || ""
                         ) ||
-                        defaultProviderName ||
-                        "",
+                          defaultProviderName ||
+                          "",
                         values.llm_model_version_override ||
-                        defaultModelName ||
-                        ""
+                          defaultModelName ||
+                          ""
                       ) && (
                         <BooleanFormField
                           noPadding
