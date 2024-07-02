@@ -7,9 +7,10 @@ from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_llm_provider
-from danswer.db.models import Persona
 from danswer.db.persona import get_personas
 from danswer.db.persona import upsert_persona
+from danswer.search.enums import RecencyBiasSetting
+from danswer.server.features.persona.models import CreatePersonaRequest
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.settings.models import Settings
 from danswer.server.settings.store import store_settings as store_base_settings
@@ -31,18 +32,14 @@ class SeedConfiguration(BaseModel):
     admin_user_emails: list[str] | None = None
     seeded_name: str | None = None
     seeded_logo_path: str | None = None
-    personas: list[Persona] | None = None
+    personas: list[CreatePersonaRequest] | None = None
     settings: Settings | None = None
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 def _parse_env() -> SeedConfiguration | None:
     seed_config_str = os.getenv(_SEED_CONFIG_ENV_VAR_NAME)
     if not seed_config_str:
         return None
-
     seed_config = SeedConfiguration.parse_raw(seed_config_str)
     return seed_config
 
@@ -63,7 +60,7 @@ def _seed_llms(
     update_default_provider(db_session, seeded_providers[0].id)
 
 
-def _seed_personas(db_session: Session, personas: list[Persona]) -> None:
+def _seed_personas(db_session: Session, personas: list[CreatePersonaRequest]) -> None:
     # don't seed personas if we've already done this
     existing_personas = get_personas(
         user_id=None,  # Admin view
@@ -84,16 +81,15 @@ def _seed_personas(db_session: Session, personas: list[Persona]) -> None:
             num_chunks=persona.num_chunks if persona.num_chunks is not None else 0.0,
             llm_relevance_filter=persona.llm_relevance_filter,
             llm_filter_extraction=persona.llm_filter_extraction,
-            recency_bias=persona.recency_bias,
-            prompts=persona.prompts,
-            document_sets=persona.document_sets,
+            recency_bias=RecencyBiasSetting.AUTO,
+            prompt_ids=persona.prompt_ids,
+            document_set_ids=persona.document_set_ids,
             llm_model_provider_override=persona.llm_model_provider_override,
             llm_model_version_override=persona.llm_model_version_override,
             starter_messages=persona.starter_messages,
             is_public=persona.is_public,
             db_session=db_session,
-            tool_ids=[tool.id for tool in persona.tools],
-            default_persona=persona.default_persona,
+            tool_ids=persona.tool_ids,
         )
 
 
