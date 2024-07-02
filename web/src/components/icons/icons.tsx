@@ -19,6 +19,7 @@ import {
   FiChevronsDown,
   FiChevronsUp,
   FiEdit2,
+  FiClipboard,
   FiFile,
   FiGlobe,
   FiThumbsDown,
@@ -262,6 +263,13 @@ export const CheckmarkIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <FiCheck size={size} className={className} />;
+};
+
+export const ClipboardIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiClipboard size={size} className={className} />;
 };
 
 export const AlertIcon = ({

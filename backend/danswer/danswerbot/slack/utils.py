@@ -77,17 +77,25 @@ def update_emote_react(
     remove: bool,
     client: WebClient,
 ) -> None:
-    if not message_ts:
-        logger.error(f"Tried to remove a react in {channel} but no message specified")
-        return
+    try:
+        if not message_ts:
+            logger.error(
+                f"Tried to remove a react in {channel} but no message specified"
+            )
+            return
 
-    func = client.reactions_remove if remove else client.reactions_add
-    slack_call = make_slack_api_rate_limited(func)  # type: ignore
-    slack_call(
-        name=emoji,
-        channel=channel,
-        timestamp=message_ts,
-    )
+        func = client.reactions_remove if remove else client.reactions_add
+        slack_call = make_slack_api_rate_limited(func)  # type: ignore
+        slack_call(
+            name=emoji,
+            channel=channel,
+            timestamp=message_ts,
+        )
+    except SlackApiError as e:
+        if remove:
+            logger.error(f"Failed to remove Reaction due to: {e}")
+        else:
+            logger.error(f"Was not able to react to user message due to: {e}")
 
 
 def get_danswer_bot_app_id(web_client: WebClient) -> Any:
