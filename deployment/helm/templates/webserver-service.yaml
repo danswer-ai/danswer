@@ -7,6 +7,10 @@ metadata:
     {{- if .Values.webserver.deploymentLabels }}
     {{- toYaml .Values.webserver.deploymentLabels | nindent 4 }}
     {{- end }}
+  {{- if .Values.webserver.service.annotations }}
+  annotations:
+  {{- toYaml .Values.webserver.service.annotations | nindent 4 }}
+  {{- end }}
 spec:
   type: {{ .Values.webserver.service.type }}
   ports:
