@@ -176,6 +176,7 @@ export const SearchResultsDisplay = ({
             />
           ))}
         </div>
+
       )}
     </>
   );

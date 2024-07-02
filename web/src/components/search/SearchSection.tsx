@@ -35,6 +35,8 @@ import { FiBookmark, FiInfo } from "react-icons/fi";
 import { HoverPopup } from "../HoverPopup";
 import { Logo } from "../Logo";
 
+export type searchState = "input" | "searching" | "analyzing"
+
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
   offset: 0,
@@ -159,6 +161,25 @@ export const SearchSection = ({
     searchType,
     offset,
   }: SearchRequestOverrides = {}) => {
+    setTimeout(() => (
+      setSearchState("searching")
+    ), 1000)
+    setTimeout(() => (
+      setSearchState("analyzing")
+    ), 3000)
+    setTimeout(() => (
+      setSearchResponse((prevSearchResponse) => ({
+        ...prevSearchResponse,
+        documents: prevSearchResponse?.documents?.map((document) => ({
+          ...document,
+          validationState: "good",
+        }))
+      } as SearchResponse))
+    ), 5000)
+    setTimeout(() => (
+      setSearchState("input")
+
+    ), 4000)
     // cancel the prior search if it hasn't finished
     if (lastSearchCancellationToken.current) {
       lastSearchCancellationToken.current.cancel();
@@ -168,7 +189,7 @@ export const SearchSection = ({
     setIsFetching(true);
     setSearchResponse(initialSearchResponse);
     setValidQuestionResponse(VALID_QUESTION_RESPONSE_DEFAULT);
-    
+
     const searchFnArgs = {
       query,
       sources: filterManager.selectedSources,
@@ -292,6 +313,9 @@ export const SearchSection = ({
   const [firstSearch, setFirstSearch] = useState(true)
 
 
+  const [searchState, setSearchState] = useState<searchState>("input")
+
+
   return (
     <>
 
@@ -358,8 +382,8 @@ export const SearchSection = ({
 
       </div> */}
 
-      <div className="px-24 pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
-        <div className="absolute top-24 left-0 hidden 2xl:block w-52 3xl:w-64">
+      <div className="px-24  pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
+        <div className="absolute top-12 left-0 hidden 2xl:block w-52 3xl:w-64">
           {(ccPairs.length > 0 || documentSets.length > 0) && (
             <SourceSelector
               {...filterManager}
@@ -413,6 +437,7 @@ export const SearchSection = ({
           } */}
 
           <SearchBar
+            searchState={searchState}
             query={query}
             setQuery={setQuery}
             onSearch={async () => {
@@ -427,7 +452,7 @@ export const SearchSection = ({
             <div className="block 2xl:block w-52 3xl:w-64 mt-4">
 
               <div className="pr-5">
-                <SearchHelper
+                {/* <SearchHelper
                   isFetching={isFetching}
                   searchResponse={searchResponse}
                   selectedSearchType={selectedSearchType}
@@ -446,7 +471,7 @@ export const SearchSection = ({
                       offset,
                     }));
                   }}
-                />
+                /> */}
               </div>
             </div>
           </div>

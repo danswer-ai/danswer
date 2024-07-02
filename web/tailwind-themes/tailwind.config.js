@@ -16,6 +16,9 @@ module.exports = {
     transparent: "transparent",
     current: "currentColor",
     extend: {
+      gradientColorStops: {
+        'neutral-10': '#e5e5e5 5%',
+      },
       screens: {
         "2xl": "1420px",
         "3xl": "1700px",
@@ -73,6 +76,8 @@ module.exports = {
 
         // hover
         "hover-light": "#f3f4f6", // gray-100
+        "hover-lightish": "#EAEBEF", // gray-160
+        
         hover: "#e5e7eb", // gray-200
         "hover-emphasis": "#d1d5db", // gray-300
         "accent-hover": "#5964c2",

@@ -5,11 +5,14 @@ import { FiCalendar, FiCamera, FiPlusCircle, FiSend } from "react-icons/fi";
 import { FaBrain } from "react-icons/fa";
 import { InputBarPreview } from "@/app/chat/files/InputBarPreview";
 import { Icon } from "@tremor/react";
+import { SearchType } from "@/lib/search/interfaces";
+import { searchState } from "./SearchSection";
 
 interface SearchBarProps {
   query: string;
   setQuery: (query: string) => void;
   onSearch: () => void;
+  searchState: searchState
 }
 
 // import React from 'react';
@@ -21,11 +24,11 @@ const AnimatedToggle = ({ isOn, handleToggle }: { isOn: boolean, handleToggle: (
       onClick={handleToggle}
     >
       <div className={`
-        w-14 h-7 flex items-center rounded-full p-1 duration-300 ease-in-out
+        w-14 h-6 flex items-center rounded-full p-1 duration-300 ease-in-out
         ${isOn ? 'bg-neutral-400' : 'bg-neutral-200'}
       `}>
         <div className={`
-          bg-white w-5 h-5 rounded-full shadow-md transform duration-300 ease-in-out
+          bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out
           ${isOn ? 'translate-x-7' : ''}
         `}></div>
       </div>
@@ -42,7 +45,7 @@ export default AnimatedToggle;
 
 
 
-export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
+export const SearchBar = ({ searchState, query, setQuery, onSearch }: SearchBarProps) => {
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const target = event.target;
     setQuery(target.value);
@@ -55,6 +58,7 @@ export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
+
       onSearch();
       event.preventDefault();
     }
@@ -125,8 +129,24 @@ export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
         }}
         suppressContentEditableWarning={true}
       />
-      <div className="flex justify-end w-full items-center space-x-3 mr-12 px-4  pb-2 overflow-hidden">
 
+      <div className="flex justify-end w-full items-center space-x-3 mr-12 px-4  pb-2 overflow-hidden">
+        {
+          searchState == "analyzing" &&
+          <div className="mr-auto relative inline-block">
+            <span className=" text-transparent bg-clip-text bg-gradient-to-r from-black to-black via-neutral-10 animate-shimmer">
+              Analyzing text...
+            </span>
+          </div>
+        }
+        {
+          searchState == "searching" &&
+          <div className="mr-auto relative inline-block">
+            <span className=" text-transparent bg-clip-text bg-gradient-to-r from-black to-black via-neutral-10 animate-shimmer">
+              Searching...
+            </span>
+          </div>
+        }
 
 
         <AnimatedToggle isOn={fast} handleToggle={handleToggle} />

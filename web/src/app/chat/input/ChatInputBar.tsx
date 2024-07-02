@@ -23,10 +23,11 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
 import { FileDescriptor } from "../interfaces";
 import { InputBarPreview } from "../files/InputBarPreview";
-import { RobotIcon } from "@/components/icons/icons";
+import { ConfigureIcon, RobotIcon } from "@/components/icons/icons";
 import { Hoverable } from "@/components/Hoverable";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
+import { IconType } from "react-icons";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
@@ -200,6 +201,7 @@ export function ChatInputBar({
             w-[90%]
             
             shrink
+            bg-background
             relative
             px-4
             max-w-searchbar-max
@@ -211,11 +213,11 @@ export function ChatInputBar({
               ref={suggestionsRef}
               className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full"
             >
-              <div className="rounded-lg py-1.5 bg-white border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
+              <div className="rounded-lg py-1.5 bg-background border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
                 {filteredPersonas.map((currentPersona, index) => (
                   <button
                     key={index}
-                    className={`px-2 ${assistantIconIndex == index && "bg-hover"} rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
+                    className={`px-2 ${assistantIconIndex == index && "bg-hover-lightish"} rounded  rounded-lg content-start flex gap-x-1 py-2 w-full  hover:bg-hover-lightish cursor-pointer`}
                     onClick={() => {
                       updateCurrentPersona(currentPersona);
                     }}
@@ -231,7 +233,7 @@ export function ChatInputBar({
                 <a
                   key={filteredPersonas.length}
                   target="_blank"
-                  className={`${assistantIconIndex == filteredPersonas.length && "bg-hover"} px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
+                  className={`${assistantIconIndex == filteredPersonas.length && "bg-hover"} rounded rounded-lg px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-lightish cursor-pointer"`}
                   href="/assistants/new"
                 >
                   <FiPlus size={17} />
@@ -267,7 +269,7 @@ export function ChatInputBar({
               <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full">
                 <div
                   ref={interactionsRef}
-                  className="bg-background-subtle p-2 rounded-t-lg  items-center flex w-full"
+                  className="bg-background p-2 rounded-t-lg  items-center flex w-full"
                 >
                   <AssistantIcon assistant={alternativeAssistant} border />
                   <p className="ml-3 text-strong my-auto">
@@ -369,7 +371,7 @@ export function ChatInputBar({
               <ChatInputOption
                 flexPriority="shrink"
                 name={selectedAssistant ? selectedAssistant.name : "Assistants"}
-                icon={FaBrain}
+                icon={ConfigureIcon}
                 onClick={() => setConfigModalActiveTab("assistants")}
               />
 
@@ -420,11 +422,24 @@ export function ChatInputBar({
                   }
                 }}
               >
-                <FiSend
+                {/* <svg className={`text-emphasis w-9 h-9 p-2 rounded-lg ${message ? "bg-blue-200" : ""
+                  }`}
+                  xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M12 1.75A10.25 10.25 0 1 0 22.25 12A10.26 10.26 0 0 0 12 1.75m6 10.26a1 1 0 0 1-1.42 0l-3.57-3.57v9.1a1 1 0 0 1-2 0v-9l-3.57 3.51a1 1 0 1 1-1.41-1.41l4.55-4.53a2.07 2.07 0 0 1 1.46-.61a2 2 0 0 1 .79.16c.253.1.482.254.67.45l4.53 4.53a1 1 0 0 1-.04 1.37z" />
+                </svg> */}
+                 <FiSend className={`text-emphasis text-white w-8 h-8 p-1 rounded-full ${message ? "bg-neutral-700" : "bg-[#D7D7D7]"
+                  }`} 
+                  />
+                {/* <svg className={`text-emphasis text-white w-8 h-8 p-1 rounded-full ${message ? "bg-neutral-900" : "bg-[#D7D7D7]"
+                  }`} xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="m3.165 19.503l7.362-16.51c.59-1.324 2.355-1.324 2.946 0l7.362 16.51c.667 1.495-.814 3.047-2.202 2.306l-5.904-3.152c-.459-.245-1-.245-1.458 0l-5.904 3.152c-1.388.74-2.87-.81-2.202-2.306Z" />
+                </svg> */}
+
+                {/* <FiSend
                   size={18}
                   className={`text-emphasis w-9 h-9 p-2 rounded-lg ${message ? "bg-blue-200" : ""
                     }`}
-                />
+                /> */}
               </div>
             </div>
           </div>

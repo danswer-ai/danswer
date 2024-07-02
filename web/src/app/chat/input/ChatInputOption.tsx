@@ -64,7 +64,7 @@ const ChatInputOption = ({
           flex 
           items-center 
           space-x-2 
-          text-subtle
+          text-neutral-700
           hover:bg-hover
           hover:text-emphasis
           p-1.5

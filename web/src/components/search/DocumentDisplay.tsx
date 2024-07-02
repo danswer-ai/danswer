@@ -7,6 +7,8 @@ import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
 import { FiInfo, FiRadio, FiTag } from "react-icons/fi";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
+import { LoadingAnimation } from "../Loading";
+import FunctionalLoader from "@/lib/search/Loader";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -174,7 +176,56 @@ export const DocumentDisplay = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex relative">
-        {document.score !== null && (
+
+
+        <div
+          className={
+            "absolute top-2/4 -translate-y-2/4 flex " +
+            (isSelected ? "-left-14 w-14" : "-left-10 w-10")
+          }
+        >
+
+          {document.validationState ?
+            <div
+              className={`
+                 text-xs
+                 text-emphasis
+                 bg-hover
+                 rounded
+                 p-0.5
+                 w-fit
+                 my-auto
+                 select-none
+                 ml-auto
+                 mr-2`}
+            >
+              {document.validationState == "good" ? "GOOD" : "NO"}
+            </div>
+            :
+            <div
+              className={`
+                 text-xs
+                 text-emphasis
+                 rounded
+                 p-0.5
+                 w-fit
+                 my-auto
+                 select-none
+                 ml-auto
+                 mr-2`}
+            >
+              < FunctionalLoader />
+            </div>
+          }
+
+
+          {/* </div> */}
+        </div>
+
+
+
+
+        {/* {document.score !== null && (
           <div
             className={
               "absolute top-2/4 -translate-y-2/4 flex " +
@@ -216,7 +267,8 @@ export const DocumentDisplay = ({
               {Math.abs(document.score).toFixed(2)}
             </div>
           </div>
-        )}
+        )} */}
+
         <a
           className={
             "rounded-lg flex font-bold text-link max-w-full " +
@@ -248,6 +300,6 @@ export const DocumentDisplay = ({
       <p className="pl-1 pt-2 pb-3 break-words">
         {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
       </p>
-    </div>
+    </div >
   );
 };
