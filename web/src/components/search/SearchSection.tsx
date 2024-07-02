@@ -161,18 +161,19 @@ export const SearchSection = ({
     searchType,
     offset,
   }: SearchRequestOverrides = {}) => {
-    setTimeout(() => (
-      setSearchState("searching")
-    ), 1000)
+
+    setSearchState("searching")
+
     setTimeout(() => (
       setSearchState("analyzing")
     ), 3000)
     setTimeout(() => (
       setSearchResponse((prevSearchResponse) => ({
         ...prevSearchResponse,
-        documents: prevSearchResponse?.documents?.map((document) => ({
+        documents: prevSearchResponse?.documents?.map((document, ind) => ({
           ...document,
-          validationState: "good",
+
+          validationState: ind % 2 == 0 ? "good" : "bad",
         }))
       } as SearchResponse))
     ), 5000)
@@ -261,15 +262,25 @@ export const SearchSection = ({
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
 
 
-  const [filters, setFilters] = useState(false)
+  const [filters, setFilters] = useState(true)
   const toggleFilters = () => {
     setFilters(filters => !filters)
   }
 
   const [showDocSidebar, setShowDocSidebar] = useState(false)
+
   const toggleSidebar = () => {
-    setShowDocSidebar(showDocSidebar => !showDocSidebar)
-  }
+    if (sidebarElementRef.current) {
+      sidebarElementRef.current.style.transition = "width 0.3s ease-in-out";
+
+      sidebarElementRef.current.style.width = showDocSidebar
+        ? "0px"
+        : `${usedSidebarWidth}px`;
+    }
+
+    setShowDocSidebar((showDocSidebar) => !showDocSidebar); // Toggle the state which will in turn toggle the class
+  };
+
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -330,9 +341,9 @@ export const SearchSection = ({
           minWidth={200}
           maxWidth={300 || undefined}
         >
-          <div className="w-full relative">
+          <div className="w-full  relative">
 
-            {/* <ChatSidebar /> */}
+
             <ChatSidebar
               initialWidth={usedSidebarWidth}
               ref={innerSidebarElementRef}
@@ -442,7 +453,6 @@ export const SearchSection = ({
             setQuery={setQuery}
             onSearch={async () => {
               setFirstSearch(false)
-              setFilters(false)
               setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
               await onSearch({ offset: 0 });
             }}
@@ -479,6 +489,7 @@ export const SearchSection = ({
 
           <div className="mt-2">
             <SearchResultsDisplay
+              searchState={searchState}
               searchResponse={searchResponse}
               validQuestionResponse={validQuestionResponse}
               isFetching={isFetching}

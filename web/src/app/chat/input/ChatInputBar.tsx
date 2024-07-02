@@ -427,9 +427,13 @@ export function ChatInputBar({
                   xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M12 1.75A10.25 10.25 0 1 0 22.25 12A10.26 10.26 0 0 0 12 1.75m6 10.26a1 1 0 0 1-1.42 0l-3.57-3.57v9.1a1 1 0 0 1-2 0v-9l-3.57 3.51a1 1 0 1 1-1.41-1.41l4.55-4.53a2.07 2.07 0 0 1 1.46-.61a2 2 0 0 1 .79.16c.253.1.482.254.67.45l4.53 4.53a1 1 0 0 1-.04 1.37z" />
                 </svg> */}
-                 <FiSend className={`text-emphasis text-white w-8 h-8 p-1 rounded-full ${message ? "bg-neutral-700" : "bg-[#D7D7D7]"
+                {/* <FiSend className={`text-emphasis text-white w-7 h-7 p-1 rounded-full ${message ? "bg-neutral-700" : "bg-[#D7D7D7]"
                   }`} 
-                  />
+                  /> */}
+                <svg className={`text-emphasis text-white w-7 h-7 p-1 rounded-full ${message ? "bg-neutral-700" : "bg-[#D7D7D7]"
+                  }`} xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24">
+                  <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m-7 7l7-7l7 7" />
+                </svg>
                 {/* <svg className={`text-emphasis text-white w-8 h-8 p-1 rounded-full ${message ? "bg-neutral-900" : "bg-[#D7D7D7]"
                   }`} xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24">
                   <path fill="currentColor" d="m3.165 19.503l7.362-16.51c.59-1.324 2.355-1.324 2.946 0l7.362 16.51c.667 1.495-.814 3.047-2.202 2.306l-5.904-3.152c-.459-.245-1-.245-1.458 0l-5.904 3.152c-1.388.74-2.87-.81-2.202-2.306Z" />

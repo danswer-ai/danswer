@@ -24,16 +24,16 @@ const AnimatedToggle = ({ isOn, handleToggle }: { isOn: boolean, handleToggle: (
       onClick={handleToggle}
     >
       <div className={`
-        w-14 h-6 flex items-center rounded-full p-1 duration-300 ease-in-out
+        w-10 h-6 flex items-center rounded-full p-1 duration-300 ease-in-out
         ${isOn ? 'bg-neutral-400' : 'bg-neutral-200'}
       `}>
         <div className={`
           bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out
-          ${isOn ? 'translate-x-7' : ''}
+          ${isOn ? 'translate-x-4' : ''}
         `}></div>
       </div>
       <span className="ml-2 text-sm">
-        Agentic Search
+        Agentic
         {/* {isOn ? 'Fast' : 'Normal'} */}
       </span>
     </div>

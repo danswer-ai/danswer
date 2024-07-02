@@ -17,6 +17,7 @@ import { ThreeDots } from "react-loader-spinner";
 import { usePopup } from "../admin/connectors/Popup";
 import { AlertIcon } from "../icons/icons";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
+import { searchState } from "./SearchSection";
 
 const getSelectedDocumentIds = (
   documents: DanswerDocument[],
@@ -31,11 +32,13 @@ const getSelectedDocumentIds = (
 
 export const SearchResultsDisplay = ({
   searchResponse,
+  searchState,
   validQuestionResponse,
   isFetching,
   defaultOverrides,
   personaName = null,
 }: {
+  searchState: searchState;
   searchResponse: SearchResponse | null;
   validQuestionResponse: ValidQuestionResponse;
   isFetching: boolean;
@@ -178,6 +181,17 @@ export const SearchResultsDisplay = ({
         </div>
 
       )}
+        <div className={`flex mt-4 justify-center transition-all duration-500 ${searchState == "input" ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+
+          <button className="duration-300 transition-bg cursor-pointer z-[100] hover:bg-neutral-700 bg-neutral-800 text-neutral-200 h-8 rounded-md px-3 text-xs">
+            Analyze 20 more
+          </button>
+          <button className="  transition-all cursor-pointer -ml-2 bg-neutral-200 text-neutral-600 h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs">
+            <p className="relative after:bg-neutral-600 after:absolute after:h-[1px] after:w-0 after:bottom-0 after:left-0 hover:after:w-full after:transition-all after:duration-300 duration-300">
+              Show me all
+            </p>
+          </button>
+        </div>
     </>
   );
 };

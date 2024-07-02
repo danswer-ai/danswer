@@ -201,11 +201,14 @@ def stream_answer_objects(
         skip_explicit_tool_calling=True,
         return_contexts=query_req.return_contexts,
     )
+
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
     dropped_inds: list[int] = []
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
         # for one-shot flow, don't currently do anything with these
         if isinstance(packet, ToolResponse):
+            print(packet)
+
             if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                 search_response_summary = cast(SearchResponseSummary, packet.response)
 

@@ -176,31 +176,44 @@ export const DocumentDisplay = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex relative">
-
-
         <div
           className={
             "absolute top-2/4 -translate-y-2/4 flex " +
             (isSelected ? "-left-14 w-14" : "-left-10 w-10")
           }
         >
-
           {document.validationState ?
-            <div
-              className={`
-                 text-xs
-                 text-emphasis
-                 bg-hover
-                 rounded
-                 p-0.5
-                 w-fit
-                 my-auto
-                 select-none
-                 ml-auto
-                 mr-2`}
-            >
-              {document.validationState == "good" ? "GOOD" : "NO"}
-            </div>
+
+
+            document.validationState == "good" ? <svg className={`h-4 w-4  
+                text-xs
+                text-emphasis
+                bg-hover-emphasis
+                rounded
+                p-0.5
+                w-fit
+                my-auto
+                select-none
+                ml-auto
+                mr-2 `} xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24">
+              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 6L9 17l-5-5" />
+            </svg> :
+
+              <svg className={`h-4 w-4  
+                text-xs
+                text-emphasis
+                bg-hover
+                rounded
+                p-0.5
+                w-fit
+                my-auto
+                select-none
+                ml-auto
+                mr-2 `} xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24">
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12" />
+              </svg>
+
+
             :
             <div
               className={`
