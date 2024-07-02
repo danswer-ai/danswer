@@ -1,5 +1,10 @@
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { Connector, ConnectorBase, ValidSources } from "./types";
+import {
+  AdvancedSettings,
+  Connector,
+  ConnectorBase,
+  ValidSources,
+} from "./types";
 
 async function handleResponse(
   response: Response
@@ -117,4 +122,9 @@ export async function deleteConnectorIfExistsAndIsUnlinked({
     }
   }
   return null;
+}
+
+export async function getAdvancedSettings(): Promise<AdvancedSettings> {
+  const response = await fetch("/api/manage/connector/advanced-settings");
+  return await response.json();
 }

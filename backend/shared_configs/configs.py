@@ -17,9 +17,6 @@ INDEXING_MODEL_SERVER_PORT = int(
 INTENT_MODEL_VERSION = "danswer/intent-model"
 INTENT_MODEL_CONTEXT_SIZE = 256
 
-# Bi-Encoder, other details
-DOC_EMBEDDING_CONTEXT_SIZE = 512
-
 # Cross Encoder Settings
 ENABLE_RERANKING_ASYNC_FLOW = (
     os.environ.get("ENABLE_RERANKING_ASYNC_FLOW", "").lower() == "true"

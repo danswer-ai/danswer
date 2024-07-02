@@ -19,6 +19,7 @@ from danswer.indexing.indexing_pipeline import build_indexing_pipeline
 from danswer.server.danswer_api.models import DocMinimalInfo
 from danswer.server.danswer_api.models import IngestionDocument
 from danswer.server.danswer_api.models import IngestionResult
+from danswer.utils.embedding import get_embedding_chunks_by_document_id_with_session
 from danswer.utils.logger import setup_logger
 from ee.danswer.auth.users import api_key_dep
 
@@ -91,11 +92,16 @@ def upsert_ingestion_doc(
 
     db_embedding_model = get_current_db_embedding_model(db_session)
 
+    embedding_chunk_config = get_embedding_chunks_by_document_id_with_session(
+        document.id, db_session
+    )
+
     index_embedding_model = DefaultIndexingEmbedder(
         model_name=db_embedding_model.model_name,
         normalize=db_embedding_model.normalize,
         query_prefix=db_embedding_model.query_prefix,
         passage_prefix=db_embedding_model.passage_prefix,
+        doc_embeddind_context_size=embedding_chunk_config.embedding_size,
     )
 
     indexing_pipeline = build_indexing_pipeline(
@@ -127,11 +133,16 @@ def upsert_ingestion_doc(
                 "Secondary index exists but no embedding model configured"
             )
 
+        embedding_chunk_config = get_embedding_chunks_by_document_id_with_session(
+            document.id, db_session
+        )
+
         new_index_embedding_model = DefaultIndexingEmbedder(
             model_name=sec_db_embedding_model.model_name,
             normalize=sec_db_embedding_model.normalize,
             query_prefix=sec_db_embedding_model.query_prefix,
             passage_prefix=sec_db_embedding_model.passage_prefix,
+            doc_embeddind_context_size=embedding_chunk_config.embedding_size,
         )
 
         sec_ind_pipeline = build_indexing_pipeline(

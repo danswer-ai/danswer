@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_status
+from danswer.configs.app_configs import ENABLED_CONNECTOR_EMBEDDING_SETTINGS
 from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
@@ -142,6 +143,13 @@ def check_google_app_credentials_exist(
         return {"client_id": get_google_app_cred().web.client_id}
     except ConfigNotFoundError:
         raise HTTPException(status_code=404, detail="Google App Credentials not found")
+
+
+@router.get("/connector/advanced-settings")
+def get_advanced_settings(
+    _: User = Depends(current_user),
+) -> dict[str, bool]:
+    return {"enabled": ENABLED_CONNECTOR_EMBEDDING_SETTINGS}
 
 
 @router.put("/admin/connector/google-drive/app-credential")
@@ -445,6 +453,8 @@ def get_connector_indexing_status(
                     allow_scheduled=True,
                 )
                 is None,
+                embedding_size=connector.embedding_size,
+                chunk_overlap=connector.chunk_overlap,
             )
         )
 

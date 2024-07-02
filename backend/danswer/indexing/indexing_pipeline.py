@@ -228,7 +228,7 @@ def build_indexing_pipeline(
     ignore_time_skip: bool = False,
 ) -> IndexingPipelineProtocol:
     """Builds a pipline which takes in a list (batch) of docs and indexes them."""
-    chunker = chunker or DefaultChunker()
+    chunker = chunker or DefaultChunker(db_session=db_session)
 
     return partial(
         index_doc_batch,

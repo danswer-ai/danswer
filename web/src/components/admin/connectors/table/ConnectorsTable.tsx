@@ -1,8 +1,8 @@
 import { ConnectorIndexingStatus, Credential } from "@/lib/types";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LinkBreakIcon, LinkIcon } from "@/components/icons/icons";
-import { disableConnector } from "@/lib/connector";
+import { disableConnector, getAdvancedSettings } from "@/lib/connector";
 import { AttachCredentialButtonForTable } from "@/components/admin/connectors/buttons/AttachCredentialButtonForTable";
 import { DeleteColumn } from "./DeleteColumn";
 import {
@@ -14,6 +14,7 @@ import {
   TableCell,
 } from "@tremor/react";
 import { FiCheck, FiXCircle } from "react-icons/fi";
+import { useConnectorAdvancedSettings } from "../hooks";
 
 interface StatusRowProps<ConnectorConfigType, ConnectorCredentialType> {
   connectorIndexingStatus: ConnectorIndexingStatus<
@@ -130,6 +131,7 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
   includeName = false,
 }: ConnectorsTableProps<ConnectorConfigType, ConnectorCredentialType>) {
   const { popup, setPopup } = usePopup();
+  const displayAdvancedSettings = useConnectorAdvancedSettings();
 
   const connectorIncludesCredential =
     getCredential !== undefined && onCredentialLink !== undefined;
@@ -172,6 +174,12 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
             <TableHeaderCell>Is Public</TableHeaderCell>
             {connectorIncludesCredential && (
               <TableHeaderCell>Credential</TableHeaderCell>
+            )}
+            {displayAdvancedSettings && (
+              <>
+                <TableHeaderCell>Embedding Size</TableHeaderCell>
+                <TableHeaderCell>Chunk Overlap</TableHeaderCell>
+              </>
             )}
             <TableHeaderCell>Remove</TableHeaderCell>
           </TableRow>
@@ -231,6 +239,16 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
                 </TableCell>
                 {connectorIncludesCredential && (
                   <TableCell>{credentialDisplay}</TableCell>
+                )}
+                {displayAdvancedSettings && (
+                  <>
+                    <TableCell>
+                      {connectorIndexingStatus.embedding_size}
+                    </TableCell>
+                    <TableCell>
+                      {connectorIndexingStatus.chunk_overlap}
+                    </TableCell>
+                  </>
                 )}
                 <TableCell>
                   <DeleteColumn

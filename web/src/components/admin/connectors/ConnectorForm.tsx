@@ -18,6 +18,8 @@ import { useSWRConfig } from "swr";
 import { Button, Divider } from "@tremor/react";
 import IsPublicField from "./IsPublicField";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { HidableSection } from "@/app/admin/assistants/HidableSection";
+import { useConnectorAdvancedSettings } from "./hooks";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
@@ -103,6 +105,13 @@ export function ConnectorForm<T extends Yup.AnyObject>({
 
   // only show this option for EE, since groups are not supported in CE
   const showNonPublicOption = usePaidEnterpriseFeaturesEnabled();
+  const displayAdvancedSettings = useConnectorAdvancedSettings();
+
+  // Define common fields
+  const commonFields = {
+    embedding_size: "",
+    chunk_overlap: "",
+  };
 
   const shouldHaveNameInput = credentialId !== undefined && !ccPairNameBuilder;
 
@@ -126,21 +135,35 @@ export function ConnectorForm<T extends Yup.AnyObject>({
     );
   }
 
+  finalValidationSchema = finalValidationSchema.concat(
+    Yup.object().shape({
+      embedding_size: Yup.string(),
+      chunk_overlap: Yup.string(),
+    })
+  );
+
+  const formInitialValues = {
+    ...publicOptionInitialValue,
+    ...ccPairNameInitialValue,
+    ...initialValues,
+    ...commonFields,
+  };
+
   return (
     <>
       {popup}
       <Formik
-        initialValues={{
-          ...publicOptionInitialValue,
-          ...ccPairNameInitialValue,
-          ...initialValues,
-        }}
+        initialValues={formInitialValues}
         validationSchema={finalValidationSchema}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
           const connectorName = nameBuilder(values);
           const connectorConfig = Object.fromEntries(
-            Object.keys(initialValues).map((key) => [key, values[key]])
+            Object.keys(initialValues)
+              .filter(
+                (key) => key !== "embedding_size" && key !== "chunk_overlap"
+              )
+              .map((key) => [key, values[key]])
           ) as T;
 
           // best effort check to see if existing connector exists
@@ -168,6 +191,12 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             refresh_freq: refreshFreq || 0,
             prune_freq: pruneFreq ?? null,
             disabled: false,
+            embedding_size: values.embedding_size
+              ? parseInt(values.embedding_size)
+              : undefined,
+            chunk_overlap: values.chunk_overlap
+              ? parseInt(values.chunk_overlap)
+              : undefined,
           });
 
           if (!isSuccess || !response) {
@@ -200,7 +229,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
 
           if (credentialIdToLinkTo !== undefined) {
             const ccPairName = ccPairNameBuilder
-              ? ccPairNameBuilder(values)
+              ? ccPairNameBuilder(values) || undefined
               : values.cc_pair_name;
             const linkCredentialResponse = await linkCredential(
               response.id,
@@ -250,6 +279,30 @@ export function ConnectorForm<T extends Yup.AnyObject>({
                 <Divider />
               </>
             )}
+
+            {displayAdvancedSettings && (
+              <>
+                <Divider />
+                <HidableSection sectionTitle="Advanced Settings" defaultHidden>
+                  <>
+                    <TextFormField
+                      name="embedding_size"
+                      label="Embedding Size"
+                      autoCompleteDisabled={true}
+                      subtext="The number of tokens to use when chunking the document. If not specified, the default value 512 will be used."
+                    />
+                    <TextFormField
+                      name="chunk_overlap"
+                      label="Chunk Overlap"
+                      autoCompleteDisabled={true}
+                      subtext="The number of tokens to overlap when chunking the document. If not specified, the default value 0 will be used."
+                    />
+                  </>
+                </HidableSection>
+                <Divider />
+              </>
+            )}
+
             <div className="flex">
               <Button
                 type="submit"

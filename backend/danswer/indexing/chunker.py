@@ -2,16 +2,17 @@ import abc
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
+from sqlalchemy.orm import Session
+
 from danswer.configs.app_configs import BLURB_SIZE
-from danswer.configs.app_configs import CHUNK_OVERLAP
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SECTION_SEPARATOR
 from danswer.configs.constants import TITLE_SEPARATOR
-from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.connectors.models import Document
 from danswer.indexing.models import DocAwareChunk
 from danswer.search.search_nlp_models import get_default_tokenizer
+from danswer.utils.embedding import get_embedding_chunks_by_document_id_with_session
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import shared_precompare_cleanup
 
@@ -41,8 +42,8 @@ def chunk_large_section(
     document: Document,
     start_chunk_id: int,
     tokenizer: "AutoTokenizer",
-    chunk_size: int = DOC_EMBEDDING_CONTEXT_SIZE,
-    chunk_overlap: int = CHUNK_OVERLAP,
+    chunk_size: int,
+    chunk_overlap: int,
     blurb_size: int = BLURB_SIZE,
 ) -> list[DocAwareChunk]:
     from llama_index.text_splitter import SentenceSplitter
@@ -71,8 +72,8 @@ def chunk_large_section(
 
 def chunk_document(
     document: Document,
-    chunk_tok_size: int = DOC_EMBEDDING_CONTEXT_SIZE,
-    subsection_overlap: int = CHUNK_OVERLAP,
+    chunk_tok_size: int,
+    subsection_overlap: int,
     blurb_size: int = BLURB_SIZE,
 ) -> list[DocAwareChunk]:
     title = document.get_title_for_document_index()
@@ -181,8 +182,19 @@ class Chunker:
 
 
 class DefaultChunker(Chunker):
+    def __init__(self, db_session: Session):
+        self.db_session = db_session
+
     def chunk(self, document: Document) -> list[DocAwareChunk]:
+        embeddings_chunk_config = get_embedding_chunks_by_document_id_with_session(
+            document.id, self.db_session
+        )
         # Specifically for reproducing an issue with gmail
         if document.source == DocumentSource.GMAIL:
             logger.debug(f"Chunking {document.semantic_identifier}")
-        return chunk_document(document)
+
+        return chunk_document(
+            document,
+            chunk_tok_size=embeddings_chunk_config.embedding_size,
+            subsection_overlap=embeddings_chunk_config.chunk_overlap,
+        )

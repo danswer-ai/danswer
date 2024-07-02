@@ -29,6 +29,7 @@ from danswer.db.models import IndexModelStatus
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.embedder import DefaultIndexingEmbedder
 from danswer.indexing.indexing_pipeline import build_indexing_pipeline
+from danswer.utils.embedding import get_embedding_chunks_by_connector_id
 from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
@@ -111,11 +112,16 @@ def _run_indexing(
         primary_index_name=index_name, secondary_index_name=None
     )
 
+    embedding_chunk_config = get_embedding_chunks_by_connector_id(
+        index_attempt.connector_id, db_session
+    )
+
     embedding_model = DefaultIndexingEmbedder(
         model_name=db_embedding_model.model_name,
         normalize=db_embedding_model.normalize,
         query_prefix=db_embedding_model.query_prefix,
         passage_prefix=db_embedding_model.passage_prefix,
+        doc_embeddind_context_size=embedding_chunk_config.embedding_size,
     )
 
     indexing_pipeline = build_indexing_pipeline(

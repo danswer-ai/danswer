@@ -6,7 +6,6 @@ from danswer.chat.models import (
     LlmDoc,
 )
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prompts.citations_prompt import compute_max_document_tokens
@@ -16,6 +15,7 @@ from danswer.llm.utils import tokenizer_trim_content
 from danswer.prompts.prompt_utils import build_doc_context_str
 from danswer.search.models import InferenceChunk
 from danswer.tools.search.search_utils import llm_doc_to_dict
+from danswer.utils.embedding import get_highest_embedding_chunk_size_by_document_ids
 from danswer.utils.logger import setup_logger
 
 
@@ -38,6 +38,7 @@ def _compute_limit(
     max_window_percentage: float | None,
     max_tokens: int | None,
     tool_token_count: int,
+    doc_embeddind_context_size: int,
 ) -> int:
     llm_max_document_tokens = compute_max_document_tokens(
         prompt_config=prompt_config,
@@ -52,7 +53,7 @@ def _compute_limit(
         else None
     )
     chunk_count_based_limit = (
-        max_chunks * DOC_EMBEDDING_CONTEXT_SIZE if max_chunks else None
+        max_chunks * doc_embeddind_context_size if max_chunks else None
     )
 
     limit_options = [
@@ -95,6 +96,7 @@ def _apply_pruning(
     is_manually_selected_docs: bool,
     use_sections: bool,
     using_tool_message: bool,
+    doc_embeddind_context_size: int,
 ) -> list[LlmDoc]:
     llm_tokenizer = get_default_llm_tokenizer()
     docs = deepcopy(docs)  # don't modify in place
@@ -128,7 +130,7 @@ def _apply_pruning(
         if (
             not is_manually_selected_docs
             and not use_sections
-            and doc_tokens > DOC_EMBEDDING_CONTEXT_SIZE + _METADATA_TOKEN_ESTIMATE
+            and doc_tokens > doc_embeddind_context_size + _METADATA_TOKEN_ESTIMATE
         ):
             logger.warning(
                 "Found more tokens in chunk than expected, "
@@ -136,10 +138,10 @@ def _apply_pruning(
             )
             llm_doc.content = tokenizer_trim_content(
                 content=llm_doc.content,
-                desired_length=DOC_EMBEDDING_CONTEXT_SIZE,
+                desired_length=doc_embeddind_context_size,
                 tokenizer=llm_tokenizer,
             )
-            doc_tokens = DOC_EMBEDDING_CONTEXT_SIZE
+            doc_tokens = doc_embeddind_context_size
         tokens_per_doc.append(doc_tokens)
         total_tokens += doc_tokens
         if total_tokens > token_limit:
@@ -211,6 +213,11 @@ def prune_documents(
     if doc_relevance_list is not None:
         assert len(docs) == len(doc_relevance_list)
 
+    document_ids = [doc.document_id for doc in docs]
+    doc_embedding_chunk_config = get_highest_embedding_chunk_size_by_document_ids(
+        document_ids
+    )
+
     doc_token_limit = _compute_limit(
         prompt_config=prompt_config,
         llm_config=llm_config,
@@ -219,6 +226,7 @@ def prune_documents(
         max_window_percentage=document_pruning_config.max_window_percentage,
         max_tokens=document_pruning_config.max_tokens,
         tool_token_count=document_pruning_config.tool_num_tokens,
+        doc_embeddind_context_size=doc_embedding_chunk_config.embedding_size,
     )
     return _apply_pruning(
         docs=docs,
@@ -227,4 +235,5 @@ def prune_documents(
         is_manually_selected_docs=document_pruning_config.is_manually_selected_docs,
         use_sections=document_pruning_config.use_sections,
         using_tool_message=document_pruning_config.using_tool_message,
+        doc_embeddind_context_size=doc_embedding_chunk_config.embedding_size,
     )
