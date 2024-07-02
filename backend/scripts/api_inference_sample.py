@@ -5,6 +5,9 @@ import json
 import os
 
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def create_new_chat_session(danswer_url: str, api_key: str | None) -> int:

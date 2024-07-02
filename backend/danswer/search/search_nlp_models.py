@@ -19,6 +19,9 @@ from shared_configs.model_server_models import IntentRequest
 from shared_configs.model_server_models import IntentResponse
 from shared_configs.model_server_models import RerankRequest
 from shared_configs.model_server_models import RerankResponse
+from dotenv import load_dotenv
+
+load_dotenv()
 
 transformer_logging.set_verbosity_error()
 

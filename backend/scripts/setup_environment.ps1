@@ -1,11 +1,7 @@
-# Change to the parent directory
 cd ..
-
-# Set the execution policy to Bypass for the current process
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
-
-# Activate the virtual environment
 . .venv\Scripts\Activate.ps1
-
-# Change to the ConversationalHealthPlatform directory
+pip install -r ConversationalHealthPlatform/backend/requirements/default.txt
+pip install -r ConversationalHealthPlatform/backend/requirements/dev.txt
+pip install -r ConversationalHealthPlatform/backend/requirements/model_server.txt
 cd ConversationalHealthPlatform

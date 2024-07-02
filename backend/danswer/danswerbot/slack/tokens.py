@@ -3,6 +3,9 @@ from typing import cast
 
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.server.manage.models import SlackBotTokens
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 _SLACK_BOT_TOKENS_CONFIG_KEY = "slack_bot_tokens_config_key"

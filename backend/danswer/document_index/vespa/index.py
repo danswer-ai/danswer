@@ -69,6 +69,9 @@ from danswer.search.retrieval.search_runner import query_processing
 from danswer.search.retrieval.search_runner import remove_stop_words_and_punctuation
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = setup_logger()
 

@@ -24,6 +24,9 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.utils.logger import setup_logger
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 logger = setup_logger()
