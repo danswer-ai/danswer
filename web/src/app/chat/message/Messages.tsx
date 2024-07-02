@@ -277,17 +277,19 @@ export const AIMessage = ({
                       index === self.findIndex((d) => d.document_id === doc.document_id)
                     )
                     .map((doc) => (
-                      <div key={doc.document_id} className={`w-[250px] transition-all duration-500 opacity-90 bg-neutral-100 px-4 py-2  border-b 
-                        ${citedDocuments &&
+                      <div key={doc.document_id} className={`w-[250px] transition-all duration-500 opacity-90 animate-pulse bg-neutral-100 px-4 py-2  border-b 
+                        ${isComplete && citedDocuments &&
                         (Array.isArray(citedDocuments) &&
                           citedDocuments.some(([_, obj]) => obj.document_id === doc.document_id)
                           ? "!opacity-100"
-                          : "!opacity-20")}
+                          : "!opacity-20")
+                        }
                     `}>
 
                         <h2 className="text-sm font-semibold text-neutral-800">
                           {doc.document_id.split("/")[doc.document_id.split("/").length - 1]}
                         </h2>
+
                         <div className="line-clamp-3 text-xs py-4">{doc.blurb}</div>
                         {/* <a className="w-full line-clamp-1 ellipses">{doc.link}</a> */}
                       </div>
@@ -308,27 +310,52 @@ export const AIMessage = ({
                     components={{
                       a: (props) => {
                         const { node, ...rest } = props;
-                        // for some reason <a> tags cause the onClick to not apply
-                        // and the links are unclickable
-                        // TODO: fix the fact that you have to double click to follow link
-                        // for the first link
-                        return (
-                          <Citation link={rest?.href} key={node?.position?.start?.offset} >
-                            {rest.children}
-                          </Citation>
-                          // <as
-                          //   key={node?.position?.start?.offset}
-                          //   onClick={() =>
-                          //     rest.href
-                          //       ? window.open(rest.href, "_blank")
-                          //       : undefined
-                          //   }
-                          //   className="cursor-pointer text-link hover:text-link-hover"
+                        const value = rest.children
+                        console.log("zzz")
 
-                          // >
-                          //   {rest.children}
-                          // </a>
-                        );
+                        console.log(value)
+                        if (value?.toString().startsWith("[")) {
+
+                          // for some reason <a> tags cause the onClick to not apply
+                          // and the links are unclickable
+                          // TODO: fix the fact that you have to double click to follow link
+                          // for the first link
+                          return (
+                            <Citation link={rest?.href} key={node?.position?.start?.offset} >
+                              {rest.children}
+                            </Citation>
+                            // <as
+                            //   key={node?.position?.start?.offset}
+                            //   onClick={() =>
+                            //     rest.href
+                            //       ? window.open(rest.href, "_blank")
+                            //       : undefined
+                            //   }
+                            //   className="cursor-pointer text-link hover:text-link-hover"
+
+                            // >
+                            //   {rest.children}
+                            // </a>
+                          );
+                        }
+                        else {
+                          return (
+                            <a
+                              key={node?.position?.start?.offset}
+                              onClick={() =>
+                                rest.href
+                                  ? window.open(rest.href, "_blank")
+                                  : undefined
+                              }
+                              className="cursor-pointer text-link hover:text-link-hover"
+
+                            >
+                              {rest.children}
+                            </a>
+
+                          )
+                        }
+
                       },
                       code: (props) => (
                         <CodeBlock {...props} content={content as string} />
@@ -356,6 +383,9 @@ export const AIMessage = ({
                   {citedDocuments
                     .filter(([_, document]) => document.semantic_identifier)
                     .map(([citationKey, document], ind) => {
+
+
+
                       const display = (
                         <div className="max-w-350 text-ellipsis flex text-sm border border-border py-1 px-2 rounded flex">
                           <div className="mr-1 my-auto">
@@ -367,6 +397,8 @@ export const AIMessage = ({
                           [{citationKey}] {document!.semantic_identifier}
                         </div>
                       );
+
+
                       if (document.link) {
                         return (
                           <a

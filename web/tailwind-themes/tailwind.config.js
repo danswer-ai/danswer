@@ -100,7 +100,7 @@ module.exports = {
         },
 
         // bubbles in chat for each "user"
-        user: "#fecdd3", // yellow-400
+        user: "#dc2626", // yellow-400
         ai: "#60a5fa", // blue-400
 
         // for display documents
