@@ -33,7 +33,9 @@ def extract_citations_from_stream(
     hold = ""
     last_cited_num = None
 
+    raw_out = ""
     for raw_token in tokens:
+        raw_out+=raw_token
         if stop_stream:
             next_hold = hold + raw_token
             if stop_stream in next_hold:
@@ -98,7 +100,7 @@ def extract_citations_from_stream(
             if last_citation_end > 0:
                 yield DanswerAnswerPiece(answer_piece=curr_segment[:last_citation_end])
                 curr_segment = curr_segment[last_citation_end:]
-
+    print(raw_out)
     if curr_segment:
         yield DanswerAnswerPiece(answer_piece=curr_segment)
 
@@ -114,3 +116,10 @@ def build_citation_processor(
         )
 
     return stream_processor
+
+
+
+
+
+
+
