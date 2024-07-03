@@ -46,7 +46,6 @@ def admin_search(
 ) -> AdminSearchResponse:
     query = question.query
     logger.info(f"Received admin search query: {query}")
-
     user_acl_filters = build_access_filters_for_user(user, db_session)
     final_filters = IndexFilters(
         source_type=question.filters.source_type,
@@ -55,19 +54,15 @@ def admin_search(
         tags=question.filters.tags,
         access_control_list=user_acl_filters,
     )
-
     embedding_model = get_current_db_embedding_model(db_session)
-
     document_index = get_default_document_index(
         primary_index_name=embedding_model.index_name, secondary_index_name=None
     )
-
     if not isinstance(document_index, VespaIndex):
         raise HTTPException(
             status_code=400,
             detail="Cannot use admin-search when using a non-Vespa document index",
         )
-
     matching_chunks = document_index.admin_retrieval(query=query, filters=final_filters)
 
     documents = chunks_or_sections_to_search_docs(matching_chunks)

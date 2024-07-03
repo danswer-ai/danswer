@@ -167,11 +167,14 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       quotes,
     }));
-  const updateDocs = (documents: DanswerDocument[]) =>
+  const updateDocs = (documents: DanswerDocument[]) => {
+    setSearchState("analyzing");
+
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       documents,
     }));
+  };
   const updateSuggestedSearchType = (suggestedSearchType: SearchType) =>
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
@@ -200,6 +203,7 @@ export const SearchSection = ({
 
   const updateDocumentRelevance = (relevance: any) => {
     setRelevance(relevance);
+    setSearchState("input");
     // console.log(" I AM UPDATING")
     // setSearchResponse(prevSearchResponse =>
     //   ({
@@ -236,7 +240,6 @@ export const SearchSection = ({
   }: SearchRequestOverrides = {}) => {
     setFirstSearch(false);
     setRelevance(null);
-    setSearchState("input");
 
     setSearchState("searching");
 

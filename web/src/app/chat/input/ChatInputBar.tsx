@@ -254,7 +254,7 @@ export function ChatInputBar({
               flex-col
               border
               border-[#E5E7EB]
-              rounded-lgl
+              rounded-lg
               overflow-hidden
               bg-background-weak
               [&:has(textarea:focus)]::ring-1

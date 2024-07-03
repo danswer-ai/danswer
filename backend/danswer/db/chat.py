@@ -36,6 +36,7 @@ from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.tools.tool_runner import ToolCallFinalResult
 from danswer.utils.logger import setup_logger
 
+
 logger = setup_logger()
 
 
@@ -92,7 +93,32 @@ def get_first_messages_for_chat_sessions(
     )
 
     first_messages = db_session.execute(query).all()
-    return first_messages
+    return [(row.chat_session_id, row.message) for row in first_messages]
+
+
+# def get_first_messages_for_chat_sessions(
+#     chat_session_ids: list[int], db_session: Session
+# ) -> Sequence[tuple[int, str]]:
+#     subquery = (
+#         select(ChatMessage.chat_session_id, func.min(ChatMessage.id).label("min_id"))
+#         .where(
+#             and_(
+#                 ChatMessage.chat_session_id.in_(chat_session_ids),
+#                 ChatMessage.message_type == MessageType.USER,  # Select USER messages
+#             )
+#         )
+#         .group_by(ChatMessage.chat_session_id)
+#         .subquery()
+#     )
+
+#     query = select(ChatMessage.chat_session_id, ChatMessage.message).join(
+#         subquery,
+#         (ChatMessage.chat_session_id == subquery.c.chat_session_id)
+#         & (ChatMessage.id == subquery.c.min_id),
+#     )
+
+#     first_messages = db_session.execute(query).all()
+#     return first_messages
 
 
 def get_chat_sessions_by_user(

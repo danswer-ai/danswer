@@ -104,10 +104,6 @@ export const SearchBar = ({
                 resize-none
                 border-0
                 bg-background-weak
-
-            ? "overflow-y-auto mt-2"
-            : ""
-          }
                 overflow-hidden
                 whitespace-normal
                 break-word

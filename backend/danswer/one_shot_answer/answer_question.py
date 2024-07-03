@@ -39,9 +39,11 @@ from danswer.llm.utils import get_default_llm_token_encode
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.one_shot_answer.models import QueryRephrase
+from danswer.one_shot_answer.models import ThreadMessage
 from danswer.one_shot_answer.qa_utils import combine_message_thread
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
+from danswer.search.models import SavedSearchDoc
 from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.search.utils import dedupe_documents
 from danswer.search.utils import drop_llm_indices
@@ -77,7 +79,9 @@ AnswerObjectIterator = Iterator[
 ]
 
 
-def evaluate_relevance(top_documents: list[any], query: str) -> dict[str, bool]:
+def evaluate_relevance(
+    top_documents: list[SavedSearchDoc], query: ThreadMessage
+) -> dict[str, bool]:
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     results = {}
 
@@ -121,7 +125,7 @@ def evaluate_relevance(top_documents: list[any], query: str) -> dict[str, bool]:
             )
 
             content = response.choices[0].message.content
-            parsed_response = json.loads(content)
+            parsed_response = json.loads(cast(str, content))
 
             if "response" in parsed_response:
                 results[document_id] = parsed_response["response"]
