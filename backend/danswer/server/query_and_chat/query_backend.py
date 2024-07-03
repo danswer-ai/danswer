@@ -153,7 +153,8 @@ def get_answer_with_quote(
     _: None = Depends(check_token_rate_limits),
 ) -> StreamingResponse:
     query = query_request.messages[0].message
-    print(f"|{query}")
+    # print(f"|{query}")
+
     logger.info(f"Received query for one shot answer with quotes: {query}")
     packets = stream_search_answer(
         query_req=query_request,
