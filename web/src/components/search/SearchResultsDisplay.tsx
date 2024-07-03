@@ -1,24 +1,19 @@
 "use client";
 
-import React from "react";
+import { removeDuplicateDocs } from "@/lib/documentUtils";
 import {
   DanswerDocument,
-  SearchResponse,
-  Quote,
   FlowType,
+  Quote,
   SearchDefaultOverrides,
+  SearchResponse,
   ValidQuestionResponse,
 } from "@/lib/search/interfaces";
-import { QAFeedbackBlock } from "./QAFeedback";
-import { DocumentDisplay } from "./DocumentDisplay";
-import { QuotesSection } from "./results/QuotesSection";
-import { AnswerSection } from "./results/AnswerSection";
-import { ThreeDots } from "react-loader-spinner";
 import { usePopup } from "../admin/connectors/Popup";
 import { AlertIcon } from "../icons/icons";
-import { removeDuplicateDocs } from "@/lib/documentUtils";
+import { DocumentDisplay } from "./DocumentDisplay";
 import { searchState } from "./SearchSection";
-import AnimatedDocumentList from "./results/AnimatedDocumentList";
+import { useEffect, useState } from "react";
 
 const getSelectedDocumentIds = (
   documents: DanswerDocument[],
@@ -39,7 +34,11 @@ export const SearchResultsDisplay = ({
   defaultOverrides,
   personaName = null,
   relevance,
+  performSweep,
+  sweep,
 }: {
+  performSweep: () => void;
+  sweep?: boolean;
   searchState: searchState;
   searchResponse: SearchResponse | null;
   validQuestionResponse: ValidQuestionResponse;
@@ -48,6 +47,26 @@ export const SearchResultsDisplay = ({
   personaName?: string | null;
   relevance: any;
 }) => {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey) {
+        switch (event.key.toLowerCase()) {
+          case "o":
+            event.preventDefault();
+            // if (relevance!=null) {
+            performSweep();
+            // }
+            break;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   const { popup, setPopup } = usePopup();
 
   if (!searchResponse) {
@@ -160,20 +179,37 @@ export const SearchResultsDisplay = ({
       )} */}
       {documents && documents.length > 0 && (
         <div className="mt-4">
-          <div className="font-bold text-emphasis border-b mb-3 pb-1 border-border text-lg">
-            Results
+          <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
+            <p>Results</p>
+            {relevance && (
+              <button
+                onClick={() => performSweep()}
+                className=" animate-fade-in-up rounded-lg p-1 text-neutral-100 bg-green-700 text-xs"
+              >
+                {!sweep ? "Clean" : "Show"} <span>(⌘O)</span>
+              </button>
+            )}
           </div>
-          {removeDuplicateDocs(documents).map((document, ind) => (
-            <DocumentDisplay
-              relevance={relevance}
-              key={document.document_id}
-              document={document}
-              documentRank={ind + 1}
-              messageId={messageId}
-              isSelected={selectedDocumentIds.has(document.document_id)}
-              setPopup={setPopup}
-            />
-          ))}
+          {removeDuplicateDocs(documents).map(
+            (document, ind) => {
+              // if (!relevance || (relevance && (!sweep || (sweep && relevance[document.document_id])))) {
+
+              return (
+                <DocumentDisplay
+                  hide={sweep && relevance && !relevance[document.document_id]}
+                  sweep={sweep!}
+                  relevance={relevance}
+                  key={document.document_id}
+                  document={document}
+                  documentRank={ind + 1}
+                  messageId={messageId}
+                  isSelected={selectedDocumentIds.has(document.document_id)}
+                  setPopup={setPopup}
+                />
+              );
+            }
+            // }
+          )}
         </div>
       )}
       <div

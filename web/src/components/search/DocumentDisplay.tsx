@@ -152,14 +152,18 @@ export function DocumentMetadataBlock({
 interface DocumentDisplayProps {
   document: DanswerDocument;
   messageId: number | null;
+  sweep: boolean;
   documentRank: number;
   isSelected: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;
   relevance: any;
+  hide?: boolean;
 }
 
 export const DocumentDisplay = ({
   document,
+  sweep,
+  hide,
   messageId,
   documentRank,
   isSelected,
@@ -176,16 +180,16 @@ export const DocumentDisplay = ({
   return (
     <div
       key={document.semantic_identifier}
-      className="text-sm border-b border-border mb-3"
+      className={`text-sm collapsible ${hide ? "collapsible-closed" : "border-b border-border mb-3"}`}
       onMouseEnter={() => {
         setIsHovered(true);
       }}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex relative">
+      <div className="flex relative ">
         <div
           className={
-            "absolute top-2/4 -translate-y-2/4 flex " +
+            "absolute top-2/4  -translate-y-2/4 flex " +
             (isSelected ? "-left-14 w-14" : "-left-10 w-10")
           }
         >

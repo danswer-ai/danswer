@@ -204,29 +204,6 @@ export const SearchSection = ({
   const updateDocumentRelevance = (relevance: any) => {
     setRelevance(relevance);
     setSearchState("input");
-    // console.log(" I AM UPDATING")
-    // setSearchResponse(prevSearchResponse =>
-    //   ({
-    //     ...prevSearchResponse,
-    //     documents: prevSearchResponse?.documents?.map(
-    //       (document, ind) => ({
-    //         ...document,
-    //         validationState: relevance[document.document_id]
-    //       })
-    //     ),
-    //   }) as SearchResponse
-    // )
-    // console.log(relevance)
-    // if (searchResponse) {
-    //   searchResponse?.documents?.forEach((d) => {
-
-    //     console.log(d)
-    //     console.log(relevance[d.document_id])
-    //     // console.log(relevance[d?.document_id])
-    //   }
-    //   )
-
-    // }
   };
   // const updateDocStatusz = (d: any) => {
   //   console.log(d)
@@ -238,6 +215,7 @@ export const SearchSection = ({
     offset,
     overrideMessage,
   }: SearchRequestOverrides = {}) => {
+    setSweep(false);
     setFirstSearch(false);
     setRelevance(null);
 
@@ -404,6 +382,11 @@ export const SearchSection = ({
       target.style.display = "none";
     }
   };
+  const [sweep, setSweep] = useState(false);
+  const performSweep = () => {
+    setSweep((sweep) => !sweep);
+  };
+
   const [firstSearch, setFirstSearch] = useState(true);
 
   const [searchState, setSearchState] = useState<searchState>("input");
@@ -515,7 +498,6 @@ export const SearchSection = ({
               </div>
             </div>
           } */}
-
           <SearchBar
             searchState={searchState}
             query={query}
@@ -554,6 +536,8 @@ export const SearchSection = ({
 
           <div className="mt-2">
             <SearchResultsDisplay
+              sweep={sweep}
+              performSweep={performSweep}
               relevance={relevance}
               searchState={searchState}
               searchResponse={searchResponse}

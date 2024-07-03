@@ -10,51 +10,60 @@
 
   /* Hide scrollbar for IE, Edge and Firefox */
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
 }
 
 ::-webkit-scrollbar-track {
-  background: theme("colors.scrollbar.track"); /* Track background color */
+  background: theme("colors.scrollbar.track");
+  /* Track background color */
 }
 
 /* Style the scrollbar handle */
 ::-webkit-scrollbar-thumb {
-  background: theme("colors.scrollbar.thumb"); /* Handle color */
+  background: theme("colors.scrollbar.thumb");
+  /* Handle color */
   border-radius: 10px;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: theme("colors.scrollbar.thumb-hover"); /* Handle color on hover */
+  background: theme("colors.scrollbar.thumb-hover");
+  /* Handle color on hover */
 }
 
 .dark-scrollbar::-webkit-scrollbar-thumb {
-  background: theme("colors.scrollbar.dark.thumb"); /* Handle color */
+  background: theme("colors.scrollbar.dark.thumb");
+  /* Handle color */
   border-radius: 10px;
 }
 
 .dark-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: theme(
-    "colors.scrollbar.dark.thumb-hover"
-  ); /* Handle color on hover */
+  background: theme("colors.scrollbar.dark.thumb-hover");
+  /* Handle color on hover */
 }
 
 ::-webkit-scrollbar {
-  width: 8px; /* Vertical scrollbar width */
-  height: 8px; /* Horizontal scrollbar height */
+  width: 8px;
+  /* Vertical scrollbar width */
+  height: 8px;
+  /* Horizontal scrollbar height */
 }
 
 /* Used to create alternatie to React Markdown */
 .preserve-lines {
-  white-space: pre-wrap; /* Preserves whitespace and wraps text */
+  white-space: pre-wrap;
+  /* Preserves whitespace and wraps text */
 }
 
 @keyframes shimmer {
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
@@ -64,4 +73,39 @@
   animation: shimmer 20s linear infinite;
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
 
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.collapsible {
+  max-height: 300px;
+  /* Adjust based on your content */
+  transition: max-height 0.5s ease-in-out;
+}
+
+.collapsible-closed {
+  max-height: 0;
+  overflow: hidden;
+}
+
+/* .collapsible {
+  
+  max-height: 10000px;
+  transition-property: all;
+  transition-duration: .5s;
+  transition-timing-function: cubic-bezier(1, 1, 1, 1);
+}
+
+.collapsible-closed {
+  max-height: 0;
+  overflow-y: hidden;
+
+} */
