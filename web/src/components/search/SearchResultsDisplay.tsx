@@ -54,26 +54,10 @@ export const SearchResultsDisplay = ({
     return null;
   }
 
-  const isPersona = personaName !== null;
   const { answer, quotes, documents, error, messageId } = searchResponse;
 
   if (isFetching && !answer && !documents) {
-    return (
-      <div className="flex">
-        <div className="mx-auto">
-          <ThreeDots
-            height="30"
-            width="40"
-            color="#3b82f6"
-            ariaLabel="grid-loading"
-            radius="12.5"
-            wrapperStyle={{}}
-            wrapperClass=""
-            visible={true}
-          />
-        </div>
-      </div>
-    );
+    return null;
   }
 
   if (

@@ -42,6 +42,10 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { Button } from "@tremor/react";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import Citation from "@/components/search/results/Citation";
+import {
+  buildDocumentSummaryDisplay,
+  DocumentMetadataBlock,
+} from "@/components/search/DocumentDisplay";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -279,7 +283,7 @@ export const AIMessage = ({
                       .map((doc) => (
                         <div
                           key={doc.document_id}
-                          className={`w-[450px] rounded-lg  transition-all duration-500 opacity-90 hover:bg-neutral-200 bg-neutral-100 px-4 py-2  border-b 
+                          className={`w-[200px] rounded-lg  flex-none transition-all duration-500 opacity-90 hover:bg-neutral-200 bg-neutral-100 px-4 py-2  border-b 
                         ${
                           !isComplete
                             ? "animate-pulse"
@@ -292,7 +296,7 @@ export const AIMessage = ({
                                 ? "!opacity-100"
                                 : "!opacity-20")
                         }
-                    `}
+                        `}
                         >
                           <a
                             href={doc.link}
@@ -312,7 +316,14 @@ export const AIMessage = ({
                             </div>
                           </a>
 
-                          <div className="line-clamp-3 text-xs py-4">
+                          <div className="flex  overscroll-x-scroll mt-1">
+                            <DocumentMetadataBlock document={doc} />
+                          </div>
+
+                          {/* <p className="pl-1 pt-2 pb-1 break-words">
+                            {buildDocumentSummaryDisplay(doc.match_highlights, doc.blurb)}
+                          </p> */}
+                          <div className="line-clamp-3 text-xs break-words   pt-1">
                             {doc.blurb}
                           </div>
                         </div>

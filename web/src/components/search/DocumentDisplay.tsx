@@ -4,7 +4,7 @@ import { useState } from "react";
 import { PopupSpec } from "../admin/connectors/Popup";
 import { HoverPopup } from "@/components/HoverPopup";
 import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
-import { FiInfo, FiRadio, FiTag } from "react-icons/fi";
+import { FiInfo, FiRadio, FiStar, FiTag } from "react-icons/fi";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
 import { LoadingAnimation } from "../Loading";
@@ -122,6 +122,7 @@ export function DocumentMetadataBlock({
           <DocumentUpdatedAtBadge updatedAt={document.updated_at} />
         </div>
       )}
+
       {Object.entries(document.metadata).length > 0 && (
         <>
           <div className="pl-1 border-l border-border" />
@@ -140,6 +141,10 @@ export function DocumentMetadataBlock({
             })}
         </>
       )}
+      {!document.updated_at &&
+        Object.entries(document.metadata).length == 0 && (
+          <MetadataBadge icon={FiStar} value={`TODO`} />
+        )}
     </div>
   );
 }
