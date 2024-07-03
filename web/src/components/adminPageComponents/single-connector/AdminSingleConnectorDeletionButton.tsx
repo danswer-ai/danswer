@@ -6,7 +6,7 @@ import { usePopup } from "@/hooks/common/usePopup";
 import { FiTrash } from "react-icons/fi";
 import { deleteCCPair } from "@/lib/documentDeletion";
 import { mutate } from "swr";
-import { buildCCPairInfoUrl } from "@/app/admin/connector/[ccPairId]/lib";
+import { buildCCPairInfoUrl } from "@/lib/connector/helpers";
 
 export function DeletionButton({ ccPair }: { ccPair: CCPairFullInfo }) {
   const { popup, setPopup } = usePopup();
