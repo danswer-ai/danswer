@@ -47,8 +47,8 @@ import confluenceSVG from "../../../public/Confluence.svg";
 import openAISVG from "../../../public/Openai.svg";
 import openSourceIcon from "../../../public/openSource.png";
 
-import awsWEBP from "../../../public/amazon.webp";
-import azureIcon from "../../../public/azure.png";
+import awsWEBP from "../../../public/Amazon.webp";
+import azureIcon from "../../../public/Azure.png";
 
 import anthropicSVG from "../../../public/Anthropic.svg";
 
