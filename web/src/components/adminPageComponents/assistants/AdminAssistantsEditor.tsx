@@ -14,8 +14,9 @@ import {
 import * as Yup from "yup";
 import { buildFinalPrompt, createPersona, updatePersona } from "@/lib/admin/helpers";
 import { useRouter } from "next/navigation";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
-import { Persona, StarterMessage } from "@/lib/admin/interfaces";
+import { usePopup } from "@/hooks/common/usePopup";
+import { StarterMessage } from "@/lib/admin/interfaces";
+import { Persona } from "@/interfaces/persona";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {

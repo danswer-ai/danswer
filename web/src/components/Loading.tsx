@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from "react";
 import "./loading.css";
 import { ThreeDots } from "react-loader-spinner";

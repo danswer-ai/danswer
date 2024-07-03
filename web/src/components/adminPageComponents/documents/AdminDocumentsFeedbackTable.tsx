@@ -1,5 +1,5 @@
-import { BasicTable } from "@/components/adminPageComponents/connectors/BasicTable";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+"use client";
+import { usePopup } from "@/hooks/common/usePopup";
 import { useState } from "react";
 import {
   Table,
@@ -11,13 +11,14 @@ import {
 } from "@tremor/react";
 import { PageSelector } from "@/components/PageSelector";
 import { DocumentBoostStatus } from "@/lib/types";
-import { updateHiddenStatus } from "@/app/admin/documents/lib";
-import { numToDisplay } from "@/app/admin/documents/feedback/constants";
+import { updateHiddenStatus } from "@/lib/documents/helpers";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { getErrorMsg } from "@/lib/fetchUtils";
 import { HoverPopup } from "@/components/HoverPopup";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
 import { ScoreSection } from "./AdminDocumentsScoreEditor";
+
+const numToDisplay = 10;
 
 const IsVisibleSection = ({
   document,

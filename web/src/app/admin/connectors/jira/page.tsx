@@ -20,7 +20,7 @@ import { LoadingAnimation } from "@/components/Loading";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorForm } from "@/components/adminPageComponents/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/adminPageComponents/connectors/table/ConnectorsTable";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/adminPageComponents/Title";
 import { Card, Divider, Text, Title } from "@tremor/react";

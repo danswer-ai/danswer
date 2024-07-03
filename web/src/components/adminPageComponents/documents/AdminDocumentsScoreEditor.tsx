@@ -1,5 +1,5 @@
 import { PopupSpec } from "@/components/adminPageComponents/connectors/Popup";
-import { updateBoost } from "@/app/admin/documents/lib";
+import { updateBoost } from "@/lib/documents/helpers";
 import { EditableValue } from "@/components/EditableValue";
 
 export const ScoreSection = ({
