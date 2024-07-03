@@ -24,7 +24,7 @@ RUN apt-get update && \
         curl \
         zip \
         ca-certificates \
-        libgnutls30=3.7.9-2+deb12u2 \
+        libgnutls30 \
         libblkid1=2.38.1-5+deb12u1 \
         libmount1=2.38.1-5+deb12u1 \
         libsmartcols1=2.38.1-5+deb12u1 \
