@@ -242,11 +242,9 @@ export function ChatInputBar({
               </div>
             </div>
           )}
-
           <div>
             <SelectedFilterDisplay filterManager={filterManager} />
           </div>
-
           <div
             className="
               opacity-100
@@ -256,7 +254,7 @@ export function ChatInputBar({
               flex-col
               border
               border-[#E5E7EB]
-              rounded-lg
+              rounded-lgl
               overflow-hidden
               bg-background-weak
               [&:has(textarea:focus)]::ring-1
@@ -285,7 +283,6 @@ export function ChatInputBar({
                         <Hoverable icon={FiInfo} />
                       </button>
                     </Tooltip>
-
                     <Hoverable
                       icon={FiX}
                       onClick={() => onSetSelectedAssistant(null)}
@@ -333,7 +330,6 @@ export function ChatInputBar({
                     ? "overflow-y-auto mt-2"
                     : ""
                 }
-
                 overflow-hidden
                 whitespace-normal
                 break-word

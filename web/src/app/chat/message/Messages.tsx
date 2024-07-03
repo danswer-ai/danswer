@@ -292,18 +292,21 @@ export const AIMessage = ({
                         }
                     `}
                       >
-                        <h2 className="text-sm font-semibold text-neutral-800">
+                        <a
+                          href={doc.link}
+                          target="_blank"
+                          className="text-sm font-semibold text-neutral-800"
+                        >
                           {
                             doc.document_id.split("/")[
                               doc.document_id.split("/").length - 1
                             ]
                           }
-                        </h2>
+                        </a>
 
                         <div className="line-clamp-3 text-xs py-4">
                           {doc.blurb}
                         </div>
-                        {/* <a className="w-full line-clamp-1 ellipses">{doc.link}</a> */}
                       </div>
                     ))}
                 </div>
@@ -358,8 +361,8 @@ export const AIMessage = ({
                         <p {...props} className="text-default" />
                       ),
                     }}
-                    // remarkPlugins={[remarkGfm]}
-                    // rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
                   >
                     {content}
                   </ReactMarkdown>
@@ -370,7 +373,7 @@ export const AIMessage = ({
             ) : isComplete ? null : (
               defaultLoader
             )}
-            {citedDocuments && citedDocuments.length > 0 && (
+            {/* {citedDocuments && citedDocuments.length > 0 && (
               <div className="mt-2">
                 <b className="text-sm text-emphasis">Sources:</b>
                 <div className="flex flex-wrap gap-2">
@@ -413,7 +416,7 @@ export const AIMessage = ({
                     })}
                 </div>
               </div>
-            )}
+            )} */}
           </div>
           {handleFeedback && (
             <div className="flex md:flex-row gap-x-0.5 ml-8 mt-1.5">

@@ -422,16 +422,17 @@ export const SearchSection = ({
 
       <div className="px-24  pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
         <div className="absolute top-12 left-0 hidden 2xl:block w-52 3xl:w-64">
-          {(ccPairs.length > 0 || documentSets.length > 0) && (
-            <SourceSelector
-              {...filterManager}
-              toggled={filters}
-              toggleFilters={toggleFilters}
-              availableDocumentSets={finalAvailableDocumentSets}
-              existingSources={finalAvailableSources}
-              availableTags={tags}
-            />
-          )}
+          {(ccPairs.length > 0 || documentSets.length > 0) &&
+            !showDocSidebar && (
+              <SourceSelector
+                {...filterManager}
+                toggled={filters}
+                toggleFilters={toggleFilters}
+                availableDocumentSets={finalAvailableDocumentSets}
+                existingSources={finalAvailableSources}
+                availableTags={tags}
+              />
+            )}
         </div>
         <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64"></div>
         <div className="max-w-searchbar-max w-[90%] mx-auto">
