@@ -240,7 +240,6 @@ export const SearchResultsDisplay = ({
               return (
                 <DocumentDisplay
                   hide={sweep && relevance && !relevance[document.document_id]}
-                  sweep={sweep!}
                   relevance={relevance}
                   key={document.document_id}
                   document={document}

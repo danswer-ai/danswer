@@ -386,9 +386,7 @@ export const SearchSection = ({
   const performSweep = () => {
     setSweep((sweep) => !sweep);
   };
-
   const [firstSearch, setFirstSearch] = useState(true);
-
   const [searchState, setSearchState] = useState<searchState>("input");
 
   return (

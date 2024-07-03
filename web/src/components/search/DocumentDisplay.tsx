@@ -152,7 +152,6 @@ export function DocumentMetadataBlock({
 interface DocumentDisplayProps {
   document: DanswerDocument;
   messageId: number | null;
-  sweep: boolean;
   documentRank: number;
   isSelected: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;
@@ -162,7 +161,6 @@ interface DocumentDisplayProps {
 
 export const DocumentDisplay = ({
   document,
-  sweep,
   hide,
   messageId,
   documentRank,
