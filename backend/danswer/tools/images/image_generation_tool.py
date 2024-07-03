@@ -60,11 +60,16 @@ class ImageGenerationTool(Tool):
     def __init__(
         self,
         api_key: str,
+        api_base: str | None,
+        api_version: str | None,
         model: str = "dall-e-3",
         num_imgs: int = 2,
         additional_headers: dict[str, str] | None = None,
     ) -> None:
         self.api_key = api_key
+        self.api_base = api_base
+        self.api_version = api_version
+
         self.model = model
         self.num_imgs = num_imgs
 
@@ -148,6 +153,9 @@ class ImageGenerationTool(Tool):
             prompt=prompt,
             model=self.model,
             api_key=self.api_key,
+            # need to pass in None rather than empty str
+            api_base=self.api_base or None,
+            api_version=self.api_version or None,
             n=1,
             extra_headers=build_llm_extra_headers(self.additional_headers),
         )
