@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@tremor/react";
-import { CCPairFullInfo } from "@/interfaces/connector/interfaces";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { CCPairFullInfo } from "@/app/admin/connector/[ccPairId]/types";
+import { usePopup } from "@/hooks/common/usePopup";
 import { FiTrash } from "react-icons/fi";
 import { deleteCCPair } from "@/lib/documentDeletion";
 import { mutate } from "swr";

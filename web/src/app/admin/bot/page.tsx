@@ -11,7 +11,8 @@ import {
 import { SlackBotConfig } from "@/lib/types";
 import { useState } from "react";
 import { useSlackBotConfigs, useSlackBotTokens } from "@/hooks/admin/bot/useSlackBotHook";
-import { PopupSpec, usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { PopupSpec } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { deleteSlackBotConfig, isPersonaASlackBotPersona } from "./lib";
 import { SlackBotTokensForm } from "@/components/adminPageComponents/slackbot/SlackBotTokensForm";
 import { AdminPageTitle } from "@/components/adminPageComponents/Title";

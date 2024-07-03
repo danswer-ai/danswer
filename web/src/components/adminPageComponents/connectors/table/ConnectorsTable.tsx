@@ -1,6 +1,7 @@
 import { ConnectorIndexingStatus, Credential } from "@/lib/types";
 import { BasicTable } from "@/components/adminPageComponents/connectors/BasicTable";
-import { PopupSpec, usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { PopupSpec } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { useState } from "react";
 import { LinkBreakIcon, LinkIcon } from "@/components/icons/icons";
 import { disableConnector } from "@/lib/connector";
