@@ -1,5 +1,6 @@
 import json
 import os
+from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
@@ -62,7 +63,6 @@ from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
 
-
 logger = setup_logger()
 
 AnswerObjectIterator = Iterator[
@@ -80,21 +80,30 @@ AnswerObjectIterator = Iterator[
 
 
 def evaluate_relevance(
-    top_documents: list[SavedSearchDoc], query: ThreadMessage
+    top_documents: list[SavedSearchDoc],
+    query: ThreadMessage,
+    # top_documents: List[Any],
+    # query: str,
+    # client: OpenAI,
+    # logger: Logger
 ) -> dict[str, bool]:
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    # Group documents by document_id
+    document_groups = defaultdict(list)
+    for doc in top_documents:
+        document_groups[doc.document_id].append(doc.blurb)
+
     results = {}
 
-    for doc in top_documents:
-        document_id = doc.document_id
-        blurb = doc.blurb
+    for document_id, blurbs in document_groups.items():
+        combined_blurb = "\n".join(blurbs)
 
         prompt = f"""
-        Given the following document blurb and query, determine if the document is relevant to the query.
+        Given the following document blurb(s) and query, determine if the document is relevant to the search term.
 
-        Document blurb:
+        Document blurb(s):
         ```
-        {blurb}
+        {combined_blurb}
         ```
 
         Query:
@@ -103,8 +112,8 @@ def evaluate_relevance(
         ```
 
         Is this document relevant? Respond with a
-          JSON object containing a single key "response"
-            with a value of either true if it's somewhat relevant or false if it's not relevant.
+        JSON object containing a single key "response"
+        with a value of either true if it's somewhat relevant or false if it's not relevant.
         """
 
         try:
@@ -125,7 +134,7 @@ def evaluate_relevance(
             )
 
             content = response.choices[0].message.content
-            parsed_response = json.loads(cast(str, content))
+            parsed_response = json.loads(content)
 
             if "response" in parsed_response:
                 results[document_id] = parsed_response["response"]
@@ -141,7 +150,73 @@ def evaluate_relevance(
         except Exception as e:
             logger.error(f"Error processing document {document_id}: {str(e)}")
             results[document_id] = False
+
     return results
+
+
+# def evaluate_relevance(
+#     top_documents: list[SavedSearchDoc], query: ThreadMessage
+# ) -> dict[str, bool]:
+#     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+#     results = {}
+
+#     for doc in top_documents:
+#         document_id = doc.document_id
+#         blurb = doc.blurb
+
+#         prompt = f"""
+#         Given the following document blurb and query, determine if the document is relevant to the search term.
+
+#         Document blurb:
+#         ```
+#         {blurb}
+#         ```
+
+#         Query:
+#         ```
+#         {query}
+#         ```
+
+#         Is this document relevant? Respond with a
+#           JSON object containing a single key "response"
+#             with a value of either true if it's somewhat relevant or false if it's not relevant.
+#         """
+
+#         try:
+#             response = client.chat.completions.create(
+#                 model="gpt-4o",
+#                 response_format={"type": "json_object"},
+#                 messages=[
+#                     {
+#                         "role": "system",
+#                         "content": """You are a helpful assistant that determines
+#                         document relevance. Always respond with a JSON object.""",
+#                     },
+#                     {"role": "user", "content": prompt},
+#                 ],
+#                 max_tokens=20,
+#                 n=1,
+#                 temperature=0.3,
+#             )
+
+#             content = response.choices[0].message.content
+#             parsed_response = json.loads(cast(str, content))
+
+#             if "response" in parsed_response:
+#                 results[document_id] = parsed_response["response"]
+#             else:
+#                 logger.error(
+#                     f"Error: 'response' key not found in JSON for document {document_id}"
+#                 )
+#                 results[document_id] = False
+
+#         except json.JSONDecodeError as e:
+#             logger.error(f"Error decoding JSON for document {document_id}: {str(e)}")
+#             results[document_id] = False
+#         except Exception as e:
+#             logger.error(f"Error processing document {document_id}: {str(e)}")
+#             results[document_id] = False
+#     return results
 
 
 def stream_answer_objects(

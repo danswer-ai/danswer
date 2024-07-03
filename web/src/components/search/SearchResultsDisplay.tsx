@@ -18,6 +18,7 @@ import { usePopup } from "../admin/connectors/Popup";
 import { AlertIcon } from "../icons/icons";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { searchState } from "./SearchSection";
+import AnimatedDocumentList from "./results/AnimatedDocumentList";
 
 const getSelectedDocumentIds = (
   documents: DanswerDocument[],
@@ -164,7 +165,15 @@ export const SearchResultsDisplay = ({
           </div>
         </div>
       )} */}
-
+      {/* {documents && documents.length > 0 && (
+        <AnimatedDocumentList
+          documents={documents}
+          messageId={messageId}
+          selectedDocumentIds={selectedDocumentIds}
+          setPopup={setPopup}
+          relevance={relevance}
+        />
+      )} */}
       {documents && documents.length > 0 && (
         <div className="mt-4">
           <div className="font-bold text-emphasis border-b mb-3 pb-1 border-border text-lg">

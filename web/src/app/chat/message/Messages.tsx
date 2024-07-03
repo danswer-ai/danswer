@@ -262,22 +262,24 @@ export const AIMessage = ({
               )}
 
             {docs && docs.length > 0 && (
-              <div className="w-full flex flex-col">
-                <div className="w-full flex gap-x-2 overflow-x-scroll">
-                  {docs
-                    .filter(
-                      (doc, index, self) =>
-                        doc.document_id &&
-                        doc.document_id !== "" &&
-                        index ===
-                          self.findIndex(
-                            (d) => d.document_id === doc.document_id
-                          )
-                    )
-                    .map((doc) => (
-                      <div
-                        key={doc.document_id}
-                        className={`w-[250px] transition-opacity duration-500 opacity-90  bg-neutral-100 px-4 py-2  border-b 
+              <div className="w-full flex ">
+                <div className="w-full relative overflow-x-scroll no-scrollbar">
+                  {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
+                  <div className="flex gap-x-2">
+                    {docs
+                      .filter(
+                        (doc, index, self) =>
+                          doc.document_id &&
+                          doc.document_id !== "" &&
+                          index ===
+                            self.findIndex(
+                              (d) => d.document_id === doc.document_id
+                            )
+                      )
+                      .map((doc) => (
+                        <div
+                          key={doc.document_id}
+                          className={`w-[450px] rounded-lg  transition-all duration-500 opacity-90 hover:bg-neutral-200 bg-neutral-100 px-4 py-2  border-b 
                         ${
                           !isComplete
                             ? "animate-pulse"
@@ -291,25 +293,46 @@ export const AIMessage = ({
                                 : "!opacity-20")
                         }
                     `}
-                      >
-                        <a
-                          href={doc.link}
-                          target="_blank"
-                          className="text-sm font-semibold text-neutral-800"
                         >
-                          {
-                            doc.document_id.split("/")[
-                              doc.document_id.split("/").length - 1
-                            ]
-                          }
-                        </a>
+                          <a
+                            href={doc.link}
+                            target="_blank"
+                            className="text-sm flex justify-between font-semibold text-neutral-800"
+                          >
+                            {
+                              doc.document_id.split("/")[
+                                doc.document_id.split("/").length - 1
+                              ]
+                            }
+                            <div className="flex-none">
+                              <SourceIcon
+                                sourceType={doc.source_type}
+                                iconSize={18}
+                              />
+                            </div>
+                          </a>
 
-                        <div className="line-clamp-3 text-xs py-4">
-                          {doc.blurb}
+                          <div className="line-clamp-3 text-xs py-4">
+                            {doc.blurb}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                  </div>
                 </div>
+                <button className="my-auto h-full flex-none p-2">
+                  <svg
+                    className="text-neutral-700 hover:text-neutral-900 h-6 w-6"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="200"
+                    height="200"
+                    viewBox="0 0 16 16"
+                  >
+                    <g fill="currentColor">
+                      <path d="M6.22 8.72a.75.75 0 0 0 1.06 1.06l5.22-5.22v1.69a.75.75 0 0 0 1.5 0v-3.5a.75.75 0 0 0-.75-.75h-3.5a.75.75 0 0 0 0 1.5h1.69z" />
+                      <path d="M3.5 6.75c0-.69.56-1.25 1.25-1.25H7A.75.75 0 0 0 7 4H4.75A2.75 2.75 0 0 0 2 6.75v4.5A2.75 2.75 0 0 0 4.75 14h4.5A2.75 2.75 0 0 0 12 11.25V9a.75.75 0 0 0-1.5 0v2.25c0 .69-.56 1.25-1.25 1.25h-4.5c-.69 0-1.25-.56-1.25-1.25z" />
+                    </g>
+                  </svg>
+                </button>
               </div>
             )}
 
