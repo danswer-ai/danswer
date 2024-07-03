@@ -200,7 +200,7 @@ class GitlabConnector(LoadConnector, PollConnector):
                 yield mr_doc_batch
 
         if self.include_issues:
-            issues = project.issues.list(state=self.state_filter)
+            issues = project.issues.list(state=self.state_filter, order_by="updated_at", sort="desc")
 
             for issue_batch in _batch_gitlab_objects(issues, self.batch_size):
                 issue_doc_batch: list[Document] = []
