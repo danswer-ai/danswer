@@ -1,7 +1,7 @@
 import { DanswerDocument } from "@/lib/search/interfaces";
 import { Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatSidebarDocumentDisplay";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { FiAlertTriangle, FiFileText } from "react-icons/fi";
 import { SelectedDocumentDisplay } from "./ChatSidebarSelectedDocumentDisplay";
 import { removeDuplicateDocs } from "@/lib/documentUtils";

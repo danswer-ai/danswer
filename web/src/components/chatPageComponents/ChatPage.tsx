@@ -41,7 +41,7 @@ import {
   uploadFilesForChat,
 } from "./lib";
 import { useContext, useEffect, useRef, useState } from "react";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
 import { useFilters, useLlmOverride } from "@/lib/hooks";

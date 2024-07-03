@@ -1,6 +1,7 @@
 "use client";
 
-import { PopupSpec, usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { PopupSpec } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { runConnector } from "@/lib/connector";
 import { Button, Divider, Text } from "@tremor/react";
 import { mutate } from "swr";

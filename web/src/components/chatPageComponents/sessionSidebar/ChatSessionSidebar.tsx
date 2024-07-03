@@ -11,7 +11,7 @@ import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
 import { ChatTab } from "./ChatSessisionSidebarTab";
 import { Folder } from "../folders/interfaces";
 import { createFolder } from "../folders/ChatFolderManagement";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import React from "react";

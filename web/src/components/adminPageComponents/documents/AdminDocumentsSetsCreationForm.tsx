@@ -1,7 +1,7 @@
 import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import * as Yup from "yup";
 import { PopupSpec } from "@/components/adminPageComponents/connectors/Popup";
-import { createDocumentSet, updateDocumentSet } from "@/app/admin/documents/sets/lib";
+import { createDocumentSet, updateDocumentSet } from "@/lib/documents/sets/helpers";
 import { ConnectorIndexingStatus, DocumentSet, UserGroup } from "@/lib/types";
 import {
   BooleanFormField,

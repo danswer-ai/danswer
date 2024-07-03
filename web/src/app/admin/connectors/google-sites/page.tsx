@@ -11,7 +11,7 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus, GoogleSitesConfig } from "@/lib/types";
 import { Form, Formik } from "formik";
 import { useState } from "react";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { linkCredential } from "@/lib/credential";
 import { FileUpload } from "@/components/adminPageComponents/connectors/FileUpload";

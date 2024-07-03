@@ -1,6 +1,6 @@
 "use client";
 
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { requestEmailVerification } from "@/app/auth/lib";
 import { Spinner } from "@/components/Spinner";
 import { useState } from "react";

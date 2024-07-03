@@ -1,5 +1,5 @@
 import { DeletionAttemptSnapshot, ValidStatuses } from "@/lib/types";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { updateConnector } from "@/lib/connector";
 import { AttachCredentialButtonForTable } from "@/components/adminPageComponents/connectors/buttons/AttachCredentialButtonForTable";
 import { scheduleDeletionJobForConnector } from "@/lib/documentDeletion";

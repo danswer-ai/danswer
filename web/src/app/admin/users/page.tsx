@@ -11,7 +11,7 @@ import {
 } from "@tremor/react";
 import { LoadingAnimation } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/adminPageComponents/Title";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { UsersIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import { User } from "@/lib/types";

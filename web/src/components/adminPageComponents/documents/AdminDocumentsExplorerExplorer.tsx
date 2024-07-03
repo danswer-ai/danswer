@@ -1,13 +1,14 @@
 "use client";
 
-import { adminSearch } from "@/app/admin/documents/explorer/lib";
+import { adminSearch } from "@/lib/search/helpers";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useState, useEffect } from "react";
 import { DanswerDocument } from "@/lib/search/interfaces";
 import { buildDocumentSummaryDisplay } from "@/components/search/DocumentDisplay";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
-import { updateHiddenStatus } from "@/app/admin/documents/lib";
-import { PopupSpec, usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { updateHiddenStatus } from "@/lib/documents/helpers";
+import { PopupSpec } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { getErrorMsg } from "@/lib/fetchUtils";
 import { ScoreSection } from "@/components/adminPageComponents/documents/AdminDocumentsScoreEditor";
 import { useRouter } from "next/navigation";
