@@ -481,8 +481,32 @@ export function AssistantEditor({
                       </div>
                     )}
                   </div>
+                </div>
 
-                  <div className="ml-1">
+                <div className="mb-6">
+                  <div className="flex gap-x-2 items-center">
+                    <div className="block font-medium text-base">
+                      Capabilities{" "}
+                    </div>
+                    <TooltipProvider delayDuration={50}>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <FiInfo size={12} />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center">
+                          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                            You can give your assistant advanced capabilities
+                            like image generation
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <div className="block text-sm font-medium text-subtle">
+                      Advanced
+                    </div>
+                  </div>
+
+                  <div className="mt-2 ml-1">
                     {imageGenerationTool &&
                       checkLLMSupportsImageInput(
                         providerDisplayNameToProviderName.get(
@@ -522,7 +546,6 @@ export function AssistantEditor({
                               {ccPairs.length > 0 && (
                                 <>
                                   <Label small>Document Sets</Label>
-
                                   <div>
                                     <SubLabel>
                                       <>
@@ -647,6 +670,8 @@ export function AssistantEditor({
                       <>
                         {customTools.map((tool) => (
                           <BooleanFormField
+                            noPadding
+                            alignTop={tool.description != null}
                             key={tool.id}
                             name={`enabled_tools_map.${tool.id}`}
                             label={tool.name}
@@ -659,244 +684,249 @@ export function AssistantEditor({
                       </>
                     )}
                   </div>
-                </div>
 
-                {llmProviders.length > 0 && (
-                  <>
-                    <Divider />
-
-                    <TextFormField
-                      name="task_prompt"
-                      label="Additional instructions (Optional)"
-                      isTextArea={true}
-                      placeholder="e.g. 'Remember to reference all of the points mentioned in my message to you and focus on identifying action items that can move things forward'"
-                      onChange={(e) => {
-                        setFieldValue("task_prompt", e.target.value);
-                        triggerFinalPromptUpdate(
-                          values.system_prompt,
-                          e.target.value,
-                          searchToolEnabled()
-                        );
-                      }}
-                      explanationText="Learn about prompting in our docs!"
-                      explanationLink="https://docs.danswer.dev/guides/assistants"
-                    />
-                  </>
-                )}
-                <div className="mb-6">
-                  <div className="flex gap-x-2 items-center">
-                    <div className="block font-medium text-base">
-                      Add Starter Messages (Optional){" "}
-                    </div>
-                  </div>
-                  <FieldArray
-                    name="starter_messages"
-                    render={(arrayHelpers: ArrayHelpers<StarterMessage[]>) => (
-                      <div>
-                        {values.starter_messages &&
-                          values.starter_messages.length > 0 &&
-                          values.starter_messages.map((_, index) => {
-                            return (
-                              <div
-                                key={index}
-                                className={index === 0 ? "mt-2" : "mt-6"}
-                              >
-                                <div className="flex">
-                                  <div className="w-full mr-6 border border-border p-3 rounded">
-                                    <div>
-                                      <Label small>Name</Label>
-                                      <SubLabel>
-                                        Shows up as the &quot;title&quot; for
-                                        this Starter Message. For example,
-                                        &quot;Write an email&quot;.
-                                      </SubLabel>
-                                      <Field
-                                        name={`starter_messages[${index}].name`}
-                                        className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
-                                      `}
-                                        autoComplete="off"
-                                      />
-                                      <ErrorMessage
-                                        name={`starter_messages[${index}].name`}
-                                        component="div"
-                                        className="text-error text-sm mt-1"
-                                      />
-                                    </div>
-
-                                    <div className="mt-3">
-                                      <Label small>Description</Label>
-                                      <SubLabel>
-                                        A description which tells the user what
-                                        they might want to use this Starter
-                                        Message for. For example &quot;to a
-                                        client about a new feature&quot;
-                                      </SubLabel>
-                                      <Field
-                                        name={`starter_messages.${index}.description`}
-                                        className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
-                                      `}
-                                        autoComplete="off"
-                                      />
-                                      <ErrorMessage
-                                        name={`starter_messages[${index}].description`}
-                                        component="div"
-                                        className="text-error text-sm mt-1"
-                                      />
-                                    </div>
-
-                                    <div className="mt-3">
-                                      <Label small>Message</Label>
-                                      <SubLabel>
-                                        The actual message to be sent as the
-                                        initial user message if a user selects
-                                        this starter prompt. For example,
-                                        &quot;Write me an email to a client
-                                        about a new billing feature we just
-                                        released.&quot;
-                                      </SubLabel>
-                                      <Field
-                                        name={`starter_messages[${index}].message`}
-                                        className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
-                                      `}
-                                        as="textarea"
-                                        autoComplete="off"
-                                      />
-                                      <ErrorMessage
-                                        name={`starter_messages[${index}].message`}
-                                        component="div"
-                                        className="text-error text-sm mt-1"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="my-auto">
-                                    <FiX
-                                      className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
-                                      onClick={() => arrayHelpers.remove(index)}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-
-                        <Button
-                          onClick={() => {
-                            arrayHelpers.push({
-                              name: "",
-                              description: "",
-                              message: "",
-                            });
-                          }}
-                          className="mt-3"
-                          color="green"
-                          size="xs"
-                          type="button"
-                          icon={FiPlus}
-                        >
-                          Add New
-                        </Button>
-                      </div>
-                    )}
-                  />
-                </div>
-
-                {isPaidEnterpriseFeaturesEnabled &&
-                  userGroups &&
-                  (!user || user.role === "admin") && (
+                  {llmProviders.length > 0 && (
                     <>
                       <Divider />
 
-                      <BooleanFormField
-                        small
-                        noPadding
-                        alignTop
-                        name="is_public"
-                        label="Is Public?"
-                        subtext="If set, this Assistant will be available to all users. If not, only the specified User Groups will be able to access it."
+                      <TextFormField
+                        name="task_prompt"
+                        label="Additional instructions (Optional)"
+                        isTextArea={true}
+                        placeholder="e.g. 'Remember to reference all of the points mentioned in my message to you and focus on identifying action items that can move things forward'"
+                        onChange={(e) => {
+                          setFieldValue("task_prompt", e.target.value);
+                          triggerFinalPromptUpdate(
+                            values.system_prompt,
+                            e.target.value,
+                            searchToolEnabled()
+                          );
+                        }}
+                        explanationText="Learn about prompting in our docs!"
+                        explanationLink="https://docs.danswer.dev/guides/assistants"
                       />
-
-                      {userGroups &&
-                        userGroups.length > 0 &&
-                        !values.is_public && (
-                          <div>
-                            <Text>
-                              Select which User Groups should have access to
-                              this Assistant.
-                            </Text>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {userGroups.map((userGroup) => {
-                                const isSelected = values.groups.includes(
-                                  userGroup.id
-                                );
-                                return (
-                                  <Bubble
-                                    key={userGroup.id}
-                                    isSelected={isSelected}
-                                    onClick={() => {
-                                      if (isSelected) {
-                                        setFieldValue(
-                                          "groups",
-                                          values.groups.filter(
-                                            (id) => id !== userGroup.id
-                                          )
-                                        );
-                                      } else {
-                                        setFieldValue("groups", [
-                                          ...values.groups,
-                                          userGroup.id,
-                                        ]);
-                                      }
-                                    }}
-                                  >
-                                    <div className="flex">
-                                      <GroupsIcon />
-                                      <div className="ml-1">
-                                        {userGroup.name}
-                                      </div>
-                                    </div>
-                                  </Bubble>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
                     </>
                   )}
+                  <div className="mb-6">
+                    <div className="flex gap-x-2 items-center">
+                      <div className="block font-medium text-base">
+                        Add Starter Messages (Optional){" "}
+                      </div>
+                    </div>
+                    <FieldArray
+                      name="starter_messages"
+                      render={(
+                        arrayHelpers: ArrayHelpers<StarterMessage[]>
+                      ) => (
+                        <div>
+                          {values.starter_messages &&
+                            values.starter_messages.length > 0 &&
+                            values.starter_messages.map((_, index) => {
+                              return (
+                                <div
+                                  key={index}
+                                  className={index === 0 ? "mt-2" : "mt-6"}
+                                >
+                                  <div className="flex">
+                                    <div className="w-full mr-6 border border-border p-3 rounded">
+                                      <div>
+                                        <Label small>Name</Label>
+                                        <SubLabel>
+                                          Shows up as the &quot;title&quot; for
+                                          this Starter Message. For example,
+                                          &quot;Write an email&quot;.
+                                        </SubLabel>
+                                        <Field
+                                          name={`starter_messages[${index}].name`}
+                                          className={`
+                                        border 
+                                        border-border 
+                                        bg-background 
+                                        rounded 
+                                        w-full 
+                                        py-2 
+                                        px-3 
+                                        mr-4
+                                      `}
+                                          autoComplete="off"
+                                        />
+                                        <ErrorMessage
+                                          name={`starter_messages[${index}].name`}
+                                          component="div"
+                                          className="text-error text-sm mt-1"
+                                        />
+                                      </div>
 
-                <div className="flex">
-                  <Button
-                    className="mx-auto"
-                    color="green"
-                    size="md"
-                    type="submit"
-                    disabled={isSubmitting}
-                  >
-                    {isUpdate ? "Update!" : "Create!"}
-                  </Button>
+                                      <div className="mt-3">
+                                        <Label small>Description</Label>
+                                        <SubLabel>
+                                          A description which tells the user
+                                          what they might want to use this
+                                          Starter Message for. For example
+                                          &quot;to a client about a new
+                                          feature&quot;
+                                        </SubLabel>
+                                        <Field
+                                          name={`starter_messages.${index}.description`}
+                                          className={`
+                                        border 
+                                        border-border 
+                                        bg-background 
+                                        rounded 
+                                        w-full 
+                                        py-2 
+                                        px-3 
+                                        mr-4
+                                      `}
+                                          autoComplete="off"
+                                        />
+                                        <ErrorMessage
+                                          name={`starter_messages[${index}].description`}
+                                          component="div"
+                                          className="text-error text-sm mt-1"
+                                        />
+                                      </div>
+
+                                      <div className="mt-3">
+                                        <Label small>Message</Label>
+                                        <SubLabel>
+                                          The actual message to be sent as the
+                                          initial user message if a user selects
+                                          this starter prompt. For example,
+                                          &quot;Write me an email to a client
+                                          about a new billing feature we just
+                                          released.&quot;
+                                        </SubLabel>
+                                        <Field
+                                          name={`starter_messages[${index}].message`}
+                                          className={`
+                                        border 
+                                        border-border 
+                                        bg-background 
+                                        rounded 
+                                        w-full 
+                                        py-2 
+                                        px-3 
+                                        mr-4
+                                      `}
+                                          as="textarea"
+                                          autoComplete="off"
+                                        />
+                                        <ErrorMessage
+                                          name={`starter_messages[${index}].message`}
+                                          component="div"
+                                          className="text-error text-sm mt-1"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="my-auto">
+                                      <FiX
+                                        className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
+                                        onClick={() =>
+                                          arrayHelpers.remove(index)
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+
+                          <Button
+                            onClick={() => {
+                              arrayHelpers.push({
+                                name: "",
+                                description: "",
+                                message: "",
+                              });
+                            }}
+                            className="mt-3"
+                            color="green"
+                            size="xs"
+                            type="button"
+                            icon={FiPlus}
+                          >
+                            Add New
+                          </Button>
+                        </div>
+                      )}
+                    />
+                  </div>
+
+                  {isPaidEnterpriseFeaturesEnabled &&
+                    userGroups &&
+                    (!user || user.role === "admin") && (
+                      <>
+                        <Divider />
+
+                        <BooleanFormField
+                          small
+                          noPadding
+                          alignTop
+                          name="is_public"
+                          label="Is Public?"
+                          subtext="If set, this Assistant will be available to all users. If not, only the specified User Groups will be able to access it."
+                        />
+
+                        {userGroups &&
+                          userGroups.length > 0 &&
+                          !values.is_public && (
+                            <div>
+                              <Text>
+                                Select which User Groups should have access to
+                                this Assistant.
+                              </Text>
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {userGroups.map((userGroup) => {
+                                  const isSelected = values.groups.includes(
+                                    userGroup.id
+                                  );
+                                  return (
+                                    <Bubble
+                                      key={userGroup.id}
+                                      isSelected={isSelected}
+                                      onClick={() => {
+                                        if (isSelected) {
+                                          setFieldValue(
+                                            "groups",
+                                            values.groups.filter(
+                                              (id) => id !== userGroup.id
+                                            )
+                                          );
+                                        } else {
+                                          setFieldValue("groups", [
+                                            ...values.groups,
+                                            userGroup.id,
+                                          ]);
+                                        }
+                                      }}
+                                    >
+                                      <div className="flex">
+                                        <GroupsIcon />
+                                        <div className="ml-1">
+                                          {userGroup.name}
+                                        </div>
+                                      </div>
+                                    </Bubble>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                      </>
+                    )}
+
+                  <div className="flex">
+                    <Button
+                      className="mx-auto"
+                      color="green"
+                      size="md"
+                      type="submit"
+                      disabled={isSubmitting}
+                    >
+                      {isUpdate ? "Update!" : "Create!"}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </Form>
