@@ -16,6 +16,10 @@ module.exports = {
     transparent: "transparent",
     current: "currentColor",
     extend: {
+      transitionProperty: {
+        spacing: "margin, padding",
+      },
+
       keyframes: {
         pulse: {
           "0%, 100%": { opacity: 0.9 },

@@ -98,7 +98,7 @@
   overflow-y: hidden;
 
 } */
-.collapsible {
+/* .collapsible {
   max-height: 300px;
   transition:
     max-height 0.5s ease-in-out,
@@ -107,6 +107,32 @@
 
 .collapsible-closed {
   max-height: 0;
-  /* overflow-y: hidden; */
+
   border-bottom-color: transparent;
+} */
+
+.collapsible {
+  max-height: 300px;
+  transition:
+    max-height 0.5s ease-in-out,
+    opacity 0.5s ease-in-out;
+  opacity: 1;
+}
+
+.collapsible-closed {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+/* Add this new class for the container */
+.collapsible-container {
+  transition:
+    transform 0.5s ease-in-out,
+    opacity 0.5s ease-in-out;
+}
+
+.collapsible-container.hidden {
+  transform: translateX(100%);
+  opacity: 0;
 }

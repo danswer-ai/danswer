@@ -118,7 +118,7 @@ def evaluate_relevance(
 
         try:
             response = client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-3.5-turbo",
                 response_format={"type": "json_object"},
                 messages=[
                     {

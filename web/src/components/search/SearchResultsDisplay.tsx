@@ -190,11 +190,11 @@ export const SearchResultsDisplay = ({
                     : "bg-rose-700 text-neutral-100"
                 }`}
                 style={{
-                  transform: !sweep ? "rotateZ(180deg)" : "rotateZ(0deg)",
+                  transform: sweep ? "rotateZ(180deg)" : "rotateZ(0deg)",
                 }}
               >
                 <div
-                  className={`flex items-center ${!sweep ? "rotate-180" : ""}`}
+                  className={`flex items-center ${sweep ? "rotate-180" : ""}`}
                 >
                   {/* {!sweep ? "Clean" : "Show"} */}
 
@@ -239,6 +239,7 @@ export const SearchResultsDisplay = ({
 
               return (
                 <DocumentDisplay
+                  index={ind}
                   hide={sweep && relevance && !relevance[document.document_id]}
                   relevance={relevance}
                   key={document.document_id}
