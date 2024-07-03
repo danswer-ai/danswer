@@ -269,7 +269,7 @@ export const AIMessage = ({
               )}
 
             {docs && docs.length > 0 && (
-              <div className="w-full flex ">
+              <div className="w-full mb-4 flex ">
                 <div className="w-full relative overflow-x-scroll no-scrollbar">
                   {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
                   <div className="flex gap-x-2">
@@ -284,12 +284,7 @@ export const AIMessage = ({
                             )
                       )
                       .map((doc) => (
-                        <button
-                          onClick={() => {
-                            if (toggleDocumentSelection) {
-                              toggleDocumentSelection();
-                            }
-                          }}
+                        <div
                           key={doc.document_id}
                           className={`w-[200px] rounded-lg  flex-none transition-all duration-500 opacity-90 hover:bg-neutral-200 bg-neutral-100 px-4 py-2  border-b 
                         ${
@@ -336,11 +331,18 @@ export const AIMessage = ({
                           <div className="line-clamp-3 text-xs break-words   pt-1">
                             {doc.blurb}
                           </div>
-                        </button>
+                        </div>
                       ))}
                   </div>
                 </div>
-                <button className="my-auto h-full flex-none p-2">
+                <button
+                  onClick={() => {
+                    if (toggleDocumentSelection) {
+                      toggleDocumentSelection();
+                    }
+                  }}
+                  className="my-auto h-full flex-none p-2"
+                >
                   <svg
                     className="text-neutral-700 hover:text-neutral-900 h-6 w-6"
                     xmlns="http://www.w3.org/2000/svg"

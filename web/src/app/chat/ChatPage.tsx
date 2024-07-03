@@ -1108,7 +1108,7 @@ export function ChatPage({
   const [documentSelection, setDocumentSelection] = useState(false);
   const toggleDocumentSelectionAspects = () => {
     setDocumentSelection((documentSelection) => !documentSelection);
-    toggleSidebar();
+    setShowDocSidebar(false);
   };
 
   return (
@@ -1629,7 +1629,7 @@ export function ChatPage({
             <DocumentSidebar
               initialWidth={300}
               ref={innerSidebarElementRef}
-              closeSidebar={() => toggleSidebar()}
+              closeSidebar={() => setDocumentSelection(false)}
               selectedMessage={aiMessage}
               selectedDocuments={selectedDocuments}
               toggleDocumentSelection={toggleDocumentSelection}
