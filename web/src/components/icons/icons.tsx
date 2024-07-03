@@ -45,7 +45,7 @@ import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
 import openAISVG from "../../../public/Openai.svg";
-import openSourceIcon from "../../../public/openSource.png";
+import openSourceIcon from "../../../public/OpenSource.png";
 
 import awsWEBP from "../../../public/Amazon.webp";
 import azureIcon from "../../../public/Azure.png";
