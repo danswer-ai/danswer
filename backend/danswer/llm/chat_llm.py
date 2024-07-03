@@ -42,6 +42,8 @@ logger = setup_logger()
 litellm.drop_params = True
 litellm.telemetry = False
 
+litellm.set_verbose = LOG_ALL_MODEL_INTERACTIONS
+
 
 def _base_msg_to_role(msg: BaseMessage) -> str:
     if isinstance(msg, HumanMessage) or isinstance(msg, HumanMessageChunk):
