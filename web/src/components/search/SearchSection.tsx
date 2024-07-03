@@ -418,7 +418,7 @@ export const SearchSection = ({
           </div>
         </ResizableSection>
       </div>
-      <div className=" left-0 sticky top-0 z-10 w-full bg-opacity-30 backdrop-blur-sm flex">
+      <div className="pb-6 left-0 sticky top-0 z-10 w-full bg-opacity-30 backdrop-blur-sm flex">
         <div className="mt-2 flex w-full">
           {!showDocSidebar && (
             <button className="ml-4 mt-auto" onClick={() => toggleSidebar()}>

@@ -1204,7 +1204,7 @@ export function ChatPage({
                       <ChatBanner />
 
                       {livePersona && (
-                        <div className="sticky top-0 left-80 z-10 w-full bg-background  bg-opacity-30 backdrop-blur-sm flex">
+                        <div className="sticky top-0 left-80 z-10 w-full bg-background bg-opacity-30 backdrop-blur-sm flex">
                           <div className="mt-2 pb-6 flex w-full">
                             {!showDocSidebar && (
                               <button
