@@ -85,17 +85,6 @@
   }
 }
 
-.collapsible {
-  max-height: 300px;
-  /* Adjust based on your content */
-  transition: max-height 0.5s ease-in-out;
-}
-
-.collapsible-closed {
-  max-height: 0;
-  overflow: hidden;
-}
-
 /* .collapsible {
   
   max-height: 10000px;
@@ -109,3 +98,15 @@
   overflow-y: hidden;
 
 } */
+.collapsible {
+  max-height: 300px;
+  transition:
+    max-height 0.5s ease-in-out,
+    border 0.5s ease-in-out;
+}
+
+.collapsible-closed {
+  max-height: 0;
+  /* overflow-y: hidden; */
+  border-bottom-color: transparent;
+}

@@ -178,20 +178,20 @@ export const DocumentDisplay = ({
   return (
     <div
       key={document.semantic_identifier}
-      className={`text-sm collapsible ${hide ? "collapsible-closed" : "border-b border-border mb-3"}`}
+      className={`text-sm collapsible border-b border-border  ${!hide ? "mt-3" : "border-none"} relative `}
       onMouseEnter={() => {
         setIsHovered(true);
       }}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex relative ">
-        <div
-          className={
-            "absolute top-2/4  -translate-y-2/4 flex " +
-            (isSelected ? "-left-14 w-14" : "-left-10 w-10")
-          }
-        >
-          {relevance ? (
+      <div
+        className={
+          "absolute top-3 animate-fade-in-up overflow-y-auto  -translate-y-2/4 flex " +
+          (isSelected ? "-left-14 w-14" : "-left-10 w-10")
+        }
+      >
+        {!hide &&
+          (relevance ? (
             relevance[document.document_id] ? (
               <svg
                 className={`h-4 w-4  
@@ -262,12 +262,20 @@ export const DocumentDisplay = ({
             >
               <FunctionalLoader />
             </div>
-          )}
+          ))}
 
-          {/* </div> */}
-        </div>
+        {/* </div> */}
+      </div>
 
-        {/* {document.score !== null && (
+      <div
+        className={` collapsible
+        ${hide ? " collapsible-closed overflow-y-auto border-transparent" : ""}`}
+      >
+        <div
+          className={`flex relative
+          `}
+        >
+          {/* {document.score !== null && (
           <div
             className={
               "absolute top-2/4 -translate-y-2/4 flex " +
@@ -311,37 +319,41 @@ export const DocumentDisplay = ({
           </div>
         )} */}
 
-        <a
-          className={
-            "rounded-lg flex font-bold text-link max-w-full " +
-            (document.link ? "" : "pointer-events-none")
-          }
-          href={document.link}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <SourceIcon sourceType={document.source_type} iconSize={22} />
-          <p className="truncate text-wrap break-all ml-2 my-auto text-base max-w-full">
-            {document.semantic_identifier || document.document_id}
-          </p>
-        </a>
-        <div className="ml-auto">
-          {isHovered && messageId && (
-            <DocumentFeedbackBlock
-              documentId={document.document_id}
-              messageId={messageId}
-              documentRank={documentRank}
-              setPopup={setPopup}
-            />
-          )}
+          <a
+            className={
+              "rounded-lg flex font-bold text-link max-w-full " +
+              (document.link ? "" : "pointer-events-none")
+            }
+            href={document.link}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <SourceIcon sourceType={document.source_type} iconSize={22} />
+            <p className="truncate text-wrap break-all ml-2 my-auto text-base max-w-full">
+              {document.semantic_identifier || document.document_id}
+            </p>
+          </a>
+          <div className="ml-auto">
+            {isHovered && messageId && (
+              <DocumentFeedbackBlock
+                documentId={document.document_id}
+                messageId={messageId}
+                documentRank={documentRank}
+                setPopup={setPopup}
+              />
+            )}
+          </div>
         </div>
+        <div className="mt-1">
+          <DocumentMetadataBlock document={document} />
+        </div>
+        <p className="pl-1 pt-2 pb-3 break-words">
+          {buildDocumentSummaryDisplay(
+            document.match_highlights,
+            document.blurb
+          )}
+        </p>
       </div>
-      <div className="mt-1">
-        <DocumentMetadataBlock document={document} />
-      </div>
-      <p className="pl-1 pt-2 pb-3 break-words">
-        {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
-      </p>
     </div>
   );
 };
