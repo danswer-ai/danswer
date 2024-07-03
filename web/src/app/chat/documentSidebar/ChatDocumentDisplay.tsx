@@ -38,8 +38,9 @@ export function ChatDocumentDisplay({
   const Main = () => {
     return (
       <button
+        onClick={() => handleSelect(document.document_id)}
         key={document.semantic_identifier}
-        className={`p-2 justify-start cursor-pointer  rounded-md ${isSelected ? "bg-neutral-200" : "hover:bg-background-weakish bg-neutral-100"}   text-sm mx-3`}
+        className={`p-2 w-[250px]  justify-start cursor-pointer  rounded-md ${isSelected ? "bg-neutral-200" : "hover:bg-background-weakish bg-neutral-100"}   text-sm mx-3`}
       >
         <div className=" flex relative justify-start  overflow-y-visible">
           <a

@@ -85,14 +85,11 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     const tokenLimitReached = selectedDocumentTokens > maxTokens - 75;
 
     return (
-      <div
-        onClick={() => closeSidebar()}
-        className="fixed inset-0 transition transform transition-all duration-300 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
-      >
+      <div className="fixed inset-0 transition transform transition-all duration-300 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
         <div
           ref={ref}
           style={{ width: initialWidth }}
-          className={`ml-auto bg-neutral-100 sidebar z-[1000] absolute right-0 h-screen border-l border-l-border`}
+          className={`ml-auto relative bg-neutral-100 sidebar z-[1000] absolute right-0 h-screen border-l border-l-border`}
         >
           <div className="   flex-initial overflow-y-hidden flex flex-col h-screen">
             {popup}
@@ -114,13 +111,13 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                 /> </div> */}
 
             {currentDocuments ? (
-              <div className="overflow-y-auto dark-scrollbar flex flex-col">
+              <div className="overflow-y-auto dark-scrollbar flex relative  flex-col">
                 <div>
                   {dedupedDocuments.length > 0 ? (
                     dedupedDocuments.map((document, ind) => (
                       <div
                         key={document.document_id}
-                        className={`max-w-[200px] bg-black
+                        className={`
                           ${
                             ind === dedupedDocuments.length - 1
                               ? "mb-5"
@@ -165,6 +162,14 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                 </div>
               )
             )}
+          </div>
+          <div className="sticky bottom-4 w-full left-0 flex ">
+            <button
+              className="mx-auto bg-neutral-800 text-xs p-2 rounded text-neutral-200"
+              onClick={() => closeSidebar()}
+            >
+              Save Changes
+            </button>
           </div>
         </div>
       </div>
