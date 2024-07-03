@@ -501,7 +501,7 @@ export function AssistantEditor({
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <div className="block font-medium text-subtle">
+                    <div className="block text-sm font-medium text-subtle">
                       Advanced
                     </div>
                   </div>
@@ -671,7 +671,7 @@ export function AssistantEditor({
                         {customTools.map((tool) => (
                           <BooleanFormField
                             noPadding
-                            alignTop
+                            alignTop={tool.description != null}
                             key={tool.id}
                             name={`enabled_tools_map.${tool.id}`}
                             label={tool.name}
