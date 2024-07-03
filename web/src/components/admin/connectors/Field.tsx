@@ -34,7 +34,7 @@ export function Label({
   small?: boolean;
 }) {
   return (
-    <div className={`block font-medium base ${small ? "text-sm" : "tex-base"}`}>
+    <div className={`block font-medium base ${small ? "text-sm" : "text-base"}`}>
       {children}
     </div>
   );
@@ -80,7 +80,7 @@ export function ToolTipDetails({
           <FiInfo size={12} />
         </TooltipTrigger>
         <TooltipContent side="top" align="center">
-          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+          <p className="bg-background-dark max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-inverted">
             {children}
           </p>
         </TooltipContent>
@@ -147,7 +147,7 @@ export function TextFormField({
             <ErrorMessage
               name={name}
               component="div"
-              className="text-red-500 my-auto text-sm"
+              className="text-error my-auto text-sm"
             />
           )
         )}
@@ -210,7 +210,7 @@ export const BooleanFormField = ({
         <Field
           name={name}
           type="checkbox"
-          className={`${noPadding ? "mr-3" : "mx-3"}  px-5 w-3.5 h-3.5 ${alignTop ? "mt-1" : "my-auto"}`}
+          className={`${noPadding ? "mr-3" : "mx-3"} px-5 w-3.5 h-3.5 ${alignTop ? "mt-1" : "my-auto"}`}
           {...(onChange ? { onChange } : {})}
         />
         <div>
@@ -221,7 +221,7 @@ export const BooleanFormField = ({
       <ErrorMessage
         name={name}
         component="div"
-        className="text-red-500 text-sm mt-1"
+        className="text-error text-sm mt-1"
       />
     </div>
   );
@@ -369,7 +369,7 @@ export function SelectorFormField({
       <ErrorMessage
         name={name}
         component="div"
-        className="text-red-500 text-sm mt-1"
+        className="text-error text-sm mt-1"
       />
     </div>
   );
