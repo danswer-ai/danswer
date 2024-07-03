@@ -186,7 +186,7 @@ export const DocumentDisplay = ({
     >
       <div
         className={
-          "absolute top-3 animate-fade-in-up overflow-y-auto  -translate-y-2/4 flex " +
+          "absolute top-3 overflow-y-auto -translate-y-2/4 flex " +
           (isSelected ? "-left-14 w-14" : "-left-10 w-10")
         }
       >
@@ -195,16 +195,16 @@ export const DocumentDisplay = ({
             relevance[document.document_id] ? (
               <svg
                 className={`h-4 w-4  
-                text-xs
-                text-emphasis
-                bg-hover-emphasis
-                rounded
-                p-0.5
-                w-fit
-                my-auto
-                select-none
-                ml-auto
-                mr-2 `}
+                    text-xs
+                    text-emphasis
+                    bg-hover-emphasis
+                    rounded
+                    p-0.5
+                    w-fit
+                    my-auto
+                    select-none
+                    ml-auto
+                    mr-2 `}
                 xmlns="http://www.w3.org/2000/svg"
                 width="200"
                 height="200"
@@ -248,6 +248,7 @@ export const DocumentDisplay = ({
               </svg>
             )
           ) : (
+            // <></>
             <div
               className={`
                  text-xs

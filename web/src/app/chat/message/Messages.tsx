@@ -46,6 +46,7 @@ import {
   buildDocumentSummaryDisplay,
   DocumentMetadataBlock,
 } from "@/components/search/DocumentDisplay";
+import { DocSidebar } from "./DocumentSidebar";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -88,6 +89,7 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 }
 
 export const AIMessage = ({
+  toggleDocumentSelection,
   alternativeAssistant,
   docs,
   messageId,
@@ -107,6 +109,7 @@ export const AIMessage = ({
   retrievalDisabled,
   currentPersona,
 }: {
+  toggleDocumentSelection?: () => void;
   docs?: DanswerDocument[] | null;
   alternativeAssistant?: Persona | null;
   currentPersona: Persona;
@@ -281,7 +284,12 @@ export const AIMessage = ({
                             )
                       )
                       .map((doc) => (
-                        <div
+                        <button
+                          onClick={() => {
+                            if (toggleDocumentSelection) {
+                              toggleDocumentSelection();
+                            }
+                          }}
                           key={doc.document_id}
                           className={`w-[200px] rounded-lg  flex-none transition-all duration-500 opacity-90 hover:bg-neutral-200 bg-neutral-100 px-4 py-2  border-b 
                         ${
@@ -328,7 +336,7 @@ export const AIMessage = ({
                           <div className="line-clamp-3 text-xs break-words   pt-1">
                             {doc.blurb}
                           </div>
-                        </div>
+                        </button>
                       ))}
                   </div>
                 </div>

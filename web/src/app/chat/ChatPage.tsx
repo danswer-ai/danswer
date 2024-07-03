@@ -75,6 +75,7 @@ import {
 import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 
 import ResizableSection from "@/components/resizable/ResizableSection";
+import { DocSidebar } from "./message/DocumentSidebar";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1104,6 +1105,12 @@ export function ChatPage({
     };
   }, [router]);
 
+  const [documentSelection, setDocumentSelection] = useState(false);
+  const toggleDocumentSelectionAspects = () => {
+    setDocumentSelection((documentSelection) => !documentSelection);
+    toggleSidebar();
+  };
+
   return (
     <>
       <HealthCheckBanner />
@@ -1114,6 +1121,8 @@ export function ChatPage({
       <ChatPopup />
 
       <div className="flex relative bg-background text-default overflow-x-hidden">
+        {/* <DocSidebar onClose={() => null} isOpen={true} selectedDoc={null} /> */}
+
         <div
           ref={sidebarElementRef}
           className={`  flex-none absolute left-0 z-[100]  overflow-y-hidden sidebar bg-background-weak h-screen`}
@@ -1349,6 +1358,9 @@ export function ChatPage({
                                 }
                               >
                                 <AIMessage
+                                  toggleDocumentSelection={
+                                    toggleDocumentSelectionAspects
+                                  }
                                   docs={message.documents}
                                   currentPersona={livePersona}
                                   alternativeAssistant={
@@ -1611,6 +1623,21 @@ export function ChatPage({
                 <DanswerInitializingLoader />
               </div>
             </div>
+          )}
+
+          {documentSelection && (
+            <DocumentSidebar
+              initialWidth={300}
+              ref={innerSidebarElementRef}
+              closeSidebar={() => toggleSidebar()}
+              selectedMessage={aiMessage}
+              selectedDocuments={selectedDocuments}
+              toggleDocumentSelection={toggleDocumentSelection}
+              clearSelectedDocuments={clearSelectedDocuments}
+              selectedDocumentTokens={selectedDocumentTokens}
+              maxTokens={maxTokens}
+              isLoading={isFetchingChatMessages}
+            />
           )}
         </div>
       </div>

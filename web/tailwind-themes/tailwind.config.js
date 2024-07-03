@@ -64,6 +64,7 @@ module.exports = {
         "background-custom-header": "#f3f4f6",
         "background-inverted": "#000000",
         "background-weak": "#f3f4f6", // gray-100
+        "background-weakish": "#EAEAEA", // gray-150
         "background-dark": "#111827", // gray-900
 
         // text or icons

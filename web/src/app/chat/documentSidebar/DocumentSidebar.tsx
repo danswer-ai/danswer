@@ -85,31 +85,30 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     const tokenLimitReached = selectedDocumentTokens > maxTokens - 75;
 
     return (
-      <div
-        style={{ width: initialWidth }}
-        ref={ref}
-        className={`sidebar absolute right-0 h-screen border-l border-l-border`}
-      >
+      <div className="fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
         <div
-          className="w-full flex-initial 
-          overflow-y-hidden
-          flex
-          flex-col h-screen"
+          ref={ref}
+          style={{ width: initialWidth }}
+          className={`ml-auto bg-neutral-100 sidebar z-[1000] absolute right-0 h-screen border-l border-l-border`}
         >
-          {popup}
-
-          <div className="h-4/6 flex flex-col">
-            <div className="pl-3 pr-6 mb-3 flex border-b border-border">
-              <SectionHeader
-                name={
-                  selectedMessageRetrievalType === RetrievalType.SelectedDocs
-                    ? "Referenced Documents"
-                    : "Retrieved Documents"
-                }
-                icon={FiFileText}
-                closeHeader={closeSidebar}
-              />
+          <div className="w-full pt-4 flex-initial overflow-y-hidden flex flex-col h-screen">
+            {popup}
+            <div
+              className={`pl-3 pr-6 mb- w-full mt-3 flex text-lg text-emphasis font-medium flex mb-3.5 font-bold flex items-end`}
+            >
+              Retrieved Documents
             </div>
+
+            {/* <div className="pl-3 pr-6 mb-3 flex border-b border-border">
+                <SectionHeader
+                  name={
+                    selectedMessageRetrievalType === RetrievalType.SelectedDocs
+                      ? "Referenced Documents"
+                      : "Retrieved Documents"
+                  }
+                  icon={FiFileText}
+                  closeHeader={closeSidebar}
+                /> </div> */}
 
             {currentDocuments ? (
               <div className="overflow-y-auto dark-scrollbar flex flex-col">
@@ -159,86 +158,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                     show up here!
                   </Text>
                 </div>
-              )
-            )}
-          </div>
-
-          <div className="text-sm mb-4 border-t border-border pt-4 overflow-y-hidden flex flex-col">
-            <div className="flex border-b border-border px-3">
-              <div className="flex">
-                <SectionHeader name="Selected Documents" icon={FiFileText} />
-                {tokenLimitReached && (
-                  <div className="ml-2 my-auto">
-                    <div className="mb-2">
-                      <HoverPopup
-                        mainContent={
-                          <FiAlertTriangle
-                            className="text-alert my-auto"
-                            size="16"
-                          />
-                        }
-                        popupContent={
-                          <Text className="w-40">
-                            Over LLM context length by:{" "}
-                            <i>{selectedDocumentTokens - maxTokens} tokens</i>
-                            <br />
-                            <br />
-                            {selectedDocuments &&
-                              selectedDocuments.length > 0 && (
-                                <>
-                                  Truncating: &quot;
-                                  <i>
-                                    {
-                                      selectedDocuments[
-                                        selectedDocuments.length - 1
-                                      ].semantic_identifier
-                                    }
-                                  </i>
-                                  &quot;
-                                </>
-                              )}
-                          </Text>
-                        }
-                        direction="left"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-              {selectedDocuments && selectedDocuments.length > 0 && (
-                <div
-                  className="ml-auto my-auto"
-                  onClick={clearSelectedDocuments}
-                >
-                  <BasicSelectable selected={false}>
-                    De-Select All
-                  </BasicSelectable>
-                </div>
-              )}
-            </div>
-
-            {selectedDocuments && selectedDocuments.length > 0 ? (
-              <div className="flex flex-col gap-y-2 py-3 px-3 overflow-y-auto dark-scrollbar max-h-full">
-                {selectedDocuments.map((document) => (
-                  <SelectedDocumentDisplay
-                    key={document.document_id}
-                    document={document}
-                    handleDeselect={(documentId) => {
-                      toggleDocumentSelection(
-                        dedupedDocuments.find(
-                          (document) => document.document_id === documentId
-                        )!
-                      );
-                    }}
-                  />
-                ))}
-              </div>
-            ) : (
-              !isLoading && (
-                <Text className="mx-3 py-3">
-                  Select documents from the retrieved documents section to chat
-                  specifically with them!
-                </Text>
               )
             )}
           </div>
