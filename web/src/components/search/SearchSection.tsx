@@ -40,6 +40,7 @@ import { BackendChatSession, ChatSession } from "@/app/chat/interfaces";
 import { FiBookmark, FiInfo } from "react-icons/fi";
 import { HoverPopup } from "../HoverPopup";
 import { Logo } from "../Logo";
+import { cornersOfRectangle } from "@dnd-kit/core/dist/utilities/algorithms/helpers";
 
 export type searchState = "input" | "searching" | "analyzing";
 
@@ -76,6 +77,7 @@ export const SearchSection = ({
 }: SearchSectionProps) => {
   // Search Bar
   const [query, setQuery] = useState<string>("");
+  const [relevance, setRelevance] = useState<any>(null);
 
   // Search
   const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(
@@ -196,6 +198,36 @@ export const SearchSection = ({
       messageId,
     }));
 
+  const updateDocumentRelevance = (relevance: any) => {
+    setRelevance(relevance);
+    // console.log(" I AM UPDATING")
+    // setSearchResponse(prevSearchResponse =>
+    //   ({
+    //     ...prevSearchResponse,
+    //     documents: prevSearchResponse?.documents?.map(
+    //       (document, ind) => ({
+    //         ...document,
+    //         validationState: relevance[document.document_id]
+    //       })
+    //     ),
+    //   }) as SearchResponse
+    // )
+    // console.log(relevance)
+    // if (searchResponse) {
+    //   searchResponse?.documents?.forEach((d) => {
+
+    //     console.log(d)
+    //     console.log(relevance[d.document_id])
+    //     // console.log(relevance[d?.document_id])
+    //   }
+    //   )
+
+    // }
+  };
+  // const updateDocStatusz = (d: any) => {
+  //   console.log(d)
+  // }
+
   let lastSearchCancellationToken = useRef<CancellationToken | null>(null);
   const onSearch = async ({
     searchType,
@@ -203,28 +235,30 @@ export const SearchSection = ({
     overrideMessage,
   }: SearchRequestOverrides = {}) => {
     setFirstSearch(false);
+    setRelevance(null);
+    setSearchState("input");
 
     setSearchState("searching");
 
-    setTimeout(() => setSearchState("analyzing"), 3000);
-    setTimeout(
-      () =>
-        setSearchResponse(
-          (prevSearchResponse) =>
-            ({
-              ...prevSearchResponse,
-              documents: prevSearchResponse?.documents?.map(
-                (document, ind) => ({
-                  ...document,
+    // setTimeout(() => setSearchState("analyzing"), 3000);
+    // setTimeout(
+    //   () =>
+    //     setSearchResponse(
+    //       (prevSearchResponse) =>
+    //         ({
+    //           ...prevSearchResponse,
+    //           documents: prevSearchResponse?.documents?.map(
+    //             (document, ind) => ({
+    //               ...document,
 
-                  validationState: ind % 2 == 0 ? "good" : "bad",
-                })
-              ),
-            }) as SearchResponse
-        ),
-      5000
-    );
-    setTimeout(() => setSearchState("input"), 4000);
+    //               validationState: ind % 2 == 0 ? "good" : "bad",
+    //             })
+    //           ),
+    //         }) as SearchResponse
+    //     ),
+    //   5000
+    // );
+    // setTimeout(() => setSearchState("input"), 4000);
     // cancel the prior search if it hasn't finished
     if (lastSearchCancellationToken.current) {
       lastSearchCancellationToken.current.cancel();
@@ -276,6 +310,12 @@ export const SearchSection = ({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateMessageId,
       }),
+      updateDocStatus: cancellable({
+        cancellationToken: lastSearchCancellationToken.current,
+        fn: updateMessageId,
+      }),
+      updateDocumentRelevance, // New callback function
+
       selectedSearchType: searchType ?? selectedSearchType,
       offset: offset ?? defaultOverrides.offset,
     };
@@ -511,6 +551,7 @@ export const SearchSection = ({
 
           <div className="mt-2">
             <SearchResultsDisplay
+              relevance={relevance}
               searchState={searchState}
               searchResponse={searchResponse}
               validQuestionResponse={validQuestionResponse}

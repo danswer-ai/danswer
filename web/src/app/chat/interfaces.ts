@@ -86,6 +86,7 @@ export interface BackendChatSession {
 
 export interface BackendMessage {
   message_id: number;
+  relevance: any;
   parent_message: number | null;
   latest_child_message: number | null;
   message: string;

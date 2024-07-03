@@ -37,6 +37,7 @@ export const SearchResultsDisplay = ({
   isFetching,
   defaultOverrides,
   personaName = null,
+  relevance,
 }: {
   searchState: searchState;
   searchResponse: SearchResponse | null;
@@ -44,6 +45,7 @@ export const SearchResultsDisplay = ({
   isFetching: boolean;
   defaultOverrides: SearchDefaultOverrides;
   personaName?: string | null;
+  relevance: any;
 }) => {
   const { popup, setPopup } = usePopup();
 
@@ -118,7 +120,7 @@ export const SearchResultsDisplay = ({
   return (
     <>
       {popup}
-      {shouldDisplayQA && (
+      {/* {shouldDisplayQA && (
         <div className="min-h-[16rem] p-4 border-2 border-border rounded-lg relative">
           <div>
             <div className="flex mb-1">
@@ -161,7 +163,7 @@ export const SearchResultsDisplay = ({
             )}
           </div>
         </div>
-      )}
+      )} */}
 
       {documents && documents.length > 0 && (
         <div className="mt-4">
@@ -170,6 +172,7 @@ export const SearchResultsDisplay = ({
           </div>
           {removeDuplicateDocs(documents).map((document, ind) => (
             <DocumentDisplay
+              relevance={relevance}
               key={document.document_id}
               document={document}
               documentRank={ind + 1}
@@ -179,19 +182,19 @@ export const SearchResultsDisplay = ({
             />
           ))}
         </div>
-
       )}
-        <div className={`flex mt-4 justify-center transition-all duration-500 ${searchState == "input" ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-
-          <button className="duration-300 transition-bg cursor-pointer z-[100] hover:bg-neutral-700 bg-neutral-800 text-neutral-200 h-8 rounded-md px-3 text-xs">
-            Analyze 20 more
-          </button>
-          <button className=" pl-5 transition-all cursor-pointer -ml-2 bg-neutral-200 text-neutral-600 h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs">
-            <p className=" relative after:bg-neutral-600 after:absolute after:h-[1px] after:w-0 after:bottom-0 after:left-0 hover:after:w-full after:transition-all after:duration-300 duration-300">
-              Show me all
-            </p>
-          </button>
-        </div>
+      <div
+        className={`flex mt-4 justify-center transition-all duration-500 ${searchState == "input" ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+      >
+        <button className="duration-300 transition-bg cursor-pointer z-[100] hover:bg-neutral-700 bg-neutral-800 text-neutral-200 h-8 rounded-md px-3 text-xs">
+          Analyze 20 more
+        </button>
+        <button className=" pl-5 transition-all cursor-pointer -ml-2 bg-neutral-200 text-neutral-600 h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs">
+          <p className=" relative after:bg-neutral-600 after:absolute after:h-[1px] after:w-0 after:bottom-0 after:left-0 hover:after:w-full after:transition-all after:duration-300 duration-300">
+            Show me all
+          </p>
+        </button>
+      </div>
     </>
   );
 };

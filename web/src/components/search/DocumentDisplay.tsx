@@ -150,6 +150,7 @@ interface DocumentDisplayProps {
   documentRank: number;
   isSelected: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;
+  relevance: any;
 }
 
 export const DocumentDisplay = ({
@@ -157,6 +158,7 @@ export const DocumentDisplay = ({
   messageId,
   documentRank,
   isSelected,
+  relevance,
   setPopup,
 }: DocumentDisplayProps) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -182,10 +184,10 @@ export const DocumentDisplay = ({
             (isSelected ? "-left-14 w-14" : "-left-10 w-10")
           }
         >
-          {document.validationState ?
-
-
-            document.validationState == "good" ? <svg className={`h-4 w-4  
+          {relevance ? (
+            relevance[document.document_id] ? (
+              <svg
+                className={`h-4 w-4  
                 text-xs
                 text-emphasis
                 bg-hover-emphasis
@@ -195,11 +197,24 @@ export const DocumentDisplay = ({
                 my-auto
                 select-none
                 ml-auto
-                mr-2 `} xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24">
-              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 6L9 17l-5-5" />
-            </svg> :
-
-              <svg className={`h-4 w-4  
+                mr-2 `}
+                xmlns="http://www.w3.org/2000/svg"
+                width="200"
+                height="200"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 6L9 17l-5-5"
+                />
+              </svg>
+            ) : (
+              <svg
+                className={`h-4 w-4  
                 text-xs
                 text-emphasis
                 bg-hover
@@ -209,12 +224,23 @@ export const DocumentDisplay = ({
                 my-auto
                 select-none
                 ml-auto
-                mr-2 `} xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24">
-                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12" />
+                mr-2 `}
+                xmlns="http://www.w3.org/2000/svg"
+                width="200"
+                height="200"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M18 6L6 18M6 6l12 12"
+                />
               </svg>
-
-
-            :
+            )
+          ) : (
             <div
               className={`
                  text-xs
@@ -227,16 +253,12 @@ export const DocumentDisplay = ({
                  ml-auto
                  mr-2`}
             >
-              < FunctionalLoader />
+              <FunctionalLoader />
             </div>
-          }
-
+          )}
 
           {/* </div> */}
         </div>
-
-
-
 
         {/* {document.score !== null && (
           <div
@@ -313,6 +335,6 @@ export const DocumentDisplay = ({
       <p className="pl-1 pt-2 pb-3 break-words">
         {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
       </p>
-    </div >
+    </div>
   );
 };

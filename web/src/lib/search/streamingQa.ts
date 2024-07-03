@@ -27,10 +27,12 @@ export const searchRequestStreamed = async ({
   updateSelectedDocIndices,
   updateError,
   updateMessageId,
+  updateDocumentRelevance, // New callback function
 }: SearchRequestArgs) => {
   let answer = "";
   let quotes: Quote[] | null = null;
   let relevantDocuments: DanswerDocument[] | null = null;
+
   try {
     const filters = buildFilters(sources, documentSets, timeRange, tags);
 
@@ -63,6 +65,7 @@ export const searchRequestStreamed = async ({
     let previousPartialChunk: string | null = null;
     while (true) {
       const rawChunk = await reader?.read();
+      console.log(rawChunk);
       if (!rawChunk) {
         throw new Error("Unable to process chunk");
       }
@@ -149,9 +152,14 @@ export const searchRequestStreamed = async ({
           updateQuotes(quotes);
           return;
         }
+        if (Object.hasOwn(chunk, "relevance")) {
+          updateDocumentRelevance((chunk as BackendMessage).relevance);
+        }
 
         // check for message ID section
         if (Object.hasOwn(chunk, "message_id")) {
+          console.log("BAKCNED MESSAGE");
+          console.log(chunk);
           updateMessageId((chunk as BackendMessage).message_id);
           return;
         }
@@ -163,5 +171,6 @@ export const searchRequestStreamed = async ({
   } catch (err) {
     console.error("Fetch error:", err);
   }
+
   return { answer, quotes, relevantDocuments };
 };

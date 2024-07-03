@@ -127,7 +127,6 @@ def get_user_query_sessions(
     # Create a dictionary for quick lookup
     first_messages_dict = dict(first_messages)
 
-    print(first_messages_dict)
     response = ChatSessionsResponse(
         sessions=[
             ChatSessionDetails(

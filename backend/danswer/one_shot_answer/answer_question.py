@@ -102,7 +102,6 @@ def evaluate_relevance(top_documents: list[any], query: str) -> dict[str, bool]:
           JSON object containing a single key "response"
             with a value of either true if it's somewhat relevant or false if it's not relevant.
         """
-        print(prompt)
 
         try:
             response = client.chat.completions.create(
@@ -127,75 +126,18 @@ def evaluate_relevance(top_documents: list[any], query: str) -> dict[str, bool]:
             if "response" in parsed_response:
                 results[document_id] = parsed_response["response"]
             else:
-                print(
+                logger.error(
                     f"Error: 'response' key not found in JSON for document {document_id}"
                 )
                 results[document_id] = False
 
         except json.JSONDecodeError as e:
-            print(f"Error decoding JSON for document {document_id}: {str(e)}")
+            logger.error(f"Error decoding JSON for document {document_id}: {str(e)}")
             results[document_id] = False
         except Exception as e:
-            print(f"Error processing document {document_id}: {str(e)}")
+            logger.error(f"Error processing document {document_id}: {str(e)}")
             results[document_id] = False
-    print("THIS WAS THE RESPONSE")
-
-    print(results)
     return results
-
-
-# def evaluate_relevance(top_documents: List[any], query: str) -> Dict[str, bool]:
-#     openai.api_key = os.environ["OPENAI_API_KEY"]
-#     results = {}
-
-#     for doc in top_documents:
-#         document_id = doc.document_id
-#         blurb = doc.blurb
-
-#         prompt = f"""
-#         Given the following document blurb and query, determine if the document is relevant to the query.
-#         Respond with either "true" if it's somewhat relevant or "false" if it's not relevant.
-
-#         Document blurb:
-#         {blurb}
-
-#         Query:
-#         {query}
-
-#         Is this document relevant (true/false)?
-#         """
-
-#         try:
-#             response = openai.ChatCompletion.create(
-#                 model="gpt-4o",
-#                 messages=[
-#                     {
-#                         "role": "system",
-#                         "content": "You are a helpful assistant that determines document relevance.",
-#                     },
-#                     {"role": "user", "content": prompt},
-#                 ],
-#                 max_tokens=10,
-#                 n=1,
-#                 stop=None,
-#                 temperature=0.3,
-#             )
-
-#             relevance = response.choices[0].message["content"].strip().lower()
-#             results[document_id] = relevance == "true"
-
-#         except Exception as e:
-#             print(f"Error processing document {document_id}: {str(e)}")
-#             results[document_id] = False
-
-#     return results
-
-
-# Example usage:
-# api_key = "your-openai-api-key"
-# query = "Your search query here"
-# relevance_results = evaluate_relevance(top_documents, query, api_key)
-# print(json.dumps(relevance_results, indent=2))
 
 
 def stream_answer_objects(
@@ -380,19 +322,11 @@ def stream_answer_objects(
 
                 yield LLMRelevanceFilterResponse(relevant_chunk_indices=packet.response)
             elif packet.id == SEARCH_DOC_CONTENT_ID:
-                print("search reponse")
-
-                print(packet)
                 yield packet.response
         else:
             yield packet
 
     relevance = evaluate_relevance(search_response, query=query_msg)
-
-    # print(answer.__dict__)
-
-    # for tool in answer.tools:
-    #     print(tool.__dict__)
 
     # Saving Gen AI answer and responding with message info
     gen_ai_response_message = create_new_chat_message(
@@ -411,9 +345,6 @@ def stream_answer_objects(
     msg_detail_response = translate_db_message_to_chat_message_detail(
         gen_ai_response_message, relevance=relevance
     )
-    print("JEN")
-    print(msg_detail_response)
-
     yield msg_detail_response
 
 
