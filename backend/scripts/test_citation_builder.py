@@ -140,21 +140,15 @@ def print_output(output: List[Union[DanswerAnswerPiece, CitationInfo]]):
 
 def are_outputs_equivalent(output1, output2):
     if len(output1) != len(output2):
-        print("LENGTH")
         return False
     for item1, item2 in zip(output1, output2):
         if type(item1) != type(item2):
-            print("DIFF")
             return False
         if isinstance(item1, DanswerAnswerPiece):
             if item1.answer_piece.strip() != item2.answer_piece.strip():
-                print(item1.answer_piece)
-                print(item2.answer_piece)
-                print("F")
                 return False
         elif isinstance(item1, CitationInfo):
             if item1.citation_num != item2.citation_num or item1.document_id != item2.document_id:
-                print("N")
                 return False
     return True
 
