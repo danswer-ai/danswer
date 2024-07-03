@@ -9,7 +9,7 @@ import { useState } from "react";
 import { ThreeDotsLoader } from "@/components/Loading";
 import Link from "next/link";
 import { useSlackBotConfigs, useSlackBotTokens } from "@/hooks/admin/bot/useSlackBotHook";
-import { usePopup } from "@/components/adminPageComponents/connectors/Popup";
+import { usePopup } from "@/hooks/common/usePopup";
 import { SlackBotTokensForm } from "@/components/adminPageComponents/slackbot/SlackBotTokensForm";
 import {
     Button,
