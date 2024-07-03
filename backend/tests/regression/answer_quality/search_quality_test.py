@@ -28,7 +28,10 @@ def main() -> None:
     print("run_suffix:", run_suffix)
 
     set_env_variables(
-        config.model_server_ip, config.model_server_port, config.use_cloud_gpu
+        config.model_server_ip,
+        config.model_server_port,
+        config.use_cloud_gpu,
+        config.openai_api_key,
     )
     relari_output_folder_path = set_volume_location_env_variables(
         run_suffix, config.output_folder, config.use_cloud_gpu
