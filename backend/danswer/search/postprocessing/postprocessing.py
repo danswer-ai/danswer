@@ -9,6 +9,7 @@ from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
 from danswer.document_index.document_index_utils import (
     translate_boost_count_to_multiplier,
 )
+from danswer.llm.interfaces import LLM
 from danswer.search.models import ChunkMetric
 from danswer.search.models import InferenceChunk
 from danswer.search.models import MAX_METRICS_CONTENT
@@ -134,6 +135,7 @@ def rerank_chunks(
 def filter_chunks(
     query: SearchQuery,
     chunks_to_filter: list[InferenceChunk],
+    llm: LLM,
 ) -> list[str]:
     """Filters chunks based on whether the LLM thought they were relevant to the query.
 
@@ -142,6 +144,7 @@ def filter_chunks(
     llm_chunk_selection = llm_batch_eval_chunks(
         query=query.query,
         chunk_contents=[chunk.content for chunk in chunks_to_filter],
+        llm=llm,
     )
     return [
         chunk.unique_id
@@ -153,6 +156,7 @@ def filter_chunks(
 def search_postprocessing(
     search_query: SearchQuery,
     retrieved_chunks: list[InferenceChunk],
+    llm: LLM,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> Generator[list[InferenceChunk] | list[str], None, None]:
     post_processing_tasks: list[FunctionCall] = []
@@ -184,7 +188,11 @@ def search_postprocessing(
         post_processing_tasks.append(
             FunctionCall(
                 filter_chunks,
-                (search_query, retrieved_chunks[: search_query.max_llm_filter_chunks]),
+                (
+                    search_query,
+                    retrieved_chunks[: search_query.max_llm_filter_chunks],
+                    llm,
+                ),
             )
         )
         llm_filter_task_id = post_processing_tasks[-1].result_id

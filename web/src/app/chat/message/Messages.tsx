@@ -150,8 +150,7 @@ export const AIMessage = ({
   }
 
   const shouldShowLoader =
-    !toolCall ||
-    (toolCall.tool_name === SEARCH_TOOL_NAME && query === undefined);
+    !toolCall || (toolCall.tool_name === SEARCH_TOOL_NAME && !content);
   const defaultLoader = shouldShowLoader ? (
     <div className="text-sm my-auto">
       <ThreeDots

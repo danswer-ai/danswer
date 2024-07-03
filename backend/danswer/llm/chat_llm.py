@@ -42,6 +42,8 @@ logger = setup_logger()
 litellm.drop_params = True
 litellm.telemetry = False
 
+litellm.set_verbose = LOG_ALL_MODEL_INTERACTIONS
+
 
 def _base_msg_to_role(msg: BaseMessage) -> str:
     if isinstance(msg, HumanMessage) or isinstance(msg, HumanMessageChunk):
@@ -304,6 +306,8 @@ class DefaultMultiLLM(LLM):
             model_name=self._model_version,
             temperature=self._temperature,
             api_key=self._api_key,
+            api_base=self._api_base,
+            api_version=self._api_version,
         )
 
     def invoke(

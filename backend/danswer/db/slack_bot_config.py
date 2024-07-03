@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
-from danswer.db.document_set import get_document_sets_by_ids
 from danswer.db.models import ChannelConfig
 from danswer.db.models import Persona
 from danswer.db.models import Persona__DocumentSet
@@ -42,12 +41,6 @@ def create_slack_bot_persona(
     num_chunks: float = MAX_CHUNKS_FED_TO_CHAT,
 ) -> Persona:
     """NOTE: does not commit changes"""
-    document_sets = list(
-        get_document_sets_by_ids(
-            document_set_ids=document_set_ids,
-            db_session=db_session,
-        )
-    )
 
     # create/update persona associated with the slack bot
     persona_name = _build_persona_name(channel_names)
@@ -61,8 +54,8 @@ def create_slack_bot_persona(
         llm_relevance_filter=True,
         llm_filter_extraction=True,
         recency_bias=RecencyBiasSetting.AUTO,
-        prompts=[default_prompt],
-        document_sets=document_sets,
+        prompt_ids=[default_prompt.id],
+        document_set_ids=document_set_ids,
         llm_model_provider_override=None,
         llm_model_version_override=None,
         starter_messages=None,

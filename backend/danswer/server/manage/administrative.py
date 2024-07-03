@@ -24,7 +24,7 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.file_store.file_store import get_default_file_store
-from danswer.llm.factory import get_default_llm
+from danswer.llm.factory import get_default_llms
 from danswer.llm.utils import test_llm
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.manage.models import BoostDoc
@@ -126,7 +126,7 @@ def validate_existing_genai_api_key(
         pass
 
     try:
-        llm = get_default_llm(timeout=10)
+        llm, __ = get_default_llms(timeout=10)
     except ValueError:
         raise HTTPException(status_code=404, detail="LLM not setup")
 

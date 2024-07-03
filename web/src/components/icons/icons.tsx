@@ -44,6 +44,14 @@ import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
+import openAISVG from "../../../public/Openai.svg";
+import openSourceIcon from "../../../public/OpenSource.png";
+
+import awsWEBP from "../../../public/Amazon.webp";
+import azureIcon from "../../../public/Azure.png";
+
+import anthropicSVG from "../../../public/Anthropic.svg";
+
 import OCIStorageSVG from "../../../public/OCI.svg";
 import googleCloudStorageIcon from "../../../public/GoogleCloudStorage.png";
 import guruIcon from "../../../public/Guru.svg";
@@ -74,6 +82,48 @@ interface IconProps {
 
 export const defaultTailwindCSS = "my-auto flex flex-shrink-0 text-default";
 export const defaultTailwindCSSBlue = "my-auto flex flex-shrink-0 text-link";
+
+export const OpenAIIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={openAISVG} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const OpenSourceIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={openSourceIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const AnthropicIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={anthropicSVG} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
 
 export const PlugIcon = ({
   size = 16,
@@ -494,6 +544,36 @@ export const ProductboardIcon = ({
       className={`w-[${size}px] h-[${size}px] ` + className}
     >
       <Image src="/Productboard.webp" alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const AWSIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      // Linear Icon has a bit more surrounding whitespace than other icons, which is why we need to adjust it here
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={awsWEBP} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const AzureIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      // Linear Icon has a bit more surrounding whitespace than other icons, which is why we need to adjust it here
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={azureIcon} alt="Logo" width="96" height="96" />
     </div>
   );
 };

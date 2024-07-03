@@ -6,7 +6,7 @@ from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.db.models import ChatMessage
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_default_llm
+from danswer.llm.factory import get_default_llms
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import message_to_string
@@ -33,7 +33,7 @@ def llm_multilingual_query_expansion(query: str, language: str) -> str:
         return messages
 
     try:
-        llm = get_default_llm(use_fast_llm=True, timeout=5)
+        _, fast_llm = get_default_llms(timeout=5)
     except GenAIDisabledException:
         logger.warning(
             "Unable to perform multilingual query expansion, Gen AI disabled"
@@ -42,7 +42,7 @@ def llm_multilingual_query_expansion(query: str, language: str) -> str:
 
     messages = _get_rephrase_messages()
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
-    model_output = message_to_string(llm.invoke(filled_llm_prompt))
+    model_output = message_to_string(fast_llm.invoke(filled_llm_prompt))
     logger.debug(model_output)
 
     return model_output
@@ -148,7 +148,7 @@ def thread_based_query_rephrase(
 
     if llm is None:
         try:
-            llm = get_default_llm()
+            llm, _ = get_default_llms()
         except GenAIDisabledException:
             # If Generative AI is turned off, just return the original query
             return user_query
