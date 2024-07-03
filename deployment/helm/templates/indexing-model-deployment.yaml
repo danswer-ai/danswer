@@ -6,6 +6,8 @@ metadata:
     {{- include "danswer-stack.labels" . | nindent 4 }}
 spec:
   replicas: 1
+  strategy:
+    {{- .Values.indexCapability.updateStrategy | toYaml | nindent 4 }}
   selector:
     matchLabels:
       {{- include "danswer-stack.selectorLabels" . | nindent 6 }}
