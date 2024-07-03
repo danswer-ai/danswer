@@ -14,18 +14,20 @@ export function generatePastelColorFromId(id: string): string {
 
 export function darkerGenerateColorFromId(id: string): string {
   if (id == "0") {
-   return "#262626" 
+    return "#262626";
   }
   const hash = Array.from(id).reduce(
     (acc, char) => acc + char.charCodeAt(0),
     0
   );
   const hue = (hash * 137.508) % 360; // Use golden angle approximation
-  const saturation = 40 + (hash % 10); // Saturation between 40-50%
-  const lightness = 40 + (hash % 10); // Lightness between 40-50%
+  // const saturation = 40 + (hash % 10); // Saturation between 40-50%
+  // const lightness = 40 + (hash % 10); // Lightness between 40-50%
+  const saturation = 35 + (hash % 10); // Saturation between 40-50%
+  const lightness = 35 + (hash % 10); // Lightness between 40-50%
+
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
-
 
 export function AssistantIcon({
   assistant,

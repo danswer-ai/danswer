@@ -301,13 +301,15 @@ export const AIMessage = ({
                           <a
                             href={doc.link}
                             target="_blank"
-                            className="text-sm flex justify-between font-semibold text-neutral-800"
+                            className="text-sm  flex justify-between font-semibold text-neutral-800"
                           >
-                            {
-                              doc.document_id.split("/")[
-                                doc.document_id.split("/").length - 1
-                              ]
-                            }
+                            <p className="line-clamp-1">
+                              {
+                                doc.document_id.split("/")[
+                                  doc.document_id.split("/").length - 1
+                                ]
+                              }
+                            </p>
                             <div className="flex-none">
                               <SourceIcon
                                 sourceType={doc.source_type}

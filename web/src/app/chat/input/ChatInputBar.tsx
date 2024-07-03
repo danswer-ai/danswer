@@ -199,7 +199,6 @@ export function ChatInputBar({
         <div
           className="
             w-[90%]
-            
             shrink
             bg-background
             relative
@@ -262,15 +261,13 @@ export function ChatInputBar({
             "
           >
             {alternativeAssistant && (
-              <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full">
+              <div className="border-b text-neutral-700 flex flex-wrap gap-y-1 gap-x-2 px-2  w-full">
                 <div
                   ref={interactionsRef}
-                  className="bg-background p-2 rounded-t-lg  items-center flex w-full"
+                  className=" p-2 rounded-t-lg items-center flex w-full"
                 >
                   <AssistantIcon assistant={alternativeAssistant} border />
-                  <p className="ml-3 text-strong my-auto">
-                    {alternativeAssistant.name}
-                  </p>
+                  <p className="ml-3 my-auto">{alternativeAssistant.name}</p>
                   <div className="flex gap-x-1 ml-auto ">
                     <Tooltip
                       content={

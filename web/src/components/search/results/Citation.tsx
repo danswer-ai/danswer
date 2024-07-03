@@ -14,7 +14,7 @@ export default function Citation({
     >
       <span className="group relative -top-1 text-sm text-gray-500 dark:text-gray-400 selection:bg-indigo-300 selection:text-black dark:selection:bg-indigo-900 dark:selection:text-white">
         <span
-          className="inline-flex group-hover:bg-neutral-200 items-center justify-center h-4 min-w-4 px-1 text-center text-xs rounded-full border border-gray-400 ring-1 ring-gray-400 divide-gray-300 dark:divide-gray-700 dark:ring-gray-700 dark:border-gray-700 transition duration-300"
+          className="inline-flex  bg-neutral-200 group-hover:bg-neutral-300 items-center justify-center h-4 min-w-4 px-1 text-center text-xs rounded-full border-1 border-gray-400 ring-1 ring-gray-400 divide-gray-300 dark:divide-gray-700 dark:ring-gray-700 dark:border-gray-700 transition duration-150"
           data-number="3"
         >
           {children && children?.toString().split("[")[1].split("]")[0]}
