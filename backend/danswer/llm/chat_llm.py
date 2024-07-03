@@ -304,6 +304,8 @@ class DefaultMultiLLM(LLM):
             model_name=self._model_version,
             temperature=self._temperature,
             api_key=self._api_key,
+            api_base=self._api_base,
+            api_version=self._api_version,
         )
 
     def invoke(

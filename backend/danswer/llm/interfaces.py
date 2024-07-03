@@ -19,6 +19,8 @@ class LLMConfig(BaseModel):
     model_name: str
     temperature: float
     api_key: str | None
+    api_base: str | None
+    api_version: str | None
 
 
 class LLM(abc.ABC):
