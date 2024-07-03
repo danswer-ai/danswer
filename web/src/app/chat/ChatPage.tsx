@@ -1358,6 +1358,7 @@ export function ChatPage({
                                 }
                               >
                                 <AIMessage
+                                  selectedDocuments={selectedDocuments}
                                   toggleDocumentSelection={
                                     toggleDocumentSelectionAspects
                                   }
@@ -1627,7 +1628,7 @@ export function ChatPage({
 
           {documentSelection && (
             <DocumentSidebar
-              initialWidth={300}
+              initialWidth={390}
               ref={innerSidebarElementRef}
               closeSidebar={() => setDocumentSelection(false)}
               selectedMessage={aiMessage}

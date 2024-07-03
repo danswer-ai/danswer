@@ -95,6 +95,7 @@ export const AIMessage = ({
   messageId,
   content,
   files,
+  selectedDocuments,
   query,
   personaName,
   citedDocuments,
@@ -109,6 +110,8 @@ export const AIMessage = ({
   retrievalDisabled,
   currentPersona,
 }: {
+  selectedDocuments?: DanswerDocument[] | null;
+
   toggleDocumentSelection?: () => void;
   docs?: DanswerDocument[] | null;
   alternativeAssistant?: Persona | null;
@@ -139,6 +142,9 @@ export const AIMessage = ({
   if (!isReady) {
     return <div />;
   }
+
+  const selectedDocumentIds =
+    selectedDocuments?.map((document) => document.document_id) || [];
 
   if (!isComplete) {
     const trimIncompleteCodeSection = (
@@ -270,7 +276,7 @@ export const AIMessage = ({
 
             {docs && docs.length > 0 && (
               <div className="w-full mb-4 flex ">
-                <div className="w-full relative overflow-x-scroll no-scrollbar">
+                <div className="-mx-2 w-full relative overflow-x-scroll no-scrollbar">
                   {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
                   <div className="flex gap-x-2">
                     {docs
@@ -286,19 +292,19 @@ export const AIMessage = ({
                       .map((doc) => (
                         <div
                           key={doc.document_id}
-                          className={`w-[200px] rounded-lg  flex-none transition-all duration-500 opacity-90 hover:bg-neutral-200 bg-neutral-100 px-4 py-2  border-b 
-                        ${
-                          !isComplete
-                            ? "animate-pulse"
-                            : citedDocuments &&
-                              (Array.isArray(citedDocuments) &&
-                              citedDocuments.some(
-                                ([_, obj]) =>
-                                  obj.document_id === doc.document_id
-                              )
-                                ? "!opacity-100"
-                                : "!opacity-20")
-                        }
+                          className={`w-[200px] rounded-lg  flex-none transition-all duration-500 hover:bg-neutral-200 bg-neutral-100 px-4 py-2  border-b 
+                            ${
+                              !isComplete
+                                ? "animate-pulse opacity-90"
+                                : citedDocuments &&
+                                  (Array.isArray(citedDocuments) &&
+                                  citedDocuments.some(
+                                    ([_, obj]) =>
+                                      obj.document_id === doc.document_id
+                                  )
+                                    ? "opacity-100"
+                                    : "opacity-20")
+                            } ${selectedDocumentIds.includes(doc.document_id) && "!opacity-100 "}
                         `}
                         >
                           <a
@@ -348,12 +354,12 @@ export const AIMessage = ({
                     xmlns="http://www.w3.org/2000/svg"
                     width="200"
                     height="200"
-                    viewBox="0 0 16 16"
+                    viewBox="0 0 24 24"
                   >
-                    <g fill="currentColor">
-                      <path d="M6.22 8.72a.75.75 0 0 0 1.06 1.06l5.22-5.22v1.69a.75.75 0 0 0 1.5 0v-3.5a.75.75 0 0 0-.75-.75h-3.5a.75.75 0 0 0 0 1.5h1.69z" />
-                      <path d="M3.5 6.75c0-.69.56-1.25 1.25-1.25H7A.75.75 0 0 0 7 4H4.75A2.75 2.75 0 0 0 2 6.75v4.5A2.75 2.75 0 0 0 4.75 14h4.5A2.75 2.75 0 0 0 12 11.25V9a.75.75 0 0 0-1.5 0v2.25c0 .69-.56 1.25-1.25 1.25h-4.5c-.69 0-1.25-.56-1.25-1.25z" />
-                    </g>
+                    <path
+                      fill="currentColor"
+                      d="M16.75 11.989a1.82 1.82 0 0 1-.57 1.36l-6.82 6.1a1.27 1.27 0 0 1-.65.31h-.19a1.3 1.3 0 0 1-.52-.1a1.23 1.23 0 0 1-.54-.47a1.19 1.19 0 0 1-.21-.68v-13a1.2 1.2 0 0 1 .21-.69a1.23 1.23 0 0 1 1.25-.56c.24.039.464.143.65.3l6.76 6.09c.19.162.344.363.45.59c.114.234.175.49.18.75"
+                    />
                   </svg>
                 </button>
               </div>
