@@ -34,7 +34,9 @@ export function Label({
   small?: boolean;
 }) {
   return (
-    <div className={`block font-medium base ${small ? "text-sm" : "text-base"}`}>
+    <div
+      className={`block font-medium base ${small ? "text-sm" : "text-base"}`}
+    >
       {children}
     </div>
   );
