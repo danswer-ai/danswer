@@ -63,6 +63,13 @@ def get_sqlalchemy_engine() -> Engine:
     return _SYNC_ENGINE
 
 
+def get_sqlalchemy_engine_for_port_number(port: str) -> Engine:
+    global _SYNC_ENGINE
+    connection_string = build_connection_string(db_api=SYNC_DB_API, port=port)
+    _SYNC_ENGINE = create_engine(connection_string, pool_size=40, max_overflow=10)
+    return _SYNC_ENGINE
+
+
 def get_sqlalchemy_async_engine() -> AsyncEngine:
     global _ASYNC_ENGINE
     if _ASYNC_ENGINE is None:

@@ -18,11 +18,11 @@ import httpx
 import requests
 from retry import retry
 
+from danswer.configs.app_configs import get_vespa_port
+from danswer.configs.app_configs import get_vespa_tenant_port
 from danswer.configs.app_configs import LOG_VESPA_TIMING_INFORMATION
 from danswer.configs.app_configs import VESPA_CONFIG_SERVER_HOST
 from danswer.configs.app_configs import VESPA_HOST
-from danswer.configs.app_configs import VESPA_PORT
-from danswer.configs.app_configs import VESPA_TENANT_PORT
 from danswer.configs.chat_configs import DOC_TIME_DECAY
 from danswer.configs.chat_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.chat_configs import HYBRID_ALPHA
@@ -70,6 +70,9 @@ from danswer.search.retrieval.search_runner import remove_stop_words_and_punctua
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
+# from danswer.configs.app_configs import VESPA_PORT
+# from danswer.configs.app_configs import VESPA_TENANT_PORT
+
 logger = setup_logger()
 
 VESPA_DIM_REPLACEMENT_PAT = "VARIABLE_DIM"
@@ -77,17 +80,34 @@ DANSWER_CHUNK_REPLACEMENT_PAT = "DANSWER_CHUNK_NAME"
 DOCUMENT_REPLACEMENT_PAT = "DOCUMENT_REPLACEMENT"
 DATE_REPLACEMENT = "DATE_REPLACEMENT"
 
+
 # config server
-VESPA_CONFIG_SERVER_URL = f"http://{VESPA_CONFIG_SERVER_HOST}:{VESPA_TENANT_PORT}"
-VESPA_APPLICATION_ENDPOINT = f"{VESPA_CONFIG_SERVER_URL}/application/v2"
+# VESPA_CONFIG_SERVER_URL = f"http://{VESPA_CONFIG_SERVER_HOST}:{VESPA_TENANT_PORT}"
+# VESPA_APPLICATION_ENDPOINT = f"{VESPA_CONFIG_SERVER_URL}/application/v2"
+def vespa_application_endpoint_builder() -> str:
+    vespa_tenant_port = get_vespa_tenant_port()
+    url = f"http://{VESPA_CONFIG_SERVER_HOST}:{vespa_tenant_port}"
+    return f"{url}/application/v2"
+
 
 # main search application
-VESPA_APP_CONTAINER_URL = f"http://{VESPA_HOST}:{VESPA_PORT}"
+# VESPA_APP_CONTAINER_URL = f"http://{VESPA_HOST}:{VESPA_PORT}"
 # danswer_chunk below is defined in vespa/app_configs/schemas/danswer_chunk.sd
-DOCUMENT_ID_ENDPOINT = (
-    f"{VESPA_APP_CONTAINER_URL}/document/v1/default/{{index_name}}/docid"
-)
-SEARCH_ENDPOINT = f"{VESPA_APP_CONTAINER_URL}/search/"
+# DOCUMENT_ID_ENDPOINT = (
+#     f"{VESPA_APP_CONTAINER_URL}/document/v1/default/{{index_name}}/docid"
+# )
+def document_id_endpoint_builder() -> str:
+    vespa_port = get_vespa_port()
+    vespa_app_container_url = f"http://{VESPA_HOST}:{vespa_port}"
+    return f"{vespa_app_container_url}/document/v1/default/{{index_name}}/docid"
+
+
+# SEARCH_ENDPOINT = f"{VESPA_APP_CONTAINER_URL}/search/"
+def search_endpoint_builder() -> str:
+    vespa_port = get_vespa_port()
+    vespa_app_container_url = f"http://{VESPA_HOST}:{vespa_port}"
+    return f"{vespa_app_container_url}/search/"
+
 
 _BATCH_SIZE = 128  # Specific to Vespa
 _NUM_THREADS = (
@@ -108,7 +128,7 @@ class _VespaUpdateRequest:
     update_request: dict[str, dict]
 
 
-@retry(tries=3, delay=1, backoff=2)
+@retry(tries=5, delay=10, backoff=2)
 def _does_document_exist(
     doc_chunk_id: str,
     index_name: str,
@@ -117,8 +137,14 @@ def _does_document_exist(
     """Returns whether the document already exists and the users/group whitelists
     Specifically in this case, document refers to a vespa document which is equivalent to a Danswer
     chunk. This checks for whether the chunk exists already in the index"""
-    doc_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{doc_chunk_id}"
-    doc_fetch_response = http_client.get(doc_url)
+    doc_url = (
+        f"{document_id_endpoint_builder().format(index_name=index_name)}/{doc_chunk_id}"
+    )
+    try:
+        doc_fetch_response = http_client.get(doc_url)
+    except Exception as e:
+        raise e
+
     if doc_fetch_response.status_code == 404:
         return False
 
@@ -151,7 +177,7 @@ def _get_vespa_chunks_by_document_id(
 ) -> list[dict]:
     # Constructing the URL for the Visit API
     # NOTE: visit API uses the same URL as the document API, but with different params
-    url = DOCUMENT_ID_ENDPOINT.format(index_name=index_name)
+    url = document_id_endpoint_builder().format(index_name=index_name)
 
     # build the list of fields to retrieve
     field_set_list = (
@@ -248,7 +274,7 @@ def _delete_vespa_doc_chunks(
     for chunk_id in doc_chunk_ids:
         try:
             res = http_client.delete(
-                f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{chunk_id}"
+                f"{document_id_endpoint_builder().format(index_name=index_name)}/{chunk_id}"
             )
             res.raise_for_status()
         except httpx.HTTPStatusError as e:
@@ -367,7 +393,7 @@ def _index_vespa_chunk(
         DOCUMENT_SETS: {document_set: 1 for document_set in chunk.document_sets},
     }
 
-    vespa_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{vespa_chunk_id}"
+    vespa_url = f"{document_id_endpoint_builder().format(index_name=index_name)}/{vespa_chunk_id}"
     logger.debug(f'Indexing to URL "{vespa_url}"')
     res = http_client.post(
         vespa_url, headers=json_header, json={"fields": vespa_document_fields}
@@ -625,7 +651,7 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
     )
 
 
-@retry(tries=3, delay=1, backoff=2)
+@retry(tries=10, delay=2, backoff=2)
 def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[InferenceChunk]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")
@@ -640,7 +666,7 @@ def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[Inferenc
     )
 
     response = requests.post(
-        SEARCH_ENDPOINT,
+        search_endpoint_builder(),
         json=params,
     )
     try:
@@ -684,7 +710,7 @@ def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[Inferenc
 @retry(tries=3, delay=1, backoff=2)
 def _inference_chunk_by_vespa_id(vespa_id: str, index_name: str) -> InferenceChunk:
     res = requests.get(
-        f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{vespa_id}"
+        f"{document_id_endpoint_builder().format(index_name=index_name)}/{vespa_id}"
     )
     res.raise_for_status()
 
@@ -755,7 +781,9 @@ class VespaIndex(DocumentIndex):
         index_embedding_dim: int,
         secondary_index_embedding_dim: int | None,
     ) -> None:
-        deploy_url = f"{VESPA_APPLICATION_ENDPOINT}/tenant/default/prepareandactivate"
+        deploy_url = (
+            f"{vespa_application_endpoint_builder()}/tenant/default/prepareandactivate"
+        )
         logger.debug(f"Sending Vespa zip to {deploy_url}")
 
         vespa_schema_path = os.path.join(
@@ -943,7 +971,7 @@ class VespaIndex(DocumentIndex):
                     processed_updates_requests.append(
                         _VespaUpdateRequest(
                             document_id=document_id,
-                            url=f"{DOCUMENT_ID_ENDPOINT.format(index_name=self.index_name)}/{doc_chunk_id}",
+                            url=f"{document_id_endpoint_builder().format(index_name=self.index_name)}/{doc_chunk_id}",
                             update_request=update_dict,
                         )
                     )

@@ -1,0 +1,11 @@
+
+branch: main
+model_server_ip: "18.218.165.17"
+model_server_port: "80"
+zipped_documents_file: "/Users/danswer/testdocuments/samplepptx.pptx"
+questions_file: "/Users/danswer/danswer/backend/tests/regression/answer_quality/sample_questions.yaml"
+output_folder: "~/danswer_test_results"
+limit: null
+launch_web_server: false
+use_cloud_gpu: true
+openai_api_key: "PUT_API_KEY_HERE"
