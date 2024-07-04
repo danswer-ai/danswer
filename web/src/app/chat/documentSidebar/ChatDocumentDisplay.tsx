@@ -33,7 +33,6 @@ export function ChatDocumentDisplay({
 }: DocumentDisplayProps) {
   // Consider reintroducing null scored docs in the future
 
-  const [showDisclosure, setShowDisclosure] = useState(false);
   if (document.score === null) {
     return null;
   }

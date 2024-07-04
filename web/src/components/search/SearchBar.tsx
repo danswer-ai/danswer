@@ -13,6 +13,8 @@ interface SearchBarProps {
   setQuery: (query: string) => void;
   onSearch: (fast?: boolean) => void;
   searchState?: searchState;
+  agentic: boolean;
+  toggleAgentic: () => void;
 }
 
 // import React from 'react';
@@ -54,6 +56,8 @@ export const SearchBar = ({
   query,
   setQuery,
   onSearch,
+  agentic,
+  toggleAgentic,
 }: SearchBarProps) => {
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const target = event.target;
@@ -70,12 +74,6 @@ export const SearchBar = ({
       onSearch(agentic);
       event.preventDefault();
     }
-  };
-
-  const [agentic, setAgentic] = useState(false);
-
-  const handleToggle = () => {
-    setAgentic((agentic) => !agentic);
   };
 
   return (
@@ -144,7 +142,7 @@ export const SearchBar = ({
           </div>
         )}
 
-        <AnimatedToggle isOn={agentic} handleToggle={handleToggle} />
+        <AnimatedToggle isOn={agentic} handleToggle={toggleAgentic} />
 
         {/* <Icon icon={FiCamera} size="sm" className="flex-none" /> */}
       </div>

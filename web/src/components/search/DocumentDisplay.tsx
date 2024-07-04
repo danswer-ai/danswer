@@ -302,57 +302,7 @@ export const AgenticDocumentDisplay = ({
       }}
     >
       <div
-        className={
-          "absolute top-6 overflow-y-auto -translate-y-2/4 flex " +
-          (isSelected ? "-left-14 w-14" : "-left-10 w-10")
-        }
-      >
-        {!hide &&
-          relevance &&
-          (relevance[document.document_id] ? (
-            <svg
-              className="h-4 w-4 text-xs text-emphasis bg-hover-emphasis rounded p-0.5 w-fit my-auto select-none ml-auto mr-2"
-              xmlns="http://www.w3.org/2000/svg"
-              width="200"
-              height="200"
-              viewBox="0 0 24 24"
-            >
-              <path
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M20 6L9 17l-5-5"
-              />
-            </svg>
-          ) : (
-            <svg
-              className="h-4 w-4 text-xs text-emphasis bg-hover rounded p-0.5 w-fit my-auto select-none ml-auto mr-2"
-              xmlns="http://www.w3.org/2000/svg"
-              width="200"
-              height="200"
-              viewBox="0 0 24 24"
-            >
-              <path
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M18 6L6 18M6 6l12 12"
-              />
-            </svg>
-          ))}
-        {!hide && !relevance && (
-          <div className="text-xs text-emphasis rounded p-0.5 w-fit my-auto overflow-y-auto select-none ml-auto mr-2">
-            <FunctionalLoader />
-          </div>
-        )}
-      </div>
-
-      <div
-        className={`collapsible   ${hide ? "collapsible-closed overflow-y-auto border-transparent" : "pb-3"}`}
+        className={`collapsible ${hide ? "collapsible-closed overflow-y-auto border-transparent" : "pb-3"}`}
       >
         <div className="flex relative">
           <a

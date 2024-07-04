@@ -89,9 +89,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             closeSidebar();
-
-            console.log("Clicked on the parent div");
-            // Add your logic here
           }
         }}
         className="fixed inset-0 transition transform transition-all duration-300 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"

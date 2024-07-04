@@ -87,6 +87,31 @@ export const SearchSection = ({
   const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(
     null
   );
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey) {
+        switch (event.key.toLowerCase()) {
+          case "a":
+            event.preventDefault();
+            toggleAgentic();
+
+            break;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  const [agentic, setAgentic] = useState(false);
+
+  const toggleAgentic = () => {
+    setAgentic((agentic) => !agentic);
+  };
+
   const [isFetching, setIsFetching] = useState(false);
 
   const [validQuestionResponse, setValidQuestionResponse] =
@@ -503,6 +528,8 @@ export const SearchSection = ({
             </div>
           } */}
           <SearchBar
+            toggleAgentic={toggleAgentic}
+            agentic={agentic}
             searchState={searchState}
             query={query}
             setQuery={setQuery}

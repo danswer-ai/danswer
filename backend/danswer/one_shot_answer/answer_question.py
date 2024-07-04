@@ -176,21 +176,22 @@ def evaluate_relevance(
             Your task is to provide brief yet informative explanations of why the given content matters for a given query.
             Be direct and to the point, but include enough detail to be genuinely helpful.
             Highlight the most relevant information or connections that make the content useful for the query.
+
             IMPORTANT:
             - Never start your response with phrases like "The document", "This text", or any similar references.
             - Begin directly with the relevant information or insight.
-            - Use concise language, but don't sacrifice important details.
             - Aim for 1-2 short sentences or about 15-25 words.
-            - Focus on why the content is (or isn't) relevant to the specific query.
+            - Focus on why the content is relevant to the specific query.
+
             Examples:
-            - "Contains Q3 financial metrics, including revenue growth and profit margins crucial for the investment decision."
-            - "Lists completed tasks from the past week, directly addressing the productivity query."
-            - "Outlines recent AI breakthroughs in natural language processing, relevant to the research question."
+            - "Contains Q3 financial metrics, including revenue growth ."
+            - "Lists completed tasks from the past week."
+            - "Outlines recent AI breakthroughs in natural language processing."
             """
 
             try:
                 response = client.chat.completions.create(
-                    model="gpt-4",
+                    model="gpt-4o",
                     messages=[
                         {"role": "system", "content": system_message},
                         {"role": "user", "content": prompt},
