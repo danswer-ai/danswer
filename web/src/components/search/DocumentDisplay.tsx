@@ -395,7 +395,7 @@ export const AgenticDocumentDisplay = ({
             {showContext ? (
               <FaCaretRight className="h-4 w-4" />
             ) : (
-              <FaCaretDown className="h-4 w-4" />
+              <FaCaretDown className="-my-2 h-4 w-4" />
             )}
           </button>
 

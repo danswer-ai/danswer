@@ -185,7 +185,7 @@ export const SearchResultsDisplay = ({
         <div className="mt-4">
           <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
             <p>Results</p>
-            {relevance && (
+            {relevance && !agenticResults && (
               <button
                 onClick={() => performSweep()}
                 className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
@@ -237,27 +237,31 @@ export const SearchResultsDisplay = ({
               </button>
             )}
           </div>
-          {removeDuplicateDocs(documents).map(
+          {removeDuplicateDocs(documents, agenticResults!, relevance).length ==
+            0 && (
+            <p>
+              No relevant documents found! Try another query or hit the button
+              below!
+            </p>
+          )}
+
+          {removeDuplicateDocs(documents, agenticResults!, relevance).map(
             (document, ind) => {
               // if (!relevance || (relevance && (!sweep || (sweep && relevance[document.document_id])))) {
 
               return agenticResults ? (
-                relevance[document.document_id] && (
-                  <AgenticDocumentDisplay
-                    comments={comments}
-                    index={ind}
-                    hide={
-                      sweep && relevance && !relevance[document.document_id]
-                    }
-                    relevance={relevance}
-                    key={document.document_id}
-                    document={document}
-                    documentRank={ind + 1}
-                    messageId={messageId}
-                    isSelected={selectedDocumentIds.has(document.document_id)}
-                    setPopup={setPopup}
-                  />
-                )
+                <AgenticDocumentDisplay
+                  comments={comments}
+                  index={ind}
+                  hide={sweep && relevance && !relevance[document.document_id]}
+                  relevance={relevance}
+                  key={document.document_id}
+                  document={document}
+                  documentRank={ind + 1}
+                  messageId={messageId}
+                  isSelected={selectedDocumentIds.has(document.document_id)}
+                  setPopup={setPopup}
+                />
               ) : (
                 <DocumentDisplay
                   index={ind}
@@ -272,7 +276,6 @@ export const SearchResultsDisplay = ({
                 />
               );
             }
-            // }
           )}
         </div>
       )}
@@ -300,9 +303,9 @@ export function AgenticDisclaimer({
   return (
     <div className="ml-auto mx-12 flex transition-all duration-300 animate-fade-in flex-col gap-y-2">
       <p className="text-sm">
-        Please note that agentic results may take longer than non-agentic. You
-        can click <i>non-agentic</i> to re-submit your query without agentic
-        capabilities.
+        Please note that agentic quries can take substantially longer than
+        non-agentic queries. You can click <i>non-agentic</i> to re-submit your
+        query without agentic capabilities.
       </p>
       <button
         onClick={forceNonAgentic}

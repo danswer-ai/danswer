@@ -154,7 +154,8 @@ def evaluate_relevance(
 
         if agentic and results[document_id]:
             prompt = f"""
-            Given the following document blurb(s) and query, determine WHY the document is relevant to the search term.
+            Given the following document blurb(s) and query,
+            explain WHY the content is relevant to the search term. Be concise but informative.
 
             Document blurb(s):
             ```
@@ -166,29 +167,82 @@ def evaluate_relevance(
             {query}
             ```
 
-            Is this document relevant? Respond with an exlanation of why it is.
+            Provide a brief explanation of the content's relevance to the query, highlighting key information.
             """
+
+            system_message = """You are a sharp, insightful assistant that quickly grasps the essence of
+              content and its relevance to queries.
+            Your task is to provide brief yet informative explanations of why the given content matters for a given query.
+            Be direct and to the point, but include enough detail to be genuinely helpful.
+            Highlight the most relevant information or connections that make the content useful for the query.
+            IMPORTANT:
+            - Never start your response with phrases like "The document", "This text", or any similar references.
+            - Begin directly with the relevant information or insight.
+            - Use concise language, but don't sacrifice important details.
+            - Aim for 1-2 short sentences or about 15-25 words.
+            - Focus on why the content is (or isn't) relevant to the specific query.
+            Examples:
+            - "Contains Q3 financial metrics, including revenue growth and profit margins crucial for the investment decision."
+            - "Lists completed tasks from the past week, directly addressing the productivity query."
+            - "Outlines recent AI breakthroughs in natural language processing, relevant to the research question."
+            """
+
             try:
                 response = client.chat.completions.create(
-                    model="gpt-4o",
+                    model="gpt-4",
                     messages=[
-                        {
-                            "role": "system",
-                            "content": """You are a helpful assistant that determines WHY this is relevant or not.
-                            You respond with a wise but removed tone. (starting with somethign like
-                            "This doc goes into...") but answer why the doc is relevant! Keep it short!""",
-                        },
+                        {"role": "system", "content": system_message},
                         {"role": "user", "content": prompt},
                     ],
-                    max_tokens=100,
+                    max_tokens=50,
                     n=1,
-                    temperature=0.3,
+                    temperature=0.4,
                 )
 
                 content = response.choices[0].message.content
-                agentic_comments[document_id] = content
+                if "not relevant" in content.lower():
+                    agentic_comments[document_id] = "Not relevant"
+                else:
+                    agentic_comments[document_id] = content
             except Exception as e:
-                print(f"Issue with agentic search {e}")
+                print(f"Issue with agentic search: {e}")
+                agentic_comments[document_id] = "Error in processing"
+            # Given the following document blurb(s) and query,
+            #  determine WHY the document is relevant to the search term in 1 sentence max!
+
+            # Document blurb(s):
+            # ```
+            # {combined_blurb}
+            # ```
+
+            # Query:
+            # ```
+            # {query}
+            # ```
+
+            # Is this document relevant? Respond with an exlanation of why it is.
+            # """
+            # try:
+            #     response = client.chat.completions.create(
+            #         model="gpt-4o",
+            #         messages=[
+            #             {
+            #                 "role": "system",
+            #                 "content": """You are a helpful assistant that determines WHY this is relevant or not.
+            #                 You respond with a wise but removed tone. (starting with sl  like
+            #                 "This doc goes into...") but answer why the doc is relevant! Keep it VERY SHORT!""",
+            #             },
+            #             {"role": "user", "content": prompt},
+            #         ],
+            #         max_tokens=100,
+            #         n=1,
+            #         temperature=0.3,
+            #     )
+
+            #     content = response.choices[0].message.content
+            #     agentic_comments[document_id] = content
+            # except Exception as e:
+            #     print(f"Issue with agentic search {e}")
 
     return results, agentic_comments
 

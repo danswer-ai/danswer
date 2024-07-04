@@ -93,14 +93,23 @@ export default function FunctionalWrapper({
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
+        const newPage = event.shiftKey;
         switch (event.key.toLowerCase()) {
           case "d":
             event.preventDefault();
-            router.push("/chat");
+            if (newPage) {
+              window.open("/chat", "_blank");
+            } else {
+              router.push("/chat");
+            }
             break;
           case "s":
             event.preventDefault();
-            router.push("/search");
+            if (newPage) {
+              window.open("/search", "_blank");
+            } else {
+              router.push("/search");
+            }
             break;
         }
       }
