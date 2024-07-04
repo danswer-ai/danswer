@@ -128,7 +128,7 @@ class _VespaUpdateRequest:
     update_request: dict[str, dict]
 
 
-@retry(tries=5, delay=10, backoff=2)
+@retry(tries=3, delay=1, backoff=2)
 def _does_document_exist(
     doc_chunk_id: str,
     index_name: str,

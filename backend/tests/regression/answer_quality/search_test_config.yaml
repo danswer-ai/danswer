@@ -1,11 +1,15 @@
-
-branch: main
-model_server_ip: "18.218.165.17"
-model_server_port: "80"
-zipped_documents_file: "/Users/danswer/testdocuments/samplepptx.pptx"
-questions_file: "/Users/danswer/danswer/backend/tests/regression/answer_quality/sample_questions.yaml"
+zipped_documents_file: "~/sampledocs.zip"
+questions_file: "~/sample_questions.yaml"
 output_folder: "~/danswer_test_results"
-limit: null
+branch: null
 launch_web_server: false
-use_cloud_gpu: true
-openai_api_key: "PUT_API_KEY_HERE"
+use_cloud_gpu: false
+model_server_ip: "PUT_PUBLIC_CLOUD_IP_HERE"
+model_server_port: "PUT_PUBLIC_CLOUD_PORT_HERE"
+limit: null
+llm:
+  name: "llm_name"
+  provider: "openai"
+  openai_api_key: "PUT_API_KEY_HERE"
+  default_model_name: "gpt-4o"
+  model_names: ["gpt-4o"]

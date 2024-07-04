@@ -14,9 +14,7 @@ from danswer.db.connector import create_connector
 from danswer.db.connector_credential_pair import add_credential_to_connector
 from danswer.db.credentials import create_credential
 from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.engine import (
-    get_sqlalchemy_engine_for_port_number,
-)
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
 from danswer.file_store.file_store import get_default_file_store
@@ -100,13 +98,12 @@ def _upload_file(zip_file_path: str, db_session: Session) -> list[str]:
         print("file_paths:", file_paths)
         return file_paths
     except ValueError as e:
-        # raise RuntimeError(f"File upload failed: {str(e)}")
-        print(str(e))
+        raise RuntimeError(f"File upload failed: {str(e)}")
 
 
 def upload_test_files(zip_file_path: str, run_suffix: str) -> None:
     api_port = get_server_host_port("relational_db", run_suffix, "5432")
-    engine = get_sqlalchemy_engine_for_port_number(api_port)
+    engine = get_sqlalchemy_engine(api_port)
     with Session(engine, expire_on_commit=False) as db_session:
         file_paths = _upload_file(zip_file_path, db_session)
         conn_id = _create_connector(file_paths, db_session)
@@ -122,10 +119,3 @@ def upload_test_files(zip_file_path: str, run_suffix: str) -> None:
             wait_seconds = 15
             print(f"still_indexing, waiting {wait_seconds} seconds")
             time.sleep(wait_seconds)
-
-
-if __name__ == "__main__":
-    file_location = "/Users/danswer/testdocuments/20240628_source_documents.zip"
-    # file_location = "/Users/danswer/testdocuments/samplepptx.pptx"
-    run_suffix = ""
-    upload_test_files(file_location, run_suffix)

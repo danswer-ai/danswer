@@ -1,9 +1,7 @@
 import json
 import os
-import platform
 import subprocess
 import sys
-import time
 from typing import Any
 
 from retry import retry
@@ -36,40 +34,6 @@ def get_current_commit_sha() -> str:
         sys.exit(1)
 
 
-def check_docker_running() -> int:
-    print("Checking if Docker is running...")
-    returncode, _, _ = _run_command("docker info")
-    return returncode == 0
-
-
-def start_docker() -> None:
-    print("Checking if Docker is running...")
-    returncode, _, _ = _run_command("docker info")
-    if returncode == 0:
-        return
-    if returncode == -1:
-        return
-
-    print("Docker is not running. Attempting to start Docker...")
-
-    system = platform.system()
-    if system == "Darwin":
-        os.system("open -a Docker")
-    elif system == "Linux":
-        if os.path.exists("/usr/bin/systemctl"):
-            os.system("sudo systemctl start docker")
-        else:
-            os.system("sudo service docker start")
-    else:
-        print("Unsupported operating system. Please start Docker manually.")
-        sys.exit(1)
-
-    print("Waiting for Docker to start...")
-    while not check_docker_running():
-        time.sleep(1)
-    print("Docker has been started successfully.")
-
-
 def switch_to_branch(branch: str) -> None:
     print(f"Switching to branch: {branch}...")
     returncode, _, stderr = _run_command(f"git checkout {branch}")
@@ -97,9 +61,7 @@ def update_repository() -> None:
         sys.exit(1)
 
 
-def set_volume_location_env_variables(
-    suffix: str, base_path: str, use_cloud_gpu: bool
-) -> str:
+def manage_data_directories(suffix: str, base_path: str, use_cloud_gpu: bool) -> str:
     # Use the user's home directory as the base path
     target_path = os.path.join(os.path.expanduser(base_path), f"test{suffix}")
     directories = {
@@ -128,29 +90,18 @@ def set_env_variables(
     remote_server_ip: str,
     remote_server_port: str,
     use_cloud_gpu: bool,
-    openai_api_key: str,
+    llm_config: dict,
 ) -> None:
-    seed_json = {
-        "llms": [
-            {
-                "name": "Netflix NCP",
-                "provider": "openai",
-                "api_key": openai_api_key,
-                "default_model_name": "gpt-4o",
-                "model_names": ["gpt-4o"],
-            }
-        ],
-    }
     env_vars: dict = {}
-    env_vars["ENV_SEED_CONFIGURATION"] = json.dumps(seed_json)
+    env_vars["ENV_SEED_CONFIGURATION"] = json.dumps({"llms": [llm_config]})
     env_vars["ENABLE_PAID_ENTERPRISE_EDITION_FEATURES"] = "true"
     if use_cloud_gpu:
         env_vars["MODEL_SERVER_HOST"] = remote_server_ip
         env_vars["MODEL_SERVER_PORT"] = remote_server_port
 
-    for env_var, directory in env_vars.items():
-        os.environ[env_var] = directory
-        print(f"Set {env_var} to: {directory}")
+    for env_var_name, env_var in env_vars.items():
+        os.environ[env_var_name] = env_var
+        print(f"Set {env_var_name} to: {env_var}")
 
 
 def start_docker_compose(

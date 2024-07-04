@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import MessageType
-from danswer.db.engine import get_sqlalchemy_engine_for_port_number
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import get_inprogress_index_attempts
 from danswer.db.models import Document
 from danswer.one_shot_answer.answer_question import get_search_answer
@@ -30,12 +30,8 @@ def _get_answer_for_question(
         if not in_progress_attempts:
             currently_indexed_docs = []
             try:
-                currently_indexed_docs = (
-                    db_session.execute(
-                        select(Document).where(Document.hidden.is_(False))
-                    )
-                    .scalars()
-                    .all()
+                currently_indexed_docs = list(
+                    db_session.execute(select(Document)).scalars().all()
                 )
             except Exception:
                 print("unable to access db, trying again...")
@@ -104,7 +100,7 @@ def _get_relari_outputs(samples: list[dict], run_suffix: str) -> list[dict]:
     relari_outputs = []
     print("run_suffix:", run_suffix)
     relational_db_port = get_server_host_port("relational_db", run_suffix, "5432")
-    engine = get_sqlalchemy_engine_for_port_number(relational_db_port)
+    engine = get_sqlalchemy_engine(relational_db_port)
     with Session(engine, expire_on_commit=False) as db_session:
         for sample in samples:
             answer = _get_answer_for_question(
