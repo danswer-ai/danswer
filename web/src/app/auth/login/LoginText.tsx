@@ -12,6 +12,9 @@ export const LoginText = () => {
   }
 
   return (
-    <>Log In to {settings?.enterpriseSettings?.application_name || "enMedD CHP"}</>
+    <div className="text-black">
+      <h1 className="font-bold text-3xl my-2">Login</h1>
+      <p>Welcome back to {settings?.enterpriseSettings?.application_name || "enMedD CHP"}! Please enter your details</p>
+    </div>
   );
 };

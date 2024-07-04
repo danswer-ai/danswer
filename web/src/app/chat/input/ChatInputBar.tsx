@@ -420,7 +420,7 @@ export function ChatInputBar({
               </div>
               <div>
                 <div
-                  className="w-auto cursor-pointer flex flex-row px-4 py-2 items-center content-center gap-2 border rounded-xl bg-blue-700 text-white"
+                  className="w-auto cursor-pointer flex flex-row px-4 py-2 items-center content-center gap-2 border rounded-xl bg-blue-700 text-white truncate"
                   onClick={() => {
                     if (!isStreaming) {
                       if (message) {

@@ -60,7 +60,7 @@ export function UserSettingsButton({
               <div className="flex items-center justify-center bg-white rounded-full min-h-10 min-w-10 aspect-square text-base font-normal border-2 border-gray-900 shadow-md">
                 {user && user.email ? user.email[0].toUpperCase() : "A"}
               </div>
-              <div className="w-full h-full flex flex-col items-start justify-center">
+              <div className="w-full h-full flex flex-col items-start justify-center truncate">
                 {/* TODO: Set this as a user.name - which will be added to the schema of the user and the database schema user table */}
                 <p className="text-base font-semibold">{user && user.email ? `${toPascalCase(user.email.split(".")[0])} ${toPascalCase(user.email.split(".")[1].split("@")[0])}` : "Admin"}</p>
                 <p className="text-xs">{user && user.email ? user.email : "admin@enmedd-chp.com"}</p>
