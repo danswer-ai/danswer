@@ -108,7 +108,6 @@ def extract_citations_from_stream(
                         context_llm_doc.document_id
                     ]
 
-
                     # Skip consecutive citations of the same work
                     if (target_citation_num in current_citations):
                         start, end = citation.span()
