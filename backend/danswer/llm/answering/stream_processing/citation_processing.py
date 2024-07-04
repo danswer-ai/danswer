@@ -26,19 +26,45 @@ def extract_citations_from_stream(
     doc_id_to_rank_map: DocumentIdOrderMapping,
     stop_stream: str | None = STOP_STREAM_PAT,
 ) -> Iterator[DanswerAnswerPiece | CitationInfo]:
-    print("Extracting information from the stream")
-    print(doc_id_to_rank_map)
+    """
+    Key aspects:
 
-    for doc in context_docs:
-        print("")
-        print(f"\t||||{doc}")
+    1. Stream Processing:
+    - Processes tokens one by one, allowing for real-time handling of large texts.
+
+    2. Citation Detection:
+    - Uses regex to find citations in the format [number].
+    - Example: [1], [2], etc.
+
+    3. Citation Mapping:
+    - Maps detected citation numbers to actual document ranks using doc_id_to_rank_map.
+    - Example: [1] might become [3] if doc_id_to_rank_map maps it to 3.
+
+    4. Citation Formatting:
+    - Replaces citations with properly formatted versions.
+    - Adds links if available: [[1]](https://example.com)
+    - Handles cases where links are not available: [[1]]()
+
+    5. Duplicate Handling:
+    - Skips consecutive citations of the same document to avoid redundancy.
+
+    6. Output Generation:
+    - Yields DanswerAnswerPiece objects for regular text.
+    - Yields CitationInfo objects for each unique citation encountered.
+
+    7. Context Awareness:
+    - Uses context_docs to access document information for citations.
+
+    This function effectively processes a stream of text, identifies and reformats citations,
+    and provides both the processed text and citation information as output.
+    """
+
 
     llm_out = ""
     max_citation_num = len(context_docs)
     curr_segment = ""
     cited_inds = set()
     hold = ""
-    last_cited_num = None
 
     raw_out = ""
     current_citations = []
@@ -63,8 +89,10 @@ def extract_citations_from_stream(
         citation_pattern = r"\[(\d+)\]"
         citations_found = list(re.finditer(citation_pattern, curr_segment))
 
-        if not citations_found and past_cite_count - len(llm_out) > 5:
+        if len(citations_found)==0 and len(llm_out) - past_cite_count> 5:
             current_citations = []
+
+
 
         if citations_found and not in_code_block(llm_out):
             last_citation_end = 0
@@ -73,21 +101,19 @@ def extract_citations_from_stream(
                 citation = citations_found.pop(0)
                 numerical_value = int(citation.group(1))
 
+
                 if 1 <= numerical_value <= max_citation_num:
                     context_llm_doc = context_docs[numerical_value - 1]
                     target_citation_num = doc_id_to_rank_map[
                         context_llm_doc.document_id
                     ]
-                    print(f'\nthe target citation for {numerical_value} is {target_citation_num}')
 
 
                     # Skip consecutive citations of the same work
-                    if (
-                        target_citation_num == last_cited_num
-                        or target_citation_num in current_citations
-                    ):
+                    if (target_citation_num in current_citations):
                         start, end = citation.span()
                         curr_segment = curr_segment[:start] + curr_segment[end:]
+                        print(f"Skipping")
 
                         continue
 

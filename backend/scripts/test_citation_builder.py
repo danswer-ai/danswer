@@ -4,17 +4,12 @@ import sys
 from datetime import datetime
 from typing import List
 from typing import Union
-
 import pytest
-
 
 # Modify sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
-
-
-print(os.listdir("."))
 
 
 # pylint: disable=E402
@@ -30,10 +25,7 @@ from danswer.chat.models import LlmDoc
 
 # pylint: enable=E402
 # flake8: noqa: E402
-
-
 import random
-
 
 def create_mock_tokens(text: str) -> list[str]:
     tokens = []
@@ -155,7 +147,7 @@ class SimpleCitationExtractionTestCase:
         from test_citation_builder import process_text  # Import the existing function
 
         final_answer_text, citations = process_text(self.input_text, mock_data)
-        print(final_answer_text)
+        print(final_answer_text, self.expected_text)
         assert (
             final_answer_text.strip() == self.expected_text.strip()
         ), "Final answer text does not match expected output"
@@ -172,22 +164,32 @@ for dock in mock_docs:
 
 if __name__ == "__main__":
 
-    print(mock_docs)
     # Create a test case
     test_case = SimpleCitationExtractionTestCase(
-        input_text="""Growth! [1][3][5]""",
-        expected_text="""Growth! [[1]](https://0.com).""",
-        expected_citations=[("doc_1")],  # Simplified citation format
+        input_text="""Growth! [1].""",
+        expected_text="""Growth! [[0]](https://0.com).""",
+        expected_citations=[("doc_0")],
     )
 
     # Run the test
     test_case.run_test((mock_docs, mock_doc_mapping))
 
     test_case_2 = SimpleCitationExtractionTestCase(
-        input_text=""""Growth! [1].""",
-        expected_text=""""Growth! [[1]](https://0.com).""",
-        expected_citations=[("doc_1")]  # Simplified citation format
+        input_text=""""Test! [1][3][1] [5].""",
+        expected_text=""""Test! [[0]](https://0.com)[[1]]() [[2]](https://2.com).""",
+        expected_citations=[("doc_0"),( "doc_1"), ("doc_2")]
+    )
+
+    test_case.run_test((mock_docs, mock_doc_mapping))
+
+    test_case_2 = SimpleCitationExtractionTestCase(
+        input_text=""""Test! [1][1][1]. And some more [1][2].""",
+        expected_text=""""Test! [[0]](https://0.com). And some more [[0]](https://0.com).""",
+        expected_citations=[("doc_0")]
     )
 
 
-    test_case_2.run_test
+
+
+
+    test_case_2.run_test((mock_docs, mock_doc_mapping))
