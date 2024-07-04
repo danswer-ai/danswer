@@ -30,7 +30,7 @@ export function FiltersTab({
   );
 
   return (
-    <div className="overflow-hidden flex flex-col">
+    <div className="overflow-hidden  flex flex-col">
       <div className="overflow-y-auto">
         <div>
           <div className="pb-4">
@@ -197,7 +197,7 @@ export function FiltersTab({
               )}
             </ul>
 
-            <div className="w-96 mt-2">
+            <div className="w-96 bg-black mt-2">
               <div>
                 <div className="mb-2 pt-2">
                   <input

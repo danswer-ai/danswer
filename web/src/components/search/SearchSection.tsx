@@ -445,7 +445,7 @@ export const SearchSection = ({
       </div> */}
 
       <div className="px-24  pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
-        <div className="absolute top-12 left-0 hidden 2xl:block w-52 3xl:w-64">
+        <div className="absolute  z-10 top-12 left-0 hidden 2xl:block w-52 3xl:w-64">
           {(ccPairs.length > 0 || documentSets.length > 0) &&
             !showDocSidebar && (
               <SourceSelector

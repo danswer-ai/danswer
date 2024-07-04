@@ -88,7 +88,8 @@ export function SearchSummary({
     <div className={`flex p-1 rounded ${isOverflowed && "cursor-default"}`}>
       <FiSearch className="mr-2 my-auto" size={14} />
       <div className="line-clamp-1 break-all px-0.5" ref={searchingForRef}>
-        Searching for: <i>{finalQuery}</i>
+        {/* {!hasDocs ? "Searching for" : "Searched for"} */}
+        Searching for : <i>{finalQuery}</i>
       </div>
     </div>
   );
