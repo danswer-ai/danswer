@@ -10,6 +10,7 @@ interface AnimatedDocumentListProps {
   selectedDocumentIds: Set<string>;
   setPopup: (popupSpec: PopupSpec | null) => void;
   relevance: { [key: string]: boolean };
+  comments: { [key: string]: boolean };
 }
 
 const AnimatedDocumentList: React.FC<AnimatedDocumentListProps> = ({
@@ -18,6 +19,7 @@ const AnimatedDocumentList: React.FC<AnimatedDocumentListProps> = ({
   selectedDocumentIds,
   setPopup,
   relevance,
+  comments,
 }) => {
   const [animatingDocuments, setAnimatingDocuments] = useState<
     DanswerDocument[]

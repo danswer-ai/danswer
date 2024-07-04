@@ -82,6 +82,7 @@ AnswerObjectIterator = Iterator[
 def evaluate_relevance(
     top_documents: list[SavedSearchDoc],
     query: ThreadMessage,
+    agentic: bool,
     # top_documents: List[Any],
     # query: str,
     # client: OpenAI,
@@ -94,6 +95,7 @@ def evaluate_relevance(
         document_groups[doc.document_id].append(doc.blurb)
 
     results = {}
+    agentic_comments = {}
 
     for document_id, blurbs in document_groups.items():
         combined_blurb = "\n".join(blurbs)
@@ -110,7 +112,6 @@ def evaluate_relevance(
         ```
         {query}
         ```
-
         Is this document relevant? Respond with a
         JSON object containing a single key "response"
         with a value of either true if it's somewhat relevant or false if it's not relevant.
@@ -151,7 +152,45 @@ def evaluate_relevance(
             logger.error(f"Error processing document {document_id}: {str(e)}")
             results[document_id] = False
 
-    return results
+        if agentic and results[document_id]:
+            prompt = f"""
+            Given the following document blurb(s) and query, determine WHY the document is relevant to the search term.
+
+            Document blurb(s):
+            ```
+            {combined_blurb}
+            ```
+
+            Query:
+            ```
+            {query}
+            ```
+
+            Is this document relevant? Respond with an exlanation of why it is.
+            """
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": """You are a helpful assistant that determines WHY this is relevant or not.
+                            You respond with a wise but removed tone. (starting with somethign like
+                            "This doc goes into...") but answer why the doc is relevant! Keep it short!""",
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    max_tokens=100,
+                    n=1,
+                    temperature=0.3,
+                )
+
+                content = response.choices[0].message.content
+                agentic_comments[document_id] = content
+            except Exception as e:
+                print(f"Issue with agentic search {e}")
+
+    return results, agentic_comments
 
 
 def stream_answer_objects(
@@ -340,7 +379,9 @@ def stream_answer_objects(
         else:
             yield packet
 
-    relevance = evaluate_relevance(search_response, query=query_msg)
+    relevance, comments = evaluate_relevance(
+        search_response, query=query_msg, agentic=query_req.agentic
+    )
 
     # Saving Gen AI answer and responding with message info
     gen_ai_response_message = create_new_chat_message(
@@ -357,7 +398,7 @@ def stream_answer_objects(
     )
 
     msg_detail_response = translate_db_message_to_chat_message_detail(
-        gen_ai_response_message, relevance=relevance
+        gen_ai_response_message, relevance=relevance, comments=comments
     )
     yield msg_detail_response
 

@@ -101,6 +101,7 @@ export interface Filters {
 
 export interface SearchRequestArgs {
   query: string;
+  agentic?: boolean;
   sources: SourceMetadata[];
   documentSets: string[];
   timeRange: DateRangePickerValue | null;
@@ -123,6 +124,7 @@ export interface SearchRequestOverrides {
   searchType?: SearchType;
   offset?: number;
   overrideMessage?: string;
+  agentic?: boolean;
 }
 
 export interface ValidQuestionResponse {

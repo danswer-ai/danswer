@@ -11,7 +11,7 @@ import { searchState } from "./SearchSection";
 interface SearchBarProps {
   query: string;
   setQuery: (query: string) => void;
-  onSearch: () => void;
+  onSearch: (fast?: boolean) => void;
   searchState?: searchState;
 }
 
@@ -67,15 +67,15 @@ export const SearchBar = ({
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
-      onSearch();
+      onSearch(agentic);
       event.preventDefault();
     }
   };
 
-  const [fast, setFast] = useState(false);
+  const [agentic, setAgentic] = useState(false);
 
   const handleToggle = () => {
-    setFast(!fast);
+    setAgentic((agentic) => !agentic);
   };
 
   return (
@@ -144,7 +144,7 @@ export const SearchBar = ({
           </div>
         )}
 
-        <AnimatedToggle isOn={fast} handleToggle={handleToggle} />
+        <AnimatedToggle isOn={agentic} handleToggle={handleToggle} />
 
         {/* <Icon icon={FiCamera} size="sm" className="flex-none" /> */}
       </div>

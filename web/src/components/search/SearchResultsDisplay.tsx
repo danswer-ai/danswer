@@ -11,7 +11,7 @@ import {
 } from "@/lib/search/interfaces";
 import { usePopup } from "../admin/connectors/Popup";
 import { AlertIcon } from "../icons/icons";
-import { DocumentDisplay } from "./DocumentDisplay";
+import { AgenticDocumentDisplay, DocumentDisplay } from "./DocumentDisplay";
 import { searchState } from "./SearchSection";
 import { useEffect, useState } from "react";
 
@@ -27,6 +27,7 @@ const getSelectedDocumentIds = (
 };
 
 export const SearchResultsDisplay = ({
+  agenticResults,
   searchResponse,
   searchState,
   validQuestionResponse,
@@ -36,7 +37,9 @@ export const SearchResultsDisplay = ({
   relevance,
   performSweep,
   sweep,
+  comments,
 }: {
+  agenticResults?: boolean | null;
   performSweep: () => void;
   sweep?: boolean;
   searchState: searchState;
@@ -46,6 +49,7 @@ export const SearchResultsDisplay = ({
   defaultOverrides: SearchDefaultOverrides;
   personaName?: string | null;
   relevance: any;
+  comments: any;
 }) => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -237,7 +241,24 @@ export const SearchResultsDisplay = ({
             (document, ind) => {
               // if (!relevance || (relevance && (!sweep || (sweep && relevance[document.document_id])))) {
 
-              return (
+              return agenticResults ? (
+                relevance[document.document_id] && (
+                  <AgenticDocumentDisplay
+                    comments={comments}
+                    index={ind}
+                    hide={
+                      sweep && relevance && !relevance[document.document_id]
+                    }
+                    relevance={relevance}
+                    key={document.document_id}
+                    document={document}
+                    documentRank={ind + 1}
+                    messageId={messageId}
+                    isSelected={selectedDocumentIds.has(document.document_id)}
+                    setPopup={setPopup}
+                  />
+                )
+              ) : (
                 <DocumentDisplay
                   index={ind}
                   hide={sweep && relevance && !relevance[document.document_id]}
@@ -270,3 +291,25 @@ export const SearchResultsDisplay = ({
     </>
   );
 };
+
+export function AgenticDisclaimer({
+  forceNonAgentic,
+}: {
+  forceNonAgentic: () => void;
+}) {
+  return (
+    <div className="ml-auto mx-12 flex transition-all duration-300 animate-fade-in flex-col gap-y-2">
+      <p className="text-sm">
+        Please note that agentic results may take longer than non-agentic. You
+        can click <i>non-agentic</i> to re-submit your query without agentic
+        capabilities.
+      </p>
+      <button
+        onClick={forceNonAgentic}
+        className="p-2 bg-neutral-900 mr-auto text-neutral-200 rounded-lg text-xs my-auto"
+      >
+        Non-agentic
+      </button>
+    </div>
+  );
+}

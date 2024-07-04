@@ -2,7 +2,10 @@
 
 import { useContext, useEffect, useRef, useState } from "react";
 import { SearchBar } from "./SearchBar";
-import { SearchResultsDisplay } from "./SearchResultsDisplay";
+import {
+  AgenticDisclaimer,
+  SearchResultsDisplay,
+} from "./SearchResultsDisplay";
 import { SourceSelector } from "./filtering/Filters";
 import {
   CCPairBasicInfo,
@@ -78,6 +81,7 @@ export const SearchSection = ({
   // Search Bar
   const [query, setQuery] = useState<string>("");
   const [relevance, setRelevance] = useState<any>(null);
+  const [comments, setComments] = useState<any>(null);
 
   // Search
   const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(
@@ -205,42 +209,39 @@ export const SearchSection = ({
     setRelevance(relevance);
     setSearchState("input");
   };
+  const updateComments = (comments: any) => {
+    setComments(comments);
+  };
   // const updateDocStatusz = (d: any) => {
   //   console.log(d)
   // }
 
-  let lastSearchCancellationToken = useRef<CancellationToken | null>(null);
-  const onSearch = async ({
-    searchType,
-    offset,
-    overrideMessage,
-  }: SearchRequestOverrides = {}) => {
+  const resetInput = () => {
     setSweep(false);
     setFirstSearch(false);
     setRelevance(null);
-
+    setComments(null);
     setSearchState("searching");
+  };
 
-    // setTimeout(() => setSearchState("analyzing"), 3000);
-    // setTimeout(
-    //   () =>
-    //     setSearchResponse(
-    //       (prevSearchResponse) =>
-    //         ({
-    //           ...prevSearchResponse,
-    //           documents: prevSearchResponse?.documents?.map(
-    //             (document, ind) => ({
-    //               ...document,
+  const [showAgenticDisclaimer, setShowAgenticDisclaimer] = useState(false);
+  const [agenticResults, setAgenticResults] = useState<boolean | null>(null);
 
-    //               validationState: ind % 2 == 0 ? "good" : "bad",
-    //             })
-    //           ),
-    //         }) as SearchResponse
-    //     ),
-    //   5000
-    // );
-    // setTimeout(() => setSearchState("input"), 4000);
-    // cancel the prior search if it hasn't finished
+  let lastSearchCancellationToken = useRef<CancellationToken | null>(null);
+  const onSearch = async ({
+    searchType,
+    agentic,
+    offset,
+    overrideMessage,
+  }: SearchRequestOverrides = {}) => {
+    setAgenticResults(agentic!);
+    if (agentic) {
+      setTimeout(() => {
+        setShowAgenticDisclaimer(true);
+      }, 1000);
+    }
+    resetInput();
+
     if (lastSearchCancellationToken.current) {
       lastSearchCancellationToken.current.cancel();
     }
@@ -253,6 +254,7 @@ export const SearchSection = ({
     const searchFnArgs = {
       query: overrideMessage || query,
       sources: filterManager.selectedSources,
+      agentic: agentic,
       documentSets: filterManager.selectedDocumentSets,
       timeRange: filterManager.timeRange,
       tags: filterManager.selectedTags,
@@ -296,6 +298,7 @@ export const SearchSection = ({
         fn: updateMessageId,
       }),
       updateDocumentRelevance, // New callback function
+      updateComments,
 
       selectedSearchType: searchType ?? selectedSearchType,
       offset: offset ?? defaultOverrides.offset,
@@ -345,6 +348,10 @@ export const SearchSection = ({
     setShowDocSidebar((showDocSidebar) => !showDocSidebar); // Toggle the state which will in turn toggle the class
   };
 
+  const forceNonAgentic = () => {
+    setAgenticResults(false);
+  };
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
@@ -356,7 +363,6 @@ export const SearchSection = ({
         }
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
@@ -500,11 +506,12 @@ export const SearchSection = ({
             searchState={searchState}
             query={query}
             setQuery={setQuery}
-            onSearch={async () => {
+            onSearch={async (agentic?: boolean) => {
               setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
-              await onSearch({ offset: 0 });
+              await onSearch({ agentic, offset: 0 });
             }}
           />
+
           <div className="flex gap-x-4 flex-wrap w-full">
             <div className="block 2xl:block w-52 3xl:w-64 mt-4">
               <div className="pr-5">
@@ -533,21 +540,29 @@ export const SearchSection = ({
           </div>
 
           <div className="mt-2">
-            <SearchResultsDisplay
-              sweep={sweep}
-              performSweep={performSweep}
-              relevance={relevance}
-              searchState={searchState}
-              searchResponse={searchResponse}
-              validQuestionResponse={validQuestionResponse}
-              isFetching={isFetching}
-              defaultOverrides={defaultOverrides}
-              personaName={
-                selectedPersona
-                  ? personas.find((p) => p.id === selectedPersona)?.name
-                  : null
-              }
-            />
+            {!(agenticResults && isFetching) ? (
+              <SearchResultsDisplay
+                comments={comments}
+                sweep={sweep}
+                agenticResults={agenticResults}
+                performSweep={performSweep}
+                relevance={relevance}
+                searchState={searchState}
+                searchResponse={searchResponse}
+                validQuestionResponse={validQuestionResponse}
+                isFetching={isFetching}
+                defaultOverrides={defaultOverrides}
+                personaName={
+                  selectedPersona
+                    ? personas.find((p) => p.id === selectedPersona)?.name
+                    : null
+                }
+              />
+            ) : (
+              showAgenticDisclaimer && (
+                <AgenticDisclaimer forceNonAgentic={forceNonAgentic} />
+              )
+            )}
           </div>
         </div>
       </div>

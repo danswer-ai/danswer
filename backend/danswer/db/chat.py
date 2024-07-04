@@ -586,10 +586,12 @@ def get_retrieval_docs_from_chat_message(
 def translate_db_message_to_chat_message_detail(
     chat_message: ChatMessage,
     relevance: dict | None = None,
+    comments: dict | None = None,
     remove_doc_content: bool = False,
 ) -> ChatMessageDetail:
     chat_msg_detail = ChatMessageDetail(
         relevance=relevance,
+        comments=comments,
         message_id=chat_message.id,
         parent_message=chat_message.parent_message,
         latest_child_message=chat_message.latest_child_message,

@@ -19,6 +19,7 @@ export const searchRequestStreamed = async ({
   timeRange,
   tags,
   persona,
+  agentic,
   updateCurrentAnswer,
   updateQuotes,
   updateDocs,
@@ -28,6 +29,7 @@ export const searchRequestStreamed = async ({
   updateError,
   updateMessageId,
   updateDocumentRelevance, // New callback function
+  updateComments,
 }: SearchRequestArgs) => {
   let answer = "";
   let quotes: Quote[] | null = null;
@@ -47,6 +49,7 @@ export const searchRequestStreamed = async ({
       body: JSON.stringify({
         messages: [threadMessage],
         persona_id: persona.id,
+        agentic,
         prompt_id: persona.id === 0 ? null : persona.prompts[0]?.id,
         retrieval_options: {
           run_search: "always",
@@ -154,6 +157,9 @@ export const searchRequestStreamed = async ({
         }
         if (Object.hasOwn(chunk, "relevance")) {
           updateDocumentRelevance((chunk as BackendMessage).relevance);
+        }
+        if (Object.hasOwn(chunk, "comments")) {
+          updateComments((chunk as BackendMessage).comments);
         }
 
         // check for message ID section

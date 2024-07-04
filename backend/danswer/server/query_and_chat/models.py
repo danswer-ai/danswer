@@ -190,6 +190,7 @@ class ChatMessageDetail(BaseModel):
     files: list[FileDescriptor]
     tool_calls: list[ToolCallFinalResult]
     relevance: dict[str, bool] | None
+    comments: dict[str, str] | None
 
     def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
         initial_dict = super().dict(*args, **kwargs)  # type: ignore

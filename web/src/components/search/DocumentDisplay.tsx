@@ -9,6 +9,7 @@ import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
 import { LoadingAnimation } from "../Loading";
 import FunctionalLoader from "@/lib/search/Loader";
+import { FaCaretDown, FaCaretRight, FaRobot } from "react-icons/fa";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -156,6 +157,7 @@ interface DocumentDisplayProps {
   isSelected: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;
   relevance: any;
+  comments?: any;
   hide?: boolean;
   index?: number;
 }
@@ -171,16 +173,6 @@ export const DocumentDisplay = ({
   setPopup,
 }: DocumentDisplayProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  // const [hide, setHide] = useState(false);
-
-  // const handleCollapse = () => {
-  //   setHide(true);
-  // You might want to trigger any parent component updates here after animation
-  // setTimeout(() => {
-
-  // }, 500);
-  // };
-
   return (
     <div
       key={document.semantic_identifier}
@@ -279,215 +271,144 @@ export const DocumentDisplay = ({
           )}
         </p>
       </div>
-
-      {/* <button
-        onClick={handleCollapse}
-        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-      >
-        Hide
-      </button> */}
     </div>
   );
 };
 
-// export const DocumentDisplay = ({
-//   document,
-//   hide,
-//   messageId,
-//   documentRank,
-//   isSelected,
-//   relevance,
-//   setPopup,
-// }: DocumentDisplayProps) => {
-//   const [isHovered, setIsHovered] = useState(false);
+export const AgenticDocumentDisplay = ({
+  document,
+  isSelected,
+  relevance,
+  comments,
+  messageId,
+  documentRank,
+  hide,
+  index,
+  setPopup,
+}: DocumentDisplayProps) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [showContext, setShowContext] = useState(false);
 
-//   // Consider reintroducing null scored docs in the future
-//   if (document.score === null) {
-//     return null;
-//   }
+  return (
+    <div
+      key={document.semantic_identifier}
+      className={`text-sm border-b border-border transition-all duration-500 
+        ${hide ? "transform translate-x-full opacity-0" : ""} 
+        ${!hide ? "pt-3" : "border-transparent"} relative`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        transitionDelay: `${index! * 10}ms`, // Add a delay to the transition based on index
+      }}
+    >
+      <div
+        className={
+          "absolute top-6 overflow-y-auto -translate-y-2/4 flex " +
+          (isSelected ? "-left-14 w-14" : "-left-10 w-10")
+        }
+      >
+        {!hide &&
+          relevance &&
+          (relevance[document.document_id] ? (
+            <svg
+              className="h-4 w-4 text-xs text-emphasis bg-hover-emphasis rounded p-0.5 w-fit my-auto select-none ml-auto mr-2"
+              xmlns="http://www.w3.org/2000/svg"
+              width="200"
+              height="200"
+              viewBox="0 0 24 24"
+            >
+              <path
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M20 6L9 17l-5-5"
+              />
+            </svg>
+          ) : (
+            <svg
+              className="h-4 w-4 text-xs text-emphasis bg-hover rounded p-0.5 w-fit my-auto select-none ml-auto mr-2"
+              xmlns="http://www.w3.org/2000/svg"
+              width="200"
+              height="200"
+              viewBox="0 0 24 24"
+            >
+              <path
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M18 6L6 18M6 6l12 12"
+              />
+            </svg>
+          ))}
+        {!hide && !relevance && (
+          <div className="text-xs text-emphasis rounded p-0.5 w-fit my-auto overflow-y-auto select-none ml-auto mr-2">
+            <FunctionalLoader />
+          </div>
+        )}
+      </div>
 
-//   return (
-//     <div
-//       key={document.semantic_identifier}
-//       className={`text-sm border-b border-border transition-spacing  duration-300  ${!hide ? "pt-3" : "border-transparent"} relative `}
-//       onMouseEnter={() => {
-//         setIsHovered(true);
-//       }}
-//       onMouseLeave={() => setIsHovered(false)}
-//     >
-//       <div
-//         className={
-//           "absolute top-6 overflow-y-auto -translate-y-2/4 flex " +
-//           (isSelected ? "-left-14 w-14" : "-left-10 w-10")
-//         }
-//       >
-//         {!hide &&
-//           (relevance ? (
-//             relevance[document.document_id] ? (
-//               <svg
-//                 className={`h-4 w-4
-//                     text-xs
-//                     text-emphasis
-//                     bg-hover-emphasis
-//                     rounded
-//                     p-0.5
-//                     w-fit
-//                     my-auto
-//                     select-none
-//                     ml-auto
-//                     mr-2 `}
-//                 xmlns="http://www.w3.org/2000/svg"
-//                 width="200"
-//                 height="200"
-//                 viewBox="0 0 24 24"
-//               >
-//                 <path
-//                   fill="none"
-//                   stroke="currentColor"
-//                   stroke-linecap="round"
-//                   stroke-linejoin="round"
-//                   stroke-width="2"
-//                   d="M20 6L9 17l-5-5"
-//                 />
-//               </svg>
-//             ) : (
-//               <svg
-//                 className={`h-4 w-4
-//                 text-xs
-//                 text-emphasis
-//                 bg-hover
-//                 rounded
-//                 p-0.5
-//                 w-fit
-//                 my-auto
-//                 select-none
-//                 ml-auto
-//                 mr-2 `}
-//                 xmlns="http://www.w3.org/2000/svg"
-//                 width="200"
-//                 height="200"
-//                 viewBox="0 0 24 24"
-//               >
-//                 <path
-//                   fill="none"
-//                   stroke="currentColor"
-//                   stroke-linecap="round"
-//                   stroke-linejoin="round"
-//                   stroke-width="2"
-//                   d="M18 6L6 18M6 6l12 12"
-//                 />
-//               </svg>
-//             )
-//           ) : (
-//             // <></>
-//             <div
-//               className={`
-//                  text-xs
-//                  text-emphasis
-//                  rounded
-//                  p-0.5
-//                  w-fit
-//                  my-auto
-//                  overflow-y-auto
-//                  select-none
-//                  ml-auto
-//                  mr-2`}
-//             >
-//               {/* pds */}
-//               <FunctionalLoader />
-//             </div>
-//           ))}
+      <div
+        className={`collapsible   ${hide ? "collapsible-closed overflow-y-auto border-transparent" : "pb-3"}`}
+      >
+        <div className="flex relative">
+          <a
+            className={`rounded-lg flex font-bold text-link max-w-full ${document.link ? "" : "pointer-events-none"}`}
+            href={document.link}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <SourceIcon sourceType={document.source_type} iconSize={22} />
+            <p className="truncate text-wrap break-all ml-2 my-auto text-base max-w-full">
+              {document.semantic_identifier || document.document_id}
+            </p>
+          </a>
+          <div className="ml-auto">
+            {isHovered && messageId && (
+              <DocumentFeedbackBlock
+                documentId={document.document_id}
+                messageId={messageId}
+                documentRank={documentRank}
+                setPopup={setPopup}
+              />
+            )}
+          </div>
+        </div>
+        <div className="mt-1">
+          <DocumentMetadataBlock document={document} />
+        </div>
+        <div className="pt-2 break-words flex gap-x-2">
+          <p className="mb-auto flex">
+            <FaRobot className="h-4 w-4 flex-none" />
+            {":"}
+          </p>
+          <p>{comments[document.document_id]}</p>
+        </div>
+        <div className="pt-2 break-words flex gap-x-2">
+          <button
+            className="flex"
+            onClick={() => setShowContext((showContext) => !showContext)}
+          >
+            {showContext ? (
+              <FaCaretRight className="h-4 w-4" />
+            ) : (
+              <FaCaretDown className="h-4 w-4" />
+            )}
+          </button>
 
-//         {/* </div> */}
-//       </div>
-
-//       <div
-//         className={` collapsible
-//         ${hide ? " collapsible-closed overflow-y-auto border-transparent" : ""}`}
-//       >
-//         <div
-//           className={`flex relative
-//           `}
-//         >
-//           {/* {document.score !== null && (
-//           <div
-//             className={
-//               "absolute top-2/4 -translate-y-2/4 flex " +
-//               (isSelected ? "-left-14 w-14" : "-left-10 w-10")
-//             }
-//           >
-//             {isSelected && (
-//               <div className="w-4 h-4 my-auto mr-1 flex flex-col">
-//                 <HoverPopup
-//                   mainContent={<FiRadio className="text-gray-500 my-auto" />}
-//                   popupContent={
-//                     <div className="text-xs text-gray-300 w-36 flex">
-//                       <div className="flex mx-auto">
-//                         <div className="w-3 h-3 flex flex-col my-auto mr-1">
-//                           <FiInfo className="my-auto" />
-//                         </div>
-//                         <div className="my-auto">The AI liked this doc!</div>
-//                       </div>
-//                     </div>
-//                   }
-//                   direction="bottom"
-//                   style="dark"
-//                 />
-//               </div>
-//             )}
-//             <div
-//               className={`
-//                 text-xs
-//                 text-emphasis
-//                 bg-hover
-//                 rounded
-//                 p-0.5
-//                 w-fit
-//                 my-auto
-//                 select-none
-//                 ml-auto
-//                 mr-2`}
-//             >
-//               {Math.abs(document.score).toFixed(2)}
-//             </div>
-//           </div>
-//         )} */}
-
-//           <a
-//             className={
-//               "rounded-lg flex font-bold text-link max-w-full " +
-//               (document.link ? "" : "pointer-events-none")
-//             }
-//             href={document.link}
-//             target="_blank"
-//             rel="noopener noreferrer"
-//           >
-//             <SourceIcon sourceType={document.source_type} iconSize={22} />
-//             <p className="truncate text-wrap break-all ml-2 my-auto text-base max-w-full">
-//               {document.semantic_identifier || document.document_id}
-//             </p>
-//           </a>
-//           <div className="ml-auto">
-//             {isHovered && messageId && (
-//               <DocumentFeedbackBlock
-//                 documentId={document.document_id}
-//                 messageId={messageId}
-//                 documentRank={documentRank}
-//                 setPopup={setPopup}
-//               />
-//             )}
-//           </div>
-//         </div>
-//         <div className="mt-1">
-//           <DocumentMetadataBlock document={document} />
-//         </div>
-//         <p className="pl-1 pt-2 pb-3 break-words">
-//           {buildDocumentSummaryDisplay(
-//             document.match_highlights,
-//             document.blurb
-//           )}
-//         </p>
-//       </div>
-//     </div>
-//   );
-// };
+          {showContext && (
+            <p className="pl-1 break-words">
+              {buildDocumentSummaryDisplay(
+                document.match_highlights,
+                document.blurb
+              )}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
