@@ -36,6 +36,8 @@ def extract_citations_from_stream(
     last_cited_num = None
 
     raw_out = ""
+    current_citations = []
+    past_cite_count = 0
     for raw_token in tokens:
         raw_out += raw_token
         if stop_stream:
@@ -50,37 +52,39 @@ def extract_citations_from_stream(
         else:
             token = raw_token
 
-
         curr_segment += token
         llm_out += token
 
         citation_pattern = r"\[(\d+)\]"
         citations_found = list(re.finditer(citation_pattern, curr_segment))
-        if not citations_found:
-            cited_inds = set()
 
+        if not citations_found and past_cite_count - len(llm_out) > 5:
+            current_citations = []
 
         if citations_found and not in_code_block(llm_out):
             last_citation_end = 0
 
-
-            while len(citations_found)>0:
-                citation =citations_found.pop(0)
+            while len(citations_found) > 0:
+                citation = citations_found.pop(0)
                 numerical_value = int(citation.group(1))
-
 
                 if 1 <= numerical_value <= max_citation_num:
                     context_llm_doc = context_docs[numerical_value - 1]
                     target_citation_num = doc_id_to_rank_map[
                         context_llm_doc.document_id
                     ]
+                    if (target_citation_num in current_citations):
+                        print(f"AVOIDING {target_citation_num}")
 
                     # Skip consecutive citations of the same work
-                    # if target_citation_num == last_cited_num:
-                    #     start, end = citation.span()
-                    #     curr_segment = curr_segment[:start] + curr_segment[end:]
+                    if (
+                        target_citation_num == last_cited_num
+                        or target_citation_num in current_citations
+                    ):
+                        start, end = citation.span()
+                        curr_segment = curr_segment[:start] + curr_segment[end:]
 
-                    #     continue
+                        continue
 
                     link = context_llm_doc.link
 
@@ -92,8 +96,10 @@ def extract_citations_from_stream(
                         + curr_segment[end:]
                     )
 
-                    print('\t||||validating')
-                    print(target_citation_num)
+                    past_cite_count = len(llm_out)
+                    current_citations.append(target_citation_num)
+                    print(f"APPENDING {current_citations}")
+
 
                     if target_citation_num not in cited_inds:
                         cited_inds.add(target_citation_num)
