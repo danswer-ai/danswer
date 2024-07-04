@@ -70,7 +70,6 @@ mock_doc_mapping = {
     "doc_3": 3,
     "doc_4": 4,
     "doc_5": 5,
-
 }
 
 @pytest.fixture
@@ -158,9 +157,6 @@ class SimpleCitationExtractionTestCase:
         print("Test passed successfully!")
 
 
-print(mock_doc_mapping)
-for dock in mock_docs:
-    print(f"Doc {dock.document_id}: {dock.link}")
 
 if __name__ == "__main__":
 
@@ -180,16 +176,51 @@ if __name__ == "__main__":
         expected_citations=[("doc_0"),( "doc_1"), ("doc_2")]
     )
 
-    test_case.run_test((mock_docs, mock_doc_mapping))
+    test_case_2.run_test((mock_docs, mock_doc_mapping))
 
-    test_case_2 = SimpleCitationExtractionTestCase(
+    test_case_3 = SimpleCitationExtractionTestCase(
         input_text=""""Test! [1][1][1]. And some more [1][2].""",
         expected_text=""""Test! [[0]](https://0.com). And some more [[0]](https://0.com).""",
         expected_citations=[("doc_0")]
     )
 
+    test_case_3.run_test((mock_docs, mock_doc_mapping))
 
 
+    # Test case 4
+
+    # Test case 5
+    test_case_5 = SimpleCitationExtractionTestCase(
+        input_text="""Citation at the end of a sentence.[2] Another sentence.[4]""",
+        expected_text="""Citation at the end of a sentence.[[0]](https://0.com) Another sentence.[[1]]()""",
+        expected_citations=[("doc_0"), ("doc_1")],
+    )
+    test_case_5.run_test((mock_docs, mock_doc_mapping))
+
+    # Test case 6
+    test_case_6 = SimpleCitationExtractionTestCase(
+        input_text="""[1] Citation at the beginning. [3] In the middle. At the end [5].""",
+        expected_text="""[[0]](https://0.com) Citation at the beginning. [[1]]() In the middle. At the end [[2]](https://2.com).""",
+        expected_citations=[("doc_0"), ("doc_1"), ("doc_2")],
+    )
+    test_case_6.run_test((mock_docs, mock_doc_mapping))
 
 
-    test_case_2.run_test((mock_docs, mock_doc_mapping))
+    # Test case 8
+    test_case_8 = SimpleCitationExtractionTestCase(
+        input_text="""Mixed valid and invalid citations [1][99][3][100][5].""",
+        expected_text="""Mixed valid and invalid citations [[0]](https://0.com)[99][[1]]()[100][[2]](https://2.com).""",
+        expected_citations=[("doc_0"), ("doc_1"), ("doc_2")],
+    )
+    test_case_8.run_test((mock_docs, mock_doc_mapping))
+
+
+    # while True:
+
+    #     test_case_4 = SimpleCitationExtractionTestCase(
+    #         input_text="""Multiple citations in one sentence [1][4][5]. """,
+    #         expected_text="""Multiple citations in one sentence [[0]](https://0.com)[[1]]()[[2]](https://2.com).""",
+    #         expected_citations=[("doc_0"), ("doc_1"), ("doc_2")],
+    #     )
+    #     test_case_4.run_test((mock_docs, mock_doc_mapping))
+
