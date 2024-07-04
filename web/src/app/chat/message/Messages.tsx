@@ -274,8 +274,69 @@ export const AIMessage = ({
                 </div>
               )}
 
-            {docs && docs.length > 0 && (
-              <div className="w-full mb-4 flex ">
+            {content ? (
+              <>
+                <FileDisplay files={files || []} />
+
+                {typeof content === "string" ? (
+                  <ReactMarkdown
+                    key={messageId}
+                    className="prose max-w-full"
+                    components={{
+                      a: (props) => {
+                        const { node, ...rest } = props;
+                        const value = rest.children;
+                        if (value?.toString().startsWith("[")) {
+                          // for some reason <a> tags cause the onClick to not apply
+                          // and the links are unclickable
+                          // TODO: fix the fact that you have to double click to follow link
+                          // for the first link
+                          return (
+                            <Citation
+                              link={rest?.href}
+                              key={node?.position?.start?.offset}
+                            >
+                              {rest.children}
+                            </Citation>
+                          );
+                        } else {
+                          return (
+                            <a
+                              key={node?.position?.start?.offset}
+                              onClick={() =>
+                                rest.href
+                                  ? window.open(rest.href, "_blank")
+                                  : undefined
+                              }
+                              className="cursor-pointer text-link hover:text-link-hover"
+                            >
+                              {rest.children}
+                            </a>
+                          );
+                        }
+                      },
+                      code: (props) => (
+                        <CodeBlock {...props} content={content as string} />
+                      ),
+                      p: ({ node, ...props }) => (
+                        <p {...props} className="text-default" />
+                      ),
+                    }}
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+                  >
+                    {content}
+                  </ReactMarkdown>
+                ) : (
+                  content
+                )}
+              </>
+            ) : isComplete ? null : (
+              defaultLoader
+            )}
+
+            {isComplete && docs && docs.length > 0 && (
+              <div className="mt-2 w-full mb-4 flex ">
                 <div className="-mx-2 w-full relative overflow-x-scroll no-scrollbar">
                   {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
                   <div className="flex gap-x-2">
@@ -363,67 +424,6 @@ export const AIMessage = ({
                   </svg>
                 </button>
               </div>
-            )}
-
-            {content ? (
-              <>
-                <FileDisplay files={files || []} />
-
-                {typeof content === "string" ? (
-                  <ReactMarkdown
-                    key={messageId}
-                    className="prose max-w-full"
-                    components={{
-                      a: (props) => {
-                        const { node, ...rest } = props;
-                        const value = rest.children;
-                        if (value?.toString().startsWith("[")) {
-                          // for some reason <a> tags cause the onClick to not apply
-                          // and the links are unclickable
-                          // TODO: fix the fact that you have to double click to follow link
-                          // for the first link
-                          return (
-                            <Citation
-                              link={rest?.href}
-                              key={node?.position?.start?.offset}
-                            >
-                              {rest.children}
-                            </Citation>
-                          );
-                        } else {
-                          return (
-                            <a
-                              key={node?.position?.start?.offset}
-                              onClick={() =>
-                                rest.href
-                                  ? window.open(rest.href, "_blank")
-                                  : undefined
-                              }
-                              className="cursor-pointer text-link hover:text-link-hover"
-                            >
-                              {rest.children}
-                            </a>
-                          );
-                        }
-                      },
-                      code: (props) => (
-                        <CodeBlock {...props} content={content as string} />
-                      ),
-                      p: ({ node, ...props }) => (
-                        <p {...props} className="text-default" />
-                      ),
-                    }}
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
-                  >
-                    {content}
-                  </ReactMarkdown>
-                ) : (
-                  content
-                )}
-              </>
-            ) : isComplete ? null : (
-              defaultLoader
             )}
             {/* {citedDocuments && citedDocuments.length > 0 && (
               <div className="mt-2">
