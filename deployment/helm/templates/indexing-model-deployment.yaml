@@ -26,8 +26,8 @@ spec:
     spec:
       containers:
       - name: indexing-model-server
-        image: danswer/danswer-model-server:latest
-        imagePullPolicy: IfNotPresent
+        image: "{{ .Values.indexCapability.deployment.image.repository }}:{{ .Values.indexCapability.deployment.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.indexCapability.deployment.image.pullPolicy }}
         command: [ "uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000", "--limit-concurrency", "10" ]
         ports:
         - containerPort: 9000

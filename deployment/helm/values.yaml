@@ -24,7 +24,7 @@ inferenceCapability:
         value: inference-model-server
     image:
       repository: danswer/danswer-model-server
-      tag: latest
+      tag:
       pullPolicy: IfNotPresent
     command: ["uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000"]
     port: 9000
@@ -40,6 +40,23 @@ inferenceCapability:
       value: inference-model-server
 
 indexCapability:
+  deployment:
+    image:
+      repository: danswer/danswer-model-server
+      tag:
+      pullPolicy: IfNotPresent
+    resources:
+    # For example
+    # limits:
+    #   nvidia.com/gpu: 1
+    # The strategy to use for rolling out deployment updates
+    # If using GPU indexing with a limited number of GPUs available,
+    # this can be set to type: Recreate instead.
+    updateStrategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
   service:
     type: ClusterIP
     port: 9000
@@ -108,7 +125,7 @@ webserver:
     repository: danswer/danswer-web-server
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: ""
+    tag:
   deploymentLabels:
     app: web-server
   podAnnotations: {}
@@ -171,7 +188,7 @@ api:
     repository: danswer/danswer-backend
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: ""
+    tag:
   deploymentLabels:
     app: api-server
   podAnnotations: {}
@@ -236,7 +253,7 @@ background:
     repository: danswer/danswer-backend
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: latest
+    tag:
   podAnnotations: {}
   podLabels:
     scope: danswer-backend
