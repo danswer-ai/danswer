@@ -1,6 +1,13 @@
 "use client";
 
-import { FiBook, FiEdit, FiFolderPlus, FiPlusSquare } from "react-icons/fi";
+import {
+  FiBook,
+  FiEdit,
+  FiFolderPlus,
+  FiMessageSquare,
+  FiPlusSquare,
+  FiSearch,
+} from "react-icons/fi";
 import { useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -20,9 +27,11 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import React from "react";
-import { FaBrain } from "react-icons/fa";
+import { FaBrain, FaHeadset } from "react-icons/fa";
 import { Logo } from "@/components/Logo";
 import { HeaderTitle } from "@/components/header/Header";
+import { UserSettingsButton } from "@/components/UserSettingsButton";
+import { useChatContext } from "@/components/context/ChatContext";
 
 export const ChatSidebar = ({
   existingChats,
@@ -35,6 +44,7 @@ export const ChatSidebar = ({
   folders: Folder[];
   openedFolders: { [key: number]: boolean };
 }) => {
+  let { user } = useChatContext();
   const router = useRouter();
   const { popup, setPopup } = usePopup();
 
@@ -59,27 +69,27 @@ export const ChatSidebar = ({
       <div
         className={`
         w-64
+        py-4
         flex
         flex-none
         bg-background-weak
         3xl:w-72
         border-r 
         border-border 
-        flex 
         flex-col 
         h-screen
         transition-transform`}
         id="chat-sidebar"
       >
-        <div className="pt-6 flex">
+        <div className="flex">
           <Link
-            className="ml-4 w-full"
+            className="w-full"
             href={
               settings && settings.default_page === "chat" ? "/chat" : "/search"
             }
           >
-            <div className="flex w-full">
-              <Logo height={32} width={30} className="mr-1 my-auto" />
+            <div className="flex w-full items-center justify-center">
+              <Logo height={32} width={32} className="mr-1 my-auto" />
 
               {enterpriseSettings && enterpriseSettings.application_name ? (
                 <div>
@@ -99,8 +109,47 @@ export const ChatSidebar = ({
             </div>
           </Link>
         </div>
+        {
+          <div className="mt-5">
+            {settings.search_page_enabled && (
+              <Link
+                href="/search"
+                className="flex py-2 px-4 rounded cursor-pointer hover:bg-hover-light"
+              >
+                <FiSearch className="my-auto mr-2 text-base" />
+                Search
+              </Link>
+            )}
+            {settings.chat_page_enabled && (
+              <>
+                <Link
+                  href="/chat"
+                  className="flex py-2 px-4 rounded cursor-pointer hover:bg-hover-light"
+                >
+                  <FiMessageSquare className="my-auto mr-2 text-base" />
+                  Chat
+                </Link>
+                <Link
+                  href="/assistants/mine"
+                  className="flex py-2 px-4 rounded cursor-pointer hover:bg-hover-light"
+                >
+                  <FaHeadset className="my-auto mr-2 text-base" />
+                  My Assistants
+                </Link>
+              </>
+            )}
+          </div>
+        }
+        <div className="border-b border-border pb-4 mx-3" />
 
-        <div className="flex mt-5 items-center">
+        <ChatTab
+          existingChats={existingChats}
+          currentChatId={currentChatId}
+          folders={folders}
+          openedFolders={openedFolders}
+        />
+
+        <div className="flex gap-3 pb-1 items-center px-3">
           <Link
             href={
               "/chat" +
@@ -109,16 +158,15 @@ export const ChatSidebar = ({
                 ? `?assistantId=${currentChatSession.persona_id}`
                 : "")
             }
-            className="ml-3 w-full"
+            className="w-full"
           >
             <BasicClickable fullWidth>
-              <div className="flex items-center text-sm">
+              <div className="flex px-2 py-1 items-center text-base">
                 <FiEdit className="ml-1 mr-2" /> New Chat
               </div>
             </BasicClickable>
           </Link>
-
-          <div className="ml-1.5 mr-3 h-full">
+          <div className=" h-full">
             <BasicClickable
               onClick={() =>
                 createFolder("New Folder")
@@ -135,29 +183,13 @@ export const ChatSidebar = ({
                   })
               }
             >
-              <div className="flex items-center text-sm h-full">
-                <FiFolderPlus className="mx-1 my-auto" />
+              <div className="flex items-center text-base aspect-square h-full">
+                <FiFolderPlus className="mx-auto my-auto" />
               </div>
             </BasicClickable>
           </div>
         </div>
-
-        <Link href="/assistants/mine" className="mt-3 mb-1 mx-3">
-          <BasicClickable fullWidth>
-            <div className="flex items-center text-default font-medium">
-              <FaBrain className="ml-1 mr-2" /> Manage Assistants
-            </div>
-          </BasicClickable>
-        </Link>
-
-        <div className="border-b border-border pb-4 mx-3" />
-
-        <ChatTab
-          existingChats={existingChats}
-          currentChatId={currentChatId}
-          folders={folders}
-          openedFolders={openedFolders}
-        />
+        <UserSettingsButton user={user} />
       </div>
     </>
   );

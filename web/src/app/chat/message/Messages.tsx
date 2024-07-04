@@ -455,7 +455,7 @@ export const HumanMessage = ({
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <div className="ml-8">
           <div className="flex">
-            <div className="p-1 bg-user rounded-lg h-fit">
+            <div className="p-1 bg-blue-400 rounded-lg h-fit">
               <div className="text-inverted">
                 <FiUser size={16} className="my-auto mx-auto" />
               </div>

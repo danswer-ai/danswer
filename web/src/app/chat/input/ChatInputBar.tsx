@@ -216,7 +216,9 @@ export function ChatInputBar({
                 {filteredPersonas.map((currentPersona, index) => (
                   <button
                     key={index}
-                    className={`px-2 ${assistantIconIndex == index && "bg-hover"} rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
+                    className={`px-2 ${
+                      assistantIconIndex == index && "bg-hover"
+                    } rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
                     onClick={() => {
                       updateCurrentPersona(currentPersona);
                     }}
@@ -232,7 +234,9 @@ export function ChatInputBar({
                 <a
                   key={filteredPersonas.length}
                   target="_blank"
-                  className={`${assistantIconIndex == filteredPersonas.length && "bg-hover"} px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
+                  className={`${
+                    assistantIconIndex == filteredPersonas.length && "bg-hover"
+                  } px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
                   href="/assistants/new"
                 >
                   <FiPlus size={17} />
@@ -338,7 +342,6 @@ export function ChatInputBar({
                 overscroll-contain
                 outline-none
                 placeholder-subtle
-                overflow-hidden
                 resize-none
                 pl-4
                 pr-12
@@ -364,74 +367,73 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-            <div className="flex items-center space-x-3 mr-12 px-4 pb-2 overflow-hidden">
-              <ChatInputOption
-                flexPriority="shrink"
-                name={selectedAssistant ? selectedAssistant.name : "Assistants"}
-                icon={FaBrain}
-                onClick={() => setConfigModalActiveTab("assistants")}
-              />
+            <div className="flex items-center justify-between px-4 py-2 overflow-hidden">
+              <div className="w-auto flex gap-2">
+                <ChatInputOption
+                  flexPriority="shrink"
+                  name={
+                    selectedAssistant ? selectedAssistant.name : "Assistants"
+                  }
+                  icon={FaBrain}
+                  onClick={() => setConfigModalActiveTab("assistants")}
+                />
 
-              <ChatInputOption
-                flexPriority="second"
-                name={
-                  llmOverrideManager.llmOverride.modelName ||
-                  (selectedAssistant
-                    ? selectedAssistant.llm_model_version_override || llmName
-                    : llmName)
-                }
-                icon={FiCpu}
-                onClick={() => setConfigModalActiveTab("llms")}
-              />
+                <ChatInputOption
+                  flexPriority="second"
+                  name={
+                    llmOverrideManager.llmOverride.modelName ||
+                    (selectedAssistant
+                      ? selectedAssistant.llm_model_version_override || llmName
+                      : llmName)
+                  }
+                  icon={FiCpu}
+                  onClick={() => setConfigModalActiveTab("llms")}
+                />
 
-              {!retrievalDisabled && (
+                {!retrievalDisabled && (
+                  <ChatInputOption
+                    flexPriority="stiff"
+                    name="Filters"
+                    icon={FiFilter}
+                    onClick={() => setConfigModalActiveTab("filters")}
+                  />
+                )}
                 <ChatInputOption
                   flexPriority="stiff"
-                  name="Filters"
-                  icon={FiFilter}
-                  onClick={() => setConfigModalActiveTab("filters")}
+                  name="File"
+                  icon={FiPlusCircle}
+                  onClick={() => {
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.multiple = true; // Allow multiple files
+                    input.onchange = (event: any) => {
+                      const files = Array.from(
+                        event?.target?.files || []
+                      ) as File[];
+                      if (files.length > 0) {
+                        handleFileUpload(files);
+                      }
+                    };
+                    input.click();
+                  }}
                 />
-              )}
-
-              <ChatInputOption
-                flexPriority="stiff"
-                name="File"
-                icon={FiPlusCircle}
-                onClick={() => {
-                  const input = document.createElement("input");
-                  input.type = "file";
-                  input.multiple = true; // Allow multiple files
-                  input.onchange = (event: any) => {
-                    const files = Array.from(
-                      event?.target?.files || []
-                    ) as File[];
-                    if (files.length > 0) {
-                      handleFileUpload(files);
+              </div>
+              <div>
+                <div
+                  className="w-auto cursor-pointer flex flex-row px-4 py-2 items-center content-center gap-2 border rounded-xl bg-blue-700 text-white truncate"
+                  onClick={() => {
+                    if (!isStreaming) {
+                      if (message) {
+                        onSubmit();
+                      }
+                    } else {
+                      setIsCancelled(true);
                     }
-                  };
-                  input.click();
-                }}
-              />
-            </div>
-            <div className="absolute bottom-2.5 right-10">
-              <div
-                className="cursor-pointer"
-                onClick={() => {
-                  if (!isStreaming) {
-                    if (message) {
-                      onSubmit();
-                    }
-                  } else {
-                    setIsCancelled(true);
-                  }
-                }}
-              >
-                <FiSend
-                  size={18}
-                  className={`text-emphasis w-9 h-9 p-2 rounded-lg ${
-                    message ? "bg-blue-200" : ""
-                  }`}
-                />
+                  }}
+                >
+                  <FiSend size={11} color="white" />
+                  <p className="font-light">Send message</p>
+                </div>
               </div>
             </div>
           </div>

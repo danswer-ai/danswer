@@ -6,14 +6,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User } from "@/lib/types";
 import { checkUserIsNoAuthUser, logout } from "@/lib/user";
-import { BasicSelectable } from "@/components/BasicClickable";
+import { BasicClickable, BasicSelectable } from "@/components/BasicClickable";
 import { Popover } from "./popover/Popover";
 import { FaBrain } from "react-icons/fa";
 import { LOGOUT_DISABLED } from "@/lib/constants";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { SettingsContext } from "./settings/SettingsProvider";
 
-export function UserDropdown({
+export function UserSettingsButton({
   user,
   hideChatAndSearch,
 }: {
@@ -39,26 +39,34 @@ export function UserDropdown({
     });
   };
 
+  const toPascalCase = (str : string) => (str.match(/[a-zA-Z0-9]+/g) || []).map(w => `${w.charAt(0).toUpperCase()}${w.slice(1)}`).join('');
   const showAdminPanel = !user || user.role === "admin";
   const showLogout =
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
 
   return (
-    <div className="relative" ref={userInfoRef}>
+    <div className="relative w-full px-3 py-2" ref={userInfoRef}>
       <Popover
+        triggerMaxWidth={true}
+        matchWidth={true}
         open={userInfoVisible}
         onOpenChange={setUserInfoVisible}
         content={
-          <BasicSelectable padding={false} selected={false}>
+          <BasicClickable fullWidth>
             <div
               onClick={() => setUserInfoVisible(!userInfoVisible)}
-              className="flex cursor-pointer"
+              className="flex min-w-full items-center gap-3 cursor-pointer px-3 py-2 bg-white"
             >
-              <div className="my-auto bg-blue-400 hover:bg-blue-400-hover rounded-lg px-2 text-base font-normal">
+              <div className="flex items-center justify-center bg-white rounded-full min-h-10 min-w-10 aspect-square text-base font-normal border-2 border-gray-900 shadow-md">
                 {user && user.email ? user.email[0].toUpperCase() : "A"}
               </div>
+              <div className="w-full h-full flex flex-col items-start justify-center truncate">
+                {/* TODO: Set this as a user.name - which will be added to the schema of the user and the database schema user table */}
+                <p className="text-base font-semibold">{user && user.email ? `${toPascalCase(user.email.split(".")[0])} ${toPascalCase(user.email.split(".")[1].split("@")[0])}` : "Admin"}</p>
+                <p className="text-xs">{user && user.email ? user.email : "admin@enmedd-chp.com"}</p>
+              </div>
             </div>
-          </BasicSelectable>
+          </BasicClickable>
         }
         popover={
           <div
@@ -79,42 +87,8 @@ export function UserDropdown({
                 overscroll-contain
               `}
           >
-            {!hideChatAndSearch && (
-              <>
-                {settings.search_page_enabled && (
-                  <Link
-                    href="/search"
-                    className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
-                  >
-                    <FiSearch className="my-auto mr-2 text-lg" />
-                    Search
-                  </Link>
-                )}
-                {settings.chat_page_enabled && (
-                  <>
-                    <Link
-                      href="/chat"
-                      className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
-                    >
-                      <FiMessageSquare className="my-auto mr-2 text-lg" />
-                      Chat
-                    </Link>
-                    <Link
-                      href="/assistants/mine"
-                      className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
-                    >
-                      <FaBrain className="my-auto mr-2 text-lg" />
-                      My Assistants
-                    </Link>
-                  </>
-                )}
-              </>
-            )}
             {showAdminPanel && (
               <>
-                {!hideChatAndSearch && (
-                  <div className="border-t border-border my-1" />
-                )}
                 <Link
                   href="/admin/indexing/status"
                   className="flex py-3 px-4 cursor-pointer rounded hover:bg-hover-light"
@@ -140,10 +114,9 @@ export function UserDropdown({
             )}
           </div>
         }
-        side="bottom"
+        side="top"
         align="end"
-        sideOffset={5}
-        alignOffset={-10}
+        sideOffset={10}
       />
     </div>
   );

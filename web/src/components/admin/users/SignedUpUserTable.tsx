@@ -41,7 +41,7 @@ const PromoterButton = ({
   );
   return (
     <Button
-      className="w-min"
+      className="w-min bg-green-600 border-none"
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
       size="xs"
@@ -80,7 +80,7 @@ const DeactivaterButton = ({
   );
   return (
     <Button
-      className="w-min"
+      className="w-min bg-red-500 border-none"
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
       size="xs"
@@ -160,7 +160,7 @@ const SignedUpUserTable = ({
                   <i>{user.status === "live" ? "Active" : "Inactive"}</i>
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-col items-end gap-y-2">
+                  <div className="flex flex-row items-center justify-end gap-2">
                     <PromoterButton
                       user={user}
                       promote={user.role !== "admin"}

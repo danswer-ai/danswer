@@ -64,19 +64,15 @@ const Page = async ({
   }
 
   return (
-    <main>
+    <main className="flex justify-center">
       <div className="absolute top-10x w-full">
         <HealthCheckBanner />
       </div>
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen w-2/3 flex items-center justify-between">
         <div>
-          <Logo height={64} width={64} className="mx-auto w-fit" />
           {authUrl && authTypeMetadata && (
             <>
-              <h2 className="text-center text-xl text-strong font-bold mt-6">
-                <LoginText />
-              </h2>
-
+              <LoginText />
               <SignInButton
                 authorizeUrl={authUrl}
                 authType={authTypeMetadata?.authType}
@@ -84,13 +80,11 @@ const Page = async ({
             </>
           )}
           {authTypeMetadata?.authType === "basic" && (
-            <Card className="mt-4 w-96">
-              <div className="flex">
-                <Title className="mb-2 mx-auto font-bold">
-                  <LoginText />
-                </Title>
+            <div className="w-96">
+              <LoginText />
+              <div className="my-6">
+                <EmailPasswordForm />
               </div>
-              <EmailPasswordForm />
               <div className="flex">
                 <Text className="mt-4 mx-auto">
                   Don&apos;t have an account?{" "}
@@ -99,9 +93,14 @@ const Page = async ({
                   </Link>
                 </Text>
               </div>
-            </Card>
+            </div>
           )}
         </div>
+        <img
+          className="w-1/2 h-auto"
+          src="/login_page_img.webp"
+          alt="login page image"
+        />
       </div>
     </main>
   );

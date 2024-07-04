@@ -100,7 +100,7 @@ export function EmailPasswordForm({
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="mx-auto w-full"
+                className="mx-auto w-full bg-blue-700"
               >
                 {isSignup ? "Sign Up" : "Log In"}
               </Button>

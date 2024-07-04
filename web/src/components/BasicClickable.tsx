@@ -11,10 +11,10 @@ export function BasicClickable({
     <button
       onClick={onClick}
       className={`
-        border 
-        border-border 
+        border
+        border-gray-300
         shadow-md
-        rounded
+        rounded-lg
         font-medium 
         text-emphasis 
         text-sm
@@ -44,9 +44,9 @@ export function EmphasizedClickable({
       onClick={onClick}
       className={`
         border 
-        border-border 
+        border-gray-400
         shadow-md
-        rounded
+        rounded-lg
         font-medium 
         text-emphasis
         text-sm
@@ -77,7 +77,7 @@ export function BasicSelectable({
   return (
     <div
       className={`
-        rounded
+        rounded-lg
         font-medium 
         text-emphasis 
         text-sm

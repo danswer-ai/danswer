@@ -51,27 +51,39 @@ const Page = async () => {
       </div>
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div>
-          <Logo height={64} width={64} className="mx-auto w-fit" />
-
           <Card className="mt-4 w-96">
-            <div className="flex">
-              <Title className="mb-2 mx-auto font-bold">
-                Sign Up for enMedD CHP
-              </Title>
-            </div>
-            <EmailPasswordForm
-              isSignup
-              shouldVerify={authTypeMetadata?.requiresVerification}
-            />
-
-            <div className="flex">
-              <Text className="mt-4 mx-auto">
+            <Title className="flex w-100 justify-center items-center gap-2 py-3">
+              <Logo height={48} width={48} />
+              {/* TODO: Change this into enterprise settings application name */}
+              {/* you need to make this page not async to be able to get settings context */}
+              <h1 className="text-2xl text-blue-800 font-extrabold">enMedD CHP</h1>
+            </Title>
+            <div className="flex flex-col mt-5">
+              <h1 className="text-xl text-black font-bold">Sign Up</h1>
+              <Text>
                 Already have an account?{" "}
                 <Link href="/auth/login" className="text-link font-medium">
                   Log In
                 </Link>
               </Text>
             </div>
+            <div className="py-5">
+              <EmailPasswordForm
+                isSignup
+                shouldVerify={authTypeMetadata?.requiresVerification}
+              />
+            </div>
+            <p className="text-sm">
+              By signing in, you agree to our{" "}
+              <Link href={"#"} className="text-link font-medium">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href={"#"} className="text-link font-medium">
+                Privacy Policy
+              </Link>
+              .
+            </p>
           </Card>
         </div>
       </div>
