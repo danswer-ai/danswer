@@ -13,8 +13,8 @@ interface SearchBarProps {
   setQuery: (query: string) => void;
   onSearch: (fast?: boolean) => void;
   searchState?: searchState;
-  agentic: boolean;
-  toggleAgentic: () => void;
+  agentic?: boolean;
+  toggleAgentic?: () => void;
 }
 
 // import React from 'react';
@@ -141,28 +141,11 @@ export const SearchBar = ({
             </span>
           </div>
         )}
-
-        <AnimatedToggle isOn={agentic} handleToggle={toggleAgentic} />
-
-        {/* <Icon icon={FiCamera} size="sm" className="flex-none" /> */}
+        {agentic && toggleAgentic && (
+          <AnimatedToggle isOn={agentic} handleToggle={toggleAgentic} />
+        )}
       </div>
       <div className="absolute bottom-2.5 right-10"></div>
     </div>
-    // <div className="flex justify-center">
-    //   <div className="flex mx-auto items-center w-full opacity-100 border-2 border-border rounded-lg px-4 py-2 focus-within:border-accent bg-background-weak">
-    //     <MagnifyingGlass className="text-emphasis" />
-    //     <textarea
-    //       autoFocus
-    //       className="flex-grow bg-background-weak ml-2 h-6 outline-none placeholder-default overflow-hidden whitespace-normal resize-none"
-    //       role="textarea"
-    //       aria-multiline
-    //       placeholder="Search..."
-    //       value={query}
-    //       onChange={handleChange}
-    //       onKeyDown={handleKeyDown}
-    //       suppressContentEditableWarning={true}
-    //     />
-    //   </div>
-    // </div>
   );
 };
