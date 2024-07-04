@@ -170,7 +170,8 @@ def evaluate_relevance(
             Provide a brief explanation of the content's relevance to the query, highlighting key information.
             """
 
-            system_message = """You are a sharp, insightful assistant that quickly grasps the essence of
+            system_message = """
+            You are a sharp, insightful assistant that quickly grasps the essence of
               content and its relevance to queries.
             Your task is to provide brief yet informative explanations of why the given content matters for a given query.
             Be direct and to the point, but include enough detail to be genuinely helpful.
@@ -209,40 +210,6 @@ def evaluate_relevance(
                 agentic_comments[document_id] = "Error in processing"
             # Given the following document blurb(s) and query,
             #  determine WHY the document is relevant to the search term in 1 sentence max!
-
-            # Document blurb(s):
-            # ```
-            # {combined_blurb}
-            # ```
-
-            # Query:
-            # ```
-            # {query}
-            # ```
-
-            # Is this document relevant? Respond with an exlanation of why it is.
-            # """
-            # try:
-            #     response = client.chat.completions.create(
-            #         model="gpt-4o",
-            #         messages=[
-            #             {
-            #                 "role": "system",
-            #                 "content": """You are a helpful assistant that determines WHY this is relevant or not.
-            #                 You respond with a wise but removed tone. (starting with sl  like
-            #                 "This doc goes into...") but answer why the doc is relevant! Keep it VERY SHORT!""",
-            #             },
-            #             {"role": "user", "content": prompt},
-            #         ],
-            #         max_tokens=100,
-            #         n=1,
-            #         temperature=0.3,
-            #     )
-
-            #     content = response.choices[0].message.content
-            #     agentic_comments[document_id] = content
-            # except Exception as e:
-            #     print(f"Issue with agentic search {e}")
 
     return results, agentic_comments
 
