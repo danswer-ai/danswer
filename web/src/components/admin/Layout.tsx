@@ -12,6 +12,12 @@ import {
   BarChartIcon,
   DatabaseIcon,
   KeyIcon,
+  SettingsIcon,
+  SlackIcon,
+  ShieldIcon,
+  CpuIcon,
+  ToolIcon,
+  PackageIcon,
 } from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import {
@@ -67,7 +73,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="h-screen overflow-y-hidden">
       <div className="flex h-full ">
-        <div className="w-80  z-[100] bg-background-weak pt-4 pb-8 h-full border-r border-border overflow-auto">
+        <div className="w-80 z-[100] bg-background-weak pt-4 pb-8 h-full border-r border-border overflow-auto">
           <AdminSidebar
             collections={[
               {
@@ -131,7 +137,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <RobotIcon size={18} />
+                        <RobotIcon className="my-auto" size={18} />
                         <div className="ml-1">Assistants</div>
                       </div>
                     ),
@@ -140,7 +146,8 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <FiSlack size={18} />
+                        {/* <FiSlack size={18} /> */}
+                        <SlackIcon />
                         <div className="ml-1">Slack Bots</div>
                       </div>
                     ),
@@ -149,7 +156,8 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <FiTool size={18} className="my-auto" />
+                        {/* <FiTool size={18} className="my-auto" /> */}
+                        <ToolIcon size={18} />
                         <div className="ml-1">Tools</div>
                       </div>
                     ),
@@ -163,7 +171,8 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <FiCpu size={18} />
+                        {/* <FiCpu size={18} /> */}
+                        <CpuIcon size={18} />
                         <div className="ml-1">LLM</div>
                       </div>
                     ),
@@ -172,7 +181,9 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <FiPackage size={18} />
+                        {/* <FiPackage size={18} /> */}
+                        <PackageIcon />
+
                         <div className="ml-1">Embedding</div>
                       </div>
                     ),
@@ -217,7 +228,8 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <FiShield size={18} />
+                        {/* <FiShield size={18} /> */}
+                        <ShieldIcon size={18} />
                         <div className="ml-1">Token Rate Limits</div>
                       </div>
                     ),
@@ -267,7 +279,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <FiSettings size={18} />
+                        <SettingsIcon size={18} />
                         <div className="ml-1">Workspace Settings</div>
                       </div>
                     ),
