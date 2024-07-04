@@ -104,10 +104,6 @@ def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str, str, bool
         logger.error(error_msg)
         raise ValueError(error_msg)
 
-    logger.info(
-        f"wiki_base: {wiki_base}, space: {space}, page_id: {page_id}, is_confluence_cloud: {is_confluence_cloud}"
-    )
-
     return wiki_base, space, page_id, is_confluence_cloud
 
 
