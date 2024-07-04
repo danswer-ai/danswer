@@ -50,7 +50,7 @@ import { InitializingLoader } from "@/components/InitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { ChatPersonaSelector } from "./ChatPersonaSelector";
-import { FiArrowDown, FiShare2 } from "react-icons/fi";
+import { FiArrowDown, FiShare } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { ThreeDots } from "react-loader-spinner";
@@ -63,7 +63,6 @@ import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
 import { ChatInputBar } from "./input/ChatInputBar";
 import { ConfigurationModal } from "./modal/configuration/ConfigurationModal";
 import { useChatContext } from "@/components/context/ChatContext";
-import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";
@@ -386,10 +385,10 @@ export function ChatPage({
           (persona) => persona.id === existingChatSessionPersonaId
         )
       : defaultSelectedPersonaId !== undefined
-        ? filteredAssistants.find(
-            (persona) => persona.id === defaultSelectedPersonaId
-          )
-        : undefined
+      ? filteredAssistants.find(
+          (persona) => persona.id === defaultSelectedPersonaId
+        )
+      : undefined
   );
   const livePersona =
     selectedPersona || filteredAssistants[0] || availablePersonas[0];
@@ -1182,7 +1181,7 @@ export function ChatPage({
                               />
                             </div>
 
-                            <div className="ml-auto mr-6 flex">
+                            <div className="ml-auto flex">
                               {chatSessionIdRef.current !== null && (
                                 <div
                                   onClick={() => setSharingModalVisible(true)}
@@ -1194,12 +1193,11 @@ export function ChatPage({
                                     hover:bg-hover-light
                                   `}
                                 >
-                                  <FiShare2 size="18" />
+                                  <FiShare size="18" />
                                 </div>
                               )}
 
                               <div className="ml-4 flex my-auto">
-                                <UserDropdown user={user} />
                                 {retrievalEnabled && !showDocSidebar && (
                                   <button
                                     className="ml-4 mt-auto"
