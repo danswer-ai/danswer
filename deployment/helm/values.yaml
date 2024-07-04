@@ -45,18 +45,6 @@ indexCapability:
       repository: danswer/danswer-model-server
       tag:
       pullPolicy: IfNotPresent
-    resources:
-    # For example
-    # limits:
-    #   nvidia.com/gpu: 1
-    # The strategy to use for rolling out deployment updates
-    # If using GPU indexing with a limited number of GPUs available,
-    # this can be set to type: Recreate instead.
-    updateStrategy:
-      rollingUpdate:
-        maxSurge: 25%
-        maxUnavailable: 25%
-      type: RollingUpdate
   service:
     type: ClusterIP
     port: 9000
