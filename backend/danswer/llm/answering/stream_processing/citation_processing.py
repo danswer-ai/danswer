@@ -27,8 +27,6 @@ def extract_citations_from_stream(
     stop_stream: str | None = STOP_STREAM_PAT,
 ) -> Iterator[DanswerAnswerPiece | CitationInfo]:
     llm_out = ""
-    print(context_docs)
-    print(f"MAXIMUM CITATION NUMBER {len(context_docs)}")
     max_citation_num = len(context_docs)
     curr_segment = ""
     cited_inds = set()
@@ -73,8 +71,6 @@ def extract_citations_from_stream(
                     target_citation_num = doc_id_to_rank_map[
                         context_llm_doc.document_id
                     ]
-                    if (target_citation_num in current_citations):
-                        print(f"AVOIDING {target_citation_num}")
 
                     # Skip consecutive citations of the same work
                     if (
@@ -98,7 +94,6 @@ def extract_citations_from_stream(
 
                     past_cite_count = len(llm_out)
                     current_citations.append(target_citation_num)
-                    print(f"APPENDING {current_citations}")
 
 
                     if target_citation_num not in cited_inds:
@@ -127,7 +122,7 @@ def extract_citations_from_stream(
             if last_citation_end > 0:
                 yield DanswerAnswerPiece(answer_piece=curr_segment[:last_citation_end])
                 curr_segment = curr_segment[last_citation_end:]
-    print(raw_out)
+
     if curr_segment:
         yield DanswerAnswerPiece(answer_piece=curr_segment)
 
