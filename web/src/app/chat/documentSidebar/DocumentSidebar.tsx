@@ -1,5 +1,5 @@
 import { DanswerDocument } from "@/lib/search/interfaces";
-import { Text } from "@tremor/react";
+import { Divider, Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { FiAlertTriangle, FiFileText } from "react-icons/fi";
@@ -99,29 +99,29 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
         <div
           ref={ref}
           style={{ width: initialWidth }}
-          className={`ml-auto relative  bg-neutral-100 sidebar z-[1000] absolute right-0 h-screen border-l border-l-border`}
+          className={`ml-auto  rounded-l-lg relative border-l bg-neutral-100 sidebar z-[1000] absolute right-0 h-screen `}
         >
-          <div className="   flex-initial overflow-y-hidden flex flex-col h-screen">
+          <div className="flex-initial overflow-y-hidden flex flex-col h-screen pb-10">
             {popup}
             <div
-              className={`pl-3 pr-6  mt-3 flex text-xl text-emphasis font-medium flex mb-3.5 font-bold flex items-end`}
+              className={`pl-3 mx-2 pr-6 mt-3 flex text-neutral-800 flex-col text-2xl text-emphasis flex font-semibold `}
             >
-              Retrieved Documents
+              {dedupedDocuments.length} Documents
+              <p className="text-sm font-semibold flex flex-wrap gap-x-2 text-neutral-600 mt-1">
+                Select to add to continuous context
+                <a
+                  href="https://docs.danswer.dev/introduction"
+                  className="underline cursor-pointer hover:text-neutral-900"
+                >
+                  Learn more
+                </a>
+              </p>
             </div>
 
-            {/* <div className="pl-3 pr-6 mb-3 flex border-b border-border">
-                <SectionHeader
-                  name={
-                    selectedMessageRetrievalType === RetrievalType.SelectedDocs
-                      ? "Referenced Documents"
-                      : "Retrieved Documents"
-                  }
-                  icon={FiFileText}
-                  closeHeader={closeSidebar}
-                /> </div> */}
+            <Divider className="mb-0 mt-4 pb-2" />
 
             {currentDocuments ? (
-              <div className="overflow-y-auto dark-scrollbar flex relative  flex-col">
+              <div className="overflow-y-auto flex-grow dark-scrollbar flex relative flex-col">
                 <div>
                   {dedupedDocuments.length > 0 ? (
                     dedupedDocuments.map((document, ind) => (

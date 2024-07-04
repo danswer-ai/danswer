@@ -40,7 +40,7 @@ export function ChatDocumentDisplay({
       <button
         onClick={() => handleSelect(document.document_id)}
         key={document.semantic_identifier}
-        className={`p-2 w-[350px]  justify-start cursor-pointer  rounded-md ${isSelected ? "bg-neutral-200" : "hover:bg-background-weakish bg-neutral-100"}   text-sm mx-3`}
+        className={`p-2 w-[350px]  justify-start cursor-pointer  rounded-md ${isSelected ? "bg-neutral-200" : "hover:bg-background-weakish bg-background-weakerish"}   text-sm mx-3`}
       >
         <div className=" flex relative justify-start  overflow-y-visible">
           <a
@@ -48,11 +48,10 @@ export function ChatDocumentDisplay({
               "rounded-lg flex font-bold flex-shrink truncate" +
               (document.link ? "" : "pointer-events-none")
             }
-            href={document.link}
-            target="_blank"
-            rel="noopener noreferrer"
           >
-            <SourceIcon sourceType={document.source_type} iconSize={18} />
+            <a href={document.link} target="_blank" rel="noopener noreferrer">
+              <SourceIcon sourceType={document.source_type} iconSize={18} />
+            </a>
             <p className="overflow-hidden text-left text-ellipsis mx-2 my-auto text-sm ">
               {document.semantic_identifier || document.document_id}
             </p>

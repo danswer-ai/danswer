@@ -336,10 +336,13 @@ export const AIMessage = ({
             )}
 
             {isComplete && docs && docs.length > 0 && (
-              <div className="mt-2 w-full mb-4 flex ">
-                <div className="-mx-2 w-full relative overflow-x-scroll no-scrollbar">
+              <div className="mt-2 -mx-8 w-full mb-4  flex relative ">
+                <div className="absolute left-0 top-0  h-full bg-gradient-to-l from-background/0  via-background/40 backdrop-blur-xs  to-background w-[40px]" />
+
+                <div className="absolute right-6 top-0  h-full bg-gradient-to-r from-background/0  via-background/40 backdrop-blur-xs  to-background w-[40px]" />
+                <div className=" w-full  overflow-x-scroll no-scrollbar">
                   {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
-                  <div className="flex gap-x-2">
+                  <div className="px-8 flex gap-x-2">
                     {docs
                       .filter(
                         (doc, index, self) =>
@@ -408,7 +411,7 @@ export const AIMessage = ({
                       toggleDocumentSelection();
                     }
                   }}
-                  className="my-auto h-full flex-none p-2"
+                  className="my-auto h-full w-6  flex-none p-2"
                 >
                   <svg
                     className="text-neutral-700 hover:text-neutral-900 h-6 w-6"
