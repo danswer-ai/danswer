@@ -2,9 +2,11 @@ export function BasicClickable({
   children,
   onClick,
   fullWidth = false,
+  inset,
 }: {
   children: string | JSX.Element;
   onClick?: () => void;
+  inset?: boolean;
   fullWidth?: boolean;
 }) {
   return (
@@ -12,19 +14,24 @@ export function BasicClickable({
       onClick={onClick}
       className={`
         border 
-        border-border 
-        shadow-md
+        border-border
         rounded
         font-medium 
         text-emphasis 
         text-sm
-        p-1
+        relative
+        px-1 py-1.5
         h-full
         bg-background
         select-none
+        overflow-hidden
         hover:bg-hover-light
         ${fullWidth ? "w-full" : ""}`}
     >
+      {inset && (
+        <div className=" rounded absolute inset-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.3),inset_0_-2px_2px_rgba(255,255,255,0.5)]" />
+      )}
+
       {children}
     </button>
   );

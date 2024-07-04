@@ -71,7 +71,7 @@ export function SourceSelector({
   };
 
   return (
-    <div>
+    <div className="duration-1000 ease-out transition-all transform origin-top-right">
       <div
         onClick={toggleFilters}
         className="cursor-pointer flex mb-4 pb-2 border-b border-border text-emphasis"

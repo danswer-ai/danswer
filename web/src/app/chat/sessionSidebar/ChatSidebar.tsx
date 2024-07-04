@@ -92,7 +92,6 @@ export const ChatSidebar = forwardRef<HTMLDivElement, ChatSideBarProps>(
             flex-col relative
             h-screen
             transition-transform`}
-          id="chat-sidebar"
         >
           <div className="pt-2  flex">
             <Link
@@ -146,7 +145,7 @@ export const ChatSidebar = forwardRef<HTMLDivElement, ChatSideBarProps>(
               }
               className="ml-3 w-full"
             >
-              <BasicClickable fullWidth>
+              <BasicClickable inset fullWidth>
                 <div className="flex items-center text-sm">
                   <FiEdit className="ml-1 mr-2" /> New Chat
                 </div>
@@ -155,6 +154,7 @@ export const ChatSidebar = forwardRef<HTMLDivElement, ChatSideBarProps>(
 
             <div className="ml-1.5 mr-3 h-full">
               <BasicClickable
+                inset
                 onClick={() =>
                   createFolder("New Folder")
                     .then((folderId) => {
@@ -178,7 +178,7 @@ export const ChatSidebar = forwardRef<HTMLDivElement, ChatSideBarProps>(
           </div>
 
           <Link href="/assistants/mine" className="mt-3 mb-1 mx-3">
-            <BasicClickable fullWidth>
+            <BasicClickable inset fullWidth>
               <div className="flex items-center text-default font-medium">
                 <FaBrain className="ml-1 mr-2" /> Manage Assistants
               </div>
