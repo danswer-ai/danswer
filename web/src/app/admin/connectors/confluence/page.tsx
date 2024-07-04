@@ -2,7 +2,10 @@
 
 import * as Yup from "yup";
 import { ConfluenceIcon, TrashIcon } from "@/components/icons/icons";
-import { TextFormField } from "@/components/admin/connectors/Field";
+import {
+  BooleanFormField,
+  TextFormField,
+} from "@/components/admin/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
@@ -274,7 +277,6 @@ const Main = () => {
               <Divider />
             </>
           )}
-
           <Card className="mt-4">
             <h2 className="font-bold mb-3">Add a New Space</h2>
             <ConnectorForm<ConfluenceConfig>
@@ -289,15 +291,22 @@ const Main = () => {
               formBody={
                 <>
                   <TextFormField name="wiki_page_url" label="Confluence URL:" />
+                  <BooleanFormField
+                    noPadding
+                    name="index_origin"
+                    label="Index the page itself"
+                  />
                 </>
               }
               validationSchema={Yup.object().shape({
                 wiki_page_url: Yup.string().required(
-                  "Please enter any link to your confluence e.g. https://danswer.atlassian.net/wiki/spaces/Engineering/overview"
+                  "Please enter any link to a Confluence space or Page e.g. https://danswer.atlassian.net/wiki/spaces/Engineering/overview"
                 ),
+                index_origin: Yup.boolean(),
               })}
               initialValues={{
                 wiki_page_url: "",
+                index_origin: false,
               }}
               refreshFreq={10 * 60} // 10 minutes
               credentialId={confluenceCredential.id}

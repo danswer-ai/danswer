@@ -213,6 +213,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         wiki_page_url: str,
+        index_origin: bool = False,
         batch_size: int = INDEX_BATCH_SIZE,
         continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
         # if a page has one of the labels specified in this list, we will just
@@ -223,19 +224,23 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self.batch_size = batch_size
         self.continue_on_failure = continue_on_failure
         self.labels_to_skip = set(labels_to_skip)
+        self.index_origin = index_origin
         (
             self.wiki_base,
             self.space,
             self.page_id,
             self.is_cloud,
         ) = extract_confluence_keys_from_url(wiki_page_url)
+
         self.space_level_scan = False
+
         if self.page_id is None or self.page_id == "":
             self.space_level_scan = True
+
         self.confluence_client: Confluence | None = None
         logger.info(
             f"wiki_base: {self.wiki_base}, space: {self.space}, page_id: {self.page_id},"
-            + f" is_confluence_cloud: {self.is_confluence_cloud} space_level_scan: {self.space_level_scan}"
+            + f" space_level_scan: {self.space_level_scan}, origin: {self.index_origin}"
         )
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
@@ -316,24 +321,44 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         def _fetch_child_pages(
             start_ind: int, batch_size: int
         ) -> Collection[dict[str, Any]]:
+            get_page_by_id = make_confluence_call_handle_rate_limit(
+                confluence_client.get_page_by_id
+            )
+
+            child_pages: list[dict[str, Any]] = []
+
+            if self.index_origin:
+                try:
+                    origin_page = get_page_by_id(
+                        self.page_id, expand="body.storage.value,version"
+                    )
+                    child_pages.append(origin_page)
+                except Exception as e:
+                    logger.warning(
+                        f"Appending orgin page with id {self.page_id} failed: {e}"
+                    )
+
             get_page_child_by_type = make_confluence_call_handle_rate_limit(
                 confluence_client.get_page_child_by_type
             )
+
             try:
-                return get_page_child_by_type(
+                child_page = get_page_child_by_type(
                     self.page_id,
                     type="page",
                     start=start_ind,
                     limit=batch_size,
                     expand="body.storage.value,version",
                 )
+
+                child_pages.extend(child_page)
+                return child_pages
             except Exception:
                 logger.warning(
                     f"Batch failed with page {self.page_id} at offset {start_ind} "
                     f"with size {batch_size}, processing pages individually..."
                 )
 
-                child_pages: list[dict[str, Any]] = []
                 for i in range(self.batch_size):
                     ind = start_ind + i
                     try:
@@ -384,6 +409,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         get_page_child_by_type = make_confluence_call_handle_rate_limit(
             confluence_client.get_page_child_by_type
         )
+
         try:
             comment_pages = cast(
                 Collection[dict[str, Any]],
@@ -470,8 +496,8 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
-
         batch = self._fetch_pages(self.confluence_client, start_ind)
+
         for page in batch:
             last_modified_str = page["version"]["when"]
             author = cast(str | None, page["version"].get("by", {}).get("email"))
@@ -498,6 +524,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                             f"Page with ID '{page_id}' has a label which has been "
                             f"designated as disallowed: {label_intersection}. Skipping."
                         )
+
                         continue
 
                 page_html = (
