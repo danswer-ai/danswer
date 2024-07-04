@@ -5,6 +5,7 @@
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
+appVersionOverride: # e.g "v0.3.93"
 
 inferenceCapability:
   service:

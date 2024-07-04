@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: {{ .Values.inferenceCapability.service.name }}
-        image: "{{ .Values.inferenceCapability.deployment.image.repository }}:{{ .Values.inferenceCapability.deployment.image.tag | default .Chart.AppVersion }}"
+        image: "{{ .Values.inferenceCapability.deployment.image.repository }}:{{ .Values.inferenceCapability.deployment.image.tag | default .Values.appVersionOverride | default .Chart.AppVersion }}"
         imagePullPolicy: {{ .Values.inferenceCapability.deployment.image.pullPolicy }}
         command: {{ toYaml .Values.inferenceCapability.deployment.command | nindent 14 }}
         ports:

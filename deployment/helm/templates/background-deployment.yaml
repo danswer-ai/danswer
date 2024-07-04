@@ -37,7 +37,7 @@ spec:
         - name: background
           securityContext:
             {{- toYaml .Values.background.securityContext | nindent 12 }}
-          image: "{{ .Values.background.image.repository }}:{{ .Values.background.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.background.image.repository }}:{{ .Values.background.image.tag | default .Values.appVersionOverride | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.background.image.pullPolicy }}
           command: ["/usr/bin/supervisord"]
           resources:
