@@ -26,6 +26,13 @@ def extract_citations_from_stream(
     doc_id_to_rank_map: DocumentIdOrderMapping,
     stop_stream: str | None = STOP_STREAM_PAT,
 ) -> Iterator[DanswerAnswerPiece | CitationInfo]:
+    print("Extracting information from the stream")
+    print(doc_id_to_rank_map)
+
+    for doc in context_docs:
+        print("")
+        print(f"\t||||{doc}")
+
     llm_out = ""
     max_citation_num = len(context_docs)
     curr_segment = ""
@@ -71,6 +78,8 @@ def extract_citations_from_stream(
                     target_citation_num = doc_id_to_rank_map[
                         context_llm_doc.document_id
                     ]
+                    print(f'\nthe target citation for {numerical_value} is {target_citation_num}')
+
 
                     # Skip consecutive citations of the same work
                     if (
@@ -94,7 +103,6 @@ def extract_citations_from_stream(
 
                     past_cite_count = len(llm_out)
                     current_citations.append(target_citation_num)
-
 
                     if target_citation_num not in cited_inds:
                         cited_inds.add(target_citation_num)
