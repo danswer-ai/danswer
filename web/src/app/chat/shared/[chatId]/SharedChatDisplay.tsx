@@ -10,7 +10,7 @@ import {
 import { AIMessage, HumanMessage } from "../../message/Messages";
 import { Button, Callout, Divider } from "@tremor/react";
 import { useRouter } from "next/navigation";
-import { useChatContext } from "@/components/context/ChatContext";
+import { Persona } from "@/app/admin/assistants/interfaces";
 
 function BackToDanswerButton() {
   const router = useRouter();
@@ -28,10 +28,11 @@ function BackToDanswerButton() {
 
 export function SharedChatDisplay({
   chatSession,
+  availableAssistants,
 }: {
   chatSession: BackendChatSession | null;
+  availableAssistants: Persona[];
 }) {
-  let { availablePersonas } = useChatContext();
   if (!chatSession) {
     return (
       <div className="min-h-full w-full">
@@ -46,7 +47,7 @@ export function SharedChatDisplay({
     );
   }
 
-  const currentPersona = availablePersonas.find(
+  const currentPersona = availableAssistants.find(
     (persona) => persona.id === chatSession.persona_id
   );
 
