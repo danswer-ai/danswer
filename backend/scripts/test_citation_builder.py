@@ -215,8 +215,8 @@ class TestCitationExtraction(unittest.TestCase):
     def test_repeated_citations(self):
         test_case = SimpleCitationExtractionTestCase(
             test_name="Repeated citations",
-            input_text=""""Test! [1][1][1]. And some more [1][2].""",
-            expected_text=""""Test! [[0]](https://0.com). And some more [[0]](https://0.com).""",
+            input_text="""Test! [1][1][1]. And some more [1][2].""",
+            expected_text="""Test! [[0]](https://0.com). And some more [[0]](https://0.com).""",
             expected_citations=["doc_0"],
         )
         self.run_test_case(test_case)
@@ -248,14 +248,15 @@ class TestCitationExtraction(unittest.TestCase):
         )
         self.run_test_case(test_case)
 
-    # def test_hard_test_consecutive(self):
-    #     while True:
-    #         test_case_4 = SimpleCitationExtractionTestCase(
-    #             input_text="""Multiple citations in one sentence [1][4][5]. """,
-    #             expected_text="""Multiple citations in one sentence [[0]](https://0.com)[[1]]()[[2]](https://2.com).""",
-    #             expected_citations=[("doc_0"), ("doc_1"), ("doc_2")],
-    #         )
-    #         test_case_4.run_test((mock_docs, mock_doc_mapping))
+    def test_hard_test_consecutive(self):
+        # while True:
+        test_case_4 = SimpleCitationExtractionTestCase(
+            test_name="Hardest!",
+            input_text="""Multiple citations in one sentence [1][4][5]. """,
+            expected_text="""Multiple citations in one sentence [[0]](https://0.com)[[1]]()[[2]](https://2.com).""",
+            expected_citations=[("doc_0"), ("doc_1"), ("doc_2")],
+        )
+        test_case_4.run_test((mock_docs, mock_doc_mapping))
 
 
 if __name__ == '__main__':
@@ -264,14 +265,17 @@ if __name__ == '__main__':
     parser.add_argument("-l", "--log", action="store_true", help="Enable logging")
     args = parser.parse_args()
     SimpleCitationExtractionTestCase.log = args.log
-    
-    # test_case = SimpleCitationExtractionTestCase(
-    #     test_name="Citations at sentence boundaries",
-    #     input_text="""Citation at the end of a sentence.[2] Another sentence.[4]""",
-    #     expected_text="""Citation at the end of a sentence.[[0]](https://0.com) Another sentence.[[1]]()""",
-    #     expected_citations=["doc_0", "doc_1"],
-    # )
+    while True:
+        unique_test_case = SimpleCitationExtractionTestCase(
+            test_name="Repeated citations",
+            input_text="""[1]Aasfasdasff [1] .""",
+            expected_text="""[[0]](https://0.com)Aasfasdasff [[0]](https://0.com).""",
+            expected_citations=["doc_0"],
+        ) 
 
-    # test_case.run_test((mock_docs,mock_doc_mapping))
+        if unique_test_case.run_test((mock_docs,mock_doc_mapping)):
+            print("SUCESS SO FAR")
+        else:
+            break
 
-    unittest.main(argv=[''], verbosity=2, exit=False)
+
