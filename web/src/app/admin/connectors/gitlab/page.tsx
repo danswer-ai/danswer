@@ -255,7 +255,7 @@ export default function Page() {
       </div>
 
       <AdminPageTitle
-        icon={<GitlabIcon size={32} />}
+        icon={<GitlabIcon size={32} className="" />}
         title="Gitlab MRs + Issues"
       />
 

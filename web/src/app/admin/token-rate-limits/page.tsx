@@ -222,7 +222,7 @@ export default function Page() {
     <div className="mx-auto container">
       <AdminPageTitle
         title="Token Rate Limits"
-        icon={<ShieldIcon size={32} />}
+        icon={<ShieldIcon className="" size={32} />}
       />
       <Main />
     </div>

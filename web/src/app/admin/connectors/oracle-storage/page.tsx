@@ -263,7 +263,7 @@ export default function Page() {
         <HealthCheckBanner />
       </div>
       <AdminPageTitle
-        icon={<OCIStorageIcon size={32} />}
+        icon={<OCIStorageIcon size={32} className="" />}
         title="Oracle Cloud Infrastructure"
       />
       <OCIMain />

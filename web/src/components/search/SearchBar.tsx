@@ -1,11 +1,4 @@
-import React, { KeyboardEvent, ChangeEvent, useState } from "react";
-import { MagnifyingGlass, ToggleLeft } from "@phosphor-icons/react";
-import ChatInputOption from "@/app/chat/input/ChatInputOption";
-import { FiCalendar, FiCamera, FiPlusCircle, FiSend } from "react-icons/fi";
-import { FaBrain } from "react-icons/fa";
-import { InputBarPreview } from "@/app/chat/files/InputBarPreview";
-import { Icon } from "@tremor/react";
-import { SearchType } from "@/lib/search/interfaces";
+import React, { KeyboardEvent, ChangeEvent } from "react";
 import { searchState } from "./SearchSection";
 
 interface SearchBarProps {
@@ -17,8 +10,6 @@ interface SearchBarProps {
   toggleAgentic?: () => void;
 }
 
-// import React from 'react';
-// import { Switch } from 'lucide-react';'
 const AnimatedToggle = ({
   isOn,
   handleToggle,
@@ -79,19 +70,19 @@ export const SearchBar = ({
   return (
     <div
       className="
-              opacity-100
-              w-full
-              h-fit
-              flex
-              flex-col
-              border
-              border-border-medium
-              rounded-lg
-              overflow-hidden
-              bg-background-weak
-              [&:has(textarea:focus)]::ring-1
-              [&:has(textarea:focus)]::ring-black
-            "
+        opacity-100
+        w-full
+        h-fit
+        flex
+        flex-col
+        border
+        border-border-medium
+        rounded-lg
+        overflow-hidden
+        bg-background-weak
+        [&:has(textarea:focus)]::ring-1
+        [&:has(textarea:focus)]::ring-black
+        "
     >
       <textarea
         onKeyDownCapture={handleKeyDown}
@@ -141,8 +132,8 @@ export const SearchBar = ({
             </span>
           </div>
         )}
-        {agentic && toggleAgentic && (
-          <AnimatedToggle isOn={agentic} handleToggle={toggleAgentic} />
+        {toggleAgentic && (
+          <AnimatedToggle isOn={agentic!} handleToggle={toggleAgentic} />
         )}
       </div>
       <div className="absolute bottom-2.5 right-10"></div>

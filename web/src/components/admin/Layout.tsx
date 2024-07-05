@@ -18,6 +18,7 @@ import {
   CpuIcon,
   ToolIcon,
   PackageIcon,
+  PaintingIcon,
 } from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import {
@@ -290,7 +291,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                         {
                           name: (
                             <div className="flex">
-                              <FiImage size={18} />
+                              <PaintingIcon size={18} />
                               <div className="ml-1">Whitelabeling</div>
                             </div>
                           ),
@@ -305,8 +306,6 @@ export async function Layout({ children }: { children: React.ReactNode }) {
         </div>
         <div className="pb-8 relative h-full overflow-y-auto w-full">
           <div className="fixed bg-background left-0 border-b  gap-x-4 mb-8 px-4 py-4 w-full items-center flex justify-end">
-            {/* FAEBE5 */}
-            {/* E85801 text */}
             <a
               href="/chat"
               className="transition-all duration-150 cursor-pointer p-1 text-sm items-center flex gap-x-1 px-2 py-1 rounded-lg hover:shadow-sm hover:ring-1 hover:ring-[#E85801]/40 hover:bg-opacity-90 text-[#E85801] bg-[#FAEBE5]"
@@ -349,7 +348,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
             </a>
             <UserDropdown user={user} />
           </div>
-          <div className="pt-20 flex overflow-y-auto h-full px-12">
+          <div className="pt-20 flex overflow-y-auto h-full px-4 md:px-12">
             {children}
           </div>
         </div>

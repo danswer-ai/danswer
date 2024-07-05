@@ -36,7 +36,7 @@ async function Page() {
     <div className="container mx-auto">
       <BackButton />
       <AdminPageTitle
-        icon={<CPUIcon size={32} />}
+        icon={<CPUIcon size={32} className="" />}
         title="New Slack Bot Config"
       />
 

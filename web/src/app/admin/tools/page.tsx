@@ -25,7 +25,7 @@ export default async function Page() {
   return (
     <div className="mx-auto container">
       <AdminPageTitle
-        icon={<ToolIcon size={32} className="my-auto" />}
+        icon={<ToolIcon size={32} className="my-auto" className="" />}
         title="Tools"
       />
 
