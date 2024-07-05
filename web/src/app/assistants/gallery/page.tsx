@@ -1,4 +1,4 @@
-import { ChatSidebar } from "@/app/chat/sessionSidebar/ChatSidebar";
+import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { UserDropdown } from "@/components/UserDropdown";
 import { ChatProvider } from "@/components/context/ChatContext";
@@ -54,7 +54,7 @@ export default async function GalleryPage({
         }}
       >
         <div className="flex relative bg-background text-default overflow-x-hidden h-screen">
-          <ChatSidebar
+          <HistorySidebar
             existingChats={chatSessions}
             currentChatSession={null}
             folders={folders}

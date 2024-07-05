@@ -37,13 +37,14 @@ import { SettingsContext } from "../settings/SettingsProvider";
 import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
 import { UserDropdown } from "../UserDropdown";
 import ResizableSection from "../resizable/ResizableSection";
-import { ChatSidebar } from "@/app/chat/sessionSidebar/ChatSidebar";
+import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
 import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 import { BackendChatSession, ChatSession } from "@/app/chat/interfaces";
 import { FiBookmark, FiInfo } from "react-icons/fi";
 import { HoverPopup } from "../HoverPopup";
 import { Logo } from "../Logo";
 import { cornersOfRectangle } from "@dnd-kit/core/dist/utilities/algorithms/helpers";
+import FunctionalHeader from "../chat_search/Header";
 
 export type searchState = "input" | "searching" | "analyzing";
 
@@ -431,7 +432,7 @@ export const SearchSection = ({
           maxWidth={300 || undefined}
         >
           <div className="w-full  relative">
-            <ChatSidebar
+            <HistorySidebar
               search={true}
               initialWidth={usedSidebarWidth}
               ref={innerSidebarElementRef}
@@ -444,33 +445,13 @@ export const SearchSection = ({
           </div>
         </ResizableSection>
       </div>
-      <div className="pb-6 left-0 sticky top-0 z-10 w-full bg-opacity-30 backdrop-blur-sm flex">
-        <div className="mt-2 flex w-full">
-          {!showDocSidebar && (
-            <button className="ml-4 mt-auto" onClick={() => toggleSidebar()}>
-              <TbLayoutSidebarLeftExpand size={24} />
-            </button>
-          )}
 
-          <div className="flex mr-4 ml-auto my-auto">
-            <UserDropdown user={user} />
-          </div>
-        </div>
-      </div>
-
-      {/* <div className="block 2xl:block w-52 3xl:w-64 mt-4">
-        {(ccPairs.length > 0 || documentSets.length > 0) && (
-          <SourceSelector
-            {...filterManager}
-            toggled={filters}
-            toggleFilters={toggleFilters}
-            availableDocumentSets={finalAvailableDocumentSets}
-            existingSources={finalAvailableSources}
-            availableTags={tags}
-          />
-        )}
-
-      </div> */}
+      {/* Header */}
+      <FunctionalHeader
+        toggleSidebar={toggleSidebar}
+        showSidebar={showDocSidebar}
+        user={user}
+      />
 
       <div className="px-24  pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
         <div className="absolute  z-10 top-12 left-0 hidden 2xl:block w-52 3xl:w-64">

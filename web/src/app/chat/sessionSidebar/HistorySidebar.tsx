@@ -1,18 +1,10 @@
 "use client";
 
-import { FiBook, FiEdit, FiFolderPlus, FiPlusSquare } from "react-icons/fi";
-import {
-  ForwardedRef,
-  forwardRef,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { FiEdit, FiFolderPlus } from "react-icons/fi";
+import { ForwardedRef, forwardRef, useContext, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { BasicClickable, BasicSelectable } from "@/components/BasicClickable";
+import { BasicClickable } from "@/components/BasicClickable";
 import { ChatSession } from "../interfaces";
 
 import {
@@ -30,12 +22,9 @@ import React from "react";
 import { FaBrain } from "react-icons/fa";
 import { Logo } from "@/components/Logo";
 import { HeaderTitle } from "@/components/header/Header";
-import {
-  TbLayoutSidebarLeftExpand,
-  TbLayoutSidebarRightExpand,
-} from "react-icons/tb";
+import { TbLayoutSidebarRightExpand } from "react-icons/tb";
 
-interface ChatSideBarProps {
+interface HistorySidebarProps {
   closeSidebar?: () => void;
   search?: boolean;
   existingChats?: ChatSession[];
@@ -45,7 +34,7 @@ interface ChatSideBarProps {
   initialWidth?: number;
 }
 // forwardRef<HTMLDivElement, DocumentSidebarProps>(
-export const ChatSidebar = forwardRef<HTMLDivElement, ChatSideBarProps>(
+export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
   (
     {
       search,
@@ -199,4 +188,4 @@ export const ChatSidebar = forwardRef<HTMLDivElement, ChatSideBarProps>(
     );
   }
 );
-ChatSidebar.displayName = "ChatSidebar";
+HistorySidebar.displayName = "HistorySidebar";

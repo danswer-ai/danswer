@@ -1,4 +1,3 @@
-
 import { SearchSection } from "@/components/search/SearchSection";
 import { Header } from "@/components/header/Header";
 import {
@@ -48,9 +47,7 @@ export default async function Home() {
     fetchSS("/query/valid-tags"),
     fetchSS("/secondary-index/get-embedding-models"),
     fetchSS("/chat/get-user-searches"),
-    
   ];
-
 
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
@@ -105,9 +102,7 @@ export default async function Home() {
   if (queryResponse?.ok) {
     querySessions = (await queryResponse.json()).sessions;
   } else {
-    console.log(
-      `Failed to fetch chat sessions - ${queryResponse?.text()}`
-    );
+    console.log(`Failed to fetch chat sessions - ${queryResponse?.text()}`);
   }
 
   let personas: Persona[] = [];
@@ -146,7 +141,7 @@ export default async function Home() {
     | undefined;
   let searchTypeDefault: SearchType =
     storedSearchType !== undefined &&
-      SearchType.hasOwnProperty(storedSearchType)
+    SearchType.hasOwnProperty(storedSearchType)
       ? (storedSearchType as SearchType)
       : SearchType.SEMANTIC; // default to semantic
 
@@ -168,11 +163,8 @@ export default async function Home() {
     !shouldDisplayNoSourcesModal &&
     !shouldShowWelcomeModal;
 
-
   return (
     <>
-      {/* <Header user={user} />
-      <> */}
       <div className="m-3">
         <HealthCheckBanner />
       </div>
@@ -194,21 +186,16 @@ export default async function Home() {
 
       <InstantSSRAutoRefresh />
       <FunctionalWrapper>
-        <div className="relative flex flex-col items-center min-h-screen">
-          <div className="w-full">
-            <SearchSection
-              querySessions={querySessions}
-              user={user}
-              ccPairs={ccPairs}
-              documentSets={documentSets}
-              personas={personas}
-              tags={tags}
-              defaultSearchType={searchTypeDefault}
-            />
-          </div>
-        </div>
+        <SearchSection
+          querySessions={querySessions}
+          user={user}
+          ccPairs={ccPairs}
+          documentSets={documentSets}
+          personas={personas}
+          tags={tags}
+          defaultSearchType={searchTypeDefault}
+        />
       </FunctionalWrapper>
-
     </>
   );
 }

@@ -14,7 +14,8 @@ import {
   StreamingError,
   ToolCallMetadata,
 } from "./interfaces";
-import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
+
+import { HistorySidebar } from "./sessionSidebar/HistorySidebar";
 import { Persona } from "../admin/assistants/interfaces";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
@@ -75,6 +76,7 @@ import {
 import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 
 import ResizableSection from "@/components/resizable/ResizableSection";
+import FunctionalHeader from "@/components/chat_search/Header";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1134,8 +1136,7 @@ export function ChatPage({
             maxWidth={maxDocumentSidebarWidth || undefined}
           >
             <div className="w-full relative">
-              {/* <ChatSidebar /> */}
-              <ChatSidebar
+              <HistorySidebar
                 initialWidth={usedSidebarWidth}
                 ref={innerSidebarElementRef}
                 closeSidebar={() => toggleSidebar()}
@@ -1212,49 +1213,16 @@ export function ChatPage({
                       <ChatBanner />
 
                       {livePersona && (
-                        <div className="sticky top-0 left-80 z-10 w-full bg-background bg-opacity-30 backdrop-blur-sm flex">
-                          <div className="mt-2 pb-6 flex w-full">
-                            {!showDocSidebar && (
-                              <button
-                                className="ml-4 my-auto"
-                                onClick={() => toggleSidebar()}
-                              >
-                                <TbLayoutSidebarLeftExpand size={24} />
-                              </button>
-                            )}
-                            {/*
-                            <div className="ml-2 p-1 rounded w-fit">
-                              
-                              <ChatPersonaSelector
-                                personas={filteredAssistants}
-                                selectedPersonaId={livePersona.id}
-                                onPersonaChange={onPersonaChange}
-                                userId={user?.id}
-                              /> 
-                            </div>*/}
-
-                            <div className="ml-auto my-auto mr-4 flex">
-                              {chatSessionIdRef.current !== null && (
-                                <div
-                                  onClick={() => setSharingModalVisible(true)}
-                                  className={`
-                                    my-auto
-                                    p-2
-                                    rounded
-                                    cursor-pointer
-                                    hover:bg-hover-light
-                                  `}
-                                >
-                                  <FiShare2 size="18" />
-                                </div>
-                              )}
-
-                              <div className="ml flex my-auto">
-                                <UserDropdown user={user} />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                        <FunctionalHeader
+                          setSharingModalVisible={
+                            chatSessionIdRef.current !== null
+                              ? setSharingModalVisible
+                              : undefined
+                          }
+                          toggleSidebar={toggleSidebar}
+                          showSidebar={showDocSidebar}
+                          user={user}
+                        />
                       )}
 
                       {messageHistory.length === 0 &&
