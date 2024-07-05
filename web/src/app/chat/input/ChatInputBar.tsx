@@ -23,7 +23,7 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
 import { FileDescriptor } from "../interfaces";
 import { InputBarPreview } from "../files/InputBarPreview";
-import { ConfigureIcon, RobotIcon } from "@/components/icons/icons";
+import { ConfigureIcon, RobotIcon, SendIcon } from "@/components/icons/icons";
 import { Hoverable } from "@/components/Hoverable";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
@@ -399,24 +399,11 @@ export function ChatInputBar({
                   }
                 }}
               >
-                <svg
-                  className={`text-emphasis text-white w-7 h-7 p-1 rounded-full ${
+                <SendIcon
+                  className={`text-emphasis text-white !w-7 !h-7 p-1 rounded-full ${
                     message ? "bg-neutral-700" : "bg-[#D7D7D7]"
                   }`}
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="200"
-                  height="200"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 19V5m-7 7l7-7l7 7"
-                  />
-                </svg>
+                />
               </div>
             </div>
           </div>

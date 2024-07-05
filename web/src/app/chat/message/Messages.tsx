@@ -47,6 +47,7 @@ import {
   DocumentMetadataBlock,
 } from "@/components/search/DocumentDisplay";
 import { DocSidebar } from "./DocumentSidebar";
+import { ExtendIcon } from "@/components/icons/icons";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -197,22 +198,6 @@ export const AIMessage = ({
                 ? alternativeAssistant.name
                 : personaName || "Danswer"}
             </div>
-
-            {/* {query === undefined &&
-              hasDocs &&
-              handleShowRetrieved !== undefined &&
-              isCurrentlyShowingRetrieved !== undefined &&
-              !retrievalDisabled && (
-                <div className="flex w-full max-w-message-max absolute ml-8">
-                  <div className="ml-auto">
-                    <ShowHideDocsButton
-                      messageId={messageId}
-                      isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
-                      handleShowRetrieved={handleShowRetrieved}
-                    />
-                  </div>
-                </divch>
-              )} */}
           </div>
 
           <div className="max-w-message-max break-words mt-1 ml-8">
@@ -336,7 +321,7 @@ export const AIMessage = ({
             )}
 
             {isComplete && docs && docs.length > 0 && (
-              <div className="mt-2 -mx-8 w-full mb-4  flex relative ">
+              <div className="mt-2 -mx-8  w-full mb-4  flex relative ">
                 <div className="absolute left-0 top-0  h-full bg-gradient-to-l from-background/0  via-background/40 backdrop-blur-xs  to-background w-[40px]" />
 
                 <div className="absolute right-6 top-0  h-full bg-gradient-to-r from-background/0  via-background/40 backdrop-blur-xs  to-background w-[40px]" />
@@ -413,65 +398,10 @@ export const AIMessage = ({
                   }}
                   className="my-auto h-full w-6  flex-none p-2"
                 >
-                  <svg
-                    className="text-neutral-700 hover:text-neutral-900 h-6 w-6"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="200"
-                    height="200"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M16.75 11.989a1.82 1.82 0 0 1-.57 1.36l-6.82 6.1a1.27 1.27 0 0 1-.65.31h-.19a1.3 1.3 0 0 1-.52-.1a1.23 1.23 0 0 1-.54-.47a1.19 1.19 0 0 1-.21-.68v-13a1.2 1.2 0 0 1 .21-.69a1.23 1.23 0 0 1 1.25-.56c.24.039.464.143.65.3l6.76 6.09c.19.162.344.363.45.59c.114.234.175.49.18.75"
-                    />
-                  </svg>
+                  <ExtendIcon className="text-neutral-700 hover:text-neutral-900 !sh-6 !w-6" />
                 </button>
               </div>
             )}
-            {/* {citedDocuments && citedDocuments.length > 0 && (
-              <div className="mt-2">
-                <b className="text-sm text-emphasis">Sources:</b>
-                <div className="flex flex-wrap gap-2">
-                  {citedDocuments
-                    .filter(([_, document]) => document.semantic_identifier)
-                    .map(([citationKey, document], ind) => {
-                      const display = (
-                        <div className="max-w-350 text-ellipsis flex text-sm border border-border py-1 px-2 rounded flex">
-                          <div className="mr-1 my-auto">
-                            <SourceIcon
-                              sourceType={document.source_type}
-                              iconSize={16}
-                            />
-                          </div>
-                          [{citationKey}] {document!.semantic_identifier}
-                        </div>
-                      );
-
-                      if (document.link) {
-                        return (
-                          <a
-                            key={document.document_id}
-                            href={document.link}
-                            target="_blank"
-                            className="cursor-pointer hover:bg-hover"
-                          >
-                            {display}
-                          </a>
-                        );
-                      } else {
-                        return (
-                          <div
-                            key={document.document_id}
-                            className="cursor-default"
-                          >
-                            {display}
-                          </div>
-                        );
-                      }
-                    })}
-                </div>
-              </div>
-            )} */}
           </div>
           {handleFeedback && (
             <div className="flex md:flex-row gap-x-0.5 ml-8 mt-1.5">

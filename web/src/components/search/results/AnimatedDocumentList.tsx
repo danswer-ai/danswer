@@ -3,6 +3,7 @@ import { DanswerDocument } from "@/lib/search/interfaces";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { DocumentDisplay } from "../DocumentDisplay";
 import FunctionalLoader from "@/lib/search/Loader";
+import { CheckmarkIcon, XIcon } from "@/components/icons/icons";
 
 interface AnimatedDocumentListProps {
   documents: DanswerDocument[];
@@ -96,35 +97,9 @@ const AnimatedDocumentList: React.FC<AnimatedDocumentListProps> = ({
               >
                 {relevance[document.document_id] !== undefined ? (
                   relevance[document.document_id] ? (
-                    <svg
-                      className="h-4 w-4 text-xs text-emphasis bg-hover-emphasis rounded p-0.5 w-fit my-auto select-none ml-auto mr-2"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        fill="none"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M20 6L9 17l-5-5"
-                      />
-                    </svg>
+                    <CheckmarkIcon className="h-4 w-4 bg-black text-xs text-emphasis bg-hover-emphasis rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
                   ) : (
-                    <svg
-                      className="h-4 w-4 text-xs text-emphasis bg-hover rounded p-0.5 w-fit my-auto select-none ml-auto mr-2"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        fill="none"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M18 6L6 18M6 6l12 12"
-                      />
-                    </svg>
+                    <XIcon className="h-4 w-4 text-xs text-emphasis bg-hover rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
                   )
                 ) : (
                   <div className="text-xs text-emphasis rounded p-0.5 w-fit my-auto select-none ml-auto mr-2">

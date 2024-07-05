@@ -19,6 +19,8 @@ import {
   ToolIcon,
   PackageIcon,
   PaintingIcon,
+  ChatIcon,
+  SearchIcon,
 } from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import {
@@ -74,7 +76,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="h-screen overflow-y-hidden">
       <div className="flex h-full ">
-        <div className="w-80 z-[100] bg-background-weak pt-4 pb-8 h-full border-r border-border overflow-auto">
+        <div className="w-80 z-[100] bg-background-weak pt-4 pb-8 h-full border-r border-border  weakbackground overflow-auto">
           <AdminSidebar
             collections={[
               {
@@ -310,40 +312,14 @@ export async function Layout({ children }: { children: React.ReactNode }) {
               href="/chat"
               className="transition-all duration-150 cursor-pointer p-1 text-sm items-center flex gap-x-1 px-2 py-1 rounded-lg hover:shadow-sm hover:ring-1 hover:ring-[#E85801]/40 hover:bg-opacity-90 text-[#E85801] bg-[#FAEBE5]"
             >
-              <svg
-                className="h-3 w-3"
-                xmlns="http://www.w3.org/2000/svg"
-                width="200"
-                height="200"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fill="currentColor"
-                  fill-rule="evenodd"
-                  d="M3.43 2.524A41.29 41.29 0 0 1 10 2c2.236 0 4.43.18 6.57.524c1.437.231 2.43 1.49 2.43 2.902v5.148c0 1.413-.993 2.67-2.43 2.902a41.102 41.102 0 0 1-3.55.414a.785.785 0 0 0-.643.413l-1.712 3.293a.75.75 0 0 1-1.33 0l-1.713-3.293a.783.783 0 0 0-.642-.413a41.108 41.108 0 0 1-3.55-.414C1.993 13.245 1 11.986 1 10.574V5.426c0-1.413.993-2.67 2.43-2.902Z"
-                  clip-rule="evenodd"
-                />
-              </svg>
+              <ChatIcon className="!h-3 !w-3" />
               Chat
             </a>
             <a
               href="/search"
               className="transition-all duration-150 cursor-pointer p-1 text-sm items-center flex gap-x-1 px-2 py-1 rounded-lg hover:shadow-xs text-[#0191E8] hover:ring-1 hover:ring-[#0191E8]/40 hover:bg-opacity-90  bg-[#E5F4FA]"
             >
-              <svg
-                className="h-3 w-3"
-                xmlns="http://www.w3.org/2000/svg"
-                width="200"
-                height="200"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fill="currentColor"
-                  fill-rule="evenodd"
-                  d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5Zm2.25 8.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 3a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z"
-                  clip-rule="evenodd"
-                />
-              </svg>
+              <SearchIcon className="!h-3 !w-3" />
               Search
             </a>
             <UserDropdown user={user} />

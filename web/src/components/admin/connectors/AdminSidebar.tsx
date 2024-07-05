@@ -28,35 +28,39 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
   return (
     <aside className="pl-4">
       <nav className="space-y-2 pl-4">
-        <div className="pb-4 flex">
-          <Link
-            className="pb-3 flex flex-col"
-            href={
-              settings && settings.default_page === "chat" ? "/chat" : "/search"
-            }
-          >
-            <div className="flex my-auto">
-              <div className="mr-1 my-auto">
-                <Logo />
+        <div className="pb-12 flex">
+          <div className="fixed left-0 top-0 pt-4 pl-8 bg-background-weak w-[250px]">
+            <Link
+              className="flex flex-col"
+              href={
+                settings && settings.default_page === "chat"
+                  ? "/chat"
+                  : "/search"
+              }
+            >
+              <div className="flex my-auto">
+                <div className="mr-1 my-auto">
+                  <Logo />
+                </div>
+                <div className="my-auto">
+                  {enterpriseSettings && enterpriseSettings.application_name ? (
+                    <div>
+                      <HeaderTitle>
+                        {enterpriseSettings.application_name}
+                      </HeaderTitle>
+                      {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
+                        <p className="text-xs text-subtle -mt-1.5">
+                          Powered by Danswer
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <HeaderTitle>Danswer</HeaderTitle>
+                  )}
+                </div>
               </div>
-              <div className="my-auto">
-                {enterpriseSettings && enterpriseSettings.application_name ? (
-                  <div>
-                    <HeaderTitle>
-                      {enterpriseSettings.application_name}
-                    </HeaderTitle>
-                    {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                      <p className="text-xs text-subtle -mt-1.5">
-                        Powered by Danswer
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <HeaderTitle>Danswer</HeaderTitle>
-                )}
-              </div>
-            </div>
-          </Link>
+            </Link>
+          </div>
         </div>
         {collections.map((collection, collectionInd) => (
           <div key={collectionInd}>

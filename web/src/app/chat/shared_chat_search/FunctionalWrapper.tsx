@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { ChatIcon, SearchIcon } from "@/components/icons/icons";
 
 const ToggleSwitch = () => {
   const pathname = usePathname();
@@ -33,7 +34,7 @@ const ToggleSwitch = () => {
       <div
         className={`absolute top-1 bottom-1 w-1/2 bg-white rounded-full shadow ${
           isInitialLoad ? "" : "transition-transform duration-300 ease-in-out"
-        } ${activeTab === "chat" ? "translate-x-full" : "translate-x-0"}`}
+        } ${activeTab === "chat" ? "translate-x-[94%]" : "translate-x-0"}`}
       />
       <button
         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 ease-in-out flex items-center relative z-10 ${
@@ -43,17 +44,7 @@ const ToggleSwitch = () => {
         }`}
         onClick={() => handleTabChange("search")}
       >
-        <svg
-          className="w-4 h-4 mr-2"
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-        </svg>
+        <SearchIcon className="w-4 h-4 mr-2" />
         Search
         <span className="text-xs ml-2">⌘S</span>
       </button>
@@ -65,17 +56,7 @@ const ToggleSwitch = () => {
         }`}
         onClick={() => handleTabChange("chat")}
       >
-        <svg
-          className="w-4 h-4 mr-2"
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-        </svg>
+        <ChatIcon className="w-4 h-4 mr-2" />
         Chat
         <span className="text-xs ml-2">⌘D</span>
       </button>
