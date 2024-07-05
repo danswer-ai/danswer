@@ -35,15 +35,12 @@ def create_mock_tokens(text: str) -> list[str]:
     i = 0
     while i < len(text):
         # Randomly choose to split after 2, 3, or 4 characters
-        split_length = random.choice([2, 3, 4])
+        split_length = random.choice([2, 3,4, 5, 6])
         end = min(i + split_length, len(text))
         tokens.append(text[i:end])
         i = end
     return tokens
 
-
-# def create_mock_tokens(text: str) -> list[str]:
-#     return text.split()
 
 
 def create_mock_doc_id_to_rank_map(num_docs: int) -> dict[str, int]:
@@ -179,65 +176,102 @@ class SimpleCitationExtractionTestCase:
         print(f"Test '{self.test_name}' passed.")
         return True
 
+import unittest
+import random
+from datetime import datetime
+from typing import List
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-l", "--log", action="store_true", help="Enable logging")
-    args = parser.parse_args()
-    SimpleCitationExtractionTestCase.log = args.log
 
-    test_cases = [
-        SimpleCitationExtractionTestCase(
+
+
+class TestCitationExtraction(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.mock_data = (mock_docs, mock_doc_mapping)
+
+    def run_test_case(self, test_case):
+        with self.subTest(test_case.test_name):
+            self.assertTrue(test_case.run_test(self.mock_data))
+
+    def test_single_citation(self):
+        test_case = SimpleCitationExtractionTestCase(
             test_name="Single citation",
             input_text="""Growth! [1].""",
             expected_text="""Growth! [[0]](https://0.com).""",
             expected_citations=["doc_0"],
-        ),
-        SimpleCitationExtractionTestCase(
+        )
+        self.run_test_case(test_case)
+
+
+    def test_multiple_unique_citations(self):
+        test_case = SimpleCitationExtractionTestCase(
             test_name="Multiple unique citations",
-            input_text=""""Test! [1][3][1] [5].""",
-            expected_text=""""Test! [[0]](https://0.com)[[1]]() [[2]](https://2.com).""",
-            expected_citations=["doc_0", "doc_1", "doc_2"],
-        ),
-        SimpleCitationExtractionTestCase(
+            input_text=""""Test! [1] [5].""",
+            expected_text=""""Test! [[0]](https://0.com) [[2]](https://2.com).""",
+            expected_citations=["doc_0", "doc_2"],
+        )
+        self.run_test_case(test_case)
+
+    def test_repeated_citations(self):
+        test_case = SimpleCitationExtractionTestCase(
             test_name="Repeated citations",
             input_text=""""Test! [1][1][1]. And some more [1][2].""",
             expected_text=""""Test! [[0]](https://0.com). And some more [[0]](https://0.com).""",
             expected_citations=["doc_0"],
-        ),
-        SimpleCitationExtractionTestCase(
+        )
+        self.run_test_case(test_case)
+
+    def test_citations_at_sentence_boundaries(self):
+        test_case = SimpleCitationExtractionTestCase(
             test_name="Citations at sentence boundaries",
             input_text="""Citation at the end of a sentence.[2] Another sentence.[4]""",
             expected_text="""Citation at the end of a sentence.[[0]](https://0.com) Another sentence.[[1]]()""",
             expected_citations=["doc_0", "doc_1"],
-        ),
-        SimpleCitationExtractionTestCase(
+        )
+        self.run_test_case(test_case)
+
+    def test_citations_at_beginning_middle_and_end(self):
+        test_case = SimpleCitationExtractionTestCase(
             test_name="Citations at beginning, middle, and end",
             input_text="""[1] Citation at the beginning. [3] In the middle. At the end [5].""",
             expected_text="""[[0]](https://0.com) Citation at the beginning. [[1]]() In the middle. At the end [[2]](https://2.com).""",
             expected_citations=["doc_0", "doc_1", "doc_2"],
-        ),
-        SimpleCitationExtractionTestCase(
+        )
+        self.run_test_case(test_case)
+
+    def test_mixed_valid_and_invalid_citations(self):
+        test_case = SimpleCitationExtractionTestCase(
             test_name="Mixed valid and invalid citations",
             input_text="""Mixed valid and invalid citations [1][99][3][100][5].""",
             expected_text="""Mixed valid and invalid citations [[0]](https://0.com)[99][[1]]()[100][[2]](https://2.com).""",
             expected_citations=["doc_0", "doc_1", "doc_2"],
-        ),
-    ]
+        )
+        self.run_test_case(test_case)
 
-    for test_case in test_cases:
-        try:
-            test_case.run_test((mock_docs, mock_doc_mapping))
-        except AssertionError as e:
-            print(f"Test failed: {str(e)}")
+    # def test_hard_test_consecutive(self):
+    #     while True:
+    #         test_case_4 = SimpleCitationExtractionTestCase(
+    #             input_text="""Multiple citations in one sentence [1][4][5]. """,
+    #             expected_text="""Multiple citations in one sentence [[0]](https://0.com)[[1]]()[[2]](https://2.com).""",
+    #             expected_citations=[("doc_0"), ("doc_1"), ("doc_2")],
+    #         )
+    #         test_case_4.run_test((mock_docs, mock_doc_mapping))
 
-    print("All tests completed.")
 
-    # while True:
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-l", "--log", action="store_true", help="Enable logging")
+    args = parser.parse_args()
+    SimpleCitationExtractionTestCase.log = args.log
+    
+    # test_case = SimpleCitationExtractionTestCase(
+    #     test_name="Citations at sentence boundaries",
+    #     input_text="""Citation at the end of a sentence.[2] Another sentence.[4]""",
+    #     expected_text="""Citation at the end of a sentence.[[0]](https://0.com) Another sentence.[[1]]()""",
+    #     expected_citations=["doc_0", "doc_1"],
+    # )
 
-    #     test_case_4 = SimpleCitationExtractionTestCase(
-    #         input_text="""Multiple citations in one sentence [1][4][5]. """,
-    #         expected_text="""Multiple citations in one sentence [[0]](https://0.com)[[1]]()[[2]](https://2.com).""",
-    #         expected_citations=[("doc_0"), ("doc_1"), ("doc_2")],
-    #     )
-    #     test_case_4.run_test((mock_docs, mock_doc_mapping))
+    # test_case.run_test((mock_docs,mock_doc_mapping))
+
+    unittest.main(argv=[''], verbosity=2, exit=False)
