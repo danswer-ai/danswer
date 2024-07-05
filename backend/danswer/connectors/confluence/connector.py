@@ -22,7 +22,6 @@ from danswer.configs.constants import DocumentSource
 from danswer.connectors.confluence.rate_limit_handler import (
     make_confluence_call_handle_rate_limit,
 )
-from danswer.connectors.cross_connector_utils.html_utils import format_document_soup
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -509,6 +508,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
             if time_filter is None or time_filter(last_modified):
                 page_id = page["id"]
+
                 if self.labels_to_skip or not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING:
                     page_labels = self._fetch_labels(self.confluence_client, page_id)
 
@@ -541,10 +541,6 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 page_text += attachment_text
                 comments_text = self._fetch_comments(self.confluence_client, page_id)
                 page_text += comments_text
-
-                if not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING and page_labels:
-                    doc_metadata["labels"] = page_labels
-                    
                 doc_metadata: dict[str, str | list[str]] = {
                     "Wiki Space Name": self.space
                 }
@@ -561,7 +557,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         primary_owners=(
                             [BasicExpertInfo(email=author)] if author else None
                         ),
-                        metadata=doc_metadata,
+                        metadata={
+                            "Wiki Space Name": self.space,
+                        },
                     )
                 )
         return doc_batch, len(batch)
