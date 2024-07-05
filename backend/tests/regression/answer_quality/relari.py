@@ -50,13 +50,12 @@ def _get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]
     body = new_message_request.dict()
     body["user"] = None
     response_json = requests.post(url, headers=headers, json=body).json()
-    print(json.dumps(response_json, indent=2))
     content_list = [
         context.get("content", "")
         for context in response_json.get("contexts", {}).get("contexts", [])
     ]
     answer = response_json.get("answer")
-    print("query: ", query)
+    print("\nquery: ", query)
     print("answer: ", answer)
     print("content_list: ", content_list)
 
