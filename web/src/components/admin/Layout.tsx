@@ -133,15 +133,6 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <ClipboardIcon size={18} />
-                        <div className="ml-1">Standard Answers</div>
-                      </div>
-                    ),
-                    link: "/admin/standard-answer",
-                  },
-                  {
-                    name: (
-                      <div className="flex">
                         <RobotIcon size={18} />
                         <div className="ml-1">Assistants</div>
                       </div>
@@ -165,6 +156,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                       </div>
                     ),
                     link: "/admin/tools",
+                  },
+                  {
+                    name: (
+                      <div className="flex">
+                        <ClipboardIcon size={18} />
+                        <div className="ml-1">Standard Answers</div>
+                      </div>
+                    ),
+                    link: "/admin/standard-answer",
                   },
                 ],
               },
