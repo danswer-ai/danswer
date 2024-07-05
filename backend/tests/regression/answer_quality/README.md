@@ -38,22 +38,29 @@ Edit `search_test_config.yaml` to set:
     The path to the yaml containing the questions you'd like to test with 
 - branch
     Set the branch to null if you want it to just use the code as is
+- clean_up_docker_containers
+    Set this to true to automatically delete all docker containers, networks and volumes after the test
 - launch_web_ui
     Set this to true if you want to use the UI during/after the testing process
 - use_cloud_gpu
     Set to true or false depending on if you want to use the remote gpu
-- clean_up_docker_containers
-    Set this to true to automatically delete all containers and volumes after the test
-- model_server_port
-    this is the port of the remote model server
-    only need to set this if use_cloud_gpu is true
+    Only need to set this if use_cloud_gpu is true
 - model_server_ip
-    this is the ip of the remote model server
-    only need to set this if use_cloud_gpu is true   
+    This is the ip of the remote model server
+    Only need to set this if use_cloud_gpu is true   
+- model_server_port
+    This is the port of the remote model server
+    Only need to set this if use_cloud_gpu is true
+- existing_test_suffix
+    Use this if you would like to relaunch a previous test instance
+    Input the suffix of the test you'd like to re-launch 
+    (E.g. to use the data from folder "test_1234_5678" put "_1234_5678")
+    No new files will automatically be uploaded
+    Leave empty to run a new test
 - limit
     Max number of questions you'd like to ask against the dataset
     Set to null for no limit
 - llm
-    fill this out according to the normal LLM seeding
+    Fill this out according to the normal LLM seeding
 
 Docker daemon must be running for this to work. 

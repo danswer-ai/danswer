@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import yaml
 
-from tests.regression.answer_quality.cli_utils import delete_docker_containers
+from tests.regression.answer_quality.cli_utils import cleanup_docker
 from tests.regression.answer_quality.cli_utils import manage_data_directories
 from tests.regression.answer_quality.cli_utils import set_env_variables
 from tests.regression.answer_quality.cli_utils import start_docker_compose
@@ -22,8 +22,12 @@ def load_config(config_filename: str) -> SimpleNamespace:
 
 def main() -> None:
     config = load_config("search_test_config.yaml")
-    run_suffix = datetime.now().strftime("_%Y%m%d_%H%M%S")
-    print("run_suffix:", run_suffix)
+    if config.existing_test_suffix:
+        run_suffix = config.existing_test_suffix
+        print("launching danswer with existing data suffix:", run_suffix)
+    else:
+        run_suffix = datetime.now().strftime("_%Y%m%d_%H%M%S")
+        print("run_suffix:", run_suffix)
 
     set_env_variables(
         config.model_server_ip,
@@ -39,14 +43,15 @@ def main() -> None:
 
     start_docker_compose(run_suffix, config.launch_web_ui, config.use_cloud_gpu)
 
-    upload_test_files(config.zipped_documents_file, run_suffix)
+    if not config.existing_test_suffix:
+        upload_test_files(config.zipped_documents_file, run_suffix)
 
-    answer_relari_questions(
-        config.questions_file, relari_output_folder_path, run_suffix, config.limit
-    )
+        answer_relari_questions(
+            config.questions_file, relari_output_folder_path, run_suffix, config.limit
+        )
 
     if config.clean_up_docker_containers:
-        delete_docker_containers(run_suffix)
+        cleanup_docker(run_suffix)
 
 
 if __name__ == "__main__":

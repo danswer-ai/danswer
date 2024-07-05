@@ -126,8 +126,10 @@ def start_docker_compose(
         sys.exit(1)
 
 
-def delete_docker_containers(run_suffix: str) -> None:
-    print(f"Deleting Docker containers and volumes for project suffix: {run_suffix}")
+def cleanup_docker(run_suffix: str) -> None:
+    print(
+        f"Deleting Docker containers, volumes, and networks for project suffix: {run_suffix}"
+    )
 
     # List all containers
     returncode, stdout, stderr = _run_command("docker ps -a --format '{{json .}}'")
@@ -184,6 +186,30 @@ def delete_docker_containers(run_suffix: str) -> None:
         )
     else:
         print(f"Failed to delete volumes. Error: {stderr}")
+    returncode, stdout, stderr = _run_command("docker network ls --format '{{.Name}}'")
+
+    if returncode != 0:
+        print(f"Failed to list Docker networks. Error: {stderr}")
+        return
+
+    networks = stdout.splitlines()
+
+    # Filter networks by project name
+    networks_to_delete = [n for n in networks if run_suffix in n]
+
+    if not networks_to_delete:
+        print(f"No networks found containing suffix: {run_suffix}")
+    else:
+        # Delete filtered networks
+        network_names = " ".join(networks_to_delete)
+        returncode, _, stderr = _run_command(f"docker network rm {network_names}")
+
+        if returncode == 0:
+            print(
+                f"Successfully deleted {len(networks_to_delete)} networks containing suffix: {run_suffix}"
+            )
+        else:
+            print(f"Failed to delete networks. Error: {stderr}")
 
 
 @retry(tries=5, delay=5, backoff=2)
@@ -223,10 +249,3 @@ def get_server_host_port(container_name: str, suffix: str, client_port: str) -> 
         raise RuntimeError(
             f"No port found containing: {client_port} for container: {container_name} and suffix: {suffix}"
         )
-
-
-def api_url_builder(run_suffix: str, api_path: str) -> str:
-    return (
-        f"http://localhost:{get_server_host_port('api_server', run_suffix, '')}"
-        + api_path
-    )

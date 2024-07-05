@@ -2,11 +2,12 @@ zipped_documents_file: "~/sampledocs.zip"
 questions_file: "~/sample_questions.yaml"
 output_folder: "~/danswer_test_results"
 branch: null
+clean_up_docker_containers: true
 launch_web_ui: false
 use_cloud_gpu: false
-clean_up_docker_containers: true
 model_server_ip: "PUT_PUBLIC_CLOUD_IP_HERE"
 model_server_port: "PUT_PUBLIC_CLOUD_PORT_HERE"
+existing_test_suffix: ""
 limit: null
 llm:
   name: "llm_name"
