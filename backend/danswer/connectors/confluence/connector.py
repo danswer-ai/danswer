@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 import bs4
 from atlassian import Confluence  # type:ignore
 from requests import HTTPError
-
+from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
@@ -497,8 +497,6 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         for page in batch:
             last_modified_str = page["version"]["when"]
             author = cast(str | None, page["version"].get("by", {}).get("email"))
-            if last_modified_str.endswith("Z"):
-                last_modified_str = last_modified_str[:-1] + "+00:00"
             last_modified = datetime.fromisoformat(last_modified_str)
 
             if last_modified.tzinfo is None:
@@ -511,9 +509,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             if time_filter is None or time_filter(last_modified):
                 page_id = page["id"]
 
+                if self.labels_to_skip or not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING:
+                    page_labels = self._fetch_labels(self.confluence_client, page_id)
+
                 # check disallowed labels
                 if self.labels_to_skip:
-                    page_labels = self._fetch_labels(self.confluence_client, page_id)
                     label_intersection = self.labels_to_skip.intersection(page_labels)
                     if label_intersection:
                         logger.info(
@@ -541,6 +541,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 page_text += attachment_text
                 comments_text = self._fetch_comments(self.confluence_client, page_id)
                 page_text += comments_text
+                doc_metadata: dict[str, str | list[str]] = {
+                    "Wiki Space Name": self.space
+                }
+                if not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING and page_labels:
+                    doc_metadata["labels"] = page_labels
 
                 doc_batch.append(
                     Document(

@@ -210,13 +210,15 @@ const Main = () => {
           <p className="text-sm mb-4">
             Specify any link to a Confluence page below and click
             &quot;Index&quot; to Index. Based on the provided link, we will
-            index the ENTIRE SPACE, not just the specified page. For example,
-            entering{" "}
+            index either the entire page and its subpages OR the entire space.
+            For example,   entering{" "}
             <i>
               https://danswer.atlassian.net/wiki/spaces/Engineering/overview
             </i>{" "}
             and clicking the Index button will index the whole{" "}
-            <i>Engineering</i> Confluence space.
+            <i>Engineering</i> Confluence space, but entering https://pablosfsanchez.atlassian.net/wiki/spaces/Engineering/pages/164331/example+page
+            will index that page's children (and optionally, its children).
+            Use the checkbox below to determine whether or not to index the parent page in addition to its children.
           </p>
 
           {confluenceConnectorIndexingStatuses.length > 0 && (
@@ -278,7 +280,7 @@ const Main = () => {
             </>
           )}
           <Card className="mt-4">
-            <h2 className="font-bold mb-3">Add a New Space</h2>
+            <h2 className="font-bold mb-3">Add a New Space or Page</h2>
             <ConnectorForm<ConfluenceConfig>
               nameBuilder={(values) =>
                 `ConfluenceConnector-${values.wiki_page_url}`
@@ -294,7 +296,7 @@ const Main = () => {
                   <BooleanFormField
                     noPadding
                     name="index_origin"
-                    label="Index the page itself"
+                    label="(For pages) Index the page itself"
                   />
                 </>
               }
