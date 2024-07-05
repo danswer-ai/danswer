@@ -43,7 +43,8 @@ logger = setup_logger()
 
 def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, str]:
     """Sample
-    https://danswer.atlassian.net/wiki/spaces/1234abcd/pages/5678efgh/overview
+    URL w/ page: https://danswer.atlassian.net/wiki/spaces/1234abcd/pages/5678efgh/overview
+    URL w/o page: https://danswer.atlassian.net/wiki/spaces/ASAM/overview
     https://danswer.atlassian.net/wiki/spaces/ASAM/overview
     wiki_base is https://danswer.atlassian.net/wiki
     space is 1234abcd
@@ -81,6 +82,7 @@ def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, st
     )
     space = DISPLAY.join(parsed_url.path.split(DISPLAY)[1:]).split("/")[0]
     page_id = parsed_url.path.split("/")[5]
+
     return wiki_base, space, page_id
 
 
@@ -209,7 +211,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         wiki_page_url: str,
-        index_origin: bool = False,
+        index_origin: bool = True,
         batch_size: int = INDEX_BATCH_SIZE,
         continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
         # if a page has one of the labels specified in this list, we will just
@@ -314,25 +316,54 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
                 return view_pages
 
-        def _fetch_child_pages(
-            start_ind: int, batch_size: int
-        ) -> Collection[dict[str, Any]]:
+        def _fetch_origin_page() -> Collection[dict[str, Any]]:
             get_page_by_id = make_confluence_call_handle_rate_limit(
                 confluence_client.get_page_by_id
             )
+            try:
+                origin_page = get_page_by_id(
+                    self.page_id, expand="body.storage.value,version"
+                )
+                return origin_page
+            except Exception as e:
+                logger.warning(
+                    f"Appending orgin page with id {self.page_id} failed: {e}"
+                )
 
-            child_pages: list[dict[str, Any]] = []
+        def _recurse_child_pages(start_ind: int) -> Collection[dict[str, Any]]:
+            pages: list[dict[str, Any]] = []
+            current_children: list[dict[str, Any]] = []
+            children = _fetch_single_depth_child_pages(
+                start_ind, self.batch_size, self.page_id
+            )
+            pages.extend(children)
+
+            # recursively index children and children's children, etc.
+            while len(children) != 0:
+                for child in children:
+                    current_children.extend(
+                        _fetch_single_depth_child_pages(
+                            start_ind, self.batch_size, child["id"]
+                        )
+                    )
+                children = current_children
+                pages.extend(children)
+                current_children: list[dict[str, Any]] = []
 
             if self.index_origin:
                 try:
-                    origin_page = get_page_by_id(
-                        self.page_id, expand="body.storage.value,version"
-                    )
-                    child_pages.append(origin_page)
+                    origin_page = self.index_origin()
+                    pages.append(origin_page)
                 except Exception as e:
                     logger.warning(
                         f"Appending orgin page with id {self.page_id} failed: {e}"
                     )
+            return pages
+
+        def _fetch_single_depth_child_pages(
+            start_ind: int, batch_size: int, page_id
+        ) -> Collection[dict[str, Any]]:
+            child_pages: list[dict[str, Any]] = []
 
             get_page_child_by_type = make_confluence_call_handle_rate_limit(
                 confluence_client.get_page_child_by_type
@@ -340,7 +371,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
             try:
                 child_page = get_page_child_by_type(
-                    self.page_id,
+                    page_id,
                     type="page",
                     start=start_ind,
                     limit=batch_size,
@@ -359,7 +390,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     ind = start_ind + i
                     try:
                         child_page = get_page_child_by_type(
-                            self.page_id,
+                            page_id,
                             type="page",
                             start=ind,
                             limit=1,
@@ -375,12 +406,16 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
                 return child_pages
 
+        pages: list[dict[str, Any]] = []
+
         try:
-            return (
+            pages = (
                 _fetch_space(start_ind, self.batch_size)
                 if self.space_level_scan
-                else _fetch_child_pages(start_ind, self.batch_size)
+                else _recurse_child_pages(start_ind=start_ind)
             )
+            return pages
+
         except Exception as e:
             if not self.continue_on_failure:
                 raise e
@@ -389,11 +424,13 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         pages: list[dict[str, Any]] = []
         for i in range(self.batch_size):
             try:
-                pages.extend(
-                    _fetch_space(start_ind + i, 1)
+                pages = (
+                    _fetch_space(start_ind, self.batch_size)
                     if self.space_level_scan
-                    else _fetch_child_pages(start_ind + i, 1)
+                    else _recurse_child_pages(start_ind=start_ind)
                 )
+                return pages
+
             except Exception:
                 logger.exception(
                     "Ran into exception when fetching pages from Confluence"
@@ -557,9 +594,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         primary_owners=(
                             [BasicExpertInfo(email=author)] if author else None
                         ),
-                        metadata={
-                            "Wiki Space Name": self.space,
-                        },
+                        metadata=doc_metadata,
                     )
                 )
         return doc_batch, len(batch)

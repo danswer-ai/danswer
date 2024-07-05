@@ -217,10 +217,10 @@ const Main = () => {
             </i>{" "}
             and clicking the Index button will index the whole{" "}
             <i>Engineering</i> Confluence space, but entering
-            https://pablosfsanchez.atlassian.net/wiki/spaces/Engineering/pages/164331/example+page
-            will index that page&apos;s children (and optionally, its children).
-            Use the checkbox below to determine whether or not to index the
-            parent page in addition to its children.
+            https://danswer.atlassian.net/wiki/spaces/Engineering/pages/164331/example+page
+            will index that page&apos;s children (and optionally, itself). Use
+            the checkbox below to determine whether or not to index the parent
+            page in addition to its children.
           </p>
 
           {confluenceConnectorIndexingStatuses.length > 0 && (
@@ -296,7 +296,6 @@ const Main = () => {
                 <>
                   <TextFormField name="wiki_page_url" label="Confluence URL:" />
                   <BooleanFormField
-                    noPadding
                     name="index_origin"
                     label="(For pages) Index the page itself"
                   />
@@ -310,7 +309,7 @@ const Main = () => {
               })}
               initialValues={{
                 wiki_page_url: "",
-                index_origin: false,
+                index_origin: true,
               }}
               refreshFreq={10 * 60} // 10 minutes
               credentialId={confluenceCredential.id}
