@@ -9,11 +9,11 @@ from tests.regression.answer_quality.cli_utils import manage_data_directories
 from tests.regression.answer_quality.cli_utils import set_env_variables
 from tests.regression.answer_quality.cli_utils import start_docker_compose
 from tests.regression.answer_quality.cli_utils import switch_to_branch
-from tests.regression.answer_quality.direct_file_uploader import upload_test_files
+from tests.regression.answer_quality.file_uploader import upload_test_files
 from tests.regression.answer_quality.relari import answer_relari_questions
 
 
-def load_config(config_filename: str) -> dict:
+def load_config(config_filename: str) -> SimpleNamespace:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(current_dir, config_filename)
     with open(config_path, "r") as file:
@@ -37,7 +37,7 @@ def main() -> None:
     if config.branch:
         switch_to_branch(config.branch)
 
-    start_docker_compose(run_suffix, config.launch_web_server, config.use_cloud_gpu)
+    start_docker_compose(run_suffix, config.launch_web_ui, config.use_cloud_gpu)
 
     upload_test_files(config.zipped_documents_file, run_suffix)
 
@@ -45,7 +45,7 @@ def main() -> None:
         config.questions_file, relari_output_folder_path, run_suffix, config.limit
     )
 
-    if not config.launch_web_server:
+    if config.clean_up_docker_containers:
         delete_docker_containers(run_suffix)
 
 

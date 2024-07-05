@@ -7,17 +7,12 @@ from typing import Any
 from retry import retry
 
 
-def _run_command(command: str, timeout: int = 60) -> tuple[int | Any, str, str]:
+def _run_command(command: str) -> tuple[int | Any, str, str]:
     process = subprocess.Popen(
         command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
-    try:
-        stdout, stderr = process.communicate(timeout=timeout)
-        return process.returncode, stdout.decode(), stderr.decode()
-    except subprocess.TimeoutExpired:
-        process.kill()
-        print(f"Command timed out after {timeout} seconds: {command}")
-        return -1, "", f"Command timed out after {timeout} seconds"
+    stdout, stderr = process.communicate()
+    return process.returncode, stdout.decode(), stderr.decode()
 
 
 def get_current_commit_sha() -> str:
@@ -39,24 +34,19 @@ def switch_to_branch(branch: str) -> None:
     returncode, _, stderr = _run_command(f"git checkout {branch}")
 
     if returncode == 0:
-        # update_repository()
+        returncode, _, stderr = _run_command("git pull")
+
+        if returncode == 0:
+            print("Repository updated successfully.")
+        else:
+            print(
+                "Failed to update the repository. Please check your internet connection and try again."
+            )
+            print(f"Error: {stderr}")
+            sys.exit(1)
         print(f"Successfully switched to branch: {branch}")
     else:
         print(f"Failed to switch to branch: {branch}")
-        print(f"Error: {stderr}")
-        sys.exit(1)
-
-
-def update_repository() -> None:
-    print("Updating the repository...")
-    returncode, _, stderr = _run_command("git pull")
-
-    if returncode == 0:
-        print("Repository updated successfully.")
-    else:
-        print(
-            "Failed to update the repository. Please check your internet connection and try again."
-        )
         print(f"Error: {stderr}")
         sys.exit(1)
 
@@ -105,7 +95,7 @@ def set_env_variables(
 
 
 def start_docker_compose(
-    run_suffix: str, launch_web_server: bool, use_cloud_gpu: bool
+    run_suffix: str, launch_web_ui: bool, use_cloud_gpu: bool
 ) -> None:
     print("Starting Docker Compose...")
     os.chdir(os.path.expanduser("~/danswer/deployment/docker_compose"))
@@ -113,7 +103,7 @@ def start_docker_compose(
     command += " --build"
     command += " --pull always"
     command += " --force-recreate"
-    if not launch_web_server:
+    if not launch_web_ui:
         command += " --scale web_server=0"
         command += " --scale nginx=0"
     if use_cloud_gpu:
@@ -126,10 +116,10 @@ def start_docker_compose(
     # command += " --scale web_server=0"
     print("Docker Command:\n", command)
 
-    returncode, _, stderr = _run_command(command, 1000)
+    returncode, _, stderr = _run_command(command)
 
     if returncode == 0:
-        print("Docker Compose started successfully.")
+        print("The Docker has been Composed :)")
     else:
         print("Failed to start Docker Compose. Please check the error messages above.")
         print(f"Error: {stderr}")
@@ -198,10 +188,6 @@ def delete_docker_containers(run_suffix: str) -> None:
 
 @retry(tries=5, delay=5, backoff=2)
 def get_server_host_port(container_name: str, suffix: str, client_port: str) -> str:
-    print(
-        f"Getting API server port for suffix: {suffix} from name {container_name} with port {client_port}"
-    )
-
     returncode, stdout, stderr = _run_command("docker ps -a --format '{{json .}}'")
     if returncode != 0:
         raise RuntimeError(
@@ -215,8 +201,6 @@ def get_server_host_port(container_name: str, suffix: str, client_port: str) -> 
         if container_name in container["Names"] and suffix in container["Names"]:
             api_server_json = container
 
-        # print(json.dumps(container, indent=2))
-
     if not api_server_json:
         raise RuntimeError(
             f"No container found containing: {container_name} and {suffix}"
@@ -224,7 +208,6 @@ def get_server_host_port(container_name: str, suffix: str, client_port: str) -> 
 
     ports = api_server_json.get("Ports", "")
     port_infos = ports.split(",") if ports else []
-    print("port_infos:", port_infos)
     port_dict = {}
     for port_info in port_infos:
         port_arr = port_info.split(":")[-1].split("->") if port_info else []
@@ -240,3 +223,10 @@ def get_server_host_port(container_name: str, suffix: str, client_port: str) -> 
         raise RuntimeError(
             f"No port found containing: {client_port} for container: {container_name} and suffix: {suffix}"
         )
+
+
+def api_url_builder(run_suffix: str, api_path: str) -> str:
+    return (
+        f"http://localhost:{get_server_host_port('api_server', run_suffix, '')}"
+        + api_path
+    )

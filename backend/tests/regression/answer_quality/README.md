@@ -38,10 +38,12 @@ Edit `search_test_config.yaml` to set:
     The path to the yaml containing the questions you'd like to test with 
 - branch
     Set the branch to null if you want it to just use the code as is
-- launch_web_server
-    set this to true if you want to use the UI during/after the testing process
+- launch_web_ui
+    Set this to true if you want to use the UI during/after the testing process
 - use_cloud_gpu
     Set to true or false depending on if you want to use the remote gpu
+- clean_up_docker_containers
+    Set this to true to automatically delete all containers and volumes after the test
 - model_server_port
     this is the port of the remote model server
     only need to set this if use_cloud_gpu is true
