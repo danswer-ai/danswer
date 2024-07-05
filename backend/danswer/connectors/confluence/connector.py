@@ -38,7 +38,7 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 # Potential Improvements
-# 1. If wiki page instead of space, do a search of all the children of the page instead of index all in the space: DONE
+# 1. If wiki page instead of space, do a search of all the children of the page instead of index all in the space
 # 2. Include attachments, etc
 # 3. Segment into Sections for more accurate linking, can split by headers but make sure no text/ordering is lost
 
