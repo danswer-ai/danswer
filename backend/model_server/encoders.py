@@ -82,10 +82,10 @@ def embed_text(
     max_context_length: int,
     normalize_embeddings: bool,
 ) -> list[list[float]]:
-    model = get_embedding_model(
-        model_name=model_name, max_context_length=max_context_length
+    model = SentenceTransformer(
+        "nomic-ai/nomic-embed-text-v1.5", trust_remote_code=True
     )
-    embeddings = model.encode(texts, normalize_embeddings=normalize_embeddings)
+    embeddings = model.encode(texts)
 
     if not isinstance(embeddings, list):
         embeddings = embeddings.tolist()

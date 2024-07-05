@@ -18,6 +18,8 @@ RUN apt-get remove -y --allow-remove-essential perl-base && \
     apt-get autoremove -y
 
 # Pre-downloading models for setups with limited egress
+ENV HF_HOME=/hf_model_cache
+WORKDIR /hf_model_cache
 RUN python -c "from transformers import AutoModel, AutoTokenizer, TFDistilBertForSequenceClassification; \
 from huggingface_hub import snapshot_download; \
 AutoTokenizer.from_pretrained('danswer/intent-model'); \
@@ -26,6 +28,10 @@ AutoTokenizer.from_pretrained('mixedbread-ai/mxbai-rerank-xsmall-v1'); \
 snapshot_download('danswer/intent-model'); \
 snapshot_download('intfloat/e5-base-v2'); \
 snapshot_download('mixedbread-ai/mxbai-rerank-xsmall-v1')"
+
+RUN python -c "from sentence_transformers import SentenceTransformer; \
+model = SentenceTransformer('nomic-ai/nomic-embed-text-v1.5', trust_remote_code=True); \
+model.save('nomic-ai/nomic-embed-text-v1.5')"
 
 WORKDIR /app
 

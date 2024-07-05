@@ -101,6 +101,8 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
+    networks:
+      - internal
 
 
   background:
@@ -203,6 +205,8 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
+    networks:
+      - internal
 
 
   web_server:
@@ -231,6 +235,8 @@ services:
 
       # Enterprise Edition only
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
+    networks:
+      - internal
 
 
   inference_model_server:
@@ -258,6 +264,8 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
+    networks:
+      - internal
 
 
   indexing_model_server:
@@ -286,6 +294,9 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
+    networks:
+      - internal
+
 
   relational_db:
     image: postgres:15.2-alpine
@@ -297,6 +308,8 @@ services:
       - "5432:5432"
     volumes:
       - db_volume:/var/lib/postgresql/data
+    networks:
+      - internal
 
 
   # This container name cannot have an underscore in it due to Vespa expectations of the URL
@@ -313,6 +326,8 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
+    networks:
+      - internal
 
 
   nginx:
@@ -343,6 +358,9 @@ services:
     command: > 
       /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
       && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
+    networks:
+      - internal
+      - local
         
 
 volumes:
@@ -350,3 +368,10 @@ volumes:
   vespa_volume:
   # Created by the container itself
   model_cache_huggingface:
+
+
+networks:
+  internal:
+    internal: true
+  local:
+    internal: false
