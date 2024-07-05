@@ -28,7 +28,7 @@ async function Page({
 
   const tasks = [fetchSS("/manage/document-set"), fetchAssistantsSS()];
   const [documentSetsResponse, [assistants, assistantsFetchError]] = 
-    (await Promise.all(tasks) as [Response, FetchAssistantsResponse]);
+    (await Promise.all(tasks)) as [Response, FetchAssistantsResponse];
 
   if (!documentSetsResponse.ok) {
     return (
