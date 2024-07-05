@@ -211,14 +211,16 @@ const Main = () => {
             Specify any link to a Confluence page below and click
             &quot;Index&quot; to Index. Based on the provided link, we will
             index either the entire page and its subpages OR the entire space.
-            For example,   entering{" "}
+            For example, entering{" "}
             <i>
               https://danswer.atlassian.net/wiki/spaces/Engineering/overview
             </i>{" "}
             and clicking the Index button will index the whole{" "}
-            <i>Engineering</i> Confluence space, but entering https://pablosfsanchez.atlassian.net/wiki/spaces/Engineering/pages/164331/example+page
-            will index that page's children (and optionally, its children).
-            Use the checkbox below to determine whether or not to index the parent page in addition to its children.
+            <i>Engineering</i> Confluence space, but entering
+            https://pablosfsanchez.atlassian.net/wiki/spaces/Engineering/pages/164331/example+page
+            will index that page&apos;s children (and optionally, its children).
+            Use the checkbox below to determine whether or not to index the
+            parent page in addition to its children.
           </p>
 
           {confluenceConnectorIndexingStatuses.length > 0 && (

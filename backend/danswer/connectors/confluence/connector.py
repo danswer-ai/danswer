@@ -12,9 +12,10 @@ from urllib.parse import urlparse
 import bs4
 from atlassian import Confluence  # type:ignore
 from requests import HTTPError
-from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING
+
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
+from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -36,9 +37,8 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 # Potential Improvements
-# 1. If wiki page instead of space, do a search of all the children of the page instead of index all in the space: DONE
-# 2. Include attachments, etc
-# 3. Segment into Sections for more accurate linking, can split by headers but make sure no text/ordering is lost
+# 1. Include attachments, etc
+# 2. Segment into Sections for more accurate linking, can split by headers but make sure no text/ordering is lost
 
 
 def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, str]:
