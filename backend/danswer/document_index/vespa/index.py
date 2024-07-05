@@ -629,7 +629,7 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
     )
 
 
-@retry(tries=10, delay=2, backoff=2)
+@retry(tries=3, delay=1, backoff=2)
 def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[InferenceChunk]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")
