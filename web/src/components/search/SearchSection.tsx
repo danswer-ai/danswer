@@ -187,6 +187,8 @@ export const SearchSection = ({
     error: null,
     messageId: null,
   };
+
+  // Streaming updates
   const updateCurrentAnswer = (answer: string) =>
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
@@ -230,13 +232,14 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       messageId,
     }));
-
   const updateDocumentRelevance = (relevance: any) => {
     setRelevance(relevance);
-    setSearchState("input");
   };
   const updateComments = (comments: any) => {
     setComments(comments);
+  };
+  const finishedSearching = () => {
+    setSearchState("input");
   };
 
   const resetInput = () => {
@@ -273,7 +276,6 @@ export const SearchSection = ({
     setIsFetching(true);
     setSearchResponse(initialSearchResponse);
     setValidQuestionResponse(VALID_QUESTION_RESPONSE_DEFAULT);
-
     const searchFnArgs = {
       query: overrideMessage || query,
       sources: filterManager.selectedSources,
@@ -320,8 +322,18 @@ export const SearchSection = ({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateMessageId,
       }),
-      updateDocumentRelevance, // New callback function
-      updateComments,
+      updateDocumentRelevance: cancellable({
+        cancellationToken: lastSearchCancellationToken.current,
+        fn: updateDocumentRelevance,
+      }),
+      updateComments: cancellable({
+        cancellationToken: lastSearchCancellationToken.current,
+        fn: updateComments,
+      }),
+      finishedSearching: cancellable({
+        cancellationToken: lastSearchCancellationToken.current,
+        fn: finishedSearching,
+      }),
 
       selectedSearchType: searchType ?? selectedSearchType,
       offset: offset ?? defaultOverrides.offset,
@@ -422,7 +434,7 @@ export const SearchSection = ({
     <>
       <div
         ref={sidebarElementRef}
-        className={`  flex-none absolute left-0 z-[100]  overflow-y-hidden sidebar bg-background-weak h-screen`}
+        className={`flex-none absolute left-0 z-[100] overflow-y-hidden sidebar bg-background-weak h-screen`}
         style={{ width: showDocSidebar ? usedSidebarWidth : 0 }}
       >
         <ResizableSection

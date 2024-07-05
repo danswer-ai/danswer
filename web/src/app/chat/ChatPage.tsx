@@ -1325,6 +1325,7 @@ export function ChatPage({
                                 }
                               >
                                 <AIMessage
+                                  isActive={messageHistory.length - 1 == i}
                                   selectedDocuments={selectedDocuments}
                                   toggleDocumentSelection={
                                     toggleDocumentSelectionAspects
@@ -1493,7 +1494,7 @@ export function ChatPage({
                           )}
 
                         {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-                        <div ref={endPaddingRef} className=" h-[95px]" />
+                        <div ref={endPaddingRef} className="h-[95px]" />
                         <div ref={endDivRef}></div>
 
                         {currentPersona &&
@@ -1537,7 +1538,6 @@ export function ChatPage({
                         <div ref={endDivRef} />
                       </div>
                     </div>
-
                     <div
                       ref={inputRef}
                       className="absolute bottom-0 z-10 w-full"

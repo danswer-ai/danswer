@@ -89,6 +89,7 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 }
 
 export const AIMessage = ({
+  isActive,
   toggleDocumentSelection,
   alternativeAssistant,
   docs,
@@ -110,6 +111,7 @@ export const AIMessage = ({
   retrievalDisabled,
   currentPersona,
 }: {
+  isActive?: boolean;
   selectedDocuments?: DanswerDocument[] | null;
 
   toggleDocumentSelection?: () => void;
@@ -192,155 +194,160 @@ export const AIMessage = ({
               assistant={alternativeAssistant || currentPersona}
             />
 
-            <div className="font-bold text-emphasis ml-2 my-auto">
+            {/* <div className="font-bold text-emphasis ml-2 my-auto">
               {alternativeAssistant
                 ? alternativeAssistant.name
                 : personaName || "Danswer"}
-            </div>
-          </div>
+            </div> */}
+            {/* </div>
+             */}
+            <div className="w-full ml-4">
+              <div className="max-w-message-max break-words">
+                {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
+                  <>
+                    {query !== undefined &&
+                      handleShowRetrieved !== undefined &&
+                      isCurrentlyShowingRetrieved !== undefined &&
+                      !retrievalDisabled && (
+                        <div className="mb-1">
+                          <SearchSummary
+                            query={query}
+                            hasDocs={hasDocs || false}
+                            messageId={messageId}
+                            isCurrentlyShowingRetrieved={
+                              isCurrentlyShowingRetrieved
+                            }
+                            handleShowRetrieved={handleShowRetrieved}
+                            handleSearchQueryEdit={handleSearchQueryEdit}
+                          />
+                        </div>
+                      )}
+                    {handleForceSearch &&
+                      content &&
+                      query === undefined &&
+                      !hasDocs &&
+                      !retrievalDisabled && (
+                        <div className="mb-1">
+                          <SkippedSearch
+                            handleForceSearch={handleForceSearch}
+                          />
+                        </div>
+                      )}
+                  </>
+                )}
 
-          <div className="max-w-message-max break-words mt-1 ml-8">
-            {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
-              <>
-                {query !== undefined &&
-                  handleShowRetrieved !== undefined &&
-                  isCurrentlyShowingRetrieved !== undefined &&
-                  !retrievalDisabled && (
-                    <div className="my-1">
-                      <SearchSummary
-                        query={query}
-                        hasDocs={hasDocs || false}
-                        messageId={messageId}
-                        isCurrentlyShowingRetrieved={
-                          isCurrentlyShowingRetrieved
+                {toolCall &&
+                  !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
+                    <div className="my-2">
+                      <ToolRunDisplay
+                        toolName={
+                          toolCall.tool_result && content
+                            ? `Used "${toolCall.tool_name}"`
+                            : `Using "${toolCall.tool_name}"`
                         }
-                        handleShowRetrieved={handleShowRetrieved}
-                        handleSearchQueryEdit={handleSearchQueryEdit}
+                        toolLogo={<FiTool size={15} className="my-auto mr-1" />}
+                        isRunning={!toolCall.tool_result || !content}
                       />
                     </div>
                   )}
-                {handleForceSearch &&
-                  content &&
-                  query === undefined &&
-                  !hasDocs &&
-                  !retrievalDisabled && (
-                    <div className="my-1">
-                      <SkippedSearch handleForceSearch={handleForceSearch} />
+
+                {toolCall &&
+                  toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
+                  !toolCall.tool_result && (
+                    <div className="my-2">
+                      <ToolRunDisplay
+                        toolName={`Generating images`}
+                        toolLogo={
+                          <FiImage size={15} className="my-auto mr-1" />
+                        }
+                        isRunning={!toolCall.tool_result}
+                      />
                     </div>
                   )}
-              </>
-            )}
 
-            {toolCall &&
-              !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
-                <div className="my-2">
-                  <ToolRunDisplay
-                    toolName={
-                      toolCall.tool_result && content
-                        ? `Used "${toolCall.tool_name}"`
-                        : `Using "${toolCall.tool_name}"`
-                    }
-                    toolLogo={<FiTool size={15} className="my-auto mr-1" />}
-                    isRunning={!toolCall.tool_result || !content}
-                  />
-                </div>
-              )}
+                {content ? (
+                  <>
+                    <FileDisplay files={files || []} />
 
-            {toolCall &&
-              toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
-              !toolCall.tool_result && (
-                <div className="my-2">
-                  <ToolRunDisplay
-                    toolName={`Generating images`}
-                    toolLogo={<FiImage size={15} className="my-auto mr-1" />}
-                    isRunning={!toolCall.tool_result}
-                  />
-                </div>
-              )}
-
-            {content ? (
-              <>
-                <FileDisplay files={files || []} />
-
-                {typeof content === "string" ? (
-                  <ReactMarkdown
-                    key={messageId}
-                    className="prose max-w-full"
-                    components={{
-                      a: (props) => {
-                        const { node, ...rest } = props;
-                        const value = rest.children;
-                        if (value?.toString().startsWith("[")) {
-                          // for some reason <a> tags cause the onClick to not apply
-                          // and the links are unclickable
-                          // TODO: fix the fact that you have to double click to follow link
-                          // for the first link
-                          return (
-                            <Citation
-                              link={rest?.href}
-                              key={node?.position?.start?.offset}
-                            >
-                              {rest.children}
-                            </Citation>
-                          );
-                        } else {
-                          return (
-                            <a
-                              key={node?.position?.start?.offset}
-                              onClick={() =>
-                                rest.href
-                                  ? window.open(rest.href, "_blank")
-                                  : undefined
-                              }
-                              className="cursor-pointer text-link hover:text-link-hover"
-                            >
-                              {rest.children}
-                            </a>
-                          );
-                        }
-                      },
-                      code: (props) => (
-                        <CodeBlock {...props} content={content as string} />
-                      ),
-                      p: ({ node, ...props }) => (
-                        <p {...props} className="text-default" />
-                      ),
-                    }}
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
-                  >
-                    {content}
-                  </ReactMarkdown>
-                ) : (
-                  content
+                    {typeof content === "string" ? (
+                      <ReactMarkdown
+                        key={messageId}
+                        className="prose max-w-full"
+                        components={{
+                          a: (props) => {
+                            const { node, ...rest } = props;
+                            const value = rest.children;
+                            if (value?.toString().startsWith("[")) {
+                              // for some reason <a> tags cause the onClick to not apply
+                              // and the links are unclickable
+                              // TODO: fix the fact that you have to double click to follow link
+                              // for the first link
+                              return (
+                                <Citation
+                                  link={rest?.href}
+                                  key={node?.position?.start?.offset}
+                                >
+                                  {rest.children}
+                                </Citation>
+                              );
+                            } else {
+                              return (
+                                <a
+                                  key={node?.position?.start?.offset}
+                                  onClick={() =>
+                                    rest.href
+                                      ? window.open(rest.href, "_blank")
+                                      : undefined
+                                  }
+                                  className="cursor-pointer text-link hover:text-link-hover"
+                                >
+                                  {rest.children}
+                                </a>
+                              );
+                            }
+                          },
+                          code: (props) => (
+                            <CodeBlock {...props} content={content as string} />
+                          ),
+                          p: ({ node, ...props }) => (
+                            <p {...props} className="text-default" />
+                          ),
+                        }}
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+                      >
+                        {content}
+                      </ReactMarkdown>
+                    ) : (
+                      content
+                    )}
+                  </>
+                ) : isComplete ? null : (
+                  defaultLoader
                 )}
-              </>
-            ) : isComplete ? null : (
-              defaultLoader
-            )}
 
-            {isComplete && docs && docs.length > 0 && (
-              <div className="mt-2 -mx-8  w-full mb-4  flex relative ">
-                <div className="absolute left-0 top-0  h-full bg-gradient-to-l from-background/0  via-background/40 backdrop-blur-xs  to-background w-[40px]" />
+                {isComplete && docs && docs.length > 0 && (
+                  <div className="mt-2 -mx-8  w-full mb-4  flex relative ">
+                    <div className="absolute left-0 top-0  h-full bg-gradient-to-l from-background/0  via-background/40 backdrop-blur-xs  to-background w-[40px]" />
 
-                <div className="absolute right-6 top-0  h-full bg-gradient-to-r from-background/0  via-background/40 backdrop-blur-xs  to-background w-[40px]" />
-                <div className=" w-full  overflow-x-scroll no-scrollbar">
-                  {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
-                  <div className="px-8 flex gap-x-2">
-                    {docs
-                      .filter(
-                        (doc, index, self) =>
-                          doc.document_id &&
-                          doc.document_id !== "" &&
-                          index ===
-                            self.findIndex(
-                              (d) => d.document_id === doc.document_id
-                            )
-                      )
-                      .map((doc) => (
-                        <div
-                          key={doc.document_id}
-                          className={`w-[200px] rounded-lg  flex-none transition-all duration-500 hover:bg-neutral-200 bg-neutral-100 px-4 py-2  border-b 
+                    <div className="absolute right-6 top-0  h-full bg-gradient-to-r from-background/0  via-background/40 backdrop-blur-xs  to-background w-[40px]" />
+                    <div className=" w-full  overflow-x-scroll no-scrollbar">
+                      {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
+                      <div className="px-8 flex gap-x-2">
+                        {docs
+                          .filter(
+                            (doc, index, self) =>
+                              doc.document_id &&
+                              doc.document_id !== "" &&
+                              index ===
+                                self.findIndex(
+                                  (d) => d.document_id === doc.document_id
+                                )
+                          )
+                          .map((doc) => (
+                            <div
+                              key={doc.document_id}
+                              className={`w-[200px] rounded-lg  flex-none transition-all duration-500 hover:bg-neutral-200 bg-neutral-100 px-4 py-2  border-b 
                             ${
                               !isComplete
                                 ? "animate-pulse opacity-90"
@@ -354,67 +361,69 @@ export const AIMessage = ({
                                     : "opacity-20")
                             } ${selectedDocumentIds.includes(doc.document_id) && "!opacity-100 "}
                         `}
-                        >
-                          <a
-                            href={doc.link}
-                            target="_blank"
-                            className="text-sm  flex justify-between font-semibold text-neutral-800"
-                          >
-                            <p className="line-clamp-1">
-                              {
-                                doc.document_id.split("/")[
-                                  doc.document_id.split("/").length - 1
-                                ]
-                              }
-                            </p>
-                            <div className="flex-none">
-                              <SourceIcon
-                                sourceType={doc.source_type}
-                                iconSize={18}
-                              />
-                            </div>
-                          </a>
+                            >
+                              <a
+                                href={doc.link}
+                                target="_blank"
+                                className="text-sm  flex justify-between font-semibold text-neutral-800"
+                              >
+                                <p className="line-clamp-1">
+                                  {
+                                    doc.document_id.split("/")[
+                                      doc.document_id.split("/").length - 1
+                                    ]
+                                  }
+                                </p>
+                                <div className="flex-none">
+                                  <SourceIcon
+                                    sourceType={doc.source_type}
+                                    iconSize={18}
+                                  />
+                                </div>
+                              </a>
 
-                          <div className="flex  overscroll-x-scroll mt-1">
-                            <DocumentMetadataBlock document={doc} />
-                          </div>
+                              <div className="flex  overscroll-x-scroll mt-1">
+                                <DocumentMetadataBlock document={doc} />
+                              </div>
 
-                          {/* <p className="pl-1 pt-2 pb-1 break-words">
+                              {/* <p className="pl-1 pt-2 pb-1 break-words">
                             {buildDocumentSummaryDisplay(doc.match_highlights, doc.blurb)}
                           </p> */}
-                          <div className="line-clamp-3 text-xs break-words   pt-1">
-                            {doc.blurb}
-                          </div>
-                        </div>
-                      ))}
+                              <div className="line-clamp-3 text-xs break-words   pt-1">
+                                {doc.blurb}
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (toggleDocumentSelection) {
+                          toggleDocumentSelection();
+                        }
+                      }}
+                      className="my-auto h-full w-6  flex-none p-2"
+                    >
+                      <ExtendIcon className="text-neutral-700 hover:text-neutral-900 !h-6 !w-6" />
+                    </button>
                   </div>
-                </div>
-                <button
-                  onClick={() => {
-                    if (toggleDocumentSelection) {
-                      toggleDocumentSelection();
-                    }
-                  }}
-                  className="my-auto h-full w-6  flex-none p-2"
-                >
-                  <ExtendIcon className="text-neutral-700 hover:text-neutral-900 !sh-6 !w-6" />
-                </button>
+                )}
               </div>
-            )}
-          </div>
-          {handleFeedback && (
-            <div className="flex md:flex-row gap-x-0.5 ml-8 mt-1.5">
-              <CopyButton content={content.toString()} />
-              <Hoverable
-                icon={FiThumbsUp}
-                onClick={() => handleFeedback("like")}
-              />
-              <Hoverable
-                icon={FiThumbsDown}
-                onClick={() => handleFeedback("dislike")}
-              />
+              {handleFeedback && isActive && (
+                <div className="flex md:flex-row gap-x-0.5 mt-1.5">
+                  <CopyButton content={content.toString()} />
+                  <Hoverable
+                    icon={FiThumbsUp}
+                    onClick={() => handleFeedback("like")}
+                  />
+                  <Hoverable
+                    icon={FiThumbsDown}
+                    onClick={() => handleFeedback("dislike")}
+                  />
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
@@ -438,9 +447,11 @@ function MessageSwitcher({
         icon={FiChevronLeft}
         onClick={currentPage === 1 ? undefined : handlePrevious}
       />
+
       <span className="text-emphasis text-medium select-none">
         {currentPage} / {totalPages}
       </span>
+
       <Hoverable
         icon={FiChevronRight}
         onClick={currentPage === totalPages ? undefined : handleNext}
@@ -503,23 +514,20 @@ export const HumanMessage = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="mx-auto w-full max-w-searchbar-max">
+      <div className="mx-auto  w-full max-w-searchbar-max">
         <div className="xl:ml-8">
           <div className="flex">
-            <div className="p-1 bg-user rounded-lg h-fit">
+            <div className="flex-none p-1 bg-user rounded-lg h-fit">
               <div className="text-inverted">
                 <FiUser size={16} className="my-auto mx-auto" />
               </div>
             </div>
 
-            <div className="font-bold text-emphasis ml-2 my-auto">You</div>
-          </div>
-          <div className="mx-auto mt-1 ml-8 mx-4 max-w-searchbar-max flex flex-wrap">
-            <div className="w-full max-w-message-max break-words">
+            <div className="w-full  ml-4 flex mr-4 w-full max-w-message-max break-words">
               <FileDisplay files={files || []} />
 
               {isEditing ? (
-                <div>
+                <div className="w-full">
                   <div
                     className={`
                       opacity-100
@@ -616,7 +624,7 @@ export const HumanMessage = ({
                   {content}
                 </div>
               ) : (
-                content
+                <p className="bg-black rounded-lg p-1">{content}</p>
               )}
             </div>
           </div>

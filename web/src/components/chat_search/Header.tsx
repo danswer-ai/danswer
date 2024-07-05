@@ -23,7 +23,6 @@ export default function FunctionalHeader({
             <TbLayoutSidebarLeftExpand size={24} />
           </button>
         )}
-
         <div className="ml-auto my-auto mr-4 flex gap-x-2">
           {setSharingModalVisible && (
             <div

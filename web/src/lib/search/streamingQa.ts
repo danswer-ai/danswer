@@ -28,6 +28,7 @@ export const searchRequestStreamed = async ({
   updateSelectedDocIndices,
   updateError,
   updateMessageId,
+  finishedSearching,
   updateDocumentRelevance, // New callback function
   updateComments,
 }: SearchRequestArgs) => {
@@ -154,21 +155,15 @@ export const searchRequestStreamed = async ({
           updateQuotes(quotes);
           return;
         }
+
+        // Is a bakcend message- handle all backend message related updates here
         if (Object.hasOwn(chunk, "relevance")) {
-          updateDocumentRelevance((chunk as BackendMessage).relevance);
+          const backendChunk = chunk as BackendMessage;
+          updateDocumentRelevance(backendChunk.relevance);
+          updateComments(backendChunk.comments);
+          updateMessageId(backendChunk.message_id);
+          finishedSearching();
         }
-        if (Object.hasOwn(chunk, "comments")) {
-          updateComments((chunk as BackendMessage).comments);
-        }
-
-        // check for message ID section
-        if (Object.hasOwn(chunk, "message_id")) {
-          updateMessageId((chunk as BackendMessage).message_id);
-          return;
-        }
-
-        // should never reach this
-        console.log("Unknown chunk:", chunk);
       });
     }
   } catch (err) {

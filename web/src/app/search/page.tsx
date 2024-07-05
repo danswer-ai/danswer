@@ -25,11 +25,6 @@ import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal"
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatPopup } from "../chat/ChatPopup";
 import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
-// import {  useState } from "react";
-import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
-import { useChatContext } from "@/components/context/ChatContext";
-
-import { UserDropdown } from "@/components/UserDropdown";
 import { ChatSession } from "../chat/interfaces";
 
 export default async function Home() {

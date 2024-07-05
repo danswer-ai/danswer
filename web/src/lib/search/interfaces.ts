@@ -116,6 +116,7 @@ export interface SearchRequestArgs {
   updateSuggestedFlowType: (flowType: FlowType) => void;
   updateError: (error: string) => void;
   updateMessageId: (messageId: number) => void;
+  finishedSearching: () => void;
   updateComments: (comments: any) => void;
   selectedSearchType: SearchType | null;
 }

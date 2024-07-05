@@ -40,6 +40,7 @@ import { ValidSources } from "./types";
 import { SourceCategory, SourceMetadata } from "./search/interfaces";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import internal from "stream";
+import { FaSlack } from "react-icons/fa";
 
 interface PartialSourceMetadata {
   icon: React.FC<{ size?: number; className?: string }>;
@@ -63,7 +64,7 @@ const SOURCE_METADATA_MAP: SourceMap = {
     category: SourceCategory.ImportedKnowledge,
   },
   slack: {
-    icon: SlackIcon,
+    icon: FaSlack,
     displayName: "Slack",
     category: SourceCategory.AppConnection,
   },
