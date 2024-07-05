@@ -118,10 +118,7 @@ def _does_document_exist(
     Specifically in this case, document refers to a vespa document which is equivalent to a Danswer
     chunk. This checks for whether the chunk exists already in the index"""
     doc_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{doc_chunk_id}"
-    try:
-        doc_fetch_response = http_client.get(doc_url)
-    except Exception as e:
-        raise e
+    doc_fetch_response = http_client.get(doc_url)
 
     if doc_fetch_response.status_code == 404:
         return False
