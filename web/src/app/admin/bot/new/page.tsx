@@ -6,8 +6,12 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { DocumentSet } from "@/lib/types";
 import { BackButton } from "@/components/BackButton";
 import { Text } from "@tremor/react";
-import { Persona } from "../../assistants/interfaces";
 import { redirect } from "next/navigation";
+import {
+  FetchAssistantsResponse,
+  fetchAssistantsSS,
+} from "@/lib/assistants/fetchAssistantsSS";
+
 
 async function Page({
   params,
@@ -22,8 +26,9 @@ async function Page({
     return null; // Return null after redirect
   }
 
-  const tasks = [fetchSS("/manage/document-set"), fetchSS("/persona")];
-  const [documentSetsResponse, personasResponse] = await Promise.all(tasks);
+  const tasks = [fetchSS("/manage/document-set"), fetchAssistantsSS()];
+  const [documentSetsResponse, [assistants, assistantsFetchError]] = 
+    (await Promise.all(tasks) as [Response, FetchAssistantsResponse]);
 
   if (!documentSetsResponse.ok) {
     return (
@@ -35,15 +40,14 @@ async function Page({
   }
   const documentSets = (await documentSetsResponse.json()) as DocumentSet[];
 
-  if (!personasResponse.ok) {
+  if (assistantsFetchError) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch personas - ${await personasResponse.text()}`}
+        errorMsg={`Failed to fetch assistants - ${assistantsFetchError}`}
       />
     );
   }
-  const personas = (await personasResponse.json()) as Persona[];
 
   return (
     <div className="container mx-auto">
@@ -61,7 +65,7 @@ async function Page({
       <SlackBotCreationForm
         app_id={app_id}
         documentSets={documentSets}
-        personas={personas}
+        personas={assistants}
       />
     </div>
   );

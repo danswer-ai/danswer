@@ -66,6 +66,7 @@ interface BaseProps<T extends Yup.AnyObject> {
   formBody?: JSX.Element | null;
   formBodyBuilder?: FormBodyBuilder<T>;
   validationSchema: Yup.ObjectSchema<T>;
+  validate?: (values: T) => Record<string, string>;
   initialValues: T;
   onSubmit?: (
     isSuccess: boolean,
@@ -92,6 +93,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
   formBody,
   formBodyBuilder,
   validationSchema,
+  validate,
   initialValues,
   refreshFreq,
   pruneFreq,
@@ -136,6 +138,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
           ...initialValues,
         }}
         validationSchema={finalValidationSchema}
+        validate={validate}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
           const connectorName = nameBuilder(values);
