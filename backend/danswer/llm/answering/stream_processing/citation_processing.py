@@ -69,7 +69,6 @@ def extract_citations_from_stream(
     current_citations = []
     past_cite_count = 0
     for raw_token in tokens:
-        print(raw_token)
         raw_out += raw_token
         if stop_stream:
             next_hold = hold + raw_token
@@ -94,9 +93,6 @@ def extract_citations_from_stream(
 
         if citations_found and not in_code_block(llm_out):
             last_citation_end = 0
-            # print("CITATIONS HERE")
-            # print(citations_found)
-            # print(llm_out)
             length_to_add = 0
 
             while len(citations_found) > 0:
@@ -111,15 +107,8 @@ def extract_citations_from_stream(
 
                     # Skip consecutive citations of the same work
                     if target_citation_num in current_citations:
-                        print(f"Target is {target_citation_num}")
-                        print(f"Before: {curr_segment}")
-
                         start, end = citation.span()
-                        print(f"REMOVING: {curr_segment[start+6:end+5]}")
                         curr_segment = curr_segment[:start] + curr_segment[end:]
-
-                        print(f"After: {curr_segment}")
-                        print("|||||")
                         continue
 
                     link = context_llm_doc.link
@@ -135,7 +124,6 @@ def extract_citations_from_stream(
 
                     past_cite_count = len(llm_out)
                     current_citations.append(target_citation_num)
-                    currently_found = True
 
                     if target_citation_num not in cited_inds:
                         cited_inds.add(target_citation_num)
@@ -143,7 +131,6 @@ def extract_citations_from_stream(
                             citation_num=target_citation_num,
                             document_id=context_llm_doc.document_id,
                         )
-                    # print(f"Before: {curr_segment}")
 
                     if link:
                         curr_segment = (
@@ -164,14 +151,7 @@ def extract_citations_from_stream(
                         length_to_add = len(f"[[{target_citation_num}]]()") - len(
                             f"{[numerical_value]}"
                         )
-                    # print(f"After: {curr_segment}")
-                    # print("|||||")
-
-                    # print("CURR SEGMENT")
-                    # print(curr_segment)
-
                     last_citation_end = end + length_to_add
-                    last_cited_num = target_citation_num
 
             if last_citation_end > 0:
                 yield DanswerAnswerPiece(answer_piece=curr_segment[:last_citation_end])
