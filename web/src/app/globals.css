@@ -93,32 +93,6 @@
   }
 }
 
-/* .collapsible {
-  
-  max-height: 10000px;
-  transition-property: all;
-  transition-duration: .5s;
-  transition-timing-function: cubic-bezier(1, 1, 1, 1);
-}
-
-.collapsible-closed {
-  max-height: 0;
-  overflow-y: hidden;
-
-} */
-/* .collapsible {
-  max-height: 300px;
-  transition:
-    max-height 0.5s ease-in-out,
-    border 0.5s ease-in-out;
-}
-
-.collapsible-closed {
-  max-height: 0;
-
-  border-bottom-color: transparent;
-} */
-
 .collapsible {
   max-height: 300px;
   transition:

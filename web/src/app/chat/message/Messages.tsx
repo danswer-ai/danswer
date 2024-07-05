@@ -46,7 +46,6 @@ import {
   buildDocumentSummaryDisplay,
   DocumentMetadataBlock,
 } from "@/components/search/DocumentDisplay";
-import { DocSidebar } from "./DocumentSidebar";
 import { ExtendIcon } from "@/components/icons/icons";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [

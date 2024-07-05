@@ -237,9 +237,6 @@ export const SearchSection = ({
   const updateComments = (comments: any) => {
     setComments(comments);
   };
-  // const updateDocStatusz = (d: any) => {
-  //   console.log(d)
-  // }
 
   const resetInput = () => {
     setSweep(false);
@@ -511,22 +508,7 @@ export const SearchSection = ({
               </div>
             </div>
           </div>
-          {/* {firstSearch &&
-          
-            <div className="mt-48 mb-8 flex justify-center items-center h-full">
-              <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
-                <div className="flex">
-                  <div className="mx-auto">
-                    <Logo height={80} width={80} className="m-auto" />
-                    <div className="m-auto text-3xl font-bold text-strong mt-4 w-fit">
-                      Danswer
-                    </div>
-                    Unlocking your organization's knowlege.
-                  </div>
-                </div>
-              </div>
-            </div>
-          } */}
+
           <SearchBar
             toggleAgentic={toggleAgentic}
             agentic={agentic}
@@ -542,6 +524,7 @@ export const SearchSection = ({
           <div className="flex gap-x-4 flex-wrap w-full">
             <div className="block 2xl:block w-52 3xl:w-64 mt-4">
               <div className="pr-5">
+                {/* Keep for now */}
                 {/* <SearchHelper
                   isFetching={isFetching}
                   searchResponse={searchResponse}

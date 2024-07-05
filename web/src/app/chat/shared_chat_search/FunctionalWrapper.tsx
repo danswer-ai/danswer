@@ -30,11 +30,10 @@ const ToggleSwitch = () => {
 
   return (
     <div className="bg-gray-100 flex rounded-full p-1">
-      {/* Animated background */}
       <div
         className={`absolute top-1 bottom-1 w-1/2 bg-white rounded-full shadow ${
           isInitialLoad ? "" : "transition-transform duration-300 ease-in-out"
-        } ${activeTab === "chat" ? "translate-x-[94%]" : "translate-x-0"}`}
+        } ${activeTab === "chat" ? "translate-x-[100%]" : "translate-x-0"}`}
       />
       <button
         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 ease-in-out flex items-center relative z-10 ${
@@ -44,7 +43,7 @@ const ToggleSwitch = () => {
         }`}
         onClick={() => handleTabChange("search")}
       >
-        <SearchIcon className="w-4 h-4 mr-2" />
+        <SearchIcon className="!w-4 !h-4 mr-2" />
         Search
         <span className="text-xs ml-2">⌘S</span>
       </button>
@@ -56,7 +55,7 @@ const ToggleSwitch = () => {
         }`}
         onClick={() => handleTabChange("chat")}
       >
-        <ChatIcon className="w-4 h-4 mr-2" />
+        <ChatIcon className="!w-4 !h-4 mr-2" />
         Chat
         <span className="text-xs ml-2">⌘D</span>
       </button>
@@ -104,8 +103,6 @@ export default function FunctionalWrapper({
 
   return (
     <>
-      {/* <div className="z-[40] absolute top-4 left-1/2 transform -translate-x-1/2"> */}
-
       <div className="z-[40] fixed top-4 left-1/2 transform -translate-x-1/2">
         <ToggleSwitch />
       </div>

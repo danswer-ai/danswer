@@ -128,59 +128,6 @@ export const SearchResultsDisplay = ({
   return (
     <>
       {popup}
-      {/* {shouldDisplayQA && (
-        <div className="min-h-[16rem] p-4 border-2 border-border rounded-lg relative">
-          <div>
-            <div className="flex mb-1">
-              <h2 className="text-emphasis font-bold my-auto mb-1 w-full">
-                AI Answer
-              </h2>
-            </div>
-
-            <div className="mb-2 pt-1 border-t border-border w-full">
-              <AnswerSection
-                answer={answer}
-                quotes={quotes}
-                error={error}
-                nonAnswerableReason={
-                  validQuestionResponse.answerable === false && !isPersona
-                    ? validQuestionResponse.reasoning
-                    : ""
-                }
-                isFetching={isFetching}
-              />
-            </div>
-
-            {quotes !== null && answer && !isPersona && (
-              <div className="pt-1 border-t border-border w-full">
-                <QuotesSection
-                  quotes={dedupedQuotes}
-                  isFetching={isFetching}
-                  isAnswerable={validQuestionResponse.answerable}
-                />
-
-                {searchResponse.messageId !== null && (
-                  <div className="absolute right-3 bottom-3">
-                    <QAFeedbackBlock
-                      messageId={searchResponse.messageId}
-                      setPopup={setPopup}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )} */}
-      {/* {documents && documents.length > 0 && (
-        <AnimatedDocumentList
-          documents={documents}
-          messageId={messageId}
-          selectedDocumentIds={selectedDocumentIds}
-          setPopup={setPopup}
-          relevance={relevance}
-        />
-      )} */}
       {documents && documents.length > 0 && (
         <div className="mt-4">
           <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
@@ -200,8 +147,6 @@ export const SearchResultsDisplay = ({
                 <div
                   className={`flex items-center ${sweep ? "rotate-180" : ""}`}
                 >
-                  {/* {!sweep ? "Clean" : "Show"} */}
-
                   <span>⌘O</span>
 
                   {!sweep ? (
@@ -223,8 +168,6 @@ export const SearchResultsDisplay = ({
 
           {removeDuplicateDocs(documents, agenticResults!, relevance).map(
             (document, ind) => {
-              // if (!relevance || (relevance && (!sweep || (sweep && relevance[document.document_id])))) {
-
               return agenticResults ? (
                 <AgenticDocumentDisplay
                   comments={comments}

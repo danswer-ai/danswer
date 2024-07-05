@@ -68,7 +68,6 @@ export const searchRequestStreamed = async ({
     let previousPartialChunk: string | null = null;
     while (true) {
       const rawChunk = await reader?.read();
-      console.log(rawChunk);
       if (!rawChunk) {
         throw new Error("Unable to process chunk");
       }
@@ -164,8 +163,6 @@ export const searchRequestStreamed = async ({
 
         // check for message ID section
         if (Object.hasOwn(chunk, "message_id")) {
-          console.log("BAKCNED MESSAGE");
-          console.log(chunk);
           updateMessageId((chunk as BackendMessage).message_id);
           return;
         }
