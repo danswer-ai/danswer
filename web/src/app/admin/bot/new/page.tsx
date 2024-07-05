@@ -12,7 +12,6 @@ import {
   fetchAssistantsSS,
 } from "@/lib/assistants/fetchAssistantsSS";
 
-
 async function Page({
   params,
   searchParams,
