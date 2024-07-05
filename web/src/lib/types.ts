@@ -132,6 +132,7 @@ export interface BookstackConfig {}
 
 export interface ConfluenceConfig {
   wiki_page_url: string;
+  index_origin?: boolean;
 }
 
 export interface JiraConfig {

@@ -38,9 +38,8 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 # Potential Improvements
-# 1. If wiki page instead of space, do a search of all the children of the page instead of index all in the space
-# 2. Include attachments, etc
-# 3. Segment into Sections for more accurate linking, can split by headers but make sure no text/ordering is lost
+# 1. Include attachments, etc
+# 2. Segment into Sections for more accurate linking, can split by headers but make sure no text/ordering is lost
 
 
 def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, str]:
@@ -94,15 +93,17 @@ def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str, str, bool
 
     try:
         if is_confluence_cloud:
-            wiki_base, space, page_id = _extract_confluence_keys_from_cloud_url(wiki_url)
+            wiki_base, space, page_id = _extract_confluence_keys_from_cloud_url(
+                wiki_url
+            )
         else:
-            wiki_base, space, page_id = _extract_confluence_keys_from_datacenter_url(wiki_url)
+            wiki_base, space, page_id = _extract_confluence_keys_from_datacenter_url(
+                wiki_url
+            )
     except Exception as e:
         error_msg = f"Not a valid Confluence Wiki Link, unable to extract wiki base, space, and page id. Exception: {e}"
         logger.error(error_msg)
         raise ValueError(error_msg)
-
-    logger.info(f"wiki_base: {wiki_base}, space: {space}, page_id: {page_id}, is_confluence_cloud: {is_confluence_cloud}")
 
     return wiki_base, space, page_id, is_confluence_cloud
 
@@ -209,6 +210,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         wiki_page_url: str,
+        index_origin: bool = False,
         batch_size: int = INDEX_BATCH_SIZE,
         continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
         # if a page has one of the labels specified in this list, we will just
@@ -219,14 +221,24 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self.batch_size = batch_size
         self.continue_on_failure = continue_on_failure
         self.labels_to_skip = set(labels_to_skip)
-        self.wiki_base, self.space, self.page_id, self.is_cloud = extract_confluence_keys_from_url(
-            wiki_page_url
-        )
+        self.index_origin = index_origin
+        (
+            self.wiki_base,
+            self.space,
+            self.page_id,
+            self.is_cloud,
+        ) = extract_confluence_keys_from_url(wiki_page_url)
+
         self.space_level_scan = False
+
         if self.page_id is None or self.page_id == "":
             self.space_level_scan = True
+
         self.confluence_client: Confluence | None = None
-        logger.info(f"wiki_base: {self.wiki_base}, space: {self.space}, page_id: {self.page_id}, is_confluence_cloud: {self.is_confluence_cloud} space_level_scan: {self.space_level_scan}")
+        logger.info(
+            f"wiki_base: {self.wiki_base}, space: {self.space}, page_id: {self.page_id},"
+            + f" space_level_scan: {self.space_level_scan}, origin: {self.index_origin}"
+        )
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         username = credentials["confluence_username"]
@@ -255,9 +267,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     self.space,
                     start=start_ind,
                     limit=batch_size,
-                    status="current"
-                    if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
-                    else None,
+                    status=(
+                        "current"
+                        if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
+                        else None
+                    ),
                     expand="body.storage.value,version",
                 )
             except Exception:
@@ -276,9 +290,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                                 self.space,
                                 start=start_ind + i,
                                 limit=1,
-                                status="current"
-                                if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
-                                else None,
+                                status=(
+                                    "current"
+                                    if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
+                                    else None
+                                ),
                                 expand="body.storage.value,version",
                             )
                         )
@@ -299,25 +315,47 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
                 return view_pages
 
-        def _fetch_child_pages(start_ind: int, batch_size: int) -> Collection[dict[str, Any]]:
+        def _fetch_child_pages(
+            start_ind: int, batch_size: int
+        ) -> Collection[dict[str, Any]]:
+            get_page_by_id = make_confluence_call_handle_rate_limit(
+                confluence_client.get_page_by_id
+            )
+
+            child_pages: list[dict[str, Any]] = []
+
+            if self.index_origin:
+                try:
+                    origin_page = get_page_by_id(
+                        self.page_id, expand="body.storage.value,version"
+                    )
+                    child_pages.append(origin_page)
+                except Exception as e:
+                    logger.warning(
+                        f"Appending orgin page with id {self.page_id} failed: {e}"
+                    )
+
             get_page_child_by_type = make_confluence_call_handle_rate_limit(
                 confluence_client.get_page_child_by_type
             )
+
             try:
-                return get_page_child_by_type(
+                child_page = get_page_child_by_type(
                     self.page_id,
                     type="page",
                     start=start_ind,
                     limit=batch_size,
                     expand="body.storage.value,version",
                 )
+
+                child_pages.extend(child_page)
+                return child_pages
             except Exception:
                 logger.warning(
                     f"Batch failed with page {self.page_id} at offset {start_ind} "
                     f"with size {batch_size}, processing pages individually..."
                 )
 
-                child_pages: list[dict[str, Any]] = []
                 for i in range(self.batch_size):
                     ind = start_ind + i
                     try:
@@ -339,7 +377,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 return child_pages
 
         try:
-            return _fetch_space(start_ind, self.batch_size) if self.space_level_scan else _fetch_child_pages(start_ind, self.batch_size)
+            return (
+                _fetch_space(start_ind, self.batch_size)
+                if self.space_level_scan
+                else _fetch_child_pages(start_ind, self.batch_size)
+            )
         except Exception as e:
             if not self.continue_on_failure:
                 raise e
@@ -348,7 +390,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         pages: list[dict[str, Any]] = []
         for i in range(self.batch_size):
             try:
-                pages.extend(_fetch_space(start_ind + i, 1) if self.space_level_scan else _fetch_child_pages(start_ind + i, 1))
+                pages.extend(
+                    _fetch_space(start_ind + i, 1)
+                    if self.space_level_scan
+                    else _fetch_child_pages(start_ind + i, 1)
+                )
             except Exception:
                 logger.exception(
                     "Ran into exception when fetching pages from Confluence"
@@ -360,6 +406,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         get_page_child_by_type = make_confluence_call_handle_rate_limit(
             confluence_client.get_page_child_by_type
         )
+
         try:
             comment_pages = cast(
                 Collection[dict[str, Any]],
@@ -408,7 +455,14 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 page_id, start=0, limit=500
             )
             for attachment in attachments_container["results"]:
-                if attachment["metadata"]["mediaType"] in ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "video/mp4", "video/quicktime"]:
+                if attachment["metadata"]["mediaType"] in [
+                    "image/jpeg",
+                    "image/png",
+                    "image/gif",
+                    "image/svg+xml",
+                    "video/mp4",
+                    "video/quicktime",
+                ]:
                     continue
 
                 if attachment["title"] not in files_in_used:
@@ -433,19 +487,17 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         return "\n".join(files_attachment_content)
 
     def _get_doc_batch(
-            self, start_ind: int, time_filter: Callable[[datetime], bool] | None = None
+        self, start_ind: int, time_filter: Callable[[datetime], bool] | None = None
     ) -> tuple[list[Document], int]:
         doc_batch: list[Document] = []
 
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
-
         batch = self._fetch_pages(self.confluence_client, start_ind)
+
         for page in batch:
             last_modified_str = page["version"]["when"]
             author = cast(str | None, page["version"].get("by", {}).get("email"))
-            if last_modified_str.endswith('Z'):
-                last_modified_str = last_modified_str[:-1] + '+00:00'
             last_modified = datetime.fromisoformat(last_modified_str)
 
             if last_modified.tzinfo is None:
@@ -468,6 +520,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                             f"Page with ID '{page_id}' has a label which has been "
                             f"designated as disallowed: {label_intersection}. Skipping."
                         )
+
                         continue
 
                 page_html = (
@@ -489,6 +542,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 comments_text = self._fetch_comments(self.confluence_client, page_id)
                 page_text += comments_text
 
+                if not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING and page_labels:
+                    doc_metadata["labels"] = page_labels
+                    
                 doc_metadata: dict[str, str | list[str]] = {
                     "Wiki Space Name": self.space
                 }
@@ -502,9 +558,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         source=DocumentSource.CONFLUENCE,
                         semantic_identifier=page["title"],
                         doc_updated_at=last_modified,
-                        primary_owners=[BasicExpertInfo(email=author)]
-                        if author
-                        else None,
+                        primary_owners=(
+                            [BasicExpertInfo(email=author)] if author else None
+                        ),
                         metadata=doc_metadata,
                     )
                 )
@@ -525,7 +581,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 break
 
     def poll_source(
-            self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
+        self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
