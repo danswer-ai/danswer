@@ -97,19 +97,27 @@ const StandardAnswersTableRow = ({
     <RowTemplate
       id={standardAnswer.id}
       entries={[
-        <Link href={`/admin/standard-answer/${standardAnswer.id}`}>
+        <Link
+          key={`edit-${standardAnswer.id}`}
+          href={`/admin/standard-answer/${standardAnswer.id}`}
+        >
           <EditIcon />
         </Link>,
-        <div>
+        <div key={`categories-${standardAnswer.id}`}>
           {standardAnswer.categories.map((category) => (
             <CategoryBubble key={category.id} name={category.name} />
           ))}
         </div>,
         standardAnswer.keyword,
-        <ReactMarkdown className="prose" remarkPlugins={[remarkGfm]}>
+        <ReactMarkdown
+          key={`answer-${standardAnswer.id}`}
+          className="prose"
+          remarkPlugins={[remarkGfm]}
+        >
           {standardAnswer.answer}
         </ReactMarkdown>,
         <div
+          key={`delete-${standardAnswer.id}`}
           className="cursor-pointer"
           onClick={() => handleDelete(standardAnswer.id)}
         >

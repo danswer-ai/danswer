@@ -408,10 +408,6 @@ export const SlackBotCreationForm = ({
                   <SectionHeader>
                     [Optional] Standard Answer Categories
                   </SectionHeader>
-                  <Text>
-                    Select standard answer categories to configure DanswerBot's
-                    behavior.
-                  </Text>
                   <div className="w-4/12">
                     <MultiSelectDropdown
                       name="standard_answer_categories"
