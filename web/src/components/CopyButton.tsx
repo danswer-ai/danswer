@@ -14,7 +14,7 @@ export function CopyButton({
 
   return (
     <HoverableIcon
-      icon={copyClicked ? <CopyMessageIcon /> : <CheckmarkIcon />}
+      icon={copyClicked ? <CheckmarkIcon /> : <CopyMessageIcon />}
       onClick={() => {
         if (content) {
           navigator.clipboard.writeText(content.toString());

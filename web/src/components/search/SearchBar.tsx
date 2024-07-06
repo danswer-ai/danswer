@@ -120,7 +120,7 @@ export const SearchBar = ({
       <div className="flex justify-end w-full items-center space-x-3 mr-12 px-4  pb-2 overflow-hidden">
         {searchState == "analyzing" && (
           <div className="mr-auto relative inline-block">
-            <span className=" text-transparent bg-clip-text bg-gradient-to-r from-black to-black via-neutral-10 animate-shimmer">
+            <span className=" text-transparent bg-clip-text bg-gradient-to-r from-black to-black via-neutral-10 shimmer-text">
               Analyzing text...
             </span>
           </div>
