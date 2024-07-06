@@ -68,6 +68,7 @@ def set_env_variables(
     if use_cloud_gpu:
         env_vars["MODEL_SERVER_HOST"] = remote_server_ip
         env_vars["MODEL_SERVER_PORT"] = remote_server_port
+        env_vars["INDEXING_MODEL_SERVER_HOST"] = remote_server_ip
 
     for env_var_name, env_var in env_vars.items():
         os.environ[env_var_name] = env_var
@@ -78,10 +79,9 @@ def start_docker_compose(
     run_suffix: str, launch_web_ui: bool, use_cloud_gpu: bool
 ) -> None:
     print("Starting Docker Compose...")
-    os.chdir(os.path.expanduser("~/danswer/deployment/docker_compose"))
+    os.chdir("../deployment/docker_compose")
     command = f"docker compose -f docker-compose.search-testing.yml -p danswer-stack{run_suffix} up -d"
     command += " --build"
-    command += " --pull always"
     command += " --force-recreate"
     if not launch_web_ui:
         command += " --scale web_server=0"
