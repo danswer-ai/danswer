@@ -11,8 +11,10 @@ import { useRouter } from "next/navigation";
 export default function FunctionalHeader({
   showSidebar,
   user,
+  page,
   setSharingModalVisible,
 }: {
+  page: "search" | "chat";
   showSidebar: boolean;
   user: User | null;
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
@@ -30,7 +32,7 @@ export default function FunctionalHeader({
           <Logo />
           Danswer
           {/* Danswer */}
-          <button onClick={() => router.push("/chat")}>
+          <button onClick={() => router.push(`/${page}`)}>
             <PlusCircleIcon className="ml-2 my-auto !h-6 !w-6 cursor-pointer text-neutral-700 hover:text-neutral-600 transition-colors duration-300" />
           </button>
         </p>

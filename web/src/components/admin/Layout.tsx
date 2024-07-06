@@ -21,6 +21,23 @@ import {
   PaintingIcon,
   ChatIcon,
   SearchIcon,
+  NotebookIconSkeleton,
+  ConnectorIconSkeleton,
+  ThumbsUpIconSkeleton,
+  ToolIconSkeleton,
+  CpuIconSkeleton,
+  PackageIconSkeleton,
+  UsersIconSkeleton,
+  GroupsIconSkeleton,
+  KeyIconSkeleton,
+  ShieldIconSkeleton,
+  DatabaseIconSkeleton,
+  SettingsIconSkeleton,
+  PaintingIconSkeleton,
+  BookmarkIconSkeleton,
+  ZoomInIconSkeleton,
+  StarIconSkeleton,
+  SlackIconSkeleton,
 } from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import {
@@ -85,7 +102,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <NotebookIcon size={18} />
+                        <NotebookIconSkeleton size={18} />
                         <div className="ml-1">Existing Connectors</div>
                       </div>
                     ),
@@ -94,7 +111,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <ConnectorIcon size={18} />
+                        <ConnectorIconSkeleton size={18} />
                         <div className="ml-1.5">Add Connector</div>
                       </div>
                     ),
@@ -108,7 +125,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <BookmarkIcon size={18} />
+                        <BookmarkIconSkeleton size={18} />
                         <div className="ml-1">Document Sets</div>
                       </div>
                     ),
@@ -117,7 +134,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <ZoomInIcon size={18} />
+                        <ZoomInIconSkeleton size={18} />
                         <div className="ml-1">Explorer</div>
                       </div>
                     ),
@@ -126,7 +143,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <ThumbsUpIcon size={18} />
+                        <ThumbsUpIconSkeleton size={18} />
                         <div className="ml-1">Feedback</div>
                       </div>
                     ),
@@ -140,7 +157,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <RobotIcon className="my-auto" size={18} />
+                        <StarIconSkeleton className="my-auto" size={18} />
                         <div className="ml-1">Assistants</div>
                       </div>
                     ),
@@ -150,7 +167,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     name: (
                       <div className="flex">
                         {/* <FiSlack size={18} /> */}
-                        <SlackIcon />
+                        <SlackIconSkeleton />
                         <div className="ml-1">Slack Bots</div>
                       </div>
                     ),
@@ -160,7 +177,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     name: (
                       <div className="flex">
                         {/* <FiTool size={18} className="my-auto" /> */}
-                        <ToolIcon size={18} />
+                        <ToolIconSkeleton size={18} />
                         <div className="ml-1">Tools</div>
                       </div>
                     ),
@@ -175,7 +192,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     name: (
                       <div className="flex">
                         {/* <FiCpu size={18} /> */}
-                        <CpuIcon size={18} />
+                        <CpuIconSkeleton size={18} />
                         <div className="ml-1">LLM</div>
                       </div>
                     ),
@@ -185,7 +202,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     name: (
                       <div className="flex">
                         {/* <FiPackage size={18} /> */}
-                        <PackageIcon />
+                        <PackageIconSkeleton />
 
                         <div className="ml-1">Embedding</div>
                       </div>
@@ -200,7 +217,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <UsersIcon size={18} />
+                        <UsersIconSkeleton size={18} />
                         <div className="ml-1">Users</div>
                       </div>
                     ),
@@ -211,7 +228,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                         {
                           name: (
                             <div className="flex">
-                              <GroupsIcon size={18} />
+                              <GroupsIconSkeleton size={18} />
                               <div className="ml-1">Groups</div>
                             </div>
                           ),
@@ -220,7 +237,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                         {
                           name: (
                             <div className="flex">
-                              <KeyIcon size={18} />
+                              <KeyIconSkeleton size={18} />
                               <div className="ml-1">API Keys</div>
                             </div>
                           ),
@@ -232,7 +249,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     name: (
                       <div className="flex">
                         {/* <FiShield size={18} /> */}
-                        <ShieldIcon size={18} />
+                        <ShieldIconSkeleton size={18} />
                         <div className="ml-1">Token Rate Limits</div>
                       </div>
                     ),
@@ -257,7 +274,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                         {
                           name: (
                             <div className="flex">
-                              <DatabaseIcon size={18} />
+                              <DatabaseIconSkeleton size={18} />
                               <div className="ml-1">Query History</div>
                             </div>
                           ),
@@ -282,7 +299,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <SettingsIcon size={18} />
+                        <SettingsIconSkeleton size={18} />
                         <div className="ml-1">Workspace Settings</div>
                       </div>
                     ),
@@ -293,7 +310,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                         {
                           name: (
                             <div className="flex">
-                              <PaintingIcon size={18} />
+                              <PaintingIconSkeleton size={18} />
                               <div className="ml-1">Whitelabeling</div>
                             </div>
                           ),

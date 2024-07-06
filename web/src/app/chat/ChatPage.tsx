@@ -1135,6 +1135,7 @@ export function ChatPage({
           case "e":
             event.preventDefault();
             toggleSidebar();
+            setToggledSidebar(true);
             break;
         }
       }
@@ -1264,6 +1265,7 @@ export function ChatPage({
 
                       {livePersona && (
                         <FunctionalHeader
+                          page="chat"
                           setSharingModalVisible={
                             chatSessionIdRef.current !== null
                               ? setSharingModalVisible
