@@ -29,7 +29,7 @@ langchain==0.1.17
 langchain-community==0.0.36
 langchain-core==0.1.50
 langchain-text-splitters==0.0.1
-litellm==1.37.7
+litellm==1.40.16
 llama-index==0.9.45
 Mako==1.2.4
 msal==1.26.0
