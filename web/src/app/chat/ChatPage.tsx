@@ -15,6 +15,8 @@ import {
   ToolCallMetadata,
 } from "./interfaces";
 
+import Cookies from "js-cookie";
+
 import { HistorySidebar } from "./sessionSidebar/HistorySidebar";
 import { Persona } from "../admin/assistants/interfaces";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -79,6 +81,7 @@ import ResizableSection from "@/components/resizable/ResizableSection";
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import { Logo } from "@/components/Logo";
+import { CHAT_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -87,9 +90,11 @@ const SYSTEM_MESSAGE_ID = -3;
 export function ChatPage({
   documentSidebarInitialWidth,
   defaultSelectedPersonaId,
+  toggleChatSidebar,
 }: {
   documentSidebarInitialWidth?: number;
   defaultSelectedPersonaId?: number;
+  toggleChatSidebar?: boolean;
 }) {
   const [configModalActiveTab, setConfigModalActiveTab] = useState<
     string | null
@@ -1045,12 +1050,21 @@ export function ChatPage({
   if (settings?.settings?.chat_page_enabled === false) {
     router.push("/search");
   }
+  console.log(toggleChatSidebar);
 
-  const [toggledSidebar, setToggledSidebar] = useState(false); // State to track if sidebar is open
+  const [toggledSidebar, setToggledSidebar] = useState(toggleChatSidebar!); // State to track if sidebar is open
 
   const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
 
   const toggleSidebar = () => {
+    Cookies.set(
+      CHAT_TOGGLED_COOKIE_NAME,
+      String(!toggledSidebar).toLocaleLowerCase()
+    ),
+      {
+        path: "/",
+      };
+
     setToggledSidebar((toggledSidebar) => !toggledSidebar); // Toggle the state which will in turn toggle the class
   };
 

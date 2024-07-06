@@ -46,6 +46,8 @@ import { Logo } from "../Logo";
 import { cornersOfRectangle } from "@dnd-kit/core/dist/utilities/algorithms/helpers";
 import FunctionalHeader from "../chat_search/Header";
 import { useSidebarVisibility } from "../chat_search/hooks";
+import { SEARCH_TOGGLED_COOKIE_NAME } from "../resizable/contants";
+import Cookies from "js-cookie";
 
 export type searchState = "input" | "searching" | "analyzing";
 
@@ -69,6 +71,7 @@ interface SearchSectionProps {
   querySessions: ChatSession[];
   defaultSearchType: SearchType;
   user: User | null;
+  toggleSearchSidebar: boolean;
 }
 
 export const SearchSection = ({
@@ -78,6 +81,7 @@ export const SearchSection = ({
   user,
   tags,
   querySessions,
+  toggleSearchSidebar,
   defaultSearchType,
 }: SearchSectionProps) => {
   // Search Bar
@@ -373,6 +377,14 @@ export const SearchSection = ({
   const [showDocSidebar, setShowDocSidebar] = useState(false);
 
   const toggleSidebar = () => {
+    Cookies.set(
+      SEARCH_TOGGLED_COOKIE_NAME,
+      String(!toggledSidebar).toLocaleLowerCase()
+    ),
+      {
+        path: "/",
+      };
+
     setToggledSidebar((toggledSidebar) => !toggledSidebar); // Toggle the state which will in turn toggle the class
     console.log(!toggledSidebar, showDocSidebar);
   };
@@ -411,7 +423,7 @@ export const SearchSection = ({
   const [firstSearch, setFirstSearch] = useState(true);
   const [searchState, setSearchState] = useState<searchState>("input");
 
-  const [toggledSidebar, setToggledSidebar] = useState(false); // State to track if sidebar is open
+  const [toggledSidebar, setToggledSidebar] = useState(toggleSearchSidebar); // State to track if sidebar is open
 
   useSidebarVisibility({
     toggledSidebar,

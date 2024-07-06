@@ -20,7 +20,11 @@ import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
 import { personaComparator } from "@/app/admin/assistants/lib";
 import { cookies } from "next/headers";
-import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
+import {
+  CHAT_TOGGLED_COOKIE_NAME,
+  DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME,
+  SEARCH_TOGGLED_COOKIE_NAME,
+} from "@/components/resizable/contants";
 import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 
 interface FetchChatDataResult {
@@ -36,6 +40,7 @@ interface FetchChatDataResult {
   folders: Folder[];
   openedFolders: Record<string, boolean>;
   defaultPersonaId?: number;
+  toggleChatSidebar: boolean;
   finalDocumentSidebarInitialWidth?: number;
   shouldShowWelcomeModal: boolean;
   shouldDisplaySourcesIncompleteModal: boolean;
@@ -54,7 +59,6 @@ export async function fetchChatData(searchParams: {
     fetchSS("/query/valid-tags"),
     fetchLLMProvidersSS(),
     fetchSS("/folder"),
-
   ];
 
   let results: (
@@ -105,8 +109,6 @@ export async function fetchChatData(searchParams: {
     }
   });
 
-
-
   let chatSessions: ChatSession[] = [];
   if (chatSessionsResponse?.ok) {
     chatSessions = (await chatSessionsResponse.json()).sessions;
@@ -154,6 +156,12 @@ export async function fetchChatData(searchParams: {
   const documentSidebarCookieInitialWidth = cookies().get(
     DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME
   );
+  const chatSidebarToggled = cookies().get(CHAT_TOGGLED_COOKIE_NAME);
+
+  const toggleChatSidebar = chatSidebarToggled
+    ? chatSidebarToggled.value.toLocaleLowerCase() == "true" ?? false
+    : false;
+
   const finalDocumentSidebarInitialWidth = documentSidebarCookieInitialWidth
     ? parseInt(documentSidebarCookieInitialWidth.value)
     : undefined;
@@ -201,6 +209,7 @@ export async function fetchChatData(searchParams: {
     openedFolders,
     defaultPersonaId,
     finalDocumentSidebarInitialWidth,
+    toggleChatSidebar,
     shouldShowWelcomeModal,
     shouldDisplaySourcesIncompleteModal,
   };

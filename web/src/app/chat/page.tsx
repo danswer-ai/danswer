@@ -32,6 +32,7 @@ export default async function Page({
     tags,
     llmProviders,
     folders,
+    toggleChatSidebar,
     openedFolders,
     defaultPersonaId,
     finalDocumentSidebarInitialWidth,
@@ -67,11 +68,10 @@ export default async function Page({
           <ChatPage
             defaultSelectedPersonaId={defaultPersonaId}
             documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
+            toggleChatSidebar={toggleChatSidebar}
           />
-        </FunctionalWrapper >
+        </FunctionalWrapper>
       </ChatProvider>
-
-
     </>
   );
 }

@@ -3,6 +3,7 @@ import os
 from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Iterator
+from typing import Any
 from typing import cast
 
 from openai import OpenAI
@@ -87,7 +88,7 @@ def evaluate_relevance(
     # query: str,
     # client: OpenAI,
     # logger: Logger
-) -> dict[str, bool]:
+) -> tuple[dict[str, Any], dict[str, str]]:
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     # Group documents by document_id
     document_groups = defaultdict(list)
@@ -134,7 +135,7 @@ def evaluate_relevance(
                 temperature=0.3,
             )
 
-            content = response.choices[0].message.content
+            content = cast(str, response.choices[0].message.content)
             parsed_response = json.loads(content)
 
             if "response" in parsed_response:
@@ -201,7 +202,7 @@ def evaluate_relevance(
                     temperature=0.4,
                 )
 
-                content = response.choices[0].message.content
+                content = cast(str, response.choices[0].message.content)
                 if "not relevant" in content.lower():
                     agentic_comments[document_id] = "Not relevant"
                 else:
@@ -402,7 +403,7 @@ def stream_answer_objects(
             yield packet
 
     relevance, comments = evaluate_relevance(
-        search_response, query=query_msg, agentic=query_req.agentic
+        search_response, query=query_msg, agentic=query_req.agentic or False
     )
 
     # Saving Gen AI answer and responding with message info

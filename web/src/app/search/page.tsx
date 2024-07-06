@@ -26,6 +26,7 @@ import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompl
 import { ChatPopup } from "../chat/ChatPopup";
 import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
 import { ChatSession } from "../chat/interfaces";
+import { SEARCH_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -158,6 +159,12 @@ export default async function Home() {
     !shouldDisplayNoSourcesModal &&
     !shouldShowWelcomeModal;
 
+  const searchSidebarToggle = cookies().get(SEARCH_TOGGLED_COOKIE_NAME);
+
+  const toggleSearchSidebar = searchSidebarToggle
+    ? searchSidebarToggle.value.toLocaleLowerCase() == "true" ?? false
+    : false;
+
   return (
     <>
       <div className="m-3">
@@ -182,6 +189,7 @@ export default async function Home() {
       <InstantSSRAutoRefresh />
       <FunctionalWrapper>
         <SearchSection
+          toggleSearchSidebar={toggleSearchSidebar}
           querySessions={querySessions}
           user={user}
           ccPairs={ccPairs}
