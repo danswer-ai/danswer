@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -69,12 +70,14 @@ def create_slack_bot_persona(
 
 
 def insert_slack_bot_config(
+    app_id: int,
     persona_id: int | None,
     channel_config: ChannelConfig,
     response_type: SlackBotResponseType,
     db_session: Session,
 ) -> SlackBotConfig:
     slack_bot_config = SlackBotConfig(
+        app_id=app_id,
         persona_id=persona_id,
         channel_config=channel_config,
         response_type=response_type,
@@ -170,5 +173,12 @@ def fetch_slack_bot_config(
     )
 
 
-def fetch_slack_bot_configs(db_session: Session) -> Sequence[SlackBotConfig]:
-    return db_session.scalars(select(SlackBotConfig)).all()
+def fetch_slack_bot_configs(
+    db_session: Session, slack_bot_app_id: Optional[int] = None
+) -> Sequence[SlackBotConfig]:
+    if not slack_bot_app_id:
+        return db_session.scalars(select(SlackBotConfig)).all()
+
+    return db_session.scalars(
+        select(SlackBotConfig).where(SlackBotConfig.app_id == slack_bot_app_id)
+    ).all()

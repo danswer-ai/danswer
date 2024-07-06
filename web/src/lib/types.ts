@@ -534,12 +534,24 @@ export type SlackBotResponseType = "quotes" | "citations";
 
 export interface SlackBotConfig {
   id: number;
+  app_id: number;
   persona: Persona | null;
   channel_config: ChannelConfig;
   response_type: SlackBotResponseType;
 }
 
 export interface SlackBotTokens {
+  bot_token: string;
+  app_token: string;
+}
+
+export interface SlackApp {
+  id: number;
+  name: string;
+  description: string;
+  enabled: boolean;
+
+  // tokens
   bot_token: string;
   app_token: string;
 }

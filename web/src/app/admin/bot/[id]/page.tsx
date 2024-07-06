@@ -86,6 +86,7 @@ async function Page({ params }: { params: { id: string } }) {
       </Text>
 
       <SlackBotCreationForm
+        app_id={slackBotConfig.app_id.toString()}
         documentSets={documentSets}
         personas={assistants}
         existingSlackBotConfig={slackBotConfig}
