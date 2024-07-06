@@ -44,7 +44,7 @@ import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { Button } from "@tremor/react";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
-import Citation, { Tooltip } from "@/components/search/results/Citation";
+import { Citation, Tooltip } from "@/components/search/results/Citation";
 import {
   buildDocumentSummaryDisplay,
   DocumentMetadataBlock,
@@ -60,14 +60,20 @@ const TOOLS_WITH_CUSTOM_HANDLING = [
   IMAGE_GENERATION_TOOL_NAME,
 ];
 
-function FileDisplay({ files }: { files: FileDescriptor[] }) {
+function FileDisplay({
+  files,
+  alignBubble,
+}: {
+  files: FileDescriptor[];
+  alignBubble?: boolean;
+}) {
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
   const nonImgFiles = files.filter((file) => file.type !== ChatFileType.IMAGE);
 
   return (
     <>
       {nonImgFiles && nonImgFiles.length > 0 && (
-        <div className="mt-2 mb-4">
+        <div className={` ${alignBubble && "  ml-auto"} mt-2 auto mb-4`}>
           <div className="flex flex-col gap-2">
             {nonImgFiles.map((file) => {
               return (
@@ -75,6 +81,7 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
                   <DocumentPreview
                     fileName={file.name || file.id}
                     maxWidth="max-w-64"
+                    alignBubble={alignBubble}
                   />
                 </div>
               );
@@ -83,7 +90,7 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
         </div>
       )}
       {imageFiles && imageFiles.length > 0 && (
-        <div className="mt-2 mb-4">
+        <div className={` ${alignBubble && "ml-auto"} mt-2 ml-auto mb-4`}>
           <div className="flex flex-wrap gap-2">
             {imageFiles.map((file) => {
               return <InMessageImage key={file.id} fileId={file.id} />;
@@ -309,6 +316,7 @@ export const AIMessage = ({
                               // for the first link
                               return (
                                 <Citation
+                                  doc={docs ? docs[0] : undefined}
                                   link={rest?.href}
                                   key={node?.position?.start?.offset}
                                 >
@@ -582,14 +590,15 @@ export const HumanMessage = ({
     >
       <div className="mx-auto  w-full max-w-searchbar-max">
         <div className="xl:ml-8">
-          <div className="flex">
-            <div className="w-full  ml-8 flex mr-4 w-full max-w-message-max break-words">
-              <FileDisplay files={files || []} />
+          <div className="flex flex-col">
+            <FileDisplay alignBubble files={files || []} />
 
-              {isEditing ? (
-                <div className="w-full">
-                  <div
-                    className={`
+            <div className="flex">
+              <div className="w-full  ml-8 flex mr-4 w-full max-w-message-max break-words">
+                {isEditing ? (
+                  <div className="w-full">
+                    <div
+                      className={`
                       opacity-100
                       w-full
                       flex
@@ -602,10 +611,10 @@ export const HumanMessage = ({
                       [&:has(textarea:focus)]::ring-1
                       [&:has(textarea:focus)]::ring-black
                     `}
-                  >
-                    <textarea
-                      ref={textareaRef}
-                      className={`
+                    >
+                      <textarea
+                        ref={textareaRef}
+                        className={`
                       m-0 
                       w-full 
                       h-auto
@@ -624,29 +633,29 @@ export const HumanMessage = ({
                       overflow-y-auto
                       pr-12 
                       py-4`}
-                      aria-multiline
-                      role="textarea"
-                      value={editedContent}
-                      style={{ scrollbarWidth: "thin" }}
-                      onChange={(e) => {
-                        setEditedContent(e.target.value);
-                        e.target.style.height = `${e.target.scrollHeight}px`;
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                          e.preventDefault();
-                          setEditedContent(content);
-                          setIsEditing(false);
-                        }
-                        // Submit edit if "Command Enter" is pressed, like in ChatGPT
-                        if (e.key === "Enter" && e.metaKey) {
-                          handleEditSubmit();
-                        }
-                      }}
-                    />
-                    <div className="flex justify-end mt-2 gap-2 pr-4">
-                      <button
-                        className={`
+                        aria-multiline
+                        role="textarea"
+                        value={editedContent}
+                        style={{ scrollbarWidth: "thin" }}
+                        onChange={(e) => {
+                          setEditedContent(e.target.value);
+                          e.target.style.height = `${e.target.scrollHeight}px`;
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") {
+                            e.preventDefault();
+                            setEditedContent(content);
+                            setIsEditing(false);
+                          }
+                          // Submit edit if "Command Enter" is pressed, like in ChatGPT
+                          if (e.key === "Enter" && e.metaKey) {
+                            handleEditSubmit();
+                          }
+                        }}
+                      />
+                      <div className="flex justify-end mt-2 gap-2 pr-4">
+                        <button
+                          className={`
                           w-fit 
                           p-1 
                           bg-accent 
@@ -657,12 +666,12 @@ inline-flex items-center justify-center flex-shrink-0 font-medium min-h-[38px] p
 
                           hover:bg-accent-hover
                         `}
-                        onClick={handleEditSubmit}
-                      >
-                        Submit
-                      </button>
-                      <button
-                        className={`
+                          onClick={handleEditSubmit}
+                        >
+                          Submit
+                        </button>
+                        <button
+                          className={`
 inline-flex items-center justify-center flex-shrink-0 font-medium min-h-[38px] py-2 px-3 pointer-events-auto
                           w-fit 
                           p-1 
@@ -672,70 +681,77 @@ inline-flex items-center justify-center flex-shrink-0 font-medium min-h-[38px] p
                           rounded-lg
                           hover:bg-hover-emphasis
                         `}
-                        onClick={() => {
-                          setEditedContent(content);
-                          setIsEditing(false);
-                        }}
-                      >
-                        Cancel
-                      </button>
+                          onClick={() => {
+                            setEditedContent(content);
+                            setIsEditing(false);
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : typeof content === "string" ? (
-                <>
-                  {onEdit &&
-                  isHovered &&
-                  !isEditing &&
-                  (!files || files.length === 0) ? (
-                    <div className="ml-auto my-auto">
-                      <Hoverable
-                        icon={FiEdit2}
-                        onClick={() => {
-                          setIsEditing(true);
-                          setIsHovered(false);
-                        }}
-                      />
+                ) : typeof content === "string" ? (
+                  <>
+                    {onEdit &&
+                    isHovered &&
+                    !isEditing &&
+                    (!files || files.length === 0) ? (
+                      <div className="ml-auto my-auto">
+                        <Hoverable
+                          icon={FiEdit2}
+                          onClick={() => {
+                            setIsEditing(true);
+                            setIsHovered(false);
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-[27px]" />
+                    )}
+
+                    {/* <div className="flex content-end justify-end flex-col"> */}
+                    {/* <FileDisplay alignBubble files={files || []} /> */}
+
+                    <div
+                      className={`${
+                        !(
+                          onEdit &&
+                          isHovered &&
+                          !isEditing &&
+                          (!files || files.length === 0)
+                        ) && "ml-auto"
+                      } relative max-w-[70%] mb-auto rounded-3xl bg-background-weakerish px-5 py-2.5`}
+                    >
+                      {content}
                     </div>
-                  ) : (
-                    <div className="h-[27px]" />
-                  )}
-                  <div
-                    className={`${
-                      !(
-                        onEdit &&
-                        isHovered &&
-                        !isEditing &&
-                        (!files || files.length === 0)
-                      ) && "ml-auto"
-                    } relative max-w-[70%] rounded-3xl bg-background-weakerish px-5 py-2.5`}
-                  >
-                    {content}
-                  </div>
-                </>
-              ) : (
-                <>
-                  {onEdit &&
-                  isHovered &&
-                  !isEditing &&
-                  (!files || files.length === 0) ? (
-                    <div className="my-auto">
-                      <Hoverable
-                        icon={FiEdit2}
-                        onClick={() => {
-                          setIsEditing(true);
-                          setIsHovered(false);
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-[27px]" />
-                  )}
-                  <p className="ml-auto bg-black rounded-lg p-1">{content}</p>
-                </>
-              )}
+                    {/* </div> */}
+                  </>
+                ) : (
+                  <>
+                    {onEdit &&
+                    isHovered &&
+                    !isEditing &&
+                    (!files || files.length === 0) ? (
+                      <div className="my-auto">
+                        <Hoverable
+                          icon={FiEdit2}
+                          onClick={() => {
+                            setIsEditing(true);
+                            setIsHovered(false);
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-[27px]" />
+                    )}
+                    <p className="ml-auto rounded-lg p-1">{content}</p>
+                  </>
+                )}
+              </div>
             </div>
           </div>
+
           <div className="flex flex-col md:flex-row gap-x-0.5 mr-8 mt-1">
             {currentMessageInd !== undefined &&
               onMessageSelection &&

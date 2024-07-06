@@ -25,8 +25,8 @@ export default function FunctionalHeader({
     <div className="pb-6 left-0 sticky top-0 z-10 w-full relative flex">
       {/* // <div className="pb-6 left-0 sticky -top-[.1]  z-10 w-full from-neutral-200 via-neutral-200 to-neutral-200/10  flex  z-10 bg-gradient-to-b via-50% blur"> */}
 
-      <div className="mt-2 text-neutral-700 flex w-full">
-        <div className=" absolute ml-4 z-[1000000] my-auto flex items-center text-xl font-bold font-['Poppins']">
+      <div className="mt-2 mx-4 text-neutral-700 flex w-full">
+        <div className=" absolute  z-[1000000] my-auto flex items-center text-xl font-bold font-['Poppins']">
           <Logo />
           {/* Danswer */}
           <a
@@ -42,7 +42,7 @@ export default function FunctionalHeader({
           </a>
         </div>
 
-        <div className="ml-auto my-auto mr-4 flex gap-x-2">
+        <div className="ml-auto my-auto flex gap-x-2">
           {setSharingModalVisible && (
             <div
               onClick={() => setSharingModalVisible(true)}
@@ -52,7 +52,7 @@ export default function FunctionalHeader({
             </div>
           )}
 
-          <div className="flex mr-4  my-auto">
+          <div className="flex   my-auto">
             <UserDropdown user={user} />
           </div>
         </div>
