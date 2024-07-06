@@ -12,6 +12,7 @@ module.exports = {
     // tremor
     "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
   ],
+
   theme: {
     transparent: "transparent",
     current: "currentColor",
@@ -38,6 +39,7 @@ module.exports = {
       screens: {
         "2xl": "1420px",
         "3xl": "1700px",
+        "4xl": "2000px",
       },
       fontFamily: {
         sans: ["var(--font-inter)"],

@@ -45,6 +45,7 @@ import { HoverPopup } from "../HoverPopup";
 import { Logo } from "../Logo";
 import { cornersOfRectangle } from "@dnd-kit/core/dist/utilities/algorithms/helpers";
 import FunctionalHeader from "../chat_search/Header";
+import { useSidebarVisibility } from "../chat_search/hooks";
 
 export type searchState = "input" | "searching" | "analyzing";
 
@@ -372,15 +373,8 @@ export const SearchSection = ({
   const [showDocSidebar, setShowDocSidebar] = useState(false);
 
   const toggleSidebar = () => {
-    if (sidebarElementRef.current) {
-      sidebarElementRef.current.style.transition = "width 0.3s ease-in-out";
-
-      sidebarElementRef.current.style.width = showDocSidebar
-        ? "0px"
-        : `${usedSidebarWidth}px`;
-    }
-
-    setShowDocSidebar((showDocSidebar) => !showDocSidebar); // Toggle the state which will in turn toggle the class
+    setToggledSidebar((toggledSidebar) => !toggledSidebar); // Toggle the state which will in turn toggle the class
+    console.log(!toggledSidebar, showDocSidebar);
   };
 
   const forceNonAgentic = () => {
@@ -404,19 +398,6 @@ export const SearchSection = ({
     };
   }, [router]);
 
-  const [usedSidebarWidth, setUsedSidebarWidth] = useState<number>(
-    300 || parseInt(SIDEBAR_WIDTH_CONST)
-  );
-
-  const updateSidebarWidth = (newWidth: number) => {
-    setUsedSidebarWidth(newWidth);
-    if (sidebarElementRef.current && innerSidebarElementRef.current) {
-      sidebarElementRef.current.style.transition = "";
-      sidebarElementRef.current.style.width = `${newWidth}px`;
-      innerSidebarElementRef.current.style.width = `${newWidth}px`;
-    }
-  };
-
   const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
     if (e.propertyName === "opacity" && !firstSearch) {
       const target = e.target as HTMLDivElement;
@@ -430,84 +411,116 @@ export const SearchSection = ({
   const [firstSearch, setFirstSearch] = useState(true);
   const [searchState, setSearchState] = useState<searchState>("input");
 
+  const [toggledSidebar, setToggledSidebar] = useState(false); // State to track if sidebar is open
+
+  useSidebarVisibility({
+    toggledSidebar,
+    sidebarElementRef,
+    showDocSidebar,
+    setShowDocSidebar,
+  });
+
   return (
     <>
-      <div
-        ref={sidebarElementRef}
-        className={`flex-none absolute left-0 z-[100] overflow-y-hidden sidebar bg-background-weak h-screen`}
-        style={{ width: showDocSidebar ? usedSidebarWidth : 0 }}
-      >
-        <HistorySidebar
-          search={true}
-          ref={innerSidebarElementRef}
-          toggleSidebar={toggleSidebar}
-          toggled={false}
-          existingChats={querySessions}
-          // currentChatSession={selectedChatSession}
-          // folders={folders}
-          // openedFolders={openedFolders}
-        />
-      </div>
-
-      {/* Header */}
-      <FunctionalHeader
-        showSidebar={showDocSidebar}
-        page="search"
-        user={user}
-      />
-
-      <div className="px-24  pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
-        <div className="absolute  z-10 top-12 left-0 hidden 2xl:block w-52 3xl:w-64">
-          {(ccPairs.length > 0 || documentSets.length > 0) &&
-            !showDocSidebar && (
-              <SourceSelector
-                {...filterManager}
-                toggled={filters}
-                toggleFilters={toggleFilters}
-                availableDocumentSets={finalAvailableDocumentSets}
-                existingSources={finalAvailableSources}
-                availableTags={tags}
-              />
-            )}
+      <div className="flex relative  w-full h-full text-default overflow-x-hidden">
+        <div
+          ref={sidebarElementRef}
+          className={`
+            w-[300px] 
+            flex-none 
+            absolute 
+            left-0 
+            z-[100] 
+            overflow-y-hidden 
+            sidebar 
+            bg-background-weak 
+            h-screen
+            transition-all 
+            bg-opacity-80
+            duration-300 
+            ease-in-out
+            ${
+              showDocSidebar || toggledSidebar
+                ? "opacity-100 translate-x-0"
+                : "opacity-0  pointer-events-none -translate-x-10"
+            }
+          `}
+        >
+          <div className="w-full  relative">
+            <HistorySidebar
+              ref={innerSidebarElementRef}
+              toggleSidebar={toggleSidebar}
+              toggled={toggledSidebar}
+              existingChats={querySessions}
+              // currentChatSession={selectedChatSession}
+              // folders={folders}
+              // openedFolders={openedFolders}
+            />
+          </div>
         </div>
-        <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64"></div>
-        <div className="max-w-searchbar-max w-[90%] mx-auto">
-          <div
-            className={`transition-all duration-500 ease-in-out overflow-hidden ${
-              firstSearch ? "opacity-100 max-h-[500px]" : "opacity-0 max-h-0"
-            }`}
-            onTransitionEnd={handleTransitionEnd}
-          >
-            <div className="mt-48 mb-8 flex justify-center items-center">
-              <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
-                <div className="flex">
-                  <div className="text-3xl font-bold text-strong mx-auto">
-                    {/* <div className="font-regular text-gray-900 font-display text-3xl md:text-4xl mx-auto"> */}
-                    {/* Organization&apos;s knowledge. */}
-                    Unlocking Insights
+
+        {/* Header */}
+
+        <div className="absolute left-0 w-full top-0 ">
+          <FunctionalHeader
+            showSidebar={showDocSidebar}
+            page="search"
+            user={user}
+          />
+          <div className="px-24  pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
+            <div className="absolute  z-10 top-12 left-0 hidden 2xl:block w-52 3xl:w-64">
+              {(ccPairs.length > 0 || documentSets.length > 0) && (
+                <SourceSelector
+                  {...filterManager}
+                  showDocSidebar={showDocSidebar || toggledSidebar}
+                  toggled={filters}
+                  toggleFilters={toggleFilters}
+                  availableDocumentSets={finalAvailableDocumentSets}
+                  existingSources={finalAvailableSources}
+                  availableTags={tags}
+                />
+              )}
+            </div>
+            <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64"></div>
+            <div className="max-w-searchbar-max w-[90%] mx-auto">
+              <div
+                className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                  firstSearch
+                    ? "opacity-100 max-h-[500px]"
+                    : "opacity-0 max-h-0"
+                }`}
+                onTransitionEnd={handleTransitionEnd}
+              >
+                <div className="mt-48 mb-8 flex justify-center items-center">
+                  <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
+                    <div className="flex">
+                      <div className="text-3xl font-bold text-strong mx-auto">
+                        {/* <div className="font-regular text-gray-900 font-display text-3xl md:text-4xl mx-auto"> */}
+                        {/* Organization&apos;s knowledge. */}
+                        Unlocking Insights
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <SearchBar
-            toggleAgentic={toggleAgentic}
-            agentic={agentic}
-            searchState={searchState}
-            query={query}
-            setQuery={setQuery}
-            onSearch={async (agentic?: boolean) => {
-              setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
-              await onSearch({ agentic, offset: 0 });
-            }}
-          />
+              <SearchBar
+                toggleAgentic={toggleAgentic}
+                agentic={agentic}
+                searchState={searchState}
+                query={query}
+                setQuery={setQuery}
+                onSearch={async (agentic?: boolean) => {
+                  setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
+                  await onSearch({ agentic, offset: 0 });
+                }}
+              />
 
-          <div className="flex gap-x-4 flex-wrap w-full">
+              {/* Keep for now */}
+              {/* <div className="flex gap-x-4 flex-wrap w-full">
             <div className="block 2xl:block w-52 3xl:w-64 mt-4">
               <div className="pr-5">
-                {/* Keep for now */}
-                {/* <SearchHelper
+                <SearchHelper
                   isFetching={isFetching}
                   searchResponse={searchResponse}
                   selectedSearchType={selectedSearchType}
@@ -526,35 +539,37 @@ export const SearchSection = ({
                       offset,
                     }));
                   }}
-                /> */}
+                />
               </div>
             </div>
-          </div>
+          </div> */}
 
-          <div className="mt-2">
-            {!(agenticResults && isFetching) ? (
-              <SearchResultsDisplay
-                comments={comments}
-                sweep={sweep}
-                agenticResults={agenticResults}
-                performSweep={performSweep}
-                relevance={relevance}
-                searchState={searchState}
-                searchResponse={searchResponse}
-                validQuestionResponse={validQuestionResponse}
-                isFetching={isFetching}
-                defaultOverrides={defaultOverrides}
-                personaName={
-                  selectedPersona
-                    ? personas.find((p) => p.id === selectedPersona)?.name
-                    : null
-                }
-              />
-            ) : (
-              showAgenticDisclaimer && (
-                <AgenticDisclaimer forceNonAgentic={forceNonAgentic} />
-              )
-            )}
+              <div className="mt-6">
+                {!(agenticResults && isFetching) ? (
+                  <SearchResultsDisplay
+                    comments={comments}
+                    sweep={sweep}
+                    agenticResults={agenticResults}
+                    performSweep={performSweep}
+                    relevance={relevance}
+                    searchState={searchState}
+                    searchResponse={searchResponse}
+                    validQuestionResponse={validQuestionResponse}
+                    isFetching={isFetching}
+                    defaultOverrides={defaultOverrides}
+                    personaName={
+                      selectedPersona
+                        ? personas.find((p) => p.id === selectedPersona)?.name
+                        : null
+                    }
+                  />
+                ) : (
+                  showAgenticDisclaimer && (
+                    <AgenticDisclaimer forceNonAgentic={forceNonAgentic} />
+                  )
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

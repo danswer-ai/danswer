@@ -77,6 +77,8 @@ import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 
 import ResizableSection from "@/components/resizable/ResizableSection";
 import FunctionalHeader from "@/components/chat_search/Header";
+import { useSidebarVisibility } from "@/components/chat_search/hooks";
+import { Logo } from "@/components/Logo";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1052,51 +1054,14 @@ export function ChatPage({
     setToggledSidebar((toggledSidebar) => !toggledSidebar); // Toggle the state which will in turn toggle the class
   };
 
-  const xPosition = useRef<number>(1000);
+  const sidebarElementRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      const currentXPosition = event.clientX;
-      console.log(xPosition.current, currentXPosition);
-
-      const sidebarRect = sidebarElementRef.current?.getBoundingClientRect();
-
-      if (sidebarRect && sidebarElementRef.current) {
-        const isWithinSidebar =
-          currentXPosition >= sidebarRect.left &&
-          currentXPosition <= sidebarRect.right &&
-          event.clientY >= sidebarRect.top &&
-          event.clientY <= sidebarRect.bottom;
-
-        const sidebarStyle = window.getComputedStyle(sidebarElementRef.current);
-        const isVisible = sidebarStyle.opacity !== "0";
-        let update = false;
-        if (isWithinSidebar && isVisible) {
-          setShowDocSidebar(true);
-          update = true;
-        }
-
-        console.log(showDocSidebar, !toggledSidebar);
-
-        if (
-          currentXPosition > 50 &&
-          showDocSidebar &&
-          !isWithinSidebar &&
-          !toggledSidebar
-        ) {
-          setShowDocSidebar(false);
-        } else if (currentXPosition < 50 && !showDocSidebar) {
-          setShowDocSidebar(true);
-        }
-      }
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, [showDocSidebar, toggledSidebar]);
+  useSidebarVisibility({
+    toggledSidebar,
+    sidebarElementRef,
+    showDocSidebar,
+    setShowDocSidebar,
+  });
 
   useEffect(() => {
     const includes = checkAnyAssistantHasSearch(
@@ -1115,7 +1080,6 @@ export function ChatPage({
     );
   });
   const [editingRetrievalEnabled, setEditingRetrievalEnabled] = useState(false);
-  const sidebarElementRef = useRef<HTMLDivElement>(null);
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
 
   const currentPersona = selectedAssistant || livePersona;
@@ -1272,6 +1236,7 @@ export function ChatPage({
                           }
                           showSidebar={showDocSidebar}
                           user={user}
+                          currentChatSession={selectedChatSession}
                         />
                       )}
 
@@ -1659,6 +1624,12 @@ export function ChatPage({
               isLoading={isFetchingChatMessages}
             />
           )}
+        </div>
+
+        {/* Temporary - fixed logo */}
+        <div className="absolute z-[100] left-4 top-2">
+          {" "}
+          <Logo />
         </div>
       </div>
     </>

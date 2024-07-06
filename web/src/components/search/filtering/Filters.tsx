@@ -20,6 +20,7 @@ export interface SourceSelectorProps {
   setTimeRange: React.Dispatch<
     React.SetStateAction<DateRangePickerValue | null>
   >;
+  showDocSidebar?: boolean;
   selectedSources: SourceMetadata[];
   setSelectedSources: React.Dispatch<React.SetStateAction<SourceMetadata[]>>;
   selectedDocumentSets: string[];
@@ -47,6 +48,7 @@ export function SourceSelector({
   availableDocumentSets,
   existingSources,
   availableTags,
+  showDocSidebar,
 }: SourceSelectorProps) {
   const handleSelect = (source: SourceMetadata) => {
     setSelectedSources((prev: SourceMetadata[]) => {
@@ -71,7 +73,9 @@ export function SourceSelector({
   };
 
   return (
-    <div className="duration-1000 ease-out transition-all transform origin-top-right">
+    <div
+      className={`hidden  ${showDocSidebar ? "4xl:block" : "!block"} duration-1000 ease-out transition-all transform origin-top-right`}
+    >
       <div
         onClick={toggleFilters}
         className="cursor-pointer flex mb-4 pb-2 border-b border-border text-emphasis"

@@ -76,6 +76,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
     return (
       <>
         {popup}
+
         <div
           ref={ref}
           className={`
@@ -91,7 +92,11 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             transition-transform`}
         >
           <div className="ml-4 mr-3 flex flex gap-x-1 items-center text-neutral-700 mt-2 my-auto text-xl ">
-            <Logo />
+            <div className="invisible">
+              {" "}
+              <Logo />
+            </div>
+
             {enterpriseSettings && enterpriseSettings.application_name ? (
               <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
             ) : (
@@ -101,7 +106,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
               {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
             </button>
           </div>
-          <div className="flex items-center">
+          <div className="mx-3 mt-4  gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
             <Link
               href={
                 "/chat" +
@@ -110,48 +115,43 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                   ? `?assistantId=${currentChatSession.persona_id}`
                   : "")
               }
-              className="ml-3 mt-2 w-full"
+              className="w-full p-2 bg-white border-border border rounded items-center hover:bg-neutral-200 cursor-pointer transition-all duration-150 flex gap-x-2"
             >
-              <BasicClickable inset fullWidth>
-                <div className="flex items-center text-sm">
-                  <FiEdit className="ml-1 mr-2" /> New Chat
-                </div>
-              </BasicClickable>
+              <FiEdit className="flex-none " />
+              <p className="my-auto flex items-center text-sm">New Chat</p>
             </Link>
 
-            <div className="ml-1.5 mr-3 h-full">
-              <BasicClickable
-                inset
-                onClick={() =>
-                  createFolder("New Folder")
-                    .then((folderId) => {
-                      console.log(`Folder created with ID: ${folderId}`);
-                      router.refresh();
-                    })
-                    .catch((error) => {
-                      console.error("Failed to create folder:", error);
-                      setPopup({
-                        message: `Failed to create folder: ${error.message}`,
-                        type: "error",
-                      });
-                    })
-                }
-              >
-                <div className="flex items-center text-sm h-full">
-                  <FiFolderPlus className="mx-1 my-auto" />
-                </div>
-              </BasicClickable>
-            </div>
+            <button
+              onClick={() =>
+                createFolder("New Folder")
+                  .then((folderId) => {
+                    console.log(`Folder created with ID: ${folderId}`);
+                    router.refresh();
+                  })
+                  .catch((error) => {
+                    console.error("Failed to create folder:", error);
+                    setPopup({
+                      message: `Failed to create folder: ${error.message}`,
+                      type: "error",
+                    });
+                  })
+              }
+              className="w-full p-2 bg-white border-border border rounded items-center hover:bg-neutral-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+            >
+              <FiFolderPlus className=" my-auto" />
+              <p className="my-auto flex items-center text-sm">New Folder</p>
+            </button>
+
+            <Link
+              href="/assistants/mine"
+              className="w-full p-2 bg-white border-border border rounded items-center hover:bg-neutral-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+            >
+              <FaBrain className=" my-auto" />
+              <p className="my-auto flex items-center text-sm">
+                Manage Assistants
+              </p>
+            </Link>
           </div>
-
-          <Link href="/assistants/mine" className="mt-3 mb-1 mx-3">
-            <BasicClickable inset fullWidth>
-              <div className="flex items-center text-default font-medium">
-                <FaBrain className="ml-1 mr-2" /> Manage Assistants
-              </div>
-            </BasicClickable>
-          </Link>
-
           <div className="border-b border-border pb-4 mx-3" />
 
           <ChatTab
