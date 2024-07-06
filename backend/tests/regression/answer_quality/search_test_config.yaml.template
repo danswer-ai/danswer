@@ -1,3 +1,6 @@
+# Copy this to search_test_config.yaml and fill in the values to run the eval pipeline
+# Don't forget to also update the .env_eval file with the correct values
+
 # Directory where test results will be saved
 output_folder: "~/danswer_test_results"
 
