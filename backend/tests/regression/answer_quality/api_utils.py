@@ -12,15 +12,12 @@ from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
 from danswer.server.documents.models import ConnectorBase
 from tests.regression.answer_quality.cli_utils import (
-    get_server_host_port,
+    get_api_server_host_port,
 )
 
 
 def _api_url_builder(run_suffix: str, api_path: str) -> str:
-    return (
-        f"http://localhost:{get_server_host_port('api_server', run_suffix, '')}"
-        + api_path
-    )
+    return f"http://localhost:{get_api_server_host_port(run_suffix)}" + api_path
 
 
 @retry(tries=5, delay=2, backoff=2)
@@ -64,7 +61,8 @@ def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
         ]
         answer = response_json.get("answer")
     except Exception as e:
-        print("File upload failed, waiting for API server to come up and trying again")
+        print("Failed to answer the questions, trying again")
+        print(f"error: {str(e)}")
         raise e
 
     print("\nquery: ", query)
@@ -74,7 +72,7 @@ def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
     return content_list, answer
 
 
-def check_if_query_ready(run_suffix: str) -> dict:
+def check_if_query_ready(run_suffix: str) -> bool:
     url = _api_url_builder(run_suffix, "/manage/admin/connector/indexing-status/")
     headers = {
         "Content-Type": "application/json",
@@ -82,13 +80,22 @@ def check_if_query_ready(run_suffix: str) -> dict:
 
     indexing_status_dict = requests.get(url, headers=headers).json()
 
+    ongoing_index_attempts = False
     doc_count = 0
     for index_attempt in indexing_status_dict:
         status = index_attempt["last_status"]
         if status == IndexingStatus.IN_PROGRESS or status == IndexingStatus.NOT_STARTED:
-            return False
+            ongoing_index_attempts = True
         doc_count += index_attempt["docs_indexed"]
-    return doc_count > 0
+
+    if not doc_count:
+        print("No docs indexed, waiting for indexing to start")
+    elif ongoing_index_attempts:
+        print(
+            f"{doc_count} docs indexed but waiting for ongoing indexing jobs to finish..."
+        )
+
+    return doc_count > 0 and not ongoing_index_attempts
 
 
 def run_cc_once(run_suffix: str, connector_id: int, credential_id: int) -> None:
@@ -156,7 +163,7 @@ def create_connector(run_suffix: str, file_paths: list[str]) -> int:
 
     count = 1
     while connector_name in existing_connector_names:
-        connector_name = base_connector_name + "_" + count
+        connector_name = base_connector_name + "_" + str(count)
         count += 1
 
     connector = ConnectorBase(

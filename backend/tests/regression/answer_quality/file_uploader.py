@@ -27,6 +27,5 @@ if __name__ == "__main__":
     with open(config_path, "r") as file:
         config = SimpleNamespace(**yaml.safe_load(file))
     file_location = config.zipped_documents_file
-    # file_location = "/Users/danswer/testdocuments/Introduction - Danswer Documentation.html"
     run_suffix = config.existing_test_suffix
     upload_test_files(file_location, run_suffix)

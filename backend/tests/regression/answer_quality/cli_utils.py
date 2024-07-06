@@ -1,54 +1,34 @@
 import json
 import os
 import subprocess
-import sys
-from typing import Any
 
 from retry import retry
 
 
-def _run_command(command: str) -> tuple[int | Any, str, str]:
+def _run_command(command: str) -> tuple[str, str]:
     process = subprocess.Popen(
         command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     stdout, stderr = process.communicate()
-    return process.returncode, stdout.decode(), stderr.decode()
+    if process.returncode != 0:
+        raise RuntimeError(f"Command failed with error: {stderr.decode()}")
+    return stdout.decode(), stderr.decode()
 
 
 def get_current_commit_sha() -> str:
     print("Getting current commit SHA...")
-    returncode, stdout, stderr = _run_command("git rev-parse HEAD")
-
-    if returncode == 0:
-        sha = stdout.strip()
-        print(f"Current commit SHA: {sha}")
-        return sha
-    else:
-        print("Failed to get current commit SHA.")
-        print(f"Error: {stderr}")
-        sys.exit(1)
+    stdout, _ = _run_command("git rev-parse HEAD")
+    sha = stdout.strip()
+    print(f"Current commit SHA: {sha}")
+    return sha
 
 
 def switch_to_branch(branch: str) -> None:
     print(f"Switching to branch: {branch}...")
-    returncode, _, stderr = _run_command(f"git checkout {branch}")
-
-    if returncode == 0:
-        returncode, _, stderr = _run_command("git pull")
-
-        if returncode == 0:
-            print("Repository updated successfully.")
-        else:
-            print(
-                "Failed to update the repository. Please check your internet connection and try again."
-            )
-            print(f"Error: {stderr}")
-            sys.exit(1)
-        print(f"Successfully switched to branch: {branch}")
-    else:
-        print(f"Failed to switch to branch: {branch}")
-        print(f"Error: {stderr}")
-        sys.exit(1)
+    _run_command(f"git checkout {branch}")
+    _run_command("git pull")
+    print(f"Successfully switched to branch: {branch}")
+    print("Repository updated successfully.")
 
 
 def manage_data_directories(suffix: str, base_path: str, use_cloud_gpu: bool) -> str:
@@ -110,20 +90,10 @@ def start_docker_compose(
         command += " --scale indexing_model_server=0"
         command += " --scale inference_model_server=0"
 
-    # command = "docker compose -f docker-compose.dev.yml -p danswer-stack up -d"
-    # command += " --pull always"
-    # command += " --force-recreate"
-    # command += " --scale web_server=0"
     print("Docker Command:\n", command)
 
-    returncode, _, stderr = _run_command(command)
-
-    if returncode == 0:
-        print("The Docker has been Composed :)")
-    else:
-        print("Failed to start Docker Compose. Please check the error messages above.")
-        print(f"Error: {stderr}")
-        sys.exit(1)
+    _run_command(command)
+    print("The Docker has been Composed :)")
 
 
 def cleanup_docker(run_suffix: str) -> None:
@@ -131,16 +101,10 @@ def cleanup_docker(run_suffix: str) -> None:
         f"Deleting Docker containers, volumes, and networks for project suffix: {run_suffix}"
     )
 
-    # List all containers
-    returncode, stdout, stderr = _run_command("docker ps -a --format '{{json .}}'")
-
-    if returncode != 0:
-        print(f"Failed to list Docker containers. Error: {stderr}")
-        return
+    stdout, _ = _run_command("docker ps -a --format '{{json .}}'")
 
     containers = [json.loads(line) for line in stdout.splitlines()]
 
-    # Filter containers by project name
     project_name = f"danswer-stack{run_suffix}"
     containers_to_delete = [
         c for c in containers if c["Names"].startswith(project_name)
@@ -149,27 +113,17 @@ def cleanup_docker(run_suffix: str) -> None:
     if not containers_to_delete:
         print(f"No containers found for project: {project_name}")
     else:
-        # Delete filtered containers
         container_ids = " ".join([c["ID"] for c in containers_to_delete])
-        returncode, _, stderr = _run_command(f"docker rm -f {container_ids}")
+        _run_command(f"docker rm -f {container_ids}")
 
-        if returncode == 0:
-            print(
-                f"Successfully deleted {len(containers_to_delete)} containers for project: {project_name}"
-            )
-        else:
-            print(f"Failed to delete containers. Error: {stderr}")
+        print(
+            f"Successfully deleted {len(containers_to_delete)} containers for project: {project_name}"
+        )
 
-    # List all volumes
-    returncode, stdout, stderr = _run_command("docker volume ls --format '{{.Name}}'")
-
-    if returncode != 0:
-        print(f"Failed to list Docker volumes. Error: {stderr}")
-        return
+    stdout, _ = _run_command("docker volume ls --format '{{.Name}}'")
 
     volumes = stdout.splitlines()
 
-    # Filter volumes by project name
     volumes_to_delete = [v for v in volumes if v.startswith(project_name)]
 
     if not volumes_to_delete:
@@ -178,61 +132,58 @@ def cleanup_docker(run_suffix: str) -> None:
 
     # Delete filtered volumes
     volume_names = " ".join(volumes_to_delete)
-    returncode, _, stderr = _run_command(f"docker volume rm {volume_names}")
+    _run_command(f"docker volume rm {volume_names}")
 
-    if returncode == 0:
-        print(
-            f"Successfully deleted {len(volumes_to_delete)} volumes for project: {project_name}"
-        )
-    else:
-        print(f"Failed to delete volumes. Error: {stderr}")
-    returncode, stdout, stderr = _run_command("docker network ls --format '{{.Name}}'")
-
-    if returncode != 0:
-        print(f"Failed to list Docker networks. Error: {stderr}")
-        return
+    print(
+        f"Successfully deleted {len(volumes_to_delete)} volumes for project: {project_name}"
+    )
+    stdout, _ = _run_command("docker network ls --format '{{.Name}}'")
 
     networks = stdout.splitlines()
 
-    # Filter networks by project name
     networks_to_delete = [n for n in networks if run_suffix in n]
 
     if not networks_to_delete:
         print(f"No networks found containing suffix: {run_suffix}")
     else:
-        # Delete filtered networks
         network_names = " ".join(networks_to_delete)
-        returncode, _, stderr = _run_command(f"docker network rm {network_names}")
+        _run_command(f"docker network rm {network_names}")
 
-        if returncode == 0:
-            print(
-                f"Successfully deleted {len(networks_to_delete)} networks containing suffix: {run_suffix}"
-            )
-        else:
-            print(f"Failed to delete networks. Error: {stderr}")
+        print(
+            f"Successfully deleted {len(networks_to_delete)} networks containing suffix: {run_suffix}"
+        )
 
 
 @retry(tries=5, delay=5, backoff=2)
-def get_server_host_port(container_name: str, suffix: str, client_port: str) -> str:
-    returncode, stdout, stderr = _run_command("docker ps -a --format '{{json .}}'")
-    if returncode != 0:
-        raise RuntimeError(
-            f"No container found containing: {container_name} and {suffix}"
-        )
+def get_api_server_host_port(suffix: str) -> str:
+    """
+    This pulls all containers with the provided suffix
+    It then grabs the JSON specific container with a name containing "api_server"
+    It then grabs the port info from the JSON and strips out the relevent data
+    """
+    container_name = "api_server"
 
+    stdout, _ = _run_command("docker ps -a --format '{{json .}}'")
     containers = [json.loads(line) for line in stdout.splitlines()]
-    api_server_json = None
+    server_jsons = []
 
     for container in containers:
         if container_name in container["Names"] and suffix in container["Names"]:
-            api_server_json = container
+            server_jsons.append(container)
 
-    if not api_server_json:
+    if not server_jsons:
         raise RuntimeError(
             f"No container found containing: {container_name} and {suffix}"
         )
+    elif len(server_jsons) > 1:
+        raise RuntimeError(
+            f"Too many containers matching {container_name} found, please indicate a suffix"
+        )
+    server_json = server_jsons[0]
 
-    ports = api_server_json.get("Ports", "")
+    # This is in case the api_server has multiple ports
+    client_port = "8080"
+    ports = server_json.get("Ports", "")
     port_infos = ports.split(",") if ports else []
     port_dict = {}
     for port_info in port_infos:
@@ -243,9 +194,10 @@ def get_server_host_port(container_name: str, suffix: str, client_port: str) -> 
     # Find the host port where client_port is in the key
     matching_ports = [value for key, value in port_dict.items() if client_port in key]
 
-    if matching_ports:
-        return matching_ports[0]
-    else:
+    if len(matching_ports) > 1:
+        raise RuntimeError(f"Too many ports matching {client_port} found")
+    if not matching_ports:
         raise RuntimeError(
             f"No port found containing: {client_port} for container: {container_name} and suffix: {suffix}"
         )
+    return matching_ports[0]
