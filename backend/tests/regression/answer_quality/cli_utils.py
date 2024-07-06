@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import sys
+from threading import Thread
 
 from retry import retry
 
@@ -27,8 +28,6 @@ def _run_command(command: str, stream_output: bool = False) -> tuple[str, str]:
                     end="",
                     file=sys.stdout if stream == process.stdout else sys.stderr,
                 )
-
-    from threading import Thread
 
     stdout_thread = Thread(target=process_stream, args=(process.stdout, stdout_lines))
     stderr_thread = Thread(target=process_stream, args=(process.stderr, stderr_lines))
