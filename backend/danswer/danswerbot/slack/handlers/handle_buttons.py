@@ -104,6 +104,16 @@ def handle_generate_answer_button(
         if thread_messages[i].role == MessageType.ASSISTANT:
             thread_messages.pop(i)
 
+    # tell the user that we're working on it
+    # Send an ephemeral message to the user that we're generating the answer
+    respond_in_thread(
+        client=client.web_client,
+        channel=channel_id,
+        receiver_ids=[user_id],
+        text="I'm working on generating a full answer for you. This may take a moment...",
+        thread_ts=thread_ts,
+    )
+
     with Session(get_sqlalchemy_engine()) as db_session:
         slack_bot_config = get_slack_bot_config_for_channel(
             channel_name=channel_name, db_session=db_session
