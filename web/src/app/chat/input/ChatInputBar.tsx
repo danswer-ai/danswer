@@ -14,7 +14,7 @@ import {
   FiPlus,
   FiInfo,
 } from "react-icons/fi";
-import ChatInputOption from "./ChatInputOption";
+import ChatInputOption, { ChatInputOptionOld } from "./ChatInputOption";
 import { FaBrain } from "react-icons/fa";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
@@ -23,12 +23,22 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
 import { FileDescriptor } from "../interfaces";
 import { InputBarPreview } from "../files/InputBarPreview";
-import { ConfigureIcon, RobotIcon, SendIcon } from "@/components/icons/icons";
+import {
+  ConfigureIcon,
+  CpuIcon,
+  CpuIconSkeleton,
+  RobotIcon,
+  SendIcon,
+} from "@/components/icons/icons";
 import { Hoverable } from "@/components/Hoverable";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { IconType } from "react-icons";
 import CustomTooltipChatInputOption from "./ChatInputOption";
+import Popup from "../sessionSidebar/Popup";
+import { LlmTab } from "../modal/configuration/LlmTab";
+import { FiltersTab } from "../modal/configuration/FiltersTab";
+import { AssistantsTab } from "../modal/configuration/AssistantsTab";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
@@ -44,13 +54,20 @@ export function ChatInputBar({
   onSetSelectedAssistant,
   selectedAssistant,
   files,
+
+  setSelectedAssistant,
   setFiles,
   handleFileUpload,
   setConfigModalActiveTab,
   textAreaRef,
   alternativeAssistant,
+  chatSessionId,
+  availableAssistants,
 }: {
+  availableAssistants: Persona[];
   onSetSelectedAssistant: (alternativeAssistant: Persona | null) => void;
+
+  setSelectedAssistant: (assistant: Persona) => void;
   personas: Persona[];
   message: string;
   setMessage: (message: string) => void;
@@ -67,6 +84,7 @@ export function ChatInputBar({
   handleFileUpload: (files: File[]) => void;
   setConfigModalActiveTab: (tab: string) => void;
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
+  chatSessionId?: number;
 }) {
   // handle re-sizing of the text area
   useEffect(() => {
@@ -213,7 +231,7 @@ export function ChatInputBar({
               ref={suggestionsRef}
               className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full"
             >
-              <div className="rounded-lg py-1.5 bg-background border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
+              <div className="rounded-lg py-1.5 bg-background border border-border-medium  shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
                 {filteredPersonas.map((currentPersona, index) => (
                   <button
                     key={index}
@@ -255,7 +273,6 @@ export function ChatInputBar({
               border
               border-[#E5E7EB]
               rounded-lg
-              overflow-hidden
               bg-background-weak
               [&:has(textarea:focus)]::ring-1
               [&:has(textarea:focus)]::ring-black
@@ -328,13 +345,11 @@ export function ChatInputBar({
                     ? "overflow-y-auto mt-2"
                     : ""
                 }
-                overflow-hidden
                 whitespace-normal
                 break-word
                 overscroll-contain
                 outline-none
                 placeholder-subtle
-                overflow-hidden
                 resize-none
                 pl-4
                 pr-12
@@ -360,38 +375,74 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-            <div className="flex items-center space-x-3 mr-12 px-4 pb-2 overflow-hidden">
-              <ChatInputOption
-                flexPriority="shrink"
-                name={selectedAssistant ? selectedAssistant.name : "Assistants"}
-                icon={ConfigureIcon as IconType}
-                onClick={() => setConfigModalActiveTab("assistants")}
-              />
-              <CustomTooltipChatInputOption
-                flexPriority="shrink"
-                name={selectedAssistant ? selectedAssistant.name : "Assistants"}
-                icon={ConfigureIcon as IconType}
-                onClick={() => setConfigModalActiveTab("assistants")}
-                tooltipContent={<span>Configure Assistants</span>}
-              />
+            <div className="flex items-center space-x-3 mr-12 px-4 pb-2  ">
+              <Popup
+                content={(close) => (
+                  <AssistantsTab
+                    availableAssistants={availableAssistants}
+                    llmProviders={llmProviders}
+                    selectedAssistant={selectedAssistant}
+                    // onSelect={() => null}
+                    onSelect={(assistant) => {
+                      setSelectedAssistant(assistant);
+                      close();
+                    }}
+                  />
+                )}
+                position="top"
+              >
+                <ChatInputOption
+                  flexPriority="shrink"
+                  name={
+                    selectedAssistant ? selectedAssistant.name : "Assistants"
+                  }
+                  icon={ConfigureIcon as IconType}
+                  onClick={() => setConfigModalActiveTab("assistants")}
+                />
+              </Popup>
+
+              <Popup
+                content={(close) => (
+                  <LlmTab
+                    close={close}
+                    llmOverrideManager={llmOverrideManager}
+                    chatSessionId={chatSessionId}
+                    currentAssistant={selectedAssistant}
+                  />
+                )}
+                position="top"
+              >
+                <ChatInputOption
+                  flexPriority="second"
+                  name={
+                    llmOverrideManager.llmOverride.modelName ||
+                    (selectedAssistant
+                      ? selectedAssistant.llm_model_version_override || llmName
+                      : llmName)
+                  }
+                  icon={CpuIconSkeleton}
+                  onClick={() => setConfigModalActiveTab("llms")}
+                />
+              </Popup>
+
               <ChatInputOption
                 flexPriority="stiff"
                 name="File"
                 icon={FiPlusCircle}
-                // onClick={() => {
-                //   const input = document.createElement("input");
-                //   input.type = "file";
-                //   input.multiple = true; // Allow multiple files
-                //   input.onchange = (event: any) => {
-                //     const files = Array.from(
-                //       event?.target?.files || []
-                //     ) as File[];
-                //     if (files.length > 0) {
-                //       handleFileUpload(files);
-                //     }
-                //   };
-                //   input.click();
-                // }}
+                onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file";
+                  input.multiple = true; // Allow multiple files
+                  input.onchange = (event: any) => {
+                    const files = Array.from(
+                      event?.target?.files || []
+                    ) as File[];
+                    if (files.length > 0) {
+                      handleFileUpload(files);
+                    }
+                  };
+                  input.click();
+                }}
               />
             </div>
             <div className="absolute bottom-2.5 right-10">

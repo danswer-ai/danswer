@@ -90,56 +90,17 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             h-screen
             transition-transform`}
         >
-          <p className="ml-4 mr-3 flex items-center text-neutral-700 mt-2 my-auto text-xl font-bold font-['Poppins']">
+          <div className="ml-4 mr-3 flex flex gap-x-1 items-center text-neutral-700 mt-2 my-auto text-xl ">
             <Logo />
             {enterpriseSettings && enterpriseSettings.application_name ? (
-              <p>{enterpriseSettings.application_name}</p>
+              <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
             ) : (
-              <p> Danswer</p>
+              <HeaderTitle>Danswer</HeaderTitle>
             )}
-
             <button className="ml-auto" onClick={toggleSidebar}>
               {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
             </button>
-          </p>
-          {/* <div>
-            <Link
-              className="ml-4 w-full"
-              href={
-                settings && settings.default_page === "chat"
-                  ? "/chat"
-                  : "/search"
-              }
-            >
-              <div className="flex pr-12 w-full">
-
-                <div className="mx-auto  flex">
-
-                  {enterpriseSettings && enterpriseSettings.application_name ? (
-
-
-                    <div>
-                      <HeaderTitle>
-                        {enterpriseSettings.application_name}
-                      </HeaderTitle>
-
-                      {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                        <p className="text-xs text-subtle -mt-1.5">
-                          Powered by Danswer
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <>
-                      <HeaderTitle>Danswer</HeaderTitle>
-
-                    </>
-                  )}
-                </div>
-              </div>
-            </Link>
-          </div> */}
-
+          </div>
           <div className="flex items-center">
             <Link
               href={
@@ -149,7 +110,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                   ? `?assistantId=${currentChatSession.persona_id}`
                   : "")
               }
-              className="ml-3 w-full"
+              className="ml-3 mt-2 w-full"
             >
               <BasicClickable inset fullWidth>
                 <div className="flex items-center text-sm">

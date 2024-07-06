@@ -1,17 +1,23 @@
 import { Popover } from "@/components/popover/Popover";
 import { ReactNode, useState } from "react";
 
-const Tooltip = ({
+export const Tooltip = ({
   content,
   children,
+  large,
+  light,
+  line,
 }: {
   content: string | ReactNode;
   children: JSX.Element;
+  large?: boolean;
+  line?: boolean;
+  light?: boolean;
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <span className="relative  leading-none inline-block">
+    <span className="relative leading-none inline-block">
       <span
         className="underline inline-block"
         onMouseEnter={() => setIsVisible(true)}
@@ -19,11 +25,25 @@ const Tooltip = ({
       >
         {children}
       </span>
-      {isVisible && (
-        <div className="absolute max-w-xs z-10 w-64 p-2 mt-2 text-sm text-white bg-neutral-800 rounded-lg shadow-lg">
-          {content}
-        </div>
-      )}
+      {isVisible &&
+        (line ? (
+          <div
+            className={`absolute  z-10 ${large ? "w-96" : "max-w-64"} mt-2 text-sm text-white ${light ? "p-1 bg-neutral-200" : "p-2 bg-neutral-800"} bg rounded-lg shadow-lg`}
+            style={{
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {content}
+          </div>
+        ) : (
+          <div
+            className={`absolute  z-10 flex ${large ? "w-96" : "max-w-64"} mt-2 text-sm text-white ${light ? "p-1 bg-neutral-200" : "p-2 bg-neutral-800"} bg rounded-lg shadow-lg`}
+          >
+            {content}
+          </div>
+        ))}
     </span>
   );
 };

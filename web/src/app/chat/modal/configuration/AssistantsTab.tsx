@@ -23,7 +23,7 @@ export function AssistantsTab({
 
   return (
     <>
-      <h3 className="text-lg font-semibold">Choose Assistant</h3>
+      <h3 className="text-lg font-semibold">Change Assistant</h3>
       <div className="my-3 grid grid-cols-1 gap-4">
         {availableAssistants.map((assistant) => (
           <div

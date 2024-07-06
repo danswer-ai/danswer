@@ -122,7 +122,7 @@ module.exports = {
         ai: "#60a5fa", // blue-400
 
         // for display documents
-        document: "#ec4899", // pink-500
+        document: "#f43f5e", // pink-500
 
         // light mode
         tremor: {

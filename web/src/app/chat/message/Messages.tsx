@@ -14,7 +14,10 @@ import {
 import { FeedbackType } from "../types";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { DanswerDocument } from "@/lib/search/interfaces";
+import {
+  DanswerDocument,
+  FilteredDanswerDocument,
+} from "@/lib/search/interfaces";
 import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
 import { SourceIcon } from "@/components/SourceIcon";
 import { ThreeDots } from "react-loader-spinner";
@@ -41,7 +44,7 @@ import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { Button } from "@tremor/react";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
-import Citation from "@/components/search/results/Citation";
+import Citation, { Tooltip } from "@/components/search/results/Citation";
 import {
   buildDocumentSummaryDisplay,
   DocumentMetadataBlock,
@@ -188,6 +191,24 @@ export const AIMessage = ({
     </div>
   ) : undefined;
 
+  let filteredDocs: FilteredDanswerDocument[] = [];
+
+  if (docs) {
+    filteredDocs = docs
+      ?.map((doc: DanswerDocument, ind: number) => {
+        return {
+          ...doc,
+          included: selectedDocumentIds.includes(doc.document_id),
+        };
+      })
+      .filter(
+        (doc, index, self) =>
+          doc.document_id &&
+          doc.document_id !== "" &&
+          index === self.findIndex((d) => d.document_id === doc.document_id)
+      );
+  }
+
   return (
     <div className={"group py-5 px-2 lg:px-5  relative flex -mr-6 w-full"}>
       <div className="mx-auto w-[90%] max-w-searchbar-max">
@@ -330,23 +351,25 @@ export const AIMessage = ({
                   defaultLoader
                 )}
 
-                {isComplete && docs && docs.length > 0 && (
+                {isComplete && filteredDocs && filteredDocs.length > 0 && (
                   <div className="mt-2 -mx-8  w-full mb-4  flex relative ">
                     <div className="absolute left-0 top-0 h-full bg-gradient-to-l from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
                     <div className="absolute right-6 top-0  h-full bg-gradient-to-r from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
                     <div className=" w-full  overflow-x-scroll no-scrollbar">
                       {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
                       <div className="px-8 flex gap-x-2">
-                        {docs
-                          .filter(
-                            (doc, index, self) =>
-                              doc.document_id &&
-                              doc.document_id !== "" &&
-                              index ===
-                                self.findIndex(
-                                  (d) => d.document_id === doc.document_id
-                                )
-                          )
+                        {filteredDocs
+                          .sort((a, b) => {
+                            const aSelected = selectedDocumentIds.includes(
+                              a.document_id
+                            );
+                            const bSelected = selectedDocumentIds.includes(
+                              b.document_id
+                            );
+                            if (aSelected && !bSelected) return -1;
+                            if (!aSelected && bSelected) return 1;
+                            return 0;
+                          })
                           .map((doc) => (
                             <div
                               key={doc.document_id}
@@ -414,29 +437,55 @@ export const AIMessage = ({
               </div>
               {handleFeedback &&
                 (isActive ? (
-                  <div className="flex md:flex-row gap-x-0.5 mt-1.5">
-                    <CopyButton content={content.toString()} />
-                    <HoverableIcon
-                      icon={<LikeFeedbackIcon />}
-                      onClick={() => handleFeedback("like")}
-                    />
-                    <HoverableIcon
-                      icon={<DislikeFeedbackIcon />}
-                      onClick={() => handleFeedback("dislike")}
-                    />
+                  <div
+                    className="
+                  flex md:flex-row gap-x-0.5 mt-1.5
+                  transition-all duration-300 ease-in-out
+                  transform opacity-100 translate-y-0
+                  flex md:flex-row gap-x-0.5 mt-1.5"
+                  >
+                    <Tooltip line content="Copy!">
+                      <CopyButton content={content.toString()} />
+                    </Tooltip>
+                    <Tooltip line content="Good response!">
+                      <HoverableIcon
+                        icon={<LikeFeedbackIcon />}
+                        onClick={() => handleFeedback("like")}
+                      />
+                    </Tooltip>
+                    <Tooltip line content="Bad response!">
+                      <HoverableIcon
+                        icon={<DislikeFeedbackIcon />}
+                        onClick={() => handleFeedback("dislike")}
+                      />
+                    </Tooltip>
                   </div>
                 ) : (
-                  <div className="invisible absolute -bottom-4 bg-background-weakerish/60 p-1 px-1.5 rounded-lg hover:visible group-hover:visible flex md:flex-row gap-x-0.5 mt-1.5">
-                    <CopyButton content={content.toString()} />
-
-                    <Hoverable
-                      icon={FiThumbsUp}
-                      onClick={() => handleFeedback("like")}
-                    />
-                    <Hoverable
-                      icon={FiThumbsDown}
-                      onClick={() => handleFeedback("dislike")}
-                    />
+                  <div
+                    className="
+                  hover:visible group-hover:visible
+                  flex md:flex-row gap-x-0.5 mt-1.5
+                  transition-all duration-300 ease-in-out
+                  transform opacity-0 translate-y-2
+                  group-hover:opacity-100 group-hover:translate-y-0
+                  invisible absolute -bottom-4 bg-background-weakerish/60
+                  p-1 px-1.5 rounded-lg hover:visible group-hover:visible flex md:flex-row gap-x-0.5 mt-1.5"
+                  >
+                    <Tooltip content={"Copy!"}>
+                      <CopyButton content={content.toString()} />
+                    </Tooltip>
+                    <Tooltip line content="Good response!">
+                      <Hoverable
+                        icon={FiThumbsUp}
+                        onClick={() => handleFeedback("like")}
+                      />
+                    </Tooltip>
+                    <Tooltip line content="Bad response!">
+                      <Hoverable
+                        icon={FiThumbsDown}
+                        onClick={() => handleFeedback("dislike")}
+                      />
+                    </Tooltip>
                   </div>
                 ))}
             </div>

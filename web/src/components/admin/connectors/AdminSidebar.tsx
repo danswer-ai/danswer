@@ -26,10 +26,10 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
   const enterpriseSettings = combinedSettings.enterpriseSettings;
 
   return (
-    <aside className="pl-4">
+    <aside className="pl-0">
       <nav className="space-y-2 pl-4">
         <div className="pb-12 flex">
-          <div className="fixed left-0 top-0 pt-4 pl-8 bg-background-weak w-[250px]">
+          <div className="fixed left-0 top-0 pt-2 pl-4 bg-background-weak w-[200px]">
             <Link
               className="flex flex-col"
               href={
@@ -38,8 +38,8 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
                   : "/search"
               }
             >
-              <div className="flex my-auto">
-                <div className="mr-1 my-auto">
+              <div className="flex gap-x-1 my-auto">
+                <div className="my-auto">
                   <Logo />
                 </div>
                 <div className="my-auto">

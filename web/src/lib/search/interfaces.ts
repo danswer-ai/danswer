@@ -51,6 +51,9 @@ export interface DanswerDocument {
   validationState?: null | "good" | "bad";
 }
 
+export interface FilteredDanswerDocument extends DanswerDocument {
+  included: boolean;
+}
 export interface DocumentInfoPacket {
   top_documents: DanswerDocument[];
   predicted_flow: FlowType | null;

@@ -147,8 +147,9 @@ export const SearchResultsDisplay = ({
                 <div
                   className={`flex items-center ${sweep ? "rotate-180" : ""}`}
                 >
-                  <span>⌘O</span>
-
+                  {/* <span>⌘O</span> */}
+                  <span></span>
+                  {!sweep ? "hide" : "undo"}
                   {!sweep ? (
                     <BroomIcon className="h-4 w-4" />
                   ) : (

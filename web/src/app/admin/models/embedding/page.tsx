@@ -21,7 +21,7 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { Connector, ConnectorIndexingStatus } from "@/lib/types";
 import Link from "next/link";
 import { CustomModelForm } from "./CustomModelForm";
-import { PackageIcon } from "@/components/icons/icons";
+import { EmbeddingIcon, PackageIcon } from "@/components/icons/icons";
 
 function Main() {
   const [tentativeNewEmbeddingModel, setTentativeNewEmbeddingModel] =
@@ -339,7 +339,7 @@ function Page() {
     <div className="mx-auto container">
       <AdminPageTitle
         title="Embedding"
-        icon={<PackageIcon size={32} className="my-auto" />}
+        icon={<EmbeddingIcon size={32} className="my-auto" />}
       />
 
       <Main />

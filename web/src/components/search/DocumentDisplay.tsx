@@ -10,7 +10,7 @@ import { MetadataBadge } from "../MetadataBadge";
 import { LoadingAnimation } from "../Loading";
 import FunctionalLoader from "@/lib/search/Loader";
 import { FaCaretDown, FaCaretRight, FaRobot } from "react-icons/fa";
-import { CheckmarkIcon, XIcon } from "../icons/icons";
+import { CheckmarkIcon, ChevronIcon, XIcon } from "../icons/icons";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -143,10 +143,6 @@ export function DocumentMetadataBlock({
             })}
         </>
       )}
-      {!document.updated_at &&
-        Object.entries(document.metadata).length == 0 && (
-          <MetadataBadge icon={FiStar} value={`TODO`} />
-        )}
     </div>
   );
 }
@@ -191,10 +187,23 @@ export const DocumentDisplay = ({
       >
         {!hide &&
           relevance &&
+          // #NOTE: Version 1
+          // (relevance[document.document_id] ? (
+          //   <CheckmarkIcon className="h-4 w-4 bg-black text-xs text-emphasis bg-hover-emphasis rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
+          // ) : (
+
+          // #NOTE: Version 2
+          //   <XIcon className="h-4 w-4 text-xs text-emphasis bg-hover rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
+          // )
+          // (relevance[document.document_id] && (
+          //   <ChevronIcon className="h-full !w-6 !h-6 text-green-700 bg-transparent text-xs text-emphasis  rounded w-fit my-auto select-none ml-auto mr-2" />
+          // )
+
+          // #NOTE: Version 3
           (relevance[document.document_id] ? (
-            <CheckmarkIcon className="h-4 w-4 bg-black text-xs text-emphasis bg-hover-emphasis rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
+            <div className=" w-1 h-6 bg-green-600 text-xs text-emphasis rounded-sm my-auto select-none ml-auto mr-2" />
           ) : (
-            <XIcon className="h-4 w-4 text-xs text-emphasis bg-hover rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
+            <div className=" w-1 h-6 bg-red-600 text-xs text-emphasis rounded-sm my-auto select-none ml-auto mr-2" />
           ))}
 
         {!hide && !relevance && (
@@ -215,7 +224,7 @@ export const DocumentDisplay = ({
             rel="noopener noreferrer"
           >
             <SourceIcon sourceType={document.source_type} iconSize={22} />
-            <p className="truncate text-wrap break-all ml-2 my-auto text-base max-w-full">
+            <p className="truncate text-wrap break-all ml-2 my-auto line-clamp-1 text-base max-w-full">
               {document.semantic_identifier || document.document_id}
             </p>
           </a>

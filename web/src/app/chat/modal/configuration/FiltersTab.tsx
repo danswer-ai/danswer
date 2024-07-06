@@ -197,7 +197,7 @@ export function FiltersTab({
               )}
             </ul>
 
-            <div className="w-96 bg-black mt-2">
+            <div className="w-96 mt-2">
               <div>
                 <div className="mb-2 pt-2">
                   <input

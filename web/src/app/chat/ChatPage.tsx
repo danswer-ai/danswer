@@ -1604,6 +1604,7 @@ export function ChatPage({
                         )}
 
                         <ChatInputBar
+                          setSelectedAssistant={onPersonaChange}
                           onSetSelectedAssistant={(
                             alternativeAssistant: Persona | null
                           ) => {
@@ -1627,6 +1628,8 @@ export function ChatPage({
                           handleFileUpload={handleImageUpload}
                           setConfigModalActiveTab={setConfigModalActiveTab}
                           textAreaRef={textAreaRef}
+                          chatSessionId={chatSessionIdRef.current!}
+                          availableAssistants={availablePersonas}
                         />
                       </div>
                     </div>

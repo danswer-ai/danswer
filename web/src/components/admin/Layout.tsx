@@ -38,6 +38,10 @@ import {
   ZoomInIconSkeleton,
   StarIconSkeleton,
   SlackIconSkeleton,
+  DocumentSetIconSkeleton,
+  EmbeddingIcon,
+  EmbeddingIconSkeleton,
+  BackIcon,
 } from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import {
@@ -125,7 +129,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <BookmarkIconSkeleton size={18} />
+                        <DocumentSetIconSkeleton size={18} />
                         <div className="ml-1">Document Sets</div>
                       </div>
                     ),
@@ -201,9 +205,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        {/* <FiPackage size={18} /> */}
-                        <PackageIconSkeleton />
-
+                        <EmbeddingIconSkeleton />
                         <div className="ml-1">Embedding</div>
                       </div>
                     ),
@@ -323,8 +325,12 @@ export async function Layout({ children }: { children: React.ReactNode }) {
             ]}
           />
         </div>
-        <div className="pb-8 relative h-full overflow-y-auto w-full">
-          <div className="fixed bg-background left-0 border-b  gap-x-4 mb-8 px-4 py-4 w-full items-center flex justify-end">
+        <div className="pb-8 relative  h-full overflow-y-auto w-full">
+          <div className="fixed bg-background left-0 border-b  gap-x-4 mb-8 px-4 py-2 w-full items-center flex justify-end">
+            {/* <a className="p-1 rounded-lg bg-background-weak text-xs">
+            <BackIcon />
+              Back to App
+            </a> */}
             <a
               href="/chat"
               className="transition-all duration-150 cursor-pointer p-1 text-sm items-center flex gap-x-1 px-2 py-1 rounded-lg hover:shadow-sm hover:ring-1 hover:ring-[#E85801]/40 hover:bg-opacity-90 text-[#E85801] bg-[#FAEBE5]"
