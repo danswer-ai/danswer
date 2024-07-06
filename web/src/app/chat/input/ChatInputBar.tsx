@@ -396,7 +396,7 @@ export function ChatInputBar({
                   name={
                     selectedAssistant ? selectedAssistant.name : "Assistants"
                   }
-                  icon={ConfigureIcon as IconType}
+                  Icon={ConfigureIcon as IconType}
                   onClick={() => setConfigModalActiveTab("assistants")}
                 />
               </Popup>
@@ -420,7 +420,7 @@ export function ChatInputBar({
                       ? selectedAssistant.llm_model_version_override || llmName
                       : llmName)
                   }
-                  icon={CpuIconSkeleton}
+                  Icon={CpuIconSkeleton}
                   onClick={() => setConfigModalActiveTab("llms")}
                 />
               </Popup>
@@ -428,7 +428,7 @@ export function ChatInputBar({
               <ChatInputOption
                 flexPriority="stiff"
                 name="File"
-                icon={FiPlusCircle}
+                Icon={FiPlusCircle}
                 onClick={() => {
                   const input = document.createElement("input");
                   input.type = "file";

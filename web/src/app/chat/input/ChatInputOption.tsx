@@ -2,11 +2,12 @@ import React, { useState, useRef, useEffect } from "react";
 import { IconType } from "react-icons";
 import { DefaultDropdownElement } from "../../../components/Dropdown";
 import { Popover } from "../../../components/popover/Popover";
+import { IconProps } from "@/components/icons/icons";
 
 interface ChatInputOptionProps {
   name: string;
-  icon: IconType;
-
+  Icon: ({ size, className }: IconProps) => JSX.Element;
+  onClick?: () => void;
   size?: number;
   tooltipContent?: React.ReactNode;
   options?: { name: string; value: number; onClick?: () => void }[];
@@ -15,7 +16,8 @@ interface ChatInputOptionProps {
 
 export const ChatInputOption: React.FC<ChatInputOptionProps> = ({
   name,
-  icon: Icon,
+  Icon,
+  // icon: Icon,
   size = 16,
   options,
   flexPriority,
@@ -101,19 +103,9 @@ export const ChatInputOption: React.FC<ChatInputOptionProps> = ({
   return <div ref={componentRef}>{optionContent}</div>;
 };
 
-interface ChatInputOptionProps {
-  name: string;
-  icon: IconType;
-  onClick?: () => void;
-  size?: number;
-  tooltipContent?: React.ReactNode;
-  options?: { name: string; value: number; onClick?: () => void }[];
-  flexPriority?: "shrink" | "stiff" | "second";
-}
-
 export const ChatInputOptionOld: React.FC<ChatInputOptionProps> = ({
   name,
-  icon: Icon,
+  Icon: Icon,
   onClick,
   size = 16,
   options,

@@ -68,7 +68,7 @@ import clickupIcon from "../../../public/Clickup.svg";
 import { FaRobot } from "react-icons/fa";
 import { IconType } from "react-icons";
 
-interface IconProps {
+export interface IconProps {
   size?: number;
   className?: string;
 }
