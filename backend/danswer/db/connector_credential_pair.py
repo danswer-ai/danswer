@@ -152,7 +152,7 @@ def add_credential_to_connector(
     credential_id: int,
     cc_pair_name: str | None,
     is_public: bool,
-    user: User,
+    user: User | None,
     db_session: Session,
 ) -> StatusResponse[int]:
     connector = fetch_connector_by_id(connector_id, db_session)
