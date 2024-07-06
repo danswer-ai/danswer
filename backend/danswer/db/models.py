@@ -695,7 +695,7 @@ class ChatSession(Base):
     )
 
     current_alternate_model: Mapped[str | None] = mapped_column(String, default=None)
-    
+
     slack_thread_id: Mapped[str | None] = mapped_column(
         String, nullable=True, default=None
     )
