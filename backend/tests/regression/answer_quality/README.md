@@ -64,3 +64,5 @@ Edit `search_test_config.yaml` to set:
     Fill this out according to the normal LLM seeding
 
 Docker daemon must be running for this to work. 
+
+Each script is able to be individually run to upload additional docs or run additional tests
