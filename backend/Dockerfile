@@ -68,7 +68,9 @@ RUN apt-get update && \
     rm -f /usr/local/lib/python3.11/site-packages/tornado/test/test.key
 
 # Pre-downloading models for setups with limited egress
-RUN python -c "from transformers import AutoTokenizer; AutoTokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1.5')"
+ENV HF_HOME=/hf_model_cache
+WORKDIR /hf_model_cache
+RUN python -c "from transformers import AutoTokenizer; AutoTokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1.5', trust_remote_code=True)"
 
 # Pre-downloading NLTK for setups with limited egress
 RUN python -c "import nltk; \
