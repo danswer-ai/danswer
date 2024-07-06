@@ -46,6 +46,7 @@ from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
 from danswer.db.persona import delete_old_default_personas
+from danswer.db.standard_answer import create_initial_default_standard_answer_category
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.llm_initialization import load_llm_providers
@@ -71,6 +72,7 @@ from danswer.server.manage.llm.api import admin_router as llm_admin_router
 from danswer.server.manage.llm.api import basic_router as llm_router
 from danswer.server.manage.secondary_index import router as secondary_index_router
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
+from danswer.server.manage.standard_answer import router as standard_answer_router
 from danswer.server.manage.users import router as user_router
 from danswer.server.middleware.latency_logging import add_latency_logging_middleware
 from danswer.server.query_and_chat.chat_backend import router as chat_router
@@ -207,6 +209,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         create_initial_default_connector(db_session)
         associate_default_cc_pair(db_session)
 
+        logger.info("Verifying default standard answer category exists.")
+        create_initial_default_standard_answer_category(db_session)
+
         logger.info("Loading LLM providers from env variables")
         load_llm_providers(db_session)
 
@@ -273,6 +278,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(
         application, slack_bot_management_router
     )
+    include_router_with_global_prefix_prepended(application, standard_answer_router)
     include_router_with_global_prefix_prepended(application, persona_router)
     include_router_with_global_prefix_prepended(application, admin_persona_router)
     include_router_with_global_prefix_prepended(application, prompt_router)

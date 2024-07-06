@@ -14,6 +14,7 @@ from danswer.db.models import User
 from danswer.db.persona import get_default_prompt
 from danswer.db.persona import mark_persona_as_deleted
 from danswer.db.persona import upsert_persona
+from danswer.db.standard_answer import fetch_standard_answer_categories_by_ids
 from danswer.search.enums import RecencyBiasSetting
 
 
@@ -72,12 +73,23 @@ def insert_slack_bot_config(
     persona_id: int | None,
     channel_config: ChannelConfig,
     response_type: SlackBotResponseType,
+    standard_answer_category_ids: list[int],
     db_session: Session,
 ) -> SlackBotConfig:
+    existing_standard_answer_categories = fetch_standard_answer_categories_by_ids(
+        standard_answer_category_ids=standard_answer_category_ids,
+        db_session=db_session,
+    )
+    if len(existing_standard_answer_categories) != len(standard_answer_category_ids):
+        raise ValueError(
+            f"Some or all categories with ids {standard_answer_category_ids} do not exist"
+        )
+
     slack_bot_config = SlackBotConfig(
         persona_id=persona_id,
         channel_config=channel_config,
         response_type=response_type,
+        standard_answer_categories=existing_standard_answer_categories,
     )
     db_session.add(slack_bot_config)
     db_session.commit()
@@ -90,6 +102,7 @@ def update_slack_bot_config(
     persona_id: int | None,
     channel_config: ChannelConfig,
     response_type: SlackBotResponseType,
+    standard_answer_category_ids: list[int],
     db_session: Session,
 ) -> SlackBotConfig:
     slack_bot_config = db_session.scalar(
@@ -99,6 +112,16 @@ def update_slack_bot_config(
         raise ValueError(
             f"Unable to find slack bot config with ID {slack_bot_config_id}"
         )
+
+    existing_standard_answer_categories = fetch_standard_answer_categories_by_ids(
+        standard_answer_category_ids=standard_answer_category_ids,
+        db_session=db_session,
+    )
+    if len(existing_standard_answer_categories) != len(standard_answer_category_ids):
+        raise ValueError(
+            f"Some or all categories with ids {standard_answer_category_ids} do not exist"
+        )
+
     # get the existing persona id before updating the object
     existing_persona_id = slack_bot_config.persona_id
 
@@ -108,6 +131,9 @@ def update_slack_bot_config(
     slack_bot_config.persona_id = persona_id
     slack_bot_config.channel_config = channel_config
     slack_bot_config.response_type = response_type
+    slack_bot_config.standard_answer_categories = list(
+        existing_standard_answer_categories
+    )
 
     # if the persona has changed, then clean up the old persona
     if persona_id != existing_persona_id and existing_persona_id:

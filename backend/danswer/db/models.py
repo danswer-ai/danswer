@@ -246,6 +246,39 @@ class Persona__Tool(Base):
     tool_id: Mapped[int] = mapped_column(ForeignKey("tool.id"), primary_key=True)
 
 
+class StandardAnswer__StandardAnswerCategory(Base):
+    __tablename__ = "standard_answer__standard_answer_category"
+
+    standard_answer_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer.id"), primary_key=True
+    )
+    standard_answer_category_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer_category.id"), primary_key=True
+    )
+
+
+class SlackBotConfig__StandardAnswerCategory(Base):
+    __tablename__ = "slack_bot_config__standard_answer_category"
+
+    slack_bot_config_id: Mapped[int] = mapped_column(
+        ForeignKey("slack_bot_config.id"), primary_key=True
+    )
+    standard_answer_category_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer_category.id"), primary_key=True
+    )
+
+
+class ChatMessage__StandardAnswer(Base):
+    __tablename__ = "chat_message__standard_answer"
+
+    chat_message_id: Mapped[int] = mapped_column(
+        ForeignKey("chat_message.id"), primary_key=True
+    )
+    standard_answer_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer.id"), primary_key=True
+    )
+
+
 """
 Documents/Indexing Tables
 """
@@ -663,6 +696,10 @@ class ChatSession(Base):
 
     current_alternate_model: Mapped[str | None] = mapped_column(String, default=None)
 
+    slack_thread_id: Mapped[str | None] = mapped_column(
+        String, nullable=True, default=None
+    )
+
     # the latest "overrides" specified by the user. These take precedence over
     # the attached persona. However, overrides specified directly in the
     # `send-message` call will take precedence over these.
@@ -759,6 +796,11 @@ class ChatMessage(Base):
     tool_calls: Mapped[list["ToolCall"]] = relationship(
         "ToolCall",
         back_populates="message",
+    )
+    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
+        "StandardAnswer",
+        secondary=ChatMessage__StandardAnswer.__table__,
+        back_populates="chat_messages",
     )
 
 
@@ -1085,6 +1127,53 @@ class ChannelConfig(TypedDict):
     follow_up_tags: NotRequired[list[str]]
 
 
+class StandardAnswerCategory(Base):
+    __tablename__ = "standard_answer_category"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
+        "StandardAnswer",
+        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+        back_populates="categories",
+    )
+    slack_bot_configs: Mapped[list["SlackBotConfig"]] = relationship(
+        "SlackBotConfig",
+        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+        back_populates="standard_answer_categories",
+    )
+
+
+class StandardAnswer(Base):
+    __tablename__ = "standard_answer"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    keyword: Mapped[str] = mapped_column(String)
+    answer: Mapped[str] = mapped_column(String)
+    active: Mapped[bool] = mapped_column(Boolean)
+
+    __table_args__ = (
+        Index(
+            "unique_keyword_active",
+            keyword,
+            active,
+            unique=True,
+            postgresql_where=(active == True),  # noqa: E712
+        ),
+    )
+
+    categories: Mapped[list[StandardAnswerCategory]] = relationship(
+        "StandardAnswerCategory",
+        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+        back_populates="standard_answers",
+    )
+    chat_messages: Mapped[list[ChatMessage]] = relationship(
+        "ChatMessage",
+        secondary=ChatMessage__StandardAnswer.__table__,
+        back_populates="standard_answers",
+    )
+
+
 class SlackBotResponseType(str, PyEnum):
     QUOTES = "quotes"
     CITATIONS = "citations"
@@ -1106,6 +1195,11 @@ class SlackBotConfig(Base):
     )
 
     persona: Mapped[Persona | None] = relationship("Persona")
+    standard_answer_categories: Mapped[list[StandardAnswerCategory]] = relationship(
+        "StandardAnswerCategory",
+        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+        back_populates="slack_bot_configs",
+    )
 
 
 class TaskQueueState(Base):

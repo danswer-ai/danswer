@@ -77,17 +77,25 @@ def update_emote_react(
     remove: bool,
     client: WebClient,
 ) -> None:
-    if not message_ts:
-        logger.error(f"Tried to remove a react in {channel} but no message specified")
-        return
+    try:
+        if not message_ts:
+            logger.error(
+                f"Tried to remove a react in {channel} but no message specified"
+            )
+            return
 
-    func = client.reactions_remove if remove else client.reactions_add
-    slack_call = make_slack_api_rate_limited(func)  # type: ignore
-    slack_call(
-        name=emoji,
-        channel=channel,
-        timestamp=message_ts,
-    )
+        func = client.reactions_remove if remove else client.reactions_add
+        slack_call = make_slack_api_rate_limited(func)  # type: ignore
+        slack_call(
+            name=emoji,
+            channel=channel,
+            timestamp=message_ts,
+        )
+    except SlackApiError as e:
+        if remove:
+            logger.error(f"Failed to remove Reaction due to: {e}")
+        else:
+            logger.error(f"Was not able to react to user message due to: {e}")
 
 
 def get_danswer_bot_app_id(web_client: WebClient) -> Any:
@@ -136,16 +144,13 @@ def respond_in_thread(
     receiver_ids: list[str] | None = None,
     metadata: Metadata | None = None,
     unfurl: bool = True,
-) -> None:
+) -> list[str]:
     if not text and not blocks:
         raise ValueError("One of `text` or `blocks` must be provided")
 
+    message_ids: list[str] = []
     if not receiver_ids:
         slack_call = make_slack_api_rate_limited(client.chat_postMessage)
-    else:
-        slack_call = make_slack_api_rate_limited(client.chat_postEphemeral)
-
-    if not receiver_ids:
         response = slack_call(
             channel=channel,
             text=text,
@@ -157,7 +162,9 @@ def respond_in_thread(
         )
         if not response.get("ok"):
             raise RuntimeError(f"Failed to post message: {response}")
+        message_ids.append(response["message_ts"])
     else:
+        slack_call = make_slack_api_rate_limited(client.chat_postEphemeral)
         for receiver in receiver_ids:
             response = slack_call(
                 channel=channel,
@@ -171,6 +178,9 @@ def respond_in_thread(
             )
             if not response.get("ok"):
                 raise RuntimeError(f"Failed to post message: {response}")
+            message_ids.append(response["message_ts"])
+
+    return message_ids
 
 
 def build_feedback_id(

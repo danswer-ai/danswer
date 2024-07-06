@@ -18,6 +18,7 @@ interface SlackBotConfigCreationRequest {
   follow_up_tags?: string[];
   usePersona: boolean;
   response_type: SlackBotResponseType;
+  standard_answer_categories: number[];
 }
 
 const buildFiltersFromCreationRequest = (
@@ -48,6 +49,7 @@ const buildRequestBodyFromCreationRequest = (
       ? { persona_id: creationRequest.persona_id }
       : { document_sets: creationRequest.document_sets }),
     response_type: creationRequest.response_type,
+    standard_answer_categories: creationRequest.standard_answer_categories,
   });
 };
 
