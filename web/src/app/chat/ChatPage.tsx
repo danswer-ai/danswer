@@ -274,14 +274,14 @@ export function ChatPage({
     documentSidebarInitialWidth || parseInt(SIDEBAR_WIDTH_CONST)
   );
 
-  const updateSidebarWidth = (newWidth: number) => {
-    setUsedSidebarWidth(newWidth);
-    if (sidebarElementRef.current && innerSidebarElementRef.current) {
-      sidebarElementRef.current.style.transition = "";
-      sidebarElementRef.current.style.width = `${newWidth}px`;
-      innerSidebarElementRef.current.style.width = `${newWidth}px`;
-    }
-  };
+  // const updateSidebarWidth = (newWidth: number) => {
+  //   setUsedSidebarWidth(newWidth);
+  //   if (sidebarElementRef.current && innerSidebarElementRef.current) {
+  //     sidebarElementRef.current.style.transition = "";
+  //     sidebarElementRef.current.style.width = `${newWidth}px`;
+  //     innerSidebarElementRef.current.style.width = `${newWidth}px`;
+  //   }
+  // };
 
   const [message, setMessage] = useState(
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
@@ -1044,19 +1044,59 @@ export function ChatPage({
     router.push("/search");
   }
 
+  const [toggledSidebar, setToggledSidebar] = useState(false); // State to track if sidebar is open
+
   const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
 
   const toggleSidebar = () => {
-    if (sidebarElementRef.current) {
-      sidebarElementRef.current.style.transition = "width 0.3s ease-in-out";
-
-      sidebarElementRef.current.style.width = showDocSidebar
-        ? "0px"
-        : `${usedSidebarWidth}px`;
-    }
-
-    setShowDocSidebar((showDocSidebar) => !showDocSidebar); // Toggle the state which will in turn toggle the class
+    setToggledSidebar((toggledSidebar) => !toggledSidebar); // Toggle the state which will in turn toggle the class
   };
+
+  const xPosition = useRef<number>(1000);
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      const currentXPosition = event.clientX;
+      console.log(xPosition.current, currentXPosition);
+
+      const sidebarRect = sidebarElementRef.current?.getBoundingClientRect();
+
+      if (sidebarRect && sidebarElementRef.current) {
+        const isWithinSidebar =
+          currentXPosition >= sidebarRect.left &&
+          currentXPosition <= sidebarRect.right &&
+          event.clientY >= sidebarRect.top &&
+          event.clientY <= sidebarRect.bottom;
+
+        const sidebarStyle = window.getComputedStyle(sidebarElementRef.current);
+        const isVisible = sidebarStyle.opacity !== "0";
+        let update = false;
+        if (isWithinSidebar && isVisible) {
+          setShowDocSidebar(true);
+          update = true;
+        }
+
+        console.log(showDocSidebar, !toggledSidebar);
+
+        if (
+          currentXPosition > 50 &&
+          showDocSidebar &&
+          !isWithinSidebar &&
+          !toggledSidebar
+        ) {
+          setShowDocSidebar(false);
+        } else if (currentXPosition < 50 && !showDocSidebar) {
+          setShowDocSidebar(true);
+        }
+      }
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [showDocSidebar, toggledSidebar]);
 
   useEffect(() => {
     const includes = checkAnyAssistantHasSearch(
@@ -1123,30 +1163,41 @@ export function ChatPage({
 
       <div className="flex relative bg-background text-default overflow-x-hidden">
         {/* <DocSidebar onClose={() => null} isOpen={true} selectedDoc={null} /> */}
-
+        {/* {showDocSidebar && ( */}
         <div
           ref={sidebarElementRef}
-          className={`  flex-none absolute left-0 z-[100]  overflow-y-hidden sidebar bg-background-weak h-screen`}
-          style={{ width: showDocSidebar ? usedSidebarWidth : 0 }}
+          className={`
+            w-[300px] 
+            flex-none 
+            absolute 
+            left-0 
+            z-[100] 
+            overflow-y-hidden 
+            sidebar 
+            bg-background-weak 
+            h-screen
+            transition-all 
+            bg-opacity-80
+            duration-300 
+            ease-in-out
+            ${
+              showDocSidebar || toggledSidebar
+                ? "opacity-100 translate-x-0"
+                : "opacity-0  pointer-events-none -translate-x-10"
+            }
+          `}
         >
-          <ResizableSection
-            updateSidebarWidth={updateSidebarWidth}
-            intialWidth={usedSidebarWidth}
-            minWidth={200}
-            maxWidth={maxDocumentSidebarWidth || undefined}
-          >
-            <div className="w-full relative">
-              <HistorySidebar
-                initialWidth={usedSidebarWidth}
-                ref={innerSidebarElementRef}
-                closeSidebar={() => toggleSidebar()}
-                existingChats={chatSessions}
-                currentChatSession={selectedChatSession}
-                folders={folders}
-                openedFolders={openedFolders}
-              />
-            </div>
-          </ResizableSection>
+          <div className="w-full  relative">
+            <HistorySidebar
+              ref={innerSidebarElementRef}
+              toggleSidebar={toggleSidebar}
+              toggled={toggledSidebar}
+              existingChats={chatSessions}
+              currentChatSession={selectedChatSession}
+              folders={folders}
+              openedFolders={openedFolders}
+            />
+          </div>
         </div>
         <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
           {popup}
@@ -1203,7 +1254,6 @@ export function ChatPage({
                     {...getRootProps()}
                   >
                     {/* <input {...getInputProps()} /> */}
-
                     <div
                       className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
                       ref={scrollableDivRef}
@@ -1219,7 +1269,6 @@ export function ChatPage({
                               ? setSharingModalVisible
                               : undefined
                           }
-                          toggleSidebar={toggleSidebar}
                           showSidebar={showDocSidebar}
                           user={user}
                         />
@@ -1233,11 +1282,10 @@ export function ChatPage({
                             selectedPersona={livePersona}
                           />
                         )}
-
                       <div
                         className={
-                          "mt-4  w-full mx-auto" +
-                          "bg-black  absolute top-12  left-1/2 transform -translate-x-1/2" +
+                          "mt-4  w-full mx-auto " +
+                          "  absolute top-12  left-1/2 transform -translate-x-1/2" +
                           (hasPerformedInitialScroll ? "" : " invisible")
                         }
                       >

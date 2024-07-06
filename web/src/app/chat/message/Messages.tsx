@@ -185,10 +185,10 @@ export const AIMessage = ({
   ) : undefined;
 
   return (
-    <div className={"py-5 px-2 lg:px-5  flex -mr-6 w-full"}>
-      <div className="mx-auto w-[90%] max-w-searchbar-max relative">
+    <div className={"group py-5 px-2 lg:px-5  relative flex -mr-6 w-full"}>
+      <div className="mx-auto w-[90%] max-w-searchbar-max">
         <div className="xl:ml-8">
-          <div className="flex">
+          <div className="group flex">
             <AssistantIcon
               size="small"
               assistant={alternativeAssistant || currentPersona}
@@ -328,9 +328,8 @@ export const AIMessage = ({
 
                 {isComplete && docs && docs.length > 0 && (
                   <div className="mt-2 -mx-8  w-full mb-4  flex relative ">
-                    <div className="absolute left-0 top-0  h-full bg-gradient-to-l from-background/0  via-background/40 backdrop-blur-xs  to-background w-[40px]" />
-
-                    <div className="absolute right-6 top-0  h-full bg-gradient-to-r from-background/0  via-background/40 backdrop-blur-xs  to-background w-[40px]" />
+                    <div className="absolute left-0 top-0 h-full bg-gradient-to-l from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
+                    <div className="absolute right-6 top-0  h-full bg-gradient-to-r from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
                     <div className=" w-full  overflow-x-scroll no-scrollbar">
                       {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
                       <div className="px-8 flex gap-x-2">
@@ -409,19 +408,32 @@ export const AIMessage = ({
                   </div>
                 )}
               </div>
-              {handleFeedback && isActive && (
-                <div className="flex md:flex-row gap-x-0.5 mt-1.5">
-                  <CopyButton content={content.toString()} />
-                  <Hoverable
-                    icon={FiThumbsUp}
-                    onClick={() => handleFeedback("like")}
-                  />
-                  <Hoverable
-                    icon={FiThumbsDown}
-                    onClick={() => handleFeedback("dislike")}
-                  />
-                </div>
-              )}
+              {handleFeedback &&
+                (isActive ? (
+                  <div className="flex md:flex-row gap-x-0.5 mt-1.5">
+                    <CopyButton content={content.toString()} />
+                    <Hoverable
+                      icon={FiThumbsUp}
+                      onClick={() => handleFeedback("like")}
+                    />
+                    <Hoverable
+                      icon={FiThumbsDown}
+                      onClick={() => handleFeedback("dislike")}
+                    />
+                  </div>
+                ) : (
+                  <div className="invisible absolute -bottom-4 bg-background-weakerish/60 p-1 px-1.5 rounded-lg hover:visible group-hover:visible flex md:flex-row gap-x-0.5 mt-1.5">
+                    <CopyButton content={content.toString()} />
+                    <Hoverable
+                      icon={FiThumbsUp}
+                      onClick={() => handleFeedback("like")}
+                    />
+                    <Hoverable
+                      icon={FiThumbsDown}
+                      onClick={() => handleFeedback("dislike")}
+                    />
+                  </div>
+                ))}
             </div>
           </div>
         </div>
@@ -517,13 +529,7 @@ export const HumanMessage = ({
       <div className="mx-auto  w-full max-w-searchbar-max">
         <div className="xl:ml-8">
           <div className="flex">
-            <div className="flex-none p-1 bg-user rounded-lg h-fit">
-              <div className="text-inverted">
-                <FiUser size={16} className="my-auto mx-auto" />
-              </div>
-            </div>
-
-            <div className="w-full  ml-4 flex mr-4 w-full max-w-message-max break-words">
+            <div className="w-full  ml-8 flex mr-4 w-full max-w-message-max break-words">
               <FileDisplay files={files || []} />
 
               {isEditing ? (
@@ -593,6 +599,8 @@ export const HumanMessage = ({
                           text-inverted 
                           text-sm
                           rounded-lg 
+inline-flex items-center justify-center flex-shrink-0 font-medium min-h-[38px] py-2 px-3 pointer-events-auto
+
                           hover:bg-accent-hover
                         `}
                         onClick={handleEditSubmit}
@@ -601,6 +609,7 @@ export const HumanMessage = ({
                       </button>
                       <button
                         className={`
+inline-flex items-center justify-center flex-shrink-0 font-medium min-h-[38px] py-2 px-3 pointer-events-auto
                           w-fit 
                           p-1 
                           bg-hover
@@ -620,20 +629,65 @@ export const HumanMessage = ({
                   </div>
                 </div>
               ) : typeof content === "string" ? (
-                <div className="flex flex-col preserve-lines prose max-w-full">
-                  {content}
-                </div>
+                <>
+                  {onEdit &&
+                  isHovered &&
+                  !isEditing &&
+                  (!files || files.length === 0) ? (
+                    <div className="ml-auto my-auto">
+                      <Hoverable
+                        icon={FiEdit2}
+                        onClick={() => {
+                          setIsEditing(true);
+                          setIsHovered(false);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-[27px]" />
+                  )}
+                  <div
+                    className={`${
+                      !(
+                        onEdit &&
+                        isHovered &&
+                        !isEditing &&
+                        (!files || files.length === 0)
+                      ) && "ml-auto"
+                    } relative max-w-[70%] rounded-3xl bg-background-weakerish px-5 py-2.5`}
+                  >
+                    {content}
+                  </div>
+                </>
               ) : (
-                <p className="bg-black rounded-lg p-1">{content}</p>
+                <>
+                  {onEdit &&
+                  isHovered &&
+                  !isEditing &&
+                  (!files || files.length === 0) ? (
+                    <div className="my-auto">
+                      <Hoverable
+                        icon={FiEdit2}
+                        onClick={() => {
+                          setIsEditing(true);
+                          setIsHovered(false);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-[27px]" />
+                  )}
+                  <p className="ml-auto bg-black rounded-lg p-1">{content}</p>
+                </>
               )}
             </div>
           </div>
-          <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1">
+          <div className="flex flex-col md:flex-row gap-x-0.5 mr-8 mt-1">
             {currentMessageInd !== undefined &&
               onMessageSelection &&
               otherMessagesCanSwitchTo &&
               otherMessagesCanSwitchTo.length > 1 && (
-                <div className="mr-2">
+                <div className="ml-auto mr-2">
                   <MessageSwitcher
                     currentPage={currentMessageInd + 1}
                     totalPages={otherMessagesCanSwitchTo.length}
@@ -650,20 +704,6 @@ export const HumanMessage = ({
                   />
                 </div>
               )}
-            {onEdit &&
-            isHovered &&
-            !isEditing &&
-            (!files || files.length === 0) ? (
-              <Hoverable
-                icon={FiEdit2}
-                onClick={() => {
-                  setIsEditing(true);
-                  setIsHovered(false);
-                }}
-              />
-            ) : (
-              <div className="h-[27px]" />
-            )}
           </div>
         </div>
       </div>

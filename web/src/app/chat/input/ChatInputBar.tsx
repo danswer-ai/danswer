@@ -28,6 +28,7 @@ import { Hoverable } from "@/components/Hoverable";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { IconType } from "react-icons";
+import CustomTooltipChatInputOption from "./ChatInputOption";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
@@ -366,24 +367,31 @@ export function ChatInputBar({
                 icon={ConfigureIcon as IconType}
                 onClick={() => setConfigModalActiveTab("assistants")}
               />
+              <CustomTooltipChatInputOption
+                flexPriority="shrink"
+                name={selectedAssistant ? selectedAssistant.name : "Assistants"}
+                icon={ConfigureIcon as IconType}
+                onClick={() => setConfigModalActiveTab("assistants")}
+                tooltipContent={<span>Configure Assistants</span>}
+              />
               <ChatInputOption
                 flexPriority="stiff"
                 name="File"
                 icon={FiPlusCircle}
-                onClick={() => {
-                  const input = document.createElement("input");
-                  input.type = "file";
-                  input.multiple = true; // Allow multiple files
-                  input.onchange = (event: any) => {
-                    const files = Array.from(
-                      event?.target?.files || []
-                    ) as File[];
-                    if (files.length > 0) {
-                      handleFileUpload(files);
-                    }
-                  };
-                  input.click();
-                }}
+                // onClick={() => {
+                //   const input = document.createElement("input");
+                //   input.type = "file";
+                //   input.multiple = true; // Allow multiple files
+                //   input.onchange = (event: any) => {
+                //     const files = Array.from(
+                //       event?.target?.files || []
+                //     ) as File[];
+                //     if (files.length > 0) {
+                //       handleFileUpload(files);
+                //     }
+                //   };
+                //   input.click();
+                // }}
               />
             </div>
             <div className="absolute bottom-2.5 right-10">

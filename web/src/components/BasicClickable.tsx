@@ -28,10 +28,6 @@ export function BasicClickable({
         hover:bg-hover-light
         ${fullWidth ? "w-full" : ""}`}
     >
-      {inset && (
-        <div className=" rounded absolute inset-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.3),inset_0_-2px_2px_rgba(255,255,255,0.5)]" />
-      )}
-
       {children}
     </button>
   );
@@ -51,16 +47,14 @@ export function EmphasizedClickable({
       onClick={onClick}
       className={`
         border 
-        border-border 
-        shadow-md
-        rounded
-        font-medium 
-        text-emphasis
+        border-neutral-300 
+        hover:shadow-sm
+        rounded-smf
         text-sm
         p-1
         select-none
-        bg-hover-light
-        hover:bg-hover
+        bg-neutral-100
+        hover:bg-background-weakerish
         ${fullWidth ? "w-full" : ""}`}
     >
       {children}

@@ -3,26 +3,44 @@ import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
 import { UserDropdown } from "../UserDropdown";
 import { FiShare2 } from "react-icons/fi";
 import { SetStateAction } from "react";
+import { Logo } from "../Logo";
+import { PlusCircle } from "@phosphor-icons/react";
+import { PlusCircleIcon } from "../icons/icons";
+import { useRouter } from "next/navigation";
 
 export default function FunctionalHeader({
   showSidebar,
-  toggleSidebar,
   user,
   setSharingModalVisible,
 }: {
   showSidebar: boolean;
-  toggleSidebar: () => void;
   user: User | null;
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
 }) {
+  const router = useRouter();
   return (
+    // <div className="pb-6 left-0 sticky top-0 z-10 w-full bg-gradient-to-b via-50% blur from-neutral-200 via-neutral-200 to-neutral-200/10 flex">
     <div className="pb-6 left-0 sticky top-0 z-10 w-full bg-opacity-30 backdrop-blur-sm flex">
-      <div className="mt-2 flex w-full">
-        {!showSidebar && (
+      {/* // <div className="pb-6 left-0 sticky -top-[.1]  z-10 w-full from-neutral-200 via-neutral-200 to-neutral-200/10  flex  z-10 bg-gradient-to-b via-50% blur"> */}
+
+      {/* pb-6 left-0 sticky top-0 z-10 w-full from-neutral-200 via-neutral-200 to-neutral-200/0 absolute flex  z-10 bg-gradient-to-b via-50% blur */}
+      <div className="mt-2 text-neutral-700 flex w-full">
+        {/* <Logo /> */}
+        <p className=" absolute ml-4 z-[1000000] my-auto flex items-center text-xl font-bold font-['Poppins']">
+          <Logo />
+          Danswer
+          {/* Danswer */}
+          <button onClick={() => router.push("/chat")}>
+            <PlusCircleIcon className="ml-2 my-auto !h-6 !w-6 cursor-pointer text-neutral-700 hover:text-neutral-600 transition-colors duration-300" />
+          </button>
+        </p>
+
+        {/* {!showSidebar && (
           <button className="ml-4 mt-auto" onClick={() => toggleSidebar()}>
             <TbLayoutSidebarLeftExpand size={24} />
           </button>
-        )}
+        )} */}
+
         <div className="ml-auto my-auto mr-4 flex gap-x-2">
           {setSharingModalVisible && (
             <div

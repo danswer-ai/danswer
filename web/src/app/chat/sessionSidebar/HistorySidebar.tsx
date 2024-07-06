@@ -1,7 +1,14 @@
 "use client";
 
 import { FiEdit, FiFolderPlus } from "react-icons/fi";
-import { ForwardedRef, forwardRef, useContext, useEffect } from "react";
+import {
+  Dispatch,
+  ForwardedRef,
+  forwardRef,
+  SetStateAction,
+  useContext,
+  useEffect,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BasicClickable } from "@/components/BasicClickable";
@@ -23,27 +30,28 @@ import { FaBrain } from "react-icons/fa";
 import { Logo } from "@/components/Logo";
 import { HeaderTitle } from "@/components/header/Header";
 import { TbLayoutSidebarRightExpand } from "react-icons/tb";
+import { LefToLineIcon, RightToLineIcon } from "@/components/icons/icons";
 
 interface HistorySidebarProps {
-  closeSidebar?: () => void;
   search?: boolean;
   existingChats?: ChatSession[];
   currentChatSession?: ChatSession | null | undefined;
   folders?: Folder[];
   openedFolders?: { [key: number]: boolean };
-  initialWidth?: number;
+  toggleSidebar: () => void;
+  toggled: boolean;
 }
 // forwardRef<HTMLDivElement, DocumentSidebarProps>(
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
   (
     {
+      toggled,
       search,
-      closeSidebar,
       existingChats,
       currentChatSession,
       folders,
       openedFolders,
-      initialWidth,
+      toggleSidebar,
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
@@ -69,12 +77,12 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
       <>
         {popup}
         <div
-          style={{ width: initialWidth }}
           ref={ref}
           className={`
             flex
             flex-none
             bg-background-weak
+            w-full
             border-r 
             border-border 
             flex 
@@ -82,7 +90,19 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             h-screen
             transition-transform`}
         >
-          <div className="pt-2  flex">
+          <p className="ml-4 mr-3 flex items-center text-neutral-700 mt-2 my-auto text-xl font-bold font-['Poppins']">
+            <Logo />
+            {enterpriseSettings && enterpriseSettings.application_name ? (
+              <p>{enterpriseSettings.application_name}</p>
+            ) : (
+              <p> Danswer</p>
+            )}
+
+            <button className="ml-auto" onClick={toggleSidebar}>
+              {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
+            </button>
+          </p>
+          {/* <div>
             <Link
               className="ml-4 w-full"
               href={
@@ -92,18 +112,12 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
               }
             >
               <div className="flex pr-12 w-full">
-                {closeSidebar && (
-                  <button className="mb-6" onClick={() => closeSidebar()}>
-                    <TbLayoutSidebarRightExpand size={24} />
-                  </button>
-                )}
-                <div className="mx-auto pt-4 flex">
-                  <Logo
-                    height={32}
-                    width={30}
-                    className="ml-auto mr-1 my-auto"
-                  />
+
+                <div className="mx-auto  flex">
+
                   {enterpriseSettings && enterpriseSettings.application_name ? (
+
+
                     <div>
                       <HeaderTitle>
                         {enterpriseSettings.application_name}
@@ -116,14 +130,17 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                       )}
                     </div>
                   ) : (
-                    <HeaderTitle>Danswer</HeaderTitle>
+                    <>
+                      <HeaderTitle>Danswer</HeaderTitle>
+
+                    </>
                   )}
                 </div>
               </div>
             </Link>
-          </div>
+          </div> */}
 
-          <div className="flex mt-5 items-center">
+          <div className="flex items-center">
             <Link
               href={
                 "/chat" +

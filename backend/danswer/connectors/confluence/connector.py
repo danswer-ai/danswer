@@ -59,6 +59,7 @@ def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str]:
     return wiki_base, space
 
 
+# NOTE: please refer to Atlassian's documenation () for most up to date configuration
 def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, str]:
     """Sample
     https://danswer.ai/confluence/display/1234abcd/overview
@@ -75,6 +76,7 @@ def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, st
         + parsed_url.netloc
         + parsed_url.path.split(DISPLAY)[0]
     )
+
     space = DISPLAY.join(parsed_url.path.split(DISPLAY)[1:]).split("/")[0]
     return wiki_base, space
 
@@ -242,9 +244,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     self.space,
                     start=start_ind,
                     limit=batch_size,
-                    status="current"
-                    if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
-                    else None,
+                    status=(
+                        "current"
+                        if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
+                        else None
+                    ),
                     expand="body.storage.value,version",
                 )
             except Exception:
@@ -263,9 +267,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                                 self.space,
                                 start=start_ind + i,
                                 limit=1,
-                                status="current"
-                                if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
-                                else None,
+                                status=(
+                                    "current"
+                                    if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
+                                    else None
+                                ),
                                 expand="body.storage.value,version",
                             )
                         )
@@ -450,9 +456,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         source=DocumentSource.CONFLUENCE,
                         semantic_identifier=page["title"],
                         doc_updated_at=last_modified,
-                        primary_owners=[BasicExpertInfo(email=author)]
-                        if author
-                        else None,
+                        primary_owners=(
+                            [BasicExpertInfo(email=author)] if author else None
+                        ),
                         metadata=doc_metadata,
                     )
                 )

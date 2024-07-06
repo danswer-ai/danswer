@@ -54,9 +54,9 @@ export function ChatTab({
   };
 
   return (
-    <div className="mb-1 ml-3 weakbackground overflow-y-auto h-full">
+    <div className="mb-1 ml-3  overflow-y-auto h-full">
       {folders && folders.length > 0 && (
-        <div className="py-2 mr-3 border-b border-border">
+        <div className="py-2 border-b border-border">
           <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-medium">
             Folders
           </div>
