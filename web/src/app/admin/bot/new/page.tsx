@@ -12,9 +12,20 @@ import {
 } from "@/lib/assistants/fetchAssistantsSS";
 
 async function Page() {
-  const tasks = [fetchSS("/manage/document-set"), fetchAssistantsSS(), fetchSS("/manage/admin/standard-answer/category"),];
-  const [documentSetsResponse, [assistants, assistantsFetchError], standardAnswerCategoriesResponse] =
-    (await Promise.all(tasks)) as [Response, FetchAssistantsResponse, Response];
+  const tasks = [
+    fetchSS("/manage/document-set"),
+    fetchAssistantsSS(),
+    fetchSS("/manage/admin/standard-answer/category"),
+  ];
+  const [
+    documentSetsResponse,
+    [assistants, assistantsFetchError],
+    standardAnswerCategoriesResponse,
+  ] = (await Promise.all(tasks)) as [
+    Response,
+    FetchAssistantsResponse,
+    Response,
+  ];
 
   if (!documentSetsResponse.ok) {
     return (

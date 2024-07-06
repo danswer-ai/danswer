@@ -31,8 +31,6 @@ async function Page() {
         icon={<ClipboardIcon size={32} />}
       />
 
-      <Text className="mb-8">Define a new standard answer below!</Text>
-
       <StandardAnswerCreationForm
         standardAnswerCategories={standardAnswerCategories}
       />

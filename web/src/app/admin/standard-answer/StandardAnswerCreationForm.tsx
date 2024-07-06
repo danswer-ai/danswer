@@ -88,13 +88,14 @@ export const StandardAnswerCreationForm = ({
             <Form>
               <TextFormField
                 name="keyword"
-                label="Keyword or phrase:"
-                placeholder="A keyword or phrase that will be used to identify the answer"
+                label="Keywords"
+                tooltip="If all specified keywords are in the question, then we will respond with the answer below"
+                placeholder="e.g. Wifi Password"
                 autoCompleteDisabled={true}
               />
               <MarkdownFormField
                 name="answer"
-                label="Answer:"
+                label="Answer"
                 placeholder="The answer in markdown"
               />
               <div className="w-4/12">
