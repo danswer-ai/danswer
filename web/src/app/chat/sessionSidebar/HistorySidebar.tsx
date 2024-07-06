@@ -38,8 +38,8 @@ interface HistorySidebarProps {
   currentChatSession?: ChatSession | null | undefined;
   folders?: Folder[];
   openedFolders?: { [key: number]: boolean };
-  toggleSidebar: () => void;
-  toggled: boolean;
+  toggleSidebar?: () => void;
+  toggled?: boolean;
 }
 // forwardRef<HTMLDivElement, DocumentSidebarProps>(
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(

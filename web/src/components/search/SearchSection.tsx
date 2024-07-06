@@ -451,9 +451,8 @@ export const SearchSection = ({
 
       {/* Header */}
       <FunctionalHeader
-        toggleSidebar={toggleSidebar}
         showSidebar={showDocSidebar}
-        toggled={false}
+        page="search"
         user={user}
       />
 
