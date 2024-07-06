@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 from threading import Thread
+from typing import IO
 
 from retry import retry
 
@@ -17,9 +18,10 @@ def _run_command(command: str, stream_output: bool = False) -> tuple[str, str]:
         bufsize=1,
     )
 
-    stdout_lines, stderr_lines = [], []
+    stdout_lines: list[str] = []
+    stderr_lines: list[str] = []
 
-    def process_stream(stream, lines):
+    def process_stream(stream: IO[str], lines: list[str]) -> None:
         for line in stream:
             lines.append(line)
             if stream_output:
