@@ -92,7 +92,7 @@ export const SearchSection = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
         switch (event.key.toLowerCase()) {
-          case "a":
+          case "/":
             event.preventDefault();
             toggleAgentic();
 
@@ -437,31 +437,23 @@ export const SearchSection = ({
         className={`flex-none absolute left-0 z-[100] overflow-y-hidden sidebar bg-background-weak h-screen`}
         style={{ width: showDocSidebar ? usedSidebarWidth : 0 }}
       >
-        <ResizableSection
-          updateSidebarWidth={updateSidebarWidth}
-          intialWidth={usedSidebarWidth}
-          minWidth={200}
-          maxWidth={300 || undefined}
-        >
-          <div className="w-full  relative">
-            <HistorySidebar
-              search={true}
-              initialWidth={usedSidebarWidth}
-              ref={innerSidebarElementRef}
-              closeSidebar={() => toggleSidebar()}
-              existingChats={querySessions}
-              // currentChatSession={selectedChatSession}
-              // folders={folders}
-              // openedFolders={openedFolders}
-            />
-          </div>
-        </ResizableSection>
+        <HistorySidebar
+          search={true}
+          ref={innerSidebarElementRef}
+          toggleSidebar={toggleSidebar}
+          toggled={false}
+          existingChats={querySessions}
+          // currentChatSession={selectedChatSession}
+          // folders={folders}
+          // openedFolders={openedFolders}
+        />
       </div>
 
       {/* Header */}
       <FunctionalHeader
         toggleSidebar={toggleSidebar}
         showSidebar={showDocSidebar}
+        toggled={false}
         user={user}
       />
 
@@ -490,12 +482,10 @@ export const SearchSection = ({
             <div className="mt-48 mb-8 flex justify-center items-center">
               <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
                 <div className="flex">
-                  <div className="mx-auto">
-                    <Logo height={80} width={80} className="m-auto" />
-                    <div className="m-auto text-3xl font-bold text-strong mt-4 w-fit">
-                      Danswer
-                    </div>
-                    Unlocking your organization&apos;s knowledge.
+                  <div className="text-3xl font-bold text-strong mx-auto">
+                    {/* <div className="font-regular text-gray-900 font-display text-3xl md:text-4xl mx-auto"> */}
+                    {/* Organization&apos;s knowledge. */}
+                    Unlocking Insights
                   </div>
                 </div>
               </div>

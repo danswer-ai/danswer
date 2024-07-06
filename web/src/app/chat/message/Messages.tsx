@@ -27,7 +27,7 @@ import {
   SEARCH_TOOL_NAME,
 } from "../tools/constants";
 import { ToolRunDisplay } from "../tools/ToolRunningAnimation";
-import { Hoverable } from "@/components/Hoverable";
+import { Hoverable, HoverableIcon } from "@/components/Hoverable";
 import { DocumentPreview } from "../files/documents/DocumentPreview";
 import { InMessageImage } from "../files/images/InMessageImage";
 import { CodeBlock } from "./CodeBlock";
@@ -46,7 +46,11 @@ import {
   buildDocumentSummaryDisplay,
   DocumentMetadataBlock,
 } from "@/components/search/DocumentDisplay";
-import { ExtendIcon } from "@/components/icons/icons";
+import {
+  DislikeFeedbackIcon,
+  ExtendIcon,
+  LikeFeedbackIcon,
+} from "@/components/icons/icons";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -412,18 +416,19 @@ export const AIMessage = ({
                 (isActive ? (
                   <div className="flex md:flex-row gap-x-0.5 mt-1.5">
                     <CopyButton content={content.toString()} />
-                    <Hoverable
-                      icon={FiThumbsUp}
+                    <HoverableIcon
+                      icon={<LikeFeedbackIcon />}
                       onClick={() => handleFeedback("like")}
                     />
-                    <Hoverable
-                      icon={FiThumbsDown}
+                    <HoverableIcon
+                      icon={<DislikeFeedbackIcon />}
                       onClick={() => handleFeedback("dislike")}
                     />
                   </div>
                 ) : (
                   <div className="invisible absolute -bottom-4 bg-background-weakerish/60 p-1 px-1.5 rounded-lg hover:visible group-hover:visible flex md:flex-row gap-x-0.5 mt-1.5">
                     <CopyButton content={content.toString()} />
+
                     <Hoverable
                       icon={FiThumbsUp}
                       onClick={() => handleFeedback("like")}

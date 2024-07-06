@@ -1135,7 +1135,6 @@ export function ChatPage({
           case "e":
             event.preventDefault();
             toggleSidebar();
-            setToggledSidebar(true);
             break;
         }
       }

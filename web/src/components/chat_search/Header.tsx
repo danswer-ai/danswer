@@ -28,14 +28,14 @@ export default function FunctionalHeader({
       {/* pb-6 left-0 sticky top-0 z-10 w-full from-neutral-200 via-neutral-200 to-neutral-200/0 absolute flex  z-10 bg-gradient-to-b via-50% blur */}
       <div className="mt-2 text-neutral-700 flex w-full">
         {/* <Logo /> */}
-        <p className=" absolute ml-4 z-[1000000] my-auto flex items-center text-xl font-bold font-['Poppins']">
+        <div className=" absolute ml-4 z-[1000000] my-auto flex items-center text-xl font-bold font-['Poppins']">
           <Logo />
           Danswer
           {/* Danswer */}
           <button onClick={() => router.push(`/${page}`)}>
             <PlusCircleIcon className="ml-2 my-auto !h-6 !w-6 cursor-pointer text-neutral-700 hover:text-neutral-600 transition-colors duration-300" />
           </button>
-        </p>
+        </div>
 
         {/* {!showSidebar && (
           <button className="ml-4 mt-auto" onClick={() => toggleSidebar()}>
