@@ -37,7 +37,7 @@ limit: null
 # LLM configuration
 llm:
   # Name of the LLM
-  name: "llm_name"
+  name: "default_test_llm"
   
   # Provider of the LLM (e.g., OpenAI)
   provider: "openai"
