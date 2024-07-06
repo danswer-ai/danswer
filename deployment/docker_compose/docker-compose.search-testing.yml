@@ -16,7 +16,7 @@ services:
     ports:
       - "8080"
     env_file:
-      - .env
+      - .env_eval
     environment:
       - AUTH_TYPE=disabled
       - POSTGRES_HOST=relational_db
@@ -43,7 +43,7 @@ services:
       - index
     restart: always
     env_file:
-      - .env
+      - .env_eval
     environment:
       - AUTH_TYPE=disabled
       - POSTGRES_HOST=relational_db
