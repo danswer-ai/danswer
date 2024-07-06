@@ -201,7 +201,7 @@ def add_credential_to_connector(
 def remove_credential_from_connector(
     connector_id: int,
     credential_id: int,
-    user: User,
+    user: User | None,
     db_session: Session,
 ) -> StatusResponse[int]:
     connector = fetch_connector_by_id(connector_id, db_session)

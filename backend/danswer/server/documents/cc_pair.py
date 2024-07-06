@@ -77,7 +77,7 @@ def associate_credential_to_connector(
     connector_id: int,
     credential_id: int,
     metadata: ConnectorCredentialPairMetadata,
-    user: User = Depends(current_user),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
     try:
@@ -97,7 +97,7 @@ def associate_credential_to_connector(
 def dissociate_credential_from_connector(
     connector_id: int,
     credential_id: int,
-    user: User = Depends(current_user),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
     return remove_credential_from_connector(
