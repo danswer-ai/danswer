@@ -1,18 +1,51 @@
 import json
 import os
 import subprocess
+import sys
+from threading import Thread
+from typing import IO
 
 from retry import retry
 
 
-def _run_command(command: str) -> tuple[str, str]:
+def _run_command(command: str, stream_output: bool = False) -> tuple[str, str]:
     process = subprocess.Popen(
-        command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        bufsize=1,
     )
-    stdout, stderr = process.communicate()
+
+    stdout_lines: list[str] = []
+    stderr_lines: list[str] = []
+
+    def process_stream(stream: IO[str], lines: list[str]) -> None:
+        for line in stream:
+            lines.append(line)
+            if stream_output:
+                print(
+                    line,
+                    end="",
+                    file=sys.stdout if stream == process.stdout else sys.stderr,
+                )
+
+    stdout_thread = Thread(target=process_stream, args=(process.stdout, stdout_lines))
+    stderr_thread = Thread(target=process_stream, args=(process.stderr, stderr_lines))
+
+    stdout_thread.start()
+    stderr_thread.start()
+
+    stdout_thread.join()
+    stderr_thread.join()
+
+    process.wait()
+
     if process.returncode != 0:
-        raise RuntimeError(f"Command failed with error: {stderr.decode()}")
-    return stdout.decode(), stderr.decode()
+        raise RuntimeError(f"Command failed with error: {''.join(stderr_lines)}")
+
+    return "".join(stdout_lines), "".join(stderr_lines)
 
 
 def get_current_commit_sha() -> str:
@@ -92,8 +125,8 @@ def start_docker_compose(
 
     print("Docker Command:\n", command)
 
-    _run_command(command)
-    print("The Docker has been Composed :)")
+    _run_command(command, stream_output=True)
+    print("Containers have been launched")
 
 
 def cleanup_docker(run_suffix: str) -> None:

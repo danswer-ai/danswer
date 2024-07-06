@@ -10,51 +10,40 @@ from tests.regression.answer_quality.api_utils import get_answer_from_query
 from tests.regression.answer_quality.cli_utils import get_current_commit_sha
 
 
-def _get_relari_outputs(samples: list[dict], run_suffix: str) -> list[dict]:
+def _get_and_write_relari_outputs(
+    samples: list[dict], run_suffix: str, output_file_path: str
+) -> None:
     while not check_if_query_ready(run_suffix):
         time.sleep(5)
 
-    relari_outputs = []
-    for sample in samples:
-        retrieved_context, answer = get_answer_from_query(
-            query=sample["question"],
-            run_suffix=run_suffix,
-        )
+    with open(output_file_path, "w", encoding="utf-8") as file:
+        for sample in samples:
+            retrieved_context, answer = get_answer_from_query(
+                query=sample["question"],
+                run_suffix=run_suffix,
+            )
 
-        relari_outputs.append(
-            {
+            if not answer:
+                print("NO ANSWER GIVEN FOR QUESTION:", sample["question"])
+                continue
+
+            output = {
                 "label": sample["uid"],
                 "question": sample["question"],
                 "answer": answer,
                 "retrieved_context": retrieved_context,
             }
-        )
 
-    return relari_outputs
+            file.write(json.dumps(output) + "\n")
+            file.flush()
 
 
-def _write_output_file(
-    relari_outputs: list[dict], output_folder_path: str, run_suffix: str
-) -> None:
+def _write_metadata_file(run_suffix: str, metadata_file_path: str) -> None:
     metadata = {"commit_sha": get_current_commit_sha(), "run_suffix": run_suffix}
 
-    counter = 1
-    output_file_path = os.path.join(output_folder_path, "results.txt")
-    metadata_file_path = os.path.join(output_folder_path, "run_metadata.yaml")
-    while os.path.exists(output_file_path) or os.path.exists(metadata_file_path):
-        output_file_path = os.path.join(output_folder_path, f"results_{counter}.txt")
-        metadata_file_path = os.path.join(
-            output_folder_path, f"run_metadata_{counter}.txt"
-        )
-        counter += 1
-    print("saving question results to:", output_file_path)
     print("saving metadata to:", metadata_file_path)
     with open(metadata_file_path, "w", encoding="utf-8") as yaml_file:
         yaml.dump(metadata, yaml_file)
-    with open(output_file_path, "w", encoding="utf-8") as file:
-        for output in relari_outputs:
-            file.write(json.dumps(output) + "\n")
-            file.flush()
 
 
 def _read_questions_jsonl(questions_file_path: str) -> list[dict]:
@@ -72,14 +61,32 @@ def answer_relari_questions(
     run_suffix: str,
     limit: int | None = None,
 ) -> None:
+    results_file = "run_results.jsonl"
+    metadata_file = "run_metadata.yaml"
     samples = _read_questions_jsonl(questions_file_path)
 
     if limit is not None:
         samples = samples[:limit]
 
-    relari_outputs = _get_relari_outputs(samples=samples, run_suffix=run_suffix)
+    counter = 1
+    output_file_path = os.path.join(results_folder_path, results_file)
+    metadata_file_path = os.path.join(results_folder_path, metadata_file)
+    while os.path.exists(output_file_path):
+        output_file_path = os.path.join(
+            results_folder_path,
+            results_file.replace("run_results", f"run_results_{counter}"),
+        )
+        metadata_file_path = os.path.join(
+            results_folder_path,
+            metadata_file.replace("run_metadata", f"run_metadata_{counter}"),
+        )
+        counter += 1
 
-    _write_output_file(relari_outputs, results_folder_path, run_suffix)
+    print("saving question results to:", output_file_path)
+    _write_metadata_file(run_suffix, metadata_file_path)
+    _get_and_write_relari_outputs(
+        samples=samples, run_suffix=run_suffix, output_file_path=output_file_path
+    )
 
 
 def main() -> None:

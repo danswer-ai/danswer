@@ -15,8 +15,9 @@ This Python script automates the process of running search quality tests for a b
 ## Usage
 
 1. Ensure you have the required dependencies installed.
-2. Configure the `search_test_config.yaml` file with your settings.
-3. Navigate to the answer_quality folder:
+2. Configure the `search_test_config.yaml` file based on the `search_test_config.yaml.template` file.
+3. Configure the `.env_eval` file with the correct environment variables.
+4. Navigate to the answer_quality folder:
 ```
 cd danswer/backend/tests/regression/answer_quality
 ```
@@ -62,6 +63,11 @@ Edit `search_test_config.yaml` to set:
     Set to null for no limit
 - llm
     Fill this out according to the normal LLM seeding
+
+
+To restart the evaluation using a particular index, set the suffix and turn off clean_up_docker_containers.
+This also will skip running the evaluation questions, in this case, the relari.py script can be run manually.
+
 
 Docker daemon must be running for this to work. 
 
