@@ -1,5 +1,6 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { BasicSelectable } from "@/components/BasicClickable";
+import { AssistantsIcon } from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import { Text } from "@tremor/react";
 import Link from "next/link";
@@ -26,7 +27,8 @@ function AssistantDisplay({
         <BasicSelectable selected={false} fullWidth>
           <div className="flex">
             <div className="truncate w-48 3xl:w-56 flex">
-              <FaRobot className="mr-2 my-auto" size={16} /> {persona.name}
+              <AssistantsIcon className="mr-2 my-auto" size={16} />{" "}
+              {persona.name}
             </div>
           </div>
         </BasicSelectable>

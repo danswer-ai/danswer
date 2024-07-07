@@ -1,21 +1,6 @@
-import React, {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import {
-  FiSend,
-  FiFilter,
-  FiPlusCircle,
-  FiCpu,
-  FiX,
-  FiPlus,
-  FiInfo,
-} from "react-icons/fi";
+import React, { useEffect, useRef, useState } from "react";
+import { FiPlusCircle, FiPlus } from "react-icons/fi";
 import { ChatInputOption } from "./ChatInputOption";
-import { FaBrain } from "react-icons/fa";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
 import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
@@ -27,21 +12,16 @@ import {
   InputBarPreviewImageProvider,
 } from "../files/InputBarPreview";
 import {
-  ConfigureIcon,
-  CpuIcon,
+  AssistantsIconSkeleton,
   CpuIconSkeleton,
   FileIcon,
-  RobotIcon,
   SendIcon,
 } from "@/components/icons/icons";
-import { Hoverable } from "@/components/Hoverable";
-import { AssistantIcon } from "@/components/assistants/AssistantIcon";
-import { Tooltip } from "@/components/tooltip/Tooltip";
 import { IconType } from "react-icons";
-import Popup from "../sessionSidebar/Popup";
+import Popup from "../../../components/popup/Popup";
 import { LlmTab } from "../modal/configuration/LlmTab";
 import { AssistantsTab } from "../modal/configuration/AssistantsTab";
-import { TempAssistant } from "./TempAssistantTab";
+import ChatInputAssistant from "./ChatInputAssistant";
 import { DanswerDocument } from "@/lib/search/interfaces";
 const MAX_INPUT_HEIGHT = 200;
 
@@ -190,6 +170,11 @@ export function ChatInputBar({
   const [assistantIconIndex, setAssistantIconIndex] = useState(0);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    console.log("KE");
+    if (!showSuggestions) {
+      console.log("KEY DOWN");
+      return;
+    }
     if (
       showSuggestions &&
       filteredPersonas.length > 0 &&
@@ -274,6 +259,7 @@ export function ChatInputBar({
               opacity-100
               w-full
               h-fit
+              bg-bl
               flex
               flex-col
               border
@@ -287,7 +273,7 @@ export function ChatInputBar({
             <div className="flex  gap-x-2 px-2 pt-2">
               {(files.length > 0 || alternativeAssistant) &&
                 alternativeAssistant && (
-                  <TempAssistant
+                  <ChatInputAssistant
                     ref={interactionsRef}
                     alternativeAssistant={alternativeAssistant}
                     unToggle={() => onSetSelectedAssistant(null)}
@@ -297,7 +283,7 @@ export function ChatInputBar({
               {selectedDocuments.length > 0 && (
                 <button
                   onClick={showDocs}
-                  className="flex-none flex cursor-pointer hover:bg-background transition-colors duration-300 h-10 p-1 items-center gap-x-2 rounded-lg bg-background-weakish max-w-[100px]"
+                  className="flex-none flex cursor-pointer hover:bg-background-subtle transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-weakish max-w-[100px]"
                 >
                   <FileIcon className="!h-6 !w-6" />
                   <p className="text-xs">
@@ -307,7 +293,7 @@ export function ChatInputBar({
                   </p>
                 </button>
               )}
-              <div className="flex gap-x-2 px-2 overflow-x-scroll items-end weakbackground">
+              <div className="flex  gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end weakbackground">
                 {files.map((file) => (
                   <div className="flex-none" key={file.id}>
                     {file.type === ChatFileType.IMAGE ? (
@@ -373,7 +359,7 @@ export function ChatInputBar({
               style={{ scrollbarWidth: "thin" }}
               role="textarea"
               aria-multiline
-              placeholder="Send a message..."
+              placeholder="Send a message or @ to tag an assistant..."
               value={message}
               onKeyDown={(event) => {
                 if (
@@ -396,7 +382,6 @@ export function ChatInputBar({
                     availableAssistants={availableAssistants}
                     llmProviders={llmProviders}
                     selectedAssistant={selectedAssistant}
-                    // onSelect={() => null}
                     onSelect={(assistant) => {
                       setSelectedAssistant(assistant);
                       close();
@@ -410,7 +395,7 @@ export function ChatInputBar({
                   name={
                     selectedAssistant ? selectedAssistant.name : "Assistants"
                   }
-                  Icon={ConfigureIcon as IconType}
+                  Icon={AssistantsIconSkeleton as IconType}
                 />
               </Popup>
 
@@ -444,8 +429,6 @@ export function ChatInputBar({
                 Icon={FiPlusCircle}
                 onClick={() => {
                   const input = document.createElement("input");
-                  console.log("created");
-                  console.log(input);
                   input.type = "file";
                   input.multiple = true; // Allow multiple files
                   input.onchange = (event: any) => {

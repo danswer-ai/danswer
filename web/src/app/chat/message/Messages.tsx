@@ -45,20 +45,21 @@ import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
-import {
-  Citation,
-  Tooltip,
-  TooltipGroup,
-} from "@/components/search/results/Citation";
+import { Citation } from "@/components/search/results/Citation";
 import {
   buildDocumentSummaryDisplay,
   DocumentMetadataBlock,
 } from "@/components/search/DocumentDisplay";
 import {
   DislikeFeedbackIcon,
+  EditIcon,
   ExtendIcon,
   LikeFeedbackIcon,
 } from "@/components/icons/icons";
+import {
+  CustomTooltip,
+  TooltipGroup,
+} from "@/components/tooltip/CustomTooltip";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -79,7 +80,7 @@ function FileDisplay({
   return (
     <>
       {nonImgFiles && nonImgFiles.length > 0 && (
-        <div className={` ${alignBubble && " pr-6 ml-auto"} mt-2 auto mb-4`}>
+        <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
           <div className="flex flex-col gap-2">
             {nonImgFiles.map((file) => {
               return (
@@ -96,7 +97,7 @@ function FileDisplay({
         </div>
       )}
       {imageFiles && imageFiles.length > 0 && (
-        <div className={` ${alignBubble && " pr-6 ml-auto"} mt-2 auto mb-4`}>
+        <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
           <div className="flex flex-col gap-2">
             {imageFiles.map((file) => {
               return <InMessageImage key={file.id} fileId={file.id} />;
@@ -166,6 +167,11 @@ export const AIMessage = ({
 
   const selectedDocumentIds =
     selectedDocuments?.map((document) => document.document_id) || [];
+  let citedDocumentIds: string[] = [];
+
+  citedDocuments?.forEach((doc) => {
+    citedDocumentIds.push(doc[1].document_id);
+  });
 
   if (!isComplete) {
     const trimIncompleteCodeSection = (
@@ -196,23 +202,26 @@ export const AIMessage = ({
 
   if (docs) {
     filteredDocs = docs
-      ?.map((doc: DanswerDocument, ind: number) => {
-        return {
-          ...doc,
-          included: selectedDocumentIds.includes(doc.document_id),
-        };
-      })
       .filter(
         (doc, index, self) =>
           doc.document_id &&
           doc.document_id !== "" &&
           index === self.findIndex((d) => d.document_id === doc.document_id)
-      );
+      )
+      .filter((doc) => {
+        return citedDocumentIds.includes(doc.document_id);
+      })
+      .map((doc: DanswerDocument, ind: number) => {
+        return {
+          ...doc,
+          included: selectedDocumentIds.includes(doc.document_id),
+        };
+      });
   }
 
   return (
-    <div className={"group py-5 px-2 lg:px-5  relative flex -mr-6 w-full"}>
-      <div className="mx-auto w-[90%] max-w-searchbar-max">
+    <div className={"group py-5 px-2 lg:px-5 relative flex "}>
+      <div className="mx-auto w-[90%] max-w-message-max">
         <div className="xl:ml-8">
           <div className="group flex">
             <AssistantIcon
@@ -243,287 +252,304 @@ export const AIMessage = ({
               )} */}
           </div>
           <div className="w-full ml-4">
-          <div className="max-w-message-max break-words mt-1 ml-8">
-            {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
-              danswerSearchToolEnabledForPersona && (
-                <>
-                  {query !== undefined &&
-                    handleShowRetrieved !== undefined &&
-                    isCurrentlyShowingRetrieved !== undefined &&
-                    !retrievalDisabled && (
-                      <div className="my-1">
-                        <SearchSummary
-                          query={query}
-                          hasDocs={hasDocs || false}
-                          messageId={messageId}
-                          isCurrentlyShowingRetrieved={
-                            isCurrentlyShowingRetrieved
+            <div className="max-w-message-max break-words mt-1 ml-8">
+              {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
+                danswerSearchToolEnabledForPersona && (
+                  <>
+                    {query !== undefined &&
+                      handleShowRetrieved !== undefined &&
+                      isCurrentlyShowingRetrieved !== undefined &&
+                      !retrievalDisabled && (
+                        <div className="my-1">
+                          <SearchSummary
+                            query={query}
+                            hasDocs={hasDocs || false}
+                            messageId={messageId}
+
+                            finished={toolCall?.tool_result != undefined}
+                            isCurrentlyShowingRetrieved={
+                              isCurrentlyShowingRetrieved
+                            }
+                            handleShowRetrieved={handleShowRetrieved}
+                            handleSearchQueryEdit={handleSearchQueryEdit}
+                          />
+                        </div>
+                      )}
+                    {handleForceSearch &&
+                      content &&
+                      query === undefined &&
+                      !hasDocs &&
+                      !retrievalDisabled && (
+                        <div className="my-1">
+                          <SkippedSearch handleForceSearch={handleForceSearch} />
+                        </div>
+                      )}
+                  </>
+                )}
+
+              <div className="w-full ml-4">
+                <div className="max-w-message-max break-words">
+                  {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
+                    <>
+                      {query !== undefined &&
+                        handleShowRetrieved !== undefined &&
+                        isCurrentlyShowingRetrieved !== undefined &&
+                        !retrievalDisabled && (
+                          <div className="mb-1">
+                            <SearchSummary
+                              query={query}
+                              finished={toolCall?.tool_result != undefined}
+                              hasDocs={hasDocs || false}
+                              messageId={messageId}
+                              isCurrentlyShowingRetrieved={
+                                isCurrentlyShowingRetrieved
+                              }
+                              handleShowRetrieved={handleShowRetrieved}
+                              handleSearchQueryEdit={handleSearchQueryEdit}
+                            />
+                          </div>
+                        )}
+                      {handleForceSearch &&
+                        content &&
+                        query === undefined &&
+                        !hasDocs &&
+                        !retrievalDisabled && (
+                          <div className="mb-1">
+                            <SkippedSearch
+                              handleForceSearch={handleForceSearch}
+                            />
+                          </div>
+                        )}
+                    </>
+                  )}
+                  {toolCall &&
+                    !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
+                      <div className="my-2">
+                        <ToolRunDisplay
+                          toolName={
+                            toolCall.tool_result && content
+                              ? `Used "${toolCall.tool_name}"`
+                              : `Using "${toolCall.tool_name}"`
                           }
-                          handleShowRetrieved={handleShowRetrieved}
-                          handleSearchQueryEdit={handleSearchQueryEdit}
+                          toolLogo={<FiTool size={15} className="my-auto mr-1" />}
+                          isRunning={!toolCall.tool_result || !content}
                         />
                       </div>
                     )}
-                  {handleForceSearch &&
-                    content &&
-                    query === undefined &&
-                    !hasDocs &&
-                    !retrievalDisabled && (
-                      <div className="my-1">
-                        <SkippedSearch handleForceSearch={handleForceSearch} />
+
+                  {toolCall &&
+                    toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
+                    !toolCall.tool_result && (
+                      <div className="my-2">
+                        <ToolRunDisplay
+                          toolName={`Generating images`}
+                          toolLogo={<FiImage size={15} className="my-auto mr-1" />}
+                          isRunning={!toolCall.tool_result}
+                        />
                       </div>
                     )}
-                </>
-              )}
 
-                {toolCall &&
-                  !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
+                  {toolCall && toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
                     <div className="my-2">
                       <ToolRunDisplay
                         toolName={
-                          toolCall.tool_result && content
-                            ? `Used "${toolCall.tool_name}"`
-                            : `Using "${toolCall.tool_name}"`
+                          toolCall.tool_result
+                            ? `Searched the internet`
+                            : `Searching the internet`
                         }
-                        toolLogo={<FiTool size={15} className="my-auto mr-1" />}
-                        isRunning={!toolCall.tool_result || !content}
+                        toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
+                        isRunning={!toolCall.tool_result}
                       />
                     </div>
                   )}
 
-            {toolCall &&
-              toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
-              !toolCall.tool_result && (
-                <div className="my-2">
-                  <ToolRunDisplay
-                    toolName={`Generating images`}
-                    toolLogo={<FiImage size={15} className="my-auto mr-1" />}
-                    isRunning={!toolCall.tool_result}
-                  />
-                </div>
-              )}
+                  {content ? (
+                    <>
+                      <FileDisplay files={files || []} />
 
-            {toolCall && toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
-              <div className="my-2">
-                <ToolRunDisplay
-                  toolName={
-                    toolCall.tool_result
-                      ? `Searched the internet`
-                      : `Searching the internet`
-                  }
-                  toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
-                  isRunning={!toolCall.tool_result}
-                />
-              </div>
-            )}
+                      {typeof content === "string" ? (
+                        <ReactMarkdown
+                          key={messageId}
+                          className="prose max-w-full"
+                          components={{
+                            a: (props) => {
+                              const { node, ...rest } = props;
+                              const value = rest.children;
+                              if (value?.toString().startsWith("[")) {
+                                // for some reason <a> tags cause the onClick to not apply
+                                // and the links are unclickable
+                                // TODO: fix the fact that you have to double click to follow link
+                                // for the first link
+                                return (
+                                  <Citation
+                                    link={rest?.href}
+                                    key={node?.position?.start?.offset}
+                                  >
+                                    {rest.children}
+                                  </Citation>
+                                );
+                              } else {
+                                return (
+                                  <a
+                                    key={node?.position?.start?.offset}
+                                    onClick={() =>
+                                      rest.href
+                                        ? window.open(rest.href, "_blank")
+                                        : undefined
+                                    }
+                                    className="cursor-pointer text-link hover:text-link-hover"
+                                  >
+                                    {rest.children}
+                                  </a>
+                                );
+                              }
+                            },
+                            code: (props) => (
+                              <CodeBlock {...props} content={content as string} />
+                            ),
+                            p: ({ node, ...props }) => (
+                              <p {...props} className="text-default" />
+                            ),
+                          }}
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+                        >
+                          {content}
+                        </ReactMarkdown>
+                      ) : (
+                        content
+                      )}
+                    </>
+                  ) : isComplete ? null : (
+                    <></>
+                  )}
 
-                {content ? (
-                  <>
-                    <FileDisplay files={files || []} />
-
-                    {typeof content === "string" ? (
-                      <ReactMarkdown
-                        key={messageId}
-                        className="prose max-w-full"
-                        components={{
-                          a: (props) => {
-                            const { node, ...rest } = props;
-                            const value = rest.children;
-                            if (value?.toString().startsWith("[")) {
-                              // for some reason <a> tags cause the onClick to not apply
-                              // and the links are unclickable
-                              // TODO: fix the fact that you have to double click to follow link
-                              // for the first link
-                              return (
-                                <Citation
-                                  doc={docs ? docs[0] : undefined}
-                                  link={rest?.href}
-                                  key={node?.position?.start?.offset}
-                                >
-                                  {rest.children}
-                                </Citation>
-                              );
-                            } else {
-                              return (
-                                <a
-                                  key={node?.position?.start?.offset}
-                                  onClick={() =>
-                                    rest.href
-                                      ? window.open(rest.href, "_blank")
-                                      : undefined
-                                  }
-                                  className="cursor-pointer text-link hover:text-link-hover"
-                                >
-                                  {rest.children}
-                                </a>
-                              );
-                            }
-                          },
-                          code: (props) => (
-                            <CodeBlock {...props} content={content as string} />
-                          ),
-                          p: ({ node, ...props }) => (
-                            <p {...props} className="text-default" />
-                          ),
-                        }}
-                        remarkPlugins={[remarkGfm]}
-                        rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
-                      >
-                        {content}
-                      </ReactMarkdown>
-                    ) : (
-                      content
-                    )}
-                  </>
-                ) : isComplete ? null : (
-                  <></>
-                )}
-
-                {isComplete && filteredDocs && filteredDocs.length > 0 && (
-                  <div className="mt-2 -mx-8  w-full mb-4  flex relative ">
-                    <div className="absolute left-0 top-0 h-full bg-gradient-to-l from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
-                    <div className="absolute right-6 top-0  h-full bg-gradient-to-r from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
-                    <div className=" w-full  overflow-x-scroll no-scrollbar">
-                      {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
-                      <div className="px-8 flex gap-x-2">
-                        {filteredDocs
-                          .sort((a, b) => {
-                            const aSelected = selectedDocumentIds.includes(
-                              a.document_id
-                            );
-                            const bSelected = selectedDocumentIds.includes(
-                              b.document_id
-                            );
-                            if (aSelected && !bSelected) return -1;
-                            if (!aSelected && bSelected) return 1;
-                            return 0;
-                          })
-                          .map((doc) => (
-                            <div
-                              key={doc.document_id}
-                              className={`w-[200px] rounded-lg  flex-none transition-all duration-500 hover:bg-neutral-200 bg-neutral-100 px-4 py-2  border-b 
-                            ${
-                              !isComplete
-                                ? "animate-pulse opacity-90"
-                                : citedDocuments &&
-                                  (Array.isArray(citedDocuments) &&
-                                  citedDocuments.some(
-                                    ([_, obj]) =>
-                                      obj.document_id === doc.document_id
-                                  )
-                                    ? "opacity-100"
-                                    : "opacity-20")
-                            } ${selectedDocumentIds.includes(doc.document_id) && "!opacity-100 "}
-                        `}
-                            >
-                              <a
-                                href={doc.link}
-                                target="_blank"
-                                className="text-sm  flex justify-between font-semibold text-neutral-800"
+                  {isComplete && docs && docs.length > 0 && (
+                    <div className="mt-2 -mx-8  w-full mb-4  flex relative ">
+                      <div className="absolute left-0 top-0 h-full bg-gradient-to-l from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
+                      <div className="absolute right-6 top-0  h-full bg-gradient-to-r from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
+                      <div className=" w-full  overflow-x-scroll no-scrollbar">
+                        {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
+                        <div className="px-8 flex gap-x-2">
+                          {filteredDocs.length > 0 &&
+                            filteredDocs.slice(0, 2).map((doc) => (
+                              <div
+                                key={doc.document_id}
+                                className={`w-[200px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weaker bg-neutral-100 px-4 py-2 border-b
+                              `}
                               >
-                                <p className="line-clamp-1">
-                                  {
-                                    doc.document_id.split("/")[
+                                <a
+                                  href={doc.link}
+                                  target="_blank"
+                                  className="text-sm  flex justify-between font-semibold text-neutral-800"
+                                >
+                                  <p className="line-clamp-1">
+                                    {
+                                      doc.document_id.split("/")[
                                       doc.document_id.split("/").length - 1
-                                    ]
-                                  }
-                                </p>
-                                <div className="flex-none">
-                                  <SourceIcon
-                                    sourceType={doc.source_type}
-                                    iconSize={18}
-                                  />
+                                      ]
+                                    }
+                                  </p>
+                                  <div className="flex-none">
+                                    <SourceIcon
+                                      sourceType={doc.source_type}
+                                      iconSize={18}
+                                    />
+                                  </div>
+                                </a>
+                                <div className="flex  overscroll-x-scroll mt-1">
+                                  <DocumentMetadataBlock document={doc} />
                                 </div>
-                              </a>
-
-                              <div className="flex  overscroll-x-scroll mt-1">
-                                <DocumentMetadataBlock document={doc} />
+                                <div className="line-clamp-3 text-xs break-words   pt-1">
+                                  {doc.blurb}
+                                </div>
                               </div>
-
-                              {/* <p className="pl-1 pt-2 pb-1 break-words">
-                            {buildDocumentSummaryDisplay(doc.match_highlights, doc.blurb)}
-                          </p> */}
-                              <div className="line-clamp-3 text-xs break-words   pt-1">
-                                {doc.blurb}
-                              </div>
+                            ))}
+                          <div
+                            onClick={() => {
+                              if (toggleDocumentSelection) {
+                                toggleDocumentSelection();
+                              }
+                            }}
+                            key={-1}
+                            className="cursor-pointer w-[140px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weaker bg-neutral-100 px-4 py-2 border-b"
+                          >
+                            <div className="text-sm  flex justify-between font-semibold text-neutral-800">
+                              <p className="line-clamp-1">See context</p>
                             </div>
-                          ))}
+
+                            <div className="line-clamp-3 text-xs break-words   pt-1">
+                              See {docs?.length} document
+                              {!((docs?.length || 0) == 1) && "s"}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <button
-                      onClick={() => {
-                        if (toggleDocumentSelection) {
-                          toggleDocumentSelection();
-                        }
-                      }}
-                      className="my-auto h-full w-6  flex-none p-2"
-                    >
-                      <ExtendIcon className="text-neutral-700 hover:text-neutral-900 !h-6 !w-6" />
-                    </button>
-                  </div>
-                )}
-              </div>
-              {handleFeedback &&
-                (isActive ? (
-                  <div
-                    className="
+                  )}
+                </div>
+                {handleFeedback &&
+                  (isActive ? (
+                    <div
+                      className="
                   flex md:flex-row gap-x-0.5 mt-1.5
                   transition-all duration-300 ease-in-out
                   transform opacity-100 translate-y-0"
-                  >
-                    <TooltipGroup>
-                      <Tooltip showTick line content="Copy!">
-                        <CopyButton content={content.toString()} />
-                      </Tooltip>
-                      <Tooltip showTick line content="Good response!">
-                        <HoverableIcon
-                          icon={<LikeFeedbackIcon />}
-                          onClick={() => handleFeedback("like")}
-                        />
-                      </Tooltip>
-                      <Tooltip showTick line content="Bad response!">
-                        <HoverableIcon
-                          icon={<DislikeFeedbackIcon />}
-                          onClick={() => handleFeedback("dislike")}
-                        />
-                      </Tooltip>
-                    </TooltipGroup>
-                  </div>
-                ) : (
-                  <div
-                    className="
+                    >
+                      <TooltipGroup>
+                        <CustomTooltip showTick line content="Copy!">
+                          <CopyButton content={content.toString()} />
+                        </CustomTooltip>
+                        <CustomTooltip showTick line content="Good response!">
+                          <HoverableIcon
+                            icon={<LikeFeedbackIcon />}
+                            onClick={() => handleFeedback("like")}
+                          />
+                        </CustomTooltip>
+                        <CustomTooltip showTick line content="Bad response!">
+                          <HoverableIcon
+                            icon={<DislikeFeedbackIcon />}
+                            onClick={() => handleFeedback("dislike")}
+                          />
+                        </CustomTooltip>
+                      </TooltipGroup>
+                    </div>
+                  ) : (
+                    <div
+                      className="
                   invisible hover:visible group-hover:visible
                   opacity-0 group-hover:opacity-100
                   transform translate-y-2 group-hover:translate-y-0
                   flex md:flex-row gap-x-0.5 mt-1.5
                   transition-all duration-300 ease-in-out
-                  absolute -bottom-4 bg-background-weakerish/60
+                  absolute -bottom-4 bg-background-weaker/60
                    p-1.5 rounded-lg  "
-                  >
-                    <TooltipGroup>
-                      <Tooltip showTick line content="Copy!">
-                        <CopyButton content={content.toString()} />
-                      </Tooltip>
-                      <Tooltip showTick line content="Good response!">
-                        <HoverableIcon
-                          icon={<LikeFeedbackIcon />}
-                          onClick={() => handleFeedback("like")}
-                        />
-                      </Tooltip>
-                      <Tooltip showTick line content="Bad response!">
-                        <HoverableIcon
-                          icon={<DislikeFeedbackIcon />}
-                          onClick={() => handleFeedback("dislike")}
-                        />
-                      </Tooltip>
-                    </TooltipGroup>
-                  </div>
-                ))}
+                    >
+                      <TooltipGroup>
+                        <CustomTooltip showTick line content="Copy!">
+                          <CopyButton content={content.toString()} />
+                        </CustomTooltip>
+                        <CustomTooltip showTick line content="Good response!">
+                          <HoverableIcon
+                            icon={<LikeFeedbackIcon />}
+                            onClick={() => handleFeedback("like")}
+                          />
+                        </CustomTooltip>
+                        <CustomTooltip showTick line content="Bad response!">
+                          <HoverableIcon
+                            icon={<DislikeFeedbackIcon />}
+                            onClick={() => handleFeedback("dislike")}
+                          />
+                        </CustomTooltip>
+                      </TooltipGroup>
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
-
+    </div>
   );
 };
 
@@ -607,16 +633,16 @@ export const HumanMessage = ({
 
   return (
     <div
-      className="pt-5 pb-1 px-2 lg:px-5 flex -mr-6 w-full relative"
+      className=" pt-5 pb-1 px-2 lg:px-5 flex -mr-6  relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="mx-auto  w-full max-w-searchbar-max">
+      <div className="mx-auto w-[90%] max-w-searchbar-max">
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />
 
-            <div className="flex">
+            <div className="flex justify-end">
               <div className="w-full  ml-8 flex  w-full max-w-message-max break-words">
                 {isEditing ? (
                   <div className="w-full">
@@ -730,9 +756,9 @@ export const HumanMessage = ({
                 ) : typeof content === "string" ? (
                   <>
                     {onEdit &&
-                    isHovered &&
-                    !isEditing &&
-                    (!files || files.length === 0) ? (
+                      isHovered &&
+                      !isEditing &&
+                      (!files || files.length === 0) ? (
                       <div className="ml-auto my-auto">
                         <Hoverable
                           icon={FiEdit2}
@@ -750,14 +776,13 @@ export const HumanMessage = ({
                     {/* <FileDisplay alignBubble files={files || []} /> */}
 
                     <div
-                      className={`${
-                        !(
+                      className={`${!(
                           onEdit &&
                           isHovered &&
                           !isEditing &&
                           (!files || files.length === 0)
                         ) && "ml-auto"
-                      } relative max-w-[70%] mb-auto rounded-3xl bg-user px-5 py-2.5`}
+                        } relative max-w-[70%] mb-auto rounded-3xl bg-user px-5 py-2.5`}
                     >
                       {content}
                     </div>
@@ -766,9 +791,9 @@ export const HumanMessage = ({
                 ) : (
                   <>
                     {onEdit &&
-                    isHovered &&
-                    !isEditing &&
-                    (!files || files.length === 0) ? (
+                      isHovered &&
+                      !isEditing &&
+                      (!files || files.length === 0) ? (
                       <div className="my-auto">
                         <Hoverable
                           icon={FiEdit2}
@@ -788,12 +813,12 @@ export const HumanMessage = ({
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-x-0.5 mr-8 mt-1">
+          <div className="flex flex-col md:flex-row gap-x-0.5  mt-1">
             {currentMessageInd !== undefined &&
               onMessageSelection &&
               otherMessagesCanSwitchTo &&
               otherMessagesCanSwitchTo.length > 1 && (
-                <div className="ml-auto mr-2">
+                <div className="ml-auto mr-3">
                   <MessageSwitcher
                     currentPage={currentMessageInd + 1}
                     totalPages={otherMessagesCanSwitchTo.length}

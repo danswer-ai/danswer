@@ -8,7 +8,6 @@ import { User } from "@/lib/types";
 import { checkUserIsNoAuthUser, logout } from "@/lib/user";
 import { BasicSelectable } from "@/components/BasicClickable";
 import { Popover } from "./popover/Popover";
-import { FaBrain } from "react-icons/fa";
 import { LOGOUT_DISABLED } from "@/lib/constants";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { SettingsContext } from "./settings/SettingsProvider";
@@ -89,7 +88,7 @@ export function UserDropdown({
                       className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
                     >
                       <svg
-                        className="h-5 w-5 text-neutral-500 my-auto mr-2"
+                        className="h-5 w-5 text-lightest0 my-auto mr-2"
                         xmlns="http://www.w3.org/2000/svg"
                         width="200"
                         height="200"
@@ -116,7 +115,7 @@ export function UserDropdown({
                   href="/admin/indexing/status"
                   className="flex py-3 px-4 cursor-pointer rounded hover:bg-hover-light"
                 >
-                  <LightSettingsIcon className="h-5 w-5 text-neutral-500 my-auto mr-2" />
+                  <LightSettingsIcon className="h-5 w-5 text-lightest0 my-auto mr-2" />
                   Admin Panel
                 </Link>
               </>

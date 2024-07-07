@@ -13,10 +13,9 @@ interface FullSearchBarProps {
 }
 
 import { useState, useEffect, useRef } from "react";
-import { HoverPopup } from "../HoverPopup";
-import { FiInfo } from "react-icons/fi";
-import { Tooltip } from "./results/Citation";
 import { SendIcon } from "../icons/icons";
+import { Divider } from "@tremor/react";
+import { CustomTooltip } from "../tooltip/CustomTooltip";
 
 export const AnimatedToggle = ({
   isOn,
@@ -43,44 +42,43 @@ export const AnimatedToggle = ({
   }, [isOn]);
 
   return (
-    <Tooltip
+    <CustomTooltip
       light
       large
       content={
-        <div className="bg-white  p-6 rounded-lg w-full">
+        <div className="bg-white my-auto p-6 rounded-lg w-full">
           <h2 className="text-xl text-neutral-800 font-bold mb-2">
             Agentic Search
           </h2>
-          <p className="text-neutral-700 text-sm mb-4">
-            Our most powerful search, ideal for longer answers to complex
-            questions
+          <p className="text-solid text-sm mb-4">
+            Our most powerful search, have an AI agent guide you to pinpoint
+            exactly what you're looking for.
           </p>
-          <button className="bg-background-weak text-default px-4 py-2 rounded-md hover:bg-hover-lightish transition-colors duration-300">
-            Learn More
-          </button>
+          <Divider />
+          <h2 className="text-xl text-neutral-800 font-bold mb-2">
+            Fast Search
+          </h2>
+          <p className="text-solid text-sm mb-4">
+            Get quality results immediately, best suited for instant access to
+            your documents.
+          </p>
         </div>
       }
     >
       <div
         ref={containerRef}
-        className=" my-auto  ml-auto flex jusitfy-end items-center cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
+        className=" my-auto ml-auto flex jusitfy-end items-center cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
         style={{ width }}
         onClick={handleToggle}
       >
         <div
           ref={contentRef}
-          className={`flex group ml-auto items-center transition-all duration-300 ease-in-out ${!isOn ? "" : "ml-auto"}`}
+          className={`flex group ml-auto items-center transition-all duration-300 ease-in-out ml-auto`}
         >
-          <span
-            className={`text-sm transition-all duration-300 ease-in-out ${isOn ? "opacity-100 translate-x-0 mr-2" : "opacity-0 -translate-x-full w-0"}`}
-          >
-            Agentic
-          </span>
-
           <div
             className={`
             w-10 h-6 flex items-center rounded-full p-1 transition-all duration-300 ease-in-out
-            ${isOn ? "bg-neutral-200" : "bg-neutral-400"}
+            ${isOn ? "bg-neutral-400" : "bg-background-subtle"}
           `}
           >
             <div
@@ -90,14 +88,21 @@ export const AnimatedToggle = ({
             `}
             ></div>
           </div>
-          <span
-            className={`no-underline text-sm transition-all duration-300 ease-in-out ${isOn ? "opacity-0 translate-x-full w-0" : "opacity-100 translate-x-0 ml-2"}`}
-          >
-            Fast
-          </span>
+          <p className="flex ml-2 w-[40px]">
+            <span
+              className={`no-underline text-sm transition-all duration-300 ease-in-out ${isOn ? "opacity-0  translate-y-10 w-0" : "opacity-100"}`}
+            >
+              Fast
+            </span>
+            <span
+              className={`text-sm transition-all duration-300 ease-in-out ${isOn ? "opacity-100 " : "opacity-0 -translate-y-10 w-0"}`}
+            >
+              Agentic
+            </span>
+          </p>
         </div>
       </div>
-    </Tooltip>
+    </CustomTooltip>
   );
 };
 
@@ -145,6 +150,7 @@ export const FullSearchBar = ({
         "
     >
       <textarea
+        rows={3}
         onKeyDownCapture={handleKeyDown}
         className={`
                 m-0
@@ -154,6 +160,7 @@ export const FullSearchBar = ({
                 border-0
                 bg-background-weak
                 whitespace-normal
+                rounded-lg
                 break-word
                 overscroll-contain
                 outline-none
@@ -161,6 +168,7 @@ export const FullSearchBar = ({
                 resize-none
                 pl-4
                 pr-12
+                max-h-[6em]
                 py-4
                 h-14
               `}
@@ -177,34 +185,27 @@ export const FullSearchBar = ({
 
       <div className="flex justify-end w-full items-center space-x-3 mr-12 px-4  pb-2 ">
         {searchState == "searching" && (
-          <div className="mr-auto relative inline-block">
-            <span className="shimmer-text">Reading Documents...</span>
+          <div key={"Reading"} className="mr-auto relative inline-block">
+            <span className="loading-text">Reading Documents...</span>
           </div>
         )}
+
         {searchState == "analyzing" && (
-          <div className="mr-auto relative inline-block">
-            <span className="shimmer-text">Generating Analysis...</span>
+          <div key={"Generating"} className="mr-auto relative inline-block">
+            <span className="loading-text">Generating Analysis...</span>
           </div>
         )}
 
         {toggleAgentic && (
           <AnimatedToggle isOn={agentic!} handleToggle={toggleAgentic} />
         )}
-        <div className="pl-2 bottom-2.5 right-10">
+
+        <div className="my-auto pl-2">
           <button
             onClick={() => {
               onSearch(agentic);
             }}
-            className="cursor-pointer"
-            // onClick={() => {
-            //   if (!isStreaming) {
-            //     if (message) {
-            //       onSubmit();
-            //     }
-            //   } else {
-            //     setIsCancelled(true);
-            //   }
-            // }}
+            className=" flex  my-auto cursor-pointer"
           >
             <SendIcon
               className={`text-emphasis text-white !w-7 !h-7 p-1 rounded-full ${
