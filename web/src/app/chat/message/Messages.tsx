@@ -44,7 +44,11 @@ import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { Button } from "@tremor/react";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
-import { Citation, Tooltip } from "@/components/search/results/Citation";
+import {
+  Citation,
+  Tooltip,
+  TooltipGroup,
+} from "@/components/search/results/Citation";
 import {
   buildDocumentSummaryDisplay,
   DocumentMetadataBlock,
@@ -73,7 +77,7 @@ function FileDisplay({
   return (
     <>
       {nonImgFiles && nonImgFiles.length > 0 && (
-        <div className={` ${alignBubble && "  ml-auto"} mt-2 auto mb-4`}>
+        <div className={` ${alignBubble && " pr-6 ml-auto"} mt-2 auto mb-4`}>
           <div className="flex flex-col gap-2">
             {nonImgFiles.map((file) => {
               return (
@@ -449,24 +453,25 @@ export const AIMessage = ({
                     className="
                   flex md:flex-row gap-x-0.5 mt-1.5
                   transition-all duration-300 ease-in-out
-                  transform opacity-100 translate-y-0
-                  flex md:flex-row gap-x-0.5 mt-1.5"
+                  transform opacity-100 translate-y-0"
                   >
-                    <Tooltip line content="Copy!">
-                      <CopyButton content={content.toString()} />
-                    </Tooltip>
-                    <Tooltip line content="Good response!">
-                      <HoverableIcon
-                        icon={<LikeFeedbackIcon />}
-                        onClick={() => handleFeedback("like")}
-                      />
-                    </Tooltip>
-                    <Tooltip line content="Bad response!">
-                      <HoverableIcon
-                        icon={<DislikeFeedbackIcon />}
-                        onClick={() => handleFeedback("dislike")}
-                      />
-                    </Tooltip>
+                    <TooltipGroup>
+                      <Tooltip showTick line content="Copy!">
+                        <CopyButton content={content.toString()} />
+                      </Tooltip>
+                      <Tooltip showTick line content="Good response!">
+                        <HoverableIcon
+                          icon={<LikeFeedbackIcon />}
+                          onClick={() => handleFeedback("like")}
+                        />
+                      </Tooltip>
+                      <Tooltip showTick line content="Bad response!">
+                        <HoverableIcon
+                          icon={<DislikeFeedbackIcon />}
+                          onClick={() => handleFeedback("dislike")}
+                        />
+                      </Tooltip>
+                    </TooltipGroup>
                   </div>
                 ) : (
                   <div
@@ -477,23 +482,25 @@ export const AIMessage = ({
                   transform opacity-0 translate-y-2
                   group-hover:opacity-100 group-hover:translate-y-0
                   invisible absolute -bottom-4 bg-background-weakerish/60
-                  p-1 px-1.5 rounded-lg hover:visible group-hover:visible flex md:flex-row gap-x-0.5 mt-1.5"
+                   px-1.5 rounded-lg  "
                   >
-                    <Tooltip content={"Copy!"}>
-                      <CopyButton content={content.toString()} />
-                    </Tooltip>
-                    <Tooltip line content="Good response!">
-                      <Hoverable
-                        icon={FiThumbsUp}
-                        onClick={() => handleFeedback("like")}
-                      />
-                    </Tooltip>
-                    <Tooltip line content="Bad response!">
-                      <Hoverable
-                        icon={FiThumbsDown}
-                        onClick={() => handleFeedback("dislike")}
-                      />
-                    </Tooltip>
+                    <TooltipGroup>
+                      <Tooltip showTick line content="Copy!">
+                        <CopyButton content={content.toString()} />
+                      </Tooltip>
+                      <Tooltip showTick line content="Good response!">
+                        <HoverableIcon
+                          icon={<LikeFeedbackIcon />}
+                          onClick={() => handleFeedback("like")}
+                        />
+                      </Tooltip>
+                      <Tooltip showTick line content="Bad response!">
+                        <HoverableIcon
+                          icon={<DislikeFeedbackIcon />}
+                          onClick={() => handleFeedback("dislike")}
+                        />
+                      </Tooltip>
+                    </TooltipGroup>
                   </div>
                 ))}
             </div>

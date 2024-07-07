@@ -80,20 +80,20 @@
 .shimmer-text {
   display: inline-block;
   color: #e5e5e5;
-  /* text-neutral-200 */
+
   background: linear-gradient(
     -90deg,
-    #e5e5e5 0%,
-    #e5e5e5 35%,
-    #000000 40%,
-    #e5e5e5 45%,
-    #e5e5e5 100%
+    #d4d4d4 0%,
+    #d4d4d4 2%,
+    #000000 7%,
+    #d4d4d4 12%,
+    #d4d4d4 100%
   );
-  background-size: 220% 100%;
+  background-size: 200% 100%;
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: flowingShimmer 3s ease-in-out infinite;
+  animation: flowingShimmer 2s ease-out infinite;
 }
 
 @keyframes flowingShimmer {
@@ -102,7 +102,7 @@
   }
 
   100% {
-    background-position: -120% 0;
+    background-position: -100% 0;
   }
 }
 

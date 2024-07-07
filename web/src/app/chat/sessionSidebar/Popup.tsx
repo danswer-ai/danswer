@@ -4,11 +4,13 @@ interface PopupProps {
   children: JSX.Element;
   content: (close: () => void) => ReactNode;
   position?: "top" | "bottom" | "left" | "right";
+  removePadding?: boolean;
 }
 
 const Popup: React.FC<PopupProps> = ({
   children,
   content,
+  removePadding,
   position = "top",
 }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -89,7 +91,7 @@ const Popup: React.FC<PopupProps> = ({
       {isOpen && (
         <div
           ref={popupRef}
-          className="absolute bg-white border border-gray-200 rounded-lg shadow-lg p-4 min-w-[400px]"
+          className={`absolute bg-white border border-gray-200 rounded-lg shadow-lg  ${!removePadding && "p-4"} min-w-[400px] `}
           style={getPopupStyle()}
         >
           {content(closePopup)}

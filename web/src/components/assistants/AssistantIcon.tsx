@@ -42,7 +42,7 @@ export function AssistantIcon({
 
   return (
     <div
-      className={` hover:!bg-black
+      className={`flex-none hover:!bg-black
       ${border && " border border-.5 border-border-strong "}
       ${(!size || size == "large") && "w-6 h-6"}
       ${size == "small" && "w-6 h-6"}

@@ -377,6 +377,7 @@ export function ChatInputBar({
             />
             <div className="flex items-center space-x-3 mr-12 px-4 pb-2  ">
               <Popup
+                removePadding
                 content={(close) => (
                   <AssistantsTab
                     availableAssistants={availableAssistants}

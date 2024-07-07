@@ -61,7 +61,7 @@ export const AnimatedToggle = ({
     >
       <div
         ref={containerRef}
-        className="  ml-auto flex jusitfy-end items-center cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
+        className=" my-auto  ml-auto flex jusitfy-end items-center cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
         style={{ width }}
         onClick={handleToggle}
       >
@@ -176,16 +176,12 @@ export const SearchBar = ({
       <div className="flex justify-end w-full items-center space-x-3 mr-12 px-4  pb-2 ">
         {searchState == "searching" && (
           <div className="mr-auto relative inline-block">
-            <span className=" text-transparent bg-clip-text bg-gradient-to-r from-black to-black via-neutral-10 shimmer-text">
-              Reading Documents...
-            </span>
+            <span className="shimmer-text">Reading Documents...</span>
           </div>
         )}
         {searchState == "analyzing" && (
           <div className="mr-auto relative inline-block">
-            <span className=" text-transparent bg-clip-text bg-gradient-to-r from-black to-black via-neutral-10 shimmer-text">
-              Generating Analysis...
-            </span>
+            <span className="shimmer-text">Generating Analysis...</span>
           </div>
         )}
 
@@ -193,7 +189,10 @@ export const SearchBar = ({
           <AnimatedToggle isOn={agentic!} handleToggle={toggleAgentic} />
         )}
         <div className="pl-2 bottom-2.5 right-10">
-          <div
+          <button
+            onClick={() => {
+              onSearch(agentic);
+            }}
             className="cursor-pointer"
             // onClick={() => {
             //   if (!isStreaming) {
@@ -210,7 +209,7 @@ export const SearchBar = ({
                 query ? "bg-neutral-700" : "bg-[#D7D7D7]"
               }`}
             />
-          </div>
+          </button>
         </div>
       </div>
       <div className="absolute bottom-2.5 right-10"></div>

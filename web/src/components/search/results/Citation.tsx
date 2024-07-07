@@ -1,7 +1,41 @@
 import Popup from "@/app/chat/sessionSidebar/Popup";
 import { Popover } from "@/components/popover/Popover";
 import { DanswerDocument } from "@/lib/search/interfaces";
-import { ReactNode, useState } from "react";
+
+import React, {
+  ReactNode,
+  useState,
+  useEffect,
+  useRef,
+  createContext,
+  useContext,
+} from "react";
+
+// Create a context for the tooltip group
+const TooltipGroupContext = createContext<{
+  setGroupHovered: React.Dispatch<React.SetStateAction<boolean>>;
+  groupHovered: boolean;
+  hoverCountRef: React.MutableRefObject<boolean>;
+}>({
+  setGroupHovered: () => {},
+  groupHovered: false,
+  hoverCountRef: { current: false },
+});
+
+export const TooltipGroup: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [groupHovered, setGroupHovered] = useState(false);
+  const hoverCountRef = useRef(false);
+
+  return (
+    <TooltipGroupContext.Provider
+      value={{ groupHovered, setGroupHovered, hoverCountRef }}
+    >
+      <div className="inline-flex">{children}</div>
+    </TooltipGroupContext.Provider>
+  );
+};
 
 export const Tooltip = ({
   content,
@@ -9,46 +43,144 @@ export const Tooltip = ({
   large,
   light,
   line,
+  showTick = false,
+  delay = 500, // Default delay of 300ms
+  quickDelay = 0, // Quick delay for group tooltips
 }: {
   content: string | ReactNode;
   children: JSX.Element;
   large?: boolean;
   line?: boolean;
   light?: boolean;
+  showTick?: boolean;
+  delay?: number;
+  quickDelay?: number;
 }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { groupHovered, setGroupHovered, hoverCountRef } =
+    useContext(TooltipGroupContext);
+
+  const showTooltip = () => {
+    hoverCountRef.current = true;
+
+    const showDelay = groupHovered ? quickDelay : delay;
+    timeoutRef.current = setTimeout(() => {
+      setIsVisible(true);
+      setGroupHovered(true);
+    }, showDelay);
+  };
+
+  const hideTooltip = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    hoverCountRef.current = false;
+    setIsVisible(false);
+    setTimeout(() => {
+      if (!hoverCountRef.current) {
+        setGroupHovered(false);
+      } else {
+        console.log("IS ACTIVe");
+      }
+    }, 100);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <span className="relative leading-none inline-block">
+    <span className="relative inline-block">
       <span
         className="underline inline-block"
-        onMouseEnter={() => setIsVisible(true)}
-        onMouseLeave={() => setIsVisible(false)}
+        onMouseEnter={showTooltip}
+        onMouseLeave={hideTooltip}
       >
         {children}
       </span>
-      {isVisible &&
-        (line ? (
+      {isVisible && (
+        <div
+          className={`absolute z-10 ${large ? "w-96" : line ? "max-w-64" : "w-40"} 
+            left-1/2 transform -translate-x-1/2 mt-2 text-sm 
+            ${light ? "text-gray-800 bg-neutral-200" : "text-white bg-neutral-800"} 
+            rounded-lg shadow-lg`}
+        >
+          {showTick && (
+            <div
+              className={`absolute w-3 h-3 -top-1.5 left-1/2 transform -translate-x-1/2 rotate-45 
+                ${light ? "bg-neutral-200" : "bg-neutral-800"}`}
+            />
+          )}
           <div
-            className={`absolute  z-10 ${large ? "w-96" : "max-w-64"} mt-2 text-sm text-white ${light ? "p-1 bg-neutral-200" : "p-2 bg-neutral-800"} bg rounded-lg shadow-lg`}
-            style={{
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
+            className={`relative ${line ? "" : "flex"} p-2`}
+            style={
+              line
+                ? {
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }
+                : {}
+            }
           >
             {content}
           </div>
-        ) : (
-          <div
-            className={`absolute  z-10 flex ${large ? "w-96" : "w-40"} mt-2 text-sm text-white ${light ? "p-1 bg-neutral-200" : "p-2 bg-neutral-800"} bg rounded-lg shadow-lg`}
-          >
-            {content}
-          </div>
-        ))}
+        </div>
+      )}
     </span>
   );
 };
+// export const Tooltip = ({
+//   content,
+//   children,
+//   large,
+//   light,
+//   line,
+// }: {
+//   content: string | ReactNode;
+//   children: JSX.Element;
+//   large?: boolean;
+//   line?: boolean;
+//   light?: boolean;
+// }) => {
+//   const [isVisible, setIsVisible] = useState(false);
+
+//   return (
+//     <span className="relative leading-none inline-block">
+//       <span
+//         className="underline inline-block"
+//         onMouseEnter={() => setIsVisible(true)}
+//         onMouseLeave={() => setIsVisible(false)}
+//       >
+//         {children}
+//       </span>
+//       {isVisible &&
+//         (line ? (
+//           <div
+//             className={`absolute  z-10 ${large ? "w-96" : "max-w-64"} mt-2 text-sm text-white ${light ? "p-1 bg-neutral-200" : "p-2 bg-neutral-800"} bg rounded-lg shadow-lg`}
+//             style={{
+//               whiteSpace: "nowrap",
+//               overflow: "hidden",
+//               textOverflow: "ellipsis",
+//             }}
+//           >
+//             {content}
+//           </div>
+//         ) : (
+//           <div
+//             className={`absolute  z-10 flex ${large ? "w-96" : "w-40"} mt-2 text-sm text-white ${light ? "p-1 bg-neutral-200" : "p-2 bg-neutral-800"} bg rounded-lg shadow-lg`}
+//           >
+//             {content}
+//           </div>
+//         ))}
+//     </span>
+//   );
+// };
 
 export function Citation({
   children,
