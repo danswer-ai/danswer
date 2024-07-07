@@ -95,7 +95,7 @@ export const Tooltip = ({
   return (
     <span className="relative inline-block">
       <span
-        className="underline inline-block"
+        className="underline h-full leading-none"
         onMouseEnter={showTooltip}
         onMouseLeave={hideTooltip}
       >
@@ -103,7 +103,7 @@ export const Tooltip = ({
       </span>
       {isVisible && (
         <div
-          className={`absolute z-10 ${large ? "w-96" : line ? "max-w-64" : "w-40"} 
+          className={` absolute z-10 ${large ? "w-96" : line ? "max-w-64" : "w-40"} 
             left-1/2 transform -translate-x-1/2 mt-2 text-sm 
             ${light ? "text-gray-800 bg-neutral-200" : "text-white bg-neutral-800"} 
             rounded-lg shadow-lg`}
@@ -115,7 +115,7 @@ export const Tooltip = ({
             />
           )}
           <div
-            className={`relative ${line ? "" : "flex"} p-2`}
+            className={` relative ${line ? "" : "flex"} p-2`}
             style={
               line
                 ? {

@@ -18,9 +18,8 @@ import {
   DanswerDocument,
   FilteredDanswerDocument,
 } from "@/lib/search/interfaces";
-import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
+import { SearchSummary } from "./SearchSummary";
 import { SourceIcon } from "@/components/SourceIcon";
-import { ThreeDots } from "react-loader-spinner";
 import { SkippedSearch } from "./SkippedSearch";
 import remarkGfm from "remark-gfm";
 import { CopyButton } from "@/components/CopyButton";
@@ -185,22 +184,8 @@ export const AIMessage = ({
     content = trimIncompleteCodeSection(content);
   }
 
-  const shouldShowLoader =
-    !toolCall || (toolCall.tool_name === SEARCH_TOOL_NAME && !content);
-  const defaultLoader = shouldShowLoader ? (
-    <div className="text-sm my-auto">
-      <ThreeDots
-        height="30"
-        width="50"
-        color="#3b82f6"
-        ariaLabel="grid-loading"
-        radius="12.5"
-        wrapperStyle={{}}
-        wrapperClass=""
-        visible={true}
-      />
-    </div>
-  ) : undefined;
+  // const shouldShowLoader =
+  //   !toolCall || (toolCall.tool_name === SEARCH_TOOL_NAME && !content);
 
   let filteredDocs: FilteredDanswerDocument[] = [];
 
@@ -235,8 +220,8 @@ export const AIMessage = ({
                 ? alternativeAssistant.name
                 : personaName || "Danswer"}
             </div> */}
-            {/* </div>
-             */}
+
+            {/* {toolCall?.tool_result} */}
             <div className="w-full ml-4">
               <div className="max-w-message-max break-words">
                 {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
@@ -360,7 +345,7 @@ export const AIMessage = ({
                     )}
                   </>
                 ) : isComplete ? null : (
-                  defaultLoader
+                  <></>
                 )}
 
                 {isComplete && filteredDocs && filteredDocs.length > 0 && (
@@ -476,13 +461,13 @@ export const AIMessage = ({
                 ) : (
                   <div
                     className="
-                  hover:visible group-hover:visible
+                  invisible hover:visible group-hover:visible
+                  opacity-0 group-hover:opacity-100
+                  transform translate-y-2 group-hover:translate-y-0
                   flex md:flex-row gap-x-0.5 mt-1.5
                   transition-all duration-300 ease-in-out
-                  transform opacity-0 translate-y-2
-                  group-hover:opacity-100 group-hover:translate-y-0
-                  invisible absolute -bottom-4 bg-background-weakerish/60
-                   px-1.5 rounded-lg  "
+                  absolute -bottom-4 bg-background-weakerish/60
+                   p-1.5 rounded-lg  "
                   >
                     <TooltipGroup>
                       <Tooltip showTick line content="Copy!">
@@ -597,11 +582,11 @@ export const HumanMessage = ({
     >
       <div className="mx-auto  w-full max-w-searchbar-max">
         <div className="xl:ml-8">
-          <div className="flex flex-col">
+          <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />
 
             <div className="flex">
-              <div className="w-full  ml-8 flex mr-4 w-full max-w-message-max break-words">
+              <div className="w-full  ml-8 flex  w-full max-w-message-max break-words">
                 {isEditing ? (
                   <div className="w-full">
                     <div
@@ -669,8 +654,14 @@ export const HumanMessage = ({
                           text-inverted 
                           text-sm
                           rounded-lg 
-inline-flex items-center justify-center flex-shrink-0 font-medium min-h-[38px] py-2 px-3 pointer-events-auto
-
+                          inline-flex 
+                          items-center 
+                          justify-center 
+                          flex-shrink-0 
+                          font-medium 
+                          min-h-[38px]
+                          py-2 p
+                          x-3 p
                           hover:bg-accent-hover
                         `}
                           onClick={handleEditSubmit}
@@ -679,7 +670,14 @@ inline-flex items-center justify-center flex-shrink-0 font-medium min-h-[38px] p
                         </button>
                         <button
                           className={`
-inline-flex items-center justify-center flex-shrink-0 font-medium min-h-[38px] py-2 px-3 pointer-events-auto
+                          inline-flex 
+                          items-center 
+                          justify-center 
+                          flex-shrink-0 
+                          font-medium 
+                          min-h-[38px] 
+                          py-2 
+                          px-3 
                           w-fit 
                           p-1 
                           bg-hover
@@ -728,7 +726,7 @@ inline-flex items-center justify-center flex-shrink-0 font-medium min-h-[38px] p
                           !isEditing &&
                           (!files || files.length === 0)
                         ) && "ml-auto"
-                      } relative max-w-[70%] mb-auto rounded-3xl bg-background-weakerish px-5 py-2.5`}
+                      } relative max-w-[70%] mb-auto rounded-3xl bg-user px-5 py-2.5`}
                     >
                       {content}
                     </div>

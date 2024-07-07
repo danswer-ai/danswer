@@ -86,7 +86,7 @@ module.exports = {
         error: "#ef4444", // red-500
         success: "#059669", // emerald-600
         alert: "#f59e0b", // amber-600
-        accent: "#6671d0",
+        accent: "#6366F1", //
 
         // borders
         border: "#e5e7eb", // gray-200
@@ -100,7 +100,7 @@ module.exports = {
 
         hover: "#e5e7eb", // gray-200
         "hover-emphasis": "#d1d5db", // gray-300
-        "accent-hover": "#5964c2",
+        "accent-hover": "#4F46E5",
 
         // keyword highlighting
         highlight: {
@@ -120,7 +120,7 @@ module.exports = {
         },
 
         // bubbles in chat for each "user"
-        user: "#dc2626", // yellow-400
+        user: "#F1F2F4", // near gray-100
         ai: "#60a5fa", // blue-400
 
         // for display documents

@@ -14,7 +14,7 @@ import {
   FiPlus,
   FiInfo,
 } from "react-icons/fi";
-import ChatInputOption, { ChatInputOptionOld } from "./ChatInputOption";
+import { ChatInputOption } from "./ChatInputOption";
 import { FaBrain } from "react-icons/fa";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
@@ -34,10 +34,8 @@ import { Hoverable } from "@/components/Hoverable";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { IconType } from "react-icons";
-import CustomTooltipChatInputOption from "./ChatInputOption";
 import Popup from "../sessionSidebar/Popup";
 import { LlmTab } from "../modal/configuration/LlmTab";
-import { FiltersTab } from "../modal/configuration/FiltersTab";
 import { AssistantsTab } from "../modal/configuration/AssistantsTab";
 const MAX_INPUT_HEIGHT = 200;
 
@@ -398,14 +396,14 @@ export function ChatInputBar({
                     selectedAssistant ? selectedAssistant.name : "Assistants"
                   }
                   Icon={ConfigureIcon as IconType}
-                  onClick={() => setConfigModalActiveTab("assistants")}
                 />
               </Popup>
 
               <Popup
-                content={(close) => (
+                content={(close, ref) => (
                   <LlmTab
                     close={close}
+                    ref={ref}
                     llmOverrideManager={llmOverrideManager}
                     chatSessionId={chatSessionId}
                     currentAssistant={selectedAssistant}
@@ -422,11 +420,32 @@ export function ChatInputBar({
                       : llmName)
                   }
                   Icon={CpuIconSkeleton}
-                  onClick={() => setConfigModalActiveTab("llms")}
                 />
               </Popup>
 
               <ChatInputOption
+                flexPriority="stiff"
+                name="File"
+                Icon={FiPlusCircle}
+                onClick={() => {
+                  const input = document.createElement("input");
+                  console.log("created");
+                  console.log(input);
+                  input.type = "file";
+                  input.multiple = true; // Allow multiple files
+                  input.onchange = (event: any) => {
+                    const files = Array.from(
+                      event?.target?.files || []
+                    ) as File[];
+                    if (files.length > 0) {
+                      handleFileUpload(files);
+                    }
+                  };
+                  input.click();
+                }}
+              />
+
+              {/* <ChatInputOption
                 flexPriority="stiff"
                 name="File"
                 Icon={FiPlusCircle}
@@ -445,6 +464,7 @@ export function ChatInputBar({
                   input.click();
                 }}
               />
+               */}
             </div>
             <div className="absolute bottom-2.5 right-10">
               <div
