@@ -277,10 +277,10 @@ export function ChatInputBar({
             "
           >
             {alternativeAssistant && (
-              <div className="border-b text-neutral-700 flex flex-wrap gap-y-1 gap-x-2 px-2  w-full">
+              <div className="text-neutral-700 flex flex-wrap gap-y-1 gap-x-2 px-2 w-full">
                 <div
                   ref={interactionsRef}
-                  className=" p-2 rounded-t-lg items-center flex w-full"
+                  className="p-2 bg-neutral-50 rounded-t-lg items-center flex w-full"
                 >
                   <AssistantIcon assistant={alternativeAssistant} border />
                   <p className="ml-3 my-auto">{alternativeAssistant.name}</p>
@@ -306,9 +306,9 @@ export function ChatInputBar({
             )}
 
             {files.length > 0 && (
-              <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-2">
+              <div className="flex overflow-x-scroll backgroundweak weakbackground gap-y-1 gap-x-2 px-2 pt-2">
                 {files.map((file) => (
-                  <div key={file.id}>
+                  <div className="flex-none" key={file.id}>
                     <InputBarPreview
                       file={file}
                       onDelete={() => {

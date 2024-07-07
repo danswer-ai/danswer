@@ -93,8 +93,8 @@ function FileDisplay({
         </div>
       )}
       {imageFiles && imageFiles.length > 0 && (
-        <div className={` ${alignBubble && "ml-auto"} mt-2 ml-auto mb-4`}>
-          <div className="flex flex-wrap gap-2">
+        <div className={` ${alignBubble && " pr-6 ml-auto"} mt-2 auto mb-4`}>
+          <div className="flex flex-col gap-2">
             {imageFiles.map((file) => {
               return <InMessageImage key={file.id} fileId={file.id} />;
             })}
