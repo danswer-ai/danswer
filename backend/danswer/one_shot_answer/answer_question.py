@@ -375,7 +375,6 @@ def stream_answer_objects(
                 ]
 
                 search_response = response_docs
-
                 initial_response = QADocsResponse(
                     rephrased_query=rephrased_query,
                     top_documents=response_docs,

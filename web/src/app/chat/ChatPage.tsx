@@ -281,15 +281,6 @@ export function ChatPage({
     documentSidebarInitialWidth || parseInt(SIDEBAR_WIDTH_CONST)
   );
 
-  // const updateSidebarWidth = (newWidth: number) => {
-  //   setUsedSidebarWidth(newWidth);
-  //   if (sidebarElementRef.current && innerSidebarElementRef.current) {
-  //     sidebarElementRef.current.style.transition = "";
-  //     sidebarElementRef.current.style.width = `${newWidth}px`;
-  //     innerSidebarElementRef.current.style.width = `${newWidth}px`;
-  //   }
-  // };
-
   const [message, setMessage] = useState(
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
@@ -1140,8 +1131,6 @@ export function ChatPage({
       <ChatPopup />
 
       <div className="flex relative bg-background text-default overflow-x-hidden">
-        {/* <DocSidebar onClose={() => null} isOpen={true} selectedDoc={null} /> */}
-        {/* {showDocSidebar && ( */}
         <div
           ref={sidebarElementRef}
           className={`

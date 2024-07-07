@@ -100,7 +100,6 @@ export const SearchSection = ({
           case "/":
             event.preventDefault();
             toggleAgentic();
-
             break;
         }
       }
@@ -386,7 +385,6 @@ export const SearchSection = ({
       };
 
     setToggledSidebar((toggledSidebar) => !toggledSidebar); // Toggle the state which will in turn toggle the class
-    console.log(!toggledSidebar, showDocSidebar);
   };
 
   const forceNonAgentic = () => {

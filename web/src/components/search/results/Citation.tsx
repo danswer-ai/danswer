@@ -80,8 +80,6 @@ export const Tooltip = ({
     setTimeout(() => {
       if (!hoverCountRef.current) {
         setGroupHovered(false);
-      } else {
-        console.log("IS ACTIVe");
       }
     }, 100);
   };
