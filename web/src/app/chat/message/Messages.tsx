@@ -214,13 +214,6 @@ export const AIMessage = ({
               assistant={alternativeAssistant || currentPersona}
             />
 
-            {/* <div className="font-bold text-emphasis ml-2 my-auto">
-              {alternativeAssistant
-                ? alternativeAssistant.name
-                : personaName || "Danswer"}
-            </div> */}
-
-            {/* {toolCall?.tool_result} */}
             <div className="w-full ml-4">
               <div className="max-w-message-max break-words">
                 {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
@@ -232,6 +225,7 @@ export const AIMessage = ({
                         <div className="mb-1">
                           <SearchSummary
                             query={query}
+                            finished={toolCall?.tool_result != undefined}
                             hasDocs={hasDocs || false}
                             messageId={messageId}
                             isCurrentlyShowingRetrieved={

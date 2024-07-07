@@ -178,12 +178,12 @@ export const FullSearchBar = ({
       <div className="flex justify-end w-full items-center space-x-3 mr-12 px-4  pb-2 ">
         {searchState == "searching" && (
           <div className="mr-auto relative inline-block">
-            <span className="shimmer-text">Reading Documents...</span>
+            <span className="loading-text">Reading Documents...</span>
           </div>
         )}
         {searchState == "analyzing" && (
           <div className="mr-auto relative inline-block">
-            <span className="shimmer-text">Generating Analysis...</span>
+            <span className="loading-text">Generating Analysis...</span>
           </div>
         )}
 

@@ -11,6 +11,7 @@ import { AssistantsTab } from "./AssistantsTab";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { LlmTab } from "./LlmTab";
 import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
+import { AssistantsIcon } from "@/components/icons/icons";
 
 const TabButton = ({
   label,
@@ -100,7 +101,7 @@ export function ConfigurationModal({
             <div className="flex px-6 gap-x-2">
               <TabButton
                 label="Assistants"
-                icon={FaBrain}
+                icon={AssistantsIcon}
                 isActive={activeTab === "assistants"}
                 onClick={() => setActiveTab("assistants")}
               />

@@ -15,7 +15,6 @@ import {
   FiInfo,
 } from "react-icons/fi";
 import { ChatInputOption } from "./ChatInputOption";
-import { FaBrain } from "react-icons/fa";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
 import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
@@ -27,6 +26,8 @@ import {
   InputBarPreviewImageProvider,
 } from "../files/InputBarPreview";
 import {
+  AssistantsIcon,
+  AssistantsIconSkeleton,
   ConfigureIcon,
   CpuIcon,
   CpuIconSkeleton,
@@ -274,6 +275,7 @@ export function ChatInputBar({
               opacity-100
               w-full
               h-fit
+              bg-bl
               flex
               flex-col
               border
@@ -297,7 +299,7 @@ export function ChatInputBar({
               {selectedDocuments.length > 0 && (
                 <button
                   onClick={showDocs}
-                  className="flex-none flex cursor-pointer hover:bg-background transition-colors duration-300 h-10 p-1 items-center gap-x-2 rounded-lg bg-background-weakish max-w-[100px]"
+                  className="flex-none flex cursor-pointer hover:bg-neutral-200 transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-weakish max-w-[100px]"
                 >
                   <FileIcon className="!h-6 !w-6" />
                   <p className="text-xs">
@@ -307,7 +309,7 @@ export function ChatInputBar({
                   </p>
                 </button>
               )}
-              <div className="flex gap-x-2 px-2 overflow-x-scroll items-end weakbackground">
+              <div className="flex  gap-x-.5 px-2  overflow-y-auto overflow-x-scroll items-end weakbackground">
                 {files.map((file) => (
                   <div className="flex-none" key={file.id}>
                     {file.type === ChatFileType.IMAGE ? (
@@ -396,7 +398,6 @@ export function ChatInputBar({
                     availableAssistants={availableAssistants}
                     llmProviders={llmProviders}
                     selectedAssistant={selectedAssistant}
-                    // onSelect={() => null}
                     onSelect={(assistant) => {
                       setSelectedAssistant(assistant);
                       close();
@@ -410,7 +411,7 @@ export function ChatInputBar({
                   name={
                     selectedAssistant ? selectedAssistant.name : "Assistants"
                   }
-                  Icon={ConfigureIcon as IconType}
+                  Icon={AssistantsIconSkeleton as IconType}
                 />
               </Popup>
 

@@ -26,11 +26,15 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import React from "react";
-import { FaBrain } from "react-icons/fa";
 import { Logo } from "@/components/Logo";
 import { HeaderTitle } from "@/components/header/Header";
 import { TbLayoutSidebarRightExpand } from "react-icons/tb";
-import { LefToLineIcon, RightToLineIcon } from "@/components/icons/icons";
+import {
+  AssistantsIcon,
+  AssistantsIconSkeleton,
+  LefToLineIcon,
+  RightToLineIcon,
+} from "@/components/icons/icons";
 
 interface HistorySidebarProps {
   search?: boolean;
@@ -148,7 +152,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
               href="/assistants/mine"
               className="w-full p-2 bg-white border-border border rounded items-center hover:bg-neutral-200 cursor-pointer transition-all duration-150 flex gap-x-2"
             >
-              <FaBrain className=" my-auto" />
+              <AssistantsIconSkeleton className="h-4 w-4 my-auto" />
               <p className="my-auto flex items-center text-sm">
                 Manage Assistants
               </p>

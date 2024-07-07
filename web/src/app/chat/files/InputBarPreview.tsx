@@ -42,7 +42,7 @@ export function InputBarPreviewImageProvider({
 
   return (
     <div
-      className="relative"
+      className="h-10 relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -55,7 +55,6 @@ export function InputBarPreviewImageProvider({
             flex
             items-center
             justify-center
-            bg-black
             bg-opacity-50
             rounded-lg
             z-0
@@ -105,7 +104,6 @@ export function InputBarPreview({
             flex
             items-center
             justify-center
-            bg-black
             bg-opacity-50
             rounded-lg
             z-0

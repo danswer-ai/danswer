@@ -29,17 +29,15 @@ export const TempAssistant = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             </p>
           }
         >
-          <div className="ltext-neutral-700 flex flex-wrap gap-y-1 gap-x-2 max-w-[200px]">
-            <div
-              ref={ref}
-              className="p-2 relative  rounded-t-lg items-center flex"
-            >
-              <AssistantIcon assistant={alternativeAssistant} border />
-              <p className="ml-3 line-clamp-1 ellipsis  break-all my-auto">
-                {alternativeAssistant.name}
-              </p>
-              <div className="flex gap-x-1 ml-auto ">{/* </Tooltip> */}</div>
-            </div>
+          <div
+            ref={ref}
+            className="p-2 relative rounded-t-lg items-center flex"
+          >
+            <AssistantIcon assistant={alternativeAssistant} border />
+            <p className="ml-1 line-clamp-1 ellipsis  break-all my-auto">
+              {alternativeAssistant.name}
+            </p>
+            <div className="flex gap-x-1 ml-auto ">{/* </Tooltip> */}</div>
           </div>
         </Tooltip>
         {isHovered && (
