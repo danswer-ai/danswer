@@ -54,7 +54,7 @@ export function EmphasizedClickable({
         p-1
         select-none
         bg-neutral-100
-        hover:bg-background-weakerish
+        hover:bg-background-weaker
         ${fullWidth ? "w-full" : ""}`}
     >
       {children}

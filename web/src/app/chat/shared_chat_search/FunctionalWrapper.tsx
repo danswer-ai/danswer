@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ChatIcon, SearchIcon } from "@/components/icons/icons";
 
@@ -64,11 +64,20 @@ const ToggleSwitch = () => {
 };
 
 export default function FunctionalWrapper({
-  children,
+  // children,
+  content,
+  initiallyTogggled,
 }: {
-  children: React.ReactNode;
+  // children: React.ReactNode;
+  content: (toggle: (toggled: boolean) => void) => ReactNode;
+  initiallyTogggled: boolean;
 }) {
   const router = useRouter();
+  const [sidebarToggled, setSidebarToggled] = useState(initiallyTogggled);
+
+  const toggle = (toggled: boolean) => {
+    setSidebarToggled(toggled);
+  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -103,10 +112,28 @@ export default function FunctionalWrapper({
 
   return (
     <>
-      <div className="z-[40] fixed top-4 left-1/2 transform -translate-x-1/2">
-        <ToggleSwitch />
+      <div className="z-[40] flex fixed top-4 left-1/2 transform -translate-x-1/2">
+        <div
+          style={{ transition: "width 0.30s ease-out" }}
+          className={`
+        flex-none 
+        overflow-y-hidden 
+        bg-background-weak 
+        transition-all 
+        bg-opacity-80
+        duration-300 
+        ease-in-out
+        h-full
+        ${sidebarToggled ? "w-[300px] " : "w-[0px]"}
+      `}
+        ></div>
+        <div className="relative">
+          <ToggleSwitch />
+        </div>
       </div>
-      <div className="absolute left-0 top-0 w-full h-full">{children}</div>
+      <div className="absolute left-0 top-0 w-full h-full">
+        {content(toggle)}
+      </div>
     </>
   );
 }

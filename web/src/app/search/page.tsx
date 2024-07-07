@@ -31,6 +31,7 @@ import {
 import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
 import { ChatSession } from "../chat/interfaces";
 import { SEARCH_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
+import ToggleSearch from "./ToggleSearch";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -131,6 +132,7 @@ export default async function Home() {
     embeddingModelResponse && embeddingModelResponse.ok
       ? ((await embeddingModelResponse.json()) as FullEmbeddingModelResponse)
       : null;
+
   const currentEmbeddingModelName =
     embeddingModelVersionInfo?.current_model_name;
   const nextEmbeddingModelName =
@@ -192,24 +194,17 @@ export default async function Home() {
       <ChatPopup />
 
       <InstantSSRAutoRefresh />
+      <ToggleSearch
+        toggleSearchSidebar={toggleSearchSidebar}
+        querySessions={querySessions}
+        user={user}
+        ccPairs={ccPairs}
+        documentSets={documentSets}
+        personas={assistants}
+        tags={tags}
+        searchTypeDefault={searchTypeDefault}
+      />
 
-      <FunctionalWrapper>
-      
-      <div className="px-24 pt-10 flex flex-col items-center min-h-screen">
-        <div className="w-full">
-          <SearchSection
-          toggleSearchSidebar={toggleSearchSidebar}
-          querySessions={querySessions}
-          user={user}
-            ccPairs={ccPairs}
-            documentSets={documentSets}
-            personas={assistants}
-            tags={tags}
-            defaultSearchType={searchTypeDefault}
-          />
-        </div>
-      </div>
-      </FunctionalWrapper>
     </>
   );
 }

@@ -11,6 +11,7 @@ import { AssistantsTab } from "./AssistantsTab";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { LlmTab } from "./LlmTab";
 import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
+import { AssistantsIcon, IconProps } from "@/components/icons/icons";
 
 const TabButton = ({
   label,
@@ -41,6 +42,7 @@ const TabButton = ({
     `}
   >
     <Icon className="inline-block mr-2 my-auto" size="16" />
+
     <p className="my-auto">{label}</p>
   </button>
 );

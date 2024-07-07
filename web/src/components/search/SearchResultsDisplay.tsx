@@ -138,7 +138,7 @@ export const SearchResultsDisplay = ({
                 className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
                   !sweep
                     ? "bg-green-500 text-neutral-800"
-                    : "bg-rose-700 text-neutral-100"
+                    : "bg-rose-700 text-lighter"
                 }`}
                 style={{
                   transform: sweep ? "rotateZ(180deg)" : "rotateZ(0deg)",
@@ -202,10 +202,7 @@ export const SearchResultsDisplay = ({
       <div
         className={`flex mt-4 justify-center transition-all duration-500 ${searchState == "input" ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
       >
-        <button className="duration-300 transition-bg cursor-pointer z-[100] hover:bg-neutral-700 bg-neutral-800 text-neutral-200 h-8 rounded-md px-3 text-xs">
-          Analyze 20 more
-        </button>
-        <button className=" pl-5 transition-all cursor-pointer -ml-2 bg-neutral-200 text-neutral-600 h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs">
+        <button className=" pl-5 transition-all cursor-pointer -ml-2 bg-background-subtle text-dark h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs">
           <p className=" relative after:bg-neutral-600 after:absolute after:h-[1px] after:w-0 after:bottom-0 after:left-0 hover:after:w-full after:transition-all after:duration-300 duration-300">
             Show me all
           </p>
@@ -229,7 +226,7 @@ export function AgenticDisclaimer({
       </p>
       <button
         onClick={forceNonAgentic}
-        className="p-2 bg-neutral-900 mr-auto text-neutral-200 rounded-lg text-xs my-auto"
+        className="p-2 bg-background-dark mr-auto text-light rounded-lg text-xs my-auto"
       >
         Non-agentic
       </button>

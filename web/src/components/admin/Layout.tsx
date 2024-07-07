@@ -34,6 +34,8 @@ import {
   EmbeddingIcon,
   EmbeddingIconSkeleton,
   BackIcon,
+  AssistantsIcon,
+  AssistantsIconSkeleton,
 } from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import {
@@ -153,7 +155,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   {
                     name: (
                       <div className="flex">
-                        <StarIconSkeleton className="my-auto" size={18} />
+                        <AssistantsIconSkeleton className="my-auto" size={18} />
                         <div className="ml-1">Assistants</div>
                       </div>
                     ),

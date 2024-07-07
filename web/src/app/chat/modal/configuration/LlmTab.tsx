@@ -152,3 +152,4 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
     );
   }
 );
+LlmTab.displayName = "LlmTab";
