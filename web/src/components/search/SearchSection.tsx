@@ -1,7 +1,7 @@
 "use client";
 
 import { useContext, useEffect, useRef, useState } from "react";
-import { SearchBar } from "./SearchBar";
+import { FullSearchBar, SearchBar } from "./SearchBar";
 import {
   AgenticDisclaimer,
   SearchResultsDisplay,
@@ -514,7 +514,7 @@ export const SearchSection = ({
                 </div>
               </div>
 
-              <SearchBar
+              <FullSearchBar
                 toggleAgentic={toggleAgentic}
                 agentic={agentic}
                 searchState={searchState}
@@ -581,6 +581,11 @@ export const SearchSection = ({
               </div>
             </div>
           </div>
+        </div>
+        {/* Temporary - fixed logo */}
+        <div className="absolute z-[100] left-4 top-2">
+          {" "}
+          <Logo />
         </div>
       </div>
     </>

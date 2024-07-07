@@ -102,9 +102,11 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             ) : (
               <HeaderTitle>Danswer</HeaderTitle>
             )}
-            <button className="ml-auto" onClick={toggleSidebar}>
-              {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
-            </button>
+            {toggleSidebar && (
+              <button className="ml-auto" onClick={toggleSidebar}>
+                {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
+              </button>
+            )}
           </div>
           <div className="mx-3 mt-4  gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
             <Link
