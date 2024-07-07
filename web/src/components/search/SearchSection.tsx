@@ -436,7 +436,6 @@ export const SearchSection = ({
         <div
           ref={sidebarElementRef}
           className={`
-            w-[300px] 
             flex-none 
             absolute 
             left-0 
@@ -451,8 +450,8 @@ export const SearchSection = ({
             ease-in-out
             ${
               showDocSidebar || toggledSidebar
-                ? "opacity-100 translate-x-0"
-                : "opacity-0  pointer-events-none -translate-x-10"
+                ? "opacity-100 w-[300px] translate-x-0"
+                : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
             }
           `}
         >
