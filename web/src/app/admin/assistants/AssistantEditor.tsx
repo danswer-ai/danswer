@@ -676,9 +676,9 @@ export function AssistantEditor({
 
                     {internetSearchTool && (
                       <BooleanFormField
+                        noPadding
                         name={`enabled_tools_map.${internetSearchTool.id}`}
                         label={internetSearchTool.display_name}
-                        subtext={internetSearchTool.description}
                         onChange={() => {
                           toggleToolInValues(internetSearchTool.id);
                         }}

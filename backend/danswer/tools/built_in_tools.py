@@ -1,3 +1,4 @@
+import os
 from typing import Type
 from typing import TypedDict
 
@@ -40,12 +41,22 @@ BUILT_IN_TOOLS: list[InCodeToolInfo] = [
         "in_code_tool_id": ImageGenerationTool.__name__,
         "display_name": ImageGenerationTool._DISPLAY_NAME,
     },
-    {
-        "cls": InternetSearchTool,
-        "description": "The Internet Search Tool allows the assistant to perform internet searches for up-to-date information.",
-        "in_code_tool_id": InternetSearchTool.__name__,
-        "display_name": InternetSearchTool._DISPLAY_NAME,
-    },
+    # don't show the InternetSearchTool as an option if BING_API_KEY is not available
+    *(
+        [
+            {
+                "cls": InternetSearchTool,
+                "description": (
+                    "The Internet Search Tool allows the assistant "
+                    "to perform internet searches for up-to-date information."
+                ),
+                "in_code_tool_id": InternetSearchTool.__name__,
+                "display_name": InternetSearchTool._DISPLAY_NAME,
+            }
+        ]
+        if os.environ.get("BING_API_KEY")
+        else []
+    ),
 ]
 
 

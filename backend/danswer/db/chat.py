@@ -543,6 +543,7 @@ def translate_db_search_doc_to_server_search_doc(
         secondary_owners=(
             db_search_doc.secondary_owners if not remove_doc_content else []
         ),
+        is_internet=db_search_doc.is_internet,
     )
 
 

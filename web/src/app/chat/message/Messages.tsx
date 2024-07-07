@@ -152,6 +152,9 @@ export const AIMessage = ({
     content = trimIncompleteCodeSection(content);
   }
 
+  const danswerSearchToolEnabledForPersona = currentPersona.tools.some(
+    (tool) => tool.in_code_tool_id === SEARCH_TOOL_NAME
+  );
   const shouldShowLoader =
     !toolCall || (toolCall.tool_name === SEARCH_TOOL_NAME && !content);
   const defaultLoader = shouldShowLoader ? (
@@ -203,36 +206,37 @@ export const AIMessage = ({
           </div>
 
           <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
-            {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
-              <>
-                {query !== undefined &&
-                  handleShowRetrieved !== undefined &&
-                  isCurrentlyShowingRetrieved !== undefined &&
-                  !retrievalDisabled && (
-                    <div className="my-1">
-                      <SearchSummary
-                        query={query}
-                        hasDocs={hasDocs || false}
-                        messageId={messageId}
-                        isCurrentlyShowingRetrieved={
-                          isCurrentlyShowingRetrieved
-                        }
-                        handleShowRetrieved={handleShowRetrieved}
-                        handleSearchQueryEdit={handleSearchQueryEdit}
-                      />
-                    </div>
-                  )}
-                {handleForceSearch &&
-                  content &&
-                  query === undefined &&
-                  !hasDocs &&
-                  !retrievalDisabled && (
-                    <div className="my-1">
-                      <SkippedSearch handleForceSearch={handleForceSearch} />
-                    </div>
-                  )}
-              </>
-            )}
+            {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
+              danswerSearchToolEnabledForPersona && (
+                <>
+                  {query !== undefined &&
+                    handleShowRetrieved !== undefined &&
+                    isCurrentlyShowingRetrieved !== undefined &&
+                    !retrievalDisabled && (
+                      <div className="my-1">
+                        <SearchSummary
+                          query={query}
+                          hasDocs={hasDocs || false}
+                          messageId={messageId}
+                          isCurrentlyShowingRetrieved={
+                            isCurrentlyShowingRetrieved
+                          }
+                          handleShowRetrieved={handleShowRetrieved}
+                          handleSearchQueryEdit={handleSearchQueryEdit}
+                        />
+                      </div>
+                    )}
+                  {handleForceSearch &&
+                    content &&
+                    query === undefined &&
+                    !hasDocs &&
+                    !retrievalDisabled && (
+                      <div className="my-1">
+                        <SkippedSearch handleForceSearch={handleForceSearch} />
+                      </div>
+                    )}
+                </>
+              )}
 
             {toolCall &&
               !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (

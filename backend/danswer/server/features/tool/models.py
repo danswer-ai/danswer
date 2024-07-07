@@ -20,6 +20,6 @@ class ToolSnapshot(BaseModel):
             name=tool.name,
             description=tool.description,
             definition=tool.openapi_schema,
-            display_name=tool.display_name,
+            display_name=tool.display_name or tool.name,
             in_code_tool_id=tool.in_code_tool_id,
         )

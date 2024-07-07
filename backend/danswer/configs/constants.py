@@ -104,6 +104,7 @@ class DocumentSource(str, Enum):
     R2 = "r2"
     GOOGLE_CLOUD_STORAGE = "google_cloud_storage"
     OCI_STORAGE = "oci_storage"
+    NOT_APPLICABLE = "not_applicable"
 
 
 class BlobType(str, Enum):

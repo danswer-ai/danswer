@@ -360,9 +360,10 @@ def upsert_persona(
         prompts = db_session.query(Prompt).filter(Prompt.id.in_(prompt_ids)).all()
         if not prompts and prompt_ids:
             raise ValueError("prompts not found")
-    
+
     # ensure all specified tools are valid
-    validate_persona_tools(tools)
+    if tools:
+        validate_persona_tools(tools)
 
     if persona:
         if not default_persona and persona.default_persona:
