@@ -12,6 +12,7 @@ from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from danswer.auth.schemas import UserRole
+from danswer.configs.chat_configs import BING_API_KEY
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import DocumentSet
@@ -360,6 +361,10 @@ def upsert_persona(
         if not prompts and prompt_ids:
             raise ValueError("prompts not found")
 
+    # ensure all specified tools are valid
+    if tools:
+        validate_persona_tools(tools)
+
     if persona:
         if not default_persona and persona.default_persona:
             raise ValueError("Cannot update default persona with non-default.")
@@ -455,6 +460,14 @@ def update_persona_visibility(
     persona = get_persona_by_id(persona_id=persona_id, user=None, db_session=db_session)
     persona.is_visible = is_visible
     db_session.commit()
+
+
+def validate_persona_tools(tools: list[Tool]) -> None:
+    for tool in tools:
+        if tool.name == "InternetSearchTool" and not BING_API_KEY:
+            raise ValueError(
+                "Bing API key not found, please contact your Danswer admin to get it added!"
+            )
 
 
 def check_user_can_edit_persona(user: User | None, persona: Persona) -> None:

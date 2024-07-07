@@ -10,6 +10,7 @@ import {
   FiChevronRight,
   FiChevronLeft,
   FiTool,
+  FiGlobe,
 } from "react-icons/fi";
 import { FeedbackType } from "../types";
 import { useEffect, useRef, useState } from "react";
@@ -25,6 +26,7 @@ import { ChatFileType, FileDescriptor, ToolCallMetadata } from "../interfaces";
 import {
   IMAGE_GENERATION_TOOL_NAME,
   SEARCH_TOOL_NAME,
+  INTERNET_SEARCH_TOOL_NAME,
 } from "../tools/constants";
 import { ToolRunDisplay } from "../tools/ToolRunningAnimation";
 import { Hoverable } from "@/components/Hoverable";
@@ -39,11 +41,12 @@ import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { Button } from "@tremor/react";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
+import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
+  INTERNET_SEARCH_TOOL_NAME,
   IMAGE_GENERATION_TOOL_NAME,
 ];
 
@@ -149,6 +152,9 @@ export const AIMessage = ({
     content = trimIncompleteCodeSection(content);
   }
 
+  const danswerSearchToolEnabledForPersona = currentPersona.tools.some(
+    (tool) => tool.in_code_tool_id === SEARCH_TOOL_NAME
+  );
   const shouldShowLoader =
     !toolCall || (toolCall.tool_name === SEARCH_TOOL_NAME && !content);
   const defaultLoader = shouldShowLoader ? (
@@ -200,36 +206,37 @@ export const AIMessage = ({
           </div>
 
           <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
-            {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
-              <>
-                {query !== undefined &&
-                  handleShowRetrieved !== undefined &&
-                  isCurrentlyShowingRetrieved !== undefined &&
-                  !retrievalDisabled && (
-                    <div className="my-1">
-                      <SearchSummary
-                        query={query}
-                        hasDocs={hasDocs || false}
-                        messageId={messageId}
-                        isCurrentlyShowingRetrieved={
-                          isCurrentlyShowingRetrieved
-                        }
-                        handleShowRetrieved={handleShowRetrieved}
-                        handleSearchQueryEdit={handleSearchQueryEdit}
-                      />
-                    </div>
-                  )}
-                {handleForceSearch &&
-                  content &&
-                  query === undefined &&
-                  !hasDocs &&
-                  !retrievalDisabled && (
-                    <div className="my-1">
-                      <SkippedSearch handleForceSearch={handleForceSearch} />
-                    </div>
-                  )}
-              </>
-            )}
+            {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
+              danswerSearchToolEnabledForPersona && (
+                <>
+                  {query !== undefined &&
+                    handleShowRetrieved !== undefined &&
+                    isCurrentlyShowingRetrieved !== undefined &&
+                    !retrievalDisabled && (
+                      <div className="my-1">
+                        <SearchSummary
+                          query={query}
+                          hasDocs={hasDocs || false}
+                          messageId={messageId}
+                          isCurrentlyShowingRetrieved={
+                            isCurrentlyShowingRetrieved
+                          }
+                          handleShowRetrieved={handleShowRetrieved}
+                          handleSearchQueryEdit={handleSearchQueryEdit}
+                        />
+                      </div>
+                    )}
+                  {handleForceSearch &&
+                    content &&
+                    query === undefined &&
+                    !hasDocs &&
+                    !retrievalDisabled && (
+                      <div className="my-1">
+                        <SkippedSearch handleForceSearch={handleForceSearch} />
+                      </div>
+                    )}
+                </>
+              )}
 
             {toolCall &&
               !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
@@ -257,6 +264,20 @@ export const AIMessage = ({
                   />
                 </div>
               )}
+
+            {toolCall && toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
+              <div className="my-2">
+                <ToolRunDisplay
+                  toolName={
+                    toolCall.tool_result
+                      ? `Searched the internet`
+                      : `Searching the internet`
+                  }
+                  toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
+                  isRunning={!toolCall.tool_result}
+                />
+              </div>
+            )}
 
             {content ? (
               <>
@@ -317,12 +338,16 @@ export const AIMessage = ({
                     .filter(([_, document]) => document.semantic_identifier)
                     .map(([citationKey, document], ind) => {
                       const display = (
-                        <div className="max-w-350 text-ellipsis flex text-sm border border-border py-1 px-2 rounded flex">
+                        <div className="max-w-350 text-ellipsis text-sm border border-border py-1 px-2 rounded flex">
                           <div className="mr-1 my-auto">
-                            <SourceIcon
-                              sourceType={document.source_type}
-                              iconSize={16}
-                            />
+                            {document.is_internet ? (
+                              <InternetSearchIcon url={document.link} />
+                            ) : (
+                              <SourceIcon
+                                sourceType={document.source_type}
+                                iconSize={16}
+                              />
+                            )}
                           </div>
                           [{citationKey}] {document!.semantic_identifier}
                         </div>

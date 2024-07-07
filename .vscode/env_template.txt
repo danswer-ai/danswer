@@ -42,6 +42,11 @@ PYTHONPATH=./backend
 PYTHONUNBUFFERED=1
 
 
+# Internet Search 
+BING_API_KEY=<REPLACE THIS>
+
+
 # Enable the full set of Danswer Enterprise Edition features
 # NOTE: DO NOT ENABLE THIS UNLESS YOU HAVE A PAID ENTERPRISE LICENSE (or if you are using this for local testing/development)
 ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=False
+

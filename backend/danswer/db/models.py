@@ -645,6 +645,7 @@ class SearchDoc(Base):
     secondary_owners: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
     )
+    is_internet: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
 
     chat_messages = relationship(
         "ChatMessage",
@@ -990,6 +991,7 @@ class Tool(Base):
     # ID of the tool in the codebase, only applies for in-code tools.
     # tools defined via the UI will have this as None
     in_code_tool_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    display_name: Mapped[str] = mapped_column(String, nullable=True)
 
     # OpenAPI scheme for the tool. Only applies to tools defined via the UI.
     openapi_schema: Mapped[dict[str, Any] | None] = mapped_column(

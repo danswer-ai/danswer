@@ -55,7 +55,9 @@ class ImageGenerationResponse(BaseModel):
 
 
 class ImageGenerationTool(Tool):
-    NAME = "run_image_generation"
+    _NAME = "run_image_generation"
+    _DESCRIPTION = "Generate an image from a prompt."
+    _DISPLAY_NAME = "Image Generation Tool"
 
     def __init__(
         self,
@@ -75,15 +77,24 @@ class ImageGenerationTool(Tool):
 
         self.additional_headers = additional_headers
 
+    @property
     def name(self) -> str:
-        return self.NAME
+        return self._NAME
+
+    @property
+    def description(self) -> str:
+        return self._DESCRIPTION
+
+    @property
+    def display_name(self) -> str:
+        return self._DISPLAY_NAME
 
     def tool_definition(self) -> dict:
         return {
             "type": "function",
             "function": {
-                "name": self.name(),
-                "description": "Generate an image from a prompt",
+                "name": self.name,
+                "description": self.description,
                 "parameters": {
                     "type": "object",
                     "properties": {

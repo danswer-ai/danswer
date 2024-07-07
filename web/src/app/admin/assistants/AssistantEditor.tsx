@@ -53,6 +53,10 @@ function findImageGenerationTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "ImageGenerationTool");
 }
 
+function findInternetSearchTool(tools: ToolSnapshot[]) {
+  return tools.find((tool) => tool.in_code_tool_id === "InternetSearchTool");
+}
+
 function SubLabel({ children }: { children: string | JSX.Element }) {
   return <div className="text-sm text-subtle mb-2">{children}</div>;
 }
@@ -150,16 +154,20 @@ export function AssistantEditor({
   const imageGenerationTool = providerSupportingImageGenerationExists
     ? findImageGenerationTool(tools)
     : undefined;
+  const internetSearchTool = findInternetSearchTool(tools);
+
   const customTools = tools.filter(
     (tool) =>
       tool.in_code_tool_id !== searchTool?.in_code_tool_id &&
-      tool.in_code_tool_id !== imageGenerationTool?.in_code_tool_id
+      tool.in_code_tool_id !== imageGenerationTool?.in_code_tool_id &&
+      tool.in_code_tool_id !== internetSearchTool?.in_code_tool_id
   );
 
   const availableTools = [
     ...customTools,
     ...(searchTool ? [searchTool] : []),
     ...(imageGenerationTool ? [imageGenerationTool] : []),
+    ...(internetSearchTool ? [internetSearchTool] : []),
   ];
   const enabledToolsMap: { [key: number]: boolean } = {};
   availableTools.forEach((tool) => {
@@ -664,6 +672,17 @@ export function AssistantEditor({
                           </CollapsibleSection>
                         )}
                       </>
+                    )}
+
+                    {internetSearchTool && (
+                      <BooleanFormField
+                        noPadding
+                        name={`enabled_tools_map.${internetSearchTool.id}`}
+                        label={internetSearchTool.display_name}
+                        onChange={() => {
+                          toggleToolInValues(internetSearchTool.id);
+                        }}
+                      />
                     )}
 
                     {customTools.length > 0 && (
