@@ -86,19 +86,18 @@ def extract_citations_from_stream(
         llm_out += token
 
         citation_pattern = r"\[(\d+)\]"
-        print(f"FILTERING FOR CITATIONS {curr_segment}")
+
         citations_found = list(re.finditer(citation_pattern, curr_segment))
+        possible_citation_pattern = r"(\[\d*$)"  # [1, [, etc
+        possible_citation_found = re.search(possible_citation_pattern, curr_segment)
 
         if len(citations_found) == 0 and len(llm_out) - past_cite_count > 5:
             current_citations = []
 
         if citations_found and not in_code_block(llm_out):
-            # print(f"BEFORE: curr_segment: |{curr_segment}|")
             last_citation_end = 0
             length_to_add = 0
 
-            print("CITATIONS")
-            print(citations_found)
             while len(citations_found) > 0:
 
                 citation = citations_found.pop(0)
@@ -114,13 +113,8 @@ def extract_citations_from_stream(
                     # Skip consecutive citations of the same work
                     if target_citation_num in current_citations:
                         start, end = citation.span()
-                        # print(f"ciation targeted is {target_citation_num, numerical_value, current_citations}" )
-                        # print(start, end)
-                        # print(f"BEFORE: |{curr_segment}|")
-                        # print(curr_segment[start:end])
 
                         curr_segment = curr_segment[:start] + curr_segment[end:]
-                        # print(f"AFTER: |{curr_segment}|")
 
                         continue
 
@@ -128,13 +122,11 @@ def extract_citations_from_stream(
 
                     # Replace the citation in the current segment
                     start, end = citation.span()
-                    # print(f"BEFORE: |{curr_segment}|")
                     curr_segment = (
                         curr_segment[: start + length_to_add]
                         + f"[{target_citation_num}]"
                         + curr_segment[end + length_to_add :]
                     )
-                    # print(f"AFTER: |{curr_segment}|")
 
                     past_cite_count = len(llm_out)
                     current_citations.append(target_citation_num)
@@ -145,9 +137,10 @@ def extract_citations_from_stream(
                             citation_num=target_citation_num,
                             document_id=context_llm_doc.document_id,
                         )
+                    else:
+                        print("not returning")
 
                     if link:
-                        # print(f"BEFORE: |{curr_segment}|")
                         prev_length = len(curr_segment)
                         curr_segment = (
                             curr_segment[: start + length_to_add]
@@ -155,10 +148,8 @@ def extract_citations_from_stream(
                             + curr_segment[end + length_to_add :]
                         )
                         length_to_add += len(curr_segment) - prev_length
-                        # print(f"AFTER: |{curr_segment}|")
 
                     else:
-                        # print(f"BEFORE: |{curr_segment}|")
                         prev_length = len(curr_segment)
 
                         curr_segment = (
@@ -167,20 +158,22 @@ def extract_citations_from_stream(
                             + curr_segment[end + length_to_add :]
                         )
                         length_to_add += len(curr_segment) - prev_length
-                        # print(f"AFTER: |{curr_segment}|")
-
                     last_citation_end = end + length_to_add
 
             if last_citation_end > 0:
-                # print(f"Last Citation {last_citation_end}")
-                # print(curr_segment[:last_citation_end])
                 yield DanswerAnswerPiece(answer_piece=curr_segment[:last_citation_end])
 
                 curr_segment = curr_segment[last_citation_end:]
             # print(f"AFFER: curr_segment: |{curr_segment}|")
+        if possible_citation_found:
+            continue
+        yield DanswerAnswerPiece(answer_piece=curr_segment)
+        curr_segment = ""
 
     if curr_segment:
+        print(f"YIELDING AT END {curr_segment}")
         yield DanswerAnswerPiece(answer_piece=curr_segment)
+    
 
 
 def build_citation_processor(
