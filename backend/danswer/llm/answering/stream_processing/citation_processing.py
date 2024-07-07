@@ -61,6 +61,7 @@ def extract_citations_from_stream(
 
     llm_out = ""
     max_citation_num = len(context_docs)
+    citation_order = []
     curr_segment = ""
     cited_inds = set()
     hold = ""
@@ -106,9 +107,13 @@ def extract_citations_from_stream(
                 #
                 if 1 <= numerical_value <= max_citation_num:
                     context_llm_doc = context_docs[numerical_value - 1]
-                    target_citation_num = doc_id_to_rank_map[
+                    real_citation_num = doc_id_to_rank_map[
                         context_llm_doc.document_id
                     ]
+                    if real_citation_num not in citation_order:
+                        citation_order.append(real_citation_num)
+                    target_citation_num = citation_order.index(real_citation_num)
+
 
                     # Skip consecutive citations of the same work
                     if target_citation_num in current_citations:
