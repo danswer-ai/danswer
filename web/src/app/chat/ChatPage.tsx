@@ -1252,7 +1252,7 @@ export function ChatPage({
                         )}
                       <div
                         className={
-                          "mt-4  w-full mx-auto " +
+                          "mt-4 -ml-4 w-full mx-auto " +
                           "  absolute top-12  left-1/2 transform -translate-x-1/2" +
                           (hasPerformedInitialScroll ? "" : " invisible")
                         }

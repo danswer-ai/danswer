@@ -54,6 +54,7 @@ import {
 } from "@/components/search/DocumentDisplay";
 import {
   DislikeFeedbackIcon,
+  EditIcon,
   ExtendIcon,
   LikeFeedbackIcon,
 } from "@/components/icons/icons";
@@ -76,7 +77,7 @@ function FileDisplay({
   return (
     <>
       {nonImgFiles && nonImgFiles.length > 0 && (
-        <div className={` ${alignBubble && " pr-6 ml-auto"} mt-2 auto mb-4`}>
+        <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
           <div className="flex flex-col gap-2">
             {nonImgFiles.map((file) => {
               return (
@@ -93,7 +94,7 @@ function FileDisplay({
         </div>
       )}
       {imageFiles && imageFiles.length > 0 && (
-        <div className={` ${alignBubble && " pr-6 ml-auto"} mt-2 auto mb-4`}>
+        <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
           <div className="flex flex-col gap-2">
             {imageFiles.map((file) => {
               return <InMessageImage key={file.id} fileId={file.id} />;
@@ -190,23 +191,23 @@ export const AIMessage = ({
 
   if (docs) {
     filteredDocs = docs
-      ?.map((doc: DanswerDocument, ind: number) => {
-        return {
-          ...doc,
-          included: selectedDocumentIds.includes(doc.document_id),
-        };
-      })
       .filter(
         (doc, index, self) =>
           doc.document_id &&
           doc.document_id !== "" &&
           index === self.findIndex((d) => d.document_id === doc.document_id)
-      );
+      )
+      .map((doc: DanswerDocument, ind: number) => {
+        return {
+          ...doc,
+          included: selectedDocumentIds.includes(doc.document_id),
+        };
+      });
   }
 
   return (
-    <div className={"group py-5 px-2 lg:px-5  relative flex -mr-6 w-full"}>
-      <div className="mx-auto w-[90%] max-w-searchbar-max">
+    <div className={"group py-5 px-2 lg:px-5 relative flex w-screen"}>
+      <div className="mx-auto w-[90%] max-w-message-max">
         <div className="xl:ml-8">
           <div className="group flex">
             <AssistantIcon
@@ -348,80 +349,76 @@ export const AIMessage = ({
                     <div className=" w-full  overflow-x-scroll no-scrollbar">
                       {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
                       <div className="px-8 flex gap-x-2">
-                        {filteredDocs
-                          .sort((a, b) => {
-                            const aSelected = selectedDocumentIds.includes(
-                              a.document_id
-                            );
-                            const bSelected = selectedDocumentIds.includes(
-                              b.document_id
-                            );
-                            if (aSelected && !bSelected) return -1;
-                            if (!aSelected && bSelected) return 1;
-                            return 0;
-                          })
-                          .map((doc) => (
-                            <div
-                              key={doc.document_id}
-                              className={`w-[200px] rounded-lg  flex-none transition-all duration-500 hover:bg-neutral-200 bg-neutral-100 px-4 py-2  border-b 
-                            ${
-                              !isComplete
-                                ? "animate-pulse opacity-90"
-                                : citedDocuments &&
-                                  (Array.isArray(citedDocuments) &&
-                                  citedDocuments.some(
-                                    ([_, obj]) =>
-                                      obj.document_id === doc.document_id
-                                  )
-                                    ? "opacity-100"
-                                    : "opacity-20")
-                            } ${selectedDocumentIds.includes(doc.document_id) && "!opacity-100 "}
-                        `}
+                        {filteredDocs.slice(0, 2).map((doc) => (
+                          <div
+                            key={doc.document_id}
+                            className={`w-[200px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weakerish bg-neutral-100 px-4 py-2 border-b
+                              `}
+                          >
+                            <a
+                              href={doc.link}
+                              target="_blank"
+                              className="text-sm  flex justify-between font-semibold text-neutral-800"
                             >
-                              <a
-                                href={doc.link}
-                                target="_blank"
-                                className="text-sm  flex justify-between font-semibold text-neutral-800"
-                              >
-                                <p className="line-clamp-1">
-                                  {
-                                    doc.document_id.split("/")[
-                                      doc.document_id.split("/").length - 1
-                                    ]
-                                  }
-                                </p>
-                                <div className="flex-none">
-                                  <SourceIcon
-                                    sourceType={doc.source_type}
-                                    iconSize={18}
-                                  />
-                                </div>
-                              </a>
-
-                              <div className="flex  overscroll-x-scroll mt-1">
-                                <DocumentMetadataBlock document={doc} />
+                              <p className="line-clamp-1">
+                                {
+                                  doc.document_id.split("/")[
+                                    doc.document_id.split("/").length - 1
+                                  ]
+                                }
+                              </p>
+                              <div className="flex-none">
+                                <SourceIcon
+                                  sourceType={doc.source_type}
+                                  iconSize={18}
+                                />
                               </div>
-
-                              {/* <p className="pl-1 pt-2 pb-1 break-words">
-                            {buildDocumentSummaryDisplay(doc.match_highlights, doc.blurb)}
-                          </p> */}
-                              <div className="line-clamp-3 text-xs break-words   pt-1">
-                                {doc.blurb}
-                              </div>
+                            </a>
+                            <div className="flex  overscroll-x-scroll mt-1">
+                              <DocumentMetadataBlock document={doc} />
                             </div>
-                          ))}
+                            <div className="line-clamp-3 text-xs break-words   pt-1">
+                              {doc.blurb}
+                            </div>
+                          </div>
+                        ))}
+                        <div
+                          onClick={() => {
+                            if (toggleDocumentSelection) {
+                              toggleDocumentSelection();
+                            }
+                          }}
+                          key={-1}
+                          className="cursor-pointer w-[100px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weakerish bg-neutral-100 px-4 py-2 border-b"
+                        >
+                          <div className="text-sm  flex justify-between font-semibold text-neutral-800">
+                            <p className="line-clamp-1">See more</p>
+                            {/* <div className="flex-none">
+                              <SourceIcon
+                                sourceType="bookstack"
+                                iconSize={18}
+                              />
+                            </div> */}
+                          </div>
+                          {/* <div className="flex  overscroll-x-scroll mt-1"> */}
+                          {/* <DocumentMetadataBlock document={doc} /> */}
+                          {/* </div> */}
+                          {/* <EditIcon /> */}
+
+                          <div className="line-clamp-3 text-xs break-words   pt-1">
+                            {docs && docs?.length - 2} more documents
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <button
+                    {/* <button
                       onClick={() => {
-                        if (toggleDocumentSelection) {
-                          toggleDocumentSelection();
-                        }
+                        
                       }}
                       className="my-auto h-full w-6  flex-none p-2"
                     >
                       <ExtendIcon className="text-neutral-700 hover:text-neutral-900 !h-6 !w-6" />
-                    </button>
+                    </button> */}
                   </div>
                 )}
               </div>
@@ -569,16 +566,16 @@ export const HumanMessage = ({
 
   return (
     <div
-      className="pt-5 pb-1 px-2 lg:px-5 flex -mr-6 w-full relative"
+      className="pt-5 pb-1 px-2 lg:px-5 flex -mr-6 w-screen relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="mx-auto  w-full max-w-searchbar-max">
+      <div className="mx-auto w-[90%] max-w-searchbar-max">
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />
 
-            <div className="flex">
+            <div className="flex justify-end">
               <div className="w-full  ml-8 flex  w-full max-w-message-max break-words">
                 {isEditing ? (
                   <div className="w-full">
@@ -750,12 +747,12 @@ export const HumanMessage = ({
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-x-0.5 mr-8 mt-1">
+          <div className="flex flex-col md:flex-row gap-x-0.5  mt-1">
             {currentMessageInd !== undefined &&
               onMessageSelection &&
               otherMessagesCanSwitchTo &&
               otherMessagesCanSwitchTo.length > 1 && (
-                <div className="ml-auto mr-2">
+                <div className="ml-auto mr-3">
                   <MessageSwitcher
                     currentPage={currentMessageInd + 1}
                     totalPages={otherMessagesCanSwitchTo.length}

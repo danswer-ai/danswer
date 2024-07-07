@@ -47,7 +47,7 @@ export const AnimatedToggle = ({
       light
       large
       content={
-        <div className="bg-white  p-6 rounded-lg w-full">
+        <div className="bg-white my-auto p-6 rounded-lg w-full">
           <h2 className="text-xl text-neutral-800 font-bold mb-2">
             Agentic Search
           </h2>
@@ -63,7 +63,7 @@ export const AnimatedToggle = ({
     >
       <div
         ref={containerRef}
-        className=" my-auto  ml-auto flex jusitfy-end items-center cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
+        className=" my-auto ml-auto flex jusitfy-end items-center cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
         style={{ width }}
         onClick={handleToggle}
       >
@@ -190,21 +190,13 @@ export const FullSearchBar = ({
         {toggleAgentic && (
           <AnimatedToggle isOn={agentic!} handleToggle={toggleAgentic} />
         )}
-        <div className="pl-2 bottom-2.5 right-10">
+
+        <div className="my-auto pl-2">
           <button
             onClick={() => {
               onSearch(agentic);
             }}
-            className="cursor-pointer"
-            // onClick={() => {
-            //   if (!isStreaming) {
-            //     if (message) {
-            //       onSubmit();
-            //     }
-            //   } else {
-            //     setIsCancelled(true);
-            //   }
-            // }}
+            className=" flex  my-auto cursor-pointer"
           >
             <SendIcon
               className={`text-emphasis text-white !w-7 !h-7 p-1 rounded-full ${
