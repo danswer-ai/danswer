@@ -145,6 +145,7 @@ export const FullSearchBar = ({
         "
     >
       <textarea
+        rows={3}
         onKeyDownCapture={handleKeyDown}
         className={`
                 m-0
@@ -154,6 +155,7 @@ export const FullSearchBar = ({
                 border-0
                 bg-background-weak
                 whitespace-normal
+                rounded-lg
                 break-word
                 overscroll-contain
                 outline-none
@@ -161,6 +163,7 @@ export const FullSearchBar = ({
                 resize-none
                 pl-4
                 pr-12
+                max-h-[6em]
                 py-4
                 h-14
               `}

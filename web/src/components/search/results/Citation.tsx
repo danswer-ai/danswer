@@ -41,7 +41,6 @@ export const Tooltip = ({
   line,
   showTick = false,
   delay = 500, // Default delay of 300ms
-  quickDelay = 0, // Quick delay for group tooltips
 }: {
   content: string | ReactNode;
   children: JSX.Element;
@@ -50,7 +49,6 @@ export const Tooltip = ({
   light?: boolean;
   showTick?: boolean;
   delay?: number;
-  quickDelay?: number;
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -60,7 +58,7 @@ export const Tooltip = ({
   const showTooltip = () => {
     hoverCountRef.current = true;
 
-    const showDelay = groupHovered ? quickDelay : delay;
+    const showDelay = groupHovered ? 0 : delay;
     timeoutRef.current = setTimeout(() => {
       setIsVisible(true);
       setGroupHovered(true);
