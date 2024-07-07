@@ -21,8 +21,11 @@ import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
 import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
 import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
-import { FileDescriptor } from "../interfaces";
-import { InputBarPreview } from "../files/InputBarPreview";
+import { ChatFileType, FileDescriptor } from "../interfaces";
+import {
+  InputBarPreview,
+  InputBarPreviewImageProvider,
+} from "../files/InputBarPreview";
 import {
   ConfigureIcon,
   CpuIcon,
@@ -37,6 +40,7 @@ import { IconType } from "react-icons";
 import Popup from "../sessionSidebar/Popup";
 import { LlmTab } from "../modal/configuration/LlmTab";
 import { AssistantsTab } from "../modal/configuration/AssistantsTab";
+import { TempAssistant } from "./TempAssistantTab";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
@@ -120,19 +124,6 @@ export function ChatInputBar({
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const interactionsRef = useRef<HTMLDivElement | null>(null);
-
-  const hideSuggestions = () => {
-    setShowSuggestions(false);
-    setAssistantIconIndex(0);
-  };
-
-  // Update selected persona
-  const updateCurrentPersona = (persona: Persona) => {
-    onSetSelectedAssistant(persona.id == selectedAssistant.id ? null : persona);
-    hideSuggestions();
-    setMessage("");
-  };
-
   // Click out of assistant suggestions
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -150,6 +141,18 @@ export function ChatInputBar({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const hideSuggestions = () => {
+    setShowSuggestions(false);
+    setAssistantIconIndex(0);
+  };
+
+  // Update selected persona
+  const updateCurrentPersona = (persona: Persona) => {
+    onSetSelectedAssistant(persona.id == selectedAssistant.id ? null : persona);
+    hideSuggestions();
+    setMessage("");
+  };
 
   // Complete user input handling
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -277,49 +280,42 @@ export function ChatInputBar({
             "
           >
             {alternativeAssistant && (
-              <div className="text-neutral-700 flex flex-wrap gap-y-1 gap-x-2 px-2 w-full">
-                <div
-                  ref={interactionsRef}
-                  className="p-2 bg-neutral-50 rounded-t-lg items-center flex w-full"
-                >
-                  <AssistantIcon assistant={alternativeAssistant} border />
-                  <p className="ml-3 my-auto">{alternativeAssistant.name}</p>
-                  <div className="flex gap-x-1 ml-auto ">
-                    <Tooltip
-                      content={
-                        <p className="max-w-xs flex flex-wrap">
-                          {alternativeAssistant.description}
-                        </p>
-                      }
-                    >
-                      <button>
-                        <Hoverable icon={FiInfo} />
-                      </button>
-                    </Tooltip>
-                    <Hoverable
-                      icon={FiX}
-                      onClick={() => onSetSelectedAssistant(null)}
-                    />
-                  </div>
-                </div>
-              </div>
+              <TempAssistant
+                ref={interactionsRef}
+                alternativeAssistant={alternativeAssistant}
+                unToggle={() => onSetSelectedAssistant(null)}
+              />
             )}
 
             {files.length > 0 && (
-              <div className="flex overflow-x-scroll backgroundweak weakbackground gap-y-1 gap-x-2 px-2 pt-2">
+              <div className="flex overflow-x-scroll items-end backgroundweak weakbackground gap-y-1 gap-x-2 px-2 pt-2">
                 {files.map((file) => (
                   <div className="flex-none" key={file.id}>
-                    <InputBarPreview
-                      file={file}
-                      onDelete={() => {
-                        setFiles(
-                          files.filter(
-                            (fileInFilter) => fileInFilter.id !== file.id
-                          )
-                        );
-                      }}
-                      isUploading={file.isUploading || false}
-                    />
+                    {file.type === ChatFileType.IMAGE ? (
+                      <InputBarPreviewImageProvider
+                        file={file}
+                        onDelete={() => {
+                          setFiles(
+                            files.filter(
+                              (fileInFilter) => fileInFilter.id !== file.id
+                            )
+                          );
+                        }}
+                        isUploading={file.isUploading || false}
+                      />
+                    ) : (
+                      <InputBarPreview
+                        file={file}
+                        onDelete={() => {
+                          setFiles(
+                            files.filter(
+                              (fileInFilter) => fileInFilter.id !== file.id
+                            )
+                          );
+                        }}
+                        isUploading={file.isUploading || false}
+                      />
+                    )}
                   </div>
                 ))}
               </div>

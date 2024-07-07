@@ -16,6 +16,8 @@ export function InputBarPreviewImage({ fileId }: { fileId: string }) {
       />
       <div
         className={`
+          bg-transparent
+          border-none
 
         flex
         items-center
