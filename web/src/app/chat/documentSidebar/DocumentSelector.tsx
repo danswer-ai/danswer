@@ -33,7 +33,7 @@ export function DocumentSelector({
         onClick={onClick}
       >
         <input
-          className="my-auto"
+          className="cursor-pointer my-auto"
           type="checkbox"
           checked={isSelected}
           // dummy function to prevent warning

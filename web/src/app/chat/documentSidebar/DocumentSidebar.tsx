@@ -122,13 +122,11 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                     dedupedDocuments.map((document, ind) => (
                       <div
                         key={document.document_id}
-                        className={`
-                          ${
-                            ind === dedupedDocuments.length - 1
-                              ? "mb-5"
-                              : "border-b  border-border-light mb-3"
-                          }
-                            `}
+                        className={`${
+                          ind === dedupedDocuments.length - 1
+                            ? "mb-5"
+                            : "border-b  border-border-light mb-3"
+                        }`}
                       >
                         <ChatDocumentDisplay
                           document={document}
@@ -177,7 +175,11 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             </button>
             <button
               className=" bg-neutral-900 text-xs p-2 rounded text-neutral-200"
-              onClick={() => closeSidebar()}
+              onClick={() => {
+                clearSelectedDocuments();
+
+                closeSidebar();
+              }}
             >
               Delete Context
             </button>

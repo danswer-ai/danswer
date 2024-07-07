@@ -350,14 +350,14 @@ export const AIMessage = ({
                   <></>
                 )}
 
-                {isComplete && (
+                {isComplete && docs && docs.length > 0 && (
                   <div className="mt-2 -mx-8  w-full mb-4  flex relative ">
                     <div className="absolute left-0 top-0 h-full bg-gradient-to-l from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
                     <div className="absolute right-6 top-0  h-full bg-gradient-to-r from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
                     <div className=" w-full  overflow-x-scroll no-scrollbar">
                       {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
                       <div className="px-8 flex gap-x-2">
-                        {filteredDocs.length > 0 ? (
+                        {filteredDocs.length > 0 &&
                           filteredDocs.slice(0, 2).map((doc) => (
                             <div
                               key={doc.document_id}
@@ -390,22 +390,7 @@ export const AIMessage = ({
                                 {doc.blurb}
                               </div>
                             </div>
-                          ))
-                        ) : (
-                          <div
-                            onClick={() => {
-                              if (toggleDocumentSelection) {
-                                toggleDocumentSelection();
-                              }
-                            }}
-                            key={-1}
-                            className="cursor-pointer w-[150px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weakerish bg-neutral-100 px-4 py-2 border-b"
-                          >
-                            <div className="text-xs  flex justify-between font-semibold text-neutral-800">
-                              No documents were cited...
-                            </div>
-                          </div>
-                        )}
+                          ))}
                         <div
                           onClick={() => {
                             if (toggleDocumentSelection) {
@@ -413,37 +398,19 @@ export const AIMessage = ({
                             }
                           }}
                           key={-1}
-                          className="cursor-pointer w-[100px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weakerish bg-neutral-100 px-4 py-2 border-b"
+                          className="cursor-pointer w-[140px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weakerish bg-neutral-100 px-4 py-2 border-b"
                         >
                           <div className="text-sm  flex justify-between font-semibold text-neutral-800">
-                            <p className="line-clamp-1">See more</p>
-                            {/* <div className="flex-none">
-                              <SourceIcon
-                                sourceType="bookstack"
-                                iconSize={18}
-                              />
-                            </div> */}
+                            <p className="line-clamp-1">See context</p>
                           </div>
-                          {/* <div className="flex  overscroll-x-scroll mt-1"> */}
-                          {/* <DocumentMetadataBlock document={doc} /> */}
-                          {/* </div> */}
-                          {/* <EditIcon /> */}
 
                           <div className="line-clamp-3 text-xs break-words   pt-1">
                             See {docs?.length} document
-                            {(docs?.length || 0) > 1 && "s"}
+                            {!((docs?.length || 0) == 1) && "s"}
                           </div>
                         </div>
                       </div>
                     </div>
-                    {/* <button
-                      onClick={() => {
-                        
-                      }}
-                      className="my-auto h-full w-6  flex-none p-2"
-                    >
-                      <ExtendIcon className="text-neutral-700 hover:text-neutral-900 !h-6 !w-6" />
-                    </button> */}
                   </div>
                 )}
               </div>

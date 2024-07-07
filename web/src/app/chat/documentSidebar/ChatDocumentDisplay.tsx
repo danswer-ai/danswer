@@ -37,25 +37,10 @@ export function ChatDocumentDisplay({
     return null;
   }
 
-  const disabled = tokenLimitReached && !isSelected;
-
   return (
-    <button
-      // disabled={disabled}
-      onClick={() => {
-        if (disabled) {
-          setPopup({
-            message:
-              "LLM context limit reached 😔 If you want to chat with this document, please de-select others to free up space.",
-            type: "error",
-          });
-          // setShowDisclosure(true)
-        } else {
-          handleSelect(document.document_id);
-        }
-      }}
+    <div
       key={document.semantic_identifier}
-      className={`p-2 w-[350px] justify-start cursor-pointer  rounded-md ${isSelected ? "bg-neutral-200" : "hover:bg-background-weakish bg-background-weakerish"}   text-sm mx-3`}
+      className={`p-2 w-[350px] justify-start rounded-md ${isSelected ? "bg-neutral-200" : "bg-background-weakerish"}   text-sm mx-3`}
     >
       <div className=" flex relative justify-start  overflow-y-visible">
         <a
@@ -97,6 +82,6 @@ export function ChatDocumentDisplay({
           />
         )} */}
       </div>
-    </button>
+    </div>
   );
 }
