@@ -19,18 +19,22 @@ import {
   NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
 } from "@/lib/constants";
 
-import { ChatTab } from "./ChatTab";
 import { Folder } from "../folders/interfaces";
 import { createFolder } from "../folders/FolderManagement";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import React from "react";
-import { FaBrain } from "react-icons/fa";
 import { Logo } from "@/components/Logo";
 import { HeaderTitle } from "@/components/header/Header";
 import { TbLayoutSidebarRightExpand } from "react-icons/tb";
-import { LefToLineIcon, RightToLineIcon } from "@/components/icons/icons";
+import {
+  AssistantsIcon,
+  AssistantsIconSkeleton,
+  LefToLineIcon,
+  RightToLineIcon,
+} from "@/components/icons/icons";
+import { PagesTab } from "./PagesTab";
 
 interface HistorySidebarProps {
   search?: boolean;
@@ -91,72 +95,75 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             h-screen
             transition-transform`}
         >
-          <div className="ml-4 mr-3 flex flex gap-x-1 items-center text-neutral-700 mt-2 my-auto text-xl ">
-            <div className="invisible">
-              {" "}
+          <div className="ml-4 mr-3 flex flex gap-x-1 items-center  mt-2 my-auto text-solid text-xl ">
+            <div className="mr-1 !h-6 !w-6">
               <Logo />
             </div>
 
-            {enterpriseSettings && enterpriseSettings.application_name ? (
-              <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
-            ) : (
-              <HeaderTitle>Danswer</HeaderTitle>
-            )}
+            <div className="hidden">
+              {enterpriseSettings && enterpriseSettings.application_name ? (
+                <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
+              ) : (
+                <HeaderTitle>Danswer</HeaderTitle>
+              )}
+            </div>
             {toggleSidebar && (
               <button className="ml-auto" onClick={toggleSidebar}>
                 {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
               </button>
             )}
           </div>
-          <div className="mx-3 mt-4  gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
-            <Link
-              href={
-                "/chat" +
-                (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                currentChatSession
-                  ? `?assistantId=${currentChatSession.persona_id}`
-                  : "")
-              }
-              className="w-full p-2 bg-white border-border border rounded items-center hover:bg-neutral-200 cursor-pointer transition-all duration-150 flex gap-x-2"
-            >
-              <FiEdit className="flex-none " />
-              <p className="my-auto flex items-center text-sm">New Chat</p>
-            </Link>
+          {!search && (
+            <div className="mx-3 mt-4  gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
+              <Link
+                href={
+                  "/chat" +
+                  (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
+                  currentChatSession
+                    ? `?assistantId=${currentChatSession.persona_id}`
+                    : "")
+                }
+                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-subtle cursor-pointer transition-all duration-150 flex gap-x-2"
+              >
+                <FiEdit className="flex-none " />
+                <p className="my-auto flex items-center text-sm">New Chat</p>
+              </Link>
 
-            <button
-              onClick={() =>
-                createFolder("New Folder")
-                  .then((folderId) => {
-                    console.log(`Folder created with ID: ${folderId}`);
-                    router.refresh();
-                  })
-                  .catch((error) => {
-                    console.error("Failed to create folder:", error);
-                    setPopup({
-                      message: `Failed to create folder: ${error.message}`,
-                      type: "error",
-                    });
-                  })
-              }
-              className="w-full p-2 bg-white border-border border rounded items-center hover:bg-neutral-200 cursor-pointer transition-all duration-150 flex gap-x-2"
-            >
-              <FiFolderPlus className=" my-auto" />
-              <p className="my-auto flex items-center text-sm">New Folder</p>
-            </button>
+              <button
+                onClick={() =>
+                  createFolder("New Folder")
+                    .then((folderId) => {
+                      console.log(`Folder created with ID: ${folderId}`);
+                      router.refresh();
+                    })
+                    .catch((error) => {
+                      console.error("Failed to create folder:", error);
+                      setPopup({
+                        message: `Failed to create folder: ${error.message}`,
+                        type: "error",
+                      });
+                    })
+                }
+                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-subtle cursor-pointer transition-all duration-150 flex gap-x-2"
+              >
+                <FiFolderPlus className=" my-auto" />
+                <p className="my-auto flex items-center text-sm">New Folder</p>
+              </button>
 
-            <Link
-              href="/assistants/mine"
-              className="w-full p-2 bg-white border-border border rounded items-center hover:bg-neutral-200 cursor-pointer transition-all duration-150 flex gap-x-2"
-            >
-              <FaBrain className=" my-auto" />
-              <p className="my-auto flex items-center text-sm">
-                Manage Assistants
-              </p>
-            </Link>
-          </div>
+              <Link
+                href="/assistants/mine"
+                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-subtle cursor-pointer transition-all duration-150 flex gap-x-2"
+              >
+                <AssistantsIconSkeleton className="h-4 w-4 my-auto" />
+                <p className="my-auto flex items-center text-sm">
+                  Manage Assistants
+                </p>
+              </Link>
+            </div>
+          )}
           <div className="border-b border-border pb-4 mx-3" />
 
-          <ChatTab
+          <PagesTab
             search={search}
             existingChats={existingChats}
             currentChatId={currentChatId}

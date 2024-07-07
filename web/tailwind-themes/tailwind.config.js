@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+
 module.exports = {
   darkMode: "class",
   content: [
@@ -43,6 +44,11 @@ module.exports = {
       },
       fontFamily: {
         sans: ["var(--font-inter)"],
+
+        // TITLE fonts
+        // title: ["var(--font-inter)"],
+        title: ["var(--font-poppins)"],
+        // title: ['Fira Code', ...defaultTheme.fontFamily.mono],
       },
       width: {
         "message-xs": "450px",
@@ -56,7 +62,7 @@ module.exports = {
       },
       maxWidth: {
         "document-sidebar": "1000px",
-        "message-max": "650px",
+        "message-max": "725px",
         "searchbar-max": "750px",
       },
       colors: {
@@ -70,12 +76,22 @@ module.exports = {
         "background-custom-header": "#f3f4f6",
         "background-inverted": "#000000",
         "background-weak": "#f3f4f6", // gray-100
-        "background-weakerish": "#F1F2F4", // gray-125
+        "background-weaker": "#F1F2F4", // gray-125
         "background-weakish": "#EAEAEA", // gray-150
+        "background-solid": "#262626", // neutral-800
+
         "background-dark": "#111827", // gray-900
 
         // text or icons
-        light: "#e5e7eb", // gray-200
+        lightest: "#fafafa", // 50
+        lighter: "#f5f5f5", // neutral-100
+        light: "#e5e5e5", // neutral-200
+        lightMedium: "#d4d4d4", // neutral-300
+        medium: "#a3a3a3", // neutral-400
+        darkMedium: "#737373", // neutral-500
+        dark: "#525252", // neutral-600
+        solid: "#404040", // neutral-700
+
         link: "#3b82f6", // blue-500
         "link-hover": "#1d4ed8", // blue-700
         subtle: "#6b7280", // gray-500

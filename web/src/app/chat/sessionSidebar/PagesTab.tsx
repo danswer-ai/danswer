@@ -9,7 +9,7 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function ChatTab({
+export function PagesTab({
   search,
   existingChats,
   currentChatId,
@@ -54,7 +54,7 @@ export function ChatTab({
   };
 
   return (
-    <div className="mb-1 ml-3 weakbackground overflow-y-auto h-full">
+    <div className="mb-1 ml-3 relative weakbackground overflow-y-auto h-full">
       {folders && folders.length > 0 && (
         <div className="py-2 border-b border-border">
           <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-medium">

@@ -36,7 +36,7 @@ export const HealthCheckBanner = () => {
     );
   } else {
     return (
-      <div className="text-xs mx-auto bg-gradient-to-r from-red-900 to-red-700 p-2 rounded-sm border-hidden text-light">
+      <div className="fixed top-0 left-0 z-[101] w-full text-xs mx-auto bg-gradient-to-r from-red-900 to-red-700 p-2 rounded-sm border-hidden text-light">
         <p className="font-bold pb-1">The backend is currently unavailable.</p>
 
         <p className="px-1">

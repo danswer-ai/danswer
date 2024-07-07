@@ -19,7 +19,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
   return (
     <div
       key={doc.document_id}
-      className={`w-[200px] rounded-lg flex-none transition-all duration-500 opacity-90 hover:bg-neutral-200 bg-neutral-100 px-4 py-2 border-b cursor-pointer
+      className={`w-[200px] rounded-lg flex-none transition-all duration-500 opacity-90 hover:bg-background-subtle bg-neutral-100 px-4 py-2 border-b cursor-pointer
         ${
           !isComplete
             ? "animate-pulse"

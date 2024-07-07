@@ -37,11 +37,13 @@ export function ShowHideDocsButton({
 export function SearchSummary({
   query,
   hasDocs,
+  finished,
   messageId,
   isCurrentlyShowingRetrieved,
   handleShowRetrieved,
   handleSearchQueryEdit,
 }: {
+  finished: boolean;
   query: string;
   hasDocs: boolean;
   messageId: number | null;
@@ -87,9 +89,11 @@ export function SearchSummary({
   const searchingForDisplay = (
     <div className={`flex p-1 rounded ${isOverflowed && "cursor-default"}`}>
       <FiSearch className="flex-none mr-2 my-auto" size={14} />
-      <div className="line-clamp-1 break-all px-0.5" ref={searchingForRef}>
-        {/* {!hasDocs ? "Searching for" : "Searched for"} */}
-        Searching for: <i>{finalQuery}</i>
+      <div
+        className={`${!finished && "loading-text"} line-clamp-1 break-all px-0.5`}
+        ref={searchingForRef}
+      >
+        {finished ? "Searched" : "Searching"} for: <i>{finalQuery}</i>
       </div>
     </div>
   );

@@ -91,24 +91,22 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             closeSidebar();
           }
         }}
-        className="fixed inset-0 transition transform transition-all duration-300 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+        className="fixed inset-0 transition transform transition-all duration-300 z-[100] bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
       >
         <div
           ref={ref}
           style={{ width: initialWidth }}
-          className={`ml-auto  rounded-l-lg relative border-l bg-neutral-100 sidebar z-[1000] absolute right-0 h-screen `}
+          className={`ml-auto  rounded-l-lg relative border-l bg-neutral-100 sidebar z-50 absolute right-0 h-screen `}
         >
           <div className="flex-initial overflow-y-hidden flex flex-col h-screen pb-10">
             {popup}
-            <div
-              className={`pl-3 mx-2 pr-6 mt-3 flex text-neutral-800 flex-col text-2xl text-emphasis flex font-semibold `}
-            >
+            <div className="pl-3 mx-2 pr-6 mt-3 flex text-neutral-800 flex-col text-2xl text-emphasis flex font-semibold">
               {dedupedDocuments.length} Documents
-              <p className="text-sm font-semibold flex flex-wrap gap-x-2 text-neutral-600 mt-1">
+              <p className="text-sm font-semibold flex flex-wrap gap-x-2 text-dark mt-1">
                 Select to add to continuous context
                 <a
                   href="https://docs.danswer.dev/introduction"
-                  className="underline cursor-pointer hover:text-neutral-900"
+                  className="underline cursor-pointer hover:text-strong"
                 >
                   Learn more
                 </a>
@@ -124,13 +122,11 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                     dedupedDocuments.map((document, ind) => (
                       <div
                         key={document.document_id}
-                        className={`
-                          ${
-                            ind === dedupedDocuments.length - 1
-                              ? "mb-5"
-                              : "border-b  border-border-light mb-3"
-                          }
-                            `}
+                        className={`${
+                          ind === dedupedDocuments.length - 1
+                            ? "mb-5"
+                            : "border-b  border-border-light mb-3"
+                        }`}
                       >
                         <ChatDocumentDisplay
                           document={document}
@@ -170,12 +166,22 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
               )
             )}
           </div>
-          <div className="sticky bottom-4 w-full left-0 flex ">
+          <div className="sticky bottom-4 w-full left-0  justify-center flex gap-x-4 ">
             <button
-              className="mx-auto bg-neutral-800 text-xs p-2 rounded text-neutral-200"
+              className=" bg-neutral-700 text-xs p-2 rounded text-light"
               onClick={() => closeSidebar()}
             >
               Save Changes
+            </button>
+            <button
+              className=" bg-background-dark text-xs p-2 rounded text-light"
+              onClick={() => {
+                clearSelectedDocuments();
+
+                closeSidebar();
+              }}
+            >
+              Delete Context
             </button>
           </div>
         </div>
