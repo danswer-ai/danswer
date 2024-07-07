@@ -303,7 +303,6 @@ export const AIMessage = ({
                               // for the first link
                               return (
                                 <Citation
-                                  doc={docs ? docs[0] : undefined}
                                   link={rest?.href}
                                   key={node?.position?.start?.offset}
                                 >

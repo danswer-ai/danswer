@@ -1136,7 +1136,7 @@ export function ChatPage({
             flex-none 
             absolute 
             left-0 
-            z-[100] 
+            z-50 
             overflow-y-hidden 
             sidebar 
             bg-background-weak 
@@ -1630,7 +1630,7 @@ export function ChatPage({
         </div>
 
         {/* Temporary - fixed logo */}
-        <div className="absolute z-[100] left-4 top-2">
+        <div className="absolute z-50 left-4 top-2">
           {" "}
           <Logo />
         </div>
