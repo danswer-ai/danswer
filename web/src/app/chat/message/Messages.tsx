@@ -189,11 +189,7 @@ export const AIMessage = ({
     content = trimIncompleteCodeSection(content);
   }
 
-  // const shouldShowLoader =
-  //   !toolCall || (toolCall.tool_name === SEARCH_TOOL_NAME && !content);
-
   let filteredDocs: FilteredDanswerDocument[] = [];
-  console.log(docs);
 
   if (docs) {
     filteredDocs = docs

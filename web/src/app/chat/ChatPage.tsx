@@ -1041,7 +1041,6 @@ export function ChatPage({
   if (settings?.settings?.chat_page_enabled === false) {
     router.push("/search");
   }
-  console.log(toggleChatSidebar);
 
   const [toggledSidebar, setToggledSidebar] = useState(toggleChatSidebar!); // State to track if sidebar is open
 

@@ -97,3 +97,6 @@ export const TempAssistant2 = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     );
   }
 );
+
+TempAssistant.displayName = "TempAssistant";
+TempAssistant2.displayName = "TempAssistant2";

@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChatFileType, FileDescriptor } from "../interfaces";
-import {
-  DocumentPreview,
-  InputDocumentPreview,
-} from "./documents/DocumentPreview";
+
 import { FiX, FiLoader, FiFileText } from "react-icons/fi";
 import { InputBarPreviewImage } from "./images/InputBarPreviewImage";
 import { Tooltip } from "@/components/tooltip/Tooltip";

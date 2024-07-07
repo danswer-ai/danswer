@@ -309,7 +309,7 @@ export function ChatInputBar({
                   </p>
                 </button>
               )}
-              <div className="flex  gap-x-.5 px-2  overflow-y-auto overflow-x-scroll items-end weakbackground">
+              <div className="flex  gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end weakbackground">
                 {files.map((file) => (
                   <div className="flex-none" key={file.id}>
                     {file.type === ChatFileType.IMAGE ? (
@@ -445,8 +445,6 @@ export function ChatInputBar({
                 Icon={FiPlusCircle}
                 onClick={() => {
                   const input = document.createElement("input");
-                  console.log("created");
-                  console.log(input);
                   input.type = "file";
                   input.multiple = true; // Allow multiple files
                   input.onchange = (event: any) => {
