@@ -30,6 +30,7 @@ import {
   ConfigureIcon,
   CpuIcon,
   CpuIconSkeleton,
+  FileIcon,
   RobotIcon,
   SendIcon,
 } from "@/components/icons/icons";
@@ -41,10 +42,13 @@ import Popup from "../sessionSidebar/Popup";
 import { LlmTab } from "../modal/configuration/LlmTab";
 import { AssistantsTab } from "../modal/configuration/AssistantsTab";
 import { TempAssistant } from "./TempAssistantTab";
+import { DanswerDocument } from "@/lib/search/interfaces";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
   personas,
+  showDocs,
+  selectedDocuments,
   message,
   setMessage,
   onSubmit,
@@ -66,9 +70,10 @@ export function ChatInputBar({
   chatSessionId,
   availableAssistants,
 }: {
+  showDocs: () => void;
+  selectedDocuments: DanswerDocument[];
   availableAssistants: Persona[];
   onSetSelectedAssistant: (alternativeAssistant: Persona | null) => void;
-
   setSelectedAssistant: (assistant: Persona) => void;
   personas: Persona[];
   message: string;
@@ -279,16 +284,30 @@ export function ChatInputBar({
               [&:has(textarea:focus)]::ring-black
             "
           >
-            {alternativeAssistant && (
-              <TempAssistant
-                ref={interactionsRef}
-                alternativeAssistant={alternativeAssistant}
-                unToggle={() => onSetSelectedAssistant(null)}
-              />
-            )}
+            <div className="flex  gap-x-2 px-2 pt-2">
+              {(files.length > 0 || alternativeAssistant) &&
+                alternativeAssistant && (
+                  <TempAssistant
+                    ref={interactionsRef}
+                    alternativeAssistant={alternativeAssistant}
+                    unToggle={() => onSetSelectedAssistant(null)}
+                  />
+                )}
 
-            {files.length > 0 && (
-              <div className="flex overflow-x-scroll items-end backgroundweak weakbackground gap-y-1 gap-x-2 px-2 pt-2">
+              {selectedDocuments.length > 0 && (
+                <button
+                  onClick={showDocs}
+                  className="flex-none flex cursor-pointer hover:bg-background transition-colors duration-300 h-10 p-1 items-center gap-x-2 rounded-lg bg-background-weakish max-w-[100px]"
+                >
+                  <FileIcon className="!h-6 !w-6" />
+                  <p className="text-xs">
+                    {selectedDocuments.length}{" "}
+                    {/* document{selectedDocuments.length > 1 && "s"} */}
+                    selected
+                  </p>
+                </button>
+              )}
+              <div className="flex gap-x-2 px-2 overflow-x-scroll items-end weakbackground">
                 {files.map((file) => (
                   <div className="flex-none" key={file.id}>
                     {file.type === ChatFileType.IMAGE ? (
@@ -319,7 +338,7 @@ export function ChatInputBar({
                   </div>
                 ))}
               </div>
-            )}
+            </div>
 
             <textarea
               onPaste={handlePaste}

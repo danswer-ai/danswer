@@ -1572,6 +1572,8 @@ export function ChatPage({
                         )}
 
                         <ChatInputBar
+                          showDocs={() => setDocumentSelection(true)}
+                          selectedDocuments={selectedDocuments}
                           setSelectedAssistant={onPersonaChange}
                           onSetSelectedAssistant={(
                             alternativeAssistant: Persona | null

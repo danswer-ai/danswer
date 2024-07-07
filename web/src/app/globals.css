@@ -17,8 +17,17 @@
   }
 }
 
+.weakbackground {
+  scrollbar-color: black;
+  scrollbar-width: thin;
+}
 .weakbackground::-webkit-scrollbar-track {
   background: #f3f4f6;
+}
+
+.inputscroll::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  /* scrollbar-width:none;  "auto" by default, "thin", or "none" */
 }
 
 /* .my-container {

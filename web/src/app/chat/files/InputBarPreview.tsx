@@ -19,7 +19,7 @@ function DeleteButton({ onDelete }: { onDelete: () => void }) {
         cursor-pointer
         border-none
         bg-hover
-        p-1
+        p-.5
         rounded-full
         z-10
       "

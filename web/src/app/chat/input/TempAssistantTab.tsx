@@ -20,6 +20,49 @@ export const TempAssistant = forwardRef<HTMLDivElement, DocumentSidebarProps>(
       <div
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        className="flex-none h-10 duration-300 h-10  items-center  rounded-lg bg-background-weakish"
+      >
+        <Tooltip
+          content={
+            <p className="max-w-xs  flex ">
+              {alternativeAssistant.description}
+            </p>
+          }
+        >
+          <div className="ltext-neutral-700 flex flex-wrap gap-y-1 gap-x-2 max-w-[200px]">
+            <div
+              ref={ref}
+              className="p-2 relative  rounded-t-lg items-center flex"
+            >
+              <AssistantIcon assistant={alternativeAssistant} border />
+              <p className="ml-3 line-clamp-1 ellipsis  break-all my-auto">
+                {alternativeAssistant.name}
+              </p>
+              <div className="flex gap-x-1 ml-auto ">{/* </Tooltip> */}</div>
+            </div>
+          </div>
+        </Tooltip>
+        {isHovered && (
+          <div
+            className="bg-neutral- rounded-lg p-.5 rounded h-fit cursor-pointer"
+            onClick={unToggle}
+          >
+            <FiX />
+          </div>
+        )}
+      </div>
+    );
+  }
+);
+
+export const TempAssistant2 = forwardRef<HTMLDivElement, DocumentSidebarProps>(
+  ({ alternativeAssistant, unToggle }, ref: ForwardedRef<HTMLDivElement>) => {
+    const [isHovered, setIsHovered] = useState(false);
+
+    return (
+      <div
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         className="flex"
       >
         <Tooltip
@@ -32,7 +75,7 @@ export const TempAssistant = forwardRef<HTMLDivElement, DocumentSidebarProps>(
           <div className="ltext-neutral-700 flex flex-wrap gap-y-1 gap-x-2 px-2 max-w-[200px]">
             <div
               ref={ref}
-              className="p-2 relative bg-neutral-50 rounded-t-lg items-center flex"
+              className="p-2 relative  rounded-t-lg items-center flex"
             >
               <AssistantIcon assistant={alternativeAssistant} border />
               <p className="ml-3 line-clamp-1 ellipsis  break-all my-auto">

@@ -130,7 +130,6 @@ export const AIMessage = ({
 }: {
   isActive?: boolean;
   selectedDocuments?: DanswerDocument[] | null;
-
   toggleDocumentSelection?: () => void;
   docs?: DanswerDocument[] | null;
   alternativeAssistant?: Persona | null;
