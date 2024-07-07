@@ -26,33 +26,33 @@ class InCodeToolInfo(TypedDict):
 
 
 BUILT_IN_TOOLS: list[InCodeToolInfo] = [
-    {
-        "cls": SearchTool,
-        "description": "The Search Tool allows the Assistant to search through connected knowledge to help build an answer.",
-        "in_code_tool_id": SearchTool.__name__,
-        "display_name": SearchTool._DISPLAY_NAME,
-    },
-    {
-        "cls": ImageGenerationTool,
-        "description": (
+    InCodeToolInfo(
+        cls=SearchTool,
+        description="The Search Tool allows the Assistant to search through connected knowledge to help build an answer.",
+        in_code_tool_id=SearchTool.__name__,
+        display_name=SearchTool._DISPLAY_NAME,
+    ),
+    InCodeToolInfo(
+        cls=ImageGenerationTool,
+        description=(
             "The Image Generation Tool allows the assistant to use DALL-E 3 to generate images. "
             "The tool will be used when the user asks the assistant to generate an image."
         ),
-        "in_code_tool_id": ImageGenerationTool.__name__,
-        "display_name": ImageGenerationTool._DISPLAY_NAME,
-    },
+        in_code_tool_id=ImageGenerationTool.__name__,
+        display_name=ImageGenerationTool._DISPLAY_NAME,
+    ),
     # don't show the InternetSearchTool as an option if BING_API_KEY is not available
     *(
         [
-            {
-                "cls": InternetSearchTool,
-                "description": (
+            InCodeToolInfo(
+                cls=InternetSearchTool,
+                description=(
                     "The Internet Search Tool allows the assistant "
                     "to perform internet searches for up-to-date information."
                 ),
-                "in_code_tool_id": InternetSearchTool.__name__,
-                "display_name": InternetSearchTool._DISPLAY_NAME,
-            }
+                in_code_tool_id=InternetSearchTool.__name__,
+                display_name=InternetSearchTool._DISPLAY_NAME,
+            )
         ]
         if os.environ.get("BING_API_KEY")
         else []
