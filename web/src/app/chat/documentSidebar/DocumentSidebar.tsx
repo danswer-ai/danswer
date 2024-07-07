@@ -168,12 +168,18 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
               )
             )}
           </div>
-          <div className="sticky bottom-4 w-full left-0 flex ">
+          <div className="sticky bottom-4 w-full left-0  justify-center flex gap-x-4 ">
             <button
-              className="mx-auto bg-neutral-800 text-xs p-2 rounded text-neutral-200"
+              className=" bg-neutral-700 text-xs p-2 rounded text-neutral-200"
               onClick={() => closeSidebar()}
             >
               Save Changes
+            </button>
+            <button
+              className=" bg-neutral-900 text-xs p-2 rounded text-neutral-200"
+              onClick={() => closeSidebar()}
+            >
+              Delete Context
             </button>
           </div>
         </div>

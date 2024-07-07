@@ -164,6 +164,11 @@ export const AIMessage = ({
 
   const selectedDocumentIds =
     selectedDocuments?.map((document) => document.document_id) || [];
+  let citedDocumentIds: string[] = [];
+
+  citedDocuments?.forEach((doc) => {
+    citedDocumentIds.push(doc[1].document_id);
+  });
 
   if (!isComplete) {
     const trimIncompleteCodeSection = (
@@ -188,6 +193,7 @@ export const AIMessage = ({
   //   !toolCall || (toolCall.tool_name === SEARCH_TOOL_NAME && !content);
 
   let filteredDocs: FilteredDanswerDocument[] = [];
+  console.log(docs);
 
   if (docs) {
     filteredDocs = docs
@@ -197,6 +203,9 @@ export const AIMessage = ({
           doc.document_id !== "" &&
           index === self.findIndex((d) => d.document_id === doc.document_id)
       )
+      .filter((doc) => {
+        return citedDocumentIds.includes(doc.document_id);
+      })
       .map((doc: DanswerDocument, ind: number) => {
         return {
           ...doc,
@@ -250,7 +259,6 @@ export const AIMessage = ({
                       )}
                   </>
                 )}
-
                 {toolCall &&
                   !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
                     <div className="my-2">
@@ -342,46 +350,62 @@ export const AIMessage = ({
                   <></>
                 )}
 
-                {isComplete && filteredDocs && filteredDocs.length > 0 && (
+                {isComplete && (
                   <div className="mt-2 -mx-8  w-full mb-4  flex relative ">
                     <div className="absolute left-0 top-0 h-full bg-gradient-to-l from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
                     <div className="absolute right-6 top-0  h-full bg-gradient-to-r from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
                     <div className=" w-full  overflow-x-scroll no-scrollbar">
                       {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
                       <div className="px-8 flex gap-x-2">
-                        {filteredDocs.slice(0, 2).map((doc) => (
-                          <div
-                            key={doc.document_id}
-                            className={`w-[200px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weakerish bg-neutral-100 px-4 py-2 border-b
+                        {filteredDocs.length > 0 ? (
+                          filteredDocs.slice(0, 2).map((doc) => (
+                            <div
+                              key={doc.document_id}
+                              className={`w-[200px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weakerish bg-neutral-100 px-4 py-2 border-b
                               `}
-                          >
-                            <a
-                              href={doc.link}
-                              target="_blank"
-                              className="text-sm  flex justify-between font-semibold text-neutral-800"
                             >
-                              <p className="line-clamp-1">
-                                {
-                                  doc.document_id.split("/")[
-                                    doc.document_id.split("/").length - 1
-                                  ]
-                                }
-                              </p>
-                              <div className="flex-none">
-                                <SourceIcon
-                                  sourceType={doc.source_type}
-                                  iconSize={18}
-                                />
+                              <a
+                                href={doc.link}
+                                target="_blank"
+                                className="text-sm  flex justify-between font-semibold text-neutral-800"
+                              >
+                                <p className="line-clamp-1">
+                                  {
+                                    doc.document_id.split("/")[
+                                      doc.document_id.split("/").length - 1
+                                    ]
+                                  }
+                                </p>
+                                <div className="flex-none">
+                                  <SourceIcon
+                                    sourceType={doc.source_type}
+                                    iconSize={18}
+                                  />
+                                </div>
+                              </a>
+                              <div className="flex  overscroll-x-scroll mt-1">
+                                <DocumentMetadataBlock document={doc} />
                               </div>
-                            </a>
-                            <div className="flex  overscroll-x-scroll mt-1">
-                              <DocumentMetadataBlock document={doc} />
+                              <div className="line-clamp-3 text-xs break-words   pt-1">
+                                {doc.blurb}
+                              </div>
                             </div>
-                            <div className="line-clamp-3 text-xs break-words   pt-1">
-                              {doc.blurb}
+                          ))
+                        ) : (
+                          <div
+                            onClick={() => {
+                              if (toggleDocumentSelection) {
+                                toggleDocumentSelection();
+                              }
+                            }}
+                            key={-1}
+                            className="cursor-pointer w-[150px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weakerish bg-neutral-100 px-4 py-2 border-b"
+                          >
+                            <div className="text-xs  flex justify-between font-semibold text-neutral-800">
+                              No documents were cited...
                             </div>
                           </div>
-                        ))}
+                        )}
                         <div
                           onClick={() => {
                             if (toggleDocumentSelection) {
@@ -406,7 +430,8 @@ export const AIMessage = ({
                           {/* <EditIcon /> */}
 
                           <div className="line-clamp-3 text-xs break-words   pt-1">
-                            {docs && docs?.length - 2} more documents
+                            See {docs?.length} document
+                            {(docs?.length || 0) > 1 && "s"}
                           </div>
                         </div>
                       </div>
