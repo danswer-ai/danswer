@@ -45,7 +45,7 @@ def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, st
     """Sample
     URL w/ page: https://danswer.atlassian.net/wiki/spaces/1234abcd/pages/5678efgh/overview
     URL w/o page: https://danswer.atlassian.net/wiki/spaces/ASAM/overview
-    https://danswer.atlassian.net/wiki/spaces/ASAM/overview
+
     wiki_base is https://danswer.atlassian.net/wiki
     space is 1234abcd
     page_id is 5678efgh
@@ -67,7 +67,8 @@ def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, st
 
 def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, str, str]:
     """Sample
-    https://danswer.ai/confluence/display/1234abcd/pages/5678efgh/overview
+    URL w/ page https://danswer.ai/confluence/display/1234abcd/pages/5678efgh/overview
+    URL w/o page https://danswer.ai/confluence/display/1234abcd/overview
     wiki_base is https://danswer.ai/confluence
     space is 1234abcd
     page_id is 5678efgh
