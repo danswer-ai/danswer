@@ -13,11 +13,9 @@ interface FullSearchBarProps {
 }
 
 import { useState, useEffect, useRef } from "react";
-import { HoverPopup } from "../HoverPopup";
-import { FiInfo } from "react-icons/fi";
-import { Tooltip } from "./results/Citation";
 import { SendIcon } from "../icons/icons";
 import { Divider } from "@tremor/react";
+import { CustomTooltip } from "../tooltip/CustomTooltip";
 
 export const AnimatedToggle = ({
   isOn,
@@ -44,7 +42,7 @@ export const AnimatedToggle = ({
   }, [isOn]);
 
   return (
-    <Tooltip
+    <CustomTooltip
       light
       large
       content={
@@ -103,7 +101,7 @@ export const AnimatedToggle = ({
           </span>
         </div>
       </div>
-    </Tooltip>
+    </CustomTooltip>
   );
 };
 

@@ -82,6 +82,7 @@ import FunctionalHeader from "@/components/chat_search/Header";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import { Logo } from "@/components/Logo";
 import { CHAT_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
+import FixedLogo from "./shared_chat_search/FixedLogo";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1630,10 +1631,7 @@ export function ChatPage({
         </div>
 
         {/* Temporary - fixed logo */}
-        <div className="absolute z-50 left-4 top-2">
-          {" "}
-          <Logo />
-        </div>
+        <FixedLogo />
       </div>
     </>
   );

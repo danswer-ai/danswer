@@ -19,7 +19,6 @@ import {
   NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
 } from "@/lib/constants";
 
-import { ChatTab } from "./ChatTab";
 import { Folder } from "../folders/interfaces";
 import { createFolder } from "../folders/FolderManagement";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -35,6 +34,7 @@ import {
   LefToLineIcon,
   RightToLineIcon,
 } from "@/components/icons/icons";
+import { PagesTab } from "./PagesTab";
 
 interface HistorySidebarProps {
   search?: boolean;
@@ -160,7 +160,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
           </div>
           <div className="border-b border-border pb-4 mx-3" />
 
-          <ChatTab
+          <PagesTab
             search={search}
             existingChats={existingChats}
             currentChatId={currentChatId}

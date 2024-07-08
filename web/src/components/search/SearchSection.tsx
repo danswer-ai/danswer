@@ -25,7 +25,7 @@ import {
   ValidQuestionResponse,
 } from "@/lib/search/interfaces";
 import { searchRequestStreamed } from "@/lib/search/streamingQa";
-import { SearchHelper } from "./SearchHelper";
+
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
 import { useFilters, useObjectState } from "@/lib/hooks";
 import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
@@ -48,6 +48,7 @@ import FunctionalHeader from "../chat_search/Header";
 import { useSidebarVisibility } from "../chat_search/hooks";
 import { SEARCH_TOGGLED_COOKIE_NAME } from "../resizable/contants";
 import Cookies from "js-cookie";
+import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
 
 export type searchState = "input" | "searching" | "analyzing";
 
@@ -468,8 +469,6 @@ export const SearchSection = ({
           </div>
         </div>
 
-        {/* Header */}
-
         <div className="absolute left-0 w-full top-0 ">
           <FunctionalHeader
             showSidebar={showDocSidebar}
@@ -504,8 +503,6 @@ export const SearchSection = ({
                   <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
                     <div className="flex">
                       <div className="text-3xl font-bold text-strong mx-auto">
-                        {/* <div className="font-regular text-gray-900 font-display text-3xl md:text-4xl mx-auto"> */}
-                        {/* Organization&apos;s knowledge. */}
                         Unlocking Insights
                       </div>
                     </div>
@@ -524,34 +521,6 @@ export const SearchSection = ({
                   await onSearch({ agentic, offset: 0 });
                 }}
               />
-
-              {/* Keep for now */}
-              {/* <div className="flex gap-x-4 flex-wrap w-full">
-            <div className="block 2xl:block w-52 3xl:w-64 mt-4">
-              <div className="pr-5">
-                <SearchHelper
-                  isFetching={isFetching}
-                  searchResponse={searchResponse}
-                  selectedSearchType={selectedSearchType}
-                  setSelectedSearchType={setSelectedSearchType}
-                  defaultOverrides={defaultOverrides}
-                  restartSearch={onSearch}
-                  forceQADisplay={() =>
-                    setDefaultOverrides((prevState) => ({
-                      ...(prevState || SEARCH_DEFAULT_OVERRIDES_START),
-                      forceDisplayQA: true,
-                    }))
-                  }
-                  setOffset={(offset) => {
-                    setDefaultOverrides((prevState) => ({
-                      ...(prevState || SEARCH_DEFAULT_OVERRIDES_START),
-                      offset,
-                    }));
-                  }}
-                />
-              </div>
-            </div>
-          </div> */}
 
               <div className="mt-6">
                 {!(agenticResults && isFetching) ? (
@@ -581,11 +550,9 @@ export const SearchSection = ({
             </div>
           </div>
         </div>
+
         {/* Temporary - fixed logo */}
-        <div className="absolute z-[100] left-4 top-2">
-          {" "}
-          <Logo />
-        </div>
+        <FixedLogo />
       </div>
     </>
   );

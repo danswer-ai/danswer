@@ -18,10 +18,10 @@ import {
   SendIcon,
 } from "@/components/icons/icons";
 import { IconType } from "react-icons";
-import Popup from "../sessionSidebar/Popup";
+import Popup from "../../../components/popup/Popup";
 import { LlmTab } from "../modal/configuration/LlmTab";
 import { AssistantsTab } from "../modal/configuration/AssistantsTab";
-import { TempAssistant } from "./TempAssistantTab";
+import ChatInputAssistant from "./ChatInputAssistant";
 import { DanswerDocument } from "@/lib/search/interfaces";
 const MAX_INPUT_HEIGHT = 200;
 
@@ -273,7 +273,7 @@ export function ChatInputBar({
             <div className="flex  gap-x-2 px-2 pt-2">
               {(files.length > 0 || alternativeAssistant) &&
                 alternativeAssistant && (
-                  <TempAssistant
+                  <ChatInputAssistant
                     ref={interactionsRef}
                     alternativeAssistant={alternativeAssistant}
                     unToggle={() => onSetSelectedAssistant(null)}

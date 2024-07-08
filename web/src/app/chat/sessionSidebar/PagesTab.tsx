@@ -9,7 +9,7 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function ChatTab({
+export function PagesTab({
   search,
   existingChats,
   currentChatId,

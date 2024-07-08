@@ -43,11 +43,7 @@ import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { Button } from "@tremor/react";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
-import {
-  Citation,
-  Tooltip,
-  TooltipGroup,
-} from "@/components/search/results/Citation";
+import { Citation } from "@/components/search/results/Citation";
 import {
   buildDocumentSummaryDisplay,
   DocumentMetadataBlock,
@@ -58,6 +54,10 @@ import {
   ExtendIcon,
   LikeFeedbackIcon,
 } from "@/components/icons/icons";
+import {
+  CustomTooltip,
+  TooltipGroup,
+} from "@/components/tooltip/CustomTooltip";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -356,7 +356,7 @@ export const AIMessage = ({
                           filteredDocs.slice(0, 2).map((doc) => (
                             <div
                               key={doc.document_id}
-                              className={`w-[200px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weakerish bg-neutral-100 px-4 py-2 border-b
+                              className={`w-[200px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weaker bg-neutral-100 px-4 py-2 border-b
                               `}
                             >
                               <a
@@ -393,7 +393,7 @@ export const AIMessage = ({
                             }
                           }}
                           key={-1}
-                          className="cursor-pointer w-[140px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weakerish bg-neutral-100 px-4 py-2 border-b"
+                          className="cursor-pointer w-[140px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weaker bg-neutral-100 px-4 py-2 border-b"
                         >
                           <div className="text-sm  flex justify-between font-semibold text-neutral-800">
                             <p className="line-clamp-1">See context</p>
@@ -418,21 +418,21 @@ export const AIMessage = ({
                   transform opacity-100 translate-y-0"
                   >
                     <TooltipGroup>
-                      <Tooltip showTick line content="Copy!">
+                      <CustomTooltip showTick line content="Copy!">
                         <CopyButton content={content.toString()} />
-                      </Tooltip>
-                      <Tooltip showTick line content="Good response!">
+                      </CustomTooltip>
+                      <CustomTooltip showTick line content="Good response!">
                         <HoverableIcon
                           icon={<LikeFeedbackIcon />}
                           onClick={() => handleFeedback("like")}
                         />
-                      </Tooltip>
-                      <Tooltip showTick line content="Bad response!">
+                      </CustomTooltip>
+                      <CustomTooltip showTick line content="Bad response!">
                         <HoverableIcon
                           icon={<DislikeFeedbackIcon />}
                           onClick={() => handleFeedback("dislike")}
                         />
-                      </Tooltip>
+                      </CustomTooltip>
                     </TooltipGroup>
                   </div>
                 ) : (
@@ -443,25 +443,25 @@ export const AIMessage = ({
                   transform translate-y-2 group-hover:translate-y-0
                   flex md:flex-row gap-x-0.5 mt-1.5
                   transition-all duration-300 ease-in-out
-                  absolute -bottom-4 bg-background-weakerish/60
+                  absolute -bottom-4 bg-background-weaker/60
                    p-1.5 rounded-lg  "
                   >
                     <TooltipGroup>
-                      <Tooltip showTick line content="Copy!">
+                      <CustomTooltip showTick line content="Copy!">
                         <CopyButton content={content.toString()} />
-                      </Tooltip>
-                      <Tooltip showTick line content="Good response!">
+                      </CustomTooltip>
+                      <CustomTooltip showTick line content="Good response!">
                         <HoverableIcon
                           icon={<LikeFeedbackIcon />}
                           onClick={() => handleFeedback("like")}
                         />
-                      </Tooltip>
-                      <Tooltip showTick line content="Bad response!">
+                      </CustomTooltip>
+                      <CustomTooltip showTick line content="Bad response!">
                         <HoverableIcon
                           icon={<DislikeFeedbackIcon />}
                           onClick={() => handleFeedback("dislike")}
                         />
-                      </Tooltip>
+                      </CustomTooltip>
                     </TooltipGroup>
                   </div>
                 ))}

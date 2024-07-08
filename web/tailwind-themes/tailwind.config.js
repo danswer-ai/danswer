@@ -70,11 +70,12 @@ module.exports = {
         "background-custom-header": "#f3f4f6",
         "background-inverted": "#000000",
         "background-weak": "#f3f4f6", // gray-100
-        "background-weakerish": "#F1F2F4", // gray-125
+        "background-weaker": "#F1F2F4", // gray-125
         "background-weakish": "#EAEAEA", // gray-150
         "background-dark": "#111827", // gray-900
 
         // text or icons
+        lighter: "#f3f4f6", // gray-100
         light: "#e5e7eb", // gray-200
         link: "#3b82f6", // blue-500
         "link-hover": "#1d4ed8", // blue-700
