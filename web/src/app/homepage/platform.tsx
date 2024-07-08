@@ -7,7 +7,7 @@ import { platformData } from "./data/platform";
 export default function Platform() {
   return (
     <Wrapper>
-      <div className="flex flex-col items-center w-full gap-12 pt-20">
+      <div className="flex flex-col items-center w-full gap-12 pt-32">
         <div className="flex flex-col w-full gap-10">
           <div className="flex flex-col items-center font-semibold">
             <span className="text-[#64A3FF] pb-3">Platform</span>
@@ -39,7 +39,7 @@ export default function Platform() {
         <div className="grid grid-cols-2 gap-10 mx-[8.5rem]">
           {platformData.map((data, i) => (
             <div key={i}>
-              <h3 className="text-xl font-semibold text-black">{data.title}</h3>
+              <h4 className="text-xl font-semibold text-black">{data.title}</h4>
               <p>{data.details}</p>
             </div>
           ))}

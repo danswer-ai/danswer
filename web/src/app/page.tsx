@@ -15,18 +15,30 @@ export default async function Page() {
   }
 } */
 
+import CallToActions from "./homepage/callToActions";
+import Certifications from "./homepage/certifications";
+import DataLoaders from "./homepage/dataLoaders";
+import Enterprise from "./homepage/enterprise";
+import Footer from "./homepage/footer";
 import Hero from "./homepage/hero";
+import Models from "./homepage/models";
 import Navbar from "./homepage/navbar";
 import Platform from "./homepage/platform";
 import UseCases from "./homepage/useCases";
 
 export default async function Page() {
   return (
-    <div>
+    <>
       <Navbar />
       <Hero />
       <UseCases />
       <Platform />
-    </div>
+      <Models />
+      <Enterprise />
+      <Certifications />
+      <DataLoaders />
+      <CallToActions />
+      <Footer />
+    </>
   );
 }
