@@ -13,7 +13,7 @@ from danswer.chat.models import LlmDoc
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import JSON_ro
-from danswer.llm.answering.doc_pruning import prune_documents
+from danswer.llm.answering.doc_pruning import prune_and_merge_docs
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
@@ -191,7 +191,7 @@ class SearchTool(Tool):
         )
         yield ToolResponse(
             id=FINAL_CONTEXT_DOCUMENTS,
-            response=prune_documents(
+            response=prune_and_merge_docs(
                 docs=self.selected_docs,
                 doc_relevance_list=None,
                 prompt_config=self.prompt_config,
@@ -263,7 +263,7 @@ class SearchTool(Tool):
             llm_doc_from_inference_section(section)
             for section in search_pipeline.reranked_sections
         ]
-        final_context_documents = prune_documents(
+        final_context_documents = prune_and_merge_docs(
             docs=llm_docs,
             doc_relevance_list=[
                 True if ind in search_pipeline.relevant_section_indices else False

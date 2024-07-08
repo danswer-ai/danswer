@@ -212,7 +212,6 @@ def prune_documents(
     if doc_relevance_list is not None:
         assert len(docs) == len(doc_relevance_list)
 
-    # TODO touch this up
     doc_token_limit = _compute_limit(
         prompt_config=prompt_config,
         llm_config=llm_config,
@@ -230,3 +229,23 @@ def prune_documents(
         use_sections=document_pruning_config.use_sections,
         using_tool_message=document_pruning_config.using_tool_message,
     )
+
+
+def prune_and_merge_docs(
+    docs: list[LlmDoc],
+    doc_relevance_list: list[bool] | None,
+    prompt_config: PromptConfig,
+    llm_config: LLMConfig,
+    question: str,
+    document_pruning_config: DocumentPruningConfig,
+) -> list[LlmDoc]:
+    remaining_llm_docs = prune_documents(
+        docs=docs,
+        doc_relevance_list=doc_relevance_list,
+        prompt_config=prompt_config,
+        llm_config=llm_config,
+        question=question,
+        document_pruning_config=document_pruning_config,
+    )
+    # TODO merge!
+    return remaining_llm_docs
