@@ -177,6 +177,9 @@ def stream_answer_objects(
         llm=llm,
         fast_llm=fast_llm,
         pruning_config=document_pruning_config,
+        chunks_above=query_req.chunks_above,
+        chunks_below=query_req.chunks_below,
+        full_doc=query_req.full_doc,
         bypass_acl=bypass_acl,
     )
 

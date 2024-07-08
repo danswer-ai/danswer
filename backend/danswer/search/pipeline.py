@@ -91,7 +91,7 @@ class SearchPipeline:
         self._retrieved_chunks: list[InferenceChunk] | None = None
         self._reranked_chunks: list[InferenceChunk] | None = None
         self._reranked_sections: list[InferenceSection] | None = None
-        self._relevant_chunk_indices: list[int] | None = None
+        self._relevant_section_indices: list[int] | None = None
 
     """Pre-processing"""
 
@@ -298,7 +298,7 @@ class SearchPipeline:
             # Since the index of the max_chunk is unknown, just allow it to be None and filter after
             surrounding_chunks_or_none = [
                 doc_chunk_ind_to_chunk.get((chunk.document_id, chunk_ind))
-                for chunk_ind in range(start_ind, end_ind)
+                for chunk_ind in range(start_ind, end_ind + 1)  # end_ind is inclusive
             ]
             surrounding_chunks = [
                 chunk for chunk in surrounding_chunks_or_none if chunk is not None
@@ -327,8 +327,8 @@ class SearchPipeline:
 
     @property
     def relevant_section_indices(self) -> list[int]:
-        if self._relevant_chunk_indices is not None:
-            return self._relevant_chunk_indices
+        if self._relevant_section_indices is not None:
+            return self._relevant_section_indices
 
         reranked_sections = self.reranked_sections
 
@@ -341,11 +341,13 @@ class SearchPipeline:
             llm=self.fast_llm,
         )
 
-        return [
+        self._relevant_section_indices = [
             ind
             for ind, section in enumerate(reranked_sections)
             if section in relevant_sections
         ]
+
+        return self._relevant_section_indices
 
     @property
     def section_relevance_list(self) -> list[bool]:

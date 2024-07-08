@@ -256,7 +256,7 @@ class SearchTool(Tool):
         )
         yield ToolResponse(
             id=SECTION_RELEVANCE_LIST_ID,
-            response=search_pipeline.reranked_sections,
+            response=search_pipeline.relevant_section_indices,
         )
 
         llm_docs = [
