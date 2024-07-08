@@ -37,22 +37,18 @@ export interface FullEmbeddingModelResponse {
 }
 
 export interface EmbeddingModelDescriptor {
-  model_name: string;
-  model_dim: number;
-  normalize: boolean;
+  model_name?: string;
+  model_dim?: number;
+  normalize?: boolean;
   query_prefix?: string;
   passage_prefix?: string;
 }
 
-export interface CloudEmbeddingModel {
+export interface CloudEmbeddingModel extends EmbeddingModelDescriptor {
   name: string;
   description: string;
-  model_dim: number;
-  normalize: boolean;
   cloud_provider_id?: number | null;
   link: string;
-  query_prefix?: string;
-  passage_prefix?: string;
   pricePerMillion: number;
   enabled?: boolean;
   mtebScore: number;
@@ -63,13 +59,12 @@ export interface CloudEmbeddingModel {
   numParameters?: string;
   memoryUsage?: string;
   notes?: string;
-  model_name?: string;
 }
 
 export interface EnrichedCloudEmbeddingModel
   extends CloudEmbeddingModel,
     EmbeddingModelDescriptor {
-  model_name: string;
+  model_name?: string;
   cloud_provider_id: number | null;
 }
 
@@ -142,7 +137,6 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
         name: "text-embedding-3-small",
         description:
           "OpenAI's newer, more efficient embedding model. Good balance of performance and cost.",
-
         model_dim: 1536,
         normalize: true,
         link: "https://platform.openai.com/docs/guides/embeddings",

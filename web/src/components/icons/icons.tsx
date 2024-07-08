@@ -72,7 +72,6 @@ import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";
 import mediawikiIcon from "../../../public/MediaWiki.svg";
 import wikipediaIcon from "../../../public/Wikipedia.svg";
-import openaiIcon from "../../../public/Openai.svg";
 
 import discourseIcon from "../../../public/Discourse.png";
 import clickupIcon from "../../../public/Clickup.svg";
@@ -89,20 +88,6 @@ export interface IconProps {
 
 export const defaultTailwindCSS = "my-auto flex flex-shrink-0 text-default";
 export const defaultTailwindCSSBlue = "my-auto flex flex-shrink-0 text-link";
-
-export const OpenAIIcon = ({
-  size = 16,
-  className = defaultTailwindCSS,
-}: IconProps) => {
-  return (
-    <div
-      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
-      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
-    >
-      <Image src={openAISVG} alt="Logo" width="96" height="96" />
-    </div>
-  );
-};
 
 export const OpenSourceIcon = ({
   size = 16,
@@ -543,7 +528,7 @@ export const OpenAIIcon = ({
       style={{ width: `${size}px`, height: `${size}px` }}
       className={`w-[${size}px] h-[${size}px] ` + className}
     >
-      <Image src={openaiIcon} alt="Logo" width="96" height="96" />
+      <Image src={openAISVG} alt="Logo" width="96" height="96" />
     </div>
   );
 };

@@ -1,9 +1,5 @@
 from enum import Enum
 
-import openai
-import voyageai
-from cohere import Client as CohereClient
-
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.model_configs import GEN_AI_TEMPERATURE
@@ -16,7 +12,6 @@ from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.headers import build_llm_extra_headers
 from danswer.llm.interfaces import LLM
 from danswer.llm.override_models import LLMOverride
-from danswer.search.enums import EmbedTextType
 from danswer.utils.logger import setup_logger
 
 # from danswer.search.search_nlp_models import BaseEmbedding
@@ -117,73 +112,6 @@ class EmbeddingProvider(Enum):
     OPENAI = "openai"
     COHERE = "cohere"
     VOYAGE = "voyage"
-
-
-# class CloudEmbedding(BaseEmbedding):
-class CloudEmbedding:
-    def __init__(self, api_key: str, provider: str, model: str | None = None):
-        self.api_key = api_key
-        self.model = model
-        try:
-            self.provider = EmbeddingProvider(provider.lower())
-        except ValueError:
-            raise ValueError(f"Unsupported provider: {provider}")
-        logger.debug(f"Initializing Embedding with provider: {self.provider}")
-        self.client = self._initialize_client()
-
-    def _initialize_client(self):
-        logger.debug(f"Initializing client for provider: {self.provider}")
-        if self.provider == EmbeddingProvider.OPENAI:
-            return openai.OpenAI(api_key=self.api_key)
-        elif self.provider == EmbeddingProvider.COHERE:
-            return CohereClient(api_key=self.api_key)
-        elif self.provider == EmbeddingProvider.VOYAGE:
-            return voyageai.Client(api_key=self.api_key)
-        else:
-            raise ValueError(f"Unsupported provider: {self.provider}")
-
-    def encode(self, texts: list[str], text_type: EmbedTextType) -> list[list[float]]:
-        return [self.embed(text) for text in texts]
-
-    def embed(self, text: str, model: str = None):
-        logger.debug(f"Embedding text with provider: {self.provider}")
-        if self.provider == EmbeddingProvider.OPENAI:
-            return self._embed_openai(text, model or "text-embedding-ada-002")
-        elif self.provider == EmbeddingProvider.COHERE:
-            return self._embed_cohere(text, model)
-        elif self.provider == EmbeddingProvider.VOYAGE:
-            return self._embed_voyage(text, model)
-        else:
-            raise ValueError(f"Unsupported provider: {self.provider}")
-
-    def _embed_openai(self, text: str, model: str = "text-embedding-ada-002"):
-        logger.debug(f"Using OpenAI embedding with model: {model}")
-        response = self.client.embeddings.create(input=text, model=model)
-        return response.data[0].embedding
-
-    def _embed_cohere(self, text: str, model: str = "embed-english-v3.0"):
-        logger.debug(f"Using Cohere embedding with model: {model}")
-        response = self.client.embed(texts=[text], model=model)
-        return response.embeddings[0]
-
-    def _embed_voyage(self, text: str, model: str = "voyage-01"):
-        logger.debug(f"Using Voyage embedding with model: {model}")
-        response = self.client.embed(text, model=model)
-        return response.embeddings[0]
-
-    @staticmethod
-    def create(api_key: str, provider: str):
-        logger.debug(f"Creating Embedding instance for provider: {provider}")
-        return CloudEmbedding(api_key, provider)
-
-
-def get_embedding(
-    provider: str,
-    # model: str,
-    api_key: str | None = None,
-    custom_config: dict[str, str] | None = None,
-) -> LLM:
-    return CloudEmbedding(api_key=api_key, provider=provider)
 
 
 def get_llm(

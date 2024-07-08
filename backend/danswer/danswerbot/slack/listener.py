@@ -3,6 +3,12 @@ from threading import Event
 from typing import Any
 from typing import cast
 
+from slack_sdk import WebClient
+from slack_sdk.socket_mode import SocketModeClient
+from slack_sdk.socket_mode.request import SocketModeRequest
+from slack_sdk.socket_mode.response import SocketModeResponse
+from sqlalchemy.orm import Session
+
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
@@ -51,11 +57,6 @@ from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
-from slack_sdk import WebClient
-from slack_sdk.socket_mode import SocketModeClient
-from slack_sdk.socket_mode.request import SocketModeRequest
-from slack_sdk.socket_mode.response import SocketModeResponse
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
@@ -468,13 +469,13 @@ if __name__ == "__main__":
                     # or the tokens have updated (set up for the first time)
                     with Session(get_sqlalchemy_engine()) as db_session:
                         embedding_model = get_current_db_embedding_model(db_session)
-
-                        warm_up_encoders(
-                            model_name=embedding_model.model_name,
-                            normalize=embedding_model.normalize,
-                            model_server_host=MODEL_SERVER_HOST,
-                            model_server_port=MODEL_SERVER_PORT,
-                        )
+                        if embedding_model.cloud_provider_id is None:
+                            warm_up_encoders(
+                                model_name=embedding_model.model_name,
+                                normalize=embedding_model.normalize,
+                                model_server_host=MODEL_SERVER_HOST,
+                                model_server_port=MODEL_SERVER_PORT,
+                            )
 
                 slack_bot_tokens = latest_slack_bot_tokens
                 # potentially may cause a message to be dropped, but it is complicated

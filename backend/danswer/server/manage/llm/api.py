@@ -16,15 +16,13 @@ from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_cloud_embedding_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.db.models import User
-from danswer.llm.factory import Embedding
 from danswer.llm.factory import get_default_llms
-from danswer.llm.factory import get_embedding
-from danswer.llm.factory import CloudEmbedding
-from danswer.llm.factory import get_default_llm
 from danswer.llm.factory import get_llm
 from danswer.llm.llm_provider_options import fetch_available_well_known_llms
 from danswer.llm.llm_provider_options import WellKnownLLMProviderDescriptor
 from danswer.llm.utils import test_llm
+from danswer.search.enums import EmbedTextType
+from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.server.manage.llm.models import CloudEmbeddingProviderCreate
 from danswer.server.manage.llm.models import FullCloudEmbeddingProvider
 from danswer.server.manage.llm.models import FullLLMProvider
@@ -34,6 +32,8 @@ from danswer.server.manage.llm.models import TestEmbeddingRequest
 from danswer.server.manage.llm.models import TestLLMRequest
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
+from shared_configs.configs import MODEL_SERVER_HOST
+from shared_configs.configs import MODEL_SERVER_PORT
 
 logger = setup_logger()
 
@@ -42,17 +42,24 @@ admin_router = APIRouter(prefix="/admin/llm")
 basic_router = APIRouter(prefix="/llm")
 
 
+# def test_embed():
+
+
 @admin_router.post("/test-embedding")
 def test_embedding_configuration(
     test_llm_request: TestEmbeddingRequest,
     _: User | None = Depends(current_admin_user),
 ) -> None:
     try:
-        embedding = CloudEmbedding.create(
-            api_key=test_llm_request.api_key, provider=test_llm_request.provider
+        test_model = EmbeddingModel(
+            model_name="dummy",
+            server_host=MODEL_SERVER_HOST,
+            server_port=MODEL_SERVER_PORT,
+            api_key=test_llm_request.api_key,
+            provider_type=test_llm_request.provider,
         )
-        result = embedding.embed("Test embedding")
-        return {"success": True, "embedding_length": len(result)}
+        encoding = test_model.encode(["test"], text_type=EmbedTextType.QUERY)
+        return {"success": True, "embedding_length": len(encoding)}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
