@@ -10,6 +10,29 @@ from danswer.llm.answering.stream_processing.citation_processing import (
     extract_citations_from_stream,
 )
 
+"""
+This module contains unit tests for the citation extraction functionality in Danswer.
+
+The tests focus on the `extract_citations_from_stream` function, which processes
+a stream of tokens and extracts citations, replacing them with properly formatted
+versions including links where available.
+
+Key components:
+- mock_docs: A list of mock LlmDoc objects used for testing.
+- mock_doc_mapping: A dictionary mapping document IDs to their ranks.
+- process_text: A helper function that simulates the citation extraction process.
+- test_citation_extraction: A parametrized test function covering various citation scenarios.
+
+To add new test cases:
+1. Add a new tuple to the @pytest.mark.parametrize decorator of test_citation_extraction.
+2. Each tuple should contain:
+   - A descriptive test name (string)
+   - Input tokens (list of strings)
+   - Expected output text (string)
+   - Expected citations (list of document IDs)
+"""
+
+
 mock_docs = [
     LlmDoc(
         document_id=f"doc_{int(id/2)}",
