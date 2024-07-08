@@ -99,7 +99,6 @@ def extract_citations_from_stream(
             last_citation_end = 0
             length_to_add = 0
             while len(citations_found) > 0:
-
                 citation = citations_found.pop(0)
                 numerical_value = int(citation.group(1))
 
@@ -147,7 +146,6 @@ def extract_citations_from_stream(
 
                     else:
                         prev_length = len(curr_segment)
-
                         curr_segment = (
                             curr_segment[: start + length_to_add]
                             + f"[[{target_citation_num}]]()"
