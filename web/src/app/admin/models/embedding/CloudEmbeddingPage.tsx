@@ -68,8 +68,6 @@ export default function CloudEmbeddingPage({
     };
     providers.push(temporary_model);
   });
-  console.log(providers);
-  console.log(embeddingProviderDetails);
 
   return (
     <div>
@@ -84,7 +82,6 @@ export default function CloudEmbeddingPage({
               <p className="my-auto">{provider.name}</p>
               <button
                 onClick={() => {
-                  console.log(provider);
                   setTentativelyNewProvider(provider);
                 }}
                 className="cursor-pointer ml-auto"

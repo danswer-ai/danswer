@@ -1,13 +1,12 @@
 from typing import TYPE_CHECKING
 
-from danswer.llm.llm_provider_options import fetch_models_for_provider
 from pydantic import BaseModel
+
+from danswer.llm.llm_provider_options import fetch_models_for_provider
 
 if TYPE_CHECKING:
     from danswer.db.models import LLMProvider as LLMProviderModel
     from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
-
-    # from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProvider
 
 
 class TestLLMRequest(BaseModel):
@@ -52,9 +51,6 @@ class LLMProviderDescriptor(BaseModel):
         )
 
 
-
-
-
 class EmbeddingProviderDescriptor(BaseModel):
     """A descriptor for an LLM provider that can be safely viewed by
     non-admin users. Used when giving a list of available LLMs."""
@@ -82,6 +78,8 @@ class EmbeddingProviderDescriptor(BaseModel):
                 or [llm_provider_model.default_model_name]
             ),
         )
+
+
 class LLMProvider(BaseModel):
     name: str
     provider: str
@@ -124,6 +122,7 @@ class FullLLMProvider(LLMProvider):
             ),
         )
 
+
 class TestEmbeddingRequest(BaseModel):
     # provider level
     provider: str
@@ -131,7 +130,6 @@ class TestEmbeddingRequest(BaseModel):
     custom_config: dict[str, str] | None = None
     # model level
     default_model_id: str
-
 
 
 class CloudEmbeddingProviderBase(BaseModel):
@@ -144,24 +142,25 @@ class CloudEmbeddingProviderBase(BaseModel):
         from_attributes = True
 
 
-
-
-
 class CloudEmbeddingProviderCreate(CloudEmbeddingProviderBase):
     pass
 
+
 class CloudEmbeddingProviderUpdate(CloudEmbeddingProviderBase):
     name: str | None = None
+
 
 class FullCloudEmbeddingProvider(CloudEmbeddingProviderBase):
     id: int
 
     @classmethod
-    def from_request(cls, cloud_provider_model: "CloudEmbeddingProvider") -> "FullCloudEmbeddingProvider":
+    def from_request(
+        cls, cloud_provider_model: "CloudEmbeddingProviderModel"
+    ) -> "FullCloudEmbeddingProvider":
         return cls(
             id=cloud_provider_model.id,
             name=cloud_provider_model.name,
             api_key=cloud_provider_model.api_key,
             custom_config=cloud_provider_model.custom_config,
-            default_model_id= cloud_provider_model.default_model_id
+            default_model_id=cloud_provider_model.default_model_id,
         )

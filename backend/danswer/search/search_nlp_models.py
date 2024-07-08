@@ -105,9 +105,9 @@ def build_model_server_url(
 class EmbeddingModel:
     def __init__(
         self,
-        model_name: str,
         server_host: str,  # Changes depending on indexing or inference
         server_port: int,
+        model_name: str | None = None,
         normalize: bool = False,
         query_prefix: str | None = None,
         passage_prefix: str | None = None,

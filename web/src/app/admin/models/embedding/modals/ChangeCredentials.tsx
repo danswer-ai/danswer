@@ -150,7 +150,6 @@ export function ChangeCredentialsModal({
               }
             );
 
-            console.log(response);
             if (!response.ok) {
               const errorMsg = (await response.json()).detail;
               alert(`Failed to delete provider: ${errorMsg}`);

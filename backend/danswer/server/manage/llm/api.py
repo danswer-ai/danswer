@@ -52,7 +52,6 @@ def test_embedding_configuration(
 ) -> None:
     try:
         test_model = EmbeddingModel(
-            model_name="dummy",
             server_host=MODEL_SERVER_HOST,
             server_port=MODEL_SERVER_PORT,
             api_key=test_llm_request.api_key,
@@ -164,7 +163,6 @@ def put_llm_provider(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> FullLLMProvider:
-    print(llm_provider)
     return upsert_llm_provider(db_session, llm_provider)
 
 

@@ -11,6 +11,7 @@ from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.embedding_model import create_embedding_model
 from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.embedding_model import get_model_id_from_name
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.embedding_model import update_embedding_model_status
 from danswer.db.engine import get_session
@@ -36,6 +37,13 @@ def set_new_embedding_model(
     """Creates a new EmbeddingModel row and cancels the previous secondary indexing if any
     Gives an error if the same model name is used as the current or secondary index
     """
+    print("request")
+
+    cloud_id = get_model_id_from_name(
+        db_session, embed_model_details.cloud_provider_name
+    )
+    embed_model_details.cloud_provider_id = cloud_id
+
     current_model = get_current_db_embedding_model(db_session)
 
     if embed_model_details.model_name == current_model.model_name:
@@ -64,7 +72,9 @@ def set_new_embedding_model(
             new_status=IndexModelStatus.PAST,
             db_session=db_session,
         )
-    print("Creating new embedding model")
+
+    # When you get current emebdding model (or before) - get the cloud provider id (from teh model name)
+
     new_model = create_embedding_model(
         model_details=embed_model_details,
         db_session=db_session,
@@ -140,7 +150,7 @@ def get_embedding_models(
     next_model = get_secondary_db_embedding_model(db_session)
     return FullModelVersionResponse(
         current_model=EmbeddingModelDetail.from_model(current_model),
-        secondary_model=EmbeddingModelDetail.from_model(next_model)
-        if next_model
-        else None,
+        secondary_model=(
+            EmbeddingModelDetail.from_model(next_model) if next_model else None
+        ),
     )
