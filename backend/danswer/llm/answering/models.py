@@ -72,6 +72,7 @@ class DocumentPruningConfig(BaseModel):
     is_manually_selected_docs: bool = False
     # If user specifies to include additional context chunks for each match, then different pruning
     # is used. As many Sections as possible are included, and the last Section is truncated
+    # If this is false, the sections are truncated if they are longer than the expected chunk size
     use_sections: bool = True
     # If using tools, then we need to consider the tool length
     tool_num_tokens: int = 0
