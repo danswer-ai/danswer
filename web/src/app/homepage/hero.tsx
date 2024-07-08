@@ -15,17 +15,16 @@ export default function Hero() {
             </h1>
             <div>
               <p>
-                <strong className="text-[#2039F3]">Augment</strong> your
-                workforce with{" "}
-                <strong className="text-[#2039F3]">AI Assistants.</strong>
+                <strong className="text-black">Augment</strong> your workforce
+                with <strong className="text-black">AI Assistants.</strong>
               </p>
               <p>
-                <strong className="text-[#2039F3]">Automate</strong> back office
+                <strong className="text-black">Automate</strong> back office
                 operations.
               </p>
               <p>
                 Make your organization{" "}
-                <strong className="text-[#2039F3]">smarter.</strong>
+                <strong className="text-black">smarter.</strong>
               </p>
             </div>
 
