@@ -98,22 +98,17 @@ def extract_citations_from_stream(
         if citations_found and not in_code_block(llm_out):
             last_citation_end = 0
             length_to_add = 0
-
             while len(citations_found) > 0:
 
                 citation = citations_found.pop(0)
                 numerical_value = int(citation.group(1))
-                # print("num")
-                #
+
                 if 1 <= numerical_value <= max_citation_num:
                     context_llm_doc = context_docs[numerical_value - 1]
-                    real_citation_num = doc_id_to_rank_map[
-                        context_llm_doc.document_id
-                    ]
+                    real_citation_num = doc_id_to_rank_map[context_llm_doc.document_id]
                     if real_citation_num not in citation_order:
                         citation_order.append(real_citation_num)
-                    target_citation_num = citation_order.index(real_citation_num)
-
+                    target_citation_num = citation_order.index(real_citation_num) + 1
 
                     # Skip consecutive citations of the same work
                     if target_citation_num in current_citations:
@@ -140,8 +135,6 @@ def extract_citations_from_stream(
                             citation_num=target_citation_num,
                             document_id=context_llm_doc.document_id,
                         )
-                    else:
-                        print("not returning")
 
                     if link:
                         prev_length = len(curr_segment)
@@ -167,14 +160,12 @@ def extract_citations_from_stream(
                 yield DanswerAnswerPiece(answer_piece=curr_segment[:last_citation_end])
 
                 curr_segment = curr_segment[last_citation_end:]
-            # print(f"AFFER: curr_segment: |{curr_segment}|")
         if possible_citation_found:
             continue
         yield DanswerAnswerPiece(answer_piece=curr_segment)
         curr_segment = ""
 
     if curr_segment:
-        print(f"YIELDING AT END {curr_segment}")
         yield DanswerAnswerPiece(answer_piece=curr_segment)
 
 
