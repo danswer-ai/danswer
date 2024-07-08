@@ -56,7 +56,7 @@ def process_text(
     citations = []
     for piece in result:
         if isinstance(piece, DanswerAnswerPiece):
-            final_answer_text += piece.answer_piece
+            final_answer_text += piece.answer_piece or ""
         elif isinstance(piece, CitationInfo):
             citations.append(piece)
     return final_answer_text, citations
