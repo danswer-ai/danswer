@@ -1,4 +1,4 @@
-import { fetchSettingsSS } from "@/components/settings/lib";
+/* import { fetchSettingsSS } from "@/components/settings/lib";
 import { redirect } from "next/navigation";
 
 export default async function Page() {
@@ -13,4 +13,20 @@ export default async function Page() {
   } else {
     redirect("/chat");
   }
+} */
+
+import Hero from "./homepage/hero";
+import Navbar from "./homepage/navbar";
+import Platform from "./homepage/platform";
+import UseCases from "./homepage/useCases";
+
+export default async function Page() {
+  return (
+    <div>
+      <Navbar />
+      <Hero />
+      <UseCases />
+      <Platform />
+    </div>
+  );
 }
