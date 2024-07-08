@@ -535,6 +535,7 @@ class IndexAttempt(Base):
         ForeignKey("credential.id"),
         nullable=True,
     )
+
     # Some index attempts that run from beginning will still have this as False
     # This is only for attempts that are explicitly marked as from the start via
     # the run once API

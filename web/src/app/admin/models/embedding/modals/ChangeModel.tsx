@@ -30,14 +30,17 @@ export function ChangeModelModal({
         <Callout title="New Hotness Specs" color="blue" className="mt-4">
           <div className="flex flex-col gap-y-2">
             <p>Elevator pitch: {newModel.description}</p>
-            <p>
-              Dimensions: {newModel.model_dim} (That&apos;s a{" "}
-              {Math.abs(newModel.model_dim - existingModel.model_dim)} dimension{" "}
-              {newModel.model_dim > existingModel.model_dim
-                ? "upgrade"
-                : "downgrade"}
-              )
-            </p>
+            {newModel.model_dim && existingModel.model_dim && (
+              <p>
+                Dimensions: {newModel.model_dim} (That&apos;s a{" "}
+                {Math.abs(newModel.model_dim - existingModel.model_dim)}{" "}
+                dimension{" "}
+                {newModel.model_dim > existingModel.model_dim
+                  ? "upgrade"
+                  : "downgrade"}
+                )
+              </p>
+            )}
             {/* <p>Cost delta: ${(newModel?.pricePerMillion! - existingModel?.pricePerMillion!).toFixed(3)}/million tokens (Could save/cost you ~$100/month)</p> */}
           </div>
         </Callout>

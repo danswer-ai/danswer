@@ -87,6 +87,17 @@ def fetch_existing_llm_providers(db_session: Session) -> list[LLMProviderModel]:
     return list(db_session.scalars(select(LLMProviderModel)).all())
 
 
+def fetch_embedding_provider(
+    db_session: Session, provider_id: int
+) -> CloudEmbeddingProviderModel | None:
+    provider_model = db_session.scalar(
+        select(CloudEmbeddingProviderModel).where(
+            CloudEmbeddingProviderModel.id == provider_id
+        )
+    )
+    return provider_model
+
+
 def fetch_default_provider(db_session: Session) -> FullLLMProvider | None:
     provider_model = db_session.scalar(
         select(LLMProviderModel).where(

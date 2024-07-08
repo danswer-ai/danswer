@@ -36,8 +36,6 @@ def set_new_embedding_model(
     """Creates a new EmbeddingModel row and cancels the previous secondary indexing if any
     Gives an error if the same model name is used as the current or secondary index
     """
-    print("embed_model_details")
-    print(embed_model_details)
     current_model = get_current_db_embedding_model(db_session)
 
     if embed_model_details.model_name == current_model.model_name:
@@ -66,7 +64,7 @@ def set_new_embedding_model(
             new_status=IndexModelStatus.PAST,
             db_session=db_session,
         )
-
+    print("Creating new embedding model")
     new_model = create_embedding_model(
         model_details=embed_model_details,
         db_session=db_session,

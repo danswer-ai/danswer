@@ -10,9 +10,7 @@ export function ModelOption({
   onSelect,
 }: {
   model: FullEmbeddingModelDescriptor | CloudEmbeddingModel;
-  onSelect?: (
-    model: FullEmbeddingModelDescriptor | CloudEmbeddingModel
-  ) => void;
+  onSelect?: (model: EmbeddingModelDescriptor) => Promise<void>;
 }) {
   console.log(model);
   return (
@@ -69,9 +67,7 @@ export function ModelSelector({
   setSelectedModel,
 }: {
   modelOptions: (FullEmbeddingModelDescriptor | CloudEmbeddingModel)[];
-  setSelectedModel: (
-    model: FullEmbeddingModelDescriptor | CloudEmbeddingModel
-  ) => void;
+  setSelectedModel: (model: EmbeddingModelDescriptor) => Promise<void>;
 }) {
   return (
     <div>

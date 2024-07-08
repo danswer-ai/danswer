@@ -1,3 +1,6 @@
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import DEFAULT_DOCUMENT_ENCODER_MODEL
@@ -12,8 +15,6 @@ from danswer.db.models import IndexModelStatus
 from danswer.indexing.models import EmbeddingModelDetail
 from danswer.search.search_nlp_models import clean_model_name
 from danswer.utils.logger import setup_logger
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
@@ -30,6 +31,7 @@ def create_embedding_model(
         query_prefix=model_details.query_prefix,
         passage_prefix=model_details.passage_prefix,
         status=status,
+        cloud_provider_id=model_details.cloud_provider_id,
         # Every single embedding model except the initial one from migrations has this name
         # The initial one from migration is called "danswer_chunk"
         index_name=f"danswer_chunk_{clean_model_name(model_details.model_name)}",

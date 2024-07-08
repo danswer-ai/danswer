@@ -4,6 +4,8 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 
+from sqlalchemy.orm import Session
+
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
 from danswer.configs.app_configs import POLL_CONNECTOR_OFFSET
 from danswer.connectors.factory import instantiate_connector
@@ -21,6 +23,7 @@ from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.index_attempt import mark_attempt_in_progress__no_commit
 from danswer.db.index_attempt import mark_attempt_succeeded
 from danswer.db.index_attempt import update_docs_indexed
+from danswer.db.llm import fetch_embedding_provider
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
@@ -30,7 +33,6 @@ from danswer.indexing.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
@@ -97,7 +99,6 @@ def _run_indexing(
     3. Updates Postgres to record the indexed documents + the outcome of this run
     """
     start_time = time.time()
-
     db_embedding_model = index_attempt.embedding_model
     index_name = db_embedding_model.index_name
 
@@ -110,11 +111,24 @@ def _run_indexing(
         primary_index_name=index_name, secondary_index_name=None
     )
 
+    cloud_provider_id = db_embedding_model.cloud_provider_id
+
+    api_key = None
+    provider_type = None
+    if cloud_provider_id is not None:
+        provider = fetch_embedding_provider(
+            db_session=db_session, provider_id=cloud_provider_id
+        )
+        api_key = provider.api_key
+        provider_type = provider.name
+
     embedding_model = DefaultIndexingEmbedder(
         model_name=db_embedding_model.model_name,
         normalize=db_embedding_model.normalize,
         query_prefix=db_embedding_model.query_prefix,
         passage_prefix=db_embedding_model.passage_prefix,
+        api_key=api_key,
+        provider_type=provider_type,
     )
 
     indexing_pipeline = build_indexing_pipeline(
@@ -286,6 +300,7 @@ def _prepare_index_attempt(db_session: Session, index_attempt_id: int) -> IndexA
         db_session=db_session,
         index_attempt_id=index_attempt_id,
     )
+
     if attempt is None:
         raise RuntimeError(f"Unable to find IndexAttempt for ID '{index_attempt_id}'")
 

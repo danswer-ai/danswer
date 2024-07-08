@@ -7,6 +7,8 @@ class EmbedRequest(BaseModel):
     model_name: str
     max_context_length: int
     normalize_embeddings: bool
+    api_key: str | None
+    provider_type: str | None
 
 
 class EmbedResponse(BaseModel):

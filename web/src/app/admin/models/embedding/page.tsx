@@ -120,19 +120,21 @@ function Main() {
       newModel = {
         ...model,
         model_name: model.model_name || model.name,
-        cloud_provider_id: model.cloud_provider_id || 0,
+        // cloud_provider_id: model.cloud_provider_id || 0,
+        cloud_provider_id: 1,
       };
     } else {
       // This is an EmbeddingModelDescriptor
       newModel = {
         ...model,
-        name: model.model_name,
+        name: model.model_name!,
         description: "",
         link: "",
         pricePerMillion: 0,
         mtebScore: 0,
         maxContext: 0,
-        cloud_provider_id: null,
+        cloud_provider_id: 1,
+        //  null,
       };
     }
     console.log(newModel);
@@ -412,7 +414,7 @@ function Main() {
         (openToggle ? (
           <OpenSourceEmbeddingSelectionPage
             onSelectOpenSource={onSelectOpenSource}
-            currentModelName={currentModelName}
+            currentModelName={currentModelName!}
           />
         ) : (
           <CloudEmbeddingPage
