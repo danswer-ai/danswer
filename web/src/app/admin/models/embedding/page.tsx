@@ -85,8 +85,6 @@ function Main() {
     errorHandlingFetcher
   );
 
-  console.log(embeddingProviderDetails);
-
   const {
     data: futureEmbeddingModel,
     isLoading: isLoadingFutureModel,
@@ -120,8 +118,8 @@ function Main() {
       newModel = {
         ...model,
         model_name: model.model_name || model.name,
+        cloud_provider_name: model.cloud_provider_name,
         // cloud_provider_id: model.cloud_provider_id || 0,
-        cloud_provider_id: 1,
       };
     } else {
       // This is an EmbeddingModelDescriptor
@@ -133,13 +131,10 @@ function Main() {
         pricePerMillion: 0,
         mtebScore: 0,
         maxContext: 0,
-        cloud_provider_id: 1,
-        //  null,
+        cloud_provider_name: null,
       };
     }
-    console.log(newModel);
-    // return
-    // model.model_name = model.name
+
     const response = await fetch(
       "/api/secondary-index/set-new-embedding-model",
       {

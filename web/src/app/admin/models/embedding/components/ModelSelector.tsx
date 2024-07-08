@@ -12,7 +12,6 @@ export function ModelOption({
   model: FullEmbeddingModelDescriptor | CloudEmbeddingModel;
   onSelect?: (model: EmbeddingModelDescriptor) => Promise<void>;
 }) {
-  console.log(model);
   return (
     <div
       className={
@@ -22,9 +21,7 @@ export function ModelOption({
       <div className="font-bold text-lg flex">{model.model_name}</div>
       <div className="text-sm mt-1 mx-1">
         {model?.description
-          ? model.cloud_provider_id
-            ? ""
-            : model.description
+          ? model.description
           : "Custom model—no description is available."}
       </div>
       {model.link && (

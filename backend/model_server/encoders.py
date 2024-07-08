@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Optional
 
 import openai
-import voyageai
+import voyageai  # type: ignore
 from cohere import Client as CohereClient
 from fastapi import APIRouter
 from fastapi import HTTPException
@@ -32,7 +32,7 @@ _RERANK_MODELS: Optional[list["CrossEncoder"]] = None
 class EmbeddingProvider(Enum):
     OPENAI = "openai"
     COHERE = "cohere"
-    VOYAGE = "voyage"
+    VOYAGE = "voyage ai"
 
 
 # class CloudEmbedding(BaseEmbedding):
@@ -74,13 +74,14 @@ class CloudEmbedding:
 
     def _embed_openai(self, text: str, model: str = "text-embedding-ada-002"):
         logger.debug(f"Using OpenAI embedding with model: {model}")
-        print(f"Using OpenAI embedding with model: {model}")
         response = self.client.embeddings.create(input=text, model=model)
         return response.data[0].embedding
 
     def _embed_cohere(self, text: str, model: str = "embed-english-v3.0"):
         logger.debug(f"Using Cohere embedding with model: {model}")
-        response = self.client.embed(texts=[text], model=model)
+        response = self.client.embed(
+            texts=[text], model=model, input_type="search_document"
+        )
         return response.embeddings[0]
 
     def _embed_voyage(self, text: str, model: str = "voyage-01"):
@@ -96,9 +97,7 @@ class CloudEmbedding:
 
 def get_embedding(
     provider: str,
-    # model: str,
     api_key: str | None = None,
-    custom_config: dict[str, str] | None = None,
 ):
     return CloudEmbedding(api_key=api_key, provider=provider)
 
@@ -162,17 +161,19 @@ def embed_text(
     api_key: str | None = None,
     provider_type: str | None = None,
 ) -> list[list[float]]:
-    if provider_type is not None:
-        model = get_embedding(provider=provider_type, api_key=api_key)
-        embeddings = model.encode(texts, model_name)
-    else:
-        model = get_embedding_model(
-            model_name=model_name, max_context_length=max_context_length
-        )
-        embeddings = model.encode(texts, normalize_embeddings=normalize_embeddings)
-    if not isinstance(embeddings, list):
-        embeddings = embeddings.tolist()
-
+    try:
+        if provider_type is not None:
+            model = get_embedding(provider=provider_type, api_key=api_key)
+            embeddings = model.encode(texts, model_name)
+        else:
+            model = get_embedding_model(
+                model_name=model_name, max_context_length=max_context_length
+            )
+            embeddings = model.encode(texts, normalize_embeddings=normalize_embeddings)
+        if not isinstance(embeddings, list):
+            embeddings = embeddings.tolist()
+    except Exception as e:
+        print(f"Error {e}")
     return embeddings
 
 

@@ -6,7 +6,7 @@ import {
   VoyageIcon,
 } from "@/components/icons/icons";
 
-export type ProviderId = "openai" | "cohere" | "voyage" | "google";
+export type ProviderId = "openai" | "cohere" | "Voyage AI" | "google";
 
 export interface CloudEmbeddingProvider {
   id: number;
@@ -47,7 +47,7 @@ export interface EmbeddingModelDescriptor {
 export interface CloudEmbeddingModel extends EmbeddingModelDescriptor {
   name: string;
   description: string;
-  cloud_provider_id?: number | null;
+  cloud_provider_name: string | null;
   link: string;
   pricePerMillion: number;
   enabled?: boolean;
@@ -65,7 +65,6 @@ export interface EnrichedCloudEmbeddingModel
   extends CloudEmbeddingModel,
     EmbeddingModelDescriptor {
   model_name?: string;
-  cloud_provider_id: number | null;
 }
 
 export interface FullEmbeddingModelDescriptor extends EmbeddingModelDescriptor {
@@ -135,6 +134,7 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
     embedding_models: [
       {
         name: "text-embedding-3-small",
+        cloud_provider_name: "OpenAI",
         description:
           "OpenAI's newer, more efficient embedding model. Good balance of performance and cost.",
         model_dim: 1536,
@@ -151,9 +151,9 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
       },
       {
         name: "text-embedding-3-large",
+        cloud_provider_name: "OpenAI",
         description:
           "OpenAI's large embedding model. Best performance, but more expensive.",
-
         model_dim: 3072,
         normalize: true,
         link: "https://platform.openai.com/docs/guides/embeddings",
@@ -180,6 +180,7 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
     embedding_models: [
       {
         name: "embed-english-v3.0",
+        cloud_provider_name: "Cohere",
         description:
           "Cohere's English embedding model. Good performance for English-language tasks.",
 
@@ -198,6 +199,7 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
       },
       {
         name: "embed-english-light-v3.0",
+        cloud_provider_name: "Cohere",
         description:
           "Cohere's lightweight English embedding model. Faster and more efficient for simpler tasks.",
 
@@ -227,6 +229,7 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
     costslink: "https://www.voyageai.com/pricing",
     embedding_models: [
       {
+        cloud_provider_name: "Voyage AI",
         name: "voyage-large-2-instruct",
         description:
           "Voyage AI's large embedding model. High performance with instruction fine-tuning.",
@@ -246,6 +249,7 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
         enabled: false,
       },
       {
+        cloud_provider_name: "Voyage AI",
         name: "voyage-light-2-instruct",
         description:
           "Voyage AI's lightweight embedding model. Good balance of performance and efficiency.",
@@ -276,6 +280,7 @@ export const AVAILABLE_CLOUD_MODELS: CloudEmbeddingProvider[] = [
     costslink: "https://cloud.google.com/vertex-ai/pricing",
     embedding_models: [
       {
+        cloud_provider_name: "Google",
         name: "gecko",
         description:
           "Google's Gecko embedding model. Powerful and efficient, but requires more setup.",

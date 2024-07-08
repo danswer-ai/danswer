@@ -10,6 +10,7 @@ from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import OLD_DEFAULT_DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import OLD_DEFAULT_MODEL_DOC_EMBEDDING_DIM
 from danswer.configs.model_configs import OLD_DEFAULT_MODEL_NORMALIZE_EMBEDDINGS
+from danswer.db.models import CloudEmbeddingProvider
 from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexModelStatus
 from danswer.indexing.models import EmbeddingModelDetail
@@ -41,6 +42,17 @@ def create_embedding_model(
     db_session.commit()
 
     return embedding_model
+
+
+def get_model_id_from_name(db_session, embedding_provider_name):
+    query = select(CloudEmbeddingProvider).where(
+        CloudEmbeddingProvider.name == embedding_provider_name
+    )
+
+    result = db_session.execute(query)
+    id = result.scalars().first().id
+
+    return id
 
 
 def get_current_db_embedding_model(db_session: Session) -> EmbeddingModel:

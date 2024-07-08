@@ -2,6 +2,10 @@ from collections.abc import Iterator
 from typing import cast
 from uuid import uuid4
 
+from langchain.schema.messages import BaseMessage
+from langchain_core.messages import AIMessageChunk
+from langchain_core.messages import HumanMessage
+
 from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import AnswerQuestionPossibleReturn
 from danswer.chat.models import CitationInfo
@@ -60,9 +64,6 @@ from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
-from langchain.schema.messages import BaseMessage
-from langchain_core.messages import AIMessageChunk
-from langchain_core.messages import HumanMessage
 
 
 def _get_answer_stream_processor(

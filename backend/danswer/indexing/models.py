@@ -87,7 +87,8 @@ class EmbeddingModelDetail(BaseModel):
     normalize: bool
     query_prefix: str | None
     passage_prefix: str | None
-    cloud_provider_id: int | None
+    cloud_provider_id: int | None = None
+    cloud_provider_name: str | None = None
 
     @classmethod
     def from_model(cls, embedding_model: "EmbeddingModel") -> "EmbeddingModelDetail":

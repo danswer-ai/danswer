@@ -4,7 +4,7 @@ from pydantic import BaseModel
 class EmbedRequest(BaseModel):
     # This already includes any prefixes, the text is just passed directly to the model
     texts: list[str]
-    model_name: str
+    model_name: str | None
     max_context_length: int
     normalize_embeddings: bool
     api_key: str | None
