@@ -57,8 +57,10 @@ def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, st
         + parsed_url.netloc
         + parsed_url.path.split("/spaces")[0]
     )
+
     path_parts = parsed_url.path.split("/")
     space = path_parts[3]
+
     page_id = path_parts[5] if len(path_parts) > 5 else ""
     return wiki_base, space, page_id
 
@@ -81,7 +83,7 @@ def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, st
         + parsed_url.path.split(DISPLAY)[0]
     )
     space = DISPLAY.join(parsed_url.path.split(DISPLAY)[1:]).split("/")[0]
-    page_id = parsed_url.path.split("/")[5]
+    page_id = parsed_url.path.split(DISPLAY)[1].split("/")[0]
 
     return wiki_base, space, page_id
 
@@ -258,8 +260,8 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self,
         confluence_client: Confluence,
         start_ind: int,
-    ) -> Collection[dict[str, Any]]:
-        def _fetch_space(start_ind: int, batch_size: int) -> Collection[dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
+        def _fetch_space(start_ind: int, batch_size: int) -> list[dict[str, Any]]:
             get_all_pages_from_space = make_confluence_call_handle_rate_limit(
                 confluence_client.get_all_pages_from_space
             )
@@ -316,7 +318,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
                 return view_pages
 
-        def _fetch_origin_page() -> Collection[dict[str, Any]]:
+        def _fetch_origin_page() -> dict[str, Any]:
             get_page_by_id = make_confluence_call_handle_rate_limit(
                 confluence_client.get_page_by_id
             )
@@ -329,8 +331,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 logger.warning(
                     f"Appending orgin page with id {self.page_id} failed: {e}"
                 )
+                return {}
 
-        def _recurse_child_pages(start_ind: int) -> Collection[dict[str, Any]]:
+        def _recurse_children_pages(start_ind: int) -> list[dict[str, Any]]:
             pages: list[dict[str, Any]] = []
             current_children: list[dict[str, Any]] = []
             children = _fetch_single_depth_child_pages(
@@ -348,11 +351,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     )
                 children = current_children
                 pages.extend(children)
-                current_children: list[dict[str, Any]] = []
+                current_children = []
 
             if self.index_origin:
                 try:
-                    origin_page = self.index_origin()
+                    origin_page = _fetch_origin_page()
                     pages.append(origin_page)
                 except Exception as e:
                     logger.warning(
@@ -362,7 +365,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
         def _fetch_single_depth_child_pages(
             start_ind: int, batch_size: int, page_id
-        ) -> Collection[dict[str, Any]]:
+        ) -> list[dict[str, Any]]:
             child_pages: list[dict[str, Any]] = []
 
             get_page_child_by_type = make_confluence_call_handle_rate_limit(
@@ -380,6 +383,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
                 child_pages.extend(child_page)
                 return child_pages
+
             except Exception:
                 logger.warning(
                     f"Batch failed with page {self.page_id} at offset {start_ind} "
@@ -412,7 +416,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             pages = (
                 _fetch_space(start_ind, self.batch_size)
                 if self.space_level_scan
-                else _recurse_child_pages(start_ind=start_ind)
+                else _recurse_children_pages(start_ind=start_ind)
             )
             return pages
 
@@ -421,13 +425,13 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 raise e
 
         # error checking phase, only reachable if `self.continue_on_failure=True`
-        pages: list[dict[str, Any]] = []
+
         for i in range(self.batch_size):
             try:
                 pages = (
                     _fetch_space(start_ind, self.batch_size)
                     if self.space_level_scan
-                    else _recurse_child_pages(start_ind=start_ind)
+                    else _recurse_children_pages(start_ind=start_ind)
                 )
                 return pages
 
