@@ -27,7 +27,7 @@ export default async function Page({
     ccPairs,
     availableSources,
     documentSets,
-    personas,
+    assistants,
     tags,
     llmProviders,
     folders,
@@ -41,7 +41,6 @@ export default async function Page({
   return (
     <>
       <InstantSSRAutoRefresh />
-
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
       {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
         <ApiKeyModal user={user} />
@@ -49,14 +48,13 @@ export default async function Page({
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
-
       <ChatProvider
         value={{
           user,
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,
-          availablePersonas: personas,
+          availablePersonas: assistants,
           availableTags: tags,
           llmProviders,
           folders,

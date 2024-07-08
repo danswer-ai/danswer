@@ -49,12 +49,12 @@ export function UserDropdown({
         open={userInfoVisible}
         onOpenChange={setUserInfoVisible}
         content={
-          <BasicSelectable selected={false}>
+          <BasicSelectable padding={false} selected={false}>
             <div
               onClick={() => setUserInfoVisible(!userInfoVisible)}
               className="flex cursor-pointer"
             >
-              <div className="my-auto bg-user rounded-lg px-2 text-base font-normal">
+              <div className="my-auto bg-user hover:bg-user-hover rounded-lg px-2 text-base font-normal">
                 {user && user.email ? user.email[0].toUpperCase() : "A"}
               </div>
             </div>

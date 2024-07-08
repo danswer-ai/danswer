@@ -43,7 +43,7 @@ from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
 from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_default_llm
+from danswer.llm.factory import get_default_llms
 from danswer.llm.headers import get_litellm_additional_request_headers
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.secondary_llm_flows.chat_session_naming import (
@@ -63,6 +63,8 @@ from danswer.server.query_and_chat.models import LLMOverride
 from danswer.server.query_and_chat.models import PromptOverride
 from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
+from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
+from danswer.server.query_and_chat.token_limit import check_token_rate_limits
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -77,9 +79,13 @@ def get_user_chat_sessions(
 ) -> ChatSessionsResponse:
     user_id = user.id if user is not None else None
 
-    chat_sessions = get_chat_sessions_by_user(
-        user_id=user_id, deleted=False, db_session=db_session
-    )
+    try:
+        chat_sessions = get_chat_sessions_by_user(
+            user_id=user_id, deleted=False, db_session=db_session
+        )
+
+    except ValueError:
+        raise ValueError("Chat session does not exist or has been deleted")
 
     return ChatSessionsResponse(
         sessions=[
@@ -90,10 +96,28 @@ def get_user_chat_sessions(
                 time_created=chat.time_created.isoformat(),
                 shared_status=chat.shared_status,
                 folder_id=chat.folder_id,
+                current_alternate_model=chat.current_alternate_model,
             )
             for chat in chat_sessions
         ]
     )
+
+
+@router.put("/update-chat-session-model")
+def update_chat_session_model(
+    update_thread_req: UpdateChatSessionThreadRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    chat_session = get_chat_session_by_id(
+        chat_session_id=update_thread_req.chat_session_id,
+        user_id=user.id if user is not None else None,
+        db_session=db_session,
+    )
+    chat_session.current_alternate_model = update_thread_req.new_alternate_model
+
+    db_session.add(chat_session)
+    db_session.commit()
 
 
 @router.get("/get-chat-session/{session_id}")
@@ -129,6 +153,8 @@ def get_chat_session(
         # we already did a permission check above with the call to
         # `get_chat_session_by_id`, so we can skip it here
         skip_permission_check=True,
+        # we need the tool call objs anyways, so just fetch them in a single call
+        prefetch_tool_calls=True,
     )
 
     return ChatSessionDetailResponse(
@@ -136,6 +162,7 @@ def get_chat_session(
         description=chat_session.description,
         persona_id=chat_session.persona_id,
         persona_name=chat_session.persona.name,
+        current_alternate_model=chat_session.current_alternate_model,
         messages=[
             translate_db_message_to_chat_message_detail(
                 msg, remove_doc_content=is_shared  # if shared, don't leak doc content
@@ -197,7 +224,7 @@ def rename_chat_session(
     full_history = history_msgs + [final_msg]
 
     try:
-        llm = get_default_llm(
+        llm, _ = get_default_llms(
             additional_headers=get_litellm_additional_request_headers(request.headers)
         )
     except GenAIDisabledException:
@@ -249,6 +276,7 @@ def handle_new_chat_message(
     chat_message_req: CreateChatMessageRequest,
     request: Request,
     user: User | None = Depends(current_user),
+    _: None = Depends(check_token_rate_limits),
 ) -> StreamingResponse:
     """This endpoint is both used for all the following purposes:
     - Sending a new message in the session
@@ -359,6 +387,7 @@ def get_max_document_tokens(
             persona_id=persona_id,
             user=user,
             db_session=db_session,
+            is_for_edit=False,
         )
     except ValueError:
         raise HTTPException(status_code=404, detail="Persona not found")

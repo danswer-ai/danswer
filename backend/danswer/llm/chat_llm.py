@@ -5,6 +5,7 @@ from typing import Any
 from typing import cast
 
 import litellm  # type: ignore
+from httpx import RemoteProtocolError
 from langchain.schema.language_model import LanguageModelInput
 from langchain_core.messages import AIMessage
 from langchain_core.messages import AIMessageChunk
@@ -40,6 +41,8 @@ logger = setup_logger()
 # parameters like frequency and presence, just ignore them
 litellm.drop_params = True
 litellm.telemetry = False
+
+litellm.set_verbose = LOG_ALL_MODEL_INTERACTIONS
 
 
 def _base_msg_to_role(msg: BaseMessage) -> str:
@@ -303,6 +306,8 @@ class DefaultMultiLLM(LLM):
             model_name=self._model_version,
             temperature=self._temperature,
             api_key=self._api_key,
+            api_base=self._api_base,
+            api_version=self._api_version,
         )
 
     def invoke(
@@ -338,17 +343,23 @@ class DefaultMultiLLM(LLM):
 
         output = None
         response = self._completion(prompt, tools, tool_choice, True)
-        for part in response:
-            if len(part["choices"]) == 0:
-                continue
-            delta = part["choices"][0]["delta"]
-            message_chunk = _convert_delta_to_message_chunk(delta, output)
-            if output is None:
-                output = message_chunk
-            else:
-                output += message_chunk
+        try:
+            for part in response:
+                if len(part["choices"]) == 0:
+                    continue
+                delta = part["choices"][0]["delta"]
+                message_chunk = _convert_delta_to_message_chunk(delta, output)
+                if output is None:
+                    output = message_chunk
+                else:
+                    output += message_chunk
 
-            yield message_chunk
+                yield message_chunk
+
+        except RemoteProtocolError:
+            raise RuntimeError(
+                "The AI model failed partway through generation, please try again."
+            )
 
         if LOG_ALL_MODEL_INTERACTIONS and output:
             content = output.content or ""

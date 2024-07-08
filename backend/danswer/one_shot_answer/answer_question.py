@@ -30,7 +30,8 @@ from danswer.llm.answering.models import CitationConfig
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.models import QuotesConfig
-from danswer.llm.factory import get_llm_for_persona
+from danswer.llm.factory import get_llms_for_persona
+from danswer.llm.factory import get_main_llm_from_tuple
 from danswer.llm.utils import get_default_llm_token_encode
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
@@ -46,12 +47,13 @@ from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephr
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.utils import get_json_line
 from danswer.tools.force import ForceUseTool
+from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
 from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
 from danswer.tools.search.search_tool import SECTION_RELEVANCE_LIST_ID
 from danswer.tools.tool import ToolResponse
-from danswer.tools.tool_runner import ToolRunKickoff
+from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
 
@@ -67,7 +69,7 @@ AnswerObjectIterator = Iterator[
     | StreamingError
     | ChatMessageDetail
     | CitationInfo
-    | ToolRunKickoff
+    | ToolCallKickoff
 ]
 
 
@@ -155,7 +157,7 @@ def stream_answer_objects(
         commit=True,
     )
 
-    llm = get_llm_for_persona(persona=chat_session.persona)
+    llm, fast_llm = get_llms_for_persona(persona=chat_session.persona)
     prompt_config = PromptConfig.from_model(prompt)
     document_pruning_config = DocumentPruningConfig(
         max_chunks=int(
@@ -173,6 +175,7 @@ def stream_answer_objects(
         retrieval_options=query_req.retrieval_options,
         prompt_config=prompt_config,
         llm=llm,
+        fast_llm=fast_llm,
         pruning_config=document_pruning_config,
         bypass_acl=bypass_acl,
     )
@@ -186,16 +189,17 @@ def stream_answer_objects(
         question=query_msg.message,
         answer_style_config=answer_config,
         prompt_config=PromptConfig.from_model(prompt),
-        llm=get_llm_for_persona(persona=chat_session.persona),
+        llm=get_main_llm_from_tuple(get_llms_for_persona(persona=chat_session.persona)),
         single_message_history=history_str,
         tools=[search_tool],
         force_use_tool=ForceUseTool(
-            tool_name=search_tool.name(),
+            tool_name=search_tool.name,
             args={"query": rephrased_query},
         ),
         # for now, don't use tool calling for this flow, as we haven't
         # tested quotes with tool calling too much yet
         skip_explicit_tool_calling=True,
+        return_contexts=query_req.return_contexts,
     )
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
     dropped_inds: list[int] = []
@@ -245,6 +249,8 @@ def stream_answer_objects(
                     )
 
                 yield LLMRelevanceFilterResponse(relevant_chunk_indices=packet.response)
+            elif packet.id == SEARCH_DOC_CONTENT_ID:
+                yield packet.response
         else:
             yield packet
 

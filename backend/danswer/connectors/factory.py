@@ -1,8 +1,11 @@
 from typing import Any
 from typing import Type
 
+from sqlalchemy.orm import Session
+
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.axero.connector import AxeroConnector
+from danswer.connectors.blob.connector import BlobStorageConnector
 from danswer.connectors.bookstack.connector import BookstackConnector
 from danswer.connectors.clickup.connector import ClickupConnector
 from danswer.connectors.confluence.connector import ConfluenceConnector
@@ -40,6 +43,8 @@ from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.wikipedia.connector import WikipediaConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
+from danswer.db.credentials import backend_update_credential_json
+from danswer.db.models import Credential
 
 
 class ConnectorMissingException(Exception):
@@ -86,6 +91,10 @@ def identify_connector_class(
         DocumentSource.CLICKUP: ClickupConnector,
         DocumentSource.MEDIAWIKI: MediaWikiConnector,
         DocumentSource.WIKIPEDIA: WikipediaConnector,
+        DocumentSource.S3: BlobStorageConnector,
+        DocumentSource.R2: BlobStorageConnector,
+        DocumentSource.GOOGLE_CLOUD_STORAGE: BlobStorageConnector,
+        DocumentSource.OCI_STORAGE: BlobStorageConnector,
     }
     connector_by_source = connector_map.get(source, {})
 
@@ -111,7 +120,6 @@ def identify_connector_class(
         raise ConnectorMissingException(
             f"Connector for source={source} does not accept input_type={input_type}"
         )
-
     return connector
 
 
@@ -119,10 +127,14 @@ def instantiate_connector(
     source: DocumentSource,
     input_type: InputType,
     connector_specific_config: dict[str, Any],
-    credentials: dict[str, Any],
-) -> tuple[BaseConnector, dict[str, Any] | None]:
+    credential: Credential,
+    db_session: Session,
+) -> BaseConnector:
     connector_class = identify_connector_class(source, input_type)
     connector = connector_class(**connector_specific_config)
-    new_credentials = connector.load_credentials(credentials)
+    new_credentials = connector.load_credentials(credential.credential_json)
 
-    return connector, new_credentials
+    if new_credentials is not None:
+        backend_update_credential_json(credential, new_credentials, db_session)
+
+    return connector
