@@ -15,13 +15,14 @@ from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import tokenizer_trim_content
 from danswer.prompts.prompt_utils import build_doc_context_str
 from danswer.search.models import InferenceChunk
+from danswer.search.models import InferenceSection
 from danswer.tools.search.search_utils import llm_doc_to_dict
 from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
 
-T = TypeVar("T", bound=LlmDoc | InferenceChunk)
+T = TypeVar("T", bound=LlmDoc | InferenceChunk | InferenceSection)
 
 _METADATA_TOKEN_ESTIMATE = 75
 
@@ -211,6 +212,7 @@ def prune_documents(
     if doc_relevance_list is not None:
         assert len(docs) == len(doc_relevance_list)
 
+    # TODO touch this up
     doc_token_limit = _compute_limit(
         prompt_config=prompt_config,
         llm_config=llm_config,

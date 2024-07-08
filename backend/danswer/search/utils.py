@@ -18,8 +18,13 @@ def dedupe_documents(items: list[T]) -> tuple[list[T], list[int]]:
     deduped_items = []
     dropped_indices = []
     for index, item in enumerate(items):
-        if item.document_id not in seen_ids:
-            seen_ids.add(item.document_id)
+        if isinstance(item, InferenceSection):
+            document_id = item.center_chunk.document_id
+        else:
+            document_id = item.document_id
+
+        if document_id not in seen_ids:
+            seen_ids.add(document_id)
             deduped_items.append(item)
         else:
             dropped_indices.append(index)
@@ -40,32 +45,36 @@ def drop_llm_indices(
 
 
 def chunks_or_sections_to_search_docs(
-    chunks: Sequence[InferenceChunk | InferenceSection] | None,
+    items: Sequence[InferenceChunk | InferenceSection] | None,
 ) -> list[SearchDoc]:
-    search_docs = (
-        [
-            SearchDoc(
-                document_id=chunk.document_id,
-                chunk_ind=chunk.chunk_id,
-                semantic_identifier=chunk.semantic_identifier or "Unknown",
-                link=chunk.source_links.get(0) if chunk.source_links else None,
-                blurb=chunk.blurb,
-                source_type=chunk.source_type,
-                boost=chunk.boost,
-                hidden=chunk.hidden,
-                metadata=chunk.metadata,
-                score=chunk.score,
-                match_highlights=chunk.match_highlights,
-                updated_at=chunk.updated_at,
-                primary_owners=chunk.primary_owners,
-                secondary_owners=chunk.secondary_owners,
-                is_internet=False,
-            )
-            for chunk in chunks
-        ]
-        if chunks
-        else []
-    )
+    if not items:
+        return []
+
+    search_docs = [
+        SearchDoc(
+            document_id=(
+                chunk := item.center_chunk
+                if isinstance(item, InferenceSection)
+                else item
+            ).document_id,
+            chunk_ind=chunk.chunk_id,
+            semantic_identifier=chunk.semantic_identifier or "Unknown",
+            link=chunk.source_links[0] if chunk.source_links else None,
+            blurb=chunk.blurb,
+            source_type=chunk.source_type,
+            boost=chunk.boost,
+            hidden=chunk.hidden,
+            metadata=chunk.metadata,
+            score=chunk.score,
+            match_highlights=chunk.match_highlights,
+            updated_at=chunk.updated_at,
+            primary_owners=chunk.primary_owners,
+            secondary_owners=chunk.secondary_owners,
+            is_internet=False,
+        )
+        for item in items
+    ]
+
     return search_docs
 
 

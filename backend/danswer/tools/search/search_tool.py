@@ -245,10 +245,10 @@ class SearchTool(Tool):
             response=DanswerContexts(
                 contexts=[
                     DanswerContext(
-                        content=section.content,
-                        document_id=section.document_id,
-                        semantic_identifier=section.semantic_identifier,
-                        blurb=section.blurb,
+                        content=section.combined_content,
+                        document_id=section.center_chunk.document_id,
+                        semantic_identifier=section.center_chunk.semantic_identifier,
+                        blurb=section.center_chunk.blurb,
                     )
                     for section in search_pipeline.reranked_sections
                 ]
@@ -256,7 +256,7 @@ class SearchTool(Tool):
         )
         yield ToolResponse(
             id=SECTION_RELEVANCE_LIST_ID,
-            response=search_pipeline.relevant_chunk_indices,
+            response=search_pipeline.reranked_sections,
         )
 
         llm_docs = [
@@ -266,7 +266,7 @@ class SearchTool(Tool):
         final_context_documents = prune_documents(
             docs=llm_docs,
             doc_relevance_list=[
-                True if ind in search_pipeline.relevant_chunk_indices else False
+                True if ind in search_pipeline.relevant_section_indices else False
                 for ind in range(len(llm_docs))
             ],
             prompt_config=self.prompt_config,

@@ -12,12 +12,13 @@ from danswer.document_index.document_index_utils import (
 from danswer.llm.interfaces import LLM
 from danswer.search.models import ChunkMetric
 from danswer.search.models import InferenceChunk
+from danswer.search.models import InferenceSection
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.search_nlp_models import CrossEncoderEnsembleModel
-from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_chunks
+from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_sections
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
@@ -132,23 +133,23 @@ def rerank_chunks(
 
 
 @log_function_time(print_only=True)
-def filter_chunks(
+def filter_sections(
     query: SearchQuery,
-    chunks_to_filter: list[InferenceChunk],
+    sections_to_filter: list[InferenceSection],
     llm: LLM,
-) -> list[str]:
-    """Filters chunks based on whether the LLM thought they were relevant to the query.
+) -> list[InferenceSection]:
+    """Filters sections based on whether the LLM thought they were relevant to the query.
 
     Returns a list of the unique chunk IDs that were marked as relevant"""
-    chunks_to_filter = chunks_to_filter[: query.max_llm_filter_chunks]
-    llm_chunk_selection = llm_batch_eval_chunks(
+    sections_to_filter = sections_to_filter[: query.max_llm_filter_chunks]
+    llm_chunk_selection = llm_batch_eval_sections(
         query=query.query,
-        chunk_contents=[chunk.content for chunk in chunks_to_filter],
+        section_contents=[section.combined_content for section in sections_to_filter],
         llm=llm,
     )
     return [
-        chunk.unique_id
-        for ind, chunk in enumerate(chunks_to_filter)
+        section
+        for ind, section in enumerate(sections_to_filter)
         if llm_chunk_selection[ind]
     ]
 
@@ -159,6 +160,9 @@ def search_postprocessing(
     llm: LLM,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> Generator[list[InferenceChunk] | list[str], None, None]:
+    # DEPRECATED, reranking runs now before the LLM filter call, reason being that
+    # we want better LLM filtering which needs to run on sections, which are built
+    # after reranking is run.
     post_processing_tasks: list[FunctionCall] = []
 
     rerank_task_id = None
@@ -187,7 +191,7 @@ def search_postprocessing(
     if should_apply_llm_based_relevance_filter(search_query):
         post_processing_tasks.append(
             FunctionCall(
-                filter_chunks,
+                filter_sections,
                 (
                     search_query,
                     retrieved_chunks[: search_query.max_llm_filter_chunks],
