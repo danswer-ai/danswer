@@ -3,6 +3,7 @@ celery-types==0.19.0
 mypy-extensions==1.0.0
 mypy==1.8.0
 pre-commit==3.2.2
+pytest==7.4.4
 reorder-python-imports==3.9.0
 ruff==0.0.286
 types-PyYAML==6.0.12.11
