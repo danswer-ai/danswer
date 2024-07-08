@@ -201,6 +201,8 @@ GONG_CONNECTOR_START_TIME = os.environ.get("GONG_CONNECTOR_START_TIME")
 
 GITHUB_CONNECTOR_BASE_URL = os.environ.get("GITHUB_CONNECTOR_BASE_URL") or None
 
+# Enable indexing of GitHub repository files (on initial load or complete
+# re-indexing only)
 GITHUB_CONNECTOR_INCLUDE_CODE_FILES = (
     os.environ.get("GITHUB_CONNECTOR_INCLUDE_CODE_FILES", "").lower() == "true"
 )
