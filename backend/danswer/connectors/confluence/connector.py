@@ -365,7 +365,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             return pages
 
         def _fetch_single_depth_child_pages(
-            start_ind: int, batch_size: int, page_id
+            start_ind: int, batch_size: int, page_id: int
         ) -> list[dict[str, Any]]:
             child_pages: list[dict[str, Any]] = []
 
