@@ -36,11 +36,13 @@ mock_doc_mapping = {
 
 
 @pytest.fixture
-def mock_data():
+def mock_data() -> tuple[list[LlmDoc], dict[str, int]]:
     return mock_docs, mock_doc_mapping
 
 
-def process_text(tokens, mock_data):
+def process_text(
+    tokens: list[str], mock_data: tuple[list[LlmDoc], dict[str, int]]
+) -> tuple[str, list[CitationInfo]]:
     mock_docs, mock_doc_id_to_rank_map = mock_data
     result = list(
         extract_citations_from_stream(
@@ -167,8 +169,12 @@ def process_text(tokens, mock_data):
     ],
 )
 def test_citation_extraction(
-    mock_data, test_name, input_tokens, expected_text, expected_citations
-):
+    mock_data: tuple[list[LlmDoc], dict[str, int]],
+    test_name: str,
+    input_tokens: list[str],
+    expected_text: str,
+    expected_citations: list[str],
+) -> None:
     final_answer_text, citations = process_text(input_tokens, mock_data)
     assert (
         final_answer_text.strip() == expected_text.strip()
