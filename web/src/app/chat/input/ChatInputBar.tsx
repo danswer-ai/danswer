@@ -1,19 +1,5 @@
-import React, {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import {
-  FiSend,
-  FiFilter,
-  FiPlusCircle,
-  FiCpu,
-  FiX,
-  FiPlus,
-  FiInfo,
-} from "react-icons/fi";
+import React, { useEffect, useRef, useState } from "react";
+import { FiPlusCircle, FiPlus } from "react-icons/fi";
 import { ChatInputOption } from "./ChatInputOption";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
@@ -26,18 +12,11 @@ import {
   InputBarPreviewImageProvider,
 } from "../files/InputBarPreview";
 import {
-  AssistantsIcon,
   AssistantsIconSkeleton,
-  ConfigureIcon,
-  CpuIcon,
   CpuIconSkeleton,
   FileIcon,
-  RobotIcon,
   SendIcon,
 } from "@/components/icons/icons";
-import { Hoverable } from "@/components/Hoverable";
-import { AssistantIcon } from "@/components/assistants/AssistantIcon";
-import { Tooltip } from "@/components/tooltip/Tooltip";
 import { IconType } from "react-icons";
 import Popup from "../sessionSidebar/Popup";
 import { LlmTab } from "../modal/configuration/LlmTab";
@@ -191,6 +170,11 @@ export function ChatInputBar({
   const [assistantIconIndex, setAssistantIconIndex] = useState(0);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    console.log("KE");
+    if (!showSuggestions) {
+      console.log("KEY DOWN");
+      return;
+    }
     if (
       showSuggestions &&
       filteredPersonas.length > 0 &&

@@ -20,34 +20,29 @@ export const TempAssistant = forwardRef<HTMLDivElement, DocumentSidebarProps>(
       <div
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="flex-none h-10 duration-300 h-10  items-center  rounded-lg bg-background-weakish"
+        className="flex-none h-10 duration-300 h-10 items-center rounded-lg bg-background-weakish"
       >
         <Tooltip
           content={
-            <p className="max-w-xs  flex ">
-              {alternativeAssistant.description}
-            </p>
+            <p className="max-w-xs flex">{alternativeAssistant.description}</p>
           }
         >
           <div
             ref={ref}
-            className="p-2 relative rounded-t-lg items-center flex"
+            className="p-2 gap-x-1 relative rounded-t-lg items-center flex"
           >
             <AssistantIcon assistant={alternativeAssistant} border />
             <p className="ml-1 line-clamp-1 ellipsis  break-all my-auto">
               {alternativeAssistant.name}
             </p>
-            <div className="flex gap-x-1 ml-auto ">{/* </Tooltip> */}</div>
+            <div
+              className="rounded-lg rounded h-fit cursor-pointer"
+              onClick={unToggle}
+            >
+              <FiX />
+            </div>
           </div>
         </Tooltip>
-        {isHovered && (
-          <div
-            className="bg-neutral- rounded-lg p-.5 rounded h-fit cursor-pointer"
-            onClick={unToggle}
-          >
-            <FiX />
-          </div>
-        )}
       </div>
     );
   }
@@ -84,14 +79,12 @@ export const TempAssistant2 = forwardRef<HTMLDivElement, DocumentSidebarProps>(
           </div>
         </Tooltip>
         {isHovered && (
-          // <div className=" flex gap-x-1 p-1 bg-neutral-50 rounded-bl-lg">
           <div
             className="bg-neutral- rounded-lg p-.5 rounded h-fit cursor-pointer"
             onClick={unToggle}
           >
             <FiX />
           </div>
-          // {/* </div> */}
         )}
       </div>
     );

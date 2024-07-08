@@ -47,6 +47,14 @@ class LLMRelevanceFilterResponse(BaseModel):
     relevant_chunk_indices: list[int]
 
 
+class LLMRelevanceEvaluationResponse(BaseModel):
+    relevant_chunk_indices: list[int]
+
+
+class LLMRelevanceSummaryResponse(BaseModel):
+    relevance_summaries: dict[int, str]
+
+
 class DanswerAnswerPiece(BaseModel):
     # A small piece of a complete answer. Used for streaming back answers.
     answer_piece: str | None  # if None, specifies the end of an Answer
