@@ -237,6 +237,18 @@ def process_text(
             "[[1]](https://0.com)t",
             ["doc_0"],
         ),
+        (
+            "Repeated citations with text",
+            ["[1][", "1", "]t]", "[2]"],
+            "[[1]](https://0.com)t]",
+            ["doc_0"],
+        ),
+        (
+            "Repeated citations with text",
+            ["[1][", "3", "]t]", "[2]"],
+            "[[1]](https://0.com)[[2]]()t]",
+            ["doc_0", "doc_1"],
+        ),
     ],
 )
 def test_citation_extraction(
