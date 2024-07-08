@@ -105,14 +105,22 @@ def extract_citations_from_stream(
                 if 1 <= numerical_value <= max_citation_num:
                     context_llm_doc = context_docs[numerical_value - 1]
                     real_citation_num = doc_id_to_rank_map[context_llm_doc.document_id]
+
                     if real_citation_num not in citation_order:
                         citation_order.append(real_citation_num)
+
                     target_citation_num = citation_order.index(real_citation_num) + 1
 
                     # Skip consecutive citations of the same work
                     if target_citation_num in current_citations:
                         start, end = citation.span()
-                        curr_segment = curr_segment[:start] + curr_segment[end:]
+                        real_start = length_to_add + start
+                        diff = end - start
+                        curr_segment = (
+                            curr_segment[: length_to_add + start]
+                            + curr_segment[real_start + diff :]
+                        )
+                        length_to_add -= diff
                         continue
 
                     link = context_llm_doc.link
@@ -156,7 +164,6 @@ def extract_citations_from_stream(
 
             if last_citation_end > 0:
                 yield DanswerAnswerPiece(answer_piece=curr_segment[:last_citation_end])
-
                 curr_segment = curr_segment[last_citation_end:]
         if possible_citation_found:
             continue

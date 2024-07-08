@@ -10,6 +10,7 @@ from danswer.llm.answering.stream_processing.citation_processing import (
     extract_citations_from_stream,
 )
 
+
 """
 This module contains unit tests for the citation extraction functionality in Danswer.
 
@@ -187,6 +188,53 @@ def process_text(
             "Repeated citations with text",
             ["[", "1", "]", "Aasf", "asda", "sff  ", "[", "1", "]", " ."],
             "[[1]](https://0.com)Aasfasdasff  [[1]](https://0.com) .",
+            ["doc_0"],
+        ),
+        (
+            "Consecutive identical citations!",
+            [
+                "Citations [",
+                "1",
+                "]",
+                "[",
+                "1]",
+                "",
+                "[2",
+                "",
+                "]",
+                ". ",
+            ],
+            "Citations [[1]](https://0.com).",
+            ["doc_0"],
+        ),
+        (
+            "Consecutive identical citations!",
+            [
+                "test [1]tt[1]t",
+                "",
+            ],
+            "test [[1]](https://0.com)ttt",
+            ["doc_0"],
+        ),
+        (
+            "Consecutive identical citations!",
+            [
+                "test [1]t[1]t[1]",
+                "",
+            ],
+            "test [[1]](https://0.com)tt",
+            ["doc_0"],
+        ),
+        (
+            "Repeated citations with text",
+            ["[", "1", "]", "Aasf", "asda", "sff  ", "[", "1", "]", " ."],
+            "[[1]](https://0.com)Aasfasdasff  [[1]](https://0.com) .",
+            ["doc_0"],
+        ),
+        (
+            "Repeated citations with text",
+            ["[1][", "1", "]t", "[2]"],
+            "[[1]](https://0.com)t",
             ["doc_0"],
         ),
     ],
