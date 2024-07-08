@@ -67,7 +67,7 @@ def extract_citations_from_stream(
     hold = ""
 
     raw_out = ""
-    current_citations = []
+    current_citations: list[int] = []
     past_cite_count = 0
     for raw_token in tokens:
         raw_out += raw_token
