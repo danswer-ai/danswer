@@ -17,6 +17,7 @@ import { HoverPopup } from "../HoverPopup";
 import { FiInfo } from "react-icons/fi";
 import { Tooltip } from "./results/Citation";
 import { SendIcon } from "../icons/icons";
+import { Divider } from "@tremor/react";
 
 export const AnimatedToggle = ({
   isOn,
@@ -52,12 +53,17 @@ export const AnimatedToggle = ({
             Agentic Search
           </h2>
           <p className="text-neutral-700 text-sm mb-4">
-            Our most powerful search, ideal for longer answers to complex
-            questions
+            Our most powerful search, ideal for complicated queries and complex
+            answers.
           </p>
-          <button className="bg-background-weak text-default px-4 py-2 rounded-md hover:bg-hover-lightish transition-colors duration-300">
-            Learn More
-          </button>
+          <Divider />
+          <h2 className="text-xl text-neutral-800 font-bold mb-2">
+            Fast Search
+          </h2>
+          <p className="text-neutral-700 text-sm mb-4">
+            Get high quality results immediately, best for quick access to your
+            docs.
+          </p>
         </div>
       }
     >

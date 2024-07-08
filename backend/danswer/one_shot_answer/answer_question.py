@@ -269,6 +269,7 @@ def stream_answer_objects(
         user_query=query_msg.message,
         history_str=history_str,
     )
+
     # Given back ahead of the documents for latency reasons
     # In chat flow it's given back along with the documents
     yield QueryRephrase(rephrased_query=rephrased_query)
@@ -384,6 +385,8 @@ def stream_answer_objects(
                     applied_time_cutoff=search_response_summary.final_filters.time_cutoff,
                     recency_bias_multiplier=search_response_summary.recency_bias_multiplier,
                 )
+
+                # analyze in the section
                 yield initial_response
             elif packet.id == SECTION_RELEVANCE_LIST_ID:
                 chunk_indices = packet.response

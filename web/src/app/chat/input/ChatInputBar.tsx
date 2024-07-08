@@ -375,7 +375,7 @@ export function ChatInputBar({
               style={{ scrollbarWidth: "thin" }}
               role="textarea"
               aria-multiline
-              placeholder="Send a message..."
+              placeholder="Send a message or @ to tag an assistant..."
               value={message}
               onKeyDown={(event) => {
                 if (
