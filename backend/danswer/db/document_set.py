@@ -45,7 +45,7 @@ def _mark_document_set_cc_pairs_as_outdated__no_commit(
 def delete_document_set_privacy__no_commit(
     document_set_id: int, db_session: Session
 ) -> None:
-    """No private document sets in Danswer MIT"""
+    """No private document sets in Spectra MIT"""
 
 
 def get_document_set_by_id(
@@ -82,7 +82,7 @@ def make_doc_set_private(
 ) -> None:
     # May cause error if someone switches down to MIT from EE
     if user_ids or group_ids:
-        raise NotImplementedError("Danswer MIT does not support private Document Sets")
+        raise NotImplementedError("Spectra MIT does not support private Document Sets")
 
 
 def insert_document_set(

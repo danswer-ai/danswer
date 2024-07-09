@@ -12,7 +12,7 @@ export default async function Page() {
       />
 
       <Text className="mb-8">
-        Manage general Danswer settings applicable to all users in the
+        Manage general Spectra settings applicable to all users in the
         workspace.
       </Text>
 

@@ -452,7 +452,7 @@ def slack_usage_report(action: str, sender_id: str | None, client: WebClient) ->
     optional_telemetry(
         record_type=RecordType.USAGE,
         data={"action": action},
-        user_id=str(danswer_user.id) if danswer_user else "Non-Danswer-Or-No-Auth-User",
+        user_id=str(danswer_user.id) if danswer_user else "Non-Spectra-Or-No-Auth-User",
     )
 
 

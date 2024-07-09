@@ -88,7 +88,7 @@ const Main = () => {
       {popup}
       <Text>
         This connector allows you to sync all your Gong Transcripts into
-        Danswer. More details on how to setup the Gong connector can be found in{" "}
+        Spectra. More details on how to setup the Gong connector can be found in{" "}
         <a
           className="text-link"
           href="https://docs.danswer.dev/connectors/gong"

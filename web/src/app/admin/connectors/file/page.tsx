@@ -60,7 +60,7 @@ const Main = () => {
       {filesAreUploading && <Spinner />}
       <Text className="mb-2">
         Specify files below, click the <b>Upload</b> button, and the contents of
-        these files will be searchable via Danswer! Currently supported file
+        these files will be searchable via Spectra! Currently supported file
         types include <i>.txt</i>, <i>.pdf</i>, <i>.docx</i>, <i>.pptx</i>,{" "}
         <i>.xlsx</i>, <i>.csv</i>, <i>.md</i>, <i>.mdx</i>, <i>.conf</i>,{" "}
         <i>.log</i>, <i>.json</i>, <i>.tsv</i>, <i>.xml</i>, <i>.yml</i>,{" "}
@@ -76,7 +76,7 @@ const Main = () => {
           </div>
         </div>{" "}
         where <i>{"<LINK>"}</i> is the link to the file. This will enable
-        Danswer to link users to the original document when they click on the
+        Spectra to link users to the original document when they click on the
         search result. More details on this can be found in the{" "}
         <a
           href="https://docs.danswer.dev/connectors/file"

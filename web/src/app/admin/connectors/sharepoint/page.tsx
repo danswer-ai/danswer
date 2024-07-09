@@ -87,7 +87,7 @@ const MainSection = () => {
         The Sharepoint connector allows you to index and search through your
         Sharepoint files. Once setup, your Word documents, Excel files,
         PowerPoint presentations, OneNote notebooks, PDFs, and uploaded files
-        will be queryable within Danswer.
+        will be queryable within Spectra.
       </Text>
 
       <Title className="mb-2 mt-6 ml-auto mr-auto">

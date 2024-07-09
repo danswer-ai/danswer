@@ -167,8 +167,8 @@ export const SlackBotCreationForm = ({
               const errorMsg = responseJson.detail || responseJson.message;
               setPopup({
                 message: isUpdate
-                  ? `Error updating DanswerBot config - ${errorMsg}`
-                  : `Error creating DanswerBot config - ${errorMsg}`,
+                  ? `Error updating SepctraBot config - ${errorMsg}`
+                  : `Error creating SpectraBot config - ${errorMsg}`,
                 type: "error",
               });
             }
@@ -187,10 +187,10 @@ export const SlackBotCreationForm = ({
                     <div>
                       The names of the Slack channels you want this
                       configuration to apply to. For example,
-                      &apos;#ask-danswer&apos;.
+                      &apos;#ask-spectra&apos;.
                       <br />
                       <br />
-                      <i>NOTE</i>: you still need to add DanswerBot to the
+                      <i>NOTE</i>: you still need to add SpectraBot to the
                       channel(s) in Slack itself. Setting this config will not
                       auto-add the bot to the channel.
                     </div>
@@ -202,15 +202,15 @@ export const SlackBotCreationForm = ({
                   label="Response Format"
                   subtext={
                     <>
-                      If set to Citations, DanswerBot will respond with a direct
+                      If set to Citations, SpectraBot will respond with a direct
                       answer with inline citations. It will also provide links
                       to these cited documents below the answer. When in doubt,
                       choose this option.
                       <br />
                       <br />
-                      If set to Quotes, DanswerBot will respond with a direct
+                      If set to Quotes, SpectraBot will respond with a direct
                       answer as well as with quotes pulled from the context
-                      documents to support that answer. DanswerBot will also
+                      documents to support that answer. SpectraBot will also
                       give a list of relevant documents. Choose this option if
                       you want a very detailed response AND/OR a list of
                       relevant documents would be useful just in case the LLM
@@ -225,7 +225,7 @@ export const SlackBotCreationForm = ({
 
                 <Divider />
 
-                <SectionHeader>When should DanswerBot respond?</SectionHeader>
+                <SectionHeader>When should SpectraBot respond?</SectionHeader>
 
                 <BooleanFormField
                   name="answer_validity_check_enabled"
@@ -239,22 +239,22 @@ export const SlackBotCreationForm = ({
                 />
                 <BooleanFormField
                   name="respond_tag_only"
-                  label="Respond to @DanswerBot Only"
-                  subtext="If set, DanswerBot will only respond when directly tagged"
+                  label="Respond to @SpectraBot Only"
+                  subtext="If set, SpectraBot will only respond when directly tagged"
                 />
                 <BooleanFormField
                   name="respond_to_bots"
                   label="Responds to Bot messages"
-                  subtext="If not set, DanswerBot will always ignore messages from Bots"
+                  subtext="If not set, SpectraBot will always ignore messages from Bots"
                 />
                 <TextArrayField
                   name="respond_member_group_list"
                   label="Team Member Emails Or Slack Group Names"
-                  subtext={`If specified, DanswerBot responses will only be 
+                  subtext={`If specified, SpectraBot responses will only be 
                   visible to the members or groups in this list. This is
-                  useful if you want DanswerBot to operate in an
+                  useful if you want SpectraBot to operate in an
                   "assistant" mode, where it helps the team members find
-                  answers, but let's them build on top of DanswerBot's response / throw 
+                  answers, but let's them build on top of SpectraBot's response / throw 
                   out the occasional incorrect answer. Group names are case sensitive.`}
                   values={values}
                 />
@@ -264,8 +264,8 @@ export const SlackBotCreationForm = ({
 
                 <BooleanFormField
                   name="still_need_help_enabled"
-                  label="Should Danswer give a “Still need help?” button?"
-                  subtext={`If specified, DanswerBot's response will include a button at the bottom 
+                  label="Should Spectra give a “Still need help?” button?"
+                  subtext={`If specified, SpectraBot's response will include a button at the bottom 
                   of the response that asks the user if they still need help.`}
                 />
                 {values.still_need_help_enabled && (
@@ -280,8 +280,8 @@ export const SlackBotCreationForm = ({
                         button. For example, &apos;mark@acme.com&apos;.
                         <br />
                         Or provide a user group by either the name or the
-                        handle. For example, &apos;Danswer Team&apos; or
-                        &apos;danswer-team&apos;.
+                        handle. For example, &apos;Spectra Team&apos; or
+                        &apos;Spectra-team&apos;.
                         <br />
                         <br />
                         If no emails are provided, we will not tag anyone and
@@ -299,7 +299,7 @@ export const SlackBotCreationForm = ({
                   </SectionHeader>
                   <Text>
                     Use either a Persona <b>or</b> Document Sets to control how
-                    DanswerBot answers.
+                    SpectraBot answers.
                   </Text>
                   <Text>
                     <ul className="list-disc mt-2 ml-4">
@@ -309,7 +309,7 @@ export const SlackBotCreationForm = ({
                       </li>
                       <li>
                         You should use Document Sets if you just want to control
-                        which documents DanswerBot uses as references.
+                        which documents SpectraBot uses as references.
                       </li>
                     </ul>
                   </Text>
@@ -337,8 +337,8 @@ export const SlackBotCreationForm = ({
                           <div>
                             <div>
                               <SubLabel>
-                                The document sets that DanswerBot should search
-                                through. If left blank, DanswerBot will search
+                                The document sets that SpectraBot should search
+                                through. If left blank, SpectraBot will search
                                 through all documents.
                               </SubLabel>
                             </div>

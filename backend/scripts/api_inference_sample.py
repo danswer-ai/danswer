@@ -67,17 +67,17 @@ if __name__ == "__main__":
         "--danswer-url",
         type=str,
         default="http://localhost:80",
-        help="Danswer URL, should point to Danswer nginx.",
+        help="Spectra URL, should point to Spectra nginx.",
     )
     parser.add_argument(
         "--test-question",
         type=str,
-        default="What is Danswer?",
+        default="What is Spectra?",
         help="Test question for new Chat Session.",
     )
 
     # Not needed if Auth is disabled
-    # Or for Danswer MIT API key must be replaced with session cookie
+    # Or for Spectra MIT API key must be replaced with session cookie
     api_key = os.environ.get("DANSWER_API_KEY")
 
     args = parser.parse_args()

@@ -618,7 +618,7 @@ export function AssistantEditor({
                                         <>
                                           If this functionality would be useful,
                                           reach out to the administrators of
-                                          Danswer for assistance.
+                                          Spectra for assistance.
                                         </>
                                       )}
                                     </Italic>
@@ -722,7 +722,7 @@ export function AssistantEditor({
                           );
                         }}
                         explanationText="Learn about prompting in our docs!"
-                        explanationLink="https://docs.danswer.dev/guides/assistants"
+                        explanationLink="https://docs.spectra.dev/guides/assistants"
                       />
                     </>
                   )}

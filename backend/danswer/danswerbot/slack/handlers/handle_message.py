@@ -125,7 +125,7 @@ def handle_message(
     Returns True if need to respond with an additional message to the user(s) after this
     function is finished. True indicates an unexpected failure that needs to be communicated
     Query thrown out by filters due to config does not count as a failure that should be notified
-    Danswer failing to answer/retrieve docs does count and should be notified
+    Spectra failing to answer/retrieve docs does count and should be notified
     """
     channel = message_info.channel_to_respond
 
@@ -192,7 +192,7 @@ def handle_message(
     if respond_tag_only and not bypass_filters:
         logger.info(
             "Skipping message since the channel is configured such that "
-            "DanswerBot only responds to tags"
+            "SpectraBot only responds to tags"
         )
         return False
 
@@ -212,7 +212,7 @@ def handle_message(
                 client=client,
                 channel=channel,
                 receiver_ids=[sender_id],
-                text="The DanswerBot slash command is not enabled for this channel",
+                text="The SpectraBot slash command is not enabled for this channel",
                 thread_ts=None,
             )
 

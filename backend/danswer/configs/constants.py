@@ -53,9 +53,9 @@ DANSWER_METADATA_FILENAME = ".danswer_metadata.json"
 
 # Messages
 DISABLED_GEN_AI_MSG = (
-    "Your System Admin has disabled the Generative AI functionalities of Danswer.\n"
+    "Your System Admin has disabled the Generative AI functionalities of Spectra.\n"
     "Please contact them if you wish to have this enabled.\n"
-    "You can still use Danswer as a search engine."
+    "You can still use Spectra as a search engine."
 )
 
 
@@ -66,7 +66,7 @@ UNNAMED_KEY_PLACEHOLDER = "Unnamed"
 
 
 class DocumentSource(str, Enum):
-    # Special case, document passed in via Danswer APIs without specifying a source type
+    # Special case, document passed in via Spectra APIs without specifying a source type
     INGESTION_API = "ingestion_api"
     SLACK = "slack"
     WEB = "web"

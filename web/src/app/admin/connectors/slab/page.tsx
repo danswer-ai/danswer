@@ -241,7 +241,7 @@ const Main = () => {
                   }
                   validationSchema={Yup.object().shape({
                     base_url: Yup.string().required(
-                      "Please enter the base URL for your team e.g. https://danswer.slab.com/"
+                      "Please enter the base URL for your team e.g. https://spectra.slab.com/"
                     ),
                   })}
                   initialValues={{

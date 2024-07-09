@@ -94,7 +94,7 @@ export function WhitelabelingForm() {
             <TextFormField
               label="Application Name"
               name="application_name"
-              subtext={`The custom name you are giving Danswer for your organization. This will replace 'Danswer' everywhere in the UI.`}
+              subtext={`The custom name you are giving Spectra for your organization. This will replace 'Danswer' everywhere in the UI.`}
               placeholder="Custom name which will replace 'Danswer'"
               disabled={isSubmitting}
             />
@@ -164,7 +164,7 @@ export function WhitelabelingForm() {
                 name="custom_popup_header"
                 subtext={`The title for the popup that will be displayed for each user on their initial visit 
                 to the application. If left blank AND Custom Popup Content is specified, will use "Welcome to ${
-                  values.application_name || "Danswer"
+                  values.application_name || "Spectra"
                 }!".`}
                 placeholder="Initial Popup Header"
                 disabled={isSubmitting}

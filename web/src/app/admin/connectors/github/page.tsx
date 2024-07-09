@@ -224,10 +224,10 @@ const Main = () => {
             }
             validationSchema={Yup.object().shape({
               repo_owner: Yup.string().required(
-                "Please enter the owner of the repository to index e.g. danswer-ai"
+                "Please enter the owner of the repository to index e.g. spectra-ai"
               ),
               repo_name: Yup.string().required(
-                "Please enter the name of the repository to index e.g. danswer "
+                "Please enter the name of the repository to index e.g. spectra "
               ),
               include_prs: Yup.boolean().required(),
               include_issues: Yup.boolean().required(),

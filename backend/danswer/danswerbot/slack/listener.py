@@ -190,14 +190,14 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
         )
         if not channel:
             channel_specific_logger.error(
-                "Received DanswerBot command without channel - skipping"
+                "Received SpectraBot command without channel - skipping"
             )
             return False
 
         sender = req.payload.get("user_id")
         if not sender:
             channel_specific_logger.error(
-                "Cannot respond to DanswerBot command without sender to respond to."
+                "Cannot respond to SpectraBot command without sender to respond to."
             )
             return False
 
@@ -255,7 +255,7 @@ def build_request_details(
                 logger.error(f"Error while trying to rephrase the Slack message: {e}")
 
         if tagged:
-            logger.info("User tagged DanswerBot")
+            logger.info("User tagged SpectraBot")
 
         if thread_ts != message_ts and thread_ts is not None:
             thread_messages = read_slack_thread(

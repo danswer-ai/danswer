@@ -157,9 +157,9 @@ function Main() {
               To complete the initial setup, let&apos;s add a connector!
               <br />
               <br />
-              Connectors are the way that Danswer gets data from your
+              Connectors are the way that Spectra gets data from your
               organization&apos;s various data sources. Once setup, we&apos;ll
-              automatically sync data from your apps and docs into Danswer, so
+              automatically sync data from your apps and docs into Spectra, so
               you can search all through all of them in one place.
             </div>
             <div className="flex">
@@ -197,7 +197,7 @@ function Main() {
 
       <Text>
         Embedding models are used to generate embeddings for your documents,
-        which then power Danswer&apos;s search.
+        which then power Spectra&apos;s search.
       </Text>
 
       {currentModel ? (
@@ -277,9 +277,9 @@ function Main() {
               </a>
               .
               <br />
-              <b>NOTE:</b> not all models listed will work with Danswer, since
+              <b>NOTE:</b> not all models listed will work with Spectra, since
               some have unique interfaces or special requirements. If in doubt,
-              reach out to the Danswer team.
+              reach out to the Spectra team.
             </Text>
 
             <div className="w-full flex">

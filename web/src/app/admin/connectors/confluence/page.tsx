@@ -293,7 +293,7 @@ const Main = () => {
               }
               validationSchema={Yup.object().shape({
                 wiki_page_url: Yup.string().required(
-                  "Please enter any link to your confluence e.g. https://danswer.atlassian.net/wiki/spaces/Engineering/overview"
+                  "Please enter any link to your confluence e.g. https://spectra.atlassian.net/wiki/spaces/Engineering/overview"
                 ),
               })}
               initialValues={{

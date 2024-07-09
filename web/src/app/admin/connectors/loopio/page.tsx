@@ -85,7 +85,7 @@ const Main = () => {
       {popup}
       <p className="text-sm">
         This connector allows you to sync your Loopio Library Entries into
-        Danswer
+        Spectra
       </p>
 
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">

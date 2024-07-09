@@ -173,8 +173,8 @@ def warm_up_encoders(
     model_server_port: int = MODEL_SERVER_PORT,
 ) -> None:
     warm_up_str = (
-        "Danswer is amazing! Check out our easy deployment guide at "
-        "https://docs.danswer.dev/quickstart"
+        "Spectra is amazing! Check out our easy deployment guide at "
+        "https://docs.spectra.dev/quickstart"
     )
 
     get_default_tokenizer(model_name=model_name)(warm_up_str)

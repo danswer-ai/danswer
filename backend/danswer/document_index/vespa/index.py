@@ -810,7 +810,7 @@ class VespaIndex(DocumentIndex):
         response = requests.post(deploy_url, headers=headers, data=zip_file)
         if response.status_code != 200:
             raise RuntimeError(
-                f"Failed to prepare Vespa Danswer Index. Response: {response.text}"
+                f"Failed to prepare Vespa Spectra Index. Response: {response.text}"
             )
 
     def index(

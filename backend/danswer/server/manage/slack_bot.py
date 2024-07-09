@@ -63,7 +63,7 @@ def _form_channel_config(
 
     if respond_tag_only and (respond_team_member_list or respond_slack_group_list):
         raise ValueError(
-            "Cannot set DanswerBot to only respond to tags only and "
+            "Cannot set SpectraBot to only respond to tags only and "
             "also respond to a predetermined set of users."
         )
 

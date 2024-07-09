@@ -332,7 +332,7 @@ const Main = () => {
               }}
               validationSchema={Yup.object().shape({
                 jira_project_url: Yup.string().required(
-                  "Please enter any link to your jira project e.g. https://danswer.atlassian.net/jira/software/projects/DAN/boards/1"
+                  "Please enter any link to your jira project e.g. https://spectra.atlassian.net/jira/software/projects/DAN/boards/1"
                 ),
                 comment_email_blacklist: Yup.array()
                   .of(Yup.string().required("Emails names must be strings"))

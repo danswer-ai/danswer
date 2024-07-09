@@ -174,7 +174,7 @@ def upgrade() -> None:
     delete_statement = sa.text(
         """
         DELETE FROM persona
-        WHERE name = 'Danswer' AND default_persona = TRUE AND id != 0
+        WHERE name = 'Spectra' AND default_persona = TRUE AND id != 0
         """
     )
 

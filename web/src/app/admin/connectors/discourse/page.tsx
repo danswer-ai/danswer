@@ -232,7 +232,7 @@ const Main = () => {
                   <TextFormField
                     name="base_url"
                     label="Base URL:"
-                    subtext="This might be something like https://danswer.discourse.group/ or https://community.yourcompany.com/"
+                    subtext="This might be something like https://spectra.discourse.group/ or https://community.yourcompany.com/"
                   />
                 </>
               }

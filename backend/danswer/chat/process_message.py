@@ -520,7 +520,7 @@ def stream_chat_message_objects(
                     bing_api_key = BING_API_KEY
                     if not bing_api_key:
                         raise ValueError(
-                            "Internet search tool requires a Bing API key, please contact your Danswer admin to get it added!"
+                            "Internet search tool requires a Bing API key, please contact your Spectra admin to get it added!"
                         )
                     tool_dict[db_tool_model.id] = [
                         InternetSearchTool(api_key=bing_api_key)

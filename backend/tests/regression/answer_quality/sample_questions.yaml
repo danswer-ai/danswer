@@ -17,17 +17,17 @@ metadata:
     - name: slack
       workspace: danswer.slack.com
     - name: file
-      detail: Markdown files from Danswer repo
+      detail: Markdown files from Spectra repo
 
 questions:
   - id: 1
-    question: "What is Danswer?"
-    expected_answer: "Danswer is an open source question-answering system."
+    question: "What is Spectra?"
+    expected_answer: "Spectra is an open source question-answering system."
     notes: "This comes directly from the docs, the actual answer should be more informative"
 
   - id: 2
-    question: "What is Danswer licensed under?"
-    expected_answer: "Danswer is MIT licensed"
+    question: "What is Spectra licensed under?"
+    expected_answer: "Spectra is MIT licensed"
     notes: "This info can be found in many places"
 
   - id: 3
@@ -57,7 +57,7 @@ questions:
 
   - id: 8
     question: "nginx returning 502"
-    expected_answer: "Google OAuth must be configured for Danswer backend to work. A PR was created to fix it"
+    expected_answer: "Google OAuth must be configured for Spectra backend to work. A PR was created to fix it"
     notes: "This question is in Github Issue #260"
 
   - id: 9
@@ -86,11 +86,11 @@ questions:
     notes: "This is in Github PR #161"
 
   - id: 14
-    question: "Does Danswer support PDFs in Google Drive?"
+    question: "Does Spectra support PDFs in Google Drive?"
     expected_answer: "Yes"
     notes: "This question is in Slack, if the message expires due to using free slack version, the info may be gone as well"
 
   - id: 15
-    question: "I deleted a connector in Danswer but some deleted docs are still showing in search"
+    question: "I deleted a connector in Spectra but some deleted docs are still showing in search"
     expected_answer: "The issue was fixed via a code change, it should go away after pulling the latest code"
     notes: "This question is in Slack, if the message expires due to using free slack version, the info may be gone as well"

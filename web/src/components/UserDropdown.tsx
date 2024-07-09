@@ -87,7 +87,7 @@ export function UserDropdown({
                     className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
                   >
                     <FiSearch className="my-auto mr-2 text-lg" />
-                    Danswer Search
+                    Spectra Search
                   </Link>
                 )}
                 {settings.chat_page_enabled && (
@@ -97,7 +97,7 @@ export function UserDropdown({
                       className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
                     >
                       <FiMessageSquare className="my-auto mr-2 text-lg" />
-                      Danswer Chat
+                      Spectra Chat
                     </Link>
                     <Link
                       href="/assistants/mine"

@@ -260,7 +260,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
 def get_application() -> FastAPI:
     application = FastAPI(
-        title="Danswer Backend", version=__version__, lifespan=lifespan
+        title="Spectra Backend", version=__version__, lifespan=lifespan
     )
 
     include_router_with_global_prefix_prepended(application, chat_router)

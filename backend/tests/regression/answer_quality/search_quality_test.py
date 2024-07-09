@@ -24,7 +24,7 @@ def main() -> None:
     config = load_config("search_test_config.yaml")
     if config.existing_test_suffix:
         run_suffix = config.existing_test_suffix
-        print("launching danswer with existing data suffix:", run_suffix)
+        print("launching spectra with existing data suffix:", run_suffix)
     else:
         run_suffix = datetime.now().strftime("_%Y%m%d_%H%M%S")
         print("run_suffix:", run_suffix)

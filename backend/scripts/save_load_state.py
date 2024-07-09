@@ -95,13 +95,13 @@ def load_vespa(filename: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Danswer checkpoint saving and loading."
+        description="Spectra checkpoint saving and loading."
     )
     parser.add_argument(
-        "--save", action="store_true", help="Save Danswer state to directory."
+        "--save", action="store_true", help="Save Spectra state to directory."
     )
     parser.add_argument(
-        "--load", action="store_true", help="Load Danswer state from save directory."
+        "--load", action="store_true", help="Load Spectra state from save directory."
     )
     parser.add_argument(
         "--postgres_container_name",

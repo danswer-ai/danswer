@@ -27,7 +27,7 @@ export function ChatPopup() {
   let popupTitle = settings.enterpriseSettings.custom_popup_header;
   if (!popupTitle) {
     popupTitle = `Welcome to ${
-      settings.enterpriseSettings.application_name || "Danswer"
+      settings.enterpriseSettings.application_name || "Spectra"
     }!`;
   }
 
