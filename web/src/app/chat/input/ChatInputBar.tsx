@@ -365,33 +365,34 @@ export function ChatInputBar({
               suppressContentEditableWarning={true}
             />
             <div className="flex items-center space-x-3 mr-12 px-4 pb-2 overflow-hidden">
-              <ChatInputOption
-                flexPriority="shrink"
-                name={selectedAssistant ? selectedAssistant.name : "Assistants"}
-                icon={FaBrain}
-                onClick={() => setConfigModalActiveTab("assistants")}
-              />
+            {/*========== ******* Disabling the Assistants and Model selection for end User*******============ */}
+            {/*  <ChatInputOption*/}
+            {/*    flexPriority="shrink"*/}
+            {/*    name={selectedAssistant ? selectedAssistant.name : "Assistants"}*/}
+            {/*    icon={FaBrain}*/}
+            {/*    onClick={() => setConfigModalActiveTab("assistants")}*/}
+            {/*  />*/}
 
-              <ChatInputOption
-                flexPriority="second"
-                name={
-                  llmOverrideManager.llmOverride.modelName ||
-                  (selectedAssistant
-                    ? selectedAssistant.llm_model_version_override || llmName
-                    : llmName)
-                }
-                icon={FiCpu}
-                onClick={() => setConfigModalActiveTab("llms")}
-              />
+            {/*  <ChatInputOption*/}
+            {/*    flexPriority="second"*/}
+            {/*    name={*/}
+            {/*      llmOverrideManager.llmOverride.modelName ||*/}
+            {/*      (selectedAssistant*/}
+            {/*        ? selectedAssistant.llm_model_version_override || llmName*/}
+            {/*        : llmName)*/}
+            {/*    }*/}
+            {/*    icon={FiCpu}*/}
+            {/*    onClick={() => setConfigModalActiveTab("llms")}*/}
+            {/*  />*/}
 
-              {!retrievalDisabled && (
-                <ChatInputOption
-                  flexPriority="stiff"
-                  name="Filters"
-                  icon={FiFilter}
-                  onClick={() => setConfigModalActiveTab("filters")}
-                />
-              )}
+            {/*  {!retrievalDisabled && (*/}
+            {/*    <ChatInputOption*/}
+            {/*      flexPriority="stiff"*/}
+            {/*      name="Filters"*/}
+            {/*      icon={FiFilter}*/}
+            {/*      onClick={() => setConfigModalActiveTab("filters")}*/}
+            {/*    />*/}
+            {/*  )}*/}
 
               <ChatInputOption
                 flexPriority="stiff"
