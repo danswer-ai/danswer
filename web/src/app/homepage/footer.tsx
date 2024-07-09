@@ -1,4 +1,3 @@
-import Link from "next/link";
 import enmeddLogo from "../../../public/logo-brand.png";
 import Image from "next/image";
 import { Wrapper } from "./wrapper";
@@ -15,26 +14,28 @@ export default function Footer() {
   return (
     <div className="w-full pt-6 pb-12 border-t">
       <Wrapper>
-        <div className="flex flex-col w-full gap-40">
-          <div className="flex justify-between w-full">
+        <div className="flex flex-col w-full gap-32 xl:gap-40">
+          <div className="flex flex-col justify-between w-full gap-10 xl:flex-row">
             <div className="flex flex-col gap-3">
               <Image src={enmeddLogo} alt="enmedd-logo" width={150} />
               <p>Build and Deploy AI Applications in minutes</p>
 
-              <div className="flex items-center gap-4">
-                <Image src={twitter} alt="twitter" width={25} />
-                <Image src={github} alt="github" width={25} />
-                <Image src={linkedin} alt="linkedin" width={25} />
-              </div>
+              <div className="flex flex-col gap-6 md:gap-10 md:flex-row xl:gap-6 xl:flex-col">
+                <div className="flex items-center gap-4">
+                  <Image src={twitter} alt="twitter" width={25} />
+                  <Image src={github} alt="github" width={25} />
+                  <Image src={linkedin} alt="linkedin" width={25} />
+                </div>
 
-              <div className="flex items-center gap-4 pt-6">
-                <Image src={SOC} alt="SOC" width={70} />
-                <Image src={GDPR} alt="GDPR" width={70} />
-                <Image src={HIPAA} alt="HIPAA" width={100} />
+                <div className="flex items-center gap-4">
+                  <Image src={SOC} alt="SOC" width={70} />
+                  <Image src={GDPR} alt="GDPR" width={70} />
+                  <Image src={HIPAA} alt="HIPAA" width={100} />
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-20">
+            <div className="flex flex-wrap justify-between gap-10 xl:gap-20">
               <div className="flex flex-col gap-3">
                 <span className="font-semibold text-black">Solutions</span>
                 <ul className="flex flex-col gap-2.5">
@@ -87,9 +88,9 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className="flex justify-between w-full">
+          <div className="flex flex-col justify-between w-full md:flex-row">
             <p className="col-span-1 leading-5 text-gray-500">
-              © 2023{" "}
+              © 2024{" "}
               <a className="hover:underline" href="/">
                 {" "}
                 enMedD

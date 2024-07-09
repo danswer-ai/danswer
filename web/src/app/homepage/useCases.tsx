@@ -8,11 +8,13 @@ export default function UseCases() {
     <Wrapper>
       <div className="w-full pt-32">
         <div className="flex flex-col gap-10">
-          <div className="flex flex-col items-center font-semibold">
+          <div className="flex flex-col font-bold md:items-center">
             <span className="text-[#64A3FF] pb-3">Use Cases</span>
-            <h2 className="flex flex-col items-center text-5xl text-black">
+            <h2 className="flex flex-col text-4xl text-black md:text-5xl md:items-center">
               <span>Enterprise-Grade</span>
-              <span>AI solutions for your Organization</span>
+              <span className="text-start md:text-center">
+                AI solutions for your Organization
+              </span>
             </h2>
           </div>
 

@@ -7,11 +7,11 @@ export default function Certifications() {
     <Wrapper>
       <div className="flex flex-col items-center w-full gap-16 pt-32">
         <div className="flex flex-col gap-10">
-          <h4 className="text-2xl font-semibold text-[#2039F3]">
+          <h4 className="text-3xl sm:text-2xl font-bold text-[#2039F3]">
             Certifications
           </h4>
 
-          <div className="flex gap-10">
+          <div className="flex flex-col gap-6 lg:gap-10 lg:flex-row">
             {certificationData.map((data, i) => (
               <div
                 key={i}
@@ -19,7 +19,7 @@ export default function Certifications() {
               >
                 <div className="flex justify-between">
                   <span>{data.type}</span>
-                  <div className="h-24">
+                  <div className="w-24 h-24">
                     <Image
                       src={data.image}
                       alt={data.type}

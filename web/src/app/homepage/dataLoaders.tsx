@@ -27,10 +27,10 @@ const icons = [
 export default function DataLoaders() {
   return (
     <Wrapper>
-      <div className="flex w-full gap-40 pt-32">
-        <div className="w-1/2">
+      <div className="flex flex-col items-center w-full gap-16 pt-32 lg:gap-40 lg:flex-row">
+        <div className="lg:w-1/2">
           <p className="text-[#64A3FF] font-semibold">Data loaders</p>
-          <h3 className="pt-3 text-4xl font-bold text-black">
+          <h3 className="pt-3 text-3xl font-bold text-black md:text-4xl">
             Connect with your Data, wherever it sits...
           </h3>
           <p className="pt-6 text-xl leading-relaxed">
@@ -40,7 +40,7 @@ export default function DataLoaders() {
           </p>
         </div>
 
-        <div className="grid w-1/2 grid-cols-3 gap-20 pt-12">
+        <div className="grid grid-cols-3 gap-20 md:gap-x-40 lg:gap-x-20 lg:w-1/2">
           {icons.map((icon, i) => (
             <Image src={icon} alt={`icon-${i}`} key={i} width={60} />
           ))}

@@ -20,7 +20,7 @@ export default function AIOptions() {
         {categories.map((category) => (
           <button
             key={category}
-            className={`text-lg px-3 py-2 rounded-[5px] ease-out duration-500 transition-all ${
+            className={`text-sm md:text-lg px-2 md:px-3 py-2 rounded-[5px] ease-out duration-500 transition-all ${
               category === activeCategory
                 ? "bg-[#D7EAFF] text-[#64A3FF] hover:opacity-50"
                 : "hover:bg-[rgba(14,_14,_15,_0.1)]"
@@ -32,11 +32,11 @@ export default function AIOptions() {
         ))}
       </div>
 
-      <div className="flex justify-between w-full gap-8">
+      <div className="flex flex-col justify-between w-full gap-8 md:flex-row">
         {aiOptionsData
           .filter((data) => data.category === activeCategory)
           .map((data, i) => (
-            <div key={i} className="flex flex-col items-start w-1/3 gap-6">
+            <div key={i} className="flex flex-col items-start gap-6 md:w-1/3">
               <h4 className="text-xl font-semibold text-black">{data.title}</h4>
               <p>{data.description}</p>
               <button className="text-[#2039F3] font-bold">Learn more</button>

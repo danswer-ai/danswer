@@ -9,34 +9,38 @@ export default function Platform() {
     <Wrapper>
       <div className="flex flex-col items-center w-full gap-12 pt-32">
         <div className="flex flex-col w-full gap-10">
-          <div className="flex flex-col items-center font-semibold">
+          <div className="flex flex-col font-bold md:items-center">
             <span className="text-[#64A3FF] pb-3">Platform</span>
-            <h2 className="flex flex-col items-center text-5xl text-black">
+            <h2 className="flex flex-col text-4xl text-black md:text-5xl md:items-center">
               <span>A User-Friendly </span>
               <span>Interface to Build AI Solutions</span>
             </h2>
           </div>
 
-          <div className="flex items-center gap-6 mr-[8.5rem]">
-            <div className="flex flex-col gap-4 text-lg">
-              <button className="bg-[#D7EAFF] text-[#64A3FF] hover:opacity-50 px-4 py-4 rounded-[5px]">
+          <div className="flex items-center gap-6 lg:mr-[8.5rem] flex-col lg:flex-row">
+            <div className="flex gap-4 text-sm md:text-lg lg:flex-col">
+              <button className="bg-[#D7EAFF] text-[#64A3FF] hover:opacity-50 p-2 md:px-4 md:py-4 rounded-[5px]">
                 Workflow
               </button>
-              <button className="hover:bg-[rgba(14,_14,_15,_0.1)] px-4 py-4 rounded-[5px]">
+              <button className="hover:bg-[rgba(14,_14,_15,_0.1)] px-2 md:px-4 md:py-4 rounded-[5px]">
                 Export
               </button>
-              <button className="hover:bg-[rgba(14,_14,_15,_0.1)] px-4 py-4 rounded-[5px]">
+              <button className="hover:bg-[rgba(14,_14,_15,_0.1)] px-2 md:px-4 md:py-4 rounded-[5px]">
                 Analytics
               </button>
-              <button className="hover:bg-[rgba(14,_14,_15,_0.1)] px-4 py-4 rounded-[5px]">
+              <button className="hover:bg-[rgba(14,_14,_15,_0.1)] px-2 md:px-4 md:py-4 rounded-[5px]">
                 Manager
               </button>
             </div>
-            <Image src={heroImg} alt="heroImg" className="w-full h-[650px]" />
+            <Image
+              src={heroImg}
+              alt="heroImg"
+              className="w-full lg:h-[650px]"
+            />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-10 mx-[8.5rem]">
+        <div className="grid grid-cols-2 gap-10 lg:mx-[8.5rem]">
           {platformData.map((data, i) => (
             <div key={i}>
               <h4 className="text-xl font-semibold text-black">{data.title}</h4>

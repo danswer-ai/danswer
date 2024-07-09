@@ -4,12 +4,12 @@ export default function CallToActions() {
   return (
     <Wrapper>
       <div className="w-full py-32">
-        <div className="relative flex flex-col items-center gap-6 p-28 overflow-hidden rounded-3xl bg-[rgb(17,_24,_39)] isolate">
-          <h3 className="text-4xl font-bold text-white">
+        <div className="relative flex flex-col items-center gap-6 md:p-28 overflow-hidden rounded-xl md:rounded-3xl bg-[rgb(17,_24,_39)] isolate p-10">
+          <h3 className="text-3xl font-bold text-center text-white md:text-4xl">
             A plan to fit your needs
           </h3>
 
-          <p className="pb-4 text-[rgb(222,222,230)] text-lg">
+          <p className="pb-4 text-[rgb(222,222,230)] text-lg text-center">
             Deploy secure and powerful AI applications in minutes
           </p>
 
