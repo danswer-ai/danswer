@@ -70,9 +70,7 @@ export default function Page() {
         <Title>Auto-Syncing aufsetzen</Title>
       </div>
       <Text>
-        Setup auto-syncing from your organization&apos;s most used apps and
-        services. Unless otherwise specified during the connector setup, we will
-        pull in the latest updates from the source every 10 minutes.
+        Alle 10 Minuten
       </Text>
       <div className="flex flex-wrap gap-4 p-4">
         {appConnectionSources.map((source) => {
