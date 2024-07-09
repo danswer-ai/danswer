@@ -8,6 +8,27 @@ from typing import Optional
 from typing import TypedDict
 from uuid import UUID
 
+from danswer.auth.schemas import UserRole
+from danswer.configs.constants import DEFAULT_BOOST
+from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import FileOrigin
+from danswer.configs.constants import MessageType
+from danswer.configs.constants import SearchFeedbackType
+from danswer.configs.constants import TokenRateLimitScope
+from danswer.connectors.models import InputType
+from danswer.db.enums import ChatSessionSharedStatus
+from danswer.db.enums import IndexingStatus
+from danswer.db.enums import IndexModelStatus
+from danswer.db.enums import TaskStatus
+from danswer.db.pydantic_type import PydanticType
+from danswer.dynamic_configs.interface import JSON_ro
+from danswer.file_store.models import FileDescriptor
+from danswer.llm.override_models import LLMOverride
+from danswer.llm.override_models import PromptOverride
+from danswer.search.enums import RecencyBiasSetting
+from danswer.search.enums import SearchType
+from danswer.utils.encryption import decrypt_bytes_to_string
+from danswer.utils.encryption import encrypt_string_to_bytes
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseOAuthAccountTableUUID
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
@@ -31,28 +52,6 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import LargeBinary
 from sqlalchemy.types import TypeDecorator
-
-from danswer.auth.schemas import UserRole
-from danswer.configs.constants import DEFAULT_BOOST
-from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import FileOrigin
-from danswer.configs.constants import MessageType
-from danswer.configs.constants import SearchFeedbackType
-from danswer.configs.constants import TokenRateLimitScope
-from danswer.connectors.models import InputType
-from danswer.db.enums import ChatSessionSharedStatus
-from danswer.db.enums import IndexingStatus
-from danswer.db.enums import IndexModelStatus
-from danswer.db.enums import TaskStatus
-from danswer.db.pydantic_type import PydanticType
-from danswer.dynamic_configs.interface import JSON_ro
-from danswer.file_store.models import FileDescriptor
-from danswer.llm.override_models import LLMOverride
-from danswer.llm.override_models import PromptOverride
-from danswer.search.enums import RecencyBiasSetting
-from danswer.search.enums import SearchType
-from danswer.utils.encryption import decrypt_bytes_to_string
-from danswer.utils.encryption import encrypt_string_to_bytes
 
 
 class Base(DeclarativeBase):
@@ -646,6 +645,9 @@ class SearchDoc(Base):
         postgresql.ARRAY(String), nullable=True
     )
     is_internet: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
+
+    relevant_search_result: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    relevance_explanation: Mapped[str | None] = mapped_column(String, nullable=True)
 
     chat_messages = relationship(
         "ChatMessage",

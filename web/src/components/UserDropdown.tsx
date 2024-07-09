@@ -53,7 +53,7 @@ export function UserDropdown({
             onClick={() => setUserInfoVisible(!userInfoVisible)}
             className="flex cursor-pointer"
           >
-            <div className="my-auto  bg-background-strong  ring-2 ring-transparent group-hover:ring-background-stronger/50 transition-ring duration-150  rounded-lg  inline-block flex-none px-2 text-base font-normal">
+            <div className="my-auto bg-background-strong ring-2 ring-transparent group-hover:ring-background-stronger/50 transition-ring duration-150 rounded-lg inline-block flex-none px-2 text-base font-normal">
               {user && user.email ? user.email[0].toUpperCase() : "A"}
             </div>
           </div>

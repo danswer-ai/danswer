@@ -5,7 +5,6 @@ from typing import Any
 from typing import cast
 
 import httpx
-
 from danswer.chat.chat_utils import combine_message_chain
 from danswer.chat.models import LlmDoc
 from danswer.configs.constants import DocumentSource

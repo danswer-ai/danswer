@@ -549,11 +549,14 @@ const PARAMS_TO_SKIP = [
 export function buildChatUrl(
   existingSearchParams: ReadonlyURLSearchParams,
   chatSessionId: number | null,
-  personaId: number | null
+  personaId: number | null,
+  search?: boolean
 ) {
   const finalSearchParams: string[] = [];
   if (chatSessionId) {
-    finalSearchParams.push(`${SEARCH_PARAM_NAMES.CHAT_ID}=${chatSessionId}`);
+    finalSearchParams.push(
+      `${search ? SEARCH_PARAM_NAMES.SEARCH_ID : SEARCH_PARAM_NAMES.CHAT_ID}=${chatSessionId}`
+    );
   }
   if (personaId !== null) {
     finalSearchParams.push(`${SEARCH_PARAM_NAMES.PERSONA_ID}=${personaId}`);
@@ -565,12 +568,13 @@ export function buildChatUrl(
     }
   });
   const finalSearchParamsString = finalSearchParams.join("&");
+  console.log(finalSearchParamsString);
 
   if (finalSearchParamsString) {
-    return `/chat?${finalSearchParamsString}`;
+    return `/${search ? "search" : "chat"}?${finalSearchParamsString}`;
   }
 
-  return "/chat";
+  return `/${search ? "search" : "chat"}`;
 }
 
 export async function uploadFilesForChat(

@@ -1,12 +1,12 @@
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session
-
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import MessageType
+from danswer.db.chat import get_chat_messages_by_session
+from danswer.db.chat import get_chat_session_by_id
+from danswer.db.chat import get_search_docs_for_chat_message
+from danswer.db.chat import translate_db_message_to_chat_message_detail
+from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.models import User
@@ -26,11 +26,17 @@ from danswer.server.query_and_chat.models import AdminSearchRequest
 from danswer.server.query_and_chat.models import AdminSearchResponse
 from danswer.server.query_and_chat.models import HelperResponse
 from danswer.server.query_and_chat.models import QueryValidationResponse
+from danswer.server.query_and_chat.models import SearchSessionDetailResponse
 from danswer.server.query_and_chat.models import SimpleQueryRequest
 from danswer.server.query_and_chat.models import SourceTag
 from danswer.server.query_and_chat.models import TagResponse
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
 from danswer.utils.logger import setup_logger
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
@@ -126,6 +132,68 @@ def query_validation(
     logger.info(f"Validating query: {simple_query.query}")
     reasoning, answerable = get_query_answerability(simple_query.query)
     return QueryValidationResponse(reasoning=reasoning, answerable=answerable)
+
+
+@basic_router.get("/get-search-session/{session_id}")
+def get_search_session(
+    session_id: int,
+    is_shared: bool = False,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> SearchSessionDetailResponse:
+    user_id = user.id if user is not None else None
+
+    try:
+        search_session = get_chat_session_by_id(
+            chat_session_id=session_id,
+            user_id=user_id,
+            db_session=db_session,
+            is_shared=is_shared,
+        )
+    except ValueError:
+        raise ValueError("Search session does not exist or has been deleted")
+
+    if search_session.user_id is None and user_id is not None:
+        search_session.user_id = user_id
+        db_session.commit()
+
+    # let's get the documents now
+
+    session_messages = get_chat_messages_by_session(
+        chat_session_id=session_id,
+        user_id=user_id,
+        db_session=db_session,
+        # we already did a permission check above with the call to
+        # `get_chat_session_by_id`, so we can skip it here
+        skip_permission_check=True,
+        # we need the tool call objs anyways, so just fetch them in a single call
+        prefetch_tool_calls=True,
+    )
+    docs_response: list[SearchDoc] = []
+    for message in session_messages:
+        if (
+            message.message_type == MessageType.ASSISTANT
+            or message.message_type == MessageType.SYSTEM
+        ):
+            docs = get_search_docs_for_chat_message(
+                db_session=db_session, chat_message_id=message.id
+            )
+            for doc in docs:
+                server_doc = translate_db_search_doc_to_server_search_doc(doc)
+                docs_response.append(server_doc)
+
+    response = SearchSessionDetailResponse(
+        search_session_id=session_id,
+        description=search_session.description,
+        documents=docs_response,
+        messages=[
+            translate_db_message_to_chat_message_detail(
+                msg, remove_doc_content=is_shared  # if shared, don't leak doc content
+            )
+            for msg in session_messages
+        ],
+    )
+    return response
 
 
 @basic_router.post("/stream-query-validation")

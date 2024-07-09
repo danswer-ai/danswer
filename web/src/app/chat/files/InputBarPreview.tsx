@@ -141,8 +141,7 @@ export function InputBarPreview({
           <Tooltip content={file.name} side="top" align="start">
             <div
               ref={fileNameRef}
-              className={`font-medium text-sm line-clamp-1 break-all ellipses max-w-48
-                }`}
+              className={`font-medium text-sm line-clamp-1 break-all ellipses max-w-48`}
             >
               {file.name}
             </div>
@@ -151,15 +150,13 @@ export function InputBarPreview({
         <button
           onClick={onDelete}
           className="
-
-
-        cursor-pointer
-        border-none
-        bg-hover
-        p-1
-        rounded-full
-        z-10
-      "
+            cursor-pointer
+            border-none
+            bg-hover
+            p-1
+            rounded-full
+            z-10
+          "
         >
           <FiX />
         </button>

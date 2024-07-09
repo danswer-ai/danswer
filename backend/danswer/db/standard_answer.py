@@ -1,12 +1,11 @@
 import string
 from collections.abc import Sequence
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from danswer.db.models import StandardAnswer
 from danswer.db.models import StandardAnswerCategory
 from danswer.utils.logger import setup_logger
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

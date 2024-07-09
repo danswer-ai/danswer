@@ -52,8 +52,7 @@ import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
-import { ChatPersonaSelector } from "./ChatPersonaSelector";
-import { FiArrowDown, FiShare2 } from "react-icons/fi";
+import { FiArrowDown } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { ThreeDots } from "react-loader-spinner";
@@ -66,21 +65,13 @@ import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
 import { ChatInputBar } from "./input/ChatInputBar";
 import { ConfigurationModal } from "./modal/configuration/ConfigurationModal";
 import { useChatContext } from "@/components/context/ChatContext";
-import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";
 import { ChatBanner } from "./ChatBanner";
-import {
-  TbLayoutSidebarLeftExpand,
-  TbLayoutSidebarRightExpand,
-} from "react-icons/tb";
-import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 
-import ResizableSection from "@/components/resizable/ResizableSection";
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
-import { Logo } from "@/components/Logo";
 import { CHAT_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 
@@ -92,12 +83,12 @@ export function ChatPage({
   toggle,
   documentSidebarInitialWidth,
   defaultSelectedPersonaId,
-  toggleChatSidebar,
+  toggledSidebar,
 }: {
-  toggle: (toggled: boolean) => void;
+  toggle: () => void;
   documentSidebarInitialWidth?: number;
   defaultSelectedPersonaId?: number;
-  toggleChatSidebar?: boolean;
+  toggledSidebar: boolean;
 }) {
   const [configModalActiveTab, setConfigModalActiveTab] = useState<
     string | null
@@ -280,10 +271,6 @@ export function ChatPage({
     initialSessionFetch();
   }, [existingChatSessionId]);
 
-  const [usedSidebarWidth, setUsedSidebarWidth] = useState<number>(
-    documentSidebarInitialWidth || parseInt(SIDEBAR_WIDTH_CONST)
-  );
-
   const [message, setMessage] = useState(
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
@@ -381,20 +368,20 @@ export function ChatPage({
     useState<number | null>(null);
   const { aiMessage } = selectedMessageForDocDisplay
     ? getHumanAndAIMessageFromMessageNumber(
-        messageHistory,
-        selectedMessageForDocDisplay
-      )
+      messageHistory,
+      selectedMessageForDocDisplay
+    )
     : { aiMessage: null };
 
   const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
     existingChatSessionPersonaId !== undefined
       ? filteredAssistants.find(
-          (persona) => persona.id === existingChatSessionPersonaId
-        )
+        (persona) => persona.id === existingChatSessionPersonaId
+      )
       : defaultSelectedPersonaId !== undefined
         ? filteredAssistants.find(
-            (persona) => persona.id === defaultSelectedPersonaId
-          )
+          (persona) => persona.id === defaultSelectedPersonaId
+        )
         : undefined
   );
   const livePersona =
@@ -671,7 +658,7 @@ export function ChatPage({
     const messageMap = completeMessageDetail.messageMap;
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
-      messageToResend?.parentMessageId !== undefined
+        messageToResend?.parentMessageId !== undefined
         ? messageMap.get(messageToResend.parentMessageId)
         : null;
     const messageToResendIndex = messageToResend
@@ -797,9 +784,9 @@ export function ChatPage({
       const updateFn = (messages: Message[]) => {
         const replacementsMap = finalMessage
           ? new Map([
-              [messages[0].messageId, TEMP_USER_MESSAGE_ID],
-              [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
-            ] as [number, number][])
+            [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+            [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+          ] as [number, number][])
           : null;
         upsertToCompleteMessageMap({
           messages: messages,
@@ -1045,8 +1032,6 @@ export function ChatPage({
     router.push("/search");
   }
 
-  const [toggledSidebar, setToggledSidebar] = useState(toggleChatSidebar!); // State to track if sidebar is open
-
   const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
 
   const toggleSidebar = () => {
@@ -1054,12 +1039,11 @@ export function ChatPage({
       CHAT_TOGGLED_COOKIE_NAME,
       String(!toggledSidebar).toLocaleLowerCase()
     ),
-      {
-        path: "/",
-      };
+    {
+      path: "/",
+    };
 
-    toggle(!toggledSidebar);
-    setToggledSidebar((toggledSidebar) => !toggledSidebar); // Toggle the state which will in turn toggle the class
+    toggle();
   };
 
   const sidebarElementRef = useRef<HTMLDivElement>(null);
@@ -1087,19 +1071,11 @@ export function ChatPage({
       livePersona
     );
   });
-  const [editingRetrievalEnabled, setEditingRetrievalEnabled] = useState(false);
+
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
 
   const currentPersona = selectedAssistant || livePersona;
 
-  const updateSelectedAssistant = (newAssistant: Persona | null) => {
-    setSelectedAssistant(newAssistant);
-    if (newAssistant) {
-      setEditingRetrievalEnabled(personaIncludesRetrieval(newAssistant));
-    } else {
-      setEditingRetrievalEnabled(false);
-    }
-  };
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
@@ -1139,8 +1115,8 @@ export function ChatPage({
           className={`
             flex-none 
             absolute 
-            left-0 
-            z-50 
+            left-0
+            z-50
             overflow-y-hidden 
             sidebar 
             bg-background-weak 
@@ -1149,10 +1125,9 @@ export function ChatPage({
             bg-opacity-80
             duration-300 
             ease-in-out
-            ${
-              showDocSidebar || toggledSidebar
-                ? "opacity-100 w-[300px] translate-x-0"
-                : "opacity-0 w-[200px]  pointer-events-none -translate-x-10"
+            ${showDocSidebar || toggledSidebar
+              ? "opacity-100 w-[300px] translate-x-0"
+              : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
             }
           `}
         >
@@ -1243,11 +1218,11 @@ export function ChatPage({
                         duration-300 
                         ease-in-out
                         h-full
-                        ${toggledSidebar ? "w-[300px] " : "w-[0px]"}
+                        ${toggledSidebar ? "w-[300px]" : "w-[0px]"}
                       `}
                     ></div>
                     <div
-                      className={`h-full  w-full  relative flex-auto transition-margin duration-300  overflow-x-auto pb-[140px]`}
+                      className={`h-full w-full relative flex-auto transition-margin duration-300  overflow-x-auto pb-[140px]`}
                       {...getRootProps()}
                     >
                       {/* <input {...getInputProps()} /> */}
@@ -1255,6 +1230,7 @@ export function ChatPage({
                         className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
                         ref={scrollableDivRef}
                       >
+
                         {/* ChatBanner is a custom banner that displays a admin-specified message at 
                       the top of the chat page. Only used in the EE version of the app. */}
                         <ChatBanner />
@@ -1270,8 +1246,8 @@ export function ChatPage({
                         <div
                           className={
                             "mt-4 -ml-4 w-full mx-auto " +
-                            "  absolute top-12  left-1/2 transform -translate-x-1/2" +
-                            (hasPerformedInitialScroll ? "" : " invisible")
+                            "absolute top-12 left-1/2 transform -translate-x-1/2" +
+                            (hasPerformedInitialScroll ? "" : "invisible")
                           }
                         >
                           {messageHistory.map((message, i) => {
@@ -1335,7 +1311,7 @@ export function ChatPage({
                               const isShowingRetrieved =
                                 (selectedMessageForDocDisplay !== null &&
                                   selectedMessageForDocDisplay ===
-                                    message.messageId) ||
+                                  message.messageId) ||
                                 (selectedMessageForDocDisplay ===
                                   TEMP_USER_MESSAGE_ID &&
                                   i === messageHistory.length - 1);
@@ -1345,10 +1321,10 @@ export function ChatPage({
                               const currentAlternativeAssistant =
                                 message.alternateAssistantID != null
                                   ? availablePersonas.find(
-                                      (persona) =>
-                                        persona.id ==
-                                        message.alternateAssistantID
-                                    )
+                                    (persona) =>
+                                      persona.id ==
+                                      message.alternateAssistantID
+                                  )
                                   : null;
 
                               return (
@@ -1394,45 +1370,45 @@ export function ChatPage({
                                     }
                                     handleFeedback={
                                       i === messageHistory.length - 1 &&
-                                      isStreaming
+                                        isStreaming
                                         ? undefined
                                         : (feedbackType) =>
-                                            setCurrentFeedback([
-                                              feedbackType,
-                                              message.messageId as number,
-                                            ])
+                                          setCurrentFeedback([
+                                            feedbackType,
+                                            message.messageId as number,
+                                          ])
                                     }
                                     handleSearchQueryEdit={
                                       i === messageHistory.length - 1 &&
-                                      !isStreaming
+                                        !isStreaming
                                         ? (newQuery) => {
-                                            if (!previousMessage) {
-                                              setPopup({
-                                                type: "error",
-                                                message:
-                                                  "Cannot edit query of first message - please refresh the page and try again.",
-                                              });
-                                              return;
-                                            }
-
-                                            if (
-                                              previousMessage.messageId === null
-                                            ) {
-                                              setPopup({
-                                                type: "error",
-                                                message:
-                                                  "Cannot edit query of a pending message - please wait a few seconds and try again.",
-                                              });
-                                              return;
-                                            }
-                                            onSubmit({
-                                              messageIdToResend:
-                                                previousMessage.messageId,
-                                              queryOverride: newQuery,
-                                              alternativeAssistant:
-                                                currentAlternativeAssistant,
+                                          if (!previousMessage) {
+                                            setPopup({
+                                              type: "error",
+                                              message:
+                                                "Cannot edit query of first message - please refresh the page and try again.",
                                             });
+                                            return;
                                           }
+
+                                          if (
+                                            previousMessage.messageId === null
+                                          ) {
+                                            setPopup({
+                                              type: "error",
+                                              message:
+                                                "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                            });
+                                            return;
+                                          }
+                                          onSubmit({
+                                            messageIdToResend:
+                                              previousMessage.messageId,
+                                            queryOverride: newQuery,
+                                            alternativeAssistant:
+                                              currentAlternativeAssistant,
+                                          });
+                                        }
                                         : undefined
                                     }
                                     isCurrentlyShowingRetrieved={
@@ -1474,8 +1450,8 @@ export function ChatPage({
                                     retrievalDisabled={
                                       currentAlternativeAssistant
                                         ? !personaIncludesRetrieval(
-                                            currentAlternativeAssistant!
-                                          )
+                                          currentAlternativeAssistant!
+                                        )
                                         : !retrievalEnabled
                                     }
                                   />
@@ -1501,7 +1477,7 @@ export function ChatPage({
                           {isStreaming &&
                             messageHistory.length > 0 &&
                             messageHistory[messageHistory.length - 1].type ===
-                              "user" && (
+                            "user" && (
                               <div
                                 key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                               >
@@ -1599,7 +1575,7 @@ export function ChatPage({
                             onSetSelectedAssistant={(
                               alternativeAssistant: Persona | null
                             ) => {
-                              updateSelectedAssistant(alternativeAssistant);
+                              setSelectedAssistant(alternativeAssistant);
                             }}
                             alternativeAssistant={selectedAssistant}
                             personas={filteredAssistants}
@@ -1629,7 +1605,7 @@ export function ChatPage({
                 )}
               </Dropzone>
             ) : (
-              <div className="mx-auto flex flex-col">
+              <div className="mx-auto h-full flex flex-col">
                 <div className="my-auto">
                   <DanswerInitializingLoader />
                 </div>

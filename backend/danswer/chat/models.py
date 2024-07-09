@@ -2,13 +2,12 @@ from collections.abc import Iterator
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
-
 from danswer.configs.constants import DocumentSource
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import RetrievalDocs
 from danswer.search.models import SearchResponse
+from pydantic import BaseModel
 
 
 class LlmDoc(BaseModel):
@@ -42,17 +41,17 @@ class QADocsResponse(RetrievalDocs):
         return initial_dict
 
 
-# Second chunk of info for streaming QA
 class LLMRelevanceFilterResponse(BaseModel):
     relevant_chunk_indices: list[int]
 
 
-class LLMRelevanceEvaluationResponse(BaseModel):
-    relevant_chunk_indices: list[int]
+class RelevanceChunk(BaseModel):
+    relevant: bool
+    content: str
 
 
 class LLMRelevanceSummaryResponse(BaseModel):
-    relevance_summaries: dict[int, str]
+    relevance_summaries: dict[str, RelevanceChunk]
 
 
 class DanswerAnswerPiece(BaseModel):

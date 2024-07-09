@@ -33,7 +33,7 @@ export const ChatInputAssistant = forwardRef<
           className="p-2 gap-x-1 relative rounded-t-lg items-center flex"
         >
           <AssistantIcon assistant={alternativeAssistant} border />
-          <p className="ml-1 line-clamp-1 ellipsis  break-all my-auto">
+          <p className="ml-1 line-clamp-1 ellipsis break-all my-auto">
             {alternativeAssistant.name}
           </p>
           <div

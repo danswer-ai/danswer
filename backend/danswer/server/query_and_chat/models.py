@@ -1,9 +1,6 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
-from pydantic import root_validator
-
 from danswer.chat.models import RetrievalDocs
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
@@ -18,6 +15,8 @@ from danswer.search.models import RetrievalDetails
 from danswer.search.models import SearchDoc
 from danswer.search.models import Tag
 from danswer.tools.models import ToolCallFinalResult
+from pydantic import BaseModel
+from pydantic import root_validator
 
 
 class SourceTag(Tag):
@@ -171,7 +170,6 @@ class SearchFeedbackRequest(BaseModel):
 
         if click is False and feedback is None:
             raise ValueError("Empty feedback received.")
-
         return values
 
 
@@ -186,16 +184,43 @@ class ChatMessageDetail(BaseModel):
     time_sent: datetime
     alternate_assistant_id: str | None
     # Dict mapping citation number to db_doc_id
+    chat_session_id: int | None = None
     citations: dict[int, int] | None
     files: list[FileDescriptor]
     tool_calls: list[ToolCallFinalResult]
-    relevance: dict[str, bool] | None
-    comments: dict[str, str] | None
 
     def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
         initial_dict = super().dict(*args, **kwargs)  # type: ignore
         initial_dict["time_sent"] = self.time_sent.isoformat()
         return initial_dict
+
+
+class SearchMessageDetail(BaseModel):
+    message_id: int
+    parent_message: int | None
+    latest_child_message: int | None
+    message: str
+    rephrased_query: str | None
+    context_docs: RetrievalDocs | None
+    message_type: MessageType
+    time_sent: datetime
+    alternate_assistant_id: str | None
+    # Dict mapping citation number to db_doc_id
+    citations: dict[int, int] | None
+    files: list[FileDescriptor]
+    tool_calls: list[ToolCallFinalResult]
+
+    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+        initial_dict["time_sent"] = self.time_sent.isoformat()
+        return initial_dict
+
+
+class SearchSessionDetailResponse(BaseModel):
+    search_session_id: int
+    description: str
+    documents: list[SearchDoc]
+    messages: list[ChatMessageDetail]
 
 
 class ChatSessionDetailResponse(BaseModel):

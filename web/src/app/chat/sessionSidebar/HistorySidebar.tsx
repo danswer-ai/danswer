@@ -35,6 +35,7 @@ import {
   RightToLineIcon,
 } from "@/components/icons/icons";
 import { PagesTab } from "./PagesTab";
+import { Tooltip } from "@/components/tooltip/Tooltip";
 
 interface HistorySidebarProps {
   search?: boolean;
@@ -45,6 +46,11 @@ interface HistorySidebarProps {
   toggleSidebar?: () => void;
   toggled?: boolean;
 }
+const isMac =
+  navigator.userAgent.length > 10
+    ? navigator.userAgent.indexOf("Mac") !== -1
+    : true;
+
 // forwardRef<HTMLDivElement, DocumentSidebarProps>(
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
   (
@@ -95,9 +101,9 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             h-screen
             transition-transform`}
         >
-          <div className="ml-4 mr-3 flex flex gap-x-1 items-center  mt-2 my-auto text-solid text-xl ">
-            <div className="mr-1 !h-6 !w-6">
-              <Logo />
+          <div className="ml-4 mr-3 flex flex gap-x-1 items-center mt-2 my-auto text-solid text-xl">
+            <div className="mr-1 mt-auto h-6 w-6">
+              <Logo height={24} width={24} />
             </div>
 
             <div className="hidden">
@@ -107,14 +113,17 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 <HeaderTitle>Danswer</HeaderTitle>
               )}
             </div>
+
             {toggleSidebar && (
-              <button className="ml-auto" onClick={toggleSidebar}>
-                {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
-              </button>
+              <Tooltip delayDuration={1000} content={`${isMac ? "⌘" : "⊞"}E`}>
+                <button className="ml-auto" onClick={toggleSidebar}>
+                  {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
+                </button>
+              </Tooltip>
             )}
           </div>
           {!search && (
-            <div className="mx-3 mt-4  gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
+            <div className="mx-3 mt-4 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
               <Link
                 href={
                   "/chat" +
@@ -146,7 +155,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 }
                 className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-subtle cursor-pointer transition-all duration-150 flex gap-x-2"
               >
-                <FiFolderPlus className=" my-auto" />
+                <FiFolderPlus className="my-auto" />
                 <p className="my-auto flex items-center text-sm">New Folder</p>
               </button>
 

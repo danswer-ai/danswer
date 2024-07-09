@@ -160,6 +160,9 @@ export const AIMessage = ({
     setIsReady(true);
   }, []);
 
+  const [isVisible, setIsVisible] = useState(false);
+  const [isWithinInput, setIsWithinInput] = useState(false);
+
   // this is needed to give Prism a chance to load
   if (!isReady) {
     return <div />;
@@ -219,11 +222,32 @@ export const AIMessage = ({
       });
   }
 
+  const showFeedback = () => {
+    console.log("visible");
+    setIsVisible(true);
+  };
+  const hideFeedback = () => {
+    console.log("not visibles");
+    setIsVisible(false);
+  };
+
+  const enterFeedback = () => {
+    console.log("ENTER FEEDBAK");
+    setIsWithinInput(true);
+  };
+  const leaveFeedback = () => {
+    setIsWithinInput(false);
+  };
+
   return (
-    <div className={"group py-5 px-2 lg:px-5 relative flex "}>
+    <div
+      onMouseEnter={showFeedback}
+      onMouseLeave={hideFeedback}
+      className={"py-5 px-2 lg:px-5 relative flex "}
+    >
       <div className="mx-auto w-[90%] max-w-message-max">
         <div className="xl:ml-8">
-          <div className="group flex">
+          <div className="flex">
             <AssistantIcon
               size="small"
               assistant={alternativeAssistant || currentPersona}
@@ -250,57 +274,23 @@ export const AIMessage = ({
                   </div>
                 </div>
               )} */}
-          </div>
-          <div className="w-full ml-4">
-            <div className="max-w-message-max break-words mt-1 ml-8">
-              {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
-                danswerSearchToolEnabledForPersona && (
-                  <>
-                    {query !== undefined &&
-                      handleShowRetrieved !== undefined &&
-                      isCurrentlyShowingRetrieved !== undefined &&
-                      !retrievalDisabled && (
-                        <div className="my-1">
-                          <SearchSummary
-                            query={query}
-                            hasDocs={hasDocs || false}
-                            messageId={messageId}
 
-                            finished={toolCall?.tool_result != undefined}
-                            isCurrentlyShowingRetrieved={
-                              isCurrentlyShowingRetrieved
-                            }
-                            handleShowRetrieved={handleShowRetrieved}
-                            handleSearchQueryEdit={handleSearchQueryEdit}
-                          />
-                        </div>
-                      )}
-                    {handleForceSearch &&
-                      content &&
-                      query === undefined &&
-                      !hasDocs &&
-                      !retrievalDisabled && (
-                        <div className="my-1">
-                          <SkippedSearch handleForceSearch={handleForceSearch} />
-                        </div>
-                      )}
-                  </>
-                )}
-
-              <div className="w-full ml-4">
-                <div className="max-w-message-max break-words">
-                  {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
+            <div className="w-full ml-4">
+              <div className="max-w-message-max break-words">
+                {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
+                  danswerSearchToolEnabledForPersona && (
                     <>
                       {query !== undefined &&
                         handleShowRetrieved !== undefined &&
                         isCurrentlyShowingRetrieved !== undefined &&
                         !retrievalDisabled && (
-                          <div className="mb-1">
+                          <div className="my-1">
                             <SearchSummary
                               query={query}
-                              finished={toolCall?.tool_result != undefined}
                               hasDocs={hasDocs || false}
                               messageId={messageId}
+
+                              finished={toolCall?.tool_result != undefined}
                               isCurrentlyShowingRetrieved={
                                 isCurrentlyShowingRetrieved
                               }
@@ -314,236 +304,277 @@ export const AIMessage = ({
                         query === undefined &&
                         !hasDocs &&
                         !retrievalDisabled && (
-                          <div className="mb-1">
-                            <SkippedSearch
-                              handleForceSearch={handleForceSearch}
-                            />
+                          <div className="my-1">
+                            <SkippedSearch handleForceSearch={handleForceSearch} />
                           </div>
                         )}
                     </>
                   )}
-                  {toolCall &&
-                    !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
+
+                <div className="w-full ml-4">
+                  <div className="max-w-message-max break-words">
+                    {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
+                      <>
+                        {query !== undefined &&
+                          handleShowRetrieved !== undefined &&
+                          isCurrentlyShowingRetrieved !== undefined &&
+                          !retrievalDisabled && (
+                            <div className="mb-1">
+                              <SearchSummary
+                                query={query}
+                                finished={toolCall?.tool_result != undefined}
+                                hasDocs={hasDocs || false}
+                                messageId={messageId}
+                                isCurrentlyShowingRetrieved={
+                                  isCurrentlyShowingRetrieved
+                                }
+                                handleShowRetrieved={handleShowRetrieved}
+                                handleSearchQueryEdit={handleSearchQueryEdit}
+                              />
+                            </div>
+                          )}
+                        {handleForceSearch &&
+                          content &&
+                          query === undefined &&
+                          !hasDocs &&
+                          !retrievalDisabled && (
+                            <div className="mb-1">
+                              <SkippedSearch
+                                handleForceSearch={handleForceSearch}
+                              />
+                            </div>
+                          )}
+                      </>
+                    )}
+                    {toolCall &&
+                      !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
+                        <div className="my-2">
+                          <ToolRunDisplay
+                            toolName={
+                              toolCall.tool_result && content
+                                ? `Used "${toolCall.tool_name}"`
+                                : `Using "${toolCall.tool_name}"`
+                            }
+                            toolLogo={<FiTool size={15} className="my-auto mr-1" />}
+                            isRunning={!toolCall.tool_result || !content}
+                          />
+                        </div>
+                      )}
+
+                    {toolCall &&
+                      toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
+                      !toolCall.tool_result && (
+                        <div className="my-2">
+                          <ToolRunDisplay
+                            toolName={`Generating images`}
+                            toolLogo={<FiImage size={15} className="my-auto mr-1" />}
+                            isRunning={!toolCall.tool_result}
+                          />
+                        </div>
+                      )}
+
+                    {toolCall && toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
                       <div className="my-2">
                         <ToolRunDisplay
                           toolName={
-                            toolCall.tool_result && content
-                              ? `Used "${toolCall.tool_name}"`
-                              : `Using "${toolCall.tool_name}"`
+                            toolCall.tool_result
+                              ? `Searched the internet`
+                              : `Searching the internet`
                           }
-                          toolLogo={<FiTool size={15} className="my-auto mr-1" />}
-                          isRunning={!toolCall.tool_result || !content}
-                        />
-                      </div>
-                    )}
-
-                  {toolCall &&
-                    toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
-                    !toolCall.tool_result && (
-                      <div className="my-2">
-                        <ToolRunDisplay
-                          toolName={`Generating images`}
-                          toolLogo={<FiImage size={15} className="my-auto mr-1" />}
+                          toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
                           isRunning={!toolCall.tool_result}
                         />
                       </div>
                     )}
 
-                  {toolCall && toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
-                    <div className="my-2">
-                      <ToolRunDisplay
-                        toolName={
-                          toolCall.tool_result
-                            ? `Searched the internet`
-                            : `Searching the internet`
-                        }
-                        toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
-                        isRunning={!toolCall.tool_result}
-                      />
-                    </div>
-                  )}
+                    {content ? (
+                      <>
+                        <FileDisplay files={files || []} />
 
-                  {content ? (
-                    <>
-                      <FileDisplay files={files || []} />
-
-                      {typeof content === "string" ? (
-                        <ReactMarkdown
-                          key={messageId}
-                          className="prose max-w-full"
-                          components={{
-                            a: (props) => {
-                              const { node, ...rest } = props;
-                              const value = rest.children;
-                              if (value?.toString().startsWith("[")) {
-                                // for some reason <a> tags cause the onClick to not apply
-                                // and the links are unclickable
-                                // TODO: fix the fact that you have to double click to follow link
-                                // for the first link
-                                return (
-                                  <Citation
-                                    link={rest?.href}
-                                    key={node?.position?.start?.offset}
-                                  >
-                                    {rest.children}
-                                  </Citation>
-                                );
-                              } else {
-                                return (
-                                  <a
-                                    key={node?.position?.start?.offset}
-                                    onClick={() =>
-                                      rest.href
-                                        ? window.open(rest.href, "_blank")
-                                        : undefined
-                                    }
-                                    className="cursor-pointer text-link hover:text-link-hover"
-                                  >
-                                    {rest.children}
-                                  </a>
-                                );
-                              }
-                            },
-                            code: (props) => (
-                              <CodeBlock {...props} content={content as string} />
-                            ),
-                            p: ({ node, ...props }) => (
-                              <p {...props} className="text-default" />
-                            ),
-                          }}
-                          remarkPlugins={[remarkGfm]}
-                          rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
-                        >
-                          {content}
-                        </ReactMarkdown>
-                      ) : (
-                        content
-                      )}
-                    </>
-                  ) : isComplete ? null : (
-                    <></>
-                  )}
-
-                  {isComplete && docs && docs.length > 0 && (
-                    <div className="mt-2 -mx-8  w-full mb-4  flex relative ">
-                      <div className="absolute left-0 top-0 h-full bg-gradient-to-l from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
-                      <div className="absolute right-6 top-0  h-full bg-gradient-to-r from-background/0 via-background/40 backdrop-blur-xs  to-background w-[40px]" />
-                      <div className=" w-full  overflow-x-scroll no-scrollbar">
-                        {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
-                        <div className="px-8 flex gap-x-2">
-                          {filteredDocs.length > 0 &&
-                            filteredDocs.slice(0, 2).map((doc) => (
-                              <div
-                                key={doc.document_id}
-                                className={`w-[200px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weaker bg-neutral-100 px-4 py-2 border-b
-                              `}
-                              >
-                                <a
-                                  href={doc.link}
-                                  target="_blank"
-                                  className="text-sm  flex justify-between font-semibold text-neutral-800"
-                                >
-                                  <p className="line-clamp-1">
-                                    {
-                                      doc.document_id.split("/")[
-                                      doc.document_id.split("/").length - 1
-                                      ]
-                                    }
-                                  </p>
-                                  <div className="flex-none">
-                                    <SourceIcon
-                                      sourceType={doc.source_type}
-                                      iconSize={18}
-                                    />
-                                  </div>
-                                </a>
-                                <div className="flex  overscroll-x-scroll mt-1">
-                                  <DocumentMetadataBlock document={doc} />
-                                </div>
-                                <div className="line-clamp-3 text-xs break-words   pt-1">
-                                  {doc.blurb}
-                                </div>
-                              </div>
-                            ))}
-                          <div
-                            onClick={() => {
-                              if (toggleDocumentSelection) {
-                                toggleDocumentSelection();
-                              }
+                        {typeof content === "string" ? (
+                          <ReactMarkdown
+                            key={messageId}
+                            className="prose max-w-full"
+                            components={{
+                              a: (props) => {
+                                const { node, ...rest } = props;
+                                const value = rest.children;
+                                if (value?.toString().startsWith("[")) {
+                                  // for some reason <a> tags cause the onClick to not apply
+                                  // and the links are unclickable
+                                  // TODO: fix the fact that you have to double click to follow link
+                                  // for the first link
+                                  return (
+                                    <Citation
+                                      link={rest?.href}
+                                      key={node?.position?.start?.offset}
+                                    >
+                                      {rest.children}
+                                    </Citation>
+                                  );
+                                } else {
+                                  return (
+                                    <a
+                                      key={node?.position?.start?.offset}
+                                      onClick={() =>
+                                        rest.href
+                                          ? window.open(rest.href, "_blank")
+                                          : undefined
+                                      }
+                                      className="cursor-pointer text-link hover:text-link-hover"
+                                    >
+                                      {rest.children}
+                                    </a>
+                                  );
+                                }
+                              },
+                              code: (props) => (
+                                <CodeBlock {...props} content={content as string} />
+                              ),
+                              p: ({ node, ...props }) => (
+                                <p {...props} className="text-default" />
+                              ),
                             }}
-                            key={-1}
-                            className="cursor-pointer w-[140px] rounded-lg  flex-none transition-all duration-500 hover:bg-background-weaker bg-neutral-100 px-4 py-2 border-b"
+                            remarkPlugins={[remarkGfm]}
+                            rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
                           >
-                            <div className="text-sm  flex justify-between font-semibold text-neutral-800">
-                              <p className="line-clamp-1">See context</p>
-                            </div>
+                            {content}
+                          </ReactMarkdown>
+                        ) : (
+                          content
+                        )}
+                      </>
+                    ) : isComplete ? null : (
+                      <></>
+                    )}
 
-                            <div className="line-clamp-3 text-xs break-words   pt-1">
-                              See {docs?.length} document
-                              {!((docs?.length || 0) == 1) && "s"}
+                    {isComplete && docs && docs.length > 0 && (
+                      <div className="mt-2 -mx-8 w-full mb-4 flex relative">
+                        <div className="absolute left-0 top-0 h-full bg-gradient-to-l from-background/0 via-background/40 backdrop-blur-xs to-background w-[40px]" />
+                        <div className="absolute right-6 top-0 h-full bg-gradient-to-r from-background/0 via-background/40 backdrop-blur-xs to-background w-[40px]" />
+                        <div className="w-full overflow-x-scroll no-scrollbar">
+                          {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
+                          <div className="px-8 flex gap-x-2">
+                            {filteredDocs.length > 0 &&
+                              filteredDocs.slice(0, 2).map((doc) => (
+                                <div
+                                  key={doc.document_id}
+                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-weaker bg-lighter px-4 py-2 border-b
+                              `}
+                                >
+                                  <a
+                                    href={doc.link}
+                                    target="_blank"
+                                    className="text-sm flex justify-between font-semibold text-solidDark"
+                                  >
+                                    <p className="line-clamp-1">
+                                      {
+                                        doc.document_id.split("/")[
+                                        doc.document_id.split("/").length - 1
+                                        ]
+                                      }
+                                    </p>
+                                    <div className="flex-none">
+                                      <SourceIcon
+                                        sourceType={doc.source_type}
+                                        iconSize={18}
+                                      />
+                                    </div>
+                                  </a>
+                                  <div className="flex overscroll-x-scroll mt-1">
+                                    <DocumentMetadataBlock document={doc} />
+                                  </div>
+                                  <div className="line-clamp-3 text-xs break-words pt-1">
+                                    {doc.blurb}
+                                  </div>
+                                </div>
+                              ))}
+                            <div
+                              onClick={() => {
+                                if (toggleDocumentSelection) {
+                                  toggleDocumentSelection();
+                                }
+                              }}
+                              key={-1}
+                              className="cursor-pointer w-[140px] rounded-lg flex-none transition-all duration-500 hover:bg-background-weaker bg-lighter px-4 py-2 border-b"
+                            >
+                              <div className="text-sm flex justify-between font-semibold text-solidDark">
+                                <p className="line-clamp-1">See context</p>
+                              </div>
+
+                              <div className="line-clamp-3 text-xs break-words pt-1">
+                                See {docs?.length} document
+                                {!((docs?.length || 0) == 1) && "s"}
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  {handleFeedback &&
+                    (isActive ? (
+                      <div
+                        className={`
+                      flex md:flex-row gap-x-0.5 mt-1.5
+                      transition-transform duration-300 ease-in-out
+                      transform opacity-100 translate-y-0"
+                  `}
+                      >
+                        <TooltipGroup>
+                          <CustomTooltip showTick line content="Copy!">
+                            <CopyButton content={content.toString()} />
+                          </CustomTooltip>
+                          <CustomTooltip showTick line content="Good response!">
+                            <HoverableIcon
+                              icon={<LikeFeedbackIcon />}
+                              onClick={() => handleFeedback("like")}
+                            />
+                          </CustomTooltip>
+                          <CustomTooltip showTick line content="Bad response!">
+                            <HoverableIcon
+                              icon={<DislikeFeedbackIcon />}
+                              onClick={() => handleFeedback("dislike")}
+                            />
+                          </CustomTooltip>
+                        </TooltipGroup>
+                      </div>
+                    ) : (
+                      <div
+                        onMouseEnter={enterFeedback}
+                        onMouseLeave={leaveFeedback}
+                        className={`
+                      absolute -bottom-6
+                      invisible hover:visible ${(isVisible || isWithinInput) && "!visible"} hover:!visible
+                      opacity-0 ${(isVisible || isWithinInput) && "!opacity-100"} hover:!opacity-100
+                      transform translate-y-2 ${(isVisible || isWithinInput) && "!translate-y-0"} ho
+                      flex md:flex-row gap-x-0.5 
+                      transition-transform duration-300 ease-in-out
+                       bg-background-weaker/40
+                       p-1.5 rounded-lg  `}
+                      >
+                        <TooltipGroup>
+                          <CustomTooltip showTick line content="Copy!">
+                            <CopyButton content={content.toString()} />
+                          </CustomTooltip>
+
+                          <CustomTooltip showTick line content="Good response!">
+                            <HoverableIcon
+                              icon={<LikeFeedbackIcon />}
+                              onClick={() => handleFeedback("like")}
+                            />
+                          </CustomTooltip>
+
+                          <CustomTooltip showTick line content="Bad response!">
+                            <HoverableIcon
+                              icon={<DislikeFeedbackIcon />}
+                              onClick={() => handleFeedback("dislike")}
+                            />
+                          </CustomTooltip>
+                        </TooltipGroup>
+                      </div>
+                    ))}
                 </div>
-                {handleFeedback &&
-                  (isActive ? (
-                    <div
-                      className="
-                  flex md:flex-row gap-x-0.5 mt-1.5
-                  transition-all duration-300 ease-in-out
-                  transform opacity-100 translate-y-0"
-                    >
-                      <TooltipGroup>
-                        <CustomTooltip showTick line content="Copy!">
-                          <CopyButton content={content.toString()} />
-                        </CustomTooltip>
-                        <CustomTooltip showTick line content="Good response!">
-                          <HoverableIcon
-                            icon={<LikeFeedbackIcon />}
-                            onClick={() => handleFeedback("like")}
-                          />
-                        </CustomTooltip>
-                        <CustomTooltip showTick line content="Bad response!">
-                          <HoverableIcon
-                            icon={<DislikeFeedbackIcon />}
-                            onClick={() => handleFeedback("dislike")}
-                          />
-                        </CustomTooltip>
-                      </TooltipGroup>
-                    </div>
-                  ) : (
-                    <div
-                      className="
-                  invisible hover:visible group-hover:visible
-                  opacity-0 group-hover:opacity-100
-                  transform translate-y-2 group-hover:translate-y-0
-                  flex md:flex-row gap-x-0.5 mt-1.5
-                  transition-all duration-300 ease-in-out
-                  absolute -bottom-4 bg-background-weaker/60
-                   p-1.5 rounded-lg  "
-                    >
-                      <TooltipGroup>
-                        <CustomTooltip showTick line content="Copy!">
-                          <CopyButton content={content.toString()} />
-                        </CustomTooltip>
-                        <CustomTooltip showTick line content="Good response!">
-                          <HoverableIcon
-                            icon={<LikeFeedbackIcon />}
-                            onClick={() => handleFeedback("like")}
-                          />
-                        </CustomTooltip>
-                        <CustomTooltip showTick line content="Bad response!">
-                          <HoverableIcon
-                            icon={<DislikeFeedbackIcon />}
-                            onClick={() => handleFeedback("dislike")}
-                          />
-                        </CustomTooltip>
-                      </TooltipGroup>
-                    </div>
-                  ))}
               </div>
             </div>
           </div>
@@ -571,7 +602,7 @@ function MessageSwitcher({
         onClick={currentPage === 1 ? undefined : handlePrevious}
       />
 
-      <span className="text-emphasis text-medium select-none">
+      <span className="text-emphasis select-none">
         {currentPage} / {totalPages}
       </span>
 
@@ -633,7 +664,7 @@ export const HumanMessage = ({
 
   return (
     <div
-      className=" pt-5 pb-1 px-2 lg:px-5 flex -mr-6  relative"
+      className="pt-5 pb-1 px-2 lg:px-5 flex -mr-6 relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -643,7 +674,7 @@ export const HumanMessage = ({
             <FileDisplay alignBubble files={files || []} />
 
             <div className="flex justify-end">
-              <div className="w-full  ml-8 flex  w-full max-w-message-max break-words">
+              <div className="w-full ml-8 flex w-full max-w-message-max break-words">
                 {isEditing ? (
                   <div className="w-full">
                     <div
@@ -705,8 +736,7 @@ export const HumanMessage = ({
                       <div className="flex justify-end mt-2 gap-2 pr-4">
                         <button
                           className={`
-                          w-fit 
-                          p-1 
+                          w-fit
                           bg-accent 
                           text-inverted 
                           text-sm
@@ -717,8 +747,8 @@ export const HumanMessage = ({
                           flex-shrink-0 
                           font-medium 
                           min-h-[38px]
-                          py-2 p
-                          x-3 p
+                          py-2
+                          px-3
                           hover:bg-accent-hover
                         `}
                           onClick={handleEditSubmit}
@@ -736,7 +766,6 @@ export const HumanMessage = ({
                           py-2 
                           px-3 
                           w-fit 
-                          p-1 
                           bg-hover
                           bg-background-strong 
                           text-sm
@@ -777,11 +806,11 @@ export const HumanMessage = ({
 
                     <div
                       className={`${!(
-                          onEdit &&
-                          isHovered &&
-                          !isEditing &&
-                          (!files || files.length === 0)
-                        ) && "ml-auto"
+                        onEdit &&
+                        isHovered &&
+                        !isEditing &&
+                        (!files || files.length === 0)
+                      ) && "ml-auto"
                         } relative max-w-[70%] mb-auto rounded-3xl bg-user px-5 py-2.5`}
                     >
                       {content}
@@ -813,7 +842,7 @@ export const HumanMessage = ({
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-x-0.5  mt-1">
+          <div className="flex flex-col md:flex-row gap-x-0.5 mt-1">
             {currentMessageInd !== undefined &&
               onMessageSelection &&
               otherMessagesCanSwitchTo &&

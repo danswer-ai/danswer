@@ -301,7 +301,7 @@ const Page = () => {
   return (
     <div className="container mx-auto">
       <AdminPageTitle
-        icon={<SlackIcon size={32} className="" />}
+        icon={<SlackIcon size={32} />}
         title="Slack Bot Configuration"
       />
       <InstantSSRAutoRefresh />

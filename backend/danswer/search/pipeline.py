@@ -1,17 +1,23 @@
 from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Iterator
+from typing import Any
 from typing import cast
 
-from sqlalchemy.orm import Session
-
+from danswer.chat.chat_utils import llm_doc_from_inference_section
+from danswer.chat.models import LlmDoc
+from danswer.chat.models import RelevanceChunk
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
+from danswer.llm.answering.models import DocumentPruningConfig
+from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prune_and_merge import ChunkRange
 from danswer.llm.answering.prune_and_merge import merge_chunk_intervals
+from danswer.llm.answering.prune_and_merge import prune_and_merge_sections
 from danswer.llm.interfaces import LLM
+from danswer.llm.utils import message_generator_to_string_generator
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import IndexFilters
@@ -26,7 +32,10 @@ from danswer.search.preprocessing.preprocessing import retrieval_preprocessing
 from danswer.search.retrieval.search_runner import retrieve_chunks
 from danswer.search.utils import inference_section_from_chunks
 from danswer.utils.logger import setup_logger
+from danswer.utils.threadpool_concurrency import FunctionCall
+from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
@@ -40,9 +49,12 @@ class SearchPipeline:
         fast_llm: LLM,
         db_session: Session,
         bypass_acl: bool = False,  # NOTE: VERY DANGEROUS, USE WITH CAUTION
-        retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-        | None = None,
+        retrieval_metrics_callback: (
+            Callable[[RetrievalMetricsContainer], None] | None
+        ) = None,
         rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+        prompt_config: PromptConfig | None = None,
+        pruning_config: DocumentPruningConfig | None = None,
     ):
         self.search_request = search_request
         self.user = user
@@ -58,6 +70,8 @@ class SearchPipeline:
             primary_index_name=self.embedding_model.index_name,
             secondary_index_name=None,
         )
+        self.prompt_config: PromptConfig | None = prompt_config
+        self.pruning_config: DocumentPruningConfig | None = pruning_config
 
         # Preprocessing steps generate this
         self._search_query: SearchQuery | None = None
@@ -77,7 +91,48 @@ class SearchPipeline:
         self._postprocessing_generator: Iterator[
             list[InferenceSection] | list[int]
         ] | None = None
+        self._final_context_documents: list[LlmDoc] | None = None
 
+
+
+    def evaluate(self, top_doc: LlmDoc, query: str) -> dict[str, RelevanceChunk]:
+        # Group documents by document_id
+
+        relevance: dict[str, Any] = {}
+        results = {}
+        document_id = top_doc.document_id
+
+        prompt = f"""
+        Determine if this document is relevant to the search query:
+
+        Title: {top_doc.document_id.split("/")[-1]}
+        Blurb: {top_doc.blurb}
+        Query: {query}
+
+        Think through the following:
+        1. What are the key terms or concepts in the query?
+        2. Do these appear in the document title or blurb?
+        3. Is the document's main topic related to the query?
+        4. Would this document be useful to someone searching with this query?
+
+        Provide your chain of thought in a paragraph. Be concise but show your reasoning clearly.
+
+        Conclude with:
+        RESULT: True (if relevant)
+        RESULT: False (if not relevant)
+        """
+
+        content = "".join(
+            message_generator_to_string_generator(self.llm.stream(prompt=prompt))
+        )
+        if "result: true" in content.lower():
+            relevance["relevant"] = True
+        else:
+            relevance["relevant"] = False
+
+        relevance["content"] = content.split("RESULT")[0]
+        results[document_id] = relevance
+        return results
     """Pre-processing"""
 
     def _run_preprocessing(self) -> None:
@@ -314,6 +369,25 @@ class SearchPipeline:
         return self._reranked_sections
 
     @property
+    def final_context_documents(self):
+
+        final_context_sections = prune_and_merge_sections(
+            sections=self.reranked_sections,
+            section_relevance_list=self.section_relevance_list,
+            prompt_config=self.prompt_config,
+            llm_config=self.llm.config,
+            question=self.search_request.query,
+            document_pruning_config=self.pruning_config,
+        )
+
+        self._final_context_documents = [
+            llm_doc_from_inference_section(section)
+            for section in final_context_sections
+        ]
+
+        return self._final_context_documents
+
+    @property
     def relevant_section_indices(self) -> list[int]:
         if self._relevant_section_indices is not None:
             return self._relevant_section_indices
@@ -322,6 +396,21 @@ class SearchPipeline:
             cast(Iterator[list[int]], self._postprocessing_generator)
         )
         return self._relevant_section_indices
+
+
+    @property
+    def relevance_summaries(self) -> dict[str, RelevanceChunk]:
+        functions = [
+            FunctionCall(self.evaluate, (final_context, self.search_query.query))
+            for final_context in self._final_context_documents
+        ]
+
+        results = run_functions_in_parallel(function_calls=functions)
+
+        return {
+            next(iter(value)): value[next(iter(value))] for value in results.values()
+        }
+
 
     @property
     def section_relevance_list(self) -> list[bool]:

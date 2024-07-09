@@ -164,14 +164,15 @@ const FolderItem = ({
       }}
       onDragLeave={() => setIsDragOver(false)}
       onDrop={handleDrop}
-      className={`transition duration-300  ease-in-out rounded-md ${
+      className={`transition duration-300 ease-in-out rounded-md ${
         isDragOver ? "bg-hover" : ""
       }`}
+      // Is there any way to use regex in the VSCODE search tool thing to find all cases of two consecutive spaces within the quotations of a className="[something here]". For example className="absolute max-w-  dsfa" would find the two spaces there
     >
       {showDeleteConfirm && (
         <div
           ref={deleteConfirmRef}
-          className="absolute max-w-xs border z-[100] border-neutral-300 top-0 right-0  w-[250px] -bo-0  top-2 mt-4 p-2 bg-background-weak rounded shadow-lg z-10"
+          className="absolute max-w-xs border z-[100] border-neutral-300 top-0 right-0 w-[250px] -bo-0 top-2 mt-4 p-2 bg-background-weak rounded shadow-lg z-10"
         >
           <p className="text-sm mb-2">
             Are you sure you want to delete <i>{folder.folder_name}</i>? All the
@@ -180,7 +181,7 @@ const FolderItem = ({
           <div className="flex justify-end">
             <button
               onClick={confirmDelete}
-              className="bg-red-500  hover:bg-red-600 text-white px-2 py-1 rounded text-xs mr-2"
+              className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs mr-2"
             >
               Yes
             </button>
@@ -198,7 +199,7 @@ const FolderItem = ({
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
         >
-          <div onClick={toggleFolderExpansion} className="   cursor-pointer">
+          <div onClick={toggleFolderExpansion} className="cursor-pointer">
             <div className="text-sm text-medium flex items-center justify-start w-full">
               <div className="mr-2">
                 {isExpanded ? (

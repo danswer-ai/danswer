@@ -3,12 +3,12 @@ import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
-import { ChatPage } from "./ChatPage";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatProvider } from "@/components/context/ChatContext";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import FunctionalWrapper from "./shared_chat_search/FunctionalWrapper";
-import WrapperTest from "./WrapperTest";
+import { ChatPage } from "./ChatPage";
+import WrappedChat from "./WrappedChat";
 
 export default async function Page({
   searchParams,
@@ -65,19 +65,10 @@ export default async function Page({
           openedFolders,
         }}
       >
-        <WrapperTest />
-        {/* <FunctionalWrapper
-          content={(toggle) => (
-            <ChatPage
-              toggle={toggle}
-              defaultSelectedPersonaId={defaultPersonaId}
-              documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
-              toggleChatSidebar={toggleChatSidebar}
-            />
-          )
-          }
-
-        /> */}
+        <WrappedChat
+          defaultPersonaId={defaultPersonaId}
+          initiallyToggled={toggleChatSidebar}
+        />
       </ChatProvider>
     </>
   );

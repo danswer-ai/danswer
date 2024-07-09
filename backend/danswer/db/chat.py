@@ -3,18 +3,8 @@ from datetime import datetime
 from datetime import timedelta
 from uuid import UUID
 
-from sqlalchemy import and_
-from sqlalchemy import delete
-from sqlalchemy import desc
-from sqlalchemy import func
-from sqlalchemy import nullsfirst
-from sqlalchemy import or_
-from sqlalchemy import select
-from sqlalchemy.exc import MultipleResultsFound
-from sqlalchemy.orm import joinedload
-from sqlalchemy.orm import Session
-
 from danswer.auth.schemas import UserRole
+from danswer.chat.models import LLMRelevanceSummaryResponse
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
@@ -36,6 +26,17 @@ from danswer.search.models import SearchDoc as ServerSearchDoc
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.tools.tool_runner import ToolCallFinalResult
 from danswer.utils.logger import setup_logger
+from sqlalchemy import and_
+from sqlalchemy import delete
+from sqlalchemy import desc
+from sqlalchemy import func
+from sqlalchemy import nullsfirst
+from sqlalchemy import or_
+from sqlalchemy import select
+from sqlalchemy import update
+from sqlalchemy.exc import MultipleResultsFound
+from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import Session
 
 
 logger = setup_logger()
@@ -310,6 +311,20 @@ def get_chat_messages_by_sessions(
     return db_session.execute(stmt).scalars().all()
 
 
+def get_search_docs_for_chat_message(
+    chat_message_id: int, db_session: Session
+) -> list[SearchDoc]:
+    stmt = (
+        select(SearchDoc)
+        .join(
+            ChatMessage__SearchDoc, ChatMessage__SearchDoc.search_doc_id == SearchDoc.id
+        )
+        .where(ChatMessage__SearchDoc.chat_message_id == chat_message_id)
+    )
+
+    return list(db_session.scalars(stmt).all())
+
+
 def get_chat_messages_by_session(
     chat_session_id: int,
     user_id: UUID | None,
@@ -330,8 +345,6 @@ def get_chat_messages_by_session(
 
     if prefetch_tool_calls:
         stmt = stmt.options(joinedload(ChatMessage.tool_calls))
-
-    if prefetch_tool_calls:
         result = db_session.scalars(stmt).unique().all()
     else:
         result = db_session.scalars(stmt).all()
@@ -519,6 +532,31 @@ def get_doc_query_identifiers_from_model(
     return doc_query_identifiers
 
 
+def update_search_docs_table_with_relevance(
+    db_session: Session,
+    reference_db_search_docs: list[SearchDoc],
+    relevance_summary: LLMRelevanceSummaryResponse,
+) -> None:
+    for search_doc in reference_db_search_docs:
+        relevance_data = relevance_summary.relevance_summaries.get(
+            search_doc.document_id
+        )
+        if relevance_data is not None:
+            db_session.execute(
+                update(SearchDoc)
+                .where(SearchDoc.document_id == search_doc.document_id)
+                .values(
+                    relevant_search_result=relevance_data.get("relevant"),
+                    relevance_explanation=relevance_data.get("content"),
+                )
+            )
+        else:
+            logger.warning(
+                f"No relevance data generated for document {search_doc.document_id}"
+            )
+    db_session.commit()
+
+
 def create_db_search_doc(
     server_search_doc: ServerSearchDoc,
     db_session: Session,
@@ -533,6 +571,8 @@ def create_db_search_doc(
         boost=server_search_doc.boost,
         hidden=server_search_doc.hidden,
         doc_metadata=server_search_doc.metadata,
+        relevant_search_result=server_search_doc.relevant_search_result,
+        relevance_explanation=server_search_doc.relevance_explanation,
         # For docs further down that aren't reranked, we can't use the retrieval score
         score=server_search_doc.score or 0.0,
         match_highlights=server_search_doc.match_highlights,
@@ -544,7 +584,6 @@ def create_db_search_doc(
 
     db_session.add(db_search_doc)
     db_session.commit()
-
     return db_search_doc
 
 
@@ -573,6 +612,8 @@ def translate_db_search_doc_to_server_search_doc(
         match_highlights=(
             db_search_doc.match_highlights if not remove_doc_content else []
         ),
+        relevance_explanation=db_search_doc.relevance_explanation,
+        relevant_search_result=db_search_doc.relevant_search_result,
         updated_at=db_search_doc.updated_at if not remove_doc_content else None,
         primary_owners=db_search_doc.primary_owners if not remove_doc_content else [],
         secondary_owners=(
@@ -597,13 +638,10 @@ def get_retrieval_docs_from_chat_message(
 
 def translate_db_message_to_chat_message_detail(
     chat_message: ChatMessage,
-    relevance: dict | None = None,
-    comments: dict | None = None,
     remove_doc_content: bool = False,
 ) -> ChatMessageDetail:
     chat_msg_detail = ChatMessageDetail(
-        relevance=relevance,
-        comments=comments,
+        chat_session_id=chat_message.chat_session_id,
         message_id=chat_message.id,
         parent_message=chat_message.parent_message,
         latest_child_message=chat_message.latest_child_message,
