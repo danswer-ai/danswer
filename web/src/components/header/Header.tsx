@@ -68,7 +68,7 @@ export function Header({ user }: HeaderProps) {
               <div className="w-24 flex my-auto">
                 <div className={"mx-auto flex text-strong px-2"}>
                   <FiSearch className="my-auto mr-1" />
-                  <h1 className="flex text-sm font-bold my-auto">Search</h1>
+                  <h1 className="flex text-sm font-bold my-auto">KI Suche</h1>
                 </div>
               </div>
             </Link>
@@ -77,7 +77,7 @@ export function Header({ user }: HeaderProps) {
               <div className="w-24 flex my-auto">
                 <div className="mx-auto flex text-strong px-2">
                   <FiMessageSquare className="my-auto mr-1" />
-                  <h1 className="flex text-sm font-bold my-auto">Chat</h1>
+                  <h1 className="flex text-sm font-bold my-auto">KI Chat</h1>
                 </div>
               </div>
             </Link>
