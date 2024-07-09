@@ -1,9 +1,4 @@
-<!-- DANSWER_METADATA={"link": "https://github.com/danswer-ai/danswer/blob/main/README.md"} -->
-
-<h2 align="center">
-<a href="https://www.danswer.ai/"> <img width="50%" src="https://github.com/danswer-owners/danswer/blob/1fabd9372d66cd54238847197c33f091a724803b/DanswerWithName.png?raw=true)" /></a>
-</h2>
-
+<h2> BLONA KI </h2>
 <p align="center">
 <p align="center">Open Source Gen-AI Chat + Unified Search.</p>
 
