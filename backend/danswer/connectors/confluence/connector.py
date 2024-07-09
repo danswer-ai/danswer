@@ -210,6 +210,126 @@ def _comment_dfs(
     return comments_str
 
 
+class RecursiveIndexer:
+    def __init__(
+        self, batch_size, confluence_client, index_origin, origin_page_id
+    ) -> None:
+        self.batch_size = batch_size
+        self.confluence_client = confluence_client
+        self.index_origin = index_origin
+        self.origin_page_id = origin_page_id
+        self.pages = self.recurse_children_pages(0, self.origin_page_id)
+
+    def get_pages(self, ind: int, size: int) -> list[dict] | None:
+        if ind * size > len(self.pages):
+            return None
+        return self.pages[ind * size : (ind + 1) * size]
+
+    def _fetch_origin_page(
+        self,
+    ) -> dict[str, Any]:
+        get_page_by_id = make_confluence_call_handle_rate_limit(
+            self.confluence_client.get_page_by_id
+        )
+        try:
+            origin_page = get_page_by_id(
+                self.origin_page_id, expand="body.storage.value,version"
+            )
+            return origin_page
+        except Exception as e:
+            logger.warning(
+                f"Appending orgin page with id {self.origin_page_id} failed: {e}"
+            )
+            return {}
+
+    def recurse_children_pages(
+        self,
+        start_ind: int,
+        page_id: int,
+    ) -> list[dict[str, Any]]:
+        pages: list[dict[str, Any]] = []
+        current_level_pages: list[dict[str, Any]] = []
+        next_level_pages: list[dict[str, Any]] = []
+
+        # Initial fetch of first level children
+        index = start_ind
+        while batch := self._fetch_single_depth_child_pages(
+            index, self.batch_size, page_id
+        ):
+            current_level_pages.extend(batch)
+            index += len(batch)
+
+        pages.extend(current_level_pages)
+
+        # Recursively index children and children's children, etc.
+        while current_level_pages:
+            for child in current_level_pages:
+                child_index = 0
+                while child_batch := self._fetch_single_depth_child_pages(
+                    child_index, self.batch_size, child["id"]
+                ):
+                    next_level_pages.extend(child_batch)
+                    child_index += len(child_batch)
+
+            pages.extend(next_level_pages)
+            current_level_pages = next_level_pages
+            next_level_pages = []
+
+        if self.index_origin:
+            try:
+                origin_page = self._fetch_origin_page()
+                pages.append(origin_page)
+            except Exception as e:
+                logger.warning(f"Appending origin page with id {page_id} failed: {e}")
+
+        return pages
+
+    def _fetch_single_depth_child_pages(
+        self, start_ind: int, batch_size: int, page_id: str
+    ) -> list[dict[str, Any]]:
+        child_pages: list[dict[str, Any]] = []
+
+        get_page_child_by_type = make_confluence_call_handle_rate_limit(
+            self.confluence_client.get_page_child_by_type
+        )
+
+        try:
+            child_page = get_page_child_by_type(
+                page_id,
+                type="page",
+                start=start_ind,
+                limit=batch_size,
+                expand="body.storage.value,version",
+            )
+
+            child_pages.extend(child_page)
+            return child_pages
+
+        except Exception:
+            logger.warning(
+                f"Batch failed with page {page_id} at offset {start_ind} "
+                f"with size {batch_size}, processing pages individually..."
+            )
+
+            for i in range(batch_size):
+                ind = start_ind + i
+                try:
+                    child_page = get_page_child_by_type(
+                        page_id,
+                        type="page",
+                        start=ind,
+                        limit=1,
+                        expand="body.storage.value,version",
+                    )
+                    child_pages.extend(child_page)
+                except Exception as e:
+                    logger.warning(f"Page {page_id} at offset {ind} failed: {e}")
+                    if not self.continue_on_failure:
+                        raise e
+
+            return child_pages
+
+
 class ConfluenceConnector(LoadConnector, PollConnector):
     def __init__(
         self,
@@ -319,97 +439,17 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
                 return view_pages
 
-        def _fetch_origin_page() -> dict[str, Any]:
-            get_page_by_id = make_confluence_call_handle_rate_limit(
-                confluence_client.get_page_by_id
+        def _fetch_page(batch_size: int) -> list[dict[str, Any]]:
+            indexer = RecursiveIndexer(
+                origin_page_id=self.page_id,
+                batch_size=batch_size,
+                confluence_client=self.confluence_client,
+                index_origin=self.index_origin,
             )
-            try:
-                origin_page = get_page_by_id(
-                    self.page_id, expand="body.storage.value,version"
-                )
-                return origin_page
-            except Exception as e:
-                logger.warning(
-                    f"Appending orgin page with id {self.page_id} failed: {e}"
-                )
-                return {}
-
-        def _recurse_children_pages(start_ind: int) -> list[dict[str, Any]]:
-            pages: list[dict[str, Any]] = []
-            current_children: list[dict[str, Any]] = []
-            children = _fetch_single_depth_child_pages(
-                start_ind, self.batch_size, self.page_id
-            )
-            pages.extend(children)
-
-            # recursively index children and children's children, etc.
-            while len(children) != 0:
-                for child in children:
-                    current_children.extend(
-                        _fetch_single_depth_child_pages(
-                            start_ind, self.batch_size, child["id"]
-                        )
-                    )
-                children = current_children
-                pages.extend(children)
-                current_children = []
-
-            if self.index_origin:
-                try:
-                    origin_page = _fetch_origin_page()
-                    pages.append(origin_page)
-                except Exception as e:
-                    logger.warning(
-                        f"Appending orgin page with id {self.page_id} failed: {e}"
-                    )
+            pages = []
+            while page := indexer.get_pages(len(pages), self.batch_size):
+                pages.extend(page)
             return pages
-
-        def _fetch_single_depth_child_pages(
-            start_ind: int, batch_size: int, page_id: str
-        ) -> list[dict[str, Any]]:
-            child_pages: list[dict[str, Any]] = []
-
-            get_page_child_by_type = make_confluence_call_handle_rate_limit(
-                confluence_client.get_page_child_by_type
-            )
-
-            try:
-                child_page = get_page_child_by_type(
-                    page_id,
-                    type="page",
-                    start=start_ind,
-                    limit=batch_size,
-                    expand="body.storage.value,version",
-                )
-
-                child_pages.extend(child_page)
-                return child_pages
-
-            except Exception:
-                logger.warning(
-                    f"Batch failed with page {self.page_id} at offset {start_ind} "
-                    f"with size {batch_size}, processing pages individually..."
-                )
-
-                for i in range(self.batch_size):
-                    ind = start_ind + i
-                    try:
-                        child_page = get_page_child_by_type(
-                            page_id,
-                            type="page",
-                            start=ind,
-                            limit=1,
-                            expand="body.storage.value,version",
-                        )
-                        child_pages.extend(child_page)
-                    except Exception as e:
-                        logger.warning(
-                            f"Page {self.page_id} at offset {ind} failed: {e}"
-                        )
-                        if not self.continue_on_failure:
-                            raise e
-
-                return child_pages
 
         pages: list[dict[str, Any]] = []
 
@@ -417,7 +457,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             pages = (
                 _fetch_space(start_ind, self.batch_size)
                 if self.space_level_scan
-                else _recurse_children_pages(start_ind=start_ind)
+                else _fetch_page(batch_size=self.batch_size)
             )
             return pages
 
@@ -426,13 +466,12 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 raise e
 
         # error checking phase, only reachable if `self.continue_on_failure=True`
-
         for i in range(self.batch_size):
             try:
                 pages = (
                     _fetch_space(start_ind, self.batch_size)
                     if self.space_level_scan
-                    else _recurse_children_pages(start_ind=start_ind)
+                    else _fetch_page(batch_size=self.batch_size)
                 )
                 return pages
 
