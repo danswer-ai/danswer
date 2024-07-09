@@ -4,12 +4,6 @@ from urllib.parse import parse_qs
 from urllib.parse import ParseResult
 from urllib.parse import urlparse
 
-from google.auth.transport.requests import Request  # type: ignore
-from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
-from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
-from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
-from sqlalchemy.orm import Session
-
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.connectors.google_drive.constants import CRED_KEY
 from danswer.connectors.google_drive.constants import (
@@ -29,6 +23,11 @@ from danswer.server.documents.models import CredentialBase
 from danswer.server.documents.models import GoogleAppCredentials
 from danswer.server.documents.models import GoogleServiceAccountKey
 from danswer.utils.logger import setup_logger
+from google.auth.transport.requests import Request  # type: ignore
+from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
+from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
+from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

@@ -1,9 +1,8 @@
 from collections.abc import Sequence
 
-from pydantic import BaseModel
-
 from danswer.chat.models import LlmDoc
 from danswer.search.models import InferenceChunk
+from pydantic import BaseModel
 
 
 class DocumentIdOrderMapping(BaseModel):

@@ -248,7 +248,7 @@ export default function Page() {
         <HealthCheckBanner />
       </div>
       <AdminPageTitle
-        icon={<GoogleStorageIcon size={32} className="" />}
+        icon={<GoogleStorageIcon size={32} />}
         title="Google Cloud Storage"
       />
       <GCSMain />

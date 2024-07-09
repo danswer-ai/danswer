@@ -417,7 +417,7 @@ export default function Page() {
       </div>
 
       <AdminPageTitle
-        icon={<GoogleDriveIcon size={32} className="" />}
+        icon={<GoogleDriveIcon size={32} />}
         title="Google Drive"
       />
 

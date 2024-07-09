@@ -7,8 +7,6 @@ from typing import Optional
 
 import boto3
 from botocore.client import Config
-from mypy_boto3_s3 import S3Client
-
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import BlobType
 from danswer.configs.constants import DocumentSource
@@ -21,6 +19,7 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.utils.logger import setup_logger
+from mypy_boto3_s3 import S3Client
 
 logger = setup_logger()
 

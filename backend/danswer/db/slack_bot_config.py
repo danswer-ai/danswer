@@ -1,8 +1,5 @@
 from collections.abc import Sequence
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.models import ChannelConfig
@@ -16,6 +13,8 @@ from danswer.db.persona import mark_persona_as_deleted
 from danswer.db.persona import upsert_persona
 from danswer.db.standard_answer import fetch_standard_answer_categories_by_ids
 from danswer.search.enums import RecencyBiasSetting
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 
 def _build_persona_name(channel_names: list[str]) -> str:

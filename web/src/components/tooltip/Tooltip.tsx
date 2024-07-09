@@ -28,8 +28,7 @@ export function Tooltip({
         <TooltipPrimitive.Content
           side={side}
           align={align}
-          className="
-
+          className={`
             bg-background-inverted 
             text-inverted 
             text-sm 
@@ -37,8 +36,8 @@ export function Tooltip({
             py-1 
             px-2 
             shadow-lg
-            z-100
-          "
+            z-10
+          `}
         >
           {content}
           <TooltipPrimitive.Arrow className="fill-black" />

@@ -3,8 +3,11 @@
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import {
   DanswerDocument,
+  DocumentRelevance,
   FlowType,
   Quote,
+  Relevance,
+  SearchDanswerDocument,
   SearchDefaultOverrides,
   SearchResponse,
   ValidQuestionResponse,
@@ -14,9 +17,10 @@ import { AlertIcon, BroomIcon, UndoIcon } from "../icons/icons";
 import { AgenticDocumentDisplay, DocumentDisplay } from "./DocumentDisplay";
 import { searchState } from "./SearchSection";
 import { useEffect, useState } from "react";
+import { Tooltip } from "../tooltip/Tooltip";
 
 const getSelectedDocumentIds = (
-  documents: DanswerDocument[],
+  documents: SearchDanswerDocument[],
   selectedIndices: number[]
 ) => {
   const selectedDocumentIds = new Set<string>();
@@ -30,15 +34,16 @@ export const SearchResultsDisplay = ({
   agenticResults,
   searchResponse,
   searchState,
+  contentEnriched,
   validQuestionResponse,
   isFetching,
   defaultOverrides,
   personaName = null,
-  relevance,
   performSweep,
   sweep,
   comments,
 }: {
+  contentEnriched?: boolean;
   agenticResults?: boolean | null;
   performSweep: () => void;
   sweep?: boolean;
@@ -48,7 +53,6 @@ export const SearchResultsDisplay = ({
   isFetching: boolean;
   defaultOverrides: SearchDefaultOverrides;
   personaName?: string | null;
-  relevance: any;
   comments: any;
 }) => {
   useEffect(() => {
@@ -72,6 +76,7 @@ export const SearchResultsDisplay = ({
   }, []);
 
   const { popup, setPopup } = usePopup();
+  const [showAll, setShowAll] = useState(false);
 
   if (!searchResponse) {
     return null;
@@ -99,7 +104,7 @@ export const SearchResultsDisplay = ({
             </div>
           </div>
         ) : (
-          <div className="text-subtle">No matching documents found.</div>
+          <></>
         )}
       </div>
     );
@@ -121,93 +126,138 @@ export const SearchResultsDisplay = ({
     searchResponse.selectedDocIndices || []
   );
 
-  const shouldDisplayQA =
-    searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
-    defaultOverrides.forceDisplayQA;
+  const relevantDocs = documents
+    ? documents.filter((doc) => {
+        return doc.relevant_search_result;
+      })
+    : [];
+
+  const orderedDocs =
+    contentEnriched && documents
+      ? documents.sort((a, b) =>
+          a.relevant_search_result === b.relevant_search_result
+            ? 0
+            : a.relevant_search_result
+              ? -1
+              : 1
+        )
+      : documents ?? [];
+
+  const isMac =
+    navigator.userAgent.length > 10
+      ? navigator.userAgent.indexOf("Mac") !== -1
+      : true;
 
   return (
     <>
       {popup}
+
       {documents && documents.length > 0 && (
         <div className="mt-4">
           <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
             <p>Results</p>
-            {relevance && !agenticResults && (
-              <button
-                onClick={() => performSweep()}
-                className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
-                  !sweep
-                    ? "bg-green-500 text-neutral-800"
-                    : "bg-rose-700 text-lighter"
-                }`}
-                style={{
-                  transform: sweep ? "rotateZ(180deg)" : "rotateZ(0deg)",
-                }}
-              >
-                <div
-                  className={`flex items-center ${sweep ? "rotate-180" : ""}`}
-                >
-                  {/* <span>⌘O</span> */}
-                  <span></span>
-                  {!sweep ? "hide" : "undo"}
-                  {!sweep ? (
-                    <BroomIcon className="h-4 w-4" />
-                  ) : (
-                    <UndoIcon className="h-4 w-4" />
-                  )}
-                </div>
-              </button>
-            )}
+            {!agenticResults &&
+              (contentEnriched || searchResponse.additional_relevance) && (
+                <Tooltip delayDuration={1000} content={`${isMac ? "⌘" : "⊞"}O`}>
+                  <button
+                    onClick={() => performSweep()}
+                    className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
+                      !sweep
+                        ? "bg-green-500 text-solidDark"
+                        : "bg-rose-700 text-lighter"
+                    }`}
+                    style={{
+                      transform: sweep ? "rotateZ(180deg)" : "rotateZ(0deg)",
+                    }}
+                  >
+                    <div
+                      className={`flex items-center ${sweep ? "rotate-180" : ""}`}
+                    >
+                      <span></span>
+                      {!sweep ? "hide" : "undo"}
+                      {!sweep ? (
+                        <BroomIcon className="h-4 w-4" />
+                      ) : (
+                        <UndoIcon className="h-4 w-4" />
+                      )}
+                    </div>
+                  </button>
+                </Tooltip>
+              )}
           </div>
-          {removeDuplicateDocs(documents, agenticResults!, relevance).length ==
-            0 && (
-            <p>
-              No relevant documents found! Try another query or hit the button
-              below!
-            </p>
-          )}
 
-          {removeDuplicateDocs(documents, agenticResults!, relevance).map(
-            (document, ind) => {
-              return agenticResults ? (
+          {orderedDocs.map((document, ind) => {
+            const relevance: DocumentRelevance | null =
+              searchResponse.additional_relevance
+                ? searchResponse.additional_relevance[document.document_id]
+                : null;
+
+            return agenticResults ? (
+              (showAll ||
+                relevance?.relevant ||
+                document.relevant_search_result) && (
                 <AgenticDocumentDisplay
+                  additional_relevance={relevance}
+                  contentEnriched={contentEnriched}
                   comments={comments}
                   index={ind}
-                  hide={sweep && relevance && !relevance[document.document_id]}
-                  relevance={relevance}
-                  key={document.document_id}
+                  key={document.document_id + ind}
                   document={document}
                   documentRank={ind + 1}
                   messageId={messageId}
                   isSelected={selectedDocumentIds.has(document.document_id)}
                   setPopup={setPopup}
                 />
-              ) : (
-                <DocumentDisplay
-                  index={ind}
-                  hide={sweep && relevance && !relevance[document.document_id]}
-                  relevance={relevance}
-                  key={document.document_id}
-                  document={document}
-                  documentRank={ind + 1}
-                  messageId={messageId}
-                  isSelected={selectedDocumentIds.has(document.document_id)}
-                  setPopup={setPopup}
-                />
-              );
-            }
-          )}
+              )
+            ) : (
+              <DocumentDisplay
+                additional_relevance={relevance}
+                contentEnriched={contentEnriched}
+                index={ind}
+                hide={sweep && !document.relevant_search_result}
+                key={document.document_id + ind}
+                document={document}
+                documentRank={ind + 1}
+                messageId={messageId}
+                isSelected={selectedDocumentIds.has(document.document_id)}
+                setPopup={setPopup}
+              />
+            );
+          })}
         </div>
       )}
-      <div
-        className={`flex mt-4 justify-center transition-all duration-500 ${searchState == "input" ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-      >
-        <button className=" pl-5 transition-all cursor-pointer -ml-2 bg-background-subtle text-dark h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs">
-          <p className=" relative after:bg-neutral-600 after:absolute after:h-[1px] after:w-0 after:bottom-0 after:left-0 hover:after:w-full after:transition-all after:duration-300 duration-300">
-            Show me all
+
+      {documents && documents.length == 0 && (
+        <p className="flex text-lg font-bold">
+          No docs found! Ensure that you have enabled at least one connector
+        </p>
+      )}
+
+      {agenticResults &&
+        relevantDocs &&
+        relevantDocs.length == 0 &&
+        !showAll && (
+          <p className="flex text-lg font-bold">
+            No high quality results found by agentic search.
           </p>
-        </button>
-      </div>
+        )}
+
+      {agenticResults ? (
+        <div
+          className={`flex my-4  justify-center transition-all duration-500 ${searchState == "input" ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+        >
+          <button
+            onClick={() => setShowAll((showAll) => !showAll)}
+            className="transition-all cursor-pointer -ml-2 bg-background-subtle text-dark h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs"
+          >
+            <p className="relative after:bg-neutral-600 after:absolute after:h-[1px] after:w-0 after:bottom-0 after:left-0 hover:after:w-full after:transition-all after:duration-300 duration-300">
+              {showAll ? "Don't show all" : "Show me all"}
+            </p>
+          </button>
+        </div>
+      ) : (
+        <div className="h-[100px]" />
+      )}
     </>
   );
 };

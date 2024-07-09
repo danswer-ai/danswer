@@ -1,10 +1,5 @@
 from typing import Any
 
-from sqlalchemy import Select
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-from sqlalchemy.sql.expression import or_
-
 from danswer.auth.schemas import UserRole
 from danswer.connectors.gmail.constants import (
     GMAIL_DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
@@ -17,6 +12,10 @@ from danswer.db.models import Credential
 from danswer.db.models import User
 from danswer.server.documents.models import CredentialBase
 from danswer.utils.logger import setup_logger
+from sqlalchemy import Select
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import or_
 
 
 logger = setup_logger()

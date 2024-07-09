@@ -15,7 +15,6 @@ import {
   User,
 } from "@/lib/types";
 import {
-  DanswerDocument,
   Quote,
   SearchResponse,
   FlowType,
@@ -23,6 +22,8 @@ import {
   SearchDefaultOverrides,
   SearchRequestOverrides,
   ValidQuestionResponse,
+  Relevance,
+  SearchDanswerDocument,
 } from "@/lib/search/interfaces";
 import { searchRequestStreamed } from "@/lib/search/streamingQa";
 
@@ -34,14 +35,15 @@ import { computeAvailableFilters } from "@/lib/filters";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
-import { BackendChatSession, ChatSession } from "@/app/chat/interfaces";
+import { ChatSession, SearchSession } from "@/app/chat/interfaces";
 import FunctionalHeader from "../chat_search/Header";
 import { useSidebarVisibility } from "../chat_search/hooks";
 import { SEARCH_TOGGLED_COOKIE_NAME } from "../resizable/contants";
+import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
 
-export type searchState = "input" | "searching" | "analyzing";
+export type searchState = "input" | "searching" | "analyzing" | "summarizing";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -59,39 +61,48 @@ interface SearchSectionProps {
   documentSets: DocumentSet[];
   personas: Persona[];
   tags: Tag[];
-  toggle: (toggled: boolean) => void;
+  toggle: () => void;
   querySessions: ChatSession[];
   defaultSearchType: SearchType;
   user: User | null;
-  toggleSearchSidebar: boolean;
+  toggledSidebar: boolean;
+  agenticSearchEnabled: boolean;
 }
 
 export const SearchSection = ({
   ccPairs,
   toggle,
   documentSets,
+  agenticSearchEnabled,
   personas,
   user,
   tags,
   querySessions,
-  toggleSearchSidebar,
+  toggledSidebar,
   defaultSearchType,
 }: SearchSectionProps) => {
   // Search Bar
   const [query, setQuery] = useState<string>("");
-  const [relevance, setRelevance] = useState<any>(null);
   const [comments, setComments] = useState<any>(null);
+  const [contentEnriched, setContentEnriched] = useState(false);
 
   // Search
-  const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(
-    null
-  );
+  const [searchResponse, setSearchResponse] = useState<SearchResponse>({
+    suggestedSearchType: null,
+    suggestedFlowType: null,
+    answer: null,
+    quotes: null,
+    documents: null,
+    selectedDocIndices: null,
+    error: null,
+    messageId: null,
+  });
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
         switch (event.key.toLowerCase()) {
           case "/":
-            event.preventDefault();
             toggleAgentic();
             break;
         }
@@ -104,9 +115,16 @@ export const SearchSection = ({
     };
   }, []);
 
-  const [agentic, setAgentic] = useState(true);
+  const [agentic, setAgentic] = useState(agenticSearchEnabled);
 
   const toggleAgentic = () => {
+    Cookies.set(
+      AGENTIC_SEARCH_TYPE_COOKIE_NAME,
+      String(!agentic).toLocaleLowerCase()
+    );
+    console.log(
+      `ENABELD ${AGENTIC_SEARCH_TYPE_COOKIE_NAME} to be ${String(!agentic).toLocaleLowerCase()}`
+    );
     setAgentic((agentic) => !agentic);
   };
 
@@ -141,12 +159,29 @@ export const SearchSection = ({
     ? parseInt(existingSearchIdRaw)
     : null;
 
+  function updateSearchDanswerDocuments(
+    searchDocs: SearchDanswerDocument[],
+    relevance: Relevance
+  ): SearchDanswerDocument[] {
+    return searchDocs.map((doc) => {
+      const relevantContent = relevance[doc.document_id];
+      console.log(`for this docuent ${doc.document_id}`);
+      console.log(relevantContent);
+      const result: SearchDanswerDocument = {
+        ...doc,
+        relevant_search_result: relevantContent.relevant ?? false,
+        relevance_explanation: relevantContent?.content ?? "",
+      };
+      return result;
+    });
+  }
+
   useEffect(() => {
     if (existingSearchIdRaw == null) {
       return;
     }
     function extractFirstUserMessage(
-      chatSession: BackendChatSession
+      chatSession: SearchSession
     ): string | null {
       const userMessage = chatSession?.messages.find(
         (msg) => msg.message_type === "user"
@@ -156,14 +191,29 @@ export const SearchSection = ({
 
     async function initialSessionFetch() {
       const response = await fetch(
-        `/api/chat/get-chat-session/${existingSearchessionId}`
+        `/api/query/get-search-session/${existingSearchessionId}`
       );
-      const searchSession = (await response.json()) as BackendChatSession;
+      const searchSession = (await response.json()) as SearchSession;
       const message = extractFirstUserMessage(searchSession);
+
       if (message) {
-        toggleSidebar();
         setQuery(message);
-        onSearch({ overrideMessage: message });
+        const danswerDocs: SearchResponse = {
+          documents: searchSession.documents,
+          suggestedSearchType: null,
+          answer: null,
+          quotes: null,
+          selectedDocIndices: null,
+          error: null,
+          messageId: null,
+          suggestedFlowType: null,
+          additional_relevance: undefined,
+        };
+
+        console.log(searchSession.documents);
+        setFirstSearch(false);
+        setSearchResponse(danswerDocs);
+        setContentEnriched(true);
       }
     }
     initialSessionFetch();
@@ -184,7 +234,6 @@ export const SearchSection = ({
     error: null,
     messageId: null,
   };
-
   // Streaming updates
   const updateCurrentAnswer = (answer: string) =>
     setSearchResponse((prevState) => ({
@@ -196,9 +245,16 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       quotes,
     }));
-  const updateDocs = (documents: DanswerDocument[]) => {
-    setSearchState("analyzing");
 
+  const updateDocs = (documents: SearchDanswerDocument[]) => {
+    setTimeout(() => {
+      if (searchState != "input") {
+        setSearchState("analyzing");
+      }
+    }, 1500);
+
+    console.log("udpating docs");
+    console.log(documents);
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       documents,
@@ -224,30 +280,42 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       error,
     }));
-  const updateMessageId = (messageId: number) =>
+  const updateMessageAndThreadId = (
+    messageId: number,
+    chat_session_id: number
+  ) => {
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       messageId,
     }));
-  const updateDocumentRelevance = (relevance: any) => {
-    setRelevance(relevance);
+
+    router.replace(`/search?searchId=${chat_session_id}`);
   };
+
+  const updateDocumentRelevance = (relevance: Relevance) => {
+    setSearchResponse((prevState) => ({
+      ...(prevState || initialSearchResponse),
+      additional_relevance: relevance,
+    }));
+    setSearchState("input");
+  };
+
   const updateComments = (comments: any) => {
     setComments(comments);
   };
+
   const finishedSearching = () => {
+    console.log("finish searching has been called");
     setSearchState("input");
   };
 
   const resetInput = () => {
     setSweep(false);
     setFirstSearch(false);
-    setRelevance(null);
     setComments(null);
     setSearchState("searching");
   };
 
-  const [showAgenticDisclaimer, setShowAgenticDisclaimer] = useState(false);
   const [agenticResults, setAgenticResults] = useState<boolean | null>(null);
 
   let lastSearchCancellationToken = useRef<CancellationToken | null>(null);
@@ -257,12 +325,11 @@ export const SearchSection = ({
     offset,
     overrideMessage,
   }: SearchRequestOverrides = {}) => {
-    setAgenticResults(agentic!);
-    if (agentic) {
-      setTimeout(() => {
-        setShowAgenticDisclaimer(true);
-      }, 1000);
+    if ((overrideMessage || query) == "") {
+      return;
     }
+
+    setAgenticResults(agentic!);
     resetInput();
 
     if (lastSearchCancellationToken.current) {
@@ -311,18 +378,19 @@ export const SearchSection = ({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateError,
       }),
-      updateMessageId: cancellable({
+      updateMessageAndThreadId: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
-        fn: updateMessageId,
+        fn: updateMessageAndThreadId,
       }),
       updateDocStatus: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
-        fn: updateMessageId,
+        fn: updateMessageAndThreadId,
       }),
       updateDocumentRelevance: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateDocumentRelevance,
       }),
+
       updateComments: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateComments,
@@ -331,7 +399,6 @@ export const SearchSection = ({
         cancellationToken: lastSearchCancellationToken.current,
         fn: finishedSearching,
       }),
-
       selectedSearchType: searchType ?? selectedSearchType,
       offset: offset ?? defaultOverrides.offset,
     };
@@ -345,8 +412,6 @@ export const SearchSection = ({
       searchRequestStreamed(searchFnArgs),
       questionValidationStreamed(questionValidationArgs),
     ]);
-
-    setIsFetching(false);
   };
 
   // handle redirect if search page is disabled
@@ -376,12 +441,7 @@ export const SearchSection = ({
       {
         path: "/",
       };
-    toggle(!toggledSidebar);
-    setToggledSidebar((toggledSidebar) => !toggledSidebar); // Toggle the state which will in turn toggle the class
-  };
-
-  const forceNonAgentic = () => {
-    setAgenticResults(false);
+    toggle();
   };
 
   useEffect(() => {
@@ -414,8 +474,6 @@ export const SearchSection = ({
   const [firstSearch, setFirstSearch] = useState(true);
   const [searchState, setSearchState] = useState<searchState>("input");
 
-  const [toggledSidebar, setToggledSidebar] = useState(toggleSearchSidebar); // State to track if sidebar is open
-
   useSidebarVisibility({
     toggledSidebar,
     sidebarElementRef,
@@ -425,12 +483,12 @@ export const SearchSection = ({
 
   return (
     <>
-      <div className="flex relative  w-full h-full text-default overflow-x-hidden">
+      <div className="flex relative w-full pr-[8px] h-full text-default overflow-x-hidden">
         <div
           ref={sidebarElementRef}
           className={`
             flex-none 
-            absolute 
+            fixed -8
             left-0 
             z-50
             overflow-y-hidden 
@@ -448,21 +506,18 @@ export const SearchSection = ({
             }
           `}
         >
-          <div className="w-full  relative">
+          <div className="w-full relative">
             <HistorySidebar
               search
               ref={innerSidebarElementRef}
               toggleSidebar={toggleSidebar}
               toggled={toggledSidebar}
               existingChats={querySessions}
-              // currentChatSession={selectedChatSession}
-              // folders={folders}
-              // openedFolders={openedFolders}
             />
           </div>
         </div>
 
-        <div className="absolute left-0 w-full top-0 ">
+        <div className="absolute left-0 w-full top-0">
           <FunctionalHeader
             showSidebar={showDocSidebar}
             page="search"
@@ -472,21 +527,21 @@ export const SearchSection = ({
             <div
               style={{ transition: "width 0.30s ease-out" }}
               className={`
-                        flex-none 
-                        overflow-y-hidden 
-                        bg-background-weak 
-                        h-full
-                        transition-all 
-                        bg-opacity-80
-                        duration-300 
-                        ease-in-out
-                        ${toggledSidebar ? "w-[300px] " : "w-[0px]"}
-                      `}
-            ></div>
+                    flex-none
+                    overflow-y-hidden
+                    bg-background-weak
+                    h-full
+                    transition-all
+                    bg-opacity-80
+                    duration-300 
+                    ease-in-out
+                    ${toggledSidebar ? "w-[300px]" : "w-[0px]"}
+                  `}
+            />
 
             {
               <div className="px-24 w-full pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
-                <div className="absolute  z-10 top-12 left-0 hidden 2xl:block w-52 3xl:w-64">
+                <div className="absolute z-10 top-12 left-0 hidden 2xl:block w-52 3xl:w-64">
                   {(ccPairs.length > 0 || documentSets.length > 0) && (
                     <SourceSelector
                       {...filterManager}
@@ -502,20 +557,19 @@ export const SearchSection = ({
                 <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64"></div>
                 <div className="max-w-searchbar-max w-[90%] mx-auto">
                   <div
-                    className={`transition-all duration-500 ease-in-out overflow-hidden ${
-                      firstSearch
-                        ? "opacity-100 max-h-[500px]"
-                        : "opacity-0 max-h-0"
-                    }`}
+                    className={`transition-all duration-500 ease-in-out overflow-hidden 
+                      ${
+                        firstSearch
+                          ? "opacity-100 max-h-[500px]"
+                          : "opacity-0 max-h-0"
+                      }`}
                     onTransitionEnd={handleTransitionEnd}
                   >
                     <div className="mt-48 mb-8 flex justify-center items-center">
                       <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
                         <div className="flex">
-                          <div className="text-3xl font-bold font-title text-strong mx-auto">
-                            {/* <div className="text-3xl font-bold text-strong mx-auto"> */}
+                          <div className="text-3xl font-bold font-strong text-strong mx-auto">
                             Unlock Knowledge
-                            {/*  */}
                           </div>
                         </div>
                       </div>
@@ -535,13 +589,13 @@ export const SearchSection = ({
                   />
 
                   <div className="mt-6">
-                    {!(agenticResults && isFetching) ? (
+                    {!(agenticResults && isFetching) && (
                       <SearchResultsDisplay
+                        contentEnriched={contentEnriched}
                         comments={comments}
                         sweep={sweep}
                         agenticResults={agenticResults}
                         performSweep={performSweep}
-                        relevance={relevance}
                         searchState={searchState}
                         searchResponse={searchResponse}
                         validQuestionResponse={validQuestionResponse}
@@ -554,10 +608,6 @@ export const SearchSection = ({
                             : null
                         }
                       />
-                    ) : (
-                      showAgenticDisclaimer && (
-                        <AgenticDisclaimer forceNonAgentic={forceNonAgentic} />
-                      )
                     )}
                   </div>
                 </div>
@@ -565,8 +615,6 @@ export const SearchSection = ({
             }
           </div>
         </div>
-
-        {/* Temporary - fixed logo */}
       </div>
       <FixedLogo />
     </>

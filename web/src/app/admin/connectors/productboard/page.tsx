@@ -244,7 +244,7 @@ export default function Page() {
       </div>
 
       <AdminPageTitle
-        icon={<ProductboardIcon size={32} className="" />}
+        icon={<ProductboardIcon size={32} />}
         title="Productboard"
       />
 

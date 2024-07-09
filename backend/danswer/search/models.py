@@ -1,9 +1,6 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
-from pydantic import validator
-
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
@@ -15,6 +12,8 @@ from danswer.db.models import Persona
 from danswer.indexing.models import BaseChunk
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import SearchType
+from pydantic import BaseModel
+from pydantic import validator
 from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
 
 
@@ -130,11 +129,14 @@ class InferenceChunk(BaseChunk):
     recency_bias: float
     score: float | None
     hidden: bool
+    relevant_search_result: bool | None = None
+    relevance_explanation: str | None = None
     metadata: dict[str, str | list[str]]
     # Matched sections in the chunk. Uses Vespa syntax e.g. <hi>TEXT</hi>
     # to specify that a set of words should be highlighted. For example:
     # ["<hi>the</hi> <hi>answer</hi> is 42", "he couldn't find an <hi>answer</hi>"]
     match_highlights: list[str]
+
     # when the doc was last updated
     updated_at: datetime | None
     primary_owners: list[str] | None = None
@@ -227,6 +229,8 @@ class SearchDoc(BaseModel):
     hidden: bool
     metadata: dict[str, str | list[str]]
     score: float | None
+    relevant_search_result: bool | None = None
+    relevance_explanation: str | None = None
     # Matched sections in the doc. Uses Vespa syntax e.g. <hi>TEXT</hi>
     # to specify that a set of words should be highlighted. For example:
     # ["<hi>the</hi> <hi>answer</hi> is 42", "the answer is <hi>42</hi>""]

@@ -44,7 +44,7 @@ export default function Page() {
   return (
     <div className="mx-auto container">
       <AdminPageTitle
-        icon={<ConnectorIcon size={32} className="" />}
+        icon={<ConnectorIcon size={32} />}
         title="Add Connector"
       />
 

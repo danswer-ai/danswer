@@ -1,9 +1,3 @@
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import status
-from sqlalchemy.orm import Session
-
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
@@ -23,6 +17,11 @@ from danswer.indexing.models import EmbeddingModelDetail
 from danswer.server.manage.models import FullModelVersionResponse
 from danswer.server.models import IdReturn
 from danswer.utils.logger import setup_logger
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import status
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/secondary-index")
 logger = setup_logger()

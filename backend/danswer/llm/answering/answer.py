@@ -2,10 +2,6 @@ from collections.abc import Iterator
 from typing import cast
 from uuid import uuid4
 
-from langchain.schema.messages import BaseMessage
-from langchain_core.messages import AIMessageChunk
-from langchain_core.messages import HumanMessage
-
 from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import AnswerQuestionPossibleReturn
 from danswer.chat.models import CitationInfo
@@ -64,6 +60,9 @@ from danswer.tools.tool_runner import ToolRunner
 from danswer.tools.tool_selection import select_single_tool_for_non_tool_calling_llm
 from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
+from langchain.schema.messages import BaseMessage
+from langchain_core.messages import AIMessageChunk
+from langchain_core.messages import HumanMessage
 
 
 logger = setup_logger()
@@ -87,6 +86,9 @@ def _get_answer_stream_processor(
 
 
 AnswerStream = Iterator[AnswerQuestionPossibleReturn | ToolCallKickoff | ToolResponse]
+
+
+logger = setup_logger()
 
 
 class Answer:
@@ -140,9 +142,9 @@ class Answer:
         self._final_prompt: list[BaseMessage] | None = None
 
         self._streamed_output: list[str] | None = None
-        self._processed_stream: list[
-            AnswerQuestionPossibleReturn | ToolResponse | ToolCallKickoff
-        ] | None = None
+        self._processed_stream: (
+            list[AnswerQuestionPossibleReturn | ToolResponse | ToolCallKickoff] | None
+        ) = None
 
         self._return_contexts = return_contexts
 
@@ -403,8 +405,11 @@ class Answer:
                     )
                 )
             )
+        final = tool_runner.tool_final_result()
 
-        yield tool_runner.tool_final_result()
+        # print(final.id)
+
+        yield final
 
         prompt = prompt_builder.build()
         yield from message_generator_to_string_generator(self.llm.stream(prompt=prompt))
@@ -443,6 +448,7 @@ class Answer:
                 ):
                     yield message
                 elif isinstance(message, ToolResponse):
+                    print(message.id)
                     if message.id == SEARCH_RESPONSE_SUMMARY_ID:
                         # We don't need to run section merging in this flow, this variable is only used
                         # below to specify the ordering of the documents for the purpose of matching

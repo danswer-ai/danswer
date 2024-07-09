@@ -1,8 +1,5 @@
 import logging
 
-from slack_sdk import WebClient
-from sqlalchemy.orm import Session
-
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.danswerbot.slack.blocks import build_standard_answer_blocks
@@ -22,6 +19,8 @@ from danswer.db.standard_answer import fetch_standard_answer_categories_by_names
 from danswer.db.standard_answer import find_matching_standard_answers
 from danswer.server.manage.models import StandardAnswer
 from danswer.utils.logger import setup_logger
+from slack_sdk import WebClient
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

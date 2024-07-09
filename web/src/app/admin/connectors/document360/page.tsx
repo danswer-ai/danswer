@@ -267,7 +267,7 @@ export default function Page() {
       </div>
 
       <AdminPageTitle
-        icon={<Document360Icon size={32} className="" />}
+        icon={<Document360Icon size={32} />}
         title="Document360"
       />
 

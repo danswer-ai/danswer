@@ -22,7 +22,7 @@ export function AssistantsTab({
   const [_, llmName] = getFinalLLM(llmProviders, null, null);
 
   return (
-    <div className="py-4 ">
+    <div className="py-4">
       <h3 className="px-4 text-lg font-semibold">Change Assistant</h3>
       <div className="px-2 mx-2 max-h-[500px] overflow-y-scroll my-3 grid grid-cols-2 gap-4">
         {availableAssistants.map((assistant) => (
@@ -50,7 +50,7 @@ export function AssistantsTab({
               </div>
             </div>
             {assistant.tools.length > 0 && (
-              <div className="text-xs text-subtle  flex flex-wrap gap-2">
+              <div className="text-xs text-subtle flex flex-wrap gap-2">
                 {assistant.tools.map((tool) => {
                   let toolName = tool.name;
                   let toolIcon = null;

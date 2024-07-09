@@ -23,7 +23,10 @@ export const CustomCheckbox = ({
           } transition duration-300`}
         >
           {checked && (
-            <CheckmarkIcon className="absolute top-0 left-0 !w-3 !h-3 fill-current text-inverted" />
+            <CheckmarkIcon
+              size={12}
+              className="absolute top-0 left-0 fill-current text-inverted"
+            />
           )}
         </span>
       </span>

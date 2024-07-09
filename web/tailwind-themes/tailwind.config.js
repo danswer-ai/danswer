@@ -44,11 +44,6 @@ module.exports = {
       },
       fontFamily: {
         sans: ["var(--font-inter)"],
-
-        // TITLE fonts
-        // title: ["var(--font-inter)"],
-        title: ["var(--font-poppins)"],
-        // title: ['Fira Code', ...defaultTheme.fontFamily.mono],
       },
       width: {
         "message-xs": "450px",
@@ -79,7 +74,8 @@ module.exports = {
         "background-weaker": "#F1F2F4", // gray-125
         "background-weakish": "#EAEAEA", // gray-150
         "background-solid": "#262626", // neutral-800
-
+        "background-lightMedium": "#d4d4d4", // neutral-300
+        "background-medium": "#a3a3a3", // neutral-400
         "background-dark": "#111827", // gray-900
 
         // text or icons
@@ -91,6 +87,7 @@ module.exports = {
         darkMedium: "#737373", // neutral-500
         dark: "#525252", // neutral-600
         solid: "#404040", // neutral-700
+        solidDark: "#262626", // neutral-800
 
         link: "#3b82f6", // blue-500
         "link-hover": "#1d4ed8", // blue-700

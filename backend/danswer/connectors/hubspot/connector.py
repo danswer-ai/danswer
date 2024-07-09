@@ -3,8 +3,6 @@ from datetime import timezone
 from typing import Any
 
 import requests
-from hubspot import HubSpot  # type: ignore
-
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -15,6 +13,7 @@ from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
+from hubspot import HubSpot  # type: ignore
 
 HUBSPOT_BASE_URL = "https://app.hubspot.com/contacts/"
 HUBSPOT_API_URL = "https://api.hubapi.com/integrations/v1/me"

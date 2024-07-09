@@ -1,8 +1,3 @@
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
-
 from danswer.auth.users import current_admin_user
 from danswer.db.engine import get_session
 from danswer.db.models import User
@@ -19,6 +14,10 @@ from danswer.server.manage.models import StandardAnswer
 from danswer.server.manage.models import StandardAnswerCategory
 from danswer.server.manage.models import StandardAnswerCategoryCreationRequest
 from danswer.server.manage.models import StandardAnswerCreationRequest
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/manage")
 
