@@ -49,18 +49,14 @@ export default function Page() {
       />
 
       <Text>
-        Connect Danswer to your organization&apos;s knowledge sources.
-        We&apos;ll automatically sync your data into Danswer, so you can find
-        exactly what you&apos;re looking for in one place.
+        Verknüpfe Blona mit Deinen Datenquellen. Wir synchronisieren die Daten automaisch. 
       </Text>
 
       <div className="flex mt-8">
-        <Title>Import Knowledge</Title>
+        <Title>Wissen importieren</Title>
       </div>
       <Text>
-        Connect to pieces of knowledge that live outside your apps. Upload
-        files, scrape websites, or connect to your organization&apos;s Google
-        Site.
+        Weitere Datenquellen hinzufügen
       </Text>
       <div className="flex flex-wrap gap-4 p-4">
         {importedKnowledgeSources.map((source) => {
@@ -71,7 +67,7 @@ export default function Page() {
       </div>
 
       <div className="flex mt-8">
-        <Title>Setup Auto-Syncing from Apps</Title>
+        <Title>Auto-Syncing aufsetzen</Title>
       </div>
       <Text>
         Setup auto-syncing from your organization&apos;s most used apps and
