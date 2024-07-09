@@ -826,6 +826,8 @@ class ChatMessage(Base):
         secondary="chat_message__search_doc",
         back_populates="chat_messages",
     )
+    # NOTE: Should always be attached to the `assistant` message.
+    # represents the tool calls used to generate this message
     tool_calls: Mapped[list["ToolCall"]] = relationship(
         "ToolCall",
         back_populates="message",
