@@ -164,10 +164,35 @@ const FolderItem = ({
       }}
       onDragLeave={() => setIsDragOver(false)}
       onDrop={handleDrop}
-      className={`transition duration-300 relative ease-in-out rounded-md ${
+      className={`transition duration-300  ease-in-out rounded-md ${
         isDragOver ? "bg-hover" : ""
       }`}
     >
+      {showDeleteConfirm && (
+        <div
+          ref={deleteConfirmRef}
+          className="absolute max-w-xs border z-[100] border-neutral-300 top-0 right-0  w-[250px] -bo-0  top-2 mt-4 p-2 bg-background-weak rounded shadow-lg z-10"
+        >
+          <p className="text-sm mb-2">
+            Are you sure you want to delete <i>{folder.folder_name}</i>? All the
+            content inside this folder will also be deleted
+          </p>
+          <div className="flex justify-end">
+            <button
+              onClick={confirmDelete}
+              className="bg-red-500  hover:bg-red-600 text-white px-2 py-1 rounded text-xs mr-2"
+            >
+              Yes
+            </button>
+            <button
+              onClick={cancelDelete}
+              className="bg-gray-300 hover:bg-gray-200 px-2 py-1 rounded text-xs"
+            >
+              No
+            </button>
+          </div>
+        </div>
+      )}
       <BasicSelectable fullWidth selected={false}>
         <div
           onMouseEnter={() => setIsHovering(true)}
@@ -221,31 +246,6 @@ const FolderItem = ({
                   >
                     <FiTrash size={16} />
                   </div> */}
-                </div>
-              )}
-              {showDeleteConfirm && (
-                <div
-                  ref={deleteConfirmRef}
-                  className="absolute max-w-xs border border-neutral-300  w-[90%] -bo-0  top-2 mt-4 p-2 bg-background-weak rounded shadow-lg z-10"
-                  style={{ minWidth: "200px" }}
-                >
-                  <p className="text-sm mb-2">
-                    Are you sure you want to delete this folder?
-                  </p>
-                  <div className="flex justify-end">
-                    <button
-                      onClick={confirmDelete}
-                      className="bg-red-500  hover:bg-red-600 text-white px-2 py-1 rounded text-xs mr-2"
-                    >
-                      Yes
-                    </button>
-                    <button
-                      onClick={cancelDelete}
-                      className="bg-gray-300 hover:bg-gray-200 px-2 py-1 rounded text-xs"
-                    >
-                      No
-                    </button>
-                  </div>
                 </div>
               )}
 

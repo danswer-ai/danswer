@@ -59,7 +59,7 @@ interface SearchSectionProps {
   documentSets: DocumentSet[];
   personas: Persona[];
   tags: Tag[];
-
+  toggle: (toggled: boolean) => void;
   querySessions: ChatSession[];
   defaultSearchType: SearchType;
   user: User | null;
@@ -68,6 +68,7 @@ interface SearchSectionProps {
 
 export const SearchSection = ({
   ccPairs,
+  toggle,
   documentSets,
   personas,
   user,
@@ -375,7 +376,7 @@ export const SearchSection = ({
       {
         path: "/",
       };
-
+    toggle(!toggledSidebar);
     setToggledSidebar((toggledSidebar) => !toggledSidebar); // Toggle the state which will in turn toggle the class
   };
 

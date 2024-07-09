@@ -27,6 +27,7 @@ import { ChatPopup } from "../chat/ChatPopup";
 import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
 import { ChatSession } from "../chat/interfaces";
 import { SEARCH_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
+import ToggleSearch from "./ToggleSearch";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -188,7 +189,18 @@ export default async function Home() {
       <ChatPopup />
 
       <InstantSSRAutoRefresh />
-      <FunctionalWrapper>
+      <ToggleSearch
+        toggleSearchSidebar={toggleSearchSidebar}
+        querySessions={querySessions}
+        user={user}
+        ccPairs={ccPairs}
+        documentSets={documentSets}
+        personas={personas}
+        tags={tags}
+        searchTypeDefault={searchTypeDefault}
+      />
+
+      {/* <FunctionalWrapper>
         <SearchSection
           toggleSearchSidebar={toggleSearchSidebar}
           querySessions={querySessions}
@@ -198,8 +210,7 @@ export default async function Home() {
           personas={personas}
           tags={tags}
           defaultSearchType={searchTypeDefault}
-        />
-      </FunctionalWrapper>
+        /> */}
     </>
   );
 }

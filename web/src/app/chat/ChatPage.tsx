@@ -89,10 +89,12 @@ const TEMP_ASSISTANT_MESSAGE_ID = -2;
 const SYSTEM_MESSAGE_ID = -3;
 
 export function ChatPage({
+  toggle,
   documentSidebarInitialWidth,
   defaultSelectedPersonaId,
   toggleChatSidebar,
 }: {
+  toggle: (toggled: boolean) => void;
   documentSidebarInitialWidth?: number;
   defaultSelectedPersonaId?: number;
   toggleChatSidebar?: boolean;
@@ -1056,6 +1058,7 @@ export function ChatPage({
         path: "/",
       };
 
+    toggle(!toggledSidebar);
     setToggledSidebar((toggledSidebar) => !toggledSidebar); // Toggle the state which will in turn toggle the class
   };
 

@@ -8,6 +8,7 @@ import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompl
 import { ChatProvider } from "@/components/context/ChatContext";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import FunctionalWrapper from "./shared_chat_search/FunctionalWrapper";
+import WrapperTest from "./WrapperTest";
 
 export default async function Page({
   searchParams,
@@ -64,13 +65,19 @@ export default async function Page({
           openedFolders,
         }}
       >
-        <FunctionalWrapper>
-          <ChatPage
-            defaultSelectedPersonaId={defaultPersonaId}
-            documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
-            toggleChatSidebar={toggleChatSidebar}
-          />
-        </FunctionalWrapper>
+        <WrapperTest />
+        {/* <FunctionalWrapper
+          content={(toggle) => (
+            <ChatPage
+              toggle={toggle}
+              defaultSelectedPersonaId={defaultPersonaId}
+              documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
+              toggleChatSidebar={toggleChatSidebar}
+            />
+          )
+          }
+
+        /> */}
       </ChatProvider>
     </>
   );
