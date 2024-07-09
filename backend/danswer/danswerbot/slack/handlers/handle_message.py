@@ -2,10 +2,6 @@ import datetime
 import logging
 from typing import cast
 
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
-from sqlalchemy.orm import Session
-
 from danswer.configs.danswerbot_configs import DANSWER_BOT_FEEDBACK_REMINDER
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.danswerbot.slack.blocks import get_feedback_reminder_blocks
@@ -26,6 +22,9 @@ from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
 from danswer.utils.logger import setup_logger
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+from sqlalchemy.orm import Session
 
 logger_base = setup_logger()
 

@@ -1,16 +1,6 @@
 import io
 import uuid
 
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import Response
-from fastapi import UploadFile
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-
 from danswer.auth.users import current_user
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.process_message import stream_chat_message
@@ -67,6 +57,17 @@ from danswer.server.query_and_chat.models import SearchFeedbackRequest
 from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
 from danswer.utils.logger import setup_logger
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import Request
+from fastapi import Response
+from fastapi import UploadFile
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+# from danswer.db.models import SearchDoc
 
 logger = setup_logger()
 
@@ -104,6 +105,7 @@ def get_user_chat_sessions(
     )
 
 
+# Search history
 @router.get("/get-user-searches")
 def get_user_query_sessions(
     user: User | None = Depends(current_user),
@@ -141,7 +143,6 @@ def get_user_query_sessions(
             for chat in chat_sessions
         ]
     )
-
     return response
 
 
@@ -345,7 +346,6 @@ def handle_new_chat_message(
             request.headers
         ),
     )
-
     return StreamingResponse(packets, media_type="application/json")
 
 

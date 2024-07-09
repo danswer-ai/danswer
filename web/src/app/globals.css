@@ -21,13 +21,15 @@
   scrollbar-color: black;
   scrollbar-width: thin;
 }
+
 .weakbackground::-webkit-scrollbar-track {
   background: #f3f4f6;
 }
 
 .inputscroll::-webkit-scrollbar-track {
   background: #e5e7eb;
-  /* scrollbar-width:none;  "auto" by default, "thin", or "none" */
+  scrollbar-width: none;
+  /* "auto" by default, "thin", or "none" */
 }
 
 /* .my-container {
@@ -62,11 +64,11 @@
   background: theme("colors.scrollbar.dark.thumb-hover");
   /* Handle color on hover */
 }
-
 ::-webkit-scrollbar {
   width: 8px;
   /* Vertical scrollbar width */
   height: 8px;
+  scrollbar-gutter: stable;
   /* Horizontal scrollbar height */
 }
 
@@ -92,16 +94,16 @@
 
   background: linear-gradient(
     -90deg,
-    #d4d4d4 0%,
+    #a3a3a3 0%,
     #000000 5%,
-    #d4d4d4 10%,
-    #d4d4d4 100%
+    #a3a3a3 10%,
+    #a3a3a3 100%
   );
   background-size: 200% 100%;
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: flowingShimmer 2s ease-out infinite;
+  animation: flowingShimmer 1.5s ease-out infinite;
 }
 
 @keyframes flowingShimmer {

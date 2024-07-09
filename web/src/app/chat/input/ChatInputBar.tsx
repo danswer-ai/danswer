@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { FiPlusCircle, FiPlus } from "react-icons/fi";
+import { FiPlusCircle, FiPlus, FiInfo, FiX } from "react-icons/fi";
 import { ChatInputOption } from "./ChatInputOption";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
@@ -23,6 +23,9 @@ import { LlmTab } from "../modal/configuration/LlmTab";
 import { AssistantsTab } from "../modal/configuration/AssistantsTab";
 import ChatInputAssistant from "./ChatInputAssistant";
 import { DanswerDocument } from "@/lib/search/interfaces";
+import { AssistantIcon } from "@/components/assistants/AssistantIcon";
+import { Tooltip } from "@/components/tooltip/Tooltip";
+import { Hoverable } from "@/components/Hoverable";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
@@ -149,7 +152,6 @@ export function ChatInputBar({
       return;
     }
 
-    // If looking for an assistant...fup
     const match = text.match(/(?:\s|^)@(\w*)$/);
     if (match) {
       setShowSuggestions(true);
@@ -170,7 +172,6 @@ export function ChatInputBar({
   const [assistantIconIndex, setAssistantIconIndex] = useState(0);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    console.log("KE");
     if (!showSuggestions) {
       console.log("KEY DOWN");
       return;
@@ -222,7 +223,7 @@ export function ChatInputBar({
               ref={suggestionsRef}
               className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full"
             >
-              <div className="rounded-lg py-1.5 bg-background border border-border-medium  shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
+              <div className="rounded-lg py-1.5 bg-background border border-border-medium shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
                 {filteredPersonas.map((currentPersona, index) => (
                   <button
                     key={index}
@@ -231,7 +232,7 @@ export function ChatInputBar({
                       updateCurrentPersona(currentPersona);
                     }}
                   >
-                    <p className="font-bold ">{currentPersona.name}</p>
+                    <p className="font-bold">{currentPersona.name}</p>
                     <p className="line-clamp-1">
                       {currentPersona.id == selectedAssistant.id &&
                         "(default) "}
@@ -270,30 +271,50 @@ export function ChatInputBar({
               [&:has(textarea:focus)]::ring-black
             "
           >
-            <div className="flex  gap-x-2 px-2 pt-2">
-              {(files.length > 0 || alternativeAssistant) &&
-                alternativeAssistant && (
-                  <ChatInputAssistant
-                    ref={interactionsRef}
-                    alternativeAssistant={alternativeAssistant}
-                    unToggle={() => onSetSelectedAssistant(null)}
-                  />
-                )}
-
-              {selectedDocuments.length > 0 && (
-                <button
-                  onClick={showDocs}
-                  className="flex-none flex cursor-pointer hover:bg-background-subtle transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-weakish max-w-[100px]"
+            {alternativeAssistant && (
+              <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full">
+                <div
+                  ref={interactionsRef}
+                  className="bg-background-subtle p-2 rounded-t-lg items-center flex w-full"
                 >
-                  <FileIcon className="!h-6 !w-6" />
-                  <p className="text-xs">
-                    {selectedDocuments.length}{" "}
-                    {/* document{selectedDocuments.length > 1 && "s"} */}
-                    selected
+                  <AssistantIcon assistant={alternativeAssistant} border />
+                  <p className="ml-3 text-strong my-auto">
+                    {alternativeAssistant.name}
                   </p>
-                </button>
-              )}
-              <div className="flex  gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end weakbackground">
+                  <div className="flex gap-x-1 ml-auto">
+                    <Tooltip
+                      content={
+                        <p className="max-w-xs flex flex-wrap">
+                          {alternativeAssistant.description}
+                        </p>
+                      }
+                    >
+                      <button>
+                        <Hoverable icon={FiInfo} />
+                      </button>
+                    </Tooltip>
+
+                    <Hoverable
+                      icon={FiX}
+                      onClick={() => onSetSelectedAssistant(null)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="flex gap-x-2 px-2 pt-2">
+              <div className="flex gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end weakbackground">
+                {selectedDocuments.length > 0 && (
+                  <button
+                    onClick={showDocs}
+                    className="flex-none flex cursor-pointer hover:bg-background-subtle transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-weakish max-w-[100px]"
+                  >
+                    <FileIcon size={24} />
+                    <p className="text-xs">
+                      {selectedDocuments.length} selected
+                    </p>
+                  </button>
+                )}
                 {files.map((file) => (
                   <div className="flex-none" key={file.id}>
                     {file.type === ChatFileType.IMAGE ? (
@@ -374,7 +395,8 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-            <div className="flex items-center space-x-3 mr-12 px-4 pb-2  ">
+
+            <div className="flex items-center space-x-3 mr-12 px-4 pb-2 ">
               <Popup
                 removePadding
                 content={(close) => (
@@ -442,27 +464,6 @@ export function ChatInputBar({
                   input.click();
                 }}
               />
-
-              {/* <ChatInputOption
-                flexPriority="stiff"
-                name="File"
-                Icon={FiPlusCircle}
-                onClick={() => {
-                  const input = document.createElement("input");
-                  input.type = "file";
-                  input.multiple = true; // Allow multiple files
-                  input.onchange = (event: any) => {
-                    const files = Array.from(
-                      event?.target?.files || []
-                    ) as File[];
-                    if (files.length > 0) {
-                      handleFileUpload(files);
-                    }
-                  };
-                  input.click();
-                }}
-              />
-               */}
             </div>
             <div className="absolute bottom-2.5 right-10">
               <div
@@ -478,8 +479,9 @@ export function ChatInputBar({
                 }}
               >
                 <SendIcon
-                  className={`text-emphasis text-white !w-7 !h-7 p-1 rounded-full ${
-                    message ? "bg-neutral-700" : "bg-[#D7D7D7]"
+                  size={28}
+                  className={`text-emphasis text-white p-1 rounded-full ${
+                    message ? "bg-background-solid" : "bg-[#D7D7D7]"
                   }`}
                 />
               </div>

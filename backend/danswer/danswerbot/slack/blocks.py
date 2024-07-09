@@ -4,18 +4,6 @@ from re import Match
 
 import pytz
 import timeago  # type: ignore
-from slack_sdk.models.blocks import ActionsBlock
-from slack_sdk.models.blocks import Block
-from slack_sdk.models.blocks import ButtonElement
-from slack_sdk.models.blocks import ContextBlock
-from slack_sdk.models.blocks import DividerBlock
-from slack_sdk.models.blocks import HeaderBlock
-from slack_sdk.models.blocks import Option
-from slack_sdk.models.blocks import RadioButtonsElement
-from slack_sdk.models.blocks import SectionBlock
-from slack_sdk.models.blocks.basic_components import MarkdownTextObject
-from slack_sdk.models.blocks.block_elements import ImageElement
-
 from danswer.chat.models import DanswerQuote
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.constants import DocumentSource
@@ -35,6 +23,17 @@ from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
 from danswer.search.models import SavedSearchDoc
 from danswer.utils.text_processing import decode_escapes
 from danswer.utils.text_processing import replace_whitespaces_w_space
+from slack_sdk.models.blocks import ActionsBlock
+from slack_sdk.models.blocks import Block
+from slack_sdk.models.blocks import ButtonElement
+from slack_sdk.models.blocks import ContextBlock
+from slack_sdk.models.blocks import DividerBlock
+from slack_sdk.models.blocks import HeaderBlock
+from slack_sdk.models.blocks import Option
+from slack_sdk.models.blocks import RadioButtonsElement
+from slack_sdk.models.blocks import SectionBlock
+from slack_sdk.models.blocks.basic_components import MarkdownTextObject
+from slack_sdk.models.blocks.block_elements import ImageElement
 
 _MAX_BLURB_LEN = 45
 

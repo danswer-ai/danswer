@@ -21,13 +21,13 @@ export const HealthCheckBanner = () => {
         title="You have been logged out!"
       >
         <div className="flex flex-col gap-y-4">
-          <p className="text-lg ">
+          <p className="text-lg">
             You can click &quot;Log in&quot; to log back in! Apologies for the
             inconvenience.
           </p>
           <a
             href="/auth/login"
-            className="w-full mt-4 mx-auto rounded-md text-light py-2 bg-background-dark text-center hover:bg-emphasis animtate duration-300 transition-bg  "
+            className="w-full mt-4 mx-auto rounded-md text-light py-2 bg-background-dark text-center hover:bg-emphasis animtate duration-300 transition-bg"
           >
             Log in
           </a>

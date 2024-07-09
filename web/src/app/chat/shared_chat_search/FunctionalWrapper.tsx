@@ -1,8 +1,9 @@
 "use client";
 
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useContext, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ChatIcon, SearchIcon } from "@/components/icons/icons";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 const ToggleSwitch = () => {
   const pathname = usePathname();
@@ -28,6 +29,11 @@ const ToggleSwitch = () => {
     router.push(tab === "search" ? "/search" : "/chat");
   };
 
+  const isMac =
+    navigator.userAgent.length > 10
+      ? navigator.userAgent.indexOf("Mac") !== -1
+      : true;
+
   return (
     <div className="bg-gray-100 flex rounded-full p-1">
       <div
@@ -43,9 +49,9 @@ const ToggleSwitch = () => {
         }`}
         onClick={() => handleTabChange("search")}
       >
-        <SearchIcon className="!w-4 !h-4 mr-2" />
+        <SearchIcon size={16} className="mr-2" />
         Search
-        <span className="text-xs ml-2">⌘S</span>
+        <span className="text-xs ml-2">{isMac ? "⌘" : "⊞"}S</span>
       </button>
       <button
         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 ease-in-out flex items-center relative z-10 ${
@@ -55,9 +61,9 @@ const ToggleSwitch = () => {
         }`}
         onClick={() => handleTabChange("chat")}
       >
-        <ChatIcon className="!w-4 !h-4 mr-2" />
+        <ChatIcon size={16} className="mr-2" />
         Chat
-        <span className="text-xs ml-2">⌘D</span>
+        <span className="text-xs ml-2">{isMac ? "⌘" : "⊞"}D</span>
       </button>
     </div>
   );
@@ -65,19 +71,14 @@ const ToggleSwitch = () => {
 
 export default function FunctionalWrapper({
   // children,
+  initiallyToggled,
   content,
-  initiallyTogggled,
 }: {
   // children: React.ReactNode;
-  content: (toggle: (toggled: boolean) => void) => ReactNode;
-  initiallyTogggled: boolean;
+  content: (toggledSidebar: boolean, toggle: () => void) => ReactNode;
+  initiallyToggled: boolean;
 }) {
   const router = useRouter();
-  const [sidebarToggled, setSidebarToggled] = useState(initiallyTogggled);
-
-  const toggle = (toggled: boolean) => {
-    setSidebarToggled(toggled);
-  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -109,30 +110,32 @@ export default function FunctionalWrapper({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [router]);
+  const settings = useContext(SettingsContext)?.settings;
+
+  const [toggledSidebar, setToggledSidebar] = useState(initiallyToggled);
+
+  const toggle = () => {
+    setToggledSidebar((toggledSidebar) => !toggledSidebar);
+  };
 
   return (
     <>
-      <div className="z-[40] flex fixed top-4 left-1/2 transform -translate-x-1/2">
-        <div
-          style={{ transition: "width 0.30s ease-out" }}
-          className={`
-        flex-none 
-        overflow-y-hidden 
-        bg-background-weak 
-        transition-all 
-        bg-opacity-80
-        duration-300 
-        ease-in-out
-        h-full
-        ${sidebarToggled ? "w-[300px] " : "w-[0px]"}
-      `}
-        ></div>
-        <div className="relative">
-          <ToggleSwitch />
+      {(!settings ||
+        (settings.search_page_enabled && settings.chat_page_enabled)) && (
+        <div className="z-[40] flex fixed top-4 left-1/2 transform -translate-x-1/2">
+          <div
+            style={{ transition: "width 0.30s ease-out" }}
+            className={`flex-none overflow-y-hidden bg-background-weak transition-all bg-opacity-80duration-300 ease-in-out h-full
+                        ${toggledSidebar ? "w-[300px] " : "w-[0px]"}`}
+          />
+          <div className="relative">
+            <ToggleSwitch />
+          </div>
         </div>
-      </div>
+      )}
+
       <div className="absolute left-0 top-0 w-full h-full">
-        {content(toggle)}
+        {content(toggledSidebar, toggle)}
       </div>
     </>
   );

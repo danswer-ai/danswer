@@ -3,11 +3,10 @@ from typing import Optional
 from typing import TypeVar
 from uuid import UUID
 
-from pydantic import BaseModel
-from pydantic.generics import GenericModel
-
 from danswer.auth.schemas import UserRole
 from danswer.auth.schemas import UserStatus
+from pydantic import BaseModel
+from pydantic.generics import GenericModel
 
 
 DataT = TypeVar("DataT")

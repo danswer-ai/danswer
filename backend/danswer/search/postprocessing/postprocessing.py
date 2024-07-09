@@ -3,7 +3,6 @@ from collections.abc import Iterator
 from typing import cast
 
 import numpy
-
 from danswer.configs.constants import MAX_CHUNK_TITLE_LEN
 from danswer.configs.constants import RETURN_SEPARATOR
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX

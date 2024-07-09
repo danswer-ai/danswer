@@ -4,13 +4,6 @@ from datetime import timedelta
 from datetime import timezone
 from functools import lru_cache
 
-from dateutil import tz
-from fastapi import Depends
-from fastapi import HTTPException
-from sqlalchemy import func
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session_context_manager
 from danswer.db.models import ChatMessage
@@ -19,7 +12,13 @@ from danswer.db.models import TokenRateLimit
 from danswer.db.models import User
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from dateutil import tz
 from ee.danswer.db.token_limit import fetch_all_global_token_rate_limits
+from fastapi import Depends
+from fastapi import HTTPException
+from sqlalchemy import func
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 
 logger = setup_logger()

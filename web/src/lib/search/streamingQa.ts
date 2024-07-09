@@ -1,12 +1,15 @@
-import { BackendMessage } from "@/app/chat/interfaces";
+import {
+  BackendMessage,
+  LLMRelevanceFilterPacket,
+} from "@/app/chat/interfaces";
 import {
   AnswerPiecePacket,
   DanswerDocument,
   DocumentInfoPacket,
   ErrorMessagePacket,
-  LLMRelevanceFilterPacket,
   Quote,
   QuotesInfoPacket,
+  RelevanceChunk,
   SearchRequestArgs,
 } from "./interfaces";
 import { processRawChunkString } from "./streamingUtils";
@@ -27,9 +30,9 @@ export const searchRequestStreamed = async ({
   updateSuggestedFlowType,
   updateSelectedDocIndices,
   updateError,
-  updateMessageId,
+  updateMessageAndThreadId,
   finishedSearching,
-  updateDocumentRelevance, // New callback function
+  updateDocumentRelevance,
   updateComments,
 }: SearchRequestArgs) => {
   let answer = "";
@@ -58,17 +61,20 @@ export const searchRequestStreamed = async ({
           filters: filters,
           enable_auto_detect_filters: false,
         },
+        evaluate_response: true,
       }),
       headers: {
         "Content-Type": "application/json",
       },
     });
+
     const reader = response.body?.getReader();
     const decoder = new TextDecoder("utf-8");
 
     let previousPartialChunk: string | null = null;
     while (true) {
       const rawChunk = await reader?.read();
+
       if (!rawChunk) {
         throw new Error("Unable to process chunk");
       }
@@ -85,6 +91,7 @@ export const searchRequestStreamed = async ({
         | DocumentInfoPacket
         | LLMRelevanceFilterPacket
         | BackendMessage
+        | RelevanceChunk
       >(decoder.decode(value, { stream: true }), previousPartialChunk);
       if (!completedChunks.length && !partialChunk) {
         break;
@@ -92,6 +99,13 @@ export const searchRequestStreamed = async ({
       previousPartialChunk = partialChunk as string | null;
       completedChunks.forEach((chunk) => {
         // check for answer peice / end of answer
+
+        if (Object.hasOwn(chunk, "relevance_summaries")) {
+          const relevanceChunk = chunk as RelevanceChunk;
+          const responseTaken = relevanceChunk.relevance_summaries;
+          updateDocumentRelevance(relevanceChunk.relevance_summaries);
+        }
+
         if (Object.hasOwn(chunk, "answer_piece")) {
           const answerPiece = (chunk as AnswerPiecePacket).answer_piece;
           if (answerPiece !== null) {
@@ -156,13 +170,14 @@ export const searchRequestStreamed = async ({
           return;
         }
 
-        // Is a bakcend message- handle all backend message related updates here
-        if (Object.hasOwn(chunk, "relevance")) {
+        // Check for the final chunk
+        if (Object.hasOwn(chunk, "message_id")) {
           const backendChunk = chunk as BackendMessage;
-          updateDocumentRelevance(backendChunk.relevance);
           updateComments(backendChunk.comments);
-          updateMessageId(backendChunk.message_id);
-          finishedSearching();
+          updateMessageAndThreadId(
+            backendChunk.message_id,
+            backendChunk.chat_session_id
+          );
         }
       });
     }

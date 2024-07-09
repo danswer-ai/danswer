@@ -31,7 +31,9 @@ import {
 import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
 import { ChatSession } from "../chat/interfaces";
 import { SEARCH_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
-import ToggleSearch from "./ToggleSearch";
+import ToggleSearch from "./WrappedSearch";
+import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
+import WrappedSearch from "./WrappedSearch";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -167,9 +169,14 @@ export default async function Home() {
     !shouldShowWelcomeModal;
 
   const searchSidebarToggle = cookies().get(SEARCH_TOGGLED_COOKIE_NAME);
+  const agenticSearchToggle = cookies().get(AGENTIC_SEARCH_TYPE_COOKIE_NAME);
 
   const toggleSearchSidebar = searchSidebarToggle
     ? searchSidebarToggle.value.toLocaleLowerCase() == "true" ?? false
+    : false;
+
+  const agenticSearchEnabled = agenticSearchToggle
+    ? agenticSearchToggle.value.toLocaleLowerCase() == "true" ?? false
     : false;
 
   return (
@@ -194,8 +201,8 @@ export default async function Home() {
       <ChatPopup />
 
       <InstantSSRAutoRefresh />
-      <ToggleSearch
-        toggleSearchSidebar={toggleSearchSidebar}
+      <WrappedSearch
+        initiallyToggled={toggleSearchSidebar}
         querySessions={querySessions}
         user={user}
         ccPairs={ccPairs}
@@ -203,8 +210,8 @@ export default async function Home() {
         personas={assistants}
         tags={tags}
         searchTypeDefault={searchTypeDefault}
+        agenticSearchEnabled={agenticSearchEnabled}
       />
-
     </>
   );
 }

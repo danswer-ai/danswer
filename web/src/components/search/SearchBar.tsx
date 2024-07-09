@@ -27,6 +27,10 @@ export const AnimatedToggle = ({
   const [width, setWidth] = useState("auto");
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const isMac =
+    navigator.userAgent.length > 10
+      ? navigator.userAgent.indexOf("Mac") !== -1
+      : true;
 
   useEffect(() => {
     const updateWidth = () => {
@@ -47,27 +51,27 @@ export const AnimatedToggle = ({
       large
       content={
         <div className="bg-white my-auto p-6 rounded-lg w-full">
-          <h2 className="text-xl text-neutral-800 font-bold mb-2">
+          <h2 className="text-xl text-solidDark font-bold mb-2">
             Agentic Search
           </h2>
           <p className="text-solid text-sm mb-4">
             Our most powerful search, have an AI agent guide you to pinpoint
-            exactly what you're looking for.
+            exactly what you&apos;re looking for.
           </p>
           <Divider />
-          <h2 className="text-xl text-neutral-800 font-bold mb-2">
-            Fast Search
-          </h2>
+          <h2 className="text-xl text-solidDark font-bold mb-2">Fast Search</h2>
           <p className="text-solid text-sm mb-4">
             Get quality results immediately, best suited for instant access to
             your documents.
           </p>
+          <p className="mt-2 text-xs">Hint: ({isMac ? "⌘" : "⊞"}/)</p>
         </div>
       }
     >
+      {/* that the proper symbol appears on Macbook vs Windows for the command symbol? */}
       <div
         ref={containerRef}
-        className=" my-auto ml-auto flex jusitfy-end items-center cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
+        className="my-auto ml-auto flex jusitfy-end items-center cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
         style={{ width }}
         onClick={handleToggle}
       >
@@ -78,7 +82,7 @@ export const AnimatedToggle = ({
           <div
             className={`
             w-10 h-6 flex items-center rounded-full p-1 transition-all duration-300 ease-in-out
-            ${isOn ? "bg-neutral-400" : "bg-background-subtle"}
+            ${isOn ? "bg-background-medium" : "bg-background-subtle"}
           `}
           >
             <div
@@ -183,7 +187,7 @@ export const FullSearchBar = ({
         suppressContentEditableWarning={true}
       />
 
-      <div className="flex justify-end w-full items-center space-x-3 mr-12 px-4  pb-2 ">
+      <div className="flex justify-end w-full items-center space-x-3 mr-12 px-4 pb-2">
         {searchState == "searching" && (
           <div key={"Reading"} className="mr-auto relative inline-block">
             <span className="loading-text">Reading Documents...</span>
@@ -205,12 +209,11 @@ export const FullSearchBar = ({
             onClick={() => {
               onSearch(agentic);
             }}
-            className=" flex  my-auto cursor-pointer"
+            className="flex my-auto cursor-pointer"
           >
             <SendIcon
-              className={`text-emphasis text-white !w-7 !h-7 p-1 rounded-full ${
-                query ? "bg-neutral-700" : "bg-[#D7D7D7]"
-              }`}
+              size={28}
+              className={`text-emphasis text-white p-1 rounded-full ${query ? "bg-background-solid" : "bg-[#D7D7D7]"}`}
             />
           </button>
         </div>

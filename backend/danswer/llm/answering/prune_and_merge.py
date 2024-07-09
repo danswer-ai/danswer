@@ -3,8 +3,6 @@ from collections import defaultdict
 from copy import deepcopy
 from typing import TypeVar
 
-from pydantic import BaseModel
-
 from danswer.chat.models import (
     LlmDoc,
 )
@@ -21,6 +19,7 @@ from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceSection
 from danswer.tools.search.search_utils import section_to_dict
 from danswer.utils.logger import setup_logger
+from pydantic import BaseModel
 
 
 logger = setup_logger()

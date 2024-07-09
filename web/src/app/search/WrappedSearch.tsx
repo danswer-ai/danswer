@@ -4,9 +4,9 @@ import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
 import { CCPairBasicInfo, DocumentSet, Tag, User } from "@/lib/types";
 import { Persona } from "../admin/assistants/interfaces";
 import { ChatSession } from "../chat/interfaces";
+import { useState } from "react";
 
-export default function ToggleSearch({
-  toggleSearchSidebar,
+export default function WrappedSearch({
   querySessions,
   ccPairs,
   documentSets,
@@ -14,8 +14,9 @@ export default function ToggleSearch({
   searchTypeDefault,
   tags,
   user,
+  agenticSearchEnabled,
+  initiallyToggled,
 }: {
-  toggleSearchSidebar: boolean;
   querySessions: ChatSession[];
   ccPairs: CCPairBasicInfo[];
   documentSets: DocumentSet[];
@@ -23,14 +24,17 @@ export default function ToggleSearch({
   searchTypeDefault: string;
   tags: Tag[];
   user: User | null;
+  agenticSearchEnabled: boolean;
+  initiallyToggled: boolean;
 }) {
   return (
     <FunctionalWrapper
-      initiallyTogggled={toggleSearchSidebar}
-      content={(toggle) => (
+      initiallyToggled={initiallyToggled}
+      content={(toggledSidebar, toggle) => (
         <SearchSection
+          agenticSearchEnabled={agenticSearchEnabled}
           toggle={toggle}
-          toggleSearchSidebar={toggleSearchSidebar}
+          toggledSidebar={toggledSidebar}
           querySessions={querySessions}
           user={user}
           ccPairs={ccPairs}

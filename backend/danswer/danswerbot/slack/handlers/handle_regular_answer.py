@@ -6,12 +6,6 @@ from typing import cast
 from typing import Optional
 from typing import TypeVar
 
-from retry import retry
-from slack_sdk import WebClient
-from slack_sdk.models.blocks import DividerBlock
-from slack_sdk.models.blocks import SectionBlock
-from sqlalchemy.orm import Session
-
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.danswerbot_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_COT
@@ -50,7 +44,12 @@ from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.models import BaseFilters
 from danswer.search.models import RetrievalDetails
+from retry import retry
 from shared_configs.configs import ENABLE_RERANKING_ASYNC_FLOW
+from slack_sdk import WebClient
+from slack_sdk.models.blocks import DividerBlock
+from slack_sdk.models.blocks import SectionBlock
+from sqlalchemy.orm import Session
 
 
 srl = SlackRateLimiter()
