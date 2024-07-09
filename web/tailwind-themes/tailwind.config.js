@@ -1,5 +1,3 @@
-const defaultTheme = require("tailwindcss/defaultTheme");
-
 /** @type {import('tailwindcss').Config} */
 
 module.exports = {
@@ -46,29 +44,6 @@ module.exports = {
       },
       fontFamily: {
         sans: ["var(--font-inter)"],
-
-        // TITLE fonts
-        // title: ["var(--font-poppins)"],
-        // 'sans': ['var(--font-inter)', ...defaultTheme.fontFamily.sans],
-        // 'body': ['var(--font-roboto)', ...defaultTheme.fontFamily.sans],
-        // 'title': ['var(--font-source-sans-pro)', ...defaultTheme.fontFamily.sans],
-
-        // title: ["var(--font-inter)"],
-        // 'title': ['var(--font-poppins)', ...defaultTheme.fontFamily.sans],
-        // 'accent': ['var(--font-lora)', ...defaultTheme.fontFamily.serif],
-        // title: ['Fira Code', ...defaultTheme.fontFamily.mono],
-
-        // 'title': ['var(--font-montserrat)', ...defaultTheme.fontFamily.sans],
-        // 'title': ['var(--font-roboto-slab)', ...defaultTheme.fontFamily.serif],
-        // 'title': ['var(--font-oswald)', ...defaultTheme.fontFamily.sans],
-        // 'title': ['var(--font-merriweather)', ...defaultTheme.fontFamily.serif],
-        // 'title': ['var(--font-lora)', ...defaultTheme.fontFamily.serif],
-        // 'title': ['var(--font-fira-code)', ...defaultTheme.fontFamily.mono],
-        // 'title': ['var(--font-crimson-text)', ...defaultTheme.fontFamily.serif],
-        // title: [
-        //   "var(--font-libre-baskerville)",
-        //   ...defaultTheme.fontFamily.serif,
-        // ],
       },
       width: {
         "message-xs": "450px",
