@@ -1,13 +1,11 @@
 from collections.abc import Sequence
 from typing import TypeVar
 
-from danswer.configs.constants import DocumentSource
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceSection
 from danswer.search.models import SavedSearchDoc
 from danswer.search.models import SearchDoc
-from danswer.tools.internet_search.internet_search_tool import InternetSearchResponse
 
 
 T = TypeVar("T", InferenceSection, InferenceChunk, SearchDoc)
@@ -44,6 +42,21 @@ def drop_llm_indices(
     return [i for i, val in enumerate(llm_bools) if val]
 
 
+def inference_section_from_chunks(
+    chunks: list[InferenceChunk],
+) -> InferenceSection | None:
+    if not chunks:
+        return None
+
+    combined_content = "\n".join([chunk.content for chunk in chunks])
+
+    return InferenceSection(
+        center_chunk=chunks[0],
+        chunks=chunks,
+        combined_content=combined_content,
+    )
+
+
 def chunks_or_sections_to_search_docs(
     items: Sequence[InferenceChunk | InferenceSection] | None,
 ) -> list[SearchDoc]:
@@ -76,28 +89,3 @@ def chunks_or_sections_to_search_docs(
     ]
 
     return search_docs
-
-
-def internet_search_response_to_search_docs(
-    internet_search_response: InternetSearchResponse,
-) -> list[SearchDoc]:
-    return [
-        SearchDoc(
-            document_id=doc.link,
-            chunk_ind=-1,
-            semantic_identifier=doc.title,
-            link=doc.link,
-            blurb=doc.snippet,
-            source_type=DocumentSource.NOT_APPLICABLE,
-            boost=0,
-            hidden=False,
-            metadata={},
-            score=None,
-            match_highlights=[],
-            updated_at=None,
-            primary_owners=[],
-            secondary_owners=[],
-            is_internet=True,
-        )
-        for doc in internet_search_response.internet_results
-    ]

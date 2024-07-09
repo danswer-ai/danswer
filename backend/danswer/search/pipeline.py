@@ -23,7 +23,11 @@ from danswer.search.models import SearchRequest
 from danswer.search.postprocessing.postprocessing import search_postprocessing
 from danswer.search.preprocessing.preprocessing import retrieval_preprocessing
 from danswer.search.retrieval.search_runner import retrieve_chunks
+from danswer.search.utils import inference_section_from_chunks
+from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
+
+logger = setup_logger()
 
 
 class ChunkRange(BaseModel):
@@ -214,14 +218,13 @@ class SearchPipeline:
 
             for ind, chunk in enumerate(unique_chunks):
                 inf_chunks = list_inference_chunks[ind]
-                combined_content = "\n".join([chunk.content for chunk in inf_chunks])
-                expanded_inference_sections.append(
-                    InferenceSection(
-                        center_chunk=chunk,
-                        chunks=inf_chunks,
-                        combined_content=combined_content,
-                    )
-                )
+
+                inference_section = inference_section_from_chunks(inf_chunks)
+
+                if inference_section is not None:
+                    expanded_inference_sections.append(inference_section)
+                else:
+                    logger.warning("Skipped creation of section, no chunks found")
 
             self._retrieved_sections = expanded_inference_sections
             return expanded_inference_sections
@@ -295,14 +298,11 @@ class SearchPipeline:
                 chunk for chunk in surrounding_chunks_or_none if chunk is not None
             ]
 
-            combined_content = "\n".join(chunk.content for chunk in surrounding_chunks)
-            expanded_inference_sections.append(
-                InferenceSection(
-                    center_chunk=chunk,
-                    chunks=surrounding_chunks,
-                    combined_content=combined_content,
-                )
-            )
+            inference_section = inference_section_from_chunks(surrounding_chunks)
+            if inference_section is not None:
+                expanded_inference_sections.append(inference_section)
+            else:
+                logger.warning("Skipped creation of section, no chunks found")
 
         self._retrieved_sections = expanded_inference_sections
         return expanded_inference_sections

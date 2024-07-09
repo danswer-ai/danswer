@@ -10,7 +10,6 @@ from danswer.chat.models import CitationInfo
 from danswer.chat.models import CustomToolResponse
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import ImageGenerationDisplay
-from danswer.chat.models import LlmDoc
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
@@ -56,11 +55,11 @@ from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
-from danswer.search.retrieval.search_runner import inference_documents_from_ids
+from danswer.search.models import InferenceSection
+from danswer.search.retrieval.search_runner import inference_sections_from_ids
 from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.search.utils import dedupe_documents
 from danswer.search.utils import drop_llm_indices
-from danswer.search.utils import internet_search_response_to_search_docs
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.utils import get_json_line
@@ -74,6 +73,9 @@ from danswer.tools.images.image_generation_tool import ImageGenerationResponse
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
 from danswer.tools.internet_search.internet_search_tool import (
     INTERNET_SEARCH_RESPONSE_ID,
+)
+from danswer.tools.internet_search.internet_search_tool import (
+    internet_search_response_to_search_docs,
 )
 from danswer.tools.internet_search.internet_search_tool import InternetSearchResponse
 from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
@@ -380,7 +382,7 @@ def stream_chat_message_objects(
             )
 
         selected_db_search_docs = None
-        selected_llm_docs: list[LlmDoc] | None = None
+        selected_sections: list[InferenceSection] | None = None
         if reference_doc_ids:
             identifier_tuples = get_doc_query_identifiers_from_model(
                 search_doc_ids=reference_doc_ids,
@@ -390,8 +392,8 @@ def stream_chat_message_objects(
             )
 
             # Generates full documents currently
-            # May extend to include chunk ranges
-            selected_llm_docs = inference_documents_from_ids(
+            # May extend to use sections instead in the future
+            selected_sections = inference_sections_from_ids(
                 doc_identifiers=identifier_tuples,
                 document_index=document_index,
             )
@@ -470,7 +472,7 @@ def stream_chat_message_objects(
                         llm=llm,
                         fast_llm=fast_llm,
                         pruning_config=document_pruning_config,
-                        selected_docs=selected_llm_docs,
+                        selected_sections=selected_sections,
                         chunks_above=new_msg_req.chunks_above,
                         chunks_below=new_msg_req.chunks_below,
                         full_doc=new_msg_req.full_doc,
