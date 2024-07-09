@@ -43,4 +43,6 @@ COPY ./model_server /app/model_server
 
 ENV PYTHONPATH /app
 
+EXPOSE 9000
+
 CMD ["uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000"]
