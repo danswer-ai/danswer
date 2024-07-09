@@ -161,7 +161,7 @@ class SummaryGenerationTool(Tool):
             default_build_system_message(self.prompt_config)
         )
         summaries = []
-        sections = query.split()
+        sections = query.split('\n\n')
         for section in sections:
             prompt_builder.update_user_prompt(
                 default_build_user_message(
