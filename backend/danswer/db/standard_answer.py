@@ -140,6 +140,22 @@ def fetch_standard_answer_category(
     )
 
 
+def fetch_standard_answer_categories_by_names(
+    standard_answer_category_names: list[str],
+    db_session: Session,
+) -> Sequence[StandardAnswerCategory]:
+    thing = db_session.scalars(select(StandardAnswerCategory)).all()
+    print(thing)
+    print(thing[0])
+    print(thing[0].name)
+
+    return db_session.scalars(
+        select(StandardAnswerCategory).where(
+            StandardAnswerCategory.name.in_(standard_answer_category_names)
+        )
+    ).all()
+
+
 def fetch_standard_answer_categories_by_ids(
     standard_answer_category_ids: list[int],
     db_session: Session,

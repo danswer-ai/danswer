@@ -17,6 +17,9 @@ from danswer.chat.process_message import stream_chat_message
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import MessageType
+from danswer.danswerbot.slack.handlers.handle_standard_answers import (
+    oneoff_standard_answers,
+)
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import delete_chat_session
@@ -63,6 +66,7 @@ from danswer.server.query_and_chat.models import LLMOverride
 from danswer.server.query_and_chat.models import PromptOverride
 from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
+from danswer.server.query_and_chat.models import TestStandardAnswerRequest
 from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
 from danswer.utils.logger import setup_logger
@@ -269,6 +273,28 @@ def delete_chat_session_by_id(
 ) -> None:
     user_id = user.id if user is not None else None
     delete_chat_session(user_id, session_id, db_session)
+
+
+@router.post("/test-standard-answer")
+def test_standard_answer(
+    request: TestStandardAnswerRequest,
+    db_session: Session = Depends(get_session),
+    _: User | None = Depends(current_user),
+):
+    try:
+        standard_answers = oneoff_standard_answers(
+            message=request.message,
+            slack_bot_categories=request.slack_bot_categories,
+            db_session=db_session,
+            logger=logger,
+        )
+        return (
+            {"standard answers": standard_answers}
+            if standard_answers
+            else {"message": "No standard answer found"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/send-message")

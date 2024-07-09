@@ -18,7 +18,42 @@ from danswer.db.chat import get_chat_sessions_by_slack_thread_id
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.models import Prompt
 from danswer.db.models import SlackBotConfig
+from danswer.db.models import StandardAnswer
+from danswer.db.standard_answer import fetch_standard_answer_categories_by_names
 from danswer.db.standard_answer import find_matching_standard_answers
+
+
+def oneoff_standard_answers(
+    message: str,
+    slack_bot_categories: list[str],
+    db_session: Session,
+    logger: logging.Logger,
+) -> list[StandardAnswer] | None:
+    """
+    Respond to the user message if it matches any configured standard answers.
+
+    Returns a list of matching StandardAnswers if found, otherwise None.
+    """
+    try:
+        configured_standard_answers = {
+            standard_answer
+            for category in fetch_standard_answer_categories_by_names(
+                slack_bot_categories, db_session=db_session
+            )
+            for standard_answer in category.standard_answers
+        }
+
+        if configured_standard_answers:
+            matching_standard_answers = find_matching_standard_answers(
+                query=message,
+                id_in=[answer.id for answer in configured_standard_answers],
+                db_session=db_session,
+            )
+            return matching_standard_answers or None
+        return None
+    except Exception as e:
+        logger.error(f"Error handling standard answers: {str(e)}")
+        return None
 
 
 def handle_standard_answers(
