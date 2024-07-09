@@ -43,6 +43,7 @@ def drop_llm_indices(
 
 
 def inference_section_from_chunks(
+    center_chunk: InferenceChunk,
     chunks: list[InferenceChunk],
 ) -> InferenceSection | None:
     if not chunks:
@@ -51,7 +52,7 @@ def inference_section_from_chunks(
     combined_content = "\n".join([chunk.content for chunk in chunks])
 
     return InferenceSection(
-        center_chunk=chunks[0],
+        center_chunk=center_chunk,
         chunks=chunks,
         combined_content=combined_content,
     )

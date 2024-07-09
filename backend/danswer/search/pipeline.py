@@ -117,9 +117,9 @@ class SearchPipeline:
             db_session=self.db_session,
             bypass_acl=self.bypass_acl,
         )
+        self._search_query = final_search_query
         self._predicted_search_type = predicted_search_type
         self._predicted_flow = predicted_flow
-        self._search_query = final_search_query
 
     @property
     def search_query(self) -> SearchQuery:
@@ -127,6 +127,7 @@ class SearchPipeline:
             return self._search_query
 
         self._run_preprocessing()
+
         return cast(SearchQuery, self._search_query)
 
     @property
@@ -178,18 +179,14 @@ class SearchPipeline:
 
         retrieved_chunks = self._get_chunks()
 
-        if self._search_query is None:
-            # Should never happen
-            raise RuntimeError("Failed in Query Preprocessing")
-
-        above = self._search_query.chunks_above
-        below = self._search_query.chunks_below
+        above = self.search_query.chunks_above
+        below = self.search_query.chunks_below
 
         functions_with_args: list[tuple[Callable, tuple]] = []
         expanded_inference_sections = []
 
         # Full doc setting takes priority
-        if self._search_query.full_doc:
+        if self.search_query.full_doc:
             seen_document_ids = set()
             unique_chunks = []
             # This preserves the ordering since the chunks are retrieved in score order
@@ -219,7 +216,10 @@ class SearchPipeline:
             for ind, chunk in enumerate(unique_chunks):
                 inf_chunks = list_inference_chunks[ind]
 
-                inference_section = inference_section_from_chunks(inf_chunks)
+                inference_section = inference_section_from_chunks(
+                    center_chunk=chunk,
+                    chunks=inf_chunks,
+                )
 
                 if inference_section is not None:
                     expanded_inference_sections.append(inference_section)
@@ -289,16 +289,22 @@ class SearchPipeline:
         for chunk in retrieved_chunks:
             start_ind = max(0, chunk.chunk_id - above)
             end_ind = chunk.chunk_id + below
+
             # Since the index of the max_chunk is unknown, just allow it to be None and filter after
             surrounding_chunks_or_none = [
                 doc_chunk_ind_to_chunk.get((chunk.document_id, chunk_ind))
                 for chunk_ind in range(start_ind, end_ind + 1)  # end_ind is inclusive
             ]
+            # The None will apply to the would be "chunks" that are larger than the index of the last chunk
+            # of the document
             surrounding_chunks = [
                 chunk for chunk in surrounding_chunks_or_none if chunk is not None
             ]
 
-            inference_section = inference_section_from_chunks(surrounding_chunks)
+            inference_section = inference_section_from_chunks(
+                center_chunk=chunk,
+                chunks=surrounding_chunks,
+            )
             if inference_section is not None:
                 expanded_inference_sections.append(inference_section)
             else:

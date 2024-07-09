@@ -124,8 +124,15 @@ def rerank_sections(
 ) -> list[InferenceSection]:
     """Chunks are reranked rather than the containing sections, this is because of speed
     implications, if reranking models have lower latency for long inputs in the future
-    we may rerank on the combined context of the section instead"""
+    we may rerank on the combined context of the section instead
+
+    Making the assumption here that often times we want larger Sections to provide context
+    for the LLM to determine if a section is useful but for reranking, we don't need to be
+    as stringent. If the Section is relevant, we assume that the chunk rerank score will
+    also be high.
+    """
     chunks_to_rerank = [section.center_chunk for section in sections_to_rerank]
+
     ranked_chunks, _ = semantic_reranking(
         query=query.query,
         chunks=chunks_to_rerank[: query.num_rerank],
@@ -140,9 +147,9 @@ def rerank_sections(
     ranked_chunks.extend(lower_chunks)
 
     chunk_id_to_section = {
-        section.center_chunk.chunk_id: section for section in sections_to_rerank
+        section.center_chunk.unique_id: section for section in sections_to_rerank
     }
-    ordered_sections = [chunk_id_to_section[chunk.chunk_id] for chunk in ranked_chunks]
+    ordered_sections = [chunk_id_to_section[chunk.unique_id] for chunk in ranked_chunks]
     return ordered_sections
 
 

@@ -266,7 +266,10 @@ def inference_sections_from_ids(
     return [
         inference_section
         for inference_section in [
-            inference_section_from_chunks(chunk_set)
+            inference_section_from_chunks(
+                center_chunk=chunk_set[0],
+                chunks=chunk_set,
+            )
             for chunk_set in inference_chunks_sets
         ]
         if inference_section is not None

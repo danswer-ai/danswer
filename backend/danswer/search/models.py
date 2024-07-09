@@ -47,9 +47,8 @@ class ChunkMetric(BaseModel):
 class ChunkContext(BaseModel):
     # Additional surrounding context options, if full doc, then chunks are deduped
     # If surrounding context overlap, it is combined into one
-    # TODO revert this
-    chunks_above: int = 2
-    chunks_below: int = 2
+    chunks_above: int = 0
+    chunks_below: int = 0
     full_doc: bool = False
 
     @validator("chunks_above", "chunks_below", pre=True, each_item=False)
