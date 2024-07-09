@@ -279,14 +279,14 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
     <>
       {popup}
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-        <AssistantsPageTitle>My Assistants</AssistantsPageTitle>
+        <AssistantsPageTitle>Meine Assistenten</AssistantsPageTitle>
 
         <div className="grid grid-cols-2 gap-4 mt-3">
           <Link href="/assistants/new">
             <NavigationButton>
               <div className="flex justify-center">
                 <FiPlus className="mr-2 my-auto" size={20} />
-                Create New Assistant
+                Neuen Asssistenten hinzufügen
               </div>
             </NavigationButton>
           </Link>
@@ -295,26 +295,22 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
             <NavigationButton>
               <div className="flex justify-center">
                 <FiSearch className="mr-2 my-auto" size={20} />
-                View Available Assistants
+                Verfügbare Assitenten zeigen
               </div>
             </NavigationButton>
           </Link>
         </div>
 
         <p className="mt-6 text-center text-base">
-          Assistants allow you to customize your experience for a specific
-          purpose. Specifically, they combine instructions, extra knowledge, and
-          any combination of tools.
+          Assistenten ermöglichen es Ihnen, Ihre Erfahrung für einen bestimmten Zweck anzupassen. Sie kombinieren Anweisungen, zusätzliches Wissen und eine beliebige Kombination von Tools.
         </p>
 
         <Divider />
 
-        <h3 className="text-xl font-bold mb-4">Active Assistants</h3>
+        <h3 className="text-xl font-bold mb-4">Aktive Assistenten</h3>
 
         <Text>
-          The order the assistants appear below will be the order they appear in
-          the Assistants dropdown. The first assistant listed will be your
-          default assistant when you start a new chat.
+          Die Reihenfolge, in der die Assistenten unten angezeigt werden, entspricht der Reihenfolge, in der sie im Assistenten-Dropdown-Menü angezeigt werden. Der erste aufgeführte Assistent wird Ihr Standard-Assistent sein, wenn Sie einen neuen Chat starten.
         </Text>
 
         <div className="w-full p-4 mt-3">
@@ -337,11 +333,10 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
           <>
             <Divider />
 
-            <h3 className="text-xl font-bold mb-4">Your Hidden Assistants</h3>
+            <h3 className="text-xl font-bold mb-4">Ihre ausgeblendeten Assistenten</h3>
 
             <Text>
-              Assistants you&apos;ve created that aren&apos;t currently visible
-              in the Assistants selector.
+              Assistenten, die Sie erstellt haben, aber derzeit nicht im Assistenten-Auswahlfeld sichtbar sind.
             </Text>
 
             <div className="w-full p-4">

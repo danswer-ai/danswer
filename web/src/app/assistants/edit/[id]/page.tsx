@@ -14,34 +14,34 @@ export default async function Page({ params }: { params: { id: string } }) {
   if (!values) {
     body = (
       <div className="px-32">
-        <ErrorCallout errorTitle="Something went wrong :(" errorMsg={error} />
+        <ErrorCallout errorTitle="Etwas ist schief gegangen :(" errorMsg={error} />
       </div>
     );
   } else {
     body = (
       <div className="w-full my-16">
-        <div className="px-32">
-          <div className="mx-auto container">
-            <Card>
-              <AssistantEditor
-                {...values}
-                defaultPublic={false}
-                redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
-              />
-            </Card>
+      <div className="px-32">
+        <div className="mx-auto container">
+        <Card>
+          <AssistantEditor
+          {...values}
+          defaultPublic={false}
+          redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
+          />
+        </Card>
 
-            <Title className="mt-12">Delete Assistant</Title>
-            <Text>
-              Click the button below to permanently delete this assistant.
-            </Text>
-            <div className="flex mt-6">
-              <DeletePersonaButton
-                personaId={values.existingPersona!.id}
-                redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
-              />
-            </div>
-          </div>
+        <Title className="mt-12">Assistent löschen</Title>
+        <Text>
+          Klicken Sie auf den unten stehenden Button, um diesen Assistenten dauerhaft zu löschen.
+        </Text>
+        <div className="flex mt-6">
+          <DeletePersonaButton
+          personaId={values.existingPersona!.id}
+          redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
+          />
         </div>
+        </div>
+      </div>
       </div>
     );
   }

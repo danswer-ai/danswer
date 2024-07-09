@@ -44,16 +44,15 @@ export function AssistantsGallery({
     <>
       {popup}
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-        <AssistantsPageTitle>Assistant Gallery</AssistantsPageTitle>
+        <AssistantsPageTitle>Assistant Gallerie</AssistantsPageTitle>
         <div className="flex justify-center mb-6">
           <Link href="/assistants/mine">
-            <NavigationButton>View Your Assistants</NavigationButton>
+            <NavigationButton>Assistenten anzeigen</NavigationButton>
           </Link>
         </div>
 
         <p className="text-center mb-6">
-          Discover and create custom assistants that combine instructions, extra
-          knowledge, and any combination of tools.
+          Erstelle eigene Assistenten. 
         </p>
 
         <div className="mb-6">

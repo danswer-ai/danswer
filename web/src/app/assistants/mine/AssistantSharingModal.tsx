@@ -64,7 +64,7 @@ export function AssistantSharingModal({
       if (error) {
         setPopup({
           message: `Failed to share assistant - ${error}`,
-          type: "error",
+          type: "Fehler",
         });
       }
     }, remainingTime);
@@ -133,7 +133,7 @@ export function AssistantSharingModal({
         <div className="px-4">
           {isUpdating && <Spinner />}
           <Text className="mb-5">
-            Control which other users should have access to this assistant.
+            Kontrolliere, welche andere Nutzer Zugang zu diesem Assitenten haben.
           </Text>
 
           <div>

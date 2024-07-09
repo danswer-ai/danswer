@@ -70,7 +70,7 @@ export default function Page() {
         <Title>Auto-Syncing aufsetzen</Title>
       </div>
       <Text>
-        Alle 10 Minuten
+        Alle 10 Minuten 
       </Text>
       <div className="flex flex-wrap gap-4 p-4">
         {appConnectionSources.map((source) => {
