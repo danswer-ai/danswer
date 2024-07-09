@@ -102,11 +102,11 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             {popup}
             <div className="pl-3 mx-2 pr-6 mt-3 flex text-neutral-800 flex-col text-2xl text-emphasis flex font-semibold">
               {dedupedDocuments.length} Documents
-              <p className="text-sm font-semibold flex flex-wrap gap-x-2 text-neutral-600 mt-1">
+              <p className="text-sm font-semibold flex flex-wrap gap-x-2 text-dark mt-1">
                 Select to add to continuous context
                 <a
                   href="https://docs.danswer.dev/introduction"
-                  className="underline cursor-pointer hover:text-neutral-900"
+                  className="underline cursor-pointer hover:text-strong"
                 >
                   Learn more
                 </a>
@@ -168,13 +168,13 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
           </div>
           <div className="sticky bottom-4 w-full left-0  justify-center flex gap-x-4 ">
             <button
-              className=" bg-neutral-700 text-xs p-2 rounded text-neutral-200"
+              className=" bg-neutral-700 text-xs p-2 rounded text-light"
               onClick={() => closeSidebar()}
             >
               Save Changes
             </button>
             <button
-              className=" bg-neutral-900 text-xs p-2 rounded text-neutral-200"
+              className=" bg-background-dark text-xs p-2 rounded text-light"
               onClick={() => {
                 clearSelectedDocuments();
 

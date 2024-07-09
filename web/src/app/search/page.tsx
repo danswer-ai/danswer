@@ -126,6 +126,7 @@ export default async function Home() {
     embeddingModelResponse && embeddingModelResponse.ok
       ? ((await embeddingModelResponse.json()) as FullEmbeddingModelResponse)
       : null;
+
   const currentEmbeddingModelName =
     embeddingModelVersionInfo?.current_model_name;
   const nextEmbeddingModelName =

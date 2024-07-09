@@ -9,8 +9,13 @@ import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
 import { LoadingAnimation } from "../Loading";
 import FunctionalLoader from "@/lib/search/Loader";
-import { FaCaretDown, FaCaretRight, FaRobot } from "react-icons/fa";
-import { CheckmarkIcon, ChevronIcon, XIcon } from "../icons/icons";
+import { FaCaretDown, FaCaretRight, FaRobot, FaStar } from "react-icons/fa";
+import {
+  CheckmarkIcon,
+  ChevronIcon,
+  StarIconSkeleton,
+  XIcon,
+} from "../icons/icons";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -189,16 +194,21 @@ export const DocumentDisplay = ({
           !hide &&
             relevance &&
             // #NOTE: Version 1
-            (relevance[document.document_id] ? (
-              <CheckmarkIcon className="h-4 w-4 bg-black text-xs text-emphasis bg-hover-emphasis rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
-            ) : (
-              <XIcon className="h-4 w-4 text-xs text-emphasis bg-hover rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
-            ))
+            // (relevance[document.document_id] ? (
+            //   <CheckmarkIcon className="h-4 w-4 bg-black text-xs text-emphasis bg-hover-emphasis rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
+            // ) : (
+            //   <XIcon className="h-4 w-4 text-xs text-emphasis bg-hover rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
+            // ))
 
-          // #NOTE: Version 2
+            // #NOTE: Version 2
 
+            relevance[document.document_id] && (
+              <FaStar className="h-full !w-4 !h-4   text-xs text-accent  rounded w-fit my-auto select-none ml-auto mr-2" />
+            )
+
+          // #NOTE: Version 3
           // (relevance[document.document_id] && (
-          //   <ChevronIcon className="h-full !w-6 !h-6 text-green-700 bg-transparent text-xs text-emphasis  rounded w-fit my-auto select-none ml-auto mr-2" />
+          //   <ChevronIcon className="h-full !w-6 !h-6 text-green-700 bg-transp[arent text-xs text-emphasis  rounded w-fit my-auto select-none ml-auto mr-2" />
           // ))
         }
 

@@ -99,13 +99,13 @@ export const CustomTooltip = ({
         <div
           className={` absolute z-10 ${large ? "w-96" : line ? "max-w-64" : "w-40"} 
               left-1/2 transform -translate-x-1/2 mt-2 text-sm 
-              ${light ? "text-gray-800 bg-neutral-200" : "text-white bg-neutral-800"} 
+              ${light ? "text-gray-800 bg-background-subtle" : "text-white bg-background-solid"} 
               rounded-lg shadow-lg`}
         >
           {showTick && (
             <div
               className={`absolute w-3 h-3 -top-1.5 left-1/2 transform -translate-x-1/2 rotate-45 
-                  ${light ? "bg-neutral-200" : "bg-neutral-800"}`}
+                  ${light ? "bg-background-subtle" : "bg-background-solid"}`}
             />
           )}
           <div

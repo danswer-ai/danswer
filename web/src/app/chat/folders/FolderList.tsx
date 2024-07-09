@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Folder } from "./interfaces";
 import { ChatSessionDisplay } from "../sessionSidebar/ChatSessionDisplay"; // Ensure this is correctly imported
 import {
@@ -22,6 +22,9 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { CHAT_SESSION_ID_KEY } from "@/lib/drag/constants";
 import Cookies from "js-cookie";
+import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
+import { Tooltip } from "@/components/tooltip/Tooltip";
+import { Popover } from "@/components/popover/Popover";
 
 const FolderItem = ({
   folder,
@@ -54,6 +57,8 @@ const FolderItem = ({
       if (newIsExpanded) {
         openedFolders[folder.folder_id] = true;
       } else {
+        setShowDeleteConfirm(false);
+
         delete openedFolders[folder.folder_id];
       }
       Cookies.set("openedFolders", JSON.stringify(openedFolders));
@@ -87,17 +92,46 @@ const FolderItem = ({
     }
   };
 
-  const deleteFolderHandler = async (
-    event: React.MouseEvent<HTMLDivElement>
-  ) => {
-    event.stopPropagation(); // Prevent the event from bubbling up to the toggle expansion
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+  const deleteConfirmRef = useRef<HTMLDivElement>(null);
+
+  const handleDeleteClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
     try {
       await deleteFolder(folder.folder_id);
-      router.refresh(); // Refresh values to update the sidebar
+      router.refresh();
     } catch (error) {
       setPopup({ message: "Failed to delete folder", type: "error" });
+    } finally {
+      setShowDeleteConfirm(false);
     }
   };
+
+  const cancelDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setShowDeleteConfirm(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        deleteConfirmRef.current &&
+        !deleteConfirmRef.current.contains(event.target as Node)
+      ) {
+        setShowDeleteConfirm(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -130,15 +164,16 @@ const FolderItem = ({
       }}
       onDragLeave={() => setIsDragOver(false)}
       onDrop={handleDrop}
-      className={`transition duration-300 ease-in-out rounded-md ${isDragOver ? "bg-hover" : ""
-        }`}
+      className={`transition duration-300 relative ease-in-out rounded-md ${
+        isDragOver ? "bg-hover" : ""
+      }`}
     >
       <BasicSelectable fullWidth selected={false}>
         <div
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
         >
-          <div onClick={toggleFolderExpansion} className="cursor-pointer">
+          <div onClick={toggleFolderExpansion} className="   cursor-pointer">
             <div className="text-sm text-medium flex items-center justify-start w-full">
               <div className="mr-2">
                 {isExpanded ? (
@@ -171,14 +206,49 @@ const FolderItem = ({
                   >
                     <FiEdit2 size={16} />
                   </div>
-                  <div
+                  <div className="relative">
+                    <div
+                      onClick={handleDeleteClick}
+                      className="hover:bg-black/10 p-1 -m-1 rounded ml-2"
+                    >
+                      <FiTrash size={16} />
+                    </div>
+                  </div>
+
+                  {/* <div
                     onClick={deleteFolderHandler}
                     className="hover:bg-black/10 p-1 -m-1 rounded ml-2"
                   >
                     <FiTrash size={16} />
+                  </div> */}
+                </div>
+              )}
+              {showDeleteConfirm && (
+                <div
+                  ref={deleteConfirmRef}
+                  className="absolute max-w-xs border border-neutral-300  w-[90%] -bo-0  top-2 mt-4 p-2 bg-background-weak rounded shadow-lg z-10"
+                  style={{ minWidth: "200px" }}
+                >
+                  <p className="text-sm mb-2">
+                    Are you sure you want to delete this folder?
+                  </p>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={confirmDelete}
+                      className="bg-red-500  hover:bg-red-600 text-white px-2 py-1 rounded text-xs mr-2"
+                    >
+                      Yes
+                    </button>
+                    <button
+                      onClick={cancelDelete}
+                      className="bg-gray-300 hover:bg-gray-200 px-2 py-1 rounded text-xs"
+                    >
+                      No
+                    </button>
                   </div>
                 </div>
               )}
+
               {isEditing && (
                 <div className="flex ml-auto my-auto">
                   <div
@@ -235,7 +305,9 @@ export const FolderList = ({
           key={folder.folder_id}
           folder={folder}
           currentChatId={currentChatId}
-          isInitiallyExpanded={openedFolders ? openedFolders[folder.folder_id] || false : false}
+          isInitiallyExpanded={
+            openedFolders ? openedFolders[folder.folder_id] || false : false
+          }
         />
       ))}
     </div>

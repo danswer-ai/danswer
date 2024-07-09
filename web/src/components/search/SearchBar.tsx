@@ -50,17 +50,17 @@ export const AnimatedToggle = ({
           <h2 className="text-xl text-neutral-800 font-bold mb-2">
             Agentic Search
           </h2>
-          <p className="text-neutral-700 text-sm mb-4">
-            Our most powerful search, ideal for complicated queries and complex
-            answers.
+          <p className="text-solid text-sm mb-4">
+            Our most powerful search, have an AI agent guide you to pinpoint
+            exactly what you're looking for.
           </p>
           <Divider />
           <h2 className="text-xl text-neutral-800 font-bold mb-2">
             Fast Search
           </h2>
-          <p className="text-neutral-700 text-sm mb-4">
-            Get high quality results immediately, best for quick access to your
-            docs.
+          <p className="text-solid text-sm mb-4">
+            Get quality results immediately, best suited for instant access to
+            your documents.
           </p>
         </div>
       }
@@ -73,18 +73,12 @@ export const AnimatedToggle = ({
       >
         <div
           ref={contentRef}
-          className={`flex group ml-auto items-center transition-all duration-300 ease-in-out ${!isOn ? "" : "ml-auto"}`}
+          className={`flex group ml-auto items-center transition-all duration-300 ease-in-out ml-auto`}
         >
-          <span
-            className={`text-sm transition-all duration-300 ease-in-out ${isOn ? "opacity-100 translate-x-0 mr-2" : "opacity-0 -translate-x-full w-0"}`}
-          >
-            Agentic
-          </span>
-
           <div
             className={`
             w-10 h-6 flex items-center rounded-full p-1 transition-all duration-300 ease-in-out
-            ${isOn ? "bg-neutral-200" : "bg-neutral-400"}
+            ${isOn ? "bg-neutral-400" : "bg-background-subtle"}
           `}
           >
             <div
@@ -94,11 +88,18 @@ export const AnimatedToggle = ({
             `}
             ></div>
           </div>
-          <span
-            className={`no-underline text-sm transition-all duration-300 ease-in-out ${isOn ? "opacity-0 translate-x-full w-0" : "opacity-100 translate-x-0 ml-2"}`}
-          >
-            Fast
-          </span>
+          <p className="flex ml-2 w-[40px]">
+            <span
+              className={`no-underline text-sm transition-all duration-300 ease-in-out ${isOn ? "opacity-0  translate-y-10 w-0" : "opacity-100"}`}
+            >
+              Fast
+            </span>
+            <span
+              className={`text-sm transition-all duration-300 ease-in-out ${isOn ? "opacity-100 " : "opacity-0 -translate-y-10 w-0"}`}
+            >
+              Agentic
+            </span>
+          </p>
         </div>
       </div>
     </CustomTooltip>
@@ -184,12 +185,13 @@ export const FullSearchBar = ({
 
       <div className="flex justify-end w-full items-center space-x-3 mr-12 px-4  pb-2 ">
         {searchState == "searching" && (
-          <div className="mr-auto relative inline-block">
+          <div key={"Reading"} className="mr-auto relative inline-block">
             <span className="loading-text">Reading Documents...</span>
           </div>
         )}
+
         {searchState == "analyzing" && (
-          <div className="mr-auto relative inline-block">
+          <div key={"Generating"} className="mr-auto relative inline-block">
             <span className="loading-text">Generating Analysis...</span>
           </div>
         )}

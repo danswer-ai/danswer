@@ -283,7 +283,7 @@ export function ChatInputBar({
               {selectedDocuments.length > 0 && (
                 <button
                   onClick={showDocs}
-                  className="flex-none flex cursor-pointer hover:bg-neutral-200 transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-weakish max-w-[100px]"
+                  className="flex-none flex cursor-pointer hover:bg-background-subtle transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-weakish max-w-[100px]"
                 >
                   <FileIcon className="!h-6 !w-6" />
                   <p className="text-xs">

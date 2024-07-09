@@ -211,7 +211,7 @@ export const AIMessage = ({
   }
 
   return (
-    <div className={"group py-5 px-2 lg:px-5 relative flex w-screen"}>
+    <div className={"group py-5 px-2 lg:px-5 relative flex "}>
       <div className="mx-auto w-[90%] max-w-message-max">
         <div className="xl:ml-8">
           <div className="group flex">
@@ -553,7 +553,7 @@ export const HumanMessage = ({
 
   return (
     <div
-      className="pt-5 pb-1 px-2 lg:px-5 flex -mr-6 w-screen relative"
+      className=" pt-5 pb-1 px-2 lg:px-5 flex -mr-6  relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

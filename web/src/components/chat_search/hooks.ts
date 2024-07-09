@@ -38,13 +38,13 @@ export const useSidebarVisibility = ({
         }
 
         if (
-          currentXPosition > 50 &&
+          currentXPosition > 100 &&
           showDocSidebar &&
           !isWithinSidebar &&
           !toggledSidebar
         ) {
           setShowDocSidebar(false);
-        } else if (currentXPosition < 50 && !showDocSidebar) {
+        } else if (currentXPosition < 100 && !showDocSidebar) {
           setShowDocSidebar(true);
         }
       }
