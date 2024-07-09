@@ -49,7 +49,7 @@
             "cwd": "${workspaceFolder}/backend",
             "envFile": "${workspaceFolder}/.env",
             "env": {
-                "LOG_ALL_MODEL_INTERACTIONS": "True",
+                "LOG_DANSWER_MODEL_INTERACTIONS": "True",
                 "LOG_LEVEL": "DEBUG",
                 "PYTHONUNBUFFERED": "1"
             },

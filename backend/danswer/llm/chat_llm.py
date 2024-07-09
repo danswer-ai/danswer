@@ -23,6 +23,7 @@ from langchain_core.messages.tool import ToolCallChunk
 from langchain_core.messages.tool import ToolMessage
 
 from danswer.configs.app_configs import LOG_ALL_MODEL_INTERACTIONS
+from danswer.configs.app_configs import LOG_DANSWER_MODEL_INTERACTIONS
 from danswer.configs.model_configs import DISABLE_LITELLM_STREAMING
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_API_VERSION
@@ -316,7 +317,7 @@ class DefaultMultiLLM(LLM):
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
     ) -> BaseMessage:
-        if LOG_ALL_MODEL_INTERACTIONS:
+        if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
             self._log_prompt(prompt)
 
@@ -333,7 +334,7 @@ class DefaultMultiLLM(LLM):
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
     ) -> Iterator[BaseMessage]:
-        if LOG_ALL_MODEL_INTERACTIONS:
+        if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
             self._log_prompt(prompt)
 
@@ -361,7 +362,7 @@ class DefaultMultiLLM(LLM):
                 "The AI model failed partway through generation, please try again."
             )
 
-        if LOG_ALL_MODEL_INTERACTIONS and output:
+        if LOG_DANSWER_MODEL_INTERACTIONS and output:
             content = output.content or ""
             if isinstance(output, AIMessage):
                 if content:
