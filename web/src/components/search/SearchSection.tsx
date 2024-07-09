@@ -472,16 +472,16 @@ export const SearchSection = ({
             <div
               style={{ transition: "width 0.30s ease-out" }}
               className={`
-                        flex-none 
-                        overflow-y-hidden 
-                        bg-background-weak 
-                        h-full
-                        transition-all 
-                        bg-opacity-80
-                        duration-300 
-                        ease-in-out
-                        ${toggledSidebar ? "w-[300px] " : "w-[0px]"}
-                      `}
+                    flex-none 
+                    overflow-y-hidden 
+                    bg-background-weak 
+                    h-full
+                    transition-all 
+                    bg-opacity-80
+                    duration-300 
+                    ease-in-out
+                    ${toggledSidebar ? "w-[300px] " : "w-[0px]"}
+                  `}
             ></div>
 
             {

@@ -316,18 +316,25 @@ export async function Layout({ children }: { children: React.ReactNode }) {
             </a> */}
             <a
               href="/chat"
+              className="transition-all duration-150 cursor-pointer p-1 text-sm items-center flex gap-x-1 px-2 py-1 rounded-lg hover:shadow-sm hover:ring-1 hover:ring-ingio-900/40 hover:bg-opacity-90 text-indigo-900 bg-indigo-300"
+            >
+              <BackIcon className="!h-4 !w-4" />
+              Back to Danswer
+            </a>
+            {/* <a
+              href="/chat"
               className="transition-all duration-150 cursor-pointer p-1 text-sm items-center flex gap-x-1 px-2 py-1 rounded-lg hover:shadow-sm hover:ring-1 hover:ring-[#E85801]/40 hover:bg-opacity-90 text-[#E85801] bg-[#FAEBE5]"
             >
               <ChatIcon className="!h-3 !w-3" />
               Chat
-            </a>
-            <a
+            </a> */}
+            {/* <a
               href="/search"
               className="transition-all duration-150 cursor-pointer p-1 text-sm items-center flex gap-x-1 px-2 py-1 rounded-lg hover:shadow-xs text-[#0191E8] hover:ring-1 hover:ring-[#0191E8]/40 hover:bg-opacity-90  bg-[#E5F4FA]"
             >
               <SearchIcon className="!h-3 !w-3" />
               Search
-            </a>
+            </a> */}
             <UserDropdown user={user} />
           </div>
           <div className="pt-20 flex overflow-y-auto h-full px-4 md:px-12">

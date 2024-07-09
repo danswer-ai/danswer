@@ -1629,7 +1629,7 @@ export function ChatPage({
                 )}
               </Dropzone>
             ) : (
-              <div className="mx-auto flex flex-col">
+              <div className="mx-auto h-full flex flex-col">
                 <div className="my-auto">
                   <DanswerInitializingLoader />
                 </div>
