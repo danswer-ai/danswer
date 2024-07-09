@@ -8,12 +8,9 @@ export default function IsPublicField({
   return (
     <BooleanFormField
       name={name}
-      label="Documents are Public?"
+      label="Sind die Dokumente öffentlich?"
       subtext={
-        "If set, then documents indexed by this connector will be " +
-        "visible to all users. If turned off, then only users who explicitly " +
-        "have been given access to the documents (e.g. through a User Group) " +
-        "will have access"
+        "Wenn aktiviert, sind die von diesem Connector indizierten Dokumente für alle Benutzer sichtbar. Wenn deaktiviert, haben nur Benutzer Zugriff auf die Dokumente, denen explizit Zugriff gewährt wurde (z. B. über eine Benutzergruppe)."
       }
     />
   );

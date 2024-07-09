@@ -64,7 +64,7 @@ export const ConnectorTitle = ({
       typedConnector.connector_specific_config?.folder_paths.length > 0
     ) {
       additionalMetadata.set(
-        "Folders",
+        "Ordner",
         typedConnector.connector_specific_config.folder_paths.join(", ")
       );
     }

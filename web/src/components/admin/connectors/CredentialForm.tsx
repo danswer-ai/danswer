@@ -14,13 +14,13 @@ export async function submitCredential<T>(
     const response = await createCredential(credential);
     if (response.ok) {
       isSuccess = true;
-      return { message: "Success!", isSuccess: true };
+      return { message: "Erfolg!", isSuccess: true };
     } else {
       const errorData = await response.json();
-      return { message: `Error: ${errorData.detail}`, isSuccess: false };
+      return { message: `Fehler: ${errorData.detail}`, isSuccess: false };
     }
   } catch (error) {
-    return { message: `Error: ${error}`, isSuccess: false };
+    return { message: `Fehler: ${error}`, isSuccess: false };
   }
 }
 

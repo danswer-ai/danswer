@@ -93,12 +93,12 @@ export function _WelcomeModal({ user }: { user: User | null }) {
               {apiKeyVerified && (
                 <FiCheckCircle className="my-auto mr-2 text-success" />
               )}
-              Step 1: Setup an LLM
+              Schritt 1: LLM einstellen
             </Text>
             <div>
               {apiKeyVerified ? (
                 <Text className="mt-2">
-                  LLM setup complete!
+                  LLM Einstellung fertig!
                   <br /> <br />
                   If you want to change the key later, you&apos;ll be able to
                   easily to do so in the Admin Panel.
@@ -111,11 +111,11 @@ export function _WelcomeModal({ user }: { user: User | null }) {
               )}
             </div>
             <Text className="font-bold mt-6 mb-2">
-              Step 2: Connect Data Sources
+              Schritt 2: Datenquellen verbinden
             </Text>
             <div>
               <Text>
-                Connectors are the way that Danswer gets data from your
+                Connectors are the way that Blona gets data from your
                 organization&apos;s various data sources. Once setup, we&apos;ll
                 automatically sync data from your apps and docs into Danswer, so
                 you can search through all of them in one place.
@@ -132,7 +132,7 @@ export function _WelcomeModal({ user }: { user: User | null }) {
                   className="w-fit mx-auto"
                 >
                   <Button size="xs" icon={FiShare2} disabled={!apiKeyVerified}>
-                    Setup your first connector!
+                    Erste Datenquelle verbinden!
                   </Button>
                 </Link>
               </div>
@@ -152,12 +152,12 @@ export function _WelcomeModal({ user }: { user: User | null }) {
               {apiKeyVerified && (
                 <FiCheckCircle className="my-auto mr-2 text-success" />
               )}
-              Step 1: Setup an LLM
+              Schritt 1: LLM Einstellen
             </Text>
             <div>
               {apiKeyVerified ? (
                 <Text className="mt-2">
-                  LLM setup complete!
+                  LLM Einstellung vollständig!
                   <br /> <br />
                   If you want to change the key later or choose a different LLM,
                   you&apos;ll be able to easily to do so in the Admin Panel.
@@ -215,11 +215,11 @@ export function _WelcomeModal({ user }: { user: User | null }) {
       );
       break;
     default:
-      title = "🎉 Welcome to Danswer";
+      title = "🎉 Willkommen bei Blona";
       body = (
         <>
           <div>
-            <Text>How are you planning on using Danswer?</Text>
+            <Text>Wie willst Du Blona nutzen? </Text>
           </div>
           <Divider />
           <UsageTypeSection

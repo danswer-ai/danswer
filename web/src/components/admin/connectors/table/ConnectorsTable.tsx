@@ -46,9 +46,9 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
   if (connector.disabled) {
     const deletionAttempt = connectorIndexingStatus.deletion_attempt;
     if (!deletionAttempt || deletionAttempt.status === "FAILURE") {
-      statusDisplay = <div className="text-error">Paused</div>;
+      statusDisplay = <div className="text-error">Pausiert</div>;
     } else {
-      statusDisplay = <div className="text-error">Deleting...</div>;
+      statusDisplay = <div className="text-error">Löschen...</div>;
       shouldDisplayDisabledToggle = false;
     }
   }
@@ -169,11 +169,11 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
               <TableHeaderCell key={header}>{header}</TableHeaderCell>
             ))}
             <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Is Public</TableHeaderCell>
+            <TableHeaderCell>Ist öffentlich</TableHeaderCell>
             {connectorIncludesCredential && (
               <TableHeaderCell>Credential</TableHeaderCell>
             )}
-            <TableHeaderCell>Remove</TableHeaderCell>
+            <TableHeaderCell>Entfernen</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>

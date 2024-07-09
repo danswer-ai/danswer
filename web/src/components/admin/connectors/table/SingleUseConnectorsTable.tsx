@@ -26,7 +26,7 @@ const SingleUseConnectorStatus = ({
     (deletionAttempt.status === "PENDING" ||
       deletionAttempt.status === "STARTED")
   ) {
-    return <div className="text-error">Deleting...</div>;
+    return <div className="text-error">Löschen...</div>;
   }
 
   if (!indexingStatus || indexingStatus === "not_started") {
@@ -38,10 +38,10 @@ const SingleUseConnectorStatus = ({
   }
 
   if (indexingStatus === "success") {
-    return <div className="text-success">Success!</div>;
+    return <div className="text-success">Erfolg!</div>;
   }
 
-  return <div className="text-error">Failed</div>;
+  return <div className="text-error">Fehler</div>;
 };
 
 export function SingleUseConnectorsTable<
@@ -76,7 +76,7 @@ export function SingleUseConnectorsTable<
             {connectorIncludesCredential && (
               <TableHeaderCell>Credential</TableHeaderCell>
             )}
-            <TableHeaderCell>Remove</TableHeaderCell>
+            <TableHeaderCell>Entfernen</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -143,13 +143,13 @@ export function SingleUseConnectorsTable<
                       if (deletionScheduleError) {
                         setPopup({
                           message:
-                            "Failed to schedule deletion of connector - " +
+                            "Fehler bei der geplanten Löschung " +
                             deletionScheduleError,
                           type: "error",
                         });
                       } else {
                         setPopup({
-                          message: "Scheduled deletion of connector!",
+                          message: "Geplante Löschung der Quelle!",
                           type: "success",
                         });
                       }

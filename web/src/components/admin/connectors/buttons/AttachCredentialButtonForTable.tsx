@@ -14,7 +14,7 @@ export const AttachCredentialButtonForTable = ({ onClick }: Props) => {
       }
       onClick={onClick}
     >
-      Attach Credential
+      Credentials hinzufügen
     </button>
   );
 };

@@ -32,7 +32,7 @@ export function NoSourcesModal() {
           </Text>
           <Link href="/admin/add-connector">
             <Button className="mt-3" size="xs" icon={FiShare2}>
-              Connect a Source!
+              Datenquelle verknüpfen
             </Button>
           </Link>
           <Divider />
@@ -44,7 +44,7 @@ export function NoSourcesModal() {
             </Text>
             <Link href="/chat">
               <Button className="mt-3" size="xs" icon={FiMessageSquare}>
-                Start Chatting!
+                Chat starten
               </Button>
             </Link>
           </div>

@@ -158,7 +158,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
           });
           if (errorMsg) {
             setPopup({
-              message: `Unable to delete existing connector - ${errorMsg}`,
+              message: `Fehler bei der Löschung - ${errorMsg}`,
               type: "error",
             });
             return;

@@ -73,7 +73,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
           <AdminSidebar
             collections={[
               {
-                name: "Connectors",
+                name: "Datenquelle",
                 items: [
                   {
                     name: (
@@ -88,7 +88,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     name: (
                       <div className="flex">
                         <ConnectorIcon size={18} />
-                        <div className="ml-1.5">Add Connector</div>
+                        <div className="ml-1.5">Datenquelle hinzufügen</div>
                       </div>
                     ),
                     link: "/admin/add-connector",
@@ -102,7 +102,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     name: (
                       <div className="flex">
                         <BookmarkIcon size={18} />
-                        <div className="ml-1">Document Sets</div>
+                        <div className="ml-1">Dokumente</div>
                       </div>
                     ),
                     link: "/admin/documents/sets",
@@ -134,7 +134,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     name: (
                       <div className="flex">
                         <RobotIcon size={18} />
-                        <div className="ml-1">Assistants</div>
+                        <div className="ml-1">Assistenten</div>
                       </div>
                     ),
                     link: "/admin/assistants",
@@ -152,7 +152,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     name: (
                       <div className="flex">
                         <FiTool size={18} className="my-auto" />
-                        <div className="ml-1">Tools</div>
+                        <div className="ml-1">Werkzeuge</div>
                       </div>
                     ),
                     link: "/admin/tools",
@@ -161,7 +161,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     name: (
                       <div className="flex">
                         <ClipboardIcon size={18} />
-                        <div className="ml-1">Standard Answers</div>
+                        <div className="ml-1">Standard Antworten</div>
                       </div>
                     ),
                     link: "/admin/standard-answer",
@@ -192,7 +192,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                 ],
               },
               {
-                name: "User Management",
+                name: "Nutzer Management",
                 items: [
                   {
                     name: (
@@ -218,7 +218,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                           name: (
                             <div className="flex">
                               <KeyIcon size={18} />
-                              <div className="ml-1">API Keys</div>
+                              <div className="ml-1">API Schlüssel</div>
                             </div>
                           ),
                           link: "/admin/api-key",
@@ -245,7 +245,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                           name: (
                             <div className="flex">
                               <FiActivity size={18} />
-                              <div className="ml-1">Usage Statistics</div>
+                              <div className="ml-1">Nutzer Statistiken</div>
                             </div>
                           ),
                           link: "/admin/performance/usage",
@@ -254,7 +254,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                           name: (
                             <div className="flex">
                               <DatabaseIcon size={18} />
-                              <div className="ml-1">Query History</div>
+                              <div className="ml-1">Historie</div>
                             </div>
                           ),
                           link: "/admin/performance/query-history",
@@ -263,7 +263,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                           name: (
                             <div className="flex">
                               <FiBarChart2 size={18} />
-                              <div className="ml-1">Custom Analytics</div>
+                              <div className="ml-1">Analytics</div>
                             </div>
                           ),
                           link: "/admin/performance/custom-analytics",
@@ -279,7 +279,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     name: (
                       <div className="flex">
                         <FiSettings size={18} />
-                        <div className="ml-1">Workspace Settings</div>
+                        <div className="ml-1">Einstellungen</div>
                       </div>
                     ),
                     link: "/admin/settings",

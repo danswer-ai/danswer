@@ -18,12 +18,11 @@ export const HealthCheckBanner = () => {
       <Modal
         width="w-1/4"
         className="overflow-y-hidden flex flex-col"
-        title="You have been logged out!"
+        title="Du wurdest ausgeloggt."
       >
         <div className="flex flex-col gap-y-4">
           <p className="text-lg ">
-            You can click &quot;Log in&quot; to log back in! Apologies for the
-            inconvenience.
+            Hier klicken, um erneut einzuloggen. 
           </p>
           <a
             href="/auth/login"
@@ -37,10 +36,10 @@ export const HealthCheckBanner = () => {
   } else {
     return (
       <div className="text-xs mx-auto bg-gradient-to-r from-red-900 to-red-700 p-2 rounded-sm border-hidden text-light">
-        <p className="font-bold pb-1">The backend is currently unavailable.</p>
+        <p className="font-bold pb-1">Die App ist vorübergehend nicht erreichbar.</p>
 
         <p className="px-1">
-          If this is your initial setup or you just updated your Danswer
+          If this is your initial setup or you just updated your Blona
           deployment, this is likely because the backend is still starting up.
           Give it a minute or two, and then refresh the page. If that does not
           work, make sure the backend is setup and/or contact an administrator.

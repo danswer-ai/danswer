@@ -38,7 +38,7 @@ export const FileUpload: FC<FileUploadProps> = ({
               <input {...getInputProps()} />
               <b className="text-emphasis">
                 {message ||
-                  "Drag and drop some files here, or click to select files"}
+                  "Dokumente reinziehen oder hier klicken um Dokumente hochzuladen"}
               </b>
             </div>
           </section>
