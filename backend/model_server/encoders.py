@@ -1,14 +1,19 @@
 import gc
+import json
 from enum import Enum
 from typing import Optional
 
 import openai
+import vertexai
 import voyageai  # type: ignore
 from cohere import Client as CohereClient
 from fastapi import APIRouter
 from fastapi import HTTPException
+from google.oauth2 import service_account
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
+from vertexai.language_models import TextEmbeddingInput
+from vertexai.language_models import TextEmbeddingModel
 
 from danswer.utils.logger import setup_logger
 from model_server.constants import MODEL_WARM_UP_STRING
@@ -21,6 +26,7 @@ from shared_configs.model_server_models import EmbedResponse
 from shared_configs.model_server_models import RerankRequest
 from shared_configs.model_server_models import RerankResponse
 
+
 logger = setup_logger()
 
 router = APIRouter(prefix="/encoder")
@@ -32,7 +38,8 @@ _RERANK_MODELS: Optional[list["CrossEncoder"]] = None
 class EmbeddingProvider(Enum):
     OPENAI = "openai"
     COHERE = "cohere"
-    VOYAGE = "voyage ai"
+    VOYAGE = "voyage"
+    VERTEX = "vertex"
 
 
 # class CloudEmbedding(BaseEmbedding):
@@ -44,17 +51,27 @@ class CloudEmbedding:
             self.provider = EmbeddingProvider(provider.lower())
         except ValueError:
             raise ValueError(f"Unsupported provider: {provider}")
-        logger.debug(f"Initializing Embedding with provider: {self.provider}")
+        # logger.debug(f"Initializing Embedding with provider: {self.provider}")
         self.client = self._initialize_client()
 
     def _initialize_client(self):
-        logger.debug(f"Initializing client for provider: {self.provider}")
+        # logger.debug(f"Initializing client for provider: {self.provider}")
         if self.provider == EmbeddingProvider.OPENAI:
             return openai.OpenAI(api_key=self.api_key)
         elif self.provider == EmbeddingProvider.COHERE:
             return CohereClient(api_key=self.api_key)
         elif self.provider == EmbeddingProvider.VOYAGE:
             return voyageai.Client(api_key=self.api_key)
+        elif self.provider == EmbeddingProvider.VERTEX:
+            credentials = service_account.Credentials.from_service_account_info(
+                json.loads(self.api_key)
+            )
+            project_id = json.loads(self.api_key)["project_id"]
+            vertexai.init(project=project_id, credentials=credentials)
+            return TextEmbeddingModel.from_pretrained(
+                self.model or "text-embedding-004"
+            )
+
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
@@ -62,13 +79,15 @@ class CloudEmbedding:
         return [self.embed(text, model_name) for text in texts]
 
     def embed(self, text: str, model: str = None):
-        logger.debug(f"Embedding text with provider: {self.provider}")
+        # logger.debug(f"Embedding text with provider: {self.provider}")
         if self.provider == EmbeddingProvider.OPENAI:
             return self._embed_openai(text, model or "text-embedding-ada-002")
         elif self.provider == EmbeddingProvider.COHERE:
             return self._embed_cohere(text, model)
         elif self.provider == EmbeddingProvider.VOYAGE:
             return self._embed_voyage(text, model)
+        elif self.provider == EmbeddingProvider.VERTEX:
+            return self._embed_vertex(text, model)
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
@@ -89,6 +108,13 @@ class CloudEmbedding:
         response = self.client.embed(text, model=model)
         return response.embeddings[0]
 
+    def _embed_vertex(self, text: str, model: str = "text-embedding-004"):
+        print(f"Using Vertex AI embedding with model: {model}")
+        embedding = self.client.get_embeddings(
+            [TextEmbeddingInput(text, "RETRIEVAL_DOCUMENT")]
+        )
+        return embedding[0].values
+
     @staticmethod
     def create(api_key: str, provider: str):
         logger.debug(f"Creating Embedding instance for provider: {provider}")
@@ -99,6 +125,7 @@ def get_embedding(
     provider: str,
     api_key: str | None = None,
 ):
+    print("called")
     return CloudEmbedding(api_key=api_key, provider=provider)
 
 

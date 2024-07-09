@@ -1,5 +1,3 @@
-from enum import Enum
-
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.model_configs import GEN_AI_TEMPERATURE
@@ -106,12 +104,6 @@ def get_default_llms(
         )
 
     return _create_llm(model_name), _create_llm(fast_model_name)
-
-
-class EmbeddingProvider(Enum):
-    OPENAI = "openai"
-    COHERE = "cohere"
-    VOYAGE = "voyage"
 
 
 def get_llm(

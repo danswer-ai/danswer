@@ -13,7 +13,7 @@ import { Modal } from "@/components/Modal";
 import {
   CloudEmbeddingProvider,
   CloudEmbeddingModel,
-  AVAILABLE_CLOUD_MODELS,
+  AVAILABLE_CLOUD_PROVIDERS,
   AVAILABLE_MODELS,
   INVALID_OLD_MODEL,
   fillOutEmeddingModelDescriptor,
@@ -24,15 +24,14 @@ import {
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Connector, ConnectorIndexingStatus } from "@/lib/types";
 import Link from "next/link";
-import OpenSourceEmbeddingSelectionPage from "./OpenSourceEmbeddingSelectionPage";
+import OpenEmbeddingPage from "./OpenEmbeddingPage";
 import CloudEmbeddingPage from "./CloudEmbeddingPage";
-import { ProviderCreationModal2 } from "./modals/ProviderCreation";
-import { ModelNotConfiguredModal } from "./modals/ModelNotConfigured";
-import { DeleteCredentialsModal } from "./modals/DeleteCredentials";
-import { ChangeModelModal } from "./modals/ChangeModel";
-import { SelectModelModal } from "./modals/SelectModel";
-import { ChangeCredentialsModal } from "./modals/ChangeCredentials";
-import { ModelSelectionConfirmationModal } from "./modals/ModelSelection";
+import { ProviderCreationModal } from "./modals/ProviderCreationModal";
+import { ModelNotConfiguredModal } from "./modals/ModelNotConfiguredModal";
+import { DeleteCredentialsModal } from "./modals/DeleteCredentialsModal";
+import { SelectModelModal } from "./modals/SelectModelModal";
+import { ChangeCredentialsModal } from "./modals/ChangeCredentialsModal";
+import { ModelSelectionConfirmationModal } from "./modals/ModelSelectionModal";
 import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../llm/constants";
 import { AlreadyPickedModal } from "./modals/AlreadyPickedModal";
 
@@ -45,27 +44,33 @@ export interface EmbeddingDetails {
 
 function Main() {
   const [openToggle, setOpenToggle] = useState(true);
-  const [tentativelyNewProvider, setTentativelyNewProvider] =
+
+  // Cloud Provider based modals
+  const [showTentativeProvider, setShowTentativeProvider] =
+    useState<CloudEmbeddingProvider | null>(null);
+  const [showUnconfiguredProvider, setShowUnconfiguredProvider] =
+    useState<CloudEmbeddingProvider | null>(null);
+  const [changeCredentialsProvider, setChangeCredentialsProvider] =
     useState<CloudEmbeddingProvider | null>(null);
 
+  // Cloud Model based modals
+  const [alreadySelectedModel, setAlreadySelectedModel] =
+    useState<CloudEmbeddingModel | null>(null);
+  const [showTentativeModel, setShowTentativeModel] =
+    useState<CloudEmbeddingModel | null>(null);
+
+  // Open Model based modals
+  const [showTentativeOpenProvider, setShowTentativeOpenProvider] =
+    useState<EmbeddingModelDescriptor | null>(null);
+
+  // Enabled / unenabled providers
   const [newEnabledProviders, setNewEnabledProviders] = useState<string[]>([]);
   const [newUnenabledProviders, setNewUnenabledProviders] = useState<string[]>(
     []
   );
-  const [alreadyPicked, setAlreadyPicked] =
-    useState<CloudEmbeddingModel | null>(null);
 
-  const [showModelNotConfiguredModal, setShowModelNotConfiguredModal] =
-    useState<CloudEmbeddingProvider | null>(null);
-  const [showChangeModelModal, setShowChangeModelModal] = useState(false);
   const [showDeleteCredentialsModal, setShowDeleteCredentialsModal] =
-    useState(false);
-  const [changeCredentials, setChangeCredentials] =
-    useState<CloudEmbeddingProvider | null>(null);
-  const [tentativeNewCloudEmbeddingModel, setTentativeNewCloudEmbeddingModel] =
-    useState<CloudEmbeddingModel | null>(null);
-  const [tentativeNewOpenmbeddingModel, setTentativeNewOpenEmbeddingModel] =
-    useState<EmbeddingModelDescriptor | null>(null);
+    useState<boolean>(false);
   const [isCancelling, setIsCancelling] = useState<boolean>(false);
   const [showAddConnectorPopup, setShowAddConnectorPopup] =
     useState<boolean>(false);
@@ -127,7 +132,6 @@ function Main() {
         ...model,
         name: model.model_name!,
         description: "",
-        link: "",
         pricePerMillion: 0,
         mtebScore: 0,
         maxContext: 0,
@@ -146,7 +150,7 @@ function Main() {
       }
     );
     if (response.ok) {
-      setTentativeNewCloudEmbeddingModel(null);
+      setShowTentativeModel(null);
       mutate("/api/secondary-index/get-secondary-embedding-model");
       if (!connectors || !connectors.length) {
         setShowAddConnectorPopup(true);
@@ -161,7 +165,7 @@ function Main() {
       method: "POST",
     });
     if (response.ok) {
-      setTentativeNewCloudEmbeddingModel(null);
+      setShowTentativeModel(null);
       mutate("/api/secondary-index/get-secondary-embedding-model");
     } else {
       alert(
@@ -195,7 +199,7 @@ function Main() {
       }
     );
     if (response.ok) {
-      setTentativeNewCloudEmbeddingModel(null);
+      setShowTentativeModel(null);
       mutate("/api/secondary-index/get-secondary-embedding-model");
       if (!connectors || !connectors.length) {
         setShowAddConnectorPopup(true);
@@ -206,7 +210,7 @@ function Main() {
   };
 
   const currentModelName = currentEmeddingModel?.model_name;
-  const AVAILABLE_CLOUD_MODELS_FLATTENED = AVAILABLE_CLOUD_MODELS.flatMap(
+  const AVAILABLE_CLOUD_PROVIDERS_FLATTENED = AVAILABLE_CLOUD_PROVIDERS.flatMap(
     (provider) =>
       provider.embedding_models.map((model) => ({
         ...model,
@@ -217,33 +221,20 @@ function Main() {
 
   const currentModel: FullEmbeddingModelDescriptor | CloudEmbeddingModel =
     AVAILABLE_MODELS.find((model) => model.model_name === currentModelName) ||
-    AVAILABLE_CLOUD_MODELS_FLATTENED.find(
+    AVAILABLE_CLOUD_PROVIDERS_FLATTENED.find(
       (model) => model.model_name === currentEmeddingModel.model_name
     ) ||
     fillOutEmeddingModelDescriptor(currentEmeddingModel);
-
-  // const currentModel =
-  //   AVAILABLE_MODELS.find((model) => model.model_name === currentModelName) ||
-  //   AVAILABLE_CLOUD_MODELS.find((model) => model.name === currentEmeddingModel.model_name) ||
-  //   fillOutEmeddingModelDescriptor(currentEmeddingModel) ;
 
   const onSelectOpenSource = async (model: EmbeddingModelDescriptor) => {
     if (currentEmeddingModel?.model_name === INVALID_OLD_MODEL) {
       await onConfirmSelection(model);
     } else {
-      setTentativeNewOpenEmbeddingModel(model);
+      setShowTentativeOpenProvider(model);
     }
   };
 
-  const selectedModel = AVAILABLE_CLOUD_MODELS[0];
-
-  const handleChangeCredentials = async (apiKey: string) => {
-    console.log(
-      `Changing credentials for ${tentativelyNewProvider?.name} with new API key: ${apiKey}`
-    );
-    setChangeCredentials(null);
-  };
-
+  const selectedModel = AVAILABLE_CLOUD_PROVIDERS[0];
   const clientsideAddProvider = (provider: CloudEmbeddingProvider) => {
     const providerName = provider.name;
     setNewEnabledProviders((newEnabledProviders) => [
@@ -277,84 +268,73 @@ function Main() {
         which then power Danswer&apos;s search.
       </Text>
 
-      {alreadyPicked && (
+      {alreadySelectedModel && (
         <AlreadyPickedModal
-          model={alreadyPicked}
-          onClose={() => setAlreadyPicked(null)}
+          model={alreadySelectedModel}
+          onClose={() => setAlreadySelectedModel(null)}
         />
       )}
-      {tentativeNewOpenmbeddingModel && (
+      {showTentativeOpenProvider && (
         <ModelSelectionConfirmationModal
-          selectedModel={tentativeNewOpenmbeddingModel}
+          selectedModel={showTentativeOpenProvider}
           isCustom={
             AVAILABLE_MODELS.find(
               (model) =>
-                model.model_name === tentativeNewOpenmbeddingModel.model_name
+                model.model_name === showTentativeOpenProvider.model_name
             ) === undefined
           }
-          onConfirm={() => onConfirm(tentativeNewOpenmbeddingModel)}
-          onCancel={() => setTentativeNewOpenEmbeddingModel(null)}
+          onConfirm={() => onConfirm(showTentativeOpenProvider)}
+          onCancel={() => setShowTentativeOpenProvider(null)}
         />
       )}
-      {showModelNotConfiguredModal && (
+      {showUnconfiguredProvider && (
         <ModelNotConfiguredModal
-          modelProvider={showModelNotConfiguredModal}
+          modelProvider={showUnconfiguredProvider}
           onConfirm={() => {
-            setTentativelyNewProvider(showModelNotConfiguredModal);
-            setShowModelNotConfiguredModal(null);
+            setShowTentativeProvider(showUnconfiguredProvider);
+            setShowUnconfiguredProvider(null);
           }}
-          onCancel={() => setShowModelNotConfiguredModal(null)}
+          onCancel={() => setShowUnconfiguredProvider(null)}
         />
       )}
 
-      {tentativelyNewProvider && (
-        <ProviderCreationModal2
-          selectedProvider={tentativelyNewProvider}
+      {showTentativeProvider && (
+        <ProviderCreationModal
+          selectedProvider={showTentativeProvider}
           onConfirm={() => {
-            setTentativelyNewProvider(showModelNotConfiguredModal);
-            setShowModelNotConfiguredModal(null);
-            clientsideAddProvider(tentativelyNewProvider);
+            setShowTentativeProvider(showUnconfiguredProvider);
+            setShowUnconfiguredProvider(null);
+            clientsideAddProvider(showTentativeProvider);
           }}
-          onCancel={() => setTentativelyNewProvider(null)}
+          onCancel={() => setShowTentativeProvider(null)}
         />
       )}
-      {changeCredentials && (
+      {changeCredentialsProvider && (
         <ChangeCredentialsModal
+          useFileUpload={changeCredentialsProvider.name == "Vertex"}
           onDeleted={() => {
-            clientsideRemoveProvider(changeCredentials);
-            setChangeCredentials(null);
+            clientsideRemoveProvider(changeCredentialsProvider);
+            setChangeCredentialsProvider(null);
           }}
-          provider={changeCredentials}
-          onConfirm={() => setChangeCredentials(null)}
-          onCancel={() => setChangeCredentials(null)}
+          provider={changeCredentialsProvider}
+          onConfirm={() => setChangeCredentialsProvider(null)}
+          onCancel={() => setChangeCredentialsProvider(null)}
         />
       )}
 
-      {tentativeNewCloudEmbeddingModel && (
+      {showTentativeModel && (
         <SelectModelModal
-          model={tentativeNewCloudEmbeddingModel}
+          model={showTentativeModel}
           onConfirm={() => {
-            onConfirm(tentativeNewCloudEmbeddingModel);
+            onConfirm(showTentativeModel);
           }}
-          onCancel={() => setTentativeNewCloudEmbeddingModel(null)}
-        />
-      )}
-
-      {showChangeModelModal && (
-        <ChangeModelModal
-          existingModel={currentModel}
-          newModel={tentativeNewCloudEmbeddingModel!}
-          onConfirm={() => {
-            setShowChangeModelModal(false);
-            onConfirm(tentativeNewCloudEmbeddingModel!);
-          }}
-          onCancel={() => setShowChangeModelModal(false)}
+          onCancel={() => setShowTentativeModel(null)}
         />
       )}
 
       {showDeleteCredentialsModal && (
         <DeleteCredentialsModal
-          modelProvider={tentativelyNewProvider!}
+          modelProvider={showTentativeProvider!}
           onConfirm={() => {
             setShowDeleteCredentialsModal(false);
           }}
@@ -366,7 +346,10 @@ function Main() {
         <>
           <Title className="mt-8 mb-2">Current Embedding Model</Title>
           <Text>
-            <ModelOption model={currentModel} />
+            <ModelOption
+              model={currentModel}
+              providers={AVAILABLE_CLOUD_PROVIDERS}
+            />
           </Text>
         </>
       ) : (
@@ -407,22 +390,22 @@ function Main() {
       {!showAddConnectorPopup &&
         !futureEmbeddingModel &&
         (openToggle ? (
-          <OpenSourceEmbeddingSelectionPage
+          <OpenEmbeddingPage
             onSelectOpenSource={onSelectOpenSource}
             currentModelName={currentModelName!}
           />
         ) : (
           <CloudEmbeddingPage
             currentModel={currentModel}
-            setAlreadyPicked={setAlreadyPicked}
+            setAlreadySelectedModel={setAlreadySelectedModel}
             embeddingProviderDetails={embeddingProviderDetails}
             newEnabledProviders={newEnabledProviders}
             newUnenabledProviders={newUnenabledProviders}
-            setTentativeNewEmbeddingModel={setTentativeNewCloudEmbeddingModel}
-            setTentativelyNewProvider={setTentativelyNewProvider}
+            setTentativeNewEmbeddingModel={setShowTentativeModel}
+            setShowTentativeProvider={setShowTentativeProvider}
             selectedModel={selectedModel}
-            setShowModelNotConfiguredModal={setShowModelNotConfiguredModal}
-            setChangeCredentials={setChangeCredentials}
+            setShowUnconfiguredProvider={setShowUnconfiguredProvider}
+            setChangeCredentialsProvider={setChangeCredentialsProvider}
           />
         ))}
 

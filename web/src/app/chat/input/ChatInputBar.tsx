@@ -1,10 +1,4 @@
-import React, {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   FiSend,
   FiFilter,
@@ -23,7 +17,6 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
 import { FileDescriptor } from "../interfaces";
 import { InputBarPreview } from "../files/InputBarPreview";
-import { RobotIcon } from "@/components/icons/icons";
 import { Hoverable } from "@/components/Hoverable";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
@@ -143,7 +136,7 @@ export function ChatInputBar({
       return;
     }
 
-    // If looking for an assistant...fup
+    // If looking for an assistant...å
     const match = text.match(/(?:\s|^)@(\w*)$/);
     if (match) {
       setShowSuggestions(true);

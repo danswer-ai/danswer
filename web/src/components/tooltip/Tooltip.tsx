@@ -1,13 +1,6 @@
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { ReactNode } from "react";
 
-interface TooltipProps {
-  children: ReactNode;
-  content: ReactNode;
-  side?: "top" | "right" | "bottom" | "left";
-  align?: "start" | "center" | "end";
-}
-
 export function Tooltip({
   children,
   content,
