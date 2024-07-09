@@ -212,7 +212,11 @@ def _comment_dfs(
 
 class RecursiveIndexer:
     def __init__(
-        self, batch_size, confluence_client, index_origin, origin_page_id
+        self,
+        batch_size: int,
+        confluence_client: Confluence,
+        index_origin: bool,
+        origin_page_id: str,
     ) -> None:
         self.batch_size = batch_size
         self.confluence_client = confluence_client
@@ -245,7 +249,7 @@ class RecursiveIndexer:
     def recurse_children_pages(
         self,
         start_ind: int,
-        page_id: int,
+        page_id: str,
     ) -> list[dict[str, Any]]:
         pages: list[dict[str, Any]] = []
         current_level_pages: list[dict[str, Any]] = []
@@ -324,8 +328,7 @@ class RecursiveIndexer:
                     child_pages.extend(child_page)
                 except Exception as e:
                     logger.warning(f"Page {page_id} at offset {ind} failed: {e}")
-                    if not self.continue_on_failure:
-                        raise e
+                    raise e
 
             return child_pages
 
@@ -446,7 +449,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 confluence_client=self.confluence_client,
                 index_origin=self.index_origin,
             )
-            pages = []
+            pages: list[dict] = []
             while page := indexer.get_pages(len(pages), self.batch_size):
                 pages.extend(page)
             return pages
