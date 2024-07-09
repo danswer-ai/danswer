@@ -281,7 +281,7 @@ def test_standard_answer(
     request: TestStandardAnswerRequest,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_user),
-) -> dict[str, list[StandardAnswer]] | dict[str, str]:
+) -> dict[str, list[StandardAnswer] | str]:
     try:
         standard_answers = oneoff_standard_answers(
             message=request.message,
