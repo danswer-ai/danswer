@@ -98,6 +98,8 @@ COPY ./assets /app/assets
 
 ENV PYTHONPATH /app
 
+EXPOSE 8080
+
 # Default command which does nothing
 # This container is used by api server and background which specify their own CMD
 CMD ["tail", "-f", "/dev/null"]
