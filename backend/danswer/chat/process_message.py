@@ -89,6 +89,9 @@ from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
 
+from danswer.tools.summary.summary_tool import SummaryGenerationTool, SUMMARY_GENERATION_RESPONSE_ID
+from danswer.tools.text_to_sql.sql_generation_tool import SqlGenerationTool, SQL_GENERATION_RESPONSE_ID
+
 logger = setup_logger()
 
 
@@ -476,6 +479,25 @@ def stream_chat_message_objects(
                         full_doc=new_msg_req.full_doc,
                     )
                     tool_dict[db_tool_model.id] = [search_tool]
+                elif tool_cls.__name__ == SqlGenerationTool.__name__:
+                    sql_generation_tool = SqlGenerationTool(
+                        db_session=db_session,
+                        user=user,
+                        persona=persona,
+                        prompt_config=prompt_config,
+                        llm_config=llm.config,
+                        llm=llm
+                    )
+                    tool_dict[db_tool_model.id] = [sql_generation_tool]
+                elif tool_cls.__name__ == SummaryGenerationTool.__name__:
+                    summary_generation_tool = SummaryGenerationTool(
+                        user=user,
+                        persona=persona,
+                        prompt_config=prompt_config,
+                        llm_config=llm.config,
+                        llm=llm
+                    )
+                    tool_dict[db_tool_model.id] = [summary_generation_tool]
                 elif tool_cls.__name__ == ImageGenerationTool.__name__:
                     img_generation_llm_config: LLMConfig | None = None
                     if (
@@ -640,6 +662,10 @@ def stream_chat_message_objects(
                         db_session=db_session,
                     )
                     yield qa_docs_response
+                elif packet.id == SQL_GENERATION_RESPONSE_ID:
+                    yield cast(ChatPacket, packet)
+                elif packet.id == SUMMARY_GENERATION_RESPONSE_ID:
+                    yield cast(ChatPacket, packet)
                 elif packet.id == CUSTOM_TOOL_RESPONSE_ID:
                     custom_tool_response = cast(CustomToolCallSummary, packet.response)
                     yield CustomToolResponse(

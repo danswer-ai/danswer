@@ -15,6 +15,12 @@ export function ToolsDisplay({ tools }: { tools: ToolSnapshot[] }) {
         } else if (tool.name === "ImageGenerationTool") {
           toolName = "Image Generation";
           toolIcon = <FiImage className="mr-1 my-auto" />;
+        } else if (tool.name === "SQLGenerationTool") {
+          toolName = "SQL Generation";
+          toolIcon = <FiImage className="mr-1 my-auto" />;
+        } else if (tool.name === "SummaryGenerationTool") {
+          toolName = "Summary Generation";
+          toolIcon = <FiImage className="mr-1 my-auto" />;
         } else if (tool.name === "InternetSearchTool") {
           toolName = "Internet Search";
           toolIcon = <FiGlobe className="mr-1 my-auto" />;

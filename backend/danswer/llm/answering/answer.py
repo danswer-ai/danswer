@@ -63,6 +63,9 @@ from danswer.tools.tool_selection import select_single_tool_for_non_tool_calling
 from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
 
+from danswer.tools.summary.summary_tool import SummaryGenerationTool, SUMMARY_GENERATION_RESPONSE_ID
+from danswer.tools.text_to_sql.sql_generation_tool import SqlGenerationTool, SQL_GENERATION_RESPONSE_ID
+
 logger = setup_logger()
 
 
@@ -254,6 +257,16 @@ class Answer:
 
             if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
                 self._update_prompt_builder_for_search_tool(prompt_builder, [])
+            elif tool.name == SqlGenerationTool._NAME:
+                for response in tool_runner.tool_responses():
+                    if response.id == SQL_GENERATION_RESPONSE_ID:
+                        res1 = yield response.response
+                        return [DanswerAnswerPiece(answer_piece=res1)]
+            elif tool.name == SummaryGenerationTool._NAME:
+                for response in tool_runner.tool_responses():
+                    if response.id == SUMMARY_GENERATION_RESPONSE_ID:
+                        res1 = yield response.response
+                        return [DanswerAnswerPiece(answer_piece=res1)]
             elif tool.name == ImageGenerationTool._NAME:
                 prompt_builder.update_user_prompt(
                     build_image_generation_user_prompt(
@@ -390,6 +403,16 @@ class Answer:
                     img_urls=img_urls,
                 )
             )
+        elif tool.name == SqlGenerationTool._NAME:
+            for response in tool_runner.tool_responses():
+                if response.id == SQL_GENERATION_RESPONSE_ID:
+                    res1 = yield response.response
+                    return [DanswerAnswerPiece(answer_piece=res1)]
+        elif tool.name == SummaryGenerationTool._NAME:
+            for response in tool_runner.tool_responses():
+                if response.id == SUMMARY_GENERATION_RESPONSE_ID:
+                    res1 = yield response.response
+                    return [DanswerAnswerPiece(answer_piece=res1)]
         else:
             prompt_builder.update_user_prompt(
                 HumanMessage(

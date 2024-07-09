@@ -52,7 +52,12 @@ function findSearchTool(tools: ToolSnapshot[]) {
 function findImageGenerationTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "ImageGenerationTool");
 }
-
+function findSqlGenerationTool(tools: ToolSnapshot[]) {
+    return tools.find((tool) => tool.in_code_tool_id === "SqlGenerationTool");
+}
+function findSummaryGenerationTool(tools: ToolSnapshot[]) {
+    return tools.find((tool) => tool.in_code_tool_id === "SummaryGenerationTool");
+}
 function findInternetSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "InternetSearchTool");
 }
@@ -154,13 +159,17 @@ export function AssistantEditor({
   const imageGenerationTool = providerSupportingImageGenerationExists
     ? findImageGenerationTool(tools)
     : undefined;
+  const sqlGenerationTool =  findSqlGenerationTool(tools);
+  const summaryGenerationTool =  findSummaryGenerationTool(tools);
   const internetSearchTool = findInternetSearchTool(tools);
 
   const customTools = tools.filter(
     (tool) =>
       tool.in_code_tool_id !== searchTool?.in_code_tool_id &&
       tool.in_code_tool_id !== imageGenerationTool?.in_code_tool_id &&
-      tool.in_code_tool_id !== internetSearchTool?.in_code_tool_id
+      tool.in_code_tool_id !== internetSearchTool?.in_code_tool_id &&
+      tool.in_code_tool_id !== sqlGenerationTool?.in_code_tool_id &&
+      tool.in_code_tool_id !== summaryGenerationTool?.in_code_tool_id
   );
 
   const availableTools = [
@@ -168,6 +177,8 @@ export function AssistantEditor({
     ...(searchTool ? [searchTool] : []),
     ...(imageGenerationTool ? [imageGenerationTool] : []),
     ...(internetSearchTool ? [internetSearchTool] : []),
+    ...(sqlGenerationTool ? [sqlGenerationTool] : []),
+    ...(summaryGenerationTool ? [summaryGenerationTool] : []),
   ];
   const enabledToolsMap: { [key: number]: boolean } = {};
   availableTools.forEach((tool) => {
@@ -287,7 +298,12 @@ export function AssistantEditor({
           const imageGenerationToolEnabled = imageGenerationTool
             ? enabledTools.includes(imageGenerationTool.id)
             : false;
-
+          const sqlGenerationToolEnabled = sqlGenerationTool
+                ? enabledTools.includes(sqlGenerationTool.id)
+                : false;
+          const summaryGenerationToolEnabled = summaryGenerationTool
+                ? enabledTools.includes(summaryGenerationTool.id)
+                : false;
           if (imageGenerationToolEnabled) {
             if (
               !checkLLMSupportsImageInput(
@@ -304,7 +320,16 @@ export function AssistantEditor({
               );
             }
           }
-
+          if (sqlGenerationToolEnabled) {
+              enabledTools = enabledTools.filter(
+                  (toolId) => toolId !== sqlGenerationTool!.id
+              );
+          }
+          if (summaryGenerationToolEnabled) {
+              enabledTools = enabledTools.filter(
+                  (toolId) => toolId !== summaryGenerationTool!.id
+              );
+          }
           // if disable_retrieval is set, set num_chunks to 0
           // to tell the backend to not fetch any documents
           const numChunks = searchToolEnabled ? values.num_chunks || 10 : 0;
@@ -535,7 +560,28 @@ export function AssistantEditor({
                           }}
                         />
                       )}
-
+                      {sqlGenerationTool && (
+                          <BooleanFormField
+                              noPadding
+                              name={`enabled_tools_map.${sqlGenerationTool.id}`}
+                              label={sqlGenerationTool.display_name}
+                              subtext={sqlGenerationTool.description}
+                              onChange={() => {
+                                  toggleToolInValues(sqlGenerationTool.id);
+                              }}
+                          />
+                      )}
+                      {summaryGenerationTool && (
+                          <BooleanFormField
+                              noPadding
+                              name={`enabled_tools_map.${summaryGenerationTool.id}`}
+                              label={summaryGenerationTool.display_name}
+                              subtext={summaryGenerationTool.description}
+                              onChange={() => {
+                                  toggleToolInValues(summaryGenerationTool.id);
+                              }}
+                          />
+                      )}
                     {ccPairs.length > 0 && searchTool && (
                       <>
                         <BooleanFormField

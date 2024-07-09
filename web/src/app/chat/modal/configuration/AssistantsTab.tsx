@@ -61,6 +61,12 @@ export function AssistantsTab({
                   } else if (tool.name === "ImageGenerationTool") {
                     toolName = "Image Generation";
                     toolIcon = <FiImage className="mr-1 my-auto" />;
+                  }else if (tool.name === "SQLGenerationTool") {
+                      toolName = "SQL Generation";
+                      toolIcon = <FiImage className="mr-1 my-auto" />;
+                  }else if (tool.name === "SummaryGenerationTool") {
+                      toolName = "Summary Generation";
+                      toolIcon = <FiImage className="mr-1 my-auto" />;
                   }
 
                   return (

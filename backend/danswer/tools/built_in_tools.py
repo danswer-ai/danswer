@@ -15,6 +15,9 @@ from danswer.tools.search.search_tool import SearchTool
 from danswer.tools.tool import Tool
 from danswer.utils.logger import setup_logger
 
+from danswer.tools.summary.summary_tool import SummaryGenerationTool
+from danswer.tools.text_to_sql.sql_generation_tool import SqlGenerationTool
+
 logger = setup_logger()
 
 
@@ -40,6 +43,22 @@ BUILT_IN_TOOLS: list[InCodeToolInfo] = [
         ),
         in_code_tool_id=ImageGenerationTool.__name__,
         display_name=ImageGenerationTool._DISPLAY_NAME,
+    ),
+    InCodeToolInfo(
+        cls=SqlGenerationTool,
+        description=(
+            "The SQL Generation Tool allows the assistant to use user prompt to generate sql "
+        ),
+        in_code_tool_id=SqlGenerationTool.__name__,
+        display_name= SqlGenerationTool._DISPLAY_NAME,
+    ),
+    InCodeToolInfo(
+        cls=SummaryGenerationTool,
+        description=(
+            "The Summary Generation Tool allows the assistant to use user prompt to generate summary for given text."
+        ),
+        in_code_tool_id=SummaryGenerationTool.__name__,
+        display_name=SummaryGenerationTool._DISPLAY_NAME,
     ),
     # don't show the InternetSearchTool as an option if BING_API_KEY is not available
     *(
