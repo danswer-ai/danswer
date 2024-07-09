@@ -35,15 +35,13 @@ export function ChatIntro({
 }) {
   const availableSourceMetadata = getSourceMetadataForSources(availableSources);
 
-  const [displaySources, setDisplaySources] = useState(false);
-
   return (
     <>
       <div className="flex justify-center items-center h-full">
         <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
           <div className="flex">
             <div className="mx-auto">
-              <div className="m-auto text-3xl  font-title font-bold text-strong w-fit">
+              <div className="m-auto text-3xl font-strong font-bold text-strong w-fit">
                 {selectedPersona?.name || "How can I help you today?"}
               </div>
               {selectedPersona && (

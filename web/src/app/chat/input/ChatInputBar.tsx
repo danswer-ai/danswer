@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { FiPlusCircle, FiPlus } from "react-icons/fi";
+import { FiPlusCircle, FiPlus, FiInfo, FiX } from "react-icons/fi";
 import { ChatInputOption } from "./ChatInputOption";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
@@ -23,6 +23,9 @@ import { LlmTab } from "../modal/configuration/LlmTab";
 import { AssistantsTab } from "../modal/configuration/AssistantsTab";
 import ChatInputAssistant from "./ChatInputAssistant";
 import { DanswerDocument } from "@/lib/search/interfaces";
+import { AssistantIcon } from "@/components/assistants/AssistantIcon";
+import { Tooltip } from "@/components/tooltip/Tooltip";
+import { Hoverable } from "@/components/Hoverable";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
@@ -270,30 +273,52 @@ export function ChatInputBar({
               [&:has(textarea:focus)]::ring-black
             "
           >
-            <div className="flex  gap-x-2 px-2 pt-2">
-              {(files.length > 0 || alternativeAssistant) &&
-                alternativeAssistant && (
-                  <ChatInputAssistant
-                    ref={interactionsRef}
-                    alternativeAssistant={alternativeAssistant}
-                    unToggle={() => onSetSelectedAssistant(null)}
-                  />
-                )}
-
-              {selectedDocuments.length > 0 && (
-                <button
-                  onClick={showDocs}
-                  className="flex-none flex cursor-pointer hover:bg-background-subtle transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-weakish max-w-[100px]"
+            {alternativeAssistant && (
+              <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full">
+                <div
+                  ref={interactionsRef}
+                  className="bg-background-subtle p-2 rounded-t-lg  items-center flex w-full"
                 >
-                  <FileIcon className="!h-6 !w-6" />
-                  <p className="text-xs">
-                    {selectedDocuments.length}{" "}
-                    {/* document{selectedDocuments.length > 1 && "s"} */}
-                    selected
+                  <AssistantIcon assistant={alternativeAssistant} border />
+                  <p className="ml-3 text-strong my-auto">
+                    {alternativeAssistant.name}
                   </p>
-                </button>
-              )}
+                  <div className="flex gap-x-1 ml-auto ">
+                    <Tooltip
+                      content={
+                        <p className="max-w-xs flex flex-wrap">
+                          {alternativeAssistant.description}
+                        </p>
+                      }
+                    >
+                      <button>
+                        <Hoverable icon={FiInfo} />
+                      </button>
+                    </Tooltip>
+
+                    <Hoverable
+                      icon={FiX}
+                      onClick={() => onSetSelectedAssistant(null)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="flex  gap-x-2 px-2 pt-2">
               <div className="flex  gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end weakbackground">
+                {selectedDocuments.length > 0 && (
+                  <button
+                    onClick={showDocs}
+                    className="flex-none flex cursor-pointer hover:bg-background-subtle transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-weakish max-w-[100px]"
+                  >
+                    <FileIcon className="!h-6 !w-6" />
+                    <p className="text-xs">
+                      {selectedDocuments.length}{" "}
+                      {/* document{selectedDocuments.length > 1 && "s"} */}
+                      selected
+                    </p>
+                  </button>
+                )}
                 {files.map((file) => (
                   <div className="flex-none" key={file.id}>
                     {file.type === ChatFileType.IMAGE ? (
@@ -374,6 +399,7 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
+
             <div className="flex items-center space-x-3 mr-12 px-4 pb-2  ">
               <Popup
                 removePadding

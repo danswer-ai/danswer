@@ -512,10 +512,8 @@ export const SearchSection = ({
                     <div className="mt-48 mb-8 flex justify-center items-center">
                       <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
                         <div className="flex">
-                          <div className="text-3xl font-bold font-title text-strong mx-auto">
-                            {/* <div className="text-3xl font-bold text-strong mx-auto"> */}
+                          <div className="text-3xl font-bold font-strong text-strong mx-auto">
                             Unlock Knowledge
-                            {/*  */}
                           </div>
                         </div>
                       </div>
