@@ -8,7 +8,7 @@ from typing import TextIO
 from sqlalchemy.orm import Session
 
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.llm.answering.doc_pruning import reorder_docs
+from danswer.llm.answering.doc_pruning import reorder_sections
 from danswer.llm.factory import get_default_llms
 from danswer.search.models import InferenceSection
 from danswer.search.models import RerankMetricsContainer
@@ -100,7 +100,7 @@ def get_search_results(
         llm_section_selection = search_pipeline.section_relevance_list
 
     return (
-        reorder_docs(top_sections, llm_section_selection),
+        reorder_sections(top_sections, llm_section_selection),
         retrieval_metrics.metrics,
         rerank_metrics.metrics,
     )

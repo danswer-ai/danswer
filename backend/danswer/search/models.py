@@ -95,7 +95,7 @@ class SearchQuery(ChunkContext):
     # Only used if not skip_rerank
     num_rerank: int | None = NUM_RERANKED_RESULTS
     # Only used if not skip_llm_chunk_filter
-    max_llm_filter_chunks: int = NUM_RERANKED_RESULTS
+    max_llm_filter_sections: int = NUM_RERANKED_RESULTS
 
     class Config:
         frozen = True

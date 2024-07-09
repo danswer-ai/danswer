@@ -31,6 +31,8 @@ from danswer.llm.answering.stream_processing.citation_processing import (
 from danswer.llm.answering.stream_processing.quotes_processing import (
     build_quotes_processor,
 )
+from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
+from danswer.llm.answering.stream_processing.utils import map_document_id_order
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import message_generator_to_string_generator
@@ -63,17 +65,18 @@ from danswer.tools.tool_selection import select_single_tool_for_non_tool_calling
 from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
 
+
 logger = setup_logger()
 
 
 def _get_answer_stream_processor(
     context_docs: list[LlmDoc],
-    search_order_docs: list[LlmDoc],
+    doc_id_to_rank_map: DocumentIdOrderMapping,
     answer_style_configs: AnswerStyleConfig,
 ) -> StreamProcessor:
     if answer_style_configs.citation_config:
         return build_citation_processor(
-            context_docs=context_docs, search_order_docs=search_order_docs
+            context_docs=context_docs, doc_id_to_rank_map=doc_id_to_rank_map
         )
     if answer_style_configs.quotes_config:
         return build_quotes_processor(
@@ -441,6 +444,9 @@ class Answer:
                     yield message
                 elif isinstance(message, ToolResponse):
                     if message.id == SEARCH_RESPONSE_SUMMARY_ID:
+                        # This does not need to be merged, can just use the separate sections
+                        # The ordering is just used for citation matching which already counts duplicates
+                        # and is more lightweight
                         search_results = [
                             llm_doc_from_inference_section(section)
                             for section in cast(
@@ -464,7 +470,9 @@ class Answer:
                 context_docs=final_context_docs or [],
                 # if doc selection is enabled, then search_results will be None,
                 # so we need to use the final_context_docs
-                search_order_docs=search_results or final_context_docs or [],
+                doc_id_to_rank_map=map_document_id_order(
+                    search_results or final_context_docs or []
+                ),
                 answer_style_configs=self.answer_style_config,
             )
 

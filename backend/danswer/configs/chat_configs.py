@@ -5,7 +5,9 @@ PROMPTS_YAML = "./danswer/chat/prompts.yaml"
 PERSONAS_YAML = "./danswer/chat/personas.yaml"
 
 NUM_RETURNED_HITS = 50
-NUM_RERANKED_RESULTS = 15
+# Used for LLM filtering and reranking
+# We want this to be approximately the number of results we want to show on the first page
+NUM_RERANKED_RESULTS = 20
 
 # May be less depending on model
 MAX_CHUNKS_FED_TO_CHAT = float(os.environ.get("MAX_CHUNKS_FED_TO_CHAT") or 10.0)

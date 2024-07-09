@@ -1,5 +1,6 @@
 from collections import defaultdict
 from collections.abc import Callable
+from collections.abc import Iterator
 from typing import cast
 
 from pydantic import BaseModel
@@ -19,12 +20,7 @@ from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchRequest
-from danswer.search.postprocessing.postprocessing import filter_sections
-from danswer.search.postprocessing.postprocessing import rerank_chunks
-from danswer.search.postprocessing.postprocessing import (
-    should_apply_llm_based_relevance_filter,
-)
-from danswer.search.postprocessing.postprocessing import should_rerank
+from danswer.search.postprocessing.postprocessing import search_postprocessing
 from danswer.search.preprocessing.preprocessing import retrieval_preprocessing
 from danswer.search.retrieval.search_runner import retrieve_chunks
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
@@ -84,14 +80,24 @@ class SearchPipeline:
             secondary_index_name=None,
         )
 
+        # Preprocessing steps generate this
         self._search_query: SearchQuery | None = None
         self._predicted_search_type: SearchType | None = None
         self._predicted_flow: QueryFlow | None = None
 
+        # Initial document index retrieval chunks
         self._retrieved_chunks: list[InferenceChunk] | None = None
-        self._reranked_chunks: list[InferenceChunk] | None = None
+        # Another call made to the document index to get surrounding sections
+        self._retrieved_sections: list[InferenceSection] | None = None
+        # Reranking and LLM section selection can be run together
+        # If only LLM selection is on, the reranked chunks are yielded immediatly
         self._reranked_sections: list[InferenceSection] | None = None
         self._relevant_section_indices: list[int] | None = None
+
+        # Generates reranked chunks and LLM selections
+        self._postprocessing_generator: Iterator[
+            list[InferenceSection] | list[int]
+        ] | None = None
 
     """Pre-processing"""
 
@@ -137,7 +143,7 @@ class SearchPipeline:
 
     """Retrieval and Postprocessing"""
 
-    def _retrieve_chunks(self) -> list[InferenceChunk]:
+    def _get_chunks(self) -> list[InferenceChunk]:
         """TODO as a future extension:
         If large chunks (above 512 tokens) are used which cannot be directly fed to the LLM,
         This step should run the two retrievals to get all of the base size chunks
@@ -156,34 +162,17 @@ class SearchPipeline:
 
         return cast(list[InferenceChunk], self._retrieved_chunks)
 
-    def _get_reranked_chunks(self) -> list[InferenceChunk]:
-        """Reranking is always done at the chunk level since section merging could create arbitrarily
-        long sections which could be:
-        1. Longer than the maximum context limit of even large rerankers
-        2. Slow to calculate due to the quadratic scaling laws of Transformers
-        """
-        if self._reranked_chunks is not None:
-            return self._reranked_chunks
-
-        retrieved_chunks = self._retrieve_chunks()
-
-        if not should_rerank(self.search_query):
-            return retrieved_chunks
-
-        self._reranked_chunks = rerank_chunks(
-            query=self.search_query,
-            chunks_to_rerank=retrieved_chunks,
-            rerank_metrics_callback=self.rerank_metrics_callback,
-        )
-
-        return self._reranked_chunks
-
-    def _expand_reranked_chunks(self) -> list[InferenceSection]:
+    def _get_sections(self) -> list[InferenceSection]:
         """Returns an expanded section from each of the chunks.
-        If whole docs instead of above/below context is specified then it will give back all of the whole docs
-        that have a corresponding chunk. Since this could be arbitrarily large, the docs will be potentially
-        truncated when doing the filtering"""
-        reranked_chunks = self._get_reranked_chunks()
+        If whole docs (instead of above/below context) is specified then it will give back all of the whole docs
+        that have a corresponding chunk.
+
+        This step should be fast for any document index implementation.
+        """
+        if self._retrieved_sections is not None:
+            return self._retrieved_sections
+
+        retrieved_chunks = self._get_chunks()
 
         if self._search_query is None:
             # Should never happen
@@ -193,13 +182,14 @@ class SearchPipeline:
         below = self._search_query.chunks_below
 
         functions_with_args: list[tuple[Callable, tuple]] = []
-        final_inference_sections = []
+        expanded_inference_sections = []
 
         # Full doc setting takes priority
         if self._search_query.full_doc:
             seen_document_ids = set()
             unique_chunks = []
-            for chunk in reranked_chunks:
+            # This preserves the ordering since the chunks are retrieved in score order
+            for chunk in retrieved_chunks:
                 if chunk.document_id not in seen_document_ids:
                     seen_document_ids.add(chunk.document_id)
                     unique_chunks.append(chunk)
@@ -225,7 +215,7 @@ class SearchPipeline:
             for ind, chunk in enumerate(unique_chunks):
                 inf_chunks = list_inference_chunks[ind]
                 combined_content = "\n".join([chunk.content for chunk in inf_chunks])
-                final_inference_sections.append(
+                expanded_inference_sections.append(
                     InferenceSection(
                         center_chunk=chunk,
                         chunks=inf_chunks,
@@ -233,18 +223,19 @@ class SearchPipeline:
                     )
                 )
 
-            return final_inference_sections
+            self._retrieved_sections = expanded_inference_sections
+            return expanded_inference_sections
 
         # General flow:
         # - Combine chunks into lists by document_id
         # - For each document, run merge-intervals to get combined ranges
+        #   - This allows for less queries to the document index
         # - Fetch all of the new chunks with contents for the combined ranges
-        # - Map it back to the combined ranges (which each know their "center" chunk)
         # - Reiterate the chunks again and map to the results above based on the chunk.
         #   This maintains the original chunks ordering. Note, we cannot simply sort by score here
         #   as reranking flow may wipe the scores for a lot of the chunks.
         doc_chunk_ranges_map = defaultdict(list)
-        for chunk in reranked_chunks:
+        for chunk in retrieved_chunks:
             # The list of ranges for each document is ordered by score
             doc_chunk_ranges_map[chunk.document_id].append(
                 ChunkRange(
@@ -291,8 +282,8 @@ class SearchPipeline:
             for chunk in flattened_inference_chunks
         }
 
-        # Build the surroundings for all of the initial reranked_chunks
-        for chunk in reranked_chunks:
+        # Build the surroundings for all of the initial retrieved chunks
+        for chunk in retrieved_chunks:
             start_ind = max(0, chunk.chunk_id - above)
             end_ind = chunk.chunk_id + below
             # Since the index of the max_chunk is unknown, just allow it to be None and filter after
@@ -305,7 +296,7 @@ class SearchPipeline:
             ]
 
             combined_content = "\n".join(chunk.content for chunk in surrounding_chunks)
-            final_inference_sections.append(
+            expanded_inference_sections.append(
                 InferenceSection(
                     center_chunk=chunk,
                     chunks=surrounding_chunks,
@@ -313,15 +304,31 @@ class SearchPipeline:
                 )
             )
 
-        # TODO TEST THIS BEFORE MERGING THE PR!!!
-        return final_inference_sections
+        self._retrieved_sections = expanded_inference_sections
+        return expanded_inference_sections
 
     @property
     def reranked_sections(self) -> list[InferenceSection]:
+        """Reranking is always done at the chunk level since section merging could create arbitrarily
+        long sections which could be:
+        1. Longer than the maximum context limit of even large rerankers
+        2. Slow to calculate due to the quadratic scaling laws of Transformers
+
+        See implementation in search_postprocessing for details
+        """
         if self._reranked_sections is not None:
             return self._reranked_sections
 
-        self._reranked_sections = self._expand_reranked_chunks()
+        self._postprocessing_generator = search_postprocessing(
+            search_query=self.search_query,
+            retrieved_sections=self._get_sections(),
+            llm=self.fast_llm,
+            rerank_metrics_callback=self.rerank_metrics_callback,
+        )
+
+        self._reranked_sections = cast(
+            list[InferenceSection], next(self._postprocessing_generator)
+        )
 
         return self._reranked_sections
 
@@ -330,23 +337,9 @@ class SearchPipeline:
         if self._relevant_section_indices is not None:
             return self._relevant_section_indices
 
-        reranked_sections = self.reranked_sections
-
-        if not should_apply_llm_based_relevance_filter(self.search_query):
-            return []
-
-        relevant_sections = filter_sections(
-            query=self.search_query,
-            sections_to_filter=reranked_sections,
-            llm=self.fast_llm,
+        self._relevant_section_indices = next(
+            cast(Iterator[list[int]], self._postprocessing_generator)
         )
-
-        self._relevant_section_indices = [
-            ind
-            for ind, section in enumerate(reranked_sections)
-            if section in relevant_sections
-        ]
-
         return self._relevant_section_indices
 
     @property

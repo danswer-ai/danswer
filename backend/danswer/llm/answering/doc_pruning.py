@@ -16,7 +16,7 @@ from danswer.llm.utils import tokenizer_trim_content
 from danswer.prompts.prompt_utils import build_doc_context_str
 from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceSection
-from danswer.tools.search.search_utils import llm_doc_to_dict
+from danswer.tools.search.search_utils import section_to_dict
 from danswer.utils.logger import setup_logger
 
 
@@ -69,95 +69,102 @@ def _compute_limit(
     return int(min(limit_options))
 
 
-def reorder_docs(
-    docs: list[T],
-    doc_relevance_list: list[bool] | None,
-) -> list[T]:
-    if doc_relevance_list is None:
-        return docs
+def reorder_sections(
+    sections: list[InferenceSection],
+    section_relevance_list: list[bool] | None,
+) -> list[InferenceSection]:
+    if section_relevance_list is None:
+        return sections
 
-    reordered_docs: list[T] = []
-    if doc_relevance_list is not None:
+    reordered_sections: list[InferenceSection] = []
+    if section_relevance_list is not None:
         for selection_target in [True, False]:
-            for doc, is_relevant in zip(docs, doc_relevance_list):
+            for section, is_relevant in zip(sections, section_relevance_list):
                 if is_relevant == selection_target:
-                    reordered_docs.append(doc)
-    return reordered_docs
+                    reordered_sections.append(section)
+    return reordered_sections
 
 
-def _remove_docs_to_ignore(docs: list[LlmDoc]) -> list[LlmDoc]:
-    return [doc for doc in docs if not doc.metadata.get(IGNORE_FOR_QA)]
+def _remove_sections_to_ignore(
+    sections: list[InferenceSection],
+) -> list[InferenceSection]:
+    return [
+        section
+        for section in sections
+        if not section.center_chunk.metadata.get(IGNORE_FOR_QA)
+    ]
 
 
 def _apply_pruning(
-    docs: list[LlmDoc],
-    doc_relevance_list: list[bool] | None,
+    sections: list[InferenceSection],
+    section_relevance_list: list[bool] | None,
     token_limit: int,
     is_manually_selected_docs: bool,
     use_sections: bool,
     using_tool_message: bool,
-) -> list[LlmDoc]:
+) -> list[InferenceSection]:
     llm_tokenizer = get_default_llm_tokenizer()
-    docs = deepcopy(docs)  # don't modify in place
+    sections = deepcopy(sections)  # don't modify in place
 
     # re-order docs with all the "relevant" docs at the front
-    docs = reorder_docs(docs=docs, doc_relevance_list=doc_relevance_list)
+    sections = reorder_sections(
+        sections=sections, section_relevance_list=section_relevance_list
+    )
     # remove docs that are explicitly marked as not for QA
-    docs = _remove_docs_to_ignore(docs=docs)
+    sections = _remove_sections_to_ignore(sections=sections)
 
-    tokens_per_doc: list[int] = []
-    final_doc_ind = None
+    final_section_ind = None
     total_tokens = 0
-    for ind, llm_doc in enumerate(docs):
-        doc_str = (
-            json.dumps(llm_doc_to_dict(llm_doc, ind))
+    for ind, section in enumerate(sections):
+        section_str = (
+            json.dumps(section_to_dict(section, ind))
             if using_tool_message
             else build_doc_context_str(
-                semantic_identifier=llm_doc.semantic_identifier,
-                source_type=llm_doc.source_type,
-                content=llm_doc.content,
-                metadata_dict=llm_doc.metadata,
-                updated_at=llm_doc.updated_at,
+                semantic_identifier=section.center_chunk.semantic_identifier,
+                source_type=section.center_chunk.source_type,
+                content=section.combined_content,
+                metadata_dict=section.center_chunk.metadata,
+                updated_at=section.center_chunk.updated_at,
                 ind=ind,
             )
         )
 
-        doc_tokens = len(llm_tokenizer.encode(doc_str))
-        # if chunks, truncate chunks that are way too long
-        # this can happen if the embedding model tokenizer is different
+        section_tokens = len(llm_tokenizer.encode(section_str))
+        # if not using sections (specifically, using Sections where each section maps exactly to the one center chunk),
+        # truncate chunks that are way too long. This can happen if the embedding model tokenizer is different
         # than the LLM tokenizer
         if (
             not is_manually_selected_docs
             and not use_sections
-            and doc_tokens > DOC_EMBEDDING_CONTEXT_SIZE + _METADATA_TOKEN_ESTIMATE
+            and section_tokens > DOC_EMBEDDING_CONTEXT_SIZE + _METADATA_TOKEN_ESTIMATE
         ):
             logger.warning(
-                "Found more tokens in chunk than expected, "
+                "Found more tokens in Section than expected, "
                 "likely mismatch between embedding and LLM tokenizers. Trimming content..."
             )
-            llm_doc.content = tokenizer_trim_content(
-                content=llm_doc.content,
+            section.combined_content = tokenizer_trim_content(
+                content=section.combined_content,
                 desired_length=DOC_EMBEDDING_CONTEXT_SIZE,
                 tokenizer=llm_tokenizer,
             )
-            doc_tokens = DOC_EMBEDDING_CONTEXT_SIZE
-        tokens_per_doc.append(doc_tokens)
-        total_tokens += doc_tokens
+            section_tokens = DOC_EMBEDDING_CONTEXT_SIZE
+
+        total_tokens += section_tokens
         if total_tokens > token_limit:
-            final_doc_ind = ind
+            final_section_ind = ind
             break
 
-    if final_doc_ind is not None:
+    if final_section_ind is not None:
         if is_manually_selected_docs or use_sections:
-            # for document selection, only allow the final document to get truncated
-            # if more than that, then the user message is too long
-            if final_doc_ind != len(docs) - 1:
-                if use_sections:
-                    # Truncate the rest of the list since we're over the token limit
-                    # for the last one, trim it. In this case, the Sections can be rather long
-                    # so better to trim the back than throw away the whole thing.
-                    docs = docs[: final_doc_ind + 1]
-                else:
+            if final_section_ind != len(sections) - 1:
+                # If using Sections, then the final section could be more than we need, in this case we are willing to
+                # truncate the final section to fit the specified context window
+                sections = sections[: final_section_ind + 1]
+
+                if is_manually_selected_docs:
+                    # For document selection flow, only allow the final document/section to get truncated
+                    # if more than that needs to be throw away then some documents are completely thrown away in which
+                    # case this should be reported to the user as an error
                     raise PruningError(
                         "LLM context window exceeded. Please de-select some documents or shorten your query."
                     )
@@ -166,7 +173,7 @@ def _apply_pruning(
             # NOTE: need to recalculate the length here, since the previous calculation included
             # overhead from JSON-fying the doc / the metadata
             final_doc_content_length = len(
-                llm_tokenizer.encode(docs[final_doc_ind].content)
+                llm_tokenizer.encode(sections[final_section_ind].combined_content)
             ) - (amount_to_truncate)
             # this could occur if we only have space for the title / metadata
             # not ideal, but it's the most reasonable thing to do
@@ -175,44 +182,44 @@ def _apply_pruning(
             # from occurring in the first place
             if final_doc_content_length <= 0:
                 logger.error(
-                    f"Final doc ({docs[final_doc_ind].semantic_identifier}) content "
-                    "length is less than 0. Removing this doc from the final prompt."
+                    f"Final section ({sections[final_section_ind].center_chunk.semantic_identifier}) content "
+                    "length is less than 0. Removing this section from the final prompt."
                 )
-                docs.pop()
+                sections.pop()
             else:
-                docs[final_doc_ind].content = tokenizer_trim_content(
-                    content=docs[final_doc_ind].content,
+                sections[final_section_ind].combined_content = tokenizer_trim_content(
+                    content=sections[final_section_ind].combined_content,
                     desired_length=final_doc_content_length,
                     tokenizer=llm_tokenizer,
                 )
         else:
-            # For regular search, don't truncate the final document unless it's the only one
+            # For search on chunk level (Section is just a chunk), don't truncate the final Chunk/Section unless it's the only one
             # If it's not the only one, we can throw it away, if it's the only one, we have to truncate
-            if final_doc_ind != 0:
-                docs = docs[:final_doc_ind]
+            if final_section_ind != 0:
+                sections = sections[:final_section_ind]
             else:
-                docs[0].content = tokenizer_trim_content(
-                    content=docs[0].content,
+                sections[0].combined_content = tokenizer_trim_content(
+                    content=sections[0].combined_content,
                     desired_length=token_limit - _METADATA_TOKEN_ESTIMATE,
                     tokenizer=llm_tokenizer,
                 )
-                docs = [docs[0]]
+                sections = [sections[0]]
 
-    return docs
+    return sections
 
 
-def prune_documents(
-    docs: list[LlmDoc],
-    doc_relevance_list: list[bool] | None,
+def prune_sections(
+    sections: list[InferenceSection],
+    section_relevance_list: list[bool] | None,
     prompt_config: PromptConfig,
     llm_config: LLMConfig,
     question: str,
     document_pruning_config: DocumentPruningConfig,
-) -> list[LlmDoc]:
-    if doc_relevance_list is not None:
-        assert len(docs) == len(doc_relevance_list)
+) -> list[InferenceSection]:
+    if section_relevance_list is not None:
+        assert len(sections) == len(section_relevance_list)
 
-    doc_token_limit = _compute_limit(
+    token_limit = _compute_limit(
         prompt_config=prompt_config,
         llm_config=llm_config,
         question=question,
@@ -222,26 +229,26 @@ def prune_documents(
         tool_token_count=document_pruning_config.tool_num_tokens,
     )
     return _apply_pruning(
-        docs=docs,
-        doc_relevance_list=doc_relevance_list,
-        token_limit=doc_token_limit,
+        sections=sections,
+        section_relevance_list=section_relevance_list,
+        token_limit=token_limit,
         is_manually_selected_docs=document_pruning_config.is_manually_selected_docs,
-        use_sections=document_pruning_config.use_sections,
+        use_sections=document_pruning_config.use_sections,  # Now default True
         using_tool_message=document_pruning_config.using_tool_message,
     )
 
 
-def prune_and_merge_docs(
-    docs: list[LlmDoc],
-    doc_relevance_list: list[bool] | None,
+def prune_and_merge_sections(
+    sections: list[InferenceSection],
+    section_relevance_list: list[bool] | None,
     prompt_config: PromptConfig,
     llm_config: LLMConfig,
     question: str,
     document_pruning_config: DocumentPruningConfig,
-) -> list[LlmDoc]:
-    remaining_llm_docs = prune_documents(
-        docs=docs,
-        doc_relevance_list=doc_relevance_list,
+) -> list[InferenceSection]:
+    remaining_sections = prune_sections(
+        sections=sections,
+        section_relevance_list=section_relevance_list,
         prompt_config=prompt_config,
         llm_config=llm_config,
         question=question,
@@ -249,4 +256,4 @@ def prune_and_merge_docs(
     )
     # TODO handle merge and web search where there are no chunk ids
 
-    return remaining_llm_docs
+    return remaining_sections

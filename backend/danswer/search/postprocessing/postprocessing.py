@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from collections.abc import Generator
+from collections.abc import Iterator
 from typing import cast
 
 import numpy
@@ -28,9 +28,12 @@ from danswer.utils.timing import log_function_time
 logger = setup_logger()
 
 
-def _log_top_chunk_links(search_flow: str, chunks: list[InferenceChunk]) -> None:
+def _log_top_section_links(search_flow: str, sections: list[InferenceSection]) -> None:
     top_links = [
-        c.source_links[0] if c.source_links is not None else "No Link" for c in chunks
+        section.center_chunk.source_links[0]
+        if section.center_chunk.source_links is not None
+        else "No Link"
+        for section in sections
     ]
     logger.info(f"Top links from {search_flow} search: {', '.join(top_links)}")
 
@@ -114,22 +117,33 @@ def semantic_reranking(
     return list(ranked_chunks), list(ranked_indices)
 
 
-def rerank_chunks(
+def rerank_sections(
     query: SearchQuery,
-    chunks_to_rerank: list[InferenceChunk],
+    sections_to_rerank: list[InferenceSection],
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> list[InferenceChunk]:
+) -> list[InferenceSection]:
+    """Chunks are reranked rather than the containing sections, this is because of speed
+    implications, if reranking models have lower latency for long inputs in the future
+    we may rerank on the combined context of the section instead"""
+    chunks_to_rerank = [section.center_chunk for section in sections_to_rerank]
     ranked_chunks, _ = semantic_reranking(
         query=query.query,
         chunks=chunks_to_rerank[: query.num_rerank],
         rerank_metrics_callback=rerank_metrics_callback,
     )
     lower_chunks = chunks_to_rerank[query.num_rerank :]
+
     # Scores from rerank cannot be meaningfully combined with scores without rerank
+    # However the ordering is still important
     for lower_chunk in lower_chunks:
         lower_chunk.score = None
     ranked_chunks.extend(lower_chunks)
-    return ranked_chunks
+
+    chunk_id_to_section = {
+        section.center_chunk.chunk_id: section for section in sections_to_rerank
+    }
+    ordered_sections = [chunk_id_to_section[chunk.chunk_id] for chunk in ranked_chunks]
+    return ordered_sections
 
 
 @log_function_time(print_only=True)
@@ -137,16 +151,27 @@ def filter_sections(
     query: SearchQuery,
     sections_to_filter: list[InferenceSection],
     llm: LLM,
+    # For cost saving, we may turn this on
+    use_chunk: bool = False,
 ) -> list[InferenceSection]:
     """Filters sections based on whether the LLM thought they were relevant to the query.
+    This applies on the section which has more context than the chunk. Hopefully this yields more accurate LLM evaluations.
 
-    Returns a list of the unique chunk IDs that were marked as relevant"""
-    sections_to_filter = sections_to_filter[: query.max_llm_filter_chunks]
+    Returns a list of the unique chunk IDs that were marked as relevant
+    """
+    sections_to_filter = sections_to_filter[: query.max_llm_filter_sections]
+
+    contents = [
+        section.center_chunk.content if use_chunk else section.combined_content
+        for section in sections_to_filter
+    ]
+
     llm_chunk_selection = llm_batch_eval_sections(
         query=query.query,
-        section_contents=[section.combined_content for section in sections_to_filter],
+        section_contents=contents,
         llm=llm,
     )
+
     return [
         section
         for ind, section in enumerate(sections_to_filter)
@@ -156,36 +181,34 @@ def filter_sections(
 
 def search_postprocessing(
     search_query: SearchQuery,
-    retrieved_chunks: list[InferenceChunk],
+    retrieved_sections: list[InferenceSection],
     llm: LLM,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> Generator[list[InferenceChunk] | list[str], None, None]:
-    # DEPRECATED, reranking runs now before the LLM filter call, reason being that
-    # we want better LLM filtering which needs to run on sections, which are built
-    # after reranking is run.
+) -> Iterator[list[InferenceSection] | list[int]]:
     post_processing_tasks: list[FunctionCall] = []
 
     rerank_task_id = None
-    chunks_yielded = False
+    sections_yielded = False
     if should_rerank(search_query):
         post_processing_tasks.append(
             FunctionCall(
-                rerank_chunks,
+                rerank_sections,
                 (
                     search_query,
-                    retrieved_chunks,
+                    retrieved_sections,
                     rerank_metrics_callback,
                 ),
             )
         )
         rerank_task_id = post_processing_tasks[-1].result_id
     else:
-        final_chunks = retrieved_chunks
         # NOTE: if we don't rerank, we can return the chunks immediately
         # since we know this is the final order
-        _log_top_chunk_links(search_query.search_type.value, final_chunks)
-        yield final_chunks
-        chunks_yielded = True
+        _log_top_section_links(search_query.search_type.value, retrieved_sections)
+        # First yield is always the sections, if no reranking we can do this immediately
+        # This way the user experience isn't delayed by the LLM step
+        yield retrieved_sections
+        sections_yielded = True
 
     llm_filter_task_id = None
     if should_apply_llm_based_relevance_filter(search_query):
@@ -194,7 +217,7 @@ def search_postprocessing(
                 filter_sections,
                 (
                     search_query,
-                    retrieved_chunks[: search_query.max_llm_filter_chunks],
+                    retrieved_sections[: search_query.max_llm_filter_sections],
                     llm,
                 ),
             )
@@ -206,30 +229,31 @@ def search_postprocessing(
         if post_processing_tasks
         else {}
     )
-    reranked_chunks = cast(
-        list[InferenceChunk] | None,
+    reranked_sections = cast(
+        list[InferenceSection] | None,
         post_processing_results.get(str(rerank_task_id)) if rerank_task_id else None,
     )
-    if reranked_chunks:
-        if chunks_yielded:
+    if reranked_sections:
+        if sections_yielded:
             logger.error(
-                "Trying to yield re-ranked chunks, but chunks were already yielded. This should never happen."
+                "Trying to yield re-ranked sections, but sections were already yielded. This should never happen."
             )
         else:
-            _log_top_chunk_links(search_query.search_type.value, reranked_chunks)
-            yield reranked_chunks
+            _log_top_section_links(search_query.search_type.value, reranked_sections)
+            # TODO validate this!!!
+            yield reranked_sections
 
-    llm_chunk_selection = cast(
+    llm_section_selection = cast(
         list[str] | None,
         post_processing_results.get(str(llm_filter_task_id))
         if llm_filter_task_id
         else None,
     )
-    if llm_chunk_selection is not None:
+    if llm_section_selection is not None:
         yield [
-            chunk.unique_id
-            for chunk in reranked_chunks or retrieved_chunks
-            if chunk.unique_id in llm_chunk_selection
+            index
+            for index, section in enumerate(reranked_sections or retrieved_sections)
+            if section.center_chunk.unique_id in llm_section_selection
         ]
     else:
-        yield cast(list[str], [])
+        yield cast(list[int], [])

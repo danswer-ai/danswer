@@ -6,7 +6,6 @@ from typing import cast
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import DanswerContext
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import LlmDoc
@@ -259,12 +258,25 @@ class SearchTool(Tool):
             response=search_pipeline.relevant_section_indices,
         )
 
-        llm_docs = [
-            llm_doc_from_inference_section(section)
-            for section in search_pipeline.reranked_sections
-        ]
+        # final_context_sections = prune_and_merge_sections(
+        #     sections=search_pipeline.reranked_sections,
+        #     prompt_config=self.prompt_config,
+        #     llm_config=self.llm.config,
+        #     question=query,
+        #     document_pruning_config=self.pruning_config,
+        # )
+
+        # llm_docs = [
+        #     llm_doc_from_inference_section(section)
+        #     for section in final_context_sections
+        # ]
+
+        # TODO CHANGE THIS
+        llm_docs = []
+
         final_context_documents = prune_and_merge_docs(
             docs=llm_docs,
+            # TODO llmdoc needs to know if it's relevant by LLM by seeing if any of the sections in it are marked relevant
             doc_relevance_list=[
                 True if ind in search_pipeline.relevant_section_indices else False
                 for ind in range(len(llm_docs))
