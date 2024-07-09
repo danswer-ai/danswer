@@ -13,10 +13,10 @@ from danswer.chat.models import LlmDoc
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import JSON_ro
-from danswer.llm.answering.doc_pruning import prune_and_merge_sections
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
+from danswer.llm.answering.prune_and_merge import prune_and_merge_sections
 from danswer.llm.interfaces import LLM
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType

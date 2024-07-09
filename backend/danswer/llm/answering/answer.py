@@ -444,9 +444,10 @@ class Answer:
                     yield message
                 elif isinstance(message, ToolResponse):
                     if message.id == SEARCH_RESPONSE_SUMMARY_ID:
-                        # This does not need to be merged, can just use the separate sections
-                        # The ordering is just used for citation matching which already counts duplicates
-                        # and is more lightweight
+                        # We don't need to run section merging in this flow, this variable is only used
+                        # below to specify the ordering of the documents for the purpose of matching
+                        # citations to the right search documents. The deduplication logic is more lightweight
+                        # there and we don't need to do it twice
                         search_results = [
                             llm_doc_from_inference_section(section)
                             for section in cast(

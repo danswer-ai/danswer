@@ -8,7 +8,7 @@ from typing import TextIO
 from sqlalchemy.orm import Session
 
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.llm.answering.doc_pruning import reorder_sections
+from danswer.llm.answering.prune_and_merge import reorder_sections
 from danswer.llm.factory import get_default_llms
 from danswer.search.models import InferenceSection
 from danswer.search.models import RerankMetricsContainer

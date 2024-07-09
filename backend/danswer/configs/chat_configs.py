@@ -7,6 +7,7 @@ PERSONAS_YAML = "./danswer/chat/personas.yaml"
 NUM_RETURNED_HITS = 50
 # Used for LLM filtering and reranking
 # We want this to be approximately the number of results we want to show on the first page
+# It cannot be too large due to cost and latency implications
 NUM_RERANKED_RESULTS = 20
 
 # May be less depending on model

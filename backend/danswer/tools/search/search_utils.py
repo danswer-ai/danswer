@@ -3,7 +3,6 @@ from danswer.prompts.prompt_utils import clean_up_source
 from danswer.search.models import InferenceSection
 
 
-# TODO verify the other uses
 def llm_doc_to_dict(llm_doc: LlmDoc, doc_num: int) -> dict:
     doc_dict = {
         "document_number": doc_num + 1,

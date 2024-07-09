@@ -267,6 +267,9 @@ def inference_sections_from_ids(
         inference_section
         for inference_section in [
             inference_section_from_chunks(
+                # The scores will always be 0 because the fetching by id gives back
+                # no search scores. This is not needed though if the user is explicitly
+                # selecting a document.
                 center_chunk=chunk_set[0],
                 chunks=chunk_set,
             )

@@ -117,6 +117,9 @@ def _apply_pruning(
     total_tokens = 0
     for ind, section in enumerate(sections):
         section_str = (
+            # If using tool message, it will be a bit of an overestimate as the extra json text around the section
+            # will be counted towards the token count. However, once the Sections are merged, the extra json parts
+            # that overlap will not be counted multiple times like it is in the pruning step.
             json.dumps(section_to_dict(section, ind))
             if using_tool_message
             else build_doc_context_str(
@@ -254,6 +257,6 @@ def prune_and_merge_sections(
         question=question,
         document_pruning_config=document_pruning_config,
     )
-    # TODO handle merge and web search where there are no chunk ids
+    # TODO add the actual section combination logic
 
     return remaining_sections

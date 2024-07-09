@@ -210,10 +210,9 @@ def search_postprocessing(
         rerank_task_id = post_processing_tasks[-1].result_id
     else:
         # NOTE: if we don't rerank, we can return the chunks immediately
-        # since we know this is the final order
-        _log_top_section_links(search_query.search_type.value, retrieved_sections)
-        # First yield is always the sections, if no reranking we can do this immediately
+        # since we know this is the final order.
         # This way the user experience isn't delayed by the LLM step
+        _log_top_section_links(search_query.search_type.value, retrieved_sections)
         yield retrieved_sections
         sections_yielded = True
 
@@ -247,7 +246,6 @@ def search_postprocessing(
             )
         else:
             _log_top_section_links(search_query.search_type.value, reranked_sections)
-            # TODO validate this!!!
             yield reranked_sections
 
     llm_section_selection = cast(
