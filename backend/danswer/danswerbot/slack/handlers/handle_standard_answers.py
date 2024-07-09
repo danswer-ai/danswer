@@ -21,13 +21,15 @@ from danswer.db.models import SlackBotConfig
 from danswer.db.models import StandardAnswer
 from danswer.db.standard_answer import fetch_standard_answer_categories_by_names
 from danswer.db.standard_answer import find_matching_standard_answers
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 
 def oneoff_standard_answers(
     message: str,
     slack_bot_categories: list[str],
     db_session: Session,
-    logger: logging.Logger,
 ) -> list[StandardAnswer] | None:
     """
     Respond to the user message if it matches any configured standard answers.

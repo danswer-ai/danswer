@@ -34,6 +34,7 @@ from danswer.db.chat import update_chat_session
 from danswer.db.engine import get_session
 from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.feedback import create_doc_retrieval_feedback
+from danswer.db.models import StandardAnswer
 from danswer.db.models import User
 from danswer.db.persona import get_persona_by_id
 from danswer.document_index.document_index_utils import get_both_index_names
@@ -280,13 +281,12 @@ def test_standard_answer(
     request: TestStandardAnswerRequest,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_user),
-):
+) -> dict[str, list[StandardAnswer]] | dict[str, str]:
     try:
         standard_answers = oneoff_standard_answers(
             message=request.message,
             slack_bot_categories=request.slack_bot_categories,
             db_session=db_session,
-            logger=logger,
         )
         return (
             {"standard answers": standard_answers}
