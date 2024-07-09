@@ -114,12 +114,12 @@ export function CodeBlock({
             {copied ? (
               <div className="flex items-center space-x-2">
                 <FiCheck size={16} />
-                <span>Copied!</span>
+                <span>Kopiert!</span>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
                 <FiCopy size={16} />
-                <span>Copy code</span>
+                <span>Code kopieren</span>
               </div>
             )}
           </div>
