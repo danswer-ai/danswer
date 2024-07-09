@@ -4,7 +4,6 @@ import { Button, Text } from "@tremor/react";
 
 import { CloudEmbeddingProvider } from "../components/types";
 
-// 1. Model Provider Not Configured
 export function ModelNotConfiguredModal({
   modelProvider,
   onConfirm,
@@ -22,19 +21,15 @@ export function ModelNotConfiguredModal({
     >
       <div className="mb-4">
         <Text className="text-lg mb-2">
-          Heads up: {modelProvider.name} isn&apos;t configured yet. Want to
-          unleash its potential now?
-        </Text>
-        <Text className="text-sm mb-2">
-          Pro tip: Setting this up now could save you 30% on compute costs. Your
-          future self will thank you.
+          Heads up: {modelProvider.name} isn&apos;t configured yet. Do you want
+          to configure this provider?
         </Text>
         <div className="flex mt-8 justify-between">
           <Button color="gray" onClick={onCancel}>
-            Maybe Later
+            Not now
           </Button>
           <Button color="blue" onClick={onConfirm}>
-            Let&apos;s Do This
+            Configure
           </Button>
         </div>
       </div>

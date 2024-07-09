@@ -1,18 +1,16 @@
 "use client";
 
-import { Title } from "@tremor/react";
+import { Text, Title } from "@tremor/react";
 
 import {
   CloudEmbeddingProvider,
   CloudEmbeddingModel,
-  AVAILABLE_CLOUD_MODELS,
+  AVAILABLE_CLOUD_PROVIDERS,
   CloudEmbeddingProviderFull,
-  FullEmbeddingModelDescriptor,
   EmbeddingModelDescriptor,
 } from "./components/types";
-import { FaLock } from "react-icons/fa";
 import { EmbeddingDetails } from "./page";
-import { FiInfo, FiRadio } from "react-icons/fi";
+import { FiInfo } from "react-icons/fi";
 import { HoverPopup } from "@/components/HoverPopup";
 import { Dispatch, SetStateAction } from "react";
 
@@ -21,29 +19,31 @@ export default function CloudEmbeddingPage({
   embeddingProviderDetails,
   newEnabledProviders,
   newUnenabledProviders,
+
   setTentativeNewEmbeddingModel,
-  setTentativelyNewProvider,
-  selectedModel,
-  setShowModelNotConfiguredModal,
-  setChangeCredentials,
-  setAlreadyPicked,
+  setShowTentativeProvider,
+  setShowUnconfiguredProvider,
+  setChangeCredentialsProvider,
+  setAlreadySelectedModel,
 }: {
   currentModel: EmbeddingModelDescriptor | CloudEmbeddingModel;
-  setAlreadyPicked: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
+  setAlreadySelectedModel: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
   newUnenabledProviders: string[];
   embeddingProviderDetails?: EmbeddingDetails[];
   newEnabledProviders: string[];
   selectedModel: CloudEmbeddingProvider;
+
+  // create modal functions
   setTentativeNewEmbeddingModel: React.Dispatch<
     React.SetStateAction<CloudEmbeddingModel | null>
   >;
-  setTentativelyNewProvider: React.Dispatch<
+  setShowTentativeProvider: React.Dispatch<
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
-  setShowModelNotConfiguredModal: React.Dispatch<
+  setShowUnconfiguredProvider: React.Dispatch<
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
-  setChangeCredentials: React.Dispatch<
+  setChangeCredentialsProvider: React.Dispatch<
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
 }) {
@@ -57,7 +57,7 @@ export default function CloudEmbeddingPage({
   }
 
   let providers: CloudEmbeddingProviderFull[] = [];
-  AVAILABLE_CLOUD_MODELS.forEach((model, ind) => {
+  AVAILABLE_CLOUD_PROVIDERS.forEach((model, ind) => {
     let temporary_model: CloudEmbeddingProviderFull = {
       ...model,
       configured:
@@ -71,6 +71,13 @@ export default function CloudEmbeddingPage({
 
   return (
     <div>
+      <Title className="mt-8">
+        Here are some cloud-based models to choose from.
+      </Title>
+      <Text className="mb-4">
+        They require API keys and run in the clouds of the respective providers.
+      </Text>
+
       <div className="gap-4 mt-2 pb-10 flex content-start flex-wrap">
         {providers.map((provider, ind) => (
           <div
@@ -82,7 +89,7 @@ export default function CloudEmbeddingPage({
               <p className="my-auto">{provider.name}</p>
               <button
                 onClick={() => {
-                  setTentativelyNewProvider(provider);
+                  setShowTentativeProvider(provider);
                 }}
                 className="cursor-pointer ml-auto"
               >
@@ -107,9 +114,9 @@ export default function CloudEmbeddingPage({
             <button
               onClick={() => {
                 if (!provider.configured) {
-                  setTentativelyNewProvider(provider);
+                  setShowTentativeProvider(provider);
                 } else {
-                  setChangeCredentials(provider);
+                  setChangeCredentialsProvider(provider);
                 }
               }}
               className="hover:underline my-2 mr-auto cursor-pointer"
@@ -129,9 +136,9 @@ export default function CloudEmbeddingPage({
                     ${!provider.configured ? "opacity-80 hover:opacity-100" : enabled ? "bg-background-stronger" : "hover:bg-background-strong"}`}
                     onClick={() => {
                       if (enabled) {
-                        setAlreadyPicked(model);
+                        setAlreadySelectedModel(model);
                       } else if (!provider.configured) {
-                        setShowModelNotConfiguredModal(provider);
+                        setShowUnconfiguredProvider(provider);
                       } else {
                         setTentativeNewEmbeddingModel(model);
                       }

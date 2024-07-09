@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text, Callout, Subtitle, Divider } from "@tremor/react";
 import { Label } from "@/components/admin/connectors/Field";
@@ -7,7 +7,6 @@ import {
   EMBEDDING_PROVIDERS_ADMIN_URL,
   LLM_PROVIDERS_ADMIN_URL,
 } from "../../llm/constants";
-import { LoadingAnimation } from "@/components/Loading";
 import { mutate } from "swr";
 
 export function ChangeCredentialsModal({
@@ -15,18 +14,58 @@ export function ChangeCredentialsModal({
   onConfirm,
   onCancel,
   onDeleted,
+  useFileUpload,
 }: {
   provider: CloudEmbeddingProvider;
   onConfirm: () => void;
   onCancel: () => void;
   onDeleted: () => void;
+  useFileUpload: boolean;
 }) {
   const [apiKey, setApiKey] = useState("");
-  const [isTesting, setIsTesting] = useState(false);
   const [testError, setTestError] = useState<string>("");
+  const [fileName, setFileName] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const clearFileInput = () => {
+    setFileName("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    setFileName("");
+
+    if (file) {
+      setFileName(file.name);
+      try {
+        const fileContent = await file.text();
+        let jsonContent;
+        try {
+          jsonContent = JSON.parse(fileContent);
+          setApiKey(JSON.stringify(jsonContent));
+        } catch (parseError) {
+          throw new Error(
+            "Failed to parse JSON file. Please ensure it's a valid JSON."
+          );
+        }
+      } catch (error) {
+        setTestError(
+          error instanceof Error
+            ? error.message
+            : "An unknown error occurred while processing the file."
+        );
+        setApiKey("");
+        clearFileInput();
+      }
+    }
+  };
 
   const handleSubmit = async () => {
-    setIsTesting(true);
     setTestError("");
 
     try {
@@ -68,15 +107,13 @@ export function ChangeCredentialsModal({
       setTestError(
         error instanceof Error ? error.message : "An unknown error occurred"
       );
-    } finally {
-      setIsTesting(false);
     }
   };
 
   return (
     <Modal
       icon={provider.icon}
-      title={`Modify yor ${provider.name} key`}
+      title={`Modify your ${provider.name} key`}
       onOutsideClick={onCancel}
     >
       <div className="mb-4">
@@ -93,14 +130,31 @@ export function ChangeCredentialsModal({
               This isn&apos;t just a local change. Every model tied to this
               provider will feel the ripple effect.
             </p>
-            <Label>Your Shiny New API Key</Label>
-            <input
-              type="password"
-              className="text-lg w-full p-1"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Paste your 1337 API key here"
-            />
+
+            {useFileUpload ? (
+              <>
+                <Label>Upload JSON File</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileUpload}
+                  className="text-lg w-full p-1"
+                />
+                {fileName && <p>Uploaded file: {fileName}</p>}
+              </>
+            ) : (
+              <>
+                <Label>New API Key</Label>
+                <input
+                  type="password"
+                  className="text-lg w-full p-1"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="Paste your 1337 API key here"
+                />
+              </>
+            )}
             <a
               href={provider.apiLink}
               target="_blank"

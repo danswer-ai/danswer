@@ -1,20 +1,15 @@
 "use client";
 import { Card, Text, Title } from "@tremor/react";
 import { ModelSelector } from "./components/ModelSelector";
-import {
-  AVAILABLE_MODELS,
-  CloudEmbeddingModel,
-  EmbeddingModelDescriptor,
-} from "./components/types";
+import { AVAILABLE_MODELS, EmbeddingModelDescriptor } from "./components/types";
 import { CustomModelForm } from "./components/CustomModelForm";
 
-export default function OpenSourceEmbeddingSelectionPage({
+export default function OpenEmbeddingPage({
   onSelectOpenSource,
   currentModelName,
 }: {
-  onSelectOpenSource: (model: EmbeddingModelDescriptor) => Promise<void>;
-
   currentModelName: string;
+  onSelectOpenSource: (model: EmbeddingModelDescriptor) => Promise<void>;
 }) {
   return (
     <div>
@@ -24,13 +19,6 @@ export default function OpenSourceEmbeddingSelectionPage({
         )}
         setSelectedModel={onSelectOpenSource}
       />
-
-      <Title className="mt-8">
-        Alternatively, here are some cloud-based models to choose from!
-      </Title>
-      <Text className="mb-4">
-        They require API keys and run in the cloud of the respective providers.
-      </Text>
 
       <Text className="mt-6">
         Alternatively, (if you know what you&apos;re doing) you can specify a{" "}

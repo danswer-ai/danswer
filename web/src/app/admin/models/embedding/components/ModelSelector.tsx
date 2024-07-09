@@ -1,5 +1,6 @@
 import {
   CloudEmbeddingModel,
+  CloudEmbeddingProvider,
   EmbeddingModelDescriptor,
   FullEmbeddingModelDescriptor,
 } from "./types";
@@ -7,9 +8,11 @@ import { FiStar } from "react-icons/fi";
 
 export function ModelOption({
   model,
+  providers,
   onSelect,
 }: {
-  model: FullEmbeddingModelDescriptor | CloudEmbeddingModel;
+  providers: CloudEmbeddingProvider[];
+  model: CloudEmbeddingModel | EmbeddingModelDescriptor;
   onSelect?: (model: EmbeddingModelDescriptor) => Promise<void>;
 }) {
   return (
@@ -24,10 +27,14 @@ export function ModelOption({
           ? model.description
           : "Custom model—no description is available."}
       </div>
-      {model.link && (
+      {model && (
         <a
           target="_blank"
-          href={model.link}
+          href={
+            providers.filter(
+              (provider, ind) => provider.name == model.cloud_provider_name
+            )[0].docsLink
+          }
           className="text-xs text-link mx-1 mt-1"
         >
           See More Details
