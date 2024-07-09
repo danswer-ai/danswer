@@ -38,7 +38,7 @@ def pywikibot_timestamp_to_utc_datetime(
 def get_doc_from_page(
     page: pywikibot.Page, site: pywikibot.Site | None, source_type: DocumentSource
 ) -> Document:
-    """Generate Danswer Document from a MediaWiki page object.
+    """Generate Spectra Document from a MediaWiki page object.
 
     Args:
         page: Page from a MediaWiki site.

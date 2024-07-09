@@ -1,4 +1,4 @@
-"""Track Danswerbot Explicitly
+"""Track Spectrabot Explicitly
 
 Revision ID: 570282d33c49
 Revises: 7547d982db8f

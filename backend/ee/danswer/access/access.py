@@ -47,7 +47,7 @@ def _get_acl_for_user(user: User | None, db_session: Session) -> set[str]:
     user should have access to a document if at least one entry in the document's ACL
     matches one entry in the returned set.
 
-    NOTE: is imported in danswer.access.access by `fetch_versioned_implementation`
+    NOTE: is imported in spectra.access.access by `fetch_versioned_implementation`
     DO NOT REMOVE."""
     user_groups = fetch_user_groups_for_user(db_session, user.id) if user else []
     return set(

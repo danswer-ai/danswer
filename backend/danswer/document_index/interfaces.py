@@ -388,7 +388,7 @@ class BaseIndex(
 
 class DocumentIndex(KeywordCapable, VectorCapable, HybridCapable, BaseIndex, abc.ABC):
     """
-    A valid document index that can plug into all Danswer flows must implement all of these
+    A valid document index that can plug into all Spectra flows must implement all of these
     functionalities, though "technically" it does not need to be keyword or vector capable as
     currently all default search flows use Hybrid Search.
     """

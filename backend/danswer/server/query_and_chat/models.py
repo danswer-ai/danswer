@@ -33,13 +33,13 @@ class SimpleQueryRequest(BaseModel):
 
 
 class UpdateChatSessionThreadRequest(BaseModel):
-    # If not specified, use Danswer default persona
+    # If not specified, use Spectra default persona
     chat_session_id: int
     new_alternate_model: str
 
 
 class ChatSessionCreationRequest(BaseModel):
-    # If not specified, use Danswer default persona
+    # If not specified, use Spectra default persona
     persona_id: int = 0
     description: str | None = None
 

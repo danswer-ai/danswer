@@ -150,7 +150,7 @@ def fetch_danswerbot_analytics(
             ChatSession.id == subquery_first_ai_response.c.chat_session_id,
         )
         # Combine the chat sessions with latest feedback to get the latest feedback for the first AI
-        # message of the chat session where the chat session is Danswerbot type and within the time
+        # message of the chat session where the chat session is Spectrabot type and within the time
         # range specified. Left/outer join used here to ensure that if no feedback, a null is used
         # for the feedback id
         .outerjoin(

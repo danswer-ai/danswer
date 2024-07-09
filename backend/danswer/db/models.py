@@ -1247,11 +1247,11 @@ class PGFileStore(Base):
 Enterprise Edition Models
 ************************************************************************
 
-These models are only used in Enterprise Edition only features in Danswer.
+These models are only used in Enterprise Edition only features in Spectra.
 They are kept here to simplify the codebase and avoid having different assumptions
-on the shape of data being passed around between the MIT and EE versions of Danswer.
+on the shape of data being passed around between the MIT and EE versions of Spectra.
 
-In the MIT version of Danswer, assume these tables are always empty.
+In the MIT version of Spectra, assume these tables are always empty.
 """
 
 
@@ -1455,9 +1455,9 @@ class ExternalPermission(Base):
 
 
 class EmailToExternalUserCache(Base):
-    """A way to map users IDs in the external tool to a user in Danswer or at least an email for
+    """A way to map users IDs in the external tool to a user in Spectra or at least an email for
     when the user joins. Used as a cache for when fetching external groups which have their own
-    user ids, this can easily be mapped back to users already known in Danswer without needing
+    user ids, this can easily be mapped back to users already known in Spectra without needing
     to call external APIs to get the user emails.
 
     This way when groups are updated in the external tool and we need to update the mapping of
