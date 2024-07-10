@@ -92,6 +92,8 @@ def extract_citations_from_stream(
         possible_citation_pattern = r"(\[\d*$)"  # [1, [, etc
         possible_citation_found = re.search(possible_citation_pattern, curr_segment)
 
+        # `past_cite_count`: number of characters since past citation
+        # 5 to ensure a citation hasn't occured
         if len(citations_found) == 0 and len(llm_out) - past_cite_count > 5:
             current_citations = []
 
