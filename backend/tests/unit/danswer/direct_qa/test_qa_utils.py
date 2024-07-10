@@ -12,7 +12,7 @@ from danswer.llm.answering.stream_processing.quotes_processing import (
 from danswer.search.models import InferenceChunk
 
 
-def test_separate_answer_quotes():
+def test_separate_answer_quotes() -> None:
     # Test case 1: Basic quote separation
     test_answer = textwrap.dedent(
         """
@@ -83,7 +83,7 @@ def test_separate_answer_quotes():
 @pytest.mark.skip(
     reason="Using fuzzy match is too slow anyway, doesn't matter if it's broken"
 )
-def test_fuzzy_match_quotes_to_docs():
+def test_fuzzy_match_quotes_to_docs() -> None:
     chunk_0_text = textwrap.dedent(
         """
         Here's a doc with some LINK embedded in the text

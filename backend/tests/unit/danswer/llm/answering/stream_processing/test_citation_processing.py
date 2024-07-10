@@ -9,6 +9,7 @@ from danswer.configs.constants import DocumentSource
 from danswer.llm.answering.stream_processing.citation_processing import (
     extract_citations_from_stream,
 )
+from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 
 
 """
@@ -68,11 +69,12 @@ def process_text(
     tokens: list[str], mock_data: tuple[list[LlmDoc], dict[str, int]]
 ) -> tuple[str, list[CitationInfo]]:
     mock_docs, mock_doc_id_to_rank_map = mock_data
+    mapping = DocumentIdOrderMapping(order_mapping=mock_doc_id_to_rank_map)
     result = list(
         extract_citations_from_stream(
             tokens=iter(tokens),
             context_docs=mock_docs,
-            doc_id_to_rank_map=mock_doc_id_to_rank_map,
+            doc_id_to_rank_map=mapping,
             stop_stream=None,
         )
     )

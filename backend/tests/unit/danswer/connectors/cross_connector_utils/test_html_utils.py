@@ -3,7 +3,7 @@ import pathlib
 from danswer.file_processing.html_utils import parse_html_page_basic
 
 
-def test_parse_table():
+def test_parse_table() -> None:
     dir_path = pathlib.Path(__file__).parent.resolve()
     with open(f"{dir_path}/test_table.html", "r") as file:
         content = file.read()

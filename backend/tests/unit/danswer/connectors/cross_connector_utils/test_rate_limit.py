@@ -5,7 +5,7 @@ from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
 )
 
 
-def test_rate_limit_basic():
+def test_rate_limit_basic() -> None:
     call_cnt = 0
 
     @rate_limit_builder(max_calls=2, period=5)

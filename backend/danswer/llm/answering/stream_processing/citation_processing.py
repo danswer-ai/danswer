@@ -58,7 +58,7 @@ def extract_citations_from_stream(
     This function effectively processes a stream of text, identifies and reformats citations,
     and provides both the processed text and citation information as output.
     """
-
+    order_mapping = doc_id_to_rank_map.order_mapping
     llm_out = ""
     max_citation_num = len(context_docs)
     citation_order = []
@@ -106,7 +106,7 @@ def extract_citations_from_stream(
 
                 if 1 <= numerical_value <= max_citation_num:
                     context_llm_doc = context_docs[numerical_value - 1]
-                    real_citation_num = doc_id_to_rank_map[context_llm_doc.document_id]
+                    real_citation_num = order_mapping[context_llm_doc.document_id]
 
                     if real_citation_num not in citation_order:
                         citation_order.append(real_citation_num)
