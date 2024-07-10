@@ -360,7 +360,11 @@ def handle_regular_answer(
         and "well_answered_postfilter" in channel_conf.get("answer_filters", [])
     )
     has_citations_or_quotes = bool(answer.citations or answer.quotes)
-    if only_respond_with_citations_or_quotes and not has_citations_or_quotes:
+    if (
+        only_respond_with_citations_or_quotes
+        and not has_citations_or_quotes
+        and not message_info.bypass_filters
+    ):
         logger.error(
             f"Unable to find citations or quotes to answer: '{answer.rephrase}' - not answering!"
         )
