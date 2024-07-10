@@ -2,7 +2,6 @@ import string
 from collections.abc import Callable
 
 import nltk  # type:ignore
-
 from nltk.corpus import stopwords  # type:ignore
 from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore

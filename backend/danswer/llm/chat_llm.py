@@ -36,7 +36,6 @@ from danswer.llm.interfaces import ToolChoiceOptions
 from danswer.utils.logger import setup_logger
 
 
-
 logger = setup_logger()
 
 # If a user configures a different model and it doesn't support all the same
