@@ -1,12 +1,15 @@
-import { BackendMessage } from "@/app/chat/interfaces";
+import {
+  BackendMessage,
+  LLMRelevanceFilterPacket,
+} from "@/app/chat/interfaces";
 import {
   AnswerPiecePacket,
   DanswerDocument,
   DocumentInfoPacket,
   ErrorMessagePacket,
-  LLMRelevanceFilterPacket,
   Quote,
   QuotesInfoPacket,
+  RelevanceChunk,
   SearchRequestArgs,
 } from "./interfaces";
 import { processRawChunkString } from "./streamingUtils";
@@ -87,21 +90,19 @@ export const searchRequestStreamed = async ({
         | DocumentInfoPacket
         | LLMRelevanceFilterPacket
         | BackendMessage
-        | any
+        | RelevanceChunk
       >(decoder.decode(value, { stream: true }), previousPartialChunk);
       if (!completedChunks.length && !partialChunk) {
         break;
       }
       previousPartialChunk = partialChunk as string | null;
       completedChunks.forEach((chunk) => {
-        // console.log("rawChunk")
-        // console.log(chunk)
-
         // check for answer peice / end of answer
 
         if (Object.hasOwn(chunk, "relevance_summaries")) {
-          updateDocumentRelevance(chunk);
-          console.log(chunk);
+          const relevanceChunk = chunk as RelevanceChunk;
+          const responseTaken = relevanceChunk.relevance_summaries;
+          updateDocumentRelevance(relevanceChunk.relevance_summaries);
         }
 
         if (Object.hasOwn(chunk, "answer_piece")) {
@@ -167,7 +168,6 @@ export const searchRequestStreamed = async ({
           updateQuotes(quotes);
           return;
         }
-        console.log(chunk);
 
         // Is a bakcend message- handle all backend message related updates here
         if (Object.hasOwn(chunk, "message_id")) {

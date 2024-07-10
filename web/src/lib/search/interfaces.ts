@@ -62,8 +62,17 @@ export interface DocumentInfoPacket {
   favor_recent: boolean;
 }
 
-export interface LLMRelevanceFilterPacket {
-  relevant_chunk_indices: number[];
+interface DocumentContent {
+  relevant: boolean;
+  content: string;
+}
+
+export interface Relevance {
+  [url: string]: DocumentContent;
+}
+
+export interface RelevanceChunk {
+  relevance_summaries: Relevance;
 }
 
 export interface SearchResponse {

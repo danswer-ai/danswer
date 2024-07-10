@@ -27,7 +27,7 @@ export default function FunctionalHeader({
       {/* // <div className="pb-6 left-0 sticky -top-[.1]  z-10 w-full from-neutral-200 via-neutral-200 to-neutral-200/10  flex  z-10 bg-gradient-to-b via-50% blur"> */}
 
       <div className="mt-2 mx-4 text-solid flex w-full">
-        <div className=" absolute  z-[1000000] my-auto flex items-center text-xl font-bold ">
+        <div className=" absolute  z-[100] my-auto flex items-center text-xl font-bold ">
           <FiSidebar className="!h-5 !w-5" />
           {/* <Logo /> */}
 
@@ -67,7 +67,7 @@ export default function FunctionalHeader({
         </div>
       </div>
 
-      <div className="h-24 left-0 absolute top-0 z-10 w-full bg-gradient-to-t via-50% z-[-1] from-background via-background to-neutral-200/10 flex" />
+      <div className="h-24 left-0 absolute top-0 z-10 w-full bg-gradient-to-b via-50% z-[-1] from-background via-background to-background/10 flex" />
     </div>
   );
 }

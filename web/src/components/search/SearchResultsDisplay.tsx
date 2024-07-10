@@ -5,6 +5,7 @@ import {
   DanswerDocument,
   FlowType,
   Quote,
+  Relevance,
   SearchDefaultOverrides,
   SearchResponse,
   ValidQuestionResponse,
@@ -25,15 +26,6 @@ const getSelectedDocumentIds = (
   });
   return selectedDocumentIds;
 };
-
-interface DocumentContent {
-  relevant: boolean;
-  content: string;
-}
-
-export interface Relevance {
-  [url: string]: DocumentContent;
-}
 
 // type SearchResultsType = DocumentSearchResults;
 
@@ -83,6 +75,7 @@ export const SearchResultsDisplay = ({
   }, []);
 
   const { popup, setPopup } = usePopup();
+  const [showAll, setShowAll] = useState(false);
 
   if (!searchResponse) {
     return null;
@@ -181,22 +174,25 @@ export const SearchResultsDisplay = ({
           {removeDuplicateDocs(documents, agenticResults!, relevance).map(
             (document, ind) => {
               return agenticResults ? (
-                <AgenticDocumentDisplay
-                  comments={comments}
-                  index={ind}
-                  hide={
-                    sweep &&
-                    relevance &&
-                    !relevance[document.document_id].relevant
-                  }
-                  relevance={relevance}
-                  key={document.document_id}
-                  document={document}
-                  documentRank={ind + 1}
-                  messageId={messageId}
-                  isSelected={selectedDocumentIds.has(document.document_id)}
-                  setPopup={setPopup}
-                />
+                relevance &&
+                  (relevance[document.document_id].relevant || showAll) && (
+                    <AgenticDocumentDisplay
+                      comments={comments}
+                      index={ind}
+                      hide={
+                        sweep &&
+                        relevance &&
+                        !relevance[document.document_id].relevant
+                      }
+                      relevance={relevance}
+                      key={document.document_id}
+                      document={document}
+                      documentRank={ind + 1}
+                      messageId={messageId}
+                      isSelected={selectedDocumentIds.has(document.document_id)}
+                      setPopup={setPopup}
+                    />
+                  )
               ) : (
                 <DocumentDisplay
                   index={ind}
@@ -219,11 +215,14 @@ export const SearchResultsDisplay = ({
         </div>
       )}
       <div
-        className={`flex mt-4 justify-center transition-all duration-500 ${searchState == "input" ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+        className={`flex my-4  justify-center transition-all duration-500 ${searchState == "input" ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
       >
-        <button className=" pl-5 transition-all cursor-pointer -ml-2 bg-background-subtle text-dark h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs">
+        <button
+          onClick={() => setShowAll((showAll) => !showAll)}
+          className=" transition-all cursor-pointer -ml-2 bg-background-subtle text-dark h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs"
+        >
           <p className=" relative after:bg-neutral-600 after:absolute after:h-[1px] after:w-0 after:bottom-0 after:left-0 hover:after:w-full after:transition-all after:duration-300 duration-300">
-            Show me all
+            {showAll ? "Don't show all" : "Show me all"}
           </p>
         </button>
       </div>

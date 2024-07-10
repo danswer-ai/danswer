@@ -21,6 +21,7 @@
   scrollbar-color: black;
   scrollbar-width: thin;
 }
+
 .weakbackground::-webkit-scrollbar-track {
   background: #f3f4f6;
 }
@@ -92,10 +93,10 @@
 
   background: linear-gradient(
     -90deg,
-    #d4d4d4 0%,
+    #a3a3a3 0%,
     #000000 5%,
-    #d4d4d4 10%,
-    #d4d4d4 100%
+    #a3a3a3 10%,
+    #a3a3a3 100%
   );
   background-size: 200% 100%;
   background-clip: text;

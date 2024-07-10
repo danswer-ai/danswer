@@ -1,4 +1,4 @@
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { DanswerDocument, Relevance } from "@/lib/search/interfaces";
 import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
 import { useState } from "react";
 import { PopupSpec } from "../admin/connectors/Popup";
@@ -6,7 +6,7 @@ import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
 import { BookIcon, CheckmarkIcon, LightBulbIcon, XIcon } from "../icons/icons";
-import { Relevance } from "./SearchResultsDisplay";
+
 import { FaStar } from "react-icons/fa";
 import { FiTag } from "react-icons/fi";
 
@@ -262,7 +262,10 @@ export const DocumentDisplay = ({
         <div className="mt-1">
           <DocumentMetadataBlock document={document} />
         </div>
-        <p className="pl-1 pt-2 pb-3 break-words">
+        <p
+          style={{ transition: "height 0.30s ease-in-out" }}
+          className="pl-1 pt-2 pb-3 break-words"
+        >
           {alternativeToggled
             ? relevance
               ? relevance[document.document_id].content
@@ -350,7 +353,7 @@ export const AgenticDocumentDisplay = ({
           <DocumentMetadataBlock document={document} />
         </div>
         <div className="pt-2 break-words flex gap-x-2">
-          <p>
+          <p style={{ transition: "height 0.30s ease-in-out" }}>
             {alternativeToggled
               ? buildDocumentSummaryDisplay(
                   document.match_highlights,

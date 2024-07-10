@@ -23,6 +23,7 @@ import {
   SearchDefaultOverrides,
   SearchRequestOverrides,
   ValidQuestionResponse,
+  Relevance,
 } from "@/lib/search/interfaces";
 import { searchRequestStreamed } from "@/lib/search/streamingQa";
 
@@ -79,7 +80,7 @@ export const SearchSection = ({
 }: SearchSectionProps) => {
   // Search Bar
   const [query, setQuery] = useState<string>("");
-  const [relevance, setRelevance] = useState<any>(null);
+  const [relevance, setRelevance] = useState<Relevance | null>(null);
   const [comments, setComments] = useState<any>(null);
 
   // Search
@@ -198,7 +199,9 @@ export const SearchSection = ({
     }));
   const updateDocs = (documents: DanswerDocument[]) => {
     setTimeout(() => {
-      setSearchState("analyzing");
+      if (searchState != "input") {
+        setSearchState("analyzing");
+      }
     }, 1500);
 
     setSearchResponse((prevState) => ({
@@ -232,7 +235,7 @@ export const SearchSection = ({
       messageId,
     }));
 
-  const updateDocumentRelevance = (relevance: any) => {
+  const updateDocumentRelevance = (relevance: Relevance) => {
     setRelevance(relevance);
     setIsFetching(false);
 
@@ -254,7 +257,6 @@ export const SearchSection = ({
     setSearchState("searching");
   };
 
-  const [showAgenticDisclaimer, setShowAgenticDisclaimer] = useState(false);
   const [agenticResults, setAgenticResults] = useState<boolean | null>(null);
 
   let lastSearchCancellationToken = useRef<CancellationToken | null>(null);
@@ -265,11 +267,6 @@ export const SearchSection = ({
     overrideMessage,
   }: SearchRequestOverrides = {}) => {
     setAgenticResults(agentic!);
-    if (agentic) {
-      setTimeout(() => {
-        setShowAgenticDisclaimer(true);
-      }, 1000);
-    }
     resetInput();
 
     if (lastSearchCancellationToken.current) {
@@ -541,9 +538,7 @@ export const SearchSection = ({
                         sweep={sweep}
                         agenticResults={agenticResults}
                         performSweep={performSweep}
-                        relevance={
-                          relevance ? relevance.relevance_summaries : undefined
-                        }
+                        relevance={relevance!}
                         searchState={searchState}
                         searchResponse={searchResponse}
                         validQuestionResponse={validQuestionResponse}

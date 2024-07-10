@@ -34,6 +34,10 @@ export interface FileDescriptor {
   isUploading?: boolean;
 }
 
+export interface LLMRelevanceFilterPacket {
+  relevant_chunk_indices: number[];
+}
+
 export interface ToolCallMetadata {
   tool_name: string;
   tool_args: Record<string, any>;
