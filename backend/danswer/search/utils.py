@@ -5,10 +5,18 @@ from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceSection
 from danswer.search.models import SavedSearchDoc
+from danswer.search.models import SavedSearchDocWithContent
 from danswer.search.models import SearchDoc
 
 
-T = TypeVar("T", InferenceSection, InferenceChunk, SearchDoc)
+T = TypeVar(
+    "T",
+    InferenceSection,
+    InferenceChunk,
+    SearchDoc,
+    SavedSearchDoc,
+    SavedSearchDocWithContent,
+)
 
 
 def dedupe_documents(items: list[T]) -> tuple[list[T], list[int]]:
