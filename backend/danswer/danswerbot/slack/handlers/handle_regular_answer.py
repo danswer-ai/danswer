@@ -104,13 +104,20 @@ def handle_regular_answer(
     document_set_names: list[str] | None = None
     persona = slack_bot_config.persona if slack_bot_config else None
     prompt = None
+    only_respond_with_citations = False
     if persona:
         document_set_names = [
             document_set.name for document_set in persona.document_sets
         ]
         prompt = persona.prompts[0] if persona.prompts else None
 
-    should_respond_even_with_no_docs = persona.num_chunks == 0 if persona else False
+        hide_non_answers = (
+            "well_answered_postfilter" in channel_conf["answer_filters"]
+            if channel_conf
+            else False
+        )
+        if persona.num_chunks == 0 or hide_non_answers:
+            only_respond_with_citations = True
 
     bypass_acl = False
     if (
@@ -329,7 +336,7 @@ def handle_regular_answer(
         raise RuntimeError("Failed to retrieve docs, cannot answer question.")
 
     top_docs = retrieval_info.top_documents
-    if not top_docs and not should_respond_even_with_no_docs:
+    if not top_docs and only_respond_with_citations:
         logger.error(
             f"Unable to answer question: '{answer.rephrase}' - no documents found"
         )
