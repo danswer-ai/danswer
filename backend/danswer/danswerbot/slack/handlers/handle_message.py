@@ -168,8 +168,6 @@ def handle_message(
     if slack_bot_config and slack_bot_config.channel_config:
         channel_conf = slack_bot_config.channel_config
         if not bypass_filters and "answer_filters" in channel_conf:
-            "well_answered_postfilter" in channel_conf["answer_filters"]
-
             if (
                 "questionmark_prefilter" in channel_conf["answer_filters"]
                 and "?" not in messages[-1].message
