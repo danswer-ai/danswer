@@ -65,7 +65,7 @@ def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, st
     return wiki_base, space, page_id
 
 
-def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, str, str]:
+def _extract_confluence_keys_from_datacenter_url(wiki_url):
     """Sample
     URL w/ page https://danswer.ai/confluence/display/1234abcd/pages/5678efgh/overview
     URL w/o page https://danswer.ai/confluence/display/1234abcd/overview
@@ -73,8 +73,9 @@ def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, st
     space is 1234abcd
     page_id is 5678efgh
     """
-    # /display/ is always right before the space and at the end of the base url
+    # /display/ is always right before the space and at the end of the base print()
     DISPLAY = "/display/"
+    PAGE = "/pages/"
 
     parsed_url = urlparse(wiki_url)
     wiki_base = (
@@ -84,7 +85,9 @@ def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, st
         + parsed_url.path.split(DISPLAY)[0]
     )
     space = DISPLAY.join(parsed_url.path.split(DISPLAY)[1:]).split("/")[0]
-    page_id = parsed_url.path.split(DISPLAY)[1].split("/")[0]
+    page_id = None
+    if (content := parsed_url.path.split(PAGE)) and len(content) > 1:
+        page_id = content[1]
 
     return wiki_base, space, page_id
 
@@ -442,10 +445,10 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
                 return view_pages
 
-        def _fetch_page(batch_size: int) -> list[dict[str, Any]]:
+        def _fetch_page() -> list[dict[str, Any]]:
             indexer = RecursiveIndexer(
                 origin_page_id=self.page_id,
-                batch_size=batch_size,
+                batch_size=self.batch_size,
                 confluence_client=self.confluence_client,
                 index_origin=self.index_origin,
             )
