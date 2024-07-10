@@ -84,17 +84,17 @@ export const ChatSidebar = ({
               {enterpriseSettings && enterpriseSettings.application_name ? (
                 <div>
                   <HeaderTitle>
-                    {enterpriseSettings.application_name}
+                    Blona
                   </HeaderTitle>
 
                   {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
                     <p className="text-xs text-subtle -mt-1.5">
-                      Powered by Danswer
+                      Powered by Blona
                     </p>
                   )}
                 </div>
               ) : (
-                <HeaderTitle>Danswer</HeaderTitle>
+                <HeaderTitle>Blona</HeaderTitle>
               )}
             </div>
           </Link>
@@ -113,7 +113,7 @@ export const ChatSidebar = ({
           >
             <BasicClickable fullWidth>
               <div className="flex items-center text-sm">
-                <FiEdit className="ml-1 mr-2" /> New Chat
+                <FiEdit className="ml-1 mr-2" /> Neuer Chat
               </div>
             </BasicClickable>
           </Link>
@@ -145,7 +145,7 @@ export const ChatSidebar = ({
         <Link href="/assistants/mine" className="mt-3 mb-1 mx-3">
           <BasicClickable fullWidth>
             <div className="flex items-center text-default font-medium">
-              <FaBrain className="ml-1 mr-2" /> Manage Assistants
+              <FaBrain className="ml-1 mr-2" /> Assistenten einstellen
             </div>
           </BasicClickable>
         </Link>

@@ -64,7 +64,7 @@ export function AssistantsTab({
   return (
     <div className="mt-4 pb-1 overflow-y-auto h-full flex flex-col gap-y-1">
       <Text className="mx-3 text-xs mb-4">
-        Select an Assistant below to begin a new chat with them!
+        Wähle einen Asssistenten und starte den Chat!
       </Text>
 
       <div className="mx-3">
