@@ -64,20 +64,15 @@ const ToggleSwitch = () => {
 };
 
 export default function FunctionalWrapper({
-  // children,
-  content,
-  initiallyTogggled,
+  children,
+  // content,
+  toggledSidebar,
 }: {
-  // children: React.ReactNode;
-  content: (toggle: (toggled: boolean) => void) => ReactNode;
-  initiallyTogggled: boolean;
+  children: React.ReactNode;
+  // content: (toggle: (toggled: boolean) => void) => ReactNode;
+  toggledSidebar: boolean;
 }) {
   const router = useRouter();
-  const [sidebarToggled, setSidebarToggled] = useState(initiallyTogggled);
-
-  const toggle = (toggled: boolean) => {
-    setSidebarToggled(toggled);
-  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -124,7 +119,7 @@ export default function FunctionalWrapper({
         duration-300 
         ease-in-out
         h-full
-        ${sidebarToggled ? "w-[300px] " : "w-[0px]"}
+        ${toggledSidebar ? "w-[300px] " : "w-[0px]"}
       `}
         ></div>
         <div className="relative">
@@ -132,7 +127,8 @@ export default function FunctionalWrapper({
         </div>
       </div>
       <div className="absolute left-0 top-0 w-full h-full">
-        {content(toggle)}
+        {/* {content(toggle)} */}
+        {children}
       </div>
     </>
   );

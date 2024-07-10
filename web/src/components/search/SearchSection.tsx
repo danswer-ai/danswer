@@ -59,11 +59,11 @@ interface SearchSectionProps {
   documentSets: DocumentSet[];
   personas: Persona[];
   tags: Tag[];
-  toggle: (toggled: boolean) => void;
+  toggle: () => void;
   querySessions: ChatSession[];
   defaultSearchType: SearchType;
   user: User | null;
-  toggleSearchSidebar: boolean;
+  toggledSidebar: boolean;
 }
 
 export const SearchSection = ({
@@ -74,7 +74,7 @@ export const SearchSection = ({
   user,
   tags,
   querySessions,
-  toggleSearchSidebar,
+  toggledSidebar,
   defaultSearchType,
 }: SearchSectionProps) => {
   // Search Bar
@@ -376,8 +376,7 @@ export const SearchSection = ({
       {
         path: "/",
       };
-    toggle(!toggledSidebar);
-    setToggledSidebar((toggledSidebar) => !toggledSidebar); // Toggle the state which will in turn toggle the class
+    toggle();
   };
 
   const forceNonAgentic = () => {
@@ -413,8 +412,6 @@ export const SearchSection = ({
   };
   const [firstSearch, setFirstSearch] = useState(true);
   const [searchState, setSearchState] = useState<searchState>("input");
-
-  const [toggledSidebar, setToggledSidebar] = useState(toggleSearchSidebar); // State to track if sidebar is open
 
   useSidebarVisibility({
     toggledSidebar,

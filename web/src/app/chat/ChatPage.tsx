@@ -92,12 +92,12 @@ export function ChatPage({
   toggle,
   documentSidebarInitialWidth,
   defaultSelectedPersonaId,
-  toggleChatSidebar,
+  toggledSidebar,
 }: {
-  toggle: (toggled: boolean) => void;
+  toggle: () => void;
   documentSidebarInitialWidth?: number;
   defaultSelectedPersonaId?: number;
-  toggleChatSidebar?: boolean;
+  toggledSidebar: boolean;
 }) {
   const [configModalActiveTab, setConfigModalActiveTab] = useState<
     string | null
@@ -1045,7 +1045,7 @@ export function ChatPage({
     router.push("/search");
   }
 
-  const [toggledSidebar, setToggledSidebar] = useState(toggleChatSidebar!); // State to track if sidebar is open
+  // const [toggledSidebar, setToggledSidebar] = useState(toggleChatSidebar!); // State to track if sidebar is open
 
   const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
 
@@ -1057,9 +1057,10 @@ export function ChatPage({
       {
         path: "/",
       };
+    console.log(!toggledSidebar);
 
-    toggle(!toggledSidebar);
-    setToggledSidebar((toggledSidebar) => !toggledSidebar); // Toggle the state which will in turn toggle the class
+    console.log("SHOLD TOGGLE");
+    toggle();
   };
 
   const sidebarElementRef = useRef<HTMLDivElement>(null);
@@ -1105,7 +1106,7 @@ export function ChatPage({
       if (event.metaKey || event.ctrlKey) {
         switch (event.key.toLowerCase()) {
           case "e":
-            event.preventDefault();
+            // event.preventDefault();
             toggleSidebar();
             break;
         }

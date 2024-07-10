@@ -47,10 +47,6 @@ class LLMRelevanceFilterResponse(BaseModel):
     relevant_chunk_indices: list[int]
 
 
-class LLMRelevanceEvaluationResponse(BaseModel):
-    relevant_chunk_indices: list[int]
-
-
 class LLMRelevanceSummaryResponse(BaseModel):
     relevance_summaries: dict[int, str]
 

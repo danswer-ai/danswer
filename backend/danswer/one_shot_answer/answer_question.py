@@ -84,10 +84,6 @@ def evaluate_relevance(
     top_documents: list[SavedSearchDoc],
     query: ThreadMessage,
     agentic: bool,
-    # top_documents: List[Any],
-    # query: str,
-    # client: OpenAI,
-    # logger: Logger
 ) -> tuple[dict[str, Any], dict[str, str]]:
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     # Group documents by document_id

@@ -132,9 +132,9 @@ class Answer:
         self._final_prompt: list[BaseMessage] | None = None
 
         self._streamed_output: list[str] | None = None
-        self._processed_stream: list[
-            AnswerQuestionPossibleReturn | ToolResponse | ToolCallKickoff
-        ] | None = None
+        self._processed_stream: (
+            list[AnswerQuestionPossibleReturn | ToolResponse | ToolCallKickoff] | None
+        ) = None
 
         self._return_contexts = return_contexts
 

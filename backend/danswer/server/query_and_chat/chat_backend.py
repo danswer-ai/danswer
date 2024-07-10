@@ -345,7 +345,6 @@ def handle_new_chat_message(
             request.headers
         ),
     )
-
     return StreamingResponse(packets, media_type="application/json")
 
 

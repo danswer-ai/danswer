@@ -7,19 +7,7 @@ import { Text } from "@tremor/react";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { destructureValue, getFinalLLM, structureValue } from "@/lib/llm/utils";
 import { updateModelOverrideForChatSession } from "../../lib";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 
-// export function LlmTab({
-//   llmOverrideManager,
-//   currentAssistant,
-//   chatSessionId,
-//   close,
-// }: {
-//   llmOverrideManager: LlmOverrideManager;
-//   currentAssistant: Persona;
-//   chatSessionId?: number;
-//   close?: () => void;
-// }) {
 interface LlmTabProps {
   llmOverrideManager: LlmOverrideManager;
   currentAssistant: Persona;
@@ -75,7 +63,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
         <Text className="mb-1">
           Override the default model for the{" "}
           <i className="font-medium">{currentAssistant.name}</i> assistant. The
-          override will apply only for this chat session.
+          override will only apply for the current chat session.
         </Text>
         <Text className="mb-3">
           Default Model: <i className="font-medium">{defaultLlmName}</i>.
@@ -98,9 +86,6 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
                   value as string
                 );
               }
-              // if (close) {
-              //   close();
-              // }
             }}
           />
         </div>
@@ -110,7 +95,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
         </label>
 
         <Text className="mb-8">
-          Adjust the temperature of the LLM. Higher temperature will make the
+          Adjust the temperature of the LLM. Higher temperatures will make the
           LLM generate more creative and diverse responses, while lower
           temperature will make the LLM generate more conservative and focused
           responses.
