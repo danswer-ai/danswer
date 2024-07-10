@@ -115,6 +115,7 @@ def create_slack_bot_config(
         response_type=slack_bot_config_creation_request.response_type,
         standard_answer_category_ids=slack_bot_config_creation_request.standard_answer_categories,
         db_session=db_session,
+        enable_auto_filters=slack_bot_config_creation_request.enable_auto_filters,
     )
     return SlackBotConfig.from_model(slack_bot_config_model)
 
@@ -129,6 +130,7 @@ def patch_slack_bot_config(
     channel_config = _form_channel_config(
         slack_bot_config_creation_request, slack_bot_config_id, db_session
     )
+    print("hhere:", slack_bot_config_creation_request.__dict__)
 
     persona_id = None
     if slack_bot_config_creation_request.persona_id is not None:
@@ -174,6 +176,7 @@ def patch_slack_bot_config(
         response_type=slack_bot_config_creation_request.response_type,
         standard_answer_category_ids=slack_bot_config_creation_request.standard_answer_categories,
         db_session=db_session,
+        enable_auto_filters=slack_bot_config_creation_request.enable_auto_filters,
     )
     return SlackBotConfig.from_model(slack_bot_config_model)
 

@@ -155,6 +155,7 @@ class SlackBotConfigCreationRequest(BaseModel):
     channel_names: list[str]
     respond_tag_only: bool = False
     respond_to_bots: bool = False
+    enable_auto_filters: bool = False
     # If no team members, assume respond in the channel to everyone
     respond_team_member_list: list[str] = []
     respond_slack_group_list: list[str] = []
@@ -188,6 +189,7 @@ class SlackBotConfig(BaseModel):
     channel_config: ChannelConfig
     response_type: SlackBotResponseType
     standard_answer_categories: list[StandardAnswerCategory]
+    enable_auto_filters: bool
 
     @classmethod
     def from_model(
@@ -208,6 +210,7 @@ class SlackBotConfig(BaseModel):
                 StandardAnswerCategory.from_model(standard_answer_category_model)
                 for standard_answer_category_model in slack_bot_config_model.standard_answer_categories
             ],
+            enable_auto_filters=slack_bot_config_model.enable_auto_filters,
         )
 
 

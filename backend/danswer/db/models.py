@@ -1195,6 +1195,9 @@ class SlackBotConfig(Base):
     response_type: Mapped[SlackBotResponseType] = mapped_column(
         Enum(SlackBotResponseType, native_enum=False), nullable=False
     )
+    enable_auto_filters: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
 
     persona: Mapped[Persona | None] = relationship("Persona")
     standard_answer_categories: Mapped[list[StandardAnswerCategory]] = relationship(

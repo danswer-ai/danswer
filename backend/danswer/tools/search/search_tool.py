@@ -225,6 +225,9 @@ class SearchTool(Tool):
                 chunks_above=self.chunks_above,
                 chunks_below=self.chunks_below,
                 full_doc=self.full_doc,
+                enable_auto_detect_filters=self.retrieval_options.enable_auto_detect_filters
+                if self.retrieval_options
+                else None,
             ),
             user=self.user,
             llm=self.llm,
