@@ -463,7 +463,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             pages = (
                 _fetch_space(start_ind, self.batch_size)
                 if self.space_level_scan
-                else _fetch_page(batch_size=self.batch_size)
+                else _fetch_page()
             )
             return pages
 
@@ -477,7 +477,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 pages = (
                     _fetch_space(start_ind, self.batch_size)
                     if self.space_level_scan
-                    else _fetch_page(batch_size=self.batch_size)
+                    else _fetch_page()
                 )
                 return pages
 
