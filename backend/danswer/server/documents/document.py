@@ -1,3 +1,9 @@
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import Query
+from sqlalchemy.orm import Session
+
 from danswer.auth.users import current_user
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
@@ -8,11 +14,6 @@ from danswer.prompts.prompt_utils import build_doc_context_str
 from danswer.search.preprocessing.access_filters import build_access_filters_for_user
 from danswer.server.documents.models import ChunkInfo
 from danswer.server.documents.models import DocumentInfo
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import Query
-from sqlalchemy.orm import Session
 
 
 router = APIRouter(prefix="/document")

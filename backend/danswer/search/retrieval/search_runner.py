@@ -2,7 +2,11 @@ import string
 from collections.abc import Callable
 
 import nltk  # type:ignore
-from danswer.chat.models import LlmDoc
+from nltk.corpus import stopwords  # type:ignore
+from nltk.stem import WordNetLemmatizer  # type:ignore
+from nltk.tokenize import word_tokenize  # type:ignore
+from sqlalchemy.orm import Session
+
 from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
@@ -11,21 +15,19 @@ from danswer.search.enums import EmbedTextType
 from danswer.search.models import ChunkMetric
 from danswer.search.models import IndexFilters
 from danswer.search.models import InferenceChunk
+from danswer.search.models import InferenceSection
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.search_nlp_models import EmbeddingModel
+from danswer.search.utils import inference_section_from_chunks
 from danswer.secondary_llm_flows.query_expansion import multilingual_query_expansion
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 from danswer.utils.timing import log_function_time
-from nltk.corpus import stopwords  # type:ignore
-from nltk.stem import WordNetLemmatizer  # type:ignore
-from nltk.tokenize import word_tokenize  # type:ignore
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
-from sqlalchemy.orm import Session
 
 
 logger = setup_logger()
@@ -239,30 +241,10 @@ def retrieve_chunks(
     return top_chunks
 
 
-def combine_inference_chunks(inf_chunks: list[InferenceChunk]) -> LlmDoc:
-    if not inf_chunks:
-        raise ValueError("Cannot combine empty list of chunks")
-
-    # Use the first link of the document
-    first_chunk = inf_chunks[0]
-    chunk_texts = [chunk.content for chunk in inf_chunks]
-    return LlmDoc(
-        document_id=first_chunk.document_id,
-        content="\n".join(chunk_texts),
-        blurb=first_chunk.blurb,
-        semantic_identifier=first_chunk.semantic_identifier,
-        source_type=first_chunk.source_type,
-        metadata=first_chunk.metadata,
-        updated_at=first_chunk.updated_at,
-        link=first_chunk.source_links[0] if first_chunk.source_links else None,
-        source_links=first_chunk.source_links,
-    )
-
-
-def inference_documents_from_ids(
+def inference_sections_from_ids(
     doc_identifiers: list[tuple[str, int]],
     document_index: DocumentIndex,
-) -> list[LlmDoc]:
+) -> list[InferenceSection]:
     # Currently only fetches whole docs
     doc_ids_set = set(doc_id for doc_id, chunk_id in doc_identifiers)
 
@@ -281,4 +263,17 @@ def inference_documents_from_ids(
     # Any failures to retrieve would give a None, drop the Nones and empty lists
     inference_chunks_sets = [res for res in parallel_results if res]
 
-    return [combine_inference_chunks(chunk_set) for chunk_set in inference_chunks_sets]
+    return [
+        inference_section
+        for inference_section in [
+            inference_section_from_chunks(
+                # The scores will always be 0 because the fetching by id gives back
+                # no search scores. This is not needed though if the user is explicitly
+                # selecting a document.
+                center_chunk=chunk_set[0],
+                chunks=chunk_set,
+            )
+            for chunk_set in inference_chunks_sets
+        ]
+        if inference_section is not None
+    ]

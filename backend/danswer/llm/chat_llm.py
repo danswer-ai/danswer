@@ -5,17 +5,6 @@ from typing import Any
 from typing import cast
 
 import litellm  # type: ignore
-from danswer.configs.app_configs import LOG_ALL_MODEL_INTERACTIONS
-from danswer.configs.model_configs import DISABLE_LITELLM_STREAMING
-from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
-from danswer.configs.model_configs import GEN_AI_API_VERSION
-from danswer.configs.model_configs import GEN_AI_LLM_PROVIDER_TYPE
-from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
-from danswer.configs.model_configs import GEN_AI_TEMPERATURE
-from danswer.llm.interfaces import LLM
-from danswer.llm.interfaces import LLMConfig
-from danswer.llm.interfaces import ToolChoiceOptions
-from danswer.utils.logger import setup_logger
 from httpx import RemoteProtocolError
 from langchain.schema.language_model import LanguageModelInput
 from langchain_core.messages import AIMessage
@@ -32,6 +21,19 @@ from langchain_core.messages import SystemMessage
 from langchain_core.messages import SystemMessageChunk
 from langchain_core.messages.tool import ToolCallChunk
 from langchain_core.messages.tool import ToolMessage
+
+from danswer.configs.app_configs import LOG_ALL_MODEL_INTERACTIONS
+from danswer.configs.app_configs import LOG_DANSWER_MODEL_INTERACTIONS
+from danswer.configs.model_configs import DISABLE_LITELLM_STREAMING
+from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
+from danswer.configs.model_configs import GEN_AI_API_VERSION
+from danswer.configs.model_configs import GEN_AI_LLM_PROVIDER_TYPE
+from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
+from danswer.configs.model_configs import GEN_AI_TEMPERATURE
+from danswer.llm.interfaces import LLM
+from danswer.llm.interfaces import LLMConfig
+from danswer.llm.interfaces import ToolChoiceOptions
+from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
@@ -315,7 +317,7 @@ class DefaultMultiLLM(LLM):
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
     ) -> BaseMessage:
-        if LOG_ALL_MODEL_INTERACTIONS:
+        if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
             self._log_prompt(prompt)
 
@@ -332,7 +334,7 @@ class DefaultMultiLLM(LLM):
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
     ) -> Iterator[BaseMessage]:
-        if LOG_ALL_MODEL_INTERACTIONS:
+        if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
             self._log_prompt(prompt)
 
@@ -360,7 +362,7 @@ class DefaultMultiLLM(LLM):
                 "The AI model failed partway through generation, please try again."
             )
 
-        if LOG_ALL_MODEL_INTERACTIONS and output:
+        if LOG_DANSWER_MODEL_INTERACTIONS and output:
             content = output.content or ""
             if isinstance(output, AIMessage):
                 if content:

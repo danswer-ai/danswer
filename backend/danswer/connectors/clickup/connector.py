@@ -4,6 +4,7 @@ from typing import Any
 from typing import Optional
 
 import requests
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (

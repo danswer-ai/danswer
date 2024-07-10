@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from pydantic import BaseModel
+
 from danswer.db.models import Persona
 from danswer.db.models import StarterMessage
 from danswer.search.enums import RecencyBiasSetting
@@ -8,7 +10,6 @@ from danswer.server.features.prompt.models import PromptSnapshot
 from danswer.server.features.tool.api import ToolSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.utils.logger import setup_logger
-from pydantic import BaseModel
 
 
 logger = setup_logger()

@@ -3,11 +3,6 @@ from collections.abc import Iterator
 from typing import Any
 from typing import TYPE_CHECKING
 
-from danswer.chat.models import AnswerQuestionStreamReturn
-from danswer.configs.constants import MessageType
-from danswer.file_store.models import InMemoryChatFile
-from danswer.llm.override_models import PromptOverride
-from danswer.llm.utils import build_content_with_imgs
 from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
@@ -15,6 +10,12 @@ from langchain.schema.messages import SystemMessage
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import root_validator
+
+from danswer.chat.models import AnswerQuestionStreamReturn
+from danswer.configs.constants import MessageType
+from danswer.file_store.models import InMemoryChatFile
+from danswer.llm.override_models import PromptOverride
+from danswer.llm.utils import build_content_with_imgs
 
 if TYPE_CHECKING:
     from danswer.db.models import ChatMessage
@@ -69,9 +70,11 @@ class DocumentPruningConfig(BaseModel):
     # e.g. we don't want to truncate each document to be no more
     # than one chunk long
     is_manually_selected_docs: bool = False
-    # If user specifies to include additional context chunks for each match, then different pruning
+    # If user specifies to include additional context Chunks for each match, then different pruning
     # is used. As many Sections as possible are included, and the last Section is truncated
-    use_sections: bool = False
+    # If this is false, all of the Sections are truncated if they are longer than the expected Chunk size.
+    # Sections are often expected to be longer than the maximum Chunk size but Chunks should not be.
+    use_sections: bool = True
     # If using tools, then we need to consider the tool length
     tool_num_tokens: int = 0
     # If using a tool message to represent the docs, then we have to JSON serialize

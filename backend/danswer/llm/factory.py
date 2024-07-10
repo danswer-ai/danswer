@@ -10,12 +10,6 @@ from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.headers import build_llm_extra_headers
 from danswer.llm.interfaces import LLM
 from danswer.llm.override_models import LLMOverride
-from danswer.utils.logger import setup_logger
-
-# from danswer.search.search_nlp_models import BaseEmbedding
-
-
-logger = setup_logger()
 
 
 def get_main_llm_from_tuple(

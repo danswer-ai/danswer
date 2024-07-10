@@ -66,7 +66,7 @@ def handle_search_request(
     )
     top_sections = search_pipeline.reranked_sections
     # If using surrounding context or full doc, this will be empty
-    relevant_chunk_indices = search_pipeline.relevant_chunk_indices
+    relevant_section_indices = search_pipeline.relevant_section_indices
     top_docs = chunks_or_sections_to_search_docs(top_sections)
 
     # Deduping happens at the last step to avoid harming quality by dropping content early on
@@ -79,14 +79,14 @@ def handle_search_request(
     fake_saved_docs = [SavedSearchDoc.from_search_doc(doc) for doc in deduped_docs]
 
     if dropped_inds:
-        relevant_chunk_indices = drop_llm_indices(
-            llm_indices=relevant_chunk_indices,
+        relevant_section_indices = drop_llm_indices(
+            llm_indices=relevant_section_indices,
             search_docs=fake_saved_docs,
             dropped_indices=dropped_inds,
         )
 
     return SearchResponse(
-        top_documents=fake_saved_docs, llm_indices=relevant_chunk_indices
+        top_documents=fake_saved_docs, llm_indices=relevant_section_indices
     )
 
 

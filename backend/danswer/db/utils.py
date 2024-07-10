@@ -1,7 +1,8 @@
 from typing import Any
 
-from danswer.db.models import Base
 from sqlalchemy import inspect
+
+from danswer.db.models import Base
 
 
 def model_to_dict(model: Base) -> dict[str, Any]:

@@ -1,6 +1,7 @@
+from sqlalchemy.orm import Session
+
 from danswer.db.models import SlackBotConfig
 from danswer.db.slack_bot_config import fetch_slack_bot_configs
-from sqlalchemy.orm import Session
 
 
 VALID_SLACK_FILTERS = [

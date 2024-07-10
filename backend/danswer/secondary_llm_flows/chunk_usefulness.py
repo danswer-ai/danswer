@@ -3,21 +3,21 @@ from collections.abc import Callable
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import message_to_string
-from danswer.prompts.llm_chunk_filter import CHUNK_FILTER_PROMPT
 from danswer.prompts.llm_chunk_filter import NONUSEFUL_PAT
+from danswer.prompts.llm_chunk_filter import SECTION_FILTER_PROMPT
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 
 logger = setup_logger()
 
 
-def llm_eval_chunk(query: str, chunk_content: str, llm: LLM) -> bool:
+def llm_eval_section(query: str, section_content: str, llm: LLM) -> bool:
     def _get_usefulness_messages() -> list[dict[str, str]]:
         messages = [
             {
                 "role": "user",
-                "content": CHUNK_FILTER_PROMPT.format(
-                    chunk_text=chunk_content, user_query=query
+                "content": SECTION_FILTER_PROMPT.format(
+                    chunk_text=section_content, user_query=query
                 ),
             },
         ]
@@ -42,13 +42,13 @@ def llm_eval_chunk(query: str, chunk_content: str, llm: LLM) -> bool:
     return _extract_usefulness(model_output)
 
 
-def llm_batch_eval_chunks(
-    query: str, chunk_contents: list[str], llm: LLM, use_threads: bool = True
+def llm_batch_eval_sections(
+    query: str, section_contents: list[str], llm: LLM, use_threads: bool = True
 ) -> list[bool]:
     if use_threads:
         functions_with_args: list[tuple[Callable, tuple]] = [
-            (llm_eval_chunk, (query, chunk_content, llm))
-            for chunk_content in chunk_contents
+            (llm_eval_section, (query, section_content, llm))
+            for section_content in section_contents
         ]
 
         logger.debug(
@@ -58,11 +58,11 @@ def llm_batch_eval_chunks(
             functions_with_args, allow_failures=True
         )
 
-        # In case of failure/timeout, don't throw out the chunk
+        # In case of failure/timeout, don't throw out the section
         return [True if item is None else item for item in parallel_results]
 
     else:
         return [
-            llm_eval_chunk(query, chunk_content, llm)
-            for chunk_content in chunk_contents
+            llm_eval_section(query, section_content, llm)
+            for section_content in section_contents
         ]
