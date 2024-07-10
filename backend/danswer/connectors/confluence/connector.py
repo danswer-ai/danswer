@@ -448,13 +448,15 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 return view_pages
 
         def _fetch_page(start_ind: int, batch_size: int) -> list[dict[str, Any]]:
-            if self.recursive_indexer:
-                return self.recursive_indexer.get_pages(start_ind, batch_size)
-            else:
-                logger.error(
-                    "Recursive indexer not instantiated for Confluence Connector"
+            if self.recursive_indexer is None:
+                self.recursive_indexer = RecursiveIndexer(
+                    origin_page_id=self.page_id,
+                    batch_size=self.batch_size,
+                    confluence_client=self.confluence_client,
+                    index_origin=self.index_origin,
                 )
-                return []
+
+            return self.recursive_indexer.get_pages(start_ind, batch_size)
 
         pages: list[dict[str, Any]] = []
 
@@ -652,13 +654,6 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
 
-        self.recursive_indexer = RecursiveIndexer(
-            origin_page_id=self.page_id,
-            batch_size=self.batch_size,
-            confluence_client=self.confluence_client,
-            index_origin=self.index_origin,
-        )
-
         start_ind = 0
         while True:
             doc_batch, num_pages = self._get_doc_batch(start_ind)
@@ -674,13 +669,6 @@ class ConfluenceConnector(LoadConnector, PollConnector):
     ) -> GenerateDocumentsOutput:
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
-
-        self.recursive_indexer = RecursiveIndexer(
-            origin_page_id=self.page_id,
-            batch_size=self.batch_size,
-            confluence_client=self.confluence_client,
-            index_origin=self.index_origin,
-        )
 
         start_time = datetime.fromtimestamp(start, tz=timezone.utc)
         end_time = datetime.fromtimestamp(end, tz=timezone.utc)
