@@ -249,6 +249,13 @@ class SavedSearchDoc(SearchDoc):
         return self.score < other.score
 
 
+class SavedSearchDocWithContent(SavedSearchDoc):
+    """Used for endpoints that need to return the actual contents of the retrieved
+    section in addition to the match_highlights."""
+
+    content: str
+
+
 class RetrievalDocs(BaseModel):
     top_documents: list[SavedSearchDoc]
 
