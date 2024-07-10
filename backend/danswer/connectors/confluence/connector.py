@@ -227,9 +227,9 @@ class RecursiveIndexer:
         self.origin_page_id = origin_page_id
         self.pages = self.recurse_children_pages(0, self.origin_page_id)
 
-    def get_pages(self, ind: int, size: int) -> list[dict] | None:
+    def get_pages(self, ind: int, size: int) -> list[dict]:
         if ind * size > len(self.pages):
-            return None
+            return []
         return self.pages[ind * size : (ind + 1) * size]
 
     def _fetch_origin_page(
@@ -448,7 +448,13 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 return view_pages
 
         def _fetch_page(start_ind: int, batch_size: int) -> list[dict[str, Any]]:
-            return self.recursive_indexer.get_pages(start_ind, batch_size)
+            if self.recursive_indexer:
+                return self.recursive_indexer.get_pages(start_ind, batch_size)
+            else:
+                logger.error(
+                    "Recursive indexer not instantiated for Confluence Connector"
+                )
+                return []
 
         pages: list[dict[str, Any]] = []
 
