@@ -211,9 +211,11 @@ def handle_regular_answer(
         # auto_detect_filters = (
         #     persona.llm_filter_extraction if persona is not None else True
         # )
-        auto_detect_filters = False
-        if slack_bot_config.enable_auto_filters:
-            auto_detect_filters = True
+        auto_detect_filters = (
+            slack_bot_config.enable_auto_filters
+            if slack_bot_config is not None
+            else False
+        )
         retrieval_details = RetrievalDetails(
             run_search=OptionalSearchSetting.ALWAYS,
             real_time=False,
