@@ -69,7 +69,9 @@ def _process_file(
 
     if is_text_file_extension(file_name):
         encoding = detect_encoding(file)
-        file_content_raw, file_metadata = read_text_file(file, encoding=encoding)
+        file_content_raw, file_metadata = read_text_file(
+            file, encoding=encoding, ignore_danswer_metadata=False
+        )
 
     # Using the PDF reader function directly to pass in password cleanly
     elif extension == ".pdf":
@@ -84,7 +86,12 @@ def _process_file(
     all_metadata = {**metadata, **file_metadata} if metadata else file_metadata
 
     # If this is set, we will show this in the UI as the "name" of the file
-    file_display_name_override = all_metadata.get("file_display_name")
+    file_display_name = all_metadata.get("file_display_name") or os.path.basename(
+        file_name
+    )
+    title = (
+        all_metadata["title"] or "" if "title" in all_metadata else file_display_name
+    )
 
     time_updated = all_metadata.get("time_updated", datetime.now(timezone.utc))
     if isinstance(time_updated, str):
@@ -106,6 +113,7 @@ def _process_file(
             "secondary_owners",
             "filename",
             "file_display_name",
+            "title",
         ]
     }
 
@@ -129,8 +137,8 @@ def _process_file(
                 Section(link=all_metadata.get("link"), text=file_content_raw.strip())
             ],
             source=DocumentSource.FILE,
-            semantic_identifier=file_display_name_override
-            or os.path.basename(file_name),
+            semantic_identifier=file_display_name,
+            title=title,
             doc_updated_at=final_time_updated,
             primary_owners=p_owners,
             secondary_owners=s_owners,

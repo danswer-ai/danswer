@@ -2,15 +2,16 @@ import { Header } from "@/components/header/Header";
 import { AdminSidebar } from "@/components/admin/connectors/AdminSidebar";
 import {
   NotebookIcon,
-  KeyIcon,
   UsersIcon,
   ThumbsUpIcon,
   BookmarkIcon,
-  CPUIcon,
   ZoomInIcon,
   RobotIcon,
   ConnectorIcon,
-  SlackIcon,
+  GroupsIcon,
+  DatabaseIcon,
+  KeyIcon,
+  ClipboardIcon,
 } from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import {
@@ -18,13 +19,18 @@ import {
   getAuthTypeMetadataSS,
   getCurrentUserSS,
 } from "@/lib/userSS";
+import { SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import {
+  FiActivity,
+  FiBarChart2,
   FiCpu,
-  FiLayers,
+  FiImage,
   FiPackage,
   FiSettings,
+  FiShield,
   FiSlack,
+  FiTool,
 } from "react-icons/fi";
 
 export async function Layout({ children }: { children: React.ReactNode }) {
@@ -63,7 +69,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
         <Header user={user} />
       </div>
       <div className="flex h-full pt-16">
-        <div className="w-80 pt-12 pb-8 h-full border-r border-border">
+        <div className="w-80  bg-background-weak pt-12 pb-8 h-full border-r border-border overflow-auto">
           <AdminSidebar
             collections={[
               {
@@ -142,6 +148,24 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     ),
                     link: "/admin/bot",
                   },
+                  {
+                    name: (
+                      <div className="flex">
+                        <FiTool size={18} className="my-auto" />
+                        <div className="ml-1">Tools</div>
+                      </div>
+                    ),
+                    link: "/admin/tools",
+                  },
+                  {
+                    name: (
+                      <div className="flex">
+                        <ClipboardIcon size={18} />
+                        <div className="ml-1">Standard Answers</div>
+                      </div>
+                    ),
+                    link: "/admin/standard-answer",
+                  },
                 ],
               },
               {
@@ -179,8 +203,75 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     ),
                     link: "/admin/users",
                   },
+                  ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
+                    ? [
+                        {
+                          name: (
+                            <div className="flex">
+                              <GroupsIcon size={18} />
+                              <div className="ml-1">Groups</div>
+                            </div>
+                          ),
+                          link: "/admin/groups",
+                        },
+                        {
+                          name: (
+                            <div className="flex">
+                              <KeyIcon size={18} />
+                              <div className="ml-1">API Keys</div>
+                            </div>
+                          ),
+                          link: "/admin/api-key",
+                        },
+                      ]
+                    : []),
+                  {
+                    name: (
+                      <div className="flex">
+                        <FiShield size={18} />
+                        <div className="ml-1">Token Rate Limits</div>
+                      </div>
+                    ),
+                    link: "/admin/token-rate-limits",
+                  },
                 ],
               },
+              ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
+                ? [
+                    {
+                      name: "Performance",
+                      items: [
+                        {
+                          name: (
+                            <div className="flex">
+                              <FiActivity size={18} />
+                              <div className="ml-1">Usage Statistics</div>
+                            </div>
+                          ),
+                          link: "/admin/performance/usage",
+                        },
+                        {
+                          name: (
+                            <div className="flex">
+                              <DatabaseIcon size={18} />
+                              <div className="ml-1">Query History</div>
+                            </div>
+                          ),
+                          link: "/admin/performance/query-history",
+                        },
+                        {
+                          name: (
+                            <div className="flex">
+                              <FiBarChart2 size={18} />
+                              <div className="ml-1">Custom Analytics</div>
+                            </div>
+                          ),
+                          link: "/admin/performance/custom-analytics",
+                        },
+                      ],
+                    },
+                  ]
+                : []),
               {
                 name: "Settings",
                 items: [
@@ -193,6 +284,19 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     ),
                     link: "/admin/settings",
                   },
+                  ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
+                    ? [
+                        {
+                          name: (
+                            <div className="flex">
+                              <FiImage size={18} />
+                              <div className="ml-1">Whitelabeling</div>
+                            </div>
+                          ),
+                          link: "/admin/whitelabeling",
+                        },
+                      ]
+                    : []),
                 ],
               },
             ]}

@@ -41,10 +41,6 @@ DEFAULT_BOOST = 0
 SESSION_KEY = "session"
 QUERY_EVENT_ID = "query_event_id"
 LLM_CHUNKS = "llm_chunks"
-TOKEN_BUDGET = "token_budget"
-TOKEN_BUDGET_TIME_PERIOD = "token_budget_time_period"
-ENABLE_TOKEN_BUDGET = "enable_token_budget"
-TOKEN_BUDGET_SETTINGS = "token_budget_settings"
 
 # For chunking/processing chunks
 TITLE_SEPARATOR = "\n\r\n"
@@ -52,6 +48,8 @@ SECTION_SEPARATOR = "\n\n"
 # For combining attributes, doesn't have to be unique/perfect to work
 INDEX_SEPARATOR = "==="
 
+# For File Connector Metadata override file
+DANSWER_METADATA_FILENAME = ".danswer_metadata.json"
 
 # Messages
 DISABLED_GEN_AI_MSG = (
@@ -95,10 +93,28 @@ class DocumentSource(str, Enum):
     LOOPIO = "loopio"
     DROPBOX = "dropbox"
     SHAREPOINT = "sharepoint"
+    TEAMS = "teams"
+    SALESFORCE = "salesforce"
     DISCOURSE = "discourse"
     AXERO = "axero"
+    CLICKUP = "clickup"
     MEDIAWIKI = "mediawiki"
     WIKIPEDIA = "wikipedia"
+    S3 = "s3"
+    R2 = "r2"
+    GOOGLE_CLOUD_STORAGE = "google_cloud_storage"
+    OCI_STORAGE = "oci_storage"
+    NOT_APPLICABLE = "not_applicable"
+
+
+class BlobType(str, Enum):
+    R2 = "r2"
+    S3 = "s3"
+    GOOGLE_CLOUD_STORAGE = "google_cloud_storage"
+    OCI_STORAGE = "oci_storage"
+
+    # Special case, for internet search
+    NOT_APPLICABLE = "not_applicable"
 
 
 class DocumentIndexType(str, Enum):
@@ -112,6 +128,11 @@ class AuthType(str, Enum):
     GOOGLE_OAUTH = "google_oauth"
     OIDC = "oidc"
     SAML = "saml"
+
+
+class QAFeedbackType(str, Enum):
+    LIKE = "like"  # User likes the answer, used for metrics
+    DISLIKE = "dislike"  # User dislikes the answer, used for metrics
 
 
 class SearchFeedbackType(str, Enum):
@@ -139,4 +160,5 @@ class FileOrigin(str, Enum):
     CHAT_UPLOAD = "chat_upload"
     CHAT_IMAGE_GEN = "chat_image_gen"
     CONNECTOR = "connector"
+    GENERATED_REPORT = "generated_report"
     OTHER = "other"

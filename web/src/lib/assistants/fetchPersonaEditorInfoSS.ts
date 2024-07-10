@@ -5,6 +5,14 @@ import { fetchSS } from "../utilsSS";
 import { FullLLMProvider } from "@/app/admin/models/llm/interfaces";
 import { ToolSnapshot } from "../tools/interfaces";
 import { fetchToolsSS } from "../tools/fetchTools";
+import { IconManifestType } from "react-icons/lib";
+import {
+  OpenAIIcon,
+  AnthropicIcon,
+  AWSIcon,
+  AzureIcon,
+  OpenSourceIcon,
+} from "@/components/icons/icons";
 
 export async function fetchAssistantEditorInfoSS(
   personaId?: number | string
@@ -18,7 +26,7 @@ export async function fetchAssistantEditorInfoSS(
         existingPersona: Persona | null;
         tools: ToolSnapshot[];
       },
-      null
+      null,
     ]
   | [null, string]
 > {
@@ -50,7 +58,7 @@ export async function fetchAssistantEditorInfoSS(
     Response,
     User | null,
     ToolSnapshot[] | null,
-    Response | null
+    Response | null,
   ];
 
   if (!ccPairsInfoResponse.ok) {
@@ -79,11 +87,27 @@ export async function fetchAssistantEditorInfoSS(
       `Failed to fetch LLM providers - ${await llmProvidersResponse.text()}`,
     ];
   }
+
   const llmProviders = (await llmProvidersResponse.json()) as FullLLMProvider[];
 
   if (personaId && personaResponse && !personaResponse.ok) {
     return [null, `Failed to fetch Persona - ${await personaResponse.text()}`];
   }
+
+  for (const provider of llmProviders) {
+    if (provider.provider == "openai") {
+      provider.icon = OpenAIIcon;
+    } else if (provider.provider == "anthropic") {
+      provider.icon = AnthropicIcon;
+    } else if (provider.provider == "bedrock") {
+      provider.icon = AzureIcon;
+    } else if (provider.provider == "azure") {
+      provider.icon = AWSIcon;
+    } else {
+      provider.icon = OpenSourceIcon;
+    }
+  }
+
   const existingPersona = personaResponse
     ? ((await personaResponse.json()) as Persona)
     : null;

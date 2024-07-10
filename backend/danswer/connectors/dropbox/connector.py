@@ -96,7 +96,11 @@ class DropboxConnector(LoadConnector, PollConnector):
                     downloaded_file = self._download_file(entry.path_display)
                     link = self._get_shared_link(entry.path_display)
                     try:
-                        text = extract_file_text(entry.name, BytesIO(downloaded_file))
+                        text = extract_file_text(
+                            entry.name,
+                            BytesIO(downloaded_file),
+                            break_on_unprocessable=False,
+                        )
                         batch.append(
                             Document(
                                 id=f"doc:{entry.id}",

@@ -5,7 +5,10 @@ PROMPTS_YAML = "./danswer/chat/prompts.yaml"
 PERSONAS_YAML = "./danswer/chat/personas.yaml"
 
 NUM_RETURNED_HITS = 50
-NUM_RERANKED_RESULTS = 15
+# Used for LLM filtering and reranking
+# We want this to be approximately the number of results we want to show on the first page
+# It cannot be too large due to cost and latency implications
+NUM_RERANKED_RESULTS = 20
 
 # May be less depending on model
 MAX_CHUNKS_FED_TO_CHAT = float(os.environ.get("MAX_CHUNKS_FED_TO_CHAT") or 10.0)
@@ -64,9 +67,20 @@ TITLE_CONTENT_RATIO = max(
 # A list of languages passed to the LLM to rephase the query
 # For example "English,French,Spanish", be sure to use the "," separator
 MULTILINGUAL_QUERY_EXPANSION = os.environ.get("MULTILINGUAL_QUERY_EXPANSION") or None
+LANGUAGE_HINT = "\n" + (
+    os.environ.get("LANGUAGE_HINT")
+    or "IMPORTANT: Respond in the same language as my query!"
+)
+LANGUAGE_CHAT_NAMING_HINT = (
+    os.environ.get("LANGUAGE_CHAT_NAMING_HINT")
+    or "The name of the conversation must be in the same language as the user query."
+)
 
 # Stops streaming answers back to the UI if this pattern is seen:
 STOP_STREAM_PAT = os.environ.get("STOP_STREAM_PAT") or None
 
 # The backend logic for this being True isn't fully supported yet
 HARD_DELETE_CHATS = False
+
+# Internet Search
+BING_API_KEY = os.environ.get("BING_API_KEY") or None

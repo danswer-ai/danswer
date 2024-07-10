@@ -7,17 +7,23 @@ import {
   UserGroup,
 } from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
-import { errorHandlingFetcher, fetcher } from "./fetcher";
+import { errorHandlingFetcher } from "./fetcher";
 import { useState } from "react";
 import { DateRangePickerValue } from "@tremor/react";
 import { SourceMetadata } from "./search/interfaces";
-import { EE_ENABLED } from "./constants";
+import { destructureValue } from "./llm/utils";
+import { ChatSession } from "@/app/chat/interfaces";
+import { UsersResponse } from "./users/interfaces";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 
 export const usePublicCredentials = () => {
   const { mutate } = useSWRConfig();
-  const swrResponse = useSWR<Credential<any>[]>(CREDENTIAL_URL, fetcher);
+  const swrResponse = useSWR<Credential<any>[]>(
+    CREDENTIAL_URL,
+    errorHandlingFetcher
+  );
 
   return {
     ...swrResponse,
@@ -34,7 +40,7 @@ export const useMostReactedToDocuments = (
   limit: number
 ) => {
   const url = buildReactedDocsUrl(ascending, limit);
-  const swrResponse = useSWR<DocumentBoostStatus[]>(url, fetcher);
+  const swrResponse = useSWR<DocumentBoostStatus[]>(url, errorHandlingFetcher);
 
   return {
     ...swrResponse,
@@ -65,7 +71,7 @@ export const useConnectorCredentialIndexingStatus = (
   const { mutate } = useSWRConfig();
   const swrResponse = useSWR<ConnectorIndexingStatus<any, any>[]>(
     INDEXING_STATUS_URL,
-    fetcher,
+    errorHandlingFetcher,
     { refreshInterval: refreshInterval }
   );
 
@@ -114,7 +120,8 @@ export function useFilters(): FilterManager {
 
 export const useUsers = () => {
   const url = "/api/manage/users";
-  const swrResponse = useSWR<User[]>(url, errorHandlingFetcher);
+
+  const swrResponse = useSWR<UsersResponse>(url, errorHandlingFetcher);
 
   return {
     ...swrResponse,
@@ -133,17 +140,38 @@ export interface LlmOverrideManager {
   setLlmOverride: React.Dispatch<React.SetStateAction<LlmOverride>>;
   temperature: number | null;
   setTemperature: React.Dispatch<React.SetStateAction<number | null>>;
+  updateModelOverrideForChatSession: (chatSession?: ChatSession) => void;
 }
 
-export function useLlmOverride(): LlmOverrideManager {
-  const [llmOverride, setLlmOverride] = useState<LlmOverride>({
-    name: "",
-    provider: "",
-    modelName: "",
-  });
+export function useLlmOverride(
+  currentChatSession?: ChatSession
+): LlmOverrideManager {
+  const [llmOverride, setLlmOverride] = useState<LlmOverride>(
+    currentChatSession && currentChatSession.current_alternate_model
+      ? destructureValue(currentChatSession.current_alternate_model)
+      : {
+          name: "",
+          provider: "",
+          modelName: "",
+        }
+  );
+
+  const updateModelOverrideForChatSession = (chatSession?: ChatSession) => {
+    setLlmOverride(
+      chatSession && chatSession.current_alternate_model
+        ? destructureValue(chatSession.current_alternate_model)
+        : {
+            name: "",
+            provider: "",
+            modelName: "",
+          }
+    );
+  };
+
   const [temperature, setTemperature] = useState<number | null>(null);
 
   return {
+    updateModelOverrideForChatSession,
     llmOverride,
     setLlmOverride,
     temperature,
@@ -164,8 +192,9 @@ export const useUserGroups = (): {
   refreshUserGroups: () => void;
 } => {
   const swrResponse = useSWR<UserGroup[]>(USER_GROUP_URL, errorHandlingFetcher);
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
-  if (!EE_ENABLED) {
+  if (!isPaidEnterpriseFeaturesEnabled) {
     return {
       ...{
         data: [],

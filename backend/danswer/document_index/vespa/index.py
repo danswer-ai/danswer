@@ -61,6 +61,7 @@ from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentInsertionRecord
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.document_index.vespa.utils import remove_invalid_unicode_chars
+from danswer.document_index.vespa.utils import replace_invalid_doc_id_characters
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.search.models import IndexFilters
 from danswer.search.models import InferenceChunk
@@ -118,6 +119,7 @@ def _does_document_exist(
     chunk. This checks for whether the chunk exists already in the index"""
     doc_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{doc_chunk_id}"
     doc_fetch_response = http_client.get(doc_url)
+
     if doc_fetch_response.status_code == 404:
         return False
 
@@ -558,7 +560,9 @@ def _process_dynamic_summary(
     return processed_summary
 
 
-def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
+def _vespa_hit_to_inference_chunk(
+    hit: dict[str, Any], null_score: bool = False
+) -> InferenceChunk:
     fields = cast(dict[str, Any], hit["fields"])
 
     # parse fields that are stored as strings, but are really json / datetime
@@ -614,7 +618,7 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
         semantic_identifier=fields[SEMANTIC_IDENTIFIER],
         boost=fields.get(BOOST, 1),
         recency_bias=fields.get("matchfeatures", {}).get(RECENCY_BIAS, 1.0),
-        score=hit.get("relevance", 0),
+        score=None if null_score else hit.get("relevance", 0),
         hidden=fields.get(HIDDEN, False),
         primary_owners=fields.get(PRIMARY_OWNERS),
         secondary_owners=fields.get(SECONDARY_OWNERS),
@@ -706,6 +710,21 @@ def _create_document_xml_lines(doc_names: list[str | None]) -> str:
         if doc_name
     ]
     return "\n".join(doc_lines)
+
+
+def _clean_chunk_id_copy(
+    chunk: DocMetadataAwareIndexChunk,
+) -> DocMetadataAwareIndexChunk:
+    clean_chunk = chunk.copy(
+        update={
+            "source_document": chunk.source_document.copy(
+                update={
+                    "id": replace_invalid_doc_id_characters(chunk.source_document.id)
+                }
+            )
+        }
+    )
+    return clean_chunk
 
 
 class VespaIndex(DocumentIndex):
@@ -801,7 +820,10 @@ class VespaIndex(DocumentIndex):
         chunks: list[DocMetadataAwareIndexChunk],
     ) -> set[DocumentInsertionRecord]:
         # IMPORTANT: This must be done one index at a time, do not use secondary index here
-        return _clear_and_index_vespa_chunks(chunks=chunks, index_name=self.index_name)
+        cleaned_chunks = [_clean_chunk_id_copy(chunk) for chunk in chunks]
+        return _clear_and_index_vespa_chunks(
+            chunks=cleaned_chunks, index_name=self.index_name
+        )
 
     @staticmethod
     def _apply_updates_batched(
@@ -847,6 +869,15 @@ class VespaIndex(DocumentIndex):
 
     def update(self, update_requests: list[UpdateRequest]) -> None:
         logger.info(f"Updating {len(update_requests)} documents in Vespa")
+
+        # Handle Vespa character limitations
+        # Mutating update_requests but it's not used later anyway
+        for update_request in update_requests:
+            update_request.document_ids = [
+                replace_invalid_doc_id_characters(doc_id)
+                for doc_id in update_request.document_ids
+            ]
+
         update_start = time.monotonic()
 
         processed_updates_requests: list[_VespaUpdateRequest] = []
@@ -929,6 +960,8 @@ class VespaIndex(DocumentIndex):
     def delete(self, doc_ids: list[str]) -> None:
         logger.info(f"Deleting {len(doc_ids)} documents from Vespa")
 
+        doc_ids = [replace_invalid_doc_id_characters(doc_id) for doc_id in doc_ids]
+
         # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficial for
         # indexing / updates / deletes since we have to make a large volume of requests.
         with httpx.Client(http2=True) as http_client:
@@ -948,6 +981,8 @@ class VespaIndex(DocumentIndex):
         max_chunk_ind: int | None,
         user_access_control_list: list[str] | None = None,
     ) -> list[InferenceChunk]:
+        document_id = replace_invalid_doc_id_characters(document_id)
+
         vespa_chunks = _get_vespa_chunks_by_document_id(
             document_id=document_id,
             index_name=self.index_name,
@@ -960,7 +995,8 @@ class VespaIndex(DocumentIndex):
             return []
 
         inference_chunks = [
-            _vespa_hit_to_inference_chunk(chunk) for chunk in vespa_chunks
+            _vespa_hit_to_inference_chunk(chunk, null_score=True)
+            for chunk in vespa_chunks
         ]
         inference_chunks.sort(key=lambda chunk: chunk.chunk_id)
         return inference_chunks

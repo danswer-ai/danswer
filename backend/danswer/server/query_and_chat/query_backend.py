@@ -29,7 +29,7 @@ from danswer.server.query_and_chat.models import QueryValidationResponse
 from danswer.server.query_and_chat.models import SimpleQueryRequest
 from danswer.server.query_and_chat.models import SourceTag
 from danswer.server.query_and_chat.models import TagResponse
-from danswer.server.query_and_chat.token_budget import check_token_budget
+from danswer.server.query_and_chat.token_limit import check_token_rate_limits
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -52,6 +52,7 @@ def admin_search(
         source_type=question.filters.source_type,
         document_set=question.filters.document_set,
         time_cutoff=question.filters.time_cutoff,
+        tags=question.filters.tags,
         access_control_list=user_acl_filters,
     )
 
@@ -149,7 +150,7 @@ def stream_query_validation(
 def get_answer_with_quote(
     query_request: DirectQARequest,
     user: User = Depends(current_user),
-    _: bool = Depends(check_token_budget),
+    _: None = Depends(check_token_rate_limits),
 ) -> StreamingResponse:
     query = query_request.messages[0].message
     logger.info(f"Received query for one shot answer with quotes: {query}")

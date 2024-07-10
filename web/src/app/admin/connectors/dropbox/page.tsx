@@ -11,7 +11,8 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { TrashIcon } from "@/components/icons/icons";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
-import { fetcher } from "@/lib/fetcher";
+import { errorHandlingFetcher } from "@/lib/fetcher";
+import { ErrorCallout } from "@/components/ErrorCallout";
 import { usePublicCredentials } from "@/lib/hooks";
 import {
   ConnectorIndexingStatus,
@@ -30,15 +31,15 @@ const Main = () => {
   const {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
-    error: isConnectorIndexingStatusesError,
+    error: connectorIndexingStatusesError,
   } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
-    fetcher
+    errorHandlingFetcher
   );
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
-    error: isCredentialsError,
+    error: credentialsError,
     refreshCredentials,
   } = usePublicCredentials();
 
@@ -49,12 +50,22 @@ const Main = () => {
     return <LoadingAnimation text="Loading" />;
   }
 
-  if (isConnectorIndexingStatusesError || !connectorIndexingStatuses) {
-    return <div>Failed to load connectors</div>;
+  if (connectorIndexingStatusesError || !connectorIndexingStatuses) {
+    return (
+      <ErrorCallout
+        errorTitle="Something went wrong :("
+        errorMsg={connectorIndexingStatusesError?.info?.detail}
+      />
+    );
   }
 
-  if (isCredentialsError || !credentialsData) {
-    return <div>Failed to load credentials</div>;
+  if (credentialsError || !credentialsData) {
+    return (
+      <ErrorCallout
+        errorTitle="Something went wrong :("
+        errorMsg={credentialsError?.info?.detail}
+      />
+    );
   }
 
   const dropboxConnectorIndexingStatuses: ConnectorIndexingStatus<
@@ -150,7 +161,9 @@ const Main = () => {
             Dropbox indexing status
           </Title>
           <Text className="mb-2">
-            The latest article changes are fetched every 10 minutes.
+            Due to Dropbox access key design, the Dropbox connector will only
+            re-index files after a new access key is provided and the indexing
+            process is re-run manually. Check the docs for more information.
           </Text>
           <div className="mb-2">
             <ConnectorsTable<DropboxConfig, DropboxCredentialJson>
@@ -186,7 +199,7 @@ const Main = () => {
               formBody={<></>}
               validationSchema={Yup.object().shape({})}
               initialValues={{}}
-              refreshFreq={10 * 60} // 10 minutes
+              // refreshFreq={10 * 60} // disabled re-indexing
               credentialId={dropboxCredential.id}
             />
           </Card>

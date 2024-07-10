@@ -4,7 +4,8 @@ import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 
 import { FileIcon } from "@/components/icons/icons";
-import { fetcher } from "@/lib/fetcher";
+import { errorHandlingFetcher } from "@/lib/fetcher";
+import { ErrorCallout } from "@/components/ErrorCallout";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus, FileConfig } from "@/lib/types";
 import { createCredential, linkCredential } from "@/lib/credential";
@@ -15,16 +16,23 @@ import { Spinner } from "@/components/Spinner";
 import { SingleUseConnectorsTable } from "@/components/admin/connectors/table/SingleUseConnectorsTable";
 import { LoadingAnimation } from "@/components/Loading";
 import { Form, Formik } from "formik";
-import { TextFormField } from "@/components/admin/connectors/Field";
+import {
+  BooleanFormField,
+  TextFormField,
+} from "@/components/admin/connectors/Field";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
 import { getNameFromPath } from "@/lib/fileUtils";
 import { Button, Card, Divider, Text } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
+import IsPublicField from "@/components/admin/connectors/IsPublicField";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 const Main = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [filesAreUploading, setFilesAreUploading] = useState<boolean>(false);
   const { popup, setPopup } = usePopup();
+
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   const { mutate } = useSWRConfig();
 
@@ -33,7 +41,7 @@ const Main = () => {
     isLoading: isConnectorIndexingStatusesLoading,
   } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
-    fetcher
+    errorHandlingFetcher
   );
 
   if (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) {
@@ -84,11 +92,15 @@ const Main = () => {
               initialValues={{
                 name: "",
                 selectedFiles: [],
+                is_public: isPaidEnterpriseFeaturesEnabled ? false : undefined,
               }}
               validationSchema={Yup.object().shape({
                 name: Yup.string().required(
                   "Please enter a descriptive name for the files"
                 ),
+                ...(isPaidEnterpriseFeaturesEnabled && {
+                  is_public: Yup.boolean().required(),
+                }),
               })}
               onSubmit={async (values, formikHelpers) => {
                 const uploadCreateAndTriggerConnector = async () => {
@@ -121,6 +133,7 @@ const Main = () => {
                         file_locations: filePaths,
                       },
                       refresh_freq: null,
+                      prune_freq: 0,
                       disabled: false,
                     });
                   if (connectorErrorMsg || !connector) {
@@ -154,7 +167,8 @@ const Main = () => {
                   const credentialResponse = await linkCredential(
                     connector.id,
                     credentialId,
-                    values.name
+                    values.name,
+                    values.is_public
                   );
                   if (!credentialResponse.ok) {
                     const credentialResponseJson =
@@ -213,6 +227,15 @@ const Main = () => {
                     selectedFiles={selectedFiles}
                     setSelectedFiles={setSelectedFiles}
                   />
+
+                  {isPaidEnterpriseFeaturesEnabled && (
+                    <>
+                      <Divider />
+                      <IsPublicField />
+                      <Divider />
+                    </>
+                  )}
+
                   <div className="flex">
                     <Button
                       className="mt-4 w-64 mx-auto"
