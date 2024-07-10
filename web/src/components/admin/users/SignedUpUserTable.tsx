@@ -41,7 +41,7 @@ const PromoterButton = ({
   );
   return (
     <Button
-      className="w-min bg-green-600 border-none"
+      className="bg-green-600 border-none w-min"
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
       size="xs"
@@ -80,7 +80,7 @@ const DeactivaterButton = ({
   );
   return (
     <Button
-      className="w-min bg-red-500 border-none"
+      className="bg-red-500 border-none w-min"
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
       size="xs"
@@ -136,7 +136,7 @@ const SignedUpUserTable = ({
             onPageChange={onPageChange}
           />
         ) : null}
-        <Table className="overflow-visible">
+        <Table className="overflow-auto">
           <TableHead>
             <TableRow>
               <TableHeaderCell>Email</TableHeaderCell>

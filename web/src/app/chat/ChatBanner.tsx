@@ -24,10 +24,10 @@ export function ChatBanner() {
       border
       flex`}
     >
-      <div className="mx-auto text-emphasis text-sm flex flex-col">
+      <div className="flex flex-col mx-auto text-sm text-emphasis">
         <div className="my-auto">
           <ReactMarkdown
-            className="prose max-w-full"
+            className="max-w-full prose"
             components={{
               a: ({ node, ...props }) => (
                 <a

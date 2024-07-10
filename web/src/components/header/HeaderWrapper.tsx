@@ -5,7 +5,7 @@ export function HeaderWrapper({
 }) {
   return (
     <header className="border-b border-border bg-background-emphasis">
-      <div className="mx-8 h-16">{children}</div>
+      <div className="h-16 mx-6 md:mx-8">{children}</div>
     </header>
   );
 }

@@ -13,6 +13,8 @@ import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { LoginText } from "./LoginText";
+import LoginImage from "../../../../public/login_page_img.webp";
+import Image from "next/image";
 
 const Page = async ({
   searchParams,
@@ -65,10 +67,10 @@ const Page = async ({
 
   return (
     <main className="flex justify-center">
-      <div className="absolute top-10x w-full">
+      <div className="absolute w-full top-10x">
         <HealthCheckBanner />
       </div>
-      <div className="min-h-screen w-2/3 flex items-center justify-between">
+      <div className="flex items-center justify-between w-full min-h-screen px-6 md:w-2/3 md:px-0">
         <div>
           {authUrl && authTypeMetadata && (
             <>
@@ -80,15 +82,15 @@ const Page = async ({
             </>
           )}
           {authTypeMetadata?.authType === "basic" && (
-            <div className="w-96">
+            <div className="md:w-96">
               <LoginText />
               <div className="my-6">
                 <EmailPasswordForm />
               </div>
               <div className="flex">
-                <Text className="mt-4 mx-auto">
+                <Text className="mx-auto mt-4">
                   Don&apos;t have an account?{" "}
-                  <Link href="/auth/signup" className="text-link font-medium">
+                  <Link href="/auth/signup" className="font-medium text-link">
                     Create an account
                   </Link>
                 </Text>
@@ -96,10 +98,10 @@ const Page = async ({
             </div>
           )}
         </div>
-        <img
-          className="w-1/2 h-auto"
-          src="/login_page_img.webp"
-          alt="login page image"
+        <Image
+          src={LoginImage}
+          alt="LoginImage"
+          className="hidden w-1/2 h-auto md:flex"
         />
       </div>
     </main>

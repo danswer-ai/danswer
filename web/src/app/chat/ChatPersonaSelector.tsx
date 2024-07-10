@@ -44,7 +44,7 @@ function PersonaItem({
       >
         {name}
         {isSelected && (
-          <div className="ml-auto mr-1 my-auto">
+          <div className="my-auto ml-auto mr-1">
             <FiCheck />
           </div>
         )}
@@ -115,7 +115,7 @@ export function ChatPersonaSelector({
             );
           })}
 
-          <div className="border-t border-border pt-2">
+          <div className="pt-2 border-t border-border">
             <DefaultDropdownElement
               name={
                 <div className="flex items-center">
@@ -130,7 +130,7 @@ export function ChatPersonaSelector({
         </div>
       }
     >
-      <div className="select-none text-xl text-strong font-bold flex px-2 rounded cursor-pointer hover:bg-hover-light">
+      <div className="flex px-2 text-xl font-bold rounded cursor-pointer select-none text-strong hover:bg-hover-light">
         <div className="mt-auto">
           {currentlySelectedPersona?.name || "Default"}
         </div>
