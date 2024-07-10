@@ -65,7 +65,7 @@ def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, st
     return wiki_base, space, page_id
 
 
-def _extract_confluence_keys_from_datacenter_url(wiki_url) -> tuple[str, str, str]:
+def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, str, str]:
     """Sample
     URL w/ page https://danswer.ai/confluence/display/1234abcd/pages/5678efgh/overview
     URL w/o page https://danswer.ai/confluence/display/1234abcd/overview
@@ -88,7 +88,6 @@ def _extract_confluence_keys_from_datacenter_url(wiki_url) -> tuple[str, str, st
     page_id = ""
     if (content := parsed_url.path.split(PAGE)) and len(content) > 1:
         page_id = content[1]
-
     return wiki_base, space, page_id
 
 
