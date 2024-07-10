@@ -351,6 +351,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self.batch_size = batch_size
         self.continue_on_failure = continue_on_failure
         self.labels_to_skip = set(labels_to_skip)
+        self.recursive_indexer: RecursiveIndexer | None = None
         self.index_origin = index_origin
         (
             self.wiki_base,
@@ -361,10 +362,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
         self.space_level_scan = False
 
+        self.confluence_client: Confluence | None = None
+
         if self.page_id is None or self.page_id == "":
             self.space_level_scan = True
 
-        self.confluence_client: Confluence | None = None
         logger.info(
             f"wiki_base: {self.wiki_base}, space: {self.space}, page_id: {self.page_id},"
             + f" space_level_scan: {self.space_level_scan}, origin: {self.index_origin}"
@@ -445,17 +447,8 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
                 return view_pages
 
-        def _fetch_page() -> list[dict[str, Any]]:
-            indexer = RecursiveIndexer(
-                origin_page_id=self.page_id,
-                batch_size=self.batch_size,
-                confluence_client=self.confluence_client,
-                index_origin=self.index_origin,
-            )
-            pages: list[dict] = []
-            while page := indexer.get_pages(len(pages), self.batch_size):
-                pages.extend(page)
-            return pages
+        def _fetch_page(start_ind: int, batch_size: int) -> list[dict[str, Any]]:
+            return self.recursive_indexer.get_pages(start_ind, batch_size)
 
         pages: list[dict[str, Any]] = []
 
@@ -463,7 +456,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             pages = (
                 _fetch_space(start_ind, self.batch_size)
                 if self.space_level_scan
-                else _fetch_page()
+                else _fetch_page(start_ind, self.batch_size)
             )
             return pages
 
@@ -477,7 +470,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 pages = (
                     _fetch_space(start_ind, self.batch_size)
                     if self.space_level_scan
-                    else _fetch_page()
+                    else _fetch_page(start_ind, self.batch_size)
                 )
                 return pages
 
@@ -653,6 +646,13 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
 
+        self.recursive_indexer = RecursiveIndexer(
+            origin_page_id=self.page_id,
+            batch_size=self.batch_size,
+            confluence_client=self.confluence_client,
+            index_origin=self.index_origin,
+        )
+
         start_ind = 0
         while True:
             doc_batch, num_pages = self._get_doc_batch(start_ind)
@@ -668,6 +668,13 @@ class ConfluenceConnector(LoadConnector, PollConnector):
     ) -> GenerateDocumentsOutput:
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
+
+        self.recursive_indexer = RecursiveIndexer(
+            origin_page_id=self.page_id,
+            batch_size=self.batch_size,
+            confluence_client=self.confluence_client,
+            index_origin=self.index_origin,
+        )
 
         start_time = datetime.fromtimestamp(start, tz=timezone.utc)
         end_time = datetime.fromtimestamp(end, tz=timezone.utc)
