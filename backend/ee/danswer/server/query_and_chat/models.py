@@ -6,6 +6,11 @@ from danswer.search.models import ChunkContext
 from danswer.search.models import RetrievalDetails
 
 
+class TestStandardAnswerRequest(BaseModel):
+    message: str
+    slack_bot_categories: list[str]
+
+
 class DocumentSearchRequest(ChunkContext):
     message: str
     search_type: SearchType
