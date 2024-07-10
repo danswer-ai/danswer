@@ -9,7 +9,7 @@ def test_rate_limit_basic() -> None:
     call_cnt = 0
 
     @rate_limit_builder(max_calls=2, period=5)
-    def func():
+    def func() -> None:
         nonlocal call_cnt
         call_cnt += 1
 

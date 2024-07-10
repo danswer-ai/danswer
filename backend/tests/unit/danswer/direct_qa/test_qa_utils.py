@@ -23,6 +23,7 @@ def test_separate_answer_quotes() -> None:
     ).strip()
     answer, quotes = separate_answer_quotes(test_answer)
     assert answer == "It seems many people love dogs"
+    assert isinstance(quotes, list)
     assert quotes[0] == "A dog is a man's best friend"
     assert quotes[1] == "Air Bud was a movie about dogs and people loved it"
 
@@ -36,6 +37,7 @@ def test_separate_answer_quotes() -> None:
     ).strip()
     answer, quotes = separate_answer_quotes(test_answer)
     assert answer == "It seems many people love dogs"
+    assert isinstance(quotes, list)
     assert quotes[0] == "A dog is a man's best friend"
     assert quotes[1] == "Air Bud was a movie about dogs and people loved it"
 
@@ -60,6 +62,7 @@ def test_separate_answer_quotes() -> None:
     ).strip()
     answer, quotes = separate_answer_quotes(test_answer)
     assert answer == "It seems many people love dogs"
+    assert isinstance(quotes, list)
     assert quotes[0] == "A well known saying is:\nA dog is a man's best friend"
     assert quotes[1] == "Air Bud was a movie about dogs and people loved it"
 
@@ -74,6 +77,7 @@ def test_separate_answer_quotes() -> None:
     ).strip()
     answer, quotes = separate_answer_quotes(test_answer)
     assert answer == "It seems many people love quote: dogs"
+    assert isinstance(quotes, list)
     assert quotes[0] == "Quote: A well known saying is:\nA dog is a man's best friend"
     assert (
         quotes[1] == "Answer: Air Bud was a movie about dogs and quote: people loved it"
