@@ -110,7 +110,7 @@ def handle_regular_answer(
         ]
         prompt = persona.prompts[0] if persona.prompts else None
 
-    should_respond_even_with_no_docs = persona.num_chunks == 0 if persona else False
+        should_respond_even_with_no_docs = persona.num_chunks == 0 if persona else False
 
     bypass_acl = False
     if (
@@ -329,7 +329,7 @@ def handle_regular_answer(
         raise RuntimeError("Failed to retrieve docs, cannot answer question.")
 
     top_docs = retrieval_info.top_documents
-    if not top_docs and not should_respond_even_with_no_docs:
+    if not top_docs and should_respond_even_with_no_docs:
         logger.error(
             f"Unable to answer question: '{answer.rephrase}' - no documents found"
         )
@@ -350,6 +350,27 @@ def handle_regular_answer(
             "Unable to find answer - not responding since the "
             "`DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER` env variable is set"
         )
+        return True
+
+    only_respond_with_citations_or_quotes = (
+        channel_conf
+        and "well_answered_postfilter" in channel_conf.get("answer_filters", [])
+    )
+    has_citations_or_quotes = bool(answer.citations or answer.quotes)
+    if only_respond_with_citations_or_quotes and not has_citations_or_quotes:
+        logger.error(
+            f"Unable to find citations or quotes to answer: '{answer.rephrase}' - not answering!"
+        )
+        # Optionally, respond in thread with the error message
+        # Used primarily for debugging purposes
+        if should_respond_with_error_msgs:
+            respond_in_thread(
+                client=client,
+                channel=channel,
+                receiver_ids=None,
+                text="Found no citations or quotes when trying to answer.",
+                thread_ts=message_ts_to_respond_to,
+            )
         return True
 
     # If called with the DanswerBot slash command, the question is lost so we have to reshow it
