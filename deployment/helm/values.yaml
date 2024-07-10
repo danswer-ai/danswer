@@ -449,6 +449,7 @@ configMap:
   DISABLE_TELEMETRY: ""
   LOG_LEVEL: ""
   LOG_ALL_MODEL_INTERACTIONS: ""
+  LOG_DANSWER_MODEL_INTERACTIONS: ""
   LOG_VESPA_TIMING_INFORMATION: ""
   # Shared or Non-backend Related
   WEB_DOMAIN: "http://localhost:3000"  # for web server and api server

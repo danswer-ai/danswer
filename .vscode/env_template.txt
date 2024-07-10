@@ -8,7 +8,7 @@ AUTH_TYPE=disabled
 
 # Always keep these on for Dev
 # Logs all model prompts to stdout
-LOG_ALL_MODEL_INTERACTIONS=True
+LOG_DANSWER_MODEL_INTERACTIONS=True
 # More verbose logging
 LOG_LEVEL=debug
 
