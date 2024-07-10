@@ -553,7 +553,7 @@ export interface SlackBotConfig {
   channel_config: ChannelConfig;
   response_type: SlackBotResponseType;
   standard_answer_categories: StandardAnswerCategory[];
-  enable_auto_filters?: boolean;
+  enable_auto_filters: boolean;
 }
 
 export interface SlackBotTokens {

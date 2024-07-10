@@ -108,7 +108,7 @@ def handle_regular_answer(
         ]
         prompt = persona.prompts[0] if persona.prompts else None
 
-        should_respond_even_with_no_docs = persona.num_chunks == 0 if persona else False
+    should_respond_even_with_no_docs = persona.num_chunks == 0 if persona else False
 
     bypass_acl = False
     if (

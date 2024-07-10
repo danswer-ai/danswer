@@ -253,8 +253,7 @@ export const SlackBotCreationForm = ({
                 <BooleanFormField
                   name="enable_auto_filters"
                   label="Enable LLM Autofiltering"
-                  subtext="If set, the LLM will attempt to filter out irrelevent documents based on 
-                            that docuement's source or when the docuement was last edited"
+                  subtext="If set, the LLM will generate source and time filters based on the user's query"
                 />
                 <TextArrayField
                   name="respond_member_group_list"

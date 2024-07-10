@@ -130,7 +130,6 @@ def patch_slack_bot_config(
     channel_config = _form_channel_config(
         slack_bot_config_creation_request, slack_bot_config_id, db_session
     )
-    print("hhere:", slack_bot_config_creation_request.__dict__)
 
     persona_id = None
     if slack_bot_config_creation_request.persona_id is not None:
