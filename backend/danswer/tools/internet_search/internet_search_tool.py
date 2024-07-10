@@ -5,7 +5,6 @@ from typing import Any
 from typing import cast
 
 import httpx
-from pydantic import BaseModel
 
 from danswer.chat.chat_utils import combine_message_chain
 from danswer.chat.models import LlmDoc
@@ -17,7 +16,10 @@ from danswer.llm.interfaces import LLM
 from danswer.llm.utils import message_to_string
 from danswer.prompts.chat_prompts import INTERNET_SEARCH_QUERY_REPHRASE
 from danswer.prompts.constants import GENERAL_SEP_PAT
+from danswer.search.models import SearchDoc
 from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
+from danswer.tools.internet_search.models import InternetSearchResponse
+from danswer.tools.internet_search.models import InternetSearchResult
 from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
@@ -51,17 +53,6 @@ Follow Up Input:
 """.strip()
 
 
-class InternetSearchResult(BaseModel):
-    title: str
-    link: str
-    snippet: str
-
-
-class InternetSearchResponse(BaseModel):
-    revised_query: str
-    internet_results: list[InternetSearchResult]
-
-
 def llm_doc_from_internet_search_result(result: InternetSearchResult) -> LlmDoc:
     return LlmDoc(
         document_id=result.link,
@@ -74,6 +65,31 @@ def llm_doc_from_internet_search_result(result: InternetSearchResult) -> LlmDoc:
         link=result.link,
         source_links={0: result.link},
     )
+
+
+def internet_search_response_to_search_docs(
+    internet_search_response: InternetSearchResponse,
+) -> list[SearchDoc]:
+    return [
+        SearchDoc(
+            document_id=doc.link,
+            chunk_ind=-1,
+            semantic_identifier=doc.title,
+            link=doc.link,
+            blurb=doc.snippet,
+            source_type=DocumentSource.NOT_APPLICABLE,
+            boost=0,
+            hidden=False,
+            metadata={},
+            score=None,
+            match_highlights=[],
+            updated_at=None,
+            primary_owners=[],
+            secondary_owners=[],
+            is_internet=True,
+        )
+        for doc in internet_search_response.internet_results
+    ]
 
 
 class InternetSearchTool(Tool):

@@ -7,7 +7,7 @@ from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import STOP_STREAM_PAT
 from danswer.llm.answering.models import StreamProcessor
-from danswer.llm.answering.stream_processing.utils import map_document_id_order
+from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 from danswer.prompts.constants import TRIPLE_BACKTICK
 from danswer.utils.logger import setup_logger
 
@@ -23,7 +23,7 @@ def in_code_block(llm_text: str) -> bool:
 def extract_citations_from_stream(
     tokens: Iterator[str],
     context_docs: list[LlmDoc],
-    doc_id_to_rank_map: dict[str, int],
+    doc_id_to_rank_map: DocumentIdOrderMapping,
     stop_stream: str | None = STOP_STREAM_PAT,
 ) -> Iterator[DanswerAnswerPiece | CitationInfo]:
     llm_out = ""
@@ -71,7 +71,9 @@ def extract_citations_from_stream(
                 ]  # remove 1 index offset
 
                 link = context_llm_doc.link
-                target_citation_num = doc_id_to_rank_map[context_llm_doc.document_id]
+                target_citation_num = doc_id_to_rank_map.order_mapping[
+                    context_llm_doc.document_id
+                ]
 
                 # Use the citation number for the document's rank in
                 # the search (or selected docs) results
@@ -114,13 +116,13 @@ def extract_citations_from_stream(
 
 
 def build_citation_processor(
-    context_docs: list[LlmDoc], search_order_docs: list[LlmDoc]
+    context_docs: list[LlmDoc], doc_id_to_rank_map: DocumentIdOrderMapping
 ) -> StreamProcessor:
     def stream_processor(tokens: Iterator[str]) -> AnswerQuestionStreamReturn:
         yield from extract_citations_from_stream(
             tokens=tokens,
             context_docs=context_docs,
-            doc_id_to_rank_map=map_document_id_order(search_order_docs),
+            doc_id_to_rank_map=doc_id_to_rank_map,
         )
 
     return stream_processor

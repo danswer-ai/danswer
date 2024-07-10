@@ -94,7 +94,7 @@ class SearchQuery(ChunkContext):
     # Only used if not skip_rerank
     num_rerank: int | None = NUM_RERANKED_RESULTS
     # Only used if not skip_llm_chunk_filter
-    max_llm_filter_chunks: int = NUM_RERANKED_RESULTS
+    max_llm_filter_sections: int = NUM_RERANKED_RESULTS
 
     class Config:
         frozen = True
@@ -162,19 +162,38 @@ class InferenceChunk(BaseChunk):
     def __hash__(self) -> int:
         return hash((self.document_id, self.chunk_id))
 
+    def __lt__(self, other: Any) -> bool:
+        if not isinstance(other, InferenceChunk):
+            return NotImplemented
+        if self.score is None:
+            if other.score is None:
+                return self.chunk_id > other.chunk_id
+            return True
+        if other.score is None:
+            return False
+        if self.score == other.score:
+            return self.chunk_id > other.chunk_id
+        return self.score < other.score
 
-class InferenceSection(InferenceChunk):
-    """Section is a combination of chunks. A section could be a single chunk, several consecutive
-    chunks or the entire document"""
+    def __gt__(self, other: Any) -> bool:
+        if not isinstance(other, InferenceChunk):
+            return NotImplemented
+        if self.score is None:
+            return False
+        if other.score is None:
+            return True
+        if self.score == other.score:
+            return self.chunk_id < other.chunk_id
+        return self.score > other.score
 
+
+class InferenceSection(BaseModel):
+    """Section list of chunks with a combined content. A section could be a single chunk, several
+    chunks from the same document or the entire document."""
+
+    center_chunk: InferenceChunk
+    chunks: list[InferenceChunk]
     combined_content: str
-
-    @classmethod
-    def from_chunk(
-        cls, inf_chunk: InferenceChunk, content: str | None = None
-    ) -> "InferenceSection":
-        inf_chunk_data = inf_chunk.dict()
-        return cls(**inf_chunk_data, combined_content=content or inf_chunk.content)
 
 
 class SearchDoc(BaseModel):
