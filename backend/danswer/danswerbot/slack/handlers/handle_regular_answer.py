@@ -22,7 +22,6 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTA
 from danswer.configs.danswerbot_configs import DANSWER_BOT_USE_QUOTES
 from danswer.configs.danswerbot_configs import DANSWER_FOLLOWUP_EMOJI
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
-from danswer.configs.danswerbot_configs import DISABLE_DANSWER_BOT_FILTER_DETECT
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
 from danswer.danswerbot.slack.blocks import build_documents_blocks
 from danswer.danswerbot.slack.blocks import build_follow_up_block
@@ -91,7 +90,6 @@ def handle_regular_answer(
     thread_context_percent: float = DANSWER_BOT_TARGET_CHUNK_PERCENTAGE,
     should_respond_with_error_msgs: bool = DANSWER_BOT_DISPLAY_ERROR_MSGS,
     disable_docs_only_answer: bool = DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER,
-    disable_auto_detect_filters: bool = DISABLE_DANSWER_BOT_FILTER_DETECT,
     disable_cot: bool = DANSWER_BOT_DISABLE_COT,
     reflexion: bool = ENABLE_DANSWERBOT_REFLEXION,
 ) -> bool:
@@ -207,12 +205,15 @@ def handle_regular_answer(
         )
 
         # Default True because no other ways to apply filters in Slack (no nice UI)
-        auto_detect_filters = (
-            persona.llm_filter_extraction if persona is not None else True
-        )
-        if disable_auto_detect_filters:
-            auto_detect_filters = False
-
+        # Commenting this out because this is only available to the slackbot for now
+        # later we plan to implement this at the persona level where this will get
+        # commented back in
+        # auto_detect_filters = (
+        #     persona.llm_filter_extraction if persona is not None else True
+        # )
+        auto_detect_filters = False
+        if slack_bot_config.enable_auto_filters:
+            auto_detect_filters = True
         retrieval_details = RetrievalDetails(
             run_search=OptionalSearchSetting.ALWAYS,
             real_time=False,

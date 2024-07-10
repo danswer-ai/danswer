@@ -53,7 +53,7 @@ def create_slack_bot_persona(
         description="",
         num_chunks=num_chunks,
         llm_relevance_filter=True,
-        llm_filter_extraction=True,
+        llm_filter_extraction=False,
         recency_bias=RecencyBiasSetting.AUTO,
         prompt_ids=[default_prompt.id],
         document_set_ids=document_set_ids,
@@ -74,6 +74,7 @@ def insert_slack_bot_config(
     channel_config: ChannelConfig,
     response_type: SlackBotResponseType,
     standard_answer_category_ids: list[int],
+    enable_auto_filters: bool,
     db_session: Session,
 ) -> SlackBotConfig:
     existing_standard_answer_categories = fetch_standard_answer_categories_by_ids(
@@ -90,6 +91,7 @@ def insert_slack_bot_config(
         channel_config=channel_config,
         response_type=response_type,
         standard_answer_categories=existing_standard_answer_categories,
+        enable_auto_filters=enable_auto_filters,
     )
     db_session.add(slack_bot_config)
     db_session.commit()
@@ -103,6 +105,7 @@ def update_slack_bot_config(
     channel_config: ChannelConfig,
     response_type: SlackBotResponseType,
     standard_answer_category_ids: list[int],
+    enable_auto_filters: bool,
     db_session: Session,
 ) -> SlackBotConfig:
     slack_bot_config = db_session.scalar(
@@ -134,6 +137,7 @@ def update_slack_bot_config(
     slack_bot_config.standard_answer_categories = list(
         existing_standard_answer_categories
     )
+    slack_bot_config.enable_auto_filters = enable_auto_filters
 
     # if the persona has changed, then clean up the old persona
     if persona_id != existing_persona_id and existing_persona_id:
