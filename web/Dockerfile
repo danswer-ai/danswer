@@ -113,5 +113,8 @@ ENV NEXT_PUBLIC_DISABLE_LOGOUT=${NEXT_PUBLIC_DISABLE_LOGOUT}
 # If you want to run this without compose, specify the ports to 
 # expose via cli
 
+# expose is done for AWS deployment
+EXPOSE 3000
+
 CMD ["node", "server.js"]
 
