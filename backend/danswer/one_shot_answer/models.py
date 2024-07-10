@@ -34,6 +34,7 @@ class DirectQARequest(ChunkContext):
     skip_llm_chunk_filter: bool | None = None
     chain_of_thought: bool = False
     return_contexts: bool = False
+    evaluate_response: bool = False  # Analyze the results
 
     @root_validator
     def check_chain_of_thought_and_prompt_id(

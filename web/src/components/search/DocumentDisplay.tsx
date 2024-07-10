@@ -242,7 +242,7 @@ export const DocumentDisplay = ({
               />
             )}
 
-            {messageId && (isHovered || alternativeToggled) && (
+            {relevance && (isHovered || alternativeToggled) && (
               <button
                 onClick={() =>
                   setAlternativeToggled(
@@ -329,7 +329,7 @@ export const AgenticDocumentDisplay = ({
                 setPopup={setPopup}
               />
             )}
-            {messageId && (isHovered || alternativeToggled) && (
+            {relevance && (isHovered || alternativeToggled) && (
               <button
                 onClick={() =>
                   setAlternativeToggled(

@@ -58,6 +58,7 @@ export const searchRequestStreamed = async ({
           filters: filters,
           enable_auto_detect_filters: false,
         },
+        evaluate_response: true,
       }),
       headers: {
         "Content-Type": "application/json",

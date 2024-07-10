@@ -78,6 +78,7 @@ class SearchTool(Tool):
         chunks_below: int = 0,
         full_doc: bool = False,
         bypass_acl: bool = False,
+        evaluate_response: bool = False,
     ) -> None:
         self.user = user
         self.persona = persona
@@ -86,14 +87,13 @@ class SearchTool(Tool):
         self.llm = llm
         self.fast_llm = fast_llm
         self.pruning_config = pruning_config
-
         self.selected_docs = selected_docs
-
         self.chunks_above = chunks_above
         self.chunks_below = chunks_below
         self.full_doc = full_doc
         self.bypass_acl = bypass_acl
         self.db_session = db_session
+        self.evaluate_response = evaluate_response
 
     def name(self) -> str:
         return self.NAME
@@ -204,9 +204,9 @@ class SearchTool(Tool):
                     self.retrieval_options.filters if self.retrieval_options else None
                 ),
                 persona=self.persona,
-                offset=self.retrieval_options.offset
-                if self.retrieval_options
-                else None,
+                offset=(
+                    self.retrieval_options.offset if self.retrieval_options else None
+                ),
                 limit=self.retrieval_options.limit if self.retrieval_options else None,
                 chunks_above=self.chunks_above,
                 chunks_below=self.chunks_below,

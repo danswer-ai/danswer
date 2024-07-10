@@ -1,12 +1,7 @@
-import json
-import os
-from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Iterator
-from typing import Any
 from typing import cast
 
-from openai import OpenAI
 from sqlalchemy.orm import Session
 
 from danswer.chat.chat_utils import reorganize_citations
@@ -42,11 +37,9 @@ from danswer.llm.utils import get_default_llm_token_encode
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.one_shot_answer.models import QueryRephrase
-from danswer.one_shot_answer.models import ThreadMessage
 from danswer.one_shot_answer.qa_utils import combine_message_thread
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
-from danswer.search.models import SavedSearchDoc
 from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.search.utils import dedupe_documents
 from danswer.search.utils import drop_llm_indices
@@ -81,140 +74,6 @@ AnswerObjectIterator = Iterator[
 ]
 
 
-def evaluate_relevance(
-    top_documents: list[SavedSearchDoc],
-    query: ThreadMessage,
-    agentic: bool,
-) -> tuple[dict[str, Any], dict[str, str]]:
-    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-    # Group documents by document_id
-    document_groups = defaultdict(list)
-    for doc in top_documents:
-        document_groups[doc.document_id].append(doc.blurb)
-
-    results = {}
-    agentic_comments = {}
-
-    for document_id, blurbs in document_groups.items():
-        combined_blurb = "\n".join(blurbs)
-
-        prompt = f"""
-        Given the following document blurb(s) and query, determine if the document is relevant to the search term.
-        The documetn is
-
-        Document blurb(s):
-        ```
-        {combined_blurb}
-        ```
-
-        Query:
-        ```
-        {query}
-        ```
-        Is this document relevant? Respond with a
-        JSON object containing a single key "response"
-        with a value of either true if it's somewhat relevant or false if it's not relevant.
-        """
-
-        try:
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                response_format={"type": "json_object"},
-                messages=[
-                    {
-                        "role": "system",
-                        "content": """You are a helpful assistant that determines
-                        document relevance. Always respond with a JSON object.""",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                max_tokens=20,
-                n=1,
-                temperature=0.3,
-            )
-
-            content = cast(str, response.choices[0].message.content)
-            parsed_response = json.loads(content)
-
-            if "response" in parsed_response:
-                results[document_id] = parsed_response["response"]
-            else:
-                logger.error(
-                    f"Error: 'response' key not found in JSON for document {document_id}"
-                )
-                results[document_id] = False
-
-        except json.JSONDecodeError as e:
-            logger.error(f"Error decoding JSON for document {document_id}: {str(e)}")
-            results[document_id] = False
-        except Exception as e:
-            logger.error(f"Error processing document {document_id}: {str(e)}")
-            results[document_id] = False
-
-        if agentic and results[document_id]:
-            prompt = f"""
-            Given the following document blurb(s) and query,
-            explain WHY the content is relevant to the search term. Be concise but informative.
-
-            Document blurb(s):
-            ```
-            {combined_blurb}
-            ```
-
-            Query:
-            ```
-            {query}
-            ```
-
-            Provide a brief explanation of the content's relevance to the query, highlighting key information.
-            """
-
-            system_message = """
-            You are a sharp, insightful assistant that quickly grasps the essence of
-              content and its relevance to queries.
-            Your task is to provide brief yet informative explanations of why the given content matters for a given query.
-            Be direct and to the point, but include enough detail to be genuinely helpful.
-            Highlight the most relevant information or connections that make the content useful for the query.
-
-            IMPORTANT:
-            - Never start your response with phrases like "The document", "This text", or any similar references.
-            - Begin directly with the relevant information or insight.
-            - Aim for 1-2 short sentences or about 15-25 words.
-            - Focus on why the content is relevant to the specific query.
-
-            Examples:
-            - "Contains Q3 financial metrics, including revenue growth ."
-            - "Lists completed tasks from the past week."
-            - "Outlines recent AI breakthroughs in natural language processing."
-            """
-
-            try:
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {"role": "system", "content": system_message},
-                        {"role": "user", "content": prompt},
-                    ],
-                    max_tokens=50,
-                    n=1,
-                    temperature=0.4,
-                )
-
-                content = cast(str, response.choices[0].message.content)
-                if "not relevant" in content.lower():
-                    agentic_comments[document_id] = "Not relevant"
-                else:
-                    agentic_comments[document_id] = content
-            except Exception as e:
-                print(f"Issue with agentic search: {e}")
-                agentic_comments[document_id] = "Error in processing"
-
-    return results, agentic_comments
-
-
-# relevance, comments = evaluate_relevance(
-#         search_response, query=query_msg, agentic=query_req.agentic or False
-#     )
 def stream_answer_objects(
     query_req: DirectQARequest,
     user: User | None,
@@ -323,6 +182,7 @@ def stream_answer_objects(
         fast_llm=fast_llm,
         pruning_config=document_pruning_config,
         bypass_acl=bypass_acl,
+        evaluate_response=query_req.evaluate_response,
     )
 
     answer_config = AnswerStyleConfig(
@@ -444,8 +304,6 @@ def stream_search_answer(
             db_session=session,
         )
         for obj in objects:
-            print("JSON")
-            print(obj)
             yield get_json_line(obj.dict())
 
 

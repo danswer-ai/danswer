@@ -101,7 +101,7 @@
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: flowingShimmer 2s ease-out infinite;
+  animation: flowingShimmer 1.5s ease-out infinite;
 }
 
 @keyframes flowingShimmer {

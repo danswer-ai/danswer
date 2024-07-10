@@ -197,7 +197,9 @@ export const SearchSection = ({
       quotes,
     }));
   const updateDocs = (documents: DanswerDocument[]) => {
-    setSearchState("analyzing");
+    setTimeout(() => {
+      setSearchState("analyzing");
+    }, 1500);
 
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),

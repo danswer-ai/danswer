@@ -392,25 +392,26 @@ class Answer:
 
             if final_context_documents is None:
                 raise RuntimeError("SearchTool did not return final context documents")
-
             self._update_prompt_builder_for_search_tool(
                 prompt_builder, final_context_documents
             )
 
-            functions = [
-                FunctionCall(evaluate, (final_context, self.question, self.llm))
-                for final_context in final_context_documents
-            ]
+            evaluate_response = cast(SearchTool, tool).evaluate_response
+            if evaluate_response:
+                functions = [
+                    FunctionCall(evaluate, (final_context, self.question, self.llm))
+                    for final_context in final_context_documents
+                ]
 
-            results = run_functions_in_parallel(function_calls=functions)
+                results = run_functions_in_parallel(function_calls=functions)
 
-            amalgamated = {}
-            for result in results:
-                value = results[result]
-                key = list(value.keys())[0]
-                amalgamated[key] = value[key]
-            response = ToolResponse(id="evaluate_response", response=amalgamated)
-            yield response
+                amalgamated = {}
+                for result in results:
+                    value = results[result]
+                    key = list(value.keys())[0]
+                    amalgamated[key] = value[key]
+                response = ToolResponse(id="evaluate_response", response=amalgamated)
+                yield response
 
         elif tool.name() == ImageGenerationTool.NAME:
             img_urls = []
