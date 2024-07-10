@@ -1,10 +1,11 @@
 from uuid import UUID
 
+from sqlalchemy.orm import Session
+
 from danswer.db.chat import delete_chat_session
 from danswer.db.models import ChatFolder
 from danswer.db.models import ChatSession
 from danswer.utils.logger import setup_logger
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

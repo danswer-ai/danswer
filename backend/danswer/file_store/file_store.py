@@ -2,6 +2,8 @@ from abc import ABC
 from abc import abstractmethod
 from typing import IO
 
+from sqlalchemy.orm import Session
+
 from danswer.configs.constants import FileOrigin
 from danswer.db.models import PGFileStore
 from danswer.db.pg_file_store import create_populate_lobj
@@ -10,7 +12,6 @@ from danswer.db.pg_file_store import delete_pgfilestore_by_file_name
 from danswer.db.pg_file_store import get_pgfilestore_by_file_name
 from danswer.db.pg_file_store import read_lobj
 from danswer.db.pg_file_store import upsert_pgfilestore
-from sqlalchemy.orm import Session
 
 
 class FileStore(ABC):

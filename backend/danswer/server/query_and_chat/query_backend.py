@@ -1,3 +1,9 @@
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
+
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import DocumentSource
@@ -25,11 +31,6 @@ from danswer.server.query_and_chat.models import SourceTag
 from danswer.server.query_and_chat.models import TagResponse
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
 from danswer.utils.logger import setup_logger
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

@@ -3,6 +3,9 @@ from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
 
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import User
@@ -23,8 +26,8 @@ from danswer.search.retrieval.search_runner import retrieve_chunks
 from danswer.search.utils import inference_section_from_chunks
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
+
+logger = setup_logger()
 
 logger = setup_logger()
 

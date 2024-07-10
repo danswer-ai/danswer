@@ -1,5 +1,11 @@
 from datetime import datetime
 
+from fastapi import HTTPException
+from sqlalchemy import delete
+from sqlalchemy import desc
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.models import ConnectorCredentialPair
@@ -10,11 +16,6 @@ from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
-from fastapi import HTTPException
-from sqlalchemy import delete
-from sqlalchemy import desc
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

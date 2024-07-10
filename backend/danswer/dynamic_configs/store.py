@@ -5,13 +5,14 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import cast
 
+from filelock import FileLock
+from sqlalchemy.orm import Session
+
 from danswer.db.engine import SessionFactory
 from danswer.db.models import KVStore
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.dynamic_configs.interface import DynamicConfigStore
 from danswer.dynamic_configs.interface import JSON_ro
-from filelock import FileLock
-from sqlalchemy.orm import Session
 
 
 FILE_LOCK_TIMEOUT = 10

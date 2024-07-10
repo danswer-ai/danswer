@@ -3,6 +3,10 @@ from typing import Any
 from typing import cast
 from typing import Dict
 
+from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
+from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
+from googleapiclient import discovery  # type: ignore
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
@@ -26,9 +30,6 @@ from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
-from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
-from googleapiclient import discovery  # type: ignore
 
 logger = setup_logger()
 

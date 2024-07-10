@@ -7,6 +7,7 @@ from json import JSONDecodeError
 from typing import Optional
 
 import regex
+
 from danswer.chat.models import AnswerQuestionStreamReturn
 from danswer.chat.models import DanswerAnswer
 from danswer.chat.models import DanswerAnswerPiece
