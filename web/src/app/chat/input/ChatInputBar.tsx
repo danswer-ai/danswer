@@ -505,7 +505,7 @@ export function ChatInputBar({
               >
                 <SendIcon
                   className={`text-emphasis text-white !w-7 !h-7 p-1 rounded-full ${
-                    message ? "bg-neutral-700" : "bg-[#D7D7D7]"
+                    message ? "bg-background-solid" : "bg-[#D7D7D7]"
                   }`}
                 />
               </div>

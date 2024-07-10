@@ -137,7 +137,7 @@ export const SearchResultsDisplay = ({
                 onClick={() => performSweep()}
                 className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
                   !sweep
-                    ? "bg-green-500 text-neutral-800"
+                    ? "bg-green-500 text-solidDark"
                     : "bg-rose-700 text-lighter"
                 }`}
                 style={{

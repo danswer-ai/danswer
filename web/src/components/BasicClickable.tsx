@@ -53,7 +53,7 @@ export function EmphasizedClickable({
         text-sm
         p-1
         select-none
-        bg-neutral-100
+        bg-lighter
         hover:bg-background-weaker
         ${fullWidth ? "w-full" : ""}`}
     >

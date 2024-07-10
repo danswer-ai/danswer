@@ -47,7 +47,7 @@ export const AnimatedToggle = ({
       large
       content={
         <div className="bg-white my-auto p-6 rounded-lg w-full">
-          <h2 className="text-xl text-neutral-800 font-bold mb-2">
+          <h2 className="text-xl text-solidDark font-bold mb-2">
             Agentic Search
           </h2>
           <p className="text-solid text-sm mb-4">
@@ -55,9 +55,7 @@ export const AnimatedToggle = ({
             exactly what you're looking for.
           </p>
           <Divider />
-          <h2 className="text-xl text-neutral-800 font-bold mb-2">
-            Fast Search
-          </h2>
+          <h2 className="text-xl text-solidDark font-bold mb-2">Fast Search</h2>
           <p className="text-solid text-sm mb-4">
             Get quality results immediately, best suited for instant access to
             your documents.
@@ -78,7 +76,7 @@ export const AnimatedToggle = ({
           <div
             className={`
             w-10 h-6 flex items-center rounded-full p-1 transition-all duration-300 ease-in-out
-            ${isOn ? "bg-neutral-400" : "bg-background-subtle"}
+            ${isOn ? "bg-background-medium" : "bg-background-subtle"}
           `}
           >
             <div
@@ -209,7 +207,7 @@ export const FullSearchBar = ({
           >
             <SendIcon
               className={`text-emphasis text-white !w-7 !h-7 p-1 rounded-full ${
-                query ? "bg-neutral-700" : "bg-[#D7D7D7]"
+                query ? "bg-background-solid" : "bg-[#D7D7D7]"
               }`}
             />
           </button>

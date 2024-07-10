@@ -96,11 +96,11 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
         <div
           ref={ref}
           style={{ width: initialWidth }}
-          className={`ml-auto  rounded-l-lg relative border-l bg-neutral-100 sidebar z-50 absolute right-0 h-screen `}
+          className={`ml-auto  rounded-l-lg relative border-l bg-lighter sidebar z-50 absolute right-0 h-screen `}
         >
           <div className="flex-initial overflow-y-hidden flex flex-col h-screen pb-10">
             {popup}
-            <div className="pl-3 mx-2 pr-6 mt-3 flex text-neutral-800 flex-col text-2xl text-emphasis flex font-semibold">
+            <div className="pl-3 mx-2 pr-6 mt-3 flex text-solidDark flex-col text-2xl text-emphasis flex font-semibold">
               {dedupedDocuments.length} Documents
               <p className="text-sm font-semibold flex flex-wrap gap-x-2 text-dark mt-1">
                 Select to add to continuous context
@@ -168,7 +168,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
           </div>
           <div className="sticky bottom-4 w-full left-0  justify-center flex gap-x-4 ">
             <button
-              className=" bg-neutral-700 text-xs p-2 rounded text-light"
+              className=" bg-background-solid text-xs p-2 rounded text-light"
               onClick={() => closeSidebar()}
             >
               Save Changes
