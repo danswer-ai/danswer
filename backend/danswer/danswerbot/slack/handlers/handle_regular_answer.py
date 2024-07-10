@@ -332,7 +332,7 @@ def handle_regular_answer(
         raise RuntimeError("Failed to retrieve docs, cannot answer question.")
 
     top_docs = retrieval_info.top_documents
-    if not top_docs and should_respond_even_with_no_docs:
+    if not top_docs and not should_respond_even_with_no_docs:
         logger.error(
             f"Unable to answer question: '{answer.rephrase}' - no documents found"
         )
