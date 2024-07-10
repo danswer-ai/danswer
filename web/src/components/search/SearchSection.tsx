@@ -229,13 +229,18 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       messageId,
     }));
+
   const updateDocumentRelevance = (relevance: any) => {
     setRelevance(relevance);
+    setIsFetching(false);
+
+    setSearchState("input");
   };
   const updateComments = (comments: any) => {
     setComments(comments);
   };
   const finishedSearching = () => {
+    console.log("finish searching has been called");
     setSearchState("input");
   };
 
@@ -345,8 +350,6 @@ export const SearchSection = ({
       searchRequestStreamed(searchFnArgs),
       questionValidationStreamed(questionValidationArgs),
     ]);
-
-    setIsFetching(false);
   };
 
   // handle redirect if search page is disabled
@@ -530,13 +533,15 @@ export const SearchSection = ({
                   />
 
                   <div className="mt-6">
-                    {!(agenticResults && isFetching) ? (
+                    {!(agenticResults && isFetching) && (
                       <SearchResultsDisplay
                         comments={comments}
                         sweep={sweep}
                         agenticResults={agenticResults}
                         performSweep={performSweep}
-                        relevance={relevance}
+                        relevance={
+                          relevance ? relevance.relevance_summaries : undefined
+                        }
                         searchState={searchState}
                         searchResponse={searchResponse}
                         validQuestionResponse={validQuestionResponse}
@@ -549,10 +554,6 @@ export const SearchSection = ({
                             : null
                         }
                       />
-                    ) : (
-                      showAgenticDisclaimer && (
-                        <AgenticDisclaimer forceNonAgentic={forceNonAgentic} />
-                      )
                     )}
                   </div>
                 </div>

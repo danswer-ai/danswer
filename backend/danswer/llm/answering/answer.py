@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from typing import Any
 from typing import cast
 from uuid import uuid4
 
@@ -34,6 +35,7 @@ from danswer.llm.answering.stream_processing.quotes_processing import (
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import message_generator_to_string_generator
+from danswer.one_shot_answer.models import ThreadMessage
 from danswer.tools.custom.custom_tool_prompt_builder import (
     build_user_message_for_custom_tool_for_non_tool_calling_llm,
 )
@@ -59,6 +61,9 @@ from danswer.tools.tool_runner import ToolCallFinalResult
 from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.tools.tool_runner import ToolRunner
 from danswer.tools.utils import explicit_tool_calling_supported
+from danswer.utils.logger import setup_logger
+from danswer.utils.threadpool_concurrency import FunctionCall
+from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 
 
 def _get_answer_stream_processor(
@@ -79,6 +84,48 @@ def _get_answer_stream_processor(
 
 
 AnswerStream = Iterator[AnswerQuestionPossibleReturn | ToolCallKickoff | ToolResponse]
+
+
+logger = setup_logger()
+
+
+def evaluate(
+    top_doc: LlmDoc, query: ThreadMessage, llm: LLM
+) -> tuple[dict[str, Any], dict[str, str]]:
+    # Group documents by document_id
+
+    relevance = {}
+    results = {}
+    document_id = top_doc.document_id
+
+    prompt = f"""
+    Determine if this document is relevant to the search query:
+
+    Title: {top_doc.document_id.split("/")[-1]}
+    Blurb: {top_doc.blurb}
+    Query: {query}
+
+    Think through the following:
+    1. What are the key terms or concepts in the query?
+    2. Do these appear in the document title or blurb?
+    3. Is the document's main topic related to the query?
+    4. Would this document be useful to someone searching with this query?
+
+    Provide your chain of thought in a paragraph. Be concise but show your reasoning clearly.
+
+    Conclude with:
+    RESULT: True (if relevant)
+    RESULT: False (if not relevant)
+    """
+
+    content = "".join(message_generator_to_string_generator(llm.stream(prompt=prompt)))
+    if "result: true" in content.lower():
+        relevance["relevant"] = True
+    else:
+        relevance["relevant"] = False
+    relevance["content"] = content.split("RESULT")[0]
+    results[document_id] = relevance
+    return results
 
 
 class Answer:
@@ -349,6 +396,22 @@ class Answer:
             self._update_prompt_builder_for_search_tool(
                 prompt_builder, final_context_documents
             )
+
+            functions = [
+                FunctionCall(evaluate, (final_context, self.question, self.llm))
+                for final_context in final_context_documents
+            ]
+
+            results = run_functions_in_parallel(function_calls=functions)
+
+            amalgamated = {}
+            for result in results:
+                value = results[result]
+                key = list(value.keys())[0]
+                amalgamated[key] = value[key]
+            response = ToolResponse(id="evaluate_response", response=amalgamated)
+            yield response
+
         elif tool.name() == ImageGenerationTool.NAME:
             img_urls = []
             for response in tool_runner.tool_responses():

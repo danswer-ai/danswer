@@ -2,20 +2,13 @@ import { DanswerDocument } from "@/lib/search/interfaces";
 import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
 import { useState } from "react";
 import { PopupSpec } from "../admin/connectors/Popup";
-import { HoverPopup } from "@/components/HoverPopup";
 import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
-import { FiInfo, FiRadio, FiStar, FiTag } from "react-icons/fi";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
-import { LoadingAnimation } from "../Loading";
-import FunctionalLoader from "@/lib/search/Loader";
-import { FaCaretDown, FaCaretRight, FaRobot, FaStar } from "react-icons/fa";
-import {
-  CheckmarkIcon,
-  ChevronIcon,
-  StarIconSkeleton,
-  XIcon,
-} from "../icons/icons";
+import { BookIcon, CheckmarkIcon, LightBulbIcon, XIcon } from "../icons/icons";
+import { Relevance } from "./SearchResultsDisplay";
+import { FaStar } from "react-icons/fa";
+import { FiTag } from "react-icons/fi";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -158,7 +151,7 @@ interface DocumentDisplayProps {
   documentRank: number;
   isSelected: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;
-  relevance: any;
+  relevance?: Relevance;
   comments?: any;
   hide?: boolean;
   index?: number;
@@ -175,6 +168,8 @@ export const DocumentDisplay = ({
   setPopup,
 }: DocumentDisplayProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [alternativeToggled, setAlternativeToggled] = useState(false);
+
   return (
     <div
       key={document.semantic_identifier}
@@ -193,8 +188,10 @@ export const DocumentDisplay = ({
         {
           !hide &&
             relevance &&
+            // &&
             // #NOTE: Version 1
-            // (relevance[document.document_id] ? (
+
+            // (relevance[document.document_id] && relevance[document.document_id].relevant ? (
             //   <CheckmarkIcon className="h-4 w-4 bg-black text-xs text-emphasis bg-hover-emphasis rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
             // ) : (
             //   <XIcon className="h-4 w-4 text-xs text-emphasis bg-hover rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
@@ -202,7 +199,7 @@ export const DocumentDisplay = ({
 
             // #NOTE: Version 2
 
-            relevance[document.document_id] && (
+            relevance[document.document_id].relevant && (
               <FaStar className="h-full !w-4 !h-4   text-xs text-accent  rounded w-fit my-auto select-none ml-auto mr-2" />
             )
 
@@ -218,12 +215,6 @@ export const DocumentDisplay = ({
           // ) : (
           //   <div className=" w-1 h-6 bg-red-600 text-xs text-emphasis rounded-sm my-auto select-none ml-auto mr-2" />
           // ))} */}
-
-        {!hide && !relevance && (
-          <div className="text-xs text-emphasis rounded p-0.5 w-fit my-auto overflow-y-auto select-none ml-auto mr-2">
-            <FunctionalLoader />
-          </div>
-        )}
       </div>
 
       <div
@@ -241,7 +232,7 @@ export const DocumentDisplay = ({
               {document.semantic_identifier || document.document_id}
             </p>
           </a>
-          <div className="ml-auto">
+          <div className="ml-auto flex gap-x-2 ">
             {isHovered && messageId && (
               <DocumentFeedbackBlock
                 documentId={document.document_id}
@@ -250,16 +241,36 @@ export const DocumentDisplay = ({
                 setPopup={setPopup}
               />
             )}
+
+            {messageId && (isHovered || alternativeToggled) && (
+              <button
+                onClick={() =>
+                  setAlternativeToggled(
+                    (alternativeToggled) => !alternativeToggled
+                  )
+                }
+              >
+                {alternativeToggled ? (
+                  <LightBulbIcon className="text-blue-400 h-4 w-4 cursor-pointer" />
+                ) : (
+                  <BookIcon className="text-blue-400" />
+                )}
+              </button>
+            )}
           </div>
         </div>
         <div className="mt-1">
           <DocumentMetadataBlock document={document} />
         </div>
         <p className="pl-1 pt-2 pb-3 break-words">
-          {buildDocumentSummaryDisplay(
-            document.match_highlights,
-            document.blurb
-          )}
+          {alternativeToggled
+            ? relevance
+              ? relevance[document.document_id].content
+              : " "
+            : buildDocumentSummaryDisplay(
+                document.match_highlights,
+                document.blurb
+              )}
         </p>
       </div>
     </div>
@@ -279,6 +290,8 @@ export const AgenticDocumentDisplay = ({
 }: DocumentDisplayProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showContext, setShowContext] = useState(false);
+
+  const [alternativeToggled, setAlternativeToggled] = useState(false);
 
   return (
     <div
@@ -307,7 +320,7 @@ export const AgenticDocumentDisplay = ({
               {document.semantic_identifier || document.document_id}
             </p>
           </a>
-          <div className="ml-auto">
+          <div className="ml-auto flex gap-x-2">
             {isHovered && messageId && (
               <DocumentFeedbackBlock
                 documentId={document.document_id}
@@ -316,38 +329,35 @@ export const AgenticDocumentDisplay = ({
                 setPopup={setPopup}
               />
             )}
+            {messageId && (isHovered || alternativeToggled) && (
+              <button
+                onClick={() =>
+                  setAlternativeToggled(
+                    (alternativeToggled) => !alternativeToggled
+                  )
+                }
+              >
+                {!alternativeToggled ? (
+                  <LightBulbIcon className="text-blue-400 h-4 w-4 cursor-pointer" />
+                ) : (
+                  <BookIcon className="text-blue-400" />
+                )}
+              </button>
+            )}
           </div>
         </div>
         <div className="mt-1">
           <DocumentMetadataBlock document={document} />
         </div>
         <div className="pt-2 break-words flex gap-x-2">
-          <p className="mb-auto flex">
-            <FaRobot className="h-4 w-4 flex-none" />
-            {":"}
+          <p>
+            {alternativeToggled
+              ? buildDocumentSummaryDisplay(
+                  document.match_highlights,
+                  document.blurb
+                )
+              : relevance && relevance[document.document_id].content}
           </p>
-          <p>{comments[document.document_id]}</p>
-        </div>
-        <div className="pt-2 break-words flex gap-x-2">
-          <button
-            className="flex"
-            onClick={() => setShowContext((showContext) => !showContext)}
-          >
-            {showContext ? (
-              <FaCaretRight className="dh-4 w-4" />
-            ) : (
-              <FaCaretDown className="-my-2 h-4 w-4" />
-            )}
-          </button>
-
-          {showContext && (
-            <p className="pl-1 break-words">
-              {buildDocumentSummaryDisplay(
-                document.match_highlights,
-                document.blurb
-              )}
-            </p>
-          )}
         </div>
       </div>
     </div>

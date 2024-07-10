@@ -48,7 +48,7 @@ class LLMRelevanceFilterResponse(BaseModel):
 
 
 class LLMRelevanceSummaryResponse(BaseModel):
-    relevance_summaries: dict[int, str]
+    relevance_summaries: dict[str, dict]
 
 
 class DanswerAnswerPiece(BaseModel):

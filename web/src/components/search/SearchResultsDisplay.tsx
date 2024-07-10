@@ -26,6 +26,17 @@ const getSelectedDocumentIds = (
   return selectedDocumentIds;
 };
 
+interface DocumentContent {
+  relevant: boolean;
+  content: string;
+}
+
+export interface Relevance {
+  [url: string]: DocumentContent;
+}
+
+// type SearchResultsType = DocumentSearchResults;
+
 export const SearchResultsDisplay = ({
   agenticResults,
   searchResponse,
@@ -48,7 +59,7 @@ export const SearchResultsDisplay = ({
   isFetching: boolean;
   defaultOverrides: SearchDefaultOverrides;
   personaName?: string | null;
-  relevance: any;
+  relevance?: Relevance;
   comments: any;
 }) => {
   useEffect(() => {
@@ -173,7 +184,11 @@ export const SearchResultsDisplay = ({
                 <AgenticDocumentDisplay
                   comments={comments}
                   index={ind}
-                  hide={sweep && relevance && !relevance[document.document_id]}
+                  hide={
+                    sweep &&
+                    relevance &&
+                    !relevance[document.document_id].relevant
+                  }
                   relevance={relevance}
                   key={document.document_id}
                   document={document}
@@ -185,7 +200,11 @@ export const SearchResultsDisplay = ({
               ) : (
                 <DocumentDisplay
                   index={ind}
-                  hide={sweep && relevance && !relevance[document.document_id]}
+                  hide={
+                    sweep &&
+                    relevance &&
+                    !relevance[document.document_id].relevant
+                  }
                   relevance={relevance}
                   key={document.document_id}
                   document={document}

@@ -69,6 +69,7 @@ export const searchRequestStreamed = async ({
     let previousPartialChunk: string | null = null;
     while (true) {
       const rawChunk = await reader?.read();
+
       if (!rawChunk) {
         throw new Error("Unable to process chunk");
       }
@@ -85,13 +86,23 @@ export const searchRequestStreamed = async ({
         | DocumentInfoPacket
         | LLMRelevanceFilterPacket
         | BackendMessage
+        | any
       >(decoder.decode(value, { stream: true }), previousPartialChunk);
       if (!completedChunks.length && !partialChunk) {
         break;
       }
       previousPartialChunk = partialChunk as string | null;
       completedChunks.forEach((chunk) => {
+        // console.log("rawChunk")
+        // console.log(chunk)
+
         // check for answer peice / end of answer
+
+        if (Object.hasOwn(chunk, "relevance_summaries")) {
+          updateDocumentRelevance(chunk);
+          console.log(chunk);
+        }
+
         if (Object.hasOwn(chunk, "answer_piece")) {
           const answerPiece = (chunk as AnswerPiecePacket).answer_piece;
           if (answerPiece !== null) {
@@ -155,11 +166,12 @@ export const searchRequestStreamed = async ({
           updateQuotes(quotes);
           return;
         }
+        console.log(chunk);
 
         // Is a bakcend message- handle all backend message related updates here
-        if (Object.hasOwn(chunk, "relevance")) {
+        if (Object.hasOwn(chunk, "message_id")) {
           const backendChunk = chunk as BackendMessage;
-          updateDocumentRelevance(backendChunk.relevance);
+
           updateComments(backendChunk.comments);
           updateMessageId(backendChunk.message_id);
           finishedSearching();

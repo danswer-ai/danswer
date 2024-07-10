@@ -15,6 +15,7 @@ from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import LLMRelevanceFilterResponse
+from danswer.chat.models import LLMRelevanceSummaryResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
@@ -99,6 +100,7 @@ def evaluate_relevance(
 
         prompt = f"""
         Given the following document blurb(s) and query, determine if the document is relevant to the search term.
+        The documetn is
 
         Document blurb(s):
         ```
@@ -210,6 +212,9 @@ def evaluate_relevance(
     return results, agentic_comments
 
 
+# relevance, comments = evaluate_relevance(
+#         search_response, query=query_msg, agentic=query_req.agentic or False
+#     )
 def stream_answer_objects(
     query_req: DirectQARequest,
     user: User | None,
@@ -344,7 +349,6 @@ def stream_answer_objects(
 
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
     dropped_inds: list[int] = []
-    search_response = []
 
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
         # for one-shot flow, don't currently do anything with these
@@ -371,7 +375,6 @@ def stream_answer_objects(
                     for db_search_doc in reference_db_search_docs
                 ]
 
-                search_response = response_docs
                 initial_response = QADocsResponse(
                     rephrased_query=rephrased_query,
                     top_documents=response_docs,
@@ -397,12 +400,13 @@ def stream_answer_objects(
                 yield LLMRelevanceFilterResponse(relevant_chunk_indices=packet.response)
             elif packet.id == SEARCH_DOC_CONTENT_ID:
                 yield packet.response
+            elif packet.id == "evaluate_response":
+                evaluation_response = LLMRelevanceSummaryResponse(
+                    relevance_summaries=packet.response
+                )
+                yield evaluation_response
         else:
             yield packet
-
-    relevance, comments = evaluate_relevance(
-        search_response, query=query_msg, agentic=query_req.agentic or False
-    )
 
     # Saving Gen AI answer and responding with message info
     gen_ai_response_message = create_new_chat_message(
@@ -419,7 +423,7 @@ def stream_answer_objects(
     )
 
     msg_detail_response = translate_db_message_to_chat_message_detail(
-        gen_ai_response_message, relevance=relevance, comments=comments
+        gen_ai_response_message
     )
     yield msg_detail_response
 
@@ -440,6 +444,8 @@ def stream_search_answer(
             db_session=session,
         )
         for obj in objects:
+            print("JSON")
+            print(obj)
             yield get_json_line(obj.dict())
 
 
