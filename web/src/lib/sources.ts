@@ -20,6 +20,11 @@ import {
   ZendeskIcon,
   MediaWikiIcon,
   WikipediaIcon,
+  FileIcon,
+  S3Icon,
+  R2Icon,
+  GoogleStorageIcon,
+  OCIStorageIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import { SourceCategory, SourceMetadata } from "./search/interfaces";
@@ -142,6 +147,36 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Clickup",
     category: SourceCategory.AppConnection,
   },
+  salesforce: {
+    icon: GlobeIcon,
+    displayName: "Salesforce",
+    category: SourceCategory.AppConnection,
+  },
+  file: {
+    icon: FileIcon,
+    displayName: "File",
+    category: SourceCategory.AppConnection,
+  },
+  s3: {
+    icon: S3Icon,
+    displayName: "File",
+    category: SourceCategory.AppConnection,
+  },
+  r2: {
+    icon: R2Icon,
+    displayName: "File",
+    category: SourceCategory.AppConnection,
+  },
+  google_cloud_storage: {
+    icon: GoogleStorageIcon,
+    displayName: "File",
+    category: SourceCategory.AppConnection,
+  },
+  oci_storage: {
+    icon: OCIStorageIcon,
+    displayName: "File",
+    category: SourceCategory.AppConnection,
+  }
 };
 
 function fillSourceMetadata(

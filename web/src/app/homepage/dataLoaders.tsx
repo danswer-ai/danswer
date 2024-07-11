@@ -6,7 +6,6 @@ import onedrive from "./assets/onedrive-logo.webp";
 import googleCloud from "./assets/google_cloud.webp";
 import sharepoint from "./assets/sharepoint.svg";
 import bigquery from "./assets/bigquery-logo-no-letters.webp";
-import slack from "./assets/slack.webp";
 import azure from "./assets/azure-no-letters.webp";
 import notion from "./assets/notion.webp";
 import snowflake from "./assets/snowflake.svg";
@@ -18,7 +17,6 @@ const icons = [
   googleCloud,
   sharepoint,
   bigquery,
-  slack,
   azure,
   notion,
   snowflake,

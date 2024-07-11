@@ -433,16 +433,7 @@ configMap:
   EXPERIMENTAL_CHECKPOINTING_ENABLED: ""
   CONFLUENCE_CONNECTOR_LABELS_TO_SKIP: ""
   JIRA_API_VERSION: ""
-  GONG_CONNECTOR_START_TIME: ""
   NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP: ""
-  # DanswerBot SlackBot Configs
-  # DANSWER_BOT_SLACK_APP_TOKEN: ""
-  # DANSWER_BOT_SLACK_BOT_TOKEN: ""
-  DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER: ""
-  DANSWER_BOT_DISPLAY_ERROR_MSGS: ""
-  DANSWER_BOT_RESPOND_EVERY_CHANNEL: ""
-  DANSWER_BOT_DISABLE_COT: ""  # Currently unused
-  NOTIFY_SLACKBOT_NO_ANSWER: ""
   # Logging
   # Optional Telemetry, please keep it on (nothing sensitive is collected)? <3
   # https://docs.danswer.dev/more/telemetry

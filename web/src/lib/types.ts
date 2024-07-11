@@ -41,14 +41,20 @@ export type ValidSources =
   | "hubspot"
   | "google_sites"
   | "dropbox"
+  | "salesforce"
   | "sharepoint"
   | "teams"
   | "zendesk"
   | "discourse"
   | "clickup"
   | "wikipedia"
-  | "mediawiki";
-
+  | "file"
+  | "mediawiki"
+  | "s3"
+  | "r2"
+  | "google_cloud_storage"
+  | "oci_storage";
+  
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
   | "success"
@@ -123,8 +129,16 @@ export interface JiraConfig {
   comment_email_blacklist?: string[];
 }
 
+export interface SalesforceConfig {
+  requested_objects?: string[];
+}
+
 export interface SharepointConfig {
   sites?: string[];
+}
+
+export interface AxeroConfig {
+  spaces?: string[];
 }
 
 export interface TeamsConfig {
@@ -143,6 +157,10 @@ export interface TeamsConfig {
 export interface ProductboardConfig {}
 
 export interface GuruConfig {}
+
+export interface FileConfig {
+  file_locations: string[];
+}
 
 export interface NotionConfig {
   root_page_id?: string;
@@ -164,6 +182,30 @@ export interface GoogleSitesConfig {
 export interface ZendeskConfig {}
 
 export interface DropboxConfig {}
+
+export interface S3Config {
+  bucket_type: "s3";
+  bucket_name: string;
+  prefix: string;
+}
+
+export interface R2Config {
+  bucket_type: "r2";
+  bucket_name: string;
+  prefix: string;
+}
+
+export interface GCSConfig {
+  bucket_type: "google_cloud_storage";
+  bucket_name: string;
+  prefix: string;
+}
+
+export interface OCIConfig {
+  bucket_type: "oci_storage";
+  bucket_name: string;
+  prefix: string;
+}
 
 export interface MediaWikiBaseConfig {
   connector_name: string;
@@ -289,11 +331,6 @@ export interface GuruCredentialJson {
   guru_user_token: string;
 }
 
-export interface GongCredentialJson {
-  gong_access_key: string;
-  gong_access_key_secret: string;
-}
-
 export interface HubSpotCredentialJson {
   hubspot_access_token: string;
 }
@@ -313,6 +350,17 @@ export interface DropboxCredentialJson {
   dropbox_access_token: string;
 }
 
+export interface R2CredentialJson {
+  account_id: string;
+  r2_access_key_id: string;
+  r2_secret_access_key: string;
+}
+
+export interface S3CredentialJson {
+  aws_access_key_id: string;
+  aws_secret_access_key: string;
+}
+
 export interface GCSCredentialJson {
   access_key_id: string;
   secret_access_key: string;
@@ -323,6 +371,12 @@ export interface OCICredentialJson {
   region: string;
   access_key_id: string;
   secret_access_key: string;
+}
+
+export interface SalesforceCredentialJson {
+  sf_username: string;
+  sf_password: string;
+  sf_security_token: string;
 }
 
 export interface SharepointCredentialJson {
