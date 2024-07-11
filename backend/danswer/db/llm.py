@@ -17,21 +17,15 @@ def upsert_cloud_embedding_provider(
         .filter_by(name=provider.name)
         .first()
     )
-
     if existing_provider:
-        # Update existing provider
         for key, value in provider.dict().items():
             setattr(existing_provider, key, value)
-
     else:
-        # Create new provider
         new_provider = CloudEmbeddingProviderModel(**provider.dict())
         db_session.add(new_provider)
         existing_provider = new_provider
-
     db_session.commit()
     db_session.refresh(existing_provider)
-
     return CloudEmbeddingProvider.from_request(existing_provider)
 
 

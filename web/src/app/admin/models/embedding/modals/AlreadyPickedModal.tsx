@@ -4,7 +4,6 @@ import { Button, Text } from "@tremor/react";
 
 import { CloudEmbeddingModel } from "../components/types";
 
-// 1. Model Provider Not Configured
 export function AlreadyPickedModal({
   model,
   onClose,

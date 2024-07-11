@@ -96,16 +96,13 @@ class FullLLMProvider(LLMProvider):
 
 
 class TestEmbeddingRequest(BaseModel):
-    # provider level
     provider: str
     api_key: str | None = None
-    custom_config: dict[str, str] | None = None
 
 
 class CloudEmbeddingProvider(BaseModel):
     name: str
     api_key: str | None = None
-    custom_config: dict[str, str] | None = None
     default_model_id: int | None = None
     id: int
 
@@ -117,6 +114,5 @@ class CloudEmbeddingProvider(BaseModel):
             id=cloud_provider_model.id,
             name=cloud_provider_model.name,
             api_key=cloud_provider_model.api_key,
-            custom_config=cloud_provider_model.custom_config,
             default_model_id=cloud_provider_model.default_model_id,
         )

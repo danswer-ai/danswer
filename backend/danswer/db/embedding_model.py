@@ -50,10 +50,7 @@ def get_model_id_from_name(
     query = select(CloudEmbeddingProvider).where(
         CloudEmbeddingProvider.name == embedding_provider_name
     )
-
-    result = db_session.execute(query)
-    provider = result.scalars().first()
-
+    provider = db_session.execute(query).scalars().first()
     return provider.id if provider else None
 
 

@@ -136,7 +136,7 @@ export function ChatInputBar({
       return;
     }
 
-    // If looking for an assistant...å
+    // If looking for an assistant...
     const match = text.match(/(?:\s|^)@(\w*)$/);
     if (match) {
       setShowSuggestions(true);

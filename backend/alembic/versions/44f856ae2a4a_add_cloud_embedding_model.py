@@ -22,7 +22,6 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("api_key", sa.LargeBinary(), nullable=True),
-        sa.Column("custom_config", sa.JSON(), nullable=True),
         sa.Column("default_model_id", sa.Integer(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("name"),

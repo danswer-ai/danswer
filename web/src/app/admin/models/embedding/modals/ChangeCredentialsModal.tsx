@@ -81,7 +81,6 @@ export function ChangeCredentialsModal({
         body: JSON.stringify({
           provider: provider.name.toLowerCase().split(" ")[0],
           api_key: apiKey,
-          default_model_id: provider.name,
         }),
       });
 

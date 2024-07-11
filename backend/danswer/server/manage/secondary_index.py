@@ -77,8 +77,6 @@ def set_new_embedding_model(
             db_session=db_session,
         )
 
-    # When you get current emebdding model (or before) - get the cloud provider id (from teh model name)
-
     new_model = create_embedding_model(
         model_details=embed_model_details,
         db_session=db_session,

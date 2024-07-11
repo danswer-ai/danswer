@@ -79,11 +79,6 @@ export function ProviderCreationModal({
 
     try {
       const customConfig = Object.fromEntries(values.custom_config);
-      const body = JSON.stringify({
-        api_key: values.api_key,
-        provider: values.name.toLowerCase().split(" ")[0],
-        default_model_id: values.name,
-      });
 
       const initialResponse = await fetch("/api/admin/llm/test-embedding", {
         method: "POST",
@@ -91,7 +86,6 @@ export function ProviderCreationModal({
         body: JSON.stringify({
           provider: values.name.toLowerCase().split(" ")[0],
           api_key: values.api_key,
-          default_model_id: values.name,
         }),
       });
 

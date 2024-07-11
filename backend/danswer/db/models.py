@@ -19,7 +19,6 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import func
 from sqlalchemy import Index
 from sqlalchemy import Integer
-from sqlalchemy import JSON
 from sqlalchemy import Sequence
 from sqlalchemy import String
 from sqlalchemy import Text
@@ -930,7 +929,6 @@ class CloudEmbeddingProvider(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True)
     api_key: Mapped[str | None] = mapped_column(EncryptedString())
-    custom_config: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)
     default_model_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("embedding_model.id"), nullable=True
     )

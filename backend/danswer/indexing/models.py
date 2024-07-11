@@ -25,10 +25,12 @@ class BaseChunk(BaseModel):
     chunk_id: int
     blurb: str  # The first sentence(s) of the first Section of the chunk
     content: str
-    source_links: dict[
-        int, str
-    ] | None  # Holds the link and the offsets into the raw Chunk text
-    section_continuation: bool  # True if this Chunk's start is not at the start of a Section
+    source_links: (
+        dict[int, str] | None
+    )  # Holds the link and the offsets into the raw Chunk text
+    section_continuation: (
+        bool  # True if this Chunk's start is not at the start of a Section
+    )
 
 
 class DocAwareChunk(BaseChunk):
@@ -86,7 +88,6 @@ class EmbeddingModelDetail(BaseModel):
     model_dim: int
     normalize: bool
     cloud_provider_id: int | None = None
-    cloud_provider_name: str | None = None
     query_prefix: str | None
     passage_prefix: str | None
 

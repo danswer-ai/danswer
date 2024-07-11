@@ -42,7 +42,6 @@ class EmbeddingProvider(Enum):
     VERTEX = "vertex"
 
 
-# class CloudEmbedding(BaseEmbedding):
 class CloudEmbedding:
     def __init__(self, api_key: str, provider: str, model: str | None = None):
         self.api_key = api_key
