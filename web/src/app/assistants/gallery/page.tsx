@@ -59,6 +59,7 @@ export default async function GalleryPage({
             currentChatSession={null}
             folders={folders}
             openedFolders={openedFolders}
+            openSidebar={false}
           />
 
           <div
