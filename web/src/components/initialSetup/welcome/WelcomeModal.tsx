@@ -249,15 +249,6 @@ export function _WelcomeModal({ user }: { user: User | null }) {
               setSelectedFlow("chat");
             }}
           />
-
-          {/* TODO: add a Slack option here */}
-          {/* <Divider />
-          <UsageTypeSection
-            title="AI-powered Slack Assistant"
-            description="If you're looking to setup a bot to auto-answer questions in Slack"
-            callToAction="Connect your company knowledge!"
-            link="/admin/add-connector"
-          /> */}
         </>
       );
   }
