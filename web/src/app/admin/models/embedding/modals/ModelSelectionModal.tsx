@@ -1,6 +1,9 @@
 import { Modal } from "@/components/Modal";
 import { Button, Text, Callout } from "@tremor/react";
-import { EmbeddingModelDescriptor } from "../components/types";
+import {
+  EmbeddingModelDescriptor,
+  HostedEmbeddingModel,
+} from "../components/types";
 
 export function ModelSelectionConfirmationModal({
   selectedModel,
@@ -8,7 +11,7 @@ export function ModelSelectionConfirmationModal({
   onConfirm,
   onCancel,
 }: {
-  selectedModel: EmbeddingModelDescriptor;
+  selectedModel: HostedEmbeddingModel;
   isCustom: boolean;
   onConfirm: () => void;
   onCancel: () => void;

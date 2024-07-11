@@ -6,7 +6,7 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import { Button, Text, Title } from "@tremor/react";
 import { FiPackage } from "react-icons/fi";
 import useSWR, { mutate } from "swr";
-import { ModelOption } from "./components/ModelSelector";
+import { ModelOption, ModelPreview } from "./components/ModelSelector";
 import { useState } from "react";
 import { ReindexingProgressTable } from "./components/ReindexingProgressTable";
 import { Modal } from "@/components/Modal";
@@ -16,10 +16,8 @@ import {
   AVAILABLE_CLOUD_PROVIDERS,
   AVAILABLE_MODELS,
   INVALID_OLD_MODEL,
-  fillOutEmeddingModelDescriptor,
+  HostedEmbeddingModel,
   EmbeddingModelDescriptor,
-  EnrichedCloudEmbeddingModel,
-  FullEmbeddingModelDescriptor,
 } from "./components/types";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Connector, ConnectorIndexingStatus } from "@/lib/types";
@@ -61,7 +59,7 @@ function Main() {
 
   // Open Model based modals
   const [showTentativeOpenProvider, setShowTentativeOpenProvider] =
-    useState<EmbeddingModelDescriptor | null>(null);
+    useState<HostedEmbeddingModel | null>(null);
 
   // Enabled / unenabled providers
   const [newEnabledProviders, setNewEnabledProviders] = useState<string[]>([]);
@@ -79,7 +77,7 @@ function Main() {
     data: currentEmeddingModel,
     isLoading: isLoadingCurrentModel,
     error: currentEmeddingModelError,
-  } = useSWR<EmbeddingModelDescriptor>(
+  } = useSWR<CloudEmbeddingModel | HostedEmbeddingModel | null>(
     "/api/secondary-index/get-current-embedding-model",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
@@ -94,7 +92,7 @@ function Main() {
     data: futureEmbeddingModel,
     isLoading: isLoadingFutureModel,
     error: futureEmeddingModelError,
-  } = useSWR<EmbeddingModelDescriptor | null>(
+  } = useSWR<CloudEmbeddingModel | HostedEmbeddingModel | null>(
     "/api/secondary-index/get-secondary-embedding-model",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
@@ -114,15 +112,15 @@ function Main() {
   );
 
   const onConfirm = async (
-    model: CloudEmbeddingModel | EmbeddingModelDescriptor
+    model: CloudEmbeddingModel | HostedEmbeddingModel
   ) => {
-    let newModel: EnrichedCloudEmbeddingModel;
+    let newModel: EmbeddingModelDescriptor;
 
     if ("name" in model) {
       // This is a CloudEmbeddingModel
       newModel = {
         ...model,
-        model_name: model.model_name || model.name,
+        model_name: model.model_name,
         cloud_provider_name: model.cloud_provider_name,
         // cloud_provider_id: model.cloud_provider_id || 0,
       };
@@ -130,11 +128,8 @@ function Main() {
       // This is an EmbeddingModelDescriptor
       newModel = {
         ...model,
-        name: model.model_name!,
+        model_name: model.model_name!,
         description: "",
-        pricePerMillion: 0,
-        mtebScore: 0,
-        maxContext: 0,
         cloud_provider_name: null,
       };
     }
@@ -215,18 +210,19 @@ function Main() {
       provider.embedding_models.map((model) => ({
         ...model,
         cloud_provider_id: provider.id,
-        model_name: model.name, // Ensure model_name is set for consistency
+        model_name: model.model_name, // Ensure model_name is set for consistency
       }))
   );
 
-  const currentModel: FullEmbeddingModelDescriptor | CloudEmbeddingModel =
+  const currentModel: CloudEmbeddingModel | HostedEmbeddingModel =
     AVAILABLE_MODELS.find((model) => model.model_name === currentModelName) ||
     AVAILABLE_CLOUD_PROVIDERS_FLATTENED.find(
       (model) => model.model_name === currentEmeddingModel.model_name
-    ) ||
-    fillOutEmeddingModelDescriptor(currentEmeddingModel);
+    )!;
+  // ||
+  // fillOutEmeddingModelDescriptor(currentEmeddingModel);
 
-  const onSelectOpenSource = async (model: EmbeddingModelDescriptor) => {
+  const onSelectOpenSource = async (model: HostedEmbeddingModel) => {
     if (currentEmeddingModel?.model_name === INVALID_OLD_MODEL) {
       await onConfirmSelection(model);
     } else {
@@ -346,10 +342,7 @@ function Main() {
         <>
           <Title className="mt-8 mb-2">Current Embedding Model</Title>
           <Text>
-            <ModelOption
-              model={currentModel}
-              providers={AVAILABLE_CLOUD_PROVIDERS}
-            />
+            <ModelPreview model={currentModel} />
           </Text>
         </>
       ) : (

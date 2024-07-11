@@ -38,10 +38,15 @@ def set_new_embedding_model(
     Gives an error if the same model name is used as the current or secondary index
     """
     print("request")
+    if embed_model_details.cloud_provider_name is None:
+        raise RuntimeError("No Cloud Name exists")
 
     cloud_id = get_model_id_from_name(
         db_session, embed_model_details.cloud_provider_name
     )
+    if cloud_id is None:
+        raise RuntimeError("No Cloud id exists")
+
     embed_model_details.cloud_provider_id = cloud_id
 
     current_model = get_current_db_embedding_model(db_session)

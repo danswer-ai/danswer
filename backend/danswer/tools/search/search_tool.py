@@ -218,9 +218,9 @@ class SearchTool(Tool):
                     self.retrieval_options.filters if self.retrieval_options else None
                 ),
                 persona=self.persona,
-                offset=self.retrieval_options.offset
-                if self.retrieval_options
-                else None,
+                offset=(
+                    self.retrieval_options.offset if self.retrieval_options else None
+                ),
                 limit=self.retrieval_options.limit if self.retrieval_options else None,
                 chunks_above=self.chunks_above,
                 chunks_below=self.chunks_below,

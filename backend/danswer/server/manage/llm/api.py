@@ -23,8 +23,7 @@ from danswer.llm.llm_provider_options import WellKnownLLMProviderDescriptor
 from danswer.llm.utils import test_llm
 from danswer.search.enums import EmbedTextType
 from danswer.search.search_nlp_models import EmbeddingModel
-from danswer.server.manage.llm.models import CloudEmbeddingProviderCreate
-from danswer.server.manage.llm.models import FullCloudEmbeddingProvider
+from danswer.server.manage.llm.models import CloudEmbeddingProvider
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderDescriptor
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
@@ -42,14 +41,11 @@ admin_router = APIRouter(prefix="/admin/llm")
 basic_router = APIRouter(prefix="/llm")
 
 
-# def test_embed():
-
-
 @admin_router.post("/test-embedding")
 def test_embedding_configuration(
     test_llm_request: TestEmbeddingRequest,
     _: User | None = Depends(current_admin_user),
-) -> None:
+) -> dict[str, bool | int]:
     try:
         test_model = EmbeddingModel(
             server_host=MODEL_SERVER_HOST,
@@ -150,9 +146,9 @@ def list_llm_providers(
 def list_embedding_providers(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> list[FullCloudEmbeddingProvider]:
+) -> list[CloudEmbeddingProvider]:
     return [
-        FullCloudEmbeddingProvider.from_request(embedding_provider_model)
+        CloudEmbeddingProvider.from_request(embedding_provider_model)
         for embedding_provider_model in fetch_existing_embedding_providers(db_session)
     ]
 
@@ -227,8 +223,8 @@ def list_embedding_provider_basics(
 
 @admin_router.put("/embedding-provider")
 def put_cloud_embedding_provider(
-    provider: CloudEmbeddingProviderCreate,
+    provider: CloudEmbeddingProvider,
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> FullCloudEmbeddingProvider:
+) -> CloudEmbeddingProvider:
     return upsert_cloud_embedding_provider(db_session, provider)

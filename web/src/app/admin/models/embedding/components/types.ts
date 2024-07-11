@@ -6,6 +6,8 @@ import {
   VoyageIcon,
 } from "@/components/icons/icons";
 
+// Cloud Provider (not needed for hosted ones)
+
 export type ProviderId = "openai" | "cohere" | "voyage" | "vertex";
 
 export interface CloudEmbeddingProvider {
@@ -27,43 +29,45 @@ export interface CloudEmbeddingProvider {
   default_model?: CloudEmbeddingModel;
 }
 
-export interface FullEmbeddingModelResponse {
-  current_model_name: string;
-  secondary_model_name: string | null;
-}
-
+// Embedding Models
 export interface EmbeddingModelDescriptor {
   model_name?: string;
   model_dim?: number;
   normalize?: boolean;
   query_prefix?: string;
   passage_prefix?: string;
+  cloud_provider_name?: string | null;
+  description: string;
 }
 
 export interface CloudEmbeddingModel extends EmbeddingModelDescriptor {
-  name: string;
-  description: string;
   cloud_provider_name: string | null;
   pricePerMillion: number;
   enabled?: boolean;
   mtebScore: number;
   maxContext: number;
-  notes?: string;
 }
 
-export interface EnrichedCloudEmbeddingModel
-  extends CloudEmbeddingModel,
-    EmbeddingModelDescriptor {
-  model_name?: string;
-}
-
-export interface FullEmbeddingModelDescriptor extends EmbeddingModelDescriptor {
-  description: string;
-  isDefault?: boolean;
+export interface HostedEmbeddingModel extends EmbeddingModelDescriptor {
   link?: string;
+  model_dim: number;
+  normalize: boolean;
+  query_prefix: string;
+  passage_prefix: string;
+  isDefault?: boolean;
 }
 
-export const AVAILABLE_MODELS: FullEmbeddingModelDescriptor[] = [
+// Responses
+export interface FullEmbeddingModelResponse {
+  current_model_name: string;
+  secondary_model_name: string | null;
+}
+
+export interface CloudEmbeddingProviderFull extends CloudEmbeddingProvider {
+  configured: boolean;
+}
+
+export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
   {
     model_name: "intfloat/e5-base-v2",
     model_dim: 768,
@@ -107,10 +111,6 @@ export const AVAILABLE_MODELS: FullEmbeddingModelDescriptor[] = [
   },
 ];
 
-export interface CloudEmbeddingProviderFull extends CloudEmbeddingProvider {
-  configured: boolean;
-}
-
 export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
   {
     id: 0,
@@ -124,24 +124,20 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     costslink: "https://openai.com/pricing",
     embedding_models: [
       {
-        name: "text-embedding-3-small",
+        model_name: "text-embedding-3-small",
         cloud_provider_name: "OpenAI",
         description:
           "OpenAI's newer, more efficient embedding model. Good balance of performance and cost.",
-        model_dim: 1536,
-        normalize: true,
         pricePerMillion: 0.02,
         enabled: false,
         mtebScore: 62.3,
         maxContext: 8191,
       },
       {
-        name: "text-embedding-3-large",
+        model_name: "text-embedding-3-large",
         cloud_provider_name: "OpenAI",
         description:
           "OpenAI's large embedding model. Best performance, but more expensive.",
-        model_dim: 3072,
-        normalize: true,
         pricePerMillion: 0.13,
         mtebScore: 64.6,
         maxContext: 8191,
@@ -161,22 +157,20 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     costslink: "https://cohere.com/pricing",
     embedding_models: [
       {
-        name: "embed-english-v3.0",
+        model_name: "embed-english-v3.0",
         cloud_provider_name: "Cohere",
         description:
           "Cohere's English embedding model. Good performance for English-language tasks.",
-        model_dim: 1024,
         pricePerMillion: 0.1,
         mtebScore: 64.5,
         maxContext: 512,
         enabled: false,
       },
       {
-        name: "embed-english-light-v3.0",
+        model_name: "embed-english-light-v3.0",
         cloud_provider_name: "Cohere",
         description:
           "Cohere's lightweight English embedding model. Faster and more efficient for simpler tasks.",
-        model_dim: 384,
         pricePerMillion: 0.1,
         mtebScore: 62,
         maxContext: 512,
@@ -197,11 +191,9 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     embedding_models: [
       {
         cloud_provider_name: "Voyage",
-        name: "voyage-large-2-instruct",
+        model_name: "voyage-large-2-instruct",
         description:
           "Voyage's large embedding model. High performance with instruction fine-tuning.",
-        model_dim: 1024,
-        normalize: true,
         pricePerMillion: 0.12,
         mtebScore: 68.28,
         maxContext: 4000,
@@ -209,11 +201,9 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
       },
       {
         cloud_provider_name: "Voyage",
-        name: "voyage-light-2-instruct",
+        model_name: "voyage-light-2-instruct",
         description:
           "Voyage's lightweight embedding model. Good balance of performance and efficiency.",
-        model_dim: 1024,
-        normalize: true,
         pricePerMillion: 0.12,
         mtebScore: 67.13,
         maxContext: 16000,
@@ -235,15 +225,12 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     embedding_models: [
       {
         cloud_provider_name: "Vertex",
-        name: "gecko",
+        model_name: "gecko",
         description:
           "Google's Gecko embedding model. Powerful and efficient, but requires more setup.",
-        model_dim: 768,
         pricePerMillion: 0.025,
         mtebScore: 66.31,
         maxContext: 2048,
-        notes:
-          "Price is per character, not token. Longer setup time, need to configure Google Cloud Console with project ID, etc.",
         enabled: false,
       },
     ],
@@ -256,13 +243,4 @@ export function checkModelNameIsValid(
   modelName: string | undefined | null
 ): boolean {
   return !!modelName && modelName !== INVALID_OLD_MODEL;
-}
-
-export function fillOutEmeddingModelDescriptor(
-  embeddingModel: EmbeddingModelDescriptor | FullEmbeddingModelDescriptor
-): FullEmbeddingModelDescriptor {
-  return {
-    ...embeddingModel,
-    description: "",
-  };
 }

@@ -119,6 +119,9 @@ def _run_indexing(
         provider = fetch_embedding_provider(
             db_session=db_session, provider_id=cloud_provider_id
         )
+        if provider is None:
+            raise RuntimeError("Provider no longer exists")
+
         api_key = provider.api_key
         provider_type = provider.name
 

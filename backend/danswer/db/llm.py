@@ -4,14 +4,13 @@ from sqlalchemy.orm import Session
 
 from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
 from danswer.db.models import LLMProvider as LLMProviderModel
-from danswer.server.manage.llm.models import CloudEmbeddingProviderCreate
-from danswer.server.manage.llm.models import FullCloudEmbeddingProvider
+from danswer.server.manage.llm.models import CloudEmbeddingProvider
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 
 
 def upsert_cloud_embedding_provider(
-    db_session: Session, provider: CloudEmbeddingProviderCreate
+    db_session: Session, provider: CloudEmbeddingProvider
 ) -> CloudEmbeddingProviderModel:
     existing_provider = (
         db_session.query(CloudEmbeddingProviderModel)
@@ -33,9 +32,7 @@ def upsert_cloud_embedding_provider(
     db_session.commit()
     db_session.refresh(existing_provider)
 
-    return FullCloudEmbeddingProvider.from_request(existing_provider)
-
-    # return CloudEmbeddingProvider.from_orm(existing_provider)
+    return CloudEmbeddingProvider.from_request(existing_provider)
 
 
 def upsert_llm_provider(

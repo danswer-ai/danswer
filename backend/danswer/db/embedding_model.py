@@ -44,15 +44,17 @@ def create_embedding_model(
     return embedding_model
 
 
-def get_model_id_from_name(db_session, embedding_provider_name):
+def get_model_id_from_name(
+    db_session: Session, embedding_provider_name: str
+) -> int | None:
     query = select(CloudEmbeddingProvider).where(
         CloudEmbeddingProvider.name == embedding_provider_name
     )
 
     result = db_session.execute(query)
-    id = result.scalars().first().id
+    provider = result.scalars().first()
 
-    return id
+    return provider.id if provider else None
 
 
 def get_current_db_embedding_model(db_session: Session) -> EmbeddingModel:

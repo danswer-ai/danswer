@@ -13,10 +13,13 @@ export function AlreadyPickedModal({
   onClose: () => void;
 }) {
   return (
-    <Modal title={`${model.name} already chosen`} onOutsideClick={onClose}>
+    <Modal
+      title={`${model.model_name} already chosen`}
+      onOutsideClick={onClose}
+    >
       <div className="mb-4">
         <Text className="text-lg mb-2">
-          Heads up: {model.name} is your current model!
+          Heads up: {model.model_name} is your current model!
         </Text>
         <Text className="text-sm mb-2">
           You can select a different one if you want!

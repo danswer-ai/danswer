@@ -128,7 +128,7 @@ export default function CloudEmbeddingPage({
 
             <div>
               {provider.embedding_models.map((model, index) => {
-                const enabled = model.name == currentModel.model_name;
+                const enabled = model.model_name == currentModel.model_name;
                 return (
                   <div
                     key={index}
@@ -145,7 +145,7 @@ export default function CloudEmbeddingPage({
                     }}
                   >
                     <div className="flex justify-between">
-                      <div className="font-medium">{model.name}</div>
+                      <div className="font-medium">{model.model_name}</div>
                       <p className="text-sm flex-none">
                         ${model.pricePerMillion}/M tokens
                       </p>

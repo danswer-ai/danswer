@@ -1,20 +1,7 @@
-import {
-  CloudEmbeddingModel,
-  CloudEmbeddingProvider,
-  EmbeddingModelDescriptor,
-  FullEmbeddingModelDescriptor,
-} from "./types";
+import { EmbeddingModelDescriptor, HostedEmbeddingModel } from "./types";
 import { FiStar } from "react-icons/fi";
 
-export function ModelOption({
-  model,
-  providers,
-  onSelect,
-}: {
-  providers: CloudEmbeddingProvider[];
-  model: CloudEmbeddingModel | EmbeddingModelDescriptor;
-  onSelect?: (model: EmbeddingModelDescriptor) => Promise<void>;
-}) {
+export function ModelPreview({ model }: { model: EmbeddingModelDescriptor }) {
   return (
     <div
       className={
@@ -23,18 +10,40 @@ export function ModelOption({
     >
       <div className="font-bold text-lg flex">{model.model_name}</div>
       <div className="text-sm mt-1 mx-1">
-        {model?.description
+        {model.description
           ? model.description
           : "Custom model—no description is available."}
       </div>
-      {model && (
+    </div>
+  );
+}
+
+export function ModelOption({
+  model,
+  onSelect,
+}: {
+  model: HostedEmbeddingModel;
+  onSelect?: (model: HostedEmbeddingModel) => void;
+}) {
+  return (
+    <div
+      className={
+        "p-2 border border-border rounded shadow-md bg-hover-light w-96 flex flex-col"
+      }
+    >
+      <div className="font-bold text-lg flex">
+        {model.isDefault && <FiStar className="my-auto mr-1 text-accent" />}
+        {model.model_name}
+      </div>
+      <div className="text-sm mt-1 mx-1">
+        {model.description
+          ? model.description
+          : "Custom model—no description is available."}
+      </div>
+      {model.link && (
         <a
           target="_blank"
-          href={
-            providers.filter(
-              (provider, ind) => provider.name == model.cloud_provider_name
-            )[0].docsLink
-          }
+          href={model.link}
           className="text-xs text-link mx-1 mt-1"
         >
           See More Details
@@ -70,8 +79,8 @@ export function ModelSelector({
   modelOptions,
   setSelectedModel,
 }: {
-  modelOptions: (FullEmbeddingModelDescriptor | CloudEmbeddingModel)[];
-  setSelectedModel: (model: EmbeddingModelDescriptor) => Promise<void>;
+  modelOptions: HostedEmbeddingModel[];
+  setSelectedModel: (model: HostedEmbeddingModel) => void;
 }) {
   return (
     <div>

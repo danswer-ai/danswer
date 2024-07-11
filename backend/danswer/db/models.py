@@ -485,7 +485,7 @@ class EmbeddingModel(Base):
 
     # New field for cloud provider relationship
     cloud_provider_id: Mapped[int | None] = mapped_column(
-        ForeignKey("embedding_provider.id"), nullable=True
+        ForeignKey("embedding_provider.id")
     )
     cloud_provider: Mapped["CloudEmbeddingProvider"] = relationship(
         "CloudEmbeddingProvider",
@@ -512,7 +512,7 @@ class EmbeddingModel(Base):
         ),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<EmbeddingModel(model_name='{self.model_name}', status='{self.status}',\
           cloud_provider='{self.cloud_provider.name if self.cloud_provider else 'None'}')>"
 
@@ -929,7 +929,7 @@ class CloudEmbeddingProvider(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True)
-    api_key: Mapped[str | None] = mapped_column(EncryptedString(), nullable=True)
+    api_key: Mapped[str | None] = mapped_column(EncryptedString())
     custom_config: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)
     default_model_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("embedding_model.id"), nullable=True
@@ -944,13 +944,8 @@ class CloudEmbeddingProvider(Base):
         "EmbeddingModel", foreign_keys=[default_model_id]
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<EmbeddingProvider(name='{self.name}')>"
-
-
-# provider_id, name, api_key, custom_config, default_model
-# (which should reference a model in the EmbeddingModel table),
-# and also keep in mind that each entry in EmbedingModel references it as a foreign key
 
 
 class DocumentSet(Base):

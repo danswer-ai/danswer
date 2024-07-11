@@ -14,12 +14,12 @@ export function SelectModelModal({
 }) {
   return (
     <Modal
-      title={`Elevate Your Game with ${model.name}`}
+      title={`Elevate Your Game with ${model.model_name}`}
       onOutsideClick={onCancel}
     >
       <div className="mb-4">
         <Text className="text-lg mb-2">
-          You&apos;re about to set your embedding model to {model.name}.
+          You&apos;re about to set your embedding model to {model.model_name}.
           <br />
           Are you sure?
         </Text>

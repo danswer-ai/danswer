@@ -1,7 +1,11 @@
 "use client";
 import { Card, Text, Title } from "@tremor/react";
 import { ModelSelector } from "./components/ModelSelector";
-import { AVAILABLE_MODELS, EmbeddingModelDescriptor } from "./components/types";
+import {
+  AVAILABLE_MODELS,
+  EmbeddingModelDescriptor,
+  HostedEmbeddingModel,
+} from "./components/types";
 import { CustomModelForm } from "./components/CustomModelForm";
 
 export default function OpenEmbeddingPage({
@@ -9,7 +13,7 @@ export default function OpenEmbeddingPage({
   currentModelName,
 }: {
   currentModelName: string;
-  onSelectOpenSource: (model: EmbeddingModelDescriptor) => Promise<void>;
+  onSelectOpenSource: (model: HostedEmbeddingModel) => Promise<void>;
 }) {
   return (
     <div>
