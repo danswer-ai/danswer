@@ -9,11 +9,13 @@ from sqlalchemy import func
 from sqlalchemy import nullsfirst
 from sqlalchemy import or_
 from sqlalchemy import select
+from sqlalchemy import update
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
 
 from danswer.auth.schemas import UserRole
+from danswer.chat.models import LLMRelevanceSummaryResponse
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
@@ -503,6 +505,28 @@ def get_doc_query_identifiers_from_model(
     return doc_query_identifiers
 
 
+def update_search_docs_table_with_relevance(
+    db_session: Session,
+    reference_db_search_docs: None | list[SearchDoc],
+    relevance_summary: LLMRelevanceSummaryResponse,
+) -> None:
+    for search_doc in reference_db_search_docs:
+        relevance_data = relevance_summary.relevance_summaries.get(
+            search_doc.document_id
+        )
+        if relevance_data:
+            print(relevance_data)
+            db_session.execute(
+                update(SearchDoc)
+                .where(SearchDoc.document_id == search_doc.document_id)
+                .values(
+                    relevant_search_result=relevance_data.get("relevant"),
+                    relevance_explanation=relevance_data.get("content"),
+                )
+            )
+    db_session.commit()
+
+
 def create_db_search_doc(
     server_search_doc: ServerSearchDoc,
     db_session: Session,
@@ -597,7 +621,6 @@ def translate_db_message_to_chat_message_detail(
     chat_message: ChatMessage,
     remove_doc_content: bool = False,
 ) -> ChatMessageDetail:
-    print("chat message")
     chat_msg_detail = ChatMessageDetail(
         message_id=chat_message.id,
         parent_message=chat_message.parent_message,

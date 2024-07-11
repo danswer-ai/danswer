@@ -22,6 +22,7 @@ from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
+from danswer.db.chat import update_search_docs_table_with_relevance
 from danswer.db.engine import get_session_context_manager
 from danswer.db.models import User
 from danswer.db.persona import get_prompt_by_id
@@ -58,6 +59,7 @@ from danswer.tools.tool import ToolResponse
 from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
+
 
 logger = setup_logger()
 
@@ -273,10 +275,16 @@ def stream_answer_objects(
                     relevance_summaries=packet.response
                 )
 
-                # update_search_doc(db_session=db_session, relevance=packet.response)
+                if reference_db_search_docs is not None:
+                    update_search_docs_table_with_relevance(
+                        db_session=db_session,
+                        reference_db_search_docs=reference_db_search_docs,
+                        relevance_summary=evaluation_response,
+                    )
 
                 # here we will do some magic with the evaluation of the results
                 yield evaluation_response
+
         else:
             yield packet
 

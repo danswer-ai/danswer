@@ -86,11 +86,19 @@ export const SearchSection = ({
   const [query, setQuery] = useState<string>("");
   const [relevance, setRelevance] = useState<Relevance | null>(null);
   const [comments, setComments] = useState<any>(null);
+  const [contentEnriched, setContentEnriched] = useState(false);
 
   // Search
-  const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(
-    null
-  );
+  const [searchResponse, setSearchResponse] = useState<SearchResponse>({
+    suggestedSearchType: null,
+    suggestedFlowType: null,
+    answer: null,
+    quotes: null,
+    documents: null,
+    selectedDocIndices: null,
+    error: null,
+    messageId: null,
+  });
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
@@ -109,7 +117,7 @@ export const SearchSection = ({
     };
   }, []);
 
-  const [agentic, setAgentic] = useState(true);
+  const [agentic, setAgentic] = useState(false);
 
   const toggleAgentic = () => {
     setAgentic((agentic) => !agentic);
@@ -152,6 +160,8 @@ export const SearchSection = ({
   ): SearchDanswerDocument[] {
     return searchDocs.map((doc) => {
       const relevantContent = relevance[doc.document_id];
+      console.log(`for this docuent ${doc.document_id}`);
+      console.log(relevantContent);
       const result: SearchDanswerDocument = {
         ...doc,
         relevant_search_result: relevantContent.relevant ?? false,
@@ -181,7 +191,6 @@ export const SearchSection = ({
       const searchSession = (await response.json()) as SearchSession;
 
       const message = extractFirstUserMessage(searchSession);
-      console.log(searchSession);
 
       if (message) {
         setQuery(message);
@@ -197,6 +206,7 @@ export const SearchSection = ({
         };
         setFirstSearch(false);
         setSearchResponse(danswerDocs);
+        setContentEnriched(true);
       }
     }
     initialSessionFetch();
@@ -217,7 +227,6 @@ export const SearchSection = ({
     error: null,
     messageId: null,
   };
-
   // Streaming updates
   const updateCurrentAnswer = (answer: string) =>
     setSearchResponse((prevState) => ({
@@ -235,6 +244,8 @@ export const SearchSection = ({
         setSearchState("analyzing");
       }
     }, 1500);
+
+    console.log("UPDATING DOCS");
 
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
@@ -270,8 +281,18 @@ export const SearchSection = ({
     }));
   };
 
+  const checkResponse = (chunk: any) => {
+    console.log(chunk);
+    console.log(searchResponse);
+  };
+
   const updateDocumentRelevance = (relevance: Relevance) => {
+    console.log("SHOULD Udpate document relevance");
     if (searchResponse != null) {
+      console.log("valling relevance");
+      console.log("Existing docs are ");
+      console.log(searchResponse.documents);
+
       const enrichedSearchedResults = {
         ...searchResponse,
         documents: updateSearchDanswerDocuments(
@@ -279,11 +300,13 @@ export const SearchSection = ({
           relevance
         ),
       };
-      console.log("OLD");
-      console.log(searchResponse);
-      console.log("New");
+      console.log("UPDAITNG TO ");
       console.log(enrichedSearchedResults);
-      setSearchResponse(enrichedSearchedResults);
+
+      // setSearchResponse(enrichedSearchedResults);
+      setContentEnriched(true);
+    } else {
+      console.log(searchResponse);
     }
 
     setIsFetching(false);
@@ -324,6 +347,8 @@ export const SearchSection = ({
     lastSearchCancellationToken.current = new CancellationToken();
 
     setIsFetching(true);
+    console.log(`search repsonse `);
+    console.log(initialSearchResponse);
     setSearchResponse(initialSearchResponse);
     setValidQuestionResponse(VALID_QUESTION_RESPONSE_DEFAULT);
     const searchFnArgs = {
@@ -376,6 +401,7 @@ export const SearchSection = ({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateDocumentRelevance,
       }),
+
       updateComments: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateComments,
@@ -384,7 +410,7 @@ export const SearchSection = ({
         cancellationToken: lastSearchCancellationToken.current,
         fn: finishedSearching,
       }),
-
+      checkResponse: checkResponse,
       selectedSearchType: searchType ?? selectedSearchType,
       offset: offset ?? defaultOverrides.offset,
     };
@@ -428,10 +454,6 @@ export const SearchSection = ({
         path: "/",
       };
     toggle();
-  };
-
-  const forceNonAgentic = () => {
-    setAgenticResults(false);
   };
 
   useEffect(() => {
@@ -582,6 +604,7 @@ export const SearchSection = ({
                   <div className="mt-6">
                     {!(agenticResults && isFetching) && (
                       <SearchResultsDisplay
+                        contentEnriched={contentEnriched}
                         comments={comments}
                         sweep={sweep}
                         agenticResults={agenticResults}

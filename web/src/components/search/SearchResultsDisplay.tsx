@@ -34,7 +34,7 @@ export const SearchResultsDisplay = ({
   agenticResults,
   searchResponse,
   searchState,
-
+  contentEnriched,
   validQuestionResponse,
   isFetching,
   defaultOverrides,
@@ -43,6 +43,7 @@ export const SearchResultsDisplay = ({
   sweep,
   comments,
 }: {
+  contentEnriched?: boolean;
   agenticResults?: boolean | null;
   performSweep: () => void;
   sweep?: boolean;
@@ -142,7 +143,7 @@ export const SearchResultsDisplay = ({
         <div className="mt-4">
           <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
             <p>Results</p>
-            {!agenticResults && messageId && (
+            {!agenticResults && contentEnriched && (
               <button
                 onClick={() => performSweep()}
                 className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
@@ -168,11 +169,13 @@ export const SearchResultsDisplay = ({
               </button>
             )}
           </div>
+          <button onClick={() => console.log(documents)}>adsfadsf</button>
 
           {documents.map((document, ind) => {
             return agenticResults ? (
               (document.relevant_search_result || showAll) && (
                 <AgenticDocumentDisplay
+                  contentEnriched={contentEnriched}
                   comments={comments}
                   index={ind}
                   hide={!document.relevant_search_result}
@@ -186,6 +189,7 @@ export const SearchResultsDisplay = ({
               )
             ) : (
               <DocumentDisplay
+                contentEnriched={contentEnriched}
                 index={ind}
                 hide={sweep && !document.relevant_search_result}
                 key={document.document_id + ind}

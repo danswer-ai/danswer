@@ -18,7 +18,6 @@ from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import message_generator_to_string_generator
-from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import IndexFilters
@@ -114,7 +113,7 @@ class SearchPipeline:
         ) = None
 
     def evaluate(
-        self, top_doc: LlmDoc, query: ThreadMessage
+        self, top_doc: LlmDoc, query: str
     ) -> tuple[dict[str, Any], dict[str, str]]:
         # Group documents by document_id
 
@@ -418,7 +417,7 @@ class SearchPipeline:
     @property
     def evaluate_response(self):
         functions = [
-            FunctionCall(self.evaluate, (final_context, self.search_query))
+            FunctionCall(self.evaluate, (final_context, self.search_query.query))
             for final_context in self._final_context_documents
         ]
 

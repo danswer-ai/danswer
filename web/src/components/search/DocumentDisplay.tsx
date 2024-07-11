@@ -158,12 +158,14 @@ interface DocumentDisplayProps {
   comments?: any;
   hide?: boolean;
   index?: number;
+  contentEnriched?: boolean;
 }
 
 export const DocumentDisplay = ({
   document,
   isSelected,
   messageId,
+  contentEnriched,
   documentRank,
   hide,
   index,
@@ -217,7 +219,7 @@ export const DocumentDisplay = ({
               />
             )}
 
-            {messageId && isHovered && (
+            {contentEnriched && isHovered && (
               <button
                 onClick={() =>
                   setAlternativeToggled(
@@ -242,8 +244,8 @@ export const DocumentDisplay = ({
           style={{ transition: "height 0.30s ease-in-out" }}
           className="pl-1 pt-2 pb-3 break-words"
         >
-          {alternativeToggled
-            ? document.relevance_explanation || ""
+          {alternativeToggled && contentEnriched
+            ? document.relevance_explanation ?? ""
             : buildDocumentSummaryDisplay(
                 document.match_highlights,
                 document.blurb
@@ -257,6 +259,7 @@ export const DocumentDisplay = ({
 export const AgenticDocumentDisplay = ({
   document,
   isSelected,
+  contentEnriched,
   comments,
   messageId,
   documentRank,
@@ -305,7 +308,7 @@ export const AgenticDocumentDisplay = ({
                 setPopup={setPopup}
               />
             )}
-            {messageId && isHovered && (
+            {contentEnriched && isHovered && (
               <button
                 onClick={() =>
                   setAlternativeToggled(
@@ -327,13 +330,12 @@ export const AgenticDocumentDisplay = ({
         </div>
         <div className="pt-2 break-words flex gap-x-2">
           <p style={{ transition: "height 0.30s ease-in-out" }}>
-            {alternativeToggled
+            {alternativeToggled && contentEnriched
               ? buildDocumentSummaryDisplay(
                   document.match_highlights,
                   document.blurb
                 )
-              : document.relevance_explanation ||
-                document.relevance_explanation}
+              : document.relevance_explanation}
           </p>
         </div>
       </div>
