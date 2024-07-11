@@ -3,13 +3,14 @@ from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
 
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
+from danswer.llm.answering.prune_and_merge import ChunkRange
+from danswer.llm.answering.prune_and_merge import merge_chunk_intervals
 from danswer.llm.interfaces import LLM
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
@@ -28,32 +29,6 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 
 logger = setup_logger()
-
-
-class ChunkRange(BaseModel):
-    chunks: list[InferenceChunk]
-    start: int
-    end: int
-    combined_content: str | None = None
-
-
-def merge_chunk_intervals(chunk_ranges: list[ChunkRange]) -> list[ChunkRange]:
-    """This acts on a single document to merge the overlapping ranges of sections
-    Algo explained here for easy understanding: https://leetcode.com/problems/merge-intervals
-    """
-    sorted_ranges = sorted(chunk_ranges, key=lambda x: x.start)
-
-    combined_ranges: list[ChunkRange] = []
-
-    for new_chunk_range in sorted_ranges:
-        if not combined_ranges or combined_ranges[-1].end < new_chunk_range.start:
-            combined_ranges.append(new_chunk_range)
-        else:
-            current_range = combined_ranges[-1]
-            current_range.end = max(current_range.end, new_chunk_range.end)
-            current_range.chunks.extend(new_chunk_range.chunks)
-
-    return combined_ranges
 
 
 class SearchPipeline:
