@@ -238,9 +238,9 @@ const Main = () => {
       <Text className="mb-3">
         <b>Document Sets</b> allow you to group logically connected documents
         into a single bundle. These can then be used as filter when performing
-        searches in the web UI or attached to slack bots to limit the amount of
-        information the bot searches over when answering in a specific channel
-        or with a certain command.
+        searches in the web UI to limit the amount of information the bot
+        searches over when answering in a specific channel or with a certain
+        command.
       </Text>
 
       <div className="mb-3"></div>
