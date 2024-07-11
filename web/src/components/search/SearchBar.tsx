@@ -52,7 +52,7 @@ export const AnimatedToggle = ({
           </h2>
           <p className="text-solid text-sm mb-4">
             Our most powerful search, have an AI agent guide you to pinpoint
-            exactly what you're looking for.
+            exactly what you&apos;re looking for.
           </p>
           <Divider />
           <h2 className="text-xl text-solidDark font-bold mb-2">Fast Search</h2>
