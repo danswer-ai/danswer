@@ -171,7 +171,7 @@ export default async function Home() {
 
       <InstantSSRAutoRefresh />
 
-      <div className="px-24 pt-10 flex flex-col items-center min-h-screen">
+      <div className="flex flex-col items-center min-h-screen px-6 pt-10 lg:px-24">
         <div className="w-full">
           <SearchSection
             ccPairs={ccPairs}

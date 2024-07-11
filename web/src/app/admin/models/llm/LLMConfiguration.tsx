@@ -70,7 +70,7 @@ function DefaultLLMProviderDisplay({
   return (
     <div>
       {popup}
-      <div className="border border-border p-3 rounded w-96 flex shadow-md">
+      <div className="flex p-3 border rounded shadow-md border-border md:w-96">
         <div className="my-auto">
           <div className="font-bold">{providerName} </div>
         </div>
@@ -159,13 +159,13 @@ export function LLMConfiguration() {
         </Callout>
       )}
 
-      <Title className="mb-2 mt-6">Add LLM Provider</Title>
+      <Title className="mt-6 mb-2">Add LLM Provider</Title>
       <Text className="mb-4">
         Add a new LLM provider by either selecting from one of the default
         providers or by specifying your own custom LLM provider.
       </Text>
 
-      <div className="gap-y-4 flex flex-col">
+      <div className="flex flex-col gap-y-4">
         {llmProviderDescriptors.map((llmProviderDescriptor) => {
           return (
             <DefaultLLMProviderDisplay

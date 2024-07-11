@@ -194,23 +194,13 @@ export function ChatInputBar({
 
   return (
     <div>
-      <div className="flex justify-center pb-2 max-w-screen-lg mx-auto mb-2">
-        <div
-          className="
-            w-full
-            shrink
-            relative
-            px-4
-            w-searchbar-xs
-            2xl:w-searchbar-sm
-            3xl:w-searchbar
-            mx-auto
-          "
-        >
+      <div className="flex justify-center max-w-screen-lg pb-2 mx-auto mb-2">
+        {/*  <div className="relative w-full px-4 mx-auto shrink w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar"> */}
+        <div className="relative w-full px-4 mx-auto shrink 2xl:w-searchbar-sm 3xl:w-searchbar">
           {showSuggestions && filteredPersonas.length > 0 && (
             <div
               ref={suggestionsRef}
-              className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full"
+              className="absolute inset-x-0 top-0 w-full text-sm transform -translate-y-full"
             >
               <div className="rounded-lg py-1.5 bg-white border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
                 {filteredPersonas.map((currentPersona, index) => (
@@ -270,16 +260,16 @@ export function ChatInputBar({
               <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full">
                 <div
                   ref={interactionsRef}
-                  className="bg-background-subtle p-2 rounded-t-lg  items-center flex w-full"
+                  className="flex items-center w-full p-2 rounded-t-lg bg-background-subtle"
                 >
                   <AssistantIcon assistant={alternativeAssistant} border />
-                  <p className="ml-3 text-strong my-auto">
+                  <p className="my-auto ml-3 text-strong">
                     {alternativeAssistant.name}
                   </p>
-                  <div className="flex gap-x-1 ml-auto ">
+                  <div className="flex ml-auto gap-x-1 ">
                     <Tooltip
                       content={
-                        <p className="max-w-xs flex flex-wrap">
+                        <p className="flex flex-wrap max-w-xs">
                           {alternativeAssistant.description}
                         </p>
                       }
@@ -299,7 +289,7 @@ export function ChatInputBar({
             )}
 
             {files.length > 0 && (
-              <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-2">
+              <div className="flex flex-wrap px-2 pt-2 gap-y-1 gap-x-2">
                 {files.map((file) => (
                   <div key={file.id}>
                     <InputBarPreview
@@ -368,7 +358,7 @@ export function ChatInputBar({
               suppressContentEditableWarning={true}
             />
             <div className="flex items-center justify-between px-4 py-2 overflow-hidden">
-              <div className="w-auto flex gap-2">
+              <div className="flex w-auto gap-2">
                 <ChatInputOption
                   flexPriority="shrink"
                   name={
@@ -420,7 +410,7 @@ export function ChatInputBar({
               </div>
               <div>
                 <div
-                  className="w-auto cursor-pointer flex flex-row px-4 py-2 items-center content-center gap-2 border rounded-xl bg-blue-700 text-white truncate"
+                  className="flex flex-row items-center content-center w-auto gap-2 px-2.5 py-2.5 text-white truncate bg-blue-700 border rounded-full cursor-pointer sm:px-4 sm:py-2 sm:rounded-xl"
                   onClick={() => {
                     if (!isStreaming) {
                       if (message) {
@@ -431,8 +421,8 @@ export function ChatInputBar({
                     }
                   }}
                 >
-                  <FiSend size={11} color="white" />
-                  <p className="font-light">Send message</p>
+                  <FiSend size={11} color="white" className="w-4 h-4" />
+                  <p className="hidden font-light sm:flex">Send message</p>
                 </div>
               </div>
             </div>

@@ -19,8 +19,8 @@ function HelperItemDisplay({
   description: string;
 }) {
   return (
-    <div className="cursor-pointer hover:bg-hover-light border border-border rounded py-2 px-4">
-      <div className="text-emphasis font-bold text-lg flex">{title}</div>
+    <div className="px-4 py-2 border rounded cursor-pointer hover:bg-hover-light border-border">
+      <div className="flex text-lg font-bold text-emphasis">{title}</div>
       <div className="text-sm">{description}</div>
     </div>
   );
@@ -39,17 +39,19 @@ export function ChatIntro({
 
   return (
     <>
-      <div className="flex justify-center items-center h-full">
+      <div className="flex items-center justify-center h-full">
         <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
           <div className="flex">
             <div className="mx-auto">
               <Logo height={80} width={80} className="m-auto" />
 
-              <div className="m-auto text-3xl font-bold text-strong mt-4 w-fit">
+              <div className="m-auto mt-4 text-3xl font-bold text-strong w-fit">
                 {selectedPersona?.name || "How can I help you today?"}
               </div>
               {selectedPersona && (
-                <div className="mt-1">{selectedPersona.description}</div>
+                <div className="mt-1 text-center">
+                  {selectedPersona.description}
+                </div>
               )}
             </div>
           </div>
@@ -60,7 +62,7 @@ export function ChatIntro({
               <div>
                 {selectedPersona.document_sets.length > 0 && (
                   <div className="mt-2">
-                    <p className="font-bold mb-1 mt-4 text-emphasis">
+                    <p className="mt-4 mb-1 font-bold text-emphasis">
                       Knowledge Sets:{" "}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -68,8 +70,8 @@ export function ChatIntro({
                         <div key={documentSet.id} className="w-fit">
                           <HoverPopup
                             mainContent={
-                              <span className="flex w-fit p-1 rounded border border-border text-xs font-medium cursor-default">
-                                <div className="mr-1 my-auto">
+                              <span className="flex p-1 text-xs font-medium border rounded cursor-default w-fit border-border">
+                                <div className="my-auto mr-1">
                                   <FiBookmark />
                                 </div>
                                 {documentSet.name}
@@ -93,16 +95,16 @@ export function ChatIntro({
 
                 {availableSources.length > 0 && (
                   <div className="mt-1">
-                    <p className="font-bold mb-1 mt-4 text-emphasis">
+                    <p className="mt-4 mb-1 font-bold text-emphasis">
                       Connected Sources:{" "}
                     </p>
                     <div className={`flex flex-wrap gap-2`}>
                       {availableSourceMetadata.map((sourceMetadata) => (
                         <span
                           key={sourceMetadata.internalName}
-                          className="flex w-fit p-1 rounded border border-border text-xs font-medium cursor-default"
+                          className="flex p-1 text-xs font-medium border rounded cursor-default w-fit border-border"
                         >
-                          <div className="mr-1 my-auto">
+                          <div className="my-auto mr-1">
                             {sourceMetadata.icon({})}
                           </div>
                           <div className="my-auto">

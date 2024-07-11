@@ -50,7 +50,7 @@ import { InitializingLoader } from "@/components/InitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { ChatPersonaSelector } from "./ChatPersonaSelector";
-import { FiArrowDown, FiShare } from "react-icons/fi";
+import { FiArrowDown, FiMenu, FiShare } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { ThreeDots } from "react-loader-spinner";
@@ -71,6 +71,7 @@ import { TbLayoutSidebarRightExpand } from "react-icons/tb";
 import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 
 import ResizableSection from "@/components/resizable/ResizableSection";
+import { UserDropdown } from "@/components/UserDropdown";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1083,6 +1084,13 @@ export function ChatPage({
     }
   };
   console.log(hasPerformedInitialScroll);
+
+  const [openSidebar, setOpenSidebar] = useState(false);
+
+  const handleClose = () => {
+    setOpenSidebar(false);
+  };
+
   return (
     <>
       <HealthCheckBanner />
@@ -1092,12 +1100,14 @@ export function ChatPage({
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      <div className="flex relative bg-background text-default overflow-x-hidden">
+      <div className="relative flex px-5 overflow-x-hidden bg-background text-default">
         <ChatSidebar
           existingChats={chatSessions}
           currentChatSession={selectedChatSession}
           folders={folders}
           openedFolders={openedFolders}
+          handleClose={handleClose}
+          openSidebar={openSidebar}
         />
 
         <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
@@ -1170,18 +1180,25 @@ export function ChatPage({
                       <ChatBanner />
 
                       {livePersona && (
-                        <div className="sticky top-0 left-80 z-10 w-full bg-background flex">
-                          <div className="mt-2 flex w-full">
-                            <div className="ml-2 p-1 rounded w-fit">
+                        <div className="sticky top-0 z-10 flex w-full left-80 bg-background">
+                          <div className="flex w-full mt-2">
+                            <div className="flex items-center w-full gap-3 p-1 ml-2 rounded">
+                              <FiMenu
+                                size={18}
+                                className="lg:hidden"
+                                onClick={() => setOpenSidebar(true)}
+                              />
                               <ChatPersonaSelector
                                 personas={filteredAssistants}
                                 selectedPersonaId={livePersona.id}
                                 onPersonaChange={onPersonaChange}
                                 userId={user?.id}
                               />
+
+                              <UserDropdown user={user} hideChatAndSearch />
                             </div>
 
-                            <div className="ml-auto flex">
+                            <div className="flex ml-auto">
                               {chatSessionIdRef.current !== null && (
                                 <div
                                   onClick={() => setSharingModalVisible(true)}
@@ -1197,10 +1214,10 @@ export function ChatPage({
                                 </div>
                               )}
 
-                              <div className="ml-4 flex my-auto">
+                              <div className="flex my-auto ml-4">
                                 {retrievalEnabled && !showDocSidebar && (
                                   <button
-                                    className="ml-4 mt-auto"
+                                    className="mt-auto ml-4"
                                     onClick={() => toggleSidebar()}
                                   >
                                     <TbLayoutSidebarRightExpand size={24} />
@@ -1431,7 +1448,7 @@ export function ChatPage({
                                   messageId={message.messageId}
                                   personaName={livePersona.name}
                                   content={
-                                    <p className="text-red-700 text-sm my-auto">
+                                    <p className="my-auto text-sm text-red-700">
                                       {message.message}
                                     </p>
                                   }
@@ -1456,7 +1473,7 @@ export function ChatPage({
                                 messageId={null}
                                 personaName={livePersona.name}
                                 content={
-                                  <div className="text-sm my-auto">
+                                  <div className="my-auto text-sm">
                                     <ThreeDots
                                       height="30"
                                       width="50"
@@ -1521,14 +1538,14 @@ export function ChatPage({
 
                     <div
                       ref={inputRef}
-                      className="absolute bottom-0 z-10 w-full"
+                      className="absolute bottom-0 left-0 z-10 w-full"
                     >
-                      <div className="w-full relative pb-4">
+                      <div className="relative w-full pb-4">
                         {aboveHorizon && (
-                          <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
+                          <div className="sticky flex justify-center w-full bg-transparent pointer-events-none">
                             <button
                               onClick={() => clientScrollToBottom(true)}
-                              className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2 mx-auto "
+                              className="p-1 mx-auto mb-2 border pointer-events-auto rounded-2xl bg-background-strong border-border "
                             >
                               <FiArrowDown size={18} />
                             </button>
@@ -1598,7 +1615,7 @@ export function ChatPage({
               )}
             </Dropzone>
           ) : (
-            <div className="mx-auto h-full flex flex-col">
+            <div className="flex flex-col h-full mx-auto">
               <div className="my-auto">
                 <InitializingLoader />
               </div>

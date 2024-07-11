@@ -9,7 +9,10 @@ import { redirect } from "next/navigation";
 import { EmailPasswordForm } from "../login/EmailPasswordForm";
 import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
+/* import { Logo } from "@/components/Logo"; */
+
+import Logo from "../../../../public/logo-brand.png";
+import Image from "next/image";
 
 const Page = async () => {
   // catch cases where the backend is completely unreachable here
@@ -46,23 +49,22 @@ const Page = async () => {
 
   return (
     <main>
-      <div className="absolute top-10x w-full">
+      <div className="absolute w-full top-10x">
         <HealthCheckBanner />
       </div>
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-center min-h-screen px-6 py-12 sm:px-6 lg:px-8">
         <div>
-          <Card className="mt-4 w-96">
-            <Title className="flex w-100 justify-center items-center gap-2 py-3">
-              <Logo height={48} width={48} />
+          <Card className="mt-4 md:w-96">
+            <Title className="flex items-center justify-center gap-2 py-3 w-100">
+              <Image src={Logo} alt="Logo" className="w-40" />
               {/* TODO: Change this into enterprise settings application name */}
               {/* you need to make this page not async to be able to get settings context */}
-              <h1 className="text-2xl text-blue-800 font-extrabold">enMedD CHP</h1>
             </Title>
             <div className="flex flex-col mt-5">
-              <h1 className="text-xl text-black font-bold">Sign Up</h1>
+              <h1 className="text-xl font-bold text-black">Sign Up</h1>
               <Text>
                 Already have an account?{" "}
-                <Link href="/auth/login" className="text-link font-medium">
+                <Link href="/auth/login" className="font-medium text-link">
                   Log In
                 </Link>
               </Text>
@@ -75,11 +77,11 @@ const Page = async () => {
             </div>
             <p className="text-sm">
               By signing in, you agree to our{" "}
-              <Link href={"#"} className="text-link font-medium">
+              <Link href={"#"} className="font-medium text-link">
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link href={"#"} className="text-link font-medium">
+              <Link href={"#"} className="font-medium text-link">
                 Privacy Policy
               </Link>
               .

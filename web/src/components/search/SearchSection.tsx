@@ -235,7 +235,7 @@ export const SearchSection = ({
           />
         )}
 
-        <div className="mt-10 pr-5">
+        <div className="pr-5 mt-10">
           <SearchHelper
             isFetching={isFetching}
             searchResponse={searchResponse}
@@ -258,7 +258,7 @@ export const SearchSection = ({
           />
         </div>
       </div>
-      <div className="w-[720px] 3xl:w-[800px] mx-auto">
+      <div className="md:w-[720px] 3xl:w-[800px] mx-auto">
         {personas.length > 0 ? (
           <div className="flex mb-2 w-fit">
             <PersonaSelector

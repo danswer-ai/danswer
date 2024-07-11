@@ -34,7 +34,7 @@ export function Modal({
         <div
           className={`
           bg-background rounded shadow-lg
-          relative ${width ?? "w-1/2"} text-sm 
+          relative mx-6 md:mx-0 ${width ?? "md:w-1/2"} text-sm 
           ${noPadding ? "" : "p-8"}
           ${className}
         `}
@@ -51,7 +51,7 @@ export function Modal({
                 {onOutsideClick && (
                   <div
                     onClick={onOutsideClick}
-                    className="my-auto ml-auto p-2 hover:bg-hover rounded cursor-pointer"
+                    className="p-2 my-auto ml-auto rounded cursor-pointer hover:bg-hover"
                   >
                     <FiX size={20} />
                   </div>

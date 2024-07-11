@@ -30,9 +30,9 @@ const DocumentDisplay = ({
   return (
     <div
       key={document.document_id}
-      className="text-sm border-b border-border mb-3"
+      className="mb-3 text-sm border-b border-border"
     >
-      <div className="flex relative">
+      <div className="relative flex">
         <a
           className={
             "rounded-lg flex font-bold " +
@@ -43,14 +43,14 @@ const DocumentDisplay = ({
           rel="noopener noreferrer"
         >
           <SourceIcon sourceType={document.source_type} iconSize={22} />
-          <p className="truncate break-all ml-2 my-auto text-base">
+          <p className="my-auto ml-2 text-base break-all truncate">
             {document.semantic_identifier || document.document_id}
           </p>
         </a>
       </div>
-      <div className="flex flex-wrap gap-x-2 mt-1 text-xs">
+      <div className="flex flex-wrap mt-1 text-xs gap-x-2">
         <div className="px-1 py-0.5 bg-hover rounded flex">
-          <p className="mr-1 my-auto">Boost:</p>
+          <p className="my-auto mr-1">Boost:</p>
           <ScoreSection
             documentId={document.document_id}
             initialScore={document.boost}
@@ -85,7 +85,7 @@ const DocumentDisplay = ({
               "Visible"
             )}
           </div>
-          <div className="ml-1 my-auto">
+          <div className="my-auto ml-1">
             <CustomCheckbox checked={!document.hidden} />
           </div>
         </div>
@@ -95,7 +95,7 @@ const DocumentDisplay = ({
           <DocumentUpdatedAtBadge updatedAt={document.updated_at} />
         </div>
       )}
-      <p className="pl-1 pt-2 pb-3 break-words">
+      <p className="pt-2 pb-3 pl-1 break-words">
         {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
       </p>
     </div>
@@ -160,11 +160,11 @@ export function Explorer({
     <div>
       {popup}
       <div className="justify-center py-2">
-        <div className="flex items-center w-full border-2 border-border rounded-lg px-4 py-2 focus-within:border-accent bg-background-search">
+        <div className="flex items-center w-full px-4 py-2 border-2 rounded-lg border-border focus-within:border-accent bg-background-search">
           <MagnifyingGlass />
           <textarea
             autoFocus
-            className="flex-grow ml-2 h-6 bg-transparent outline-none placeholder-subtle overflow-hidden whitespace-normal resize-none"
+            className="flex-grow h-6 ml-2 overflow-hidden whitespace-normal bg-transparent outline-none resize-none placeholder-subtle"
             role="textarea"
             aria-multiline
             placeholder="Find documents based on title / content..."
@@ -205,7 +205,7 @@ export function Explorer({
         </div>
       )}
       {!query && (
-        <div className="flex text-emphasis mt-3">
+        <div className="flex mt-3 text-emphasis">
           Search for a document above to modify it&apos;s boost or hide it from
           searches.
         </div>

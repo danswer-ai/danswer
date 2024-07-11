@@ -1,40 +1,25 @@
 import {
-  AxeroIcon,
   BookstackIcon,
   ClickupIcon,
   ConfluenceIcon,
   DiscourseIcon,
-  Document360Icon,
   DropboxIcon,
-  FileIcon,
   GithubIcon,
   GitlabIcon,
   GlobeIcon,
   GmailIcon,
-  GongIcon,
   GoogleDriveIcon,
   GoogleSitesIcon,
   GuruIcon,
   HubSpotIcon,
   JiraIcon,
-  LinearIcon,
-  LoopioIcon,
   NotionIcon,
   ProductboardIcon,
-  RequestTrackerIcon,
-  R2Icon,
-  SalesforceIcon,
   SharepointIcon,
   TeamsIcon,
-  SlabIcon,
-  SlackIcon,
   ZendeskIcon,
-  ZulipIcon,
   MediaWikiIcon,
   WikipediaIcon,
-  S3Icon,
-  OCIStorageIcon,
-  GoogleStorageIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import { SourceCategory, SourceMetadata } from "./search/interfaces";
@@ -56,16 +41,6 @@ const SOURCE_METADATA_MAP: SourceMap = {
     icon: GlobeIcon,
     displayName: "Web",
     category: SourceCategory.ImportedKnowledge,
-  },
-  file: {
-    icon: FileIcon,
-    displayName: "File",
-    category: SourceCategory.ImportedKnowledge,
-  },
-  slack: {
-    icon: SlackIcon,
-    displayName: "Slack",
-    category: SourceCategory.AppConnection,
   },
   gmail: {
     icon: GmailIcon,
@@ -107,29 +82,9 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Zendesk",
     category: SourceCategory.AppConnection,
   },
-  gong: {
-    icon: GongIcon,
-    displayName: "Gong",
-    category: SourceCategory.AppConnection,
-  },
-  linear: {
-    icon: LinearIcon,
-    displayName: "Linear",
-    category: SourceCategory.AppConnection,
-  },
   productboard: {
     icon: ProductboardIcon,
     displayName: "Productboard",
-    category: SourceCategory.AppConnection,
-  },
-  slab: {
-    icon: SlabIcon,
-    displayName: "Slab",
-    category: SourceCategory.AppConnection,
-  },
-  zulip: {
-    icon: ZulipIcon,
-    displayName: "Zulip",
     category: SourceCategory.AppConnection,
   },
   guru: {
@@ -142,11 +97,6 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "HubSpot",
     category: SourceCategory.AppConnection,
   },
-  document360: {
-    icon: Document360Icon,
-    displayName: "Document360",
-    category: SourceCategory.AppConnection,
-  },
   bookstack: {
     icon: BookstackIcon,
     displayName: "BookStack",
@@ -157,19 +107,9 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Google Sites",
     category: SourceCategory.ImportedKnowledge,
   },
-  loopio: {
-    icon: LoopioIcon,
-    displayName: "Loopio",
-    category: SourceCategory.AppConnection,
-  },
   dropbox: {
     icon: DropboxIcon,
     displayName: "Dropbox",
-    category: SourceCategory.AppConnection,
-  },
-  salesforce: {
-    icon: SalesforceIcon,
-    displayName: "Salesforce",
     category: SourceCategory.AppConnection,
   },
   sharepoint: {
@@ -187,11 +127,6 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Discourse",
     category: SourceCategory.AppConnection,
   },
-  axero: {
-    icon: AxeroIcon,
-    displayName: "Axero",
-    category: SourceCategory.AppConnection,
-  },
   wikipedia: {
     icon: WikipediaIcon,
     displayName: "Wikipedia",
@@ -202,34 +137,9 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "MediaWiki",
     category: SourceCategory.AppConnection,
   },
-  requesttracker: {
-    icon: RequestTrackerIcon,
-    displayName: "Request Tracker",
-    category: SourceCategory.AppConnection,
-  },
   clickup: {
     icon: ClickupIcon,
     displayName: "Clickup",
-    category: SourceCategory.AppConnection,
-  },
-  s3: {
-    icon: S3Icon,
-    displayName: "S3",
-    category: SourceCategory.AppConnection,
-  },
-  r2: {
-    icon: R2Icon,
-    displayName: "R2",
-    category: SourceCategory.AppConnection,
-  },
-  oci_storage: {
-    icon: OCIStorageIcon,
-    displayName: "Oracle Storage",
-    category: SourceCategory.AppConnection,
-  },
-  google_cloud_storage: {
-    icon: GoogleStorageIcon,
-    displayName: "Google Storage",
     category: SourceCategory.AppConnection,
   },
 };
