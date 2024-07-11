@@ -85,9 +85,6 @@ export function ProviderCreationModal({
         default_model_id: values.name,
       });
 
-      console.log("body");
-      console.log(body);
-
       const initialResponse = await fetch("/api/admin/llm/test-embedding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
