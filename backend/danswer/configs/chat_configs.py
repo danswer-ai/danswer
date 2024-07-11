@@ -28,9 +28,6 @@ BASE_RECENCY_DECAY = 0.5
 FAVOR_RECENT_DECAY_MULTIPLIER = 2.0
 # Currently this next one is not configurable via env
 DISABLE_LLM_QUERY_ANSWERABILITY = QA_PROMPT_OVERRIDE == "weak"
-DISABLE_LLM_FILTER_EXTRACTION = (
-    os.environ.get("DISABLE_LLM_FILTER_EXTRACTION", "").lower() == "true"
-)
 # Whether the LLM should evaluate all of the document chunks passed in for usefulness
 # in relation to the user query
 DISABLE_LLM_CHUNK_FILTER = (

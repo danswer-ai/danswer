@@ -77,6 +77,8 @@ export const SlackBotCreationForm = ({
               existingSlackBotConfig?.channel_config?.respond_tag_only || false,
             respond_to_bots:
               existingSlackBotConfig?.channel_config?.respond_to_bots || false,
+            enable_auto_filters:
+              existingSlackBotConfig?.enable_auto_filters || false,
             respond_member_group_list: (
               existingSlackBotConfig?.channel_config
                 ?.respond_team_member_list ?? []
@@ -114,6 +116,7 @@ export const SlackBotCreationForm = ({
             questionmark_prefilter_enabled: Yup.boolean().required(),
             respond_tag_only: Yup.boolean().required(),
             respond_to_bots: Yup.boolean().required(),
+            enable_auto_filters: Yup.boolean().required(),
             respond_member_group_list: Yup.array().of(Yup.string()).required(),
             still_need_help_enabled: Yup.boolean().required(),
             follow_up_tags: Yup.array().of(Yup.string()),
@@ -246,6 +249,11 @@ export const SlackBotCreationForm = ({
                   name="respond_to_bots"
                   label="Responds to Bot messages"
                   subtext="If not set, DanswerBot will always ignore messages from Bots"
+                />
+                <BooleanFormField
+                  name="enable_auto_filters"
+                  label="Enable LLM Autofiltering"
+                  subtext="If set, the LLM will generate source and time filters based on the user's query"
                 />
                 <TextArrayField
                   name="respond_member_group_list"
