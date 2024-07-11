@@ -302,7 +302,7 @@ def get_channel_name_from_id(
         raise e
 
 
-def fetch_userids_from_emails(
+def fetch_user_ids_from_emails(
     user_emails: list[str], client: WebClient
 ) -> tuple[list[str], list[str]]:
     user_ids: list[str] = []
@@ -318,57 +318,65 @@ def fetch_userids_from_emails(
     return user_ids, failed_to_find
 
 
-def fetch_userids_from_groups(
-    group_names: list[str], client: WebClient
+def fetch_user_ids_from_groups(
+    given_names: list[str], client: WebClient
 ) -> tuple[list[str], list[str]]:
     user_ids: list[str] = []
     failed_to_find: list[str] = []
-    for group_name in group_names:
-        try:
-            # First, find the group ID from the group name
-            response = client.usergroups_list()
-            groups = {group["name"]: group["id"] for group in response["usergroups"]}
-            group_id = groups.get(group_name)
+    try:
+        response = client.usergroups_list()
+        if not isinstance(response.data, dict):
+            logger.error("Error fetching user groups")
+            return user_ids, failed_to_find
 
-            if group_id:
-                # Fetch user IDs for the group
-                response = client.usergroups_users_list(usergroup=group_id)
-                user_ids.extend(response["users"])
-            else:
-                failed_to_find.append(group_name)
-        except Exception as e:
-            logger.error(f"Error fetching user IDs for group {group_name}: {str(e)}")
-            failed_to_find.append(group_name)
+        all_group_data = response.data.get("usergroups", [])
+        name_id_map = {d["name"]: d["id"] for d in all_group_data}
+        handle_id_map = {d["handle"]: d["id"] for d in all_group_data}
+        for given_name in given_names:
+            group_id = name_id_map.get(given_name) or handle_id_map.get(
+                given_name.lstrip("@")
+            )
+            if not group_id:
+                failed_to_find.append(given_name)
+                continue
+            response = client.usergroups_users_list(usergroup=group_id)
+            if isinstance(response.data, dict):
+                user_ids.extend(response.data.get("users", []))
+    except Exception as e:
+        logger.error(f"Error fetching user groups: {str(e)}")
+        failed_to_find.append(given_name)
 
     return user_ids, failed_to_find
 
 
-def fetch_groupids_from_names(
-    names: list[str], client: WebClient
+def fetch_group_ids_from_names(
+    given_names: list[str], client: WebClient
 ) -> tuple[list[str], list[str]]:
-    group_ids: set[str] = set()
+    group_data: list[str] = []  # group_name: id
     failed_to_find: list[str] = []
 
     try:
         response = client.usergroups_list()
-        if response.get("ok") and "usergroups" in response.data:
-            all_groups_dicts = response.data["usergroups"]  # type: ignore
-            name_id_map = {d["name"]: d["id"] for d in all_groups_dicts}
-            handle_id_map = {d["handle"]: d["id"] for d in all_groups_dicts}
-            for group in names:
-                if group in name_id_map:
-                    group_ids.add(name_id_map[group])
-                elif group in handle_id_map:
-                    group_ids.add(handle_id_map[group])
-                else:
-                    failed_to_find.append(group)
-        else:
-            # Most likely a Slack App scope issue
+        if not (isinstance(response.data, dict) or response.get("ok")):
             logger.error("Error fetching user groups")
+            return group_data, failed_to_find
+
+        all_group_data = response.data.get("usergroups", [])
+
+        name_id_map = {d["name"]: d["id"] for d in all_group_data}
+        handle_id_map = {d["handle"]: d["id"] for d in all_group_data}
+
+        for given_name in given_names:
+            id = handle_id_map.get(given_name.lstrip("@"))
+            id = id or name_id_map.get(given_name)
+            if id:
+                group_data.append(id)
+            else:
+                failed_to_find.append(given_name)
     except Exception as e:
         logger.error(f"Error fetching user groups: {str(e)}")
 
-    return list(group_ids), failed_to_find
+    return group_data, failed_to_find
 
 
 def fetch_user_semantic_id_from_id(
