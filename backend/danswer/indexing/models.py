@@ -85,7 +85,7 @@ class EmbeddingModelDetail(BaseModel):
     model_name: str
     model_dim: int
     normalize: bool
-    cloud_provider_id: int
+    cloud_provider_id: int | None = None
     cloud_provider_name: str | None = None
     query_prefix: str | None
     passage_prefix: str | None

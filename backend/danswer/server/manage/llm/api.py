@@ -61,9 +61,7 @@ def test_embedding_configuration(
         logger.error(
             f"An error occurred while testing embedding: {str(e)}", exc_info=True
         )
-        raise HTTPException(
-            status_code=500, detail=f"An unexpected error occurred- {e}"
-        )
+        return {"success": False}
 
 
 @admin_router.post("/test")

@@ -78,7 +78,11 @@ export function ChangeCredentialsModal({
       const testResponse = await fetch("/api/admin/llm/test-embedding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: body,
+        body: JSON.stringify({
+          provider: provider.name.toLowerCase().split(" ")[0],
+          api_key: apiKey,
+          default_model_id: provider.name,
+        }),
       });
 
       if (!testResponse.ok) {
@@ -99,7 +103,9 @@ export function ChangeCredentialsModal({
 
       if (!updateResponse.ok) {
         const errorData = await updateResponse.json();
-        throw new Error(errorData.detail || "Failed to update provider");
+        throw new Error(
+          errorData.detail || "Failed to update provider- check your API key"
+        );
       }
 
       onConfirm();

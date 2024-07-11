@@ -84,12 +84,18 @@ export function ProviderCreationModal({
         provider: values.name.toLowerCase().split(" ")[0],
         default_model_id: values.name,
       });
+
+      console.log("body");
+      console.log(body);
+
       const initialResponse = await fetch("/api/admin/llm/test-embedding", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: body,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: values.name.toLowerCase().split(" ")[0],
+          api_key: values.api_key,
+          default_model_id: values.name,
+        }),
       });
 
       if (!initialResponse.ok) {
@@ -113,7 +119,9 @@ export function ProviderCreationModal({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to update provider");
+        throw new Error(
+          errorData.detail || "Failed to update provider- check your API key"
+        );
       }
 
       onConfirm();

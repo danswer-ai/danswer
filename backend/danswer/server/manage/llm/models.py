@@ -100,8 +100,6 @@ class TestEmbeddingRequest(BaseModel):
     provider: str
     api_key: str | None = None
     custom_config: dict[str, str] | None = None
-    # model level
-    default_model_id: str
 
 
 class CloudEmbeddingProvider(BaseModel):
