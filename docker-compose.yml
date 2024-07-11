@@ -3,7 +3,7 @@ services:
   api_server:
     image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest
     build:
-      context: ../../backend
+      context: ./backend
       dockerfile: Dockerfile
     command: >
       /bin/sh -c "alembic upgrade head &&
@@ -106,7 +106,7 @@ services:
   background:
     image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest
     build:
-      context: ../../backend
+      context: ./backend
       dockerfile: Dockerfile
     command: /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
     depends_on:
@@ -207,7 +207,7 @@ services:
   web_server:
     image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-web:latest
     build:
-      context: ../../web
+      context: ./web
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_DISABLE_STREAMING=${NEXT_PUBLIC_DISABLE_STREAMING:-false}
@@ -235,7 +235,7 @@ services:
   inference_model_server:
     image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-model-server:latest
     build:
-      context: ../../backend
+      context: ./backend
       dockerfile: Dockerfile.model_server
     command: >
       /bin/sh -c "if [ \"${DISABLE_MODEL_SERVER:-false}\" = \"True\" ]; then
@@ -262,7 +262,7 @@ services:
   indexing_model_server:
     image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-model-server:latest
     build:
-      context: ../../backend
+      context: ./backend
       dockerfile: Dockerfile.model_server
     command: >
       /bin/sh -c "if [ \"${DISABLE_MODEL_SERVER:-false}\" = \"True\" ]; then
@@ -328,7 +328,7 @@ services:
       - "80:80"
       - "3000:80"  # allow for localhost:3000 usage, since that is the norm
     volumes:
-      - ../data/nginx:/etc/nginx/conf.d
+      - ./deployment/data/nginx:/etc/nginx/conf.d
     logging:
       driver: json-file
       options:
