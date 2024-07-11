@@ -1,7 +1,7 @@
 "use client";
 
 import * as Yup from "yup";
-import { TrashIcon, SalesforceIcon } from "@/components/icons/icons"; // Make sure you have a Document360 icon
+import { TrashIcon, SalesforceIcon } from "@/components/icons/icons"; 
 import { errorHandlingFetcher as fetcher } from "@/lib/fetcher";
 import useSWR, { useSWRConfig } from "swr";
 import { LoadingAnimation } from "@/components/Loading";
