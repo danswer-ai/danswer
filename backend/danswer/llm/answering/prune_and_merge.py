@@ -1,6 +1,9 @@
 import json
+from collections import defaultdict
 from copy import deepcopy
 from typing import TypeVar
+
+from pydantic import BaseModel
 
 from danswer.chat.models import (
     LlmDoc,
@@ -29,6 +32,31 @@ _METADATA_TOKEN_ESTIMATE = 75
 
 class PruningError(Exception):
     pass
+
+
+class ChunkRange(BaseModel):
+    chunks: list[InferenceChunk]
+    start: int
+    end: int
+
+
+def merge_chunk_intervals(chunk_ranges: list[ChunkRange]) -> list[ChunkRange]:
+    """This acts on a single document to merge the overlapping ranges of chunks
+    Algo explained here for easy understanding: https://leetcode.com/problems/merge-intervals
+    """
+    sorted_ranges = sorted(chunk_ranges, key=lambda x: x.start)
+
+    combined_ranges: list[ChunkRange] = []
+
+    for new_chunk_range in sorted_ranges:
+        if not combined_ranges or combined_ranges[-1].end < new_chunk_range.start - 1:
+            combined_ranges.append(new_chunk_range)
+        else:
+            current_range = combined_ranges[-1]
+            current_range.end = max(current_range.end, new_chunk_range.end)
+            current_range.chunks.extend(new_chunk_range.chunks)
+
+    return combined_ranges
 
 
 def _compute_limit(
@@ -219,6 +247,7 @@ def prune_sections(
     question: str,
     document_pruning_config: DocumentPruningConfig,
 ) -> list[InferenceSection]:
+    # Assumes the sections are score ordered with highest first
     if section_relevance_list is not None:
         assert len(sections) == len(section_relevance_list)
 
@@ -241,6 +270,67 @@ def prune_sections(
     )
 
 
+def _merge_doc_chunks(chunks: list[InferenceChunk]) -> InferenceSection:
+    # Assuming there are no duplicates by this point
+    sorted_chunks = sorted(chunks, key=lambda x: x.chunk_id)
+
+    center_chunk = max(
+        chunks, key=lambda x: x.score if x.score is not None else float("-inf")
+    )
+
+    merged_content = []
+    for i, chunk in enumerate(sorted_chunks):
+        if i > 0:
+            prev_chunk_id = sorted_chunks[i - 1].chunk_id
+            if chunk.chunk_id == prev_chunk_id + 1:
+                merged_content.append("\n")
+            else:
+                merged_content.append("\n\n...\n\n")
+        merged_content.append(chunk.content)
+
+    combined_content = "".join(merged_content)
+
+    return InferenceSection(
+        center_chunk=center_chunk,
+        chunks=sorted_chunks,
+        combined_content=combined_content,
+    )
+
+
+def _merge_sections(sections: list[InferenceSection]) -> list[InferenceSection]:
+    docs_map: dict[str, dict[int, InferenceChunk]] = defaultdict(dict)
+    doc_order: dict[str, int] = {}
+    for index, section in enumerate(sections):
+        if section.center_chunk.document_id not in doc_order:
+            doc_order[section.center_chunk.document_id] = index
+        for chunk in [section.center_chunk] + section.chunks:
+            chunks_map = docs_map[section.center_chunk.document_id]
+            existing_chunk = chunks_map.get(chunk.chunk_id)
+            if (
+                existing_chunk is None
+                or existing_chunk.score is None
+                or chunk.score is not None
+                and chunk.score > existing_chunk.score
+            ):
+                chunks_map[chunk.chunk_id] = chunk
+
+    new_sections = []
+    for section_chunks in docs_map.values():
+        new_sections.append(_merge_doc_chunks(chunks=list(section_chunks.values())))
+
+    # Sort by highest score, then by original document order
+    # It is now 1 large section per doc, the center chunk being the one with the highest score
+    new_sections.sort(
+        key=lambda x: (
+            x.center_chunk.score if x.center_chunk.score is not None else 0,
+            -1 * doc_order[x.center_chunk.document_id],
+        ),
+        reverse=True,
+    )
+
+    return new_sections
+
+
 def prune_and_merge_sections(
     sections: list[InferenceSection],
     section_relevance_list: list[bool] | None,
@@ -249,6 +339,7 @@ def prune_and_merge_sections(
     question: str,
     document_pruning_config: DocumentPruningConfig,
 ) -> list[InferenceSection]:
+    # Assumes the sections are score ordered with highest first
     remaining_sections = prune_sections(
         sections=sections,
         section_relevance_list=section_relevance_list,
@@ -257,6 +348,7 @@ def prune_and_merge_sections(
         question=question,
         document_pruning_config=document_pruning_config,
     )
-    # TODO add the actual section combination logic
 
-    return remaining_sections
+    merged_sections = _merge_sections(sections=remaining_sections)
+
+    return merged_sections
