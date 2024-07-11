@@ -1121,8 +1121,7 @@ class ChannelConfig(TypedDict):
     channel_names: list[str]
     respond_tag_only: NotRequired[bool]  # defaults to False
     respond_to_bots: NotRequired[bool]  # defaults to False
-    respond_team_member_list: NotRequired[list[str]]
-    respond_slack_group_list: NotRequired[list[str]]
+    respond_member_group_list: NotRequired[list[str]]
     answer_filters: NotRequired[list[AllowedAnswerFilters]]
     # If None then no follow up
     # If empty list, follow up with no tags
