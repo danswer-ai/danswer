@@ -41,8 +41,13 @@ class ChunkRange(BaseModel):
 
 
 def merge_chunk_intervals(chunk_ranges: list[ChunkRange]) -> list[ChunkRange]:
-    """This acts on a single document to merge the overlapping ranges of chunks
+    """
+    This acts on a single document to merge the overlapping ranges of chunks
     Algo explained here for easy understanding: https://leetcode.com/problems/merge-intervals
+
+    NOTE: this is used to merge chunk ranges for retrieving the right chunk_ids against the
+    document index, this does not merge the actual contents so it should not be used to actually
+    merge chunks post retrieval.
     """
     sorted_ranges = sorted(chunk_ranges, key=lambda x: x.start)
 
