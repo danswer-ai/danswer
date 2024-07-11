@@ -1,7 +1,7 @@
 version: '3'
 services:
   api_server:
-    image: danswer/danswer-backend:latest
+    image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -104,7 +104,7 @@ services:
 
 
   background:
-    image: danswer/danswer-backend:latest
+    image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -172,20 +172,8 @@ services:
       - JIRA_CONNECTOR_LABELS_TO_SKIP=${JIRA_CONNECTOR_LABELS_TO_SKIP:-}
       - WEB_CONNECTOR_VALIDATE_URLS=${WEB_CONNECTOR_VALIDATE_URLS:-}
       - JIRA_API_VERSION=${JIRA_API_VERSION:-}
-      - GONG_CONNECTOR_START_TIME=${GONG_CONNECTOR_START_TIME:-}
       - NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP=${NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP:-}
       - GITHUB_CONNECTOR_BASE_URL=${GITHUB_CONNECTOR_BASE_URL:-}
-      # Danswer SlackBot Configs
-      - DANSWER_BOT_SLACK_APP_TOKEN=${DANSWER_BOT_SLACK_APP_TOKEN:-}
-      - DANSWER_BOT_SLACK_BOT_TOKEN=${DANSWER_BOT_SLACK_BOT_TOKEN:-}
-      - DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER=${DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER:-}
-      - DANSWER_BOT_FEEDBACK_VISIBILITY=${DANSWER_BOT_FEEDBACK_VISIBILITY:-}
-      - DANSWER_BOT_DISPLAY_ERROR_MSGS=${DANSWER_BOT_DISPLAY_ERROR_MSGS:-}
-      - DANSWER_BOT_RESPOND_EVERY_CHANNEL=${DANSWER_BOT_RESPOND_EVERY_CHANNEL:-}
-      - DANSWER_BOT_DISABLE_COT=${DANSWER_BOT_DISABLE_COT:-}  # Currently unused
-      - NOTIFY_SLACKBOT_NO_ANSWER=${NOTIFY_SLACKBOT_NO_ANSWER:-}
-      - DANSWER_BOT_MAX_QPM=${DANSWER_BOT_MAX_QPM:-}
-      - DANSWER_BOT_MAX_WAIT_TIME=${DANSWER_BOT_MAX_WAIT_TIME:-}
       # Logging
       # Leave this on pretty please? Nothing sensitive is collected!
       # https://docs.danswer.dev/more/telemetry
@@ -206,7 +194,7 @@ services:
 
 
   web_server:
-    image: danswer/danswer-web-server:latest
+    image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-web:latest
     build:
       context: ../../web
       dockerfile: Dockerfile
@@ -234,7 +222,7 @@ services:
 
 
   inference_model_server:
-    image: danswer/danswer-model-server:latest
+    image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-model-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
@@ -261,7 +249,7 @@ services:
 
 
   indexing_model_server:
-    image: danswer/danswer-model-server:latest
+    image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-model-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
