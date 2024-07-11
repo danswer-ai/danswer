@@ -6,8 +6,6 @@ from danswer.search.models import ChunkContext
 from danswer.search.models import RetrievalDetails
 from danswer.server.manage.models import StandardAnswer
 
-# from danswer.db.models import StandardAnswer
-
 
 class TestStandardAnswerRequest(BaseModel):
     message: str
