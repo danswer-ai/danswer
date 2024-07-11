@@ -55,21 +55,14 @@ def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
     body["user"] = None
     try:
         response_json = requests.post(url, headers=headers, json=body).json()
-        content_list = [
-            context.get("content", "")
-            for context in response_json.get("contexts", {}).get("contexts", [])
-        ]
-        answer = response_json.get("answer")
+        context_data_list = response_json.get("contexts", {}).get("contexts", [])
+        answer = response_json.get("answer", "")
     except Exception as e:
         print("Failed to answer the questions, trying again")
         print(f"error: {str(e)}")
         raise e
 
-    print("\nquery: ", query)
-    print("answer: ", answer)
-    print("content_list: ", content_list)
-
-    return content_list, answer
+    return context_data_list, answer
 
 
 def check_if_query_ready(run_suffix: str) -> bool:
