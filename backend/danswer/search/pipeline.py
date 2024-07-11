@@ -112,12 +112,10 @@ class SearchPipeline:
             Generator[list[InferenceChunk] | list[str], None, None] | None
         ) = None
 
-    def evaluate(
-        self, top_doc: LlmDoc, query: str
-    ) -> tuple[dict[str, Any], dict[str, str]]:
+    def evaluate(self, top_doc: LlmDoc, query: str) -> dict[str, Any]:
         # Group documents by document_id
 
-        relevance = {}
+        relevance: dict[str, Any] = {}
         results = {}
         document_id = top_doc.document_id
 
@@ -148,6 +146,7 @@ class SearchPipeline:
             relevance["relevant"] = True
         else:
             relevance["relevant"] = False
+
         relevance["content"] = content.split("RESULT")[0]
         results[document_id] = relevance
         return results

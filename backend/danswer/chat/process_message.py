@@ -117,10 +117,6 @@ def _handle_search_tool_response_summary(
         if dedupe_docs:
             deduped_docs, dropped_inds = dedupe_documents(top_docs)
 
-        print("Created search doc summary")
-        for doc in dedupe_docs:
-            print(f"za doc is {doc}")
-
         reference_db_search_docs = [
             create_db_search_doc(server_search_doc=doc, db_session=db_session)
             for doc in deduped_docs

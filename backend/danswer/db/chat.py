@@ -507,7 +507,7 @@ def get_doc_query_identifiers_from_model(
 
 def update_search_docs_table_with_relevance(
     db_session: Session,
-    reference_db_search_docs: None | list[SearchDoc],
+    reference_db_search_docs: list[SearchDoc],
     relevance_summary: LLMRelevanceSummaryResponse,
 ) -> None:
     for search_doc in reference_db_search_docs:
@@ -515,7 +515,6 @@ def update_search_docs_table_with_relevance(
             search_doc.document_id
         )
         if relevance_data:
-            print(relevance_data)
             db_session.execute(
                 update(SearchDoc)
                 .where(SearchDoc.document_id == search_doc.document_id)
@@ -555,18 +554,6 @@ def create_db_search_doc(
     db_session.commit()
 
     return db_search_doc
-
-
-def update_search_doc(db_session: Session, relevance: dict[str:dict]):
-    search_docs = (
-        db_session.query(SearchDoc)
-        .filtesr(SearchDoc.document_id.in_(list(relevance.keys())))
-        .all()
-    )
-
-    for doc in search_docs:
-        doc.relevance_explanation = relevance[doc.document_id].relevance
-        doc.relevant_search_result = relevance[doc.document_id].comment
 
 
 def get_db_search_doc_by_id(doc_id: int, db_session: Session) -> DBSearchDoc | None:

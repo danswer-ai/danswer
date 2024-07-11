@@ -74,6 +74,7 @@ AnswerObjectIterator = Iterator[
     | ChatMessageDetail
     | CitationInfo
     | ToolCallKickoff
+    | LLMRelevanceSummaryResponse
 ]
 
 

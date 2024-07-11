@@ -17,8 +17,6 @@ from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.interfaces import LLM
-from danswer.llm.utils import message_generator_to_string_generator
-from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import IndexFilters
@@ -137,46 +135,6 @@ class SearchTool(Tool):
                 ]
             }
         )
-
-    def evaluate(
-        self, top_doc: LlmDoc, query: ThreadMessage
-    ) -> tuple[dict[str, Any], dict[str, str]]:
-        # Group documents by document_id
-
-        relevance = {}
-        results = {}
-        document_id = top_doc.document_id
-
-        prompt = f"""
-        Determine if this document is relevant to the search query:
-
-        Title: {top_doc.document_id.split("/")[-1]}
-        Blurb: {top_doc.blurb}
-        Query: {query}
-
-        Think through the following:
-        1. What are the key terms or concepts in the query?
-        2. Do these appear in the document title or blurb?
-        3. Is the document's main topic related to the query?
-        4. Would this document be useful to someone searching with this query?
-
-        Provide your chain of thought in a paragraph. Be concise but show your reasoning clearly.
-
-        Conclude with:
-        RESULT: True (if relevant)
-        RESULT: False (if not relevant)
-        """
-
-        content = "".join(
-            message_generator_to_string_generator(self.llm.stream(prompt=prompt))
-        )
-        if "result: true" in content.lower():
-            relevance["relevant"] = True
-        else:
-            relevance["relevant"] = False
-        relevance["content"] = content.split("RESULT")[0]
-        results[document_id] = relevance
-        return results
 
     """For LLMs that don't support tool calling"""
 
