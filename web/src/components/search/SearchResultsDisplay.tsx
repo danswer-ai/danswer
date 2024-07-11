@@ -129,6 +129,12 @@ export const SearchResultsDisplay = ({
     searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
     defaultOverrides.forceDisplayQA;
 
+  const relevantDocs =
+    documents && relevance
+      ? documents.filter((doc) => {
+          return relevance[doc.document_id].relevant;
+        })
+      : [];
   return (
     <>
       {popup}
@@ -151,7 +157,6 @@ export const SearchResultsDisplay = ({
                 <div
                   className={`flex items-center ${sweep ? "rotate-180" : ""}`}
                 >
-                  {/* <span>⌘O</span> */}
                   <span></span>
                   {!sweep ? "hide" : "undo"}
                   {!sweep ? (
@@ -163,57 +168,61 @@ export const SearchResultsDisplay = ({
               </button>
             )}
           </div>
-          {removeDuplicateDocs(documents, agenticResults!, relevance).length ==
-            0 && (
-            <p>
-              No relevant documents found! Try another query or hit the button
-              below!
-            </p>
-          )}
 
-          {removeDuplicateDocs(documents, agenticResults!, relevance).map(
-            (document, ind) => {
-              return agenticResults ? (
-                relevance &&
-                  (relevance[document.document_id].relevant || showAll) && (
-                    <AgenticDocumentDisplay
-                      comments={comments}
-                      index={ind}
-                      hide={
-                        sweep &&
-                        relevance &&
-                        !relevance[document.document_id].relevant
-                      }
-                      relevance={relevance}
-                      key={document.document_id}
-                      document={document}
-                      documentRank={ind + 1}
-                      messageId={messageId}
-                      isSelected={selectedDocumentIds.has(document.document_id)}
-                      setPopup={setPopup}
-                    />
-                  )
-              ) : (
-                <DocumentDisplay
-                  index={ind}
-                  hide={
-                    sweep &&
-                    relevance &&
-                    !relevance[document.document_id].relevant
-                  }
-                  relevance={relevance}
-                  key={document.document_id}
-                  document={document}
-                  documentRank={ind + 1}
-                  messageId={messageId}
-                  isSelected={selectedDocumentIds.has(document.document_id)}
-                  setPopup={setPopup}
-                />
-              );
-            }
-          )}
+          {documents.map((document, ind) => {
+            return agenticResults ? (
+              relevance &&
+                (relevance[document.document_id].relevant || showAll) && (
+                  <AgenticDocumentDisplay
+                    comments={comments}
+                    index={ind}
+                    hide={
+                      sweep &&
+                      relevance &&
+                      !relevance[document.document_id].relevant
+                    }
+                    relevance={relevance}
+                    key={document.document_id}
+                    document={document}
+                    documentRank={ind + 1}
+                    messageId={messageId}
+                    isSelected={selectedDocumentIds.has(document.document_id)}
+                    setPopup={setPopup}
+                  />
+                )
+            ) : (
+              <DocumentDisplay
+                index={ind}
+                hide={
+                  sweep &&
+                  relevance &&
+                  !relevance[document.document_id].relevant
+                }
+                relevance={relevance}
+                key={document.document_id}
+                document={document}
+                documentRank={ind + 1}
+                messageId={messageId}
+                isSelected={selectedDocumentIds.has(document.document_id)}
+                setPopup={setPopup}
+              />
+            );
+          })}
         </div>
       )}
+
+      {documents && documents.length == 0 && (
+        <p className="flex text-lg font-bold">
+          No docs found! Ensure that you have enabled at least one connector
+        </p>
+      )}
+
+      {relevantDocs && relevantDocs.length == 0 && !showAll && (
+        <p className="flex text-lg font-bold">
+          No high quality results found by agentic search.
+        </p>
+      )}
+
       <div
         className={`flex my-4  justify-center transition-all duration-500 ${searchState == "input" ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
       >

@@ -44,21 +44,42 @@ export function EmphasizedClickable({
 }) {
   return (
     <button
-      onClick={onClick}
       className={`
-        border 
-        border-neutral-300 
-        hover:shadow-sm
-        rounded-smf
-        text-sm
-        p-1
-        select-none
-        bg-lighter
-        hover:bg-background-weaker
-        ${fullWidth ? "w-full" : ""}`}
+    inline-flex 
+    items-center 
+    justify-center 
+    flex-shrink-0 
+    font-medium 
+    min-h-[38px] 
+    py-2 
+    px-3 
+    w-fit 
+    bg-hover
+    border-1 border-neutral-300 border bg-neutral-100 
+    text-sm
+    rounded-lg
+    hover:bg-background-weaker
+`}
+      onClick={onClick}
     >
       {children}
     </button>
+    // <button
+    //   onClick={onClick}
+    //   className={`
+    //     border
+    //     border-neutral-300
+    //     hover:shadow-sm
+    //     rounded-smf
+    //     text-sm
+    //     p-1
+    //     select-none
+    //     bg-lighter
+    //     hover:bg-background-weaker
+    //     ${fullWidth ? "w-full" : ""}`}
+    // >
+    //   {children}
+    // </button>
   );
 }
 

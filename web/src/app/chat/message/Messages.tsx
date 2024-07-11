@@ -214,7 +214,7 @@ export const AIMessage = ({
     <div className={"group py-5 px-2 lg:px-5 relative flex "}>
       <div className="mx-auto w-[90%] max-w-message-max">
         <div className="xl:ml-8">
-          <div className="group flex">
+          <div className=" flex">
             <AssistantIcon
               size="small"
               assistant={alternativeAssistant || currentPersona}
@@ -413,9 +413,9 @@ export const AIMessage = ({
                 (isActive ? (
                   <div
                     className="
-                  flex md:flex-row gap-x-0.5 mt-1.5
-                  transition-all duration-300 ease-in-out
-                  transform opacity-100 translate-y-0"
+                      flex md:flex-row gap-x-0.5 mt-1.5
+                      transition-all duration-300 ease-in-out
+                      transform opacity-100 translate-y-0"
                   >
                     <TooltipGroup>
                       <CustomTooltip showTick line content="Copy!">
@@ -438,13 +438,14 @@ export const AIMessage = ({
                 ) : (
                   <div
                     className="
-                  invisible hover:visible group-hover:visible
-                  opacity-0 group-hover:opacity-100
-                  transform translate-y-2 group-hover:translate-y-0
-                  flex md:flex-row gap-x-0.5 mt-1.5
-                  transition-all duration-300 ease-in-out
-                  absolute -bottom-4 bg-background-weaker/60
-                   p-1.5 rounded-lg  "
+                      absolute -bottom-6
+                      invisible hover:visible group-hover:visible hover:visible
+                      opacity-0 group-hover:opacity-100 ver:opacity-100
+                      transform translate-y-2 group-hover:translate-y-0
+                      flex md:flex-row gap-x-0.5 
+                      transition-all duration-300 ease-in-out
+                       bg-background-weaker/40
+                       p-1.5 rounded-lg  "
                   >
                     <TooltipGroup>
                       <CustomTooltip showTick line content="Copy!">
@@ -491,7 +492,7 @@ function MessageSwitcher({
         onClick={currentPage === 1 ? undefined : handlePrevious}
       />
 
-      <span className="text-emphasis text-medium select-none">
+      <span className="text-emphasis select-none">
         {currentPage} / {totalPages}
       </span>
 
@@ -625,8 +626,7 @@ export const HumanMessage = ({
                       <div className="flex justify-end mt-2 gap-2 pr-4">
                         <button
                           className={`
-                          w-fit 
-                          p-1 
+                          w-fit
                           bg-accent 
                           text-inverted 
                           text-sm
@@ -637,8 +637,8 @@ export const HumanMessage = ({
                           flex-shrink-0 
                           font-medium 
                           min-h-[38px]
-                          py-2 p
-                          x-3 p
+                          py-2
+                          px-3
                           hover:bg-accent-hover
                         `}
                           onClick={handleEditSubmit}
@@ -656,7 +656,6 @@ export const HumanMessage = ({
                           py-2 
                           px-3 
                           w-fit 
-                          p-1 
                           bg-hover
                           bg-background-strong 
                           text-sm

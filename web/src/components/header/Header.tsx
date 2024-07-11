@@ -57,32 +57,6 @@ export function Header({ user }: HeaderProps) {
             </div>
           </div>
         </Link>
-        {/* 
-        {(!settings ||
-          (settings.search_page_enabled && settings.chat_page_enabled)) && (
-          <>
-            <Link
-              href="/search"
-              className={"ml-6 h-full flex flex-col hover:bg-hover"}
-            >
-              <div className="w-24 flex my-auto">
-                <div className={"mx-auto flex text-strong px-2"}>
-                  <FiSearch className="my-auto mr-1" />
-                  <h1 className="flex text-sm font-bold my-auto">Search</h1>
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/chat" className="h-full flex flex-col hover:bg-hover">
-              <div className="w-24 flex my-auto">
-                <div className="mx-auto flex text-strong px-2">
-                  <FiMessageSquare className="my-auto mr-1" />
-                  <h1 className="flex text-sm font-bold my-auto">Chat</h1>
-                </div>
-              </div>
-            </Link>
-          </>
-        )} */}
 
         <div className="ml-auto h-full flex flex-col">
           <div className="my-auto">

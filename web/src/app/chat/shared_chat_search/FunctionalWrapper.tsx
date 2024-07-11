@@ -1,8 +1,9 @@
 "use client";
 
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useContext, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ChatIcon, SearchIcon } from "@/components/icons/icons";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 const ToggleSwitch = () => {
   const pathname = usePathname();
@@ -104,32 +105,32 @@ export default function FunctionalWrapper({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [router]);
+  const settings = useContext(SettingsContext)?.settings;
 
   return (
     <>
-      <div className="z-[40] flex fixed top-4 left-1/2 transform -translate-x-1/2">
-        <div
-          style={{ transition: "width 0.30s ease-out" }}
-          className={`
-        flex-none 
-        overflow-y-hidden 
-        bg-background-weak 
-        transition-all 
-        bg-opacity-80
-        duration-300 
-        ease-in-out
-        h-full
-        ${toggledSidebar ? "w-[300px] " : "w-[0px]"}
-      `}
-        ></div>
-        <div className="relative">
-          <ToggleSwitch />
+      {(!settings ||
+        (settings.search_page_enabled && settings.chat_page_enabled)) && (
+        <div className="z-[40] flex fixed top-4 left-1/2 transform -translate-x-1/2">
+          <div
+            style={{ transition: "width 0.30s ease-out" }}
+            className={`flex-none 
+                        overflow-y-hidden 
+                        bg-background-weak 
+                        transition-all 
+                        bg-opacity-80
+                        duration-300 
+                        ease-in-out
+                        h-full
+                        ${toggledSidebar ? "w-[300px] " : "w-[0px]"}`}
+          ></div>
+          <div className="relative">
+            <ToggleSwitch />
+          </div>
         </div>
-      </div>
-      <div className="absolute left-0 top-0 w-full h-full">
-        {/* {content(toggle)} */}
-        {children}
-      </div>
+      )}
+
+      <div className="absolute left-0 top-0 w-full h-full">{children}</div>
     </>
   );
 }

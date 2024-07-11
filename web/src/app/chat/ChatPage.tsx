@@ -71,16 +71,10 @@ import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";
 import { ChatBanner } from "./ChatBanner";
-import {
-  TbLayoutSidebarLeftExpand,
-  TbLayoutSidebarRightExpand,
-} from "react-icons/tb";
 import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 
-import ResizableSection from "@/components/resizable/ResizableSection";
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
-import { Logo } from "@/components/Logo";
 import { CHAT_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 
