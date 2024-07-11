@@ -68,7 +68,7 @@ def gpt_search(
     db_session: Session = Depends(get_session),
 ) -> GptSearchResponse:
     llm, fast_llm = get_default_llms()
-    top_chunks = SearchPipeline(
+    top_sections = SearchPipeline(
         search_request=SearchRequest(
             query=search_request.query,
         ),
@@ -76,20 +76,22 @@ def gpt_search(
         llm=llm,
         fast_llm=fast_llm,
         db_session=db_session,
-    ).reranked_chunks
+    ).reranked_sections
 
     return GptSearchResponse(
         matching_document_chunks=[
             GptDocChunk(
-                title=chunk.semantic_identifier,
-                content=chunk.content,
-                source_type=chunk.source_type,
-                link=chunk.source_links.get(0, "") if chunk.source_links else "",
-                metadata=chunk.metadata,
-                document_age=time_ago(chunk.updated_at)
-                if chunk.updated_at
+                title=section.center_chunk.semantic_identifier,
+                content=section.center_chunk.content,
+                source_type=section.center_chunk.source_type,
+                link=section.center_chunk.source_links.get(0, "")
+                if section.center_chunk.source_links
+                else "",
+                metadata=section.center_chunk.metadata,
+                document_age=time_ago(section.center_chunk.updated_at)
+                if section.center_chunk.updated_at
                 else "Unknown",
             )
-            for chunk in top_chunks
+            for section in top_sections
         ],
     )

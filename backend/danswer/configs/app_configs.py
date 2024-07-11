@@ -266,9 +266,13 @@ JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
 CURRENT_PROCESS_IS_AN_INDEXING_JOB = (
     os.environ.get("CURRENT_PROCESS_IS_AN_INDEXING_JOB", "").lower() == "true"
 )
-# Logs every model prompt and output, mostly used for development or exploration purposes
+# Sets LiteLLM to verbose logging
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
+)
+# Logs Danswer only model interactions like prompts, responses, messages etc.
+LOG_DANSWER_MODEL_INTERACTIONS = (
+    os.environ.get("LOG_DANSWER_MODEL_INTERACTIONS", "").lower() == "true"
 )
 # If set to `true` will enable additional logs about Vespa query performance
 # (time spent on finding the right docs + time spent fetching summaries from disk)

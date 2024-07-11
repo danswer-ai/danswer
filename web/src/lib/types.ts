@@ -133,6 +133,7 @@ export interface BookstackConfig {}
 
 export interface ConfluenceConfig {
   wiki_page_url: string;
+  index_origin?: boolean;
 }
 
 export interface JiraConfig {
@@ -552,6 +553,7 @@ export interface SlackBotConfig {
   channel_config: ChannelConfig;
   response_type: SlackBotResponseType;
   standard_answer_categories: StandardAnswerCategory[];
+  enable_auto_filters: boolean;
 }
 
 export interface SlackBotTokens {

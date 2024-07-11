@@ -13,10 +13,10 @@ from danswer.chat.models import LlmDoc
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import JSON_ro
-from danswer.llm.answering.doc_pruning import prune_documents
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
+from danswer.llm.answering.prune_and_merge import prune_and_merge_sections
 from danswer.llm.interfaces import LLM
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
@@ -75,7 +75,7 @@ class SearchTool(Tool):
         pruning_config: DocumentPruningConfig,
         # if specified, will not actually run a search and will instead return these
         # sections. Used when the user selects specific docs to talk to
-        selected_docs: list[LlmDoc] | None = None,
+        selected_sections: list[InferenceSection] | None = None,
         chunks_above: int = 0,
         chunks_below: int = 0,
         full_doc: bool = False,
@@ -89,7 +89,7 @@ class SearchTool(Tool):
         self.fast_llm = fast_llm
         self.pruning_config = pruning_config
 
-        self.selected_docs = selected_docs
+        self.selected_sections = selected_sections
 
         self.chunks_above = chunks_above
         self.chunks_below = chunks_below
@@ -171,7 +171,7 @@ class SearchTool(Tool):
     def _build_response_for_specified_sections(
         self, query: str
     ) -> Generator[ToolResponse, None, None]:
-        if self.selected_docs is None:
+        if self.selected_sections is None:
             raise ValueError("sections must be specified")
 
         yield ToolResponse(
@@ -187,24 +187,27 @@ class SearchTool(Tool):
         )
         yield ToolResponse(
             id=SECTION_RELEVANCE_LIST_ID,
-            response=[i for i in range(len(self.selected_docs))],
+            response=[i for i in range(len(self.selected_sections))],
         )
-        yield ToolResponse(
-            id=FINAL_CONTEXT_DOCUMENTS,
-            response=prune_documents(
-                docs=self.selected_docs,
-                doc_relevance_list=None,
-                prompt_config=self.prompt_config,
-                llm_config=self.llm.config,
-                question=query,
-                document_pruning_config=self.pruning_config,
-            ),
+
+        final_context_sections = prune_and_merge_sections(
+            sections=self.selected_sections,
+            section_relevance_list=None,
+            prompt_config=self.prompt_config,
+            llm_config=self.llm.config,
+            question=query,
+            document_pruning_config=self.pruning_config,
         )
+        llm_docs = [
+            llm_doc_from_inference_section(section)
+            for section in final_context_sections
+        ]
+        yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
         query = cast(str, kwargs["query"])
 
-        if self.selected_docs:
+        if self.selected_sections:
             yield from self._build_response_for_specified_sections(query)
             return
 
@@ -222,6 +225,9 @@ class SearchTool(Tool):
                 chunks_above=self.chunks_above,
                 chunks_below=self.chunks_below,
                 full_doc=self.full_doc,
+                enable_auto_detect_filters=self.retrieval_options.enable_auto_detect_filters
+                if self.retrieval_options
+                else None,
             ),
             user=self.user,
             llm=self.llm,
@@ -245,10 +251,10 @@ class SearchTool(Tool):
             response=DanswerContexts(
                 contexts=[
                     DanswerContext(
-                        content=section.content,
-                        document_id=section.document_id,
-                        semantic_identifier=section.semantic_identifier,
-                        blurb=section.blurb,
+                        content=section.combined_content,
+                        document_id=section.center_chunk.document_id,
+                        semantic_identifier=section.center_chunk.semantic_identifier,
+                        blurb=section.center_chunk.blurb,
                     )
                     for section in search_pipeline.reranked_sections
                 ]
@@ -256,25 +262,24 @@ class SearchTool(Tool):
         )
         yield ToolResponse(
             id=SECTION_RELEVANCE_LIST_ID,
-            response=search_pipeline.relevant_chunk_indices,
+            response=search_pipeline.relevant_section_indices,
         )
 
-        llm_docs = [
-            llm_doc_from_inference_section(section)
-            for section in search_pipeline.reranked_sections
-        ]
-        final_context_documents = prune_documents(
-            docs=llm_docs,
-            doc_relevance_list=[
-                True if ind in search_pipeline.relevant_chunk_indices else False
-                for ind in range(len(llm_docs))
-            ],
+        final_context_sections = prune_and_merge_sections(
+            sections=search_pipeline.reranked_sections,
+            section_relevance_list=search_pipeline.section_relevance_list,
             prompt_config=self.prompt_config,
             llm_config=self.llm.config,
             question=query,
             document_pruning_config=self.pruning_config,
         )
-        yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=final_context_documents)
+
+        llm_docs = [
+            llm_doc_from_inference_section(section)
+            for section in final_context_sections
+        ]
+
+        yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         final_docs = cast(

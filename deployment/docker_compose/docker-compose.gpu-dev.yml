@@ -41,7 +41,6 @@ services:
       - GEN_AI_MAX_TOKENS=${GEN_AI_MAX_TOKENS:-}
       - QA_TIMEOUT=${QA_TIMEOUT:-}
       - MAX_CHUNKS_FED_TO_CHAT=${MAX_CHUNKS_FED_TO_CHAT:-}
-      - DISABLE_LLM_FILTER_EXTRACTION=${DISABLE_LLM_FILTER_EXTRACTION:-}
       - DISABLE_LLM_CHUNK_FILTER=${DISABLE_LLM_CHUNK_FILTER:-}
       - DISABLE_LLM_CHOOSE_SEARCH=${DISABLE_LLM_CHOOSE_SEARCH:-}
       - DISABLE_LLM_QUERY_REPHRASE=${DISABLE_LLM_QUERY_REPHRASE:-}
@@ -79,7 +78,9 @@ services:
       # https://docs.danswer.dev/more/telemetry
       - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}  # Set to debug to get more fine-grained logs
-      - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # Log all of the prompts to the LLM
+      - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # LiteLLM Verbose Logging
+      # Log all of Danswer prompts and interactions with the LLM
+      - LOG_DANSWER_MODEL_INTERACTIONS=${LOG_DANSWER_MODEL_INTERACTIONS:-}
       # If set to `true` will enable additional logs about Vespa query performance
       # (time spent on finding the right docs + time spent fetching summaries from disk)
       - LOG_VESPA_TIMING_INFORMATION=${LOG_VESPA_TIMING_INFORMATION:-}
@@ -121,7 +122,6 @@ services:
       - GEN_AI_MAX_TOKENS=${GEN_AI_MAX_TOKENS:-}
       - QA_TIMEOUT=${QA_TIMEOUT:-}
       - MAX_CHUNKS_FED_TO_CHAT=${MAX_CHUNKS_FED_TO_CHAT:-}
-      - DISABLE_LLM_FILTER_EXTRACTION=${DISABLE_LLM_FILTER_EXTRACTION:-}
       - DISABLE_LLM_CHUNK_FILTER=${DISABLE_LLM_CHUNK_FILTER:-}
       - DISABLE_LLM_CHOOSE_SEARCH=${DISABLE_LLM_CHOOSE_SEARCH:-}
       - DISABLE_LLM_QUERY_REPHRASE=${DISABLE_LLM_QUERY_REPHRASE:-}
@@ -183,7 +183,9 @@ services:
       # https://docs.danswer.dev/more/telemetry
       - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}  # Set to debug to get more fine-grained logs
-      - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # Log all of the prompts to the LLM
+      - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # LiteLLM Verbose Logging
+      # Log all of Danswer prompts and interactions with the LLM
+      - LOG_DANSWER_MODEL_INTERACTIONS=${LOG_DANSWER_MODEL_INTERACTIONS:-}
       - LOG_VESPA_TIMING_INFORMATION=${LOG_VESPA_TIMING_INFORMATION:-}
 
       # Enterprise Edition only

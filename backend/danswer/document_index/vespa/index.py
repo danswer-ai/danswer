@@ -560,7 +560,9 @@ def _process_dynamic_summary(
     return processed_summary
 
 
-def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
+def _vespa_hit_to_inference_chunk(
+    hit: dict[str, Any], null_score: bool = False
+) -> InferenceChunk:
     fields = cast(dict[str, Any], hit["fields"])
 
     # parse fields that are stored as strings, but are really json / datetime
@@ -616,7 +618,7 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
         semantic_identifier=fields[SEMANTIC_IDENTIFIER],
         boost=fields.get(BOOST, 1),
         recency_bias=fields.get("matchfeatures", {}).get(RECENCY_BIAS, 1.0),
-        score=hit.get("relevance", 0),
+        score=None if null_score else hit.get("relevance", 0),
         hidden=fields.get(HIDDEN, False),
         primary_owners=fields.get(PRIMARY_OWNERS),
         secondary_owners=fields.get(SECONDARY_OWNERS),
@@ -993,7 +995,8 @@ class VespaIndex(DocumentIndex):
             return []
 
         inference_chunks = [
-            _vespa_hit_to_inference_chunk(chunk) for chunk in vespa_chunks
+            _vespa_hit_to_inference_chunk(chunk, null_score=True)
+            for chunk in vespa_chunks
         ]
         inference_chunks.sort(key=lambda chunk: chunk.chunk_id)
         return inference_chunks
