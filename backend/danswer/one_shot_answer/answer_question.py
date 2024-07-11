@@ -277,11 +277,14 @@ def stream_answer_objects(
                 )
 
                 if reference_db_search_docs is not None:
+                    print("ZZZA CREATING")
                     update_search_docs_table_with_relevance(
                         db_session=db_session,
                         reference_db_search_docs=reference_db_search_docs,
                         relevance_summary=evaluation_response,
                     )
+                else:
+                    print("ZZZA hasn't been created")
 
                 # here we will do some magic with the evaluation of the results
                 yield evaluation_response
@@ -302,6 +305,7 @@ def stream_answer_objects(
         db_session=db_session,
         commit=True,
     )
+    print("message has now been saved!")
 
     msg_detail_response = translate_db_message_to_chat_message_detail(
         gen_ai_response_message
