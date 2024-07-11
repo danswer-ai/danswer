@@ -376,3 +376,6 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
 ENTERPRISE_EDITION_ENABLED = (
     os.environ.get("ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "").lower() == "true"
 )
+
+
+POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA", "public")

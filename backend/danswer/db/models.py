@@ -20,6 +20,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import func
 from sqlalchemy import Index
 from sqlalchemy import Integer
+from sqlalchemy import MetaData
 from sqlalchemy import Sequence
 from sqlalchemy import String
 from sqlalchemy import Text
@@ -34,6 +35,7 @@ from sqlalchemy.types import LargeBinary
 from sqlalchemy.types import TypeDecorator
 
 from danswer.auth.schemas import UserRole
+from danswer.configs.app_configs import POSTGRES_SCHEMA
 from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
@@ -61,7 +63,7 @@ from shared_configs.enums import RerankerProvider
 
 
 class Base(DeclarativeBase):
-    pass
+    metadata = MetaData(schema=POSTGRES_SCHEMA)
 
 
 class EncryptedString(TypeDecorator):
@@ -448,7 +450,7 @@ class Document(Base):
     )
     tags = relationship(
         "Tag",
-        secondary="document__tag",
+        secondary=Document__Tag.__table__,
         back_populates="documents",
     )
 
@@ -465,7 +467,7 @@ class Tag(Base):
 
     documents = relationship(
         "Document",
-        secondary="document__tag",
+        secondary=Document__Tag.__table__,
         back_populates="tags",
     )
 
@@ -814,7 +816,7 @@ class SearchDoc(Base):
 
     chat_messages = relationship(
         "ChatMessage",
-        secondary="chat_message__search_doc",
+        secondary=ChatMessage__SearchDoc.__table__,
         back_populates="search_docs",
     )
 
@@ -957,7 +959,7 @@ class ChatMessage(Base):
     )
     search_docs: Mapped[list["SearchDoc"]] = relationship(
         "SearchDoc",
-        secondary="chat_message__search_doc",
+        secondary=ChatMessage__SearchDoc.__table__,
         back_populates="chat_messages",
     )
     # NOTE: Should always be attached to the `assistant` message.
