@@ -357,7 +357,7 @@ def fetch_group_ids_from_names(
 
     try:
         response = client.usergroups_list()
-        if not (isinstance(response.data, dict) or response.get("ok")):
+        if not isinstance(response.data, dict):
             logger.error("Error fetching user groups")
             return group_data, failed_to_find
 
