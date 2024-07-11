@@ -1,4 +1,8 @@
-import { DanswerDocument, Relevance } from "@/lib/search/interfaces";
+import {
+  DanswerDocument,
+  Relevance,
+  SearchDanswerDocument,
+} from "@/lib/search/interfaces";
 import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
 import { useState } from "react";
 import { PopupSpec } from "../admin/connectors/Popup";
@@ -146,12 +150,11 @@ export function DocumentMetadataBlock({
 }
 
 interface DocumentDisplayProps {
-  document: DanswerDocument;
+  document: SearchDanswerDocument;
   messageId: number | null;
   documentRank: number;
   isSelected: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;
-  relevance?: Relevance;
   comments?: any;
   hide?: boolean;
   index?: number;
@@ -160,7 +163,6 @@ interface DocumentDisplayProps {
 export const DocumentDisplay = ({
   document,
   isSelected,
-  relevance,
   messageId,
   documentRank,
   hide,
@@ -185,36 +187,9 @@ export const DocumentDisplay = ({
       <div
         className={`absolute top-6 overflow-y-auto -translate-y-2/4 flex ${isSelected ? "-left-14 w-14" : "-left-10 w-10"}`}
       >
-        {
-          !hide &&
-            relevance &&
-            // &&
-            // #NOTE: Version 1
-
-            // (relevance[document.document_id] && relevance[document.document_id].relevant ? (
-            //   <CheckmarkIcon className="h-4 w-4 bg-black text-xs text-emphasis bg-hover-emphasis rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
-            // ) : (
-            //   <XIcon className="h-4 w-4 text-xs text-emphasis bg-hover rounded p-0.5 w-fit my-auto select-none ml-auto mr-2" />
-            // ))
-
-            // #NOTE: Version 2
-
-            relevance[document.document_id].relevant && (
-              <FaStar className="h-full !w-4 !h-4   text-xs text-accent  rounded w-fit my-auto select-none ml-auto mr-2" />
-            )
-
-          // #NOTE: Version 3
-          // (relevance[document.document_id] && (
-          //   <ChevronIcon className="h-full !w-6 !h-6 text-green-700 bg-transp[arent text-xs text-emphasis  rounded w-fit my-auto select-none ml-auto mr-2" />
-          // ))
-        }
-
-        {/* // #NOTE: Version 3
-          // (relevance[document.document_id] ? (
-          //   <div className=" w-1 h-6 bg-green-600 text-xs text-emphasis rounded-sm my-auto select-none ml-auto mr-2" />
-          // ) : (
-          //   <div className=" w-1 h-6 bg-red-600 text-xs text-emphasis rounded-sm my-auto select-none ml-auto mr-2" />
-          // ))} */}
+        {!hide && document.relevant_search_result && (
+          <FaStar className="h-full !w-4 !h-4   text-xs text-accent  rounded w-fit my-auto select-none ml-auto mr-2" />
+        )}
       </div>
 
       <div
@@ -242,7 +217,7 @@ export const DocumentDisplay = ({
               />
             )}
 
-            {relevance && (isHovered || alternativeToggled) && (
+            {messageId && isHovered && (
               <button
                 onClick={() =>
                   setAlternativeToggled(
@@ -259,6 +234,7 @@ export const DocumentDisplay = ({
             )}
           </div>
         </div>
+
         <div className="mt-1">
           <DocumentMetadataBlock document={document} />
         </div>
@@ -267,9 +243,7 @@ export const DocumentDisplay = ({
           className="pl-1 pt-2 pb-3 break-words"
         >
           {alternativeToggled
-            ? relevance
-              ? relevance[document.document_id].content
-              : " "
+            ? document.relevance_explanation || ""
             : buildDocumentSummaryDisplay(
                 document.match_highlights,
                 document.blurb
@@ -283,7 +257,6 @@ export const DocumentDisplay = ({
 export const AgenticDocumentDisplay = ({
   document,
   isSelected,
-  relevance,
   comments,
   messageId,
   documentRank,
@@ -332,7 +305,7 @@ export const AgenticDocumentDisplay = ({
                 setPopup={setPopup}
               />
             )}
-            {relevance && (isHovered || alternativeToggled) && (
+            {messageId && isHovered && (
               <button
                 onClick={() =>
                   setAlternativeToggled(
@@ -359,7 +332,8 @@ export const AgenticDocumentDisplay = ({
                   document.match_highlights,
                   document.blurb
                 )
-              : relevance && relevance[document.document_id].content}
+              : document.relevance_explanation ||
+                document.relevance_explanation}
           </p>
         </div>
       </div>

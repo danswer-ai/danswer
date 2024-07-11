@@ -26,8 +26,10 @@ from danswer.db.chat import get_chat_session_by_id
 from danswer.db.chat import get_chat_sessions_by_user
 from danswer.db.chat import get_first_messages_for_chat_sessions
 from danswer.db.chat import get_or_create_root_message
+from danswer.db.chat import get_search_docs_for_chat_message
 from danswer.db.chat import set_as_latest_chat_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
+from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.chat import update_chat_session
 from danswer.db.engine import get_session
 from danswer.db.feedback import create_chat_message_feedback
@@ -47,6 +49,7 @@ from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llms
 from danswer.llm.headers import get_litellm_additional_request_headers
 from danswer.llm.utils import get_default_llm_tokenizer
+from danswer.search.models import SearchDoc
 from danswer.secondary_llm_flows.chat_session_naming import (
     get_renamed_conversation_name,
 )
@@ -64,9 +67,12 @@ from danswer.server.query_and_chat.models import LLMOverride
 from danswer.server.query_and_chat.models import PromptOverride
 from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
+from danswer.server.query_and_chat.models import SearchSessionDetailResponse
 from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
 from danswer.utils.logger import setup_logger
+
+# from danswer.db.models import SearchDoc
 
 logger = setup_logger()
 
@@ -160,6 +166,73 @@ def update_chat_session_model(
 
     db_session.add(chat_session)
     db_session.commit()
+
+
+@router.get("/get-search-session/{session_id}")
+def get_search_session(
+    session_id: int,
+    is_shared: bool = False,
+    user: User | None = Depends(current_user),
+    # user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    # ) -> SearchSessionDetailResponse:
+    user_id = user.id if user is not None else None
+
+    try:
+        search_session = get_chat_session_by_id(
+            chat_session_id=session_id,
+            user_id=user_id,
+            db_session=db_session,
+            is_shared=is_shared,
+        )
+    except ValueError:
+        raise ValueError("Chat session does not exist or has been deleted")
+
+    # for chat-seeding: if the session is unassigned, assign it now. This is done here
+    # to avoid another back and forth between FE -> BE before starting the first
+    # message generation
+    if search_session.user_id is None and user_id is not None:
+        search_session.user_id = user_id
+        db_session.commit()
+
+    # let's get the documents now
+
+    session_messages = get_chat_messages_by_session(
+        chat_session_id=session_id,
+        user_id=user_id,
+        db_session=db_session,
+        # we already did a permission check above with the call to
+        # `get_chat_session_by_id`, so we can skip it here
+        skip_permission_check=True,
+        # we need the tool call objs anyways, so just fetch them in a single call
+        prefetch_tool_calls=True,
+    )
+    docs_response: list[SearchDoc] = []
+    for message in session_messages:
+        if (
+            message.message_type == MessageType.ASSISTANT
+            or message.message_type == MessageType.SYSTEM
+        ):
+            docs = get_search_docs_for_chat_message(
+                db_session=db_session, chat_message_id=message.id
+            )
+            for doc in docs:
+                server_doc = translate_db_search_doc_to_server_search_doc(doc)
+                docs_response.append(server_doc)
+
+    response = SearchSessionDetailResponse(
+        search_session_id=session_id,
+        description=search_session.description,
+        documents=docs_response,
+        messages=[
+            translate_db_message_to_chat_message_detail(
+                msg, remove_doc_content=is_shared  # if shared, don't leak doc content
+            )
+            for msg in session_messages
+        ],
+    )
+    return response
 
 
 @router.get("/get-chat-session/{session_id}")

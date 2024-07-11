@@ -15,7 +15,6 @@ import {
   User,
 } from "@/lib/types";
 import {
-  DanswerDocument,
   Quote,
   SearchResponse,
   FlowType,
@@ -24,6 +23,7 @@ import {
   SearchRequestOverrides,
   ValidQuestionResponse,
   Relevance,
+  SearchDanswerDocument,
 } from "@/lib/search/interfaces";
 import { searchRequestStreamed } from "@/lib/search/streamingQa";
 
@@ -35,7 +35,11 @@ import { computeAvailableFilters } from "@/lib/filters";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
-import { BackendChatSession, ChatSession } from "@/app/chat/interfaces";
+import {
+  BackendChatSession,
+  ChatSession,
+  SearchSession,
+} from "@/app/chat/interfaces";
 import FunctionalHeader from "../chat_search/Header";
 import { useSidebarVisibility } from "../chat_search/hooks";
 import { SEARCH_TOGGLED_COOKIE_NAME } from "../resizable/contants";
@@ -142,12 +146,27 @@ export const SearchSection = ({
     ? parseInt(existingSearchIdRaw)
     : null;
 
+  function updateSearchDanswerDocuments(
+    searchDocs: SearchDanswerDocument[],
+    relevance: Relevance
+  ): SearchDanswerDocument[] {
+    return searchDocs.map((doc) => {
+      const relevantContent = relevance[doc.document_id];
+      const result: SearchDanswerDocument = {
+        ...doc,
+        relevant_search_result: relevantContent.relevant ?? false,
+        relevance_explanation: relevantContent?.content ?? "",
+      };
+      return result;
+    });
+  }
+
   useEffect(() => {
     if (existingSearchIdRaw == null) {
       return;
     }
     function extractFirstUserMessage(
-      chatSession: BackendChatSession
+      chatSession: SearchSession
     ): string | null {
       const userMessage = chatSession?.messages.find(
         (msg) => msg.message_type === "user"
@@ -157,14 +176,27 @@ export const SearchSection = ({
 
     async function initialSessionFetch() {
       const response = await fetch(
-        `/api/chat/get-chat-session/${existingSearchessionId}`
+        `/api/chat/get-search-session/${existingSearchessionId}`
       );
-      const searchSession = (await response.json()) as BackendChatSession;
+      const searchSession = (await response.json()) as SearchSession;
+
       const message = extractFirstUserMessage(searchSession);
+      console.log(searchSession);
+
       if (message) {
-        toggleSidebar();
         setQuery(message);
-        onSearch({ overrideMessage: message });
+        const danswerDocs: SearchResponse = {
+          documents: searchSession.documents,
+          suggestedSearchType: null,
+          answer: null,
+          quotes: null,
+          selectedDocIndices: null,
+          error: null,
+          messageId: null,
+          suggestedFlowType: null,
+        };
+        setFirstSearch(false);
+        setSearchResponse(danswerDocs);
       }
     }
     initialSessionFetch();
@@ -197,7 +229,7 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       quotes,
     }));
-  const updateDocs = (documents: DanswerDocument[]) => {
+  const updateDocs = (documents: SearchDanswerDocument[]) => {
     setTimeout(() => {
       if (searchState != "input") {
         setSearchState("analyzing");
@@ -229,14 +261,31 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       error,
     }));
-  const updateMessageId = (messageId: number) =>
+  const updateMessageId = (messageId: number) => {
+    console.log("message id");
+    console.log(messageId);
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       messageId,
     }));
+  };
 
   const updateDocumentRelevance = (relevance: Relevance) => {
-    setRelevance(relevance);
+    if (searchResponse != null) {
+      const enrichedSearchedResults = {
+        ...searchResponse,
+        documents: updateSearchDanswerDocuments(
+          searchResponse.documents ?? [],
+          relevance
+        ),
+      };
+      console.log("OLD");
+      console.log(searchResponse);
+      console.log("New");
+      console.log(enrichedSearchedResults);
+      setSearchResponse(enrichedSearchedResults);
+    }
+
     setIsFetching(false);
 
     setSearchState("input");
@@ -429,7 +478,7 @@ export const SearchSection = ({
           ref={sidebarElementRef}
           className={`
             flex-none 
-            absolute 
+            fixed 
             left-0 
             z-50
             overflow-y-hidden 
@@ -447,7 +496,7 @@ export const SearchSection = ({
             }
           `}
         >
-          <div className="w-full  relative">
+          <div className="w-full   relative">
             <HistorySidebar
               search
               ref={innerSidebarElementRef}
@@ -461,7 +510,7 @@ export const SearchSection = ({
           </div>
         </div>
 
-        <div className="absolute left-0 w-full top-0 ">
+        <div className="absolute left-0  w-full top-0 ">
           <FunctionalHeader
             showSidebar={showDocSidebar}
             page="search"
@@ -484,7 +533,7 @@ export const SearchSection = ({
             ></div>
 
             {
-              <div className="px-24 w-full pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
+              <div className="px-24  w-full pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
                 <div className="absolute  z-10 top-12 left-0 hidden 2xl:block w-52 3xl:w-64">
                   {(ccPairs.length > 0 || documentSets.length > 0) && (
                     <SourceSelector
@@ -518,7 +567,6 @@ export const SearchSection = ({
                       </div>
                     </div>
                   </div>
-
                   <FullSearchBar
                     toggleAgentic={toggleAgentic}
                     agentic={agentic}
@@ -538,7 +586,6 @@ export const SearchSection = ({
                         sweep={sweep}
                         agenticResults={agenticResults}
                         performSweep={performSweep}
-                        relevance={relevance!}
                         searchState={searchState}
                         searchResponse={searchResponse}
                         validQuestionResponse={validQuestionResponse}
@@ -558,8 +605,6 @@ export const SearchSection = ({
             }
           </div>
         </div>
-
-        {/* Temporary - fixed logo */}
       </div>
       <FixedLogo />
     </>

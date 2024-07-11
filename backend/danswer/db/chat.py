@@ -275,6 +275,25 @@ def get_chat_message(
     return chat_message
 
 
+# from sqlalchemy import select
+# from sqlalchemy.orm import Session
+# from uuid import UUID
+
+
+def get_search_docs_for_chat_message(
+    chat_message_id: int, db_session: Session
+) -> list[SearchDoc]:
+    stmt = (
+        select(SearchDoc)
+        .join(
+            ChatMessage__SearchDoc, ChatMessage__SearchDoc.search_doc_id == SearchDoc.id
+        )
+        .where(ChatMessage__SearchDoc.chat_message_id == chat_message_id)
+    )
+
+    return list(db_session.scalars(stmt).all())
+
+
 def get_chat_messages_by_session(
     chat_session_id: int,
     user_id: UUID | None,
@@ -498,6 +517,8 @@ def create_db_search_doc(
         boost=server_search_doc.boost,
         hidden=server_search_doc.hidden,
         doc_metadata=server_search_doc.metadata,
+        relevant_search_result=server_search_doc.relevant_search_result,
+        relevance_explanation=server_search_doc.relevance_explanation,
         # For docs further down that aren't reranked, we can't use the retrieval score
         score=server_search_doc.score or 0.0,
         match_highlights=server_search_doc.match_highlights,
@@ -510,6 +531,18 @@ def create_db_search_doc(
     db_session.commit()
 
     return db_search_doc
+
+
+def update_search_doc(db_session: Session, relevance: dict[str:dict]):
+    search_docs = (
+        db_session.query(SearchDoc)
+        .filtesr(SearchDoc.document_id.in_(list(relevance.keys())))
+        .all()
+    )
+
+    for doc in search_docs:
+        doc.relevance_explanation = relevance[doc.document_id].relevance
+        doc.relevant_search_result = relevance[doc.document_id].comment
 
 
 def get_db_search_doc_by_id(doc_id: int, db_session: Session) -> DBSearchDoc | None:
@@ -537,6 +570,8 @@ def translate_db_search_doc_to_server_search_doc(
         match_highlights=(
             db_search_doc.match_highlights if not remove_doc_content else []
         ),
+        relevance_explanation=db_search_doc.relevance_explanation,
+        relevant_search_result=db_search_doc.relevant_search_result,
         updated_at=db_search_doc.updated_at if not remove_doc_content else None,
         primary_owners=db_search_doc.primary_owners if not remove_doc_content else [],
         secondary_owners=(
@@ -562,6 +597,7 @@ def translate_db_message_to_chat_message_detail(
     chat_message: ChatMessage,
     remove_doc_content: bool = False,
 ) -> ChatMessageDetail:
+    print("chat message")
     chat_msg_detail = ChatMessageDetail(
         message_id=chat_message.id,
         parent_message=chat_message.parent_message,

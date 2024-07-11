@@ -6,6 +6,7 @@ import {
   FlowType,
   Quote,
   Relevance,
+  SearchDanswerDocument,
   SearchDefaultOverrides,
   SearchResponse,
   ValidQuestionResponse,
@@ -17,7 +18,7 @@ import { searchState } from "./SearchSection";
 import { useEffect, useState } from "react";
 
 const getSelectedDocumentIds = (
-  documents: DanswerDocument[],
+  documents: SearchDanswerDocument[],
   selectedIndices: number[]
 ) => {
   const selectedDocumentIds = new Set<string>();
@@ -33,11 +34,11 @@ export const SearchResultsDisplay = ({
   agenticResults,
   searchResponse,
   searchState,
+
   validQuestionResponse,
   isFetching,
   defaultOverrides,
   personaName = null,
-  relevance,
   performSweep,
   sweep,
   comments,
@@ -51,7 +52,6 @@ export const SearchResultsDisplay = ({
   isFetching: boolean;
   defaultOverrides: SearchDefaultOverrides;
   personaName?: string | null;
-  relevance?: Relevance;
   comments: any;
 }) => {
   useEffect(() => {
@@ -129,12 +129,12 @@ export const SearchResultsDisplay = ({
     searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
     defaultOverrides.forceDisplayQA;
 
-  const relevantDocs =
-    documents && relevance
-      ? documents.filter((doc) => {
-          return relevance[doc.document_id].relevant;
-        })
-      : [];
+  const relevantDocs = documents
+    ? documents.filter((doc) => {
+        return doc.relevant_search_result;
+      })
+    : [];
+
   return (
     <>
       {popup}
@@ -142,7 +142,7 @@ export const SearchResultsDisplay = ({
         <div className="mt-4">
           <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
             <p>Results</p>
-            {relevance && !agenticResults && (
+            {!agenticResults && messageId && (
               <button
                 onClick={() => performSweep()}
                 className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
@@ -171,35 +171,24 @@ export const SearchResultsDisplay = ({
 
           {documents.map((document, ind) => {
             return agenticResults ? (
-              relevance &&
-                (relevance[document.document_id].relevant || showAll) && (
-                  <AgenticDocumentDisplay
-                    comments={comments}
-                    index={ind}
-                    hide={
-                      sweep &&
-                      relevance &&
-                      !relevance[document.document_id].relevant
-                    }
-                    relevance={relevance}
-                    key={document.document_id}
-                    document={document}
-                    documentRank={ind + 1}
-                    messageId={messageId}
-                    isSelected={selectedDocumentIds.has(document.document_id)}
-                    setPopup={setPopup}
-                  />
-                )
+              (document.relevant_search_result || showAll) && (
+                <AgenticDocumentDisplay
+                  comments={comments}
+                  index={ind}
+                  hide={!document.relevant_search_result}
+                  key={document.document_id + ind}
+                  document={document}
+                  documentRank={ind + 1}
+                  messageId={messageId}
+                  isSelected={selectedDocumentIds.has(document.document_id)}
+                  setPopup={setPopup}
+                />
+              )
             ) : (
               <DocumentDisplay
                 index={ind}
-                hide={
-                  sweep &&
-                  relevance &&
-                  !relevance[document.document_id].relevant
-                }
-                relevance={relevance}
-                key={document.document_id}
+                hide={sweep && !document.relevant_search_result}
+                key={document.document_id + ind}
                 document={document}
                 documentRank={ind + 1}
                 messageId={messageId}
@@ -223,18 +212,22 @@ export const SearchResultsDisplay = ({
         </p>
       )}
 
-      <div
-        className={`flex my-4  justify-center transition-all duration-500 ${searchState == "input" ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-      >
-        <button
-          onClick={() => setShowAll((showAll) => !showAll)}
-          className=" transition-all cursor-pointer -ml-2 bg-background-subtle text-dark h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs"
+      {agenticResults ? (
+        <div
+          className={`flex my-4  justify-center transition-all duration-500 ${searchState == "input" ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
-          <p className=" relative after:bg-neutral-600 after:absolute after:h-[1px] after:w-0 after:bottom-0 after:left-0 hover:after:w-full after:transition-all after:duration-300 duration-300">
-            {showAll ? "Don't show all" : "Show me all"}
-          </p>
-        </button>
-      </div>
+          <button
+            onClick={() => setShowAll((showAll) => !showAll)}
+            className=" transition-all cursor-pointer -ml-2 bg-background-subtle text-dark h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs"
+          >
+            <p className=" relative after:bg-neutral-600 after:absolute after:h-[1px] after:w-0 after:bottom-0 after:left-0 hover:after:w-full after:transition-all after:duration-300 duration-300">
+              {showAll ? "Don't show all" : "Show me all"}
+            </p>
+          </button>
+        </div>
+      ) : (
+        <div className="h-[100px]" />
+      )}
     </>
   );
 };

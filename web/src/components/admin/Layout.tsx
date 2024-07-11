@@ -80,7 +80,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="h-screen overflow-y-hidden">
       <div className="flex h-full ">
-        <div className="w-80 z-[100] bg-background-weak pt-4 pb-8 h-full border-r border-border  weakbackground overflow-auto">
+        <div className="w-80 z-20 bg-background-weak pt-4 pb-8 h-full border-r border-border  weakbackground overflow-auto">
           <AdminSidebar
             collections={[
               {

@@ -51,6 +51,11 @@ export interface DanswerDocument {
   validationState?: null | "good" | "bad";
 }
 
+export interface SearchDanswerDocument extends DanswerDocument {
+  relevant_search_result: boolean;
+  relevance_explanation: string;
+}
+
 export interface FilteredDanswerDocument extends DanswerDocument {
   included: boolean;
 }
@@ -80,7 +85,7 @@ export interface SearchResponse {
   suggestedFlowType: FlowType | null;
   answer: string | null;
   quotes: Quote[] | null;
-  documents: DanswerDocument[] | null;
+  documents: SearchDanswerDocument[] | null;
   selectedDocIndices: number[] | null;
   error: string | null;
   messageId: number | null;

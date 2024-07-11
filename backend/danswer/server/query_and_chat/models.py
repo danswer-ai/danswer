@@ -196,6 +196,35 @@ class ChatMessageDetail(BaseModel):
         return initial_dict
 
 
+class SearchMessageDetail(BaseModel):
+    message_id: int
+    parent_message: int | None
+    latest_child_message: int | None
+    message: str
+    rephrased_query: str | None
+    context_docs: RetrievalDocs | None
+    message_type: MessageType
+    time_sent: datetime
+    alternate_assistant_id: str | None
+    # Dict mapping citation number to db_doc_id
+    citations: dict[int, int] | None
+    files: list[FileDescriptor]
+    tool_calls: list[ToolCallFinalResult]
+
+    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+        initial_dict["time_sent"] = self.time_sent.isoformat()
+        return initial_dict
+
+
+class SearchSessionDetailResponse(BaseModel):
+    search_session_id: int
+    description: str
+    documents: list[SearchDoc]
+    messages: list[ChatMessageDetail]
+    # time_created: datetime
+
+
 class ChatSessionDetailResponse(BaseModel):
     chat_session_id: int
     description: str

@@ -169,8 +169,10 @@ export const searchRequestStreamed = async ({
           return;
         }
 
+        console.log(chunk);
         // Is a bakcend message- handle all backend message related updates here
         if (Object.hasOwn(chunk, "message_id")) {
+          console.log("I am updating message ID");
           const backendChunk = chunk as BackendMessage;
 
           updateComments(backendChunk.comments);

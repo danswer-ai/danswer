@@ -128,11 +128,14 @@ class InferenceChunk(BaseChunk):
     recency_bias: float
     score: float | None
     hidden: bool
+    relevant_search_result: bool | None
+    relevance_explanation: str | None
     metadata: dict[str, str | list[str]]
     # Matched sections in the chunk. Uses Vespa syntax e.g. <hi>TEXT</hi>
     # to specify that a set of words should be highlighted. For example:
     # ["<hi>the</hi> <hi>answer</hi> is 42", "he couldn't find an <hi>answer</hi>"]
     match_highlights: list[str]
+
     # when the doc was last updated
     updated_at: datetime | None
     primary_owners: list[str] | None = None
@@ -191,6 +194,8 @@ class SearchDoc(BaseModel):
     hidden: bool
     metadata: dict[str, str | list[str]]
     score: float | None
+    relevant_search_result: bool | None
+    relevance_explanation: str | None
     # Matched sections in the doc. Uses Vespa syntax e.g. <hi>TEXT</hi>
     # to specify that a set of words should be highlighted. For example:
     # ["<hi>the</hi> <hi>answer</hi> is 42", "the answer is <hi>42</hi>""]

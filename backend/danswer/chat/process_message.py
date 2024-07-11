@@ -117,6 +117,10 @@ def _handle_search_tool_response_summary(
         if dedupe_docs:
             deduped_docs, dropped_inds = dedupe_documents(top_docs)
 
+        print("Created search doc summary")
+        for doc in dedupe_docs:
+            print(f"za doc is {doc}")
+
         reference_db_search_docs = [
             create_db_search_doc(server_search_doc=doc, db_session=db_session)
             for doc in deduped_docs
@@ -538,11 +542,14 @@ def stream_chat_message_objects(
                         db_session=db_session,
                         selected_search_docs=selected_db_search_docs,
                         # Deduping happens at the last step to avoid harming quality by dropping content early on
-                        dedupe_docs=retrieval_options.dedupe_docs
-                        if retrieval_options
-                        else False,
+                        dedupe_docs=(
+                            retrieval_options.dedupe_docs
+                            if retrieval_options
+                            else False
+                        ),
                     )
                     yield qa_docs_response
+
                 elif packet.id == SECTION_RELEVANCE_LIST_ID:
                     chunk_indices = packet.response
 
@@ -552,10 +559,10 @@ def stream_chat_message_objects(
                             search_docs=reference_db_search_docs,
                             dropped_indices=dropped_indices,
                         )
-
                     yield LLMRelevanceFilterResponse(
                         relevant_chunk_indices=chunk_indices
                     )
+
                 elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
                     img_generation_response = cast(
                         list[ImageGenerationResponse], packet.response
@@ -624,16 +631,18 @@ def stream_chat_message_objects(
             token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
             citations=db_citations,
             error=None,
-            tool_calls=[
-                ToolCall(
-                    tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                    tool_name=tool_result.tool_name,
-                    tool_arguments=tool_result.tool_args,
-                    tool_result=tool_result.tool_result,
-                )
-            ]
-            if tool_result
-            else [],
+            tool_calls=(
+                [
+                    ToolCall(
+                        tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                        tool_name=tool_result.tool_name,
+                        tool_arguments=tool_result.tool_args,
+                        tool_result=tool_result.tool_result,
+                    )
+                ]
+                if tool_result
+                else []
+            ),
         )
         db_session.commit()  # actually save user / assistant message
 

@@ -49,6 +49,7 @@ from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.utils import get_json_line
 from danswer.tools.force import ForceUseTool
 from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
+from danswer.tools.search.search_tool import SEARCH_EVALUATION_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
 from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
@@ -213,6 +214,8 @@ def stream_answer_objects(
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
         # for one-shot flow, don't currently do anything with these
         if isinstance(packet, ToolResponse):
+            # add a handling of the response here to add the information regarding relevance to the search results.
+            # (likely fine that it comes after the initial creation of the search docs)
             if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                 search_response_summary = cast(SearchResponseSummary, packet.response)
 
@@ -246,6 +249,7 @@ def stream_answer_objects(
                 )
 
                 # analyze in the section
+
                 yield initial_response
             elif packet.id == SECTION_RELEVANCE_LIST_ID:
                 chunk_indices = packet.response
@@ -258,12 +262,20 @@ def stream_answer_objects(
                     )
 
                 yield LLMRelevanceFilterResponse(relevant_chunk_indices=packet.response)
+
             elif packet.id == SEARCH_DOC_CONTENT_ID:
                 yield packet.response
-            elif packet.id == "evaluate_response":
+
+            # thest when this occurs
+
+            elif packet.id == SEARCH_EVALUATION_ID:
                 evaluation_response = LLMRelevanceSummaryResponse(
                     relevance_summaries=packet.response
                 )
+
+                # update_search_doc(db_session=db_session, relevance=packet.response)
+
+                # here we will do some magic with the evaluation of the results
                 yield evaluation_response
         else:
             yield packet

@@ -228,6 +228,8 @@ class ChatMessage__SearchDoc(Base):
     search_doc_id: Mapped[int] = mapped_column(
         ForeignKey("search_doc.id"), primary_key=True
     )
+    # relevant_search_result: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    # relevance_explanation: Mapped[str | None] = mapped_column(String, nullable=True)
 
 
 class Document__Tag(Base):
@@ -612,6 +614,9 @@ class SearchDoc(Base):
     secondary_owners: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
     )
+
+    relevant_search_result: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    relevance_explanation: Mapped[str | None] = mapped_column(String, nullable=True)
 
     chat_messages = relationship(
         "ChatMessage",

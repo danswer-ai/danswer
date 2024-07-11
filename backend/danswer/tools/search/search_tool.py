@@ -18,6 +18,8 @@ from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.interfaces import LLM
+from danswer.llm.utils import message_generator_to_string_generator
+from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import IndexFilters
@@ -30,11 +32,14 @@ from danswer.secondary_llm_flows.query_expansion import history_based_query_reph
 from danswer.tools.search.search_utils import llm_doc_to_dict
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
+from danswer.utils.threadpool_concurrency import FunctionCall
+from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 
 SEARCH_RESPONSE_SUMMARY_ID = "search_response_summary"
 SEARCH_DOC_CONTENT_ID = "search_doc_content"
 SECTION_RELEVANCE_LIST_ID = "section_relevance_list"
 FINAL_CONTEXT_DOCUMENTS = "final_context_documents"
+SEARCH_EVALUATION_ID = "evaluate_response"
 
 
 class SearchResponseSummary(BaseModel):
@@ -136,6 +141,46 @@ class SearchTool(Tool):
             }
         )
 
+    def evaluate(
+        self, top_doc: LlmDoc, query: ThreadMessage
+    ) -> tuple[dict[str, Any], dict[str, str]]:
+        # Group documents by document_id
+
+        relevance = {}
+        results = {}
+        document_id = top_doc.document_id
+
+        prompt = f"""
+        Determine if this document is relevant to the search query:
+
+        Title: {top_doc.document_id.split("/")[-1]}
+        Blurb: {top_doc.blurb}
+        Query: {query}
+
+        Think through the following:
+        1. What are the key terms or concepts in the query?
+        2. Do these appear in the document title or blurb?
+        3. Is the document's main topic related to the query?
+        4. Would this document be useful to someone searching with this query?
+
+        Provide your chain of thought in a paragraph. Be concise but show your reasoning clearly.
+
+        Conclude with:
+        RESULT: True (if relevant)
+        RESULT: False (if not relevant)
+        """
+
+        content = "".join(
+            message_generator_to_string_generator(self.llm.stream(prompt=prompt))
+        )
+        if "result: true" in content.lower():
+            relevance["relevant"] = True
+        else:
+            relevance["relevant"] = False
+        relevance["content"] = content.split("RESULT")[0]
+        results[document_id] = relevance
+        return results
+
     """For LLMs that don't support tool calling"""
 
     def get_args_for_non_tool_calling_llm(
@@ -229,6 +274,7 @@ class SearchTool(Tool):
                 recency_bias_multiplier=search_pipeline.search_query.recency_bias_multiplier,
             ),
         )
+
         yield ToolResponse(
             id=SEARCH_DOC_CONTENT_ID,
             response=DanswerContexts(
@@ -243,6 +289,7 @@ class SearchTool(Tool):
                 ]
             ),
         )
+
         yield ToolResponse(
             id=SECTION_RELEVANCE_LIST_ID,
             response=search_pipeline.relevant_chunk_indices,
@@ -264,6 +311,28 @@ class SearchTool(Tool):
             document_pruning_config=self.pruning_config,
         )
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=final_context_documents)
+
+        # evaluation =
+        if self.evaluate_response:
+            functions = [
+                FunctionCall(self.evaluate, (final_context, query))
+                for final_context in final_context_documents
+            ]
+
+            results = run_functions_in_parallel(function_calls=functions)
+
+            evaluated_responses = {}
+            for result in results:
+                value = results[result]
+                key = list(value.keys())[0]
+                evaluated_responses[key] = value[key]
+
+            response = ToolResponse(
+                id=SEARCH_EVALUATION_ID, response=evaluated_responses
+            )
+            print("response")
+            # print(final_context_documents[0].
+            yield response
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         final_docs = cast(
