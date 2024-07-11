@@ -37,7 +37,6 @@ def set_new_embedding_model(
     """Creates a new EmbeddingModel row and cancels the previous secondary indexing if any
     Gives an error if the same model name is used as the current or secondary index
     """
-    print("request")
     if embed_model_details.cloud_provider_name is None:
         raise RuntimeError("No Cloud Name exists")
 

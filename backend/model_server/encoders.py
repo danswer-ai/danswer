@@ -189,28 +189,25 @@ def embed_text(
     api_key: str | None = None,
     provider_type: str | None = None,
 ) -> list[list[float]]:
-    try:
-        if provider_type is not None:
-            if api_key is not None:
-                model = CloudEmbedding(api_key=api_key, provider=provider_type)
-                embeddings = model.encode(texts, model_name)
-            else:
-                raise RuntimeError("API key not provided for cloud model")
+    if provider_type is not None:
+        if api_key is not None:
+            model = CloudEmbedding(api_key=api_key, provider=provider_type)
+            embeddings = model.encode(texts, model_name)
         else:
-            if model_name is not None:
-                model = get_embedding_model(
-                    model_name=model_name, max_context_length=max_context_length
-                )
-                embeddings = model.encode(
-                    texts, normalize_embeddings=normalize_embeddings
-                )
-            else:
-                raise RuntimeError("Model name missing")
+            raise RuntimeError("API key not provided for cloud model")
+    else:
+        if model_name is not None:
+            model = get_embedding_model(
+                model_name=model_name, max_context_length=max_context_length
+            )
+            embeddings = model.encode(texts, normalize_embeddings=normalize_embeddings)
 
-        if not isinstance(embeddings, list):
-            embeddings = embeddings.tolist()
-    except Exception as e:
-        print(f"Error {e}")
+    if embeddings is None:
+        raise RuntimeError("Embeddings not created")
+
+    if not isinstance(embeddings, list):
+        embeddings = embeddings.tolist()
+
     return embeddings
 
 
