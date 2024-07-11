@@ -18,9 +18,9 @@ from danswer.db.chat import get_chat_sessions_by_slack_thread_id
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.models import Prompt
 from danswer.db.models import SlackBotConfig
-from danswer.db.models import StandardAnswer
 from danswer.db.standard_answer import fetch_standard_answer_categories_by_names
 from danswer.db.standard_answer import find_matching_standard_answers
+from danswer.server.manage.models import StandardAnswer
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -30,32 +30,30 @@ def oneoff_standard_answers(
     message: str,
     slack_bot_categories: list[str],
     db_session: Session,
-) -> list[StandardAnswer] | None:
+) -> list[StandardAnswer]:
     """
     Respond to the user message if it matches any configured standard answers.
 
     Returns a list of matching StandardAnswers if found, otherwise None.
     """
-    try:
-        configured_standard_answers = {
-            standard_answer
-            for category in fetch_standard_answer_categories_by_names(
-                slack_bot_categories, db_session=db_session
-            )
-            for standard_answer in category.standard_answers
-        }
+    configured_standard_answers = {
+        standard_answer
+        for category in fetch_standard_answer_categories_by_names(
+            slack_bot_categories, db_session=db_session
+        )
+        for standard_answer in category.standard_answers
+    }
 
-        if configured_standard_answers:
-            matching_standard_answers = find_matching_standard_answers(
-                query=message,
-                id_in=[answer.id for answer in configured_standard_answers],
-                db_session=db_session,
-            )
-            return matching_standard_answers or None
-        return None
-    except Exception as e:
-        logger.error(f"Error handling standard answers: {str(e)}")
-        return None
+    matching_standard_answers = find_matching_standard_answers(
+        query=message,
+        id_in=[answer.id for answer in configured_standard_answers],
+        db_session=db_session,
+    )
+
+    server_tandard_answers = [
+        StandardAnswer.from_model(db_answer) for db_answer in matching_standard_answers
+    ]
+    return server_tandard_answers
 
 
 def handle_standard_answers(

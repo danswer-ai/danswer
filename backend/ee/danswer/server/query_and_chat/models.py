@@ -4,11 +4,19 @@ from danswer.configs.constants import DocumentSource
 from danswer.search.enums import SearchType
 from danswer.search.models import ChunkContext
 from danswer.search.models import RetrievalDetails
+from danswer.server.manage.models import StandardAnswer
+
+# from danswer.db.models import StandardAnswer
 
 
 class TestStandardAnswerRequest(BaseModel):
     message: str
     slack_bot_categories: list[str]
+
+
+class TestStandardAnswerResponse(BaseModel):
+    standard_answers: list[StandardAnswer] = []
+    error_msg: str | None = None
 
 
 class DocumentSearchRequest(ChunkContext):

@@ -19,7 +19,6 @@ from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
-from danswer.server.manage.models import StandardAnswer
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.utils.logger import setup_logger
@@ -27,6 +26,7 @@ from ee.danswer.server.query_and_chat.models import BasicCreateChatMessageReques
 from ee.danswer.server.query_and_chat.models import ChatBasicResponse
 from ee.danswer.server.query_and_chat.models import SimpleDoc
 from ee.danswer.server.query_and_chat.models import TestStandardAnswerRequest
+from ee.danswer.server.query_and_chat.models import TestStandardAnswerResponse
 
 logger = setup_logger()
 
@@ -61,20 +61,17 @@ def test_standard_answer(
     request: TestStandardAnswerRequest,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_user),
-) -> dict[str, list[StandardAnswer]] | dict[str, str]:
+) -> TestStandardAnswerResponse:
     try:
         standard_answers = oneoff_standard_answers(
             message=request.message,
             slack_bot_categories=request.slack_bot_categories,
             db_session=db_session,
         )
-        return (
-            {"standard answers": standard_answers}
-            if standard_answers
-            else {"message": "No standard answer found"}
-        )
+        return TestStandardAnswerResponse(standard_answers=standard_answers)
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return TestStandardAnswerResponse(error_msg=f"An error has occured: {e}")
 
 
 @router.post("/send-message-simple-api")
