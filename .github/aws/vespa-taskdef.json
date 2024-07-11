@@ -1,0 +1,47 @@
+{
+  "family": "index",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "index",
+      "image": "vespaengine/vespa:8.277.17",
+      "essential": true,
+      "memory": 4096,
+      "cpu": 2048,
+      "portMappings": [
+        {
+          "containerPort": 19071,
+          "hostPort": 19071,
+          "protocol": "tcp"
+        },
+        {
+          "containerPort": 8081,
+          "hostPort": 8081,
+          "protocol": "tcp"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "vespa_volume",
+          "containerPath": "/opt/vespa/var"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "json-file",
+        "options": {
+          "max-size": "50m",
+          "max-file": "6"
+        }
+      }
+    }
+  ],
+  "volumes": [
+    {
+      "name": "vespa_volume",
+      "dockerVolumeConfiguration": {
+        "scope": "task",
+        "autoprovision": true
+      }
+    }
+  ]
+}

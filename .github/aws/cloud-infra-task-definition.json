@@ -1,0 +1,37 @@
+{
+    "family": "my-app-task",
+    "networkMode": "awsvpc",
+    "containerDefinitions": [
+      {
+        "name": "web-server",
+        "image": "web-server-image",
+        "essential": true,
+        "portMappings": [
+          {
+            "containerPort": 3000,
+            "hostPort": 3000
+          }
+        ],
+        "environment": [],
+        "memory": 512,
+        "cpu": 256
+      },
+      {
+        "name": "api-server",
+        "image": "api-server-image",
+        "essential": true,
+        "environment": [],
+        "memory": 512,
+        "cpu": 256
+      },
+      {
+        "name": "backend-server",
+        "image": "backend-server-image",
+        "essential": true,
+        "environment": [],
+        "memory": 512,
+        "cpu": 256
+      }
+    ]
+  }
+  
