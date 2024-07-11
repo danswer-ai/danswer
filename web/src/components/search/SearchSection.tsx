@@ -35,11 +35,7 @@ import { computeAvailableFilters } from "@/lib/filters";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
-import {
-  BackendChatSession,
-  ChatSession,
-  SearchSession,
-} from "@/app/chat/interfaces";
+import { ChatSession, SearchSession } from "@/app/chat/interfaces";
 import FunctionalHeader from "../chat_search/Header";
 import { useSidebarVisibility } from "../chat_search/hooks";
 import { SEARCH_TOGGLED_COOKIE_NAME } from "../resizable/contants";
@@ -84,7 +80,7 @@ export const SearchSection = ({
 }: SearchSectionProps) => {
   // Search Bar
   const [query, setQuery] = useState<string>("");
-  const [relevance, setRelevance] = useState<Relevance | null>(null);
+
   const [comments, setComments] = useState<any>(null);
   const [contentEnriched, setContentEnriched] = useState(false);
 
@@ -189,10 +185,11 @@ export const SearchSection = ({
         `/api/chat/get-search-session/${existingSearchessionId}`
       );
       const searchSession = (await response.json()) as SearchSession;
-
       const message = extractFirstUserMessage(searchSession);
 
       if (message) {
+        console.log("FETHCING");
+
         setQuery(message);
         const danswerDocs: SearchResponse = {
           documents: searchSession.documents,
@@ -203,7 +200,9 @@ export const SearchSection = ({
           error: null,
           messageId: null,
           suggestedFlowType: null,
+          additional_relevance: undefined,
         };
+
         setFirstSearch(false);
         setSearchResponse(danswerDocs);
         setContentEnriched(true);
@@ -245,8 +244,6 @@ export const SearchSection = ({
       }
     }, 1500);
 
-    console.log("UPDATING DOCS");
-
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       documents,
@@ -273,49 +270,26 @@ export const SearchSection = ({
       error,
     }));
   const updateMessageId = (messageId: number) => {
-    console.log("message id");
-    console.log(messageId);
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       messageId,
     }));
   };
 
-  const checkResponse = (chunk: any) => {
-    console.log(chunk);
-    console.log(searchResponse);
-  };
-
   const updateDocumentRelevance = (relevance: Relevance) => {
-    console.log("SHOULD Udpate document relevance");
-    if (searchResponse != null) {
-      console.log("valling relevance");
-      console.log("Existing docs are ");
-      console.log(searchResponse.documents);
-
-      const enrichedSearchedResults = {
-        ...searchResponse,
-        documents: updateSearchDanswerDocuments(
-          searchResponse.documents ?? [],
-          relevance
-        ),
-      };
-      console.log("UPDAITNG TO ");
-      console.log(enrichedSearchedResults);
-
-      // setSearchResponse(enrichedSearchedResults);
-      setContentEnriched(true);
-    } else {
-      console.log(searchResponse);
-    }
-
+    setSearchResponse((prevState) => ({
+      ...(prevState || initialSearchResponse),
+      additional_relevance: relevance,
+    }));
+    // setContentEnriched(true);
     setIsFetching(false);
-
     setSearchState("input");
   };
+
   const updateComments = (comments: any) => {
     setComments(comments);
   };
+
   const finishedSearching = () => {
     console.log("finish searching has been called");
     setSearchState("input");
@@ -324,7 +298,6 @@ export const SearchSection = ({
   const resetInput = () => {
     setSweep(false);
     setFirstSearch(false);
-    setRelevance(null);
     setComments(null);
     setSearchState("searching");
   };
@@ -347,8 +320,6 @@ export const SearchSection = ({
     lastSearchCancellationToken.current = new CancellationToken();
 
     setIsFetching(true);
-    console.log(`search repsonse `);
-    console.log(initialSearchResponse);
     setSearchResponse(initialSearchResponse);
     setValidQuestionResponse(VALID_QUESTION_RESPONSE_DEFAULT);
     const searchFnArgs = {
@@ -410,7 +381,6 @@ export const SearchSection = ({
         cancellationToken: lastSearchCancellationToken.current,
         fn: finishedSearching,
       }),
-      checkResponse: checkResponse,
       selectedSearchType: searchType ?? selectedSearchType,
       offset: offset ?? defaultOverrides.offset,
     };
@@ -552,7 +522,7 @@ export const SearchSection = ({
                     ease-in-out
                     ${toggledSidebar ? "w-[300px] " : "w-[0px]"}
                   `}
-            ></div>
+            />
 
             {
               <div className="px-24  w-full pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">

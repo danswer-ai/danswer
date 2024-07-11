@@ -32,7 +32,6 @@ export const searchRequestStreamed = async ({
   updateError,
   updateMessageId,
   finishedSearching,
-  checkResponse,
   updateDocumentRelevance, // New callback function
   updateComments,
 }: SearchRequestArgs) => {
@@ -100,7 +99,6 @@ export const searchRequestStreamed = async ({
       completedChunks.forEach((chunk) => {
         // check for answer peice / end of answer
 
-        checkResponse(chunk);
         if (Object.hasOwn(chunk, "relevance_summaries")) {
           const relevanceChunk = chunk as RelevanceChunk;
           const responseTaken = relevanceChunk.relevance_summaries;
@@ -155,14 +153,14 @@ export const searchRequestStreamed = async ({
           return;
         }
 
-        // if (Object.hasOwn(chunk, "relevant_chunk_indices")) {
-        //   const relevantChunkIndices = (chunk as LLMRelevanceFilterPacket)
-        //     .relevant_chunk_indices;
-        //   if (relevantChunkIndices) {
-        //     updateSelectedDocIndices(relevantChunkIndices);
-        //   }
-        //   return;
-        // }
+        if (Object.hasOwn(chunk, "relevant_chunk_indices")) {
+          const relevantChunkIndices = (chunk as LLMRelevanceFilterPacket)
+            .relevant_chunk_indices;
+          if (relevantChunkIndices) {
+            updateSelectedDocIndices(relevantChunkIndices);
+          }
+          return;
+        }
 
         // Check for quote section
         if (Object.hasOwn(chunk, "quotes")) {

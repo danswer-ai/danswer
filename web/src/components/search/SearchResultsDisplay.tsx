@@ -3,6 +3,7 @@
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import {
   DanswerDocument,
+  DocumentRelevance,
   FlowType,
   Quote,
   Relevance,
@@ -104,7 +105,8 @@ export const SearchResultsDisplay = ({
             </div>
           </div>
         ) : (
-          <div className="text-subtle">No matching documents found.</div>
+          <></>
+          // <div className="text-subtle">No matching documents found.</div>
         )}
       </div>
     );
@@ -126,15 +128,22 @@ export const SearchResultsDisplay = ({
     searchResponse.selectedDocIndices || []
   );
 
-  const shouldDisplayQA =
-    searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
-    defaultOverrides.forceDisplayQA;
-
   const relevantDocs = documents
     ? documents.filter((doc) => {
         return doc.relevant_search_result;
       })
     : [];
+
+  const orderedDocs =
+    contentEnriched && documents
+      ? documents.sort((a, b) =>
+          a.relevant_search_result === b.relevant_search_result
+            ? 0
+            : a.relevant_search_result
+              ? -1
+              : 1
+        )
+      : [];
 
   return (
     <>
@@ -169,12 +178,19 @@ export const SearchResultsDisplay = ({
               </button>
             )}
           </div>
-          <button onClick={() => console.log(documents)}>adsfadsf</button>
 
-          {documents.map((document, ind) => {
+          {orderedDocs.map((document, ind) => {
+            const relevance: DocumentRelevance | null =
+              searchResponse.additional_relevance
+                ? searchResponse.additional_relevance[document.document_id]
+                : null;
+
             return agenticResults ? (
-              (document.relevant_search_result || showAll) && (
+              (relevance?.relevant ||
+                document.relevant_search_result ||
+                showAll) && (
                 <AgenticDocumentDisplay
+                  additional_relevance={relevance}
                   contentEnriched={contentEnriched}
                   comments={comments}
                   index={ind}
@@ -189,6 +205,7 @@ export const SearchResultsDisplay = ({
               )
             ) : (
               <DocumentDisplay
+                additional_relevance={relevance}
                 contentEnriched={contentEnriched}
                 index={ind}
                 hide={sweep && !document.relevant_search_result}
@@ -210,11 +227,14 @@ export const SearchResultsDisplay = ({
         </p>
       )}
 
-      {relevantDocs && relevantDocs.length == 0 && !showAll && (
-        <p className="flex text-lg font-bold">
-          No high quality results found by agentic search.
-        </p>
-      )}
+      {agenticResults &&
+        relevantDocs &&
+        relevantDocs.length == 0 &&
+        !showAll && (
+          <p className="flex text-lg font-bold">
+            No high quality results found by agentic search.
+          </p>
+        )}
 
       {agenticResults ? (
         <div

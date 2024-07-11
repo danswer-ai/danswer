@@ -1,5 +1,6 @@
 import {
   DanswerDocument,
+  DocumentRelevance,
   Relevance,
   SearchDanswerDocument,
 } from "@/lib/search/interfaces";
@@ -159,11 +160,13 @@ interface DocumentDisplayProps {
   hide?: boolean;
   index?: number;
   contentEnriched?: boolean;
+  additional_relevance: DocumentRelevance | null;
 }
 
 export const DocumentDisplay = ({
   document,
   isSelected,
+  additional_relevance,
   messageId,
   contentEnriched,
   documentRank,
@@ -189,9 +192,11 @@ export const DocumentDisplay = ({
       <div
         className={`absolute top-6 overflow-y-auto -translate-y-2/4 flex ${isSelected ? "-left-14 w-14" : "-left-10 w-10"}`}
       >
-        {!hide && document.relevant_search_result && (
-          <FaStar className="h-full !w-4 !h-4   text-xs text-accent  rounded w-fit my-auto select-none ml-auto mr-2" />
-        )}
+        {!hide &&
+          (document.relevant_search_result ||
+            additional_relevance?.relevant) && (
+            <FaStar className="h-full !w-4 !h-4   text-xs text-accent  rounded w-fit my-auto select-none ml-auto mr-2" />
+          )}
       </div>
 
       <div
@@ -219,7 +224,7 @@ export const DocumentDisplay = ({
               />
             )}
 
-            {contentEnriched && isHovered && (
+            {contentEnriched && (isHovered || alternativeToggled) && (
               <button
                 onClick={() =>
                   setAlternativeToggled(
@@ -245,7 +250,9 @@ export const DocumentDisplay = ({
           className="pl-1 pt-2 pb-3 break-words"
         >
           {alternativeToggled && contentEnriched
-            ? document.relevance_explanation ?? ""
+            ? document.relevance_explanation ??
+              additional_relevance?.content ??
+              ""
             : buildDocumentSummaryDisplay(
                 document.match_highlights,
                 document.blurb
@@ -261,6 +268,7 @@ export const AgenticDocumentDisplay = ({
   isSelected,
   contentEnriched,
   comments,
+  additional_relevance,
   messageId,
   documentRank,
   hide,
@@ -335,7 +343,9 @@ export const AgenticDocumentDisplay = ({
                   document.match_highlights,
                   document.blurb
                 )
-              : document.relevance_explanation}
+              : document.relevance_explanation ??
+                additional_relevance?.content ??
+                ""}
           </p>
         </div>
       </div>

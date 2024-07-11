@@ -67,13 +67,13 @@ export interface DocumentInfoPacket {
   favor_recent: boolean;
 }
 
-interface DocumentContent {
+export interface DocumentRelevance {
   relevant: boolean;
   content: string;
 }
 
 export interface Relevance {
-  [url: string]: DocumentContent;
+  [url: string]: DocumentRelevance;
 }
 
 export interface RelevanceChunk {
@@ -89,6 +89,7 @@ export interface SearchResponse {
   selectedDocIndices: number[] | null;
   error: string | null;
   messageId: number | null;
+  additional_relevance?: Relevance;
 }
 
 export enum SourceCategory {
@@ -124,7 +125,6 @@ export interface SearchRequestArgs {
   timeRange: DateRangePickerValue | null;
   tags: Tag[];
   persona: Persona;
-  checkResponse: (chunk: any) => void;
   updateDocumentRelevance: (relevance: any) => void; // New callback function
   updateCurrentAnswer: (val: string) => void;
   updateQuotes: (quotes: Quote[]) => void;
