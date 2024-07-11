@@ -1,0 +1,46 @@
+{
+  "family": "relational_db",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "relational_db",
+      "image": "postgres:15.2-alpine",
+      "essential": true,
+      "memory": 1024,
+      "cpu": 512,
+      "environment": [
+        { "name": "POSTGRES_USER", "value": "${POSTGRES_USER:postgres}" },
+        { "name": "POSTGRES_PASSWORD", "value": "${POSTGRES_PASSWORD:password}" }
+      ],
+      "portMappings": [
+        {
+          "containerPort": 5432,
+          "hostPort": 5432,
+          "protocol": "tcp"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "db_volume",
+          "containerPath": "/var/lib/postgresql/data"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "json-file",
+        "options": {
+          "max-size": "50m",
+          "max-file": "6"
+        }
+      }
+    }
+  ],
+  "volumes": [
+    {
+      "name": "db_volume",
+      "dockerVolumeConfiguration": {
+        "scope": "task",
+        "autoprovision": true
+      }
+    }
+  ]
+}
