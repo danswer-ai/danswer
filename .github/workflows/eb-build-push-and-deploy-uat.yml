@@ -80,6 +80,6 @@ jobs:
               region: ${{ env.AWS_REGION }}
               application_name: "enmedd-chp"
               environment_name: "chp-uat"
-              version_label: ${{ env.VERSION_LABEL }}
+              version_label: $VERSION_LABEL
 
                 
