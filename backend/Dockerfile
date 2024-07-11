@@ -1,17 +1,5 @@
 FROM python:3.11.7-slim-bookworm
 
-LABEL com.danswer.maintainer="founders@danswer.ai"
-LABEL com.danswer.description="This image is the web/frontend container of Danswer which \
-contains code for both the Community and Enterprise editions of Danswer. If you do not \
-have a contract or agreement with DanswerAI, you are not permitted to use the Enterprise \
-Edition features outside of personal development or testing purposes. Please reach out to \
-founders@danswer.ai for more information. Please visit https://github.com/danswer-ai/danswer"
-
-# Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
-ARG DANSWER_VERSION=0.3-dev
-ENV DANSWER_VERSION=${DANSWER_VERSION}
-
-RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 # Install system dependencies
 # cmake needed for psycopg (postgres)
 # libpq-dev needed for psycopg (postgres)

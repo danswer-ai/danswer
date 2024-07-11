@@ -1,17 +1,5 @@
 FROM node:20-alpine AS base
 
-LABEL com.danswer.maintainer="founders@danswer.ai"
-LABEL com.danswer.description="This image is the web/frontend container of Danswer which \
-contains code for both the Community and Enterprise editions of Danswer. If you do not \
-have a contract or agreement with DanswerAI, you are not permitted to use the Enterprise \
-Edition features outside of personal development or testing purposes. Please reach out to \
-founders@danswer.ai for more information. Please visit https://github.com/danswer-ai/danswer"
-
-# Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
-ARG DANSWER_VERSION=0.3-dev
-ENV DANSWER_VERSION=${DANSWER_VERSION}
-RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
-
 # Step 1. Install dependencies + rebuild the source code only when needed
 FROM base AS builder
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
