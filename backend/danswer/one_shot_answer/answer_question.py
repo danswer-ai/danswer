@@ -277,15 +277,11 @@ def stream_answer_objects(
                 )
 
                 if reference_db_search_docs is not None:
-                    print("ZZZA CREATING")
                     update_search_docs_table_with_relevance(
                         db_session=db_session,
                         reference_db_search_docs=reference_db_search_docs,
                         relevance_summary=evaluation_response,
                     )
-                else:
-                    print("ZZZA hasn't been created")
-
                 # here we will do some magic with the evaluation of the results
                 yield evaluation_response
 

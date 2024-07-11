@@ -316,21 +316,22 @@ export const AgenticDocumentDisplay = ({
                 setPopup={setPopup}
               />
             )}
-            {contentEnriched && isHovered && (
-              <button
-                onClick={() =>
-                  setAlternativeToggled(
-                    (alternativeToggled) => !alternativeToggled
-                  )
-                }
-              >
-                {!alternativeToggled ? (
-                  <LightBulbIcon className="text-blue-400 h-4 w-4 cursor-pointer" />
-                ) : (
-                  <BookIcon className="text-blue-400" />
-                )}
-              </button>
-            )}
+            {(contentEnriched || additional_relevance) &&
+              (isHovered || alternativeToggled) && (
+                <button
+                  onClick={() =>
+                    setAlternativeToggled(
+                      (alternativeToggled) => !alternativeToggled
+                    )
+                  }
+                >
+                  {!alternativeToggled ? (
+                    <LightBulbIcon className="text-blue-400 h-4 w-4 cursor-pointer" />
+                  ) : (
+                    <BookIcon className="text-blue-400" />
+                  )}
+                </button>
+              )}
           </div>
         </div>
         <div className="mt-1">
@@ -338,7 +339,7 @@ export const AgenticDocumentDisplay = ({
         </div>
         <div className="pt-2 break-words flex gap-x-2">
           <p style={{ transition: "height 0.30s ease-in-out" }}>
-            {alternativeToggled && contentEnriched
+            {alternativeToggled && (contentEnriched || additional_relevance)
               ? buildDocumentSummaryDisplay(
                   document.match_highlights,
                   document.blurb

@@ -115,6 +115,8 @@ class SearchPipeline:
     def evaluate(self, top_doc: LlmDoc, query: str) -> dict[str, Any]:
         # Group documents by document_id
 
+        print(f"Za answer to za query {query}")
+
         relevance: dict[str, Any] = {}
         results = {}
         document_id = top_doc.document_id

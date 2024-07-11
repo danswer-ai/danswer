@@ -106,7 +106,6 @@ export const SearchResultsDisplay = ({
           </div>
         ) : (
           <></>
-          // <div className="text-subtle">No matching documents found.</div>
         )}
       </div>
     );
@@ -143,7 +142,7 @@ export const SearchResultsDisplay = ({
               ? -1
               : 1
         )
-      : [];
+      : documents ?? [];
 
   return (
     <>
@@ -152,31 +151,32 @@ export const SearchResultsDisplay = ({
         <div className="mt-4">
           <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
             <p>Results</p>
-            {!agenticResults && contentEnriched && (
-              <button
-                onClick={() => performSweep()}
-                className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
-                  !sweep
-                    ? "bg-green-500 text-solidDark"
-                    : "bg-rose-700 text-lighter"
-                }`}
-                style={{
-                  transform: sweep ? "rotateZ(180deg)" : "rotateZ(0deg)",
-                }}
-              >
-                <div
-                  className={`flex items-center ${sweep ? "rotate-180" : ""}`}
+            {!agenticResults &&
+              (contentEnriched || searchResponse.additional_relevance) && (
+                <button
+                  onClick={() => performSweep()}
+                  className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
+                    !sweep
+                      ? "bg-green-500 text-solidDark"
+                      : "bg-rose-700 text-lighter"
+                  }`}
+                  style={{
+                    transform: sweep ? "rotateZ(180deg)" : "rotateZ(0deg)",
+                  }}
                 >
-                  <span></span>
-                  {!sweep ? "hide" : "undo"}
-                  {!sweep ? (
-                    <BroomIcon className="h-4 w-4" />
-                  ) : (
-                    <UndoIcon className="h-4 w-4" />
-                  )}
-                </div>
-              </button>
-            )}
+                  <div
+                    className={`flex items-center ${sweep ? "rotate-180" : ""}`}
+                  >
+                    <span></span>
+                    {!sweep ? "hide" : "undo"}
+                    {!sweep ? (
+                      <BroomIcon className="h-4 w-4" />
+                    ) : (
+                      <UndoIcon className="h-4 w-4" />
+                    )}
+                  </div>
+                </button>
+              )}
           </div>
 
           {orderedDocs.map((document, ind) => {
@@ -186,15 +186,14 @@ export const SearchResultsDisplay = ({
                 : null;
 
             return agenticResults ? (
-              (relevance?.relevant ||
-                document.relevant_search_result ||
-                showAll) && (
+              (showAll ||
+                relevance?.relevant ||
+                document.relevant_search_result) && (
                 <AgenticDocumentDisplay
                   additional_relevance={relevance}
                   contentEnriched={contentEnriched}
                   comments={comments}
                   index={ind}
-                  hide={!document.relevant_search_result}
                   key={document.document_id + ind}
                   document={document}
                   documentRank={ind + 1}

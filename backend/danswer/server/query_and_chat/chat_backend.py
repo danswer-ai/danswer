@@ -218,8 +218,6 @@ def get_search_session(
                 db_session=db_session, chat_message_id=message.id
             )
             for doc in docs:
-                print("appending this doc")
-                print(doc.id)
                 server_doc = translate_db_search_doc_to_server_search_doc(doc)
                 docs_response.append(server_doc)
 

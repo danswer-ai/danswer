@@ -188,8 +188,6 @@ export const SearchSection = ({
       const message = extractFirstUserMessage(searchSession);
 
       if (message) {
-        console.log("FETHCING");
-
         setQuery(message);
         const danswerDocs: SearchResponse = {
           documents: searchSession.documents,
@@ -203,6 +201,7 @@ export const SearchSection = ({
           additional_relevance: undefined,
         };
 
+        console.log(searchSession.documents);
         setFirstSearch(false);
         setSearchResponse(danswerDocs);
         setContentEnriched(true);
@@ -237,6 +236,7 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       quotes,
     }));
+
   const updateDocs = (documents: SearchDanswerDocument[]) => {
     setTimeout(() => {
       if (searchState != "input") {
@@ -244,6 +244,8 @@ export const SearchSection = ({
       }
     }, 1500);
 
+    console.log("udpating docs");
+    console.log(documents);
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       documents,
