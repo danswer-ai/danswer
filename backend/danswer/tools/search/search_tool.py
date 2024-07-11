@@ -6,7 +6,6 @@ from typing import cast
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import DanswerContext
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import LlmDoc
@@ -32,8 +31,6 @@ from danswer.secondary_llm_flows.query_expansion import history_based_query_reph
 from danswer.tools.search.search_utils import llm_doc_to_dict
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
-from danswer.utils.threadpool_concurrency import FunctionCall
-from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 
 SEARCH_RESPONSE_SUMMARY_ID = "search_response_summary"
 SEARCH_DOC_CONTENT_ID = "search_doc_content"
@@ -262,7 +259,10 @@ class SearchTool(Tool):
             fast_llm=self.fast_llm,
             bypass_acl=self.bypass_acl,
             db_session=self.db_session,
+            prompt_config=self.prompt_config,
+            pruning_config=self.pruning_config,
         )
+
         yield ToolResponse(
             id=SEARCH_RESPONSE_SUMMARY_ID,
             response=SearchResponseSummary(
@@ -295,44 +295,14 @@ class SearchTool(Tool):
             response=search_pipeline.relevant_chunk_indices,
         )
 
-        llm_docs = [
-            llm_doc_from_inference_section(section)
-            for section in search_pipeline.reranked_sections
-        ]
-        final_context_documents = prune_documents(
-            docs=llm_docs,
-            doc_relevance_list=[
-                True if ind in search_pipeline.relevant_chunk_indices else False
-                for ind in range(len(llm_docs))
-            ],
-            prompt_config=self.prompt_config,
-            llm_config=self.llm.config,
-            question=query,
-            document_pruning_config=self.pruning_config,
+        yield ToolResponse(
+            id=FINAL_CONTEXT_DOCUMENTS, response=search_pipeline.final_context_documents
         )
-        yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=final_context_documents)
 
-        # evaluation =
         if self.evaluate_response:
-            functions = [
-                FunctionCall(self.evaluate, (final_context, query))
-                for final_context in final_context_documents
-            ]
-
-            results = run_functions_in_parallel(function_calls=functions)
-
-            evaluated_responses = {}
-            for result in results:
-                value = results[result]
-                key = list(value.keys())[0]
-                evaluated_responses[key] = value[key]
-
-            response = ToolResponse(
-                id=SEARCH_EVALUATION_ID, response=evaluated_responses
+            yield ToolResponse(
+                id=SEARCH_EVALUATION_ID, response=search_pipeline.evaluate_response
             )
-            print("response")
-            # print(final_context_documents[0].
-            yield response
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         final_docs = cast(

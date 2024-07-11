@@ -1,16 +1,24 @@
 from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Generator
+from typing import Any
 from typing import cast
 
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from danswer.chat.chat_utils import llm_doc_from_inference_section
+from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
+from danswer.llm.answering.doc_pruning import prune_documents
+from danswer.llm.answering.models import DocumentPruningConfig
+from danswer.llm.answering.models import PromptConfig
 from danswer.llm.interfaces import LLM
+from danswer.llm.utils import message_generator_to_string_generator
+from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import IndexFilters
@@ -23,6 +31,8 @@ from danswer.search.models import SearchRequest
 from danswer.search.postprocessing.postprocessing import search_postprocessing
 from danswer.search.preprocessing.preprocessing import retrieval_preprocessing
 from danswer.search.retrieval.search_runner import retrieve_chunks
+from danswer.utils.threadpool_concurrency import FunctionCall
+from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 
 
@@ -59,9 +69,12 @@ class SearchPipeline:
         fast_llm: LLM,
         db_session: Session,
         bypass_acl: bool = False,  # NOTE: VERY DANGEROUS, USE WITH CAUTION
-        retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-        | None = None,
+        retrieval_metrics_callback: (
+            Callable[[RetrievalMetricsContainer], None] | None
+        ) = None,
         rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+        prompt_config: PromptConfig | None = None,
+        pruning_config: DocumentPruningConfig | None = None,
     ):
         self.search_request = search_request
         self.user = user
@@ -77,6 +90,8 @@ class SearchPipeline:
             primary_index_name=self.embedding_model.index_name,
             secondary_index_name=None,
         )
+        self.prompt_config: PromptConfig | None = prompt_config
+        self.pruning_config: DocumentPruningConfig | None = pruning_config
 
         self._search_query: SearchQuery | None = None
         self._predicted_search_type: SearchType | None = None
@@ -87,15 +102,56 @@ class SearchPipeline:
         self._reranked_chunks: list[InferenceChunk] | None = None
         self._reranked_sections: list[InferenceSection] | None = None
         self._relevant_chunk_indices: list[int] | None = None
+        self._final_context_documents: list[LlmDoc] | None = None
 
         # If chunks have been merged, the LLM filter flow no longer applies
         # as the indices no longer match. Can be implemented later as needed
         self.ran_merge_chunk = False
 
         # generator state
-        self._postprocessing_generator: Generator[
-            list[InferenceChunk] | list[str], None, None
-        ] | None = None
+        self._postprocessing_generator: (
+            Generator[list[InferenceChunk] | list[str], None, None] | None
+        ) = None
+
+    def evaluate(
+        self, top_doc: LlmDoc, query: ThreadMessage
+    ) -> tuple[dict[str, Any], dict[str, str]]:
+        # Group documents by document_id
+
+        relevance = {}
+        results = {}
+        document_id = top_doc.document_id
+
+        prompt = f"""
+        Determine if this document is relevant to the search query:
+
+        Title: {top_doc.document_id.split("/")[-1]}
+        Blurb: {top_doc.blurb}
+        Query: {query}
+
+        Think through the following:
+        1. What are the key terms or concepts in the query?
+        2. Do these appear in the document title or blurb?
+        3. Is the document's main topic related to the query?
+        4. Would this document be useful to someone searching with this query?
+
+        Provide your chain of thought in a paragraph. Be concise but show your reasoning clearly.
+
+        Conclude with:
+        RESULT: True (if relevant)
+        RESULT: False (if not relevant)
+        """
+
+        content = "".join(
+            message_generator_to_string_generator(self.llm.stream(prompt=prompt))
+        )
+        if "result: true" in content.lower():
+            relevance["relevant"] = True
+        else:
+            relevance["relevant"] = False
+        relevance["content"] = content.split("RESULT")[0]
+        results[document_id] = relevance
+        return results
 
     def _combine_chunks(self, post_rerank: bool) -> list[InferenceSection]:
         if not post_rerank and self._retrieved_sections:
@@ -315,7 +371,26 @@ class SearchPipeline:
         return self._reranked_sections
 
     @property
-    def relevant_chunk_indices(self) -> list[int]:
+    def final_context_documents(self):
+        llm_docs = [
+            llm_doc_from_inference_section(section)
+            for section in self.reranked_sections
+        ]
+        self._final_context_documents = prune_documents(
+            docs=llm_docs,
+            doc_relevance_list=[
+                True if ind in self.relevant_chunk_indices else False
+                for ind in range(len(llm_docs))
+            ],
+            prompt_config=self.prompt_config,
+            llm_config=self.llm.config,
+            question=self.search_request.query,
+            document_pruning_config=self.pruning_config,
+        )
+        return self._final_context_documents
+
+    @property
+    def relevant_chunk_indices(self):
         # If chunks have been merged, then we cannot simply rely on the leading chunk
         # relevance, there is no way to get the full relevance of the Section now
         # without running a more token heavy pass. This can be an option but not
@@ -337,7 +412,24 @@ class SearchPipeline:
             for ind, chunk in enumerate(reranked_docs)
             if chunk.unique_id in relevant_chunk_ids
         ]
+
         return self._relevant_chunk_indices
+
+    @property
+    def evaluate_response(self):
+        functions = [
+            FunctionCall(self.evaluate, (final_context, self.search_query))
+            for final_context in self._final_context_documents
+        ]
+
+        results = run_functions_in_parallel(function_calls=functions)
+
+        evaluated_responses = {}
+        for result in results:
+            value = results[result]
+            key = list(value.keys())[0]
+            evaluated_responses[key] = value[key]
+        return evaluated_responses
 
     @property
     def chunk_relevance_list(self) -> list[bool]:
