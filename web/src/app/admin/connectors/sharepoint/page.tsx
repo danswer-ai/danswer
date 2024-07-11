@@ -1,7 +1,7 @@
 "use client";
 
 import * as Yup from "yup";
-import { TrashIcon, SharepointIcon } from "@/components/icons/icons"; // Make sure you have a Document360 icon
+import { TrashIcon, SharepointIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import useSWR, { useSWRConfig } from "swr";
