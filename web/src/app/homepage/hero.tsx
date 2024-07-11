@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Wrapper } from "./wrapper";
 import heroImg from "../../../public/login_page_img.webp";
 import placeholder from "../../../public/placeholder.svg";
+import Link from "next/link";
 
 export default function Hero() {
   return (
@@ -32,9 +33,12 @@ export default function Hero() {
               <button className="py-3 px-6 bg-[#2039F3] text-white rounded-[5px]">
                 Get a Demo
               </button>
-              <button className="text-[#2039F3] py-3 px-6 hover:bg-[#D7EAFF] rounded-[5px] transition-all duration-500 ease-in-out">
+              <Link
+                href="/chat"
+                className="text-[#2039F3] py-3 px-6 hover:bg-[#D7EAFF] rounded-[5px] transition-all duration-500 ease-in-out"
+              >
                 Start for free
-              </button>
+              </Link>
             </div>
           </div>
 

@@ -130,7 +130,7 @@ export function ChatPersonaSelector({
         </div>
       }
     >
-      <div className="flex px-2 text-xl font-bold rounded cursor-pointer select-none text-strong hover:bg-hover-light">
+      <div className="inline-flex px-2 text-xl font-bold rounded cursor-pointer select-none text-strong hover:bg-hover-light">
         <div className="mt-auto">
           {currentlySelectedPersona?.name || "Default"}
         </div>

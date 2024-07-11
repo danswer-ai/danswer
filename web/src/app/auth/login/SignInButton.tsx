@@ -11,7 +11,7 @@ export function SignInButton({
   let button;
   if (authType === "google_oauth") {
     button = (
-      <div className="mx-auto flex">
+      <div className="flex mx-auto">
         <div className="my-auto mr-2">
           <FaGoogle />
         </div>
@@ -20,7 +20,7 @@ export function SignInButton({
     );
   } else if (authType === "oidc") {
     button = (
-      <div className="mx-auto flex">
+      <div className="flex mx-auto">
         <p className="text-sm font-medium select-none">
           Continue with OIDC SSO
         </p>
@@ -28,7 +28,7 @@ export function SignInButton({
     );
   } else if (authType === "saml") {
     button = (
-      <div className="mx-auto flex">
+      <div className="flex mx-auto">
         <p className="text-sm font-medium select-none">
           Continue with SAML SSO
         </p>
@@ -42,7 +42,7 @@ export function SignInButton({
 
   return (
     <a
-      className="mt-6 py-3 w-72 text-gray-100 bg-accent flex rounded cursor-pointer hover:bg-indigo-800"
+      className="flex py-3 mt-6 text-gray-100 rounded cursor-pointer w-72 bg-accent hover:bg-indigo-800"
       href={authorizeUrl}
     >
       {button}

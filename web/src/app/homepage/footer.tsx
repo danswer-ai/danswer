@@ -9,6 +9,7 @@ import HIPAA from "./assets/hipaa_blue.webp";
 import twitter from "./assets/twitter-icon.svg";
 import github from "./assets/github-icon.svg";
 import linkedin from "./assets/linkedin-icon.svg";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -17,7 +18,9 @@ export default function Footer() {
         <div className="flex flex-col w-full gap-32 xl:gap-40">
           <div className="flex flex-col justify-between w-full gap-10 xl:flex-row">
             <div className="flex flex-col gap-3">
-              <Image src={enmeddLogo} alt="enmedd-logo" width={150} />
+              <Link href="/">
+                <Image src={enmeddLogo} alt="enmedd-logo" width={150} />
+              </Link>
               <p>Build and Deploy AI Applications in minutes</p>
 
               <div className="flex flex-col gap-6 md:gap-10 md:flex-row xl:gap-6 xl:flex-col">

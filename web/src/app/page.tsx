@@ -15,6 +15,8 @@ export default async function Page() {
   }
 } */
 
+import { fetchSettingsSS } from "@/components/settings/lib";
+import { redirect } from "next/navigation";
 import CallToActions from "./homepage/callToActions";
 import Certifications from "./homepage/certifications";
 import DataLoaders from "./homepage/dataLoaders";
@@ -27,6 +29,12 @@ import Platform from "./homepage/platform";
 import UseCases from "./homepage/useCases";
 
 export default async function Page() {
+  const settings = await fetchSettingsSS();
+
+  if (!settings) {
+    redirect("/chat");
+  }
+
   return (
     <>
       <Navbar />

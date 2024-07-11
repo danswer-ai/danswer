@@ -48,7 +48,7 @@ export const ChatSidebar = ({
   folders: Folder[];
   openedFolders: { [key: number]: boolean };
   handleClose?: () => void;
-  openSidebar: boolean;
+  openSidebar?: boolean;
 }) => {
   let { user } = useChatContext();
   const router = useRouter();
@@ -86,11 +86,11 @@ export const ChatSidebar = ({
         id="chat-sidebar"
       >
         <div className="flex">
-          <Link
+          <div
             className="w-full"
-            href={
+            /*  href={
               settings && settings.default_page === "chat" ? "/chat" : "/search"
-            }
+            } */
           >
             <div className="flex items-center w-full px-4">
               <div className="flex items-center justify-between w-full">
@@ -114,7 +114,7 @@ export const ChatSidebar = ({
                 <></>
               )}
             </div>
-          </Link>
+          </div>
         </div>
         {/* <HeaderTitle>enMedD CHP</HeaderTitle> */}
         {
