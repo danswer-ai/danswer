@@ -144,7 +144,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
-    expiry_length: Mapped[int] = mapped_column(Integer, nullable=False)
+    pass
 
 
 class ApiKey(Base):

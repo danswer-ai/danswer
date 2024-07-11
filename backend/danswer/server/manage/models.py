@@ -15,10 +15,12 @@ from danswer.db.models import SlackBotConfig as SlackBotConfigModel
 from danswer.db.models import SlackBotResponseType
 from danswer.db.models import StandardAnswer as StandardAnswerModel
 from danswer.db.models import StandardAnswerCategory as StandardAnswerCategoryModel
+from danswer.db.models import User
 from danswer.indexing.models import EmbeddingModelDetail
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
+
 
 if TYPE_CHECKING:
     pass
@@ -54,9 +56,9 @@ class UserInfo(BaseModel):
     @classmethod
     def from_model(
         cls,
-        user,
-        current_token_created_at=None,
-        current_token_expiry_length=None,
+        user: User,
+        current_token_created_at: datetime | None = None,
+        expiry_length: int | None = None,
     ) -> "UserInfo":
         return cls(
             id=str(user.id),
@@ -68,7 +70,7 @@ class UserInfo(BaseModel):
             preferences=(UserPreferences(chosen_assistants=user.chosen_assistants)),
             oidc_expiry=user.oidc_expiry,
             current_token_created_at=current_token_created_at,
-            current_token_expiry_length=current_token_expiry_length,
+            current_token_expiry_length=expiry_length,
         )
 
 
@@ -163,7 +165,9 @@ class SlackBotConfigCreationRequest(BaseModel):
     # by an optional `PersonaSnapshot` object. Keeping it like this
     # for now for simplicity / speed of development
     document_sets: list[int] | None
-    persona_id: int | None  # NOTE: only one of `document_sets` / `persona_id` should be set
+    persona_id: (
+        int | None
+    )  # NOTE: only one of `document_sets` / `persona_id` should be set
     channel_names: list[str]
     respond_tag_only: bool = False
     respond_to_bots: bool = False

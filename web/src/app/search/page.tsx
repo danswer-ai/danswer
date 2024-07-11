@@ -186,9 +186,8 @@ export default async function Home() {
 
   return (
     <>
-      <div className="m-3">
-        <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
-      </div>
+      <Header user={user} />
+      <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
 
       {!shouldShowWelcomeModal &&

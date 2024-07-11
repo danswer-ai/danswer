@@ -1101,7 +1101,6 @@ export function ChatPage({
   });
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
-  // const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
   const currentPersona = alternativeAssistant || liveAssistant;
 
@@ -1128,14 +1127,12 @@ export function ChatPage({
     setDocumentSelection((documentSelection) => !documentSelection);
     setShowDocSidebar(false);
   };
+  const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
   return (
     <>
-      <HealthCheckBanner />
+      <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
       <InstantSSRAutoRefresh />
-      {/* <div className="m-3">
-        <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
-      </div> */}
 
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
