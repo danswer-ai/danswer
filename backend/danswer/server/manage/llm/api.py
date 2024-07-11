@@ -24,6 +24,7 @@ from danswer.llm.utils import test_llm
 from danswer.search.enums import EmbedTextType
 from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.server.manage.llm.models import CloudEmbeddingProvider
+from danswer.server.manage.llm.models import CLoudEmbeddingProviderCreationRequest
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderDescriptor
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
@@ -221,7 +222,7 @@ def list_embedding_provider_basics(
 
 @admin_router.put("/embedding-provider")
 def put_cloud_embedding_provider(
-    provider: CloudEmbeddingProvider,
+    provider: CLoudEmbeddingProviderCreationRequest,
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> CloudEmbeddingProvider:

@@ -2,15 +2,18 @@ from sqlalchemy import delete
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
 from danswer.db.models import LLMProvider as LLMProviderModel
+from danswer.indexing.models import EmbeddingModelDetail
 from danswer.server.manage.llm.models import CloudEmbeddingProvider
+from danswer.server.manage.llm.models import CLoudEmbeddingProviderCreationRequest
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 
 
 def upsert_cloud_embedding_provider(
-    db_session: Session, provider: CloudEmbeddingProvider
+    db_session: Session, provider: CLoudEmbeddingProviderCreationRequest
 ) -> CloudEmbeddingProviderModel:
     existing_provider = (
         db_session.query(CloudEmbeddingProviderModel)
@@ -112,12 +115,25 @@ def fetch_provider(db_session: Session, provider_name: str) -> FullLLMProvider |
 def remove_embedding_provider(
     db_session: Session, embedding_provider_name: str
 ) -> None:
-    db_session.execute(
-        delete(CloudEmbeddingProviderModel).where(
-            CloudEmbeddingProviderModel.name == embedding_provider_name
-        )
+    # Should throw error if embedding_provider is the default
+    current_model = get_current_db_embedding_model()
+
+    current_model = EmbeddingModelDetail.from_model(current_model)
+
+    embedding_provider = fetch_embedding_provider(
+        provider_id=current_model.cloud_provider_id
     )
-    db_session.commit()
+    model_provider = CloudEmbeddingProvider.from_request(embedding_provider)
+    print(model_provider.name)
+    if model_provider.name == embedding_provider_name:
+        raise RuntimeError("You can't delete a currently active model")
+
+    # db_session.execute(
+    #     delete(CloudEmbeddingProviderModel).where(
+    #         CloudEmbeddingProviderModel.name == embedding_provider_name
+    #     )
+    # )
+    # db_session.commit()
 
 
 def remove_llm_provider(db_session: Session, provider_id: int) -> None:

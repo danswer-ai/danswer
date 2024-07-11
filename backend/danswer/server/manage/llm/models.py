@@ -116,3 +116,9 @@ class CloudEmbeddingProvider(BaseModel):
             api_key=cloud_provider_model.api_key,
             default_model_id=cloud_provider_model.default_model_id,
         )
+
+
+class CLoudEmbeddingProviderCreationRequest(BaseModel):
+    name: str
+    api_key: str | None = None
+    default_model_id: int | None = None

@@ -116,7 +116,7 @@ function Main() {
   ) => {
     let newModel: EmbeddingModelDescriptor;
 
-    if ("name" in model) {
+    if ("cloud_provider_name" in model) {
       // This is a CloudEmbeddingModel
       newModel = {
         ...model,

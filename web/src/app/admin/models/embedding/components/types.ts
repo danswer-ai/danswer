@@ -31,11 +31,11 @@ export interface CloudEmbeddingProvider {
 
 // Embedding Models
 export interface EmbeddingModelDescriptor {
-  model_name?: string;
-  model_dim?: number;
-  normalize?: boolean;
-  query_prefix?: string;
-  passage_prefix?: string;
+  model_name: string;
+  model_dim: number;
+  normalize: boolean;
+  query_prefix: string;
+  passage_prefix: string;
   cloud_provider_name?: string | null;
   description: string;
 }
@@ -126,6 +126,10 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
       {
         model_name: "text-embedding-3-small",
         cloud_provider_name: "OpenAI",
+        model_dim: 1536,
+        normalize: false,
+        query_prefix: "",
+        passage_prefix: "",
         description:
           "OpenAI's newer, more efficient embedding model. Good balance of performance and cost.",
         pricePerMillion: 0.02,
@@ -139,6 +143,10 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         description:
           "OpenAI's large embedding model. Best performance, but more expensive.",
         pricePerMillion: 0.13,
+        model_dim: 3072,
+        normalize: false,
+        query_prefix: "",
+        passage_prefix: "",
         mtebScore: 64.6,
         maxContext: 8191,
         enabled: false,
@@ -165,6 +173,10 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         mtebScore: 64.5,
         maxContext: 512,
         enabled: false,
+        model_dim: 1024,
+        normalize: false,
+        query_prefix: "",
+        passage_prefix: "",
       },
       {
         model_name: "embed-english-light-v3.0",
@@ -175,6 +187,10 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         mtebScore: 62,
         maxContext: 512,
         enabled: false,
+        model_dim: 384,
+        normalize: false,
+        query_prefix: "",
+        passage_prefix: "",
       },
     ],
   },
@@ -198,6 +214,10 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         mtebScore: 68.28,
         maxContext: 4000,
         enabled: false,
+        model_dim: 1024,
+        normalize: false,
+        query_prefix: "",
+        passage_prefix: "",
       },
       {
         cloud_provider_name: "Voyage",
@@ -208,6 +228,10 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         mtebScore: 67.13,
         maxContext: 16000,
         enabled: false,
+        model_dim: 1024,
+        normalize: false,
+        query_prefix: "",
+        passage_prefix: "",
       },
     ],
   },
@@ -232,6 +256,10 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         mtebScore: 66.31,
         maxContext: 2048,
         enabled: false,
+        model_dim: 768,
+        normalize: false,
+        query_prefix: "",
+        passage_prefix: "",
       },
     ],
   },
