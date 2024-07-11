@@ -17,12 +17,14 @@ from danswer.search.models import InferenceSection
 def create_inference_chunk(
     document_id: str, chunk_id: int, content: str, score: float | None
 ) -> InferenceChunk:
-    # Hardcoding a bunch of fields that aren't useful for the testing
+    """
+    Create an InferenceChunk with hardcoded values for testing purposes.
+    """
     return InferenceChunk(
         chunk_id=chunk_id,
         document_id=document_id,
-        semantic_identifier=document_id + "_" + str(chunk_id),
-        blurb=document_id + "_" + str(chunk_id),
+        semantic_identifier=f"{document_id}_{chunk_id}",
+        blurb=f"{document_id}_{chunk_id}",
         content=content,
         source_links={0: "fake_link"},
         section_continuation=False,
