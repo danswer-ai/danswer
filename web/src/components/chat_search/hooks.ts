@@ -4,7 +4,6 @@ interface UseSidebarVisibilityProps {
   toggledSidebar: boolean;
   sidebarElementRef: React.RefObject<HTMLElement>;
   showDocSidebar: boolean;
-
   setShowDocSidebar: Dispatch<SetStateAction<boolean>>;
 }
 
@@ -29,14 +28,11 @@ export const useSidebarVisibility = ({
           currentXPosition <= sidebarRect.right &&
           event.clientY >= sidebarRect.top &&
           event.clientY <= sidebarRect.bottom;
-
         const sidebarStyle = window.getComputedStyle(sidebarElementRef.current);
         const isVisible = sidebarStyle.opacity !== "0";
-
         if (isWithinSidebar && isVisible) {
           setShowDocSidebar(true);
         }
-
         if (
           currentXPosition > 100 &&
           showDocSidebar &&

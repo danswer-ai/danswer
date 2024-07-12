@@ -39,6 +39,7 @@ import { ChatSession, SearchSession } from "@/app/chat/interfaces";
 import FunctionalHeader from "../chat_search/Header";
 import { useSidebarVisibility } from "../chat_search/hooks";
 import { SEARCH_TOGGLED_COOKIE_NAME } from "../resizable/contants";
+import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
 
@@ -65,12 +66,14 @@ interface SearchSectionProps {
   defaultSearchType: SearchType;
   user: User | null;
   toggledSidebar: boolean;
+  agenticSearchEnabled: boolean;
 }
 
 export const SearchSection = ({
   ccPairs,
   toggle,
   documentSets,
+  agenticSearchEnabled,
   personas,
   user,
   tags,
@@ -95,12 +98,12 @@ export const SearchSection = ({
     error: null,
     messageId: null,
   });
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
         switch (event.key.toLowerCase()) {
           case "/":
-            event.preventDefault();
             toggleAgentic();
             break;
         }
@@ -113,9 +116,16 @@ export const SearchSection = ({
     };
   }, []);
 
-  const [agentic, setAgentic] = useState(false);
+  const [agentic, setAgentic] = useState(agenticSearchEnabled);
 
   const toggleAgentic = () => {
+    Cookies.set(
+      AGENTIC_SEARCH_TYPE_COOKIE_NAME,
+      String(!agentic).toLocaleLowerCase()
+    );
+    console.log(
+      `ENABELD ${AGENTIC_SEARCH_TYPE_COOKIE_NAME} to be ${String(!agentic).toLocaleLowerCase()}`
+    );
     setAgentic((agentic) => !agentic);
   };
 
@@ -467,7 +477,7 @@ export const SearchSection = ({
 
   return (
     <>
-      <div className="flex relative  w-full h-full text-default overflow-x-hidden">
+      <div className="flex relative w-full h-full text-default overflow-x-hidden">
         <div
           ref={sidebarElementRef}
           className={`
@@ -511,21 +521,20 @@ export const SearchSection = ({
             <div
               style={{ transition: "width 0.30s ease-out" }}
               className={`
-                    flex-none 
-                    overflow-y-hidden 
-                    bg-background-weak 
+                    flex-none
+                    overflow-y-hidden
+                    bg-background-weak
                     h-full
-                    transition-all 
+                    transition-all
                     bg-opacity-80
                     duration-300 
                     ease-in-out
                     ${toggledSidebar ? "w-[300px]" : "w-[0px]"}
                   `}
             />
-
             {
-              <div className="px-24  w-full pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
-                <div className="absolute  z-10 top-12 left-0 hidden 2xl:block w-52 3xl:w-64">
+              <div className="px-24 w-full pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
+                <div className="absolute z-10 top-12 left-0 hidden 2xl:block w-52 3xl:w-64">
                   {(ccPairs.length > 0 || documentSets.length > 0) && (
                     <SourceSelector
                       {...filterManager}
@@ -541,11 +550,12 @@ export const SearchSection = ({
                 <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64"></div>
                 <div className="max-w-searchbar-max w-[90%] mx-auto">
                   <div
-                    className={`transition-all duration-500 ease-in-out overflow-hidden ${
-                      firstSearch
-                        ? "opacity-100 max-h-[500px]"
-                        : "opacity-0 max-h-0"
-                    }`}
+                    className={`transition-all duration-500 ease-in-out overflow-hidden 
+                      ${
+                        firstSearch
+                          ? "opacity-100 max-h-[500px]"
+                          : "opacity-0 max-h-0"
+                      }`}
                     onTransitionEnd={handleTransitionEnd}
                   >
                     <div className="mt-48 mb-8 flex justify-center items-center">
@@ -558,6 +568,7 @@ export const SearchSection = ({
                       </div>
                     </div>
                   </div>
+
                   <FullSearchBar
                     toggleAgentic={toggleAgentic}
                     agentic={agentic}

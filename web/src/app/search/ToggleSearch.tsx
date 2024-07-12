@@ -15,6 +15,7 @@ export default function ToggleSearch({
   searchTypeDefault,
   tags,
   user,
+  agenticSearchEnabled,
 }: {
   toggleSearchSidebar: boolean;
   querySessions: ChatSession[];
@@ -24,6 +25,7 @@ export default function ToggleSearch({
   searchTypeDefault: string;
   tags: Tag[];
   user: User | null;
+  agenticSearchEnabled: boolean;
 }) {
   const [toggledSidebar, setToggledSidebar] = useState<boolean>(
     toggleSearchSidebar || false
@@ -35,6 +37,7 @@ export default function ToggleSearch({
   return (
     <FunctionalWrapper toggledSidebar={toggledSidebar}>
       <SearchSection
+        agenticSearchEnabled={agenticSearchEnabled}
         toggle={toggle}
         toggledSidebar={toggledSidebar}
         querySessions={querySessions}
