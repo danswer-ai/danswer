@@ -86,7 +86,9 @@ def _process_file(
     all_metadata = {**metadata, **file_metadata} if metadata else file_metadata
 
     # add a prefix to avoid conflicts with other connectors
-    doc_id = metadata.get("id") or f"FILE_CONNECTOR__{file_name}"
+    doc_id = f"FILE_CONNECTOR__{file_name}"
+    if metadata:
+        doc_id = metadata.get("id") or doc_id
 
     # If this is set, we will show this in the UI as the "name" of the file
     file_display_name = all_metadata.get("file_display_name") or os.path.basename(
