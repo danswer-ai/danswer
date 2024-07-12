@@ -118,7 +118,7 @@ class CloudEmbeddingProvider(BaseModel):
         )
 
 
-class CLoudEmbeddingProviderCreationRequest(BaseModel):
+class CloudEmbeddingProviderCreationRequest(BaseModel):
     name: str
     api_key: str | None = None
     default_model_id: int | None = None

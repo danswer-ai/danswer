@@ -25,9 +25,10 @@ export function ChangeCredentialsModal({
 }) {
   const [apiKey, setApiKey] = useState("");
   const [testError, setTestError] = useState<string>("");
-  const [deletionError, setDeletionError] = useState<null | string>(null);
   const [fileName, setFileName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [deletionError, setDeletionError] = useState<string>("");
 
   const clearFileInput = () => {
     setFileName("");
@@ -45,7 +46,7 @@ export function ChangeCredentialsModal({
     if (file) {
       setFileName(file.name);
       try {
-        setDeletionError(null);
+        setDeletionError("");
         const fileContent = await file.text();
         let jsonContent;
         try {
@@ -65,6 +66,35 @@ export function ChangeCredentialsModal({
         setApiKey("");
         clearFileInput();
       }
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeletionError("");
+    setIsProcessing(true);
+
+    try {
+      const response = await fetch(
+        `${EMBEDDING_PROVIDERS_ADMIN_URL}/${provider.name}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setDeletionError(errorData.detail);
+        return;
+      }
+
+      mutate(LLM_PROVIDERS_ADMIN_URL);
+      onDeleted();
+    } catch (error) {
+      setDeletionError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -191,31 +221,13 @@ export function ChangeCredentialsModal({
           embedding type!
         </Text>
 
-        <Button
-          onClick={async () => {
-            setDeletionError(null);
-            const response = await fetch(
-              `${EMBEDDING_PROVIDERS_ADMIN_URL}/${provider.name}`,
-              {
-                method: "DELETE",
-              }
-            );
-
-            if (!response.ok) {
-              const errorMsg = (await response.json()).detail;
-              setDeletionError(errorMsg);
-              return;
-            }
-
-            mutate(LLM_PROVIDERS_ADMIN_URL);
-            onDeleted();
-          }}
-          color="red"
-        >
+        <Button onClick={handleDelete} color="red">
           Delete key
         </Button>
         {deletionError && (
-          <p className="text-base  mt-2">Error: {deletionError}</p>
+          <Callout title="Error" color="red" className="mt-4">
+            {deletionError}
+          </Callout>
         )}
       </div>
     </Modal>

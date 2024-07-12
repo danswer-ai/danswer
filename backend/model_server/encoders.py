@@ -75,7 +75,7 @@ class CloudEmbedding:
     def encode(self, texts: list[str], model_name: str | None) -> list[list[float]]:
         return [self.embed(text, model_name) for text in texts]
 
-    def embed(self, text: str, model: str | None = None) -> list[str]:
+    def embed(self, text: str, model: str | None = None) -> list[float]:
         # logger.debug(f"Embedding text with provider: {self.provider}")
         if self.provider == EmbeddingProvider.OPENAI:
             return self._embed_openai(text, model or "text-embedding-ada-002")
@@ -90,12 +90,12 @@ class CloudEmbedding:
 
     def _embed_openai(
         self, text: str, model: str = "text-embedding-ada-002"
-    ) -> list[str]:
+    ) -> list[float]:
         logger.debug(f"Using OpenAI embedding with model: {model}")
         response = self.client.embeddings.create(input=text, model=model)
         return response.data[0].embedding
 
-    def _embed_cohere(self, text: str, model: str | None) -> list[str]:
+    def _embed_cohere(self, text: str, model: str | None) -> list[float]:
         if model is None:
             model = "embed-english-v3.0"
 
@@ -105,7 +105,7 @@ class CloudEmbedding:
         )
         return response.embeddings[0]
 
-    def _embed_voyage(self, text: str, model: str | None) -> list[str]:
+    def _embed_voyage(self, text: str, model: str | None) -> list[float]:
         if model is None:
             model = "voyage-01"
 
@@ -113,7 +113,7 @@ class CloudEmbedding:
         response = self.client.embed(text, model=model)
         return response.embeddings[0]
 
-    def _embed_vertex(self, text: str, model: str | None) -> list[str]:
+    def _embed_vertex(self, text: str, model: str | None) -> list[float]:
         if model is None:
             model = "text-embedding-004"
 
@@ -192,14 +192,16 @@ def embed_text(
         if api_key is None:
             raise RuntimeError("API key not provided for cloud model")
 
-        model = CloudEmbedding(api_key=api_key, provider=provider_type)
-        embeddings = model.encode(texts, model_name)
+        cloud_model = CloudEmbedding(api_key=api_key, provider=provider_type)
+        embeddings = cloud_model.encode(texts, model_name)
 
     elif model_name is not None:
-        model = get_embedding_model(
+        hosted_model = get_embedding_model(
             model_name=model_name, max_context_length=max_context_length
         )
-        embeddings = model.encode(texts, normalize_embeddings=normalize_embeddings)
+        embeddings = hosted_model.encode(
+            texts, normalize_embeddings=normalize_embeddings
+        )
 
     if embeddings is None:
         raise RuntimeError("Embeddings were not created")

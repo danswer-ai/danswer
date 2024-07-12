@@ -16,6 +16,9 @@ from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexModelStatus
 from danswer.indexing.models import EmbeddingModelDetail
 from danswer.search.search_nlp_models import clean_model_name
+from danswer.server.manage.llm.models import (
+    CloudEmbeddingProvider as ServerCloudEmbeddingProvider,
+)
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -55,22 +58,29 @@ def get_model_id_from_name(
     return provider.id if provider else None
 
 
-def get_current_db_embedding_provider(db_session: Session) -> CloudEmbeddingProvider:
+def get_current_db_embedding_provider(
+    db_session: Session,
+) -> ServerCloudEmbeddingProvider:
     current_embedding_model = EmbeddingModelDetail.from_model(
         get_current_db_embedding_model(db_session=db_session)
     )
-    if not current_embedding_model:
-        raise RuntimeError("No embedding model selected, DB is not in a valid state")
-
-    current_embedding_provider = CloudEmbeddingProvider.from_request(
-        fetch_embedding_provider(
-            db_session=db_session, provider_id=current_embedding_model.cloud_provider_id
-        )
-    )
-    if not current_embedding_provider:
+    if (
+        current_embedding_model is None
+        or current_embedding_model.cloud_provider_id is None
+    ):
         raise RuntimeError(
-            "No embedding provider exists for this model, DB is not in a valid state"
+            "No cloud embedding model selected, DB is not in a valid state"
         )
+
+    embedding_provider = fetch_embedding_provider(
+        db_session=db_session, provider_id=current_embedding_model.cloud_provider_id
+    )
+    if embedding_provider is None:
+        raise RuntimeError("No embedding provider exists for this model.")
+
+    current_embedding_provider = ServerCloudEmbeddingProvider.from_request(
+        cloud_provider_model=embedding_provider
+    )
 
     return current_embedding_provider
 

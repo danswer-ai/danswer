@@ -25,7 +25,7 @@ from danswer.llm.utils import test_llm
 from danswer.search.enums import EmbedTextType
 from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.server.manage.llm.models import CloudEmbeddingProvider
-from danswer.server.manage.llm.models import CLoudEmbeddingProviderCreationRequest
+from danswer.server.manage.llm.models import CloudEmbeddingProviderCreationRequest
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderDescriptor
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
@@ -47,7 +47,7 @@ basic_router = APIRouter(prefix="/llm")
 def test_embedding_configuration(
     test_llm_request: TestEmbeddingRequest,
     _: User | None = Depends(current_admin_user),
-) -> dict[str, bool | int]:
+) -> None:
     try:
         test_model = EmbeddingModel(
             server_host=MODEL_SERVER_HOST,
@@ -63,8 +63,8 @@ def test_embedding_configuration(
         raise ValueError(error_msg)
 
     except Exception as e:
-        error_msg = f"An error occurred while testing embedding {e}"
-        logger.error(error_msg, exc_info=True)
+        error_msg = "An error occurred while testing your embedding model. Please check your configuration."
+        logger.error(f"{error_msg} Error message: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=error_msg)
 
 
@@ -170,7 +170,7 @@ def delete_embedding_provider(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    embedding_provider = get_current_db_embedding_provider()
+    embedding_provider = get_current_db_embedding_provider(db_session=db_session)
     if embedding_provider_name == embedding_provider.name:
         raise HTTPException(
             status_code=400, detail="You can't delete a currently active model"
@@ -231,7 +231,7 @@ def list_embedding_provider_basics(
 
 @admin_router.put("/embedding-provider")
 def put_cloud_embedding_provider(
-    provider: CLoudEmbeddingProviderCreationRequest,
+    provider: CloudEmbeddingProviderCreationRequest,
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> CloudEmbeddingProvider:

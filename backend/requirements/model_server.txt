@@ -10,3 +10,4 @@ uvicorn==0.21.1
 voyageai==0.2.3
 openai==1.14.3
 cohere==5.5.8
+google-cloud-aiplatform==1.58.0
