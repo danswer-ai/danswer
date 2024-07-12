@@ -36,6 +36,10 @@ class DocAwareChunk(BaseChunk):
     # During inference we only have access to the document id and do not reconstruct the Document
     source_document: Document
 
+    # The Vespa documents require a separate highlight field. Since it is stored as a duplicate anyway,
+    # it's easier to just store a not prefixed/suffixed string for the highlighting
+    content_summary: str
+
     # During indexing we also (optionally) build a metadata string from the metadata dict
     # This is also indexed so that we can strip it out after indexing, this way it supports
     # multiple iterations of metadata representation for backwards compatibility

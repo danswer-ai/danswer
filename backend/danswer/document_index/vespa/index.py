@@ -44,7 +44,6 @@ from danswer.configs.constants import METADATA_LIST
 from danswer.configs.constants import METADATA_SUFFIX
 from danswer.configs.constants import PRIMARY_OWNERS
 from danswer.configs.constants import RECENCY_BIAS
-from danswer.configs.constants import RETURN_SEPARATOR
 from danswer.configs.constants import SECONDARY_OWNERS
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
@@ -349,8 +348,8 @@ def _index_vespa_chunk(
         TITLE: remove_invalid_unicode_chars(title) if title else None,
         SKIP_TITLE_EMBEDDING: not title,
         CONTENT: remove_invalid_unicode_chars(chunk.content),
-        # This duplication of `content` is needed for keyword highlighting :(
-        CONTENT_SUMMARY: remove_invalid_unicode_chars(chunk.content),
+        # This duplication of `content` is needed for keyword highlighting
+        CONTENT_SUMMARY: remove_invalid_unicode_chars(chunk.content_summary),
         SOURCE_TYPE: str(document.source.value),
         SOURCE_LINKS: json.dumps(chunk.source_links),
         SEMANTIC_IDENTIFIER: remove_invalid_unicode_chars(document.semantic_identifier),
@@ -588,19 +587,6 @@ def _vespa_hit_to_inference_chunk(
             f"Chunk with blurb: {fields.get(BLURB, 'Unknown')[:50]}... has no Semantic Identifier"
         )
 
-    # Remove the title from the first chunk as every chunk already included
-    # its semantic identifier for LLM
-    content = fields[CONTENT]
-    if fields[CHUNK_ID] == 0:
-        parts = content.split(RETURN_SEPARATOR, maxsplit=1)
-        content = parts[1] if len(parts) > 1 and "\n" not in parts[0] else content
-
-    # User ran into this, not sure why this could happen, error checking here
-    blurb = fields.get(BLURB)
-    if not blurb:
-        logger.error(f"Chunk with id {fields.get(semantic_identifier)} ")
-        blurb = ""
-
     source_links = fields.get(SOURCE_LINKS, {})
     source_links_dict_unprocessed = (
         json.loads(source_links) if isinstance(source_links, str) else source_links
@@ -612,8 +598,8 @@ def _vespa_hit_to_inference_chunk(
 
     return InferenceChunkUncleaned(
         chunk_id=fields[CHUNK_ID],
-        blurb=blurb,
-        content=content,
+        blurb=fields.get(BLURB, ""),  # Unused
+        content=fields[CONTENT],  # Includes extra title prefix and metadata suffix
         source_links=source_links_dict,
         section_continuation=fields[SECTION_CONTINUATION],
         document_id=fields[DOCUMENT_ID],
@@ -745,6 +731,7 @@ class VespaIndex(DocumentIndex):
         f"{SOURCE_TYPE}, "
         f"{SOURCE_LINKS}, "
         f"{SEMANTIC_IDENTIFIER}, "
+        f"{TITLE}, "
         f"{SECTION_CONTINUATION}, "
         f"{BOOST}, "
         f"{HIDDEN}, "
@@ -752,6 +739,7 @@ class VespaIndex(DocumentIndex):
         f"{PRIMARY_OWNERS}, "
         f"{SECONDARY_OWNERS}, "
         f"{METADATA}, "
+        f"{METADATA_SUFFIX}, "
         f"{CONTENT_SUMMARY} "
         f"from {{index_name}} where "
     )

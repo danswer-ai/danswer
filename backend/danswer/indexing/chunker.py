@@ -74,6 +74,7 @@ def chunk_large_section(
             chunk_id=start_chunk_id + chunk_ind,
             blurb=blurb,
             content=f"{title_prefix}{chunk_str}{metadata_suffix}",
+            content_summary=chunk_str,
             source_links={0: section_link_text},
             section_continuation=(chunk_ind != 0),
             metadata_suffix=metadata_suffix,
@@ -93,8 +94,8 @@ def _get_metadata_suffix_for_document_index(
         if key in get_metadata_keys_to_ignore():
             continue
 
-        value_str = " ".join(value) if isinstance(value, list) else value
-        metadata_str += f"{key} - {value_str}\n"
+        value_str = ", ".join(value) if isinstance(value, list) else value
+        metadata_str += f"\t{key} - {value_str}\n"
     return metadata_str.strip()
 
 
@@ -145,6 +146,7 @@ def chunk_document(
                         chunk_id=len(chunks),
                         blurb=extract_blurb(chunk_text, blurb_size),
                         content=f"{title_prefix}{chunk_text}{metadata_suffix}",
+                        content_summary=chunk_text,
                         source_links=link_offsets,
                         section_continuation=False,
                         metadata_suffix=metadata_suffix,
@@ -186,6 +188,7 @@ def chunk_document(
                     chunk_id=len(chunks),
                     blurb=extract_blurb(chunk_text, blurb_size),
                     content=f"{title_prefix}{chunk_text}{metadata_suffix}",
+                    content_summary=chunk_text,
                     source_links=link_offsets,
                     section_continuation=False,
                     metadata_suffix=metadata_suffix,
@@ -203,6 +206,7 @@ def chunk_document(
                 chunk_id=len(chunks),
                 blurb=extract_blurb(chunk_text, blurb_size),
                 content=f"{title_prefix}{chunk_text}{metadata_suffix}",
+                content_summary=chunk_text,
                 source_links=link_offsets,
                 section_continuation=False,
                 metadata_suffix=metadata_suffix,
