@@ -12,7 +12,7 @@ env:
   ECR_API_REPOSITORY: chp-api-server
   ECR_WEB_REPOSITORY: chp-web
   IMAGE_TAG: ${{ github.sha }}
-  VERSION_LABEL: "app-a16b-240711_142709888259"
+  VERSION_LABEL: "0.0.1"
 
 jobs:
   build-and-push:
@@ -72,14 +72,29 @@ jobs:
           - name: Checkout code
             uses: actions/checkout@v2
 
+          - name: Configure AWS credentials
+            uses: aws-actions/configure-aws-credentials@v2
+            with:
+              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws-region: ${{ env.AWS_REGION }}
+        
+          - name: Login to Amazon ECR
+            run: |
+              aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+          - name : Generate deployment package
+            run: zip -r deployment.zip . -x "*.git*" 
+
           - name: Deploy to Elastic Beanstalk
             uses: einaregilsson/beanstalk-deploy@v22
             with:
               aws_access_key: ${{ secrets.AWS_EB_CICD_ACCESS_KEY }}
               aws_secret_key: ${{ secrets.AWS_EB_CICD_SECRET_ACCESS_KEY }}
               region: ${{ env.AWS_REGION }}
-              application_name: "enmedd-chp"
-              environment_name: "chp-uat"
+              application_name: "chp-uat"
+              environment_name: "Chp-uat-env"
               version_label: ${{ env.VERSION_LABEL }}
+              deployment_package: deployment.zip
 
                 
