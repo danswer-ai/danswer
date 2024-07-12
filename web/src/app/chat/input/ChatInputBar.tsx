@@ -152,7 +152,6 @@ export function ChatInputBar({
       return;
     }
 
-    // If looking for an assistant...fup
     const match = text.match(/(?:\s|^)@(\w*)$/);
     if (match) {
       setShowSuggestions(true);
@@ -173,7 +172,6 @@ export function ChatInputBar({
   const [assistantIconIndex, setAssistantIconIndex] = useState(0);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    console.log("KE");
     if (!showSuggestions) {
       console.log("KEY DOWN");
       return;
@@ -306,6 +304,7 @@ export function ChatInputBar({
             )}
             <div className="flex  gap-x-2 px-2 pt-2">
               <div className="flex  gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end weakbackground">
+                <input type="text" name="" id="" />
                 {selectedDocuments.length > 0 && (
                   <button
                     onClick={showDocs}
