@@ -16,26 +16,33 @@ def _get_and_write_relari_outputs(
     while not check_if_query_ready(run_suffix):
         time.sleep(5)
 
+    count = 0
     with open(output_file_path, "w", encoding="utf-8") as file:
         for sample in samples:
-            retrieved_context, answer = get_answer_from_query(
-                query=sample["question"],
+            print(f"On question number {count}")
+            query = sample["question"]
+            print(f"query: {query}")
+            context_data_list, answer = get_answer_from_query(
+                query=query,
                 run_suffix=run_suffix,
             )
 
-            if not answer:
-                print("NO ANSWER GIVEN FOR QUESTION:", sample["question"])
-                continue
+            print(f"answer: {answer[:50]}...")
+            if not context_data_list:
+                print("No context found")
+            else:
+                print(f"{len(context_data_list)} context docs found")
+            print("\n")
 
             output = {
-                "label": sample["uid"],
-                "question": sample["question"],
+                "question_data": sample,
                 "answer": answer,
-                "retrieved_context": retrieved_context,
+                "context_data_list": context_data_list,
             }
 
             file.write(json.dumps(output) + "\n")
             file.flush()
+            count += 1
 
 
 def _write_metadata_file(run_suffix: str, metadata_file_path: str) -> None:

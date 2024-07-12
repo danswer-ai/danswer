@@ -112,7 +112,8 @@ def start_docker_compose(
     run_suffix: str, launch_web_ui: bool, use_cloud_gpu: bool
 ) -> None:
     print("Starting Docker Compose...")
-    os.chdir("../deployment/docker_compose")
+    os.chdir(os.path.dirname(__file__))
+    os.chdir("../../../../deployment/docker_compose/")
     command = f"docker compose -f docker-compose.search-testing.yml -p danswer-stack{run_suffix} up -d"
     command += " --build"
     command += " --force-recreate"
