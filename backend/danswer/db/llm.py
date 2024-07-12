@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 
 from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
 from danswer.db.models import LLMProvider as LLMProviderModel
-from danswer.server.manage.llm.models import CloudEmbeddingProvider
-from danswer.server.manage.llm.models import CloudEmbeddingProviderCreationRequest
+from danswer.server.manage.embedding.models import CloudEmbeddingProvider
+from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 

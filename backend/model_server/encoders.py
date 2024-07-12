@@ -1,6 +1,5 @@
 import gc
 import json
-from enum import Enum
 from typing import Any
 from typing import Optional
 
@@ -16,7 +15,14 @@ from sentence_transformers import SentenceTransformer  # type: ignore
 from vertexai.language_models import TextEmbeddingInput  # type: ignore
 from vertexai.language_models import TextEmbeddingModel  # type: ignore
 
+from danswer.search.enums import EmbedTextType
 from danswer.utils.logger import setup_logger
+from model_server.constants import DEFAULT_COHERE_MODEL
+from model_server.constants import DEFAULT_OPENAI_MODEL
+from model_server.constants import DEFAULT_VERTEX_MODEL
+from model_server.constants import DEFAULT_VOYAGE_MODEL
+from model_server.constants import EmbeddingModelTextType
+from model_server.constants import EmbeddingProvider
 from model_server.constants import MODEL_WARM_UP_STRING
 from model_server.utils import simple_log_function_time
 from shared_configs.configs import CROSS_EMBED_CONTEXT_SIZE
@@ -27,19 +33,13 @@ from shared_configs.model_server_models import EmbedResponse
 from shared_configs.model_server_models import RerankRequest
 from shared_configs.model_server_models import RerankResponse
 
+
 logger = setup_logger()
 
 router = APIRouter(prefix="/encoder")
 
 _GLOBAL_MODELS_DICT: dict[str, "SentenceTransformer"] = {}
 _RERANK_MODELS: Optional[list["CrossEncoder"]] = None
-
-
-class EmbeddingProvider(Enum):
-    OPENAI = "openai"
-    COHERE = "cohere"
-    VOYAGE = "voyage"
-    VERTEX = "vertex"
 
 
 class CloudEmbedding:
@@ -72,54 +72,74 @@ class CloudEmbedding:
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
-    def encode(self, texts: list[str], model_name: str | None) -> list[list[float]]:
-        return [self.embed(text, model_name) for text in texts]
+    def encode(
+        self, texts: list[str], model_name: str | None, text_type: EmbedTextType
+    ) -> list[list[float]]:
+        return [
+            self.embed(text=text, text_type=text_type, model=model_name)
+            for text in texts
+        ]
 
-    def embed(self, text: str, model: str | None = None) -> list[float]:
-        # logger.debug(f"Embedding text with provider: {self.provider}")
+    def embed(
+        self, *, text: str, text_type: EmbedTextType, model: str | None = None
+    ) -> list[float]:
+        logger.debug(f"Embedding text with provider: {self.provider}")
         if self.provider == EmbeddingProvider.OPENAI:
-            return self._embed_openai(text, model or "text-embedding-ada-002")
-        elif self.provider == EmbeddingProvider.COHERE:
-            return self._embed_cohere(text, model)
+            return self._embed_openai(text, model)
+
+        embedding_type = EmbeddingModelTextType.get_type(self.provider, text_type)
+
+        if self.provider == EmbeddingProvider.COHERE:
+            return self._embed_cohere(text, model, embedding_type)
         elif self.provider == EmbeddingProvider.VOYAGE:
-            return self._embed_voyage(text, model)
+            return self._embed_voyage(text, model, embedding_type)
         elif self.provider == EmbeddingProvider.VERTEX:
-            return self._embed_vertex(text, model)
+            return self._embed_vertex(text, model, embedding_type)
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
-    def _embed_openai(
-        self, text: str, model: str = "text-embedding-ada-002"
-    ) -> list[float]:
-        logger.debug(f"Using OpenAI embedding with model: {model}")
+    def _embed_openai(self, text: str, model: str | None) -> list[float]:
+        if model is None:
+            model = DEFAULT_OPENAI_MODEL
+
         response = self.client.embeddings.create(input=text, model=model)
         return response.data[0].embedding
 
-    def _embed_cohere(self, text: str, model: str | None) -> list[float]:
+    def _embed_cohere(
+        self, text: str, model: str | None, embedding_type: str
+    ) -> list[float]:
         if model is None:
-            model = "embed-english-v3.0"
+            model = DEFAULT_COHERE_MODEL
 
-        logger.debug(f"Using Cohere embedding with model: {model}")
         response = self.client.embed(
-            texts=[text], model=model, input_type="search_document"
+            texts=[text],
+            model=model,
+            input_type=embedding_type,
         )
         return response.embeddings[0]
 
-    def _embed_voyage(self, text: str, model: str | None) -> list[float]:
+    def _embed_voyage(
+        self, text: str, model: str | None, embedding_type: str
+    ) -> list[float]:
         if model is None:
-            model = "voyage-01"
+            model = DEFAULT_VOYAGE_MODEL
 
-        logger.debug(f"Using Voyage embedding with model: {model}")
-        response = self.client.embed(text, model=model)
+        response = self.client.embed(text, model=model, input_type=embedding_type)
         return response.embeddings[0]
 
-    def _embed_vertex(self, text: str, model: str | None) -> list[float]:
+    def _embed_vertex(
+        self, text: str, model: str | None, embedding_type: str
+    ) -> list[float]:
         if model is None:
-            model = "text-embedding-004"
+            model = DEFAULT_VERTEX_MODEL
 
-        logger.debug(f"Using Vertex AI embedding with model: {model}")
         embedding = self.client.get_embeddings(
-            [TextEmbeddingInput(text, "RETRIEVAL_DOCUMENT")]
+            [
+                TextEmbeddingInput(
+                    text,
+                    embedding_type,
+                )
+            ]
         )
         return embedding[0].values
 
@@ -182,18 +202,19 @@ def warm_up_cross_encoders() -> None:
 @simple_log_function_time()
 def embed_text(
     texts: list[str],
+    text_type: EmbedTextType,
     model_name: str | None,
     max_context_length: int,
     normalize_embeddings: bool,
-    api_key: str | None = None,
-    provider_type: str | None = None,
+    api_key: str | None,
+    provider_type: str | None,
 ) -> list[list[float]]:
     if provider_type is not None:
         if api_key is None:
             raise RuntimeError("API key not provided for cloud model")
 
         cloud_model = CloudEmbedding(api_key=api_key, provider=provider_type)
-        embeddings = cloud_model.encode(texts, model_name)
+        embeddings = cloud_model.encode(texts, model_name, text_type)
 
     elif model_name is not None:
         hosted_model = get_embedding_model(
@@ -233,11 +254,13 @@ async def process_embed_request(
             normalize_embeddings=embed_request.normalize_embeddings,
             api_key=embed_request.api_key,
             provider_type=embed_request.provider_type,
+            text_type=embed_request.text_type,
         )
         logger.info(f"response size is {len(embeddings)}, {len(embeddings[0])}")
 
         return EmbedResponse(embeddings=embeddings)
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 

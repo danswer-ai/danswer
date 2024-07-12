@@ -108,7 +108,7 @@ export function ChangeCredentialsModal({
         default_model_id: provider.name,
       });
 
-      const testResponse = await fetch("/api/admin/llm/test-embedding", {
+      const testResponse = await fetch("/api/admin/embedding/test-embedding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

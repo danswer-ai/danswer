@@ -86,12 +86,12 @@ class EmbeddingModel:
         self,
         server_host: str,  # Changes depending on indexing or inference
         server_port: int,
-        model_name: str | None = None,
-        normalize: bool = False,
-        query_prefix: str | None = None,
-        passage_prefix: str | None = None,
-        api_key: str | None = None,
-        provider_type: str | None = None,
+        model_name: str | None,
+        normalize: bool,
+        query_prefix: str | None,
+        passage_prefix: str | None,
+        api_key: str | None,
+        provider_type: str | None,
         # The following are globals are currently not configurable
         max_seq_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
     ) -> None:
@@ -121,6 +121,7 @@ class EmbeddingModel:
             normalize_embeddings=self.normalize,
             api_key=self.api_key,
             provider_type=self.provider_type,
+            text_type=text_type,
         )
 
         response = requests.post(self.embed_server_endpoint, json=embed_request.dict())

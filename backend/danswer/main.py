@@ -67,6 +67,8 @@ from danswer.server.features.tool.api import admin_router as admin_tool_router
 from danswer.server.features.tool.api import router as tool_router
 from danswer.server.gpts.api import router as gpts_router
 from danswer.server.manage.administrative import router as admin_router
+from danswer.server.manage.embedding.api import admin_router as embedding_admin_router
+from danswer.server.manage.embedding.api import basic_router as embedding_router
 from danswer.server.manage.get_state import router as state_router
 from danswer.server.manage.llm.api import admin_router as llm_admin_router
 from danswer.server.manage.llm.api import basic_router as llm_router
@@ -292,6 +294,8 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, settings_admin_router)
     include_router_with_global_prefix_prepended(application, llm_admin_router)
     include_router_with_global_prefix_prepended(application, llm_router)
+    include_router_with_global_prefix_prepended(application, embedding_admin_router)
+    include_router_with_global_prefix_prepended(application, embedding_router)
     include_router_with_global_prefix_prepended(
         application, token_rate_limit_settings_router
     )

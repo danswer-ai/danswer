@@ -80,14 +80,17 @@ export function ProviderCreationModal({
     try {
       const customConfig = Object.fromEntries(values.custom_config);
 
-      const initialResponse = await fetch("/api/admin/llm/test-embedding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          provider: values.name.toLowerCase().split(" ")[0],
-          api_key: values.api_key,
-        }),
-      });
+      const initialResponse = await fetch(
+        "/api/admin/embedding/test-embedding",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            provider: values.name.toLowerCase().split(" ")[0],
+            api_key: values.api_key,
+          }),
+        }
+      );
 
       if (!initialResponse.ok) {
         const errorMsg = (await initialResponse.json()).detail;

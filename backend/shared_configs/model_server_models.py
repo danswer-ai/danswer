@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from danswer.search.enums import EmbedTextType
+
 
 class EmbedRequest(BaseModel):
     # This already includes any prefixes, the text is just passed directly to the model
@@ -11,6 +13,7 @@ class EmbedRequest(BaseModel):
     normalize_embeddings: bool
     api_key: str | None
     provider_type: str | None
+    text_type: EmbedTextType
 
 
 class EmbedResponse(BaseModel):

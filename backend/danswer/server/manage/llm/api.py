@@ -7,14 +7,10 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.db.embedding_model import get_current_db_embedding_provider
 from danswer.db.engine import get_session
-from danswer.db.llm import fetch_existing_embedding_providers
 from danswer.db.llm import fetch_existing_llm_providers
-from danswer.db.llm import remove_embedding_provider
 from danswer.db.llm import remove_llm_provider
 from danswer.db.llm import update_default_provider
-from danswer.db.llm import upsert_cloud_embedding_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.db.models import User
 from danswer.llm.factory import get_default_llms
@@ -22,50 +18,18 @@ from danswer.llm.factory import get_llm
 from danswer.llm.llm_provider_options import fetch_available_well_known_llms
 from danswer.llm.llm_provider_options import WellKnownLLMProviderDescriptor
 from danswer.llm.utils import test_llm
-from danswer.search.enums import EmbedTextType
-from danswer.search.search_nlp_models import EmbeddingModel
-from danswer.server.manage.llm.models import CloudEmbeddingProvider
-from danswer.server.manage.llm.models import CloudEmbeddingProviderCreationRequest
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderDescriptor
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
-from danswer.server.manage.llm.models import TestEmbeddingRequest
 from danswer.server.manage.llm.models import TestLLMRequest
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
-from shared_configs.configs import MODEL_SERVER_HOST
-from shared_configs.configs import MODEL_SERVER_PORT
 
 logger = setup_logger()
 
 
 admin_router = APIRouter(prefix="/admin/llm")
 basic_router = APIRouter(prefix="/llm")
-
-
-@admin_router.post("/test-embedding")
-def test_embedding_configuration(
-    test_llm_request: TestEmbeddingRequest,
-    _: User | None = Depends(current_admin_user),
-) -> None:
-    try:
-        test_model = EmbeddingModel(
-            server_host=MODEL_SERVER_HOST,
-            server_port=MODEL_SERVER_PORT,
-            api_key=test_llm_request.api_key,
-            provider_type=test_llm_request.provider,
-        )
-        test_model.encode(["Test String"], text_type=EmbedTextType.QUERY)
-
-    except ValueError as e:
-        error_msg = f"Not a valid embedding model. Exception thrown: {e}"
-        logger.error(error_msg)
-        raise ValueError(error_msg)
-
-    except Exception as e:
-        error_msg = "An error occurred while testing your embedding model. Please check your configuration."
-        logger.error(f"{error_msg} Error message: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=error_msg)
 
 
 @admin_router.post("/test")
@@ -144,17 +108,6 @@ def list_llm_providers(
     ]
 
 
-@admin_router.get("/embedding-provider")
-def list_embedding_providers(
-    _: User | None = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> list[CloudEmbeddingProvider]:
-    return [
-        CloudEmbeddingProvider.from_request(embedding_provider_model)
-        for embedding_provider_model in fetch_existing_embedding_providers(db_session)
-    ]
-
-
 @admin_router.put("/provider")
 def put_llm_provider(
     llm_provider: LLMProviderUpsertRequest,
@@ -162,21 +115,6 @@ def put_llm_provider(
     db_session: Session = Depends(get_session),
 ) -> FullLLMProvider:
     return upsert_llm_provider(db_session, llm_provider)
-
-
-@admin_router.delete("/embedding-provider/{embedding_provider_name}")
-def delete_embedding_provider(
-    embedding_provider_name: str,
-    _: User | None = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> None:
-    embedding_provider = get_current_db_embedding_provider(db_session=db_session)
-    if embedding_provider_name == embedding_provider.name:
-        raise HTTPException(
-            status_code=400, detail="You can't delete a currently active model"
-        )
-
-    remove_embedding_provider(db_session, embedding_provider_name)
 
 
 @admin_router.delete("/provider/{provider_id}")
@@ -216,23 +154,3 @@ def fetch_llm_options(
     _: User | None = Depends(current_admin_user),
 ) -> list[WellKnownLLMProviderDescriptor]:
     return fetch_available_well_known_llms()
-
-
-@basic_router.get("/embedding-provider")
-def list_embedding_provider_basics(
-    _: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> list[LLMProviderDescriptor]:
-    return [
-        LLMProviderDescriptor.from_model(llm_provider_model)
-        for llm_provider_model in fetch_existing_llm_providers(db_session)
-    ]
-
-
-@admin_router.put("/embedding-provider")
-def put_cloud_embedding_provider(
-    provider: CloudEmbeddingProviderCreationRequest,
-    _: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> CloudEmbeddingProvider:
-    return upsert_cloud_embedding_provider(db_session, provider)
