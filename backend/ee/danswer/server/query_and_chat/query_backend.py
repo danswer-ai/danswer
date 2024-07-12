@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi import Depends
-from pydantic import BaseModel
 from fastapi import HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
