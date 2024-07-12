@@ -29,6 +29,7 @@ CHUNK_OVERLAP = 0
 # Fairly arbitrary numbers but the general concept is we don't want the title/metadata to
 # overwhelm the actual contents of the chunk
 MAX_METADATA_PERCENTAGE = 0.25
+CHUNK_MIN_CONTENT = 256
 
 logger = setup_logger()
 
@@ -124,6 +125,13 @@ def chunk_document(
         metadata_tokens = 0
 
     content_token_limit = chunk_tok_size - title_tokens - metadata_tokens
+
+    # If using minichunks or if there is not enough context remaining
+    # then just index the chunk along with no prefix/suffix
+    if content_token_limit <= CHUNK_MIN_CONTENT:
+        content_token_limit = chunk_tok_size
+        title_prefix = ""
+        metadata_suffix = ""
 
     chunks: list[DocAwareChunk] = []
     link_offsets: dict[int, str] = {}
