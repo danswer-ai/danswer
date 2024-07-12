@@ -126,8 +126,7 @@ def chunk_document(
 
     content_token_limit = chunk_tok_size - title_tokens - metadata_tokens
 
-    # If using minichunks or if there is not enough context remaining
-    # then just index the chunk along with no prefix/suffix
+    # If there is not enough context remaining then just index the chunk with no prefix/suffix
     if content_token_limit <= CHUNK_MIN_CONTENT:
         content_token_limit = chunk_tok_size
         title_prefix = ""
