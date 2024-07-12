@@ -19,7 +19,6 @@ export default function CloudEmbeddingPage({
   embeddingProviderDetails,
   newEnabledProviders,
   newUnenabledProviders,
-
   setTentativeNewEmbeddingModel,
   setShowTentativeProvider,
   setShowUnconfiguredProvider,
