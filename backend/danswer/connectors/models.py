@@ -117,7 +117,9 @@ class DocumentBase(BaseModel):
         # If title is explicitly empty, return a None here for embedding purposes
         if self.title == "":
             return None
-        return self.semantic_identifier if self.title is None else self.title
+        title = self.semantic_identifier if self.title is None else self.title
+        title = title.replace("\n", " ").replace("\r", " ").strip()
+        return title
 
     def get_metadata_str_attributes(self) -> list[str] | None:
         if not self.metadata:

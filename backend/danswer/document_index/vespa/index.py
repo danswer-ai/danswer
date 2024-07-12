@@ -41,8 +41,10 @@ from danswer.configs.constants import HIDDEN
 from danswer.configs.constants import INDEX_SEPARATOR
 from danswer.configs.constants import METADATA
 from danswer.configs.constants import METADATA_LIST
+from danswer.configs.constants import METADATA_SUFFIX
 from danswer.configs.constants import PRIMARY_OWNERS
 from danswer.configs.constants import RECENCY_BIAS
+from danswer.configs.constants import RETURN_SEPARATOR
 from danswer.configs.constants import SECONDARY_OWNERS
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
@@ -51,7 +53,6 @@ from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.constants import TITLE
 from danswer.configs.constants import TITLE_EMBEDDING
-from danswer.configs.constants import TITLE_SEPARATOR
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
@@ -65,6 +66,7 @@ from danswer.document_index.vespa.utils import replace_invalid_doc_id_characters
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.search.models import IndexFilters
 from danswer.search.models import InferenceChunk
+from danswer.search.models import InferenceChunkUncleaned
 from danswer.search.retrieval.search_runner import query_processing
 from danswer.search.retrieval.search_runner import remove_stop_words_and_punctuation
 from danswer.utils.batching import batch_generator
@@ -356,6 +358,7 @@ def _index_vespa_chunk(
         METADATA: json.dumps(document.metadata),
         # Save as a list for efficient extraction as an Attribute
         METADATA_LIST: chunk.source_document.get_metadata_str_attributes(),
+        METADATA_SUFFIX: chunk.metadata_suffix,
         EMBEDDINGS: embeddings_name_vector_map,
         TITLE_EMBEDDING: chunk.title_embedding,
         BOOST: chunk.boost,
@@ -562,7 +565,7 @@ def _process_dynamic_summary(
 
 def _vespa_hit_to_inference_chunk(
     hit: dict[str, Any], null_score: bool = False
-) -> InferenceChunk:
+) -> InferenceChunkUncleaned:
     fields = cast(dict[str, Any], hit["fields"])
 
     # parse fields that are stored as strings, but are really json / datetime
@@ -589,7 +592,7 @@ def _vespa_hit_to_inference_chunk(
     # its semantic identifier for LLM
     content = fields[CONTENT]
     if fields[CHUNK_ID] == 0:
-        parts = content.split(TITLE_SEPARATOR, maxsplit=1)
+        parts = content.split(RETURN_SEPARATOR, maxsplit=1)
         content = parts[1] if len(parts) > 1 and "\n" not in parts[0] else content
 
     # User ran into this, not sure why this could happen, error checking here
@@ -607,7 +610,7 @@ def _vespa_hit_to_inference_chunk(
         for k, v in cast(dict[str, str], source_links_dict_unprocessed).items()
     }
 
-    return InferenceChunk(
+    return InferenceChunkUncleaned(
         chunk_id=fields[CHUNK_ID],
         blurb=blurb,
         content=content,
@@ -615,6 +618,7 @@ def _vespa_hit_to_inference_chunk(
         section_continuation=fields[SECTION_CONTINUATION],
         document_id=fields[DOCUMENT_ID],
         source_type=fields[SOURCE_TYPE],
+        title=fields[TITLE],
         semantic_identifier=fields[SEMANTIC_IDENTIFIER],
         boost=fields.get(BOOST, 1),
         recency_bias=fields.get("matchfeatures", {}).get(RECENCY_BIAS, 1.0),
@@ -623,13 +627,16 @@ def _vespa_hit_to_inference_chunk(
         primary_owners=fields.get(PRIMARY_OWNERS),
         secondary_owners=fields.get(SECONDARY_OWNERS),
         metadata=metadata,
+        metadata_suffix=fields.get(METADATA_SUFFIX) or "",
         match_highlights=match_highlights,
         updated_at=updated_at,
     )
 
 
 @retry(tries=3, delay=1, backoff=2)
-def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[InferenceChunk]:
+def _query_vespa(
+    query_params: Mapping[str, str | int | float]
+) -> list[InferenceChunkUncleaned]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")
 
@@ -980,7 +987,7 @@ class VespaIndex(DocumentIndex):
         min_chunk_ind: int | None,
         max_chunk_ind: int | None,
         user_access_control_list: list[str] | None = None,
-    ) -> list[InferenceChunk]:
+    ) -> list[InferenceChunkUncleaned]:
         document_id = replace_invalid_doc_id_characters(document_id)
 
         vespa_chunks = _get_vespa_chunks_by_document_id(
@@ -1009,7 +1016,7 @@ class VespaIndex(DocumentIndex):
         num_to_retrieve: int = NUM_RETURNED_HITS,
         offset: int = 0,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
-    ) -> list[InferenceChunk]:
+    ) -> list[InferenceChunkUncleaned]:
         # IMPORTANT: THIS FUNCTION IS NOT UP TO DATE, DOES NOT WORK CORRECTLY
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
@@ -1046,7 +1053,7 @@ class VespaIndex(DocumentIndex):
         offset: int = 0,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
-    ) -> list[InferenceChunk]:
+    ) -> list[InferenceChunkUncleaned]:
         # IMPORTANT: THIS FUNCTION IS NOT UP TO DATE, DOES NOT WORK CORRECTLY
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
@@ -1090,7 +1097,7 @@ class VespaIndex(DocumentIndex):
         title_content_ratio: float | None = TITLE_CONTENT_RATIO,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
-    ) -> list[InferenceChunk]:
+    ) -> list[InferenceChunkUncleaned]:
         vespa_where_clauses = _build_vespa_filters(filters)
         # Needs to be at least as much as the value set in Vespa schema config
         target_hits = max(10 * num_to_retrieve, 1000)
@@ -1134,7 +1141,7 @@ class VespaIndex(DocumentIndex):
         filters: IndexFilters,
         num_to_retrieve: int = NUM_RETURNED_HITS,
         offset: int = 0,
-    ) -> list[InferenceChunk]:
+    ) -> list[InferenceChunkUncleaned]:
         vespa_where_clauses = _build_vespa_filters(filters, include_hidden=True)
         yql = (
             VespaIndex.yql_base.format(index_name=self.index_name)

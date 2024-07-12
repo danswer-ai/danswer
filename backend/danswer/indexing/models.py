@@ -36,6 +36,11 @@ class DocAwareChunk(BaseChunk):
     # During inference we only have access to the document id and do not reconstruct the Document
     source_document: Document
 
+    # During indexing we also (optionally) build a metadata string from the metadata dict
+    # This is also indexed so that we can strip it out after indexing, this way it supports
+    # multiple iterations of metadata representation for backwards compatibility
+    metadata_suffix: str
+
     def to_short_descriptor(self) -> str:
         """Used when logging the identity of a chunk"""
         return (
