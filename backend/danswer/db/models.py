@@ -515,6 +515,14 @@ class EmbeddingModel(Base):
         return f"<EmbeddingModel(model_name='{self.model_name}', status='{self.status}',\
           cloud_provider='{self.cloud_provider.name if self.cloud_provider else 'None'}')>"
 
+    @property
+    def api_key(self) -> str | None:
+        return self.cloud_provider.api_key if self.cloud_provider else None
+
+    @property
+    def provider_type(self) -> str | None:
+        return self.cloud_provider.name if self.cloud_provider else None
+
 
 class IndexAttempt(Base):
     """

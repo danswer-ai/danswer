@@ -23,7 +23,6 @@ from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.index_attempt import mark_attempt_in_progress__no_commit
 from danswer.db.index_attempt import mark_attempt_succeeded
 from danswer.db.index_attempt import update_docs_indexed
-from danswer.db.llm import fetch_embedding_provider
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
@@ -111,26 +110,13 @@ def _run_indexing(
         primary_index_name=index_name, secondary_index_name=None
     )
 
-    cloud_provider_id = db_embedding_model.cloud_provider_id
-
-    api_key, provider_type = None, None
-    if cloud_provider_id is not None:
-        provider = fetch_embedding_provider(
-            db_session=db_session, provider_id=cloud_provider_id
-        )
-        if provider is None:
-            raise RuntimeError("Provider no longer exists")
-
-        api_key = provider.api_key
-        provider_type = provider.name
-
     embedding_model = DefaultIndexingEmbedder(
         model_name=db_embedding_model.model_name,
         normalize=db_embedding_model.normalize,
         query_prefix=db_embedding_model.query_prefix,
         passage_prefix=db_embedding_model.passage_prefix,
-        api_key=api_key,
-        provider_type=provider_type,
+        api_key=db_embedding_model.api_key,
+        provider_type=db_embedding_model.provider_type,
     )
 
     indexing_pipeline = build_indexing_pipeline(

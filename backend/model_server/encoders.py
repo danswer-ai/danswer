@@ -5,7 +5,7 @@ from typing import Any
 from typing import Optional
 
 import openai
-import vertexai
+import vertexai  # type: ignore
 import voyageai  # type: ignore
 from cohere import Client as CohereClient
 from fastapi import APIRouter
@@ -13,8 +13,8 @@ from fastapi import HTTPException
 from google.oauth2 import service_account
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
-from vertexai.language_models import TextEmbeddingInput
-from vertexai.language_models import TextEmbeddingModel
+from vertexai.language_models import TextEmbeddingInput  # type: ignore
+from vertexai.language_models import TextEmbeddingModel  # type: ignore
 
 from danswer.utils.logger import setup_logger
 from model_server.constants import MODEL_WARM_UP_STRING
@@ -234,6 +234,8 @@ async def process_embed_request(
             api_key=embed_request.api_key,
             provider_type=embed_request.provider_type,
         )
+        logger.info(f"response size is {len(embeddings)}, {len(embeddings[0])}")
+
         return EmbedResponse(embeddings=embeddings)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
