@@ -18,7 +18,7 @@ def test_chunk_document() -> None:
         id="test_doc",
         source=DocumentSource.WEB,
         semantic_identifier=semantic_identifier,
-        metadata={},
+        metadata={"tags": ["tag1", "tag2"]},
         doc_updated_at=None,
         sections=[
             Section(text=short_section_1, link="link1"),
@@ -35,3 +35,4 @@ def test_chunk_document() -> None:
     assert short_section_1 in chunks[0].content
     assert short_section_3 in chunks[-1].content
     assert short_section_4 in chunks[-1].content
+    assert "tag1" in chunks[0].content

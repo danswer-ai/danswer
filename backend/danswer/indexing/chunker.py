@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from danswer.configs.app_configs import BLURB_SIZE
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
+from danswer.configs.app_configs import SKIP_METADATA_IN_CHUNK
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MAX_CHUNK_TITLE_LEN
 from danswer.configs.constants import RETURN_SEPARATOR
@@ -102,7 +103,7 @@ def chunk_document(
     chunk_tok_size: int = DOC_EMBEDDING_CONTEXT_SIZE,
     subsection_overlap: int = CHUNK_OVERLAP,
     blurb_size: int = BLURB_SIZE,
-    include_metadata: bool = False,
+    include_metadata: bool = not SKIP_METADATA_IN_CHUNK,
 ) -> list[DocAwareChunk]:
     tokenizer = get_default_tokenizer()
 
