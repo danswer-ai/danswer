@@ -24,6 +24,7 @@ from ee.danswer.server.query_and_chat.models import ChatBasicResponse
 from ee.danswer.server.query_and_chat.models import SimpleDoc
 
 logger = setup_logger()
+
 router = APIRouter(prefix="/chat")
 
 
@@ -46,6 +47,7 @@ def translate_doc_response_to_simple_doc(
 
 def remove_answer_citations(answer: str) -> str:
     pattern = r"\s*\[\[\d+\]\]\(http[s]?://[^\s]+\)"
+
     return re.sub(pattern, "", answer)
 
 
