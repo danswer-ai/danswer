@@ -3,6 +3,7 @@ import json
 import os
 import re
 import zipfile
+from collections.abc import Callable
 from collections.abc import Iterator
 from email.parser import Parser as EmailParser
 from pathlib import Path
@@ -16,6 +17,7 @@ import pptx  # type: ignore
 from pypdf import PdfReader
 from pypdf.errors import PdfStreamError
 
+from danswer.configs.constants import DANSWER_METADATA_FILENAME
 from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.utils.logger import setup_logger
 
@@ -47,6 +49,7 @@ VALID_FILE_EXTENSIONS = PLAIN_TEXT_FILE_EXTENSIONS + [
     ".xlsx",
     ".eml",
     ".epub",
+    ".html",
 ]
 
 
@@ -61,6 +64,16 @@ def get_file_ext(file_path_or_name: str | Path) -> str:
 
 def check_file_ext_is_valid(ext: str) -> bool:
     return ext in VALID_FILE_EXTENSIONS
+
+
+def is_text_file(file: IO[bytes]) -> bool:
+    """
+    checks if the first 1024 bytes only contain printable or whitespace characters
+    if it does, then we say its a plaintext file
+    """
+    raw_data = file.read(1024)
+    text_chars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7F})
+    return all(c in text_chars for c in raw_data)
 
 
 def detect_encoding(file: IO[bytes]) -> str:
@@ -87,7 +100,7 @@ def load_files_from_zip(
     with zipfile.ZipFile(zip_file_io, "r") as zip_file:
         zip_metadata = {}
         try:
-            metadata_file_info = zip_file.getinfo(".danswer_metadata.json")
+            metadata_file_info = zip_file.getinfo(DANSWER_METADATA_FILENAME)
             with zip_file.open(metadata_file_info, "r") as metadata_file:
                 try:
                     zip_metadata = json.load(metadata_file)
@@ -95,18 +108,19 @@ def load_files_from_zip(
                         # convert list of dicts to dict of dicts
                         zip_metadata = {d["filename"]: d for d in zip_metadata}
                 except json.JSONDecodeError:
-                    logger.warn("Unable to load .danswer_metadata.json")
+                    logger.warn(f"Unable to load {DANSWER_METADATA_FILENAME}")
         except KeyError:
-            logger.info("No .danswer_metadata.json file")
+            logger.info(f"No {DANSWER_METADATA_FILENAME} file")
 
         for file_info in zip_file.infolist():
             with zip_file.open(file_info.filename, "r") as file:
                 if ignore_dirs and file_info.is_dir():
                     continue
 
-                if ignore_macos_resource_fork_files and is_macos_resource_fork_file(
-                    file_info.filename
-                ):
+                if (
+                    ignore_macos_resource_fork_files
+                    and is_macos_resource_fork_file(file_info.filename)
+                ) or file_info.filename == DANSWER_METADATA_FILENAME:
                     continue
                 yield file_info, file, zip_metadata.get(file_info.filename, {})
 
@@ -256,31 +270,34 @@ def file_io_to_text(file: IO[Any]) -> str:
 def extract_file_text(
     file_name: str | None,
     file: IO[Any],
+    break_on_unprocessable: bool = True,
 ) -> str:
-    if not file_name:
-        return file_io_to_text(file)
+    extension_to_function: dict[str, Callable[[IO[Any]], str]] = {
+        ".pdf": pdf_to_text,
+        ".docx": docx_to_text,
+        ".pptx": pptx_to_text,
+        ".xlsx": xlsx_to_text,
+        ".eml": eml_to_text,
+        ".epub": epub_to_text,
+        ".html": parse_html_page_basic,
+    }
 
-    extension = get_file_ext(file_name)
-    if not check_file_ext_is_valid(extension):
-        raise RuntimeError("Unprocessable file type")
+    def _process_file() -> str:
+        if file_name:
+            extension = get_file_ext(file_name)
+            if check_file_ext_is_valid(extension):
+                return extension_to_function.get(extension, file_io_to_text)(file)
 
-    if extension == ".pdf":
-        return pdf_to_text(file=file)
+        # Either the file somehow has no name or the extension is not one that we are familiar with
+        if is_text_file(file):
+            return file_io_to_text(file)
 
-    elif extension == ".docx":
-        return docx_to_text(file)
+        raise ValueError("Unknown file extension and unknown text encoding")
 
-    elif extension == ".pptx":
-        return pptx_to_text(file)
-
-    elif extension == ".xlsx":
-        return xlsx_to_text(file)
-
-    elif extension == ".eml":
-        return eml_to_text(file)
-
-    elif extension == ".epub":
-        return epub_to_text(file)
-
-    else:
-        return file_io_to_text(file)
+    try:
+        return _process_file()
+    except Exception as e:
+        if break_on_unprocessable:
+            raise RuntimeError(f"Failed to process file: {str(e)}") from e
+        logger.warning(f"Failed to process file: {str(e)}")
+        return ""

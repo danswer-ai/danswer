@@ -7,11 +7,11 @@ from danswer.auth.users import current_admin_user
 from danswer.danswerbot.slack.config import validate_channel_names
 from danswer.danswerbot.slack.tokens import fetch_tokens
 from danswer.danswerbot.slack.tokens import save_tokens
-from danswer.db.chat import get_persona_by_id
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.engine import get_session
 from danswer.db.models import ChannelConfig
 from danswer.db.models import User
+from danswer.db.persona import get_persona_by_id
 from danswer.db.slack_bot_config import create_slack_bot_persona
 from danswer.db.slack_bot_config import fetch_slack_bot_config
 from danswer.db.slack_bot_config import fetch_slack_bot_configs
@@ -37,6 +37,9 @@ def _form_channel_config(
     respond_team_member_list = (
         slack_bot_config_creation_request.respond_team_member_list
     )
+    respond_slack_group_list = (
+        slack_bot_config_creation_request.respond_slack_group_list
+    )
     answer_filters = slack_bot_config_creation_request.answer_filters
     follow_up_tags = slack_bot_config_creation_request.follow_up_tags
 
@@ -58,7 +61,7 @@ def _form_channel_config(
             detail=str(e),
         )
 
-    if respond_tag_only and respond_team_member_list:
+    if respond_tag_only and (respond_team_member_list or respond_slack_group_list):
         raise ValueError(
             "Cannot set DanswerBot to only respond to tags only and "
             "also respond to a predetermined set of users."
@@ -71,6 +74,8 @@ def _form_channel_config(
         channel_config["respond_tag_only"] = respond_tag_only
     if respond_team_member_list:
         channel_config["respond_team_member_list"] = respond_team_member_list
+    if respond_slack_group_list:
+        channel_config["respond_slack_group_list"] = respond_slack_group_list
     if answer_filters:
         channel_config["answer_filters"] = answer_filters
     if follow_up_tags is not None:
@@ -108,7 +113,9 @@ def create_slack_bot_config(
         persona_id=persona_id,
         channel_config=channel_config,
         response_type=slack_bot_config_creation_request.response_type,
+        standard_answer_category_ids=slack_bot_config_creation_request.standard_answer_categories,
         db_session=db_session,
+        enable_auto_filters=slack_bot_config_creation_request.enable_auto_filters,
     )
     return SlackBotConfig.from_model(slack_bot_config_model)
 
@@ -140,7 +147,10 @@ def patch_slack_bot_config(
         existing_persona_id = existing_slack_bot_config.persona_id
         if existing_persona_id is not None:
             persona = get_persona_by_id(
-                persona_id=existing_persona_id, user=None, db_session=db_session
+                persona_id=existing_persona_id,
+                user=None,
+                db_session=db_session,
+                is_for_edit=False,
             )
 
             if not persona.name.startswith(SLACK_BOT_PERSONA_PREFIX):
@@ -163,7 +173,9 @@ def patch_slack_bot_config(
         persona_id=persona_id,
         channel_config=channel_config,
         response_type=slack_bot_config_creation_request.response_type,
+        standard_answer_category_ids=slack_bot_config_creation_request.standard_answer_categories,
         db_session=db_session,
+        enable_auto_filters=slack_bot_config_creation_request.enable_auto_filters,
     )
     return SlackBotConfig.from_model(slack_bot_config_model)
 
@@ -172,10 +184,10 @@ def patch_slack_bot_config(
 def delete_slack_bot_config(
     slack_bot_config_id: int,
     db_session: Session = Depends(get_session),
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_admin_user),
 ) -> None:
     remove_slack_bot_config(
-        slack_bot_config_id=slack_bot_config_id, db_session=db_session
+        slack_bot_config_id=slack_bot_config_id, user=user, db_session=db_session
     )
 
 

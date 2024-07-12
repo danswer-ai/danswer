@@ -39,8 +39,8 @@ ASYM_PASSAGE_PREFIX = os.environ.get("ASYM_PASSAGE_PREFIX", "passage: ")
 # Purely an optimization, memory limitation consideration
 BATCH_SIZE_ENCODE_CHUNKS = 8
 # For score display purposes, only way is to know the expected ranges
-CROSS_ENCODER_RANGE_MAX = 12
-CROSS_ENCODER_RANGE_MIN = -12
+CROSS_ENCODER_RANGE_MAX = 1
+CROSS_ENCODER_RANGE_MIN = 0
 
 # Unused currently, can't be used with the current default encoder model due to its output range
 SEARCH_DISTANCE_CUTOFF = 0
@@ -100,7 +100,7 @@ DISABLE_LITELLM_STREAMING = (
 ).lower() == "true"
 
 # extra headers to pass to LiteLLM
-LITELLM_EXTRA_HEADERS = None
+LITELLM_EXTRA_HEADERS: dict[str, str] | None = None
 _LITELLM_EXTRA_HEADERS_RAW = os.environ.get("LITELLM_EXTRA_HEADERS")
 if _LITELLM_EXTRA_HEADERS_RAW:
     try:
@@ -112,4 +112,19 @@ if _LITELLM_EXTRA_HEADERS_RAW:
         logger = setup_logger()
         logger.error(
             "Failed to parse LITELLM_EXTRA_HEADERS, must be a valid JSON object"
+        )
+
+# if specified, will pass through request headers to the call to the LLM
+LITELLM_PASS_THROUGH_HEADERS: list[str] | None = None
+_LITELLM_PASS_THROUGH_HEADERS_RAW = os.environ.get("LITELLM_PASS_THROUGH_HEADERS")
+if _LITELLM_PASS_THROUGH_HEADERS_RAW:
+    try:
+        LITELLM_PASS_THROUGH_HEADERS = json.loads(_LITELLM_PASS_THROUGH_HEADERS_RAW)
+    except Exception:
+        # need to import here to avoid circular imports
+        from danswer.utils.logger import setup_logger
+
+        logger = setup_logger()
+        logger.error(
+            "Failed to parse LITELLM_PASS_THROUGH_HEADERS, must be a valid JSON object"
         )

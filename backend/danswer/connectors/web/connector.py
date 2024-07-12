@@ -155,6 +155,11 @@ def extract_urls_from_sitemap(sitemap_url: str) -> list[str]:
         # the given url doesn't look like a sitemap, let's try to find one
         urls = list_pages_for_site(sitemap_url)
 
+    if len(urls) == 0:
+        raise ValueError(
+            f"No URLs found in sitemap {sitemap_url}. Try using the 'single' or 'recursive' scraping options instead."
+        )
+
     return urls
 
 
@@ -221,6 +226,10 @@ class WebConnector(LoadConnector):
         and converts them into documents"""
         visited_links: set[str] = set()
         to_visit: list[str] = self.to_visit_list
+
+        if not to_visit:
+            raise ValueError("No URLs to visit")
+
         base_url = to_visit[0]  # For the recursive case
         doc_batch: list[Document] = []
 

@@ -8,7 +8,8 @@ from itertools import chain
 from typing import Any
 from typing import cast
 
-from google.auth.credentials import Credentials  # type: ignore
+from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
+from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
 
@@ -41,6 +42,7 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import docx_to_text
 from danswer.file_processing.extract_file_text import pdf_to_text
+from danswer.file_processing.extract_file_text import pptx_to_text
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
@@ -56,6 +58,10 @@ class GDriveMimeType(str, Enum):
     SPREADSHEET = "application/vnd.google-apps.spreadsheet"
     PDF = "application/pdf"
     WORD_DOC = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    PPT = "application/vnd.google-apps.presentation"
+    POWERPOINT = (
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    )
 
 
 GoogleDriveFileType = dict[str, Any]
@@ -324,6 +330,12 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
     elif mime_type == GDriveMimeType.PDF.value:
         response = service.files().get_media(fileId=file["id"]).execute()
         return pdf_to_text(file=io.BytesIO(response))
+    elif mime_type == GDriveMimeType.POWERPOINT.value:
+        response = service.files().get_media(fileId=file["id"]).execute()
+        return pptx_to_text(file=io.BytesIO(response))
+    elif mime_type == GDriveMimeType.PPT.value:
+        response = service.files().get_media(fileId=file["id"]).execute()
+        return pptx_to_text(file=io.BytesIO(response))
 
     return UNSUPPORTED_FILE_TYPE_CONTENT
 
@@ -346,7 +358,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         self.follow_shortcuts = follow_shortcuts
         self.only_org_public = only_org_public
         self.continue_on_failure = continue_on_failure
-        self.creds: Credentials | None = None
+        self.creds: OAuthCredentials | ServiceAccountCredentials | None = None
 
     @staticmethod
     def _process_folder_paths(
@@ -387,7 +399,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         (2) A credential which holds a service account key JSON file, which
         can then be used to impersonate any user in the workspace.
         """
-        creds = None
+        creds: OAuthCredentials | ServiceAccountCredentials | None = None
         new_creds_dict = None
         if DB_CREDENTIALS_DICT_TOKEN_KEY in credentials:
             access_token_json_str = cast(
@@ -416,7 +428,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                 str | None, credentials.get(DB_CREDENTIALS_DICT_DELEGATED_USER_KEY)
             )
             if delegated_user_email:
-                creds = creds.with_subject(delegated_user_email) if creds else None
+                creds = creds.with_subject(delegated_user_email) if creds else None  # type: ignore
 
         if creds is None:
             raise PermissionError(
@@ -461,6 +473,11 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
             doc_batch = []
             for file in files_batch:
                 try:
+                    # Skip files that are shortcuts
+                    if file.get("mimeType") == DRIVE_SHORTCUT_TYPE:
+                        logger.info("Ignoring Drive Shortcut Filetype")
+                        continue
+
                     if self.only_org_public:
                         if "permissions" not in file:
                             continue

@@ -4,7 +4,7 @@ import { User } from "@/lib/types";
 import { Text } from "@tremor/react";
 import Link from "next/link";
 import { FaRobot } from "react-icons/fa";
-import { FiEdit } from "react-icons/fi";
+import { FiEdit2 } from "react-icons/fi";
 
 function AssistantDisplay({
   persona,
@@ -34,7 +34,7 @@ function AssistantDisplay({
       {isEditable && (
         <div className="pl-2 my-auto">
           <Link href={`/assistants/edit/${persona.id}`}>
-            <FiEdit
+            <FiEdit2
               className="my-auto ml-auto hover:bg-hover p-0.5"
               size={20}
             />
@@ -57,7 +57,8 @@ export function AssistantsTab({
   const globalAssistants = personas.filter((persona) => persona.is_public);
   const personalAssistants = personas.filter(
     (persona) =>
-      (!user || persona.users.includes(user.id)) && !persona.is_public
+      (!user || persona.users.some((u) => u.id === user.id)) &&
+      !persona.is_public
   );
 
   return (

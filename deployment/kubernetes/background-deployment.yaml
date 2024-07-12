@@ -16,21 +16,9 @@ spec:
       - name: background
         image: danswer/danswer-backend:latest
         imagePullPolicy: IfNotPresent
-        command: ["/usr/bin/supervisord"]
+        command: ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
         # There are some extra values since this is shared between services
         # There are no conflicts though, extra env variables are simply ignored
         envFrom:
         - configMapRef:
             name: env-configmap
-        volumeMounts:
-        - name: dynamic-storage
-          mountPath: /home/storage
-        - name: file-connector-storage
-          mountPath: /home/file_connector_storage
-      volumes:
-      - name: dynamic-storage
-        persistentVolumeClaim:
-          claimName: dynamic-pvc
-      - name: file-connector-storage
-        persistentVolumeClaim:
-          claimName: file-connector-pvc

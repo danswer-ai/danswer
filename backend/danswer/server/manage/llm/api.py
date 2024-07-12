@@ -13,7 +13,7 @@ from danswer.db.llm import remove_llm_provider
 from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.db.models import User
-from danswer.llm.factory import get_default_llm
+from danswer.llm.factory import get_default_llms
 from danswer.llm.factory import get_llm
 from danswer.llm.llm_provider_options import fetch_available_well_known_llms
 from danswer.llm.llm_provider_options import WellKnownLLMProviderDescriptor
@@ -55,13 +55,13 @@ def test_llm_configuration(
     functions_with_args: list[tuple[Callable, tuple]] = [(test_llm, (llm,))]
 
     if (
-        test_llm_request.default_fast_model_name
-        and test_llm_request.default_fast_model_name
+        test_llm_request.fast_default_model_name
+        and test_llm_request.fast_default_model_name
         != test_llm_request.default_model_name
     ):
         fast_llm = get_llm(
             provider=test_llm_request.provider,
-            model=test_llm_request.default_fast_model_name,
+            model=test_llm_request.fast_default_model_name,
             api_key=test_llm_request.api_key,
             api_base=test_llm_request.api_base,
             api_version=test_llm_request.api_version,
@@ -85,8 +85,7 @@ def test_default_provider(
     _: User | None = Depends(current_admin_user),
 ) -> None:
     try:
-        llm = get_default_llm()
-        fast_llm = get_default_llm(use_fast_llm=True)
+        llm, fast_llm = get_default_llms()
     except ValueError:
         logger.exception("Failed to fetch default LLM Provider")
         raise HTTPException(status_code=400, detail="No LLM Provider setup")

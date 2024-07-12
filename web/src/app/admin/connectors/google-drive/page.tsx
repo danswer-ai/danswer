@@ -3,7 +3,8 @@
 import * as Yup from "yup";
 import { GoogleDriveIcon } from "@/components/icons/icons";
 import useSWR, { useSWRConfig } from "swr";
-import { fetcher } from "@/lib/fetcher";
+import { FetchError, errorHandlingFetcher } from "@/lib/fetcher";
+import { ErrorCallout } from "@/components/ErrorCallout";
 import { LoadingAnimation } from "@/components/Loading";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -263,38 +264,45 @@ const Main = () => {
     data: appCredentialData,
     isLoading: isAppCredentialLoading,
     error: isAppCredentialError,
-  } = useSWR<{ client_id: string }>(
+  } = useSWR<{ client_id: string }, FetchError>(
     "/api/manage/admin/connector/google-drive/app-credential",
-    fetcher
+    errorHandlingFetcher
   );
   const {
     data: serviceAccountKeyData,
     isLoading: isServiceAccountKeyLoading,
     error: isServiceAccountKeyError,
-  } = useSWR<{ service_account_email: string }>(
+  } = useSWR<{ service_account_email: string }, FetchError>(
     "/api/manage/admin/connector/google-drive/service-account-key",
-    fetcher
+    errorHandlingFetcher
   );
   const {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
-    error: isConnectorIndexingStatusesError,
-  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
+    error: connectorIndexingStatusesError,
+  } = useSWR<ConnectorIndexingStatus<any, any>[], FetchError>(
     "/api/manage/admin/connector/indexing-status",
-    fetcher
+    errorHandlingFetcher
   );
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
-    error: isCredentialsError,
+    error: credentialsError,
     refreshCredentials,
   } = usePublicCredentials();
 
   const { popup, setPopup } = usePopup();
 
+  const appCredentialSuccessfullyFetched =
+    appCredentialData ||
+    (isAppCredentialError && isAppCredentialError.status === 404);
+  const serviceAccountKeySuccessfullyFetched =
+    serviceAccountKeyData ||
+    (isServiceAccountKeyError && isServiceAccountKeyError.status === 404);
+
   if (
-    (!appCredentialData && isAppCredentialLoading) ||
-    (!serviceAccountKeyData && isServiceAccountKeyLoading) ||
+    (!appCredentialSuccessfullyFetched && isAppCredentialLoading) ||
+    (!serviceAccountKeySuccessfullyFetched && isServiceAccountKeyLoading) ||
     (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
     (!credentialsData && isCredentialsLoading)
   ) {
@@ -305,29 +313,20 @@ const Main = () => {
     );
   }
 
-  if (isCredentialsError || !credentialsData) {
-    return (
-      <div className="mx-auto">
-        <div className="text-red-500">Failed to load credentials.</div>
-      </div>
-    );
+  if (credentialsError || !credentialsData) {
+    return <ErrorCallout errorTitle="Failed to load credentials." />;
   }
 
-  if (isConnectorIndexingStatusesError || !connectorIndexingStatuses) {
-    return (
-      <div className="mx-auto">
-        <div className="text-red-500">Failed to load connectors.</div>
-      </div>
-    );
+  if (connectorIndexingStatusesError || !connectorIndexingStatuses) {
+    return <ErrorCallout errorTitle="Failed to load connectors." />;
   }
 
-  if (isAppCredentialError || isServiceAccountKeyError) {
+  if (
+    !appCredentialSuccessfullyFetched ||
+    !serviceAccountKeySuccessfullyFetched
+  ) {
     return (
-      <div className="mx-auto">
-        <div className="text-red-500">
-          Error loading Google Drive app credentials. Contact an administrator.
-        </div>
-      </div>
+      <ErrorCallout errorTitle="Error loading Google Drive app credentials. Contact an administrator." />
     );
   }
 

@@ -8,15 +8,18 @@ import { Persona } from "../assistants/interfaces";
 interface SlackBotConfigCreationRequest {
   document_sets: number[];
   persona_id: number | null;
+  enable_auto_filters: boolean;
   channel_names: string[];
   answer_validity_check_enabled: boolean;
   questionmark_prefilter_enabled: boolean;
   respond_tag_only: boolean;
   respond_to_bots: boolean;
   respond_team_member_list: string[];
+  respond_slack_group_list: string[];
   follow_up_tags?: string[];
   usePersona: boolean;
   response_type: SlackBotResponseType;
+  standard_answer_categories: number[];
 }
 
 const buildFiltersFromCreationRequest = (
@@ -39,13 +42,16 @@ const buildRequestBodyFromCreationRequest = (
     channel_names: creationRequest.channel_names,
     respond_tag_only: creationRequest.respond_tag_only,
     respond_to_bots: creationRequest.respond_to_bots,
+    enable_auto_filters: creationRequest.enable_auto_filters,
     respond_team_member_list: creationRequest.respond_team_member_list,
+    respond_slack_group_list: creationRequest.respond_slack_group_list,
     answer_filters: buildFiltersFromCreationRequest(creationRequest),
     follow_up_tags: creationRequest.follow_up_tags?.filter((tag) => tag !== ""),
     ...(creationRequest.usePersona
       ? { persona_id: creationRequest.persona_id }
       : { document_sets: creationRequest.document_sets }),
     response_type: creationRequest.response_type,
+    standard_answer_categories: creationRequest.standard_answer_categories,
   });
 };
 

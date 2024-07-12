@@ -4,6 +4,7 @@ import urllib.parse
 
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentIndexType
+from danswer.file_processing.enums import HtmlBasedConnectorTransformLinksStrategy
 
 #####
 # App Configs
@@ -45,12 +46,13 @@ DISABLE_AUTH = AUTH_TYPE == AuthType.DISABLED
 # Encryption key secret is used to encrypt connector credentials, api keys, and other sensitive
 # information. This provides an extra layer of security on top of Postgres access controls
 # and is available in Danswer EE
-ENCRYPTION_KEY_SECRET = os.environ.get("ENCRYPTION_KEY_SECRET")
+ENCRYPTION_KEY_SECRET = os.environ.get("ENCRYPTION_KEY_SECRET") or ""
 
 # Turn off mask if admin users should see full credentials for data connectors.
 MASK_CREDENTIAL_PREFIX = (
     os.environ.get("MASK_CREDENTIAL_PREFIX", "True").lower() != "false"
 )
+
 
 SESSION_EXPIRE_TIME_SECONDS = int(
     os.environ.get("SESSION_EXPIRE_TIME_SECONDS") or 86400 * 7
@@ -160,6 +162,11 @@ WEB_CONNECTOR_OAUTH_CLIENT_SECRET = os.environ.get("WEB_CONNECTOR_OAUTH_CLIENT_S
 WEB_CONNECTOR_OAUTH_TOKEN_URL = os.environ.get("WEB_CONNECTOR_OAUTH_TOKEN_URL")
 WEB_CONNECTOR_VALIDATE_URLS = os.environ.get("WEB_CONNECTOR_VALIDATE_URLS")
 
+HTML_BASED_CONNECTOR_TRANSFORM_LINKS_STRATEGY = os.environ.get(
+    "HTML_BASED_CONNECTOR_TRANSFORM_LINKS_STRATEGY",
+    HtmlBasedConnectorTransformLinksStrategy.STRIP,
+)
+
 NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP = (
     os.environ.get("NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP", "").lower()
     == "true"
@@ -178,6 +185,12 @@ CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES = (
     os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower() == "true"
 )
 
+# Save pages labels as Danswer metadata tags
+# The reason to skip this would be to reduce the number of calls to Confluence due to rate limit concerns
+CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING = (
+    os.environ.get("CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING", "").lower() == "true"
+)
+
 JIRA_CONNECTOR_LABELS_TO_SKIP = [
     ignored_tag
     for ignored_tag in os.environ.get("JIRA_CONNECTOR_LABELS_TO_SKIP", "").split(",")
@@ -188,11 +201,26 @@ GONG_CONNECTOR_START_TIME = os.environ.get("GONG_CONNECTOR_START_TIME")
 
 GITHUB_CONNECTOR_BASE_URL = os.environ.get("GITHUB_CONNECTOR_BASE_URL") or None
 
+GITLAB_CONNECTOR_INCLUDE_CODE_FILES = (
+    os.environ.get("GITLAB_CONNECTOR_INCLUDE_CODE_FILES", "").lower() == "true"
+)
+
 DASK_JOB_CLIENT_ENABLED = (
     os.environ.get("DASK_JOB_CLIENT_ENABLED", "").lower() == "true"
 )
 EXPERIMENTAL_CHECKPOINTING_ENABLED = (
     os.environ.get("EXPERIMENTAL_CHECKPOINTING_ENABLED", "").lower() == "true"
+)
+
+DEFAULT_PRUNING_FREQ = 60 * 60 * 24  # Once a day
+
+PREVENT_SIMULTANEOUS_PRUNING = (
+    os.environ.get("PREVENT_SIMULTANEOUS_PRUNING", "").lower() == "true"
+)
+
+# This is the maxiumum rate at which documents are queried for a pruning job. 0 disables the limitation.
+MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE = int(
+    os.environ.get("MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE", 0)
 )
 
 
@@ -224,10 +252,6 @@ ENABLE_MINI_CHUNK = os.environ.get("ENABLE_MINI_CHUNK", "").lower() == "true"
 MINI_CHUNK_SIZE = 150
 # Timeout to wait for job's last update before killing it, in hours
 CLEANUP_INDEXING_JOBS_TIMEOUT = int(os.environ.get("CLEANUP_INDEXING_JOBS_TIMEOUT", 3))
-# If set to true, then will not clean up documents that "no longer exist" when running Load connectors
-DISABLE_DOCUMENT_CLEANUP = (
-    os.environ.get("DISABLE_DOCUMENT_CLEANUP", "").lower() == "true"
-)
 
 
 #####
@@ -242,15 +266,20 @@ JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
 CURRENT_PROCESS_IS_AN_INDEXING_JOB = (
     os.environ.get("CURRENT_PROCESS_IS_AN_INDEXING_JOB", "").lower() == "true"
 )
-# Logs every model prompt and output, mostly used for development or exploration purposes
+# Sets LiteLLM to verbose logging
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
+)
+# Logs Danswer only model interactions like prompts, responses, messages etc.
+LOG_DANSWER_MODEL_INTERACTIONS = (
+    os.environ.get("LOG_DANSWER_MODEL_INTERACTIONS", "").lower() == "true"
 )
 # If set to `true` will enable additional logs about Vespa query performance
 # (time spent on finding the right docs + time spent fetching summaries from disk)
 LOG_VESPA_TIMING_INFORMATION = (
     os.environ.get("LOG_VESPA_TIMING_INFORMATION", "").lower() == "true"
 )
+LOG_ENDPOINT_LATENCY = os.environ.get("LOG_ENDPOINT_LATENCY", "").lower() == "true"
 # Anonymous usage telemetry
 DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"
 
@@ -262,4 +291,16 @@ TOKEN_BUDGET_GLOBALLY_ENABLED = (
 # Format: list of strings
 CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
     os.environ.get("CUSTOM_ANSWER_VALIDITY_CONDITIONS", "[]")
+)
+
+
+#####
+# Enterprise Edition Configs
+#####
+# NOTE: this should only be enabled if you have purchased an enterprise license.
+# if you're interested in an enterprise license, please reach out to us at
+# founders@danswer.ai OR message Chris Weaver or Yuhong Sun in the Danswer
+# Slack community (https://join.slack.com/t/danswer/shared_invite/zt-1w76msxmd-HJHLe3KNFIAIzk_0dSOKaQ)
+ENTERPRISE_EDITION_ENABLED = (
+    os.environ.get("ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "").lower() == "true"
 )

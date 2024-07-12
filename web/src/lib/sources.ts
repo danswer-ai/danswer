@@ -1,9 +1,11 @@
 import {
   AxeroIcon,
   BookstackIcon,
+  ClickupIcon,
   ConfluenceIcon,
   DiscourseIcon,
   Document360Icon,
+  DropboxIcon,
   FileIcon,
   GithubIcon,
   GitlabIcon,
@@ -20,13 +22,19 @@ import {
   NotionIcon,
   ProductboardIcon,
   RequestTrackerIcon,
+  R2Icon,
+  SalesforceIcon,
   SharepointIcon,
+  TeamsIcon,
   SlabIcon,
   SlackIcon,
   ZendeskIcon,
   ZulipIcon,
   MediaWikiIcon,
   WikipediaIcon,
+  S3Icon,
+  OCIStorageIcon,
+  GoogleStorageIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import { SourceCategory, SourceMetadata } from "./search/interfaces";
@@ -153,9 +161,24 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Loopio",
     category: SourceCategory.AppConnection,
   },
+  dropbox: {
+    icon: DropboxIcon,
+    displayName: "Dropbox",
+    category: SourceCategory.AppConnection,
+  },
+  salesforce: {
+    icon: SalesforceIcon,
+    displayName: "Salesforce",
+    category: SourceCategory.AppConnection,
+  },
   sharepoint: {
     icon: SharepointIcon,
     displayName: "Sharepoint",
+    category: SourceCategory.AppConnection,
+  },
+  teams: {
+    icon: TeamsIcon,
+    displayName: "Teams",
     category: SourceCategory.AppConnection,
   },
   discourse: {
@@ -183,6 +206,36 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Request Tracker",
     category: SourceCategory.AppConnection,
   },
+  clickup: {
+    icon: ClickupIcon,
+    displayName: "Clickup",
+    category: SourceCategory.AppConnection,
+  },
+  s3: {
+    icon: S3Icon,
+    displayName: "S3",
+    category: SourceCategory.AppConnection,
+  },
+  r2: {
+    icon: R2Icon,
+    displayName: "R2",
+    category: SourceCategory.AppConnection,
+  },
+  oci_storage: {
+    icon: OCIStorageIcon,
+    displayName: "Oracle Storage",
+    category: SourceCategory.AppConnection,
+  },
+  google_cloud_storage: {
+    icon: GoogleStorageIcon,
+    displayName: "Google Storage",
+    category: SourceCategory.AppConnection,
+  },
+  not_applicable: {
+    icon: GlobeIcon,
+    displayName: "Internet",
+    category: SourceCategory.ImportedKnowledge,
+  },
 };
 
 function fillSourceMetadata(
@@ -199,13 +252,21 @@ function fillSourceMetadata(
 }
 
 export function getSourceMetadata(sourceType: ValidSources): SourceMetadata {
-  return fillSourceMetadata(SOURCE_METADATA_MAP[sourceType], sourceType);
+  const response = fillSourceMetadata(
+    SOURCE_METADATA_MAP[sourceType],
+    sourceType
+  );
+
+  return response;
 }
 
 export function listSourceMetadata(): SourceMetadata[] {
-  return Object.entries(SOURCE_METADATA_MAP).map(([source, metadata]) => {
-    return fillSourceMetadata(metadata, source as ValidSources);
-  });
+  const entries = Object.entries(SOURCE_METADATA_MAP)
+    .filter(([source, _]) => source !== "not_applicable")
+    .map(([source, metadata]) => {
+      return fillSourceMetadata(metadata, source as ValidSources);
+    });
+  return entries;
 }
 
 export function getSourceDisplayName(sourceType: ValidSources): string | null {
