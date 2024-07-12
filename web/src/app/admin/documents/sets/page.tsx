@@ -42,8 +42,8 @@ const EditRow = ({ documentSet }: { documentSet: DocumentSet }) => {
   return (
     <div className="relative flex">
       {isSyncingTooltipOpen && (
-        <div className="flex flex-nowrap absolute w-64 top-0 left-0 mt-8 border border-border bg-background px-3 py-2 rounded shadow-lg break-words z-40">
-          <InfoIcon className="mt-1 flex flex-shrink-0 mr-2" /> Cannot update
+        <div className="absolute top-0 left-0 z-40 flex w-64 px-3 py-2 mt-8 break-words border rounded shadow-lg flex-nowrap border-border bg-background">
+          <InfoIcon className="flex flex-shrink-0 mt-1 mr-2" /> Cannot update
           while syncing! Wait for the sync to finish, then try again.
         </div>
       )}
@@ -68,7 +68,7 @@ const EditRow = ({ documentSet }: { documentSet: DocumentSet }) => {
           }
         }}
       >
-        <FiEdit2 className="text-emphasis mr-1 my-auto" />
+        <FiEdit2 className="my-auto mr-1 text-emphasis" />
         {documentSet.name}
       </div>
     </div>
@@ -103,7 +103,7 @@ const DocumentSetTable = ({
   return (
     <div>
       <Title>Existing Document Sets</Title>
-      <Table className="overflow-visible mt-2">
+      <Table className="mt-2 overflow-visible">
         <TableHead>
           <TableRow>
             <TableHeaderCell>Name</TableHeaderCell>
@@ -118,7 +118,7 @@ const DocumentSetTable = ({
             .map((documentSet) => {
               return (
                 <TableRow key={documentSet.id}>
-                  <TableCell className="whitespace-normal break-all">
+                  <TableCell className="break-all whitespace-normal">
                     <div className="flex gap-x-1 text-emphasis">
                       <EditRow documentSet={documentSet} />
                     </div>
@@ -192,7 +192,7 @@ const DocumentSetTable = ({
         </TableBody>
       </Table>
 
-      <div className="mt-3 flex">
+      <div className="flex mt-3">
         <div className="mx-auto">
           <PageSelector
             totalPages={Math.ceil(documentSets.length / numToDisplay)}
@@ -238,16 +238,16 @@ const Main = () => {
       <Text className="mb-3">
         <b>Document Sets</b> allow you to group logically connected documents
         into a single bundle. These can then be used as filter when performing
-        searches in the web UI or attached to slack bots to limit the amount of
-        information the bot searches over when answering in a specific channel
-        or with a certain command.
+        searches in the web UI to limit the amount of information the bot
+        searches over when answering in a specific channel or with a certain
+        command.
       </Text>
 
       <div className="mb-3"></div>
 
       <div className="flex mb-6">
         <Link href="/admin/documents/sets/new">
-          <Button size="xs" color="green" className="ml-2 my-auto">
+          <Button size="xs" color="green" className="my-auto md:ml-2">
             New Document Set
           </Button>
         </Link>

@@ -43,13 +43,7 @@ export function Popover({
       <RadixPopover.Trigger style={triggerMaxWidth ? { width: "100%" } : {}}>
         {/* NOTE: this weird `-mb-1.5` is needed to offset the Anchor, otherwise 
           the content will shift up by 1.5px when the Popover is open. */}
-        {open ? (
-          <div className={requiresContentPadding ? "-mb-1.5" : ""}>
-            {content}
-          </div>
-        ) : (
-          content
-        )}
+        {content}
       </RadixPopover.Trigger>
       <RadixPopover.Portal>
         <RadixPopover.Content

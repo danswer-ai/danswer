@@ -2,16 +2,21 @@
 
 import { User } from "@/lib/types";
 import Link from "next/link";
-import React, { useContext } from "react";
-import { FiMessageSquare, FiSearch } from "react-icons/fi";
+import React, { useContext, useState } from "react";
+
+import { FiMenu, FiMessageSquare, FiSearch } from "react-icons/fi";
 import { HeaderWrapper } from "./HeaderWrapper";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { UserDropdown } from "../UserDropdown";
-import { Logo } from "../Logo";
+import Logo from "../../../public/logo-brand.png";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
+import { ConnectorIcon, NotebookIcon } from "../icons/icons";
+import { AdminSidebar } from "../admin/connectors/AdminSidebar";
+import { SideBar } from "../SideBar";
+import Image from "next/image";
 
 export function HeaderTitle({ children }: { children: JSX.Element | string }) {
-  return <h1 className="flex text-2xl text-strong font-bold">{children}</h1>;
+  return <h1 className="flex text-2xl font-bold text-strong">{children}</h1>;
 }
 
 interface HeaderProps {
@@ -19,6 +24,7 @@ interface HeaderProps {
 }
 
 export function Header({ user }: HeaderProps) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -26,19 +32,29 @@ export function Header({ user }: HeaderProps) {
   const settings = combinedSettings.settings;
   const enterpriseSettings = combinedSettings.enterpriseSettings;
 
+  const handleClose = () => {
+    setIsMenuOpen(false);
+  };
+
   return (
     <HeaderWrapper>
-      <div className="flex h-full">
+      <div className="flex items-center h-full">
+        <FiMenu
+          size={18}
+          className="mr-6 lg:hidden"
+          onClick={() => setIsMenuOpen(true)}
+        />
+        {isMenuOpen && <SideBar isHeader handleClose={handleClose} />}
         <Link
-          className="py-3 flex flex-col"
+          className="flex flex-col py-3"
           href={
             settings && settings.default_page === "chat" ? "/chat" : "/search"
           }
         >
           <div className="flex my-auto">
-            <div className="mr-1 my-auto">
+            <div className="my-auto mr-1">
               {/* TODO: Remove Enterprise Settings */}
-              <Logo />
+              <Image src={Logo} alt="Logo" className="w-28" />
             </div>
             <div className="my-auto">
               {enterpriseSettings && enterpriseSettings.application_name ? (
@@ -53,39 +69,42 @@ export function Header({ user }: HeaderProps) {
                   )}
                 </div>
               ) : (
-                <HeaderTitle>enMedD CHP</HeaderTitle>
+                <></>
               )}
             </div>
           </div>
         </Link>
-
+        {/* <HeaderTitle>enMedD CHP</HeaderTitle> */}
         {(!settings ||
           (settings.search_page_enabled && settings.chat_page_enabled)) && (
-            <>
-              <Link
-                href="/search"
-                className={"ml-6 h-full flex flex-col hover:bg-hover"}
-              >
-                <div className="w-24 flex my-auto">
-                  <div className={"mx-auto flex text-strong px-2"}>
-                    <FiSearch className="my-auto mr-1" />
-                    <h1 className="flex text-sm font-bold my-auto">Search</h1>
-                  </div>
+          <>
+            <Link
+              href="/search"
+              className={"ml-6 h-full  flex-col hover:bg-hover lg:flex hidden"}
+            >
+              <div className="flex w-24 my-auto">
+                <div className={"mx-auto flex text-strong px-2"}>
+                  <FiSearch className="my-auto mr-1" />
+                  <h1 className="flex my-auto text-sm font-bold">Search</h1>
                 </div>
-              </Link>
+              </div>
+            </Link>
 
-              <Link href="/chat" className="h-full flex flex-col hover:bg-hover">
-                <div className="w-24 flex my-auto">
-                  <div className="mx-auto flex text-strong px-2">
-                    <FiMessageSquare className="my-auto mr-1" />
-                    <h1 className="flex text-sm font-bold my-auto">Chat</h1>
-                  </div>
+            <Link
+              href="/chat"
+              className="flex-col hidden h-full hover:bg-hover lg:flex"
+            >
+              <div className="flex w-24 my-auto">
+                <div className="flex px-2 mx-auto text-strong">
+                  <FiMessageSquare className="my-auto mr-1" />
+                  <h1 className="flex my-auto text-sm font-bold">Chat</h1>
                 </div>
-              </Link>
-            </>
-          )}
+              </div>
+            </Link>
+          </>
+        )}
 
-        <div className="ml-auto h-full flex flex-col">
+        <div className="flex flex-col h-full ml-auto">
           <div className="my-auto">
             <UserDropdown user={user} hideChatAndSearch />
           </div>
@@ -94,7 +113,3 @@ export function Header({ user }: HeaderProps) {
     </HeaderWrapper>
   );
 }
-
-/* 
-
-*/

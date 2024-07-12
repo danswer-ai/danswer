@@ -40,7 +40,8 @@ export function NoSourcesModal() {
             <Text>
               Or, if you&apos;re looking for a pure ChatGPT-like experience
               without any organization specific knowledge, then you can head
-              over to the Chat page and start chatting with enMedD CHP right away!
+              over to the Chat page and start chatting with enMedD CHP right
+              away!
             </Text>
             <Link href="/chat">
               <Button className="mt-3" size="xs" icon={FiMessageSquare}>

@@ -39,14 +39,14 @@ function UsageTypeSection({
   return (
     <div>
       <Text className="font-bold">{title}</Text>
-      <div className="text-base mt-1 mb-3">{description}</div>
+      <div className="mt-1 mb-3 text-base">{description}</div>
       <div
         onClick={(e) => {
           e.preventDefault();
           onClick();
         }}
       >
-        <div className="text-link font-medium cursor-pointer select-none">
+        <div className="font-medium cursor-pointer select-none text-link">
           {callToAction}
         </div>
       </div>
@@ -89,7 +89,7 @@ export function _WelcomeModal({ user }: { user: User | null }) {
         <div className="max-h-[85vh] overflow-y-auto px-4 pb-4">
           <BackButton behaviorOverride={() => setSelectedFlow(null)} />
           <div className="mt-3">
-            <Text className="font-bold flex">
+            <Text className="flex font-bold">
               {apiKeyVerified && (
                 <FiCheckCircle className="my-auto mr-2 text-success" />
               )}
@@ -110,15 +110,15 @@ export function _WelcomeModal({ user }: { user: User | null }) {
                 />
               )}
             </div>
-            <Text className="font-bold mt-6 mb-2">
+            <Text className="mt-6 mb-2 font-bold">
               Step 2: Connect Data Sources
             </Text>
             <div>
               <Text>
                 Connectors are the way that enMedD CHP gets data from your
                 organization&apos;s various data sources. Once setup, we&apos;ll
-                automatically sync data from your apps and docs into enMedD CHP, so
-                you can search through all of them in one place.
+                automatically sync data from your apps and docs into enMedD CHP,
+                so you can search through all of them in one place.
               </Text>
 
               <div className="flex mt-3">
@@ -129,7 +129,7 @@ export function _WelcomeModal({ user }: { user: User | null }) {
                     setWelcomeFlowComplete();
                     router.push("/admin/add-connector");
                   }}
-                  className="w-fit mx-auto"
+                  className="mx-auto w-fit"
                 >
                   <Button size="xs" icon={FiShare2} disabled={!apiKeyVerified}>
                     Setup your first connector!
@@ -148,7 +148,7 @@ export function _WelcomeModal({ user }: { user: User | null }) {
           <BackButton behaviorOverride={() => setSelectedFlow(null)} />
 
           <div className="mt-3">
-            <Text className="font-bold flex">
+            <Text className="flex font-bold">
               {apiKeyVerified && (
                 <FiCheckCircle className="my-auto mr-2 text-success" />
               )}
@@ -172,7 +172,7 @@ export function _WelcomeModal({ user }: { user: User | null }) {
               )}
             </div>
 
-            <Text className="font-bold mt-6 mb-2 flex">
+            <Text className="flex mt-6 mb-2 font-bold">
               Step 2: Start Chatting!
             </Text>
 
@@ -203,7 +203,7 @@ export function _WelcomeModal({ user }: { user: User | null }) {
                   router.push("/chat");
                   setIsHidden(true);
                 }}
-                className="w-fit mx-auto"
+                className="mx-auto w-fit"
               >
                 <Button size="xs" icon={FiShare2} disabled={!apiKeyVerified}>
                   Start chatting!
@@ -249,21 +249,12 @@ export function _WelcomeModal({ user }: { user: User | null }) {
               setSelectedFlow("chat");
             }}
           />
-
-          {/* TODO: add a Slack option here */}
-          {/* <Divider />
-          <UsageTypeSection
-            title="AI-powered Slack Assistant"
-            description="If you're looking to setup a bot to auto-answer questions in Slack"
-            callToAction="Connect your company knowledge!"
-            link="/admin/add-connector"
-          /> */}
         </>
       );
   }
 
   return (
-    <Modal title={title} className="max-w-4xl">
+    <Modal title={title} className="w-full max-w-4xl mx-6 md:w-auto md:mx-0">
       <div className="text-base">{body}</div>
     </Modal>
   );

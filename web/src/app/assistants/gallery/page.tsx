@@ -53,19 +53,20 @@ export default async function GalleryPage({
           openedFolders,
         }}
       >
-        <div className="flex relative bg-background text-default overflow-x-hidden h-screen">
+        <div className="relative flex h-screen overflow-x-hidden bg-background text-default">
           <ChatSidebar
             existingChats={chatSessions}
             currentChatSession={null}
             folders={folders}
             openedFolders={openedFolders}
+            openSidebar={false}
           />
 
           <div
             className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
           >
-            <div className="sticky top-0 left-80 z-10 w-full bg-background flex h-fit">
-              <div className="ml-auto my-auto mt-4 mr-8">
+            <div className="sticky top-0 z-10 flex w-full left-80 bg-background h-fit">
+              <div className="my-auto mt-4 ml-auto mr-8">
                 <UserDropdown user={user} />
               </div>
             </div>

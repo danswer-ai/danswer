@@ -54,7 +54,7 @@ export function UserDropdown({
               onClick={() => setUserInfoVisible(!userInfoVisible)}
               className="flex cursor-pointer"
             >
-              <div className="my-auto bg-user hover:bg-user-hover rounded-lg px-2 text-base font-normal">
+              <div className="px-2 my-auto text-base font-normal bg-blue-400 rounded-lg hover:bg-blue-400-hover">
                 {user && user.email ? user.email[0].toUpperCase() : "A"}
               </div>
             </div>
@@ -84,7 +84,7 @@ export function UserDropdown({
                 {settings.search_page_enabled && (
                   <Link
                     href="/search"
-                    className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
+                    className="flex px-4 py-3 rounded cursor-pointer hover:bg-hover-light"
                   >
                     <FiSearch className="my-auto mr-2 text-lg" />
                     Search
@@ -94,14 +94,14 @@ export function UserDropdown({
                   <>
                     <Link
                       href="/chat"
-                      className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
+                      className="flex px-4 py-3 rounded cursor-pointer hover:bg-hover-light"
                     >
                       <FiMessageSquare className="my-auto mr-2 text-lg" />
                       Chat
                     </Link>
                     <Link
                       href="/assistants/mine"
-                      className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
+                      className="flex px-4 py-3 rounded cursor-pointer hover:bg-hover-light"
                     >
                       <FaBrain className="my-auto mr-2 text-lg" />
                       My Assistants
@@ -113,11 +113,11 @@ export function UserDropdown({
             {showAdminPanel && (
               <>
                 {!hideChatAndSearch && (
-                  <div className="border-t border-border my-1" />
+                  <div className="my-1 border-t border-border" />
                 )}
                 <Link
                   href="/admin/indexing/status"
-                  className="flex py-3 px-4 cursor-pointer rounded hover:bg-hover-light"
+                  className="flex px-4 py-3 rounded cursor-pointer hover:bg-hover-light"
                 >
                   <FiTool className="my-auto mr-2 text-lg" />
                   Admin Panel
@@ -127,11 +127,11 @@ export function UserDropdown({
             {showLogout && (
               <>
                 {(!hideChatAndSearch || showAdminPanel) && (
-                  <div className="border-t border-border my-1" />
+                  <div className="my-1 border-t border-border" />
                 )}
                 <div
                   onClick={handleLogout}
-                  className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-hover-light"
+                  className="flex px-4 py-3 mt-1 cursor-pointer hover:bg-hover-light"
                 >
                   <FiLogOut className="my-auto mr-2 text-lg" />
                   Log out

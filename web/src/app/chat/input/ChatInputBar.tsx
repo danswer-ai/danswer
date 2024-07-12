@@ -194,29 +194,21 @@ export function ChatInputBar({
 
   return (
     <div>
-      <div className="flex justify-center pb-2 max-w-screen-lg mx-auto mb-2">
-        <div
-          className="
-            w-full
-            shrink
-            relative
-            px-4
-            w-searchbar-xs
-            2xl:w-searchbar-sm
-            3xl:w-searchbar
-            mx-auto
-          "
-        >
+      <div className="flex justify-center max-w-screen-lg pb-2 mx-auto mb-2">
+        {/*  <div className="relative w-full px-4 mx-auto shrink w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar"> */}
+        <div className="relative w-full px-4 mx-auto shrink 2xl:w-searchbar-sm 3xl:w-searchbar">
           {showSuggestions && filteredPersonas.length > 0 && (
             <div
               ref={suggestionsRef}
-              className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full"
+              className="absolute inset-x-0 top-0 w-full text-sm transform -translate-y-full"
             >
               <div className="rounded-lg py-1.5 bg-white border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
                 {filteredPersonas.map((currentPersona, index) => (
                   <button
                     key={index}
-                    className={`px-2 ${assistantIconIndex == index && "bg-hover"} rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
+                    className={`px-2 ${
+                      assistantIconIndex == index && "bg-hover"
+                    } rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
                     onClick={() => {
                       updateCurrentPersona(currentPersona);
                     }}
@@ -232,7 +224,9 @@ export function ChatInputBar({
                 <a
                   key={filteredPersonas.length}
                   target="_blank"
-                  className={`${assistantIconIndex == filteredPersonas.length && "bg-hover"} px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
+                  className={`${
+                    assistantIconIndex == filteredPersonas.length && "bg-hover"
+                  } px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
                   href="/assistants/new"
                 >
                   <FiPlus size={17} />
@@ -266,16 +260,16 @@ export function ChatInputBar({
               <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full">
                 <div
                   ref={interactionsRef}
-                  className="bg-background-subtle p-2 rounded-t-lg  items-center flex w-full"
+                  className="flex items-center w-full p-2 rounded-t-lg bg-background-subtle"
                 >
                   <AssistantIcon assistant={alternativeAssistant} border />
-                  <p className="ml-3 text-strong my-auto">
+                  <p className="my-auto ml-3 text-strong">
                     {alternativeAssistant.name}
                   </p>
-                  <div className="flex gap-x-1 ml-auto ">
+                  <div className="flex ml-auto gap-x-1 ">
                     <Tooltip
                       content={
-                        <p className="max-w-xs flex flex-wrap">
+                        <p className="flex flex-wrap max-w-xs">
                           {alternativeAssistant.description}
                         </p>
                       }
@@ -295,7 +289,7 @@ export function ChatInputBar({
             )}
 
             {files.length > 0 && (
-              <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-2">
+              <div className="flex flex-wrap px-2 pt-2 gap-y-1 gap-x-2">
                 {files.map((file) => (
                   <div key={file.id}>
                     <InputBarPreview
@@ -338,7 +332,6 @@ export function ChatInputBar({
                 overscroll-contain
                 outline-none
                 placeholder-subtle
-                overflow-hidden
                 resize-none
                 pl-4
                 pr-12
@@ -364,74 +357,73 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-            <div className="flex items-center space-x-3 mr-12 px-4 pb-2 overflow-hidden">
-              <ChatInputOption
-                flexPriority="shrink"
-                name={selectedAssistant ? selectedAssistant.name : "Assistants"}
-                icon={FaBrain}
-                onClick={() => setConfigModalActiveTab("assistants")}
-              />
+            <div className="flex items-center justify-between px-4 py-2 overflow-hidden">
+              <div className="flex w-auto gap-2">
+                <ChatInputOption
+                  flexPriority="shrink"
+                  name={
+                    selectedAssistant ? selectedAssistant.name : "Assistants"
+                  }
+                  icon={FaBrain}
+                  onClick={() => setConfigModalActiveTab("assistants")}
+                />
 
-              <ChatInputOption
-                flexPriority="second"
-                name={
-                  llmOverrideManager.llmOverride.modelName ||
-                  (selectedAssistant
-                    ? selectedAssistant.llm_model_version_override || llmName
-                    : llmName)
-                }
-                icon={FiCpu}
-                onClick={() => setConfigModalActiveTab("llms")}
-              />
+                <ChatInputOption
+                  flexPriority="second"
+                  name={
+                    llmOverrideManager.llmOverride.modelName ||
+                    (selectedAssistant
+                      ? selectedAssistant.llm_model_version_override || llmName
+                      : llmName)
+                  }
+                  icon={FiCpu}
+                  onClick={() => setConfigModalActiveTab("llms")}
+                />
 
-              {!retrievalDisabled && (
+                {!retrievalDisabled && (
+                  <ChatInputOption
+                    flexPriority="stiff"
+                    name="Filters"
+                    icon={FiFilter}
+                    onClick={() => setConfigModalActiveTab("filters")}
+                  />
+                )}
                 <ChatInputOption
                   flexPriority="stiff"
-                  name="Filters"
-                  icon={FiFilter}
-                  onClick={() => setConfigModalActiveTab("filters")}
+                  name="File"
+                  icon={FiPlusCircle}
+                  onClick={() => {
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.multiple = true; // Allow multiple files
+                    input.onchange = (event: any) => {
+                      const files = Array.from(
+                        event?.target?.files || []
+                      ) as File[];
+                      if (files.length > 0) {
+                        handleFileUpload(files);
+                      }
+                    };
+                    input.click();
+                  }}
                 />
-              )}
-
-              <ChatInputOption
-                flexPriority="stiff"
-                name="File"
-                icon={FiPlusCircle}
-                onClick={() => {
-                  const input = document.createElement("input");
-                  input.type = "file";
-                  input.multiple = true; // Allow multiple files
-                  input.onchange = (event: any) => {
-                    const files = Array.from(
-                      event?.target?.files || []
-                    ) as File[];
-                    if (files.length > 0) {
-                      handleFileUpload(files);
+              </div>
+              <div>
+                <div
+                  className="flex flex-row items-center content-center w-auto gap-2 px-2.5 py-2.5 text-white truncate bg-blue-700 border rounded-full cursor-pointer sm:px-4 sm:py-2 sm:rounded-xl"
+                  onClick={() => {
+                    if (!isStreaming) {
+                      if (message) {
+                        onSubmit();
+                      }
+                    } else {
+                      setIsCancelled(true);
                     }
-                  };
-                  input.click();
-                }}
-              />
-            </div>
-            <div className="absolute bottom-2.5 right-10">
-              <div
-                className="cursor-pointer"
-                onClick={() => {
-                  if (!isStreaming) {
-                    if (message) {
-                      onSubmit();
-                    }
-                  } else {
-                    setIsCancelled(true);
-                  }
-                }}
-              >
-                <FiSend
-                  size={18}
-                  className={`text-emphasis w-9 h-9 p-2 rounded-lg ${
-                    message ? "bg-blue-200" : ""
-                  }`}
-                />
+                  }}
+                >
+                  <FiSend size={11} color="white" className="w-4 h-4" />
+                  <p className="hidden font-light sm:flex">Send message</p>
+                </div>
               </div>
             </div>
           </div>

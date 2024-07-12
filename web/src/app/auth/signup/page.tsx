@@ -9,7 +9,10 @@ import { redirect } from "next/navigation";
 import { EmailPasswordForm } from "../login/EmailPasswordForm";
 import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
+/* import { Logo } from "@/components/Logo"; */
+
+import Logo from "../../../../public/logo-brand.png";
+import Image from "next/image";
 
 const Page = async () => {
   // catch cases where the backend is completely unreachable here
@@ -46,32 +49,43 @@ const Page = async () => {
 
   return (
     <main>
-      <div className="absolute top-10x w-full">
+      <div className="absolute w-full top-10x">
         <HealthCheckBanner />
       </div>
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-center min-h-screen px-6 py-12 sm:px-6 lg:px-8">
         <div>
-          <Logo height={64} width={64} className="mx-auto w-fit" />
-
-          <Card className="mt-4 w-96">
-            <div className="flex">
-              <Title className="mb-2 mx-auto font-bold">
-                Sign Up for enMedD CHP
-              </Title>
-            </div>
-            <EmailPasswordForm
-              isSignup
-              shouldVerify={authTypeMetadata?.requiresVerification}
-            />
-
-            <div className="flex">
-              <Text className="mt-4 mx-auto">
+          <Card className="mt-4 md:w-96">
+            <Title className="flex items-center justify-center gap-2 py-3 w-100">
+              <Image src={Logo} alt="Logo" className="w-40" />
+              {/* TODO: Change this into enterprise settings application name */}
+              {/* you need to make this page not async to be able to get settings context */}
+            </Title>
+            <div className="flex flex-col mt-5">
+              <h1 className="text-xl font-bold text-black">Sign Up</h1>
+              <Text>
                 Already have an account?{" "}
-                <Link href="/auth/login" className="text-link font-medium">
+                <Link href="/auth/login" className="font-medium text-link">
                   Log In
                 </Link>
               </Text>
             </div>
+            <div className="py-5">
+              <EmailPasswordForm
+                isSignup
+                shouldVerify={authTypeMetadata?.requiresVerification}
+              />
+            </div>
+            <p className="text-sm">
+              By signing in, you agree to our{" "}
+              <Link href={"#"} className="font-medium text-link">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href={"#"} className="font-medium text-link">
+                Privacy Policy
+              </Link>
+              .
+            </p>
           </Card>
         </div>
       </div>

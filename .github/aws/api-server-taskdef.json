@@ -1,0 +1,97 @@
+{
+  "family": "api_server",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "api_server",
+      "image": "471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest",
+      "essential": true,
+      "memory": 5120,
+      "cpu": 2560,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080
+        }
+      ],
+      "command": [
+        "/bin/sh",
+        "-c",
+        "alembic upgrade head && echo \"Starting Danswer Api Server\" && uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
+      ],
+      "environment": [
+        { "name": "AUTH_TYPE", "value": "disabled" },
+        { "name": "SESSION_EXPIRE_TIME_SECONDS", "value": "86400" },
+        { "name": "ENCRYPTION_KEY_SECRET", "value": "" },
+        { "name": "VALID_EMAIL_DOMAINS", "value": "" },
+        { "name": "GOOGLE_OAUTH_CLIENT_ID", "value": "" },
+        { "name": "GOOGLE_OAUTH_CLIENT_SECRET", "value": "" },
+        { "name": "REQUIRE_EMAIL_VERIFICATION", "value": "" },
+        { "name": "SMTP_SERVER", "value": "smtp.gmail.com" },
+        { "name": "SMTP_PORT", "value": "587" },
+        { "name": "SMTP_USER", "value": "" },
+        { "name": "SMTP_PASS", "value": "" },
+        { "name": "EMAIL_FROM", "value": "" },
+        { "name": "OAUTH_CLIENT_ID", "value": "" },
+        { "name": "OAUTH_CLIENT_SECRET", "value": "" },
+        { "name": "OPENID_CONFIG_URL", "value": "" },
+        { "name": "GEN_AI_MODEL_PROVIDER", "value": "" },
+        { "name": "GEN_AI_MODEL_VERSION", "value": "" },
+        { "name": "FAST_GEN_AI_MODEL_VERSION", "value": "" },
+        { "name": "GEN_AI_API_KEY", "value": "" },
+        { "name": "GEN_AI_API_ENDPOINT", "value": "" },
+        { "name": "GEN_AI_API_VERSION", "value": "" },
+        { "name": "GEN_AI_LLM_PROVIDER_TYPE", "value": "" },
+        { "name": "GEN_AI_MAX_TOKENS", "value": "" },
+        { "name": "QA_TIMEOUT", "value": "" },
+        { "name": "MAX_CHUNKS_FED_TO_CHAT", "value": "" },
+        { "name": "DISABLE_LLM_FILTER_EXTRACTION", "value": "" },
+        { "name": "DISABLE_LLM_CHUNK_FILTER", "value": "" },
+        { "name": "DISABLE_LLM_CHOOSE_SEARCH", "value": "" },
+        { "name": "DISABLE_LLM_QUERY_REPHRASE", "value": "" },
+        { "name": "DISABLE_GENERATIVE_AI", "value": "" },
+        { "name": "DISABLE_LITELLM_STREAMING", "value": "" },
+        { "name": "LITELLM_EXTRA_HEADERS", "value": "" },
+        { "name": "BING_API_KEY", "value": "" },
+        { "name": "TOKEN_BUDGET_GLOBALLY_ENABLED", "value": "" },
+        { "name": "AWS_ACCESS_KEY_ID", "value": "" },
+        { "name": "AWS_SECRET_ACCESS_KEY", "value": "" },
+        { "name": "AWS_REGION_NAME", "value": "" },
+        { "name": "DOC_TIME_DECAY", "value": "" },
+        { "name": "HYBRID_ALPHA", "value": "" },
+        { "name": "EDIT_KEYWORD_QUERY", "value": "" },
+        { "name": "MULTILINGUAL_QUERY_EXPANSION", "value": "" },
+        { "name": "LANGUAGE_HINT", "value": "" },
+        { "name": "LANGUAGE_CHAT_NAMING_HINT", "value": "" },
+        { "name": "QA_PROMPT_OVERRIDE", "value": "" },
+        { "name": "POSTGRES_HOST", "value": "relational_db" },
+        { "name": "VESPA_HOST", "value": "index" },
+        { "name": "WEB_DOMAIN", "value": "" },
+        { "name": "DOCUMENT_ENCODER_MODEL", "value": "" },
+        { "name": "DOC_EMBEDDING_DIM", "value": "" },
+        { "name": "NORMALIZE_EMBEDDINGS", "value": "" },
+        { "name": "ASYM_QUERY_PREFIX", "value": "" },
+        { "name": "ENABLE_RERANKING_REAL_TIME_FLOW", "value": "" },
+        { "name": "ENABLE_RERANKING_ASYNC_FLOW", "value": "" },
+        { "name": "MODEL_SERVER_HOST", "value": "inference_model_server" },
+        { "name": "MODEL_SERVER_PORT", "value": "" },
+        { "name": "DISABLE_TELEMETRY", "value": "" },
+        { "name": "LOG_LEVEL", "value": "info" },
+        { "name": "LOG_ALL_MODEL_INTERACTIONS", "value": "" },
+        { "name": "LOG_VESPA_TIMING_INFORMATION", "value": "" },
+        { "name": "LOG_ENDPOINT_LATENCY", "value": "" },
+        { "name": "ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "value": "false" },
+        { "name": "API_KEY_HASH_ROUNDS", "value": "" },
+        { "name": "ENV_SEED_CONFIGURATION", "value": "" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/api_server",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

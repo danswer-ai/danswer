@@ -159,12 +159,12 @@ function Main() {
               <br />
               Connectors are the way that enMedD CHP gets data from your
               organization&apos;s various data sources. Once setup, we&apos;ll
-              automatically sync data from your apps and docs into enMedD CHP, so
-              you can search all through all of them in one place.
+              automatically sync data from your apps and docs into enMedD CHP,
+              so you can search all through all of them in one place.
             </div>
             <div className="flex">
               <Link className="mx-auto mt-2 w-fit" href="/admin/add-connector">
-                <Button className="mt-3 mx-auto" size="xs">
+                <Button className="mx-auto mt-3" size="xs">
                   Add Connector
                 </Button>
               </Link>
@@ -187,7 +187,7 @@ function Main() {
               be lost.
             </div>
             <div className="flex">
-              <Button onClick={onCancel} className="mt-3 mx-auto" color="green">
+              <Button onClick={onCancel} className="mx-auto mt-3" color="green">
                 Confirm
               </Button>
             </div>
@@ -277,13 +277,13 @@ function Main() {
               </a>
               .
               <br />
-              <b>NOTE:</b> not all models listed will work with enMedD CHP, since
-              some have unique interfaces or special requirements. If in doubt,
-              reach out to the enMedD CHP team.
+              <b>NOTE:</b> not all models listed will work with enMedD CHP,
+              since some have unique interfaces or special requirements. If in
+              doubt, reach out to the enMedD CHP team.
             </Text>
 
-            <div className="w-full flex">
-              <Card className="mt-4 2xl:w-4/6 mx-auto">
+            <div className="flex w-full">
+              <Card className="mx-auto mt-4 2xl:w-4/6">
                 <CustomModelForm onSubmit={onSelect} />
               </Card>
             </div>
@@ -294,7 +294,7 @@ function Main() {
             <div>
               <Title className="mt-8">Current Upgrade Status</Title>
               <div className="mt-4">
-                <div className="italic text-sm mb-2">
+                <div className="mb-2 text-sm italic">
                   Currently in the process of switching to:
                 </div>
                 <ModelOption model={newModelSelection} />
@@ -335,7 +335,7 @@ function Main() {
 
 function Page() {
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto">
       <AdminPageTitle
         title="Embedding"
         icon={<FiPackage size={32} className="my-auto" />}

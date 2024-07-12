@@ -74,13 +74,13 @@ function LLMProviderDisplay({
   return (
     <div>
       {popup}
-      <div className="border border-border p-3 rounded w-96 flex shadow-md">
+      <div className="flex p-3 border rounded shadow-md border-border md:w-96">
         <div className="my-auto">
           <div className="font-bold">{providerName} </div>
           <div className="text-xs italic">({existingLlmProvider.provider})</div>
           {!existingLlmProvider.is_default_provider && (
             <div
-              className="text-xs text-link cursor-pointer pt-1"
+              className="pt-1 text-xs cursor-pointer text-link"
               onClick={async () => {
                 const response = await fetch(
                   `${LLM_PROVIDERS_ADMIN_URL}/${existingLlmProvider.id}/default`,
@@ -164,7 +164,7 @@ export function ConfiguredLLMProviderDisplay({
   });
 
   return (
-    <div className="gap-y-4 flex flex-col">
+    <div className="flex flex-col gap-y-4">
       {existingLlmProviders.map((provider) => {
         const defaultProviderDesciptor = llmProviderDescriptors.find(
           (llmProviderDescriptors) =>

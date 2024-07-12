@@ -70,6 +70,7 @@ function ToolForm({
           setDefinitionError(null);
         }
       } catch (error) {
+        // TODO: Take a look into this more
         console.log(error);
         setMethodSpecs(null);
         setDefinitionError("Invalid JSON format");

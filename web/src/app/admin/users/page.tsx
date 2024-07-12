@@ -25,7 +25,7 @@ const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
       <div className="text-sm">
         No invited users. Anyone can sign up with a valid email address. To
         restrict access you can:
-        <div className="flex flex-wrap ml-2 mt-1">
+        <div className="flex flex-wrap mt-1 ml-2">
           (1) Invite users above. Once a user has been invited, only emails that
           have explicitly been invited will be able to sign-up.
         </div>
@@ -147,7 +147,7 @@ const SearchableTables = () => {
       {popup}
 
       <div className="flex flex-col gap-y-4">
-        <div className="flex gap-x-4">
+        <div className="flex flex-col gap-4 md:flex-row">
           <AddUserButton setPopup={setPopup} />
           <div className="flex-grow">
             <SearchBar
@@ -197,7 +197,7 @@ const AddUserButton = ({
       {modal && (
         <Modal title="Bulk Add Users" onOutsideClick={() => setModal(false)}>
           <div className="flex flex-col gap-y-4">
-            <Text className="font-medium text-base">
+            <Text className="text-base font-medium">
               Add the email addresses to import, separated by whitespaces.
             </Text>
             <BulkAdd onSuccess={onSuccess} onFailure={onFailure} />
@@ -210,7 +210,7 @@ const AddUserButton = ({
 
 const Page = () => {
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto">
       <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
       <SearchableTables />
     </div>

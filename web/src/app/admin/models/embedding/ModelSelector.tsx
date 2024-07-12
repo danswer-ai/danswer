@@ -17,14 +17,14 @@ export function ModelOption({
   return (
     <div
       className={
-        "p-2 border border-border rounded shadow-md bg-hover-light w-96 flex flex-col"
+        "p-2 border border-border rounded shadow-md bg-hover-light md:w-96 flex flex-col"
       }
     >
-      <div className="font-bold text-lg flex">
+      <div className="flex text-lg font-bold">
         {model.isDefault && <FiStar className="my-auto mr-1 text-accent" />}
         {model.model_name}
       </div>
-      <div className="text-sm mt-1 mx-1">
+      <div className="mx-1 mt-1 text-sm">
         {model.description
           ? model.description
           : "Custom model—no description is available."}
@@ -33,7 +33,7 @@ export function ModelOption({
         <a
           target="_blank"
           href={model.link}
-          className="text-xs text-link mx-1 mt-1"
+          className="mx-1 mt-1 text-xs text-link"
         >
           See More Details
         </a>

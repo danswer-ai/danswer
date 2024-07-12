@@ -40,7 +40,7 @@ const TabButton = ({
       flex
     `}
   >
-    <Icon className="inline-block mr-2 my-auto" size="16" />
+    <Icon className="inline-block my-auto mr-2" size="16" />
     <p className="my-auto">{label}</p>
   </button>
 );
@@ -87,14 +87,9 @@ export function ConfigurationModal({
     <Modal
       onOutsideClick={onClose}
       noPadding
-      className="
-        w-4/6 
-        h-4/6
-        flex
-        flex-col
-      "
+      className="flex flex-col w-4/6  h-4/6"
     >
-      <div className="rounded flex flex-col overflow-hidden">
+      <div className="flex flex-col overflow-hidden rounded">
         <div className="mb-4">
           <div className="flex border-b border-border bg-background-emphasis">
             <div className="flex px-6 gap-x-2">
@@ -118,24 +113,7 @@ export function ConfigurationModal({
               />
             </div>
             <button
-              className="
-                ml-auto
-                px-1
-                py-1
-                text-xs
-                font-medium
-                rounded
-                hover:bg-hover
-                focus:outline-none
-                focus:ring-2
-                focus:ring-offset-2
-                focus:ring-subtle
-                flex
-                items-center
-                h-fit
-                my-auto
-                mr-5
-              "
+              className="flex items-center px-1 py-1 my-auto ml-auto mr-5 text-xs font-medium rounded  hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-subtle h-fit"
               onClick={onClose}
             >
               <FiX size={24} />

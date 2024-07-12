@@ -12,7 +12,7 @@ import { SourceIcon } from "@/components/SourceIcon";
 import { TagFilter } from "./TagFilter";
 
 const SectionTitle = ({ children }: { children: string }) => (
-  <div className="font-bold text-xs mt-2 flex">{children}</div>
+  <div className="flex mt-2 text-xs font-bold">{children}</div>
 );
 
 export interface SourceSelectorProps {
@@ -68,8 +68,8 @@ export function SourceSelector({
 
   return (
     <div>
-      <div className="flex mb-4 pb-2 border-b border-border text-emphasis">
-        <h2 className="font-bold my-auto">Filters</h2>
+      <div className="flex pb-2 mb-4 border-b border-border text-emphasis">
+        <h2 className="my-auto font-bold">Filters</h2>
         <FiFilter className="my-auto ml-2" size="16" />
       </div>
 
@@ -136,7 +136,7 @@ export function SourceSelector({
                       </div>
                     }
                     popupContent={
-                      <div className="text-sm w-64">
+                      <div className="w-64 text-sm">
                         <div className="flex font-medium">Description</div>
                         <div className="mt-1">{documentSet.description}</div>
                       </div>
@@ -226,7 +226,7 @@ export function HorizontalFilters({
 
   return (
     <div>
-      <div className="flex gap-x-3">
+      <div className="flex flex-col gap-3 md:flex-row">
         <div className="w-64">
           <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
         </div>
@@ -282,11 +282,11 @@ export function HorizontalFilters({
         />
       </div>
 
-      <div className="flex pb-4 mt-2 h-12">
+      <div className="flex h-12 pb-4 mt-2">
         <div className="flex flex-wrap gap-x-2">
           {timeRange && timeRange.selectValue && (
             <SelectedBubble onClick={() => setTimeRange(null)}>
-              <div className="text-sm flex">{timeRange.selectValue}</div>
+              <div className="flex text-sm">{timeRange.selectValue}</div>
             </SelectedBubble>
           )}
           {existingSources.length > 0 &&

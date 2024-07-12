@@ -20,7 +20,7 @@ export default async function Page() {
     body = (
       <div className="w-full my-16">
         <div className="px-32">
-          <div className="mx-auto container">
+          <div className="container mx-auto">
             <Card>
               <AssistantEditor
                 {...values}
@@ -38,10 +38,10 @@ export default async function Page() {
   return (
     <div>
       <HeaderWrapper>
-        <div className="h-full flex flex-col">
+        <div className="flex flex-col h-full">
           <div className="flex my-auto">
             <LargeBackButton />
-            <h1 className="flex text-xl text-strong font-bold my-auto">
+            <h1 className="flex my-auto text-xl font-bold text-strong">
               New Assistant
             </h1>
           </div>

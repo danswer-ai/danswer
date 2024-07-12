@@ -17,11 +17,11 @@ export function AdminPageTitle({
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="flex">
-        <h1 className="text-3xl text-strong font-bold flex gap-x-2">
+      <div className="flex flex-col gap-4 md:flex-row md:gap-0">
+        <h1 className="flex text-xl font-bold md:text-3xl text-strong gap-x-2">
           {icon} {title}
         </h1>
-        {farRightElement && <div className="ml-auto">{farRightElement}</div>}
+        {farRightElement && <div className="md:ml-auto">{farRightElement}</div>}
       </div>
       {includeDivider && <Divider />}
     </div>
