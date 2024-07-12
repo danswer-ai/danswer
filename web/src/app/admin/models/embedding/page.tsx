@@ -307,6 +307,7 @@ function Main() {
       )}
       {changeCredentialsProvider && (
         <ChangeCredentialsModal
+          // setPopup={setPopup}
           useFileUpload={changeCredentialsProvider.name == "Vertex"}
           onDeleted={() => {
             clientsideRemoveProvider(changeCredentialsProvider);
@@ -469,7 +470,7 @@ function Main() {
         <div>
           <Title className="mt-8">Current Upgrade Status</Title>
           <div className="mt-4">
-            <div className="italic text-sm mb-2">
+            <div className="italic text-lg mb-2">
               Currently in the process of switching to:{" "}
               {futureEmbeddingModel.model_name}
             </div>

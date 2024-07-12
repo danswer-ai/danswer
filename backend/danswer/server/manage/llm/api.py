@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
+from danswer.db.embedding_model import get_current_db_embedding_provider
 from danswer.db.engine import get_session
 from danswer.db.llm import fetch_existing_embedding_providers
 from danswer.db.llm import fetch_existing_llm_providers
@@ -167,6 +168,12 @@ def delete_embedding_provider(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
+    embedding_provider = get_current_db_embedding_provider()
+    if embedding_provider_name == embedding_provider.name:
+        raise HTTPException(
+            status_code=400, detail="You can't delete a currently active model"
+        )
+
     remove_embedding_provider(db_session, embedding_provider_name)
 
 

@@ -169,7 +169,7 @@ export function ProviderCreationModal({
                 </a>
               </Text>
 
-              <Callout title="IMPORTANT" color="blue" className="mt-4">
+              <Callout title="Configuration" color="blue" className="mt-4">
                 <div className="flex flex-col gap-y-2">
                   You will need to retrieve your API credentials for this
                   update.

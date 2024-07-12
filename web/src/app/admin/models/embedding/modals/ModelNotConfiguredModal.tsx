@@ -21,8 +21,8 @@ export function ModelNotConfiguredModal({
     >
       <div className="mb-4">
         <Text className="text-lg mb-2">
-          Heads up: {modelProvider.name} isn&apos;t configured yet. Do you want
-          to configure this provider?
+          {modelProvider.name} isn&apos;t configured yet. Do you want to
+          configure this provider?
         </Text>
         <div className="flex mt-8 justify-between">
           <Button color="gray" onClick={onCancel}>

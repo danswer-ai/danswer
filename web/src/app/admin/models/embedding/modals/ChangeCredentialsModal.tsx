@@ -8,6 +8,7 @@ import {
   LLM_PROVIDERS_ADMIN_URL,
 } from "../../llm/constants";
 import { mutate } from "swr";
+import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 
 export function ChangeCredentialsModal({
   provider,
@@ -24,6 +25,7 @@ export function ChangeCredentialsModal({
 }) {
   const [apiKey, setApiKey] = useState("");
   const [testError, setTestError] = useState<string>("");
+  const [deletionError, setDeletionError] = useState<null | string>(null);
   const [fileName, setFileName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,6 +45,7 @@ export function ChangeCredentialsModal({
     if (file) {
       setFileName(file.name);
       try {
+        setDeletionError(null);
         const fileContent = await file.text();
         let jsonContent;
         try {
@@ -125,17 +128,9 @@ export function ChangeCredentialsModal({
         <Subtitle className="mt-4 font-bold text-lg mb-2">
           Want to swap out your key?
         </Subtitle>
-        <Text className="text-lg mb-2">
-          Ready to play key swap with {provider.name}? Your old key is about to
-          hit the bit bucket.
-        </Text>
-        <Callout title="Read the Fine Print" color="blue" className="mt-4">
-          <div className="flex flex-col gap-y-2">
-            <p>
-              This isn&apos;t just a local change. Every model tied to this
-              provider will feel the ripple effect.
-            </p>
 
+        <Callout title="Change credentials" color="blue" className="mt-4">
+          <div className="flex flex-col gap-y-2">
             {useFileUpload ? (
               <>
                 <Label>Upload JSON File</Label>
@@ -153,10 +148,10 @@ export function ChangeCredentialsModal({
                 <Label>New API Key</Label>
                 <input
                   type="password"
-                  className="text-lg w-full p-1"
+                  className="text-base w-full p-1"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Paste your 1337 API key here"
+                  placeholder="Paste your API key here"
                 />
               </>
             )}
@@ -166,14 +161,10 @@ export function ChangeCredentialsModal({
               rel="noopener noreferrer"
               className="underline cursor-pointer"
             >
-              RTFM: {provider.name} API key edition
+              Visit API
             </a>
           </div>
         </Callout>
-        <Text className="text-sm mt-4">
-          Fun fact: This key swap could save you up to 15% on your API calls. Or
-          not. We&apos;re developers, not fortune tellers.
-        </Text>
 
         {testError && (
           <Callout title="Error" color="red" className="mt-4">
@@ -202,6 +193,7 @@ export function ChangeCredentialsModal({
 
         <Button
           onClick={async () => {
+            setDeletionError(null);
             const response = await fetch(
               `${EMBEDDING_PROVIDERS_ADMIN_URL}/${provider.name}`,
               {
@@ -211,7 +203,7 @@ export function ChangeCredentialsModal({
 
             if (!response.ok) {
               const errorMsg = (await response.json()).detail;
-              alert(`Failed to delete provider: ${errorMsg}`);
+              setDeletionError(errorMsg);
               return;
             }
 
@@ -222,6 +214,9 @@ export function ChangeCredentialsModal({
         >
           Delete key
         </Button>
+        {deletionError && (
+          <p className="text-base  mt-2">Error: {deletionError}</p>
+        )}
       </div>
     </Modal>
   );

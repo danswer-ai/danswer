@@ -10,6 +10,7 @@ from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import OLD_DEFAULT_DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import OLD_DEFAULT_MODEL_DOC_EMBEDDING_DIM
 from danswer.configs.model_configs import OLD_DEFAULT_MODEL_NORMALIZE_EMBEDDINGS
+from danswer.db.llm import fetch_embedding_provider
 from danswer.db.models import CloudEmbeddingProvider
 from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexModelStatus
@@ -52,6 +53,26 @@ def get_model_id_from_name(
     )
     provider = db_session.execute(query).scalars().first()
     return provider.id if provider else None
+
+
+def get_current_db_embedding_provider(db_session: Session) -> CloudEmbeddingProvider:
+    current_model = EmbeddingModelDetail.from_model(
+        get_current_db_embedding_model(db_session=db_session)
+    )
+    if not current_model:
+        raise RuntimeError("No embedding model selected, DB is not in a valid state")
+
+    embedding_provider = CloudEmbeddingProvider.from_request(
+        fetch_embedding_provider(
+            db_session=db_session, provider_id=current_model.cloud_provider_id
+        )
+    )
+    if not current_model:
+        raise RuntimeError(
+            "No embedding provider exists for this model, DB is not in a valid state"
+        )
+
+    return embedding_provider
 
 
 def get_current_db_embedding_model(db_session: Session) -> EmbeddingModel:
