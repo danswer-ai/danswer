@@ -81,7 +81,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         for chunk_ind, chunk in enumerate(chunks):
             chunk_texts.append(chunk.content)
             mini_chunk_texts = (
-                split_chunk_text_into_mini_chunks(chunk.content)
+                split_chunk_text_into_mini_chunks(chunk.content_summary)
                 if enable_mini_chunk
                 else []
             )

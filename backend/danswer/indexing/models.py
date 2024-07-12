@@ -38,6 +38,7 @@ class DocAwareChunk(BaseChunk):
 
     # The Vespa documents require a separate highlight field. Since it is stored as a duplicate anyway,
     # it's easier to just store a not prefixed/suffixed string for the highlighting
+    # Also during the chunking, this non-prefixed/suffixed string is used for mini-chunks
     content_summary: str
 
     # During indexing we also (optionally) build a metadata string from the metadata dict

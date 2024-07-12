@@ -226,7 +226,7 @@ def chunk_document(
 def split_chunk_text_into_mini_chunks(
     chunk_text: str, mini_chunk_size: int = MINI_CHUNK_SIZE
 ) -> list[str]:
-    """The minichunks won't all have the title/metadata prefix/suffix
+    """The minichunks won't all have the title prefix or metadata suffix
     It could be a significant percentage of every minichunk so better to not include it
     """
     from llama_index.text_splitter import SentenceSplitter
