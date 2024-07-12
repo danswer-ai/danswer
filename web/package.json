@@ -47,7 +47,8 @@
     "tailwindcss": "^3.3.1",
     "typescript": "5.0.3",
     "uuid": "^9.0.1",
-    "yup": "^1.1.1"
+    "yup": "^1.1.1",
+    "lenis": "^1.0.45"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.10",
