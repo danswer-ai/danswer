@@ -29,7 +29,6 @@ from ee.danswer.server.query_and_chat.models import TestStandardAnswerRequest
 from ee.danswer.server.query_and_chat.models import TestStandardAnswerResponse
 
 logger = setup_logger()
-
 router = APIRouter(prefix="/chat")
 
 
@@ -52,12 +51,11 @@ def translate_doc_response_to_simple_doc(
 
 def remove_answer_citations(answer: str) -> str:
     pattern = r"\s*\[\[\d+\]\]\(http[s]?://[^\s]+\)"
-
     return re.sub(pattern, "", answer)
 
 
-@router.post("/test-standard-answer")
-def test_standard_answer(
+@router.get("/standard-answer")
+def get_standard_answer(
     request: TestStandardAnswerRequest,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_user),
@@ -71,7 +69,7 @@ def test_standard_answer(
         return TestStandardAnswerResponse(standard_answers=standard_answers)
 
     except Exception as e:
-        return TestStandardAnswerResponse(error_msg=f"An error has occured: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/send-message-simple-api")

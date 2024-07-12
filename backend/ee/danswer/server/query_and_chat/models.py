@@ -14,7 +14,6 @@ class TestStandardAnswerRequest(BaseModel):
 
 class TestStandardAnswerResponse(BaseModel):
     standard_answers: list[StandardAnswer] = []
-    error_msg: str | None = None
 
 
 class DocumentSearchRequest(ChunkContext):

@@ -50,10 +50,10 @@ def oneoff_standard_answers(
         db_session=db_session,
     )
 
-    server_tandard_answers = [
+    server_standard_answers = [
         StandardAnswer.from_model(db_answer) for db_answer in matching_standard_answers
     ]
-    return server_tandard_answers
+    return server_standard_answers
 
 
 def handle_standard_answers(
