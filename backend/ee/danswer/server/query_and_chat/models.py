@@ -7,12 +7,12 @@ from danswer.search.models import RetrievalDetails
 from danswer.server.manage.models import StandardAnswer
 
 
-class TestStandardAnswerRequest(BaseModel):
+class StandardAnswerRequest(BaseModel):
     message: str
     slack_bot_categories: list[str]
 
 
-class TestStandardAnswerResponse(BaseModel):
+class StandardAnswerResponse(BaseModel):
     standard_answers: list[StandardAnswer] = []
 
 

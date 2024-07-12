@@ -11,9 +11,6 @@ from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.chat.process_message import stream_chat_message_objects
-from danswer.danswerbot.slack.handlers.handle_standard_answers import (
-    oneoff_standard_answers,
-)
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.engine import get_session
 from danswer.db.models import User
@@ -25,8 +22,6 @@ from danswer.utils.logger import setup_logger
 from ee.danswer.server.query_and_chat.models import BasicCreateChatMessageRequest
 from ee.danswer.server.query_and_chat.models import ChatBasicResponse
 from ee.danswer.server.query_and_chat.models import SimpleDoc
-from ee.danswer.server.query_and_chat.models import TestStandardAnswerRequest
-from ee.danswer.server.query_and_chat.models import TestStandardAnswerResponse
 
 logger = setup_logger()
 router = APIRouter(prefix="/chat")
@@ -52,24 +47,6 @@ def translate_doc_response_to_simple_doc(
 def remove_answer_citations(answer: str) -> str:
     pattern = r"\s*\[\[\d+\]\]\(http[s]?://[^\s]+\)"
     return re.sub(pattern, "", answer)
-
-
-@router.get("/standard-answer")
-def get_standard_answer(
-    request: TestStandardAnswerRequest,
-    db_session: Session = Depends(get_session),
-    _: User | None = Depends(current_user),
-) -> TestStandardAnswerResponse:
-    try:
-        standard_answers = oneoff_standard_answers(
-            message=request.message,
-            slack_bot_categories=request.slack_bot_categories,
-            db_session=db_session,
-        )
-        return TestStandardAnswerResponse(standard_answers=standard_answers)
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/send-message-simple-api")
