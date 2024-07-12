@@ -261,11 +261,11 @@ export function getSourceMetadata(sourceType: ValidSources): SourceMetadata {
 }
 
 export function listSourceMetadata(): SourceMetadata[] {
-  const entries = Object.entries(SOURCE_METADATA_MAP).map(
-    ([source, metadata]) => {
+  const entries = Object.entries(SOURCE_METADATA_MAP)
+    .filter(([source, _]) => source !== "not_applicable")
+    .map(([source, metadata]) => {
       return fillSourceMetadata(metadata, source as ValidSources);
-    }
-  );
+    });
   return entries;
 }
 
