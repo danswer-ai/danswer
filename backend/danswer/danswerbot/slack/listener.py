@@ -469,13 +469,13 @@ if __name__ == "__main__":
                     # or the tokens have updated (set up for the first time)
                     with Session(get_sqlalchemy_engine()) as db_session:
                         embedding_model = get_current_db_embedding_model(db_session)
-
-                        warm_up_encoders(
-                            model_name=embedding_model.model_name,
-                            normalize=embedding_model.normalize,
-                            model_server_host=MODEL_SERVER_HOST,
-                            model_server_port=MODEL_SERVER_PORT,
-                        )
+                        if embedding_model.cloud_provider_id is None:
+                            warm_up_encoders(
+                                model_name=embedding_model.model_name,
+                                normalize=embedding_model.normalize,
+                                model_server_host=MODEL_SERVER_HOST,
+                                model_server_port=MODEL_SERVER_PORT,
+                            )
 
                 slack_bot_tokens = latest_slack_bot_tokens
                 # potentially may cause a message to be dropped, but it is complicated

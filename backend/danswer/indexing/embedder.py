@@ -50,6 +50,8 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         normalize: bool,
         query_prefix: str | None,
         passage_prefix: str | None,
+        api_key: str | None = None,
+        provider_type: str | None = None,
     ):
         super().__init__(model_name, normalize, query_prefix, passage_prefix)
         self.max_seq_length = DOC_EMBEDDING_CONTEXT_SIZE  # Currently not customizable
@@ -59,6 +61,8 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
             query_prefix=query_prefix,
             passage_prefix=passage_prefix,
             normalize=normalize,
+            api_key=api_key,
+            provider_type=provider_type,
             # The below are globally set, this flow always uses the indexing one
             server_host=INDEXING_MODEL_SERVER_HOST,
             server_port=INDEXING_MODEL_SERVER_PORT,
