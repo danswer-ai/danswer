@@ -274,10 +274,6 @@ export function ChatPage({
     initialSessionFetch();
   }, [existingChatSessionId]);
 
-  const [usedSidebarWidth, setUsedSidebarWidth] = useState<number>(
-    documentSidebarInitialWidth || parseInt(SIDEBAR_WIDTH_CONST)
-  );
-
   const [message, setMessage] = useState(
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
@@ -1039,8 +1035,6 @@ export function ChatPage({
     router.push("/search");
   }
 
-  // const [toggledSidebar, setToggledSidebar] = useState(toggleChatSidebar!); // State to track if sidebar is open
-
   const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
 
   const toggleSidebar = () => {
@@ -1051,9 +1045,7 @@ export function ChatPage({
       {
         path: "/",
       };
-    console.log(!toggledSidebar);
 
-    console.log("SHOLD TOGGLE");
     toggle();
   };
 
@@ -1082,25 +1074,17 @@ export function ChatPage({
       livePersona
     );
   });
-  const [editingRetrievalEnabled, setEditingRetrievalEnabled] = useState(false);
+
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
 
   const currentPersona = selectedAssistant || livePersona;
 
-  const updateSelectedAssistant = (newAssistant: Persona | null) => {
-    setSelectedAssistant(newAssistant);
-    if (newAssistant) {
-      setEditingRetrievalEnabled(personaIncludesRetrieval(newAssistant));
-    } else {
-      setEditingRetrievalEnabled(false);
-    }
-  };
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
         switch (event.key.toLowerCase()) {
           case "e":
-            // event.preventDefault();
+            event.preventDefault();
             toggleSidebar();
             break;
         }
@@ -1134,8 +1118,8 @@ export function ChatPage({
           className={`
             flex-none 
             absolute 
-            left-0 
-            z-50 
+            left-0
+            z-50
             overflow-y-hidden 
             sidebar 
             bg-background-weak 
@@ -1147,7 +1131,7 @@ export function ChatPage({
             ${
               showDocSidebar || toggledSidebar
                 ? "opacity-100 w-[300px] translate-x-0"
-                : "opacity-0 w-[200px]  pointer-events-none -translate-x-10"
+                : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
             }
           `}
         >
@@ -1238,11 +1222,11 @@ export function ChatPage({
                         duration-300 
                         ease-in-out
                         h-full
-                        ${toggledSidebar ? "w-[300px] " : "w-[0px]"}
+                        ${toggledSidebar ? "w-[300px]" : "w-[0px]"}
                       `}
                     ></div>
                     <div
-                      className={`h-full  w-full  relative flex-auto transition-margin duration-300  overflow-x-auto pb-[140px]`}
+                      className={`h-full w-full relative flex-auto transition-margin duration-300  overflow-x-auto pb-[140px]`}
                       {...getRootProps()}
                     >
                       {/* <input {...getInputProps()} /> */}
@@ -1265,8 +1249,8 @@ export function ChatPage({
                         <div
                           className={
                             "mt-4 -ml-4 w-full mx-auto " +
-                            "  absolute top-12  left-1/2 transform -translate-x-1/2" +
-                            (hasPerformedInitialScroll ? "" : " invisible")
+                            "absolute top-12 left-1/2 transform -translate-x-1/2" +
+                            (hasPerformedInitialScroll ? "" : "invisible")
                           }
                         >
                           {messageHistory.map((message, i) => {
@@ -1594,7 +1578,7 @@ export function ChatPage({
                             onSetSelectedAssistant={(
                               alternativeAssistant: Persona | null
                             ) => {
-                              updateSelectedAssistant(alternativeAssistant);
+                              setSelectedAssistant(alternativeAssistant);
                             }}
                             alternativeAssistant={selectedAssistant}
                             personas={filteredAssistants}

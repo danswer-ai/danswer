@@ -222,7 +222,6 @@ class SearchSessionDetailResponse(BaseModel):
     description: str
     documents: list[SearchDoc]
     messages: list[ChatMessageDetail]
-    # time_created: datetime
 
 
 class ChatSessionDetailResponse(BaseModel):

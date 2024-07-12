@@ -6,15 +6,13 @@ import FunctionalWrapper from "./shared_chat_search/FunctionalWrapper";
 
 export default function WrapperTest({
   defaultPersonaId,
-  finalDocumentSidebarInitialWidth,
-  toggleChatSidebar,
+  toggleSidebar,
 }: {
   defaultPersonaId?: number;
-  finalDocumentSidebarInitialWidth?: number;
-  toggleChatSidebar?: boolean | undefined;
+  toggleSidebar: boolean | undefined;
 }) {
   const [toggledSidebar, setToggledSidebar] = useState<boolean>(
-    toggleChatSidebar || false
+    toggleSidebar || false
   );
   const toggle = () => {
     setToggledSidebar((toggledSidebar) => !toggledSidebar);
@@ -25,7 +23,6 @@ export default function WrapperTest({
       <ChatPage
         toggle={toggle}
         defaultSelectedPersonaId={defaultPersonaId}
-        documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
         toggledSidebar={toggledSidebar}
       />
     </FunctionalWrapper>

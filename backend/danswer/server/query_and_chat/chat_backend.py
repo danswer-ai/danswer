@@ -110,6 +110,7 @@ def get_user_chat_sessions(
     )
 
 
+# Search history
 @router.get("/get-user-searches")
 def get_user_query_sessions(
     user: User | None = Depends(current_user),
@@ -147,7 +148,6 @@ def get_user_query_sessions(
             for chat in chat_sessions
         ]
     )
-
     return response
 
 
@@ -173,10 +173,8 @@ def get_search_session(
     session_id: int,
     is_shared: bool = False,
     user: User | None = Depends(current_user),
-    # user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> SearchSessionDetailResponse:
-    # ) -> SearchSessionDetailResponse:
     user_id = user.id if user is not None else None
 
     try:
@@ -187,11 +185,8 @@ def get_search_session(
             is_shared=is_shared,
         )
     except ValueError:
-        raise ValueError("Chat session does not exist or has been deleted")
+        raise ValueError("Search session does not exist or has been deleted")
 
-    # for chat-seeding: if the session is unassigned, assign it now. This is done here
-    # to avoid another back and forth between FE -> BE before starting the first
-    # message generation
     if search_session.user_id is None and user_id is not None:
         search_session.user_id = user_id
         db_session.commit()

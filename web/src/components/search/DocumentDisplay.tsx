@@ -241,7 +241,6 @@ export const DocumentDisplay = ({
             )}
           </div>
         </div>
-
         <div className="mt-1">
           <DocumentMetadataBlock document={document} />
         </div>

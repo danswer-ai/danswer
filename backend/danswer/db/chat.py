@@ -316,8 +316,6 @@ def get_chat_messages_by_session(
 
     if prefetch_tool_calls:
         stmt = stmt.options(joinedload(ChatMessage.tool_calls))
-
-    if prefetch_tool_calls:
         result = db_session.scalars(stmt).unique().all()
     else:
         result = db_session.scalars(stmt).all()

@@ -32,7 +32,7 @@ export const searchRequestStreamed = async ({
   updateError,
   updateMessageId,
   finishedSearching,
-  updateDocumentRelevance, // New callback function
+  updateDocumentRelevance,
   updateComments,
 }: SearchRequestArgs) => {
   let answer = "";
@@ -169,8 +169,7 @@ export const searchRequestStreamed = async ({
           return;
         }
 
-        console.log(chunk);
-        // Is a bakcend message- handle all backend message related updates here
+        // Check for the final chunk
         if (Object.hasOwn(chunk, "message_id")) {
           console.log("I am updating message ID");
           const backendChunk = chunk as BackendMessage;

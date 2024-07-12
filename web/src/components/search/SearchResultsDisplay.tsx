@@ -17,6 +17,7 @@ import { AlertIcon, BroomIcon, UndoIcon } from "../icons/icons";
 import { AgenticDocumentDisplay, DocumentDisplay } from "./DocumentDisplay";
 import { searchState } from "./SearchSection";
 import { useEffect, useState } from "react";
+import { Tooltip } from "../tooltip/Tooltip";
 
 const getSelectedDocumentIds = (
   documents: SearchDanswerDocument[],
@@ -144,38 +145,43 @@ export const SearchResultsDisplay = ({
         )
       : documents ?? [];
 
+  const isMac = navigator.userAgent.indexOf("Mac") !== -1;
+
   return (
     <>
       {popup}
+
       {documents && documents.length > 0 && (
         <div className="mt-4">
           <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
             <p>Results</p>
             {!agenticResults &&
               (contentEnriched || searchResponse.additional_relevance) && (
-                <button
-                  onClick={() => performSweep()}
-                  className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
-                    !sweep
-                      ? "bg-green-500 text-solidDark"
-                      : "bg-rose-700 text-lighter"
-                  }`}
-                  style={{
-                    transform: sweep ? "rotateZ(180deg)" : "rotateZ(0deg)",
-                  }}
-                >
-                  <div
-                    className={`flex items-center ${sweep ? "rotate-180" : ""}`}
+                <Tooltip delayDuration={1000} content={`${isMac ? "⌘" : "⊞"}O`}>
+                  <button
+                    onClick={() => performSweep()}
+                    className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
+                      !sweep
+                        ? "bg-green-500 text-solidDark"
+                        : "bg-rose-700 text-lighter"
+                    }`}
+                    style={{
+                      transform: sweep ? "rotateZ(180deg)" : "rotateZ(0deg)",
+                    }}
                   >
-                    <span></span>
-                    {!sweep ? "hide" : "undo"}
-                    {!sweep ? (
-                      <BroomIcon className="h-4 w-4" />
-                    ) : (
-                      <UndoIcon className="h-4 w-4" />
-                    )}
-                  </div>
-                </button>
+                    <div
+                      className={`flex items-center ${sweep ? "rotate-180" : ""}`}
+                    >
+                      <span></span>
+                      {!sweep ? "hide" : "undo"}
+                      {!sweep ? (
+                        <BroomIcon className="h-4 w-4" />
+                      ) : (
+                        <UndoIcon className="h-4 w-4" />
+                      )}
+                    </div>
+                  </button>
+                </Tooltip>
               )}
           </div>
 

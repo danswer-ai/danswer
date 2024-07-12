@@ -27,6 +27,7 @@ export const AnimatedToggle = ({
   const [width, setWidth] = useState("auto");
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const isMac = navigator.userAgent.indexOf("Mac") !== -1;
 
   useEffect(() => {
     const updateWidth = () => {
@@ -60,9 +61,11 @@ export const AnimatedToggle = ({
             Get quality results immediately, best suited for instant access to
             your documents.
           </p>
+          <p className="mt-2 text-xs">Hint: ({isMac ? "⌘" : "⊞"}/)</p>
         </div>
       }
     >
+      {/* that the proper symbol appears on Macbook vs Windows for the command symbol? */}
       <div
         ref={containerRef}
         className=" my-auto ml-auto flex jusitfy-end items-center cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"

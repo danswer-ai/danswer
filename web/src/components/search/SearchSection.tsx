@@ -490,21 +490,18 @@ export const SearchSection = ({
             }
           `}
         >
-          <div className="w-full   relative">
+          <div className="w-full relative">
             <HistorySidebar
               search
               ref={innerSidebarElementRef}
               toggleSidebar={toggleSidebar}
               toggled={toggledSidebar}
               existingChats={querySessions}
-              // currentChatSession={selectedChatSession}
-              // folders={folders}
-              // openedFolders={openedFolders}
             />
           </div>
         </div>
 
-        <div className="absolute left-0  w-full top-0 ">
+        <div className="absolute box-content left-0 w-full top-0 ">
           <FunctionalHeader
             showSidebar={showDocSidebar}
             page="search"
@@ -522,7 +519,7 @@ export const SearchSection = ({
                     bg-opacity-80
                     duration-300 
                     ease-in-out
-                    ${toggledSidebar ? "w-[300px] " : "w-[0px]"}
+                    ${toggledSidebar ? "w-[300px]" : "w-[0px]"}
                   `}
             />
 

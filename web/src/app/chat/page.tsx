@@ -65,19 +65,10 @@ export default async function Page({
           openedFolders,
         }}
       >
-        <WrapperTest />
-        {/* <FunctionalWrapper
-          content={(toggle) => (
-            <ChatPage
-              toggle={toggle}
-              defaultSelectedPersonaId={defaultPersonaId}
-              documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
-              toggleChatSidebar={toggleChatSidebar}
-            />
-          )
-          }
-
-        /> */}
+        <WrapperTest
+          defaultPersonaId={defaultPersonaId}
+          toggleSidebar={toggleChatSidebar}
+        />
       </ChatProvider>
     </>
   );

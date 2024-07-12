@@ -67,7 +67,7 @@ async function Page({ params }: { params: { id: string } }) {
 
       <BackButton />
       <AdminPageTitle
-        icon={<CPUIcon size={32} className="" />}
+        icon={<CPUIcon size={32} />}
         title="Edit Slack Bot Config"
       />
 

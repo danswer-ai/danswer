@@ -243,7 +243,7 @@ export default function Page() {
       </div>
 
       <AdminPageTitle
-        icon={<GithubIcon size={32} className="" />}
+        icon={<GithubIcon size={32} />}
         title="Github PRs + Issues"
       />
 

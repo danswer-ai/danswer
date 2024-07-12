@@ -35,6 +35,7 @@ import {
   RightToLineIcon,
 } from "@/components/icons/icons";
 import { PagesTab } from "./PagesTab";
+import { Tooltip } from "@/components/tooltip/Tooltip";
 
 interface HistorySidebarProps {
   search?: boolean;
@@ -45,6 +46,8 @@ interface HistorySidebarProps {
   toggleSidebar?: () => void;
   toggled?: boolean;
 }
+const isMac = navigator.userAgent.indexOf("Mac") !== -1;
+
 // forwardRef<HTMLDivElement, DocumentSidebarProps>(
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
   (
@@ -107,10 +110,13 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 <HeaderTitle>Danswer</HeaderTitle>
               )}
             </div>
+
             {toggleSidebar && (
-              <button className="ml-auto" onClick={toggleSidebar}>
-                {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
-              </button>
+              <Tooltip delayDuration={1000} content={`${isMac ? "⌘" : "⊞"}E`}>
+                <button className="ml-auto" onClick={toggleSidebar}>
+                  {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
+                </button>
+              </Tooltip>
             )}
           </div>
           {!search && (

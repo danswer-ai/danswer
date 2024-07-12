@@ -66,7 +66,7 @@ export default function Status() {
   return (
     <div className="mx-auto container">
       <AdminPageTitle
-        icon={<NotebookIcon size={32} className="" />}
+        icon={<NotebookIcon size={32} />}
         title="Existing Connectors"
         farRightElement={
           <Link href="/admin/add-connector">

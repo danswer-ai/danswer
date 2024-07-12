@@ -125,7 +125,7 @@ export interface SearchRequestArgs {
   timeRange: DateRangePickerValue | null;
   tags: Tag[];
   persona: Persona;
-  updateDocumentRelevance: (relevance: any) => void; // New callback function
+  updateDocumentRelevance: (relevance: any) => void;
   updateCurrentAnswer: (val: string) => void;
   updateQuotes: (quotes: Quote[]) => void;
   updateDocs: (documents: DanswerDocument[]) => void;

@@ -29,6 +29,7 @@ const ToggleSwitch = () => {
     router.push(tab === "search" ? "/search" : "/chat");
   };
 
+  const isMac = navigator.userAgent.indexOf("Mac") !== -1;
   return (
     <div className="bg-gray-100 flex rounded-full p-1">
       <div
@@ -46,7 +47,7 @@ const ToggleSwitch = () => {
       >
         <SearchIcon className="!w-4 !h-4 mr-2" />
         Search
-        <span className="text-xs ml-2">⌘S</span>
+        <span className="text-xs ml-2">{isMac ? "⌘" : "⊞"}S</span>
       </button>
       <button
         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 ease-in-out flex items-center relative z-10 ${
@@ -58,7 +59,7 @@ const ToggleSwitch = () => {
       >
         <ChatIcon className="!w-4 !h-4 mr-2" />
         Chat
-        <span className="text-xs ml-2">⌘D</span>
+        <span className="text-xs ml-2">{isMac ? "⌘" : "⊞"}D</span>
       </button>
     </div>
   );
