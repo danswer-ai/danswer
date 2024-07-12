@@ -327,7 +327,7 @@ def fetch_user_ids_from_groups(
         response = client.usergroups_list()
         if not isinstance(response.data, dict):
             logger.error("Error fetching user groups")
-            return user_ids, failed_to_find
+            return user_ids, given_names
 
         all_group_data = response.data.get("usergroups", [])
         name_id_map = {d["name"]: d["id"] for d in all_group_data}
@@ -339,12 +339,18 @@ def fetch_user_ids_from_groups(
             if not group_id:
                 failed_to_find.append(given_name)
                 continue
-            response = client.usergroups_users_list(usergroup=group_id)
-            if isinstance(response.data, dict):
-                user_ids.extend(response.data.get("users", []))
+            try:
+                response = client.usergroups_users_list(usergroup=group_id)
+                if isinstance(response.data, dict):
+                    user_ids.extend(response.data.get("users", []))
+                else:
+                    failed_to_find.append(given_name)
+            except Exception as e:
+                logger.error(f"Error fetching user group ids: {str(e)}")
+                failed_to_find.append(given_name)
     except Exception as e:
         logger.error(f"Error fetching user groups: {str(e)}")
-        failed_to_find.append(given_name)
+        failed_to_find = given_names
 
     return user_ids, failed_to_find
 
@@ -352,14 +358,14 @@ def fetch_user_ids_from_groups(
 def fetch_group_ids_from_names(
     given_names: list[str], client: WebClient
 ) -> tuple[list[str], list[str]]:
-    group_data: list[str] = []  # group_name: id
+    group_data: list[str] = []
     failed_to_find: list[str] = []
 
     try:
         response = client.usergroups_list()
         if not isinstance(response.data, dict):
             logger.error("Error fetching user groups")
-            return group_data, failed_to_find
+            return group_data, given_names
 
         all_group_data = response.data.get("usergroups", [])
 
@@ -374,6 +380,7 @@ def fetch_group_ids_from_names(
             else:
                 failed_to_find.append(given_name)
     except Exception as e:
+        failed_to_find = given_names
         logger.error(f"Error fetching user groups: {str(e)}")
 
     return group_data, failed_to_find
