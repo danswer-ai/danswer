@@ -15,6 +15,7 @@ from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.embedding_model import update_embedding_model_status
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import expire_index_attempts
+from danswer.db.embedding_model import get_model_id_from_name
 from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
@@ -37,6 +38,19 @@ def set_new_embedding_model(
     Gives an error if the same model name is used as the current or secondary index
     """
     current_model = get_current_db_embedding_model(db_session)
+
+    if embed_model_details.cloud_provider_name is not None:
+        cloud_id = get_model_id_from_name(
+            db_session, embed_model_details.cloud_provider_name
+        )
+        if cloud_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No ID exists for given provider name",
+            )
+
+        embed_model_details.cloud_provider_id = cloud_id
+
 
     if embed_model_details.model_name == current_model.model_name:
         raise HTTPException(
