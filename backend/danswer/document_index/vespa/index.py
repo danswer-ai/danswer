@@ -64,7 +64,6 @@ from danswer.document_index.vespa.utils import remove_invalid_unicode_chars
 from danswer.document_index.vespa.utils import replace_invalid_doc_id_characters
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.search.models import IndexFilters
-from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceChunkUncleaned
 from danswer.search.retrieval.search_runner import query_processing
 from danswer.search.retrieval.search_runner import remove_stop_words_and_punctuation
@@ -675,16 +674,6 @@ def _query_vespa(
     inference_chunks = [_vespa_hit_to_inference_chunk(hit) for hit in filtered_hits]
     # Good Debugging Spot
     return inference_chunks
-
-
-@retry(tries=3, delay=1, backoff=2)
-def _inference_chunk_by_vespa_id(vespa_id: str, index_name: str) -> InferenceChunk:
-    res = requests.get(
-        f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{vespa_id}"
-    )
-    res.raise_for_status()
-
-    return _vespa_hit_to_inference_chunk(res.json())
 
 
 def in_memory_zip_from_file_bytes(file_contents: dict[str, bytes]) -> BinaryIO:
