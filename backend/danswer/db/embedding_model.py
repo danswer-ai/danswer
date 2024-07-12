@@ -56,23 +56,23 @@ def get_model_id_from_name(
 
 
 def get_current_db_embedding_provider(db_session: Session) -> CloudEmbeddingProvider:
-    current_model = EmbeddingModelDetail.from_model(
+    current_embedding_model = EmbeddingModelDetail.from_model(
         get_current_db_embedding_model(db_session=db_session)
     )
-    if not current_model:
+    if not current_embedding_model:
         raise RuntimeError("No embedding model selected, DB is not in a valid state")
 
-    embedding_provider = CloudEmbeddingProvider.from_request(
+    current_embedding_provider = CloudEmbeddingProvider.from_request(
         fetch_embedding_provider(
-            db_session=db_session, provider_id=current_model.cloud_provider_id
+            db_session=db_session, provider_id=current_embedding_model.cloud_provider_id
         )
     )
-    if not current_model:
+    if not current_embedding_provider:
         raise RuntimeError(
             "No embedding provider exists for this model, DB is not in a valid state"
         )
 
-    return embedding_provider
+    return current_embedding_provider
 
 
 def get_current_db_embedding_model(db_session: Session) -> EmbeddingModel:

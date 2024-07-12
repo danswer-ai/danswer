@@ -55,15 +55,17 @@ def test_embedding_configuration(
             api_key=test_llm_request.api_key,
             provider_type=test_llm_request.provider,
         )
-        encoding = test_model.encode(["test"], text_type=EmbedTextType.QUERY)
-        return {"success": True, "embedding_length": len(encoding)}
+        test_model.encode(["Test String"], text_type=EmbedTextType.QUERY)
+
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        error_msg = f"Not a valid embedding model. Exception thrown: {e}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
     except Exception as e:
-        logger.error(
-            f"An error occurred while testing embedding: {str(e)}", exc_info=True
-        )
-        return {"success": False}
+        error_msg = f"An error occurred while testing embedding {e}"
+        logger.error(error_msg, exc_info=True)
+        raise HTTPException(status_code=400, detail=error_msg)
 
 
 @admin_router.post("/test")

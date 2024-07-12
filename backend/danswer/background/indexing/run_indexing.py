@@ -113,8 +113,7 @@ def _run_indexing(
 
     cloud_provider_id = db_embedding_model.cloud_provider_id
 
-    api_key = None
-    provider_type = None
+    api_key, provider_type = None, None
     if cloud_provider_id is not None:
         provider = fetch_embedding_provider(
             db_session=db_session, provider_id=cloud_provider_id
