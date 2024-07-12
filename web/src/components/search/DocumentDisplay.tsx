@@ -198,7 +198,6 @@ export const DocumentDisplay = ({
             <FaStar className="h-full !w-4 !h-4   text-xs text-accent  rounded w-fit my-auto select-none ml-auto mr-2" />
           )}
       </div>
-
       <div
         className={`collapsible ${hide ? "collapsible-closed overflow-y-auto border-transparent" : ""}`}
       >
@@ -275,7 +274,6 @@ export const AgenticDocumentDisplay = ({
   setPopup,
 }: DocumentDisplayProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [showContext, setShowContext] = useState(false);
 
   const [alternativeToggled, setAlternativeToggled] = useState(false);
 

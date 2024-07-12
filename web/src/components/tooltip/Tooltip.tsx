@@ -36,7 +36,7 @@ export function Tooltip({
             py-1 
             px-2 
             shadow-lg
-            z-100
+            z-10
           `}
         >
           {content}
