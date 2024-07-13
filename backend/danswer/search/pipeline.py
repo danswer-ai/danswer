@@ -3,6 +3,8 @@ from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
 
+from sqlalchemy.orm import Session
+
 from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import LlmDoc
 from danswer.chat.models import RelevanceChunk
@@ -34,7 +36,6 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
@@ -92,8 +93,6 @@ class SearchPipeline:
         ] | None = None
         self._final_context_documents: list[LlmDoc] | None = None
 
-
-
     def evaluate(self, top_doc: LlmDoc, query: str) -> dict[str, RelevanceChunk]:
         # Group documents by document_id
 
@@ -132,6 +131,7 @@ class SearchPipeline:
         relevance.content = content.split("RESULT")[0]
         results[document_id] = relevance
         return results
+
     """Pre-processing"""
 
     def _run_preprocessing(self) -> None:
@@ -368,7 +368,11 @@ class SearchPipeline:
         return self._reranked_sections
 
     @property
-    def final_context_documents(self):
+    def final_context_documents(self) -> list[LlmDoc]:
+        if self.pruning_config is None or self.prompt_config is None:
+            raise ValueError(
+                "Pruning or prompt config have not been correctly set for search pipeline"
+            )
 
         final_context_sections = prune_and_merge_sections(
             sections=self.reranked_sections,
@@ -396,7 +400,6 @@ class SearchPipeline:
         )
         return self._relevant_section_indices
 
-
     @property
     def relevance_summaries(self) -> dict[str, RelevanceChunk]:
         if self._final_context_documents is None:
@@ -412,7 +415,6 @@ class SearchPipeline:
         return {
             next(iter(value)): value[next(iter(value))] for value in results.values()
         }
-
 
     @property
     def section_relevance_list(self) -> list[bool]:
