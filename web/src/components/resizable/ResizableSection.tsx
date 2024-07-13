@@ -83,7 +83,6 @@ export function ResizableSection({
 
   return (
     <div className="flex h-full">
-
       <div
         style={{ width: `${width}px` }}
         className={`resize-section h-full flex`}
@@ -107,10 +106,11 @@ export function ResizableSection({
           h-full
           w-full
           transition-all duration-300 ease-in hover:border-border-strong hover:border-r-2
-          ${isResizing
+          ${
+            isResizing
               ? "transition-all duration-300 ease-in border-border-strong border-r-2"
               : ""
-            }
+          }
           `}
         ></div>
       </div>
