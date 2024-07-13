@@ -61,6 +61,7 @@ class UserGroup(BaseModel):
             personas=[
                 PersonaSnapshot.from_model(persona)
                 for persona in user_group_model.personas
+                if not persona.deleted
             ],
             is_up_to_date=user_group_model.is_up_to_date,
             is_up_for_deletion=user_group_model.is_up_for_deletion,
