@@ -1,5 +1,6 @@
-from danswer.danswerbot.slack.utils import respond_in_thread
 from slack_sdk import WebClient
+
+from danswer.danswerbot.slack.utils import respond_in_thread
 
 
 def send_team_member_message(

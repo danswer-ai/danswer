@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
 
+from pydantic import BaseModel
+
 from danswer.access.models import DocumentAccess
 from danswer.connectors.models import Document
 from danswer.utils.logger import setup_logger
-from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from danswer.db.models import EmbeddingModel

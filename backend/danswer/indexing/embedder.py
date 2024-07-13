@@ -1,6 +1,8 @@
 from abc import ABC
 from abc import abstractmethod
 
+from sqlalchemy.orm import Session
+
 from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE

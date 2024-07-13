@@ -7,6 +7,7 @@ from typing import Any
 from typing import cast
 
 import requests
+
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import GONG_CONNECTOR_START_TIME
 from danswer.configs.app_configs import INDEX_BATCH_SIZE

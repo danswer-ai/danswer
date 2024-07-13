@@ -2,6 +2,8 @@ from functools import partial
 from itertools import chain
 from typing import Protocol
 
+from sqlalchemy.orm import Session
+
 from danswer.access.access import get_access_for_documents
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
@@ -26,7 +28,6 @@ from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

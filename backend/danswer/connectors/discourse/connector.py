@@ -5,6 +5,9 @@ from datetime import timezone
 from typing import Any
 
 import requests
+from pydantic import BaseModel
+from requests import Response
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
@@ -18,8 +21,6 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.utils.logger import setup_logger
-from pydantic import BaseModel
-from requests import Response
 
 logger = setup_logger()
 
