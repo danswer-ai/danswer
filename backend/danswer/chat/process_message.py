@@ -3,6 +3,8 @@ from collections.abc import Iterator
 from functools import partial
 from typing import cast
 
+from sqlalchemy.orm import Session
+
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import CustomToolResponse
@@ -88,7 +90,6 @@ from danswer.tools.utils import compute_all_tool_tokens
 from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
@@ -599,14 +600,11 @@ def stream_chat_message_objects(
                         db_session=db_session,
                         selected_search_docs=selected_db_search_docs,
                         # Deduping happens at the last step to avoid harming quality by dropping content early on
-                        dedupe_docs=(
-                            retrieval_options.dedupe_docs
-                            if retrieval_options
-                            else False
-                        ),
+                        dedupe_docs=retrieval_options.dedupe_docs
+                        if retrieval_options
+                        else False,
                     )
                     yield qa_docs_response
-
                 elif packet.id == SECTION_RELEVANCE_LIST_ID:
                     chunk_indices = packet.response
 
@@ -616,10 +614,10 @@ def stream_chat_message_objects(
                             search_docs=reference_db_search_docs,
                             dropped_indices=dropped_indices,
                         )
+
                     yield LLMRelevanceFilterResponse(
                         relevant_chunk_indices=chunk_indices
                     )
-
                 elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
                     img_generation_response = cast(
                         list[ImageGenerationResponse], packet.response
@@ -697,18 +695,16 @@ def stream_chat_message_objects(
             token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
             citations=db_citations,
             error=None,
-            tool_calls=(
-                [
-                    ToolCall(
-                        tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                        tool_name=tool_result.tool_name,
-                        tool_arguments=tool_result.tool_args,
-                        tool_result=tool_result.tool_result,
-                    )
-                ]
-                if tool_result
-                else []
-            ),
+            tool_calls=[
+                ToolCall(
+                    tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                    tool_name=tool_result.tool_name,
+                    tool_arguments=tool_result.tool_args,
+                    tool_result=tool_result.tool_result,
+                )
+            ]
+            if tool_result
+            else [],
         )
         db_session.commit()  # actually save user / assistant message
 

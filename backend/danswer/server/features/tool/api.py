@@ -1,5 +1,11 @@
 from typing import Any
 
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
@@ -13,11 +19,6 @@ from danswer.server.features.tool.models import ToolSnapshot
 from danswer.tools.custom.openapi_parsing import MethodSpec
 from danswer.tools.custom.openapi_parsing import openapi_to_method_specs
 from danswer.tools.custom.openapi_parsing import validate_openapi_schema
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/tool")
 admin_router = APIRouter(prefix="/admin/tool")
