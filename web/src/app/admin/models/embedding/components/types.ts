@@ -117,26 +117,12 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     name: "OpenAI",
     website: "https://openai.com",
     icon: OpenAIIcon,
-    description: "Leading AI research company known for GPT models and DALL-E.",
+    description: "AI industry leader known for ChatGPT and DALL-E",
     apiLink: "https://platform.openai.com/api-keys",
     docsLink:
       "https://docs.danswer.dev/guides/embedding_providers#openai-models",
     costslink: "https://openai.com/pricing",
     embedding_models: [
-      {
-        model_name: "text-embedding-3-small",
-        cloud_provider_name: "OpenAI",
-        model_dim: 1536,
-        normalize: false,
-        query_prefix: "",
-        passage_prefix: "",
-        description:
-          "OpenAI's newer, more efficient embedding model. Good balance of performance and cost.",
-        pricePerMillion: 0.02,
-        enabled: false,
-        mtebScore: 62.3,
-        maxContext: 8191,
-      },
       {
         model_name: "text-embedding-3-large",
         cloud_provider_name: "OpenAI",
@@ -151,6 +137,20 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         maxContext: 8191,
         enabled: false,
       },
+      {
+        model_name: "text-embedding-3-small",
+        cloud_provider_name: "OpenAI",
+        model_dim: 1536,
+        normalize: false,
+        query_prefix: "",
+        passage_prefix: "",
+        description:
+          "OpenAI's newer, more efficient embedding model. Good balance of performance and cost.",
+        pricePerMillion: 0.02,
+        enabled: false,
+        mtebScore: 62.3,
+        maxContext: 8191,
+      },
     ],
   },
   {
@@ -160,7 +160,8 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     icon: CohereIcon,
     docsLink:
       "https://docs.danswer.dev/guides/embedding_providers#cohere-models",
-    description: "Specializes in NLP models for various text-based tasks.",
+    description:
+      "AI company specializing in NLP models for various text-based tasks",
     apiLink: "https://dashboard.cohere.ai/api-keys",
     costslink: "https://cohere.com/pricing",
     embedding_models: [
@@ -194,12 +195,41 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
       },
     ],
   },
+
   {
     id: 2,
+    name: "Google Vertex",
+    website: "https://ai.google",
+    icon: GoogleIcon,
+    docsLink:
+      "https://docs.danswer.dev/guides/embedding_providers#vertex-ai-google-model",
+    description:
+      "Offers a wide range of AI services including language and vision models",
+    apiLink: "https://console.cloud.google.com/apis/credentials",
+    costslink: "https://cloud.google.com/vertex-ai/pricing",
+    embedding_models: [
+      {
+        cloud_provider_name: "Vertex",
+        model_name: "gecko",
+        description:
+          "Google's Gecko embedding model. Powerful and efficient, but requires more setup.",
+        pricePerMillion: 0.025,
+        mtebScore: 66.31,
+        maxContext: 2048,
+        enabled: false,
+        model_dim: 768,
+        normalize: false,
+        query_prefix: "",
+        passage_prefix: "",
+      },
+    ],
+  },
+  {
+    id: 3,
     name: "Voyage",
     website: "https://www.voyageai.com",
     icon: VoyageIcon,
-    description: "Focuses on advanced language models and embeddings.",
+    description: "Advanced NLP research startup born from Stanford AI Labs",
     docsLink:
       "https://docs.danswer.dev/guides/embedding_providers#voyage-models",
     apiLink: "https://www.voyageai.com/dashboard",
@@ -229,34 +259,6 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         maxContext: 16000,
         enabled: false,
         model_dim: 1024,
-        normalize: false,
-        query_prefix: "",
-        passage_prefix: "",
-      },
-    ],
-  },
-  {
-    id: 3,
-    name: "Vertex",
-    website: "https://ai.google",
-    icon: GoogleIcon,
-    docsLink:
-      "https://docs.danswer.dev/guides/embedding_providers#vertex-ai-google-model",
-    description:
-      "Offers a wide range of AI services including language and vision models.",
-    apiLink: "https://console.cloud.google.com/apis/credentials",
-    costslink: "https://cloud.google.com/vertex-ai/pricing",
-    embedding_models: [
-      {
-        cloud_provider_name: "Vertex",
-        model_name: "gecko",
-        description:
-          "Google's Gecko embedding model. Powerful and efficient, but requires more setup.",
-        pricePerMillion: 0.025,
-        mtebScore: 66.31,
-        maxContext: 2048,
-        enabled: false,
-        model_dim: 768,
         normalize: false,
         query_prefix: "",
         passage_prefix: "",

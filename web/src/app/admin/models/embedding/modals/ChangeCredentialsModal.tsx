@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text, Callout, Subtitle, Divider } from "@tremor/react";
-import { Label } from "@/components/admin/connectors/Field";
+import { Label, TextFormField } from "@/components/admin/connectors/Field";
 import { CloudEmbeddingProvider } from "../components/types";
 import {
   EMBEDDING_PROVIDERS_ADMIN_URL,
@@ -9,6 +9,7 @@ import {
 } from "../../llm/constants";
 import { mutate } from "swr";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
+import { Field } from "formik";
 
 export function ChangeCredentialsModal({
   provider,
@@ -159,42 +160,50 @@ export function ChangeCredentialsModal({
           Want to swap out your key?
         </Subtitle>
 
-        <Callout title="Change credentials" color="blue" className="mt-4">
-          <div className="flex flex-col gap-y-2">
-            {useFileUpload ? (
-              <>
-                <Label>Upload JSON File</Label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".json"
-                  onChange={handleFileUpload}
-                  className="text-lg w-full p-1"
-                />
-                {fileName && <p>Uploaded file: {fileName}</p>}
-              </>
-            ) : (
-              <>
+        <div className="flex flex-col gap-y-2">
+          {useFileUpload ? (
+            <>
+              <Label>Upload JSON File</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleFileUpload}
+                className="text-lg w-full p-1"
+              />
+              {fileName && <p>Uploaded file: {fileName}</p>}
+            </>
+          ) : (
+            <>
+              <div className="flex gap-x-2 items-center">
                 <Label>New API Key</Label>
-                <input
-                  type="password"
-                  className="text-base w-full p-1"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Paste your API key here"
-                />
-              </>
-            )}
-            <a
-              href={provider.apiLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline cursor-pointer"
-            >
-              Visit API
-            </a>
-          </div>
-        </Callout>
+              </div>
+              <input
+                className={`
+                    border 
+                    border-border 
+                    rounded 
+                    w-full 
+                    py-2 
+                    px-3 
+                    mt-1
+                    bg-background-emphasis
+                `}
+                value={apiKey}
+                onChange={(e: any) => setApiKey(e.target.value)}
+                placeholder="Paste your API key here"
+              />
+            </>
+          )}
+          <a
+            href={provider.apiLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline cursor-pointer"
+          >
+            Visit API
+          </a>
+        </div>
 
         {testError && (
           <Callout title="Error" color="red" className="mt-4">

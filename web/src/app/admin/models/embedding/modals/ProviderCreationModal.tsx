@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { Text, Button, Callout } from "@tremor/react";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
-import { Label } from "@/components/admin/connectors/Field";
+import { Label, TextFormField } from "@/components/admin/connectors/Field";
 import { LoadingAnimation } from "@/components/Loading";
 import { CloudEmbeddingProvider } from "../components/types";
 import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../../llm/constants";
@@ -172,44 +172,36 @@ export function ProviderCreationModal({
                 </a>
               </Text>
 
-              <Callout title="Configuration" color="blue" className="mt-4">
-                <div className="flex flex-col gap-y-2">
-                  You will need to retrieve your API credentials for this
-                  update.
-                  {useFileUpload ? (
-                    <>
-                      <Label>Upload JSON File</Label>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".json"
-                        onChange={(e) => handleFileUpload(e, setFieldValue)}
-                        className="text-lg w-full p-1"
-                      />
-                      {fileName && <p>Uploaded file: {fileName}</p>}
-                    </>
-                  ) : (
-                    <>
-                      <Label>API Key</Label>
-                      <Field
-                        name="api_key"
-                        type="password"
-                        className="text-lg w-full p-1"
-                      />
-                    </>
-                  )}
-                  {errors.api_key && touched.api_key && (
-                    <div className="text-red-500">{errors.api_key}</div>
-                  )}
-                  <a
-                    href={selectedProvider.apiLink}
-                    target="_blank"
-                    className="underline cursor-pointer"
-                  >
-                    Learn more here
-                  </a>
-                </div>
-              </Callout>
+              <div className="flex flex-col gap-y-2">
+                {useFileUpload ? (
+                  <>
+                    <Label>Upload JSON File</Label>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".json"
+                      onChange={(e) => handleFileUpload(e, setFieldValue)}
+                      className="text-lg w-full p-1"
+                    />
+                    {fileName && <p>Uploaded file: {fileName}</p>}
+                  </>
+                ) : (
+                  <TextFormField
+                    name="api_key"
+                    label="API Key"
+                    placeholder="API Key"
+                    type="password"
+                  />
+                )}
+
+                <a
+                  href={selectedProvider.apiLink}
+                  target="_blank"
+                  className="underline cursor-pointer"
+                >
+                  Learn more here
+                </a>
+              </div>
 
               {errorMsg && (
                 <Callout title="Error" color="red">

@@ -25,7 +25,7 @@ import Link from "next/link";
 import OpenEmbeddingPage from "./OpenEmbeddingPage";
 import CloudEmbeddingPage from "./CloudEmbeddingPage";
 import { ProviderCreationModal } from "./modals/ProviderCreationModal";
-import { ModelNotConfiguredModal } from "./modals/ModelNotConfiguredModal";
+
 import { DeleteCredentialsModal } from "./modals/DeleteCredentialsModal";
 import { SelectModelModal } from "./modals/SelectModelModal";
 import { ChangeCredentialsModal } from "./modals/ChangeCredentialsModal";
@@ -283,7 +283,7 @@ function Main() {
           onCancel={() => setShowTentativeOpenProvider(null)}
         />
       )}
-      {showUnconfiguredProvider && (
+      {/* {showUnconfiguredProvider && (
         <ModelNotConfiguredModal
           modelProvider={showUnconfiguredProvider}
           onConfirm={() => {
@@ -292,14 +292,13 @@ function Main() {
           }}
           onCancel={() => setShowUnconfiguredProvider(null)}
         />
-      )}
+      )} */}
 
       {showTentativeProvider && (
         <ProviderCreationModal
           selectedProvider={showTentativeProvider}
           onConfirm={() => {
             setShowTentativeProvider(showUnconfiguredProvider);
-            setShowUnconfiguredProvider(null);
             clientsideAddProvider(showTentativeProvider);
           }}
           onCancel={() => setShowTentativeProvider(null)}
@@ -390,15 +389,14 @@ function Main() {
           />
         ) : (
           <CloudEmbeddingPage
+            setShowTentativeModel={setShowTentativeModel}
             currentModel={currentModel}
             setAlreadySelectedModel={setAlreadySelectedModel}
             embeddingProviderDetails={embeddingProviderDetails}
             newEnabledProviders={newEnabledProviders}
             newUnenabledProviders={newUnenabledProviders}
-            setTentativeNewEmbeddingModel={setShowTentativeModel}
             setShowTentativeProvider={setShowTentativeProvider}
             selectedModel={selectedModel}
-            setShowUnconfiguredProvider={setShowUnconfiguredProvider}
             setChangeCredentialsProvider={setChangeCredentialsProvider}
           />
         ))}

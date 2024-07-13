@@ -19,12 +19,12 @@ export default function CloudEmbeddingPage({
   embeddingProviderDetails,
   newEnabledProviders,
   newUnenabledProviders,
-  setTentativeNewEmbeddingModel,
   setShowTentativeProvider,
-  setShowUnconfiguredProvider,
   setChangeCredentialsProvider,
   setAlreadySelectedModel,
+  setShowTentativeModel,
 }: {
+  setShowTentativeModel: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
   currentModel: EmbeddingModelDescriptor | CloudEmbeddingModel;
   setAlreadySelectedModel: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
   newUnenabledProviders: string[];
@@ -33,13 +33,8 @@ export default function CloudEmbeddingPage({
   selectedModel: CloudEmbeddingProvider;
 
   // create modal functions
-  setTentativeNewEmbeddingModel: React.Dispatch<
-    React.SetStateAction<CloudEmbeddingModel | null>
-  >;
+
   setShowTentativeProvider: React.Dispatch<
-    React.SetStateAction<CloudEmbeddingProvider | null>
-  >;
-  setShowUnconfiguredProvider: React.Dispatch<
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
   setChangeCredentialsProvider: React.Dispatch<
@@ -110,36 +105,23 @@ export default function CloudEmbeddingPage({
                 </a>
               </button>
             </div>
-            <button
-              onClick={() => {
-                if (!provider.configured) {
-                  setShowTentativeProvider(provider);
-                } else {
-                  setChangeCredentialsProvider(provider);
-                }
-              }}
-              className="hover:underline my-2 mr-auto cursor-pointer"
-            >
-              {provider.configured
-                ? "Modify credentials"
-                : "Configure credentials"}
-            </button>
 
             <div>
               {provider.embedding_models.map((model, index) => {
                 const enabled = model.model_name == currentModel.model_name;
+
                 return (
                   <div
                     key={index}
-                    className={`p-3 mb-2 border-2 border-neutral-300 border-opacity-40 rounded-md rounded cursor-pointer  
+                    className={`p-3 my-2 border-2 border-neutral-300 border-opacity-40 rounded-md rounded cursor-pointer  
                     ${!provider.configured ? "opacity-80 hover:opacity-100" : enabled ? "bg-background-stronger" : "hover:bg-background-strong"}`}
                     onClick={() => {
                       if (enabled) {
                         setAlreadySelectedModel(model);
-                      } else if (!provider.configured) {
-                        setShowUnconfiguredProvider(provider);
+                      } else if (provider.configured) {
+                        setShowTentativeModel(model);
                       } else {
-                        setTentativeNewEmbeddingModel(model);
+                        setShowTentativeProvider(provider);
                       }
                     }}
                   >
@@ -156,6 +138,18 @@ export default function CloudEmbeddingPage({
                 );
               })}
             </div>
+            <button
+              onClick={() => {
+                if (!provider.configured) {
+                  setShowTentativeProvider(provider);
+                } else {
+                  setChangeCredentialsProvider(provider);
+                }
+              }}
+              className="hover:underline mb-1 text-sm mr-auto cursor-pointer"
+            >
+              {provider.configured && "Modify credentials"}
+            </button>
           </div>
         ))}
       </div>

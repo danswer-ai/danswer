@@ -17,9 +17,6 @@ export function AlreadyPickedModal({
       onOutsideClick={onClose}
     >
       <div className="mb-4">
-        <Text className="text-lg mb-2">
-          Heads up: {model.model_name} is your current model!
-        </Text>
         <Text className="text-sm mb-2">
           You can select a different one if you want!
         </Text>
