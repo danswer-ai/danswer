@@ -16,7 +16,7 @@ export function ChatBanner() {
       className={`
       z-[39] 
       h-[30px]
-      bg-background-custom-header
+      bg-background-weak
       shadow-sm
       m-2
       rounded
