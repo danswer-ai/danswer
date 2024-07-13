@@ -3,6 +3,7 @@ import importlib
 from typing import Any
 from typing import TypeVar
 
+from danswer.configs.app_configs import ENTERPRISE_EDITION_ENABLED
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -23,9 +24,9 @@ global_version = DanswerVersion()
 
 
 def set_is_ee_based_on_env_variable() -> None:
-    # if ENTERPRISE_EDITION_ENABLED and not global_version.get_is_ee_version():
-    logger.info("Enterprise Edition enabled")
-    global_version.set_ee()
+    if ENTERPRISE_EDITION_ENABLED and not global_version.get_is_ee_version():
+        logger.info("Enterprise Edition enabled")
+        global_version.set_ee()
 
 
 @functools.lru_cache(maxsize=128)
