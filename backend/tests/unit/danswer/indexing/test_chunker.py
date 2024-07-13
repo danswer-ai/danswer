@@ -2,6 +2,7 @@ from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.indexing.chunker import chunk_document
+from danswer.search.search_nlp_models import get_default_tokenizer
 
 
 def test_chunk_document() -> None:
@@ -29,7 +30,8 @@ def test_chunk_document() -> None:
         ],
     )
 
-    chunks = chunk_document(document)
+    tokenizer = get_default_tokenizer()
+    chunks = chunk_document(document, tokenizer)
     assert len(chunks) == 5
     assert all(semantic_identifier in chunk.content for chunk in chunks)
     assert short_section_1 in chunks[0].content

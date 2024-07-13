@@ -238,7 +238,9 @@ def split_chunk_text_into_mini_chunks(
 
 class Chunker:
     @abc.abstractmethod
-    def chunk(self, document: Document) -> list[DocAwareChunk]:
+    def chunk(
+        self, document: Document, tokenizer: "AutoTokenizer"
+    ) -> list[DocAwareChunk]:
         raise NotImplementedError
 
 
