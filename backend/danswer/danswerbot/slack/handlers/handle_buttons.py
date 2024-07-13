@@ -2,6 +2,13 @@ import logging
 from typing import Any
 from typing import cast
 
+from slack_sdk import WebClient
+from slack_sdk.models.blocks import SectionBlock
+from slack_sdk.models.views import View
+from slack_sdk.socket_mode import SocketModeClient
+from slack_sdk.socket_mode.request import SocketModeRequest
+from sqlalchemy.orm import Session
+
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.danswerbot_configs import DANSWER_FOLLOWUP_EMOJI
@@ -35,12 +42,6 @@ from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.utils.logger import setup_logger
-from slack_sdk import WebClient
-from slack_sdk.models.blocks import SectionBlock
-from slack_sdk.models.views import View
-from slack_sdk.socket_mode import SocketModeClient
-from slack_sdk.socket_mode.request import SocketModeRequest
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

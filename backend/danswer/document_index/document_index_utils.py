@@ -1,11 +1,12 @@
 import math
 import uuid
 
+from sqlalchemy.orm import Session
+
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.indexing.models import IndexChunk
 from danswer.search.models import InferenceChunk
-from sqlalchemy.orm import Session
 
 
 DEFAULT_BATCH_SIZE = 30

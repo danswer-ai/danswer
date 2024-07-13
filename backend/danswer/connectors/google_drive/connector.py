@@ -8,6 +8,11 @@ from itertools import chain
 from typing import Any
 from typing import cast
 
+from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
+from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
+from googleapiclient import discovery  # type: ignore
+from googleapiclient.errors import HttpError  # type: ignore
+
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
@@ -40,10 +45,6 @@ from danswer.file_processing.extract_file_text import pdf_to_text
 from danswer.file_processing.extract_file_text import pptx_to_text
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
-from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
-from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
-from googleapiclient import discovery  # type: ignore
-from googleapiclient.errors import HttpError  # type: ignore
 
 logger = setup_logger()
 

@@ -10,6 +10,12 @@ from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
+from oauthlib.oauth2 import BackendApplicationClient
+from playwright.sync_api import BrowserContext
+from playwright.sync_api import Playwright
+from playwright.sync_api import sync_playwright
+from requests_oauthlib import OAuth2Session  # type:ignore
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_ID
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_SECRET
@@ -23,11 +29,6 @@ from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import pdf_to_text
 from danswer.file_processing.html_utils import web_html_cleanup
 from danswer.utils.logger import setup_logger
-from oauthlib.oauth2 import BackendApplicationClient
-from playwright.sync_api import BrowserContext
-from playwright.sync_api import Playwright
-from playwright.sync_api import sync_playwright
-from requests_oauthlib import OAuth2Session  # type:ignore
 
 logger = setup_logger()
 

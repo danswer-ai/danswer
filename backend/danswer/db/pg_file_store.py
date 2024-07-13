@@ -2,13 +2,14 @@ import tempfile
 from io import BytesIO
 from typing import IO
 
+from psycopg2.extensions import connection
+from sqlalchemy.orm import Session
+
 from danswer.configs.constants import FileOrigin
 from danswer.db.models import PGFileStore
 from danswer.file_store.constants import MAX_IN_MEMORY_SIZE
 from danswer.file_store.constants import STANDARD_CHUNK_SIZE
 from danswer.utils.logger import setup_logger
-from psycopg2.extensions import connection
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

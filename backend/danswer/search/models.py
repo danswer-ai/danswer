@@ -1,6 +1,9 @@
 from datetime import datetime
 from typing import Any
 
+from pydantic import BaseModel
+from pydantic import validator
+
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
@@ -12,8 +15,6 @@ from danswer.db.models import Persona
 from danswer.indexing.models import BaseChunk
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import SearchType
-from pydantic import BaseModel
-from pydantic import validator
 from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
 
 

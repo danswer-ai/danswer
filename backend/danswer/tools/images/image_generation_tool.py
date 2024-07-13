@@ -3,6 +3,9 @@ from collections.abc import Generator
 from typing import Any
 from typing import cast
 
+from litellm import image_generation  # type: ignore
+from pydantic import BaseModel
+
 from danswer.chat.chat_utils import combine_message_chain
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.dynamic_configs.interface import JSON_ro
@@ -16,8 +19,6 @@ from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
-from litellm import image_generation  # type: ignore
-from pydantic import BaseModel
 
 logger = setup_logger()
 

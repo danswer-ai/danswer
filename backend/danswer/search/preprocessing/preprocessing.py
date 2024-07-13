@@ -1,3 +1,5 @@
+from sqlalchemy.orm import Session
+
 from danswer.configs.chat_configs import BASE_RECENCY_DECAY
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.chat_configs import FAVOR_RECENT_DECAY_MULTIPLIER
@@ -20,7 +22,6 @@ from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.timing import log_function_time
 from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
-from sqlalchemy.orm import Session
 
 
 logger = setup_logger()

@@ -11,6 +11,8 @@ from urllib.parse import urlparse
 
 import bs4
 from atlassian import Confluence  # type:ignore
+from requests import HTTPError
+
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING
@@ -31,7 +33,6 @@ from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.file_processing.html_utils import format_document_soup
 from danswer.utils.logger import setup_logger
-from requests import HTTPError
 
 logger = setup_logger()
 
@@ -83,7 +84,6 @@ def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, st
         + parsed_url.netloc
         + parsed_url.path.split(DISPLAY)[0]
     )
-
     space = DISPLAY.join(parsed_url.path.split(DISPLAY)[1:]).split("/")[0]
     page_id = ""
     if (content := parsed_url.path.split(PAGE)) and len(content) > 1:
