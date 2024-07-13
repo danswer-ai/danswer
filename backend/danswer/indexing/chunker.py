@@ -36,12 +36,11 @@ logger = setup_logger()
 ChunkFunc = Callable[[Document], list[DocAwareChunk]]
 
 
-def extract_blurb(text: str, blurb_size: int) -> str:
+def extract_blurb(text: str, blurb_size: int, tokenizer: "AutoTokenizer") -> str:
     from llama_index.text_splitter import SentenceSplitter
 
-    token_count_func = get_default_tokenizer().tokenize
     blurb_splitter = SentenceSplitter(
-        tokenizer=token_count_func, chunk_size=blurb_size, chunk_overlap=0
+        tokenizer=tokenizer.tokenize, chunk_size=blurb_size, chunk_overlap=0
     )
 
     return blurb_splitter.split_text(text)[0]
@@ -61,13 +60,13 @@ def chunk_large_section(
 ) -> list[DocAwareChunk]:
     from llama_index.text_splitter import SentenceSplitter
 
-    blurb = extract_blurb(section_text, blurb_size)
+    blurb = extract_blurb(section_text, blurb_size, tokenizer)  # 0.01-0.08 seconds
 
     sentence_aware_splitter = SentenceSplitter(
         tokenizer=tokenizer.tokenize, chunk_size=chunk_size, chunk_overlap=chunk_overlap
     )
 
-    split_texts = sentence_aware_splitter.split_text(section_text)
+    split_texts = sentence_aware_splitter.split_text(section_text)  # 0.01-0.08 seconds
 
     chunks = [
         DocAwareChunk(
@@ -102,13 +101,12 @@ def _get_metadata_suffix_for_document_index(
 
 def chunk_document(
     document: Document,
+    tokenizer: "AutoTokenizer",
     chunk_tok_size: int = DOC_EMBEDDING_CONTEXT_SIZE,
     subsection_overlap: int = CHUNK_OVERLAP,
     blurb_size: int = BLURB_SIZE,
     include_metadata: bool = not SKIP_METADATA_IN_CHUNK,
 ) -> list[DocAwareChunk]:
-    tokenizer = get_default_tokenizer()
-
     title = document.get_title_for_document_index()
     title_prefix = f"{title}{RETURN_SEPARATOR}"[:MAX_CHUNK_TITLE_LEN] if title else ""
     title_tokens = len(tokenizer.tokenize(title_prefix))
@@ -151,7 +149,7 @@ def chunk_document(
                     DocAwareChunk(
                         source_document=document,
                         chunk_id=len(chunks),
-                        blurb=extract_blurb(chunk_text, blurb_size),
+                        blurb=extract_blurb(chunk_text, blurb_size, tokenizer),
                         content=f"{title_prefix}{chunk_text}{metadata_suffix}",
                         content_summary=chunk_text,
                         source_links=link_offsets,
@@ -193,7 +191,7 @@ def chunk_document(
                 DocAwareChunk(
                     source_document=document,
                     chunk_id=len(chunks),
-                    blurb=extract_blurb(chunk_text, blurb_size),
+                    blurb=extract_blurb(chunk_text, blurb_size, tokenizer),
                     content=f"{title_prefix}{chunk_text}{metadata_suffix}",
                     content_summary=chunk_text,
                     source_links=link_offsets,
@@ -211,7 +209,7 @@ def chunk_document(
             DocAwareChunk(
                 source_document=document,
                 chunk_id=len(chunks),
-                blurb=extract_blurb(chunk_text, blurb_size),
+                blurb=extract_blurb(chunk_text, blurb_size, tokenizer),
                 content=f"{title_prefix}{chunk_text}{metadata_suffix}",
                 content_summary=chunk_text,
                 source_links=link_offsets,
@@ -245,8 +243,10 @@ class Chunker:
 
 
 class DefaultChunker(Chunker):
-    def chunk(self, document: Document) -> list[DocAwareChunk]:
+    def chunk(
+        self, document: Document, tokenizer: "AutoTokenizer"
+    ) -> list[DocAwareChunk]:
         # Specifically for reproducing an issue with gmail
         if document.source == DocumentSource.GMAIL:
             logger.debug(f"Chunking {document.semantic_identifier}")
-        return chunk_document(document)
+        return chunk_document(document, tokenizer)

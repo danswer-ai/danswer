@@ -1,3 +1,4 @@
+import time
 from functools import partial
 from itertools import chain
 from typing import Protocol
@@ -26,6 +27,7 @@ from danswer.indexing.chunker import DefaultChunker
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
+from danswer.search.search_nlp_models import get_default_tokenizer
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -149,13 +151,19 @@ def index_doc_batch(
     )
 
     logger.debug("Starting chunking")
+    chunking_start_time = time.time()
 
-    # The first chunk additionally contains the Title of the Document
+    tokenizer = get_default_tokenizer()
     chunks: list[DocAwareChunk] = list(
-        chain(*[chunker.chunk(document=document) for document in updatable_docs])
+        chain(*[chunker.chunk(document, tokenizer) for document in updatable_docs])
+    )
+
+    logger.debug(
+        f"It took {time.time() - chunking_start_time} to chunk {len(updatable_docs)} docs"
     )
 
     logger.debug("Starting embedding")
+    embedding_start_time = time.time()
     chunks_with_embeddings = embedder.embed_chunks(chunks=chunks)
 
     # Acquires a lock on the documents so that no other process can modify them
@@ -213,6 +221,10 @@ def index_doc_batch(
         update_docs_updated_at(
             ids_to_new_updated_at=ids_to_new_updated_at, db_session=db_session
         )
+
+    logger.debug(
+        f"It took {time.time() - embedding_start_time} to embed {len(chunks)} chunks"
+    )
 
     return len([r for r in insertion_records if r.already_existed is False]), len(
         chunks
