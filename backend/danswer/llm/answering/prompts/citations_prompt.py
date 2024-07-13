@@ -1,3 +1,6 @@
+from langchain.schema.messages import HumanMessage
+from langchain.schema.messages import SystemMessage
+
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
@@ -26,8 +29,6 @@ from danswer.prompts.token_counts import CITATION_REMINDER_TOKEN_CNT
 from danswer.prompts.token_counts import CITATION_STATEMENT_TOKEN_CNT
 from danswer.prompts.token_counts import LANGUAGE_HINT_TOKEN_CNT
 from danswer.search.models import InferenceChunk
-from langchain.schema.messages import HumanMessage
-from langchain.schema.messages import SystemMessage
 
 
 def get_prompt_tokens(prompt_config: PromptConfig) -> int:

@@ -1,3 +1,9 @@
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import Path
+from sqlalchemy.orm import Session
+
 from danswer.auth.users import current_user
 from danswer.db.chat import get_chat_session_by_id
 from danswer.db.engine import get_session
@@ -17,11 +23,6 @@ from danswer.server.features.folder.models import FolderUpdateRequest
 from danswer.server.features.folder.models import GetUserFoldersResponse
 from danswer.server.models import DisplayPriorityRequest
 from danswer.server.query_and_chat.models import ChatSessionDetails
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import Path
-from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/folder")
 

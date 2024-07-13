@@ -3,6 +3,11 @@ import time
 from datetime import datetime
 
 import dask
+from dask.distributed import Client
+from dask.distributed import Future
+from distributed import LocalCluster
+from sqlalchemy.orm import Session
+
 from danswer.background.indexing.dask_utils import ResourceLogger
 from danswer.background.indexing.job_client import SimpleJob
 from danswer.background.indexing.job_client import SimpleJobClient
@@ -32,13 +37,9 @@ from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
-from dask.distributed import Client
-from dask.distributed import Future
-from distributed import LocalCluster
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import LOG_LEVEL
 from shared_configs.configs import MODEL_SERVER_PORT
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

@@ -12,6 +12,8 @@ connector / credential pair from the access list
 """
 import time
 
+from sqlalchemy.orm import Session
+
 from danswer.access.access import get_access_for_documents
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector_credential_pair import (
@@ -33,7 +35,6 @@ from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

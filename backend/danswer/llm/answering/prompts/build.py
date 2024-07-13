@@ -1,6 +1,10 @@
 from collections.abc import Callable
 from typing import cast
 
+from langchain_core.messages import BaseMessage
+from langchain_core.messages import HumanMessage
+from langchain_core.messages import SystemMessage
+
 from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
@@ -14,9 +18,6 @@ from danswer.prompts.chat_prompts import CHAT_USER_CONTEXT_FREE_PROMPT
 from danswer.prompts.prompt_utils import add_date_time_to_prompt
 from danswer.prompts.prompt_utils import drop_messages_history_overflow
 from danswer.tools.message import ToolCallSummary
-from langchain_core.messages import BaseMessage
-from langchain_core.messages import HumanMessage
-from langchain_core.messages import SystemMessage
 
 
 def default_build_system_message(
