@@ -1,5 +1,6 @@
-from danswer.db.models import Prompt
 from pydantic import BaseModel
+
+from danswer.db.models import Prompt
 
 
 class CreatePromptRequest(BaseModel):

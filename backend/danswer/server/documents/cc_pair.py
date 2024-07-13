@@ -1,3 +1,9 @@
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_status
@@ -12,11 +18,6 @@ from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorCredentialPairMetadata
 from danswer.server.models import StatusResponse
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/manage")
 
