@@ -99,8 +99,6 @@ class DiscourseConnector(PollConnector):
         valid_categories = set(self.category_id_map.keys())
 
         total_topics = 0
-        filtered_by_time = 0
-        filtered_by_category = 0
 
         latest_endpoint = urllib.parse.urljoin(
             self.base_url, f"latest.json?page={page}"
@@ -117,10 +115,9 @@ class DiscourseConnector(PollConnector):
             last_time_dt = time_str_to_utc(last_time)
 
             if start and start > last_time_dt:
-                filtered_by_time += 1
                 continue
+
             if end and end < last_time_dt:
-                filtered_by_time += 1
                 continue
 
             if (
@@ -128,7 +125,6 @@ class DiscourseConnector(PollConnector):
                 and valid_categories
                 and topic.get("category_id") not in valid_categories
             ):
-                filtered_by_category += 1
                 continue
 
             topic_ids.append(topic["id"])
