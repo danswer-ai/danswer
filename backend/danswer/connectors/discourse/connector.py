@@ -98,8 +98,6 @@ class DiscourseConnector(PollConnector):
         topic_ids = []
         valid_categories = set(self.category_id_map.keys())
 
-        total_topics = 0
-
         latest_endpoint = urllib.parse.urljoin(
             self.base_url, f"latest.json?page={page}"
         )
@@ -108,7 +106,6 @@ class DiscourseConnector(PollConnector):
         topics = response.json()["topic_list"]["topics"]
 
         for topic in topics:
-            total_topics += 1
             last_time = topic.get("last_posted_at")
             if not last_time:
                 continue
