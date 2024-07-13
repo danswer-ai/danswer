@@ -14,7 +14,7 @@ import {
   ClipboardIcon,
   ChatIcon,
   SearchIcon,
-  NotebookIconSkeleton, 
+  NotebookIconSkeleton,
   ConnectorIconSkeleton,
   ThumbsUpIconSkeleton,
   ToolIconSkeleton,

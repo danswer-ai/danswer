@@ -289,7 +289,6 @@ export const AIMessage = ({
                               query={query}
                               hasDocs={hasDocs || false}
                               messageId={messageId}
-
                               finished={toolCall?.tool_result != undefined}
                               isCurrentlyShowingRetrieved={
                                 isCurrentlyShowingRetrieved
@@ -305,7 +304,9 @@ export const AIMessage = ({
                         !hasDocs &&
                         !retrievalDisabled && (
                           <div className="my-1">
-                            <SkippedSearch handleForceSearch={handleForceSearch} />
+                            <SkippedSearch
+                              handleForceSearch={handleForceSearch}
+                            />
                           </div>
                         )}
                     </>
@@ -347,7 +348,9 @@ export const AIMessage = ({
                       </>
                     )}
                     {toolCall &&
-                      !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
+                      !TOOLS_WITH_CUSTOM_HANDLING.includes(
+                        toolCall.tool_name
+                      ) && (
                         <div className="my-2">
                           <ToolRunDisplay
                             toolName={
@@ -355,7 +358,9 @@ export const AIMessage = ({
                                 ? `Used "${toolCall.tool_name}"`
                                 : `Using "${toolCall.tool_name}"`
                             }
-                            toolLogo={<FiTool size={15} className="my-auto mr-1" />}
+                            toolLogo={
+                              <FiTool size={15} className="my-auto mr-1" />
+                            }
                             isRunning={!toolCall.tool_result || !content}
                           />
                         </div>
@@ -367,25 +372,30 @@ export const AIMessage = ({
                         <div className="my-2">
                           <ToolRunDisplay
                             toolName={`Generating images`}
-                            toolLogo={<FiImage size={15} className="my-auto mr-1" />}
+                            toolLogo={
+                              <FiImage size={15} className="my-auto mr-1" />
+                            }
                             isRunning={!toolCall.tool_result}
                           />
                         </div>
                       )}
 
-                    {toolCall && toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
-                      <div className="my-2">
-                        <ToolRunDisplay
-                          toolName={
-                            toolCall.tool_result
-                              ? `Searched the internet`
-                              : `Searching the internet`
-                          }
-                          toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
-                          isRunning={!toolCall.tool_result}
-                        />
-                      </div>
-                    )}
+                    {toolCall &&
+                      toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
+                        <div className="my-2">
+                          <ToolRunDisplay
+                            toolName={
+                              toolCall.tool_result
+                                ? `Searched the internet`
+                                : `Searching the internet`
+                            }
+                            toolLogo={
+                              <FiGlobe size={15} className="my-auto mr-1" />
+                            }
+                            isRunning={!toolCall.tool_result}
+                          />
+                        </div>
+                      )}
 
                     {content ? (
                       <>
@@ -429,14 +439,19 @@ export const AIMessage = ({
                                 }
                               },
                               code: (props) => (
-                                <CodeBlock {...props} content={content as string} />
+                                <CodeBlock
+                                  {...props}
+                                  content={content as string}
+                                />
                               ),
                               p: ({ node, ...props }) => (
                                 <p {...props} className="text-default" />
                               ),
                             }}
                             remarkPlugins={[remarkGfm]}
-                            rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+                            rehypePlugins={[
+                              [rehypePrism, { ignoreMissing: true }],
+                            ]}
                           >
                             {content}
                           </ReactMarkdown>
@@ -470,7 +485,7 @@ export const AIMessage = ({
                                     <p className="line-clamp-1">
                                       {
                                         doc.document_id.split("/")[
-                                        doc.document_id.split("/").length - 1
+                                          doc.document_id.split("/").length - 1
                                         ]
                                       }
                                     </p>
@@ -785,9 +800,9 @@ export const HumanMessage = ({
                 ) : typeof content === "string" ? (
                   <>
                     {onEdit &&
-                      isHovered &&
-                      !isEditing &&
-                      (!files || files.length === 0) ? (
+                    isHovered &&
+                    !isEditing &&
+                    (!files || files.length === 0) ? (
                       <div className="ml-auto my-auto">
                         <Hoverable
                           icon={FiEdit2}
@@ -805,13 +820,14 @@ export const HumanMessage = ({
                     {/* <FileDisplay alignBubble files={files || []} /> */}
 
                     <div
-                      className={`${!(
-                        onEdit &&
-                        isHovered &&
-                        !isEditing &&
-                        (!files || files.length === 0)
-                      ) && "ml-auto"
-                        } relative max-w-[70%] mb-auto rounded-3xl bg-user px-5 py-2.5`}
+                      className={`${
+                        !(
+                          onEdit &&
+                          isHovered &&
+                          !isEditing &&
+                          (!files || files.length === 0)
+                        ) && "ml-auto"
+                      } relative max-w-[70%] mb-auto rounded-3xl bg-user px-5 py-2.5`}
                     >
                       {content}
                     </div>
@@ -820,9 +836,9 @@ export const HumanMessage = ({
                 ) : (
                   <>
                     {onEdit &&
-                      isHovered &&
-                      !isEditing &&
-                      (!files || files.length === 0) ? (
+                    isHovered &&
+                    !isEditing &&
+                    (!files || files.length === 0) ? (
                       <div className="my-auto">
                         <Hoverable
                           icon={FiEdit2}

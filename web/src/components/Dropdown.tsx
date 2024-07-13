@@ -287,7 +287,6 @@ export function DefaultDropdownElement({
   );
 }
 
-
 type DefaultDropdownProps = {
   options: StringOrNumberOption[];
   selected: string | null;
@@ -296,11 +295,21 @@ type DefaultDropdownProps = {
   defaultValue?: string;
   side?: "top" | "right" | "bottom" | "left";
   maxHeight?: string;
-
 };
 
 export const DefaultDropdown = forwardRef<HTMLDivElement, DefaultDropdownProps>(
-  ({ options, selected, onSelect, includeDefault, defaultValue, side, maxHeight }, ref) => {
+  (
+    {
+      options,
+      selected,
+      onSelect,
+      includeDefault,
+      defaultValue,
+      side,
+      maxHeight,
+    },
+    ref
+  ) => {
     const selectedOption = options.find((option) => option.value === selected);
     const [isOpen, setIsOpen] = useState(false);
 
@@ -316,14 +325,16 @@ export const DefaultDropdown = forwardRef<HTMLDivElement, DefaultDropdownProps>(
       border 
       border-border 
       cursor-pointer`}
-    >
-      <p className="line-clamp-1">
-        {selectedOption?.name ||
-          (includeDefault ? defaultValue ?? "Default" : "Select an option...")}
-      </p>
-      <FiChevronDown className="my-auto ml-auto" />
-    </div>
-  );
+      >
+        <p className="line-clamp-1">
+          {selectedOption?.name ||
+            (includeDefault
+              ? defaultValue ?? "Default"
+              : "Select an option...")}
+        </p>
+        <FiChevronDown className="my-auto ml-auto" />
+      </div>
+    );
 
     const Dropdown = (
       <div
@@ -338,32 +349,32 @@ export const DefaultDropdown = forwardRef<HTMLDivElement, DefaultDropdownProps>(
         ${maxHeight || "max-h-96"}
         overflow-y-auto 
         overscroll-contain`}
-    >
-      {includeDefault && (
-        <DefaultDropdownElement
-          key={-1}
-          name="Default"
-          onSelect={() => {
-            onSelect(null);
-          }}
-          isSelected={selected === null}
-        />
-      )}
-      {options.map((option, ind) => {
-        const isSelected = option.value === selected;
-        return (
+      >
+        {includeDefault && (
           <DefaultDropdownElement
-            key={option.value}
-            name={option.name}
-            description={option.description}
-            onSelect={() => onSelect(option.value)}
-            isSelected={isSelected}
-            icon={option.icon}
+            key={-1}
+            name="Default"
+            onSelect={() => {
+              onSelect(null);
+            }}
+            isSelected={selected === null}
           />
-        );
-      })}
-    </div>
-  );
+        )}
+        {options.map((option, ind) => {
+          const isSelected = option.value === selected;
+          return (
+            <DefaultDropdownElement
+              key={option.value}
+              name={option.name}
+              description={option.description}
+              onSelect={() => onSelect(option.value)}
+              isSelected={isSelected}
+              icon={option.icon}
+            />
+          );
+        })}
+      </div>
+    );
 
     return (
       <div onClick={() => setIsOpen(!isOpen)}>
