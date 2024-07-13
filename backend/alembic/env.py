@@ -4,7 +4,7 @@ from logging.config import fileConfig
 from alembic import context
 from danswer.db.engine import build_connection_string
 from danswer.db.models import Base
-from sqlalchemy import pool
+from sqlalchemy import pool, text
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 from celery.backends.database.session import ResultModelBase  # type: ignore
@@ -43,21 +43,31 @@ def run_migrations_offline() -> None:
 
     """
     url = build_connection_string()
+    schema = target_metadata[0].schema
+
     context.configure(
         url=url,
         target_metadata=target_metadata,  # type: ignore
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        version_table_schema=schema,
     )
 
     with context.begin_transaction():
+        if schema and schema != "public":
+            context.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
+            context.execute(f"SET search_path TO {schema}")
         context.run_migrations()
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)  # type: ignore
+    schema = target_metadata[0].schema
+    context.configure(connection=connection, target_metadata=target_metadata, version_table_schema=schema)  # type: ignore
 
     with context.begin_transaction():
+        if schema is not None and schema != "public":
+            context.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
+            context.execute(text(f"SET search_path TO {schema}"))
         context.run_migrations()
 
 
