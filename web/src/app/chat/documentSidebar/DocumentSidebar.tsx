@@ -173,6 +173,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             >
               Save Changes
             </button>
+
             <button
               className="bg-background-dark text-xs p-2 rounded text-light"
               onClick={() => {

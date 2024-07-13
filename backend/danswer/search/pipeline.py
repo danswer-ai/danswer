@@ -1,7 +1,6 @@
 from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Iterator
-from typing import Any
 from typing import cast
 
 from danswer.chat.chat_utils import llm_doc_from_inference_section
@@ -98,7 +97,7 @@ class SearchPipeline:
     def evaluate(self, top_doc: LlmDoc, query: str) -> dict[str, RelevanceChunk]:
         # Group documents by document_id
 
-        relevance: dict[str, Any] = {}
+        relevance: RelevanceChunk = RelevanceChunk()
         results = {}
         document_id = top_doc.document_id
 
@@ -115,7 +114,7 @@ class SearchPipeline:
         3. Is the document's main topic related to the query?
         4. Would this document be useful to someone searching with this query?
 
-        Provide your chain of thought in a paragraph. Be concise but show your reasoning clearly.
+        Provide your chain of thought in a short paragraph. Be concise but show your reasoning clearly.
 
         Conclude with:
         RESULT: True (if relevant)
@@ -126,11 +125,11 @@ class SearchPipeline:
             message_generator_to_string_generator(self.llm.stream(prompt=prompt))
         )
         if "result: true" in content.lower():
-            relevance["relevant"] = True
+            relevance.relevant = True
         else:
-            relevance["relevant"] = False
+            relevance.relevant = False
 
-        relevance["content"] = content.split("RESULT")[0]
+        relevance.content = content.split("RESULT")[0]
         results[document_id] = relevance
         return results
     """Pre-processing"""
@@ -400,6 +399,9 @@ class SearchPipeline:
 
     @property
     def relevance_summaries(self) -> dict[str, RelevanceChunk]:
+        if self._final_context_documents is None:
+            return {}
+
         functions = [
             FunctionCall(self.evaluate, (final_context, self.search_query.query))
             for final_context in self._final_context_documents

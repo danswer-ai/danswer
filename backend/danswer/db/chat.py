@@ -546,8 +546,8 @@ def update_search_docs_table_with_relevance(
                 update(SearchDoc)
                 .where(SearchDoc.document_id == search_doc.document_id)
                 .values(
-                    relevant_search_result=relevance_data.get("relevant"),
-                    relevance_explanation=relevance_data.get("content"),
+                    relevant_search_result=relevance_data.relevant,
+                    relevance_explanation=relevance_data.content,
                 )
             )
         else:

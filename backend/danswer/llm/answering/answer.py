@@ -114,6 +114,7 @@ class Answer:
         skip_explicit_tool_calling: bool = False,
         # Returns the full document sections text from the search tool
         return_contexts: bool = False,
+        skip_generation: bool = False,
     ) -> None:
         if single_message_history and message_history:
             raise ValueError(
@@ -147,6 +148,7 @@ class Answer:
         ) = None
 
         self._return_contexts = return_contexts
+        self.skip_generation = skip_generation
 
     def _update_prompt_builder_for_search_tool(
         self, prompt_builder: AnswerPromptBuilder, final_context_documents: list[LlmDoc]
@@ -407,8 +409,6 @@ class Answer:
             )
         final = tool_runner.tool_final_result()
 
-        # print(final.id)
-
         yield final
 
         prompt = prompt_builder.build()
@@ -473,22 +473,23 @@ class Answer:
                     # assumes all tool responses will come first, then the final answer
                     break
 
-            process_answer_stream_fn = _get_answer_stream_processor(
-                context_docs=final_context_docs or [],
-                # if doc selection is enabled, then search_results will be None,
-                # so we need to use the final_context_docs
-                doc_id_to_rank_map=map_document_id_order(
-                    search_results or final_context_docs or []
-                ),
-                answer_style_configs=self.answer_style_config,
-            )
+            if not self.skip_generation:
+                process_answer_stream_fn = _get_answer_stream_processor(
+                    context_docs=final_context_docs or [],
+                    # if doc selection is enabled, then search_results will be None,
+                    # so we need to use the final_context_docs
+                    doc_id_to_rank_map=map_document_id_order(
+                        search_results or final_context_docs or []
+                    ),
+                    answer_style_configs=self.answer_style_config,
+                )
 
-            def _stream() -> Iterator[str]:
-                if message:
-                    yield cast(str, message)
-                yield from cast(Iterator[str], stream)
+                def _stream() -> Iterator[str]:
+                    if message:
+                        yield cast(str, message)
+                    yield from cast(Iterator[str], stream)
 
-            yield from process_answer_stream_fn(_stream())
+                yield from process_answer_stream_fn(_stream())
 
         processed_stream = []
         for processed_packet in _process_stream(output_generator):

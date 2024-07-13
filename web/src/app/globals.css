@@ -64,11 +64,11 @@
   background: theme("colors.scrollbar.dark.thumb-hover");
   /* Handle color on hover */
 }
+
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 0px;
   /* Vertical scrollbar width */
   height: 8px;
-  scrollbar-gutter: stable;
   /* Horizontal scrollbar height */
 }
 
