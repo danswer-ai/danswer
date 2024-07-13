@@ -242,7 +242,7 @@ export const ConfigureIcon = ({
 export const defaultTailwindCSS = "my-auto flex flex-shrink-0 text-default";
 export const defaultTailwindCSSBlue = "my-auto flex flex-shrink-0 text-link";
 
-export const OpenAIIcon = ({ 
+export const OpenAIIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
@@ -256,7 +256,7 @@ export const OpenAIIcon = ({
   );
 };
 
-export const OpenSourceIcon = ({ 
+export const OpenSourceIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
@@ -267,8 +267,8 @@ export const OpenSourceIcon = ({
     >
       <Image src={openSourceIcon} alt="Logo" width="96" height="96" />
     </div>
-  ); 
-}
+  );
+};
 export const AnthropicIcon = ({
   size = 16,
   className = defaultTailwindCSS,
@@ -295,7 +295,7 @@ export const LefToLineIcon = ({
       viewBox="0 0 24 24"
       style={{ width: `${size}px`, height: `${size}px` }}
       className={`w-[${size}px] h-[${size}px] ` + className}
-    > 
+    >
       <path
         fill="none"
         stroke="currentColor"
@@ -640,7 +640,7 @@ export const CheckmarkIcon = ({
   return (
     <svg
       style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] ` + className} 
+      className={`w-[${size}px] h-[${size}px] ` + className}
       xmlns="http://www.w3.org/2000/svg"
       width="200"
       height="200"
@@ -664,7 +664,7 @@ export const ClipboardIcon = ({
 }: IconProps) => {
   return <FiClipboard size={size} className={className} />;
 };
- 
+
 export const AlertIcon = ({
   size = 16,
   className = defaultTailwindCSS,

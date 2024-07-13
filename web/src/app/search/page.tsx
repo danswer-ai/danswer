@@ -110,7 +110,6 @@ export default async function Home() {
     console.log(`Failed to fetch chat sessions - ${queryResponse?.text()}`);
   }
 
-
   let assistants: Persona[] = initialAssistantsList;
   if (assistantsFetchError) {
     console.log(`Failed to fetch assistants - ${assistantsFetchError}`);
