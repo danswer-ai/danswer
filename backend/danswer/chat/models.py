@@ -46,8 +46,8 @@ class LLMRelevanceFilterResponse(BaseModel):
 
 
 class RelevanceChunk(BaseModel):
-    relevant: bool
-    content: str
+    relevant: bool | None = None
+    content: str | None = None
 
 
 class LLMRelevanceSummaryResponse(BaseModel):

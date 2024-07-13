@@ -196,6 +196,7 @@ def stream_answer_objects(
         quotes_config=QuotesConfig() if not use_citations else None,
         document_pruning_config=document_pruning_config,
     )
+
     answer = Answer(
         question=query_msg.message,
         answer_style_config=answer_config,
@@ -306,6 +307,7 @@ def stream_answer_objects(
     msg_detail_response = translate_db_message_to_chat_message_detail(
         gen_ai_response_message
     )
+    print("saving response")
     yield msg_detail_response
 
 

@@ -156,6 +156,7 @@ export const SearchResultsDisplay = ({
         <div className="mt-4">
           <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
             <p>Results</p>
+
             {!agenticResults &&
               (contentEnriched || searchResponse.additional_relevance) && (
                 <Tooltip delayDuration={1000} content={`${isMac ? "⌘" : "⊞"}O`}>
@@ -210,18 +211,24 @@ export const SearchResultsDisplay = ({
                 />
               )
             ) : (
-              <DocumentDisplay
-                additional_relevance={relevance}
-                contentEnriched={contentEnriched}
-                index={ind}
-                hide={sweep && !document.relevant_search_result}
-                key={document.document_id + ind}
-                document={document}
-                documentRank={ind + 1}
-                messageId={messageId}
-                isSelected={selectedDocumentIds.has(document.document_id)}
-                setPopup={setPopup}
-              />
+              <>
+                <DocumentDisplay
+                  additional_relevance={relevance}
+                  contentEnriched={contentEnriched}
+                  index={ind}
+                  hide={
+                    sweep &&
+                    !document.relevant_search_result &&
+                    !relevance?.relevant
+                  }
+                  key={document.document_id + ind}
+                  document={document}
+                  documentRank={ind + 1}
+                  messageId={messageId}
+                  isSelected={selectedDocumentIds.has(document.document_id)}
+                  setPopup={setPopup}
+                />
+              </>
             );
           })}
         </div>

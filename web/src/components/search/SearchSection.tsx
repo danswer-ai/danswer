@@ -159,23 +159,6 @@ export const SearchSection = ({
     ? parseInt(existingSearchIdRaw)
     : null;
 
-  function updateSearchDanswerDocuments(
-    searchDocs: SearchDanswerDocument[],
-    relevance: Relevance
-  ): SearchDanswerDocument[] {
-    return searchDocs.map((doc) => {
-      const relevantContent = relevance[doc.document_id];
-      console.log(`for this docuent ${doc.document_id}`);
-      console.log(relevantContent);
-      const result: SearchDanswerDocument = {
-        ...doc,
-        relevant_search_result: relevantContent.relevant ?? false,
-        relevance_explanation: relevantContent?.content ?? "",
-      };
-      return result;
-    });
-  }
-
   useEffect(() => {
     if (existingSearchIdRaw == null) {
       return;
@@ -196,6 +179,8 @@ export const SearchSection = ({
       const searchSession = (await response.json()) as SearchSession;
       const message = extractFirstUserMessage(searchSession);
 
+      console.log("MESSAGE");
+      console.log(existingSearchessionId);
       if (message) {
         setQuery(message);
         const danswerDocs: SearchResponse = {
@@ -209,6 +194,8 @@ export const SearchSection = ({
           suggestedFlowType: null,
           additional_relevance: undefined,
         };
+
+        console.log();
 
         console.log(searchSession.documents);
         setFirstSearch(false);
@@ -233,6 +220,7 @@ export const SearchSection = ({
     selectedDocIndices: null,
     error: null,
     messageId: null,
+    additional_relevance: undefined,
   };
   // Streaming updates
   const updateCurrentAnswer = (answer: string) =>
@@ -289,7 +277,7 @@ export const SearchSection = ({
       messageId,
     }));
 
-    router.replace(`/search?searchId=${chat_session_id}`);
+    // router.replace(`/search?searchId=${chat_session_id}`);
   };
 
   const updateDocumentRelevance = (relevance: Relevance) => {
@@ -328,9 +316,10 @@ export const SearchSection = ({
     if ((overrideMessage || query) == "") {
       return;
     }
-
+    setSearchResponse;
     setAgenticResults(agentic!);
     resetInput();
+    setContentEnriched(false);
 
     if (lastSearchCancellationToken.current) {
       lastSearchCancellationToken.current.cancel();

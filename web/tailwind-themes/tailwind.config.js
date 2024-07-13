@@ -62,27 +62,25 @@ module.exports = {
       },
       colors: {
         // background
-        background: "#f9fafb", // gray-50
-        "background-subtle": "#e5e7eb", // gray-200
-        "background-emphasis": "#f6f7f8",
-        "background-strong": "#eaecef",
-        "background-stronger": "#d1d5db",
-        "background-search": "#ffffff",
-        "background-custom-header": "#f3f4f6",
-        "background-inverted": "#000000",
-        "background-weak": "#f3f4f6", // gray-100
+        background: "#fafafa", // 50
+        "background-search": "#ffffff", // white
+        "background-weak": "#f5f5f5", // neutral-100
         "background-weaker": "#F1F2F4", // gray-125
         "background-weakish": "#EAEAEA", // gray-150
-        "background-solid": "#262626", // neutral-800
-        "background-lightMedium": "#d4d4d4", // neutral-300
+        "background-subtle": "#e5e5e5", // neutral-200
+        "background-stronger": "#d4d4d4", // neutral-300
         "background-medium": "#a3a3a3", // neutral-400
+        "background-solid": "#262626", // neutral-800
         "background-dark": "#111827", // gray-900
+        "background-inverted": "#000000", // black
+        "background-emphasis": "#f6f7f8",
+        "background-strong": "#eaecef",
 
         // text or icons
         lightest: "#fafafa", // 50
         lighter: "#f5f5f5", // neutral-100
         light: "#e5e5e5", // neutral-200
-        lightMedium: "#d4d4d4", // neutral-300
+        stronger: "#d4d4d4", // neutral-300
         medium: "#a3a3a3", // neutral-400
         darkMedium: "#737373", // neutral-500
         dark: "#525252", // neutral-600

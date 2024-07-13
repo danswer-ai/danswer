@@ -114,6 +114,7 @@ class EmbeddingModel:
             model_name=self.model_name,
             max_context_length=self.max_seq_length,
             normalize_embeddings=self.normalize,
+            text_type=text_type,
         )
 
         response = requests.post(self.embed_server_endpoint, json=embed_request.dict())
