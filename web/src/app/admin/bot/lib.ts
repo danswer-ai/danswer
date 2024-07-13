@@ -14,8 +14,7 @@ interface SlackBotConfigCreationRequest {
   questionmark_prefilter_enabled: boolean;
   respond_tag_only: boolean;
   respond_to_bots: boolean;
-  respond_team_member_list: string[];
-  respond_slack_group_list: string[];
+  respond_member_group_list: string[];
   follow_up_tags?: string[];
   usePersona: boolean;
   response_type: SlackBotResponseType;
@@ -43,8 +42,7 @@ const buildRequestBodyFromCreationRequest = (
     respond_tag_only: creationRequest.respond_tag_only,
     respond_to_bots: creationRequest.respond_to_bots,
     enable_auto_filters: creationRequest.enable_auto_filters,
-    respond_team_member_list: creationRequest.respond_team_member_list,
-    respond_slack_group_list: creationRequest.respond_slack_group_list,
+    respond_member_group_list: creationRequest.respond_member_group_list,
     answer_filters: buildFiltersFromCreationRequest(creationRequest),
     follow_up_tags: creationRequest.follow_up_tags?.filter((tag) => tag !== ""),
     ...(creationRequest.usePersona
