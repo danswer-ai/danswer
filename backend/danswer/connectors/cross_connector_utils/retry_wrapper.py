@@ -4,8 +4,9 @@ from typing import Any
 from typing import cast
 from typing import TypeVar
 
-from danswer.utils.logger import setup_logger
 from retry import retry
+
+from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

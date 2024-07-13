@@ -5,6 +5,8 @@ from typing import cast
 
 from bs4 import BeautifulSoup
 from bs4 import Tag
+from sqlalchemy.orm import Session
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -17,7 +19,6 @@ from danswer.file_processing.extract_file_text import read_text_file
 from danswer.file_processing.html_utils import web_html_cleanup
 from danswer.file_store.file_store import get_default_file_store
 from danswer.utils.logger import setup_logger
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

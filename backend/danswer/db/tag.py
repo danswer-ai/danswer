@@ -1,18 +1,12 @@
 from sqlalchemy import delete
 from sqlalchemy import func
-from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import Document
 from danswer.db.models import Document__Tag
 from danswer.db.models import Tag
 from danswer.utils.logger import setup_logger
-from sqlalchemy import delete
-from sqlalchemy import func
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

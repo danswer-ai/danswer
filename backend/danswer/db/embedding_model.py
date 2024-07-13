@@ -1,3 +1,6 @@
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import DEFAULT_DOCUMENT_ENCODER_MODEL
@@ -17,8 +20,6 @@ from danswer.server.manage.embedding.models import (
     CloudEmbeddingProvider as ServerCloudEmbeddingProvider,
 )
 from danswer.utils.logger import setup_logger
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

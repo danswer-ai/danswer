@@ -2,6 +2,13 @@ from collections.abc import Sequence
 from typing import cast
 from uuid import UUID
 
+from sqlalchemy import and_
+from sqlalchemy import delete
+from sqlalchemy import func
+from sqlalchemy import or_
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Document
 from danswer.db.models import DocumentByConnectorCredentialPair
@@ -10,12 +17,6 @@ from danswer.db.models import DocumentSet__ConnectorCredentialPair
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from danswer.server.features.document_set.models import DocumentSetUpdateRequest
 from danswer.utils.variable_functionality import fetch_versioned_implementation
-from sqlalchemy import and_
-from sqlalchemy import delete
-from sqlalchemy import func
-from sqlalchemy import or_
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 
 def _delete_document_set_cc_pairs__no_commit(

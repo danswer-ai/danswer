@@ -1,9 +1,10 @@
 from typing import Any
 
-from danswer.tools.tool import Tool
 from langchain_core.messages import AIMessage
 from langchain_core.messages import BaseMessage
 from pydantic import BaseModel
+
+from danswer.tools.tool import Tool
 
 
 class ForceUseTool(BaseModel):

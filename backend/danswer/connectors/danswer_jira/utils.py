@@ -2,11 +2,12 @@
 from typing import Any
 from typing import List
 
-from danswer.utils.logger import setup_logger
 from jira import JIRA
 from jira.resources import CustomFieldOption
 from jira.resources import Issue
 from jira.resources import User
+
+from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
