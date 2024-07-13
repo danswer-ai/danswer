@@ -66,6 +66,8 @@ class DiscourseConnector(PollConnector):
 
         self.permissions: DiscoursePerms | None = None
         self.last_request_time = 0
+        self.active_categories: set | None = None
+        self.category_pages: dict | None = None
 
     @rate_limit_builder(max_calls=200, period=60)
     def _make_request(self, endpoint: str, params: dict | None = None) -> Response:
@@ -84,49 +86,14 @@ class DiscourseConnector(PollConnector):
             params={"include_subcategories": True},
         )
         categories = response.json()["category_list"]["categories"]
-
         self.category_id_map = {
-            category["id"]: category["name"]
-            for category in categories
-            if not self.categories or category["name"].lower() in self.categories
+            cat["id"]: cat["name"]
+            for cat in categories
+            if not self.categories or cat["name"].lower() in self.categories
         }
 
-    def _get_latest_topics(
-        self, start: datetime | None, end: datetime | None, page: int
-    ) -> list[int]:
-        assert self.permissions is not None
-        topic_ids = []
-        valid_categories = set(self.category_id_map.keys())
-
-        latest_endpoint = urllib.parse.urljoin(
-            self.base_url, f"latest.json?page={page}"
-        )
-        response = self._make_request(endpoint=latest_endpoint)
-
-        topics = response.json()["topic_list"]["topics"]
-
-        for topic in topics:
-            last_time = topic.get("last_posted_at")
-            if not last_time:
-                continue
-            last_time_dt = time_str_to_utc(last_time)
-
-            if start and start > last_time_dt:
-                continue
-
-            if end and end < last_time_dt:
-                continue
-
-            if (
-                self.categories
-                and valid_categories
-                and topic.get("category_id") not in valid_categories
-            ):
-                continue
-
-            topic_ids.append(topic["id"])
-
-        return topic_ids
+        self.active_categories = set(self.category_id_map)
+        self.category_pages = dict.fromkeys(self.active_categories, 1)
 
     def _get_doc_from_topic(self, topic_id: int) -> Document:
         assert self.permissions is not None
@@ -180,15 +147,51 @@ class DiscourseConnector(PollConnector):
         )
         return doc
 
-    import time
+    def _get_latest_topics(
+        self, start: datetime | None, end: datetime | None, page: int
+    ) -> list[int]:
+        assert self.permissions is not None
+        topic_ids = []
+
+        if not self.categories:
+            latest_endpoint = urllib.parse.urljoin(
+                self.base_url, f"latest.json?page={page}"
+            )
+            response = self._make_request(endpoint=latest_endpoint)
+            topics = response.json()["topic_list"]["topics"]
+
+        else:
+            topics = []
+            for category_id in self.category_id_map.keys():
+                category_endpoint = urllib.parse.urljoin(
+                    self.base_url, f"c/{category_id}.json?page={page}&sys=latest"
+                )
+
+                response = self._make_request(endpoint=category_endpoint)
+                topics.extend(response.json()["topic_list"]["topics"])
+
+        for topic in topics:
+            last_time = topic.get("last_posted_at")
+            if not last_time:
+                continue
+
+            last_time_dt = time_str_to_utc(last_time)
+            if (start and start > last_time_dt) or (end and end < last_time_dt):
+                continue
+
+            topic_ids.append(topic["id"])
+            if len(topic_ids) >= self.batch_size:
+                break
+
+        return topic_ids
 
     def _yield_discourse_documents(
         self,
         start: datetime,
         end: datetime,
     ) -> GenerateDocumentsOutput:
-        page = 0
-        while True:
+        page = 1
+        while self.active_categories:
             topic_ids = self._get_latest_topics(start, end, page)
             if not topic_ids:
                 break
@@ -196,7 +199,6 @@ class DiscourseConnector(PollConnector):
             doc_batch: list[Document] = []
             for topic_id in topic_ids:
                 doc_batch.append(self._get_doc_from_topic(topic_id))
-
                 if len(doc_batch) >= self.batch_size:
                     yield doc_batch
                     doc_batch = []
@@ -213,7 +215,6 @@ class DiscourseConnector(PollConnector):
             api_key=credentials["discourse_api_key"],
             api_username=credentials["discourse_api_username"],
         )
-
         return None
 
     def poll_source(
