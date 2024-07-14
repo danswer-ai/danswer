@@ -190,7 +190,6 @@ class DiscourseConnector(PollConnector):
         start: datetime,
         end: datetime,
     ) -> GenerateDocumentsOutput:
-
         page = 1
         while topic_ids := self._get_latest_topics(start, end, page):
             doc_batch: list[Document] = []
