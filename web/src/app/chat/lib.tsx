@@ -568,7 +568,6 @@ export function buildChatUrl(
     }
   });
   const finalSearchParamsString = finalSearchParams.join("&");
-  console.log(finalSearchParamsString);
 
   if (finalSearchParamsString) {
     return `/${search ? "search" : "chat"}?${finalSearchParamsString}`;
