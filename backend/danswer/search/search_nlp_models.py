@@ -43,8 +43,8 @@ def clean_model_name(model_str: str) -> str:
 # NOTE: If no model_name is specified, it may not be using the "correct" tokenizer
 # for cases where this is more important, be sure to refresh with the actual model name
 # One case where it is not particularly important is in the document chunking flow,
-# most tokenizer options will be approximately the same in splitting documents and some
-# small misses won't be a huge issue.
+# they're basically all using the sentencepiece tokenizer and whether it's cased or
+# uncased does not really matter, they'll all generally end up with the same chunk lengths.
 def get_default_tokenizer(model_name: str = DOCUMENT_ENCODER_MODEL) -> "AutoTokenizer":
     # NOTE: doing a local import here to avoid reduce memory usage caused by
     # processes importing this file despite not using any of this
