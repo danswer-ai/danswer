@@ -168,6 +168,7 @@ def stream_answer_objects(
         max_tokens=max_document_tokens,
         use_sections=query_req.chunks_above > 0 or query_req.chunks_below > 0,
     )
+
     search_tool = SearchTool(
         db_session=db_session,
         user=user,

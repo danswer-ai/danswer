@@ -84,20 +84,24 @@ def build_model_server_url(
 class EmbeddingModel:
     def __init__(
         self,
-        model_name: str,
-        query_prefix: str | None,
-        passage_prefix: str | None,
-        normalize: bool,
         server_host: str,  # Changes depending on indexing or inference
         server_port: int,
+        model_name: str | None,
+        normalize: bool,
+        query_prefix: str | None,
+        passage_prefix: str | None,
+        api_key: str | None,
+        provider_type: str | None,
         # The following are globals are currently not configurable
         max_seq_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
     ) -> None:
-        self.model_name = model_name
+        self.api_key = api_key
+        self.provider_type = provider_type
         self.max_seq_length = max_seq_length
         self.query_prefix = query_prefix
         self.passage_prefix = passage_prefix
         self.normalize = normalize
+        self.model_name = model_name
 
         model_server_url = build_model_server_url(server_host, server_port)
         self.embed_server_endpoint = f"{model_server_url}/encoder/bi-encoder-embed"
@@ -111,10 +115,13 @@ class EmbeddingModel:
             prefixed_texts = texts
 
         embed_request = EmbedRequest(
-            texts=prefixed_texts,
             model_name=self.model_name,
+            texts=prefixed_texts,
             max_context_length=self.max_seq_length,
             normalize_embeddings=self.normalize,
+            api_key=self.api_key,
+            provider_type=self.provider_type,
+            text_type=text_type,
         )
 
         response = requests.post(self.embed_server_endpoint, json=embed_request.dict())
@@ -187,6 +194,8 @@ def warm_up_encoders(
         passage_prefix=None,
         server_host=model_server_host,
         server_port=model_server_port,
+        api_key=None,
+        provider_type=None,
     )
 
     # First time downloading the models it may take even longer, but just in case,
