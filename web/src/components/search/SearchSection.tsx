@@ -185,10 +185,11 @@ export const SearchSection = ({
           quotes: null,
           selectedDocIndices: null,
           error: null,
-          messageId: null,
+          messageId: existingSearchIdRaw ? parseInt(existingSearchIdRaw) : null,
           suggestedFlowType: null,
           additional_relevance: undefined,
         };
+
         setIsFetching(false);
         setFirstSearch(false);
         setSearchResponse(danswerDocs);
