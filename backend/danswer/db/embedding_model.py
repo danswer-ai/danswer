@@ -41,8 +41,6 @@ def create_embedding_model(
         # The initial one from migration is called "danswer_chunk"
         index_name=f"danswer_chunk_{clean_model_name(model_details.model_name)}",
     )
-    print("Creatina  new embedding model with the name")
-    print(model_details.model_name)
 
     db_session.add(embedding_model)
     db_session.commit()

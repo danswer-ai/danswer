@@ -43,7 +43,7 @@ def set_new_embedding_model(
         cloud_id = get_model_id_from_name(
             db_session, embed_model_details.cloud_provider_name
         )
-        print(embed_model_details.cloud_provider_name)
+
         if cloud_id is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
