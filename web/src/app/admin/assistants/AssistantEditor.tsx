@@ -550,7 +550,7 @@ export function AssistantEditor({
 
                         {searchToolEnabled() && (
                           <CollapsibleSection prompt="Configure Search">
-                            <div className=" ">
+                            <div>
                               {ccPairs.length > 0 && (
                                 <>
                                   <Label small>Document Sets</Label>

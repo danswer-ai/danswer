@@ -51,7 +51,6 @@ const isMac =
     ? navigator.userAgent.indexOf("Mac") !== -1
     : true;
 
-// forwardRef<HTMLDivElement, DocumentSidebarProps>(
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
   (
     {
