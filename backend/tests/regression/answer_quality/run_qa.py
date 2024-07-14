@@ -10,7 +10,7 @@ from tests.regression.answer_quality.api_utils import get_answer_from_query
 from tests.regression.answer_quality.cli_utils import get_current_commit_sha
 
 
-def _get_and_write_relari_outputs(
+def _process_and_write_query_results(
     samples: list[dict], run_suffix: str, output_file_path: str
 ) -> None:
     while not check_if_query_ready(run_suffix):
@@ -62,7 +62,7 @@ def _read_questions_jsonl(questions_file_path: str) -> list[dict]:
     return questions
 
 
-def answer_relari_questions(
+def run_qa_test_and_save_results(
     questions_file_path: str,
     results_folder_path: str,
     run_suffix: str,
@@ -91,7 +91,7 @@ def answer_relari_questions(
 
     print("saving question results to:", output_file_path)
     _write_metadata_file(run_suffix, metadata_file_path)
-    _get_and_write_relari_outputs(
+    _process_and_write_query_results(
         samples=samples, run_suffix=run_suffix, output_file_path=output_file_path
     )
 
@@ -110,7 +110,7 @@ def main() -> None:
     else:
         current_output_folder = os.path.join(current_output_folder, "no_defined_suffix")
 
-    answer_relari_questions(
+    run_qa_test_and_save_results(
         config.questions_file,
         current_output_folder,
         config.existing_test_suffix,
