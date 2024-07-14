@@ -247,7 +247,6 @@ function Main() {
     );
   };
 
-
   const clientsideRemoveProvider = (provider: CloudEmbeddingProvider) => {
     const providerName = provider.name;
     setNewEnabledProviders((newEnabledProviders) =>
@@ -295,12 +294,12 @@ function Main() {
             setShowTentativeProvider(showUnconfiguredProvider);
             clientsideAddProvider(showTentativeProvider);
             if (showModelInQueue) {
-              setShowTentativeModel(showModelInQueue)
+              setShowTentativeModel(showModelInQueue);
             }
           }}
           onCancel={() => {
-            setShowModelInQueue(null)
-            setShowTentativeProvider(null)
+            setShowModelInQueue(null);
+            setShowTentativeProvider(null);
           }}
         />
       )}
@@ -322,12 +321,12 @@ function Main() {
         <SelectModelModal
           model={showTentativeModel}
           onConfirm={() => {
-            setShowModelInQueue(null)
+            setShowModelInQueue(null);
             onConfirm(showTentativeModel);
           }}
           onCancel={() => {
-            setShowModelInQueue(null)
-            setShowTentativeModel(null)
+            setShowModelInQueue(null);
+            setShowTentativeModel(null);
           }}
         />
       )}
@@ -467,8 +466,6 @@ function Main() {
             </Modal>
           )}
         </>
-
-
       )}
 
       {futureEmbeddingModel && connectors && connectors.length > 0 && (

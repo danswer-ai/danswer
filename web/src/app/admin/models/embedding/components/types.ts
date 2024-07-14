@@ -209,8 +209,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
       {
         cloud_provider_name: "Google",
         model_name: "textembedding-gecko@003",
-        description:
-          "Google's Gecko embedding model. Powerful and efficient.",
+        description: "Google's Gecko embedding model. Powerful and efficient.",
         pricePerMillion: 0.025,
         mtebScore: 66.31,
         maxContext: 2048,
@@ -223,8 +222,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
       {
         cloud_provider_name: "Google",
         model_name: "text-embedding-004",
-        description:
-          "Google's most recent text embedding model.",
+        description: "Google's most recent text embedding model.",
         pricePerMillion: 0.025,
         mtebScore: 66.31,
         maxContext: 2048,
