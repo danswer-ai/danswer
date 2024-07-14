@@ -176,6 +176,7 @@ export const SearchSection = ({
       const searchSession = (await response.json()) as SearchSession;
       const message = extractFirstUserMessage(searchSession);
 
+      console.log(searchSession);
       if (message) {
         setQuery(message);
         const danswerDocs: SearchResponse = {
@@ -470,7 +471,7 @@ export const SearchSection = ({
             flex-none 
             fixed -8
             left-0 
-            z-50
+            z-30
             overflow-y-hidden 
             sidebar 
             bg-background-100 
