@@ -73,7 +73,10 @@ def delete_embedding_provider(
     db_session: Session = Depends(get_session),
 ) -> None:
     embedding_provider = get_current_db_embedding_provider(db_session=db_session)
-    if embedding_provider_name == embedding_provider.name:
+    if (
+        embedding_provider is not None
+        and embedding_provider_name == embedding_provider.name
+    ):
         raise HTTPException(
             status_code=400, detail="You can't delete a currently active model"
         )

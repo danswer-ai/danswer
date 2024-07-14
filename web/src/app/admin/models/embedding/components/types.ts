@@ -8,8 +8,6 @@ import {
 
 // Cloud Provider (not needed for hosted ones)
 
-export type ProviderId = "openai" | "cohere" | "voyage" | "vertex";
-
 export interface CloudEmbeddingProvider {
   id: number;
   name: string;
@@ -198,7 +196,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
 
   {
     id: 2,
-    name: "Google Vertex",
+    name: "Google",
     website: "https://ai.google",
     icon: GoogleIcon,
     docsLink:
@@ -209,10 +207,24 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     costslink: "https://cloud.google.com/vertex-ai/pricing",
     embedding_models: [
       {
-        cloud_provider_name: "Vertex",
-        model_name: "gecko",
+        cloud_provider_name: "Google",
+        model_name: "textembedding-gecko@003",
         description:
-          "Google's Gecko embedding model. Powerful and efficient, but requires more setup.",
+          "Google's Gecko embedding model. Powerful and efficient.",
+        pricePerMillion: 0.025,
+        mtebScore: 66.31,
+        maxContext: 2048,
+        enabled: false,
+        model_dim: 768,
+        normalize: false,
+        query_prefix: "",
+        passage_prefix: "",
+      },
+      {
+        cloud_provider_name: "Google",
+        model_name: "text-embedding-004",
+        description:
+          "Google's most recent text embedding model.",
         pricePerMillion: 0.025,
         mtebScore: 66.31,
         maxContext: 2048,

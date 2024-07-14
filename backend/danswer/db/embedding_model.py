@@ -41,6 +41,8 @@ def create_embedding_model(
         # The initial one from migration is called "danswer_chunk"
         index_name=f"danswer_chunk_{clean_model_name(model_details.model_name)}",
     )
+    print("Creatina  new embedding model with the name")
+    print(model_details.model_name)
 
     db_session.add(embedding_model)
     db_session.commit()
@@ -60,17 +62,16 @@ def get_model_id_from_name(
 
 def get_current_db_embedding_provider(
     db_session: Session,
-) -> ServerCloudEmbeddingProvider:
+) -> ServerCloudEmbeddingProvider | None:
     current_embedding_model = EmbeddingModelDetail.from_model(
         get_current_db_embedding_model(db_session=db_session)
     )
+
     if (
         current_embedding_model is None
         or current_embedding_model.cloud_provider_id is None
     ):
-        raise RuntimeError(
-            "No cloud embedding model selected, DB is not in a valid state"
-        )
+        return None
 
     embedding_provider = fetch_embedding_provider(
         db_session=db_session, provider_id=current_embedding_model.cloud_provider_id

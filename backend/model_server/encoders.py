@@ -45,6 +45,8 @@ _RERANK_MODELS: Optional[list["CrossEncoder"]] = None
 class CloudEmbedding:
     def __init__(self, api_key: str, provider: str, model: str | None = None):
         self.api_key = api_key
+
+        # Only for Google as is needed on client setup
         self.model = model
         try:
             self.provider = EmbeddingProvider(provider.lower())
@@ -59,14 +61,14 @@ class CloudEmbedding:
             return CohereClient(api_key=self.api_key)
         elif self.provider == EmbeddingProvider.VOYAGE:
             return voyageai.Client(api_key=self.api_key)
-        elif self.provider == EmbeddingProvider.VERTEX:
+        elif self.provider == EmbeddingProvider.GOOGLE:
             credentials = service_account.Credentials.from_service_account_info(
                 json.loads(self.api_key)
             )
             project_id = json.loads(self.api_key)["project_id"]
             vertexai.init(project=project_id, credentials=credentials)
             return TextEmbeddingModel.from_pretrained(
-                self.model or "text-embedding-004"
+                self.model or DEFAULT_VERTEX_MODEL
             )
 
         else:
@@ -93,7 +95,7 @@ class CloudEmbedding:
             return self._embed_cohere(text, model, embedding_type)
         elif self.provider == EmbeddingProvider.VOYAGE:
             return self._embed_voyage(text, model, embedding_type)
-        elif self.provider == EmbeddingProvider.VERTEX:
+        elif self.provider == EmbeddingProvider.GOOGLE:
             return self._embed_vertex(text, model, embedding_type)
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
@@ -144,9 +146,11 @@ class CloudEmbedding:
         return embedding[0].values
 
     @staticmethod
-    def create(api_key: str, provider: str) -> "CloudEmbedding":
+    def create(
+        api_key: str, provider: str, model: str | None = None
+    ) -> "CloudEmbedding":
         logger.debug(f"Creating Embedding instance for provider: {provider}")
-        return CloudEmbedding(api_key, provider)
+        return CloudEmbedding(api_key, provider, model)
 
 
 def get_embedding_model(
@@ -209,11 +213,14 @@ def embed_text(
     api_key: str | None,
     provider_type: str | None,
 ) -> list[list[float]]:
+
     if provider_type is not None:
         if api_key is None:
             raise RuntimeError("API key not provided for cloud model")
 
-        cloud_model = CloudEmbedding(api_key=api_key, provider=provider_type)
+        cloud_model = CloudEmbedding(
+            api_key=api_key, provider=provider_type, model=model_name
+        )
         embeddings = cloud_model.encode(texts, model_name, text_type)
 
     elif model_name is not None:
@@ -256,11 +263,8 @@ async def process_embed_request(
             provider_type=embed_request.provider_type,
             text_type=embed_request.text_type,
         )
-        logger.info(f"response size is {len(embeddings)}, {len(embeddings[0])}")
-
         return EmbedResponse(embeddings=embeddings)
     except Exception as e:
-        print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 

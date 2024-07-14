@@ -57,6 +57,9 @@ function Main() {
   const [showTentativeModel, setShowTentativeModel] =
     useState<CloudEmbeddingModel | null>(null);
 
+  const [showModelInQueue, setShowModelInQueue] =
+    useState<CloudEmbeddingModel | null>(null);
+
   // Open Model based modals
   const [showTentativeOpenProvider, setShowTentativeOpenProvider] =
     useState<HostedEmbeddingModel | null>(null);
@@ -244,6 +247,7 @@ function Main() {
     );
   };
 
+
   const clientsideRemoveProvider = (provider: CloudEmbeddingProvider) => {
     const providerName = provider.name;
     setNewEnabledProviders((newEnabledProviders) =>
@@ -283,16 +287,6 @@ function Main() {
           onCancel={() => setShowTentativeOpenProvider(null)}
         />
       )}
-      {/* {showUnconfiguredProvider && (
-        <ModelNotConfiguredModal
-          modelProvider={showUnconfiguredProvider}
-          onConfirm={() => {
-            setShowTentativeProvider(showUnconfiguredProvider);
-            setShowUnconfiguredProvider(null);
-          }}
-          onCancel={() => setShowUnconfiguredProvider(null)}
-        />
-      )} */}
 
       {showTentativeProvider && (
         <ProviderCreationModal
@@ -300,14 +294,20 @@ function Main() {
           onConfirm={() => {
             setShowTentativeProvider(showUnconfiguredProvider);
             clientsideAddProvider(showTentativeProvider);
+            if (showModelInQueue) {
+              setShowTentativeModel(showModelInQueue)
+            }
           }}
-          onCancel={() => setShowTentativeProvider(null)}
+          onCancel={() => {
+            setShowModelInQueue(null)
+            setShowTentativeProvider(null)
+          }}
         />
       )}
       {changeCredentialsProvider && (
         <ChangeCredentialsModal
           // setPopup={setPopup}
-          useFileUpload={changeCredentialsProvider.name == "Vertex"}
+          useFileUpload={changeCredentialsProvider.name == "Google"}
           onDeleted={() => {
             clientsideRemoveProvider(changeCredentialsProvider);
             setChangeCredentialsProvider(null);
@@ -322,9 +322,13 @@ function Main() {
         <SelectModelModal
           model={showTentativeModel}
           onConfirm={() => {
+            setShowModelInQueue(null)
             onConfirm(showTentativeModel);
           }}
-          onCancel={() => setShowTentativeModel(null)}
+          onCancel={() => {
+            setShowModelInQueue(null)
+            setShowTentativeModel(null)
+          }}
         />
       )}
 
@@ -389,6 +393,7 @@ function Main() {
           />
         ) : (
           <CloudEmbeddingPage
+            setShowModelInQueue={setShowModelInQueue}
             setShowTentativeModel={setShowTentativeModel}
             currentModel={currentModel}
             setAlreadySelectedModel={setAlreadySelectedModel}
@@ -462,6 +467,8 @@ function Main() {
             </Modal>
           )}
         </>
+
+
       )}
 
       {futureEmbeddingModel && connectors && connectors.length > 0 && (

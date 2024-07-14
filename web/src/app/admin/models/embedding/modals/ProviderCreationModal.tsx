@@ -19,7 +19,7 @@ export function ProviderCreationModal({
   onCancel: () => void;
   existingProvider?: CloudEmbeddingProvider;
 }) {
-  const useFileUpload = selectedProvider.name == "Vertex";
+  const useFileUpload = selectedProvider.name == "Google";
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>("");

@@ -13,8 +13,8 @@ DEFAULT_VERTEX_MODEL = "text-embedding-004"
 class EmbeddingProvider(Enum):
     OPENAI = "openai"
     COHERE = "cohere"
-    VOYAGE = "voyage"
-    VERTEX = "vertex"
+    VOYAGE = "voyage" 
+    GOOGLE = "google"
 
 
 class EmbeddingModelTextType:
@@ -27,7 +27,7 @@ class EmbeddingModelTextType:
             EmbedTextType.QUERY: "query",
             EmbedTextType.PASSAGE: "document",
         },
-        EmbeddingProvider.VERTEX: {
+        EmbeddingProvider.GOOGLE: {
             EmbedTextType.QUERY: "RETRIEVAL_QUERY",
             EmbedTextType.PASSAGE: "RETRIEVAL_DOCUMENT",
         },

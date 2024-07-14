@@ -23,7 +23,9 @@ export default function CloudEmbeddingPage({
   setChangeCredentialsProvider,
   setAlreadySelectedModel,
   setShowTentativeModel,
+  setShowModelInQueue
 }: {
+  setShowModelInQueue: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
   setShowTentativeModel: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
   currentModel: EmbeddingModelDescriptor | CloudEmbeddingModel;
   setAlreadySelectedModel: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
@@ -121,12 +123,13 @@ export default function CloudEmbeddingPage({
                       } else if (provider.configured) {
                         setShowTentativeModel(model);
                       } else {
+                        setShowModelInQueue(model)
                         setShowTentativeProvider(provider);
                       }
                     }}
                   >
                     <div className="flex justify-between">
-                      <div className="font-medium">{model.model_name}</div>
+                      <div className="font-medium text-sm">{model.model_name}</div>
                       <p className="text-sm flex-none">
                         ${model.pricePerMillion}/M tokens
                       </p>
