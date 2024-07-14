@@ -200,6 +200,18 @@ export const DocumentDisplay = ({
               className="h-full text-xs text-accent rounded w-fit my-auto select-none ml-auto mr-2"
             />
           )}
+        {/* {!hide &&
+          (document.relevant_search_result ) && (
+            <p>
+              second
+              </p>
+          )} */}
+        {/* {additional_relevance && "HI"}
+          {(additional_relevance?.relevant ) && (
+            <p>
+              first
+              </p>
+          )} */}
       </div>
       <div
         className={`collapsible ${hide ? "collapsible-closed overflow-y-auto border-transparent" : ""}`}
@@ -226,21 +238,22 @@ export const DocumentDisplay = ({
               />
             )}
 
-            {contentEnriched && (isHovered || alternativeToggled) && (
-              <button
-                onClick={() =>
-                  setAlternativeToggled(
-                    (alternativeToggled) => !alternativeToggled
-                  )
-                }
-              >
-                {alternativeToggled ? (
-                  <LightBulbIcon className="text-blue-400 h-4 w-4 cursor-pointer" />
-                ) : (
-                  <BookIcon className="text-blue-400" />
-                )}
-              </button>
-            )}
+            {(contentEnriched || additional_relevance) &&
+              (isHovered || alternativeToggled) && (
+                <button
+                  onClick={() =>
+                    setAlternativeToggled(
+                      (alternativeToggled) => !alternativeToggled
+                    )
+                  }
+                >
+                  {alternativeToggled ? (
+                    <LightBulbIcon className="text-blue-400 h-4 w-4 cursor-pointer" />
+                  ) : (
+                    <BookIcon className="text-blue-400" />
+                  )}
+                </button>
+              )}
           </div>
         </div>
         <div className="mt-1">
@@ -250,7 +263,7 @@ export const DocumentDisplay = ({
           style={{ transition: "height 0.30s ease-in-out" }}
           className="pl-1 pt-2 pb-3 break-words"
         >
-          {alternativeToggled && contentEnriched
+          {alternativeToggled && (contentEnriched || additional_relevance)
             ? document.relevance_explanation ??
               additional_relevance?.content ??
               ""
@@ -272,7 +285,6 @@ export const AgenticDocumentDisplay = ({
   additional_relevance,
   messageId,
   documentRank,
-  hide,
   index,
   setPopup,
 }: DocumentDisplayProps) => {
@@ -283,18 +295,14 @@ export const AgenticDocumentDisplay = ({
   return (
     <div
       key={document.semantic_identifier}
-      className={`text-sm border-b border-border transition-all duration-500 
-        ${hide ? "transform translate-x-full opacity-0" : ""} 
-        ${!hide ? "pt-3" : "border-transparent"} relative`}
+      className={`text-sm border-b border-border transition-all duration-500 pt-3`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
         transitionDelay: `${index! * 10}ms`, // Add a delay to the transition based on index
       }}
     >
-      <div
-        className={`collapsible ${hide ? "collapsible-closed overflow-y-auto border-transparent" : "pb-3"}`}
-      >
+      <div className={`collapsible pb-3`}>
         <div className="flex relative">
           <a
             className={`rounded-lg flex font-bold text-link max-w-full ${document.link ? "" : "pointer-events-none"}`}
@@ -307,6 +315,7 @@ export const AgenticDocumentDisplay = ({
               {document.semantic_identifier || document.document_id}
             </p>
           </a>
+
           <div className="ml-auto flex gap-x-2">
             {isHovered && messageId && (
               <DocumentFeedbackBlock
@@ -316,6 +325,7 @@ export const AgenticDocumentDisplay = ({
                 setPopup={setPopup}
               />
             )}
+
             {(contentEnriched || additional_relevance) &&
               (isHovered || alternativeToggled) && (
                 <button
