@@ -247,20 +247,6 @@ export const ConfigureIcon = ({
 export const defaultTailwindCSS = "my-auto flex flex-shrink-0 text-default";
 export const defaultTailwindCSSBlue = "my-auto flex flex-shrink-0 text-link";
 
-export const OpenAIIcon = ({
-  size = 16,
-  className = defaultTailwindCSS,
-}: IconProps) => {
-  return (
-    <div
-      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
-      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
-    >
-      <Image src={openAISVG} alt="Logo" width="96" height="96" />
-    </div>
-  );
-};
-
 export const OpenSourceIcon = ({
   size = 16,
   className = defaultTailwindCSS,
