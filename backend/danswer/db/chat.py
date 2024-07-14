@@ -538,8 +538,6 @@ def update_search_docs_table_with_relevance(
     reference_db_search_docs: list[SearchDoc],
     relevance_summary: LLMRelevanceSummaryResponse,
 ) -> None:
-    print("the summary is ")
-    print(relevance_summary)
     for search_doc in reference_db_search_docs:
         relevance_data = relevance_summary.relevance_summaries.get(
             search_doc.document_id
