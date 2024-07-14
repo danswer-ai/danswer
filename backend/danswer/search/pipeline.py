@@ -93,10 +93,6 @@ class SearchPipeline:
         ) = None
 
     def evaluate(self, top_doc: LlmDoc, query: str) -> dict[str, RelevanceChunk]:
-        # def evaluate( self, top_doc: InferenceSection, query: str ) -> dict[str, RelevanceChunk]:
-
-        # Group documents by document_id
-
         relevance: RelevanceChunk = RelevanceChunk()
         results = {}
         document_id = top_doc.document_id

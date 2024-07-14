@@ -545,18 +545,11 @@ def update_search_docs_table_with_relevance(
         if relevance_data is not None:
             db_session.execute(
                 update(SearchDoc)
-                .where(SearchDoc.document_id == search_doc.document_id)
+                .where(SearchDoc.id == search_doc.id)
                 .values(
                     relevant_search_result=relevance_data.relevant,
                     relevance_explanation=relevance_data.content,
                 )
-            )
-            logger.warning(
-                f"YES data data data generated for document {search_doc.document_id}"
-            )
-        else:
-            logger.warning(
-                f"No relevance data generated for document {search_doc.document_id}"
             )
     db_session.commit()
 
