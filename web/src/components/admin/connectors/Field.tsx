@@ -86,7 +86,7 @@ export function ToolTipDetails({
           <FiInfo size={12} />
         </TooltipTrigger>
         <TooltipContent side="top" align="center">
-          <p className="bg-background-dark max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-inverted">
+          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-inverted">
             {children}
           </p>
         </TooltipContent>

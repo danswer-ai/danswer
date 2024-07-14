@@ -474,13 +474,13 @@ export const AIMessage = ({
                               filteredDocs.slice(0, 2).map((doc) => (
                                 <div
                                   key={doc.document_id}
-                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-weaker bg-lighter px-4 py-2 border-b
+                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-lighter px-4 py-2 border-b
                               `}
                                 >
                                   <a
                                     href={doc.link}
                                     target="_blank"
-                                    className="text-sm flex justify-between font-semibold text-solidDark"
+                                    className="text-sm flex justify-between font-semibold text-text-700Dark"
                                   >
                                     <p className="line-clamp-1">
                                       {
@@ -511,9 +511,9 @@ export const AIMessage = ({
                                 }
                               }}
                               key={-1}
-                              className="cursor-pointer w-[140px] rounded-lg flex-none transition-all duration-500 hover:bg-background-weaker bg-lighter px-4 py-2 border-b"
+                              className="cursor-pointer w-[140px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-lighter px-4 py-2 border-b"
                             >
-                              <div className="text-sm flex justify-between font-semibold text-solidDark">
+                              <div className="text-sm flex justify-between font-semibold text-text-700Dark">
                                 <p className="line-clamp-1">See context</p>
                               </div>
 
@@ -565,7 +565,7 @@ export const AIMessage = ({
                       transform translate-y-2 ${(isVisible || isWithinInput) && "!translate-y-0"} ho
                       flex md:flex-row gap-x-0.5 
                       transition-transform duration-300 ease-in-out
-                       bg-background-weaker/40
+                       bg-background-125/40
                        p-1.5 rounded-lg  `}
                       >
                         <TooltipGroup>

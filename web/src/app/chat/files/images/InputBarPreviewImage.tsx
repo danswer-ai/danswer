@@ -18,16 +18,15 @@ export function InputBarPreviewImage({ fileId }: { fileId: string }) {
         className={`
           bg-transparent
           border-none
-
-        flex
-        items-center
-        p-2
-        bg-hover
-        border
-        border-border
-        rounded-md
-        box-border
-        h-10
+          flex
+          items-center
+          p-2
+          bg-hover
+          border
+          border-border
+          rounded-md
+          box-border
+          h-10
       `}
       >
         <img

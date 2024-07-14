@@ -62,42 +62,48 @@ module.exports = {
       },
       colors: {
         // background
-        background: "#fafafa", // 50
+
         "background-search": "#ffffff", // white
-        "background-weak": "#f5f5f5", // neutral-100
-        "background-weaker": "#F1F2F4", // gray-125
-        "background-weakish": "#EAEAEA", // gray-150
-        "background-subtle": "#e5e5e5", // neutral-200
-        "background-stronger": "#d4d4d4", // neutral-300
-        "background-medium": "#a3a3a3", // neutral-400
-        "background-solid": "#262626", // neutral-800
-        "background-dark": "#111827", // gray-900
+
+        background: "#fafafa", // 50
+        "background-100": "#f5f5f5", // neutral-100
+        "background-125": "#F1F2F4", // gray-125
+        "background-150": "#EAEAEA", // gray-150
+        "background-200": "#e5e5e5", // neutral-200
+        "background-300": "#d4d4d4", // neutral-300
+        "background-400": "#a3a3a3", // neutral-400
+        "background-800": "#262626", // neutral-800
+        "background-900": "#111827", // gray-900
         "background-inverted": "#000000", // black
+
         "background-emphasis": "#f6f7f8",
         "background-strong": "#eaecef",
 
         // text or icons
-        lightest: "#fafafa", // 50
-        lighter: "#f5f5f5", // neutral-100
-        light: "#e5e5e5", // neutral-200
-        stronger: "#d4d4d4", // neutral-300
-        medium: "#a3a3a3", // neutral-400
-        darkMedium: "#737373", // neutral-500
-        dark: "#525252", // neutral-600
-        solid: "#404040", // neutral-700
-        solidDark: "#262626", // neutral-800
+        "text-50": "#fafafa", // 50, neutral-50
+        "text-100": "#f5f5f5", // lighter, neutral-100
+        "text-200": "#e5e5e5", // light, neutral-200
+        "text-300": "#d4d4d4", // stronger, neutral-300
+        "text-400": "#a3a3a3", // medium, neutral-400
+        "text-500": "#737373", // darkMedium, neutral-500
+        "text-600": "#525252", // dark, neutral-600
+        "text-700": "#404040", // solid, neutral-700
+        "text-800": "#262626", // solidDark, neutral-800
 
-        link: "#3b82f6", // blue-500
-        "link-hover": "#1d4ed8", // blue-700
         subtle: "#6b7280", // gray-500
         default: "#4b5563", // gray-600
         emphasis: "#374151", // gray-700
         strong: "#111827", // gray-900
+
+        link: "#3b82f6", // blue-500
+        "link-hover": "#1d4ed8", // blue-700
         inverted: "#ffffff", // white
+
+        // one offs
         error: "#ef4444", // red-500
         success: "#059669", // emerald-600
         alert: "#f59e0b", // amber-600
-        accent: "#6366F1", //
+        accent: "#6366F1", // indigo-500
 
         // borders
         border: "#e5e7eb", // gray-200

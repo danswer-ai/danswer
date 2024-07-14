@@ -3,6 +3,18 @@ from datetime import datetime
 from datetime import timedelta
 from uuid import UUID
 
+from sqlalchemy import and_
+from sqlalchemy import delete
+from sqlalchemy import desc
+from sqlalchemy import func
+from sqlalchemy import nullsfirst
+from sqlalchemy import or_
+from sqlalchemy import select
+from sqlalchemy import update
+from sqlalchemy.exc import MultipleResultsFound
+from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import Session
+
 from danswer.auth.schemas import UserRole
 from danswer.chat.models import LLMRelevanceSummaryResponse
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
@@ -26,17 +38,6 @@ from danswer.search.models import SearchDoc as ServerSearchDoc
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.tools.tool_runner import ToolCallFinalResult
 from danswer.utils.logger import setup_logger
-from sqlalchemy import and_
-from sqlalchemy import delete
-from sqlalchemy import desc
-from sqlalchemy import func
-from sqlalchemy import nullsfirst
-from sqlalchemy import or_
-from sqlalchemy import select
-from sqlalchemy import update
-from sqlalchemy.exc import MultipleResultsFound
-from sqlalchemy.orm import joinedload
-from sqlalchemy.orm import Session
 
 
 logger = setup_logger()
@@ -537,6 +538,8 @@ def update_search_docs_table_with_relevance(
     reference_db_search_docs: list[SearchDoc],
     relevance_summary: LLMRelevanceSummaryResponse,
 ) -> None:
+    print("the summary is ")
+    print(relevance_summary)
     for search_doc in reference_db_search_docs:
         relevance_data = relevance_summary.relevance_summaries.get(
             search_doc.document_id
@@ -549,6 +552,9 @@ def update_search_docs_table_with_relevance(
                     relevant_search_result=relevance_data.relevant,
                     relevance_explanation=relevance_data.content,
                 )
+            )
+            logger.warning(
+                f"YES data data data generated for document {search_doc.document_id}"
             )
         else:
             logger.warning(

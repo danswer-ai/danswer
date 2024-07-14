@@ -125,7 +125,7 @@ export default function FunctionalWrapper({
         <div className="z-[40] flex fixed top-4 left-1/2 transform -translate-x-1/2">
           <div
             style={{ transition: "width 0.30s ease-out" }}
-            className={`flex-none overflow-y-hidden bg-background-weak transition-all bg-opacity-80duration-300 ease-in-out h-full
+            className={`flex-none overflow-y-hidden bg-background-100 transition-all bg-opacity-80duration-300 ease-in-out h-full
                         ${toggledSidebar ? "w-[300px] " : "w-[0px]"}`}
           />
           <div className="relative">

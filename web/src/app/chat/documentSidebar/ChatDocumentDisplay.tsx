@@ -1,8 +1,6 @@
 import { HoverPopup } from "@/components/HoverPopup";
 import { SourceIcon } from "@/components/SourceIcon";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { DocumentFeedbackBlock } from "@/components/search/DocumentFeedbackBlock";
-import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { DanswerDocument } from "@/lib/search/interfaces";
 import { FiInfo, FiRadio } from "react-icons/fi";
 import { DocumentSelector } from "./DocumentSelector";
@@ -11,7 +9,6 @@ import {
   buildDocumentSummaryDisplay,
 } from "@/components/search/DocumentDisplay";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
-import { useState } from "react";
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
@@ -42,9 +39,9 @@ export function ChatDocumentDisplay({
   return (
     <div
       key={document.semantic_identifier}
-      className={`p-2 w-[350px] justify-start rounded-md ${isSelected ? "bg-background-subtle" : "bg-background-weaker"}   text-sm mx-3`}
+      className={`p-2 w-[350px] justify-start rounded-md ${isSelected ? "bg-background-200" : "bg-background-125"} text-sm mx-3`}
     >
-      <div className=" flex relative justify-start  overflow-y-visible">
+      <div className="flex relative justify-start overflow-y-visible">
         <a
           className={
             "rounded-lg flex font-bold flex-shrink truncate" +
@@ -112,7 +109,7 @@ export function ChatDocumentDisplay({
           <DocumentMetadataBlock document={document} />
         </div>
       </div>
-      <p className=" line-clamp-3 pl-1 pt-2 pb-1 text-start break-words">
+      <p className="line-clamp-3 pl-1 pt-2 pb-1 text-start break-words">
         {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
       </p>
       <div className="mb-2">

@@ -1119,7 +1119,7 @@ export function ChatPage({
             z-50
             overflow-y-hidden 
             sidebar 
-            bg-background-weak 
+            bg-background-100 
             h-screen
             transition-all 
             bg-opacity-80
@@ -1213,7 +1213,7 @@ export function ChatPage({
                       className={`
                         flex-none 
                         overflow-y-hidden 
-                        bg-background-weak 
+                        bg-background-100 
                         transition-all 
                         bg-opacity-80
                         duration-300 
