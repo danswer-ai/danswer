@@ -265,6 +265,7 @@ def prune_sections(
         max_tokens=document_pruning_config.max_tokens,
         tool_token_count=document_pruning_config.tool_num_tokens,
     )
+
     return _apply_pruning(
         sections=sections,
         section_relevance_list=section_relevance_list,
