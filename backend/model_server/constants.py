@@ -13,7 +13,7 @@ DEFAULT_VERTEX_MODEL = "text-embedding-004"
 class EmbeddingProvider(Enum):
     OPENAI = "openai"
     COHERE = "cohere"
-    VOYAGE = "voyage" 
+    VOYAGE = "voyage"
     GOOGLE = "google"
 
 
