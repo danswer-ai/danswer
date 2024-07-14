@@ -190,11 +190,12 @@ class InferenceChunk(BaseChunk):
 
 
 class InferenceChunkUncleaned(InferenceChunk):
-    title: str  # Separate from Semantic Identifier though often same
-    metadata_suffix: str
+    title: str | None  # Separate from Semantic Identifier though often same
+    metadata_suffix: str | None
 
     def to_inference_chunk(self) -> InferenceChunk:
         # Create a dict of all fields except 'title' and 'metadata_suffix'
+        # Assumes the cleaning has already been applied and just needs to translate to the right type
         inference_chunk_data = {
             k: v
             for k, v in self.dict().items()

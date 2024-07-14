@@ -605,7 +605,7 @@ def _vespa_hit_to_inference_chunk(
         section_continuation=fields[SECTION_CONTINUATION],
         document_id=fields[DOCUMENT_ID],
         source_type=fields[SOURCE_TYPE],
-        title=fields[TITLE],
+        title=fields.get(TITLE),
         semantic_identifier=fields[SEMANTIC_IDENTIFIER],
         boost=fields.get(BOOST, 1),
         recency_bias=fields.get("matchfeatures", {}).get(RECENCY_BIAS, 1.0),
@@ -614,7 +614,7 @@ def _vespa_hit_to_inference_chunk(
         primary_owners=fields.get(PRIMARY_OWNERS),
         secondary_owners=fields.get(SECONDARY_OWNERS),
         metadata=metadata,
-        metadata_suffix=fields.get(METADATA_SUFFIX) or "",
+        metadata_suffix=fields.get(METADATA_SUFFIX),
         match_highlights=match_highlights,
         updated_at=updated_at,
     )
