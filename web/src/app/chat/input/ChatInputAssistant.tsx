@@ -21,7 +21,7 @@ export const ChatInputAssistant = forwardRef<
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="flex-none h-10 duration-300 h-10 items-center rounded-lg bg-background-weakish"
+      className="flex-none h-10 duration-300 h-10 items-center rounded-lg bg-background-150"
     >
       <Tooltip
         content={

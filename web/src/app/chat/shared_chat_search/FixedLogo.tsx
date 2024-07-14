@@ -6,7 +6,7 @@ export default function FixedLogo() {
     <div className="absolute flex z-50 left-4 top-2">
       {" "}
       {/* <Logo /> */}
-      <div className="ml-7 text-solid text-xl">
+      <div className="ml-7 text-text-700 text-xl">
         <HeaderTitle>Danswer</HeaderTitle>
       </div>
     </div>

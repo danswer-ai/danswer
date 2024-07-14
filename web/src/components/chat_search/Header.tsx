@@ -54,10 +54,10 @@ export default function FunctionalHeader({
   }, []);
   return (
     <div className="pb-6 left-0 sticky top-0 z-10 w-full relative flex">
-      <div className="mt-2 mx-4 text-solid flex w-full">
+      <div className="mt-2 mx-4 text-text-700 flex w-full">
         <div className="absolute z-[100] my-auto flex items-center text-xl font-bold">
           <FiSidebar size={20} />
-          <div className="ml-2 text-solid text-xl">
+          <div className="ml-2 text-text-700 text-xl">
             <HeaderTitle>Danswer</HeaderTitle>
           </div>
 
@@ -74,7 +74,7 @@ export default function FunctionalHeader({
               >
                 <NewChatIcon
                   size={20}
-                  className="ml-2 my-auto cursor-pointer text-solid hover:text-dark transition-colors duration-300"
+                  className="ml-2 my-auto cursor-pointer text-text-700 hover:text-text-600 transition-colors duration-300"
                 />
               </a>
             </Tooltip>
