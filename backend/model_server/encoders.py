@@ -213,7 +213,6 @@ def embed_text(
     api_key: str | None,
     provider_type: str | None,
 ) -> list[list[float]]:
-
     if provider_type is not None:
         if api_key is None:
             raise RuntimeError("API key not provided for cloud model")
