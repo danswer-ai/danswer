@@ -122,9 +122,6 @@ export const SearchSection = ({
       AGENTIC_SEARCH_TYPE_COOKIE_NAME,
       String(!agentic).toLocaleLowerCase()
     );
-    console.log(
-      `ENABELD ${AGENTIC_SEARCH_TYPE_COOKIE_NAME} to be ${String(!agentic).toLocaleLowerCase()}`
-    );
     setAgentic((agentic) => !agentic);
   };
 
@@ -193,9 +190,6 @@ export const SearchSection = ({
           additional_relevance: undefined,
         };
 
-        console.log();
-
-        console.log(searchSession.documents);
         setFirstSearch(false);
         setSearchResponse(danswerDocs);
         setContentEnriched(true);
@@ -238,9 +232,6 @@ export const SearchSection = ({
         setSearchState("analyzing");
       }
     }, 1500);
-
-    console.log("udpating docs");
-    console.log(documents);
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       documents,
@@ -291,7 +282,6 @@ export const SearchSection = ({
   };
 
   const finishedSearching = () => {
-    console.log("finish searching has been called");
     setSearchState("input");
   };
 

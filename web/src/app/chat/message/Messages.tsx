@@ -223,16 +223,13 @@ export const AIMessage = ({
   }
 
   const showFeedback = () => {
-    console.log("visible");
     setIsVisible(true);
   };
   const hideFeedback = () => {
-    console.log("not visibles");
     setIsVisible(false);
   };
 
   const enterFeedback = () => {
-    console.log("ENTER FEEDBAK");
     setIsWithinInput(true);
   };
   const leaveFeedback = () => {

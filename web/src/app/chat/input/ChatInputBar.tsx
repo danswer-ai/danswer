@@ -172,10 +172,6 @@ export function ChatInputBar({
   const [assistantIconIndex, setAssistantIconIndex] = useState(0);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (!showSuggestions) {
-      console.log("KEY DOWN");
-      return;
-    }
     if (
       showSuggestions &&
       filteredPersonas.length > 0 &&

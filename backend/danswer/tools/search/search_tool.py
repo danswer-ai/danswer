@@ -228,9 +228,11 @@ class SearchTool(Tool):
                 chunks_above=self.chunks_above,
                 chunks_below=self.chunks_below,
                 full_doc=self.full_doc,
-                enable_auto_detect_filters=self.retrieval_options.enable_auto_detect_filters
-                if self.retrieval_options
-                else None,
+                enable_auto_detect_filters=(
+                    self.retrieval_options.enable_auto_detect_filters
+                    if self.retrieval_options
+                    else None
+                ),
             ),
             user=self.user,
             llm=self.llm,
@@ -273,9 +275,21 @@ class SearchTool(Tool):
             response=search_pipeline.relevant_section_indices,
         )
 
-        yield ToolResponse(
-            id=FINAL_CONTEXT_DOCUMENTS, response=search_pipeline.final_context_documents
+        final_context_sections = prune_and_merge_sections(
+            sections=search_pipeline.reranked_sections,
+            section_relevance_list=search_pipeline.section_relevance_list,
+            prompt_config=self.prompt_config,
+            llm_config=self.llm.config,
+            question=query,
+            document_pruning_config=self.pruning_config,
         )
+
+        llm_docs = [
+            llm_doc_from_inference_section(section)
+            for section in final_context_sections
+        ]
+
+        yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
 
         if self.evaluate_response:
             yield ToolResponse(

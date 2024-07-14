@@ -30,7 +30,6 @@ export default function FunctionalHeader({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      console.log("Key is down");
       if (event.metaKey || event.ctrlKey) {
         switch (event.key.toLowerCase()) {
           case "u":

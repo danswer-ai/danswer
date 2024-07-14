@@ -17,7 +17,6 @@ from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prune_and_merge import _merge_sections
 from danswer.llm.answering.prune_and_merge import ChunkRange
 from danswer.llm.answering.prune_and_merge import merge_chunk_intervals
-from danswer.llm.answering.prune_and_merge import prune_and_merge_sections
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import message_generator_to_string_generator
 from danswer.search.enums import QueryFlow
@@ -92,7 +91,6 @@ class SearchPipeline:
         self._postprocessing_generator: (
             Iterator[list[InferenceSection] | list[int]] | None
         ) = None
-        self._final_context_documents: list[LlmDoc] | None = None
 
     def evaluate(self, top_doc: LlmDoc, query: str) -> dict[str, RelevanceChunk]:
         # def evaluate( self, top_doc: InferenceSection, query: str ) -> dict[str, RelevanceChunk]:
@@ -371,29 +369,6 @@ s
         return self._reranked_sections
 
     @property
-    def final_context_documents(self) -> list[LlmDoc]:
-        if self.pruning_config is None or self.prompt_config is None:
-            raise ValueError(
-                "Pruning or prompt config have not been correctly set for search pipeline"
-            )
-
-        final_context_sections = prune_and_merge_sections(
-            sections=self.reranked_sections,
-            section_relevance_list=self.section_relevance_list,
-            prompt_config=self.prompt_config,
-            llm_config=self.llm.config,
-            question=self.search_request.query,
-            document_pruning_config=self.pruning_config,
-        )
-
-        self._final_context_documents = [
-            llm_doc_from_inference_section(section)
-            for section in final_context_sections
-        ]
-
-        return self._final_context_documents
-
-    @property
     def relevant_section_indices(self) -> list[int]:
         if self._relevant_section_indices is not None:
             return self._relevant_section_indices
@@ -405,8 +380,6 @@ s
 
     @property
     def relevance_summaries(self) -> dict[str, RelevanceChunk]:
-        if self._final_context_documents is None:
-            return {}
         sections = _merge_sections(self.reranked_sections)
         llm_docs = [llm_doc_from_inference_section(section) for section in sections]
 
