@@ -175,13 +175,6 @@ export function SearchSummary({
           )}
         </>
       )}
-      {/* {hasDocs && (
-        <ShowHideDocsButton
-          messageId={messageId}
-          isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
-          handleShowRetrieved={handleShowRetrieved}
-        />
-      )} */}
     </div>
   );
 }

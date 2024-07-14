@@ -71,15 +71,6 @@ export interface SearchSession {
   description: string;
 }
 
-// search_session_id=session_id,
-// description=search_session.description,
-// documents=docs_response,
-// messages=[
-//     translate_db_message_to_chat_message_detail(
-//         msg, remove_doc_content=is_shared  # if shared, don't leak doc content
-//     )
-//     for msg in session_messages
-
 export interface Message {
   messageId: number;
   message: string;

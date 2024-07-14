@@ -308,7 +308,6 @@ def stream_answer_objects(
     msg_detail_response = translate_db_message_to_chat_message_detail(
         gen_ai_response_message
     )
-    print("saving response")
     yield msg_detail_response
 
 

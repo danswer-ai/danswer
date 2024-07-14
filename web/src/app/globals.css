@@ -29,12 +29,7 @@
 .inputscroll::-webkit-scrollbar-track {
   background: #e5e7eb;
   scrollbar-width: none;
-  /* "auto" by default, "thin", or "none" */
 }
-
-/* .my-container {
-  scrollbar-color: #888 #f1f1f1;
-} */
 
 ::-webkit-scrollbar-track {
   background: theme("colors.scrollbar.track");
@@ -78,16 +73,6 @@
   /* Preserves whitespace and wraps text */
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
 .loading-text {
   display: inline-block;
   color: #e5e5e5;
@@ -103,28 +88,16 @@
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: flowingShimmer 1.5s ease-out infinite;
+  animation: shimmerTransition 1.5s ease-out infinite;
 }
 
-@keyframes flowingShimmer {
+@keyframes shimmerTransition {
   0% {
     background-position: 100% 0;
   }
 
   100% {
     background-position: -100% 0;
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -140,16 +113,4 @@
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-}
-
-/* Add this new class for the container */
-.collapsible-container {
-  transition:
-    transform 0.5s ease-in-out,
-    opacity 0.5s ease-in-out;
-}
-
-.collapsible-container.hidden {
-  transform: translateX(100%);
-  opacity: 0;
 }
