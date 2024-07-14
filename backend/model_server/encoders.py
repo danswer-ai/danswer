@@ -9,7 +9,7 @@ import voyageai  # type: ignore
 from cohere import Client as CohereClient
 from fastapi import APIRouter
 from fastapi import HTTPException
-from google.oauth2 import service_account
+from google.oauth2 import service_account  # type: ignore
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 from vertexai.language_models import TextEmbeddingInput  # type: ignore
