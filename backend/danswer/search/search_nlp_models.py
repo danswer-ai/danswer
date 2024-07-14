@@ -42,22 +42,16 @@ def clean_model_name(model_str: str) -> str:
 
 # NOTE: If None is used, it may not be using the "correct" tokenizer, for cases
 # where this is more important, be sure to refresh with the actual model name
-def get_default_tokenizer(model_name: str | None = None) -> "AutoTokenizer":
+def get_default_tokenizer(model_name: str = DOCUMENT_ENCODER_MODEL) -> "AutoTokenizer":
     # NOTE: doing a local import here to avoid reduce memory usage caused by
     # processes importing this file despite not using any of this
     from transformers import AutoTokenizer  # type: ignore
 
     global _TOKENIZER
-    if _TOKENIZER[0] is None or (
-        _TOKENIZER[1] is not None and _TOKENIZER[1] != model_name
-    ):
+    if _TOKENIZER[0] is None or _TOKENIZER[1] != model_name:
         if _TOKENIZER[0] is not None:
             del _TOKENIZER
             gc.collect()
-
-        if model_name is None:
-            # This could be inaccurate
-            model_name = DOCUMENT_ENCODER_MODEL
 
         _TOKENIZER = (AutoTokenizer.from_pretrained(model_name), model_name)
 
@@ -184,6 +178,7 @@ def warm_up_encoders(
         "https://docs.danswer.dev/quickstart"
     )
 
+    # May not be the exact same tokenizer used for the indexing flow
     get_default_tokenizer(model_name=model_name)(warm_up_str)
 
     embed_model = EmbeddingModel(
