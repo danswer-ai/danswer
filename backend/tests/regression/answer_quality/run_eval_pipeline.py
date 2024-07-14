@@ -50,8 +50,8 @@ def main() -> None:
             config.questions_file, relari_output_folder_path, run_suffix, config.limit
         )
 
-    if config.clean_up_docker_containers:
-        cleanup_docker(run_suffix)
+        if config.clean_up_docker_containers:
+            cleanup_docker(run_suffix)
 
 
 if __name__ == "__main__":
