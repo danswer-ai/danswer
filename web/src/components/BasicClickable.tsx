@@ -58,7 +58,7 @@ export function EmphasizedClickable({
     border-1 border-neutral-300 border bg-neutral-100 
     text-sm
     rounded-lg
-    hover:bg-background-weaker
+    hover:bg-background-125
 `}
       onClick={onClick}
     >
@@ -75,7 +75,7 @@ export function EmphasizedClickable({
     //     p-1
     //     select-none
     //     bg-lighter
-    //     hover:bg-background-weaker
+    //     hover:bg-background-125
     //     ${fullWidth ? "w-full" : ""}`}
     // >
     //   {children}

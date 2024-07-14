@@ -14,6 +14,7 @@ from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PromptConfig
+from danswer.llm.answering.prune_and_merge import _merge_sections
 from danswer.llm.answering.prune_and_merge import ChunkRange
 from danswer.llm.answering.prune_and_merge import merge_chunk_intervals
 from danswer.llm.answering.prune_and_merge import prune_and_merge_sections
@@ -88,12 +89,14 @@ class SearchPipeline:
         self._relevant_section_indices: list[int] | None = None
 
         # Generates reranked chunks and LLM selections
-        self._postprocessing_generator: Iterator[
-            list[InferenceSection] | list[int]
-        ] | None = None
+        self._postprocessing_generator: (
+            Iterator[list[InferenceSection] | list[int]] | None
+        ) = None
         self._final_context_documents: list[LlmDoc] | None = None
 
     def evaluate(self, top_doc: LlmDoc, query: str) -> dict[str, RelevanceChunk]:
+        # def evaluate( self, top_doc: InferenceSection, query: str ) -> dict[str, RelevanceChunk]:
+
         # Group documents by document_id
 
         relevance: RelevanceChunk = RelevanceChunk()
@@ -102,9 +105,9 @@ class SearchPipeline:
 
         prompt = f"""
         Determine if this document is relevant to the search query:
-
-        Title: {top_doc.document_id.split("/")[-1]}
-        Blurb: {top_doc.blurb}
+s
+        Title: {document_id.split("/")[-1]}
+        Blurb: {top_doc.content}
         Query: {query}
 
         Think through the following:
@@ -404,10 +407,12 @@ class SearchPipeline:
     def relevance_summaries(self) -> dict[str, RelevanceChunk]:
         if self._final_context_documents is None:
             return {}
+        sections = _merge_sections(self.reranked_sections)
+        llm_docs = [llm_doc_from_inference_section(section) for section in sections]
 
         functions = [
             FunctionCall(self.evaluate, (final_context, self.search_query.query))
-            for final_context in self._final_context_documents
+            for final_context in llm_docs
         ]
 
         results = run_functions_in_parallel(function_calls=functions)

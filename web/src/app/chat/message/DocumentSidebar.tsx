@@ -19,7 +19,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
   return (
     <div
       key={doc.document_id}
-      className={`w-[200px] rounded-lg flex-none transition-all duration-500 opacity-90 hover:bg-background-subtle bg-lighter px-4 py-2 border-b cursor-pointer
+      className={`w-[200px] rounded-lg flex-none transition-all duration-500 opacity-90 hover:bg-background-200 bg-lighter px-4 py-2 border-b cursor-pointer
         ${
           !isComplete
             ? "animate-pulse"
@@ -33,7 +33,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
         }`}
       onClick={() => onSelect(doc)}
     >
-      <div className="text-sm flex justify-between font-semibold text-solidDark">
+      <div className="text-sm flex justify-between font-semibold text-text-700Dark">
         <p className="line-clamp-1">
           {doc.document_id.split("/")[doc.document_id.split("/").length - 1]}
         </p>

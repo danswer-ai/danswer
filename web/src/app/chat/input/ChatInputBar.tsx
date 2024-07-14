@@ -266,7 +266,7 @@ export function ChatInputBar({
               border
               border-[#E5E7EB]
               rounded-lg
-              bg-background-weak
+              bg-background-100
               [&:has(textarea:focus)]::ring-1
               [&:has(textarea:focus)]::ring-black
             "
@@ -275,7 +275,7 @@ export function ChatInputBar({
               <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full">
                 <div
                   ref={interactionsRef}
-                  className="bg-background-subtle p-2 rounded-t-lg items-center flex w-full"
+                  className="bg-background-200 p-2 rounded-t-lg items-center flex w-full"
                 >
                   <AssistantIcon assistant={alternativeAssistant} border />
                   <p className="ml-3 text-strong my-auto">
@@ -307,7 +307,7 @@ export function ChatInputBar({
                 {selectedDocuments.length > 0 && (
                   <button
                     onClick={showDocs}
-                    className="flex-none flex cursor-pointer hover:bg-background-subtle transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-weakish max-w-[100px]"
+                    className="flex-none flex cursor-pointer hover:bg-background-200 transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-150 max-w-[100px]"
                   >
                     <FileIcon size={24} />
                     <p className="text-xs">
@@ -358,7 +358,7 @@ export function ChatInputBar({
                 shrink
                 resize-none
                 border-0
-                bg-background-weak
+                bg-background-100
                 ${
                   textAreaRef.current &&
                   textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT
@@ -481,7 +481,7 @@ export function ChatInputBar({
                 <SendIcon
                   size={28}
                   className={`text-emphasis text-white p-1 rounded-full ${
-                    message ? "bg-background-solid" : "bg-[#D7D7D7]"
+                    message ? "bg-background-800" : "bg-[#D7D7D7]"
                   }`}
                 />
               </div>

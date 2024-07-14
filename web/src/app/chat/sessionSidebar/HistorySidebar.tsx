@@ -92,7 +92,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
           className={`
             flex
             flex-none
-            bg-background-weak
+            bg-background-100
             w-full
             border-r 
             border-border 
@@ -101,7 +101,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             h-screen
             transition-transform`}
         >
-          <div className="ml-4 mr-3 flex flex gap-x-1 items-center mt-2 my-auto text-solid text-xl">
+          <div className="ml-4 mr-3 flex flex gap-x-1 items-center mt-2 my-auto text-text-700 text-xl">
             <div className="mr-1 mt-auto h-6 w-6">
               <Logo height={24} width={24} />
             </div>
@@ -132,7 +132,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                     ? `?assistantId=${currentChatSession.persona_id}`
                     : "")
                 }
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-subtle cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
               >
                 <FiEdit className="flex-none " />
                 <p className="my-auto flex items-center text-sm">New Chat</p>
@@ -153,7 +153,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                       });
                     })
                 }
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-subtle cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
               >
                 <FiFolderPlus className="my-auto" />
                 <p className="my-auto flex items-center text-sm">New Folder</p>
@@ -161,7 +161,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
 
               <Link
                 href="/assistants/mine"
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-subtle cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
               >
                 <AssistantsIconSkeleton className="h-4 w-4 my-auto" />
                 <p className="my-auto flex items-center text-sm">

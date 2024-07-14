@@ -3,6 +3,9 @@ from collections.abc import Generator
 from typing import Any
 from typing import cast
 
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
 from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import DanswerContext
 from danswer.chat.models import DanswerContexts
@@ -27,8 +30,6 @@ from danswer.secondary_llm_flows.query_expansion import history_based_query_reph
 from danswer.tools.search.search_utils import llm_doc_to_dict
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
 
 SEARCH_RESPONSE_SUMMARY_ID = "search_response_summary"
 SEARCH_DOC_CONTENT_ID = "search_doc_content"

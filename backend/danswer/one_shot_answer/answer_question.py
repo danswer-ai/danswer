@@ -2,6 +2,8 @@ from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
 
+from sqlalchemy.orm import Session
+
 from danswer.chat.chat_utils import reorganize_citations
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
@@ -57,7 +59,6 @@ from danswer.tools.tool import ToolResponse
 from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
-from sqlalchemy.orm import Session
 
 
 logger = setup_logger()

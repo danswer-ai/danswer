@@ -164,8 +164,8 @@ export const SearchResultsDisplay = ({
                     onClick={() => performSweep()}
                     className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
                       !sweep
-                        ? "bg-green-500 text-solidDark"
-                        : "bg-rose-700 text-lighter"
+                        ? "bg-green-500 text-text-700Dark"
+                        : "bg-rose-700 text-text-100"
                     }`}
                     style={{
                       transform: sweep ? "rotateZ(180deg)" : "rotateZ(0deg)",
@@ -202,7 +202,7 @@ export const SearchResultsDisplay = ({
                   contentEnriched={contentEnriched}
                   comments={comments}
                   index={ind}
-                  key={document.document_id + ind}
+                  key={`${document.document_id}-${ind}`}
                   document={document}
                   documentRank={ind + 1}
                   messageId={messageId}
@@ -221,7 +221,7 @@ export const SearchResultsDisplay = ({
                     !document.relevant_search_result &&
                     !relevance?.relevant
                   }
-                  key={document.document_id + ind}
+                  key={`${document.document_id}-${ind}`}
                   document={document}
                   documentRank={ind + 1}
                   messageId={messageId}
@@ -255,7 +255,7 @@ export const SearchResultsDisplay = ({
         >
           <button
             onClick={() => setShowAll((showAll) => !showAll)}
-            className="transition-all cursor-pointer -ml-2 bg-background-subtle text-dark h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs"
+            className="transition-all cursor-pointer -ml-2 bg-background-200 text-text-600 h-8 my-auto rounded-r-md rounded-t-md rounded-b-md px-3 text-xs"
           >
             <p className="relative after:bg-neutral-600 after:absolute after:h-[1px] after:w-0 after:bottom-0 after:left-0 hover:after:w-full after:transition-all after:duration-300 duration-300">
               {showAll ? "Don't show all" : "Show me all"}
@@ -283,7 +283,7 @@ export function AgenticDisclaimer({
       </p>
       <button
         onClick={forceNonAgentic}
-        className="p-2 bg-background-dark mr-auto text-light rounded-lg text-xs my-auto"
+        className="p-2 bg-background-900 mr-auto text-text-200 rounded-lg text-xs my-auto"
       >
         Non-agentic
       </button>

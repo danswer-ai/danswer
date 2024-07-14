@@ -51,16 +51,18 @@ export const AnimatedToggle = ({
       large
       content={
         <div className="bg-white my-auto p-6 rounded-lg w-full">
-          <h2 className="text-xl text-solidDark font-bold mb-2">
+          <h2 className="text-xl text-text-700Dark font-bold mb-2">
             Agentic Search
           </h2>
-          <p className="text-solid text-sm mb-4">
+          <p className="text-text-700 text-sm mb-4">
             Our most powerful search, have an AI agent guide you to pinpoint
             exactly what you&apos;re looking for.
           </p>
           <Divider />
-          <h2 className="text-xl text-solidDark font-bold mb-2">Fast Search</h2>
-          <p className="text-solid text-sm mb-4">
+          <h2 className="text-xl text-text-700Dark font-bold mb-2">
+            Fast Search
+          </h2>
+          <p className="text-text-700 text-sm mb-4">
             Get quality results immediately, best suited for instant access to
             your documents.
           </p>
@@ -82,7 +84,7 @@ export const AnimatedToggle = ({
           <div
             className={`
             w-10 h-6 flex items-center rounded-full p-1 transition-all duration-300 ease-in-out
-            ${isOn ? "bg-background-medium" : "bg-background-subtle"}
+            ${isOn ? "bg-background-400" : "bg-background-200"}
           `}
           >
             <div
@@ -148,7 +150,7 @@ export const FullSearchBar = ({
         border
         border-border-medium
         rounded-lg
-        bg-background-weak
+        bg-background-100
         [&:has(textarea:focus)]::ring-1
         [&:has(textarea:focus)]::ring-black
         "
@@ -162,7 +164,7 @@ export const FullSearchBar = ({
                 shrink
                 resize-none
                 border-0
-                bg-background-weak
+                bg-background-100
                 whitespace-normal
                 rounded-lg
                 break-word
@@ -213,7 +215,7 @@ export const FullSearchBar = ({
           >
             <SendIcon
               size={28}
-              className={`text-emphasis text-white p-1 rounded-full ${query ? "bg-background-solid" : "bg-[#D7D7D7]"}`}
+              className={`text-emphasis text-white p-1 rounded-full ${query ? "bg-background-800" : "bg-[#D7D7D7]"}`}
             />
           </button>
         </div>

@@ -179,8 +179,6 @@ export const SearchSection = ({
       const searchSession = (await response.json()) as SearchSession;
       const message = extractFirstUserMessage(searchSession);
 
-      console.log("MESSAGE");
-      console.log(existingSearchessionId);
       if (message) {
         setQuery(message);
         const danswerDocs: SearchResponse = {
@@ -482,7 +480,7 @@ export const SearchSection = ({
             z-50
             overflow-y-hidden 
             sidebar 
-            bg-background-weak 
+            bg-background-100 
             h-screen
             transition-all 
             bg-opacity-80
@@ -518,7 +516,7 @@ export const SearchSection = ({
               className={`
                     flex-none
                     overflow-y-hidden
-                    bg-background-weak
+                    bg-background-100
                     h-full
                     transition-all
                     bg-opacity-80
