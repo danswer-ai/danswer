@@ -200,18 +200,6 @@ export const DocumentDisplay = ({
               className="h-full text-xs text-accent rounded w-fit my-auto select-none ml-auto mr-2"
             />
           )}
-        {/* {!hide &&
-          (document.relevant_search_result ) && (
-            <p>
-              second
-              </p>
-          )} */}
-        {/* {additional_relevance && "HI"}
-          {(additional_relevance?.relevant ) && (
-            <p>
-              first
-              </p>
-          )} */}
       </div>
       <div
         className={`collapsible ${hide ? "collapsible-closed overflow-y-auto border-transparent" : ""}`}
@@ -261,7 +249,7 @@ export const DocumentDisplay = ({
         </div>
         <p
           style={{ transition: "height 0.30s ease-in-out" }}
-          className="pl-1 pt-2 pb-3 break-words"
+          className="pl-1 pt-2 pb-3 break-words text-wrap"
         >
           {alternativeToggled && (contentEnriched || additional_relevance)
             ? document.relevance_explanation ??
@@ -348,7 +336,10 @@ export const AgenticDocumentDisplay = ({
           <DocumentMetadataBlock document={document} />
         </div>
         <div className="pt-2 break-words flex gap-x-2">
-          <p style={{ transition: "height 0.30s ease-in-out" }}>
+          <p
+            className="break-words text-wrap"
+            style={{ transition: "height 0.30s ease-in-out" }}
+          >
             {alternativeToggled && (contentEnriched || additional_relevance)
               ? buildDocumentSummaryDisplay(
                   document.match_highlights,
