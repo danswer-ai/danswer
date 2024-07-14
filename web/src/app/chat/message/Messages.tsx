@@ -250,29 +250,7 @@ export const AIMessage = ({
               assistant={alternativeAssistant || currentPersona}
             />
 
-            {/* <div className="font-bold text-emphasis ml-2 my-auto">
-              {alternativeAssistant
-                ? alternativeAssistant.name
-                : personaName || "Danswer"}
-            </div>
-
-            {/* {query === undefined &&
-              hasDocs &&
-              handleShowRetrieved !== undefined &&
-              isCurrentlyShowingRetrieved !== undefined &&
-              !retrievalDisabled && (
-                <div className="flex w-full max-w-message-max absolute ml-8">
-                  <div className="ml-auto">
-                    <ShowHideDocsButton
-                      messageId={messageId}
-                      isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
-                      handleShowRetrieved={handleShowRetrieved}
-                    />
-                  </div>
-                </div>
-              )} */}
-
-            <div className="w-full ml-4">
+            <div className="w-full">
               <div className="max-w-message-max break-words">
                 {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
                   danswerSearchToolEnabledForPersona && (
