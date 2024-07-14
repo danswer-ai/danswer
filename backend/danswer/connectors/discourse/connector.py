@@ -51,7 +51,6 @@ class DiscourseConnector(PollConnector):
         base_url: str,
         categories: list[str] | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
-        current_page: int = 0,
     ) -> None:
         parsed_url = urllib.parse.urlparse(base_url)
         if not parsed_url.scheme:
@@ -62,18 +61,13 @@ class DiscourseConnector(PollConnector):
         self.category_id_map: dict[int, str] = {}
 
         self.batch_size = batch_size
-        self.current_page = current_page
-
         self.permissions: DiscoursePerms | None = None
-        self.last_request_time = 0
         self.active_categories: set | None = None
-        self.category_pages: dict | None = None
 
-    @rate_limit_builder(max_calls=200, period=60)
+    @rate_limit_builder(max_calls=100, period=60)
     def _make_request(self, endpoint: str, params: dict | None = None) -> Response:
         if not self.permissions:
             raise ConnectorMissingCredentialError("Discourse")
-
         return discourse_request(endpoint, self.permissions, params)
 
     def _get_categories_map(
@@ -91,9 +85,7 @@ class DiscourseConnector(PollConnector):
             for cat in categories
             if not self.categories or cat["name"].lower() in self.categories
         }
-
         self.active_categories = set(self.category_id_map)
-        self.category_pages = dict.fromkeys(self.active_categories, 1)
 
     def _get_doc_from_topic(self, topic_id: int) -> Document:
         assert self.permissions is not None
@@ -162,13 +154,21 @@ class DiscourseConnector(PollConnector):
 
         else:
             topics = []
+            empty_categories = []
+
             for category_id in self.category_id_map.keys():
                 category_endpoint = urllib.parse.urljoin(
                     self.base_url, f"c/{category_id}.json?page={page}&sys=latest"
                 )
-
                 response = self._make_request(endpoint=category_endpoint)
-                topics.extend(response.json()["topic_list"]["topics"])
+                new_topics = response.json()["topic_list"]["topics"]
+
+                if len(new_topics) == 0:
+                    empty_categories.append(category_id)
+                topics.extend(new_topics)
+
+            for empty_category in empty_categories:
+                self.category_id_map.pop(empty_category)
 
         for topic in topics:
             last_time = topic.get("last_posted_at")
@@ -190,12 +190,9 @@ class DiscourseConnector(PollConnector):
         start: datetime,
         end: datetime,
     ) -> GenerateDocumentsOutput:
-        page = 1
-        while self.active_categories:
-            topic_ids = self._get_latest_topics(start, end, page)
-            if not topic_ids:
-                break
 
+        page = 1
+        while topic_ids := self._get_latest_topics(start, end, page):
             doc_batch: list[Document] = []
             for topic_id in topic_ids:
                 doc_batch.append(self._get_doc_from_topic(topic_id))
