@@ -110,7 +110,7 @@ def chunk_document(
     tokenizer = get_default_tokenizer()
 
     title = document.get_title_for_document_index()
-    title_prefix = f"{title}{RETURN_SEPARATOR}"[:MAX_CHUNK_TITLE_LEN] if title else ""
+    title_prefix = f"{title[:MAX_CHUNK_TITLE_LEN]}{RETURN_SEPARATOR}" if title else ""
     title_tokens = len(tokenizer.tokenize(title_prefix))
 
     metadata_suffix = ""
