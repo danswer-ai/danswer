@@ -189,7 +189,7 @@ export const SearchSection = ({
           suggestedFlowType: null,
           additional_relevance: undefined,
         };
-
+        setIsFetching(false);
         setFirstSearch(false);
         setSearchResponse(danswerDocs);
         setContentEnriched(true);
@@ -274,6 +274,8 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       additional_relevance: relevance,
     }));
+
+    setIsFetching(false);
     setSearchState("input");
   };
 
