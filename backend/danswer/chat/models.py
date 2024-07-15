@@ -115,7 +115,7 @@ class ImageGenerationDisplay(BaseModel):
 
 
 class GraphGenerationDisplay(BaseModel):
-    content: str
+    file_id: str
 
 
 class CustomToolResponse(BaseModel):
@@ -129,6 +129,7 @@ AnswerQuestionPossibleReturn = (
     | CitationInfo
     | DanswerContexts
     | ImageGenerationDisplay
+    | GraphGenerationDisplay
     | CustomToolResponse
     | StreamingError
 )

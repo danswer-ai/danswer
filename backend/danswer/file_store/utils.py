@@ -52,21 +52,10 @@ def load_all_chat_files(
 
 
 def save_base64_image(base64_image: str) -> str:
-    """
-    Saves a base64 encoded image to the file store and returns a unique identifier.
-
-    Args:
-    base64_image (str): The base64 encoded image string.
-
-    Returns:
-    str: A unique identifier for the saved image.
-    """
     with get_session_context_manager() as db_session:
-        # Remove the data URL prefix if present
         if base64_image.startswith("data:image"):
             base64_image = base64_image.split(",", 1)[1]
 
-        # Decode the base64 string
         image_data = base64.b64decode(base64_image)
 
         unique_id = str(uuid4())

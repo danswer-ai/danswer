@@ -475,12 +475,10 @@ class Answer:
                     yield message
 
                 else:
-                    print(type(message))
                     # assumes all tool responses will come first, then the final answer
                     break
 
             if not self.skip_generation:
-                print("now processing the stream of answers")
                 process_answer_stream_fn = _get_answer_stream_processor(
                     context_docs=final_context_docs or [],
                     # if doc selection is enabled, then search_results will be None,

@@ -167,7 +167,6 @@ class GraphingTool(Tool):
         code = kwargs["code"]
 
         code = self.preprocess_code(code)
-        print(code)
 
         locals_dict = {"plt": plt, "matplotlib": matplotlib}
 
@@ -179,26 +178,18 @@ class GraphingTool(Tool):
             if fig is None:
                 raise ValueError("The provided code did not create a 'fig' variable")
 
-            # Save the plot to a file
-            filename = f"generated_graph_{len(os.listdir(self.output_dir)) + 1}.png"
-            filepath = os.path.join(self.output_dir, filename)
-            fig.savefig(filepath, bbox_inches="tight")
-            print(f"Graph saved to: {filepath}")
-
-            filename = f"generated_graph_{len(os.listdir(self.output_dir)) + 1}.png"
-            filepath = os.path.join(self.output_dir, filename)
-            fig.savefig(filepath, bbox_inches="tight")
-            logger.info(f"Graph saved to: {filepath}")
+            # Save the plot to a file (for testing purposes)
+            # filename = f"generated_graph_{len(os.listdir(self.output_dir)) + 1}.png"
+            # filepath = os.path.join(self.output_dir, filename)
+            # fig.savefig(filepath, bbox_inches="tight")
+            # logger.info(f"Graph saved to: {filepath}")
 
             buf = BytesIO()
             fig.savefig(buf, format="png", bbox_inches="tight")
             # buf.seek(0)
 
             img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
-
-            # plt.close(fig)
-
-            graph_result = GraphingResult(image=img_base64, filepath=filepath)
+            graph_result = GraphingResult(image=img_base64)
             response = GraphingResponse(graph_result=graph_result)
 
             yield ToolResponse(id=GRAPHING_RESPONSE_ID, response=response)
@@ -213,13 +204,5 @@ class GraphingTool(Tool):
             graph_response = next(arg for arg in args if arg.id == GRAPHING_RESPONSE_ID)
             return graph_response.response.dict()
 
-        # return {}
-
-        # try:
-        #     graph_response = next(arg for arg in args if arg.id == GRAPHING_RESPONSE_ID)
-        #     return graph_response.response.dict()
-        # except StopIteration:
-        #     error_response = next(arg for arg in args if arg.id == "ERROR")
-        #     return error_response.response.dict()
         except Exception as e:
             return {"error": f"Unexpected error in final_result: {str(e)}"}

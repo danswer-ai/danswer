@@ -5,7 +5,6 @@ from pydantic import BaseModel
 
 class GraphingResult(BaseModel):
     image: str
-    filepath: str
 
 
 class GraphingResponse(BaseModel):
