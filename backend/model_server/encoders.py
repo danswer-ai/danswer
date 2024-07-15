@@ -264,7 +264,10 @@ async def process_embed_request(
         )
         return EmbedResponse(embeddings=embeddings)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception(f"Error during embedding process:\n{str(e)}")
+        raise HTTPException(
+            status_code=500, detail="Failed to run Bi-Encoder embedding"
+        )
 
 
 @router.post("/cross-encoder-scores")
@@ -279,4 +282,7 @@ async def process_rerank_request(embed_request: RerankRequest) -> RerankResponse
         )
         return RerankResponse(scores=sim_scores)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception(f"Error during reranking process:\n{str(e)}")
+        raise HTTPException(
+            status_code=500, detail="Failed to run Cross-Encoder reranking"
+        )
