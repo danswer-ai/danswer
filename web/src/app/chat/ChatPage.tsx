@@ -803,7 +803,6 @@ export function ChatPage({
       await delay(50);
       while (!stack.isComplete || !stack.isEmpty()) {
         await delay(2);
-        console;
 
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();

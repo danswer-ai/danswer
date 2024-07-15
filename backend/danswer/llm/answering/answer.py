@@ -241,10 +241,8 @@ class Answer:
 
         # if we have a tool call, we need to call the tool
         tool_call_requests = tool_call_chunk.tool_calls
-        # print(len(tool_call_chunk.tool_calls))
 
         for tool_call_request in tool_call_requests:
-            # print(tool_call_request)
             tool = [
                 tool for tool in self.tools if tool.name == tool_call_request["name"]
             ][0]
