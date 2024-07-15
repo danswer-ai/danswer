@@ -1,7 +1,7 @@
 version: '3'
 services:
   api_server:
-    image: danswer/danswer-backend:latest
+    image: syammohan2103/rougechat-backend:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -104,7 +104,7 @@ services:
 
 
   background:
-    image: danswer/danswer-backend:latest
+    image: syammohan2103/rougechat-backend:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -206,7 +206,7 @@ services:
 
 
   web_server:
-    image: danswer/danswer-web-server:latest
+    image: syammohan2103/rougechat-web:latest
     build:
       context: ../../web
       dockerfile: Dockerfile
@@ -328,7 +328,7 @@ services:
       - DOMAIN=localhost
     ports:
       - "80:80"
-      - "3000:80"  # allow for localhost:3000 usage, since that is the norm
+      - "3003:80"  # allow for localhost:3000 usage, since that is the norm
     volumes:
       - ../data/nginx:/etc/nginx/conf.d
     logging:
