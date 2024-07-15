@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from danswer.search.enums import EmbedTextType
+from shared_configs.enums import EmbedTextType
 
 
 class EmbedRequest(BaseModel):

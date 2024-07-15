@@ -1,6 +1,6 @@
 from enum import Enum
 
-from danswer.search.enums import EmbedTextType
+from shared_configs.enums import EmbedTextType
 
 
 MODEL_WARM_UP_STRING = "hi " * 512

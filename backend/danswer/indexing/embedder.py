@@ -14,12 +14,12 @@ from danswer.indexing.chunker import split_chunk_text_into_mini_chunks
 from danswer.indexing.models import ChunkEmbedding
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
-from danswer.search.enums import EmbedTextType
 from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.utils.batching import batch_list
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
+from shared_configs.enums import EmbedTextType
 
 
 logger = setup_logger()
