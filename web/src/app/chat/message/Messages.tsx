@@ -29,6 +29,7 @@ import {
   IMAGE_GENERATION_TOOL_NAME,
   SEARCH_TOOL_NAME,
   INTERNET_SEARCH_TOOL_NAME,
+  GRAPH_GENERATION_TOOL_NAME,
 } from "../tools/constants";
 import { ToolRunDisplay } from "../tools/ToolRunningAnimation";
 import { Hoverable, HoverableIcon } from "@/components/Hoverable";
@@ -63,11 +64,13 @@ import {
 import { ValidSources } from "@/lib/types";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useMouseTracking } from "./hooks";
+import { FaMarsStrokeH, FaParagraph } from "react-icons/fa";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
   INTERNET_SEARCH_TOOL_NAME,
   IMAGE_GENERATION_TOOL_NAME,
+  GRAPH_GENERATION_TOOL_NAME,
 ];
 
 function FileDisplay({
@@ -339,6 +342,20 @@ export const AIMessage = ({
                             toolName={`Generating images`}
                             toolLogo={
                               <FiImage size={15} className="my-auto mr-1" />
+                            }
+                            isRunning={!toolCall.tool_result}
+                          />
+                        </div>
+                      )}
+
+                    {toolCall &&
+                      toolCall.tool_name === GRAPH_GENERATION_TOOL_NAME &&
+                      !toolCall.tool_result && (
+                        <div className="my-2">
+                          <ToolRunDisplay
+                            toolName={`Generating a graph`}
+                            toolLogo={
+                              <FaParagraph size={15} className="my-auto mr-1" />
                             }
                             isRunning={!toolCall.tool_result}
                           />

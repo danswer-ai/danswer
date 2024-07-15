@@ -809,8 +809,6 @@ export function ChatPage({
           const packet = stack.nextPacket();
 
           if (packet) {
-            // console.log(packet)
-
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "file_id")) {

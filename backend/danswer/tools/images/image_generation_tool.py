@@ -170,7 +170,6 @@ class ImageGenerationTool(Tool):
             n=1,
             extra_headers=build_llm_extra_headers(self.additional_headers),
         )
-
         return ImageGenerationResponse(
             revised_prompt=response.data[0]["revised_prompt"],
             url=response.data[0]["url"],
