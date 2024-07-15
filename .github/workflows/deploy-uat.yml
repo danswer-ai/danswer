@@ -23,9 +23,9 @@ jobs:
   
             - name: Delete Old Docker
               run: |
-                    docker-compose -f docker-compose.yml -p chp-uat down
+                    docker-compose -f docker-compose.yml -p chp-stack down
                     docker rmi $(docker images -q) -f
-                    docker system prune -f
+                    docker system prune --all -f
             
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v2
