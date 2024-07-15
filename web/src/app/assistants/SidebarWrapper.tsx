@@ -57,7 +57,6 @@ export default function SidebarWrapper({
   });
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
-
   const router = useRouter();
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
