@@ -448,12 +448,12 @@ export const HumanMessage = ({
 
   return (
     <div
-      className="relative flex w-full px-5 pt-5 pb-1 -mr-6"
+      className="relative flex w-full pt-5 pb-1 -mr-6 lg:px-5"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="w-full mx-auto sm:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-        <div className="ml-8">
+      <div className="w-full mx-auto 2xl:w-searchbar-sm 3xl:w-searchbar">
+        <div className="lg:ml-8">
           <div className="flex">
             <div className="p-1 bg-blue-400 rounded-lg h-fit">
               <div className="text-inverted">
