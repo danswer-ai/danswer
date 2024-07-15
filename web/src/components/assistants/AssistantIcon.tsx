@@ -1,5 +1,6 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
 import React from "react";
+import { Tooltip } from "../tooltip/Tooltip";
 
 export function generatePastelColorFromId(id: string): string {
   const hash = Array.from(id).reduce(
@@ -41,14 +42,16 @@ export function AssistantIcon({
   const color = darkerGenerateColorFromId(assistant.id.toString());
 
   return (
-    <div
-      className={`flex-none
+    <Tooltip delayDuration={1000} content={assistant.description}>
+      <div
+        className={`flex-none
       ${border && " border border-.5 border-border-strong "}
       ${(!size || size == "large") && "w-6 h-6"}
       ${size == "small" && "w-6 h-6"}
       rounded-lg
       `}
-      style={{ backgroundColor: color }}
-    />
+        style={{ backgroundColor: color }}
+      />
+    </Tooltip>
   );
 }
