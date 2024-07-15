@@ -104,7 +104,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
       # Not necessary, this is just to reduce download time during startup
-      - inference_huggingface_model_cache:/root/.cache/huggingface/
+      - model_cache_huggingface:/root/.cache/huggingface/
     logging:
       driver: json-file
       options:
@@ -206,5 +206,5 @@ volumes:
   db_volume:
   vespa_volume:
   # Created by the container itself
-  inference_huggingface_model_cache:
+  model_cache_huggingface:
   indexing_huggingface_model_cache:
