@@ -138,13 +138,6 @@ export const SearchResultsDisplay = ({
         );
       })
     : [];
-  // console.log(searchResponse)
-  // console.log("searchResponse")
-  // console.log(documents)
-
-  // showAll ||
-  //             relevance?.relevant ||
-  //             document.relevant_search_result
 
   const orderedDocs =
     contentEnriched && documents
