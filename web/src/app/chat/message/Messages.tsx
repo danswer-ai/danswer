@@ -388,6 +388,14 @@ export const AIMessage = ({
                             key={messageId}
                             className="prose max-w-full"
                             components={{
+                              // img: (props) => {
+                              //   return (
+                              //     <div>
+                              //       {/* {props.children.} */}
+                              //     </div>
+
+                              //   )
+                              // },
                               a: (props) => {
                                 const { node, ...rest } = props;
                                 const value = rest.children;

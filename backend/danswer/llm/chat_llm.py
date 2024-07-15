@@ -33,6 +33,7 @@ from danswer.configs.model_configs import GEN_AI_TEMPERATURE
 from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import LLMConfig
 from danswer.llm.interfaces import ToolChoiceOptions
+from danswer.tools.graphing.models import GRAPHING_RESPONSE_ID
 from danswer.utils.logger import setup_logger
 
 
@@ -128,12 +129,20 @@ def _convert_message_to_dict(message: BaseMessage) -> dict:
             "name": message.name,
         }
     elif isinstance(message, ToolMessage):
-        message_dict = {
-            "tool_call_id": message.tool_call_id,
-            "role": "tool",
-            "name": message.name or "",
-            "content": message.content,
-        }
+        if message.id == GRAPHING_RESPONSE_ID:
+            message_dict = {
+                "tool_call_id": message.tool_call_id,
+                "role": "tool",
+                "name": message.name or "",
+                "content": "a graph",
+            }
+        else:
+            message_dict = {
+                "tool_call_id": message.tool_call_id,
+                "role": "tool",
+                "name": message.name or "",
+                "content": "a graph",
+            }
     else:
         raise ValueError(f"Got unknown type {message}")
     if "name" in message.additional_kwargs:

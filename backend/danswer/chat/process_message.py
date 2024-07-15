@@ -70,9 +70,9 @@ from danswer.tools.custom.custom_tool import build_custom_tools_from_openapi_sch
 from danswer.tools.custom.custom_tool import CUSTOM_TOOL_RESPONSE_ID
 from danswer.tools.custom.custom_tool import CustomToolCallSummary
 from danswer.tools.force import ForceUseTool
-from danswer.tools.graphing.graphing_tool import GRAPHING_RESPONSE_ID
 from danswer.tools.graphing.graphing_tool import GraphingResponse
 from danswer.tools.graphing.graphing_tool import GraphingTool
+from danswer.tools.graphing.models import GRAPHING_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import ImageGenerationResponse
 from danswer.tools.images.image_generation_tool import ImageGenerationTool

@@ -529,6 +529,7 @@ def upload_files_for_chat(
         "application/xml",
         "application/x-yaml",
     }
+
     document_content_types = {
         "application/pdf",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

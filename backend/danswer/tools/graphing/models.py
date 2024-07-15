@@ -12,3 +12,6 @@ class GraphingResponse(BaseModel):
 
 class GraphingError(BaseModel):
     error: str
+
+
+GRAPHING_RESPONSE_ID = "graphing_response"

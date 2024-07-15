@@ -18,6 +18,7 @@ from danswer.prompts.chat_prompts import (
     GRAPHING_QUERY_REPHRASE,
 )  # You'll need to create this
 from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
+from danswer.tools.graphing.models import GRAPHING_RESPONSE_ID
 from danswer.tools.graphing.models import GraphingError
 from danswer.tools.graphing.models import GraphingResponse
 from danswer.tools.graphing.models import GraphingResult
@@ -30,7 +31,6 @@ matplotlib.use("Agg")  # Use non-interactive backend
 
 logger = setup_logger()
 
-GRAPHING_RESPONSE_ID = "graphing_response"
 FINAL_GRAPH_IMAGE = "final_graph_image"
 
 YES_GRAPHING = "Yes Graphing"
