@@ -320,16 +320,7 @@ export function AssistantEditor({
               );
             }
           }
-          if (sqlGenerationToolEnabled) {
-              enabledTools = enabledTools.filter(
-                  (toolId) => toolId !== sqlGenerationTool!.id
-              );
-          }
-          if (summaryGenerationToolEnabled) {
-              enabledTools = enabledTools.filter(
-                  (toolId) => toolId !== summaryGenerationTool!.id
-              );
-          }
+
           // if disable_retrieval is set, set num_chunks to 0
           // to tell the backend to not fetch any documents
           const numChunks = searchToolEnabled ? values.num_chunks || 10 : 0;
