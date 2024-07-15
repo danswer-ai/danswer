@@ -61,6 +61,7 @@ import {
   TooltipGroup,
 } from "@/components/tooltip/CustomTooltip";
 import { ValidSources } from "@/lib/types";
+import { Tooltip } from "@/components/tooltip/Tooltip";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -796,21 +797,22 @@ export const HumanMessage = ({
                     isHovered &&
                     !isEditing &&
                     (!files || files.length === 0) ? (
-                      <div className="ml-auto my-auto">
-                        <Hoverable
-                          icon={FiEdit2}
-                          onClick={() => {
-                            setIsEditing(true);
-                            setIsHovered(false);
-                          }}
-                        />
+                      <div className="ml-auto  mr-1 my-auto">
+                        <Tooltip delayDuration={1000} content={"Edit message"}>
+                          <button
+                            className="hover:bg-hover p-1.5 rounded"
+                            onClick={() => {
+                              setIsEditing(true);
+                              setIsHovered(false);
+                            }}
+                          >
+                            <FiEdit2 />
+                          </button>
+                        </Tooltip>
                       </div>
                     ) : (
                       <div className="h-[27px]" />
                     )}
-
-                    {/* <div className="flex content-end justify-end flex-col"> */}
-                    {/* <FileDisplay alignBubble files={files || []} /> */}
 
                     <div
                       className={`${

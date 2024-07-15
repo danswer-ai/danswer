@@ -4,6 +4,7 @@ import {
 } from "@/components/BasicClickable";
 import { HoverPopup } from "@/components/HoverPopup";
 import { Hoverable } from "@/components/Hoverable";
+import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useEffect, useRef, useState } from "react";
 import { FiCheck, FiEdit2, FiSearch, FiX } from "react-icons/fi";
 
@@ -169,9 +170,16 @@ export function SearchSummary({
             )}
           </div>
           {handleSearchQueryEdit && (
-            <div className="my-auto">
-              <Hoverable icon={FiEdit2} onClick={() => setIsEditing(true)} />
-            </div>
+            <Tooltip delayDuration={1000} content={"Edit Search"}>
+              <button
+                className="my-auto hover:bg-hover p-1.5 rounded"
+                onClick={() => {
+                  setIsEditing(true);
+                }}
+              >
+                <FiEdit2 />
+              </button>
+            </Tooltip>
           )}
         </>
       )}
