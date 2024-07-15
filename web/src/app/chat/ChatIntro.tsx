@@ -49,7 +49,7 @@ export function ChatIntro({
                 {selectedPersona?.name || "How can I help you today?"}
               </div>
               {selectedPersona && (
-                <div className="mt-1 text-center">
+                <div className="px-6 mt-1 text-center">
                   {selectedPersona.description}
                 </div>
               )}
