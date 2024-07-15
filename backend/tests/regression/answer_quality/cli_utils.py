@@ -181,7 +181,7 @@ def cleanup_docker(run_suffix: str) -> None:
 
     containers = [json.loads(line) for line in stdout.splitlines()]
     if not run_suffix:
-        run_suffix = "_"
+        run_suffix = "_20"
     project_name = f"danswer-stack{run_suffix}"
     containers_to_delete = [
         c for c in containers if c["Names"].startswith(project_name)
