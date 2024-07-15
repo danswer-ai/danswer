@@ -7,6 +7,7 @@ import time
 from threading import Thread
 from typing import IO
 
+import yaml
 from retry import retry
 
 
@@ -179,7 +180,8 @@ def cleanup_docker(run_suffix: str) -> None:
     stdout, _ = _run_command("docker ps -a --format '{{json .}}'")
 
     containers = [json.loads(line) for line in stdout.splitlines()]
-
+    if not run_suffix:
+        run_suffix = "_"
     project_name = f"danswer-stack{run_suffix}"
     containers_to_delete = [
         c for c in containers if c["Names"].startswith(project_name)
@@ -328,3 +330,19 @@ def restart_vespa_container(suffix: str) -> None:
         time.sleep(5)
 
     print(f"Vespa container '{container_name}' has been restarted")
+
+
+if __name__ == "__main__":
+    """
+    Running this just cleans up the docker environment for the container indicated by existing_test_suffix
+    If no existing_test_suffix is indicated, will just clean up all danswer docker containers/volumes/networks
+    Note: vespa/postgres mounts are not deleted
+    """
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(current_dir, "search_test_config.yaml")
+    with open(config_path, "r") as file:
+        config = yaml.safe_load(file)
+
+    if not isinstance(config, dict):
+        raise TypeError("config must be a dictionary")
+    cleanup_docker(config["existing_test_suffix"])
