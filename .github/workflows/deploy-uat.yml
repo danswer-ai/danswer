@@ -25,7 +25,7 @@ jobs:
               run: |
                     docker-compose -f docker-compose.yml -p chp-stack down
                     docker rmi $(docker images -q) -f
-                    docker system prune --all -f
+                    docker system prune --all
             
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v2
