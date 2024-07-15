@@ -150,8 +150,9 @@ class GraphingTool(Tool):
         use_graphing_output = llm.invoke(prompt)
 
         logger.debug(f"Evaluated if should use graphing: {use_graphing_output}")
+        content = use_graphing_output.content
 
-        return YES_GRAPHING.lower() in use_graphing_output.content.lower()
+        return YES_GRAPHING.lower() in str(content).lower()
 
     def get_args_for_non_tool_calling_llm(
         self,

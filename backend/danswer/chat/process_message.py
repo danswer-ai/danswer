@@ -472,8 +472,7 @@ def stream_chat_message_objects(
                     tool_cls.__name__ == GraphingTool.__name__
                     and not latest_query_files
                 ):
-                    search_tool = GraphingTool(output_dir="output")
-                    tool_dict[db_tool_model.id] = [search_tool]
+                    tool_dict[db_tool_model.id] = [GraphingTool(output_dir="output")]
 
                 if tool_cls.__name__ == SearchTool.__name__ and not latest_query_files:
                     search_tool = SearchTool(
