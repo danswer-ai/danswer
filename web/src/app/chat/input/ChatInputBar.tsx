@@ -298,50 +298,53 @@ export function ChatInputBar({
                 </div>
               </div>
             )}
-            <div className="flex gap-x-2 px-2 pt-2">
-              <div className="flex gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end weakbackground">
-                {selectedDocuments.length > 0 && (
-                  <button
-                    onClick={showDocs}
-                    className="flex-none flex cursor-pointer hover:bg-background-200 transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-150 max-w-[100px]"
-                  >
-                    <FileIcon size={24} />
-                    <p className="text-xs">
-                      {selectedDocuments.length} selected
-                    </p>
-                  </button>
-                )}
-                {files.map((file) => (
-                  <div className="flex-none" key={file.id}>
-                    {file.type === ChatFileType.IMAGE ? (
-                      <InputBarPreviewImageProvider
-                        file={file}
-                        onDelete={() => {
-                          setFiles(
-                            files.filter(
-                              (fileInFilter) => fileInFilter.id !== file.id
-                            )
-                          );
-                        }}
-                        isUploading={file.isUploading || false}
-                      />
-                    ) : (
-                      <InputBarPreview
-                        file={file}
-                        onDelete={() => {
-                          setFiles(
-                            files.filter(
-                              (fileInFilter) => fileInFilter.id !== file.id
-                            )
-                          );
-                        }}
-                        isUploading={file.isUploading || false}
-                      />
+            {selectedDocuments.length > 0 ||
+              (files.length > 0 && (
+                <div className="flex gap-x-2 px-2 pt-2">
+                  <div className="flex gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end weakbackground">
+                    {selectedDocuments.length > 0 && (
+                      <button
+                        onClick={showDocs}
+                        className="flex-none flex cursor-pointer hover:bg-background-200 transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-150 max-w-[100px]"
+                      >
+                        <FileIcon size={24} />
+                        <p className="text-xs">
+                          {selectedDocuments.length} selected
+                        </p>
+                      </button>
                     )}
+                    {files.map((file) => (
+                      <div className="flex-none" key={file.id}>
+                        {file.type === ChatFileType.IMAGE ? (
+                          <InputBarPreviewImageProvider
+                            file={file}
+                            onDelete={() => {
+                              setFiles(
+                                files.filter(
+                                  (fileInFilter) => fileInFilter.id !== file.id
+                                )
+                              );
+                            }}
+                            isUploading={file.isUploading || false}
+                          />
+                        ) : (
+                          <InputBarPreview
+                            file={file}
+                            onDelete={() => {
+                              setFiles(
+                                files.filter(
+                                  (fileInFilter) => fileInFilter.id !== file.id
+                                )
+                              );
+                            }}
+                            isUploading={file.isUploading || false}
+                          />
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              ))}
 
             <textarea
               onPaste={handlePaste}
