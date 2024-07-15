@@ -114,6 +114,10 @@ class ImageGenerationDisplay(BaseModel):
     file_ids: list[str]
 
 
+class GraphGenerationDisplay(BaseModel):
+    content: str
+
+
 class CustomToolResponse(BaseModel):
     response: dict
     tool_name: str

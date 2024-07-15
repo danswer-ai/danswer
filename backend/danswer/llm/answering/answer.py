@@ -41,6 +41,7 @@ from danswer.tools.custom.custom_tool_prompt_builder import (
 )
 from danswer.tools.force import filter_tools_for_force_tool_use
 from danswer.tools.force import ForceUseTool
+from danswer.tools.graphing.graphing_tool import GraphingTool
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import ImageGenerationResponse
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
@@ -259,10 +260,13 @@ class Answer:
                     tool_call_request, tool_runner.tool_message_content()
                 ),
             )
-
             if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
                 self._update_prompt_builder_for_search_tool(prompt_builder, [])
-            elif tool.name == ImageGenerationTool._NAME:
+
+            elif (
+                tool.name == ImageGenerationTool._NAME
+                or tool.name == GraphingTool._NAME
+            ):
                 prompt_builder.update_user_prompt(
                     build_image_generation_user_prompt(
                         query=self.question,
@@ -381,7 +385,7 @@ class Answer:
             self._update_prompt_builder_for_search_tool(
                 prompt_builder, final_context_documents
             )
-        elif tool.name == ImageGenerationTool._NAME:
+        elif tool.name == ImageGenerationTool._NAME or GraphingTool._NAME:
             img_urls = []
             for response in tool_runner.tool_responses():
                 if response.id == IMAGE_GENERATION_RESPONSE_ID:
@@ -469,11 +473,14 @@ class Answer:
                         continue
 
                     yield message
+
                 else:
+                    print(type(message))
                     # assumes all tool responses will come first, then the final answer
                     break
 
             if not self.skip_generation:
+                print("now processing the stream of answers")
                 process_answer_stream_fn = _get_answer_stream_processor(
                     context_docs=final_context_docs or [],
                     # if doc selection is enabled, then search_results will be None,

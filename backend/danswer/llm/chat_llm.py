@@ -132,7 +132,9 @@ def _convert_message_to_dict(message: BaseMessage) -> dict:
             "tool_call_id": message.tool_call_id,
             "role": "tool",
             "name": message.name or "",
-            "content": message.content,
+            "content": message.content[
+                :100
+            ],  # TODO longer term fix for excessively long graph response
         }
     else:
         raise ValueError(f"Got unknown type {message}")

@@ -9,6 +9,7 @@ from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import CustomToolResponse
 from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import GraphGenerationDisplay
 from danswer.chat.models import ImageGenerationDisplay
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
@@ -40,6 +41,7 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import FileDescriptor
 from danswer.file_store.utils import load_all_chat_files
+from danswer.file_store.utils import save_base64_image
 from danswer.file_store.utils import save_files_from_urls
 from danswer.llm.answering.answer import Answer
 from danswer.llm.answering.models import AnswerStyleConfig
@@ -68,6 +70,9 @@ from danswer.tools.custom.custom_tool import build_custom_tools_from_openapi_sch
 from danswer.tools.custom.custom_tool import CUSTOM_TOOL_RESPONSE_ID
 from danswer.tools.custom.custom_tool import CustomToolCallSummary
 from danswer.tools.force import ForceUseTool
+from danswer.tools.graphing.graphing_tool import GRAPHING_RESPONSE_ID
+from danswer.tools.graphing.graphing_tool import GraphingResponse
+from danswer.tools.graphing.graphing_tool import GraphingTool
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import ImageGenerationResponse
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
@@ -229,6 +234,7 @@ ChatPacket = (
     | CitationInfo
     | ImageGenerationDisplay
     | CustomToolResponse
+    | GraphGenerationDisplay
 )
 ChatPacketStream = Iterator[ChatPacket]
 
@@ -462,6 +468,13 @@ def stream_chat_message_objects(
             # handle in-code tools specially
             if db_tool_model.in_code_tool_id:
                 tool_cls = get_built_in_tool_by_id(db_tool_model.id, db_session)
+                if (
+                    tool_cls.__name__ == GraphingTool.__name__
+                    and not latest_query_files
+                ):
+                    search_tool = GraphingTool(output_dir="output")
+                    tool_dict[db_tool_model.id] = [search_tool]
+
                 if tool_cls.__name__ == SearchTool.__name__ and not latest_query_files:
                     search_tool = SearchTool(
                         db_session=db_session,
@@ -600,9 +613,11 @@ def stream_chat_message_objects(
                         db_session=db_session,
                         selected_search_docs=selected_db_search_docs,
                         # Deduping happens at the last step to avoid harming quality by dropping content early on
-                        dedupe_docs=retrieval_options.dedupe_docs
-                        if retrieval_options
-                        else False,
+                        dedupe_docs=(
+                            retrieval_options.dedupe_docs
+                            if retrieval_options
+                            else False
+                        ),
                     )
                     yield qa_docs_response
                 elif packet.id == SECTION_RELEVANCE_LIST_ID:
@@ -618,11 +633,23 @@ def stream_chat_message_objects(
                     yield LLMRelevanceFilterResponse(
                         relevant_chunk_indices=chunk_indices
                     )
+                elif packet.id == GRAPHING_RESPONSE_ID:
+                    graph_generation = cast(GraphingResponse, packet.response)
+
+                    file_id = save_base64_image(graph_generation.graph_result.image)
+                    ai_message_files = [
+                        FileDescriptor(id=str(file_id), type=ChatFileType.IMAGE)
+                    ]
+                    yield ImageGenerationDisplay(file_ids=[file_id])
+
+                    # yield GraphGenerationDisplay(
+                    #     content=graph_generation.graph_result.image
+                    # )
+
                 elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
                     img_generation_response = cast(
                         list[ImageGenerationResponse], packet.response
                     )
-
                     file_ids = save_files_from_urls(
                         [img.url for img in img_generation_response]
                     )
@@ -633,6 +660,7 @@ def stream_chat_message_objects(
                     yield ImageGenerationDisplay(
                         file_ids=[str(file_id) for file_id in file_ids]
                     )
+
                 elif packet.id == INTERNET_SEARCH_RESPONSE_ID:
                     (
                         qa_docs_response,
@@ -642,6 +670,7 @@ def stream_chat_message_objects(
                         db_session=db_session,
                     )
                     yield qa_docs_response
+
                 elif packet.id == CUSTOM_TOOL_RESPONSE_ID:
                     custom_tool_response = cast(CustomToolCallSummary, packet.response)
                     yield CustomToolResponse(
@@ -695,16 +724,18 @@ def stream_chat_message_objects(
             token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
             citations=db_citations,
             error=None,
-            tool_calls=[
-                ToolCall(
-                    tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                    tool_name=tool_result.tool_name,
-                    tool_arguments=tool_result.tool_args,
-                    tool_result=tool_result.tool_result,
-                )
-            ]
-            if tool_result
-            else [],
+            tool_calls=(
+                [
+                    ToolCall(
+                        tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                        tool_name=tool_result.tool_name,
+                        tool_arguments=tool_result.tool_args,
+                        tool_result=tool_result.tool_result,
+                    )
+                ]
+                if tool_result
+                else []
+            ),
         )
         db_session.commit()  # actually save user / assistant message
 
