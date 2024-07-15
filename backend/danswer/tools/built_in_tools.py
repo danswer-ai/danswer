@@ -35,15 +35,15 @@ BUILT_IN_TOOLS: list[InCodeToolInfo] = [
         in_code_tool_id=SearchTool.__name__,
         display_name=SearchTool._DISPLAY_NAME,
     ),
-    InCodeToolInfo(
-        cls=ImageGenerationTool,
-        description=(
-            "The Image Generation Tool allows the assistant to use DALL-E 3 to generate images. "
-            "The tool will be used when the user asks the assistant to generate an image."
-        ),
-        in_code_tool_id=ImageGenerationTool.__name__,
-        display_name=ImageGenerationTool._DISPLAY_NAME,
-    ),
+    # InCodeToolInfo(
+    #     cls=ImageGenerationTool,
+    #     description=(
+    #         "The Image Generation Tool allows the assistant to use DALL-E 3 to generate images. "
+    #         "The tool will be used when the user asks the assistant to generate an image."
+    #     ),
+    #     in_code_tool_id=ImageGenerationTool.__name__,
+    #     display_name=ImageGenerationTool._DISPLAY_NAME,
+    # ),
     InCodeToolInfo(
         cls=SqlGenerationTool,
         description=(
