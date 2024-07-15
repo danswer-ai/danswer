@@ -189,6 +189,21 @@ class InferenceChunk(BaseChunk):
         return self.score > other.score
 
 
+class InferenceChunkUncleaned(InferenceChunk):
+    title: str | None  # Separate from Semantic Identifier though often same
+    metadata_suffix: str | None
+
+    def to_inference_chunk(self) -> InferenceChunk:
+        # Create a dict of all fields except 'title' and 'metadata_suffix'
+        # Assumes the cleaning has already been applied and just needs to translate to the right type
+        inference_chunk_data = {
+            k: v
+            for k, v in self.dict().items()
+            if k not in ["title", "metadata_suffix"]
+        }
+        return InferenceChunk(**inference_chunk_data)
+
+
 class InferenceSection(BaseModel):
     """Section list of chunks with a combined content. A section could be a single chunk, several
     chunks from the same document or the entire document."""

@@ -14,12 +14,12 @@ from danswer.indexing.chunker import split_chunk_text_into_mini_chunks
 from danswer.indexing.models import ChunkEmbedding
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
-from danswer.search.enums import EmbedTextType
 from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.utils.batching import batch_list
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
+from shared_configs.enums import EmbedTextType
 
 
 logger = setup_logger()
@@ -50,6 +50,8 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         normalize: bool,
         query_prefix: str | None,
         passage_prefix: str | None,
+        api_key: str | None = None,
+        provider_type: str | None = None,
     ):
         super().__init__(model_name, normalize, query_prefix, passage_prefix)
         self.max_seq_length = DOC_EMBEDDING_CONTEXT_SIZE  # Currently not customizable
@@ -59,6 +61,8 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
             query_prefix=query_prefix,
             passage_prefix=passage_prefix,
             normalize=normalize,
+            api_key=api_key,
+            provider_type=provider_type,
             # The below are globally set, this flow always uses the indexing one
             server_host=INDEXING_MODEL_SERVER_HOST,
             server_port=INDEXING_MODEL_SERVER_PORT,
@@ -81,7 +85,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         for chunk_ind, chunk in enumerate(chunks):
             chunk_texts.append(chunk.content)
             mini_chunk_texts = (
-                split_chunk_text_into_mini_chunks(chunk.content)
+                split_chunk_text_into_mini_chunks(chunk.content_summary)
                 if enable_mini_chunk
                 else []
             )

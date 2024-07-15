@@ -2,16 +2,15 @@ import {
   BooleanFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
-import { Button, Divider, Text } from "@tremor/react";
+import { Button } from "@tremor/react";
 import { Form, Formik } from "formik";
-
 import * as Yup from "yup";
-import { EmbeddingModelDescriptor } from "./embeddingModels";
+import { EmbeddingModelDescriptor, HostedEmbeddingModel } from "./types";
 
 export function CustomModelForm({
   onSubmit,
 }: {
-  onSubmit: (model: EmbeddingModelDescriptor) => void;
+  onSubmit: (model: HostedEmbeddingModel) => void;
 }) {
   return (
     <div>
@@ -21,6 +20,7 @@ export function CustomModelForm({
           model_dim: "",
           query_prefix: "",
           passage_prefix: "",
+          description: "",
           normalize: true,
         }}
         validationSchema={Yup.object().shape({
@@ -62,6 +62,13 @@ export function CustomModelForm({
                 }
               }}
             />
+            <TextFormField
+              name="description"
+              label="Description:"
+              subtext="Description of  your model"
+              placeholder=""
+              autoCompleteDisabled={true}
+            />
 
             <TextFormField
               name="query_prefix"
@@ -77,7 +84,6 @@ export function CustomModelForm({
               placeholder="E.g. 'query: '"
               autoCompleteDisabled={true}
             />
-
             <TextFormField
               name="passage_prefix"
               label="[Optional] Passage Prefix:"

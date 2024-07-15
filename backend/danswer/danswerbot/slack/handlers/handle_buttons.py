@@ -29,8 +29,8 @@ from danswer.danswerbot.slack.handlers.handle_regular_answer import (
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import build_feedback_id
 from danswer.danswerbot.slack.utils import decompose_action_id
-from danswer.danswerbot.slack.utils import fetch_groupids_from_names
-from danswer.danswerbot.slack.utils import fetch_userids_from_emails
+from danswer.danswerbot.slack.utils import fetch_group_ids_from_names
+from danswer.danswerbot.slack.utils import fetch_user_ids_from_emails
 from danswer.danswerbot.slack.utils import get_channel_name_from_id
 from danswer.danswerbot.slack.utils import get_feedback_visibility
 from danswer.danswerbot.slack.utils import read_slack_thread
@@ -43,7 +43,7 @@ from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.utils.logger import setup_logger
 
-logger_base = setup_logger()
+logger = setup_logger()
 
 
 def handle_doc_feedback_button(
@@ -51,7 +51,7 @@ def handle_doc_feedback_button(
     client: SocketModeClient,
 ) -> None:
     if not (actions := req.payload.get("actions")):
-        logger_base.error("Missing actions. Unable to build the source feedback view")
+        logger.error("Missing actions. Unable to build the source feedback view")
         return
 
     # Extracts the feedback_id coming from the 'source feedback' button
@@ -134,7 +134,7 @@ def handle_generate_answer_button(
             receiver_ids=None,
             client=client.web_client,
             channel=channel_id,
-            logger=cast(logging.Logger, logger_base),
+            logger=cast(logging.Logger, logger),
             feedback_reminder_id=None,
         )
 
@@ -196,7 +196,7 @@ def handle_slack_feedback(
                 feedback=feedback,
             )
         else:
-            logger_base.error(f"Feedback type '{feedback_type}' not supported")
+            logger.error(f"Feedback type '{feedback_type}' not supported")
 
     if get_feedback_visibility() == FeedbackVisibility.PRIVATE or feedback_type not in [
         LIKE_BLOCK_ACTION_ID,
@@ -260,11 +260,11 @@ def handle_followup_button(
             tag_names = slack_bot_config.channel_config.get("follow_up_tags")
             remaining = None
             if tag_names:
-                tag_ids, remaining = fetch_userids_from_emails(
+                tag_ids, remaining = fetch_user_ids_from_emails(
                     tag_names, client.web_client
                 )
             if remaining:
-                group_ids, _ = fetch_groupids_from_names(remaining, client.web_client)
+                group_ids, _ = fetch_group_ids_from_names(remaining, client.web_client)
 
     blocks = build_follow_up_resolved_blocks(tag_ids=tag_ids, group_ids=group_ids)
 
@@ -339,7 +339,7 @@ def handle_followup_resolved_button(
         )
 
         if not response.get("ok"):
-            logger_base.error("Unable to delete message for resolved")
+            logger.error("Unable to delete message for resolved")
 
     if immediate:
         msg_text = f"{clicker_name} has marked this question as resolved!"

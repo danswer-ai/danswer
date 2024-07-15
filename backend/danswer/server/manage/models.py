@@ -157,8 +157,7 @@ class SlackBotConfigCreationRequest(BaseModel):
     respond_to_bots: bool = False
     enable_auto_filters: bool = False
     # If no team members, assume respond in the channel to everyone
-    respond_team_member_list: list[str] = []
-    respond_slack_group_list: list[str] = []
+    respond_member_group_list: list[str] = []
     answer_filters: list[AllowedAnswerFilters] = []
     # list of user emails
     follow_up_tags: list[str] | None = None

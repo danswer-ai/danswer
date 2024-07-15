@@ -10,32 +10,39 @@ from tests.regression.answer_quality.api_utils import get_answer_from_query
 from tests.regression.answer_quality.cli_utils import get_current_commit_sha
 
 
-def _get_and_write_relari_outputs(
+def _process_and_write_query_results(
     samples: list[dict], run_suffix: str, output_file_path: str
 ) -> None:
     while not check_if_query_ready(run_suffix):
         time.sleep(5)
 
+    count = 0
     with open(output_file_path, "w", encoding="utf-8") as file:
         for sample in samples:
-            retrieved_context, answer = get_answer_from_query(
-                query=sample["question"],
+            print(f"On question number {count}")
+            query = sample["question"]
+            print(f"query: {query}")
+            context_data_list, answer = get_answer_from_query(
+                query=query,
                 run_suffix=run_suffix,
             )
 
-            if not answer:
-                print("NO ANSWER GIVEN FOR QUESTION:", sample["question"])
-                continue
+            print(f"answer: {answer[:50]}...")
+            if not context_data_list:
+                print("No context found")
+            else:
+                print(f"{len(context_data_list)} context docs found")
+            print("\n")
 
             output = {
-                "label": sample["uid"],
-                "question": sample["question"],
+                "question_data": sample,
                 "answer": answer,
-                "retrieved_context": retrieved_context,
+                "context_data_list": context_data_list,
             }
 
             file.write(json.dumps(output) + "\n")
             file.flush()
+            count += 1
 
 
 def _write_metadata_file(run_suffix: str, metadata_file_path: str) -> None:
@@ -55,7 +62,7 @@ def _read_questions_jsonl(questions_file_path: str) -> list[dict]:
     return questions
 
 
-def answer_relari_questions(
+def run_qa_test_and_save_results(
     questions_file_path: str,
     results_folder_path: str,
     run_suffix: str,
@@ -84,7 +91,7 @@ def answer_relari_questions(
 
     print("saving question results to:", output_file_path)
     _write_metadata_file(run_suffix, metadata_file_path)
-    _get_and_write_relari_outputs(
+    _process_and_write_query_results(
         samples=samples, run_suffix=run_suffix, output_file_path=output_file_path
     )
 
@@ -103,7 +110,7 @@ def main() -> None:
     else:
         current_output_folder = os.path.join(current_output_folder, "no_defined_suffix")
 
-    answer_relari_questions(
+    run_qa_test_and_save_results(
         config.questions_file,
         current_output_folder,
         config.existing_test_suffix,

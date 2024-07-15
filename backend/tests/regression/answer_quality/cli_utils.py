@@ -1,5 +1,6 @@
 import json
 import os
+import socket
 import subprocess
 import sys
 from threading import Thread
@@ -108,20 +109,32 @@ def set_env_variables(
         print(f"Set {env_var_name} to: {env_var}")
 
 
+def _is_port_in_use(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(("localhost", port)) == 0
+
+
 def start_docker_compose(
     run_suffix: str, launch_web_ui: bool, use_cloud_gpu: bool
 ) -> None:
     print("Starting Docker Compose...")
-    os.chdir("../deployment/docker_compose")
+    os.chdir(os.path.dirname(__file__))
+    os.chdir("../../../../deployment/docker_compose/")
     command = f"docker compose -f docker-compose.search-testing.yml -p danswer-stack{run_suffix} up -d"
     command += " --build"
     command += " --force-recreate"
-    if not launch_web_ui:
-        command += " --scale web_server=0"
-        command += " --scale nginx=0"
     if use_cloud_gpu:
         command += " --scale indexing_model_server=0"
         command += " --scale inference_model_server=0"
+    if launch_web_ui:
+        web_ui_port = 3000
+        while _is_port_in_use(web_ui_port):
+            web_ui_port += 1
+        print(f"UI will be launched at http://localhost:{web_ui_port}")
+        os.environ["NGINX_PORT"] = str(web_ui_port)
+    else:
+        command += " --scale web_server=0"
+        command += " --scale nginx=0"
 
     print("Docker Command:\n", command)
 

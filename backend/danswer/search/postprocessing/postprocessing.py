@@ -4,6 +4,8 @@ from typing import cast
 
 import numpy
 
+from danswer.configs.constants import MAX_CHUNK_TITLE_LEN
+from danswer.configs.constants import RETURN_SEPARATOR
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
 from danswer.document_index.document_index_utils import (
@@ -12,6 +14,7 @@ from danswer.document_index.document_index_utils import (
 from danswer.llm.interfaces import LLM
 from danswer.search.models import ChunkMetric
 from danswer.search.models import InferenceChunk
+from danswer.search.models import InferenceChunkUncleaned
 from danswer.search.models import InferenceSection
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RerankMetricsContainer
@@ -45,6 +48,33 @@ def should_rerank(query: SearchQuery) -> bool:
 
 def should_apply_llm_based_relevance_filter(query: SearchQuery) -> bool:
     return not query.skip_llm_chunk_filter
+
+
+def cleanup_chunks(chunks: list[InferenceChunkUncleaned]) -> list[InferenceChunk]:
+    def _remove_title(chunk: InferenceChunkUncleaned) -> str:
+        if not chunk.title or not chunk.content:
+            return chunk.content
+
+        if chunk.content.startswith(chunk.title):
+            return chunk.content[len(chunk.title) :].lstrip()
+
+        if chunk.content.startswith(chunk.title[:MAX_CHUNK_TITLE_LEN]):
+            return chunk.content[MAX_CHUNK_TITLE_LEN:].lstrip()
+
+        return chunk.content
+
+    def _remove_metadata_suffix(chunk: InferenceChunkUncleaned) -> str:
+        if not chunk.metadata_suffix:
+            return chunk.content
+        return chunk.content.removesuffix(chunk.metadata_suffix).rstrip(
+            RETURN_SEPARATOR
+        )
+
+    for chunk in chunks:
+        chunk.content = _remove_title(chunk)
+        chunk.content = _remove_metadata_suffix(chunk)
+
+    return [chunk.to_inference_chunk() for chunk in chunks]
 
 
 @log_function_time(print_only=True)

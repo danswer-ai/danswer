@@ -474,7 +474,7 @@ def build_follow_up_resolved_blocks(
     if tag_str:
         tag_str += " "
 
-    group_str = " ".join([f"<!subteam^{group}>" for group in group_ids])
+    group_str = " ".join([f"<!subteam^{group_id}|>" for group_id in group_ids])
     if group_str:
         group_str += " "
 
