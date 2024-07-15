@@ -502,7 +502,7 @@ export const AIMessage = ({
                                 <p className="line-clamp-1">See context</p>
                                 {uniqueSources.map((sourceType, ind) => {
                                   return (
-                                    <div className="flex-none">
+                                    <div key={ind} className="flex-none">
                                       <SourceIcon
                                         sourceType={sourceType}
                                         iconSize={18}
