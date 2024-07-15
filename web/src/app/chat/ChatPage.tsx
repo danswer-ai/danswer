@@ -1109,7 +1109,7 @@ export function ChatPage({
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      <div className="flex relative bg-background text-default overflow-x-hidden">
+      <div className="flex  relative bg-background text-default overflow-x-hidden">
         <div
           ref={sidebarElementRef}
           className={`

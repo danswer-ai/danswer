@@ -17,13 +17,13 @@
   }
 }
 
-.weakbackground {
+.miniscroll {
   scrollbar-color: black;
   scrollbar-width: thin;
 }
 
-.weakbackground::-webkit-scrollbar-track {
-  background: #f5f5f5;
+.miniscroll::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .inputscroll::-webkit-scrollbar-track {
@@ -32,31 +32,36 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: theme("colors.scrollbar.track");
+  background: transparent;
+  /* background: theme("colors.scrollbar.track"); */
   /* Track background color */
 }
 
 /* Style the scrollbar handle */
 ::-webkit-scrollbar-thumb {
-  background: theme("colors.scrollbar.thumb");
+  background: transparent;
+  /* background: theme("colors.scrollbar.thumb"); */
   /* Handle color */
   border-radius: 10px;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: theme("colors.scrollbar.thumb-hover");
+  background: transparent;
+  /* background: theme("colors.scrollbar.thumb-hover"); */
   /* Handle color on hover */
 }
 
 .dark-scrollbar::-webkit-scrollbar-thumb {
-  background: theme("colors.scrollbar.dark.thumb");
+  background: transparent;
+  /* background: theme("colors.scrollbar.dark.thumb"); */
   /* Handle color */
   border-radius: 10px;
 }
 
 .dark-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: theme("colors.scrollbar.dark.thumb-hover");
+  background: transparent;
+  /* background: theme("colors.scrollbar.dark.thumb-hover"); */
   /* Handle color on hover */
 }
 
