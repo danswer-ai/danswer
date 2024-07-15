@@ -270,37 +270,20 @@ def mark_document_set_as_to_be_deleted(
         raise
 
 
-def mark_cc_pair__document_set_relationships_to_be_deleted__no_commit(
-    cc_pair_id: int, db_session: Session
-) -> set[int]:
-    """Marks all CC Pair -> Document Set relationships for the specified
-    `cc_pair_id` as not current and returns the list of all document set IDs
-    affected.
-
-    NOTE: raises a `ValueError` if any of the document sets are currently syncing
-    to avoid getting into a bad state."""
-    document_set__cc_pair_relationships = db_session.scalars(
-        select(DocumentSet__ConnectorCredentialPair).where(
+def delete_document_set_cc_pair_relationship__no_commit(
+    connector_id: int, credential_id: int, db_session: Session
+) -> None:
+    """Deletes all rows from DocumentSet__ConnectorCredentialPair where the
+    connector_credential_pair_id matches the given cc_pair_id."""
+    delete_stmt = delete(DocumentSet__ConnectorCredentialPair).where(
+        and_(
+            ConnectorCredentialPair.connector_id == connector_id,
+            ConnectorCredentialPair.credential_id == credential_id,
             DocumentSet__ConnectorCredentialPair.connector_credential_pair_id
-            == cc_pair_id
+            == ConnectorCredentialPair.id,
         )
-    ).all()
-
-    document_set_ids_touched: set[int] = set()
-    for document_set__cc_pair_relationship in document_set__cc_pair_relationships:
-        document_set__cc_pair_relationship.is_current = False
-
-        if not document_set__cc_pair_relationship.document_set.is_up_to_date:
-            raise ValueError(
-                "Cannot delete CC pair while it is attached to a document set "
-                "that is syncing. Please wait for the document set to finish "
-                "syncing, and then try again."
-            )
-
-        document_set__cc_pair_relationship.document_set.is_up_to_date = False
-        document_set_ids_touched.add(document_set__cc_pair_relationship.document_set_id)
-
-    return document_set_ids_touched
+    )
+    db_session.execute(delete_stmt)
 
 
 def fetch_document_sets(
