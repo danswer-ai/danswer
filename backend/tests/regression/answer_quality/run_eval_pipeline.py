@@ -35,9 +35,7 @@ def main() -> None:
         config.use_cloud_gpu,
         config.llm,
     )
-    relari_output_folder_path = manage_data_directories(
-        run_suffix, config.output_folder, config.use_cloud_gpu
-    )
+    manage_data_directories(run_suffix, config.output_folder, config.use_cloud_gpu)
     if config.branch:
         switch_to_branch(config.branch)
 
@@ -46,9 +44,7 @@ def main() -> None:
     if not config.existing_test_suffix:
         upload_test_files(config.zipped_documents_file, run_suffix)
 
-        run_qa_test_and_save_results(
-            config.questions_file, relari_output_folder_path, run_suffix, config.limit
-        )
+        run_qa_test_and_save_results(run_suffix)
 
         if config.clean_up_docker_containers:
             cleanup_docker(run_suffix)

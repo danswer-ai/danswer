@@ -11,16 +11,15 @@ from danswer.search.models import IndexFilters
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
 from danswer.server.documents.models import ConnectorBase
-from tests.regression.answer_quality.cli_utils import (
-    get_api_server_host_port,
-)
+from tests.regression.answer_quality.cli_utils import get_api_server_host_port
+from tests.regression.answer_quality.cli_utils import restart_vespa_container
 
 
 def _api_url_builder(run_suffix: str, api_path: str) -> str:
     return f"http://localhost:{get_api_server_host_port(run_suffix)}" + api_path
 
 
-@retry(tries=5, delay=2, backoff=2)
+@retry(tries=15, delay=10, jitter=1)
 def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
     filters = IndexFilters(
         source_type=None,
@@ -58,8 +57,10 @@ def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
         context_data_list = response_json.get("contexts", {}).get("contexts", [])
         answer = response_json.get("answer", "")
     except Exception as e:
-        print("Failed to answer the questions, trying again")
-        print(f"error: {str(e)}")
+        print("Failed to answer the questions:")
+        print(f"\t {str(e)}")
+        print("Restarting vespa container and trying agian")
+        restart_vespa_container(run_suffix)
         raise e
 
     return context_data_list, answer
