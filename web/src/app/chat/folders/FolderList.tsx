@@ -200,7 +200,7 @@ const FolderItem = ({
           onMouseLeave={() => setIsHovering(false)}
         >
           <div onClick={toggleFolderExpansion} className="cursor-pointer">
-            <div className="text-sm text-text-400 flex items-center justify-start w-full">
+            <div className="text-sm text-text-600 flex items-center justify-start w-full">
               <div className="mr-2">
                 {isExpanded ? (
                   <FiChevronDown size={16} />

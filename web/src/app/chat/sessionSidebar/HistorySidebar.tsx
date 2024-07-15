@@ -31,6 +31,7 @@ import { TbLayoutSidebarRightExpand } from "react-icons/tb";
 import {
   AssistantsIcon,
   AssistantsIconSkeleton,
+  BackIcon,
   LefToLineIcon,
   RightToLineIcon,
 } from "@/components/icons/icons";
@@ -38,7 +39,7 @@ import { PagesTab } from "./PagesTab";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 
 interface HistorySidebarProps {
-  search?: boolean;
+  page: "search" | "chat" | "assistants";
   existingChats?: ChatSession[];
   currentChatSession?: ChatSession | null | undefined;
   folders?: Folder[];
@@ -55,7 +56,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
   (
     {
       toggled,
-      search,
+      page,
       existingChats,
       currentChatSession,
       folders,
@@ -101,11 +102,11 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             transition-transform`}
         >
           <div className="ml-4 mr-3 flex flex gap-x-1 items-center mt-2 my-auto text-text-700 text-xl">
-            <div className="mr-1 mt-auto h-6 w-6">
+            <div className="mr-1 my-auto h-6 w-6">
               <Logo height={24} width={24} />
             </div>
 
-            <div className="hidden">
+            <div className="invisible">
               {enterpriseSettings && enterpriseSettings.application_name ? (
                 <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
               ) : (
@@ -121,7 +122,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
               </Tooltip>
             )}
           </div>
-          {!search && (
+          {!(page == "search") && (
             <div className="mx-3 mt-4 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
               <Link
                 href={
@@ -158,21 +159,33 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 <p className="my-auto flex items-center text-sm">New Folder</p>
               </button>
 
-              <Link
-                href="/assistants/mine"
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
-              >
-                <AssistantsIconSkeleton className="h-4 w-4 my-auto" />
-                <p className="my-auto flex items-center text-sm">
-                  Manage Assistants
-                </p>
-              </Link>
+              {page == "assistants" ? (
+                <Link
+                  href="/chat"
+                  className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+                >
+                  <BackIcon className="h-4 w-4 my-auto" />
+                  <p className="my-auto flex items-center text-sm">
+                    Back to Danswer
+                  </p>
+                </Link>
+              ) : (
+                <Link
+                  href="/assistants/mine"
+                  className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+                >
+                  <AssistantsIconSkeleton className="h-4 w-4 my-auto" />
+                  <p className="my-auto flex items-center text-sm">
+                    Manage Assistants
+                  </p>
+                </Link>
+              )}
             </div>
           )}
           <div className="border-b border-border pb-4 mx-3" />
 
           <PagesTab
-            search={search}
+            search={page == "search"}
             existingChats={existingChats}
             currentChatId={currentChatId}
             folders={folders}

@@ -76,7 +76,7 @@ const Popup: React.FC<PopupProps> = ({
         break;
       default: // top
         popupStyle.bottom = `${triggerRect.height + 5}px`;
-        popupStyle.left = "50%";
+        popupStyle.left = `${triggerRect.width + 100}px`;
         popupStyle.transform = "translateX(-50%)";
     }
 
@@ -88,6 +88,7 @@ const Popup: React.FC<PopupProps> = ({
       <div ref={triggerRef} onClick={togglePopup} className="cursor-pointer">
         {children}
       </div>
+
       {isOpen && (
         <div
           ref={popupRef}

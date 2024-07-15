@@ -1113,27 +1113,27 @@ export function ChatPage({
         <div
           ref={sidebarElementRef}
           className={`
-            flex-none 
-            absolute 
+            flex-none
+            absolute
             left-0
-            z-50
-            overflow-y-hidden 
-            sidebar 
-            bg-background-100 
+            z-20
+            overflow-y-hidden
+            sidebar
+            bg-background-100
             h-screen
-            transition-all 
+            transition-all
             bg-opacity-80
-            duration-300 
+            duration-300
             ease-in-out
             ${
               showDocSidebar || toggledSidebar
                 ? "opacity-100 w-[300px] translate-x-0"
                 : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
-            }
-          `}
+            }`}
         >
           <div className="w-full relative">
             <HistorySidebar
+              page="chat"
               ref={innerSidebarElementRef}
               toggleSidebar={toggleSidebar}
               toggled={toggledSidebar}

@@ -516,11 +516,9 @@ export function checkAnyAssistantHasSearch(
       ) {
         return false;
       }
-
       const alternateAssistant = availablePersonas.find(
         (persona) => persona.id === message.alternateAssistantID
       );
-
       return alternateAssistant
         ? personaIncludesRetrieval(alternateAssistant)
         : false;

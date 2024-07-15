@@ -28,7 +28,7 @@ export const AnimatedToggle = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const isMac =
-    navigator.userAgent.length > 10
+    navigator && navigator.userAgent.length > 10
       ? navigator.userAgent.indexOf("Mac") !== -1
       : true;
 
@@ -51,7 +51,7 @@ export const AnimatedToggle = ({
       large
       content={
         <div className="bg-white my-auto p-6 rounded-lg w-full">
-          <h2 className="text-xl text-text-700Dark font-bold mb-2">
+          <h2 className="text-xl text-text-800 font-bold mb-2">
             Agentic Search
           </h2>
           <p className="text-text-700 text-sm mb-4">
@@ -59,9 +59,7 @@ export const AnimatedToggle = ({
             exactly what you&apos;re looking for.
           </p>
           <Divider />
-          <h2 className="text-xl text-text-700Dark font-bold mb-2">
-            Fast Search
-          </h2>
+          <h2 className="text-xl text-text-800 font-bold mb-2">Fast Search</h2>
           <p className="text-text-700 text-sm mb-4">
             Get quality results immediately, best suited for instant access to
             your documents.

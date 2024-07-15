@@ -64,22 +64,6 @@ export function EmphasizedClickable({
     >
       {children}
     </button>
-    // <button
-    //   onClick={onClick}
-    //   className={`
-    //     border
-    //     border-neutral-300
-    //     hover:shadow-sm
-    //     rounded-smf
-    //     text-sm
-    //     p-1
-    //     select-none
-    //     bg-lighter
-    //     hover:bg-background-125
-    //     ${fullWidth ? "w-full" : ""}`}
-    // >
-    //   {children}
-    // </button>
   );
 }
 
