@@ -131,12 +131,11 @@ def _process_and_write_query_results(config: dict) -> None:
 
 
 def run_qa_test_and_save_results(run_suffix: str = "") -> None:
-    print("hello")
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(current_dir, "search_test_config.yaml")
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
-    print("2")
+
     if not isinstance(config, dict):
         raise TypeError("config must be a dictionary")
 
