@@ -3,9 +3,12 @@ import os
 import socket
 import subprocess
 import sys
+import time
+from datetime import datetime
 from threading import Thread
 from typing import IO
 
+import yaml
 from retry import retry
 
 
@@ -65,7 +68,36 @@ def switch_to_branch(branch: str) -> None:
     print("Repository updated successfully.")
 
 
-def manage_data_directories(suffix: str, base_path: str, use_cloud_gpu: bool) -> str:
+def get_docker_container_env_vars(suffix: str) -> dict:
+    """
+    Retrieves environment variables from "background" and "api_server" Docker containers.
+    """
+    print(f"Getting environment variables for containers with suffix: {suffix}")
+
+    combined_env_vars = {}
+    for container_type in ["background", "api_server"]:
+        container_name = _run_command(
+            f"docker ps -a --format '{{{{.Names}}}}' | grep '{container_type}' | grep '{suffix}'"
+        )[0].strip()
+        if not container_name:
+            raise RuntimeError(
+                f"No {container_type} container found with suffix: {suffix}"
+            )
+
+        env_vars_json = _run_command(
+            f"docker inspect --format='{{{{json .Config.Env}}}}' {container_name}"
+        )[0]
+        env_vars_list = json.loads(env_vars_json.strip())
+
+        for env_var in env_vars_list:
+            key, value = env_var.split("=", 1)
+            combined_env_vars[key] = value
+
+    print(f"Combined env variables: {combined_env_vars}")
+    return combined_env_vars
+
+
+def manage_data_directories(suffix: str, base_path: str, use_cloud_gpu: bool) -> None:
     # Use the user's home directory as the base path
     target_path = os.path.join(os.path.expanduser(base_path), f"test{suffix}")
     directories = {
@@ -87,7 +119,6 @@ def manage_data_directories(suffix: str, base_path: str, use_cloud_gpu: bool) ->
         print(f"Set {env_var} to: {directory}")
     relari_output_path = os.path.join(target_path, "relari_output/")
     os.makedirs(relari_output_path, exist_ok=True)
-    return relari_output_path
 
 
 def set_env_variables(
@@ -150,7 +181,8 @@ def cleanup_docker(run_suffix: str) -> None:
     stdout, _ = _run_command("docker ps -a --format '{{json .}}'")
 
     containers = [json.loads(line) for line in stdout.splitlines()]
-
+    if not run_suffix:
+        run_suffix = datetime.now().strftime("-%Y")
     project_name = f"danswer-stack{run_suffix}"
     containers_to_delete = [
         c for c in containers if c["Names"].startswith(project_name)
@@ -247,3 +279,71 @@ def get_api_server_host_port(suffix: str) -> str:
             f"No port found containing: {client_port} for container: {container_name} and suffix: {suffix}"
         )
     return matching_ports[0]
+
+
+# Added function to check Vespa container health status
+def is_vespa_container_healthy(suffix: str) -> bool:
+    print(f"Checking health status of Vespa container for suffix: {suffix}")
+
+    # Find the Vespa container
+    stdout, _ = _run_command(
+        f"docker ps -a --format '{{{{.Names}}}}' | grep vespa | grep {suffix}"
+    )
+    container_name = stdout.strip()
+
+    if not container_name:
+        print(f"No Vespa container found with suffix: {suffix}")
+        return False
+
+    # Get the health status
+    stdout, _ = _run_command(
+        f"docker inspect --format='{{{{.State.Health.Status}}}}' {container_name}"
+    )
+    health_status = stdout.strip()
+
+    is_healthy = health_status.lower() == "healthy"
+    print(f"Vespa container '{container_name}' health status: {health_status}")
+
+    return is_healthy
+
+
+# Added function to restart Vespa container
+def restart_vespa_container(suffix: str) -> None:
+    print(f"Restarting Vespa container for suffix: {suffix}")
+
+    # Find the Vespa container
+    stdout, _ = _run_command(
+        f"docker ps -a --format '{{{{.Names}}}}' | grep vespa | grep {suffix}"
+    )
+    container_name = stdout.strip()
+
+    if not container_name:
+        raise RuntimeError(f"No Vespa container found with suffix: {suffix}")
+
+    # Restart the container
+    _run_command(f"docker restart {container_name}")
+
+    print(f"Vespa container '{container_name}' has begun restarting")
+
+    time_to_wait = 5
+    while not is_vespa_container_healthy(suffix):
+        print(f"Waiting {time_to_wait} seconds for vespa container to restart")
+        time.sleep(5)
+
+    print(f"Vespa container '{container_name}' has been restarted")
+
+
+if __name__ == "__main__":
+    """
+    Running this just cleans up the docker environment for the container indicated by existing_test_suffix
+    If no existing_test_suffix is indicated, will just clean up all danswer docker containers/volumes/networks
+    Note: vespa/postgres mounts are not deleted
+    """
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(current_dir, "search_test_config.yaml")
+    with open(config_path, "r") as file:
+        config = yaml.safe_load(file)
+
+    if not isinstance(config, dict):
+        raise TypeError("config must be a dictionary")
+    cleanup_docker(config["existing_test_suffix"])
