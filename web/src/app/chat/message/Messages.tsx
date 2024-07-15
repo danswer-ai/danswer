@@ -10,6 +10,7 @@ import {
   FiChevronRight,
   FiChevronLeft,
   FiTool,
+  FiGlobe,
 } from "react-icons/fi";
 import { FeedbackType } from "../types";
 import { useEffect, useRef, useState } from "react";
@@ -25,6 +26,7 @@ import { ChatFileType, FileDescriptor, ToolCallMetadata } from "../interfaces";
 import {
   IMAGE_GENERATION_TOOL_NAME,
   SEARCH_TOOL_NAME,
+  INTERNET_SEARCH_TOOL_NAME,
 } from "../tools/constants";
 import { ToolRunDisplay } from "../tools/ToolRunningAnimation";
 import { Hoverable } from "@/components/Hoverable";
@@ -38,9 +40,13 @@ import Prism from "prismjs";
 
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
+import { Persona } from "@/app/admin/assistants/interfaces";
+import { AssistantIcon } from "@/components/assistants/AssistantIcon";
+import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
+  INTERNET_SEARCH_TOOL_NAME,
   IMAGE_GENERATION_TOOL_NAME,
 ];
 
@@ -80,6 +86,7 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 }
 
 export const AIMessage = ({
+  alternativeAssistant,
   messageId,
   content,
   files,
@@ -95,7 +102,10 @@ export const AIMessage = ({
   handleSearchQueryEdit,
   handleForceSearch,
   retrievalDisabled,
+  currentPersona,
 }: {
+  alternativeAssistant?: Persona | null;
+  currentPersona: Persona;
   messageId: number | null;
   content: string | JSX.Element;
   files?: FileDescriptor[];
@@ -142,9 +152,11 @@ export const AIMessage = ({
     content = trimIncompleteCodeSection(content);
   }
 
+  const danswerSearchToolEnabledForPersona = currentPersona.tools.some(
+    (tool) => tool.in_code_tool_id === SEARCH_TOOL_NAME
+  );
   const shouldShowLoader =
-    !toolCall ||
-    (toolCall.tool_name === SEARCH_TOOL_NAME && query === undefined);
+    !toolCall || (toolCall.tool_name === SEARCH_TOOL_NAME && !content);
   const defaultLoader = shouldShowLoader ? (
     <div className="text-sm my-auto">
       <ThreeDots
@@ -165,14 +177,15 @@ export const AIMessage = ({
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
         <div className="ml-8">
           <div className="flex">
-            <div className="p-1 bg-ai rounded-lg h-fit my-auto">
-              <div className="text-inverted">
-                <FiCpu size={16} className="my-auto mx-auto" />
-              </div>
-            </div>
+            <AssistantIcon
+              size="small"
+              assistant={alternativeAssistant || currentPersona}
+            />
 
             <div className="font-bold text-emphasis ml-2 my-auto">
-              {personaName || "Danswer"}
+              {alternativeAssistant
+                ? alternativeAssistant.name
+                : personaName || "Danswer"}
             </div>
 
             {query === undefined &&
@@ -193,36 +206,37 @@ export const AIMessage = ({
           </div>
 
           <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
-            {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
-              <>
-                {query !== undefined &&
-                  handleShowRetrieved !== undefined &&
-                  isCurrentlyShowingRetrieved !== undefined &&
-                  !retrievalDisabled && (
-                    <div className="my-1">
-                      <SearchSummary
-                        query={query}
-                        hasDocs={hasDocs || false}
-                        messageId={messageId}
-                        isCurrentlyShowingRetrieved={
-                          isCurrentlyShowingRetrieved
-                        }
-                        handleShowRetrieved={handleShowRetrieved}
-                        handleSearchQueryEdit={handleSearchQueryEdit}
-                      />
-                    </div>
-                  )}
-                {handleForceSearch &&
-                  content &&
-                  query === undefined &&
-                  !hasDocs &&
-                  !retrievalDisabled && (
-                    <div className="my-1">
-                      <SkippedSearch handleForceSearch={handleForceSearch} />
-                    </div>
-                  )}
-              </>
-            )}
+            {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
+              danswerSearchToolEnabledForPersona && (
+                <>
+                  {query !== undefined &&
+                    handleShowRetrieved !== undefined &&
+                    isCurrentlyShowingRetrieved !== undefined &&
+                    !retrievalDisabled && (
+                      <div className="my-1">
+                        <SearchSummary
+                          query={query}
+                          hasDocs={hasDocs || false}
+                          messageId={messageId}
+                          isCurrentlyShowingRetrieved={
+                            isCurrentlyShowingRetrieved
+                          }
+                          handleShowRetrieved={handleShowRetrieved}
+                          handleSearchQueryEdit={handleSearchQueryEdit}
+                        />
+                      </div>
+                    )}
+                  {handleForceSearch &&
+                    content &&
+                    query === undefined &&
+                    !hasDocs &&
+                    !retrievalDisabled && (
+                      <div className="my-1">
+                        <SkippedSearch handleForceSearch={handleForceSearch} />
+                      </div>
+                    )}
+                </>
+              )}
 
             {toolCall &&
               !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
@@ -250,6 +264,20 @@ export const AIMessage = ({
                   />
                 </div>
               )}
+
+            {toolCall && toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
+              <div className="my-2">
+                <ToolRunDisplay
+                  toolName={
+                    toolCall.tool_result
+                      ? `Searched the internet`
+                      : `Searching the internet`
+                  }
+                  toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
+                  isRunning={!toolCall.tool_result}
+                />
+              </div>
+            )}
 
             {content ? (
               <>
@@ -286,6 +314,9 @@ export const AIMessage = ({
                       code: (props) => (
                         <CodeBlock {...props} content={content as string} />
                       ),
+                      p: ({ node, ...props }) => (
+                        <p {...props} className="text-default" />
+                      ),
                     }}
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
@@ -307,12 +338,16 @@ export const AIMessage = ({
                     .filter(([_, document]) => document.semantic_identifier)
                     .map(([citationKey, document], ind) => {
                       const display = (
-                        <div className="max-w-350 text-ellipsis flex text-sm border border-border py-1 px-2 rounded flex">
+                        <div className="max-w-350 text-ellipsis text-sm border border-border py-1 px-2 rounded flex">
                           <div className="mr-1 my-auto">
-                            <SourceIcon
-                              sourceType={document.source_type}
-                              iconSize={16}
-                            />
+                            {document.is_internet ? (
+                              <InternetSearchIcon url={document.link} />
+                            ) : (
+                              <SourceIcon
+                                sourceType={document.source_type}
+                                iconSize={16}
+                              />
+                            )}
                           </div>
                           [{citationKey}] {document!.semantic_identifier}
                         </div>
@@ -494,6 +529,7 @@ export const HumanMessage = ({
                       placeholder-gray-400 
                       resize-none
                       pl-4
+                      overflow-y-auto
                       pr-12 
                       py-4`}
                       aria-multiline
@@ -502,7 +538,6 @@ export const HumanMessage = ({
                       style={{ scrollbarWidth: "thin" }}
                       onChange={(e) => {
                         setEditedContent(e.target.value);
-                        e.target.style.height = "auto";
                         e.target.style.height = `${e.target.scrollHeight}px`;
                       }}
                       onKeyDown={(e) => {
@@ -511,13 +546,11 @@ export const HumanMessage = ({
                           setEditedContent(content);
                           setIsEditing(false);
                         }
+                        // Submit edit if "Command Enter" is pressed, like in ChatGPT
+                        if (e.key === "Enter" && e.metaKey) {
+                          handleEditSubmit();
+                        }
                       }}
-                      // ref={(textarea) => {
-                      //   if (textarea) {
-                      //     textarea.selectionStart = textarea.selectionEnd =
-                      //       textarea.value.length;
-                      //   }
-                      // }}
                     />
                     <div className="flex justify-end mt-2 gap-2 pr-4">
                       <button

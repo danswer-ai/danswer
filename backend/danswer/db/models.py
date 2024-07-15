@@ -246,6 +246,39 @@ class Persona__Tool(Base):
     tool_id: Mapped[int] = mapped_column(ForeignKey("tool.id"), primary_key=True)
 
 
+class StandardAnswer__StandardAnswerCategory(Base):
+    __tablename__ = "standard_answer__standard_answer_category"
+
+    standard_answer_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer.id"), primary_key=True
+    )
+    standard_answer_category_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer_category.id"), primary_key=True
+    )
+
+
+class SlackBotConfig__StandardAnswerCategory(Base):
+    __tablename__ = "slack_bot_config__standard_answer_category"
+
+    slack_bot_config_id: Mapped[int] = mapped_column(
+        ForeignKey("slack_bot_config.id"), primary_key=True
+    )
+    standard_answer_category_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer_category.id"), primary_key=True
+    )
+
+
+class ChatMessage__StandardAnswer(Base):
+    __tablename__ = "chat_message__standard_answer"
+
+    chat_message_id: Mapped[int] = mapped_column(
+        ForeignKey("chat_message.id"), primary_key=True
+    )
+    standard_answer_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer.id"), primary_key=True
+    )
+
+
 """
 Documents/Indexing Tables
 """
@@ -612,6 +645,7 @@ class SearchDoc(Base):
     secondary_owners: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
     )
+    is_internet: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
 
     chat_messages = relationship(
         "ChatMessage",
@@ -661,6 +695,12 @@ class ChatSession(Base):
         ForeignKey("chat_folder.id"), nullable=True
     )
 
+    current_alternate_model: Mapped[str | None] = mapped_column(String, default=None)
+
+    slack_thread_id: Mapped[str | None] = mapped_column(
+        String, nullable=True, default=None
+    )
+
     # the latest "overrides" specified by the user. These take precedence over
     # the attached persona. However, overrides specified directly in the
     # `send-message` call will take precedence over these.
@@ -688,7 +728,7 @@ class ChatSession(Base):
         "ChatFolder", back_populates="chat_sessions"
     )
     messages: Mapped[list["ChatMessage"]] = relationship(
-        "ChatMessage", back_populates="chat_session", cascade="delete"
+        "ChatMessage", back_populates="chat_session"
     )
     persona: Mapped["Persona"] = relationship("Persona")
 
@@ -706,6 +746,11 @@ class ChatMessage(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_session_id: Mapped[int] = mapped_column(ForeignKey("chat_session.id"))
+
+    alternate_assistant_id = mapped_column(
+        Integer, ForeignKey("persona.id"), nullable=True
+    )
+
     parent_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latest_child_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     message: Mapped[str] = mapped_column(Text)
@@ -734,11 +779,15 @@ class ChatMessage(Base):
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
     prompt: Mapped[Optional["Prompt"]] = relationship("Prompt")
+
     chat_message_feedbacks: Mapped[list["ChatMessageFeedback"]] = relationship(
-        "ChatMessageFeedback", back_populates="chat_message"
+        "ChatMessageFeedback",
+        back_populates="chat_message",
     )
+
     document_feedbacks: Mapped[list["DocumentRetrievalFeedback"]] = relationship(
-        "DocumentRetrievalFeedback", back_populates="chat_message"
+        "DocumentRetrievalFeedback",
+        back_populates="chat_message",
     )
     search_docs: Mapped[list["SearchDoc"]] = relationship(
         "SearchDoc",
@@ -748,6 +797,11 @@ class ChatMessage(Base):
     tool_calls: Mapped[list["ToolCall"]] = relationship(
         "ToolCall",
         back_populates="message",
+    )
+    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
+        "StandardAnswer",
+        secondary=ChatMessage__StandardAnswer.__table__,
+        back_populates="chat_messages",
     )
 
 
@@ -785,7 +839,9 @@ class DocumentRetrievalFeedback(Base):
     __tablename__ = "document_retrieval_feedback"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
+    chat_message_id: Mapped[int | None] = mapped_column(
+        ForeignKey("chat_message.id", ondelete="SET NULL"), nullable=True
+    )
     document_id: Mapped[str] = mapped_column(ForeignKey("document.id"))
     # How high up this document is in the results, 1 for first
     document_rank: Mapped[int] = mapped_column(Integer)
@@ -795,7 +851,9 @@ class DocumentRetrievalFeedback(Base):
     )
 
     chat_message: Mapped[ChatMessage] = relationship(
-        "ChatMessage", back_populates="document_feedbacks"
+        "ChatMessage",
+        back_populates="document_feedbacks",
+        foreign_keys=[chat_message_id],
     )
     document: Mapped[Document] = relationship(
         "Document", back_populates="retrieval_feedbacks"
@@ -806,14 +864,18 @@ class ChatMessageFeedback(Base):
     __tablename__ = "chat_feedback"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
+    chat_message_id: Mapped[int | None] = mapped_column(
+        ForeignKey("chat_message.id", ondelete="SET NULL"), nullable=True
+    )
     is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     required_followup: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     feedback_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     predefined_feedback: Mapped[str | None] = mapped_column(String, nullable=True)
 
     chat_message: Mapped[ChatMessage] = relationship(
-        "ChatMessage", back_populates="chat_message_feedbacks"
+        "ChatMessage",
+        back_populates="chat_message_feedbacks",
+        foreign_keys=[chat_message_id],
     )
 
 
@@ -929,6 +991,7 @@ class Tool(Base):
     # ID of the tool in the codebase, only applies for in-code tools.
     # tools defined via the UI will have this as None
     in_code_tool_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    display_name: Mapped[str] = mapped_column(String, nullable=True)
 
     # OpenAPI scheme for the tool. Only applies to tools defined via the UI.
     openapi_schema: Mapped[dict[str, Any] | None] = mapped_column(
@@ -1059,10 +1122,58 @@ class ChannelConfig(TypedDict):
     respond_tag_only: NotRequired[bool]  # defaults to False
     respond_to_bots: NotRequired[bool]  # defaults to False
     respond_team_member_list: NotRequired[list[str]]
+    respond_slack_group_list: NotRequired[list[str]]
     answer_filters: NotRequired[list[AllowedAnswerFilters]]
     # If None then no follow up
     # If empty list, follow up with no tags
     follow_up_tags: NotRequired[list[str]]
+
+
+class StandardAnswerCategory(Base):
+    __tablename__ = "standard_answer_category"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
+        "StandardAnswer",
+        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+        back_populates="categories",
+    )
+    slack_bot_configs: Mapped[list["SlackBotConfig"]] = relationship(
+        "SlackBotConfig",
+        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+        back_populates="standard_answer_categories",
+    )
+
+
+class StandardAnswer(Base):
+    __tablename__ = "standard_answer"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    keyword: Mapped[str] = mapped_column(String)
+    answer: Mapped[str] = mapped_column(String)
+    active: Mapped[bool] = mapped_column(Boolean)
+
+    __table_args__ = (
+        Index(
+            "unique_keyword_active",
+            keyword,
+            active,
+            unique=True,
+            postgresql_where=(active == True),  # noqa: E712
+        ),
+    )
+
+    categories: Mapped[list[StandardAnswerCategory]] = relationship(
+        "StandardAnswerCategory",
+        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+        back_populates="standard_answers",
+    )
+    chat_messages: Mapped[list[ChatMessage]] = relationship(
+        "ChatMessage",
+        secondary=ChatMessage__StandardAnswer.__table__,
+        back_populates="standard_answers",
+    )
 
 
 class SlackBotResponseType(str, PyEnum):
@@ -1084,8 +1195,16 @@ class SlackBotConfig(Base):
     response_type: Mapped[SlackBotResponseType] = mapped_column(
         Enum(SlackBotResponseType, native_enum=False), nullable=False
     )
+    enable_auto_filters: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
 
     persona: Mapped[Persona | None] = relationship("Persona")
+    standard_answer_categories: Mapped[list[StandardAnswerCategory]] = relationship(
+        "StandardAnswerCategory",
+        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+        back_populates="slack_bot_configs",
+    )
 
 
 class TaskQueueState(Base):
@@ -1365,3 +1484,30 @@ class EmailToExternalUserCache(Base):
     )
 
     user = relationship("User")
+
+
+class UsageReport(Base):
+    """This stores metadata about usage reports generated by admin including user who generated
+    them as well las the period they cover. The actual zip file of the report is stored as a lo
+    using the PGFileStore
+    """
+
+    __tablename__ = "usage_reports"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    report_name: Mapped[str] = mapped_column(ForeignKey("file_store.file_name"))
+
+    # if None, report was auto-generated
+    requestor_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id"), nullable=True
+    )
+    time_created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    period_from: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    period_to: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True))
+
+    requestor = relationship("User")
+    file = relationship("PGFileStore")

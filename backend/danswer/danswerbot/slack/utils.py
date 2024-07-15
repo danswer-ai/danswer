@@ -30,7 +30,7 @@ from danswer.danswerbot.slack.tokens import fetch_tokens
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.users import get_user_by_email
 from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_default_llm
+from danswer.llm.factory import get_default_llms
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import message_to_string
 from danswer.one_shot_answer.models import ThreadMessage
@@ -58,7 +58,7 @@ def rephrase_slack_message(msg: str) -> str:
         return messages
 
     try:
-        llm = get_default_llm(use_fast_llm=False, timeout=5)
+        llm, _ = get_default_llms(timeout=5)
     except GenAIDisabledException:
         logger.warning("Unable to rephrase Slack user message, Gen AI disabled")
         return msg
@@ -77,17 +77,25 @@ def update_emote_react(
     remove: bool,
     client: WebClient,
 ) -> None:
-    if not message_ts:
-        logger.error(f"Tried to remove a react in {channel} but no message specified")
-        return
+    try:
+        if not message_ts:
+            logger.error(
+                f"Tried to remove a react in {channel} but no message specified"
+            )
+            return
 
-    func = client.reactions_remove if remove else client.reactions_add
-    slack_call = make_slack_api_rate_limited(func)  # type: ignore
-    slack_call(
-        name=emoji,
-        channel=channel,
-        timestamp=message_ts,
-    )
+        func = client.reactions_remove if remove else client.reactions_add
+        slack_call = make_slack_api_rate_limited(func)  # type: ignore
+        slack_call(
+            name=emoji,
+            channel=channel,
+            timestamp=message_ts,
+        )
+    except SlackApiError as e:
+        if remove:
+            logger.error(f"Failed to remove Reaction due to: {e}")
+        else:
+            logger.error(f"Was not able to react to user message due to: {e}")
 
 
 def get_danswer_bot_app_id(web_client: WebClient) -> Any:
@@ -136,16 +144,13 @@ def respond_in_thread(
     receiver_ids: list[str] | None = None,
     metadata: Metadata | None = None,
     unfurl: bool = True,
-) -> None:
+) -> list[str]:
     if not text and not blocks:
         raise ValueError("One of `text` or `blocks` must be provided")
 
+    message_ids: list[str] = []
     if not receiver_ids:
         slack_call = make_slack_api_rate_limited(client.chat_postMessage)
-    else:
-        slack_call = make_slack_api_rate_limited(client.chat_postEphemeral)
-
-    if not receiver_ids:
         response = slack_call(
             channel=channel,
             text=text,
@@ -157,7 +162,9 @@ def respond_in_thread(
         )
         if not response.get("ok"):
             raise RuntimeError(f"Failed to post message: {response}")
+        message_ids.append(response["message_ts"])
     else:
+        slack_call = make_slack_api_rate_limited(client.chat_postEphemeral)
         for receiver in receiver_ids:
             response = slack_call(
                 channel=channel,
@@ -171,6 +178,9 @@ def respond_in_thread(
             )
             if not response.get("ok"):
                 raise RuntimeError(f"Failed to post message: {response}")
+            message_ids.append(response["message_ts"])
+
+    return message_ids
 
 
 def build_feedback_id(
@@ -304,6 +314,31 @@ def fetch_userids_from_emails(
         except Exception:
             logger.error(f"Was not able to find slack user by email: {email}")
             failed_to_find.append(email)
+
+    return user_ids, failed_to_find
+
+
+def fetch_userids_from_groups(
+    group_names: list[str], client: WebClient
+) -> tuple[list[str], list[str]]:
+    user_ids: list[str] = []
+    failed_to_find: list[str] = []
+    for group_name in group_names:
+        try:
+            # First, find the group ID from the group name
+            response = client.usergroups_list()
+            groups = {group["name"]: group["id"] for group in response["usergroups"]}
+            group_id = groups.get(group_name)
+
+            if group_id:
+                # Fetch user IDs for the group
+                response = client.usergroups_users_list(usergroup=group_id)
+                user_ids.extend(response["users"])
+            else:
+                failed_to_find.append(group_name)
+        except Exception as e:
+            logger.error(f"Error fetching user IDs for group {group_name}: {str(e)}")
+            failed_to_find.append(group_name)
 
     return user_ids, failed_to_find
 

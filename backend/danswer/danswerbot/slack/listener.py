@@ -18,6 +18,7 @@ from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_ID
+from danswer.danswerbot.slack.constants import GENERATE_ANSWER_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import IMMEDIATE_RESOLVED_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
@@ -26,6 +27,9 @@ from danswer.danswerbot.slack.handlers.handle_buttons import handle_doc_feedback
 from danswer.danswerbot.slack.handlers.handle_buttons import handle_followup_button
 from danswer.danswerbot.slack.handlers.handle_buttons import (
     handle_followup_resolved_button,
+)
+from danswer.danswerbot.slack.handlers.handle_buttons import (
+    handle_generate_answer_button,
 )
 from danswer.danswerbot.slack.handlers.handle_buttons import handle_slack_feedback
 from danswer.danswerbot.slack.handlers.handle_message import handle_message
@@ -56,7 +60,6 @@ from shared_configs.configs import MODEL_SERVER_PORT
 
 logger = setup_logger()
 
-
 # In rare cases, some users have been experiencing a massive amount of trivial messages coming through
 # to the Slack Bot with trivial messages. Adding this to avoid exploding LLM costs while we track down
 # the cause.
@@ -69,6 +72,9 @@ _SLACK_GREETINGS_TO_IGNORE = {
     "Hi there",
     ":wave:",
 }
+
+# this is always (currently) the user id of Slack's official slackbot
+_OFFICIAL_SLACKBOT_USER_ID = "USLACKBOT"
 
 
 def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool:
@@ -90,6 +96,15 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
 
         if not msg:
             channel_specific_logger.error("Cannot respond to empty message - skipping")
+            return False
+
+        if (
+            req.payload.setdefault("event", {}).get("user", "")
+            == _OFFICIAL_SLACKBOT_USER_ID
+        ):
+            channel_specific_logger.info(
+                "Ignoring messages from Slack's official Slackbot"
+            )
             return False
 
         if (
@@ -255,6 +270,7 @@ def build_request_details(
             thread_messages=thread_messages,
             channel_to_respond=channel,
             msg_to_respond=cast(str, message_ts or thread_ts),
+            thread_to_respond=cast(str, thread_ts or message_ts),
             sender=event.get("user") or None,
             bypass_filters=tagged,
             is_bot_msg=False,
@@ -272,6 +288,7 @@ def build_request_details(
             thread_messages=[single_msg],
             channel_to_respond=channel,
             msg_to_respond=None,
+            thread_to_respond=None,
             sender=sender,
             bypass_filters=True,
             is_bot_msg=True,
@@ -341,7 +358,7 @@ def process_message(
 
         failed = handle_message(
             message_info=details,
-            channel_config=slack_bot_config,
+            slack_bot_config=slack_bot_config,
             client=client.web_client,
             feedback_reminder_id=feedback_reminder_id,
         )
@@ -379,6 +396,8 @@ def action_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
             return handle_followup_resolved_button(req, client, immediate=True)
         elif action["action_id"] == FOLLOWUP_BUTTON_RESOLVED_ACTION_ID:
             return handle_followup_resolved_button(req, client, immediate=False)
+        elif action["action_id"] == GENERATE_ANSWER_BUTTON_ACTION_ID:
+            return handle_generate_answer_button(req, client)
 
 
 def view_routing(req: SocketModeRequest, client: SocketModeClient) -> None:

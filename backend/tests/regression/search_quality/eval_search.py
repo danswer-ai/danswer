@@ -8,9 +8,9 @@ from typing import TextIO
 from sqlalchemy.orm import Session
 
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.llm.answering.doc_pruning import reorder_docs
-from danswer.llm.factory import get_default_llm
-from danswer.search.models import InferenceChunk
+from danswer.llm.answering.prune_and_merge import reorder_sections
+from danswer.llm.factory import get_default_llms
+from danswer.search.models import InferenceSection
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchRequest
@@ -75,7 +75,7 @@ def word_wrap(s: str, max_line_size: int = 100, prepend_tab: bool = True) -> str
 def get_search_results(
     query: str,
 ) -> tuple[
-    list[InferenceChunk],
+    list[InferenceSection],
     RetrievalMetricsContainer | None,
     RerankMetricsContainer | None,
 ]:
@@ -83,22 +83,24 @@ def get_search_results(
     rerank_metrics = MetricsHander[RerankMetricsContainer]()
 
     with Session(get_sqlalchemy_engine()) as db_session:
+        llm, fast_llm = get_default_llms()
         search_pipeline = SearchPipeline(
             search_request=SearchRequest(
                 query=query,
             ),
             user=None,
-            llm=get_default_llm(),
+            llm=llm,
+            fast_llm=fast_llm,
             db_session=db_session,
             retrieval_metrics_callback=retrieval_metrics.record_metric,
             rerank_metrics_callback=rerank_metrics.record_metric,
         )
 
-        top_chunks = search_pipeline.reranked_chunks
-        llm_chunk_selection = search_pipeline.chunk_relevance_list
+        top_sections = search_pipeline.reranked_sections
+        llm_section_selection = search_pipeline.section_relevance_list
 
     return (
-        reorder_docs(top_chunks, llm_chunk_selection),
+        reorder_sections(top_sections, llm_section_selection),
         retrieval_metrics.metrics,
         rerank_metrics.metrics,
     )
@@ -167,7 +169,7 @@ def main(
                 print(f"\n\nQuestion: {question}")
 
                 (
-                    top_chunks,
+                    top_sections,
                     retrieval_metrics,
                     rerank_metrics,
                 ) = get_search_results(query=question)
@@ -186,7 +188,7 @@ def main(
                 running_rerank_score += rerank_score
                 print(f"Average: {running_rerank_score / (ind + 1)}")
 
-                llm_ids = [chunk.document_id for chunk in top_chunks]
+                llm_ids = [section.center_chunk.document_id for section in top_sections]
                 llm_score = calculate_score("LLM Filter", llm_ids, targets)
                 running_llm_filter_score += llm_score
                 print(f"Average: {running_llm_filter_score / (ind + 1)}")
