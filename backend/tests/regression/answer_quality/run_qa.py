@@ -13,7 +13,7 @@ RESULTS_FILENAME = "results.jsonl"
 METADATA_FILENAME = "metadata.yaml"
 
 
-def _update_results_file(output_folder_path: str, qa_output: dict[str, any]):
+def _update_results_file(output_folder_path: str, qa_output: dict) -> None:
     output_file_path = os.path.join(output_folder_path, RESULTS_FILENAME)
     with open(output_file_path, "w", encoding="utf-8") as file:
         file.write(json.dumps(qa_output) + "\n")
