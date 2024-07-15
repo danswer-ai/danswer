@@ -243,13 +243,15 @@ DISABLE_INDEX_UPDATE_ON_SWAP = (
 # fairly large amount of memory in order to increase substantially, since
 # each worker loads the embedding models into memory.
 NUM_INDEXING_WORKERS = int(os.environ.get("NUM_INDEXING_WORKERS") or 1)
-CHUNK_OVERLAP = 0
 # More accurate results at the expense of indexing speed and index size (stores additional 4 MINI_CHUNK vectors)
 ENABLE_MINI_CHUNK = os.environ.get("ENABLE_MINI_CHUNK", "").lower() == "true"
 # Finer grained chunking for more detail retention
 # Slightly larger since the sentence aware split is a max cutoff so most minichunks will be under MINI_CHUNK_SIZE
 # tokens. But we need it to be at least as big as 1/4th chunk size to avoid having a tiny mini-chunk at the end
 MINI_CHUNK_SIZE = 150
+# Include the document level metadata in each chunk. If the metadata is too long, then it is thrown out
+# We don't want the metadata to overwhelm the actual contents of the chunk
+SKIP_METADATA_IN_CHUNK = os.environ.get("SKIP_METADATA_IN_CHUNK", "").lower() == "true"
 # Timeout to wait for job's last update before killing it, in hours
 CLEANUP_INDEXING_JOBS_TIMEOUT = int(os.environ.get("CLEANUP_INDEXING_JOBS_TIMEOUT", 3))
 
@@ -266,9 +268,13 @@ JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
 CURRENT_PROCESS_IS_AN_INDEXING_JOB = (
     os.environ.get("CURRENT_PROCESS_IS_AN_INDEXING_JOB", "").lower() == "true"
 )
-# Logs every model prompt and output, mostly used for development or exploration purposes
+# Sets LiteLLM to verbose logging
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
+)
+# Logs Danswer only model interactions like prompts, responses, messages etc.
+LOG_DANSWER_MODEL_INTERACTIONS = (
+    os.environ.get("LOG_DANSWER_MODEL_INTERACTIONS", "").lower() == "true"
 )
 # If set to `true` will enable additional logs about Vespa query performance
 # (time spent on finding the right docs + time spent fetching summaries from disk)

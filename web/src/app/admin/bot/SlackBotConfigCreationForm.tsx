@@ -77,13 +77,11 @@ export const SlackBotCreationForm = ({
               existingSlackBotConfig?.channel_config?.respond_tag_only || false,
             respond_to_bots:
               existingSlackBotConfig?.channel_config?.respond_to_bots || false,
-            respond_member_group_list: (
+            enable_auto_filters:
+              existingSlackBotConfig?.enable_auto_filters || false,
+            respond_member_group_list:
               existingSlackBotConfig?.channel_config
-                ?.respond_team_member_list ?? []
-            ).concat(
-              existingSlackBotConfig?.channel_config
-                ?.respond_slack_group_list ?? []
-            ),
+                ?.respond_member_group_list ?? [],
             still_need_help_enabled:
               existingSlackBotConfig?.channel_config?.follow_up_tags !==
               undefined,
@@ -114,6 +112,7 @@ export const SlackBotCreationForm = ({
             questionmark_prefilter_enabled: Yup.boolean().required(),
             respond_tag_only: Yup.boolean().required(),
             respond_to_bots: Yup.boolean().required(),
+            enable_auto_filters: Yup.boolean().required(),
             respond_member_group_list: Yup.array().of(Yup.string()).required(),
             still_need_help_enabled: Yup.boolean().required(),
             follow_up_tags: Yup.array().of(Yup.string()),
@@ -130,14 +129,7 @@ export const SlackBotCreationForm = ({
               channel_names: values.channel_names.filter(
                 (channelName) => channelName !== ""
               ),
-              respond_team_member_list: values.respond_member_group_list.filter(
-                (teamMemberEmail) =>
-                  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(teamMemberEmail)
-              ),
-              respond_slack_group_list: values.respond_member_group_list.filter(
-                (slackGroupName) =>
-                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(slackGroupName)
-              ),
+              respond_member_group_list: values.respond_member_group_list,
               usePersona: usingPersonas,
               standard_answer_categories: values.standard_answer_categories.map(
                 (category) => category.id
@@ -247,15 +239,20 @@ export const SlackBotCreationForm = ({
                   label="Responds to Bot messages"
                   subtext="If not set, DanswerBot will always ignore messages from Bots"
                 />
+                <BooleanFormField
+                  name="enable_auto_filters"
+                  label="Enable LLM Autofiltering"
+                  subtext="If set, the LLM will generate source and time filters based on the user's query"
+                />
                 <TextArrayField
                   name="respond_member_group_list"
-                  label="Team Member Emails Or Slack Group Names"
+                  label="Team Member Emails Or Slack Group Names/Handles"
                   subtext={`If specified, DanswerBot responses will only be 
                   visible to the members or groups in this list. This is
                   useful if you want DanswerBot to operate in an
                   "assistant" mode, where it helps the team members find
                   answers, but let's them build on top of DanswerBot's response / throw 
-                  out the occasional incorrect answer. Group names are case sensitive.`}
+                  out the occasional incorrect answer. Group names and handles are case sensitive.`}
                   values={values}
                 />
                 <Divider />

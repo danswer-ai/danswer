@@ -49,7 +49,7 @@
             "cwd": "${workspaceFolder}/backend",
             "envFile": "${workspaceFolder}/.env",
             "env": {
-                "LOG_ALL_MODEL_INTERACTIONS": "True",
+                "LOG_DANSWER_MODEL_INTERACTIONS": "True",
                 "LOG_LEVEL": "DEBUG",
                 "PYTHONUNBUFFERED": "1"
             },
@@ -83,6 +83,7 @@
             "cwd": "${workspaceFolder}/backend",
             "envFile": "${workspaceFolder}/.env",
             "env": {
+                "LOG_DANSWER_MODEL_INTERACTIONS": "True",
                 "LOG_LEVEL": "DEBUG",
                 "PYTHONUNBUFFERED": "1",
                 "PYTHONPATH": "."
@@ -105,6 +106,24 @@
                 "PYTHONUNBUFFERED": "1",
                 "PYTHONPATH": "."
             }
+        },
+        {
+            "name": "Pytest",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "LOG_LEVEL": "DEBUG",
+                "PYTHONUNBUFFERED": "1",
+                "PYTHONPATH": "."
+            },
+            "args": [
+                "-v"
+                // Specify a sepcific module/test to run or provide nothing to run all tests
+                //"tests/unit/danswer/llm/answering/test_prune_and_merge.py"
+            ]
         }
     ]
 }

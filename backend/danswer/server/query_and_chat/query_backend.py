@@ -88,6 +88,7 @@ def get_tags(
     # If this is empty or None, then tags for all sources are considered
     sources: list[DocumentSource] | None = None,
     allow_prefix: bool = True,  # This is currently the only option
+    limit: int = 50,
     _: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> TagResponse:
@@ -95,8 +96,10 @@ def get_tags(
         raise NotImplementedError("Cannot disable prefix match for now")
 
     db_tags = get_tags_by_value_prefix_for_source_types(
+        tag_key_prefix=match_pattern,
         tag_value_prefix=match_pattern,
         sources=sources,
+        limit=limit,
         db_session=db_session,
     )
     server_tags = [

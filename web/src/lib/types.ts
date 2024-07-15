@@ -133,6 +133,7 @@ export interface BookstackConfig {}
 
 export interface ConfluenceConfig {
   wiki_page_url: string;
+  index_origin?: boolean;
 }
 
 export interface JiraConfig {
@@ -538,8 +539,7 @@ export interface ChannelConfig {
   channel_names: string[];
   respond_tag_only?: boolean;
   respond_to_bots?: boolean;
-  respond_team_member_list?: string[];
-  respond_slack_group_list?: string[];
+  respond_member_group_list?: string[];
   answer_filters?: AnswerFilterOption[];
   follow_up_tags?: string[];
 }
@@ -552,6 +552,7 @@ export interface SlackBotConfig {
   channel_config: ChannelConfig;
   response_type: SlackBotResponseType;
   standard_answer_categories: StandardAnswerCategory[];
+  enable_auto_filters: boolean;
 }
 
 export interface SlackBotTokens {

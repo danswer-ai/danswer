@@ -98,7 +98,6 @@ def _run_indexing(
     3. Updates Postgres to record the indexed documents + the outcome of this run
     """
     start_time = time.time()
-
     db_embedding_model = index_attempt.embedding_model
     index_name = db_embedding_model.index_name
 
@@ -116,6 +115,8 @@ def _run_indexing(
         normalize=db_embedding_model.normalize,
         query_prefix=db_embedding_model.query_prefix,
         passage_prefix=db_embedding_model.passage_prefix,
+        api_key=db_embedding_model.api_key,
+        provider_type=db_embedding_model.provider_type,
     )
 
     indexing_pipeline = build_indexing_pipeline(
@@ -287,6 +288,7 @@ def _prepare_index_attempt(db_session: Session, index_attempt_id: int) -> IndexA
         db_session=db_session,
         index_attempt_id=index_attempt_id,
     )
+
     if attempt is None:
         raise RuntimeError(f"Unable to find IndexAttempt for ID '{index_attempt_id}'")
 

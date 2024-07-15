@@ -23,6 +23,7 @@ class ToolRunner:
     def tool_responses(self) -> Generator[ToolResponse, None, None]:
         if self._tool_responses is not None:
             yield from self._tool_responses
+            return
 
         tool_responses: list[ToolResponse] = []
         for tool_response in self.tool.run(**self.args):

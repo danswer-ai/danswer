@@ -10,7 +10,7 @@ from tests.regression.answer_quality.cli_utils import set_env_variables
 from tests.regression.answer_quality.cli_utils import start_docker_compose
 from tests.regression.answer_quality.cli_utils import switch_to_branch
 from tests.regression.answer_quality.file_uploader import upload_test_files
-from tests.regression.answer_quality.relari import answer_relari_questions
+from tests.regression.answer_quality.run_qa import run_qa_test_and_save_results
 
 
 def load_config(config_filename: str) -> SimpleNamespace:
@@ -46,12 +46,12 @@ def main() -> None:
     if not config.existing_test_suffix:
         upload_test_files(config.zipped_documents_file, run_suffix)
 
-        answer_relari_questions(
+        run_qa_test_and_save_results(
             config.questions_file, relari_output_folder_path, run_suffix, config.limit
         )
 
-    if config.clean_up_docker_containers:
-        cleanup_docker(run_suffix)
+        if config.clean_up_docker_containers:
+            cleanup_docker(run_suffix)
 
 
 if __name__ == "__main__":

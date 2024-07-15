@@ -21,6 +21,10 @@ function PersonaTypeDisplay({ persona }: { persona: Persona }) {
     return <Text>Global</Text>;
   }
 
+  if (persona.groups.length > 0 || persona.users.length > 0) {
+    return <Text>Shared</Text>;
+  }
+
   return <Text>Personal {persona.owner && <>({persona.owner.email})</>}</Text>;
 }
 

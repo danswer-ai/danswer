@@ -18,8 +18,8 @@ from danswer.danswerbot.slack.handlers.handle_standard_answers import (
 )
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
-from danswer.danswerbot.slack.utils import fetch_userids_from_emails
-from danswer.danswerbot.slack.utils import fetch_userids_from_groups
+from danswer.danswerbot.slack.utils import fetch_user_ids_from_emails
+from danswer.danswerbot.slack.utils import fetch_user_ids_from_groups
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.danswerbot.slack.utils import slack_usage_report
 from danswer.danswerbot.slack.utils import update_emote_react
@@ -158,18 +158,13 @@ def handle_message(
         ]
         prompt = persona.prompts[0] if persona.prompts else None
 
-    # List of user id to send message to, if None, send to everyone in channel
-    send_to: list[str] | None = None
     respond_tag_only = False
-    respond_team_member_list = None
-    respond_slack_group_list = None
+    respond_member_group_list = None
 
     channel_conf = None
     if slack_bot_config and slack_bot_config.channel_config:
         channel_conf = slack_bot_config.channel_config
         if not bypass_filters and "answer_filters" in channel_conf:
-            "well_answered_postfilter" in channel_conf["answer_filters"]
-
             if (
                 "questionmark_prefilter" in channel_conf["answer_filters"]
                 and "?" not in messages[-1].message
@@ -186,8 +181,7 @@ def handle_message(
         )
 
         respond_tag_only = channel_conf.get("respond_tag_only") or False
-        respond_team_member_list = channel_conf.get("respond_team_member_list") or None
-        respond_slack_group_list = channel_conf.get("respond_slack_group_list") or None
+        respond_member_group_list = channel_conf.get("respond_member_group_list", None)
 
     if respond_tag_only and not bypass_filters:
         logger.info(
@@ -196,17 +190,23 @@ def handle_message(
         )
         return False
 
-    if respond_team_member_list:
-        send_to, _ = fetch_userids_from_emails(respond_team_member_list, client)
-    if respond_slack_group_list:
-        user_ids, _ = fetch_userids_from_groups(respond_slack_group_list, client)
-        send_to = (send_to + user_ids) if send_to else user_ids
-    if send_to:
-        send_to = list(set(send_to))  # remove duplicates
+    # List of user id to send message to, if None, send to everyone in channel
+    send_to: list[str] | None = None
+    missing_users: list[str] | None = None
+    if respond_member_group_list:
+        send_to, missing_ids = fetch_user_ids_from_emails(
+            respond_member_group_list, client
+        )
+
+        user_ids, missing_users = fetch_user_ids_from_groups(missing_ids, client)
+        send_to = list(set(send_to + user_ids)) if send_to else user_ids
+
+        if missing_users:
+            logger.warning(f"Failed to find these users/groups: {missing_users}")
 
     # If configured to respond to team members only, then cannot be used with a /DanswerBot command
     # which would just respond to the sender
-    if (respond_team_member_list or respond_slack_group_list) and is_bot_msg:
+    if send_to and is_bot_msg:
         if sender_id:
             respond_in_thread(
                 client=client,

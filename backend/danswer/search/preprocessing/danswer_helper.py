@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 def count_unk_tokens(text: str, tokenizer: "AutoTokenizer") -> int:
-    """Unclear if the wordpiece tokenizer used is actually tokenizing anything as the [UNK] token
+    """Unclear if the wordpiece/sentencepiece tokenizer used is actually tokenizing anything as the [UNK] token
     It splits up even foreign characters and unicode emojis without using UNK"""
     tokenized_text = tokenizer.tokenize(text)
     num_unk_tokens = len(
@@ -73,6 +73,7 @@ def recommend_search_flow(
     non_stopword_percent = len(non_stopwords) / len(words)
 
     # UNK tokens -> suggest Keyword (still may be valid QA)
+    # TODO do a better job with the classifier model and retire the heuristics
     if count_unk_tokens(query, get_default_tokenizer(model_name=model_name)) > 0:
         if not keyword:
             heuristic_search_type = SearchType.KEYWORD

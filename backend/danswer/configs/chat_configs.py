@@ -5,7 +5,10 @@ PROMPTS_YAML = "./danswer/chat/prompts.yaml"
 PERSONAS_YAML = "./danswer/chat/personas.yaml"
 
 NUM_RETURNED_HITS = 50
-NUM_RERANKED_RESULTS = 15
+# Used for LLM filtering and reranking
+# We want this to be approximately the number of results we want to show on the first page
+# It cannot be too large due to cost and latency implications
+NUM_RERANKED_RESULTS = 20
 
 # May be less depending on model
 MAX_CHUNKS_FED_TO_CHAT = float(os.environ.get("MAX_CHUNKS_FED_TO_CHAT") or 10.0)
@@ -25,9 +28,10 @@ BASE_RECENCY_DECAY = 0.5
 FAVOR_RECENT_DECAY_MULTIPLIER = 2.0
 # Currently this next one is not configurable via env
 DISABLE_LLM_QUERY_ANSWERABILITY = QA_PROMPT_OVERRIDE == "weak"
-DISABLE_LLM_FILTER_EXTRACTION = (
-    os.environ.get("DISABLE_LLM_FILTER_EXTRACTION", "").lower() == "true"
-)
+# For the highest matching base size chunk, how many chunks above and below do we pull in by default
+# Note this is not in any of the deployment configs yet
+CONTEXT_CHUNKS_ABOVE = int(os.environ.get("CONTEXT_CHUNKS_ABOVE") or 0)
+CONTEXT_CHUNKS_BELOW = int(os.environ.get("CONTEXT_CHUNKS_BELOW") or 0)
 # Whether the LLM should evaluate all of the document chunks passed in for usefulness
 # in relation to the user query
 DISABLE_LLM_CHUNK_FILTER = (
@@ -43,8 +47,6 @@ DISABLE_LLM_QUERY_REPHRASE = (
 # 1 edit per 20 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 60 seconds
-# Include additional document/chunk metadata in prompt to GenerativeAI
-INCLUDE_METADATA = False
 # Keyword Search Drop Stopwords
 # If user has changed the default model, would most likely be to use a multilingual
 # model, the stopwords are NLTK english stopwords so then we would want to not drop the keywords
