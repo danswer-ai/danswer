@@ -159,33 +159,21 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 <p className="my-auto flex items-center text-sm">New Folder</p>
               </button>
 
-              {page == "assistants" ? (
-                <Link
-                  href="/chat"
-                  className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
-                >
-                  <BackIcon className="h-4 w-4 my-auto" />
-                  <p className="my-auto flex items-center text-sm">
-                    Back to Danswer
-                  </p>
-                </Link>
-              ) : (
-                <Link
-                  href="/assistants/mine"
-                  className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
-                >
-                  <AssistantsIconSkeleton className="h-4 w-4 my-auto" />
-                  <p className="my-auto flex items-center text-sm">
-                    Manage Assistants
-                  </p>
-                </Link>
-              )}
+              <Link
+                href="/assistants/mine"
+                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+              >
+                <AssistantsIconSkeleton className="h-4 w-4 my-auto" />
+                <p className="my-auto flex items-center text-sm">
+                  Manage Assistants
+                </p>
+              </Link>
             </div>
           )}
           <div className="border-b border-border pb-4 mx-3" />
 
           <PagesTab
-            search={page == "search"}
+            page={page}
             existingChats={existingChats}
             currentChatId={currentChatId}
             folders={folders}

@@ -38,7 +38,7 @@ import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
 import { ChatSession, SearchSession } from "@/app/chat/interfaces";
 import FunctionalHeader from "../chat_search/Header";
 import { useSidebarVisibility } from "../chat_search/hooks";
-import { SEARCH_TOGGLED_COOKIE_NAME } from "../resizable/contants";
+import { SIDEBAR_TOGGLED_COOKIE_NAME } from "../resizable/contants";
 import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
@@ -414,7 +414,7 @@ export const SearchSection = ({
 
   const toggleSidebar = () => {
     Cookies.set(
-      SEARCH_TOGGLED_COOKIE_NAME,
+      SIDEBAR_TOGGLED_COOKIE_NAME,
       String(!toggledSidebar).toLocaleLowerCase()
     ),
       {

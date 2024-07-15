@@ -10,13 +10,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function PagesTab({
-  search,
+  page,
   existingChats,
   currentChatId,
   folders,
   openedFolders,
 }: {
-  search?: boolean;
+  page: "search" | "chat" | "assistants";
   existingChats?: ChatSession[];
   currentChatId?: number;
   folders?: Folder[];
@@ -79,12 +79,22 @@ export function PagesTab({
           isDragOver ? "bg-hover" : ""
         } rounded-md`}
       >
+        {(page == "chat" || page == "search") && (
+          <p className="text-sm text-subtle flex  my-2 font-medium">
+            {page == "chat" && "Chat "}
+            {page == "search" && "Search "}
+            History
+          </p>
+        )}
+
         {Object.entries(groupedChatSessions).map(
-          ([dateRange, chatSessions]) => {
+          ([dateRange, chatSessions], ind) => {
             if (chatSessions.length > 0) {
               return (
                 <div key={dateRange}>
-                  <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-5 font-medium">
+                  <div
+                    className={`text-xs text-subtle  ${ind != 0 && "mt-5"} flex pb-0.5 mb-1.5 font-medium`}
+                  >
                     {dateRange}
                   </div>
                   {chatSessions
@@ -94,7 +104,7 @@ export function PagesTab({
                       return (
                         <div key={`${chat.id}-${chat.name}`}>
                           <ChatSessionDisplay
-                            search={search}
+                            search={page == "search"}
                             chatSession={chat}
                             isSelected={isSelected}
                             skipGradient={isDragOver}
