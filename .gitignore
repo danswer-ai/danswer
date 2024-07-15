@@ -3,6 +3,7 @@
 .venv
 .mypy_cache
 .idea
+.python-version
 /deployment/data/nginx/app.conf
 .vscode/launch.json
 *.sw?

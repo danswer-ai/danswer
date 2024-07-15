@@ -20,11 +20,13 @@ function applyMinAndMax(
 }
 
 export function ResizableSection({
+  updateSidebarWidth,
   children,
   intialWidth,
   minWidth,
   maxWidth,
 }: {
+  updateSidebarWidth?: (newWidth: number) => void;
   children: JSX.Element;
   intialWidth: number;
   minWidth: number;
@@ -56,6 +58,9 @@ export function ResizableSection({
       const delta = mouseMoveEvent.clientX - startX;
       let newWidth = applyMinAndMax(width - delta, minWidth, maxWidth);
       setWidth(newWidth);
+      if (updateSidebarWidth) {
+        updateSidebarWidth(newWidth);
+      }
       Cookies.set(DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME, newWidth.toString(), {
         path: "/",
       });

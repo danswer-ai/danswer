@@ -29,6 +29,7 @@ export function Tooltip({
           side={side}
           align={align}
           className="
+
             bg-background-inverted 
             text-inverted 
             text-sm 
@@ -36,7 +37,7 @@ export function Tooltip({
             py-1 
             px-2 
             shadow-lg
-            z-50
+            z-100
           "
         >
           {content}

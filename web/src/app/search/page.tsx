@@ -23,6 +23,11 @@ import { personaComparator } from "../admin/assistants/lib";
 import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingModels";
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
+import { ChatPopup } from "../chat/ChatPopup";
+import {
+  FetchAssistantsResponse,
+  fetchAssistantsSS,
+} from "@/lib/assistants/fetchAssistantsSS";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -35,7 +40,7 @@ export default async function Home() {
     getCurrentUserSS(),
     fetchSS("/manage/indexing-status"),
     fetchSS("/manage/document-set"),
-    fetchSS("/persona"),
+    fetchAssistantsSS(),
     fetchSS("/query/valid-tags"),
     fetchSS("/secondary-index/get-embedding-models"),
   ];
@@ -48,6 +53,7 @@ export default async function Home() {
     | Response
     | AuthTypeMetadata
     | FullEmbeddingModelResponse
+    | FetchAssistantsResponse
     | null
   )[] = [null, null, null, null, null, null];
   try {
@@ -59,7 +65,8 @@ export default async function Home() {
   const user = results[1] as User | null;
   const ccPairsResponse = results[2] as Response | null;
   const documentSetsResponse = results[3] as Response | null;
-  const personaResponse = results[4] as Response | null;
+  const [initialAssistantsList, assistantsFetchError] =
+    results[4] as FetchAssistantsResponse;
   const tagsResponse = results[5] as Response | null;
   const embeddingModelResponse = results[6] as Response | null;
 
@@ -88,18 +95,17 @@ export default async function Home() {
     );
   }
 
-  let personas: Persona[] = [];
-  if (personaResponse?.ok) {
-    personas = await personaResponse.json();
+  let assistants: Persona[] = initialAssistantsList;
+  if (assistantsFetchError) {
+    console.log(`Failed to fetch assistants - ${assistantsFetchError}`);
   } else {
-    console.log(`Failed to fetch personas - ${personaResponse?.status}`);
+    // remove those marked as hidden by an admin
+    assistants = assistants.filter((assistant) => assistant.is_visible);
+    // hide personas with no retrieval
+    assistants = assistants.filter((assistant) => assistant.num_chunks !== 0);
+    // sort them in priority order
+    assistants.sort(personaComparator);
   }
-  // remove those marked as hidden by an admin
-  personas = personas.filter((persona) => persona.is_visible);
-  // hide personas with no retrieval
-  personas = personas.filter((persona) => persona.num_chunks !== 0);
-  // sort them in priority order
-  personas.sort(personaComparator);
 
   let tags: Tag[] = [];
   if (tagsResponse?.ok) {
@@ -132,8 +138,12 @@ export default async function Home() {
     !hasCompletedWelcomeFlowSS() &&
     !hasAnyConnectors &&
     (!user || user.role === "admin");
+
   const shouldDisplayNoSourcesModal =
-    ccPairs.length === 0 && !shouldShowWelcomeModal;
+    (!user || user.role === "admin") &&
+    ccPairs.length === 0 &&
+    !shouldShowWelcomeModal;
+
   const shouldDisplaySourcesIncompleteModal =
     !ccPairs.some(
       (ccPair) => ccPair.has_successful_run && ccPair.docs_indexed > 0
@@ -148,13 +158,20 @@ export default async function Home() {
         <HealthCheckBanner />
       </div>
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
+
       {!shouldShowWelcomeModal &&
         !shouldDisplayNoSourcesModal &&
         !shouldDisplaySourcesIncompleteModal && <ApiKeyModal user={user} />}
+
       {shouldDisplayNoSourcesModal && <NoSourcesModal />}
+
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
+
+      {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
+      Only used in the EE version of the app. */}
+      <ChatPopup />
 
       <InstantSSRAutoRefresh />
 
@@ -163,7 +180,7 @@ export default async function Home() {
           <SearchSection
             ccPairs={ccPairs}
             documentSets={documentSets}
-            personas={personas}
+            personas={assistants}
             tags={tags}
             defaultSearchType={searchTypeDefault}
           />

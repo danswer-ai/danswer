@@ -15,7 +15,14 @@ export function getFinalLLM(
   let model = defaultProvider?.default_model_name || "";
 
   if (persona) {
-    provider = persona.llm_model_provider_override || provider;
+    // Map "provider override" to actual LLLMProvider
+    if (persona.llm_model_provider_override) {
+      const underlyingProvider = llmProviders.find(
+        (item: LLMProviderDescriptor) =>
+          item.name === persona.llm_model_provider_override
+      );
+      provider = underlyingProvider?.provider || provider;
+    }
     model = persona.llm_model_version_override || model;
   }
 
@@ -43,3 +50,20 @@ export function checkLLMSupportsImageInput(provider: string, model: string) {
     ([p, m]) => p === provider && m === model
   );
 }
+
+export const structureValue = (
+  name: string,
+  provider: string,
+  modelName: string
+) => {
+  return `${name}__${provider}__${modelName}`;
+};
+
+export const destructureValue = (value: string): LlmOverride => {
+  const [displayName, provider, modelName] = value.split("__");
+  return {
+    name: displayName,
+    provider,
+    modelName,
+  };
+};
