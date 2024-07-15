@@ -65,6 +65,8 @@ import document360Icon from "../../../public/Document360.png";
 import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
 import dropboxIcon from "../../../public/Dropbox.png";
+import slackIcon from "../../../public/Slack.png";
+
 import s3Icon from "../../../public/S3.png";
 import r2Icon from "../../../public/r2.webp";
 import salesforceIcon from "../../../public/Salesforce.png";
@@ -246,6 +248,20 @@ export const ConfigureIcon = ({
 
 export const defaultTailwindCSS = "my-auto flex flex-shrink-0 text-default";
 export const defaultTailwindCSSBlue = "my-auto flex flex-shrink-0 text-link";
+
+export const ColorSlackIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={slackIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
 
 export const OpenSourceIcon = ({
   size = 16,
@@ -1719,6 +1735,7 @@ export const RobotIcon = ({
   return <FaRobot size={size} className={className} />;
 };
 
+slackIcon;
 export const SlackIconSkeleton = ({
   size = 16,
   className = defaultTailwindCSS,

@@ -235,11 +235,7 @@ export const DocumentDisplay = ({
                     )
                   }
                 >
-                  {alternativeToggled ? (
-                    <LightBulbIcon className="text-blue-400 h-4 w-4 cursor-pointer" />
-                  ) : (
-                    <BookIcon className="text-blue-400" />
-                  )}
+                  <LightBulbIcon className="text-blue-400 h-4 w-4 cursor-pointer" />
                 </button>
               )}
           </div>
@@ -274,6 +270,7 @@ export const AgenticDocumentDisplay = ({
   messageId,
   documentRank,
   index,
+  hide,
   setPopup,
 }: DocumentDisplayProps) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -283,14 +280,18 @@ export const AgenticDocumentDisplay = ({
   return (
     <div
       key={document.semantic_identifier}
-      className={`text-sm border-b border-border transition-all duration-500 pt-3`}
+      className={`text-sm border-b border-border transition-all duration-500
+      ${!hide ? "transform translate-x-full opacity-0" : ""} 
+      ${hide ? "py-3" : "border-transparent"} relative`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
         transitionDelay: `${index! * 10}ms`, // Add a delay to the transition based on index
       }}
     >
-      <div className={`collapsible pb-3`}>
+      <div
+        className={`collapsible ${!hide ? "collapsible-closed overflow-y-auto border-transparent" : ""}`}
+      >
         <div className="flex relative">
           <a
             className={`rounded-lg flex font-bold text-link max-w-full ${document.link ? "" : "pointer-events-none"}`}
@@ -323,11 +324,7 @@ export const AgenticDocumentDisplay = ({
                     )
                   }
                 >
-                  {!alternativeToggled ? (
-                    <LightBulbIcon className="text-blue-400 h-4 w-4 cursor-pointer" />
-                  ) : (
-                    <BookIcon className="text-blue-400" />
-                  )}
+                  <BookIcon className="text-blue-400" />
                 </button>
               )}
           </div>

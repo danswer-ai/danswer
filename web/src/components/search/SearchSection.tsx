@@ -238,6 +238,9 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       documents,
     }));
+    if (documents.length == 0) {
+      setSearchState("input");
+    }
   };
   const updateSuggestedSearchType = (suggestedSearchType: SearchType) =>
     setSearchResponse((prevState) => ({
@@ -267,6 +270,7 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       messageId,
     }));
+    router.refresh();
 
     // router.replace(`/search?searchId=${chat_session_id}`);
   };
@@ -406,12 +410,6 @@ export const SearchSection = ({
   }
   const sidebarElementRef = useRef<HTMLDivElement>(null);
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
-
-  const [filters, setFilters] = useState(true);
-  const toggleFilters = () => {
-    setFilters((filters) => !filters);
-  };
-
   const [showDocSidebar, setShowDocSidebar] = useState(false);
 
   const toggleSidebar = () => {
@@ -471,7 +469,7 @@ export const SearchSection = ({
             flex-none 
             fixed -8
             left-0 
-            z-30
+            z-20
             overflow-y-hidden 
             sidebar 
             bg-background-100 
@@ -489,7 +487,7 @@ export const SearchSection = ({
         >
           <div className="w-full relative">
             <HistorySidebar
-              search
+              page="search"
               ref={innerSidebarElementRef}
               toggleSidebar={toggleSidebar}
               toggled={toggledSidebar}
@@ -527,8 +525,6 @@ export const SearchSection = ({
                     <SourceSelector
                       {...filterManager}
                       showDocSidebar={showDocSidebar || toggledSidebar}
-                      toggled={filters}
-                      toggleFilters={toggleFilters}
                       availableDocumentSets={finalAvailableDocumentSets}
                       existingSources={finalAvailableSources}
                       availableTags={tags}

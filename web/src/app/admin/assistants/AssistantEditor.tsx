@@ -400,7 +400,7 @@ export function AssistantEditor({
           }
 
           return (
-            <Form>
+            <Form className="w-full">
               <div className="pb-6">
                 <TextFormField
                   name="name"

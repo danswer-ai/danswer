@@ -28,7 +28,7 @@ export default async function Page() {
   }
 
   return (
-    <div>
+    <div className="w-full">
       <BackButton />
       <AdminPageTitle
         title="Create a New Assistant"

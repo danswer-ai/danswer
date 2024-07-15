@@ -4,7 +4,6 @@ import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
 import { CCPairBasicInfo, DocumentSet, Tag, User } from "@/lib/types";
 import { Persona } from "../admin/assistants/interfaces";
 import { ChatSession } from "../chat/interfaces";
-import { useState } from "react";
 
 export default function WrappedSearch({
   querySessions,

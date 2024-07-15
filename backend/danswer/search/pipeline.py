@@ -105,12 +105,14 @@ s
         Query: {query}
 
         Think through the following:
-        1. What are the key terms or concepts in the query?
-        2. Do these appear in the document title or blurb?
-        3. Is the document's main topic related to the query?
-        4. Would this document be useful to someone searching with this query?
+        1. What is the purpose of this document and how might it be useful to a user.
+        2. Is the document's main topic related to the query?
+        3. Would this document be useful to someone searching for this query?
 
-        Provide your chain of thought in a short paragraph. Be concise but show your reasoning clearly.
+        Provide your chain of thought in a few sentences.
+        Be concise but show your reasoning clearly.
+        Do not use bulleted/numbered lists, remember to be concise,
+          and refer to the document using clear langauge and not just "document".
 
         Conclude with:
         RESULT: True (if relevant)
@@ -378,6 +380,8 @@ s
     def relevance_summaries(self) -> dict[str, RelevanceChunk]:
         sections = _merge_sections(self.reranked_sections)
         llm_docs = [llm_doc_from_inference_section(section) for section in sections]
+        if len(llm_docs) == 0:
+            return {}
 
         functions = [
             FunctionCall(self.evaluate, (final_context, self.search_query.query))

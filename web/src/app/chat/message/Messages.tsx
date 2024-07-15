@@ -60,6 +60,7 @@ import {
   CustomTooltip,
   TooltipGroup,
 } from "@/components/tooltip/CustomTooltip";
+import { ValidSources } from "@/lib/types";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -154,6 +155,8 @@ export const AIMessage = ({
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
 }) => {
+  const finalContent = content + (!isComplete ? "[*](test)" : "");
+
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {
     Prism.highlightAll();
@@ -235,6 +238,10 @@ export const AIMessage = ({
   const leaveFeedback = () => {
     setIsWithinInput(false);
   };
+
+  const uniqueSources: ValidSources[] = Array.from(
+    new Set(filteredDocs.map((doc) => doc.source_type))
+  ).slice(0, 3);
 
   return (
     <div
@@ -384,7 +391,12 @@ export const AIMessage = ({
                               a: (props) => {
                                 const { node, ...rest } = props;
                                 const value = rest.children;
-                                if (value?.toString().startsWith("[")) {
+
+                                if (value?.toString().startsWith("*")) {
+                                  return (
+                                    <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
+                                  );
+                                } else if (value?.toString().startsWith("[")) {
                                   // for some reason <a> tags cause the onClick to not apply
                                   // and the links are unclickable
                                   // TODO: fix the fact that you have to double click to follow link
@@ -428,7 +440,7 @@ export const AIMessage = ({
                               [rehypePrism, { ignoreMissing: true }],
                             ]}
                           >
-                            {content}
+                            {finalContent}
                           </ReactMarkdown>
                         ) : (
                           content
@@ -440,24 +452,22 @@ export const AIMessage = ({
 
                     {isComplete && docs && docs.length > 0 && (
                       <div className="mt-2 -mx-8 w-full mb-4 flex relative">
-                        <div className="absolute left-0 top-0 h-full bg-gradient-to-l from-background/0 via-background/40 backdrop-blur-xs to-background w-[40px]" />
-                        <div className="absolute right-6 top-0 h-full bg-gradient-to-r from-background/0 via-background/40 backdrop-blur-xs to-background w-[40px]" />
-                        <div className="w-full overflow-x-scroll no-scrollbar">
-                          {/* <div className="absolute left-0 h-full w-20 bg-gradient-to-r from-background to-background/20 " /> */}
+                        <div className="w-full">
                           <div className="px-8 flex gap-x-2">
                             {filteredDocs.length > 0 &&
-                              filteredDocs.slice(0, 2).map((doc) => (
+                              filteredDocs.slice(0, 2).map((doc, ind) => (
                                 <div
                                   key={doc.document_id}
-                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-lighter px-4 py-2 border-b
+                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 py-2 border-b
                               `}
                                 >
                                   <a
                                     href={doc.link}
                                     target="_blank"
-                                    className="text-sm flex justify-between font-semibold text-text-700Dark"
+                                    className="text-sm flex justify-between font-semibold text-text-700"
                                   >
                                     <p className="line-clamp-1">
+                                      {ind}.{" "}
                                       {
                                         doc.document_id.split("/")[
                                           doc.document_id.split("/").length - 1
@@ -486,15 +496,23 @@ export const AIMessage = ({
                                 }
                               }}
                               key={-1}
-                              className="cursor-pointer w-[140px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-lighter px-4 py-2 border-b"
+                              className="cursor-pointer w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 py-2 border-b"
                             >
-                              <div className="text-sm flex justify-between font-semibold text-text-700Dark">
+                              <div className="text-sm flex justify-between font-semibold text-text-700">
                                 <p className="line-clamp-1">See context</p>
+                                {uniqueSources.map((sourceType, ind) => {
+                                  return (
+                                    <div className="flex-none">
+                                      <SourceIcon
+                                        sourceType={sourceType}
+                                        iconSize={18}
+                                      />
+                                    </div>
+                                  );
+                                })}
                               </div>
-
                               <div className="line-clamp-3 text-xs break-words pt-1">
-                                See {docs?.length} document
-                                {!((docs?.length || 0) == 1) && "s"}
+                                See more
                               </div>
                             </div>
                           </div>

@@ -9,6 +9,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import { AssistantsList } from "./AssistantsList";
 import { Logo } from "@/components/Logo";
+import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
 
 export default async function GalleryPage({
   searchParams,
@@ -56,8 +57,9 @@ export default async function GalleryPage({
         }}
       >
         <div className="flex relative bg-background text-default overflow-x-hidden h-screen">
-          <div className="max-w-[300px]">
+          <div className="w-[300px]">
             <HistorySidebar
+              page="assistants"
               existingChats={chatSessions}
               currentChatSession={null}
               folders={folders}
@@ -80,10 +82,7 @@ export default async function GalleryPage({
           </div>
         </div>
         {/* Temporary - fixed logo */}
-        <div className="absolute z-[100] left-4 top-2">
-          {" "}
-          <Logo />
-        </div>
+        <FixedLogo />
       </ChatProvider>
     </>
   );

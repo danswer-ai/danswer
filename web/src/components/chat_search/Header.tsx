@@ -24,7 +24,7 @@ export default function FunctionalHeader({
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
 }) {
   const isMac =
-    navigator.userAgent.length > 10
+    navigator && navigator.userAgent.length > 10
       ? navigator.userAgent.indexOf("Mac") !== -1
       : true;
 

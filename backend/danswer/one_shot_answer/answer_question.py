@@ -213,6 +213,7 @@ def stream_answer_objects(
         # tested quotes with tool calling too much yet
         skip_explicit_tool_calling=True,
         return_contexts=query_req.return_contexts,
+        skip_generation=True,
     )
 
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
@@ -271,21 +272,16 @@ def stream_answer_objects(
             elif packet.id == SEARCH_DOC_CONTENT_ID:
                 yield packet.response
 
-            # thest when this occurs
-
             elif packet.id == SEARCH_EVALUATION_ID:
                 evaluation_response = LLMRelevanceSummaryResponse(
                     relevance_summaries=packet.response
                 )
-
-                # Update Search Doc values
                 if reference_db_search_docs is not None:
                     update_search_docs_table_with_relevance(
                         db_session=db_session,
                         reference_db_search_docs=reference_db_search_docs,
                         relevance_summary=evaluation_response,
                     )
-                # here we will do some magic with the evaluation of the results
                 yield evaluation_response
 
         else:
