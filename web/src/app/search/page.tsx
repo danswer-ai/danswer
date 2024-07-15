@@ -30,7 +30,7 @@ import {
 } from "@/lib/assistants/fetchAssistantsSS";
 import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
 import { ChatSession } from "../chat/interfaces";
-import { SEARCH_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
+import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
 import ToggleSearch from "./WrappedSearch";
 import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
 import WrappedSearch from "./WrappedSearch";
@@ -167,11 +167,11 @@ export default async function Home() {
     !shouldDisplayNoSourcesModal &&
     !shouldShowWelcomeModal;
 
-  const searchSidebarToggle = cookies().get(SEARCH_TOGGLED_COOKIE_NAME);
+  const sidebarToggled = cookies().get(SIDEBAR_TOGGLED_COOKIE_NAME);
   const agenticSearchToggle = cookies().get(AGENTIC_SEARCH_TYPE_COOKIE_NAME);
 
-  const toggleSearchSidebar = searchSidebarToggle
-    ? searchSidebarToggle.value.toLocaleLowerCase() == "true" ?? false
+  const toggleSidebar = sidebarToggled
+    ? sidebarToggled.value.toLocaleLowerCase() == "true" ?? false
     : false;
 
   const agenticSearchEnabled = agenticSearchToggle
@@ -201,7 +201,7 @@ export default async function Home() {
 
       <InstantSSRAutoRefresh />
       <WrappedSearch
-        initiallyToggled={toggleSearchSidebar}
+        initiallyToggled={toggleSidebar}
         querySessions={querySessions}
         user={user}
         ccPairs={ccPairs}

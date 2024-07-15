@@ -21,9 +21,8 @@ import { Folder } from "@/app/chat/folders/interfaces";
 import { personaComparator } from "@/app/admin/assistants/lib";
 import { cookies } from "next/headers";
 import {
-  CHAT_TOGGLED_COOKIE_NAME,
+  SIDEBAR_TOGGLED_COOKIE_NAME,
   DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME,
-  SEARCH_TOGGLED_COOKIE_NAME,
 } from "@/components/resizable/contants";
 import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { fetchAssistantsSS } from "../assistants/fetchAssistantsSS";
@@ -41,7 +40,7 @@ interface FetchChatDataResult {
   folders: Folder[];
   openedFolders: Record<string, boolean>;
   defaultPersonaId?: number;
-  toggleChatSidebar: boolean;
+  toggleSidebar: boolean;
   finalDocumentSidebarInitialWidth?: number;
   shouldShowWelcomeModal: boolean;
   shouldDisplaySourcesIncompleteModal: boolean;
@@ -159,10 +158,10 @@ export async function fetchChatData(searchParams: {
   const documentSidebarCookieInitialWidth = cookies().get(
     DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME
   );
-  const chatSidebarToggled = cookies().get(CHAT_TOGGLED_COOKIE_NAME);
+  const sidebarToggled = cookies().get(SIDEBAR_TOGGLED_COOKIE_NAME);
 
-  const toggleChatSidebar = chatSidebarToggled
-    ? chatSidebarToggled.value.toLocaleLowerCase() == "true" ?? false
+  const toggleSidebar = sidebarToggled
+    ? sidebarToggled.value.toLocaleLowerCase() == "true" ?? false
     : false;
 
   const finalDocumentSidebarInitialWidth = documentSidebarCookieInitialWidth
@@ -212,7 +211,7 @@ export async function fetchChatData(searchParams: {
     openedFolders,
     defaultPersonaId,
     finalDocumentSidebarInitialWidth,
-    toggleChatSidebar,
+    toggleSidebar,
     shouldShowWelcomeModal,
     shouldDisplaySourcesIncompleteModal,
   };

@@ -16,9 +16,10 @@ export function HeaderTitle({ children }: { children: JSX.Element | string }) {
 
 interface HeaderProps {
   user: User | null;
+  page?: "search" | "chat" | "assistants";
 }
 
-export function Header({ user }: HeaderProps) {
+export function Header({ user, page }: HeaderProps) {
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -60,7 +61,7 @@ export function Header({ user }: HeaderProps) {
 
         <div className="ml-auto h-full flex flex-col">
           <div className="my-auto">
-            <UserDropdown user={user} hideChatAndSearch />
+            <UserDropdown user={user} page={page} />
           </div>
         </div>
       </div>

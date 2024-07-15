@@ -8,6 +8,8 @@ import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import { AssistantsGallery } from "./AssistantsGallery";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
+import GalleryWrapper from "../SidebarWrapper";
+import WrappedAssistantsGallery from "./WrappedAssistantsGallery";
 
 export default async function GalleryPage({
   searchParams,
@@ -33,6 +35,7 @@ export default async function GalleryPage({
     folders,
     openedFolders,
     shouldShowWelcomeModal,
+    toggleSidebar,
   } = data;
 
   return (
@@ -54,30 +57,16 @@ export default async function GalleryPage({
           openedFolders,
         }}
       >
-        <div className="flex relative bg-background text-default overflow-x-hidden h-screen">
-          <div className="w-[300px]">
-            <HistorySidebar
-              page="assistants"
-              existingChats={chatSessions}
-              currentChatSession={null}
-              folders={folders}
-              openedFolders={openedFolders}
-            />
-          </div>
-          <div
-            className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
-          >
-            <div className="sticky top-0 left-80 z-10 w-full bg-background flex h-fit">
-              <div className="ml-auto my-auto mt-4 mr-8">
-                <UserDropdown user={user} />
-              </div>
-            </div>
+        <WrappedAssistantsGallery
+          initiallyToggled={toggleSidebar}
+          chatSessions={chatSessions}
+          folders={folders}
+          openedFolders={openedFolders}
+          user={user}
+          assistants={assistants}
+        />
 
-            <div className="mt-4">
-              <AssistantsGallery assistants={assistants} user={user} />
-            </div>
-          </div>
-        </div>
+        {/* Temporary - fixed logo */}
         <FixedLogo />
       </ChatProvider>
     </>

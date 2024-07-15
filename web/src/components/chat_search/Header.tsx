@@ -17,7 +17,7 @@ export default function FunctionalHeader({
   currentChatSession,
   setSharingModalVisible,
 }: {
-  page: "search" | "chat";
+  page: "search" | "chat" | "assistants";
   showSidebar: boolean;
   user: User | null;
   currentChatSession?: ChatSession | null | undefined;
