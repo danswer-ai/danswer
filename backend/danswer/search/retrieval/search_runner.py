@@ -11,7 +11,6 @@ from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.document_index.interfaces import DocumentIndex
-from danswer.search.enums import EmbedTextType
 from danswer.search.models import ChunkMetric
 from danswer.search.models import IndexFilters
 from danswer.search.models import InferenceChunk
@@ -29,6 +28,7 @@ from danswer.utils.threadpool_concurrency import run_functions_tuples_in_paralle
 from danswer.utils.timing import log_function_time
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
+from shared_configs.enums import EmbedTextType
 
 
 logger = setup_logger()

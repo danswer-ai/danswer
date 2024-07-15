@@ -10,7 +10,6 @@ from danswer.db.llm import fetch_existing_embedding_providers
 from danswer.db.llm import remove_embedding_provider
 from danswer.db.llm import upsert_cloud_embedding_provider
 from danswer.db.models import User
-from danswer.search.enums import EmbedTextType
 from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.server.manage.embedding.models import CloudEmbeddingProvider
 from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
@@ -18,6 +17,7 @@ from danswer.server.manage.embedding.models import TestEmbeddingRequest
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
+from shared_configs.enums import EmbedTextType
 
 logger = setup_logger()
 
