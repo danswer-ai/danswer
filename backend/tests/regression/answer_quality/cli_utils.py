@@ -4,6 +4,7 @@ import socket
 import subprocess
 import sys
 import time
+from datetime import datetime
 from threading import Thread
 from typing import IO
 
@@ -181,7 +182,7 @@ def cleanup_docker(run_suffix: str) -> None:
 
     containers = [json.loads(line) for line in stdout.splitlines()]
     if not run_suffix:
-        run_suffix = "_20"
+        run_suffix = datetime.now().strftime("-%Y")
     project_name = f"danswer-stack{run_suffix}"
     containers_to_delete = [
         c for c in containers if c["Names"].startswith(project_name)

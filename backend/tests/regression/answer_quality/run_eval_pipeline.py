@@ -26,7 +26,7 @@ def main() -> None:
         run_suffix = config.existing_test_suffix
         print("launching danswer with existing data suffix:", run_suffix)
     else:
-        run_suffix = datetime.now().strftime("_%Y%m%d_%H%M%S")
+        run_suffix = datetime.now().strftime("-%Y%m%d-%H%M%S")
         print("run_suffix:", run_suffix)
 
     set_env_variables(
