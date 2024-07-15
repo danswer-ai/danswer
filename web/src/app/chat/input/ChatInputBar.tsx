@@ -300,7 +300,7 @@ export function ChatInputBar({
             )}
             {(selectedDocuments.length > 0 || files.length > 0) && (
               <div className="flex gap-x-2 px-2 pt-2">
-                <div className="flex gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end weakbackground">
+                <div className="flex gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end miniscroll">
                   {selectedDocuments.length > 0 && (
                     <button
                       onClick={showDocs}

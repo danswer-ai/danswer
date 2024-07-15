@@ -78,27 +78,22 @@ export default function SidebarWrapper({
   }, [router]);
 
   return (
-    <div className="flex flex-col w-full h-full">
-      <FunctionalHeader
-        page="assistants"
-        showSidebar={showDocSidebar}
-        user={user}
-      />
+    <div className="flex  relative overflow-x-hidden overscroll-contain flex-col w-full h-screen ">
       <div
         ref={sidebarElementRef}
         className={`
-                            flex-none
-                            absolute
-                            left-0
-                            z-20
-                            overflow-y-hidden
-                            sidebar
-                            bg-background-100
-                            h-screen
-                            transition-all
-                            bg-opacity-80
-                            duration-300
-                            ease-in-out
+            flex-none
+            fixed
+            left-0
+            z-20
+            overflow-y-hidden
+            sidebar
+            bg-background-100
+            h-screen
+            transition-all
+            bg-opacity-80
+            duration-300
+            ease-in-out
             ${
               showDocSidebar || toggledSidebar
                 ? "opacity-100 w-[300px] translate-x-0"
@@ -118,37 +113,32 @@ export default function SidebarWrapper({
           />
         </div>
       </div>
-      <div className="flex bg-background text-default overflow-x-hidden h-screen">
-        <div
-          style={{ transition: "width 0.30s ease-out" }}
-          className={`
-                        flex-none 
-                        overflow-y-hidden 
-                        bg-background-100 
-                        transition-all 
-                        bg-opacity-80
-                        duration-300 
-                        ease-in-out
-                        h-full
-                        ${toggledSidebar ? "w-[300px]" : "w-[0px]"}
-                      `}
-        ></div>
-        <div
-          className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
-        >
-          {/* <div className="sticky top-0 left-80 z-10 w-full bg-background flex h-fit">
-                        <div className="ml-auto my-auto mt-4 mr-8">
-                            <UserDropdown user={user} page="assistants" />
-                        </div>
-                    </div> */}
 
-          <div className="mt-4">
-            {content(assistants, user)}
-            {/* <AssistantsGallery assistants={assistants} user={user} /> */}
-          </div>
+      <div className="absolute  left-0 w-full top-0">
+        <FunctionalHeader
+          page="assistants"
+          showSidebar={showDocSidebar}
+          user={user}
+        />
+        <div className="w-full  flex">
+          <div
+            style={{ transition: "width 0.30s ease-out" }}
+            className={`
+                    flex-none
+                    overflow-y-hidden
+                    bg-background-100
+                    h-full
+                    transition-all
+                    bg-opacity-80
+                    duration-300 
+                    ease-in-out
+                    ${toggledSidebar ? "w-[300px]" : "w-[0px]"}
+                  `}
+          />
+
+          <div className="mt-4 mx-auto">{content(assistants, user)}</div>
         </div>
       </div>
-      <FixedLogo />
     </div>
   );
 }
