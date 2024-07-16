@@ -37,6 +37,7 @@ import {
 } from "@/components/icons/icons";
 import { PagesTab } from "./PagesTab";
 import { Tooltip } from "@/components/tooltip/Tooltip";
+import KeyboardSymbol from "@/lib/browserUtilities";
 
 interface HistorySidebarProps {
   page: "search" | "chat" | "assistants";
@@ -47,10 +48,6 @@ interface HistorySidebarProps {
   toggleSidebar?: () => void;
   toggled?: boolean;
 }
-const isMac =
-  navigator && navigator.userAgent.length > 10
-    ? navigator.userAgent.indexOf("Mac") !== -1
-    : true;
 
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
   (
@@ -117,7 +114,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             {toggleSidebar && (
               <Tooltip
                 delayDuration={1000}
-                content={`${isMac ? "⌘" : "⊞"}E show`}
+                content={`${(<KeyboardSymbol />)}E show`}
               >
                 <button className="ml-auto" onClick={toggleSidebar}>
                   {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}

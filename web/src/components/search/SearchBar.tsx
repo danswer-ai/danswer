@@ -16,6 +16,7 @@ import { useState, useEffect, useRef } from "react";
 import { SendIcon } from "../icons/icons";
 import { Divider } from "@tremor/react";
 import { CustomTooltip } from "../tooltip/CustomTooltip";
+import KeyboardSymbol from "@/lib/browserUtilities";
 
 export const AnimatedToggle = ({
   isOn,
@@ -27,10 +28,6 @@ export const AnimatedToggle = ({
   const [width, setWidth] = useState("auto");
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const isMac =
-    navigator && navigator.userAgent.length > 10
-      ? navigator.userAgent.indexOf("Mac") !== -1
-      : true;
 
   useEffect(() => {
     const updateWidth = () => {
@@ -64,7 +61,7 @@ export const AnimatedToggle = ({
             Get quality results immediately, best suited for instant access to
             your documents.
           </p>
-          <p className="mt-2 text-xs">Hint: ({isMac ? "⌘" : "⊞"}/)</p>
+          <p className="mt-2 text-xs">Hint: ({<KeyboardSymbol />}/)</p>
         </div>
       }
     >
