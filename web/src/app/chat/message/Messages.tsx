@@ -202,8 +202,6 @@ export const AIMessage = ({
   const danswerSearchToolEnabledForPersona = currentPersona.tools.some(
     (tool) => tool.in_code_tool_id === SEARCH_TOOL_NAME
   );
-  // const shouldShowLoader =
-  //   !toolCall || (toolCall.tool_name === SEARCH_TOOL_NAME && !content);
 
   let filteredDocs: FilteredDanswerDocument[] = [];
 

@@ -128,6 +128,7 @@ class SearchPipeline:
         )
         analysis = ""
         relevant = False
+        chain_of_thought = ""
 
         parts = content.split("[ANALYSIS_START]", 1)
         if len(parts) == 2:
