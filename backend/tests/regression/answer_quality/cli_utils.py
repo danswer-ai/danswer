@@ -92,7 +92,6 @@ def get_docker_container_env_vars(suffix: str) -> dict:
             key, value = env_var.split("=", 1)
             combined_env_vars[key] = value
 
-    print(f"Combined env variables: {combined_env_vars}")
     return combined_env_vars
 
 
@@ -116,8 +115,8 @@ def manage_data_directories(suffix: str, base_path: str, use_cloud_gpu: bool) ->
         os.makedirs(directory, exist_ok=True)
         os.environ[env_var] = directory
         print(f"Set {env_var} to: {directory}")
-    relari_output_path = os.path.join(target_path, "relari_output/")
-    os.makedirs(relari_output_path, exist_ok=True)
+    results_output_path = os.path.join(target_path, "evaluations_output/")
+    os.makedirs(results_output_path, exist_ok=True)
 
 
 def set_env_variables(

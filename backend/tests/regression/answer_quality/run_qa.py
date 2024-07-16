@@ -23,12 +23,12 @@ def _populate_results_file(output_folder_path: str, all_qa_output: list[dict]) -
             file.flush()
 
 
-def _update_metadata_file(test_output_folder: str, count: int) -> None:
+def _update_metadata_file(test_output_folder: str, invalid_answer_count: int) -> None:
     metadata_path = os.path.join(test_output_folder, METADATA_FILENAME)
     with open(metadata_path, "r", encoding="utf-8") as file:
         metadata = yaml.safe_load(file)
 
-    metadata["number_of_questions_asked"] = count
+    metadata["number_of_failed_questions"] = invalid_answer_count
     with open(metadata_path, "w", encoding="utf-8") as yaml_file:
         yaml.dump(metadata, yaml_file)
 
@@ -46,7 +46,7 @@ def _get_test_output_folder(config: dict) -> str:
     base_output_folder = os.path.expanduser(config["output_folder"])
     if config["run_suffix"]:
         base_output_folder = os.path.join(
-            base_output_folder, ("test" + config["run_suffix"]), "relari_output"
+            base_output_folder, ("test" + config["run_suffix"]), "evaluations_output"
         )
     else:
         base_output_folder = os.path.join(base_output_folder, "no_defined_suffix")
@@ -152,12 +152,16 @@ def _process_and_write_query_results(config: dict) -> None:
 
     _populate_results_file(test_output_folder, results)
 
-    valid_answer_count = 0
+    invalid_answer_count = 0
     for result in results:
-        if result.get("answer"):
-            valid_answer_count += 1
+        if not result.get("answer"):
+            invalid_answer_count += 1
 
-    _update_metadata_file(test_output_folder, valid_answer_count)
+    _update_metadata_file(test_output_folder, invalid_answer_count)
+
+    if invalid_answer_count:
+        print(f"Warning: {invalid_answer_count} questions failed!")
+        print("Suggest restarting the vespa container and rerunning")
 
     time_to_finish = time.time() - start_time
     minutes, seconds = divmod(int(time_to_finish), 60)
