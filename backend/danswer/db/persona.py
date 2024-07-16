@@ -12,7 +12,6 @@ from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from danswer.auth.schemas import UserRole
-from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.document_set import get_document_sets_by_ids
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import DocumentSet
@@ -173,7 +172,6 @@ def get_personas(
     user_id: UUID | None,
     db_session: Session,
     include_default: bool = True,
-    include_slack_bot_personas: bool = False,
     include_deleted: bool = False,
 ) -> Sequence[Persona]:
     stmt = select(Persona).distinct()
@@ -201,8 +199,6 @@ def get_personas(
 
     if not include_default:
         stmt = stmt.where(Persona.default_persona.is_(False))
-    if not include_slack_bot_personas:
-        stmt = stmt.where(not_(Persona.name.startswith(SLACK_BOT_PERSONA_PREFIX)))
     if not include_deleted:
         stmt = stmt.where(Persona.deleted.is_(False))
 

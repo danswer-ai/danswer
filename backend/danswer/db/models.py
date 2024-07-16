@@ -1069,45 +1069,6 @@ AllowedAnswerFilters = (
     Literal["well_answered_postfilter"] | Literal["questionmark_prefilter"]
 )
 
-
-class ChannelConfig(TypedDict):
-    """NOTE: is a `TypedDict` so it can be used as a type hint for a JSONB column
-    in Postgres"""
-
-    channel_names: list[str]
-    respond_tag_only: NotRequired[bool]  # defaults to False
-    respond_to_bots: NotRequired[bool]  # defaults to False
-    respond_team_member_list: NotRequired[list[str]]
-    respond_slack_group_list: NotRequired[list[str]]
-    answer_filters: NotRequired[list[AllowedAnswerFilters]]
-    # If None then no follow up
-    # If empty list, follow up with no tags
-    follow_up_tags: NotRequired[list[str]]
-
-
-class SlackBotResponseType(str, PyEnum):
-    QUOTES = "quotes"
-    CITATIONS = "citations"
-
-
-class SlackBotConfig(Base):
-    __tablename__ = "slack_bot_config"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    persona_id: Mapped[int | None] = mapped_column(
-        ForeignKey("persona.id"), nullable=True
-    )
-    # JSON for flexibility. Contains things like: channel name, team members, etc.
-    channel_config: Mapped[ChannelConfig] = mapped_column(
-        postgresql.JSONB(), nullable=False
-    )
-    response_type: Mapped[SlackBotResponseType] = mapped_column(
-        Enum(SlackBotResponseType, native_enum=False), nullable=False
-    )
-
-    persona: Mapped[Persona | None] = relationship("Persona")
-
-
 class TaskQueueState(Base):
     # Currently refers to Celery Tasks
     __tablename__ = "task_queue_jobs"
