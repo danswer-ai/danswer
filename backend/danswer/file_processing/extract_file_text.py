@@ -21,6 +21,9 @@ from danswer.configs.constants import DANSWER_METADATA_FILENAME
 from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.utils.logger import setup_logger
 
+from unstructured.partition.pdf import partition_pdf
+from unstructured.partition.auto import partition
+
 logger = setup_logger()
 
 
@@ -144,6 +147,25 @@ def _extract_danswer_metadata(line: str) -> dict | None:
     except json.JSONDecodeError:
         return None
 
+def read_pdf_file_unstructured(file: IO[Any], file_name: str) -> str: 
+# Read pdf using unstructured io core library 
+    try: 
+        elements = partition_pdf(file=file) 
+        return "\n\n".join([str(el) for el in elements]) 
+    except Exception: logger.exception(f"Failed to read PDF {file_name}") 
+        
+    # File is still discoverable by title 
+    # but the contents are not included as they cannot be parsed 
+    return ""
+
+def read_any_file(file: IO[Any], file_name: str) -> str: 
+    try: 
+        elements = partition(file=file) 
+        return "\n\n".join([str(el) for el in elements]) 
+    except Exception: 
+        logger.exception(f"Failed to read file {file_name}") 
+        
+    return ""
 
 def read_text_file(
     file: IO,
