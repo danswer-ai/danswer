@@ -57,7 +57,7 @@ import sharepointIcon from "../../../public/Sharepoint.png";
 import googleSheets from "../../../public/GoogleSheets.svg";
 import teamsIcon from "../../../public/Teams.png";
 import { FaRobot } from "react-icons/fa";
- 
+
 interface IconProps {
   size?: number;
   className?: string;
