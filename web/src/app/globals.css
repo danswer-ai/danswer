@@ -17,15 +17,6 @@
   }
 }
 
-.miniscroll {
-  scrollbar-color: black;
-  scrollbar-width: thin;
-}
-
-.miniscroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
 .inputscroll::-webkit-scrollbar-track {
   background: #e5e7eb;
   scrollbar-width: none;
