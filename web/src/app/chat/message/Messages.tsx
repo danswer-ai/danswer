@@ -62,6 +62,7 @@ import {
 } from "@/components/tooltip/CustomTooltip";
 import { ValidSources } from "@/lib/types";
 import { Tooltip } from "@/components/tooltip/Tooltip";
+import { useMouseTracking } from "./hooks";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -164,8 +165,7 @@ export const AIMessage = ({
     setIsReady(true);
   }, []);
 
-  const [isVisible, setIsVisible] = useState(false);
-  const [isWithinInput, setIsWithinInput] = useState(false);
+  const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
 
   // this is needed to give Prism a chance to load
   if (!isReady) {
@@ -226,30 +226,12 @@ export const AIMessage = ({
       });
   }
 
-  const showFeedback = () => {
-    setIsVisible(true);
-  };
-  const hideFeedback = () => {
-    setIsVisible(false);
-  };
-
-  const enterFeedback = () => {
-    setIsWithinInput(true);
-  };
-  const leaveFeedback = () => {
-    setIsWithinInput(false);
-  };
-
   const uniqueSources: ValidSources[] = Array.from(
     new Set(filteredDocs.map((doc) => doc.source_type))
   ).slice(0, 3);
 
   return (
-    <div
-      onMouseEnter={showFeedback}
-      onMouseLeave={hideFeedback}
-      className={"py-5 px-2 lg:px-5 relative flex "}
-    >
+    <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
       <div className="mx-auto w-[90%] max-w-message-max">
         <div className="xl:ml-8">
           <div className="flex">
@@ -535,7 +517,7 @@ export const AIMessage = ({
                     (isActive ? (
                       <div
                         className={`
-                      flex md:flex-row gap-x-0.5 mt-1.5
+                      flex md:flex-row gap-x-0.5 mt-1
                       transition-transform duration-300 ease-in-out
                       transform opacity-100 translate-y-0"
                   `}
@@ -560,17 +542,15 @@ export const AIMessage = ({
                       </div>
                     ) : (
                       <div
-                        onMouseEnter={enterFeedback}
-                        onMouseLeave={leaveFeedback}
+                        ref={hoverElementRef}
                         className={`
-                      absolute -bottom-6
-                      invisible hover:visible ${(isVisible || isWithinInput) && "!visible"} hover:!visible
-                      opacity-0 ${(isVisible || isWithinInput) && "!opacity-100"} hover:!opacity-100
-                      transform translate-y-2 ${(isVisible || isWithinInput) && "!translate-y-0"} ho
-                      flex md:flex-row gap-x-0.5 
-                      transition-transform duration-300 ease-in-out
-                       bg-background-125/40
-                       p-1.5 rounded-lg  `}
+                        absolute -bottom-2
+                        invisible ${isHovering && "!visible"}
+                        opacity-0 ${isHovering && "!opacity-100"}
+                        translate-y-2 ${isHovering && "!translate-y-0"}
+                        transition-transform duration-300 ease-in-out 
+                        flex md:flex-row gap-x-0.5 bg-background-125/40 p-1.5 rounded-lg
+                        `}
                       >
                         <TooltipGroup>
                           <CustomTooltip showTick line content="Copy!">
