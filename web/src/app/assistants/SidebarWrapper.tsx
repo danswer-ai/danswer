@@ -113,13 +113,13 @@ export default function SidebarWrapper({
         </div>
       </div>
 
-      <div className="absolute  left-0 w-full top-0">
+      <div className="absolute left-0 w-full top-0">
         <FunctionalHeader
           page="assistants"
           showSidebar={showDocSidebar}
           user={user}
         />
-        <div className="w-full  flex">
+        <div className="w-full flex">
           <div
             style={{ transition: "width 0.30s ease-out" }}
             className={`

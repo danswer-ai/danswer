@@ -31,6 +31,9 @@ from danswer.secondary_llm_flows.query_expansion import history_based_query_reph
 from danswer.tools.search.search_utils import llm_doc_to_dict
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 SEARCH_RESPONSE_SUMMARY_ID = "search_response_summary"
 SEARCH_DOC_CONTENT_ID = "search_doc_content"
@@ -291,6 +294,7 @@ class SearchTool(Tool):
         ]
 
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
+        logger.info("evals", self.evaluate_response, DISABLE_AGENTIC)
 
         if self.evaluate_response and not DISABLE_AGENTIC:
             yield ToolResponse(

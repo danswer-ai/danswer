@@ -1,19 +1,10 @@
 "use client";
 
 import { useContext, useEffect, useRef, useState } from "react";
-import { FullSearchBar, SearchBar } from "./SearchBar";
-import {
-  AgenticDisclaimer,
-  SearchResultsDisplay,
-} from "./SearchResultsDisplay";
+import { FullSearchBar } from "./SearchBar";
+import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./filtering/Filters";
-import {
-  CCPairBasicInfo,
-  Connector,
-  DocumentSet,
-  Tag,
-  User,
-} from "@/lib/types";
+import { CCPairBasicInfo, DocumentSet, Tag, User } from "@/lib/types";
 import {
   Quote,
   SearchResponse,
@@ -88,7 +79,6 @@ export const SearchSection = ({
   const [comments, setComments] = useState<any>(null);
   const [contentEnriched, setContentEnriched] = useState(false);
 
-  // Search
   const [searchResponse, setSearchResponse] = useState<SearchResponse>({
     suggestedSearchType: null,
     suggestedFlowType: null,
@@ -578,17 +568,9 @@ export const SearchSection = ({
                         sweep={sweep}
                         agenticResults={agenticResults}
                         performSweep={performSweep}
-                        searchState={searchState}
                         searchResponse={searchResponse}
-                        validQuestionResponse={validQuestionResponse}
                         isFetching={isFetching}
                         defaultOverrides={defaultOverrides}
-                        personaName={
-                          selectedPersona
-                            ? personas.find((p) => p.id === selectedPersona)
-                                ?.name
-                            : null
-                        }
                       />
                     ) : (
                       <></>

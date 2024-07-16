@@ -200,6 +200,8 @@ def get_search_session(
     return response
 
 
+# NOTE No longer used, after search/chat redesign.
+# No search responses are answered with a conversational generative AI response
 @basic_router.post("/stream-query-validation")
 def stream_query_validation(
     simple_query: SimpleQueryRequest, _: User = Depends(current_user)
