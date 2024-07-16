@@ -1,28 +1,28 @@
-<!-- DANSWER_METADATA={"link": "https://github.com/danswer-ai/danswer/blob/main/CONTRIBUTING.md"} -->
+<!-- spectra_METADATA={"link": "https://github.com/spectra-ai/spectra/blob/main/CONTRIBUTING.md"} -->
 
-# Contributing to Danswer
-Hey there! We are so excited that you're interested in Danswer.
+# Contributing to spectra
+Hey there! We are so excited that you're interested in spectra.
 
 As an open source project in a rapidly changing space, we welcome all contributions.
 
 
 ## 💃 Guidelines
 ### Contribution Opportunities
-The [GitHub Issues](https://github.com/danswer-ai/danswer/issues) page is a great place to start for contribution ideas.
+The [GitHub Issues](https://github.com/spectra-ai/spectra/issues) page is a great place to start for contribution ideas.
 
 Issues that have been explicitly approved by the maintainers (aligned with the direction of the project)
 will be marked with the `approved by maintainers` label.
 Issues marked `good first issue` are an especially great place to start.
 
 **Connectors** to other tools are another great place to contribute. For details on how, refer to this
-[README.md](https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/README.md).
+[README.md](https://github.com/spectra-ai/spectra/blob/main/backend/spectra/connectors/README.md).
 
 If you have a new/different contribution in mind, we'd love to hear about it!
-Your input is vital to making sure that Danswer moves in the right direction.
+Your input is vital to making sure that spectra moves in the right direction.
 Before starting on implementation, please raise a GitHub issue.
 
 And always feel free to message us (Chris Weaver / Yuhong Sun) on 
-[Slack](https://join.slack.com/t/danswer/shared_invite/zt-2afut44lv-Rw3kSWu6_OmdAXRpCv80DQ) / 
+[Slack](https://join.slack.com/t/spectra/shared_invite/zt-2afut44lv-Rw3kSWu6_OmdAXRpCv80DQ) / 
 [Discord](https://discord.gg/TDJ59cGV2X) directly about anything at all. 
 
 
@@ -40,7 +40,7 @@ Our goal is to make contributing as easy as possible. If you run into any issues
 That way we can help future contributors and users can avoid the same issue.
 
 We also have support channels and generally interesting discussions on our
-[Slack](https://join.slack.com/t/danswer/shared_invite/zt-2afut44lv-Rw3kSWu6_OmdAXRpCv80DQ)
+[Slack](https://join.slack.com/t/spectra/shared_invite/zt-2afut44lv-Rw3kSWu6_OmdAXRpCv80DQ)
 and 
 [Discord](https://discord.gg/TDJ59cGV2X).
 
@@ -48,11 +48,11 @@ We would love to see you there!
 
 
 ## Get Started 🚀
-Danswer being a fully functional app, relies on some external pieces of software, specifically:
+spectra being a fully functional app, relies on some external pieces of software, specifically:
 - [Postgres](https://www.postgresql.org/) (Relational DB)
 - [Vespa](https://vespa.ai/) (Vector DB/Search Engine)
 
-This guide provides instructions to set up the Danswer specific services outside of Docker because it's easier for
+This guide provides instructions to set up the spectra specific services outside of Docker because it's easier for
 development purposes but also feel free to just use the containers and update with local changes by providing the
 `--build` flag.
 
@@ -73,7 +73,7 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
---> Note that this virtual environment MUST NOT be set up WITHIN the danswer
+--> Note that this virtual environment MUST NOT be set up WITHIN the spectra
 directory
 
 _For Windows, activate the virtual environment using Command Prompt:_
@@ -87,13 +87,13 @@ If using PowerShell, the command slightly differs:
 
 Install the required python dependencies:
 ```bash
-pip install -r danswer/backend/requirements/default.txt
-pip install -r danswer/backend/requirements/dev.txt
-pip install -r danswer/backend/requirements/model_server.txt
+pip install -r spectra/backend/requirements/default.txt
+pip install -r spectra/backend/requirements/dev.txt
+pip install -r spectra/backend/requirements/model_server.txt
 ```
 
 Install [Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) for the frontend.
-Once the above is done, navigate to `danswer/web` run:
+Once the above is done, navigate to `spectra/web` run:
 ```bash
 npm i
 ```
@@ -110,20 +110,20 @@ playwright install
 
 
 #### Dependent Docker Containers
-First navigate to `danswer/deployment/docker_compose`, then start up Vespa and Postgres with:
+First navigate to `spectra/deployment/docker_compose`, then start up Vespa and Postgres with:
 ```bash
-docker compose -f docker-compose.dev.yml -p danswer-stack up -d index relational_db
+docker compose -f docker-compose.dev.yml -p spectra-stack up -d index relational_db
 ```
 (index refers to Vespa and relational_db refers to Postgres)
 
-#### Running Danswer
-To start the frontend, navigate to `danswer/web` and run:
+#### Running spectra
+To start the frontend, navigate to `spectra/web` and run:
 ```bash
 npm run dev
 ```
 
 Next, start the model server which runs the local NLP models.
-Navigate to `danswer/backend` and run:
+Navigate to `spectra/backend` and run:
 ```bash
 uvicorn model_server.main:app --reload --port 9000
 ```
@@ -134,10 +134,10 @@ powershell -Command "
 "
 ```
 
-The first time running Danswer, you will need to run the DB migrations for Postgres.
+The first time running spectra, you will need to run the DB migrations for Postgres.
 After the first time, this is no longer required unless the DB models change.
 
-Navigate to `danswer/backend` and with the venv active, run:
+Navigate to `spectra/backend` and with the venv active, run:
 ```bash
 alembic upgrade head
 ```
@@ -145,20 +145,20 @@ alembic upgrade head
 Next, start the task queue which orchestrates the background jobs.
 Jobs that take more time are run async from the API server.
 
-Still in `danswer/backend`, run:
+Still in `spectra/backend`, run:
 ```bash
 python ./scripts/dev_run_background_jobs.py
 ```
 
-To run the backend API server, navigate back to `danswer/backend` and run:
+To run the backend API server, navigate back to `spectra/backend` and run:
 ```bash
-AUTH_TYPE=disabled uvicorn danswer.main:app --reload --port 8080
+AUTH_TYPE=disabled uvicorn spectra.main:app --reload --port 8080
 ```
 _For Windows (for compatibility with both PowerShell and Command Prompt):_
 ```bash
 powershell -Command "
     $env:AUTH_TYPE='disabled'
-    uvicorn danswer.main:app --reload --port 8080 
+    uvicorn spectra.main:app --reload --port 8080 
 "
 ```
 
@@ -169,23 +169,23 @@ Note: if you need finer logging, add the additional environment variable `LOG_LE
 For the backend, you'll need to setup pre-commit hooks (black / reorder-python-imports).
 First, install pre-commit (if you don't have it already) following the instructions
 [here](https://pre-commit.com/#installation).
-Then, from the `danswer/backend` directory, run:
+Then, from the `spectra/backend` directory, run:
 ```bash
 pre-commit install
 ```
 
 Additionally, we use `mypy` for static type checking.
-Danswer is fully type-annotated, and we would like to keep it that way! 
-To run the mypy checks manually, run `python -m mypy .` from the `danswer/backend` directory.
+spectra is fully type-annotated, and we would like to keep it that way! 
+To run the mypy checks manually, run `python -m mypy .` from the `spectra/backend` directory.
 
 
 #### Web
-We use `prettier` for formatting. The desired version (2.8.8) will be installed via a `npm i` from the `danswer/web` directory. 
-To run the formatter, use `npx prettier --write .` from the `danswer/web` directory.
+We use `prettier` for formatting. The desired version (2.8.8) will be installed via a `npm i` from the `spectra/web` directory. 
+To run the formatter, use `npx prettier --write .` from the `spectra/web` directory.
 Please double check that prettier passes before creating a pull request.
 
 
 ### Release Process
-Danswer follows the semver versioning standard.
+spectra follows the semver versioning standard.
 A set of Docker containers will be pushed automatically to DockerHub with every tag.
-You can see the containers [here](https://hub.docker.com/search?q=danswer%2F).
+You can see the containers [here](https://hub.docker.com/search?q=spectra%2F).

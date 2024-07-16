@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 from typing import cast
 
+import litellm
 import uvicorn
 from fastapi import APIRouter
 from fastapi import FastAPI
@@ -294,6 +295,9 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(
         application, token_rate_limit_settings_router
     )
+    # configure longfuse for llm
+    litellm.success_callback = ["langfuse"]
+    litellm.failure_callback = ["langfuse"]
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step

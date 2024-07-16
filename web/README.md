@@ -1,4 +1,4 @@
-<!-- DANSWER_METADATA={"link": "https://github.com/danswer-ai/danswer/blob/main/web/README.md"} -->
+<!-- spectra_METADATA={"link": "https://github.com/spectra-ai/spectra/blob/main/web/README.md"} -->
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
