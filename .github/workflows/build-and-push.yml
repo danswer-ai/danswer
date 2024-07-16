@@ -54,12 +54,12 @@ jobs:
       
     - name: Push Docker image to ECR
       run: |
-        docker push ${{ env.ECR_MODEL_REPOSITORY }}:$IMAGE_TAG ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_MODEL_REPOSITORY }}:$IMAGE_TAG
-        docker push ${{ env.ECR_MODEL_REPOSITORY }}:$IMAGE_TAG ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_MODEL_REPOSITORY }}:latest
+        docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_MODEL_REPOSITORY }}:$IMAGE_TAG
+        docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_MODEL_REPOSITORY }}:latest
 
-        docker push ${{ env.ECR_API_REPOSITORY }}:$IMAGE_TAG ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_API_REPOSITORY }}:$IMAGE_TAG
-        docker push ${{ env.ECR_API_REPOSITORY }}:$IMAGE_TAG ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_API_REPOSITORY }}:latest
+        docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_API_REPOSITORY }}:$IMAGE_TAG
+        docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_API_REPOSITORY }}:latest
         
-        docker push ${{ env.ECR_WEB_REPOSITORY }}:$IMAGE_TAG ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_WEB_REPOSITORY }}:$IMAGE_TAG
-        docker push ${{ env.ECR_WEB_REPOSITORY }}:$IMAGE_TAG ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_WEB_REPOSITORY }}:latest
+        docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_WEB_REPOSITORY }}:$IMAGE_TAG
+        docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_WEB_REPOSITORY }}:latest
                 
