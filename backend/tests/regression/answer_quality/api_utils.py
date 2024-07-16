@@ -39,7 +39,7 @@ def _create_new_chat_session(run_suffix: str) -> int:
         raise RuntimeError(response_json)
 
 
-@retry(tries=15, delay=10, jitter=1)
+@retry(tries=10, delay=10)
 def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
     filters = IndexFilters(
         source_type=None,
@@ -81,10 +81,16 @@ def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
     return simple_search_docs, answer
 
 
+@retry(tries=10, delay=10)
 def check_if_query_ready(run_suffix: str) -> bool:
     url = _api_url_builder(run_suffix, "/manage/admin/connector/indexing-status/")
-
-    indexing_status_dict = requests.get(url, headers=GENERAL_HEADERS).json()
+    try:
+        indexing_status_dict = requests.get(url, headers=GENERAL_HEADERS).json()
+    except Exception as e:
+        print("Failed to check indexing status, API server is likely starting up:")
+        print(f"\t {str(e)}")
+        print("trying again")
+        raise e
 
     ongoing_index_attempts = False
     doc_count = 0
