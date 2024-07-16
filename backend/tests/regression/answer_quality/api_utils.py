@@ -11,7 +11,6 @@ from danswer.server.documents.models import ConnectorBase
 from danswer.server.query_and_chat.models import ChatSessionCreationRequest
 from ee.danswer.server.query_and_chat.models import BasicCreateChatMessageRequest
 from tests.regression.answer_quality.cli_utils import get_api_server_host_port
-from tests.regression.answer_quality.cli_utils import restart_vespa_container
 
 GENERAL_HEADERS = {"Content-Type": "application/json"}
 
@@ -76,8 +75,7 @@ def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
     except Exception as e:
         print("Failed to answer the questions:")
         print(f"\t {str(e)}")
-        print("Restarting vespa container and trying agian")
-        restart_vespa_container(run_suffix)
+        print("trying again")
         raise e
 
     return simple_search_docs, answer

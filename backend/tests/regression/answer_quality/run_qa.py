@@ -1,4 +1,5 @@
 import json
+import multiprocessing
 import os
 import time
 
@@ -13,11 +14,12 @@ RESULTS_FILENAME = "results.jsonl"
 METADATA_FILENAME = "metadata.yaml"
 
 
-def _update_results_file(output_folder_path: str, qa_output: dict) -> None:
+def _populate_results_file(output_folder_path: str, all_qa_output: list[dict]) -> None:
     output_file_path = os.path.join(output_folder_path, RESULTS_FILENAME)
     with open(output_file_path, "a", encoding="utf-8") as file:
-        file.write(json.dumps(qa_output) + "\n")
-        file.flush()
+        for qa_output in all_qa_output:
+            file.write(json.dumps(qa_output) + "\n")
+            file.flush()
 
 
 def _update_metadata_file(test_output_folder: str, count: int) -> None:
@@ -92,7 +94,34 @@ def _initialize_files(config: dict) -> tuple[str, list[dict]]:
     return test_output_folder, questions
 
 
+def _process_question(question_data: dict, config: dict, question_number: int) -> dict:
+    print(f"On question number {question_number}")
+
+    query = question_data["question"]
+    print(f"query: {query}")
+    context_data_list, answer = get_answer_from_query(
+        query=query,
+        run_suffix=config["run_suffix"],
+    )
+
+    if not context_data_list:
+        print("No answer or context found")
+    else:
+        print(f"answer: {answer[:50]}...")
+        print(f"{len(context_data_list)} context docs found")
+    print("\n")
+
+    output = {
+        "question_data": question_data,
+        "answer": answer,
+        "context_data_list": context_data_list,
+    }
+
+    return output
+
+
 def _process_and_write_query_results(config: dict) -> None:
+    start_time = time.time()
     test_output_folder, questions = _initialize_files(config)
     print("saving test results to folder:", test_output_folder)
 
@@ -101,33 +130,26 @@ def _process_and_write_query_results(config: dict) -> None:
 
     if config["limit"] is not None:
         questions = questions[: config["limit"]]
-    count = 1
-    for question_data in questions:
-        print(f"On question number {count}")
 
-        query = question_data["question"]
-        print(f"query: {query}")
-        context_data_list, answer = get_answer_from_query(
-            query=query,
-            run_suffix=config["run_suffix"],
+    with multiprocessing.Pool(processes=multiprocessing.cpu_count() * 2) as pool:
+        results = pool.starmap(
+            _process_question, [(q, config, i + 1) for i, q in enumerate(questions)]
         )
 
-        if not context_data_list:
-            print("No answer or context found")
-        else:
-            print(f"answer: {answer[:50]}...")
-            print(f"{len(context_data_list)} context docs found")
-        print("\n")
+    _populate_results_file(test_output_folder, results)
 
-        output = {
-            "question_data": question_data,
-            "answer": answer,
-            "context_data_list": context_data_list,
-        }
+    valid_answer_count = 0
+    for result in results:
+        if result.get("answer"):
+            valid_answer_count += 1
 
-        _update_results_file(test_output_folder, output)
-        _update_metadata_file(test_output_folder, count)
-        count += 1
+    _update_metadata_file(test_output_folder, valid_answer_count)
+
+    time_to_finish = time.time() - start_time
+    minutes, seconds = divmod(int(time_to_finish), 60)
+    print(
+        f"Took {minutes:02d}:{seconds:02d} to ask and answer {len(results)} questions"
+    )
 
 
 def run_qa_test_and_save_results(run_suffix: str = "") -> None:

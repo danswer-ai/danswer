@@ -44,7 +44,7 @@ class BasicCreateChatMessageRequest(ChunkContext):
 
 
 class SimpleDoc(BaseModel):
-    id: int
+    id: str
     semantic_identifier: str
     link: str | None
     blurb: str
