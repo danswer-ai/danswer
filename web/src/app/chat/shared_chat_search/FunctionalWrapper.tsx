@@ -38,7 +38,9 @@ const ToggleSwitch = () => {
     <div className="bg-gray-100 flex rounded-full p-1">
       <div
         className={`absolute top-1 bottom-1  ${activeTab === "chat" ? "w-[45%]" : "w-[50%]"} bg-white rounded-full shadow ${
-          isInitialLoad ? "" : "transition-transform duration-300 ease-in-out"
+          isInitialLoad
+            ? ""
+            : "transition-transform transitiion-width duration-300 ease-in-out"
         } ${activeTab === "chat" ? "translate-x-[115%]" : "translate-x-[1%]"}`}
       />
       <button

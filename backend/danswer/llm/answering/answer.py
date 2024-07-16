@@ -265,10 +265,7 @@ class Answer:
             if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
                 self._update_prompt_builder_for_search_tool(prompt_builder, [])
 
-            elif (
-                tool.name == ImageGenerationTool._NAME
-                or tool.name == GraphingTool._NAME
-            ):
+            elif tool.name == ImageGenerationTool._NAME:
                 prompt_builder.update_user_prompt(
                     build_image_generation_user_prompt(
                         query=self.question,

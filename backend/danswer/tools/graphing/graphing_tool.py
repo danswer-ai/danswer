@@ -192,6 +192,9 @@ class GraphingTool(Tool):
 
         locals_dict = {"plt": plt, "matplotlib": matplotlib, "sns": sns}
 
+        # print("THIS IS THE CODE:::")
+        # print(code)
+
         try:
             exec(code, globals(), locals_dict)
 
