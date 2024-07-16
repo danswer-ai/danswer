@@ -80,7 +80,7 @@ export const ChatSidebar = ({
         border-border 
         flex-col 
         h-screen
-        transition-transform z-[999] ${
+        transition-transform z-30 ${
           openSidebar ? "w-full md:w-80 left-0 absolute flex" : "hidden lg:flex"
         }`}
         id="chat-sidebar"
