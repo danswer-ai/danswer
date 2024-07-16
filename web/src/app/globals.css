@@ -119,3 +119,7 @@
   opacity: 0;
   overflow: hidden;
 }
+
+body {
+  overscroll-behavior-y: none;
+}
