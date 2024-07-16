@@ -33,6 +33,7 @@ def translate_doc_response_to_simple_doc(
 ) -> list[SimpleDoc]:
     return [
         SimpleDoc(
+            id=doc.id,
             semantic_identifier=doc.semantic_identifier,
             link=doc.link,
             blurb=doc.blurb,

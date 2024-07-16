@@ -15,7 +15,7 @@ METADATA_FILENAME = "metadata.yaml"
 
 def _update_results_file(output_folder_path: str, qa_output: dict) -> None:
     output_file_path = os.path.join(output_folder_path, RESULTS_FILENAME)
-    with open(output_file_path, "w", encoding="utf-8") as file:
+    with open(output_file_path, "a", encoding="utf-8") as file:
         file.write(json.dumps(qa_output) + "\n")
         file.flush()
 
@@ -81,8 +81,8 @@ def _initialize_files(config: dict) -> tuple[str, list[dict]]:
         del env_vars["ENV_SEED_CONFIGURATION"]
     if env_vars["GPG_KEY"]:
         del env_vars["GPG_KEY"]
-    if metadata["config"]["llm"]["api_key"]:
-        del metadata["config"]["llm"]["api_key"]
+    if metadata["test_config"]["llm"]["api_key"]:
+        del metadata["test_config"]["llm"]["api_key"]
     metadata.update(env_vars)
     metadata_path = os.path.join(test_output_folder, METADATA_FILENAME)
     print("saving metadata to:", metadata_path)
