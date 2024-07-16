@@ -8,7 +8,7 @@ from tests.regression.answer_quality.cli_utils import cleanup_docker
 from tests.regression.answer_quality.cli_utils import manage_data_directories
 from tests.regression.answer_quality.cli_utils import set_env_variables
 from tests.regression.answer_quality.cli_utils import start_docker_compose
-from tests.regression.answer_quality.cli_utils import switch_to_branch
+from tests.regression.answer_quality.cli_utils import switch_to_commit
 from tests.regression.answer_quality.file_uploader import upload_test_files
 from tests.regression.answer_quality.run_qa import run_qa_test_and_save_results
 
@@ -37,7 +37,7 @@ def main() -> None:
     )
     manage_data_directories(run_suffix, config.output_folder, config.use_cloud_gpu)
     if config.branch:
-        switch_to_branch(config.branch)
+        switch_to_commit(config.branch)
 
     start_docker_compose(run_suffix, config.launch_web_ui, config.use_cloud_gpu)
 

@@ -60,11 +60,10 @@ def get_current_commit_sha() -> str:
     return sha
 
 
-def switch_to_branch(branch: str) -> None:
-    print(f"Switching to branch: {branch}...")
-    _run_command(f"git checkout {branch}")
-    _run_command("git pull")
-    print(f"Successfully switched to branch: {branch}")
+def switch_to_commit(commit_sha: str) -> None:
+    print(f"Switching to commit: {commit_sha}...")
+    _run_command(f"git checkout {commit_sha}")
+    print(f"Successfully switched to commit: {commit_sha}")
     print("Repository updated successfully.")
 
 

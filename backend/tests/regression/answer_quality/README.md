@@ -53,8 +53,10 @@ Edit `search_test_config.yaml` to set:
     - The path to the zip file containing the files you'd like to test against
 - questions_file
     - The path to the yaml containing the questions you'd like to test with 
-- branch
-    - Set the branch to null if you want it to just use the code as is
+- commit_sha
+    - Set this to the SHA of the commit you want to run the test against
+    - You must clear all local changes if you want to use this option
+    - Set this to null if you want it to just use the code as is
 - clean_up_docker_containers
     - Set this to true to automatically delete all docker containers, networks and volumes after the test
 - launch_web_ui

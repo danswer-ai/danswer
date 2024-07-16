@@ -10,8 +10,8 @@ zipped_documents_file: "~/sampledocs.zip"
 # Path to the YAML file containing sample questions
 questions_file: "~/sample_questions.yaml"
 
-# Git branch to use (null means use current branch as is)
-branch: null
+# Git commit SHA to use (null means use current code as is)
+commit_sha: null
 
 # Whether to remove Docker containers after the test
 clean_up_docker_containers: true
