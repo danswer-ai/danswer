@@ -57,6 +57,8 @@ export const SearchResultsDisplay = ({
 }) => {
   const { popup, setPopup } = usePopup();
   const [showAll, setShowAll] = useState(false);
+  console.log("MADE IT HERE 1");
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
@@ -80,13 +82,15 @@ export const SearchResultsDisplay = ({
   }, []);
 
   if (!searchResponse) {
+    console.log("SEARCH");
     return null;
   }
 
   const { answer, quotes, documents, error, messageId } = searchResponse;
 
   if (isFetching && !answer && !documents) {
-    return null;
+    console.log("dan");
+    return <p>TESTE</p>;
   }
 
   if (
@@ -101,11 +105,15 @@ export const SearchResultsDisplay = ({
           <div className="text-error text-sm">
             <div className="flex">
               <AlertIcon size={16} className="text-error my-auto mr-1" />
-              <p className="italic">{error}</p>
+              <p className="italic">{error || "No documents were found!"}</p>
             </div>
           </div>
         ) : (
-          <></>
+          <div className="text-lg gap-x-1.5 flex">
+            <AlertIcon size={16} className="text-error my-auto mr-1" />
+            <p className="text-error ">No documents were found!</p>
+            <p>Have you set up a connector?</p>
+          </div>
         )}
       </div>
     );
@@ -121,6 +129,7 @@ export const SearchResultsDisplay = ({
       }
     });
   }
+  console.log("MADE IT HERE 2");
 
   const selectedDocumentIds = getSelectedDocumentIds(
     documents || [],
@@ -149,7 +158,7 @@ export const SearchResultsDisplay = ({
               : 1
         )
       : documents ?? [];
-
+  console.log("MADE IT HERE");
   const isMac =
     navigator && navigator.userAgent.length > 10
       ? navigator.userAgent.indexOf("Mac") !== -1
