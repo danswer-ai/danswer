@@ -89,6 +89,20 @@ export const SearchResultsDisplay = ({
   if (isFetching && !answer && !documents) {
     return null;
   }
+  if (
+    answer === null &&
+    documents != null &&
+    documents.length == 0 &&
+    !isFetching
+  ) {
+    return (
+      <div className="text-base gap-x-1.5 flex">
+        <AlertIcon size={16} className="text-error my-auto mr-1" />
+        <p className="text-error ">No documents were found!</p>
+        <p>Have you set up a connector?</p>
+      </div>
+    );
+  }
 
   if (
     answer === null &&
@@ -98,18 +112,12 @@ export const SearchResultsDisplay = ({
   ) {
     return (
       <div className="mt-4">
-        {error ? (
+        {error && (
           <div className="text-error text-sm">
             <div className="flex">
               <AlertIcon size={16} className="text-error my-auto mr-1" />
               <p className="italic">{error || "No documents were found!"}</p>
             </div>
-          </div>
-        ) : (
-          <div className="text-lg gap-x-1.5 flex">
-            <AlertIcon size={16} className="text-error my-auto mr-1" />
-            <p className="text-error ">No documents were found!</p>
-            <p>Have you set up a connector?</p>
           </div>
         )}
       </div>
