@@ -125,6 +125,31 @@ Follow Up Input:
 {{final_query}}
 """.strip()
 
+GRAPHING_QUERY_REPHRASE = f"""
+Given the following conversation and a follow-up input, generate Python code using matplotlib to create the requested graph.
+IMPORTANT: The code should be complete and executable, including data generation if necessary.
+Focus on creating a clear and informative visualization based on the user's request.
+
+Guidelines:
+- Import matplotlib.pyplot as plt at the beginning of the code.
+- Generate sample data if specific data is not provided in the conversation.
+- Use appropriate graph types (line, bar, scatter, pie) based on the nature of the data and request.
+- Include proper labeling (title, x-axis, y-axis, legend) in the graph.
+- Use plt.figure() to create the figure and assign it to a variable named 'fig'.
+- Do not include plt.show() at the end of the code.
+
+{GENERAL_SEP_PAT}
+Chat History:
+{{chat_history}}
+{GENERAL_SEP_PAT}
+
+Follow Up Input: {{question}}
+
+Python Code for Graph (Respond with only the Python code to generate the graph):
+```python
+# Your code here
+```
+""".strip()
 
 HISTORY_QUERY_REPHRASE = f"""
 Given the following conversation and a follow up input, rephrase the follow up into a SHORT, \

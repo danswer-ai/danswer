@@ -8,6 +8,7 @@ import {
   ChatSessionSharedStatus,
   DocumentsResponse,
   FileDescriptor,
+  GraphGenerationDisplay,
   ImageGenerationDisplay,
   Message,
   RetrievalType,
@@ -809,6 +810,13 @@ export function ChatPage({
           if (packet) {
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
+            } else if (Object.hasOwn(packet, "file_id")) {
+              aiMessageImages = [
+                {
+                  id: (packet as GraphGenerationDisplay).file_id,
+                  type: ChatFileType.IMAGE,
+                },
+              ];
             } else if (Object.hasOwn(packet, "top_documents")) {
               documents = (packet as DocumentsResponse).top_documents;
               query = (packet as DocumentsResponse).rephrased_query;

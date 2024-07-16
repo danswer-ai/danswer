@@ -41,6 +41,7 @@ from danswer.tools.custom.custom_tool_prompt_builder import (
 )
 from danswer.tools.force import filter_tools_for_force_tool_use
 from danswer.tools.force import ForceUseTool
+from danswer.tools.graphing.graphing_tool import GraphingTool
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import ImageGenerationResponse
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
@@ -218,6 +219,7 @@ class Answer:
                     self.tools, self.force_use_tool
                 )
             ]
+
             for message in self.llm.stream(
                 prompt=prompt,
                 tools=final_tool_definitions if final_tool_definitions else None,
@@ -239,6 +241,7 @@ class Answer:
 
         # if we have a tool call, we need to call the tool
         tool_call_requests = tool_call_chunk.tool_calls
+
         for tool_call_request in tool_call_requests:
             tool = [
                 tool for tool in self.tools if tool.name == tool_call_request["name"]
@@ -259,9 +262,9 @@ class Answer:
                     tool_call_request, tool_runner.tool_message_content()
                 ),
             )
-
             if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
                 self._update_prompt_builder_for_search_tool(prompt_builder, [])
+
             elif tool.name == ImageGenerationTool._NAME:
                 prompt_builder.update_user_prompt(
                     build_image_generation_user_prompt(
@@ -381,7 +384,7 @@ class Answer:
             self._update_prompt_builder_for_search_tool(
                 prompt_builder, final_context_documents
             )
-        elif tool.name == ImageGenerationTool._NAME:
+        elif tool.name == ImageGenerationTool._NAME or GraphingTool._NAME:
             img_urls = []
             for response in tool_runner.tool_responses():
                 if response.id == IMAGE_GENERATION_RESPONSE_ID:
@@ -448,6 +451,7 @@ class Answer:
                     message, ToolCallFinalResult
                 ):
                     yield message
+
                 elif isinstance(message, ToolResponse):
                     if message.id == SEARCH_RESPONSE_SUMMARY_ID:
                         # We don't need to run section merging in this flow, this variable is only used
@@ -469,6 +473,7 @@ class Answer:
                         continue
 
                     yield message
+
                 else:
                     # assumes all tool responses will come first, then the final answer
                     break

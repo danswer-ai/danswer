@@ -18,6 +18,7 @@ import {
   ChatSession,
   DocumentsResponse,
   FileDescriptor,
+  GraphGenerationDisplay,
   ImageGenerationDisplay,
   Message,
   RetrievalType,
@@ -78,6 +79,7 @@ export type PacketType =
   | AnswerPiecePacket
   | DocumentsResponse
   | ImageGenerationDisplay
+  | GraphGenerationDisplay
   | StreamingError;
 
 export async function* sendMessage({

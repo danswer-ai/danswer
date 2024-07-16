@@ -122,6 +122,9 @@ export interface DocumentsResponse {
   rephrased_query: string | null;
 }
 
+export interface GraphGenerationDisplay {
+  file_id: string;
+}
 export interface ImageGenerationDisplay {
   file_ids: string[];
 }
