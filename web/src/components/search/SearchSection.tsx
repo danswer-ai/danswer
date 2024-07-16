@@ -98,6 +98,27 @@ export const SearchSection = ({
     messageId: null,
   });
 
+  const [agentic, setAgentic] = useState(agenticSearchEnabled);
+
+  const toggleAgentic = () => {
+    Cookies.set(
+      AGENTIC_SEARCH_TYPE_COOKIE_NAME,
+      String(!agentic).toLocaleLowerCase()
+    );
+    setAgentic((agentic) => !agentic);
+  };
+
+  const toggleSidebar = () => {
+    Cookies.set(
+      SIDEBAR_TOGGLED_COOKIE_NAME,
+      String(!toggledSidebar).toLocaleLowerCase()
+    ),
+      {
+        path: "/",
+      };
+    toggle();
+  };
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
@@ -114,17 +135,6 @@ export const SearchSection = ({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
-
-  const [agentic, setAgentic] = useState(agenticSearchEnabled);
-
-  const toggleAgentic = () => {
-    Cookies.set(
-      AGENTIC_SEARCH_TYPE_COOKIE_NAME,
-      String(!agentic).toLocaleLowerCase()
-    );
-    setAgentic((agentic) => !agentic);
-  };
-
   const [isFetching, setIsFetching] = useState(false);
 
   const [validQuestionResponse, setValidQuestionResponse] =
@@ -198,7 +208,7 @@ export const SearchSection = ({
       }
     }
     initialSessionFetch();
-  }, [existingSearchessionId]);
+  }, [existingSearchessionId, existingSearchIdRaw]);
 
   // Overrides for default behavior that only last a single query
   const [defaultOverrides, setDefaultOverrides] =
@@ -411,17 +421,6 @@ export const SearchSection = ({
   const sidebarElementRef = useRef<HTMLDivElement>(null);
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
   const [showDocSidebar, setShowDocSidebar] = useState(false);
-
-  const toggleSidebar = () => {
-    Cookies.set(
-      SIDEBAR_TOGGLED_COOKIE_NAME,
-      String(!toggledSidebar).toLocaleLowerCase()
-    ),
-      {
-        path: "/",
-      };
-    toggle();
-  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

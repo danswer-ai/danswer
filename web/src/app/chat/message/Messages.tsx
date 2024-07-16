@@ -450,12 +450,9 @@ export const AIMessage = ({
                                     className="text-sm flex justify-between font-semibold text-text-700"
                                   >
                                     <div className="flex gap-x-1.5">
-                                      <div>
-                                        <Citation
-                                          children={`[${ind + 1}]`}
-                                          link={doc.link}
-                                        />
-                                      </div>
+                                      <Citation link={doc.link}>
+                                        [{ind + 1}]
+                                      </Citation>
                                       <p className="line-clamp-1">
                                         {
                                           doc.document_id.split("/")[
