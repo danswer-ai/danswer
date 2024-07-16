@@ -36,8 +36,8 @@ def main() -> None:
         config.llm,
     )
     manage_data_directories(run_suffix, config.output_folder, config.use_cloud_gpu)
-    if config.branch:
-        switch_to_commit(config.branch)
+    if config.commit_sha:
+        switch_to_commit(config.commit_sha)
 
     start_docker_compose(run_suffix, config.launch_web_ui, config.use_cloud_gpu)
 
