@@ -34,5 +34,6 @@ jobs:
   
             - name: Run Docker Compose
               run: |
+                docker-compose -f docker-compose.yml -p chp-uat down
                 docker-compose -f docker-compose.yml -p chp-uat up -d --build --force-recreate
 
