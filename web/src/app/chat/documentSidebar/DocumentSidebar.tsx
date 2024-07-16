@@ -88,21 +88,25 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
 
     return (
       <div
+        className={`fixed inset-0 transition-opacity duration-300 z-50 bg-black/80 ${
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             closeSidebar();
           }
         }}
-        className="fixed inset-0 transition transform transition-all duration-300 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
       >
         <div
+          className={`ml-auto rounded-l-lg relative border-l bg-text-100 sidebar z-50 absolute right-0 h-screen transition-all duration-300 ${
+            isOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[10%]"
+          }`}
           ref={ref}
           style={{
             width: initialWidth,
           }}
-          className={`ml-auto rounded-l-lg relative border-l bg-text-100 sidebar z-50 absolute right-0 h-screen `}
         >
-          <div className="flex-initial overflow-y-hidden flex flex-col h-screen ">
+          <div className="pb-6 flex-initial overflow-y-hidden flex flex-col h-screen ">
             {popup}
             <div className="pl-3 mx-2 pr-6 mt-3 flex text-text-800 flex-col text-2xl text-emphasis flex font-semibold">
               {dedupedDocuments.length} Documents
@@ -170,6 +174,8 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
               )
             )}
           </div>
+
+          <div className="absolute left-0 bottom-0 w-full bg-gradient-to-b from-neutral-100/0 via-neutral-100/40 backdrop-blur-xs  to-neutral-100 h-[100px]" />
           <div className="sticky bottom-4 w-full left-0 justify-center flex gap-x-4">
             <button
               className="bg-success text-xs p-2 rounded text-text-200"

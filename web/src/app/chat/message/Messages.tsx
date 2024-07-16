@@ -470,7 +470,7 @@ export const AIMessage = ({
                                     <div className="flex gap-x-1.5">
                                       <div>
                                         <Citation
-                                          children={`[1]`}
+                                          children={`[${ind + 1}]`}
                                           link={doc.link}
                                         />
                                       </div>
@@ -509,16 +509,18 @@ export const AIMessage = ({
                             >
                               <div className="text-sm flex justify-between font-semibold text-text-700">
                                 <p className="line-clamp-1">See context</p>
-                                {uniqueSources.map((sourceType, ind) => {
-                                  return (
-                                    <div key={ind} className="flex-none">
-                                      <SourceIcon
-                                        sourceType={sourceType}
-                                        iconSize={18}
-                                      />
-                                    </div>
-                                  );
-                                })}
+                                <div className="flex gap-x-1">
+                                  {uniqueSources.map((sourceType, ind) => {
+                                    return (
+                                      <div key={ind} className="flex-none">
+                                        <SourceIcon
+                                          sourceType={sourceType}
+                                          iconSize={18}
+                                        />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               </div>
                               <div className="line-clamp-3 text-xs break-words pt-1">
                                 See more

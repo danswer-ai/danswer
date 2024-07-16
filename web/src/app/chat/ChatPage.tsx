@@ -1612,21 +1612,19 @@ export function ChatPage({
             )}
           </div>
 
-          {documentSelection && (
-            <DocumentSidebar
-              initialWidth={390}
-              ref={innerSidebarElementRef}
-              closeSidebar={() => setDocumentSelection(false)}
-              selectedMessage={aiMessage}
-              selectedDocuments={selectedDocuments}
-              toggleDocumentSelection={toggleDocumentSelection}
-              clearSelectedDocuments={clearSelectedDocuments}
-              selectedDocumentTokens={selectedDocumentTokens}
-              maxTokens={maxTokens}
-              isLoading={isFetchingChatMessages}
-              isOpen={documentSelection}
-            />
-          )}
+          <DocumentSidebar
+            initialWidth={390}
+            ref={innerSidebarElementRef}
+            closeSidebar={() => setDocumentSelection(false)}
+            selectedMessage={aiMessage}
+            selectedDocuments={selectedDocuments}
+            toggleDocumentSelection={toggleDocumentSelection}
+            clearSelectedDocuments={clearSelectedDocuments}
+            selectedDocumentTokens={selectedDocumentTokens}
+            maxTokens={maxTokens}
+            isLoading={isFetchingChatMessages}
+            isOpen={documentSelection}
+          />
         </div>
         <FixedLogo />
       </div>
