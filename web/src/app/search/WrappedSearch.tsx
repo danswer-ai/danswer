@@ -15,7 +15,9 @@ export default function WrappedSearch({
   user,
   agenticSearchEnabled,
   initiallyToggled,
+  disabledAgentic,
 }: {
+  disabledAgentic: boolean;
   querySessions: ChatSession[];
   ccPairs: CCPairBasicInfo[];
   documentSets: DocumentSet[];
@@ -31,6 +33,7 @@ export default function WrappedSearch({
       initiallyToggled={initiallyToggled}
       content={(toggledSidebar, toggle) => (
         <SearchSection
+          disabledAgentic={disabledAgentic}
           agenticSearchEnabled={agenticSearchEnabled}
           toggle={toggle}
           toggledSidebar={toggledSidebar}

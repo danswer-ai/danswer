@@ -46,3 +46,6 @@ export const EE_ENABLED =
 export const CUSTOM_ANALYTICS_ENABLED = process.env.CUSTOM_ANALYTICS_SECRET_KEY
   ? true
   : false;
+
+export const DISABLE_AGENTIC =
+  process.env.DISABLE_AGENTIC?.toLowerCase() === "true";

@@ -57,6 +57,7 @@ const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
 };
 
 interface SearchSectionProps {
+  disabledAgentic: boolean;
   ccPairs: CCPairBasicInfo[];
   documentSets: DocumentSet[];
   personas: Persona[];
@@ -72,6 +73,7 @@ interface SearchSectionProps {
 export const SearchSection = ({
   ccPairs,
   toggle,
+  disabledAgentic,
   documentSets,
   agenticSearchEnabled,
   personas,
@@ -248,7 +250,7 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       documents,
     }));
-    if (documents.length == 0) {
+    if (documents.length == 0 || disabledAgentic) {
       setSearchState("input");
     }
   };
@@ -281,7 +283,7 @@ export const SearchSection = ({
       messageId,
     }));
     router.refresh();
-    console.log("NOT FETCHING");
+    setSearchState("input");
     setIsFetching(false);
 
     // router.replace(`/search?searchId=${chat_session_id}`);
@@ -292,6 +294,8 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       additional_relevance: relevance,
     }));
+
+    setContentEnriched(true);
 
     setIsFetching(false);
     setSearchState("input");
@@ -555,7 +559,7 @@ export const SearchSection = ({
                   </div>
 
                   <FullSearchBar
-                    toggleAgentic={toggleAgentic}
+                    toggleAgentic={disabledAgentic ? undefined : toggleAgentic}
                     agentic={agentic}
                     searchState={searchState}
                     query={query}

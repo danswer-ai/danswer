@@ -14,6 +14,7 @@ import { BookIcon, CheckmarkIcon, LightBulbIcon, XIcon } from "../icons/icons";
 
 import { FaStar } from "react-icons/fa";
 import { FiTag } from "react-icons/fi";
+import { DISABLE_AGENTIC } from "@/lib/constants";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -227,6 +228,7 @@ export const DocumentDisplay = ({
             )}
 
             {(contentEnriched || additional_relevance) &&
+              document.relevance_explanation &&
               (isHovered || alternativeToggled) && (
                 <button
                   onClick={() =>
@@ -277,6 +279,8 @@ export const AgenticDocumentDisplay = ({
 
   const [alternativeToggled, setAlternativeToggled] = useState(false);
 
+  const relevance_explanation =
+    document.relevance_explanation ?? additional_relevance?.content;
   return (
     <div
       key={document.semantic_identifier}
@@ -316,6 +320,7 @@ export const AgenticDocumentDisplay = ({
             )}
 
             {(contentEnriched || additional_relevance) &&
+              relevance_explanation &&
               (isHovered || alternativeToggled) && (
                 <button
                   onClick={() =>
@@ -342,9 +347,7 @@ export const AgenticDocumentDisplay = ({
                   document.match_highlights,
                   document.blurb
                 )
-              : document.relevance_explanation ??
-                additional_relevance?.content ??
-                ""}
+              : relevance_explanation ?? ""}
           </p>
         </div>
       </div>

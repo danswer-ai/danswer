@@ -32,7 +32,10 @@ import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
 import { ChatSession } from "../chat/interfaces";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
 import ToggleSearch from "./WrappedSearch";
-import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
+import {
+  AGENTIC_SEARCH_TYPE_COOKIE_NAME,
+  DISABLE_AGENTIC,
+} from "@/lib/constants";
 import WrappedSearch from "./WrappedSearch";
 
 export default async function Home() {
@@ -201,6 +204,7 @@ export default async function Home() {
 
       <InstantSSRAutoRefresh />
       <WrappedSearch
+        disabledAgentic={DISABLE_AGENTIC}
         initiallyToggled={toggleSidebar}
         querySessions={querySessions}
         user={user}
