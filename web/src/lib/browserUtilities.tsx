@@ -23,11 +23,9 @@ const KeyboardSymbol = () => {
   const os = useOperatingSystem();
 
   if (os === "Windows") {
-    return <span>⊞</span>;
-  } else if (os === "Mac") {
-    return <span>⌘</span>;
+    return "⊞";
   } else {
-    return <span>⌘</span>;
+    return "⌘";
   }
 };
 

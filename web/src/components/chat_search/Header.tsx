@@ -57,7 +57,7 @@ export default function FunctionalHeader({
           </div>
 
           {page == "chat" && (
-            <Tooltip delayDuration={1000} content={`${(<KeyboardSymbol />)}U`}>
+            <Tooltip delayDuration={1000} content={`${KeyboardSymbol()}U`}>
               <a
                 href={
                   `/${page}` +

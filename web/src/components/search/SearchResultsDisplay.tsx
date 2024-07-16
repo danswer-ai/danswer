@@ -179,10 +179,7 @@ export const SearchResultsDisplay = ({
             <p>Results</p>
 
             {(contentEnriched || searchResponse.additional_relevance) && (
-              <Tooltip
-                delayDuration={1000}
-                content={`${(<KeyboardSymbol />)}O`}
-              >
+              <Tooltip delayDuration={1000} content={`${KeyboardSymbol()}O`}>
                 <button
                   onClick={() => {
                     performSweep();

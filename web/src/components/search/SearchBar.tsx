@@ -61,7 +61,7 @@ export const AnimatedToggle = ({
             Get quality results immediately, best suited for instant access to
             your documents.
           </p>
-          <p className="mt-2 text-xs">Hint: ({<KeyboardSymbol />}/)</p>
+          <p className="mt-2 text-xs">Hint: ({KeyboardSymbol()}/)</p>
         </div>
       }
     >
