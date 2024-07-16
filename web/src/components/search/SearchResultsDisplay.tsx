@@ -57,7 +57,6 @@ export const SearchResultsDisplay = ({
 }) => {
   const { popup, setPopup } = usePopup();
   const [showAll, setShowAll] = useState(false);
-  console.log("MADE IT HERE 1");
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -82,15 +81,13 @@ export const SearchResultsDisplay = ({
   }, []);
 
   if (!searchResponse) {
-    console.log("SEARCH");
     return null;
   }
 
   const { answer, quotes, documents, error, messageId } = searchResponse;
 
   if (isFetching && !answer && !documents) {
-    console.log("dan");
-    return <p>TESTE</p>;
+    return null;
   }
 
   if (
@@ -129,7 +126,6 @@ export const SearchResultsDisplay = ({
       }
     });
   }
-  console.log("MADE IT HERE 2");
 
   const selectedDocumentIds = getSelectedDocumentIds(
     documents || [],
@@ -158,7 +154,6 @@ export const SearchResultsDisplay = ({
               : 1
         )
       : documents ?? [];
-  console.log("MADE IT HERE");
   const isMac =
     navigator && navigator.userAgent.length > 10
       ? navigator.userAgent.indexOf("Mac") !== -1
