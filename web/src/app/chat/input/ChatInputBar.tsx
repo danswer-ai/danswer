@@ -355,6 +355,7 @@ export function ChatInputBar({
                 w-full
                 shrink
                 resize-none
+                rounded-lg
                 border-0
                 bg-background-100
                 ${
