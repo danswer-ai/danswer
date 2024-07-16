@@ -294,7 +294,6 @@ class SearchTool(Tool):
         ]
 
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
-        logger.info("evals", self.evaluate_response, DISABLE_AGENTIC)
 
         if self.evaluate_response and not DISABLE_AGENTIC:
             yield ToolResponse(

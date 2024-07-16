@@ -176,6 +176,8 @@ export const DocumentDisplay = ({
 }: DocumentDisplayProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [alternativeToggled, setAlternativeToggled] = useState(false);
+  const relevance_explanation =
+    document.relevance_explanation ?? additional_relevance?.content;
 
   return (
     <div
@@ -227,7 +229,7 @@ export const DocumentDisplay = ({
             )}
 
             {(contentEnriched || additional_relevance) &&
-              document.relevance_explanation &&
+              relevance_explanation &&
               (isHovered || alternativeToggled) && (
                 <button
                   onClick={() =>
@@ -249,9 +251,7 @@ export const DocumentDisplay = ({
           className="pl-1 pt-2 pb-3 break-words text-wrap"
         >
           {alternativeToggled && (contentEnriched || additional_relevance)
-            ? document.relevance_explanation ??
-              additional_relevance?.content ??
-              ""
+            ? relevance_explanation ?? ""
             : buildDocumentSummaryDisplay(
                 document.match_highlights,
                 document.blurb
@@ -278,6 +278,7 @@ export const AgenticDocumentDisplay = ({
 
   const relevance_explanation =
     document.relevance_explanation ?? additional_relevance?.content;
+  console.log(relevance_explanation);
   return (
     <div
       key={document.semantic_identifier}
