@@ -4,6 +4,7 @@ import React, { ReactNode, useContext, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ChatIcon, SearchIcon } from "@/components/icons/icons";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import KeyboardSymbol from "@/lib/browserUtilities";
 
 const ToggleSwitch = () => {
   const pathname = usePathname();
@@ -29,11 +30,6 @@ const ToggleSwitch = () => {
     router.push(tab === "search" ? "/search" : "/chat");
   };
 
-  const isMac =
-    navigator && navigator.userAgent.length > 10
-      ? navigator.userAgent.indexOf("Mac") !== -1
-      : true;
-
   return (
     <div className="bg-gray-100 flex rounded-full p-1">
       <div
@@ -51,7 +47,7 @@ const ToggleSwitch = () => {
       >
         <SearchIcon size={16} className="mr-2" />
         Search
-        <span className="text-xs ml-2">{isMac ? "⌘" : "⊞"}S</span>
+        <span className="text-xs ml-2">{<KeyboardSymbol />}S</span>
       </button>
       <button
         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 ease-in-out flex items-center relative z-10 ${
@@ -63,7 +59,7 @@ const ToggleSwitch = () => {
       >
         <ChatIcon size={16} className="mr-2" />
         Chat
-        <span className="text-xs ml-2">{isMac ? "⌘" : "⊞"}D</span>
+        <span className="text-xs ml-2">{<KeyboardSymbol />}D</span>
       </button>
     </div>
   );

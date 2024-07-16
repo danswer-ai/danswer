@@ -18,6 +18,7 @@ import { AgenticDocumentDisplay, DocumentDisplay } from "./DocumentDisplay";
 import { searchState } from "./SearchSection";
 import { useEffect, useState } from "react";
 import { Tooltip } from "../tooltip/Tooltip";
+import KeyboardSymbol from "@/lib/browserUtilities";
 
 const getSelectedDocumentIds = (
   documents: SearchDanswerDocument[],
@@ -162,10 +163,6 @@ export const SearchResultsDisplay = ({
               : 1
         )
       : documents ?? [];
-  const isMac =
-    navigator && navigator.userAgent.length > 10
-      ? navigator.userAgent.indexOf("Mac") !== -1
-      : true;
 
   return (
     <>
@@ -182,7 +179,10 @@ export const SearchResultsDisplay = ({
             <p>Results</p>
 
             {(contentEnriched || searchResponse.additional_relevance) && (
-              <Tooltip delayDuration={1000} content={`${isMac ? "⌘" : "⊞"}O`}>
+              <Tooltip
+                delayDuration={1000}
+                content={`${(<KeyboardSymbol />)}O`}
+              >
                 <button
                   onClick={() => {
                     performSweep();

@@ -9,6 +9,7 @@ import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
 import { ChatSession } from "@/app/chat/interfaces";
 import { HeaderTitle } from "../header/Header";
 import { Tooltip } from "../tooltip/Tooltip";
+import KeyboardSymbol from "@/lib/browserUtilities";
 
 export default function FunctionalHeader({
   showSidebar,
@@ -23,11 +24,6 @@ export default function FunctionalHeader({
   currentChatSession?: ChatSession | null | undefined;
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
 }) {
-  const isMac =
-    navigator && navigator.userAgent.length > 10
-      ? navigator.userAgent.indexOf("Mac") !== -1
-      : true;
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
@@ -61,7 +57,7 @@ export default function FunctionalHeader({
           </div>
 
           {page == "chat" && (
-            <Tooltip delayDuration={1000} content={`${isMac ? "⌘" : "⊞"}U`}>
+            <Tooltip delayDuration={1000} content={`${(<KeyboardSymbol />)}U`}>
               <a
                 href={
                   `/${page}` +

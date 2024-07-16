@@ -216,7 +216,7 @@ def stream_answer_objects(
         skip_generation=True,
     )
 
-    # won't be any ImageGenerationDisplay responses since that tool is never passed in
+    # won't be any ImageGenerationDisplay responses since that tool is never passed in go
     dropped_inds: list[int] = []
 
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
