@@ -227,7 +227,7 @@ export const AIMessage = ({
   }
 
   const uniqueSources: ValidSources[] = Array.from(
-    new Set(filteredDocs.map((doc) => doc.source_type))
+    new Set((docs || []).map((doc) => doc.source_type))
   ).slice(0, 3);
 
   return (
