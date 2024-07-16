@@ -25,6 +25,8 @@ export default function FunctionalHeader({
   currentChatSession?: ChatSession | null | undefined;
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
 }) {
+  const commandSymbol = KeyboardSymbol();
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
@@ -58,7 +60,7 @@ export default function FunctionalHeader({
           </div>
 
           {page == "chat" && (
-            <Tooltip delayDuration={1000} content={`${KeyboardSymbol()}U`}>
+            <Tooltip delayDuration={1000} content={`${commandSymbol}U`}>
               <Link
                 href={
                   `/${page}` +

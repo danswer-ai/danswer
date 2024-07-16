@@ -56,6 +56,7 @@ export const SearchResultsDisplay = ({
   personaName?: string | null;
   comments: any;
 }) => {
+  const commandSymbol = KeyboardSymbol();
   const { popup, setPopup } = usePopup();
   const [showAll, setShowAll] = useState(false);
 
@@ -179,7 +180,7 @@ export const SearchResultsDisplay = ({
             <p>Results</p>
 
             {(contentEnriched || searchResponse.additional_relevance) && (
-              <Tooltip delayDuration={1000} content={`${KeyboardSymbol()}O`}>
+              <Tooltip delayDuration={1000} content={`${commandSymbol}O`}>
                 <button
                   onClick={() => {
                     performSweep();

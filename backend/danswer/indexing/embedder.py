@@ -20,7 +20,6 @@ from danswer.utils.logger import setup_logger
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
 from shared_configs.enums import EmbedTextType
-from sqlalchemy.orm import Session
 
 
 logger = setup_logger()

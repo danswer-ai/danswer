@@ -75,6 +75,8 @@ LANGUAGE_CHAT_NAMING_HINT = (
     or "The name of the conversation must be in the same language as the user query."
 )
 
+DISABLE_AGENTIC = os.environ.get("DISABLE_AGENTIC") or False
+
 # Stops streaming answers back to the UI if this pattern is seen:
 STOP_STREAM_PAT = os.environ.get("STOP_STREAM_PAT") or None
 

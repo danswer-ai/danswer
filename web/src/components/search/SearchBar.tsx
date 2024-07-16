@@ -25,6 +25,8 @@ export const AnimatedToggle = ({
   isOn: boolean;
   handleToggle: () => void;
 }) => {
+  const commandSymbol = KeyboardSymbol();
+
   const [width, setWidth] = useState("auto");
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -61,7 +63,7 @@ export const AnimatedToggle = ({
             Get quality results immediately, best suited for instant access to
             your documents.
           </p>
-          <p className="mt-2 text-xs">Hint: ({KeyboardSymbol()}/)</p>
+          <p className="mt-2 text-xs">Hint: ({commandSymbol}/)</p>
         </div>
       }
     >

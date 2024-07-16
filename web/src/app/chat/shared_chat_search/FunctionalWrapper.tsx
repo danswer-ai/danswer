@@ -7,6 +7,7 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 import KeyboardSymbol from "@/lib/browserUtilities";
 
 const ToggleSwitch = () => {
+  const commandSymbol = KeyboardSymbol();
   const pathname = usePathname();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(() => {
@@ -47,7 +48,7 @@ const ToggleSwitch = () => {
       >
         <SearchIcon size={16} className="mr-2" />
         Search
-        <span className="text-xs ml-2">{KeyboardSymbol()}S</span>
+        <span className="text-xs ml-2">{commandSymbol}S</span>
       </button>
       <button
         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 ease-in-out flex items-center relative z-10 ${
@@ -59,7 +60,7 @@ const ToggleSwitch = () => {
       >
         <ChatIcon size={16} className="mr-2" />
         Chat
-        <span className="text-xs ml-2">{KeyboardSymbol()}D</span>
+        <span className="text-xs ml-2">{commandSymbol}D</span>
       </button>
     </div>
   );

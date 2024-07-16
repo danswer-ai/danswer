@@ -29,7 +29,6 @@ from danswer.utils.timing import log_function_time
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.enums import EmbedTextType
-from sqlalchemy.orm import Session
 
 
 logger = setup_logger()

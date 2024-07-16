@@ -62,6 +62,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
+    const commandSymbol = KeyboardSymbol();
     const router = useRouter();
     const { popup, setPopup } = usePopup();
 
@@ -112,10 +113,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             </div>
 
             {toggleSidebar && (
-              <Tooltip
-                delayDuration={1000}
-                content={`${KeyboardSymbol()}E show`}
-              >
+              <Tooltip delayDuration={1000} content={`${commandSymbol}E show`}>
                 <button className="ml-auto" onClick={toggleSidebar}>
                   {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
                 </button>
