@@ -253,24 +253,22 @@ export const SearchResultsDisplay = ({
                 setPopup={setPopup}
               />
             ) : (
-              <>
-                <DocumentDisplay
-                  additional_relevance={relevance}
-                  contentEnriched={contentEnriched}
-                  index={ind}
-                  hide={
-                    sweep &&
-                    !document.relevant_search_result &&
-                    !relevance?.relevant
-                  }
-                  key={`${document.document_id}-${ind}`}
-                  document={document}
-                  documentRank={ind + 1}
-                  messageId={messageId}
-                  isSelected={selectedDocumentIds.has(document.document_id)}
-                  setPopup={setPopup}
-                />
-              </>
+              <DocumentDisplay
+                additional_relevance={relevance}
+                contentEnriched={contentEnriched}
+                index={ind}
+                hide={
+                  sweep &&
+                  !document.relevant_search_result &&
+                  !relevance?.relevant
+                }
+                key={`${document.document_id}-${ind}`}
+                document={document}
+                documentRank={ind + 1}
+                messageId={messageId}
+                isSelected={selectedDocumentIds.has(document.document_id)}
+                setPopup={setPopup}
+              />
             );
           })}
         </div>

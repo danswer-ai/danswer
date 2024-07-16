@@ -18,8 +18,8 @@ export function Citation({
   if (link != "") {
     return (
       <CustomTooltip
-        large
-        content={<p className=" inline-block p-0  m-0 truncate">{link}</p>}
+        citation
+        content={<p className="inline-block p-0  m-0 truncate">{link}</p>}
       >
         <a
           onClick={() => (link ? window.open(link, "_blank") : undefined)}

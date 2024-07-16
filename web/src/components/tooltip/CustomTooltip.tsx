@@ -38,6 +38,7 @@ export const CustomTooltip = ({
   children,
   large,
   light,
+  citation,
   line,
   showTick = false,
   delay = 500, // Default delay of 300ms
@@ -49,6 +50,7 @@ export const CustomTooltip = ({
   light?: boolean;
   showTick?: boolean;
   delay?: number;
+  citation?: boolean;
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -97,7 +99,7 @@ export const CustomTooltip = ({
       </span>
       {isVisible && (
         <div
-          className={` absolute z-10 ${large ? "max-w-96" : line ? "max-w-64" : "w-40"} 
+          className={` absolute z-10 ${citation && "max-w-96"} ${large ? "w-96" : line ? "max-w-64" : "w-40"} 
               left-1/2 transform -translate-x-1/2 mt-2 text-sm 
               ${light ? "text-gray-800 bg-background-200" : "text-white bg-background-800"} 
               rounded-lg shadow-lg`}

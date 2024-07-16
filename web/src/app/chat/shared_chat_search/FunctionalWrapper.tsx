@@ -51,7 +51,7 @@ const ToggleSwitch = () => {
         <span className="text-xs ml-2">{commandSymbol}S</span>
       </button>
       <button
-        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 ease-in-out flex items-center relative z-10 ${
+        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 ease-in-out flex  items-center relative z-10 ${
           activeTab === "chat"
             ? "text-gray-800"
             : "text-gray-500 hover:text-gray-700"
@@ -59,8 +59,10 @@ const ToggleSwitch = () => {
         onClick={() => handleTabChange("chat")}
       >
         <ChatIcon size={16} className="mr-2" />
-        Chat
-        <span className="text-xs ml-2">{commandSymbol}D</span>
+        <p className="items-baseline flex">
+          Chat
+          <span className="text-xs ml-2">{commandSymbol}D</span>
+        </p>
       </button>
     </div>
   );
