@@ -92,42 +92,78 @@ class SearchPipeline:
             Iterator[list[InferenceSection] | list[int]] | None
         ) = None
 
-    def evaluate(self, top_doc: LlmDoc, query: str) -> dict[str, RelevanceChunk]:
+    def evaluate(self, document: LlmDoc, query: str) -> dict[str, RelevanceChunk]:
         relevance: RelevanceChunk = RelevanceChunk()
         results = {}
-        document_id = top_doc.document_id
+        document_id = document.document_id
 
         prompt = f"""
-        Determine if this document is relevant to the search query:
-s
+        Analyze the relevance of this document to the search query:
         Title: {document_id.split("/")[-1]}
-        Blurb: {top_doc.content}
+        Blurb: {document.content}
         Query: {query}
 
-        Think through the following:
-        1. What is the purpose of this document and how might it be useful to a user.
-        2. Is the document's main topic related to the query?
-        3. Would this document be useful to someone searching for this query?
+        1. Chain of Thought Analysis:
+        Provide a detailed chain of thought analysis considering:
+        - The main purpose and content of the document
+        - What the user is likely in search of
+        - How the document's topic relates to the query
+        - Potential usefulness of the document for the given query
+        Be thorough in your reasoning, but avoid unnecessary repetition.
 
-        Provide your chain of thought in a few sentences.
-        Be concise but show your reasoning clearly.
-        Do not use bulleted/numbered lists, remember to be concise,
-          and refer to the document using clear langauge and not just "document".
+        2. Useful Analysis:
+        [ANALYSIS_START]
+        Provide a concise, user-friendly summary of the document's relevance and usefulness.
+        Focus on what the document is about and how it relates to the query.
+        Do not include your reasoning process.
+        [ANALYSIS_END]
 
-        Conclude with:
-        RESULT: True (if relevant)
+        3. Relevance Determination:
+        RESULT: True (if potentially relevant)
         RESULT: False (if not relevant)
         """
 
         content = "".join(
             message_generator_to_string_generator(self.llm.stream(prompt=prompt))
         )
-        if "result: true" in content.lower():
-            relevance.relevant = True
-        else:
-            relevance.relevant = False
+        analysis = ""
+        relevant = False
 
-        relevance.content = content.split("RESULT")[0]
+        parts = content.split("[ANALYSIS_START]", 1)
+        if len(parts) == 2:
+            chain_of_thought, rest = parts
+        else:
+            logger.warning(f"Missing [ANALYSIS_START] tag for document {document_id}")
+            rest = content
+
+        parts = rest.split("[ANALYSIS_END]", 1)
+        if len(parts) == 2:
+            analysis, result = parts
+        else:
+            logger.warning(f"Missing [ANALYSIS_END] tag for document {document_id}")
+            result = rest
+
+        chain_of_thought = chain_of_thought.strip()
+        analysis = analysis.strip()
+        result = result.strip().lower()
+
+        # Determine relevance
+        if "result: true" in result:
+            relevant = True
+        elif "result: false" in result:
+            relevant = False
+        else:
+            logger.warning(f"Invalid result format for document {document_id}")
+
+        if not analysis:
+            logger.warning(
+                f"Couldn't extract proper analysis for document {document_id}. Using full content."
+            )
+            analysis = content
+
+        relevance.content = analysis
+        relevance.relevant = relevant
+
         results[document_id] = relevance
         return results
 
