@@ -30,7 +30,7 @@ function buildConfigEntries(
           file_names: obj.file_locations.map(getNameFromPath),
         }
       : {};
-  } 
+  }
   // else if (sourceType === "google_sites") {
   //   return {
   //     base_url: obj.base_url,

@@ -37,8 +37,8 @@ export type ValidSources =
   | "productboard"
   | "notion"
   | "hubspot"
-  // | "google_sites"
-  | 'google_sheets'
+  | "google_sites"
+  | "google_sheets"
   | "dropbox"
   | "salesforce"
   | "sharepoint"

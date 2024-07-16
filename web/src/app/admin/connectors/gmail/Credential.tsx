@@ -316,8 +316,8 @@ export const GmailOAuthSection = ({
     return (
       <div>
         <p className="text-sm mb-2">
-          When using a Gmail Service Account, you can either have enMedD CHP act as
-          the service account itself OR you can specify an account for the
+          When using a Gmail Service Account, you can either have enMedD CHP act
+          as the service account itself OR you can specify an account for the
           service account to impersonate.
           <br />
           <br />

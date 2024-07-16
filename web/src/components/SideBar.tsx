@@ -142,15 +142,6 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
               {
                 name: (
                   <div className="flex">
-                    <FiSlack size={18} />
-                    <div className="ml-1">Slack Bots</div>
-                  </div>
-                ),
-                link: "/admin/bot",
-              },
-              {
-                name: (
-                  <div className="flex">
                     <FiTool size={18} className="my-auto" />
                     <div className="ml-1">Tools</div>
                   </div>
