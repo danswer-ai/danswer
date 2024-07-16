@@ -105,6 +105,12 @@ def _initialize_files(config: dict) -> tuple[str, list[dict]]:
     )
     shutil.copy2(zipped_files_path, copied_zipped_documents_path)
 
+    zipped_files_folder = os.path.dirname(zipped_files_path)
+    jsonl_file_path = os.path.join(zipped_files_folder, "target_docs.jsonl")
+    if os.path.exists(jsonl_file_path):
+        copied_jsonl_path = os.path.join(test_output_folder, "target_docs.jsonl")
+        shutil.copy2(jsonl_file_path, copied_jsonl_path)
+
     return test_output_folder, questions
 
 
