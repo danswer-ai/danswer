@@ -8,9 +8,6 @@ from pydantic import validator
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import AuthType
 from danswer.db.models import AllowedAnswerFilters
-from danswer.db.models import ChannelConfig
-from danswer.db.models import SlackBotConfig as SlackBotConfigModel
-from danswer.db.models import SlackBotResponseType
 from danswer.indexing.models import EmbeddingModelDetail
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.models import FullUserSnapshot
