@@ -90,21 +90,6 @@
             "args": [
                 "--no-indexing"
             ]
-        },
-        // For the listner to access the Slack API,
-        // DANSWER_BOT_SLACK_APP_TOKEN & DANSWER_BOT_SLACK_BOT_TOKEN need to be set in .env file located in the root of the project
-        {
-            "name": "Slack Bot",
-            "type": "python",
-            "request": "launch",
-            "program": "danswer/danswerbot/slack/listener.py",
-            "cwd": "${workspaceFolder}/backend",
-            "envFile": "${workspaceFolder}/.env",
-            "env": {
-                "LOG_LEVEL": "DEBUG",
-                "PYTHONUNBUFFERED": "1",
-                "PYTHONPATH": "."
-            }
         }
     ]
 }
