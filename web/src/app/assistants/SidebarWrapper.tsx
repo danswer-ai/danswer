@@ -77,7 +77,7 @@ export default function SidebarWrapper({
   }, [router]);
 
   return (
-    <div className="flex  relative overflow-x-hidden overscroll-contain flex-col w-full h-screen ">
+    <div className="flex relative overflow-x-hidden overscroll-contain flex-col w-full h-screen">
       <div
         ref={sidebarElementRef}
         className={`

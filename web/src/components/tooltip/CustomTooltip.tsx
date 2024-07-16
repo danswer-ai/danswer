@@ -41,7 +41,7 @@ export const CustomTooltip = ({
   citation,
   line,
   showTick = false,
-  delay = 500, // Default delay of 300ms
+  delay = 500,
 }: {
   content: string | ReactNode;
   children: JSX.Element;

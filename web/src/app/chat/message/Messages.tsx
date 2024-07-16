@@ -783,7 +783,7 @@ export const HumanMessage = ({
                     isHovered &&
                     !isEditing &&
                     (!files || files.length === 0) ? (
-                      <div className="ml-auto  mr-1 my-auto">
+                      <div className="ml-auto mr-1 my-auto">
                         <Tooltip delayDuration={1000} content={"Edit message"}>
                           <button
                             className="hover:bg-hover p-1.5 rounded"

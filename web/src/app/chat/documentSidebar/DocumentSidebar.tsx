@@ -175,10 +175,10 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             )}
           </div>
 
-          <div className="absolute left-0 bottom-0 w-full bg-gradient-to-b from-neutral-100/0 via-neutral-100/40 backdrop-blur-xs  to-neutral-100 h-[100px]" />
+          <div className="absolute left-0 bottom-0 w-full bg-gradient-to-b from-neutral-100/0 via-neutral-100/40 backdrop-blur-xs to-neutral-100 h-[100px]" />
           <div className="sticky bottom-4 w-full left-0 justify-center flex gap-x-4">
             <button
-              className="bg-[#84e49e]  text-xs p-2 rounded text-text-800"
+              className="bg-[#84e49e] text-xs p-2 rounded text-text-800"
               onClick={() => closeSidebar()}
             >
               Save Changes

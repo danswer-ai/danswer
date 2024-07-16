@@ -167,7 +167,6 @@ const FolderItem = ({
       className={`transition duration-300 ease-in-out rounded-md ${
         isDragOver ? "bg-hover" : ""
       }`}
-      // Is there any way to use regex in the VSCODE search tool thing to find all cases of two consecutive spaces within the quotations of a className="[something here]". For example className="absolute max-w-  dsfa" would find the two spaces there
     >
       {showDeleteConfirm && (
         <div

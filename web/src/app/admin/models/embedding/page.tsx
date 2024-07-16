@@ -365,7 +365,7 @@ function Main() {
             monitor the progress of the re-indexing on this page.
           </Text>
 
-          <div className="mt-8 text-sm  mr-auto  mb-12 divide-x-2  flex   ">
+          <div className="mt-8 text-sm mr-auto mb-12 divide-x-2 flex">
             <button
               onClick={() => setOpenToggle(true)}
               className={` mx-2 p-2 font-bold  ${openToggle ? "rounded bg-neutral-900 text-neutral-100 underline" : "hover:underline"}`}

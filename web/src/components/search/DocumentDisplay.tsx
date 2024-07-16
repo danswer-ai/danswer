@@ -157,7 +157,6 @@ interface DocumentDisplayProps {
   documentRank: number;
   isSelected: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;
-  comments?: any;
   hide?: boolean;
   index?: number;
   contentEnriched?: boolean;
@@ -265,9 +264,7 @@ export const DocumentDisplay = ({
 
 export const AgenticDocumentDisplay = ({
   document,
-  isSelected,
   contentEnriched,
-  comments,
   additional_relevance,
   messageId,
   documentRank,

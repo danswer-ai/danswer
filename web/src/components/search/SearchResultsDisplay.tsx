@@ -34,26 +34,19 @@ const getSelectedDocumentIds = (
 export const SearchResultsDisplay = ({
   agenticResults,
   searchResponse,
-  searchState,
   contentEnriched,
-  validQuestionResponse,
   isFetching,
   defaultOverrides,
-  personaName = null,
   performSweep,
   sweep,
-  comments,
 }: {
   contentEnriched?: boolean;
   agenticResults?: boolean | null;
   performSweep: () => void;
   sweep?: boolean;
-  searchState: searchState;
   searchResponse: SearchResponse | null;
-  validQuestionResponse: ValidQuestionResponse;
   isFetching: boolean;
   defaultOverrides: SearchDefaultOverrides;
-  personaName?: string | null;
   comments: any;
 }) => {
   const commandSymbol = KeyboardSymbol();
@@ -238,7 +231,6 @@ export const SearchResultsDisplay = ({
               <AgenticDocumentDisplay
                 additional_relevance={relevance}
                 contentEnriched={contentEnriched}
-                comments={comments}
                 index={ind}
                 hide={
                   showAll ||

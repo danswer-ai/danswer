@@ -80,7 +80,7 @@ export function PagesTab({
         } rounded-md`}
       >
         {(page == "chat" || page == "search") && (
-          <p className="text-sm text-subtle flex  my-2 font-medium">
+          <p className="my-2 text-xs text-subtle flex font-medium">
             {page == "chat" && "Chat "}
             {page == "search" && "Search "}
             History
