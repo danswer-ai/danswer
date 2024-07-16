@@ -15,20 +15,12 @@ import { SettingsContext } from "./settings/SettingsProvider";
 
 export function UserSettingsButton({
   user,
-  hideChatAndSearch,
 }: {
   user: User | null;
-  hideChatAndSearch?: boolean;
 }) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
   const userInfoRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-
-  const combinedSettings = useContext(SettingsContext);
-  if (!combinedSettings) {
-    return null;
-  }
-  const settings = combinedSettings.settings;
 
   const handleLogout = () => {
     logout().then((isSuccess) => {
@@ -71,20 +63,21 @@ export function UserSettingsButton({
         popover={
           <div
             className={`
+                z-[60]
                 text-strong 
-                text-sm
+                text-sm 
                 border 
                 border-border 
-                bg-background
-                rounded-lg
-                shadow-lg 
+                bg-background 
+                rounded-lg 
+                shadow-lg  
                 flex 
                 flex-col 
                 w-full 
                 max-h-96 
                 overflow-y-auto 
-                p-1
-                overscroll-contain
+                p-1 
+                overscroll-contain 
               `}
           >
             {showAdminPanel && (
@@ -100,8 +93,8 @@ export function UserSettingsButton({
             )}
             {showLogout && (
               <>
-                {(!hideChatAndSearch || showAdminPanel) && (
-                  <div className="border-t border-border my-1" />
+                {(showAdminPanel) && (
+                  <div className="my-1 border-t border-border" />
                 )}
                 <div
                   onClick={handleLogout}
