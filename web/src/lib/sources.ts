@@ -92,11 +92,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "HubSpot",
     category: SourceCategory.AppConnection,
   },
-  // google_sites: {
-  //   icon: GoogleSitesIcon,
-  //   displayName: "Google Sites",
-  //   category: SourceCategory.ImportedKnowledge,
-  // },
+  google_sites: {
+    icon: GoogleSitesIcon,
+    displayName: "Google Sites",
+    category: SourceCategory.Disabled,
+  },
   dropbox: {
     icon: DropboxIcon,
     displayName: "Dropbox",

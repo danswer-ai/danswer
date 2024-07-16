@@ -7,8 +7,8 @@ def source_to_github_img_link(source: DocumentSource) -> str | None:
         return "https://raw.githubusercontent.com/danswer-ai/danswer/main/backend/slackbot_images/Web.png"
     if source == DocumentSource.FILE.value:
         return "https://raw.githubusercontent.com/danswer-ai/danswer/main/backend/slackbot_images/File.png"
-    if source == DocumentSource.GOOGLE_SITES.value:
-        return "https://raw.githubusercontent.com/danswer-ai/danswer/main/web/public/GoogleSites.png"
+    # if source == DocumentSource.GOOGLE_SITES.value:
+    #     return "https://raw.githubusercontent.com/danswer-ai/danswer/main/web/public/GoogleSites.png"
     if source == DocumentSource.GMAIL.value:
         return "https://raw.githubusercontent.com/danswer-ai/danswer/main/web/public/Gmail.png"
     if source == DocumentSource.GOOGLE_DRIVE.value:
