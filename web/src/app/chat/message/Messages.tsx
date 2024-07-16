@@ -467,14 +467,22 @@ export const AIMessage = ({
                                     target="_blank"
                                     className="text-sm flex justify-between font-semibold text-text-700"
                                   >
-                                    <p className="line-clamp-1">
-                                      {ind}.{" "}
-                                      {
-                                        doc.document_id.split("/")[
-                                          doc.document_id.split("/").length - 1
-                                        ]
-                                      }
-                                    </p>
+                                    <div className="flex gap-x-1.5">
+                                      <div>
+                                        <Citation
+                                          children={`[1]`}
+                                          link={doc.link}
+                                        />
+                                      </div>
+                                      <p className="line-clamp-1">
+                                        {
+                                          doc.document_id.split("/")[
+                                            doc.document_id.split("/").length -
+                                              1
+                                          ]
+                                        }
+                                      </p>
+                                    </div>
                                     <div className="flex-none">
                                       <SourceIcon
                                         sourceType={doc.source_type}
@@ -482,7 +490,7 @@ export const AIMessage = ({
                                       />
                                     </div>
                                   </a>
-                                  <div className="flex overscroll-x-scroll mt-1">
+                                  <div className="flex overscroll-x-scroll mt-.5">
                                     <DocumentMetadataBlock document={doc} />
                                   </div>
                                   <div className="line-clamp-3 text-xs break-words pt-1">

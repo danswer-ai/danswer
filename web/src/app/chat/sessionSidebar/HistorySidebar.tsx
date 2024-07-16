@@ -115,7 +115,10 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             </div>
 
             {toggleSidebar && (
-              <Tooltip delayDuration={1000} content={`${isMac ? "⌘" : "⊞"}E`}>
+              <Tooltip
+                delayDuration={1000}
+                content={`${isMac ? "⌘" : "⊞"}E show`}
+              >
                 <button className="ml-auto" onClick={toggleSidebar}>
                   {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
                 </button>

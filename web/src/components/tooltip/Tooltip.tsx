@@ -35,8 +35,8 @@ export function Tooltip({
             rounded 
             py-1 
             px-2 
-            shadow-lg
             z-10
+            shadow-lg
           `}
         >
           {content}
