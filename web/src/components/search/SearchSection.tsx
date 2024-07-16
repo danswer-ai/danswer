@@ -281,6 +281,8 @@ export const SearchSection = ({
       messageId,
     }));
     router.refresh();
+    console.log("NOT FETCHING");
+    setIsFetching(false);
 
     // router.replace(`/search?searchId=${chat_session_id}`);
   };
@@ -565,7 +567,7 @@ export const SearchSection = ({
                   />
 
                   <div className="mt-6">
-                    {!(agenticResults && isFetching) && (
+                    {!(agenticResults && isFetching) ? (
                       <SearchResultsDisplay
                         contentEnriched={contentEnriched}
                         comments={comments}
@@ -584,6 +586,8 @@ export const SearchSection = ({
                             : null
                         }
                       />
+                    ) : (
+                      <></>
                     )}
                   </div>
                 </div>
