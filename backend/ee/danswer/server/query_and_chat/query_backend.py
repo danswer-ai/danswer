@@ -3,7 +3,6 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
-from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.persona import get_persona_by_id
@@ -90,44 +89,44 @@ def handle_search_request(
     )
 
 
-@basic_router.post("/answer-with-quote")
-def get_answer_with_quote(
-    query_request: DirectQARequest,
-    user: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> OneShotQAResponse:
-    query = query_request.messages[0].message
-    logger.info(f"Received query for one shot answer API with quotes: {query}")
+# @basic_router.post("/answer-with-quote")
+# def get_answer_with_quote(
+#     query_request: DirectQARequest,
+#     user: User | None = Depends(current_user),
+#     db_session: Session = Depends(get_session),
+# ) -> OneShotQAResponse:
+#     query = query_request.messages[0].message
+#     logger.info(f"Received query for one shot answer API with quotes: {query}")
 
-    persona = get_persona_by_id(
-        persona_id=query_request.persona_id,
-        user=user,
-        db_session=db_session,
-        is_for_edit=False,
-    )
+#     persona = get_persona_by_id(
+#         persona_id=query_request.persona_id,
+#         user=user,
+#         db_session=db_session,
+#         is_for_edit=False,
+#     )
 
-    llm = get_main_llm_from_tuple(
-        get_default_llms() if not persona else get_llms_for_persona(persona)
-    )
-    input_tokens = get_max_input_tokens(
-        model_name=llm.config.model_name, model_provider=llm.config.model_provider
-    )
-    max_history_tokens = int(input_tokens * DANSWER_BOT_TARGET_CHUNK_PERCENTAGE)
+#     llm = get_main_llm_from_tuple(
+#         get_default_llms() if not persona else get_llms_for_persona(persona)
+#     )
+#     input_tokens = get_max_input_tokens(
+#         model_name=llm.config.model_name, model_provider=llm.config.model_provider
+#     )
+#     max_history_tokens = int(input_tokens * DANSWER_BOT_TARGET_CHUNK_PERCENTAGE)
 
-    remaining_tokens = input_tokens - max_history_tokens
+#     remaining_tokens = input_tokens - max_history_tokens
 
-    max_document_tokens = compute_max_document_tokens_for_persona(
-        persona=persona,
-        actual_user_input=query,
-        max_llm_token_override=remaining_tokens,
-    )
+#     max_document_tokens = compute_max_document_tokens_for_persona(
+#         persona=persona,
+#         actual_user_input=query,
+#         max_llm_token_override=remaining_tokens,
+#     )
 
-    answer_details = get_search_answer(
-        query_req=query_request,
-        user=user,
-        max_document_tokens=max_document_tokens,
-        max_history_tokens=max_history_tokens,
-        db_session=db_session,
-    )
+#     answer_details = get_search_answer(
+#         query_req=query_request,
+#         user=user,
+#         max_document_tokens=max_document_tokens,
+#         max_history_tokens=max_history_tokens,
+#         db_session=db_session,
+#     )
 
-    return answer_details
+#     return answer_details
