@@ -1,6 +1,7 @@
 import json
 import multiprocessing
 import os
+import shutil
 import time
 
 import yaml
@@ -69,7 +70,9 @@ def _get_test_output_folder(config: dict) -> str:
 def _initialize_files(config: dict) -> tuple[str, list[dict]]:
     test_output_folder = _get_test_output_folder(config)
 
-    questions = _read_questions_jsonl(config["questions_file"])
+    questions_file_path = config["questions_file"]
+
+    questions = _read_questions_jsonl(questions_file_path)
 
     metadata = {
         "commit_sha": get_current_commit_sha(),
@@ -90,6 +93,17 @@ def _initialize_files(config: dict) -> tuple[str, list[dict]]:
     print("saving metadata to:", metadata_path)
     with open(metadata_path, "w", encoding="utf-8") as yaml_file:
         yaml.dump(metadata, yaml_file)
+
+    copied_questions_file_path = os.path.join(
+        test_output_folder, os.path.basename(questions_file_path)
+    )
+    shutil.copy2(questions_file_path, copied_questions_file_path)
+
+    zipped_files_path = config["zipped_documents_file"]
+    copied_zipped_documents_path = os.path.join(
+        test_output_folder, os.path.basename(zipped_files_path)
+    )
+    shutil.copy2(zipped_files_path, copied_zipped_documents_path)
 
     return test_output_folder, questions
 
