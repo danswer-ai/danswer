@@ -50,6 +50,7 @@ interface DocumentSidebarProps {
   maxTokens: number;
   isLoading: boolean;
   initialWidth: number;
+  isOpen: boolean;
 }
 
 export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
@@ -64,6 +65,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
       maxTokens,
       isLoading,
       initialWidth,
+      isOpen,
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
@@ -95,10 +97,12 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
       >
         <div
           ref={ref}
-          style={{ width: initialWidth }}
+          style={{
+            width: initialWidth,
+          }}
           className={`ml-auto rounded-l-lg relative border-l bg-text-100 sidebar z-50 absolute right-0 h-screen `}
         >
-          <div className="flex-initial overflow-y-hidden flex flex-col h-screen pb-10">
+          <div className="flex-initial overflow-y-hidden flex flex-col h-screen ">
             {popup}
             <div className="pl-3 mx-2 pr-6 mt-3 flex text-text-800 flex-col text-2xl text-emphasis flex font-semibold">
               {dedupedDocuments.length} Documents
@@ -168,14 +172,14 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
           </div>
           <div className="sticky bottom-4 w-full left-0 justify-center flex gap-x-4">
             <button
-              className="bg-background-800 text-xs p-2 rounded text-text-200"
+              className="bg-success text-xs p-2 rounded text-text-200"
               onClick={() => closeSidebar()}
             >
               Save Changes
             </button>
 
             <button
-              className="bg-background-900 text-xs p-2 rounded text-text-200"
+              className="bg-error text-xs p-2 rounded text-text-200"
               onClick={() => {
                 clearSelectedDocuments();
 

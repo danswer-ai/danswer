@@ -1109,7 +1109,7 @@ export function ChatPage({
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      <div className="flex  relative bg-background text-default overflow-x-hidden">
+      <div className="flex  relative bg-background text-default ">
         <div
           ref={sidebarElementRef}
           className={`
@@ -1117,7 +1117,6 @@ export function ChatPage({
             absolute
             left-0
             z-20
-            overflow-y-hidden
             sidebar
             bg-background-100
             h-screen
@@ -1625,6 +1624,7 @@ export function ChatPage({
               selectedDocumentTokens={selectedDocumentTokens}
               maxTokens={maxTokens}
               isLoading={isFetchingChatMessages}
+              isOpen={documentSelection}
             />
           )}
         </div>

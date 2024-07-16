@@ -68,7 +68,6 @@ export const AnimatedToggle = ({
         </div>
       }
     >
-      {/* that the proper symbol appears on Macbook vs Windows for the command symbol? */}
       <div
         ref={containerRef}
         className="my-auto ml-auto flex jusitfy-end items-center cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
