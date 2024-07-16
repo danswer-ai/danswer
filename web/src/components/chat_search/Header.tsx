@@ -10,6 +10,7 @@ import { ChatSession } from "@/app/chat/interfaces";
 import { HeaderTitle } from "../header/Header";
 import { Tooltip } from "../tooltip/Tooltip";
 import KeyboardSymbol from "@/lib/browserUtilities";
+import Link from "next/link";
 
 export default function FunctionalHeader({
   showSidebar,
@@ -58,7 +59,7 @@ export default function FunctionalHeader({
 
           {page == "chat" && (
             <Tooltip delayDuration={1000} content={`${KeyboardSymbol()}U`}>
-              <a
+              <Link
                 href={
                   `/${page}` +
                   (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
@@ -71,7 +72,7 @@ export default function FunctionalHeader({
                   size={20}
                   className="ml-2 my-auto cursor-pointer text-text-700 hover:text-text-600 transition-colors duration-300"
                 />
-              </a>
+              </Link>
             </Tooltip>
           )}
         </div>
