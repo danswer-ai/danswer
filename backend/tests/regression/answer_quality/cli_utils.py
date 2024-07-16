@@ -76,7 +76,7 @@ def get_docker_container_env_vars(suffix: str) -> dict:
     combined_env_vars = {}
     for container_type in ["background", "api_server"]:
         container_name = _run_command(
-            f"docker ps -a --format '{{{{.Names}}}}' | grep '{container_type}' | grep '{suffix}'"
+            f"docker ps -a --format '{{{{.Names}}}}' | awk '/{container_type}/ && /{suffix}/'"
         )[0].strip()
         if not container_name:
             raise RuntimeError(
@@ -285,7 +285,7 @@ def is_vespa_container_healthy(suffix: str) -> bool:
 
     # Find the Vespa container
     stdout, _ = _run_command(
-        f"docker ps -a --format '{{{{.Names}}}}' | grep vespa | grep {suffix}"
+        f"docker ps -a --format '{{{{.Names}}}}' | awk /vespa/ && /{suffix}/"
     )
     container_name = stdout.strip()
 
@@ -311,7 +311,7 @@ def restart_vespa_container(suffix: str) -> None:
 
     # Find the Vespa container
     stdout, _ = _run_command(
-        f"docker ps -a --format '{{{{.Names}}}}' | grep vespa | grep {suffix}"
+        f"docker ps -a --format '{{{{.Names}}}}' | awk /vespa/ && /{suffix}/"
     )
     container_name = stdout.strip()
 

@@ -73,7 +73,7 @@ Edit `search_test_config.yaml` to set:
 - existing_test_suffix
     - Use this if you would like to relaunch a previous test instance
     - Input the suffix of the test you'd like to re-launch 
-    - (E.g. to use the data from folder "test_1234_5678" put "_1234_5678")
+    - (E.g. to use the data from folder "test-1234-5678" put "-1234-5678")
     - No new files will automatically be uploaded
     - Leave empty to run a new test
 - limit
