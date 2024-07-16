@@ -210,9 +210,8 @@ const Main = () => {
             index the ENTIRE SPACE, not just the specified page. For example,
             entering{" "}
             <a href="https://danswer.atlassian.net/wiki/spaces/Engineering/overview">
-              <i>
-                Atlassian engineering overview
-              </i>{" "}</a>
+              <i>Atlassian engineering overview</i>{" "}
+            </a>
             and clicking the Index button will index the whole{" "}
             <i>Engineering</i> Confluence space.
           </p>

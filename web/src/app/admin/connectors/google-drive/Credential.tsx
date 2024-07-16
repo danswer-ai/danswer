@@ -322,9 +322,9 @@ export const DriveOAuthSection = ({
     return (
       <div>
         <p className="text-sm mb-2">
-          When using a Google Drive Service Account, you can either have enMedD CHP
-          act as the service account itself OR you can specify an account for
-          the service account to impersonate.
+          When using a Google Drive Service Account, you can either have enMedD
+          CHP act as the service account itself OR you can specify an account
+          for the service account to impersonate.
           <br />
           <br />
           If you want to use the service account itself, leave the{" "}

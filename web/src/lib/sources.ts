@@ -20,7 +20,7 @@ import {
   GoogleStorageIcon,
   OCIStorageIcon,
   SalesforceIcon,
-  GoogleSheetsIcon
+  GoogleSheetsIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import { SourceCategory, SourceMetadata } from "./search/interfaces";

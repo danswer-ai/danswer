@@ -13,11 +13,7 @@ import { LOGOUT_DISABLED } from "@/lib/constants";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { SettingsContext } from "./settings/SettingsProvider";
 
-export function UserSettingsButton({
-  user,
-}: {
-  user: User | null;
-}) {
+export function UserSettingsButton({ user }: { user: User | null }) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
   const userInfoRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -31,7 +27,10 @@ export function UserSettingsButton({
     });
   };
 
-  const toPascalCase = (str : string) => (str.match(/[a-zA-Z0-9]+/g) || []).map(w => `${w.charAt(0).toUpperCase()}${w.slice(1)}`).join('');
+  const toPascalCase = (str: string) =>
+    (str.match(/[a-zA-Z0-9]+/g) || [])
+      .map((w) => `${w.charAt(0).toUpperCase()}${w.slice(1)}`)
+      .join("");
   const showAdminPanel = !user || user.role === "admin";
   const showLogout =
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
@@ -54,8 +53,16 @@ export function UserSettingsButton({
               </div>
               <div className="w-full h-full flex flex-col items-start justify-center truncate">
                 {/* TODO: Set this as a user.name - which will be added to the schema of the user and the database schema user table */}
-                <p className="text-base font-semibold">{user && user.email ? `${toPascalCase(user.email.split(".")[0])} ${toPascalCase(user.email.split(".")[1].split("@")[0])}` : "Admin"}</p>
-                <p className="text-xs">{user && user.email ? user.email : "admin@enmedd-chp.com"}</p>
+                <p className="text-base font-semibold">
+                  {user && user.email
+                    ? `${toPascalCase(user.email.split(".")[0])} ${toPascalCase(
+                        user.email.split(".")[1].split("@")[0]
+                      )}`
+                    : "Admin"}
+                </p>
+                <p className="text-xs">
+                  {user && user.email ? user.email : "admin@enmedd-chp.com"}
+                </p>
               </div>
             </div>
           </BasicClickable>
@@ -93,7 +100,7 @@ export function UserSettingsButton({
             )}
             {showLogout && (
               <>
-                {(showAdminPanel) && (
+                {showAdminPanel && (
                   <div className="my-1 border-t border-border" />
                 )}
                 <div

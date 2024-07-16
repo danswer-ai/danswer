@@ -17,15 +17,14 @@ function SourceTile({ sourceMetadata }: { sourceMetadata: SourceMetadata }) {
         rounded-lg 
         w-40
         ${
-          sourceMetadata.category == "Coming Soon" ?
-          `bg-gray-200
+          sourceMetadata.category == "Coming Soon"
+            ? `bg-gray-200
           cursor-not-allowed
           grayscale
           border-1
           border-gray-400
           `
-          :
-          `
+            : `
           shadow-md 
           cursor-pointer 
          bg-hover-light
