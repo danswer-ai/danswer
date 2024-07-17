@@ -187,7 +187,12 @@ export function ChatInputBar({
           filteredPersonas[assistantIconIndex >= 0 ? assistantIconIndex : 0];
         updateCurrentPersona(option);
       }
-    } else if (e.key === "ArrowDown") {
+    }
+    if (!showSuggestions) {
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
       e.preventDefault();
       setAssistantIconIndex((assistantIconIndex) =>
         Math.min(assistantIconIndex + 1, filteredPersonas.length)

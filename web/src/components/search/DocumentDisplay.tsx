@@ -250,6 +250,7 @@ export const DocumentDisplay = ({
         <div className="mt-1">
           <DocumentMetadataBlock document={document} />
         </div>
+
         <p
           style={{ transition: "height 0.30s ease-in-out" }}
           className="pl-1 pt-2 pb-3 break-words text-wrap"
@@ -309,7 +310,7 @@ export const AgenticDocumentDisplay = ({
             rel="noopener noreferrer"
           >
             <SourceIcon sourceType={document.source_type} iconSize={22} />
-            <p className="truncate text-wrap break-all ml-2 my-auto text-base max-w-full">
+            <p className="truncate text-wrap break-all ml-2 my-auto line-clamp-1 text-base max-w-full">
               {document.semantic_identifier || document.document_id}
             </p>
           </a>
@@ -342,6 +343,7 @@ export const AgenticDocumentDisplay = ({
         <div className="mt-1">
           <DocumentMetadataBlock document={document} />
         </div>
+
         <div className="pt-2 break-words flex gap-x-2">
           <p
             className="break-words text-wrap"

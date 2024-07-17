@@ -2,7 +2,7 @@ import { User } from "@/lib/types";
 import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
 import { UserDropdown } from "../UserDropdown";
 import { FiShare2, FiSidebar } from "react-icons/fi";
-import { SetStateAction, useEffect } from "react";
+import { SetStateAction, useContext, useEffect } from "react";
 import { Logo } from "../Logo";
 import { ChatIcon, NewChatIcon, PlusCircleIcon } from "../icons/icons";
 import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
@@ -11,6 +11,7 @@ import { HeaderTitle } from "../header/Header";
 import { Tooltip } from "../tooltip/Tooltip";
 import KeyboardSymbol from "@/lib/browserUtilities";
 import Link from "next/link";
+import { SettingsContext } from "../settings/SettingsProvider";
 
 export default function FunctionalHeader({
   showSidebar,
@@ -25,6 +26,10 @@ export default function FunctionalHeader({
   currentChatSession?: ChatSession | null | undefined;
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
 }) {
+  const combinedSettings = useContext(SettingsContext);
+  const settings = combinedSettings?.settings;
+  const enterpriseSettings = combinedSettings?.enterpriseSettings;
+
   const commandSymbol = KeyboardSymbol();
 
   useEffect(() => {
@@ -56,7 +61,11 @@ export default function FunctionalHeader({
         <div className="absolute z-[100] my-auto flex items-center text-xl font-bold">
           <FiSidebar size={20} />
           <div className="ml-2 text-text-700 text-xl">
-            <HeaderTitle>Danswer</HeaderTitle>
+            {enterpriseSettings && enterpriseSettings.application_name ? (
+              <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
+            ) : (
+              <HeaderTitle>Danswer</HeaderTitle>
+            )}
           </div>
 
           {page == "chat" && (
