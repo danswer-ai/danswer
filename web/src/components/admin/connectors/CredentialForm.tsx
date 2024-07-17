@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Formik, Form } from "formik";
+import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { Popup } from "./Popup";
 import { CredentialBase } from "@/lib/types";
@@ -67,15 +67,14 @@ export function CredentialForm<T extends Yup.AnyObject>({
           <Form>
             {formBody}
             <div className="flex">
-              <Button
+              <button
                 type="submit"
-                size="xs"
                 color="green"
                 disabled={isSubmitting}
-                className="mx-auto w-64"
+                className="mx-auto w-64 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-background-200 text-primary-foreground shadow hover:bg-primary/90  h-9 px-4 py-2"
               >
                 Update
-              </Button>
+              </button>
             </div>
           </Form>
         )}

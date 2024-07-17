@@ -1,6 +1,9 @@
 "use client";
 
-import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
+import {
+  adminSetupPropsType,
+  HistorySidebar,
+} from "@/app/chat/sessionSidebar/HistorySidebar";
 import { AssistantsGallery } from "./gallery/AssistantsGallery";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
 import { UserDropdown } from "@/components/UserDropdown";
@@ -14,18 +17,21 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useRouter } from "next/navigation";
+import { pageType } from "../chat/sessionSidebar/types";
 
 interface SidebarWrapperProps<T extends object> {
-  chatSessions: ChatSession[];
-  folders: Folder[];
+  chatSessions?: ChatSession[];
+  folders?: Folder[];
   initiallyToggled: boolean;
   openedFolders?: { [key: number]: boolean };
   content: (props: T) => ReactNode;
   headerProps: {
-    page: string;
+    page: pageType;
     user: User | null;
   };
   contentProps: T;
+  page: pageType;
+  adminSetupProps?: adminSetupPropsType;
 }
 
 export default function SidebarWrapper<T extends object>({
@@ -33,6 +39,8 @@ export default function SidebarWrapper<T extends object>({
   initiallyToggled,
   folders,
   openedFolders,
+  page,
+  adminSetupProps,
   headerProps,
   contentProps,
   content,
@@ -106,7 +114,8 @@ export default function SidebarWrapper<T extends object>({
       >
         <div className="w-full relative">
           <HistorySidebar
-            page="chat"
+            adminSetupProps={adminSetupProps}
+            page={page}
             ref={innerSidebarElementRef}
             toggleSidebar={toggleSidebar}
             toggled={toggledSidebar}
@@ -140,7 +149,9 @@ export default function SidebarWrapper<T extends object>({
                   `}
           />
 
-          <div className="mt-4 mx-auto">{content(contentProps)}</div>
+          <div className="mt-4 w-full max-w-3xl mx-auto">
+            {content(contentProps)}
+          </div>
         </div>
       </div>
     </div>

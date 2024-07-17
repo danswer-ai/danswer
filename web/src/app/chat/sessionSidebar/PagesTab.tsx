@@ -8,6 +8,7 @@ import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { pageType } from "./types";
 
 export function PagesTab({
   page,
@@ -16,7 +17,7 @@ export function PagesTab({
   folders,
   openedFolders,
 }: {
-  page: "search" | "chat" | "assistants";
+  page: pageType;
   existingChats?: ChatSession[];
   currentChatId?: number;
   folders?: Folder[];
