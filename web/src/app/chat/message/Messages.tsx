@@ -439,29 +439,23 @@ export const AIMessage = ({
                               filteredDocs.slice(0, 2).map((doc, ind) => (
                                 <div
                                   key={doc.document_id}
-                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 py-2 border-b
+                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 pb-2 pt-1 border-b
                               `}
                                 >
                                   <a
                                     href={doc.link}
                                     target="_blank"
-                                    className="text-sm flex justify-between font-semibold text-text-700"
+                                    className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
                                   >
-                                    <div className="flex gap-x-1.5">
-                                      <Citation
-                                        link={doc.link}
-                                        index={ind + 1}
-                                      />
-                                      <p className="line-clamp-1">
-                                        {
-                                          doc.document_id.split("/")[
-                                            doc.document_id.split("/").length -
-                                              1
-                                          ]
-                                        }
-                                      </p>
-                                    </div>
-                                    <div className="flex-none">
+                                    <Citation link={doc.link} index={ind + 1} />
+                                    <p className="shrink truncate ellipsis break-all ">
+                                      {
+                                        doc.document_id.split("/")[
+                                          doc.document_id.split("/").length - 1
+                                        ]
+                                      }
+                                    </p>
+                                    <div className="ml-auto flex-none">
                                       <SourceIcon
                                         sourceType={doc.source_type}
                                         iconSize={18}
