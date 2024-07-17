@@ -174,11 +174,11 @@ export default async function Home() {
   const agenticSearchToggle = cookies().get(AGENTIC_SEARCH_TYPE_COOKIE_NAME);
 
   const toggleSidebar = sidebarToggled
-    ? sidebarToggled.value.toLocaleLowerCase() == "true" ?? false
+    ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
     : false;
 
   const agenticSearchEnabled = agenticSearchToggle
-    ? agenticSearchToggle.value.toLocaleLowerCase() == "true" ?? true
+    ? agenticSearchToggle.value.toLocaleLowerCase() == "true" || true
     : false;
 
   return (

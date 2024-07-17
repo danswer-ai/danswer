@@ -333,7 +333,7 @@ export const DefaultDropdown = forwardRef<HTMLDivElement, DefaultDropdownProps>(
         <p className="line-clamp-1">
           {selectedOption?.name ||
             (includeDefault
-              ? defaultValue ?? "Default"
+              ? defaultValue || "Default"
               : "Select an option...")}
         </p>
         <FiChevronDown className="my-auto ml-auto" />

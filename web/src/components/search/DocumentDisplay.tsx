@@ -255,7 +255,7 @@ export const DocumentDisplay = ({
           className="pl-1 pt-2 pb-3 break-words text-wrap"
         >
           {alternativeToggled && (contentEnriched || additional_relevance)
-            ? relevance_explanation ?? ""
+            ? relevance_explanation
             : buildDocumentSummaryDisplay(
                 document.match_highlights,
                 document.blurb
@@ -352,7 +352,7 @@ export const AgenticDocumentDisplay = ({
                   document.match_highlights,
                   document.blurb
                 )
-              : relevance_explanation ?? ""}
+              : relevance_explanation}
           </p>
         </div>
       </div>
