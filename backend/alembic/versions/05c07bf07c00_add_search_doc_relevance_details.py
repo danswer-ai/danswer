@@ -19,7 +19,7 @@ depends_on = None
 def upgrade() -> None:
     op.add_column(
         "search_doc",
-        sa.Column("relevant_search_result", sa.Boolean(), nullable=True),
+        sa.Column("is_relevant", sa.Boolean(), nullable=True),
     )
     op.add_column(
         "search_doc",
@@ -29,4 +29,4 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_column("search_doc", "relevance_explanation")
-    op.drop_column("search_doc", "relevant_search_result")
+    op.drop_column("search_doc", "is_relevant")

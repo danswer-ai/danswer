@@ -196,14 +196,12 @@ export const DocumentDisplay = ({
           isSelected ? "-left-14 w-14" : "-left-10 w-10"
         }`}
       >
-        {!hide &&
-          (document.relevant_search_result ||
-            additional_relevance?.relevant) && (
-            <FaStar
-              size={16}
-              className="h-full text-xs text-accent rounded w-fit my-auto select-none ml-auto mr-2"
-            />
-          )}
+        {!hide && (document.is_relevant || additional_relevance?.relevant) && (
+          <FaStar
+            size={16}
+            className="h-full text-xs text-accent rounded w-fit my-auto select-none ml-auto mr-2"
+          />
+        )}
       </div>
       <div
         className={`collapsible ${

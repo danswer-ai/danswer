@@ -671,7 +671,7 @@ class SearchDoc(Base):
     )
     is_internet: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
 
-    relevant_search_result: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    is_relevant: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     relevance_explanation: Mapped[str | None] = mapped_column(String, nullable=True)
 
     chat_messages = relationship(

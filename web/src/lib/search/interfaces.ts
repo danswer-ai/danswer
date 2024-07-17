@@ -55,7 +55,7 @@ export interface DanswerDocument {
 }
 
 export interface SearchDanswerDocument extends DanswerDocument {
-  relevant_search_result: boolean;
+  is_relevant: boolean;
   relevance_explanation: string;
 }
 

@@ -547,7 +547,7 @@ def update_search_docs_table_with_relevance(
                 update(SearchDoc)
                 .where(SearchDoc.id == search_doc.id)
                 .values(
-                    relevant_search_result=relevance_data.relevant,
+                    is_relevant=relevance_data.relevant,
                     relevance_explanation=relevance_data.content,
                 )
             )
@@ -568,7 +568,7 @@ def create_db_search_doc(
         boost=server_search_doc.boost,
         hidden=server_search_doc.hidden,
         doc_metadata=server_search_doc.metadata,
-        relevant_search_result=server_search_doc.relevant_search_result,
+        is_relevant=server_search_doc.is_relevant,
         relevance_explanation=server_search_doc.relevance_explanation,
         # For docs further down that aren't reranked, we can't use the retrieval score
         score=server_search_doc.score or 0.0,
@@ -610,7 +610,7 @@ def translate_db_search_doc_to_server_search_doc(
             db_search_doc.match_highlights if not remove_doc_content else []
         ),
         relevance_explanation=db_search_doc.relevance_explanation,
-        relevant_search_result=db_search_doc.relevant_search_result,
+        is_relevant=db_search_doc.is_relevant,
         updated_at=db_search_doc.updated_at if not remove_doc_content else None,
         primary_owners=db_search_doc.primary_owners if not remove_doc_content else [],
         secondary_owners=(

@@ -146,7 +146,7 @@ export const SearchResultsDisplay = ({
             searchResponse.additional_relevance[
               `${doc.document_id}-${doc.chunk_ind}`
             ].relevant) ||
-          doc.relevant_search_result
+          doc.is_relevant
         );
       })
     : [];
@@ -154,11 +154,7 @@ export const SearchResultsDisplay = ({
   const orderedDocs =
     contentEnriched && documents
       ? documents.sort((a, b) =>
-          a.relevant_search_result === b.relevant_search_result
-            ? 0
-            : a.relevant_search_result
-              ? -1
-              : 1
+          a.is_relevant === b.is_relevant ? 0 : a.is_relevant ? -1 : 1
         )
       : documents ?? [];
 
@@ -238,11 +234,7 @@ export const SearchResultsDisplay = ({
                 additional_relevance={relevance}
                 contentEnriched={contentEnriched}
                 index={ind}
-                hide={
-                  showAll ||
-                  relevance?.relevant ||
-                  document.relevant_search_result
-                }
+                hide={showAll || relevance?.relevant || document.is_relevant}
                 key={`${document.document_id}-${ind}`}
                 document={document}
                 documentRank={ind + 1}
@@ -255,11 +247,7 @@ export const SearchResultsDisplay = ({
                 additional_relevance={relevance}
                 contentEnriched={contentEnriched}
                 index={ind}
-                hide={
-                  sweep &&
-                  !document.relevant_search_result &&
-                  !relevance?.relevant
-                }
+                hide={sweep && !document.is_relevant && !relevance?.relevant}
                 key={`${document.document_id}-${ind}`}
                 document={document}
                 documentRank={ind + 1}
