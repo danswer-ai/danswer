@@ -51,194 +51,390 @@ interface PartialSourceMetadata {
 type SourceMap = {
   [K in ValidSources]: PartialSourceMetadata;
 };
-
+// Documents = "Documents",
+//   Messaging = "Messaging",
+//   ProjectManagement = "Project Management",
+//   CustomerSupport = "Customer Support",
+//   CodeRepository = "Code Repository",
+//   Storage = "Storage",
+//   Wiki = "Wiki",
+//   Other = "Other"
+// }
 const SOURCE_METADATA_MAP: SourceMap = {
   web: {
     icon: GlobeIcon,
     displayName: "Web",
-    category: SourceCategory.ImportedKnowledge,
+    category: SourceCategory.Other,
   },
   file: {
     icon: FileIcon,
     displayName: "File",
-    category: SourceCategory.ImportedKnowledge,
+    category: SourceCategory.Storage,
   },
   slack: {
     icon: ColorSlackIcon,
     displayName: "Slack",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Messaging,
   },
   gmail: {
     icon: GmailIcon,
     displayName: "Gmail",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Messaging,
   },
   google_drive: {
     icon: GoogleDriveIcon,
     displayName: "Google Drive",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Storage,
   },
   github: {
     icon: GithubIcon,
     displayName: "Github",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.CodeRepository,
   },
   gitlab: {
     icon: GitlabIcon,
     displayName: "Gitlab",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.CodeRepository,
   },
   confluence: {
     icon: ConfluenceIcon,
     displayName: "Confluence",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Wiki,
   },
   jira: {
     icon: JiraIcon,
     displayName: "Jira",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.ProjectManagement,
   },
   notion: {
     icon: NotionIcon,
     displayName: "Notion",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Wiki,
   },
   zendesk: {
     icon: ZendeskIcon,
     displayName: "Zendesk",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.CustomerSupport,
   },
   gong: {
     icon: GongIcon,
     displayName: "Gong",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Other,
   },
   linear: {
     icon: LinearIcon,
     displayName: "Linear",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.ProjectManagement,
   },
   productboard: {
     icon: ProductboardIcon,
     displayName: "Productboard",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.ProjectManagement,
   },
   slab: {
     icon: SlabIcon,
     displayName: "Slab",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Wiki,
   },
   zulip: {
     icon: ZulipIcon,
     displayName: "Zulip",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Messaging,
   },
   guru: {
     icon: GuruIcon,
     displayName: "Guru",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Wiki,
   },
   hubspot: {
     icon: HubSpotIcon,
     displayName: "HubSpot",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.CustomerSupport,
   },
   document360: {
     icon: Document360Icon,
     displayName: "Document360",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Wiki,
   },
   bookstack: {
     icon: BookstackIcon,
     displayName: "BookStack",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Wiki,
   },
   google_sites: {
     icon: GoogleSitesIcon,
     displayName: "Google Sites",
-    category: SourceCategory.ImportedKnowledge,
+    category: SourceCategory.Wiki,
   },
   loopio: {
     icon: LoopioIcon,
     displayName: "Loopio",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Other,
   },
   dropbox: {
     icon: DropboxIcon,
     displayName: "Dropbox",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Storage,
   },
   salesforce: {
     icon: SalesforceIcon,
     displayName: "Salesforce",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.CustomerSupport,
   },
   sharepoint: {
     icon: SharepointIcon,
     displayName: "Sharepoint",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Storage,
   },
   teams: {
     icon: TeamsIcon,
     displayName: "Teams",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Messaging,
   },
   discourse: {
     icon: DiscourseIcon,
     displayName: "Discourse",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Messaging,
   },
   axero: {
     icon: AxeroIcon,
     displayName: "Axero",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Wiki,
   },
   wikipedia: {
     icon: WikipediaIcon,
     displayName: "Wikipedia",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Wiki,
   },
   mediawiki: {
     icon: MediaWikiIcon,
     displayName: "MediaWiki",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Wiki,
   },
   requesttracker: {
     icon: RequestTrackerIcon,
     displayName: "Request Tracker",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.CustomerSupport,
   },
   clickup: {
     icon: ClickupIcon,
     displayName: "Clickup",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.ProjectManagement,
   },
   s3: {
     icon: S3Icon,
     displayName: "S3",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Storage,
   },
   r2: {
     icon: R2Icon,
     displayName: "R2",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Storage,
   },
   oci_storage: {
     icon: OCIStorageIcon,
     displayName: "Oracle Storage",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Storage,
   },
   google_cloud_storage: {
     icon: GoogleStorageIcon,
     displayName: "Google Storage",
-    category: SourceCategory.AppConnection,
+    category: SourceCategory.Storage,
   },
-  not_applicable: {
-    icon: GlobeIcon,
-    displayName: "Internet",
-    category: SourceCategory.ImportedKnowledge,
-  },
-};
+  // not_applicable: {
+  //   icon: null,
+  //   displayName: "Not Applicable",
+  //   category: SourceCategory.Other
+  // }
+} as SourceMap;
+
+// const SOURCE_METADATA_MAP: SourceMap = {
+//   web: {
+//     icon: GlobeIcon,
+//     displayName: "Web",
+//     category: SourceCategory.ImportedKnowledge,
+//   },
+//   file: {
+//     icon: FileIcon,
+//     displayName: "File",
+//     category: SourceCategory.ImportedKnowledge,
+//   },
+//   slack: {
+//     icon: ColorSlackIcon,
+//     displayName: "Slack",
+//     category: SourceCategory.AppConnection,
+//   },
+//   gmail: {
+//     icon: GmailIcon,
+//     displayName: "Gmail",
+//     category: SourceCategory.AppConnection,
+//   },
+//   google_drive: {
+//     icon: GoogleDriveIcon,
+//     displayName: "Google Drive",
+//     category: SourceCategory.AppConnection,
+//   },
+//   github: {
+//     icon: GithubIcon,
+//     displayName: "Github",
+//     category: SourceCategory.AppConnection,
+//   },
+//   gitlab: {
+//     icon: GitlabIcon,
+//     displayName: "Gitlab",
+//     category: SourceCategory.AppConnection,
+//   },
+//   confluence: {
+//     icon: ConfluenceIcon,
+//     displayName: "Confluence",
+//     category: SourceCategory.AppConnection,
+//   },
+//   jira: {
+//     icon: JiraIcon,
+//     displayName: "Jira",
+//     category: SourceCategory.AppConnection,
+//   },
+//   notion: {
+//     icon: NotionIcon,
+//     displayName: "Notion",
+//     category: SourceCategory.AppConnection,
+//   },
+//   zendesk: {
+//     icon: ZendeskIcon,
+//     displayName: "Zendesk",
+//     category: SourceCategory.AppConnection,
+//   },
+//   gong: {
+//     icon: GongIcon,
+//     displayName: "Gong",
+//     category: SourceCategory.AppConnection,
+//   },
+//   linear: {
+//     icon: LinearIcon,
+//     displayName: "Linear",
+//     category: SourceCategory.AppConnection,
+//   },
+//   productboard: {
+//     icon: ProductboardIcon,
+//     displayName: "Productboard",
+//     category: SourceCategory.AppConnection,
+//   },
+//   slab: {
+//     icon: SlabIcon,
+//     displayName: "Slab",
+//     category: SourceCategory.AppConnection,
+//   },
+//   zulip: {
+//     icon: ZulipIcon,
+//     displayName: "Zulip",
+//     category: SourceCategory.AppConnection,
+//   },
+//   guru: {
+//     icon: GuruIcon,
+//     displayName: "Guru",
+//     category: SourceCategory.AppConnection,
+//   },
+//   hubspot: {
+//     icon: HubSpotIcon,
+//     displayName: "HubSpot",
+//     category: SourceCategory.AppConnection,
+//   },
+//   document360: {
+//     icon: Document360Icon,
+//     displayName: "Document360",
+//     category: SourceCategory.AppConnection,
+//   },
+//   bookstack: {
+//     icon: BookstackIcon,
+//     displayName: "BookStack",
+//     category: SourceCategory.AppConnection,
+//   },
+//   google_sites: {
+//     icon: GoogleSitesIcon,
+//     displayName: "Google Sites",
+//     category: SourceCategory.ImportedKnowledge,
+//   },
+//   loopio: {
+//     icon: LoopioIcon,
+//     displayName: "Loopio",
+//     category: SourceCategory.AppConnection,
+//   },
+//   dropbox: {
+//     icon: DropboxIcon,
+//     displayName: "Dropbox",
+//     category: SourceCategory.AppConnection,
+//   },
+//   salesforce: {
+//     icon: SalesforceIcon,
+//     displayName: "Salesforce",
+//     category: SourceCategory.AppConnection,
+//   },
+//   sharepoint: {
+//     icon: SharepointIcon,
+//     displayName: "Sharepoint",
+//     category: SourceCategory.AppConnection,
+//   },
+//   teams: {
+//     icon: TeamsIcon,
+//     displayName: "Teams",
+//     category: SourceCategory.AppConnection,
+//   },
+//   discourse: {
+//     icon: DiscourseIcon,
+//     displayName: "Discourse",
+//     category: SourceCategory.AppConnection,
+//   },
+//   axero: {
+//     icon: AxeroIcon,
+//     displayName: "Axero",
+//     category: SourceCategory.AppConnection,
+//   },
+//   wikipedia: {
+//     icon: WikipediaIcon,
+//     displayName: "Wikipedia",
+//     category: SourceCategory.AppConnection,
+//   },
+//   mediawiki: {
+//     icon: MediaWikiIcon,
+//     displayName: "MediaWiki",
+//     category: SourceCategory.AppConnection,
+//   },
+//   requesttracker: {
+//     icon: RequestTrackerIcon,
+//     displayName: "Request Tracker",
+//     category: SourceCategory.AppConnection,
+//   },
+//   clickup: {
+//     icon: ClickupIcon,
+//     displayName: "Clickup",
+//     category: SourceCategory.AppConnection,
+//   },
+//   s3: {
+//     icon: S3Icon,
+//     displayName: "S3",
+//     category: SourceCategory.AppConnection,
+//   },
+//   r2: {
+//     icon: R2Icon,
+//     displayName: "R2",
+//     category: SourceCategory.AppConnection,
+//   },
+//   oci_storage: {
+//     icon: OCIStorageIcon,
+//     displayName: "Oracle Storage",
+//     category: SourceCategory.AppConnection,
+//   },
+//   google_cloud_storage: {
+//     icon: GoogleStorageIcon,
+//     displayName: "Google Storage",
+//     category: SourceCategory.AppConnection,
+//   },
+//   not_applicable: {
+//     icon: GlobeIcon,
+//     displayName: "Internet",
+//     category: SourceCategory.ImportedKnowledge,
+//   },
+// };
 
 function fillSourceMetadata(
   partialMetadata: PartialSourceMetadata,

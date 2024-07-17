@@ -130,7 +130,7 @@ export function ReIndexButton({
             : undefined
         }
       >
-        Run Indexing
+        Index
       </Button>
     </>
   );

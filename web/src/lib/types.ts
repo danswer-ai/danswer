@@ -300,6 +300,15 @@ export interface CCPairBasicInfo {
   source: ValidSources;
 }
 
+export type ConnectorSummary = {
+  count: number;
+  active: number;
+  public: number;
+  totalDocsIndexed: number;
+};
+
+export type GroupedConnectorSummaries = Record<ValidSources, ConnectorSummary>;
+
 // CREDENTIALS
 export interface CredentialBase<T> {
   credential_json: T;

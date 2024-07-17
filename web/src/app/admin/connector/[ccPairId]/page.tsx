@@ -67,35 +67,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
       <div className="pb-1 flex mt-1">
         <h1 className="text-3xl text-emphasis font-bold">{ccPair.name}</h1>
 
-        <div className="ml-auto">
-          <ModifyStatusButtonCluster ccPair={ccPair} />
-        </div>
-      </div>
-
-      <CCPairStatus
-        status={lastIndexAttempt?.status || "not_started"}
-        disabled={ccPair.connector.disabled}
-        isDeleting={isDeleting}
-      />
-
-      <div className="text-sm mt-1">
-        Total Documents Indexed:{" "}
-        <b className="text-emphasis">{totalDocsIndexed}</b>
-      </div>
-
-      <Divider />
-
-      <ConfigDisplay
-        connectorSpecificConfig={ccPair.connector.connector_specific_config}
-        sourceType={ccPair.connector.source}
-      />
-      {/* NOTE: no divider / title here for `ConfigDisplay` since it is optional and we need
-        to render these conditionally.*/}
-
-      <div className="mt-6">
-        <div className="flex">
-          <Title>Indexing Attempts</Title>
-
+        <div className="ml-auto flex gap-x-2">
           {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(
             ccPair.connector.source
           ) && (
@@ -106,26 +78,39 @@ function Main({ ccPairId }: { ccPairId: number }) {
               isDisabled={ccPair.connector.disabled}
             />
           )}
+          <ModifyStatusButtonCluster ccPair={ccPair} />
+        </div>
+      </div>
+      <CCPairStatus
+        status={lastIndexAttempt?.status || "not_started"}
+        disabled={ccPair.connector.disabled}
+        isDeleting={isDeleting}
+      />
+      <div className="text-sm mt-1">
+        Total Documents Indexed:{" "}
+        <b className="text-emphasis">{totalDocsIndexed}</b>
+      </div>
+      Credentials
+      <Divider />
+      <ConfigDisplay
+        connectorSpecificConfig={ccPair.connector.connector_specific_config}
+        sourceType={ccPair.connector.source}
+      />
+      {/* NOTE: no divider / title here for `ConfigDisplay` since it is optional and we need
+        to render these conditionally.*/}
+      <div className="mt-6">
+        <div className="flex">
+          <Title>Indexing Attempts</Title>
         </div>
 
         <IndexingAttemptsTable ccPair={ccPair} />
       </div>
-
       <Divider />
-
-      <div className="mt-4">
-        <Title>Delete Connector</Title>
-        <Text>
-          Deleting the connector will also delete all associated documents.
-        </Text>
-
-        <div className="flex mt-16">
-          <div className="mx-auto">
-            <DeletionButton ccPair={ccPair} />
-          </div>
+      <div className="flex mt-4">
+        <div className="mx-auto">
+          <DeletionButton ccPair={ccPair} />
         </div>
       </div>
-
       {/* TODO: add document search*/}
     </>
   );
