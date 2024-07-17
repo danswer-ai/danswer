@@ -178,7 +178,6 @@ export const SearchSection = ({
       const searchSession = (await response.json()) as SearchSession;
       const message = extractFirstUserMessage(searchSession);
 
-      console.log(searchSession);
       if (message) {
         setQuery(message);
         const danswerDocs: SearchResponse = {

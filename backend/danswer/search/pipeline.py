@@ -253,6 +253,7 @@ class SearchPipeline:
         results[f"{document_id}-{chunk_id}"] = relevance
         return results
 
+    # NOTE: previous doucment-level evaluation
     # def evaluate(self, document: LlmDoc, query: str) -> dict[str, RelevanceChunk]:
     #     relevance: RelevanceChunk = RelevanceChunk()
     #     results = {}
@@ -570,33 +571,17 @@ class SearchPipeline:
             next(iter(value)): value[next(iter(value))] for value in results.values()
         }
 
-        # sections = _merge_sections(self.reranked_sections)
-        # llm_docs = [llm_doc_from_inference_section(section) for section in sections]
-        # if len(llm_docs) == 0:
-        #     return {}
-
-        # return {
-        #     next(iter(value)): value[next(iter(value))] for value in results.values()
-        # }
-
+        # NOTE: Previous document level evaluation
         # @property
         # def relevance_summaries(self) -> dict[str, RelevanceChunk]:
-
-        #     seciotns = self.reranked_sections
-        #     for section in seciotns:
-        #         for chunk in section.chunks:
-        #             print(chunk.document_id)
-        #         print("contineu")
-
         #     sections = _merge_sections(self.reranked_sections)
         #     llm_docs = [llm_doc_from_inference_section(section) for section in sections]
         #     if len(llm_docs) == 0:
         #         return {}
-
-        #     functions = [
-        #         FunctionCall(self.evaluate, (final_context, self.search_query.query))
-        #         for final_context in llm_docs
-        #     ]
+        #         functions = [
+        #             FunctionCall(self.evaluate, (final_context, self.search_query.query))
+        #             for final_context in llm_docs
+        #         ]
 
         #     results = run_functions_in_parallel(function_calls=functions)
 

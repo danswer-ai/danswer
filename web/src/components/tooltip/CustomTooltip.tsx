@@ -99,7 +99,7 @@ export const CustomTooltip = ({
       </span>
       {isVisible && (
         <div
-          className={` absolute z-10 ${citation && "max-w-96"} ${large ? "w-96" : line ? "max-w-64" : "w-40"} 
+          className={` absolute z-10 ${citation ? "max-w-[350px]" : "w-40"} ${large ? "w-96" : line && "max-w-64"} 
               left-1/2 transform -translate-x-1/2 mt-2 text-sm 
               ${light ? "text-gray-800 bg-background-200" : "text-white bg-background-800"} 
               rounded-lg shadow-lg`}

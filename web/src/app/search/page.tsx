@@ -52,7 +52,7 @@ export default async function Home() {
     fetchAssistantsSS(),
     fetchSS("/query/valid-tags"),
     fetchSS("/secondary-index/get-embedding-models"),
-    fetchSS("/chat/get-user-searches"),
+    fetchSS("/query/get-user-searches"),
   ];
 
   // catch cases where the backend is completely unreachable here

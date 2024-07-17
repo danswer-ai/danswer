@@ -278,7 +278,6 @@ export const AgenticDocumentDisplay = ({
 
   const relevance_explanation =
     document.relevance_explanation ?? additional_relevance?.content;
-  console.log(relevance_explanation);
   return (
     <div
       key={document.semantic_identifier}

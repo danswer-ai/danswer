@@ -10,6 +10,8 @@ from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.db.chat import get_chat_messages_by_session
 from danswer.db.chat import get_chat_session_by_id
+from danswer.db.chat import get_chat_sessions_by_user
+from danswer.db.chat import get_first_messages_for_chat_sessions
 from danswer.db.chat import get_search_docs_for_chat_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
@@ -30,6 +32,8 @@ from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
 from danswer.server.query_and_chat.models import AdminSearchRequest
 from danswer.server.query_and_chat.models import AdminSearchResponse
+from danswer.server.query_and_chat.models import ChatSessionDetails
+from danswer.server.query_and_chat.models import ChatSessionsResponse
 from danswer.server.query_and_chat.models import HelperResponse
 from danswer.server.query_and_chat.models import QueryValidationResponse
 from danswer.server.query_and_chat.models import SearchSessionDetailResponse
@@ -136,6 +140,46 @@ def query_validation(
     logger.info(f"Validating query: {simple_query.query}")
     reasoning, answerable = get_query_answerability(simple_query.query)
     return QueryValidationResponse(reasoning=reasoning, answerable=answerable)
+
+
+# Search history
+@basic_router.get("/get-user-searches")
+def get_user_query_sessions(
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> ChatSessionsResponse:
+    user_id = user.id if user is not None else None
+
+    try:
+        search_sessions = get_chat_sessions_by_user(
+            user_id=user_id, deleted=False, db_session=db_session, only_one_shot=True
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=404, detail="Chat session does not exist or has been deleted"
+        )
+
+    search_session_ids = [chat.id for chat in search_sessions]
+    first_messages = get_first_messages_for_chat_sessions(
+        search_session_ids, db_session
+    )
+    first_messages_dict = dict(first_messages)
+
+    response = ChatSessionsResponse(
+        sessions=[
+            ChatSessionDetails(
+                id=search.id,
+                name=first_messages_dict.get(search.id, search.description),
+                persona_id=search.persona_id,
+                time_created=search.time_created.isoformat(),
+                shared_status=search.shared_status,
+                folder_id=search.folder_id,
+                current_alternate_model=search.current_alternate_model,
+            )
+            for search in search_sessions
+        ]
+    )
+    return response
 
 
 @basic_router.get("/get-search-session/{session_id}")

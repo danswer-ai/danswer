@@ -89,7 +89,7 @@ def get_chat_sessions_by_slack_thread_id(
 
 def get_first_messages_for_chat_sessions(
     chat_session_ids: list[int], db_session: Session
-) -> list[tuple[int, str]]:
+) -> dict[int, str]:
     subquery = (
         select(ChatMessage.chat_session_id, func.min(ChatMessage.id).label("min_id"))
         .where(
@@ -109,7 +109,7 @@ def get_first_messages_for_chat_sessions(
     )
 
     first_messages = db_session.execute(query).all()
-    return [(row.chat_session_id, row.message) for row in first_messages]
+    return dict([(row.chat_session_id, row.message) for row in first_messages])
 
 
 def get_chat_sessions_by_user(

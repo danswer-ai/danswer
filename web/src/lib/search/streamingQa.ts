@@ -106,7 +106,6 @@ export const searchRequestStreamed = async ({
           updateDocumentRelevance(relevanceChunk.relevance_summaries);
         }
 
-        console.log(chunk);
         if (Object.hasOwn(chunk, "answer_piece")) {
           const answerPiece = (chunk as AnswerPiecePacket).answer_piece;
           if (answerPiece !== null) {
