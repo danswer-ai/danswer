@@ -60,11 +60,10 @@ def get_current_commit_sha() -> str:
     return sha
 
 
-def switch_to_branch(branch: str) -> None:
-    print(f"Switching to branch: {branch}...")
-    _run_command(f"git checkout {branch}")
-    _run_command("git pull")
-    print(f"Successfully switched to branch: {branch}")
+def switch_to_commit(commit_sha: str) -> None:
+    print(f"Switching to commit: {commit_sha}...")
+    _run_command(f"git checkout {commit_sha}")
+    print(f"Successfully switched to commit: {commit_sha}")
     print("Repository updated successfully.")
 
 
@@ -77,7 +76,7 @@ def get_docker_container_env_vars(suffix: str) -> dict:
     combined_env_vars = {}
     for container_type in ["background", "api_server"]:
         container_name = _run_command(
-            f"docker ps -a --format '{{{{.Names}}}}' | grep '{container_type}' | grep '{suffix}'"
+            f"docker ps -a --format '{{{{.Names}}}}' | awk '/{container_type}/ && /{suffix}/'"
         )[0].strip()
         if not container_name:
             raise RuntimeError(
@@ -93,7 +92,6 @@ def get_docker_container_env_vars(suffix: str) -> dict:
             key, value = env_var.split("=", 1)
             combined_env_vars[key] = value
 
-    print(f"Combined env variables: {combined_env_vars}")
     return combined_env_vars
 
 
@@ -117,8 +115,8 @@ def manage_data_directories(suffix: str, base_path: str, use_cloud_gpu: bool) ->
         os.makedirs(directory, exist_ok=True)
         os.environ[env_var] = directory
         print(f"Set {env_var} to: {directory}")
-    relari_output_path = os.path.join(target_path, "relari_output/")
-    os.makedirs(relari_output_path, exist_ok=True)
+    results_output_path = os.path.join(target_path, "evaluations_output/")
+    os.makedirs(results_output_path, exist_ok=True)
 
 
 def set_env_variables(
@@ -287,7 +285,7 @@ def is_vespa_container_healthy(suffix: str) -> bool:
 
     # Find the Vespa container
     stdout, _ = _run_command(
-        f"docker ps -a --format '{{{{.Names}}}}' | grep vespa | grep {suffix}"
+        f"docker ps -a --format '{{{{.Names}}}}' | awk /vespa/ && /{suffix}/"
     )
     container_name = stdout.strip()
 
@@ -313,7 +311,7 @@ def restart_vespa_container(suffix: str) -> None:
 
     # Find the Vespa container
     stdout, _ = _run_command(
-        f"docker ps -a --format '{{{{.Names}}}}' | grep vespa | grep {suffix}"
+        f"docker ps -a --format '{{{{.Names}}}}' | awk /vespa/ && /{suffix}/"
     )
     container_name = stdout.strip()
 

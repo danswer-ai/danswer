@@ -1,6 +1,7 @@
 import json
 import multiprocessing
 import os
+import shutil
 import time
 
 import yaml
@@ -22,12 +23,12 @@ def _populate_results_file(output_folder_path: str, all_qa_output: list[dict]) -
             file.flush()
 
 
-def _update_metadata_file(test_output_folder: str, count: int) -> None:
+def _update_metadata_file(test_output_folder: str, invalid_answer_count: int) -> None:
     metadata_path = os.path.join(test_output_folder, METADATA_FILENAME)
     with open(metadata_path, "r", encoding="utf-8") as file:
         metadata = yaml.safe_load(file)
 
-    metadata["number_of_questions_asked"] = count
+    metadata["number_of_failed_questions"] = invalid_answer_count
     with open(metadata_path, "w", encoding="utf-8") as yaml_file:
         yaml.dump(metadata, yaml_file)
 
@@ -45,7 +46,7 @@ def _get_test_output_folder(config: dict) -> str:
     base_output_folder = os.path.expanduser(config["output_folder"])
     if config["run_suffix"]:
         base_output_folder = os.path.join(
-            base_output_folder, ("test" + config["run_suffix"]), "relari_output"
+            base_output_folder, ("test" + config["run_suffix"]), "evaluations_output"
         )
     else:
         base_output_folder = os.path.join(base_output_folder, "no_defined_suffix")
@@ -69,7 +70,9 @@ def _get_test_output_folder(config: dict) -> str:
 def _initialize_files(config: dict) -> tuple[str, list[dict]]:
     test_output_folder = _get_test_output_folder(config)
 
-    questions = _read_questions_jsonl(config["questions_file"])
+    questions_file_path = config["questions_file"]
+
+    questions = _read_questions_jsonl(questions_file_path)
 
     metadata = {
         "commit_sha": get_current_commit_sha(),
@@ -90,6 +93,23 @@ def _initialize_files(config: dict) -> tuple[str, list[dict]]:
     print("saving metadata to:", metadata_path)
     with open(metadata_path, "w", encoding="utf-8") as yaml_file:
         yaml.dump(metadata, yaml_file)
+
+    copied_questions_file_path = os.path.join(
+        test_output_folder, os.path.basename(questions_file_path)
+    )
+    shutil.copy2(questions_file_path, copied_questions_file_path)
+
+    zipped_files_path = config["zipped_documents_file"]
+    copied_zipped_documents_path = os.path.join(
+        test_output_folder, os.path.basename(zipped_files_path)
+    )
+    shutil.copy2(zipped_files_path, copied_zipped_documents_path)
+
+    zipped_files_folder = os.path.dirname(zipped_files_path)
+    jsonl_file_path = os.path.join(zipped_files_folder, "target_docs.jsonl")
+    if os.path.exists(jsonl_file_path):
+        copied_jsonl_path = os.path.join(test_output_folder, "target_docs.jsonl")
+        shutil.copy2(jsonl_file_path, copied_jsonl_path)
 
     return test_output_folder, questions
 
@@ -138,18 +158,23 @@ def _process_and_write_query_results(config: dict) -> None:
 
     _populate_results_file(test_output_folder, results)
 
-    valid_answer_count = 0
+    invalid_answer_count = 0
     for result in results:
-        if result.get("answer"):
-            valid_answer_count += 1
+        if not result.get("answer"):
+            invalid_answer_count += 1
 
-    _update_metadata_file(test_output_folder, valid_answer_count)
+    _update_metadata_file(test_output_folder, invalid_answer_count)
+
+    if invalid_answer_count:
+        print(f"Warning: {invalid_answer_count} questions failed!")
+        print("Suggest restarting the vespa container and rerunning")
 
     time_to_finish = time.time() - start_time
     minutes, seconds = divmod(int(time_to_finish), 60)
     print(
         f"Took {minutes:02d}:{seconds:02d} to ask and answer {len(results)} questions"
     )
+    print("saved test results to folder:", test_output_folder)
 
 
 def run_qa_test_and_save_results(run_suffix: str = "") -> None:

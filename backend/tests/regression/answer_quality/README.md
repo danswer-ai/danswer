@@ -53,8 +53,10 @@ Edit `search_test_config.yaml` to set:
     - The path to the zip file containing the files you'd like to test against
 - questions_file
     - The path to the yaml containing the questions you'd like to test with 
-- branch
-    - Set the branch to null if you want it to just use the code as is
+- commit_sha
+    - Set this to the SHA of the commit you want to run the test against
+    - You must clear all local changes if you want to use this option
+    - Set this to null if you want it to just use the code as is
 - clean_up_docker_containers
     - Set this to true to automatically delete all docker containers, networks and volumes after the test
 - launch_web_ui
@@ -71,7 +73,7 @@ Edit `search_test_config.yaml` to set:
 - existing_test_suffix
     - Use this if you would like to relaunch a previous test instance
     - Input the suffix of the test you'd like to re-launch 
-    - (E.g. to use the data from folder "test_1234_5678" put "_1234_5678")
+    - (E.g. to use the data from folder "test-1234-5678" put "-1234-5678")
     - No new files will automatically be uploaded
     - Leave empty to run a new test
 - limit
