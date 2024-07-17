@@ -161,7 +161,7 @@ export async function fetchChatData(searchParams: {
   const sidebarToggled = cookies().get(SIDEBAR_TOGGLED_COOKIE_NAME);
 
   const toggleSidebar = sidebarToggled
-    ? sidebarToggled.value.toLocaleLowerCase() == "true" ?? false
+    ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
     : false;
 
   const finalDocumentSidebarInitialWidth = documentSidebarCookieInitialWidth

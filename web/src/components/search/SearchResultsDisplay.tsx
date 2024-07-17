@@ -156,7 +156,7 @@ export const SearchResultsDisplay = ({
       ? documents.sort((a, b) =>
           a.is_relevant === b.is_relevant ? 0 : a.is_relevant ? -1 : 1
         )
-      : documents ?? [];
+      : documents || [];
 
   return (
     <>
