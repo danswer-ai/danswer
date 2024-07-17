@@ -28,10 +28,16 @@ export default function WrappedAssistantsGallery({
       chatSessions={chatSessions}
       folders={folders}
       openedFolders={openedFolders}
-      user={user}
-      assistants={assistants}
-      content={(assistants, user) => (
-        <AssistantsGallery assistants={assistants} user={user} />
+      headerProps={{ user, page: "" }}
+      contentProps={{
+        assistants: assistants,
+        user: user,
+      }}
+      content={(contentProps) => (
+        <AssistantsGallery
+          assistants={contentProps.assistants}
+          user={contentProps.user}
+        />
       )}
     />
   );

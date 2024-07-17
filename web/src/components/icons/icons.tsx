@@ -40,6 +40,7 @@ import {
   FiUsers,
   FiBarChart2,
   FiDatabase,
+  FiSlack,
 } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
@@ -81,7 +82,7 @@ import cohereIcon from "../../../public/Cohere.svg";
 import voyageIcon from "../../../public/Voyage.png";
 import googleIcon from "../../../public/Google.webp";
 
-import { FaRobot } from "react-icons/fa";
+import { FaRobot, FaSlack } from "react-icons/fa";
 import { IconType } from "react-icons";
 
 export interface IconProps {
@@ -255,8 +256,8 @@ export const ColorSlackIcon = ({
 }: IconProps) => {
   return (
     <div
-      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
-      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
     >
       <Image src={slackIcon} alt="Logo" width="96" height="96" />
     </div>

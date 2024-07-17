@@ -27,10 +27,16 @@ export default function WrappedAssistantsMine({
       chatSessions={chatSessions}
       folders={folders}
       openedFolders={openedFolders}
-      user={user}
-      assistants={assistants}
-      content={(assistants, user) => (
-        <AssistantsList assistants={assistants} user={user} />
+      headerProps={{ user, page: "" }}
+      contentProps={{
+        assistants: assistants,
+        user: user,
+      }}
+      content={(contentProps) => (
+        <AssistantsList
+          assistants={contentProps.assistants}
+          user={contentProps.user}
+        />
       )}
     />
   );

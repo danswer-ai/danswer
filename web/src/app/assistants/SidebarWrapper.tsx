@@ -15,23 +15,28 @@ import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useRouter } from "next/navigation";
 
-export default function SidebarWrapper({
-  chatSessions,
-  initiallyToggled,
-  folders,
-  openedFolders,
-  user,
-  assistants,
-  content,
-}: {
+interface SidebarWrapperProps<T extends object> {
   chatSessions: ChatSession[];
   folders: Folder[];
   initiallyToggled: boolean;
   openedFolders?: { [key: number]: boolean };
-  user: User | null;
-  assistants: Persona[];
-  content: (assistants: Persona[], user: User | null) => ReactNode;
-}) {
+  content: (props: T) => ReactNode;
+  headerProps: {
+    page: string;
+    user: User | null;
+  };
+  contentProps: T;
+}
+
+export default function SidebarWrapper<T extends object>({
+  chatSessions,
+  initiallyToggled,
+  folders,
+  openedFolders,
+  headerProps,
+  contentProps,
+  content,
+}: SidebarWrapperProps<T>) {
   const [toggledSidebar, setToggledSidebar] = useState(initiallyToggled);
 
   const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
@@ -117,7 +122,7 @@ export default function SidebarWrapper({
         <FunctionalHeader
           page="assistants"
           showSidebar={showDocSidebar}
-          user={user}
+          user={headerProps.user}
         />
         <div className="w-full flex">
           <div
@@ -135,7 +140,7 @@ export default function SidebarWrapper({
                   `}
           />
 
-          <div className="mt-4 mx-auto">{content(assistants, user)}</div>
+          <div className="mt-4 mx-auto">{content(contentProps)}</div>
         </div>
       </div>
     </div>
