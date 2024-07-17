@@ -1559,7 +1559,7 @@ export function ChatPage({
                           {aboveHorizon && (
                             <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
                               <button
-                                onClick={() => clientScrollToBottom(o)}
+                                onClick={() => clientScrollToBottom()}
                                 className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2 mx-auto "
                               >
                                 <FiArrowDown size={18} />
