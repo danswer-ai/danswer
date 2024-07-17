@@ -1245,7 +1245,7 @@ export function ChatPage({
                         <div
                           className={
                             "mt-4 -ml-4 w-full mx-auto " +
-                            "absolute top-12 left-1/2 transform -translate-x-1/2" +
+                            "absolute top-12 left-0  " +
                             (hasPerformedInitialScroll ? "" : "invisible")
                           }
                         >
@@ -1559,7 +1559,7 @@ export function ChatPage({
                           {aboveHorizon && (
                             <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
                               <button
-                                onClick={() => clientScrollToBottom(true)}
+                                onClick={() => clientScrollToBottom(o)}
                                 className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2 mx-auto "
                               >
                                 <FiArrowDown size={18} />
@@ -1604,7 +1604,12 @@ export function ChatPage({
                 )}
               </Dropzone>
             ) : (
-              <div className="mx-auto h-full flex flex-col">
+              <div className="mx-auto h-full flex">
+                <div
+                  style={{ transition: "width 0.30s ease-out" }}
+                  className={`flex-none bg-transparent transition-all bg-opacity-80 duration-300 ease-in-out h-full
+                        ${toggledSidebar ? "w-[300px] " : "w-[0px]"}`}
+                />
                 <div className="my-auto">
                   <DanswerInitializingLoader />
                 </div>

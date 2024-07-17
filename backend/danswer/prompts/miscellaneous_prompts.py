@@ -35,8 +35,8 @@ Be thorough, but avoid unnecessary repetition. Think step by step.
 
 2. Useful Analysis:
 [ANALYSIS_START]
-State the two most important points from the chain of thought.
-DO NOT refer to "the document" (describe it as "this")- ONLY state the core points in a description.
+State the most important point from the chain of thought.
+DO NOT refer to "the document" (describe it as "this")- ONLY state the core point in a description.
 [ANALYSIS_END]
 
 3. Relevance Determination:

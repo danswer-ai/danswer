@@ -16,7 +16,6 @@ from danswer.llm.answering.prune_and_merge import ChunkRange
 from danswer.llm.answering.prune_and_merge import merge_chunk_intervals
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import message_generator_to_string_generator
-from danswer.prompts.miscellaneous_prompts import AGENTIC_SEARCH_EVALUATION_PROMPT
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import IndexFilters
@@ -90,6 +89,89 @@ class SearchPipeline:
             Iterator[list[InferenceSection] | list[int]] | None
         ) = None
 
+    def extract_section(self, content: str, start_tag: str, end_tag: str) -> str:
+        parts = content.split(f"[{start_tag}]", 1)
+        if len(parts) == 2:
+            _, section = parts
+            parts = section.split(f"[{end_tag}]", 1)
+            if len(parts) == 2:
+                return parts[0].strip()
+        return ""
+
+    # def evaluate(self, document: InferenceSection, query: str) -> dict[str, RelevanceChunk]:
+    #     relevance: RelevanceChunk = RelevanceChunk()
+    #     results = {}
+
+    #     document_id = document.center_chunk.document_id
+    #     chunk_id = document.center_chunk.chunk_id
+
+    #     prompt = f"""
+    #     Analyze the relevance of this document to the search query:
+    #     Title: {document_id.split("/")[-1]}
+    #     Blurb: {document.combined_content}
+    #     Query: {query}
+
+    #     Provide your analysis in the following format:
+
+    #     1. Chain of Thought Analysis:
+    #     [COT_START]
+    #     Provide a thorough chain of thought analysis considering:
+    #     - The main purpose and content of the document
+    #     - What the user is searching for
+    #     - How the document's topic relates to the query
+    #     - Potential uses of the document for the given query
+    #     Be thorough, but avoid unnecessary repetition. Think step by step.
+    #     [COT_END]
+
+    #     2. Content Synthesis:
+    #     [SYNTHESIS_START]
+    #     Summarize the most important point from the chain of thought in one sentence.
+    #     DO NOT refer to "the document" (describe it as "this") - ONLY state the core point in a description.
+    #     [SYNTHESIS_END]
+
+    #     3. Query Use Analysis:
+    #     [USE_START]
+    #     Analyze how this document could be used to answer the query. Think step by step about:
+    #     - Specific information in the document that addresses the query
+    #     - How the document's content could be applied or adapted to the query
+    #     - Any limitations or gaps in using this document for the query
+    #     [USE_END]
+
+    #     4. Use Synthesis:
+    #     [USE_SYNTHESIS_START]
+    #     Summarize the potential use of this document for the query in one sentence.
+    #     Focus on the most relevant aspect of how the document could be used.
+    #     [USE_SYNTHESIS_END]
+
+    #     5. Relevance Determination:
+    #     [RELEVANCE_START]
+    #     Based on the above analysis, determine if this document is potentially relevant to the query.
+    #     RESULT: True (if potentially relevant)
+    #     RESULT: False (if not relevant)
+    #     Briefly justify your determination.
+    #     [RELEVANCE_END]
+    #     """
+
+    #     content = "".join(message_generator_to_string_generator(self.llm.stream(prompt=prompt)))
+
+    #     # Extract sections
+    #     sections = {
+    #         "chain_of_thought": self.extract_section(content, "COT_START", "COT_END"),
+    #         "content_synthesis": self.extract_section(content, "SYNTHESIS_START", "SYNTHESIS_END"),
+    #         "use_analysis": self.extract_section(content, "USE_START", "USE_END"),
+    #         "use_synthesis": self.extract_section(content, "USE_SYNTHESIS_START", "USE_SYNTHESIS_END"),
+    #         "relevance": self.extract_section(content, "RELEVANCE_START", "RELEVANCE_END")
+    #     }
+
+    #     # Determine relevance
+    #     relevant = "result: true" in sections["relevance"].lower()
+
+    #     relevance.content = "\n".join(sections.values())
+    #     relevance.relevant = relevant
+
+    #     results[f"{document_id}-{chunk_id}"] = relevance
+    #     return results
+
     def evaluate(
         self, document: InferenceSection, query: str
     ) -> dict[str, RelevanceChunk]:
@@ -105,7 +187,25 @@ class SearchPipeline:
         Title: {document_id.split("/")[-1]}
         Blurb: {document.combined_content}
         Query: {query}
-        {AGENTIC_SEARCH_EVALUATION_PROMPT}
+
+        1. Chain of Thought Analysis:
+        Provide a chain of thought analysis considering:
+        - The main purpose and content of the document
+        - What the user is searching for
+        - How the document's topic relates to the query
+        - Potential uses of the document for the given query
+        Be thorough, but avoid unnecessary repetition. Think step by step.
+
+        2. Useful Analysis:
+        [ANALYSIS_START]
+        State the most important point from the chain of thought.
+        DO NOT refer to "the document" (describe it as "this")- ONLY state the core point in a description.
+        [ANALYSIS_END]
+
+        3. Relevance Determination:
+        RESULT: True (if potentially relevant)
+        RESULT: False (if not relevant)
+
         """
 
         content = "".join(
