@@ -32,7 +32,9 @@ function StandardDropdownOption<T>({
   return (
     <button
       onClick={() => handleSelect(option)}
-      className={`w-full text-left block px-4 py-2.5 text-sm hover:bg-gray-800 ${index !== 0 ? " border-t-2 border-gray-600" : ""}`}
+      className={`w-full text-left block px-4 py-2.5 text-sm hover:bg-gray-800 ${
+        index !== 0 ? " border-t-2 border-gray-600" : ""
+      }`}
       role="menuitem"
     >
       <p className="font-medium">{option.name}</p>
@@ -222,7 +224,9 @@ export const CustomDropdown = ({
       {isOpen && (
         <div
           onClick={() => setIsOpen(!isOpen)}
-          className={`absolute ${direction === "up" ? "bottom-full pb-2" : "pt-2"} w-full z-30 box-shadow`}
+          className={`absolute ${
+            direction === "up" ? "bottom-full pb-2" : "pt-2"
+          } w-full z-30 box-shadow`}
         >
           {dropdown}
         </div>

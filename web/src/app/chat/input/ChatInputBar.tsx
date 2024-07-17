@@ -223,7 +223,9 @@ export function ChatInputBar({
                 {filteredPersonas.map((currentPersona, index) => (
                   <button
                     key={index}
-                    className={`px-2 ${assistantIconIndex == index && "bg-hover-lightish"} rounded  rounded-lg content-start flex gap-x-1 py-2 w-full  hover:bg-hover-lightish cursor-pointer`}
+                    className={`px-2 ${
+                      assistantIconIndex == index && "bg-hover-lightish"
+                    } rounded  rounded-lg content-start flex gap-x-1 py-2 w-full  hover:bg-hover-lightish cursor-pointer`}
                     onClick={() => {
                       updateCurrentPersona(currentPersona);
                     }}
@@ -239,7 +241,9 @@ export function ChatInputBar({
                 <a
                   key={filteredPersonas.length}
                   target="_blank"
-                  className={`${assistantIconIndex == filteredPersonas.length && "bg-hover"} rounded rounded-lg px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-lightish cursor-pointer"`}
+                  className={`${
+                    assistantIconIndex == filteredPersonas.length && "bg-hover"
+                  } rounded rounded-lg px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-lightish cursor-pointer"`}
                   href="/assistants/new"
                 >
                   <FiPlus size={17} />

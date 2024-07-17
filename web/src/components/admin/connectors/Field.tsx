@@ -285,7 +285,9 @@ export const BooleanFormField = ({
         <Field
           name={name}
           type="checkbox"
-          className={`${noPadding ? "mr-3" : "mx-3"} px-5 w-3.5 h-3.5 ${alignTop ? "mt-1" : "my-auto"}`}
+          className={`${noPadding ? "mr-3" : "mx-3"} px-5 w-3.5 h-3.5 ${
+            alignTop ? "mt-1" : "my-auto"
+          }`}
           {...(onChange ? { onChange } : {})}
         />
         <div>

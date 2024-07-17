@@ -92,12 +92,16 @@ export const AnimatedToggle = ({
           </div>
           <p className="flex ml-2 w-[40px]">
             <span
-              className={`no-underline text-sm transition-all duration-300 ease-in-out ${isOn ? "opacity-0  translate-y-10 w-0" : "opacity-100"}`}
+              className={`no-underline text-sm transition-all duration-300 ease-in-out ${
+                isOn ? "opacity-0  translate-y-10 w-0" : "opacity-100"
+              }`}
             >
               Fast
             </span>
             <span
-              className={`text-sm transition-all duration-300 ease-in-out ${isOn ? "opacity-100 " : "opacity-0 -translate-y-10 w-0"}`}
+              className={`text-sm transition-all duration-300 ease-in-out ${
+                isOn ? "opacity-100 " : "opacity-0 -translate-y-10 w-0"
+              }`}
             >
               Agentic
             </span>
@@ -211,7 +215,9 @@ export const FullSearchBar = ({
           >
             <SendIcon
               size={28}
-              className={`text-emphasis text-white p-1 rounded-full ${query ? "bg-background-800" : "bg-[#D7D7D7]"}`}
+              className={`text-emphasis text-white p-1 rounded-full ${
+                query ? "bg-background-800" : "bg-[#D7D7D7]"
+              }`}
             />
           </button>
         </div>

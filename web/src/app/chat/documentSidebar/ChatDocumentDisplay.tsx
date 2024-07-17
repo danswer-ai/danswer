@@ -39,7 +39,9 @@ export function ChatDocumentDisplay({
   return (
     <div
       key={document.semantic_identifier}
-      className={`p-2 w-[350px] justify-start rounded-md ${isSelected ? "bg-background-200" : "bg-background-125"} text-sm mx-3`}
+      className={`p-2 w-[350px] justify-start rounded-md ${
+        isSelected ? "bg-background-200" : "bg-background-125"
+      } text-sm mx-3`}
     >
       <div className="flex relative justify-start overflow-y-visible">
         <a

@@ -70,7 +70,9 @@ export function SourceSelector({
 
   return (
     <div
-      className={`hidden ${showDocSidebar ? "4xl:block" : "!block"} duration-1000 ease-out transition-all transform origin-top-right`}
+      className={`hidden ${
+        showDocSidebar ? "4xl:block" : "!block"
+      } duration-1000 ease-out transition-all transform origin-top-right`}
     >
       <div className="flex mb-4 pb-2 border-b border-border text-emphasis">
         <h2 className="font-bold my-auto">Filters</h2>

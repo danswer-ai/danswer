@@ -192,7 +192,9 @@ export const DocumentDisplay = ({
       }}
     >
       <div
-        className={`absolute top-6 overflow-y-auto -translate-y-2/4 flex ${isSelected ? "-left-14 w-14" : "-left-10 w-10"}`}
+        className={`absolute top-6 overflow-y-auto -translate-y-2/4 flex ${
+          isSelected ? "-left-14 w-14" : "-left-10 w-10"
+        }`}
       >
         {!hide &&
           (document.relevant_search_result ||
@@ -204,11 +206,15 @@ export const DocumentDisplay = ({
           )}
       </div>
       <div
-        className={`collapsible ${hide ? "collapsible-closed overflow-y-auto border-transparent" : ""}`}
+        className={`collapsible ${
+          hide ? "collapsible-closed overflow-y-auto border-transparent" : ""
+        }`}
       >
         <div className="flex relative">
           <a
-            className={`rounded-lg flex font-bold text-link max-w-full ${document.link ? "" : "pointer-events-none"}`}
+            className={`rounded-lg flex font-bold text-link max-w-full ${
+              document.link ? "" : "pointer-events-none"
+            }`}
             href={document.link}
             target="_blank"
             rel="noopener noreferrer"
@@ -291,11 +297,15 @@ export const AgenticDocumentDisplay = ({
       }}
     >
       <div
-        className={`collapsible ${!hide ? "collapsible-closed overflow-y-auto border-transparent" : ""}`}
+        className={`collapsible ${
+          !hide ? "collapsible-closed overflow-y-auto border-transparent" : ""
+        }`}
       >
         <div className="flex relative">
           <a
-            className={`rounded-lg flex font-bold text-link max-w-full ${document.link ? "" : "pointer-events-none"}`}
+            className={`rounded-lg flex font-bold text-link max-w-full ${
+              document.link ? "" : "pointer-events-none"
+            }`}
             href={document.link}
             target="_blank"
             rel="noopener noreferrer"

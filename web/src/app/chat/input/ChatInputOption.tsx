@@ -59,9 +59,18 @@ export const ChatInputOption: React.FC<ChatInputOptionProps> = ({
         hover:text-emphasis
         p-1.5
         rounded-md
-        ${flexPriority === "shrink" && "flex-shrink-[10000] flex-grow-0 flex-basis-auto min-w-[30px] whitespace-nowrap overflow-hidden"}
-        ${flexPriority === "second" && "flex-shrink flex-basis-0 min-w-[30px] whitespace-nowrap overflow-hidden"}
-        ${flexPriority === "stiff" && "flex-none whitespace-nowrap overflow-hidden"}
+        ${
+          flexPriority === "shrink" &&
+          "flex-shrink-[10000] flex-grow-0 flex-basis-auto min-w-[30px] whitespace-nowrap overflow-hidden"
+        }
+        ${
+          flexPriority === "second" &&
+          "flex-shrink flex-basis-0 min-w-[30px] whitespace-nowrap overflow-hidden"
+        }
+        ${
+          flexPriority === "stiff" &&
+          "flex-none whitespace-nowrap overflow-hidden"
+        }
       `}
       title={name}
       onClick={onClick}

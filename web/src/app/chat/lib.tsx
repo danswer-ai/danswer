@@ -553,7 +553,9 @@ export function buildChatUrl(
   const finalSearchParams: string[] = [];
   if (chatSessionId) {
     finalSearchParams.push(
-      `${search ? SEARCH_PARAM_NAMES.SEARCH_ID : SEARCH_PARAM_NAMES.CHAT_ID}=${chatSessionId}`
+      `${
+        search ? SEARCH_PARAM_NAMES.SEARCH_ID : SEARCH_PARAM_NAMES.CHAT_ID
+      }=${chatSessionId}`
     );
   }
   if (personaId !== null) {
