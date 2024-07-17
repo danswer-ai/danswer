@@ -93,8 +93,10 @@ export const SearchResultsDisplay = ({
     return (
       <div className="text-base gap-x-1.5 flex">
         <AlertIcon size={16} className="text-error my-auto mr-1" />
-        <p className="text-error ">No documents were found!</p>
-        <p>Have you set up a connector?</p>
+        <p>
+          <span className="text-error ">No documents were found!</span>
+          Have you set up a connector? Your data may not have loaded properly.
+        </p>
       </div>
     );
   }
@@ -141,7 +143,9 @@ export const SearchResultsDisplay = ({
           showAll ||
           (searchResponse &&
             searchResponse.additional_relevance &&
-            searchResponse.additional_relevance[doc.document_id].relevant) ||
+            searchResponse.additional_relevance[
+              `${doc.document_id}-${doc.chunk_ind}`
+            ].relevant) ||
           doc.relevant_search_result
         );
       })
@@ -224,7 +228,9 @@ export const SearchResultsDisplay = ({
           {orderedDocs.map((document, ind) => {
             const relevance: DocumentRelevance | null =
               searchResponse.additional_relevance
-                ? searchResponse.additional_relevance[document.document_id]
+                ? searchResponse.additional_relevance[
+                    `${document.document_id}-${document.chunk_ind}`
+                  ]
                 : null;
 
             return agenticResults ? (

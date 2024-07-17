@@ -5,8 +5,6 @@ from typing import cast
 
 from sqlalchemy.orm import Session
 
-from danswer.chat.chat_utils import llm_doc_from_inference_section
-from danswer.chat.models import LlmDoc
 from danswer.chat.models import RelevanceChunk
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
@@ -14,7 +12,6 @@ from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PromptConfig
-from danswer.llm.answering.prune_and_merge import _merge_sections
 from danswer.llm.answering.prune_and_merge import ChunkRange
 from danswer.llm.answering.prune_and_merge import merge_chunk_intervals
 from danswer.llm.interfaces import LLM
@@ -93,15 +90,20 @@ class SearchPipeline:
             Iterator[list[InferenceSection] | list[int]] | None
         ) = None
 
-    def evaluate(self, document: LlmDoc, query: str) -> dict[str, RelevanceChunk]:
+    def evaluate(
+        self, document: InferenceSection, query: str
+    ) -> dict[str, RelevanceChunk]:
         relevance: RelevanceChunk = RelevanceChunk()
         results = {}
-        document_id = document.document_id
+
+        # At least for now, is the same doucment ID across chunks
+        document_id = document.center_chunk.document_id
+        chunk_id = document.center_chunk.chunk_id
 
         prompt = f"""
         Analyze the relevance of this document to the search query:
         Title: {document_id.split("/")[-1]}
-        Blurb: {document.content}
+        Blurb: {document.combined_content}
         Query: {query}
         {AGENTIC_SEARCH_EVALUATION_PROMPT}
         """
@@ -126,6 +128,7 @@ class SearchPipeline:
         else:
             logger.warning(f"Missing [ANALYSIS_END] tag for document {document_id}")
             result = rest
+        print(content)
 
         chain_of_thought = chain_of_thought.strip()
         analysis = analysis.strip()
@@ -148,8 +151,66 @@ class SearchPipeline:
         relevance.content = analysis
         relevance.relevant = relevant
 
-        results[document_id] = relevance
+        results[f"{document_id}-{chunk_id}"] = relevance
         return results
+
+    # def evaluate(self, document: LlmDoc, query: str) -> dict[str, RelevanceChunk]:
+    #     relevance: RelevanceChunk = RelevanceChunk()
+    #     results = {}
+    #     document_id = document.document_id
+
+    #     prompt = f"""
+    #     Analyze the relevance of this document to the search query:
+    #     Title: {document_id.split("/")[-1]}
+    #     Blurb: {document.content}
+    #     Query: {query}
+    #     {AGENTIC_SEARCH_EVALUATION_PROMPT}
+    #     """
+
+    #     content = "".join(
+    #         message_generator_to_string_generator(self.llm.stream(prompt=prompt))
+    #     )
+    #     analysis = ""
+    #     relevant = False
+    #     chain_of_thought = ""
+
+    #     parts = content.split("[ANALYSIS_START]", 1)
+    #     if len(parts) == 2:
+    #         chain_of_thought, rest = parts
+    #     else:
+    #         logger.warning(f"Missing [ANALYSIS_START] tag for document {document_id}")
+    #         rest = content
+
+    #     parts = rest.split("[ANALYSIS_END]", 1)
+    #     if len(parts) == 2:
+    #         analysis, result = parts
+    #     else:
+    #         logger.warning(f"Missing [ANALYSIS_END] tag for document {document_id}")
+    #         result = rest
+
+    #     chain_of_thought = chain_of_thought.strip()
+    #     analysis = analysis.strip()
+    #     result = result.strip().lower()
+
+    #     # Determine relevance
+    #     if "result: true" in result:
+    #         relevant = True
+    #     elif "result: false" in result:
+    #         relevant = False
+    #     else:
+    #         logger.warning(f"Invalid result format for document {document_id}")
+
+    #     if not analysis:
+    #         logger.warning(
+    #             f"Couldn't extract proper analysis for document {document_id}. Using full content."
+    #         )
+    #         analysis = content
+
+    #     relevance.content = analysis
+    #     relevance.relevant = relevant
+
+    #     results[document_id] = relevance
+    #     return results
 
     """Pre-processing"""
 
@@ -398,14 +459,10 @@ class SearchPipeline:
 
     @property
     def relevance_summaries(self) -> dict[str, RelevanceChunk]:
-        sections = _merge_sections(self.reranked_sections)
-        llm_docs = [llm_doc_from_inference_section(section) for section in sections]
-        if len(llm_docs) == 0:
-            return {}
-
+        sections = self.reranked_sections
         functions = [
-            FunctionCall(self.evaluate, (final_context, self.search_query.query))
-            for final_context in llm_docs
+            FunctionCall(self.evaluate, (section, self.search_query.query))
+            for section in sections
         ]
 
         results = run_functions_in_parallel(function_calls=functions)
@@ -413,6 +470,36 @@ class SearchPipeline:
         return {
             next(iter(value)): value[next(iter(value))] for value in results.values()
         }
+
+        # sections = _merge_sections(self.reranked_sections)
+        # llm_docs = [llm_doc_from_inference_section(section) for section in sections]
+        # if len(llm_docs) == 0:
+        #     return {}
+
+        # return {
+        #     next(iter(value)): value[next(iter(value))] for value in results.values()
+        # }
+
+        # @property
+        # def relevance_summaries(self) -> dict[str, RelevanceChunk]:
+
+        #     seciotns = self.reranked_sections
+        #     for section in seciotns:
+        #         for chunk in section.chunks:
+        #             print(chunk.document_id)
+        #         print("contineu")
+
+        #     sections = _merge_sections(self.reranked_sections)
+        #     llm_docs = [llm_doc_from_inference_section(section) for section in sections]
+        #     if len(llm_docs) == 0:
+        #         return {}
+
+        #     functions = [
+        #         FunctionCall(self.evaluate, (final_context, self.search_query.query))
+        #         for final_context in llm_docs
+        #     ]
+
+        #     results = run_functions_in_parallel(function_calls=functions)
 
     @property
     def section_relevance_list(self) -> list[bool]:

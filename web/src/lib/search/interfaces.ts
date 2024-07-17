@@ -45,6 +45,7 @@ export interface DanswerDocument {
   boost: number;
   hidden: boolean;
   score: number;
+  chunk_ind: number;
   match_highlights: string[];
   metadata: { [key: string]: string };
   updated_at: string | null;

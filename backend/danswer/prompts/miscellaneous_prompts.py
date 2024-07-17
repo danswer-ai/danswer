@@ -28,16 +28,15 @@ AGENTIC_SEARCH_EVALUATION_PROMPT = """
 1. Chain of Thought Analysis:
 Provide a detailed chain of thought analysis considering:
 - The main purpose and content of the document
-- What the user is likely in search of
+- What the user is searching for
 - How the document's topic relates to the query
-- Potential usefulness of the document for the given query
-Be thorough in your reasoning, but avoid unnecessary repetition.
+- Potential uses of the document for the given query
+Be thorough, but avoid unnecessary repetition. Think step by step.
 
 2. Useful Analysis:
 [ANALYSIS_START]
-Provide a concise, user-friendly summary of the document's relevance and usefulness.
-Focus on what the document is about and how it relates to the query.
-Do not include your reasoning process.
+Synthesize the analysis into one or two core points
+DO NOT refer to the document (refer to it as "this")- ONLY state the core points.
 [ANALYSIS_END]
 
 3. Relevance Determination:
