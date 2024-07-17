@@ -105,6 +105,7 @@ class CloudEmbedding:
             model = DEFAULT_OPENAI_MODEL
 
         response = self.client.embeddings.create(input=text, model=model)
+        print(len(response.data[0].embedding))
         return response.data[0].embedding
 
     def _embed_cohere(
@@ -213,6 +214,8 @@ def embed_text(
     api_key: str | None,
     provider_type: str | None,
 ) -> list[list[float]]:
+    print("encoding")
+    print(text_type)
     if provider_type is not None:
         if api_key is None:
             raise RuntimeError("API key not provided for cloud model")
