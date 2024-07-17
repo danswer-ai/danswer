@@ -14,7 +14,7 @@ import { BookIcon, CheckmarkIcon, LightBulbIcon, XIcon } from "../icons/icons";
 
 import { FaStar } from "react-icons/fa";
 import { FiTag } from "react-icons/fi";
-import { DISABLE_AGENTIC } from "@/lib/constants";
+import { DISABLE_AGENTIC_SEARCH } from "@/lib/constants";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],

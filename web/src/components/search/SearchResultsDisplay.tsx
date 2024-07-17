@@ -35,11 +35,13 @@ export const SearchResultsDisplay = ({
   agenticResults,
   searchResponse,
   contentEnriched,
+  disabledAgentic,
   isFetching,
   defaultOverrides,
   performSweep,
   sweep,
 }: {
+  disabledAgentic?: boolean;
   contentEnriched?: boolean;
   agenticResults?: boolean | null;
   performSweep: () => void;
@@ -80,6 +82,16 @@ export const SearchResultsDisplay = ({
   }
 
   const { answer, quotes, documents, error, messageId } = searchResponse;
+
+  if (isFetching && disabledAgentic) {
+    return (
+      <div className="mt-4">
+        <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
+          <p>Results</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isFetching && !answer && !documents) {
     return null;

@@ -128,6 +128,3 @@ if _LITELLM_PASS_THROUGH_HEADERS_RAW:
         logger.error(
             "Failed to parse LITELLM_PASS_THROUGH_HEADERS, must be a valid JSON object"
         )
-
-# Optinal maximum workers (if 0, disregard)
-MAX_WORKERS = int(os.environ.get("MAX_WORKERS") or 0)

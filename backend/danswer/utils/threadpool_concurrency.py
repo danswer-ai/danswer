@@ -6,7 +6,6 @@ from typing import Any
 from typing import Generic
 from typing import TypeVar
 
-from danswer.configs.model_configs import MAX_WORKERS
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -89,13 +88,7 @@ def run_functions_in_parallel(
     """
     results = {}
 
-    max_workers = (
-        len(function_calls)
-        if MAX_WORKERS == 0
-        else min(len(function_calls), MAX_WORKERS)
-    )
-
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    with ThreadPoolExecutor(max_workers=len(function_calls)) as executor:
         future_to_id = {
             executor.submit(func_call.execute): func_call.result_id
             for func_call in function_calls

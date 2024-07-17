@@ -173,7 +173,7 @@ export const SearchSection = ({
 
     async function initialSessionFetch() {
       const response = await fetch(
-        `/api/query/get-search-session/${existingSearchessionId}`
+        `/api/query/search-session/${existingSearchessionId}`
       );
       const searchSession = (await response.json()) as SearchSession;
       const message = extractFirstUserMessage(searchSession);
@@ -239,7 +239,11 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       documents,
     }));
-    if (documents.length == 0 || disabledAgentic) {
+    if (disabledAgentic) {
+      setIsFetching(false);
+      setSearchState("input");
+    }
+    if (documents.length == 0) {
       setSearchState("input");
     }
   };
@@ -560,12 +564,13 @@ export const SearchSection = ({
                   />
 
                   <div className="mt-6">
-                    {!(agenticResults && isFetching) ? (
+                    {!(agenticResults && isFetching) || disabledAgentic ? (
                       <SearchResultsDisplay
+                        disabledAgentic={disabledAgentic}
                         contentEnriched={contentEnriched}
                         comments={comments}
                         sweep={sweep}
-                        agenticResults={agenticResults}
+                        agenticResults={agenticResults && !disabledAgentic}
                         performSweep={performSweep}
                         searchResponse={searchResponse}
                         isFetching={isFetching}

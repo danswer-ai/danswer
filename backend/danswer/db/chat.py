@@ -116,17 +116,16 @@ def get_chat_sessions_by_user(
     user_id: UUID | None,
     deleted: bool | None,
     db_session: Session,
-    include_one_shot: bool = False,
     only_one_shot: bool = False,
 ) -> list[ChatSession]:
     stmt = select(ChatSession).where(ChatSession.user_id == user_id)
 
-    if not include_one_shot and not only_one_shot:
-        stmt = stmt.where(ChatSession.one_shot.is_(False))
-
     if only_one_shot:
         stmt = stmt.where(ChatSession.one_shot.is_(True))
-        stmt = stmt.order_by(desc(ChatSession.id))
+    else:
+        stmt = stmt.where(ChatSession.one_shot.is_(False))
+
+    stmt = stmt.order_by(desc(ChatSession.time_created))
 
     if deleted is not None:
         stmt = stmt.where(ChatSession.deleted == deleted)
@@ -255,7 +254,6 @@ def delete_chat_session(
     db_session.commit()
 
 
-# def get_chat
 def delete_chat_sessions_older_than(days_old: int, db_session: Session) -> None:
     cutoff_time = datetime.utcnow() - timedelta(days=days_old)
     old_sessions = db_session.execute(

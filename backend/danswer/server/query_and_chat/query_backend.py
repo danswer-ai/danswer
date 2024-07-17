@@ -142,8 +142,7 @@ def query_validation(
     return QueryValidationResponse(reasoning=reasoning, answerable=answerable)
 
 
-# Search history
-@basic_router.get("/get-user-searches")
+@basic_router.get("/user-searches")
 def get_user_query_sessions(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -182,7 +181,7 @@ def get_user_query_sessions(
     return response
 
 
-@basic_router.get("/get-search-session/{session_id}")
+@basic_router.get("/search-session/{session_id}")
 def get_search_session(
     session_id: int,
     is_shared: bool = False,

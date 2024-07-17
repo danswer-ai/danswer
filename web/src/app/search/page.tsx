@@ -34,7 +34,7 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
 import ToggleSearch from "./WrappedSearch";
 import {
   AGENTIC_SEARCH_TYPE_COOKIE_NAME,
-  DISABLE_AGENTIC,
+  DISABLE_AGENTIC_SEARCH,
 } from "@/lib/constants";
 import WrappedSearch from "./WrappedSearch";
 
@@ -52,7 +52,7 @@ export default async function Home() {
     fetchAssistantsSS(),
     fetchSS("/query/valid-tags"),
     fetchSS("/secondary-index/get-embedding-models"),
-    fetchSS("/query/get-user-searches"),
+    fetchSS("/query/user-searches"),
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -204,7 +204,7 @@ export default async function Home() {
 
       <InstantSSRAutoRefresh />
       <WrappedSearch
-        disabledAgentic={DISABLE_AGENTIC}
+        disabledAgentic={DISABLE_AGENTIC_SEARCH}
         initiallyToggled={toggleSidebar}
         querySessions={querySessions}
         user={user}

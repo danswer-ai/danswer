@@ -90,15 +90,6 @@ class SearchPipeline:
             Iterator[list[InferenceSection] | list[int]] | None
         ) = None
 
-    def extract_section(self, content: str, start_tag: str, end_tag: str) -> str:
-        parts = content.split(f"[{start_tag}]", 1)
-        if len(parts) == 2:
-            _, section = parts
-            parts = section.split(f"[{end_tag}]", 1)
-            if len(parts) == 2:
-                return parts[0].strip()
-        return ""
-
     def evaluate(
         self, document: InferenceSection, query: str
     ) -> dict[str, RelevanceChunk]:

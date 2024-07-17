@@ -42,7 +42,7 @@ DO NOT refer to "the document" (describe it as "this")- ONLY state the core poin
 3. Relevance Determination:
 RESULT: True (if potentially relevant)
 RESULT: False (if not relevant)
-"""
+""".strip()
 # Use the following for easy viewing of prompts
 if __name__ == "__main__":
     print(LANGUAGE_REPHRASE_PROMPT)

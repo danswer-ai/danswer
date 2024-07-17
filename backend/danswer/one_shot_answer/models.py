@@ -34,7 +34,12 @@ class DirectQARequest(ChunkContext):
     skip_llm_chunk_filter: bool | None = None
     chain_of_thought: bool = False
     return_contexts: bool = False
-    evaluate_response: bool = False  # Analyze the results
+    # This is to toggle agentic evaluation:
+    # 1. Evaluates whether each response is relevant or not
+    # 2. Provides a summary of the document's relevance in the resulsts
+    evaluate_response: bool = False
+    # If True, skips generative an AI response to the search query
+    skip_gen_ai_answer_generation: bool = False
 
     @root_validator
     def check_chain_of_thought_and_prompt_id(

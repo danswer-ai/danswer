@@ -25,6 +25,7 @@ export function PagesTab({
   const groupedChatSessions = existingChats
     ? groupSessionsByDateRange(existingChats)
     : [];
+
   const { setPopup } = usePopup();
   const router = useRouter();
   const [isDragOver, setIsDragOver] = useState<boolean>(false);

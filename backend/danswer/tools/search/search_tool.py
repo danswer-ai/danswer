@@ -10,7 +10,7 @@ from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import DanswerContext
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import LlmDoc
-from danswer.configs.chat_configs import DISABLE_AGENTIC
+from danswer.configs.chat_configs import DISABLE_AGENTIC_SEARCH
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import JSON_ro
@@ -295,7 +295,7 @@ class SearchTool(Tool):
 
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
 
-        if self.evaluate_response and not DISABLE_AGENTIC:
+        if self.evaluate_response and not DISABLE_AGENTIC_SEARCH:
             yield ToolResponse(
                 id=SEARCH_EVALUATION_ID, response=search_pipeline.relevance_summaries
             )

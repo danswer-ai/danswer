@@ -213,16 +213,15 @@ def stream_answer_objects(
         # tested quotes with tool calling too much yet
         skip_explicit_tool_calling=True,
         return_contexts=query_req.return_contexts,
-        skip_generation=True,
+        skip_gen_ai_answer_generation=query_req.skip_gen_ai_answer_generation,
     )
 
-    # won't be any ImageGenerationDisplay responses since that tool is never passed in go
+    # won't be any ImageGenerationDisplay responses since that tool is never passed in
     dropped_inds: list[int] = []
 
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
         # for one-shot flow, don't currently do anything with these
         if isinstance(packet, ToolResponse):
-            # add a handling of the response here to add the information regarding relevance to the search results.
             # (likely fine that it comes after the initial creation of the search docs)
             if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                 search_response_summary = cast(SearchResponseSummary, packet.response)
@@ -283,7 +282,6 @@ def stream_answer_objects(
                         relevance_summary=evaluation_response,
                     )
                 yield evaluation_response
-
         else:
             yield packet
 

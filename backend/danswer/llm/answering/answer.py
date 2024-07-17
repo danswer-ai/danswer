@@ -115,7 +115,7 @@ class Answer:
         skip_explicit_tool_calling: bool = False,
         # Returns the full document sections text from the search tool
         return_contexts: bool = False,
-        skip_generation: bool = False,
+        skip_gen_ai_answer_generation: bool = False,
     ) -> None:
         if single_message_history and message_history:
             raise ValueError(
@@ -149,7 +149,7 @@ class Answer:
         ) = None
 
         self._return_contexts = return_contexts
-        self.skip_generation = skip_generation
+        self.skip_gen_ai_answer_generation = skip_gen_ai_answer_generation
 
     def _update_prompt_builder_for_search_tool(
         self, prompt_builder: AnswerPromptBuilder, final_context_documents: list[LlmDoc]
@@ -473,7 +473,7 @@ class Answer:
                     # assumes all tool responses will come first, then the final answer
                     break
 
-            if not self.skip_generation:
+            if not self.skip_gen_ai_answer_generation:
                 process_answer_stream_fn = _get_answer_stream_processor(
                     context_docs=final_context_docs or [],
                     # if doc selection is enabled, then search_results will be None,
