@@ -163,65 +163,6 @@ class SearchPipeline:
         results[f"{document_id}-{chunk_id}"] = relevance
         return results
 
-    # NOTE: previous doucment-level evaluation
-    # def evaluate(self, document: LlmDoc, query: str) -> dict[str, RelevanceChunk]:
-    #     relevance: RelevanceChunk = RelevanceChunk()
-    #     results = {}
-    #     document_id = document.document_id
-
-    #     prompt = f"""
-    #     Analyze the relevance of this document to the search query:
-    #     Title: {document_id.split("/")[-1]}
-    #     Blurb: {document.content}
-    #     Query: {query}
-    #     {AGENTIC_SEARCH_EVALUATION_PROMPT}
-    #     """
-
-    #     content = "".join(
-    #         message_generator_to_string_generator(self.llm.stream(prompt=prompt))
-    #     )
-    #     analysis = ""
-    #     relevant = False
-    #     chain_of_thought = ""
-
-    #     parts = content.split("[ANALYSIS_START]", 1)
-    #     if len(parts) == 2:
-    #         chain_of_thought, rest = parts
-    #     else:
-    #         logger.warning(f"Missing [ANALYSIS_START] tag for document {document_id}")
-    #         rest = content
-
-    #     parts = rest.split("[ANALYSIS_END]", 1)
-    #     if len(parts) == 2:
-    #         analysis, result = parts
-    #     else:
-    #         logger.warning(f"Missing [ANALYSIS_END] tag for document {document_id}")
-    #         result = rest
-
-    #     chain_of_thought = chain_of_thought.strip()
-    #     analysis = analysis.strip()
-    #     result = result.strip().lower()
-
-    #     # Determine relevance
-    #     if "result: true" in result:
-    #         relevant = True
-    #     elif "result: false" in result:
-    #         relevant = False
-    #     else:
-    #         logger.warning(f"Invalid result format for document {document_id}")
-
-    #     if not analysis:
-    #         logger.warning(
-    #             f"Couldn't extract proper analysis for document {document_id}. Using full content."
-    #         )
-    #         analysis = content
-
-    #     relevance.content = analysis
-    #     relevance.relevant = relevant
-
-    #     results[document_id] = relevance
-    #     return results
-
     """Pre-processing"""
 
     def _run_preprocessing(self) -> None:
@@ -480,20 +421,6 @@ class SearchPipeline:
         return {
             next(iter(value)): value[next(iter(value))] for value in results.values()
         }
-
-        # NOTE: Previous document level evaluation
-        # @property
-        # def relevance_summaries(self) -> dict[str, RelevanceChunk]:
-        #     sections = _merge_sections(self.reranked_sections)
-        #     llm_docs = [llm_doc_from_inference_section(section) for section in sections]
-        #     if len(llm_docs) == 0:
-        #         return {}
-        #         functions = [
-        #             FunctionCall(self.evaluate, (final_context, self.search_query.query))
-        #             for final_context in llm_docs
-        #         ]
-
-        #     results = run_functions_in_parallel(function_calls=functions)
 
     @property
     def section_relevance_list(self) -> list[bool]:

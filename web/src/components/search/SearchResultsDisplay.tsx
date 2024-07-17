@@ -93,9 +93,10 @@ export const SearchResultsDisplay = ({
     return (
       <div className="text-base gap-x-1.5 flex">
         <AlertIcon size={16} className="text-error my-auto mr-1" />
+
         <p>
-          <span className="text-error ">No documents were found!</span>
-          Have you set up a connector? Your data may not have loaded properly.
+          <span className="text-error ">No documents were found!</span> Have you
+          set up a connector? Your data may not have loaded properly.
         </p>
       </div>
     );
@@ -151,12 +152,20 @@ export const SearchResultsDisplay = ({
       })
     : [];
 
-  const orderedDocs =
-    contentEnriched && documents
-      ? documents.sort((a, b) =>
-          a.is_relevant === b.is_relevant ? 0 : a.is_relevant ? -1 : 1
-        )
-      : documents || [];
+  const getUniqueDocuments = (
+    documents: SearchDanswerDocument[]
+  ): SearchDanswerDocument[] => {
+    const seenIds = new Set<string>();
+    return documents.filter((doc) => {
+      if (!seenIds.has(doc.document_id)) {
+        seenIds.add(doc.document_id);
+        return true;
+      }
+      return false;
+    });
+  };
+
+  const uniqueDocuments = getUniqueDocuments(documents || []);
 
   return (
     <>
@@ -221,7 +230,7 @@ export const SearchResultsDisplay = ({
               </p>
             )}
 
-          {orderedDocs.map((document, ind) => {
+          {uniqueDocuments.map((document, ind) => {
             const relevance: DocumentRelevance | null =
               searchResponse.additional_relevance
                 ? searchResponse.additional_relevance[

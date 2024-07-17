@@ -67,7 +67,6 @@ export function PagesTab({
           />
         </div>
       )}
-
       <div
         onDragOver={(event) => {
           event.preventDefault();
@@ -86,7 +85,6 @@ export function PagesTab({
             History
           </p>
         )}
-
         {Object.entries(groupedChatSessions).map(
           ([dateRange, chatSessions], ind) => {
             if (chatSessions.length > 0) {

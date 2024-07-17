@@ -292,13 +292,11 @@ export const AgenticDocumentDisplay = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
-        transitionDelay: `${index! * 10}ms`, // Add a delay to the transition based on index
+        transitionDelay: `${index! * 10}ms`,
       }}
     >
       <div
-        className={`collapsible ${
-          !hide ? "collapsible-closed overflow-y-auto border-transparent" : ""
-        }`}
+        className={`collapsible ${!hide && "collapsible-closed overflow-y-auto border-transparent"}`}
       >
         <div className="flex relative">
           <a
