@@ -174,6 +174,7 @@ def _process_and_write_query_results(config: dict) -> None:
     print(
         f"Took {minutes:02d}:{seconds:02d} to ask and answer {len(results)} questions"
     )
+    print("saved test results to folder:", test_output_folder)
 
 
 def run_qa_test_and_save_results(run_suffix: str = "") -> None:
