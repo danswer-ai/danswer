@@ -3,14 +3,16 @@ from collections.abc import Generator
 from typing import Any
 from typing import cast
 
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pydantic import BaseModel
 
 from danswer.chat.chat_utils import combine_message_chain
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.dynamic_configs.interface import JSON_ro
+from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.answering.prompts.build import AnswerPromptBuilder, default_build_system_message, \
     default_build_user_message
-from danswer.llm.utils import message_to_string
+from danswer.llm.utils import message_to_string, _build_content, get_max_input_tokens
 from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
@@ -83,13 +85,15 @@ class SummaryGenerationTool(Tool):
             persona: Persona,
             prompt_config: PromptConfig,
             llm_config: LLMConfig,
-            llm: LLM | None
+            llm: LLM | None,
+            files: list[InMemoryChatFile] | None
     ) -> None:
         self.user = user
         self.persona = persona
         self.prompt_config = prompt_config
         self.llm_config = llm_config
         self.llm =llm
+        self.files=files
 
     @property
     def name(self) -> str:
@@ -161,7 +165,11 @@ class SummaryGenerationTool(Tool):
             default_build_system_message(self.prompt_config)
         )
         summaries = []
-        sections = query.split('\n\n')
+        message_content = _build_content(query, self.files)
+
+        sections = self.split_text_by_paragraphs(message_content)
+        #sections = message_content.split('\n\n')
+
         for section in sections:
             prompt_builder.update_user_prompt(
                 default_build_user_message(
@@ -178,6 +186,66 @@ class SummaryGenerationTool(Tool):
             id=SUMMARY_GENERATION_RESPONSE_ID,
             response = " ".join(summaries)
         )
+
+    def split_text_by_paragraphs(self, text):
+        """Split text into chunks of paragraphs with a buffer for previous summaries."""
+
+        chunks = []
+        current_chunk = []
+
+        max_tokens = get_max_input_tokens(
+            model_name=self.llm.config.model_name,
+            model_provider=self.llm.config.model_provider,
+        )
+        if len(text.split()) < max_tokens:
+            return [text]
+
+        #calculate effective max tokens
+        buffer_percent=0.1
+        buffer_tokens = int(max_tokens * buffer_percent)
+        effective_max_tokens = max_tokens - buffer_tokens
+
+        recursive = False
+        if recursive:
+            text_splitter = RecursiveCharacterTextSplitter( separators=[
+                    "\n\n",
+                    "\n",
+                    " ",
+                    ".",
+                    ",",
+                    "\u200b",  # Zero-width space
+                    "\uff0c",  # Fullwidth comma
+                    "\u3001",  # Ideographic comma
+                    "\uff0e",  # Fullwidth full stop
+                    "\u3002",  # Ideographic full stop
+                    "",
+                ],
+                    chunk_size = effective_max_tokens,
+                    chunk_overlap  = 100,
+                    length_function = len,
+                )
+
+            chunks = text_splitter.split_text(text)
+            return chunks
+        else:
+            paragraphs = text.split('\n\n')
+            current_length = 0
+            for paragraph in paragraphs:
+                paragraph_length = len(paragraph.split())
+                if current_length + paragraph_length > effective_max_tokens:
+                    if current_chunk:
+                        chunks.append("\n\n".join(current_chunk))
+                    current_chunk = []
+                    current_length = 0
+                current_chunk.append(paragraph)
+                current_length += paragraph_length
+
+
+            if current_chunk:
+                chunks.append("\n\n".join(current_chunk))
+
+
+            return chunks
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         summary_generation_response = cast(

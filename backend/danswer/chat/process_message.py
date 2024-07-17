@@ -495,7 +495,8 @@ def stream_chat_message_objects(
                         persona=persona,
                         prompt_config=prompt_config,
                         llm_config=llm.config,
-                        llm=llm
+                        llm=llm,
+                        files = latest_query_files
                     )
                     tool_dict[db_tool_model.id] = [summary_generation_tool]
                 elif tool_cls.__name__ == ImageGenerationTool.__name__:
