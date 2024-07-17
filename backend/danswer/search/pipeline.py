@@ -16,6 +16,7 @@ from danswer.llm.answering.prune_and_merge import ChunkRange
 from danswer.llm.answering.prune_and_merge import merge_chunk_intervals
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import message_generator_to_string_generator
+from danswer.prompts.miscellaneous_prompts import AGENTIC_SEARCH_EVALUATION_PROMPT
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import IndexFilters
@@ -188,24 +189,7 @@ class SearchPipeline:
         Blurb: {document.combined_content}
         Query: {query}
 
-        1. Chain of Thought Analysis:
-        Provide a chain of thought analysis considering:
-        - The main purpose and content of the document
-        - What the user is searching for
-        - How the document's topic relates to the query
-        - Potential uses of the document for the given query
-        Be thorough, but avoid unnecessary repetition. Think step by step.
-
-        2. Useful Analysis:
-        [ANALYSIS_START]
-        State the most important point from the chain of thought.
-        DO NOT refer to "the document" (describe it as "this")- ONLY state the core point in a description.
-        [ANALYSIS_END]
-
-        3. Relevance Determination:
-        RESULT: True (if potentially relevant)
-        RESULT: False (if not relevant)
-
+        {AGENTIC_SEARCH_EVALUATION_PROMPT}
         """
 
         content = "".join(
