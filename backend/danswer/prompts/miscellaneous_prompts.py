@@ -26,7 +26,7 @@ Query:
 
 AGENTIC_SEARCH_EVALUATION_PROMPT = """
 1. Chain of Thought Analysis:
-Provide a detailed chain of thought analysis considering:
+Provide a chain of thought analysis considering:
 - The main purpose and content of the document
 - What the user is searching for
 - How the document's topic relates to the query
@@ -35,8 +35,8 @@ Be thorough, but avoid unnecessary repetition. Think step by step.
 
 2. Useful Analysis:
 [ANALYSIS_START]
-Synthesize the analysis into one or two core points
-DO NOT refer to the document (refer to it as "this")- ONLY state the core points.
+State the two most important points from the chain of thought.
+DO NOT refer to "the document" (describe it as "this")- ONLY state the core points in a description.
 [ANALYSIS_END]
 
 3. Relevance Determination:

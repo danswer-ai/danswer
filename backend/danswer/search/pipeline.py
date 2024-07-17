@@ -128,7 +128,6 @@ class SearchPipeline:
         else:
             logger.warning(f"Missing [ANALYSIS_END] tag for document {document_id}")
             result = rest
-        print(content)
 
         chain_of_thought = chain_of_thought.strip()
         analysis = analysis.strip()
