@@ -184,7 +184,7 @@ class SqlGenerationTool(Tool):
         result_list = [dict(row._mapping) for row in dbrows]
 
         final_response = ""
-        isTableResponse = True
+        isTableResponse = "json" in query
         if not result_list:
             final_response = "No result found. Please rephrase your query!"
         else:
