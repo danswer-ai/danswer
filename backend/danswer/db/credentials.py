@@ -82,7 +82,7 @@ def fetch_credentials_by_source(
 ) -> list[Credential]:
     base_query = select(Credential).where(Credential.source == document_source)
     credentials = db_session.execute(base_query).scalars().all()
-    return credentials
+    return list(credentials)
 
 
 def swap_credentials_connector(

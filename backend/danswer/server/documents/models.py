@@ -108,6 +108,7 @@ class CredentialBase(BaseModel):
     # if `true`, then all Admins will have access to the credential
     admin_public: bool
     source: DocumentSource
+    name: str
 
 
 class CredentialSnapshot(CredentialBase):
@@ -115,7 +116,6 @@ class CredentialSnapshot(CredentialBase):
     user_id: UUID | None
     time_created: datetime
     time_updated: datetime
-    source: DocumentSource
 
     @classmethod
     def from_credential_db_model(cls, credential: Credential) -> "CredentialSnapshot":
@@ -129,6 +129,7 @@ class CredentialSnapshot(CredentialBase):
             time_created=credential.time_created,
             time_updated=credential.time_updated,
             source=credential.source,
+            name=credential.name,
         )
 
 

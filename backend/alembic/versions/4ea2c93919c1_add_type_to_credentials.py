@@ -68,6 +68,14 @@ def upgrade() -> None:
             nullable=True,  # Initially allow NULL values
         ),
     )
+    op.add_column(
+        "credential",
+        sa.Column(
+            "name",
+            sa.String(),
+            nullable=True,  # Initially allow NULL values
+        ),
+    )
 
     op.execute(
         """

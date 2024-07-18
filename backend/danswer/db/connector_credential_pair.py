@@ -6,6 +6,7 @@ from sqlalchemy import desc
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from danswer.configs.constants import DocumentSource
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.models import ConnectorCredentialPair
@@ -45,7 +46,7 @@ def get_connector_credential_pair(
 def get_connector_credential_source_from_id(
     cc_pair_id: int,
     db_session: Session,
-) -> ConnectorCredentialPair | None:
+) -> DocumentSource:
     stmt = select(ConnectorCredentialPair)
     stmt = stmt.where(ConnectorCredentialPair.id == cc_pair_id)
     result = db_session.execute(stmt)
