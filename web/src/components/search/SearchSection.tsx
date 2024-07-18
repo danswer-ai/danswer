@@ -34,7 +34,12 @@ import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
 
-export type searchState = "input" | "searching" | "analyzing" | "summarizing";
+export type searchState =
+  | "input"
+  | "searching"
+  | "reading"
+  | "analyzing"
+  | "summarizing";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -233,11 +238,21 @@ export const SearchSection = ({
     setTimeout(() => {
       setSearchState((searchState) => {
         if (searchState != "input") {
+          return "reading";
+        }
+        return "input";
+      });
+    }, 3000);
+
+    setTimeout(() => {
+      setSearchState((searchState) => {
+        if (searchState != "input") {
           return "analyzing";
         }
         return "input";
       });
-    }, 2000);
+    }, 4500);
+
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       documents,
