@@ -132,13 +132,10 @@ export const SearchSection = ({
   const [validQuestionResponse, setValidQuestionResponse] =
     useObjectState<ValidQuestionResponse>(VALID_QUESTION_RESPONSE_DEFAULT);
 
-  // Search Type
-  const [selectedSearchType, setSelectedSearchType] =
-    useState<SearchType>(defaultSearchType);
+  // Search Types
+  const selectedSearchType = defaultSearchType;
 
-  const [selectedPersona, setSelectedPersona] = useState<number>(
-    personas[0]?.id || 0
-  );
+  const selectedPersona = personas[0]?.id || 0;
 
   // Filters
   const filterManager = useFilters();
