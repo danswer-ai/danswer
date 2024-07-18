@@ -130,34 +130,38 @@ function Main({ ccPairId }: { ccPairId: number }) {
             onClick={() => setShowModifyCredential(true)}
             className="flex items-center gap-x-2 cursor-pointer bg-neutral-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-neutral-700"
           >
-            <FaSwatchbook /> Swap credential
+            <FaSwatchbook />
+            Swap credential
           </button>
           <button
             onClick={() => setShowCreateCredential(true)}
             className="flex items-center gap-x-2 cursor-pointer bg-neutral-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-neutral-700"
           >
-            <NewChatIcon /> New Credential
+            <NewChatIcon />
+            New Credential
           </button>
         </div>
       </div>
+
       {showModifyCredential && (
         <ModifyCredentialModal
+          connectorId={ccPair.connector.id}
+          credentialId={ccPair.credential.id}
+          id={ccPairId}
           onSwap={(credential: Credential<ConfluenceCredentialJson>) => null}
           onCreateNew={() => makeShowCreateCredential()}
-          id={ccPair.connector.id}
           onClose={closeModifyCredential}
         />
       )}
+
       {showCreateCredential && (
         <CreateCredentialModal
           onSwap={(credential: Credential<ConfluenceCredentialJson>) => null}
           onCreateNew={() => makeShowCreateCredential()}
-          id={ccPair.connector.id}
+          id={ccPairId}
           onClose={closeCreateCredential}
         />
       )}
-
-      {/* </div> */}
 
       <Divider />
       <ConfigDisplay

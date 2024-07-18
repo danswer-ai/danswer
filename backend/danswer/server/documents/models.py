@@ -77,6 +77,7 @@ class ConnectorSnapshot(ConnectorBase):
     credential_ids: list[int]
     time_created: datetime
     time_updated: datetime
+    source: DocumentSource
 
     @classmethod
     def from_connector_db_model(cls, connector: Connector) -> "ConnectorSnapshot":
@@ -97,10 +98,16 @@ class ConnectorSnapshot(ConnectorBase):
         )
 
 
+class CredentialSwapRequest(BaseModel):
+    new_credential_id: int
+    connector_id: int
+
+
 class CredentialBase(BaseModel):
     credential_json: dict[str, Any]
     # if `true`, then all Admins will have access to the credential
     admin_public: bool
+    source: DocumentSource
 
 
 class CredentialSnapshot(CredentialBase):
@@ -108,6 +115,7 @@ class CredentialSnapshot(CredentialBase):
     user_id: UUID | None
     time_created: datetime
     time_updated: datetime
+    source: DocumentSource
 
     @classmethod
     def from_credential_db_model(cls, credential: Credential) -> "CredentialSnapshot":
@@ -120,6 +128,7 @@ class CredentialSnapshot(CredentialBase):
             admin_public=credential.admin_public,
             time_created=credential.time_created,
             time_updated=credential.time_updated,
+            source=credential.source,
         )
 
 
@@ -140,6 +149,8 @@ class CCPairFullInfo(BaseModel):
         latest_deletion_attempt: DeletionAttemptSnapshot | None,
         num_docs_indexed: int,  # not ideal, but this must be computed separately
     ) -> "CCPairFullInfo":
+        print(cc_pair_model.credential.__dict__)
+
         return cls(
             id=cc_pair_model.id,
             name=cc_pair_model.name,

@@ -313,6 +313,7 @@ export type GroupedConnectorSummaries = Record<ValidSources, ConnectorSummary>;
 export interface CredentialBase<T> {
   credential_json: T;
   admin_public: boolean;
+  source: ValidSources;
 }
 
 export interface Credential<T> extends CredentialBase<T> {

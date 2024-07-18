@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
@@ -79,17 +80,17 @@ def associate_credential_to_connector(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
-    # try:
-    return add_credential_to_connector(
-        connector_id=connector_id,
-        credential_id=credential_id,
-        cc_pair_name=metadata.name,
-        is_public=metadata.is_public,
-        user=user,
-        db_session=db_session,
-    )
-    # except IntegrityError:
-    #     raise HTTPException(status_code=400, detail="Name must be unique")
+    try:
+        return add_credential_to_connector(
+            connector_id=connector_id,
+            credential_id=credential_id,
+            cc_pair_name=metadata.name,
+            is_public=metadata.is_public,
+            user=user,
+            db_session=db_session,
+        )
+    except IntegrityError:
+        raise HTTPException(status_code=400, detail="Name must be unique")
 
 
 @router.delete("/connector/{connector_id}/credential/{credential_id}")

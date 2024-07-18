@@ -12,11 +12,13 @@ from danswer.db.credentials import delete_credential
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
 from danswer.db.credentials import fetch_credentials_by_source
+from danswer.db.credentials import swap_credentials_connector
 from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.server.documents.models import CredentialBase
 from danswer.server.documents.models import CredentialSnapshot
+from danswer.server.documents.models import CredentialSwapRequest
 from danswer.server.documents.models import ObjectCreationIdResponse
 from danswer.server.models import StatusResponse
 
@@ -85,6 +87,20 @@ def delete_credential_by_id_admin(
     )
 
 
+@router.post("/admin/swap-credentials")
+def swap_credentials_for_connector(
+    credentail_swap_req: CredentialSwapRequest,
+    _: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    new_pair = swap_credentials_connector(
+        new_credential_id=credentail_swap_req.new_credential_id,
+        connector_id=credentail_swap_req.connector_id,
+        db_session=db_session,
+    )
+    return new_pair
+
+
 """Endpoints for all"""
 
 
@@ -106,6 +122,8 @@ def create_credential_from_model(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
+    print("HH")
+    print(credential_info)
     if user and user.role != UserRole.ADMIN and credential_info.admin_public:
         raise HTTPException(
             status_code=400,

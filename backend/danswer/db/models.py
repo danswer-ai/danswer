@@ -442,6 +442,9 @@ class Connector(Base):
 class Credential(Base):
     __tablename__ = "credential"
 
+    source: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     credential_json: Mapped[dict[str, Any]] = mapped_column(EncryptedJson())
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)

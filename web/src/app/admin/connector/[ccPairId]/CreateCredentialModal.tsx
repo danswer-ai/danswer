@@ -1,25 +1,16 @@
 import * as Yup from "yup";
-import { errorHandlingFetcher } from "@/lib/fetcher";
-
 import React, { useState } from "react";
 import { Modal } from "@/components/Modal";
-import { Button, Text, Callout, Badge, Card } from "@tremor/react";
-
-import { buildSimilarCredentialInfoURL } from "./lib";
-import useSWR from "swr";
+import { Button, Text, Badge, Card } from "@tremor/react";
 import { ConfluenceCredentialJson, Credential } from "@/lib/types";
-import { FaCreativeCommons, FaSwatchbook } from "react-icons/fa";
-import { TrashIcon } from "@/components/icons/icons";
-import {
-  CredentialForm,
-  submitCredential,
-} from "@/components/admin/connectors/CredentialForm";
+import { FaSwatchbook } from "react-icons/fa";
+
+import { submitCredential } from "@/components/admin/connectors/CredentialForm";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik } from "formik";
 import Popup from "@/components/popup/Popup";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { linkCredential } from "@/lib/credential";
-
 interface CredentialSelectionTableProps {
   credentials: Credential<any>[];
   onSelectCredential: (credential: Credential<any> | null) => void;
@@ -146,6 +137,7 @@ export default function CreateCredentialModal({
             submitCredential<ConfluenceCredentialJson>({
               credential_json: values,
               admin_public: true,
+              source: "confluence",
             }).then(async (response) => {
               console.log(response);
               const { message, isSuccess, credentialId } = response;
@@ -153,9 +145,6 @@ export default function CreateCredentialModal({
                 return;
               }
               console.log("link");
-
-              const d = await linkCredential(id, credentialId, "name");
-              console.log(d);
 
               setPopup({ message, type: isSuccess ? "success" : "error" });
               setTimeout(() => {

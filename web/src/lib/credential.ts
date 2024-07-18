@@ -48,3 +48,16 @@ export function linkCredential(
     }
   );
 }
+
+export function swapCredential(newCredentialId: number, connectorId: number) {
+  return fetch(`/api/manage/admin/swap-credentials`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      new_credential_id: newCredentialId,
+      connector_id: connectorId,
+    }),
+  });
+}

@@ -120,11 +120,6 @@ function SummaryRow({
           </button>
         </CustomTooltip>
       </TableCell>
-      <TableCell>
-        <button className="text-text-200 rounded p-2 cursor-pointer bg-neutral-700 hover:bg-neutral-800 border-neutral-400 border border">
-          New Connector
-        </button>
-      </TableCell>
 
       <TableCell className="w-[14.5%]"></TableCell>
       <TableCell></TableCell>

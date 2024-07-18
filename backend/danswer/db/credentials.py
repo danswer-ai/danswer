@@ -13,7 +13,6 @@ from danswer.connectors.gmail.constants import (
 from danswer.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
-from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
 from danswer.db.models import User
@@ -81,31 +80,51 @@ def fetch_credentials_by_source(
     user: User | None,
     document_source: DocumentSource | None = None,
 ) -> list[Credential]:
-    # Start with a base query joining Credential and ConnectorCredentialPair
-    base_query = select(Credential).join(ConnectorCredentialPair).join(Connector)
-
-    # Filter by document_source if provided
-    if document_source:
-        base_query = base_query.filter(Connector.source == document_source)
-
-    # Add user-specific filters
-    if user:
-        if user.is_admin:
-            # Admins can see admin_public credentials and their own
-            base_query = base_query.filter(
-                (Credential.admin_public == True)  # noqa: E712
-                | (Credential.user_id == user.id)  # noqa: E712
-            )
-        else:
-            # Regular users can only see their own credentials
-            base_query = base_query.filter(Credential.user_id == user.id)  # noqa: E712
-    else:
-        # If no user is provided, only fetch admin_public credentials
-        base_query = base_query.filter(Credential.admin_public == True)  # noqa: E712
-
-    # Execute the query and return the results
+    base_query = select(Credential).where(Credential.source == document_source)
     credentials = db_session.execute(base_query).scalars().all()
     return credentials
+
+
+def swap_credentials_connector(
+    new_credential_id: int, connector_id: int, db_session: Session
+) -> ConnectorCredentialPair:
+    # Find the existing ConnectorCredentialPair
+    existing_pair = db_session.execute(
+        select(ConnectorCredentialPair).where(
+            ConnectorCredentialPair.connector_id == connector_id
+        )
+    ).scalar_one_or_none()
+
+    if not existing_pair:
+        raise ValueError(
+            f"No ConnectorCredentialPair found for connector_id {connector_id}"
+        )
+
+    # Find the new Credential
+    new_credential = db_session.execute(
+        select(Credential).where(Credential.id == new_credential_id)
+    ).scalar_one_or_none()
+
+    if not new_credential:
+        raise ValueError(f"No Credential found with id {new_credential_id}")
+
+    # Check if the new credential is compatible with the connector
+    if new_credential.source != existing_pair.connector.source:
+        raise ValueError(
+            f"New credential source {new_credential.source} does not match connector source {existing_pair.connector.source}"
+        )
+
+    # Update the existing pair with the new credential
+    existing_pair.credential_id = new_credential_id
+    existing_pair.credential = new_credential
+
+    # Commit the changes
+    db_session.commit()
+
+    # Refresh the object to ensure all relationships are up-to-date
+    db_session.refresh(existing_pair)
+
+    return existing_pair
 
 
 def create_credential(
@@ -117,6 +136,7 @@ def create_credential(
         credential_json=credential_data.credential_json,
         user_id=user.id if user else None,
         admin_public=credential_data.admin_public,
+        source=credential_data.source,
     )
     db_session.add(credential)
     db_session.commit()

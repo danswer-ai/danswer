@@ -55,6 +55,7 @@ export function CredentialForm<T extends Yup.AnyObject>({
           submitCredential<T>({
             credential_json: values,
             admin_public: true,
+            source: "confluence",
           }).then(({ message, isSuccess }) => {
             setPopup({ message, type: isSuccess ? "success" : "error" });
             formikHelpers.setSubmitting(false);

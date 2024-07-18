@@ -5,18 +5,21 @@ import { Modal } from "@/components/Modal";
 import { Button, Text, Callout, Badge } from "@tremor/react";
 
 import { buildSimilarCredentialInfoURL } from "./lib";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { ConfluenceCredentialJson, Credential } from "@/lib/types";
 import { FaCreativeCommons, FaSwatchbook } from "react-icons/fa";
+import { swapCredential } from "@/lib/credential";
 
 interface CredentialSelectionTableProps {
   credentials: Credential<any>[];
   onSelectCredential: (credential: Credential<any> | null) => void;
+  currentCredentialId: number;
 }
 
 const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
   credentials,
   onSelectCredential,
+  currentCredentialId,
 }) => {
   const [selectedCredentialId, setSelectedCredentialId] = useState<
     number | null
@@ -42,14 +45,17 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
               Admin Public
             </th>
             <th className="p-2 text-left font-medium text-gray-600">Created</th>
-            <th className="p-2 text-left font-medium text-gray-600">Updated</th>
+            <th className="p-2 text-left font-medium text-gray-600">
+              Last Updated
+            </th>
+            <th className="p-2 text-left font-medium text-gray-600"></th>
           </tr>
         </thead>
         <tbody>
           {credentials.map((credential, ind) => (
             <tr key={credential.id} className="border-b hover:bg-gray-50">
               <td className="p-2">
-                {ind != 0 ? (
+                {credential.id != currentCredentialId ? (
                   <input
                     type="radio"
                     name="credentialSelection"
@@ -80,10 +86,14 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
 export default function ModifyCredentialModal({
   id,
   onClose,
+  connectorId,
+  credentialId,
   onSwap,
   onCreateNew,
 }: {
   id: number;
+  connectorId: number;
+  credentialId: number;
   onClose: () => void;
   onSwap: (selectedCredential: Credential<ConfluenceCredentialJson>) => void;
   onCreateNew: () => void;
@@ -93,8 +103,8 @@ export default function ModifyCredentialModal({
 
   const handleSelectCredential = (credential: Credential<any> | null) => {
     setSelectedCredential(credential);
-    console.log("Selected credential:", credential);
   };
+
   const {
     data: credentials,
     isLoading,
@@ -108,13 +118,17 @@ export default function ModifyCredentialModal({
     onClose();
     return <></>;
   }
-  console.log(credentials);
+  const [loading, setLoading] = useState<boolean>(false);
 
   return (
-    <Modal className="max-w-2xl rounded-lg" title={`Swap Credential`}>
-      <div className="mb-4">
+    <Modal
+      className="max-w-2xl rounded-lg"
+      title={`Swap Confluence Credential`}
+    >
+      <div className="mb-0">
         {credentials.length > 1 ? (
           <CredentialSelectionTable
+            currentCredentialId={credentialId}
             credentials={credentials}
             onSelectCredential={handleSelectCredential}
           />
@@ -132,10 +146,27 @@ export default function ModifyCredentialModal({
             Exit
           </Button>
           {credentials.length > 1 ? (
-            <Button className="bg-indigo-500 hover:bg-indigo-400">
+            <Button
+              onClick={async () => {
+                setLoading(true);
+                await swapCredential(selectedCredential?.id!, connectorId);
+                mutate(buildSimilarCredentialInfoURL(id));
+                setLoading(false);
+              }}
+              className="bg-indigo-500 hover:bg-indigo-400"
+            >
               <div className="flex gap-x-2 items-center w-full border-none">
-                <FaSwatchbook />
-                <p>Swap</p>
+                {false ? (
+                  <>
+                    <FaSwatchbook />
+                    <p>Loading..</p>
+                  </>
+                ) : (
+                  <>
+                    <FaSwatchbook />
+                    <p>Swap</p>
+                  </>
+                )}
               </div>
             </Button>
           ) : (
