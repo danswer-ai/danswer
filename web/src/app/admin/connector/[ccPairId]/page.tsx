@@ -4,7 +4,7 @@ import { CCPairFullInfo } from "./types";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
-import { Divider, Title } from "@tremor/react";
+import { Button, Divider, Title } from "@tremor/react";
 import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
 import { Text } from "@tremor/react";
 import { ConfigDisplay } from "./ConfigDisplay";
@@ -13,11 +13,20 @@ import { DeletionButton } from "./DeletionButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ReIndexButton } from "./ReIndexButton";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
-import { ValidSources } from "@/lib/types";
+import {
+  ConfluenceCredentialJson,
+  Credential,
+  ValidSources,
+} from "@/lib/types";
 import useSWR from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { buildCCPairInfoUrl } from "./lib";
+import { FaSwatchbook } from "react-icons/fa";
+import { NewChatIcon, TrashIcon } from "@/components/icons/icons";
+import ModifyCredentialModal from "./ModifyCredentialModal";
+import { useState } from "react";
+import CreateCredentialModal from "./CreateCredentialModal";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -25,6 +34,14 @@ import { buildCCPairInfoUrl } from "./lib";
 const CONNECTOR_TYPES_THAT_CANT_REINDEX: ValidSources[] = ["file"];
 
 function Main({ ccPairId }: { ccPairId: number }) {
+  const [showModifyCredential, setShowModifyCredential] = useState(false);
+  const [showCreateCredential, setShowCreateCredential] = useState(false);
+  const closeModifyCredential = () => {
+    setShowModifyCredential(false);
+  };
+  const closeCreateCredential = () => {
+    setShowCreateCredential(false);
+  };
   const {
     data: ccPair,
     isLoading,
@@ -61,6 +78,11 @@ function Main({ ccPairId }: { ccPairId: number }) {
       ? lastIndexAttempt.total_docs_indexed
       : ccPair.num_docs_indexed;
 
+  const makeShowCreateCredential = () => {
+    setShowModifyCredential(false);
+    setShowCreateCredential(true);
+  };
+
   return (
     <>
       <BackButton />
@@ -90,7 +112,53 @@ function Main({ ccPairId }: { ccPairId: number }) {
         Total Documents Indexed:{" "}
         <b className="text-emphasis">{totalDocsIndexed}</b>
       </div>
-      Credentials
+      <Divider />
+      <Title className="mb-2">Credentials</Title>
+      {/* <div className="flex gap-x-2"> */}
+      <div className="flex justify-start flex-col gap-y-2">
+        <div className="flex gap-x-2">
+          <p>Current credential:</p>
+          <Text className="ml-1 italic my-auto">
+            {
+              (ccPair.credential.credential_json as ConfluenceCredentialJson)
+                .confluence_access_token
+            }
+          </Text>
+        </div>
+        <div className="flex text-sm justify-start mr-auto gap-x-2">
+          <button
+            onClick={() => setShowModifyCredential(true)}
+            className="flex items-center gap-x-2 cursor-pointer bg-neutral-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-neutral-700"
+          >
+            <FaSwatchbook /> Swap credential
+          </button>
+          <button
+            onClick={() => setShowCreateCredential(true)}
+            className="flex items-center gap-x-2 cursor-pointer bg-neutral-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-neutral-700"
+          >
+            <NewChatIcon /> New Credential
+          </button>
+        </div>
+      </div>
+      {showModifyCredential && (
+        <ModifyCredentialModal
+          onSwap={(credential: Credential<ConfluenceCredentialJson>) => null}
+          onCreateNew={() => makeShowCreateCredential()}
+          id={ccPair.connector.id}
+          onClose={closeModifyCredential}
+        />
+      )}
+      {showCreateCredential && (
+        <CreateCredentialModal
+          onSwap={(credential: Credential<ConfluenceCredentialJson>) => null}
+          onCreateNew={() => makeShowCreateCredential()}
+          id={ccPair.connector.id}
+          onClose={closeCreateCredential}
+        />
+      )}
+
+      {/* </div> */}
+
       <Divider />
       <ConfigDisplay
         connectorSpecificConfig={ccPair.connector.connector_specific_config}

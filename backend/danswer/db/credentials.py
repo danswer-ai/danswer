@@ -6,12 +6,14 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import or_
 
 from danswer.auth.schemas import UserRole
+from danswer.configs.constants import DocumentSource
 from danswer.connectors.gmail.constants import (
     GMAIL_DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
 from danswer.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
+from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
 from danswer.db.models import User
@@ -72,6 +74,38 @@ def fetch_credential_by_id(
     result = db_session.execute(stmt)
     credential = result.scalar_one_or_none()
     return credential
+
+
+def fetch_credentials_by_source(
+    db_session: Session,
+    user: User | None,
+    document_source: DocumentSource | None = None,
+) -> list[Credential]:
+    # Start with a base query joining Credential and ConnectorCredentialPair
+    base_query = select(Credential).join(ConnectorCredentialPair).join(Connector)
+
+    # Filter by document_source if provided
+    if document_source:
+        base_query = base_query.filter(Connector.source == document_source)
+
+    # Add user-specific filters
+    if user:
+        if user.is_admin:
+            # Admins can see admin_public credentials and their own
+            base_query = base_query.filter(
+                (Credential.admin_public == True)  # noqa: E712
+                | (Credential.user_id == user.id)  # noqa: E712
+            )
+        else:
+            # Regular users can only see their own credentials
+            base_query = base_query.filter(Credential.user_id == user.id)  # noqa: E712
+    else:
+        # If no user is provided, only fetch admin_public credentials
+        base_query = base_query.filter(Credential.admin_public == True)  # noqa: E712
+
+    # Execute the query and return the results
+    credentials = db_session.execute(base_query).scalars().all()
+    return credentials
 
 
 def create_credential(

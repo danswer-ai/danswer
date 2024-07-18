@@ -6,10 +6,12 @@ from sqlalchemy.orm import Session
 from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
+from danswer.db.connector_credential_pair import get_connector_credential_source_from_id
 from danswer.db.credentials import create_credential
 from danswer.db.credentials import delete_credential
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
+from danswer.db.credentials import fetch_credentials_by_source
 from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
 from danswer.db.models import User
@@ -31,6 +33,38 @@ def list_credentials_admin(
     db_session: Session = Depends(get_session),
 ) -> list[CredentialSnapshot]:
     """Lists all public credentials"""
+    credentials = fetch_credentials(db_session=db_session, user=user)
+    return [
+        CredentialSnapshot.from_credential_db_model(credential)
+        for credential in credentials
+    ]
+
+
+@router.get("/admin/similar-credentials/{cc_pair_id}")
+def get_cc_source_full_info(
+    cc_pair_id: int,
+    user: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> list[CredentialSnapshot]:
+    source = get_connector_credential_source_from_id(
+        cc_pair_id=cc_pair_id,
+        db_session=db_session,
+    )
+    credentials = fetch_credentials_by_source(
+        db_session=db_session, user=user, document_source=source
+    )
+
+    return [
+        CredentialSnapshot.from_credential_db_model(credential)
+        for credential in credentials
+    ]
+
+
+@router.get("/credentials/{id}")
+def list_credentials_by_id(
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> list[CredentialSnapshot]:
     credentials = fetch_credentials(db_session=db_session, user=user)
     return [
         CredentialSnapshot.from_credential_db_model(credential)

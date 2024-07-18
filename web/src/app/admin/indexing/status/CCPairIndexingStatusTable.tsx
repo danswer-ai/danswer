@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Table,
   TableHead,
@@ -32,6 +32,8 @@ import { Tooltip } from "@/components/tooltip/Tooltip";
 import { SourceIcon } from "@/components/SourceIcon";
 import { getSourceDisplayName, listSourceMetadata } from "@/lib/sources";
 import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
+import { update } from "lodash";
+import { Warning } from "@phosphor-icons/react";
 
 const NUM_IN_PAGE = 20;
 
@@ -50,13 +52,16 @@ function SummaryRow({
   const publicPercentage = (summary.public / summary.count) * 100;
 
   return (
-    <TableRow
-      className="overflow-visible bg-white cursor-pointer"
-      onClick={onToggle}
-    >
+    <TableRow className="overflow-visible bg-white cursor-pointer">
       <TableCell className="py-4 w-[23%]">
-        <div className="text-xl flex items-center w-[200px] truncate ellipsis gap-x-2 font-semibold">
-          {isOpen ? <FiChevronDown size={20} /> : <FiChevronRight size={20} />}
+        <div className="text-xl flex items-center truncate ellipsis gap-x-2 font-semibold">
+          <button className="cursor-pointer" onClick={onToggle}>
+            {isOpen ? (
+              <FiChevronDown size={20} />
+            ) : (
+              <FiChevronRight size={20} />
+            )}
+          </button>
           <SourceIcon iconSize={20} sourceType={source} />
           {getSourceDisplayName(source)}
         </div>
@@ -107,6 +112,19 @@ function SummaryRow({
           {summary.totalDocsIndexed.toLocaleString()}
         </div>
       </TableCell>
+      <TableCell>
+        <CustomTooltip content="Some connectors did not index properly">
+          <button className="flex gap-x-1.5 rounded p-2 cursor-pointer bg-error/80 text-white items-center border-error border border">
+            <Warning className="h-4 w-4" />
+            Errors
+          </button>
+        </CustomTooltip>
+      </TableCell>
+      <TableCell>
+        <button className="text-text-200 rounded p-2 cursor-pointer bg-neutral-700 hover:bg-neutral-800 border-neutral-400 border border">
+          New Connector
+        </button>
+      </TableCell>
 
       <TableCell className="w-[14.5%]"></TableCell>
       <TableCell></TableCell>
@@ -131,7 +149,7 @@ function ConnectorRow({
 
   return (
     <TableRow
-      className="hover:bg-hover-light bg-background cursor-pointer relative"
+      className="hover:bg-hover-light w-full cursor-pointer relative"
       onClick={() =>
         router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`)
       }
@@ -183,6 +201,7 @@ export function CCPairIndexingStatusTable({
 }: {
   ccPairsIndexingStatuses: ConnectorIndexingStatus<any, any>[];
 }) {
+  const [allToggleTracker, setAllToggleTracker] = useState(true);
   const [page, setPage] = useState(1);
   const [openSources, setOpenSources] = useState<Record<ValidSources, boolean>>(
     {} as Record<ValidSources, boolean>
@@ -230,14 +249,41 @@ export function CCPairIndexingStatusTable({
     }));
   };
 
+  const toggleSources = (toggle: boolean) => {
+    const updatedSources = Object.fromEntries(
+      sortedSources.map((item) => [item, toggle])
+    );
+    setOpenSources(updatedSources as Record<ValidSources, boolean>);
+    setAllToggleTracker(!toggle);
+  };
+
+  const router = useRouter();
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey) {
+        switch (event.key.toLowerCase()) {
+          case "e":
+            toggleSources(allToggleTracker);
+            event.preventDefault();
+            break;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [router, allToggleTracker]);
+
   const totalPages = Math.ceil(ccPairsIndexingStatuses.length / NUM_IN_PAGE);
 
   return (
     <div className="overflow-">
       {sortedSources.map((source, ind) => (
         <div key={ind}>
-          <Table className="shadow overflow-x-scroll bg-white rounded-lg w-full">
-            <TableBody className="w-full">
+          <div className="shadow overflow-x-scroll text-sm bg-white rounded-lg ">
+            <div className="!p-0 !m-0 w-full">
               <SummaryRow
                 source={source}
                 summary={groupSummaries[source]}
@@ -247,7 +293,7 @@ export function CCPairIndexingStatusTable({
 
               {openSources[source] && (
                 <>
-                  <TableRow className="bg-gray-50 text-xs uppercase text-gray-500">
+                  <TableRow className="bg-gray-50  w-full text-xs uppercase text-gray-500">
                     <TableHeaderCell className="py-2 w-1/4">
                       Name
                     </TableHeaderCell>
@@ -270,6 +316,7 @@ export function CCPairIndexingStatusTable({
                       Manage
                     </TableHeaderCell>
                   </TableRow>
+
                   {groupedStatuses[source].map((ccPairsIndexingStatus) => (
                     <ConnectorRow
                       key={ccPairsIndexingStatus.cc_pair_id}
@@ -278,8 +325,8 @@ export function CCPairIndexingStatusTable({
                   ))}
                 </>
               )}
-            </TableBody>
-          </Table>
+            </div>
+          </div>
 
           <div className="mt-4"></div>
         </div>

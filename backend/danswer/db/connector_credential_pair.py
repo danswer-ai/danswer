@@ -42,6 +42,16 @@ def get_connector_credential_pair(
     return result.scalar_one_or_none()
 
 
+def get_connector_credential_source_from_id(
+    cc_pair_id: int,
+    db_session: Session,
+) -> ConnectorCredentialPair | None:
+    stmt = select(ConnectorCredentialPair)
+    stmt = stmt.where(ConnectorCredentialPair.id == cc_pair_id)
+    result = db_session.execute(stmt)
+    return result.scalar_one_or_none().connector.source
+
+
 def get_connector_credential_pair_from_id(
     cc_pair_id: int,
     db_session: Session,

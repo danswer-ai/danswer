@@ -189,13 +189,6 @@ const MainSection = ({
       (credential) => credential.credential_json?.slack_bot_token
     );
 
-  // const { isSubmitting, handleSubmit } = useCredentialForm(
-  //   (isSuccess) => {
-  //     // Handle submission result
-  //     console.log("Submission was successful:", isSuccess);
-  //   }
-  // );
-
   return (
     <div className="mx-auto w-full max-w-3xl">
       {index == 1 && (

@@ -91,7 +91,7 @@ export const CustomTooltip = ({
   return (
     <span className="relative inline-block">
       <span
-        className="underline h-full leading-none"
+        className=" h-full leading-none"
         onMouseEnter={showTooltip}
         onMouseLeave={hideTooltip}
       >

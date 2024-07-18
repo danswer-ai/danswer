@@ -328,7 +328,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
             ]}
           />
         </div>
-        <div className="pb-8 relative h-full overflow-y-auto w-full">
+        <div className="relative h-full w-full">
           <div className="fixed bg-background left-0 border-b gap-x-4 mb-8 px-4 py-2 w-full items-center flex justify-end">
             <a
               href="/chat"
@@ -339,7 +339,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
             </a>
             <UserDropdown user={user} />
           </div>
-          <div className="pt-20 flex overflow-y-auto h-full px-4 md:px-12">
+          <div className="pt-20  flex overflow-y-auto h-full px-4 md:px-12">
             {children}
           </div>
         </div>

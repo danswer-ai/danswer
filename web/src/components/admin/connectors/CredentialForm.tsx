@@ -8,13 +8,15 @@ import { Button } from "@tremor/react";
 
 export async function submitCredential<T>(
   credential: CredentialBase<T>
-): Promise<{ message: string; isSuccess: boolean }> {
+): Promise<{ credentialId?: number; message: string; isSuccess: boolean }> {
   let isSuccess = false;
   try {
     const response = await createCredential(credential);
+
     if (response.ok) {
+      const credentialId = (await response.json()).id;
       isSuccess = true;
-      return { message: "Success!", isSuccess: true };
+      return { credentialId, message: "Success!", isSuccess: true };
     } else {
       const errorData = await response.json();
       return { message: `Error: ${errorData.detail}`, isSuccess: false };
