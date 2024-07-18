@@ -223,6 +223,11 @@ MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE = int(
     os.environ.get("MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE", 0)
 )
 
+# comma delimited list of zendesk article labels to skip indexing for
+ZENDESK_CONNECTOR_SKIP_ARTICLE_LABELS = os.environ.get(
+    "ZENDESK_CONNECTOR_SKIP_ARTICLE_LABELS", ""
+).split(",")
+
 
 #####
 # Indexing Configs
