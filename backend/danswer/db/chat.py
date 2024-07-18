@@ -146,6 +146,12 @@ def delete_search_doc_message_relationship(
     db_session.commit()
 
 
+def delete_tool_call_for_message_id(message_id: int, db_session: Session) -> None:
+    stmt = delete(ToolCall).where(ToolCall.message_id == message_id)
+    db_session.execute(stmt)
+    db_session.commit()
+
+
 def delete_orphaned_search_docs(db_session: Session) -> None:
     orphaned_docs = (
         db_session.query(SearchDoc)
@@ -169,6 +175,7 @@ def delete_messages_and_files_from_chat_session(
     ).fetchall()
 
     for id, files in messages_with_files:
+        delete_tool_call_for_message_id(message_id=id, db_session=db_session)
         delete_search_doc_message_relationship(message_id=id, db_session=db_session)
         for file_info in files or {}:
             lobj_name = file_info.get("id")
