@@ -433,8 +433,6 @@ export const AIMessage = ({
                           <div className="px-8 flex gap-x-2">
                             {filteredDocs.length > 0 &&
                               filteredDocs.slice(0, 2).map((doc, ind) => (
-
-
                                 <div
                                   key={doc.document_id}
                                   className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 pb-2 pt-1 border-b
@@ -450,14 +448,14 @@ export const AIMessage = ({
                                       {getTitleFromDocument(doc)}
                                     </p>
                                     <div className="ml-auto flex-none">
-                                      {doc.is_internet ?
+                                      {doc.is_internet ? (
                                         <InternetSearchIcon url={doc.link} />
-                                        :
+                                      ) : (
                                         <SourceIcon
                                           sourceType={doc.source_type}
                                           iconSize={18}
                                         />
-                                      }
+                                      )}
                                     </div>
                                   </a>
                                   <div className="flex overscroll-x-scroll mt-.5">
@@ -467,10 +465,7 @@ export const AIMessage = ({
                                     {doc.blurb}
                                   </div>
                                 </div>
-
-                              )
-
-                              )}
+                              ))}
                             <div
                               onClick={() => {
                                 if (toggleDocumentSelection) {
@@ -775,9 +770,9 @@ export const HumanMessage = ({
                 ) : typeof content === "string" ? (
                   <>
                     {onEdit &&
-                      isHovered &&
-                      !isEditing &&
-                      (!files || files.length === 0) ? (
+                    isHovered &&
+                    !isEditing &&
+                    (!files || files.length === 0) ? (
                       <div className="ml-auto mr-1 my-auto">
                         <Tooltip delayDuration={1000} content={"Edit message"}>
                           <button
@@ -796,13 +791,14 @@ export const HumanMessage = ({
                     )}
 
                     <div
-                      className={`${!(
-                        onEdit &&
-                        isHovered &&
-                        !isEditing &&
-                        (!files || files.length === 0)
-                      ) && "ml-auto"
-                        } relative max-w-[70%] mb-auto rounded-3xl bg-user px-5 py-2.5`}
+                      className={`${
+                        !(
+                          onEdit &&
+                          isHovered &&
+                          !isEditing &&
+                          (!files || files.length === 0)
+                        ) && "ml-auto"
+                      } relative max-w-[70%] mb-auto rounded-3xl bg-user px-5 py-2.5`}
                     >
                       {content}
                     </div>
@@ -811,9 +807,9 @@ export const HumanMessage = ({
                 ) : (
                   <>
                     {onEdit &&
-                      isHovered &&
-                      !isEditing &&
-                      (!files || files.length === 0) ? (
+                    isHovered &&
+                    !isEditing &&
+                    (!files || files.length === 0) ? (
                       <div className="my-auto">
                         <Hoverable
                           icon={FiEdit2}
