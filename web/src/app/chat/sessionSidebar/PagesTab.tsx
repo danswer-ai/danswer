@@ -101,7 +101,7 @@ export function PagesTab({
                 return (
                   <div key={dateRange}>
                     <div
-                      className={`text-xs    text-subtle  ${
+                      className={`text-xs text-subtle ${
                         ind != 0 && "mt-5"
                       } flex pb-0.5 mb-1.5 font-medium`}
                     >
