@@ -79,6 +79,8 @@ LANGUAGE_CHAT_NAMING_HINT = (
 # Agentic search takes significantly more tokens and therefore has much higher cost.
 # This configuration allows users to get a search-only experience with instant results
 # and no involvement from the LLM.
+# Additionally, some LLM providers have strict rate limits which may prohibit
+# sending many API requests at once (as is done in agentic search).
 DISABLE_AGENTIC_SEARCH = (
     os.environ.get("DISABLE_AGENTIC_SEARCH") or "false"
 ).lower() == "true"

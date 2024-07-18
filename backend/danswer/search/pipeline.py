@@ -6,6 +6,7 @@ from typing import cast
 from sqlalchemy.orm import Session
 
 from danswer.chat.models import RelevanceChunk
+from danswer.configs.chat_configs import DISABLE_AGENTIC_SEARCH
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import User
@@ -15,8 +16,6 @@ from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prune_and_merge import ChunkRange
 from danswer.llm.answering.prune_and_merge import merge_chunk_intervals
 from danswer.llm.interfaces import LLM
-from danswer.llm.utils import message_generator_to_string_generator
-from danswer.prompts.miscellaneous_prompts import AGENTIC_SEARCH_EVALUATION_PROMPT
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import IndexFilters
@@ -30,6 +29,7 @@ from danswer.search.postprocessing.postprocessing import search_postprocessing
 from danswer.search.preprocessing.preprocessing import retrieval_preprocessing
 from danswer.search.retrieval.search_runner import retrieve_chunks
 from danswer.search.utils import inference_section_from_chunks
+from danswer.secondary_llm_flows.agentic_evaluation import evaluate_inference_section
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
@@ -89,70 +89,6 @@ class SearchPipeline:
         self._postprocessing_generator: (
             Iterator[list[InferenceSection] | list[int]] | None
         ) = None
-
-    def evaluate(
-        self, document: InferenceSection, query: str
-    ) -> dict[str, RelevanceChunk]:
-        relevance: RelevanceChunk = RelevanceChunk()
-        results = {}
-
-        # At least for now, is the same doucment ID across chunks
-        document_id = document.center_chunk.document_id
-        chunk_id = document.center_chunk.chunk_id
-
-        prompt = f"""
-        Analyze the relevance of this document to the search query:
-        Title: {document_id.split("/")[-1]}
-        Blurb: {document.combined_content}
-        Query: {query}
-
-        {AGENTIC_SEARCH_EVALUATION_PROMPT}
-        """
-
-        content = "".join(
-            message_generator_to_string_generator(self.llm.stream(prompt=prompt))
-        )
-        analysis = ""
-        relevant = False
-        chain_of_thought = ""
-
-        parts = content.split("[ANALYSIS_START]", 1)
-        if len(parts) == 2:
-            chain_of_thought, rest = parts
-        else:
-            logger.warning(f"Missing [ANALYSIS_START] tag for document {document_id}")
-            rest = content
-
-        parts = rest.split("[ANALYSIS_END]", 1)
-        if len(parts) == 2:
-            analysis, result = parts
-        else:
-            logger.warning(f"Missing [ANALYSIS_END] tag for document {document_id}")
-            result = rest
-
-        chain_of_thought = chain_of_thought.strip()
-        analysis = analysis.strip()
-        result = result.strip().lower()
-
-        # Determine relevance
-        if "result: true" in result:
-            relevant = True
-        elif "result: false" in result:
-            relevant = False
-        else:
-            logger.warning(f"Invalid result format for document {document_id}")
-
-        if not analysis:
-            logger.warning(
-                f"Couldn't extract proper analysis for document {document_id}. Using full content."
-            )
-            analysis = content
-
-        relevance.content = analysis
-        relevance.relevant = relevant
-
-        results[f"{document_id}-{chunk_id}"] = relevance
-        return results
 
     """Pre-processing"""
 
@@ -401,9 +337,16 @@ class SearchPipeline:
 
     @property
     def relevance_summaries(self) -> dict[str, RelevanceChunk]:
+        if DISABLE_AGENTIC_SEARCH:
+            raise ValueError(
+                "Agentic saerch operation called while DISABLE_AGENTIC_SEARCH is toggled"
+            )
+
         sections = self.reranked_sections
         functions = [
-            FunctionCall(self.evaluate, (section, self.search_query.query))
+            FunctionCall(
+                evaluate_inference_section, (section, self.search_query.query, self.llm)
+            )
             for section in sections
         ]
 

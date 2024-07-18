@@ -143,7 +143,7 @@ def query_validation(
 
 
 @basic_router.get("/user-searches")
-def get_user_query_sessions(
+def get_user_search_sessions(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ChatSessionsResponse:
@@ -199,12 +199,6 @@ def get_search_session(
         )
     except ValueError:
         raise ValueError("Search session does not exist or has been deleted")
-
-    if search_session.user_id is None and user_id is not None:
-        search_session.user_id = user_id
-        db_session.commit()
-
-    # let's get the documents now
 
     session_messages = get_chat_messages_by_session(
         chat_session_id=session_id,

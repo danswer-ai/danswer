@@ -67,8 +67,6 @@ from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
 from danswer.utils.logger import setup_logger
 
-# from danswer.db.models import SearchDoc
-
 logger = setup_logger()
 
 router = APIRouter(prefix="/chat")

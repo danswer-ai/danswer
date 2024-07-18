@@ -44,16 +44,10 @@ import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
-import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { Citation } from "@/components/search/results/Citation";
-import {
-  buildDocumentSummaryDisplay,
-  DocumentMetadataBlock,
-} from "@/components/search/DocumentDisplay";
+import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 import {
   DislikeFeedbackIcon,
-  EditIcon,
-  ExtendIcon,
   LikeFeedbackIcon,
 } from "@/components/icons/icons";
 import {
