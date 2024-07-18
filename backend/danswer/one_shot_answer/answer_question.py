@@ -189,7 +189,7 @@ def stream_answer_objects(
         chunks_below=query_req.chunks_below,
         full_doc=query_req.full_doc,
         bypass_acl=bypass_acl,
-        evaluate_response=query_req.evaluate_response,
+        llm_doc_eval=query_req.llm_doc_eval,
     )
 
     answer_config = AnswerStyleConfig(

@@ -39,7 +39,7 @@ SEARCH_RESPONSE_SUMMARY_ID = "search_response_summary"
 SEARCH_DOC_CONTENT_ID = "search_doc_content"
 SECTION_RELEVANCE_LIST_ID = "section_relevance_list"
 FINAL_CONTEXT_DOCUMENTS = "final_context_documents"
-SEARCH_EVALUATION_ID = "evaluate_response"
+SEARCH_EVALUATION_ID = "llm_doc_eval"
 
 
 class SearchResponseSummary(BaseModel):
@@ -85,7 +85,7 @@ class SearchTool(Tool):
         chunks_below: int = 0,
         full_doc: bool = False,
         bypass_acl: bool = False,
-        evaluate_response: bool = False,
+        llm_doc_eval: bool = False,
     ) -> None:
         self.user = user
         self.persona = persona
@@ -102,7 +102,7 @@ class SearchTool(Tool):
         self.full_doc = full_doc
         self.bypass_acl = bypass_acl
         self.db_session = db_session
-        self.evaluate_response = evaluate_response
+        self.llm_doc_eval = llm_doc_eval
 
     @property
     def name(self) -> str:
@@ -295,7 +295,7 @@ class SearchTool(Tool):
 
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
 
-        if self.evaluate_response and not DISABLE_AGENTIC_SEARCH:
+        if self.llm_doc_eval and not DISABLE_AGENTIC_SEARCH:
             yield ToolResponse(
                 id=SEARCH_EVALUATION_ID, response=search_pipeline.relevance_summaries
             )
