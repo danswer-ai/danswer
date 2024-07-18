@@ -49,8 +49,10 @@ const ToggleSwitch = () => {
         onClick={() => handleTabChange("search")}
       >
         <SearchIcon size={16} className="mr-2" />
-        Search
-        <span className="text-xs ml-2">{commandSymbol}S</span>
+        <p className="items-baseline flex">
+          Search
+          <span className="text-xs ml-2">{commandSymbol}S</span>
+        </p>
       </button>
       <button
         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 ease-in-out flex  items-center relative z-10 ${

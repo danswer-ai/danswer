@@ -202,7 +202,7 @@ export const SearchResultsDisplay = ({
                       setShowAll((showAll) => !showAll);
                     }
                   }}
-                  className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-16 h-8 ${
+                  className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-20 h-8 ${
                     !sweep
                       ? "bg-green-500 text-text-800"
                       : "bg-rose-700 text-text-100"
@@ -217,16 +217,18 @@ export const SearchResultsDisplay = ({
                     <span></span>
                     {!sweep
                       ? agenticResults
-                        ? "all"
-                        : "hide"
+                        ? "Show All"
+                        : "Focus"
                       : agenticResults
-                        ? "hide"
-                        : "undo"}
-                    {!sweep ? (
-                      <BroomIcon className="h-4 w-4" />
-                    ) : (
-                      <UndoIcon className="h-4 w-4" />
-                    )}
+                        ? "Focus"
+                        : "Show All"}
+                    <span className="ml-1">
+                      {!sweep ? (
+                        <BroomIcon className="h-4 w-4" />
+                      ) : (
+                        <UndoIcon className="h-4 w-4" />
+                      )}
+                    </span>
                   </div>
                 </button>
               </Tooltip>
