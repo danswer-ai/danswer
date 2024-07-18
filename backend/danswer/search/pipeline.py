@@ -341,6 +341,11 @@ class SearchPipeline:
             raise ValueError(
                 "Agentic saerch operation called while DISABLE_AGENTIC_SEARCH is toggled"
             )
+        if len(self.reranked_sections) == 0:
+            logger.warning(
+                "No sections found in agentic search evalution. Returning empty dict."
+            )
+            return {}
 
         sections = self.reranked_sections
         functions = [

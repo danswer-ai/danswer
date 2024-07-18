@@ -103,12 +103,13 @@ export const SearchResultsDisplay = ({
     !isFetching
   ) {
     return (
-      <div className="text-base gap-x-1.5 flex">
-        <AlertIcon size={16} className="text-error my-auto mr-1" />
-
+      <div className="text-base gap-x-1.5 flex flex-col">
+        <div className="flex gap-x-2 items-center text-error">
+          <AlertIcon size={16} className="text-error" />
+          No documents were found!
+        </div>
         <p>
-          <span className="text-error ">No documents were found!</span> Have you
-          set up a connector? Your data may not have loaded properly.
+          Have you set up a connector? Your data may not have loaded properly.
         </p>
       </div>
     );
