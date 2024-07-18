@@ -357,7 +357,6 @@ class SearchPipeline:
 
         results = run_functions_in_parallel(function_calls=functions)
 
-        # Maps the document_id-chunk_id to the
         return {
             next(iter(value)): value[next(iter(value))] for value in results.values()
         }
