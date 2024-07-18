@@ -52,9 +52,12 @@ def get_cc_source_full_info(
         cc_pair_id=cc_pair_id,
         db_session=db_session,
     )
+
     credentials = fetch_credentials_by_source(
         db_session=db_session, user=user, document_source=source
     )
+    print("za")
+    print(credentials)
 
     return [
         CredentialSnapshot.from_credential_db_model(credential)

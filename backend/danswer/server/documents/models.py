@@ -108,7 +108,7 @@ class CredentialBase(BaseModel):
     # if `true`, then all Admins will have access to the credential
     admin_public: bool
     source: DocumentSource
-    name: str
+    name: str | None = None
 
 
 class CredentialSnapshot(CredentialBase):

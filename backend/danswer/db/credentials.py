@@ -81,6 +81,8 @@ def fetch_credentials_by_source(
     document_source: DocumentSource | None = None,
 ) -> list[Credential]:
     base_query = select(Credential).where(Credential.source == document_source)
+    print("querying")
+    print(base_query)
     credentials = db_session.execute(base_query).scalars().all()
     return list(credentials)
 
