@@ -231,10 +231,13 @@ export const SearchSection = ({
 
   const updateDocs = (documents: SearchDanswerDocument[]) => {
     setTimeout(() => {
-      if (searchState != "input") {
-        setSearchState("analyzing");
-      }
-    }, 1500);
+      setSearchState((searchState) => {
+        if (searchState != "input") {
+          return "analyzing";
+        }
+        return "input";
+      });
+    }, 2000);
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       documents,
