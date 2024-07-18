@@ -67,7 +67,6 @@ export default async function GalleryPage({
           user={user}
           assistants={assistants}
         />
-
       </ChatProvider>
     </>
   );
