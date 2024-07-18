@@ -46,9 +46,9 @@ export default function SidebarWrapper<T extends object>({
       SIDEBAR_TOGGLED_COOKIE_NAME,
       String(!toggledSidebar).toLocaleLowerCase()
     ),
-      {
-        path: "/",
-      };
+    {
+      path: "/",
+    };
     setToggledSidebar((toggledSidebar) => !toggledSidebar);
   };
 
@@ -98,11 +98,10 @@ export default function SidebarWrapper<T extends object>({
             bg-opacity-80
             duration-300
             ease-in-out
-            ${
-              showDocSidebar || toggledSidebar
-                ? "opacity-100 w-[300px] translate-x-0"
-                : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
-            }`}
+            ${showDocSidebar || toggledSidebar
+            ? "opacity-100 w-[300px] translate-x-0"
+            : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
+          }`}
       >
         <div className="w-full relative">
           <HistorySidebar
@@ -143,6 +142,8 @@ export default function SidebarWrapper<T extends object>({
           <div className="mt-4 mx-auto">{content(contentProps)}</div>
         </div>
       </div>
+      <FixedLogo />
+
     </div>
   );
 }

@@ -68,8 +68,6 @@ export default async function GalleryPage({
           assistants={assistants}
         />
 
-        {/* Temporary - fixed logo */}
-        <FixedLogo />
       </ChatProvider>
     </>
   );

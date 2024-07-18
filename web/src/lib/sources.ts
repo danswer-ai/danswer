@@ -38,7 +38,7 @@ import {
   ColorSlackIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
-import { SourceCategory, SourceMetadata } from "./search/interfaces";
+import { DanswerDocument, SourceCategory, SourceMetadata } from "./search/interfaces";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { FaAccessibleIcon, FaSlack } from "react-icons/fa";
 
@@ -289,4 +289,16 @@ export function getSourcesForPersona(persona: Persona): ValidSources[] {
     });
   });
   return personaSources;
+}
+
+function stripTrailingSlash(str: string) {
+  if (str.substr(-1) === '/') {
+    return str.substr(0, str.length - 1);
+  }
+  return str;
+}
+
+export const getTitleFromDocument = (document: DanswerDocument) => {
+  return stripTrailingSlash(document.document_id).split("/")[stripTrailingSlash(document.document_id).split("/").length - 1]
+
 }
