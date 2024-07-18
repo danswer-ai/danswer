@@ -54,11 +54,13 @@ export function PagesTab({
     }
   };
 
+  const isHistoryEmpty = !existingChats || existingChats.length === 0;
+
   return (
     <div className="mb-1 ml-3 relative miniscroll overflow-y-auto h-full">
       {folders && folders.length > 0 && (
         <div className="py-2 border-b border-border">
-          <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-medium">
+          <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-bold">
             Folders
           </div>
           <FolderList
@@ -80,43 +82,51 @@ export function PagesTab({
         } rounded-md`}
       >
         {(page == "chat" || page == "search") && (
-          <p className="my-2 text-xs text-subtle flex font-semibold">
+          <p className="my-2 text-xs text-subtle flex font-bold">
             {page == "chat" && "Chat "}
             {page == "search" && "Search "}
             History
           </p>
         )}
-        {Object.entries(groupedChatSessions).map(
-          ([dateRange, chatSessions], ind) => {
-            if (chatSessions.length > 0) {
-              return (
-                <div key={dateRange}>
-                  <div
-                    className={`text-xs text-subtle  ${
-                      ind != 0 && "mt-5"
-                    } flex pb-0.5 mb-1.5 font-medium`}
-                  >
-                    {dateRange}
+        {isHistoryEmpty ? (
+          <p className="text-sm text-subtle mt-2 w-[250px]">
+            {page === "search"
+              ? "Try running a search! Your search history will appear here."
+              : "Try sending a message! Your chat history will appear here."}
+          </p>
+        ) : (
+          Object.entries(groupedChatSessions).map(
+            ([dateRange, chatSessions], ind) => {
+              if (chatSessions.length > 0) {
+                return (
+                  <div key={dateRange}>
+                    <div
+                      className={`text-xs text-subtle ${
+                        ind != 0 && "mt-5"
+                      } flex pb-0.5 mb-1.5 font-medium`}
+                    >
+                      {dateRange}
+                    </div>
+                    {chatSessions
+                      .filter((chat) => chat.folder_id === null)
+                      .map((chat) => {
+                        const isSelected = currentChatId === chat.id;
+                        return (
+                          <div key={`${chat.id}-${chat.name}`}>
+                            <ChatSessionDisplay
+                              search={page == "search"}
+                              chatSession={chat}
+                              isSelected={isSelected}
+                              skipGradient={isDragOver}
+                            />
+                          </div>
+                        );
+                      })}
                   </div>
-                  {chatSessions
-                    .filter((chat) => chat.folder_id === null)
-                    .map((chat) => {
-                      const isSelected = currentChatId === chat.id;
-                      return (
-                        <div key={`${chat.id}-${chat.name}`}>
-                          <ChatSessionDisplay
-                            search={page == "search"}
-                            chatSession={chat}
-                            isSelected={isSelected}
-                            skipGradient={isDragOver}
-                          />
-                        </div>
-                      );
-                    })}
-                </div>
-              );
+                );
+              }
             }
-          }
+          )
         )}
       </div>
     </div>
