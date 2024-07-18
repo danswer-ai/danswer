@@ -23,8 +23,12 @@ Query:
 {query}
 """.strip()
 
-
 AGENTIC_SEARCH_EVALUATION_PROMPT = """
+Analyze the relevance of this document to the search query:
+Title: {document_title}
+Blurb: {content}
+Query: {query}
+
 1. Chain of Thought Analysis:
 Provide a chain of thought analysis considering:
 - The main purpose and content of the document
@@ -43,6 +47,7 @@ DO NOT refer to "the document" (describe it as "this")- ONLY state the core poin
 RESULT: True (if potentially relevant)
 RESULT: False (if not relevant)
 """.strip()
+
 # Use the following for easy viewing of prompts
 if __name__ == "__main__":
     print(LANGUAGE_REPHRASE_PROMPT)

@@ -18,14 +18,11 @@ def evaluate_inference_section(
     document_id = document.center_chunk.document_id
     chunk_id = document.center_chunk.chunk_id
 
-    prompt = f"""
-    Analyze the relevance of this document to the search query:
-    Title: {document_id.split("/")[-1]}
-    Blurb: {document.combined_content}
-    Query: {query}
-
-    {AGENTIC_SEARCH_EVALUATION_PROMPT}
-    """
+    prompt = AGENTIC_SEARCH_EVALUATION_PROMPT.format(
+        document_title=document_id.split("/")[-1],
+        content=document.combined_content,
+        query=query,
+    )
 
     content = message_to_string(llm.invoke(prompt=prompt))
     analysis = ""
