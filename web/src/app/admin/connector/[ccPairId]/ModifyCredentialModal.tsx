@@ -9,6 +9,7 @@ import useSWR, { mutate } from "swr";
 import { ConfluenceCredentialJson, Credential } from "@/lib/types";
 import { FaCreativeCommons, FaSwatchbook } from "react-icons/fa";
 import { swapCredential } from "@/lib/credential";
+import { EditIcon, TrashIcon } from "@/components/icons/icons";
 
 interface CredentialSelectionTableProps {
   credentials: Credential<any>[];
@@ -48,7 +49,8 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
             <th className="p-2 text-left font-medium text-gray-600">
               Last Updated
             </th>
-            <th className="p-2 text-left font-medium text-gray-600"></th>
+            <th className="p-2 text-left font-medium text-gray-600">Name</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -74,6 +76,17 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
               </td>
               <td className="p-2">
                 {new Date(credential.time_updated).toLocaleString()}
+              </td>
+              <td className="p-2">
+                <p>{credential.name ?? "Untitled"}</p>
+              </td>
+              <td className="pt-3 flex gap-x-2  content-center mt-auto">
+                <button className="cursor-pointer my-auto">
+                  <TrashIcon />
+                </button>
+                <button className="cursor-pointer my-auto">
+                  <EditIcon />
+                </button>
               </td>
             </tr>
           ))}
@@ -122,7 +135,7 @@ export default function ModifyCredentialModal({
 
   return (
     <Modal
-      className="max-w-2xl rounded-lg"
+      className="max-w-3xl rounded-lg"
       title={`Swap Confluence Credential`}
     >
       <div className="mb-0">
