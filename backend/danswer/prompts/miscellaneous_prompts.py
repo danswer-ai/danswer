@@ -24,25 +24,6 @@ Query:
 """.strip()
 
 
-AGENTIC_SEARCH_EVALUATION_PROMPT = """
-1. Chain of Thought Analysis:
-Provide a chain of thought analysis considering:
-- The main purpose and content of the document
-- What the user is searching for
-- How the document's topic relates to the query
-- Potential uses of the document for the given query
-Be thorough, but avoid unnecessary repetition. Think step by step.
-
-2. Useful Analysis:
-[ANALYSIS_START]
-State the most important point from the chain of thought.
-DO NOT refer to "the document" (describe it as "this")- ONLY state the core point in a description.
-[ANALYSIS_END]
-
-3. Relevance Determination:
-RESULT: True (if potentially relevant)
-RESULT: False (if not relevant)
-""".strip()
 # Use the following for easy viewing of prompts
 if __name__ == "__main__":
     print(LANGUAGE_REPHRASE_PROMPT)
