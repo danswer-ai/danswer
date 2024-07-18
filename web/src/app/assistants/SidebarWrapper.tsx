@@ -143,6 +143,7 @@ export default function SidebarWrapper<T extends object>({
           <div className="mt-4 mx-auto">{content(contentProps)}</div>
         </div>
       </div>
+      <FixedLogo />
     </div>
   );
 }

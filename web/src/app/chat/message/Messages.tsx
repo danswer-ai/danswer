@@ -57,6 +57,8 @@ import {
 import { ValidSources } from "@/lib/types";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useMouseTracking } from "./hooks";
+import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import { getTitleFromDocument } from "@/lib/sources";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -443,17 +445,17 @@ export const AIMessage = ({
                                   >
                                     <Citation link={doc.link} index={ind + 1} />
                                     <p className="shrink truncate ellipsis break-all ">
-                                      {
-                                        doc.document_id.split("/")[
-                                          doc.document_id.split("/").length - 1
-                                        ]
-                                      }
+                                      {getTitleFromDocument(doc)}
                                     </p>
                                     <div className="ml-auto flex-none">
-                                      <SourceIcon
-                                        sourceType={doc.source_type}
-                                        iconSize={18}
-                                      />
+                                      {doc.is_internet ? (
+                                        <InternetSearchIcon url={doc.link} />
+                                      ) : (
+                                        <SourceIcon
+                                          sourceType={doc.source_type}
+                                          iconSize={18}
+                                        />
+                                      )}
                                     </div>
                                   </a>
                                   <div className="flex overscroll-x-scroll mt-.5">
