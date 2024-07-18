@@ -3,7 +3,6 @@ from collections.abc import Iterator
 from typing import Literal
 
 from langchain.schema.language_model import LanguageModelInput
-from langchain_core.messages import AIMessage
 from langchain_core.messages import AIMessageChunk
 from langchain_core.messages import BaseMessage
 from pydantic import BaseModel
@@ -51,30 +50,6 @@ def log_prompt(prompt: LanguageModelInput) -> None:
                 logger.debug(f"Message {ind}:\n{msg.content}")
     if isinstance(prompt, str):
         logger.debug(f"Prompt:\n{prompt}")
-
-
-def log_raw_model_output(output: BaseMessage) -> None:
-    if LOG_DANSWER_MODEL_INTERACTIONS:
-        if isinstance(output, AIMessage):
-            content = output.content or ""
-            if content:
-                log_msg = content
-            elif output.tool_calls:
-                log_msg = "Tool Calls: " + str(
-                    [
-                        {
-                            key: value
-                            for key, value in tool_call.items()
-                            if key != "index"
-                        }
-                        for tool_call in output.tool_calls
-                    ]
-                )
-            else:
-                log_msg = ""
-            logger.debug(f"Raw Model Output:\n{log_msg}")
-        else:
-            logger.debug(f"Raw Model Output:\n{output.content}")
 
 
 class LLM(abc.ABC):
