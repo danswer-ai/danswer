@@ -1,6 +1,7 @@
 from io import BytesIO
 from typing import cast
 from uuid import uuid4
+import base64
 
 import requests
 from sqlalchemy.orm import Session
@@ -55,22 +56,26 @@ def save_file_from_url(url: str) -> str:
     using multithreading. In practice, sharing a session has resulted in
     weird errors."""
     with get_session_context_manager() as db_session:
-        response = requests.get(url)
-        response.raise_for_status()
+        if "data:image/png;base64" in url:
+            content = base64.b64decode(url.split(",")[1])
+        else:
+            response = requests.get(url)
+            response.raise_for_status()
+            content = response.content
 
         unique_id = str(uuid4())
 
-        file_io = BytesIO(response.content)
+        file_io = BytesIO(content)
         file_store = get_default_file_store(db_session)
         file_store.save_file(
             file_name=unique_id,
             content=file_io,
             display_name="GeneratedImage",
             file_origin=FileOrigin.CHAT_IMAGE_GEN,
-            file_type="image/png;base64",
+            file_type="image/png",  # Correct content type
         )
         return unique_id
-
+    
 
 def save_files_from_urls(urls: list[str]) -> list[str]:
     funcs = [(save_file_from_url, (url,)) for url in urls]

@@ -167,12 +167,13 @@ class ImageGenerationTool(Tool):
             # need to pass in None rather than empty str
             api_base=self.api_base or None,
             api_version=self.api_version or None,
+            response_format="b64_json",
             n=1,
             extra_headers=build_llm_extra_headers(self.additional_headers),
         )
         return ImageGenerationResponse(
             revised_prompt=response.data[0]["revised_prompt"],
-            url=response.data[0]["url"],
+            url="data:image/png;base64," + response.data[0]["b64_json"],
         )
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
