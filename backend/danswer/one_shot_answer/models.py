@@ -37,7 +37,7 @@ class DirectQARequest(ChunkContext):
     # This is to toggle agentic evaluation:
     # 1. Evaluates whether each response is relevant or not
     # 2. Provides a summary of the document's relevance in the resulsts
-    evaluate_response: bool = False
+    llm_doc_eval: bool = False
     # If True, skips generative an AI response to the search query
     skip_gen_ai_answer_generation: bool = False
 

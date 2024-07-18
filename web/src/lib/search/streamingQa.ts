@@ -61,7 +61,7 @@ export const searchRequestStreamed = async ({
           filters: filters,
           enable_auto_detect_filters: false,
         },
-        evaluate_response: true,
+        llm_doc_eval: true,
         skip_gen_ai_answer_generation: true,
       }),
       headers: {
