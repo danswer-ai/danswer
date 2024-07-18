@@ -85,7 +85,7 @@ const Page = () => {
   return (
     <div className="mx-auto container">
       <AdminPageTitle
-        title="Manage Users Groups"
+        title="Manage User Groups"
         icon={<GroupsIcon size={32} />}
       />
 

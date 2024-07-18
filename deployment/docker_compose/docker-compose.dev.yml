@@ -51,6 +51,7 @@ services:
       - DISABLE_LITELLM_STREAMING=${DISABLE_LITELLM_STREAMING:-}
       - LITELLM_EXTRA_HEADERS=${LITELLM_EXTRA_HEADERS:-}
       - BING_API_KEY=${BING_API_KEY:-}
+      - DISABLE_AGENTIC_SEARCH=${DISABLE_AGENTIC_SEARCH:-}
       # if set, allows for the use of the token budget system
       - TOKEN_BUDGET_GLOBALLY_ENABLED=${TOKEN_BUDGET_GLOBALLY_ENABLED:-}
       # Enables the use of bedrock models
@@ -230,6 +231,7 @@ services:
       - INTERNAL_URL=http://api_server:8080
       - WEB_DOMAIN=${WEB_DOMAIN:-}
       - THEME_IS_DARK=${THEME_IS_DARK:-}
+      - DISABLE_AGENTIC_SEARCH=${DISABLE_AGENTIC_SEARCH:-}
 
       # Enterprise Edition only
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}

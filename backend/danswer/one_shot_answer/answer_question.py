@@ -10,6 +10,7 @@ from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import LLMRelevanceFilterResponse
+from danswer.chat.models import LLMRelevanceSummaryResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
@@ -21,6 +22,7 @@ from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
+from danswer.db.chat import update_search_docs_table_with_relevance
 from danswer.db.engine import get_session_context_manager
 from danswer.db.models import User
 from danswer.db.persona import get_prompt_by_id
@@ -48,6 +50,7 @@ from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.utils import get_json_line
 from danswer.tools.force import ForceUseTool
 from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
+from danswer.tools.search.search_tool import SEARCH_EVALUATION_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
 from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
@@ -56,6 +59,7 @@ from danswer.tools.tool import ToolResponse
 from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
+
 
 logger = setup_logger()
 
@@ -70,6 +74,7 @@ AnswerObjectIterator = Iterator[
     | ChatMessageDetail
     | CitationInfo
     | ToolCallKickoff
+    | LLMRelevanceSummaryResponse
 ]
 
 
@@ -88,8 +93,9 @@ def stream_answer_objects(
     bypass_acl: bool = False,
     use_citations: bool = False,
     danswerbot_flow: bool = False,
-    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-    | None = None,
+    retrieval_metrics_callback: (
+        Callable[[RetrievalMetricsContainer], None] | None
+    ) = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> AnswerObjectIterator:
     """Streams in order:
@@ -127,6 +133,7 @@ def stream_answer_objects(
         user_query=query_msg.message,
         history_str=history_str,
     )
+
     # Given back ahead of the documents for latency reasons
     # In chat flow it's given back along with the documents
     yield QueryRephrase(rephrased_query=rephrased_query)
@@ -182,6 +189,7 @@ def stream_answer_objects(
         chunks_below=query_req.chunks_below,
         full_doc=query_req.full_doc,
         bypass_acl=bypass_acl,
+        evaluate_response=query_req.evaluate_response,
     )
 
     answer_config = AnswerStyleConfig(
@@ -189,6 +197,7 @@ def stream_answer_objects(
         quotes_config=QuotesConfig() if not use_citations else None,
         document_pruning_config=document_pruning_config,
     )
+
     answer = Answer(
         question=query_msg.message,
         answer_style_config=answer_config,
@@ -204,12 +213,16 @@ def stream_answer_objects(
         # tested quotes with tool calling too much yet
         skip_explicit_tool_calling=True,
         return_contexts=query_req.return_contexts,
+        skip_gen_ai_answer_generation=query_req.skip_gen_ai_answer_generation,
     )
+
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
     dropped_inds: list[int] = []
+
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
         # for one-shot flow, don't currently do anything with these
         if isinstance(packet, ToolResponse):
+            # (likely fine that it comes after the initial creation of the search docs)
             if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                 search_response_summary = cast(SearchResponseSummary, packet.response)
 
@@ -242,6 +255,7 @@ def stream_answer_objects(
                     recency_bias_multiplier=search_response_summary.recency_bias_multiplier,
                 )
                 yield initial_response
+
             elif packet.id == SECTION_RELEVANCE_LIST_ID:
                 chunk_indices = packet.response
 
@@ -253,8 +267,21 @@ def stream_answer_objects(
                     )
 
                 yield LLMRelevanceFilterResponse(relevant_chunk_indices=packet.response)
+
             elif packet.id == SEARCH_DOC_CONTENT_ID:
                 yield packet.response
+
+            elif packet.id == SEARCH_EVALUATION_ID:
+                evaluation_response = LLMRelevanceSummaryResponse(
+                    relevance_summaries=packet.response
+                )
+                if reference_db_search_docs is not None:
+                    update_search_docs_table_with_relevance(
+                        db_session=db_session,
+                        reference_db_search_docs=reference_db_search_docs,
+                        relevance_summary=evaluation_response,
+                    )
+                yield evaluation_response
         else:
             yield packet
 
@@ -275,7 +302,6 @@ def stream_answer_objects(
     msg_detail_response = translate_db_message_to_chat_message_detail(
         gen_ai_response_message
     )
-
     yield msg_detail_response
 
 
@@ -309,8 +335,9 @@ def get_search_answer(
     bypass_acl: bool = False,
     use_citations: bool = False,
     danswerbot_flow: bool = False,
-    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-    | None = None,
+    retrieval_metrics_callback: (
+        Callable[[RetrievalMetricsContainer], None] | None
+    ) = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> OneShotQAResponse:
     """Collects the streamed one shot answer responses into a single object"""

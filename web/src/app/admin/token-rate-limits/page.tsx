@@ -23,6 +23,7 @@ import { mutate } from "swr";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { CreateRateLimitModal } from "./CreateRateLimitModal";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { ShieldIcon } from "@/components/icons/icons";
 
 const BASE_URL = "/api/admin/token-rate-limits";
 const GLOBAL_TOKEN_FETCH_URL = `${BASE_URL}/global`;
@@ -219,8 +220,10 @@ function Main() {
 export default function Page() {
   return (
     <div className="mx-auto container">
-      <AdminPageTitle title="Token Rate Limits" icon={<FiShield size={32} />} />
-
+      <AdminPageTitle
+        title="Token Rate Limits"
+        icon={<ShieldIcon size={32} />}
+      />
       <Main />
     </div>
   );

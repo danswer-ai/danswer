@@ -1,4 +1,4 @@
-import { ChatSidebar } from "@/app/chat/sessionSidebar/ChatSidebar";
+import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { UserDropdown } from "@/components/UserDropdown";
 import { ChatProvider } from "@/components/context/ChatContext";
@@ -8,6 +8,10 @@ import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import { AssistantsList } from "./AssistantsList";
+import { Logo } from "@/components/Logo";
+import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
+import SidebarWrapper from "../SidebarWrapper";
+import WrappedAssistantsMine from "./WrappedAssistantsMine";
 
 export default async function GalleryPage({
   searchParams,
@@ -33,6 +37,7 @@ export default async function GalleryPage({
     folders,
     openedFolders,
     shouldShowWelcomeModal,
+    toggleSidebar,
   } = data;
 
   return (
@@ -54,28 +59,17 @@ export default async function GalleryPage({
           openedFolders,
         }}
       >
-        <div className="flex relative bg-background text-default overflow-x-hidden h-screen">
-          <ChatSidebar
-            existingChats={chatSessions}
-            currentChatSession={null}
-            folders={folders}
-            openedFolders={openedFolders}
-          />
+        <WrappedAssistantsMine
+          initiallyToggled={toggleSidebar}
+          chatSessions={chatSessions}
+          folders={folders}
+          openedFolders={openedFolders}
+          user={user}
+          assistants={assistants}
+        />
 
-          <div
-            className={`w-full h-screen flex flex-col overflow-y-auto overflow-x-hidden relative`}
-          >
-            <div className="sticky top-0 left-80 z-10 w-full bg-background flex h-fit">
-              <div className="ml-auto my-auto mt-4 mr-8">
-                <UserDropdown user={user} />
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <AssistantsList user={user} assistants={assistants} />
-            </div>
-          </div>
-        </div>
+        {/* Temporary - fixed logo */}
+        <FixedLogo />
       </ChatProvider>
     </>
   );

@@ -20,13 +20,17 @@ import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
 import { personaComparator } from "@/app/admin/assistants/lib";
 import { cookies } from "next/headers";
-import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
+import {
+  SIDEBAR_TOGGLED_COOKIE_NAME,
+  DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME,
+} from "@/components/resizable/contants";
 import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { fetchAssistantsSS } from "../assistants/fetchAssistantsSS";
 
 interface FetchChatDataResult {
   user: User | null;
   chatSessions: ChatSession[];
+
   ccPairs: CCPairBasicInfo[];
   availableSources: ValidSources[];
   documentSets: DocumentSet[];
@@ -36,6 +40,7 @@ interface FetchChatDataResult {
   folders: Folder[];
   openedFolders: Record<string, boolean>;
   defaultPersonaId?: number;
+  toggleSidebar: boolean;
   finalDocumentSidebarInitialWidth?: number;
   shouldShowWelcomeModal: boolean;
   shouldDisplaySourcesIncompleteModal: boolean;
@@ -81,6 +86,7 @@ export async function fetchChatData(searchParams: {
     string | null,
   ];
   const chatSessionsResponse = results[5] as Response | null;
+
   const tagsResponse = results[6] as Response | null;
   const llmProviders = (results[7] || []) as LLMProviderDescriptor[];
   const foldersResponse = results[8] as Response | null; // Handle folders result
@@ -152,6 +158,12 @@ export async function fetchChatData(searchParams: {
   const documentSidebarCookieInitialWidth = cookies().get(
     DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME
   );
+  const sidebarToggled = cookies().get(SIDEBAR_TOGGLED_COOKIE_NAME);
+
+  const toggleSidebar = sidebarToggled
+    ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
+    : false;
+
   const finalDocumentSidebarInitialWidth = documentSidebarCookieInitialWidth
     ? parseInt(documentSidebarCookieInitialWidth.value)
     : undefined;
@@ -199,6 +211,7 @@ export async function fetchChatData(searchParams: {
     openedFolders,
     defaultPersonaId,
     finalDocumentSidebarInitialWidth,
+    toggleSidebar,
     shouldShowWelcomeModal,
     shouldDisplaySourcesIncompleteModal,
   };

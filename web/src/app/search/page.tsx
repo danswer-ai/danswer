@@ -28,6 +28,15 @@ import {
   FetchAssistantsResponse,
   fetchAssistantsSS,
 } from "@/lib/assistants/fetchAssistantsSS";
+import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
+import { ChatSession } from "../chat/interfaces";
+import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
+import ToggleSearch from "./WrappedSearch";
+import {
+  AGENTIC_SEARCH_TYPE_COOKIE_NAME,
+  DISABLE_AGENTIC_SEARCH,
+} from "@/lib/constants";
+import WrappedSearch from "./WrappedSearch";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -43,6 +52,7 @@ export default async function Home() {
     fetchAssistantsSS(),
     fetchSS("/query/valid-tags"),
     fetchSS("/secondary-index/get-embedding-models"),
+    fetchSS("/query/user-searches"),
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -69,6 +79,7 @@ export default async function Home() {
     results[4] as FetchAssistantsResponse;
   const tagsResponse = results[5] as Response | null;
   const embeddingModelResponse = results[6] as Response | null;
+  const queryResponse = results[7] as Response | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -95,6 +106,13 @@ export default async function Home() {
     );
   }
 
+  let querySessions: ChatSession[] = [];
+  if (queryResponse?.ok) {
+    querySessions = (await queryResponse.json()).sessions;
+  } else {
+    console.log(`Failed to fetch chat sessions - ${queryResponse?.text()}`);
+  }
+
   let assistants: Persona[] = initialAssistantsList;
   if (assistantsFetchError) {
     console.log(`Failed to fetch assistants - ${assistantsFetchError}`);
@@ -118,6 +136,7 @@ export default async function Home() {
     embeddingModelResponse && embeddingModelResponse.ok
       ? ((await embeddingModelResponse.json()) as FullEmbeddingModelResponse)
       : null;
+
   const currentEmbeddingModelName =
     embeddingModelVersionInfo?.current_model_name;
   const nextEmbeddingModelName =
@@ -151,9 +170,19 @@ export default async function Home() {
     !shouldDisplayNoSourcesModal &&
     !shouldShowWelcomeModal;
 
+  const sidebarToggled = cookies().get(SIDEBAR_TOGGLED_COOKIE_NAME);
+  const agenticSearchToggle = cookies().get(AGENTIC_SEARCH_TYPE_COOKIE_NAME);
+
+  const toggleSidebar = sidebarToggled
+    ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
+    : false;
+
+  const agenticSearchEnabled = agenticSearchToggle
+    ? agenticSearchToggle.value.toLocaleLowerCase() == "true" || true
+    : false;
+
   return (
     <>
-      <Header user={user} />
       <div className="m-3">
         <HealthCheckBanner />
       </div>
@@ -174,18 +203,18 @@ export default async function Home() {
       <ChatPopup />
 
       <InstantSSRAutoRefresh />
-
-      <div className="px-24 pt-10 flex flex-col items-center min-h-screen">
-        <div className="w-full">
-          <SearchSection
-            ccPairs={ccPairs}
-            documentSets={documentSets}
-            personas={assistants}
-            tags={tags}
-            defaultSearchType={searchTypeDefault}
-          />
-        </div>
-      </div>
+      <WrappedSearch
+        disabledAgentic={DISABLE_AGENTIC_SEARCH}
+        initiallyToggled={toggleSidebar}
+        querySessions={querySessions}
+        user={user}
+        ccPairs={ccPairs}
+        documentSets={documentSets}
+        personas={assistants}
+        tags={tags}
+        searchTypeDefault={searchTypeDefault}
+        agenticSearchEnabled={agenticSearchEnabled}
+      />
     </>
   );
 }

@@ -75,6 +75,17 @@ LANGUAGE_CHAT_NAMING_HINT = (
     or "The name of the conversation must be in the same language as the user query."
 )
 
+
+# Agentic search takes significantly more tokens and therefore has much higher cost.
+# This configuration allows users to get a search-only experience with instant results
+# and no involvement from the LLM.
+# Additionally, some LLM providers have strict rate limits which may prohibit
+# sending many API requests at once (as is done in agentic search).
+DISABLE_AGENTIC_SEARCH = (
+    os.environ.get("DISABLE_AGENTIC_SEARCH") or "false"
+).lower() == "true"
+
+
 # Stops streaming answers back to the UI if this pattern is seen:
 STOP_STREAM_PAT = os.environ.get("STOP_STREAM_PAT") or None
 

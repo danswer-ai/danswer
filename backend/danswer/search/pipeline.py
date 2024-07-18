@@ -5,10 +5,14 @@ from typing import cast
 
 from sqlalchemy.orm import Session
 
+from danswer.chat.models import RelevanceChunk
+from danswer.configs.chat_configs import DISABLE_AGENTIC_SEARCH
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
+from danswer.llm.answering.models import DocumentPruningConfig
+from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prune_and_merge import ChunkRange
 from danswer.llm.answering.prune_and_merge import merge_chunk_intervals
 from danswer.llm.interfaces import LLM
@@ -25,7 +29,10 @@ from danswer.search.postprocessing.postprocessing import search_postprocessing
 from danswer.search.preprocessing.preprocessing import retrieval_preprocessing
 from danswer.search.retrieval.search_runner import retrieve_chunks
 from danswer.search.utils import inference_section_from_chunks
+from danswer.secondary_llm_flows.agentic_evaluation import evaluate_inference_section
 from danswer.utils.logger import setup_logger
+from danswer.utils.threadpool_concurrency import FunctionCall
+from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 
 logger = setup_logger()
@@ -40,9 +47,12 @@ class SearchPipeline:
         fast_llm: LLM,
         db_session: Session,
         bypass_acl: bool = False,  # NOTE: VERY DANGEROUS, USE WITH CAUTION
-        retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-        | None = None,
+        retrieval_metrics_callback: (
+            Callable[[RetrievalMetricsContainer], None] | None
+        ) = None,
         rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+        prompt_config: PromptConfig | None = None,
+        pruning_config: DocumentPruningConfig | None = None,
     ):
         self.search_request = search_request
         self.user = user
@@ -58,6 +68,8 @@ class SearchPipeline:
             primary_index_name=self.embedding_model.index_name,
             secondary_index_name=None,
         )
+        self.prompt_config: PromptConfig | None = prompt_config
+        self.pruning_config: DocumentPruningConfig | None = pruning_config
 
         # Preprocessing steps generate this
         self._search_query: SearchQuery | None = None
@@ -74,9 +86,9 @@ class SearchPipeline:
         self._relevant_section_indices: list[int] | None = None
 
         # Generates reranked chunks and LLM selections
-        self._postprocessing_generator: Iterator[
-            list[InferenceSection] | list[int]
-        ] | None = None
+        self._postprocessing_generator: (
+            Iterator[list[InferenceSection] | list[int]] | None
+        ) = None
 
     """Pre-processing"""
 
@@ -322,6 +334,32 @@ class SearchPipeline:
             cast(Iterator[list[int]], self._postprocessing_generator)
         )
         return self._relevant_section_indices
+
+    @property
+    def relevance_summaries(self) -> dict[str, RelevanceChunk]:
+        if DISABLE_AGENTIC_SEARCH:
+            raise ValueError(
+                "Agentic saerch operation called while DISABLE_AGENTIC_SEARCH is toggled"
+            )
+        if len(self.reranked_sections) == 0:
+            logger.warning(
+                "No sections found in agentic search evalution. Returning empty dict."
+            )
+            return {}
+
+        sections = self.reranked_sections
+        functions = [
+            FunctionCall(
+                evaluate_inference_section, (section, self.search_query.query, self.llm)
+            )
+            for section in sections
+        ]
+
+        results = run_functions_in_parallel(function_calls=functions)
+
+        return {
+            next(iter(value)): value[next(iter(value))] for value in results.values()
+        }
 
     @property
     def section_relevance_list(self) -> list[bool]:

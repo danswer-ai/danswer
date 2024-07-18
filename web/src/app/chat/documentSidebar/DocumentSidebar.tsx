@@ -1,5 +1,5 @@
 import { DanswerDocument } from "@/lib/search/interfaces";
-import { Text } from "@tremor/react";
+import { Divider, Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { FiAlertTriangle, FiFileText } from "react-icons/fi";
@@ -50,6 +50,7 @@ interface DocumentSidebarProps {
   maxTokens: number;
   isLoading: boolean;
   initialWidth: number;
+  isOpen: boolean;
 }
 
 export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
@@ -64,6 +65,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
       maxTokens,
       isLoading,
       initialWidth,
+      isOpen,
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
@@ -86,43 +88,53 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
 
     return (
       <div
-        style={{ width: initialWidth }}
-        ref={ref}
-        className={`sidebar absolute right-0 h-screen border-l border-l-border`}
+        className={`fixed inset-0 transition-opacity duration-300 z-50 bg-black/80 ${
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            closeSidebar();
+          }
+        }}
       >
         <div
-          className="w-full flex-initial 
-          overflow-y-hidden
-          flex
-          flex-col h-screen"
+          className={`ml-auto rounded-l-lg relative border-l bg-text-100 sidebar z-50 absolute right-0 h-screen transition-all duration-300 ${
+            isOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[10%]"
+          }`}
+          ref={ref}
+          style={{
+            width: initialWidth,
+          }}
         >
-          {popup}
-
-          <div className="h-4/6 flex flex-col">
-            <div className="pl-3 pr-6 mb-3 flex border-b border-border">
-              <SectionHeader
-                name={
-                  selectedMessageRetrievalType === RetrievalType.SelectedDocs
-                    ? "Referenced Documents"
-                    : "Retrieved Documents"
-                }
-                icon={FiFileText}
-                closeHeader={closeSidebar}
-              />
+          <div className="pb-6 flex-initial overflow-y-hidden flex flex-col h-screen ">
+            {popup}
+            <div className="pl-3 mx-2 pr-6 mt-3 flex text-text-800 flex-col text-2xl text-emphasis flex font-semibold">
+              {dedupedDocuments.length} Documents
+              <p className="text-sm font-semibold flex flex-wrap gap-x-2 text-text-600 mt-1">
+                Select to add to continuous context
+                <a
+                  href="https://docs.danswer.dev/introduction"
+                  className="underline cursor-pointer hover:text-strong"
+                >
+                  Learn more
+                </a>
+              </p>
             </div>
 
+            <Divider className="mb-0 mt-4 pb-2" />
+
             {currentDocuments ? (
-              <div className="overflow-y-auto dark-scrollbar flex flex-col">
+              <div className="overflow-y-auto flex-grow dark-scrollbar flex relative flex-col">
                 <div>
                   {dedupedDocuments.length > 0 ? (
                     dedupedDocuments.map((document, ind) => (
                       <div
                         key={document.document_id}
-                        className={
+                        className={`${
                           ind === dedupedDocuments.length - 1
                             ? "mb-5"
-                            : "border-b border-border-light mb-3"
-                        }
+                            : "border-b  border-border-light mb-3"
+                        }`}
                       >
                         <ChatDocumentDisplay
                           document={document}
@@ -163,84 +175,25 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             )}
           </div>
 
-          <div className="text-sm mb-4 border-t border-border pt-4 overflow-y-hidden flex flex-col">
-            <div className="flex border-b border-border px-3">
-              <div className="flex">
-                <SectionHeader name="Selected Documents" icon={FiFileText} />
-                {tokenLimitReached && (
-                  <div className="ml-2 my-auto">
-                    <div className="mb-2">
-                      <HoverPopup
-                        mainContent={
-                          <FiAlertTriangle
-                            className="text-alert my-auto"
-                            size="16"
-                          />
-                        }
-                        popupContent={
-                          <Text className="w-40">
-                            Over LLM context length by:{" "}
-                            <i>{selectedDocumentTokens - maxTokens} tokens</i>
-                            <br />
-                            <br />
-                            {selectedDocuments &&
-                              selectedDocuments.length > 0 && (
-                                <>
-                                  Truncating: &quot;
-                                  <i>
-                                    {
-                                      selectedDocuments[
-                                        selectedDocuments.length - 1
-                                      ].semantic_identifier
-                                    }
-                                  </i>
-                                  &quot;
-                                </>
-                              )}
-                          </Text>
-                        }
-                        direction="left"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-              {selectedDocuments && selectedDocuments.length > 0 && (
-                <div
-                  className="ml-auto my-auto"
-                  onClick={clearSelectedDocuments}
-                >
-                  <BasicSelectable selected={false}>
-                    De-Select All
-                  </BasicSelectable>
-                </div>
-              )}
-            </div>
+          <div className="absolute left-0 bottom-0 w-full bg-gradient-to-b from-neutral-100/0 via-neutral-100/40 backdrop-blur-xs to-neutral-100 h-[100px]" />
+          <div className="sticky bottom-4 w-full left-0 justify-center flex gap-x-4">
+            <button
+              className="bg-[#84e49e] text-xs p-2 rounded text-text-800"
+              onClick={() => closeSidebar()}
+            >
+              Save Changes
+            </button>
 
-            {selectedDocuments && selectedDocuments.length > 0 ? (
-              <div className="flex flex-col gap-y-2 py-3 px-3 overflow-y-auto dark-scrollbar max-h-full">
-                {selectedDocuments.map((document) => (
-                  <SelectedDocumentDisplay
-                    key={document.document_id}
-                    document={document}
-                    handleDeselect={(documentId) => {
-                      toggleDocumentSelection(
-                        dedupedDocuments.find(
-                          (document) => document.document_id === documentId
-                        )!
-                      );
-                    }}
-                  />
-                ))}
-              </div>
-            ) : (
-              !isLoading && (
-                <Text className="mx-3 py-3">
-                  Select documents from the retrieved documents section to chat
-                  specifically with them!
-                </Text>
-              )
-            )}
+            <button
+              className="bg-error text-xs p-2 rounded text-text-200"
+              onClick={() => {
+                clearSelectedDocuments();
+
+                closeSidebar();
+              }}
+            >
+              Delete Context
+            </button>
           </div>
         </div>
       </div>

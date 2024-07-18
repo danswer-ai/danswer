@@ -9,18 +9,23 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function ChatTab({
+export function PagesTab({
+  page,
   existingChats,
   currentChatId,
   folders,
   openedFolders,
 }: {
-  existingChats: ChatSession[];
+  page: "search" | "chat" | "assistants";
+  existingChats?: ChatSession[];
   currentChatId?: number;
-  folders: Folder[];
-  openedFolders: { [key: number]: boolean };
+  folders?: Folder[];
+  openedFolders?: { [key: number]: boolean };
 }) {
-  const groupedChatSessions = groupSessionsByDateRange(existingChats);
+  const groupedChatSessions = existingChats
+    ? groupSessionsByDateRange(existingChats)
+    : [];
+
   const { setPopup } = usePopup();
   const router = useRouter();
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
@@ -50,9 +55,9 @@ export function ChatTab({
   };
 
   return (
-    <div className="mb-1 ml-3 overflow-y-auto h-full">
-      {folders.length > 0 && (
-        <div className="py-2 mr-3 border-b border-border">
+    <div className="mb-1 ml-3 relative miniscroll overflow-y-auto h-full">
+      {folders && folders.length > 0 && (
+        <div className="py-2 border-b border-border">
           <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-medium">
             Folders
           </div>
@@ -63,7 +68,6 @@ export function ChatTab({
           />
         </div>
       )}
-
       <div
         onDragOver={(event) => {
           event.preventDefault();
@@ -75,12 +79,23 @@ export function ChatTab({
           isDragOver ? "bg-hover" : ""
         } rounded-md`}
       >
+        {(page == "chat" || page == "search") && (
+          <p className="my-2 text-xs text-subtle flex font-semibold">
+            {page == "chat" && "Chat "}
+            {page == "search" && "Search "}
+            History
+          </p>
+        )}
         {Object.entries(groupedChatSessions).map(
-          ([dateRange, chatSessions]) => {
+          ([dateRange, chatSessions], ind) => {
             if (chatSessions.length > 0) {
               return (
                 <div key={dateRange}>
-                  <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-5 font-medium">
+                  <div
+                    className={`text-xs text-subtle  ${
+                      ind != 0 && "mt-5"
+                    } flex pb-0.5 mb-1.5 font-medium`}
+                  >
                     {dateRange}
                   </div>
                   {chatSessions
@@ -90,6 +105,7 @@ export function ChatTab({
                       return (
                         <div key={`${chat.id}-${chat.name}`}>
                           <ChatSessionDisplay
+                            search={page == "search"}
                             chatSession={chat}
                             isSelected={isSelected}
                             skipGradient={isDragOver}
