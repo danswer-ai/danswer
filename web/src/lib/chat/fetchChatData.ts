@@ -23,7 +23,7 @@ import { cookies } from "next/headers";
 import {
   SIDEBAR_TOGGLED_COOKIE_NAME,
   DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME,
-} from "@/components/resizable/contants";
+} from "@/components/resizable/constants";
 import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { fetchAssistantsSS } from "../assistants/fetchAssistantsSS";
 

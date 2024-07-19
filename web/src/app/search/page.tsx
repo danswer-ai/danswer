@@ -30,7 +30,7 @@ import {
 } from "@/lib/assistants/fetchAssistantsSS";
 import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
 import { ChatSession } from "../chat/interfaces";
-import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
+import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import ToggleSearch from "./WrappedSearch";
 import {
   AGENTIC_SEARCH_TYPE_COOKIE_NAME,
