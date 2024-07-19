@@ -144,7 +144,7 @@ def _is_port_in_use(port: int) -> bool:
 
 
 def start_docker_compose(
-    run_suffix: str, launch_web_ui: bool, use_cloud_gpu: bool
+    run_suffix: str, launch_web_ui: bool, use_cloud_gpu: bool, only_state: bool = False
 ) -> None:
     print("Starting Docker Compose...")
     os.chdir(os.path.dirname(__file__))
@@ -152,18 +152,22 @@ def start_docker_compose(
     command = f"docker compose -f docker-compose.search-testing.yml -p danswer-stack{run_suffix} up -d"
     command += " --build"
     command += " --force-recreate"
-    if use_cloud_gpu:
-        command += " --scale indexing_model_server=0"
-        command += " --scale inference_model_server=0"
-    if launch_web_ui:
-        web_ui_port = 3000
-        while _is_port_in_use(web_ui_port):
-            web_ui_port += 1
-        print(f"UI will be launched at http://localhost:{web_ui_port}")
-        os.environ["NGINX_PORT"] = str(web_ui_port)
+
+    if only_state:
+        command += " index relational_db"
     else:
-        command += " --scale web_server=0"
-        command += " --scale nginx=0"
+        if use_cloud_gpu:
+            command += " --scale indexing_model_server=0"
+            command += " --scale inference_model_server=0"
+        if launch_web_ui:
+            web_ui_port = 3000
+            while _is_port_in_use(web_ui_port):
+                web_ui_port += 1
+            print(f"UI will be launched at http://localhost:{web_ui_port}")
+            os.environ["NGINX_PORT"] = str(web_ui_port)
+        else:
+            command += " --scale web_server=0"
+            command += " --scale nginx=0"
 
     print("Docker Command:\n", command)
 

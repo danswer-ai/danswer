@@ -674,6 +674,14 @@ def _query_vespa(
     filtered_hits = [hit for hit in hits if hit["fields"].get(CONTENT) is not None]
 
     inference_chunks = [_vespa_hit_to_inference_chunk(hit) for hit in filtered_hits]
+
+    chunk_contents = [chunk.content for chunk in inference_chunks]
+    for ind, content in enumerate(chunk_contents):
+        print(f"\n\n\n\n\n\n{ind} Contents:\n")
+        print(content.replace("\r", "").replace("\n", " "))
+        if ind == 10:
+            break
+
     # Good Debugging Spot
     return inference_chunks
 

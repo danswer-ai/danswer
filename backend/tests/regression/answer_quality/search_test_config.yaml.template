@@ -19,6 +19,9 @@ clean_up_docker_containers: true
 # Whether to launch a web UI for the test
 launch_web_ui: false
 
+# Whether to only run Vespa and Postgres
+only_state: false
+
 # Whether to use a cloud GPU for processing
 use_cloud_gpu: false
 
