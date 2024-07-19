@@ -1,3 +1,5 @@
+"use client";
+
 import { HeaderTitle } from "@/components/header/Header";
 import { Logo } from "@/components/Logo";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
