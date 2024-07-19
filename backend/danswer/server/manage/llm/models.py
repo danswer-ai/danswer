@@ -94,5 +94,5 @@ class FullLLMProvider(LLMProvider):
                 or [llm_provider_model.default_model_name]
             ),
             is_public=llm_provider_model.is_public,
-            groups=llm_provider_model.groups,
+            groups=[group.id for group in llm_provider_model.groups],
         )

@@ -8,10 +8,35 @@ from danswer.db.models import LLMProvider as LLMProviderModel
 from danswer.db.models import LLMProvider__UserGroup
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
+from danswer.db.models import UserGroup
 from danswer.server.manage.embedding.models import CloudEmbeddingProvider
 from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
+
+
+def update_group_llm_provider_relationships(
+    llm_provider_id: int,
+    group_ids: list[int] | None,
+    db_session: Session,
+) -> list[UserGroup]:
+    # Delete existing relationships
+    db_session.query(LLMProvider__UserGroup).filter(
+        LLMProvider__UserGroup.llm_provider_id == llm_provider_id
+    ).delete(synchronize_session="fetch")
+
+    if group_ids:
+        new_relationships = [
+            LLMProvider__UserGroup(
+                llm_provider_id=llm_provider_id, user_group_id=group_id
+            )
+            for group_id in group_ids
+        ]
+        db_session.add_all(new_relationships)
+        db_session.commit()
+
+        return db_session.query(UserGroup).filter(UserGroup.id.in_(group_ids)).all()
+    return []
 
 
 def upsert_cloud_embedding_provider(
@@ -40,36 +65,30 @@ def upsert_llm_provider(
     existing_llm_provider = db_session.scalar(
         select(LLMProviderModel).where(LLMProviderModel.name == llm_provider.name)
     )
-    if existing_llm_provider:
-        existing_llm_provider.provider = llm_provider.provider
-        existing_llm_provider.api_key = llm_provider.api_key
-        existing_llm_provider.api_base = llm_provider.api_base
-        existing_llm_provider.api_version = llm_provider.api_version
-        existing_llm_provider.custom_config = llm_provider.custom_config
-        existing_llm_provider.default_model_name = llm_provider.default_model_name
-        existing_llm_provider.fast_default_model_name = (
-            llm_provider.fast_default_model_name
-        )
-        existing_llm_provider.model_names = llm_provider.model_names
-        db_session.commit()
-        return FullLLMProvider.from_model(existing_llm_provider)
-    # if it does not exist, create a new entry
-    llm_provider_model = LLMProviderModel(
-        name=llm_provider.name,
-        provider=llm_provider.provider,
-        api_key=llm_provider.api_key,
-        api_base=llm_provider.api_base,
-        api_version=llm_provider.api_version,
-        custom_config=llm_provider.custom_config,
-        default_model_name=llm_provider.default_model_name,
-        fast_default_model_name=llm_provider.fast_default_model_name,
-        model_names=llm_provider.model_names,
-        is_default_provider=None,
+
+    if not existing_llm_provider:
+        existing_llm_provider = LLMProviderModel(name=llm_provider.name)
+        db_session.add(existing_llm_provider)
+
+    existing_llm_provider.provider = llm_provider.provider
+    existing_llm_provider.api_key = llm_provider.api_key
+    existing_llm_provider.api_base = llm_provider.api_base
+    existing_llm_provider.api_version = llm_provider.api_version
+    existing_llm_provider.custom_config = llm_provider.custom_config
+    existing_llm_provider.default_model_name = llm_provider.default_model_name
+    existing_llm_provider.fast_default_model_name = llm_provider.fast_default_model_name
+    existing_llm_provider.model_names = llm_provider.model_names
+    existing_llm_provider.is_public = llm_provider.is_public
+    user_groups = update_group_llm_provider_relationships(
+        llm_provider_id=existing_llm_provider.id,
+        group_ids=llm_provider.groups,
+        db_session=db_session,
     )
-    db_session.add(llm_provider_model)
+    existing_llm_provider.groups = user_groups
+
     db_session.commit()
 
-    return FullLLMProvider.from_model(llm_provider_model)
+    return FullLLMProvider.from_model(existing_llm_provider)
 
 
 def fetch_existing_embedding_providers(
@@ -144,6 +163,11 @@ def remove_embedding_provider(
 
 
 def remove_llm_provider(db_session: Session, provider_id: int) -> None:
+    db_session.execute(
+        delete(LLMProvider__UserGroup).where(
+            LLMProvider__UserGroup.llm_provider_id == provider_id
+        )
+    )
     db_session.execute(
         delete(LLMProviderModel).where(LLMProviderModel.id == provider_id)
     )
