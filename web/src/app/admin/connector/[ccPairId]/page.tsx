@@ -18,7 +18,7 @@ import {
   Credential,
   ValidSources,
 } from "@/lib/types";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { buildCCPairInfoUrl } from "./lib";
@@ -27,6 +27,8 @@ import { NewChatIcon, TrashIcon } from "@/components/icons/icons";
 import ModifyCredentialModal from "./ModifyCredentialModal";
 import { useState } from "react";
 import CreateCredentialModal from "./CreateCredentialModal";
+import { swapCredential } from "@/lib/credential";
+import EditCredentialModal from "./EditCredentialModal";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -36,11 +38,16 @@ const CONNECTOR_TYPES_THAT_CANT_REINDEX: ValidSources[] = ["file"];
 function Main({ ccPairId }: { ccPairId: number }) {
   const [showModifyCredential, setShowModifyCredential] = useState(false);
   const [showCreateCredential, setShowCreateCredential] = useState(false);
+  const [editingCredential, setEditingCredential] =
+    useState<Credential<ConfluenceCredentialJson> | null>(null);
   const closeModifyCredential = () => {
     setShowModifyCredential(false);
   };
   const closeCreateCredential = () => {
     setShowCreateCredential(false);
+  };
+  const closeEditingCredential = () => {
+    setEditingCredential(null);
   };
   const {
     data: ccPair,
@@ -81,6 +88,18 @@ function Main({ ccPairId }: { ccPairId: number }) {
   const makeShowCreateCredential = () => {
     setShowModifyCredential(false);
     setShowCreateCredential(true);
+  };
+
+  const onSwap = async (selectedCredentialId: number, connectorId: number) => {
+    await swapCredential(selectedCredentialId, connectorId);
+    mutate(buildCCPairInfoUrl(ccPairId));
+  };
+
+  const onEditCredential = (
+    credential: Credential<ConfluenceCredentialJson>
+  ) => {
+    closeModifyCredential();
+    setEditingCredential(credential);
   };
 
   return (
@@ -145,12 +164,20 @@ function Main({ ccPairId }: { ccPairId: number }) {
 
       {showModifyCredential && (
         <ModifyCredentialModal
+          onEditCredential={onEditCredential}
           connectorId={ccPair.connector.id}
           credentialId={ccPair.credential.id}
           id={ccPairId}
-          onSwap={(credential: Credential<ConfluenceCredentialJson>) => null}
+          onSwap={onSwap}
           onCreateNew={() => makeShowCreateCredential()}
           onClose={closeModifyCredential}
+        />
+      )}
+
+      {editingCredential && (
+        <EditCredentialModal
+          credential={editingCredential}
+          onClose={closeEditingCredential}
         />
       )}
 

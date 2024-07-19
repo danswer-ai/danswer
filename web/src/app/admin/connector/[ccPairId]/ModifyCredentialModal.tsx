@@ -9,16 +9,18 @@ import useSWR, { mutate } from "swr";
 import { ConfluenceCredentialJson, Credential } from "@/lib/types";
 import { FaCreativeCommons, FaSwatchbook } from "react-icons/fa";
 import { swapCredential } from "@/lib/credential";
-import { EditIcon, TrashIcon } from "@/components/icons/icons";
+import { EditIcon, SwapIcon, TrashIcon } from "@/components/icons/icons";
 
 interface CredentialSelectionTableProps {
   credentials: Credential<any>[];
   onSelectCredential: (credential: Credential<any> | null) => void;
   currentCredentialId: number;
+  onEditCredential: (credential: Credential<ConfluenceCredentialJson>) => void;
 }
 
 const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
   credentials,
+  onEditCredential,
   onSelectCredential,
   currentCredentialId,
 }) => {
@@ -42,14 +44,11 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
           <tr className="bg-gray-100">
             <th className="p-2 text-left font-medium text-gray-600"></th>
             <th className="p-2 text-left font-medium text-gray-600">ID</th>
-            <th className="p-2 text-left font-medium text-gray-600">
-              Admin Public
-            </th>
+            <th className="p-2 text-left font-medium text-gray-600">Name</th>
             <th className="p-2 text-left font-medium text-gray-600">Created</th>
             <th className="p-2 text-left font-medium text-gray-600">
               Last Updated
             </th>
-            <th className="p-2 text-left font-medium text-gray-600">Name</th>
             <th></th>
           </tr>
         </thead>
@@ -70,21 +69,23 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
                 )}
               </td>
               <td className="p-2">{credential.id}</td>
-              <td className="p-2">{credential.admin_public ? "Yes" : "No"}</td>
+              <td className="p-2">
+                <p>{credential.name ?? "Untitled"}</p>
+              </td>
               <td className="p-2">
                 {new Date(credential.time_created).toLocaleString()}
               </td>
               <td className="p-2">
                 {new Date(credential.time_updated).toLocaleString()}
               </td>
-              <td className="p-2">
-                <p>{credential.name ?? "Untitled"}</p>
-              </td>
               <td className="pt-3 flex gap-x-2  content-center mt-auto">
                 <button className="cursor-pointer my-auto">
                   <TrashIcon />
                 </button>
-                <button className="cursor-pointer my-auto">
+                <button
+                  onClick={() => onEditCredential(credential)}
+                  className="cursor-pointer my-auto"
+                >
                   <EditIcon />
                 </button>
               </td>
@@ -103,12 +104,14 @@ export default function ModifyCredentialModal({
   credentialId,
   onSwap,
   onCreateNew,
+  onEditCredential,
 }: {
+  onEditCredential: (credential: Credential<ConfluenceCredentialJson>) => void;
   id: number;
   connectorId: number;
   credentialId: number;
   onClose: () => void;
-  onSwap: (selectedCredential: Credential<ConfluenceCredentialJson>) => void;
+  onSwap: (newCredentialId: number, connectorId: number) => void;
   onCreateNew: () => void;
 }) {
   const [selectedCredential, setSelectedCredential] =
@@ -135,12 +138,18 @@ export default function ModifyCredentialModal({
 
   return (
     <Modal
+      onOutsideClick={onClose}
       className="max-w-3xl rounded-lg"
       title={`Swap Confluence Credential`}
     >
       <div className="mb-0">
+        <Text className="mb-4 ">
+          Swap credentials as needed! Ensure that you have selected a credential
+          with the proper permissions for this connector!
+        </Text>
         {credentials.length > 1 ? (
           <CredentialSelectionTable
+            onEditCredential={onEditCredential}
             currentCredentialId={credentialId}
             credentials={credentials}
             onSelectCredential={handleSelectCredential}
@@ -151,41 +160,22 @@ export default function ModifyCredentialModal({
           </p>
         )}
 
-        <div className="flex mt-8 justify-between">
-          <Button
-            className="bg-teal-500 hover:bg-teal-400 border-none"
-            onClick={onClose}
-          >
-            Exit
-          </Button>
+        <div className="flex mt-8 justify-end">
           {credentials.length > 1 ? (
             <Button
-              onClick={async () => {
-                setLoading(true);
-                await swapCredential(selectedCredential?.id!, connectorId);
-                mutate(buildSimilarCredentialInfoURL(id));
-                setLoading(false);
-              }}
-              className="bg-indigo-500 hover:bg-indigo-400"
+              disabled={selectedCredential == null}
+              onClick={() => onSwap(selectedCredential.id, connectorId)}
+              className="bg-indigo-500 disabled:border-transparent transition-colors duration-150 ease-in disabled:bg-indigo-300 disabled:hover:bg-indigo-300 hover:bg-indigo-600 cursor-pointer"
             >
               <div className="flex gap-x-2 items-center w-full border-none">
-                {false ? (
-                  <>
-                    <FaSwatchbook />
-                    <p>Loading..</p>
-                  </>
-                ) : (
-                  <>
-                    <FaSwatchbook />
-                    <p>Swap</p>
-                  </>
-                )}
+                <SwapIcon className="text-white" />
+                <p>Swap</p>
               </div>
             </Button>
           ) : (
             <Button
               onClick={onCreateNew}
-              className="bg-indigo-500 hover:bg-indigo-400"
+              className="bg-indigo-500 disabled:bg-indigo-300 hover:bg-indigo-400"
             >
               <div className="flex gap-x-2 items-center w-full border-none">
                 <FaCreativeCommons />

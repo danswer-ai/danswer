@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text, Badge, Card } from "@tremor/react";
 import { ConfluenceCredentialJson, Credential } from "@/lib/types";
-import { FaAccusoft, FaSwatchbook } from "react-icons/fa";
+import { FaSwatchbook } from "react-icons/fa";
 
 import { submitCredential } from "@/components/admin/connectors/CredentialForm";
 import { TextFormField } from "@/components/admin/connectors/Field";
@@ -11,6 +11,7 @@ import { Form, Formik } from "formik";
 import Popup from "@/components/popup/Popup";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { linkCredential } from "@/lib/credential";
+import { EditIcon } from "@/components/icons/icons";
 interface CredentialSelectionTableProps {
   credentials: Credential<any>[];
   onSelectCredential: (credential: Credential<any> | null) => void;
@@ -77,16 +78,69 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
   );
 };
 
-export default function CreateCredentialModal({
-  id,
-  onClose,
-  onSwap,
-  onCreateNew,
+const EditingValue = ({
+  name,
+  currentValue,
+  label,
+  type,
 }: {
-  id: number;
+  name: string;
+  currentValue: string;
+  label: string;
+  type?: string;
+}) => {
+  const [editing, setEditing] = useState(false);
+  return (
+    <div className="my-6 w-full">
+      {editing ? (
+        <div className="w-full flex gap-x-2 justify-between">
+          <div className="w-full">
+            <TextFormField
+              noPadding
+              type={type}
+              name={name}
+              placeholder={currentValue}
+              label={label}
+            />
+          </div>
+          <div className="flex-none mt-auto">
+            <button
+              className="text-xs h-[35px] my-auto p-1.5 rounded bg-neutral-900 border-neutral-700 text-neutral-300 flex gap-x-1"
+              onClick={() => setEditing((editing) => !editing)}
+            >
+              <EditIcon className="text-netural-300 my-auto" />
+              <p className="my-auto">Revert</p>
+            </button>
+          </div>
+
+          {/* <button
+            className="-mt-4 mb-2 p-1.5 rounded bg-neutral-900 border-neutral-700 text-neutral-300 flex gap-x-1"
+            onClick={() => setEditing(editing => !editing)}>
+            <EditIcon className="text-netural-300 my-auto" />
+            Revert
+          </button> */}
+        </div>
+      ) : (
+        <div className="flex text-base gap-x-4">
+          Your current {label}: {currentValue}
+          <button
+            className="text-xs my-auto p-1.5 rounded bg-neutral-900 border-neutral-700 text-neutral-300 flex gap-x-1"
+            onClick={() => setEditing((editing) => !editing)}
+          >
+            <EditIcon className="text-netural-300 my-auto" />
+            Edit
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+export default function EditCredentialModal({
+  credential,
+  onClose,
+}: {
+  credential: Credential<ConfluenceCredentialJson>;
   onClose: () => void;
-  onSwap: (selectedCredential: Credential<ConfluenceCredentialJson>) => void;
-  onCreateNew: () => void;
 }) {
   const [selectedCredential, setSelectedCredential] =
     React.useState<Credential<any> | null>(null);
@@ -105,7 +159,7 @@ export default function CreateCredentialModal({
     <Modal
       onOutsideClick={onClose}
       className="max-w-2xl rounded-lg"
-      title={`Create Credential`}
+      title={`Edit Credential`}
     >
       <div className="mb-4">
         <Text>
@@ -178,32 +232,31 @@ export default function CreateCredentialModal({
                 <Card className="mt-4">
                   <TextFormField
                     name="name"
-                    placeholder="(Optional) connector name.."
+                    placeholder={credential.name || ""}
                     label="Name:"
                   />
-                  <TextFormField
+
+                  <EditingValue
                     name="confluence_username"
-                    placeholder="Confluence username"
+                    currentValue={
+                      credential.credential_json.confluence_username
+                    }
                     label="Username:"
                   />
-                  <TextFormField
-                    placeholder="Confluence access token"
+                  <EditingValue
                     name="confluence_access_token"
+                    currentValue={
+                      credential.credential_json.confluence_access_token
+                    }
                     label="Access Token:"
                     type="password"
                   />
                 </Card>
-                <div className="flex gap-x-4 mt-8 justify-end">
-                  <Button className="bg-rose-500 hover:bg-rose-400 border-rose-800">
-                    <div className="flex gap-x-2 items-center w-full border-none">
-                      <FaAccusoft />
-                      <p>Create + Update</p>
-                    </div>
-                  </Button>
+                <div className="flex mt-8 justify-end">
                   <Button className="bg-indigo-500 hover:bg-indigo-400">
                     <div className="flex gap-x-2 items-center w-full border-none">
                       <FaSwatchbook />
-                      <p>Create</p>
+                      <p>Update</p>
                     </div>
                   </Button>
                 </div>

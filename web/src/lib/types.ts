@@ -314,6 +314,7 @@ export interface CredentialBase<T> {
   credential_json: T;
   admin_public: boolean;
   source: ValidSources;
+  name?: string;
 }
 
 export interface Credential<T> extends CredentialBase<T> {

@@ -93,16 +93,10 @@ function SummaryRow({
         <Tooltip
           content={`${summary.public} out of ${summary.count} connectors are public`}
         >
-          <div className="flex items-center mt-1">
-            <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
-              <div
-                className="bg-blue-500 h-2 rounded-full"
-                style={{ width: `${publicPercentage}%` }}
-              ></div>
-            </div>
-            <span className="text-sm font-medium whitespace-nowrap">
-              {summary.public} ({publicPercentage.toFixed(0)}%)
-            </span>
+          <div className="flex text-xl font-semibolditems-center text-lg mt-1">
+            <p>
+              {summary.public}/{summary.count}
+            </p>
           </div>
         </Tooltip>
       </TableCell>

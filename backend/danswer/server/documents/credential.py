@@ -56,8 +56,6 @@ def get_cc_source_full_info(
     credentials = fetch_credentials_by_source(
         db_session=db_session, user=user, document_source=source
     )
-    print("za")
-    print(credentials)
 
     return [
         CredentialSnapshot.from_credential_db_model(credential)
@@ -125,8 +123,6 @@ def create_credential_from_model(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
-    print("HH")
-    print(credential_info)
     if user and user.role != UserRole.ADMIN and credential_info.admin_public:
         raise HTTPException(
             status_code=400,

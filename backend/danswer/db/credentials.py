@@ -139,6 +139,7 @@ def create_credential(
         user_id=user.id if user else None,
         admin_public=credential_data.admin_public,
         source=credential_data.source,
+        name=credential_data.name,
     )
     db_session.add(credential)
     db_session.commit()

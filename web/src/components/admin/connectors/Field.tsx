@@ -114,6 +114,7 @@ export function TextFormField({
   explanationText,
   explanationLink,
   small,
+  noPadding,
 }: {
   name: string;
   label: string;
@@ -123,6 +124,7 @@ export function TextFormField({
   type?: string;
   isTextArea?: boolean;
   disabled?: boolean;
+  noPadding?: boolean;
   autoCompleteDisabled?: boolean;
   error?: string;
   defaultHeight?: string;
@@ -140,7 +142,7 @@ export function TextFormField({
   }
 
   return (
-    <div className="mb-6">
+    <div className={`${!noPadding && "mb-6"}`}>
       <div className="flex gap-x-2 items-center">
         <Label small={small}>{label}</Label>
 
