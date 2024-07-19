@@ -6,6 +6,7 @@ import { Logo } from "@/components/Logo";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
 import { HeaderTitle } from "@/components/header/Header";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { BackIcon } from "@/components/icons/icons";
 
 interface Item {
   name: string | JSX.Element;
@@ -62,6 +63,12 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
             </Link>
           </div>
         </div>
+        <Link href={"/chat"}>
+          <button className="text-sm block w-48 py-2.5 flex px-2 text-left bg-background-200 hover:bg-background-200/80 cursor-pointer rounded">
+            <BackIcon size={20} className="text-neutral" />
+            <p className="ml-1">Back to Danswer</p>
+          </button>
+        </Link>
         {collections.map((collection, collectionInd) => (
           <div key={collectionInd}>
             <h2 className="text-xs text-strong font-bold pb-2">
@@ -70,7 +77,7 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
             {collection.items.map((item) => (
               <Link key={item.link} href={item.link}>
                 <button className="text-sm block w-48 py-2.5 px-2 text-left hover:bg-hover rounded">
-                  <div className="">{item.name}</div>
+                  {item.name}
                 </button>
               </Link>
             ))}

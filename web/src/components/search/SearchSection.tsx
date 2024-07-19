@@ -29,12 +29,17 @@ import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
 import { ChatSession, SearchSession } from "@/app/chat/interfaces";
 import FunctionalHeader from "../chat_search/Header";
 import { useSidebarVisibility } from "../chat_search/hooks";
-import { SIDEBAR_TOGGLED_COOKIE_NAME } from "../resizable/contants";
+import { SIDEBAR_TOGGLED_COOKIE_NAME } from "../resizable/constants";
 import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
 
-export type searchState = "input" | "searching" | "analyzing" | "summarizing";
+export type searchState =
+  | "input"
+  | "searching"
+  | "reading"
+  | "analyzing"
+  | "summarizing";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -231,10 +236,23 @@ export const SearchSection = ({
 
   const updateDocs = (documents: SearchDanswerDocument[]) => {
     setTimeout(() => {
-      if (searchState != "input") {
-        setSearchState("analyzing");
-      }
+      setSearchState((searchState) => {
+        if (searchState != "input") {
+          return "reading";
+        }
+        return "input";
+      });
     }, 1500);
+
+    setTimeout(() => {
+      setSearchState((searchState) => {
+        if (searchState != "input") {
+          return "analyzing";
+        }
+        return "input";
+      });
+    }, 4500);
+
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       documents,

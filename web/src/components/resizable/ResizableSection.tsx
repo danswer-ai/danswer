@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
-import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "./contants";
+import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "./constants";
 
 function applyMinAndMax(
   width: number,
