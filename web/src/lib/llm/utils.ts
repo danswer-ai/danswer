@@ -36,10 +36,12 @@ export function getFinalLLM(
 
 const MODELS_SUPPORTING_IMAGES = [
   ["openai", "gpt-4o"],
+  ["openai", "gpt-4o-mini"],
   ["openai", "gpt-4-vision-preview"],
   ["openai", "gpt-4-turbo"],
   ["openai", "gpt-4-1106-vision-preview"],
   ["azure", "gpt-4o"],
+  ["azure", "gpt-4o-mini"],
   ["azure", "gpt-4-vision-preview"],
   ["azure", "gpt-4-turbo"],
   ["azure", "gpt-4-1106-vision-preview"],
