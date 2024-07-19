@@ -410,14 +410,14 @@ export function CustomLLMProviderUpdateForm({
                   alignTop
                   name="is_public"
                   label="Is Public?"
-                  subtext="If set, this Assistant will be available to all users. If not, only the specified User Groups will be able to access it."
+                  subtext="If set, this LLM Provider will be available to all users. If not, only the specified User Groups will be able to use it."
                 />
 
                 {userGroups && userGroups.length > 0 && !values.is_public && (
                   <div>
                     <Text>
-                      Select which User Groups should have access to this
-                      Assistant.
+                      Select which User Groups should have access to this LLM
+                      Provider.
                     </Text>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {userGroups.map((userGroup) => {
