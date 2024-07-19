@@ -25,6 +25,7 @@ def update_group_llm_provider_relationships(
         LLMProvider__UserGroup.llm_provider_id == llm_provider_id
     ).delete(synchronize_session="fetch")
 
+    # Add new relationships from given group_ids
     if group_ids:
         new_relationships = [
             LLMProvider__UserGroup(
@@ -77,6 +78,7 @@ def upsert_llm_provider(
     existing_llm_provider.model_names = llm_provider.model_names
     existing_llm_provider.is_public = llm_provider.is_public
 
+    # Make sure the relationship table stays up to date
     update_group_llm_provider_relationships(
         llm_provider_id=existing_llm_provider.id,
         group_ids=llm_provider.groups,
@@ -87,7 +89,6 @@ def upsert_llm_provider(
         db_session.query(UserGroup).filter(UserGroup.id.in_(llm_provider.groups)).all()
     )
     existing_llm_provider.groups = user_groups
-
     db_session.commit()
 
     return FullLLMProvider.from_model(existing_llm_provider)
@@ -165,11 +166,13 @@ def remove_embedding_provider(
 
 
 def remove_llm_provider(db_session: Session, provider_id: int) -> None:
+    # Remove LLMProvider's dependent relationships
     db_session.execute(
         delete(LLMProvider__UserGroup).where(
             LLMProvider__UserGroup.llm_provider_id == provider_id
         )
     )
+    # Remove LLMProvider
     db_session.execute(
         delete(LLMProviderModel).where(LLMProviderModel.id == provider_id)
     )
