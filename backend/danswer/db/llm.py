@@ -1,9 +1,13 @@
 from sqlalchemy import delete
+from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
 from danswer.db.models import LLMProvider as LLMProviderModel
+from danswer.db.models import LLMProvider__UserGroup
+from danswer.db.models import User
+from danswer.db.models import User__UserGroup
 from danswer.server.manage.embedding.models import CloudEmbeddingProvider
 from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
 from danswer.server.manage.llm.models import FullLLMProvider
@@ -74,8 +78,29 @@ def fetch_existing_embedding_providers(
     return list(db_session.scalars(select(CloudEmbeddingProviderModel)).all())
 
 
-def fetch_existing_llm_providers(db_session: Session) -> list[LLMProviderModel]:
-    return list(db_session.scalars(select(LLMProviderModel)).all())
+def fetch_existing_llm_providers(
+    db_session: Session,
+    user: User | None = None,
+) -> list[LLMProviderModel]:
+    if not user:
+        return list(db_session.scalars(select(LLMProviderModel)).all())
+    stmt = select(LLMProviderModel).distinct()
+    user_groups_subquery = (
+        select(User__UserGroup.user_group_id)
+        .where(User__UserGroup.user_id == user.id)
+        .subquery()
+    )
+    access_conditions = or_(
+        LLMProviderModel.is_public,
+        LLMProviderModel.id.in_(  # User is part of a group that has access
+            select(LLMProvider__UserGroup.llm_provider_id).where(
+                LLMProvider__UserGroup.user_group_id.in_(user_groups_subquery)  # type: ignore
+            )
+        ),
+    )
+    stmt = stmt.where(access_conditions)
+
+    return list(db_session.scalars(stmt).all())
 
 
 def fetch_embedding_provider(

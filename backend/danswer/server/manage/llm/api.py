@@ -147,10 +147,10 @@ def set_provider_as_default(
 
 @basic_router.get("/provider")
 def list_llm_provider_basics(
-    _: User | None = Depends(current_user),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> list[LLMProviderDescriptor]:
     return [
         LLMProviderDescriptor.from_model(llm_provider_model)
-        for llm_provider_model in fetch_existing_llm_providers(db_session)
+        for llm_provider_model in fetch_existing_llm_providers(db_session, user)
     ]
