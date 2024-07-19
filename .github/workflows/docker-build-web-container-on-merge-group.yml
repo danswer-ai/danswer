@@ -1,8 +1,6 @@
 name: Build Web Image on Merge Group
 
 on:
-  pull_request:
-    branches: [ "main" ]
   merge_group:
     types: [checks_requested]
 
