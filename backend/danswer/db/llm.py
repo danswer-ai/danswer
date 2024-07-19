@@ -19,7 +19,7 @@ def update_group_llm_provider_relationships(
     llm_provider_id: int,
     group_ids: list[int] | None,
     db_session: Session,
-) -> list[UserGroup]:
+) -> None:
     # Delete existing relationships
     db_session.query(LLMProvider__UserGroup).filter(
         LLMProvider__UserGroup.llm_provider_id == llm_provider_id
@@ -34,9 +34,6 @@ def update_group_llm_provider_relationships(
         ]
         db_session.add_all(new_relationships)
         db_session.commit()
-
-        return db_session.query(UserGroup).filter(UserGroup.id.in_(group_ids)).all()
-    return []
 
 
 def upsert_cloud_embedding_provider(
@@ -79,10 +76,15 @@ def upsert_llm_provider(
     existing_llm_provider.fast_default_model_name = llm_provider.fast_default_model_name
     existing_llm_provider.model_names = llm_provider.model_names
     existing_llm_provider.is_public = llm_provider.is_public
-    user_groups = update_group_llm_provider_relationships(
+
+    update_group_llm_provider_relationships(
         llm_provider_id=existing_llm_provider.id,
         group_ids=llm_provider.groups,
         db_session=db_session,
+    )
+
+    user_groups = list(
+        db_session.query(UserGroup).filter(UserGroup.id.in_(llm_provider.groups)).all()
     )
     existing_llm_provider.groups = user_groups
 
