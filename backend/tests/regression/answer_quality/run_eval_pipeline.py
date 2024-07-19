@@ -39,9 +39,11 @@ def main() -> None:
     if config.commit_sha:
         switch_to_commit(config.commit_sha)
 
-    start_docker_compose(run_suffix, config.launch_web_ui, config.use_cloud_gpu)
+    start_docker_compose(
+        run_suffix, config.launch_web_ui, config.use_cloud_gpu, config.only_state
+    )
 
-    if not config.existing_test_suffix:
+    if not config.existing_test_suffix and not config.only_state:
         upload_test_files(config.zipped_documents_file, run_suffix)
 
         run_qa_test_and_save_results(run_suffix)
