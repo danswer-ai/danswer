@@ -34,7 +34,12 @@ import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
 
-export type searchState = "input" | "searching" | "analyzing" | "summarizing";
+export type searchState =
+  | "input"
+  | "searching"
+  | "reading"
+  | "analyzing"
+  | "summarizing";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -105,9 +110,9 @@ export const SearchSection = ({
       SIDEBAR_TOGGLED_COOKIE_NAME,
       String(!toggledSidebar).toLocaleLowerCase()
     ),
-      {
-        path: "/",
-      };
+    {
+      path: "/",
+    };
     toggle();
   };
 
@@ -231,10 +236,23 @@ export const SearchSection = ({
 
   const updateDocs = (documents: SearchDanswerDocument[]) => {
     setTimeout(() => {
-      if (searchState != "input") {
-        setSearchState("analyzing");
-      }
+      setSearchState((searchState) => {
+        if (searchState != "input") {
+          return "reading";
+        }
+        return "input";
+      });
     }, 1500);
+
+    setTimeout(() => {
+      setSearchState((searchState) => {
+        if (searchState != "input") {
+          return "analyzing";
+        }
+        return "input";
+      });
+    }, 4500);
+
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       documents,
@@ -476,10 +494,9 @@ export const SearchSection = ({
             bg-opacity-80
             duration-300 
             ease-in-out
-            ${
-              showDocSidebar || toggledSidebar
-                ? "opacity-100 w-[300px] translate-x-0"
-                : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
+            ${showDocSidebar || toggledSidebar
+              ? "opacity-100 w-[300px] translate-x-0"
+              : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
             }
           `}
         >
@@ -533,10 +550,9 @@ export const SearchSection = ({
                 <div className="max-w-searchbar-max w-[90%] mx-auto">
                   <div
                     className={`transition-all duration-500 ease-in-out overflow-hidden 
-                      ${
-                        firstSearch
-                          ? "opacity-100 max-h-[500px]"
-                          : "opacity-0 max-h-0"
+                      ${firstSearch
+                        ? "opacity-100 max-h-[500px]"
+                        : "opacity-0 max-h-0"
                       }`}
                     onTransitionEnd={handleTransitionEnd}
                   >
