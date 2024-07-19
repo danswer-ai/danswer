@@ -85,8 +85,10 @@ def upsert_llm_provider(
         db_session=db_session,
     )
 
-    user_groups = list(
+    user_groups = (
         db_session.query(UserGroup).filter(UserGroup.id.in_(llm_provider.groups)).all()
+        if llm_provider.groups
+        else []
     )
     existing_llm_provider.groups = user_groups
     db_session.commit()
