@@ -305,6 +305,7 @@ export type ConnectorSummary = {
   active: number;
   public: number;
   totalDocsIndexed: number;
+  errors: number; // New field for error count
 };
 
 export type GroupedConnectorSummaries = Record<ValidSources, ConnectorSummary>;
@@ -313,7 +314,7 @@ export type GroupedConnectorSummaries = Record<ValidSources, ConnectorSummary>;
 export interface CredentialBase<T> {
   credential_json: T;
   admin_public: boolean;
-  source: ValidSources;
+  source?: ValidSources; //TODO modify
   name?: string;
 }
 

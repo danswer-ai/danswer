@@ -24,18 +24,26 @@ import {
   FiCheck,
   FiChevronDown,
   FiChevronRight,
-  FiEdit2,
   FiSettings,
   FiXCircle,
 } from "react-icons/fi";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { SourceIcon } from "@/components/SourceIcon";
-import { getSourceDisplayName, listSourceMetadata } from "@/lib/sources";
+import { getSourceDisplayName } from "@/lib/sources";
 import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
-import { update } from "lodash";
 import { Warning } from "@phosphor-icons/react";
 
 const NUM_IN_PAGE = 20;
+
+const columnWidths = {
+  first: "20%",
+  second: "15%",
+  third: "15%",
+  fourth: "15%",
+  fifth: "15%",
+  sixth: "15%",
+  seventh: "5%",
+};
 
 function SummaryRow({
   source,
@@ -49,28 +57,32 @@ function SummaryRow({
   onToggle: () => void;
 }) {
   const activePercentage = (summary.active / summary.count) * 100;
-  const publicPercentage = (summary.public / summary.count) * 100;
 
   return (
-    <TableRow className="overflow-visible bg-white cursor-pointer">
-      <TableCell className="py-4 w-[23%]">
+    <TableRow
+      onClick={onToggle}
+      className="border-border bg-white rounded-sm !border sbg-white cursor-pointer"
+    >
+      <TableCell className={`py-4 w-[${columnWidths.first}]`}>
         <div className="text-xl flex items-center truncate ellipsis gap-x-2 font-semibold">
-          <button className="cursor-pointer" onClick={onToggle}>
+          <div className="cursor-pointer">
             {isOpen ? (
               <FiChevronDown size={20} />
             ) : (
               <FiChevronRight size={20} />
             )}
-          </button>
+          </div>
           <SourceIcon iconSize={20} sourceType={source} />
           {getSourceDisplayName(source)}
         </div>
       </TableCell>
-      <TableCell className="py-4 w-[17.1%]">
+
+      <TableCell className={`py-4 w-[${columnWidths.first}]`}>
         <div className="text-sm text-gray-500">Total Connectors</div>
         <div className="text-xl font-semibold">{summary.count}</div>
       </TableCell>
-      <TableCell className="py-4 w-[17.1%]">
+
+      <TableCell className={`py-4 w-[${columnWidths.second}]`}>
         <div className="text-sm text-gray-500">Active Connectors</div>
         <Tooltip
           content={`${summary.active} out of ${summary.count} connectors are active`}
@@ -88,35 +100,37 @@ function SummaryRow({
           </div>
         </Tooltip>
       </TableCell>
-      <TableCell className="py-4 w-[17.1%]">
+
+      <TableCell className={`py-4 w-[${columnWidths.fourth}]`}>
         <div className="text-sm text-gray-500">Public Connectors</div>
-        <Tooltip
-          content={`${summary.public} out of ${summary.count} connectors are public`}
-        >
-          <div className="flex text-xl font-semibolditems-center text-lg mt-1">
-            <p>
-              {summary.public}/{summary.count}
-            </p>
-          </div>
-        </Tooltip>
+        <p className="flex text-xl font-semibolditems-center text-lg mt-1">
+          {summary.public}/{summary.count}
+        </p>
       </TableCell>
-      <TableCell className="py-4 w-[17.1%]">
+
+      <TableCell className={`py-4 w-[${columnWidths.fifth}]`}>
         <div className="text-sm text-gray-500">Total Docs Indexed</div>
         <div className="text-xl font-semibold">
           {summary.totalDocsIndexed.toLocaleString()}
         </div>
       </TableCell>
-      <TableCell>
-        <CustomTooltip content="Some connectors did not index properly">
-          <button className="flex gap-x-1.5 rounded p-2 cursor-pointer bg-error/80 text-white items-center border-error border border">
-            <Warning className="h-4 w-4" />
-            Errors
-          </button>
-        </CustomTooltip>
+
+      <TableCell className={`w-[${columnWidths.sixth}]`}>
+        {summary.errors > 0 && (
+          <CustomTooltip
+            delay={200}
+            wrap
+            content="Some connectors did not index properly"
+          >
+            <button className="flex gap-x-1.5 rounded p-2 cursor-pointer bg-error/80 text-white items-center border-error border border">
+              <Warning className="h-4 w-4" />
+              Errors ({summary.errors})
+            </button>
+          </CustomTooltip>
+        )}
       </TableCell>
 
-      <TableCell className="w-[14.5%]"></TableCell>
-      <TableCell></TableCell>
+      <TableCell className={`w-[${columnWidths.seventh}]`}></TableCell>
     </TableRow>
   );
 }
@@ -138,24 +152,24 @@ function ConnectorRow({
 
   return (
     <TableRow
-      className="hover:bg-hover-light w-full cursor-pointer relative"
+      className="hover:bg-hover-light border border-border !border-b w-full cursor-pointer relative"
       onClick={() =>
         router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`)
       }
     >
-      <TableCell>
+      <TableCell className={`w-[${columnWidths.first}]`}>
         <p className="w-[200px] ellipsis truncate">
           {ccPairsIndexingStatus.name}
         </p>
       </TableCell>
-      <TableCell>
+      <TableCell className={`w-[${columnWidths.second}]`}>
         <IndexAttemptStatus
           status={ccPairsIndexingStatus.last_status || "not_started"}
           errorMsg={ccPairsIndexingStatus?.latest_index_attempt?.error_msg}
           size="xs"
         />
       </TableCell>
-      <TableCell>
+      <TableCell className={`w-[${columnWidths.third}]`}>
         <Tooltip
           content={
             ccPairsIndexingStatus.connector.disabled ? "Inactive" : "Active"
@@ -163,21 +177,23 @@ function ConnectorRow({
         >
           <div
             className={`w-3 h-3 rounded-full ${ccPairsIndexingStatus.connector.disabled ? "bg-red-500" : "bg-green-500"}`}
-          ></div>
+          />
         </Tooltip>
       </TableCell>
-      <TableCell>
+      <TableCell className={`w-[${columnWidths.fourth}]`}>
         {ccPairsIndexingStatus.public_doc ? (
           <FiCheck className="my-auto text-emerald-600" size="18" />
         ) : (
           <FiXCircle className="my-auto text-red-600" />
         )}
       </TableCell>
-      <TableCell>
+      <TableCell className={`w-[${columnWidths.fifth}]`}>
         {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
       </TableCell>
-      <TableCell>{ccPairsIndexingStatus.docs_indexed}</TableCell>
-      <TableCell>
+      <TableCell className={`w-[${columnWidths.sixth}]`}>
+        {ccPairsIndexingStatus.docs_indexed}
+      </TableCell>
+      <TableCell className={`w-[${columnWidths.seventh}]`}>
         <CustomTooltip content="Manage Connector">
           <FiSettings className="cursor-pointer" onClick={handleManageClick} />
         </CustomTooltip>
@@ -185,6 +201,7 @@ function ConnectorRow({
     </TableRow>
   );
 }
+
 export function CCPairIndexingStatusTable({
   ccPairsIndexingStatuses,
 }: {
@@ -221,6 +238,8 @@ export function CCPairIndexingStatusTable({
           (sum, status) => sum + status.docs_indexed,
           0
         ),
+        errors: statuses.filter((status) => status.last_status === "failed")
+          .length, // New error count
       };
     });
 
@@ -269,43 +288,68 @@ export function CCPairIndexingStatusTable({
 
   return (
     <div className="overflow-">
-      {sortedSources.map((source, ind) => (
-        <div key={ind}>
-          <div className="shadow overflow-x-scroll text-sm bg-white rounded-lg ">
-            <div className="!p-0 !m-0 w-full">
+      <Table>
+        <TableHead>
+          <TableRow className="invisible">
+            <TableHeaderCell className={`w-[${columnWidths.first}]`}>
+              Name
+            </TableHeaderCell>
+            <TableHeaderCell className={`w-[${columnWidths.second}]`}>
+              Status
+            </TableHeaderCell>
+            <TableHeaderCell className={`w-[${columnWidths.third}]`}>
+              Active
+            </TableHeaderCell>
+            <TableHeaderCell className={`w-[${columnWidths.fourth}]`}>
+              Public
+            </TableHeaderCell>
+            <TableHeaderCell className={`w-[${columnWidths.fifth}]`}>
+              Last Indexed
+            </TableHeaderCell>
+            <TableHeaderCell className={`w-[${columnWidths.sixth}]`}>
+              Total Docs
+            </TableHeaderCell>
+            <TableHeaderCell
+              className={`w-[${columnWidths.seventh}]`}
+            ></TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {sortedSources.map((source, ind) => (
+            <React.Fragment key={ind}>
+              <div className="mt-4" />
+
               <SummaryRow
                 source={source}
                 summary={groupSummaries[source]}
                 isOpen={openSources[source] || false}
                 onToggle={() => toggleSource(source)}
               />
-
               {openSources[source] && (
                 <>
-                  <TableRow className="bg-gray-50  w-full text-xs uppercase text-gray-500">
-                    <TableHeaderCell className="py-2 w-1/4">
+                  <TableRow className="border border-border">
+                    <TableHeaderCell className={`w-[${columnWidths.first}]`}>
                       Name
                     </TableHeaderCell>
-                    <TableHeaderCell className="py-2 w-1/6">
+                    <TableHeaderCell className={`w-[${columnWidths.second}]`}>
                       Status
                     </TableHeaderCell>
-                    <TableHeaderCell className="py-2 w-1/12">
+                    <TableHeaderCell className={`w-[${columnWidths.third}]`}>
                       Active
                     </TableHeaderCell>
-                    <TableHeaderCell className="py-2 w-1/12">
+                    <TableHeaderCell className={`w-[${columnWidths.fourth}]`}>
                       Public
                     </TableHeaderCell>
-                    <TableHeaderCell className="py-2 w-1/6">
+                    <TableHeaderCell className={`w-[${columnWidths.fifth}]`}>
                       Last Indexed
                     </TableHeaderCell>
-                    <TableHeaderCell className="py-2 w-1/6">
-                      Docs Indexed
+                    <TableHeaderCell className={`w-[${columnWidths.sixth}]`}>
+                      Total Docs
                     </TableHeaderCell>
-                    <TableHeaderCell className="py-2 w-1/12">
-                      Manage
-                    </TableHeaderCell>
+                    <TableHeaderCell
+                      className={`w-[${columnWidths.seventh}]`}
+                    ></TableHeaderCell>
                   </TableRow>
-
                   {groupedStatuses[source].map((ccPairsIndexingStatus) => (
                     <ConnectorRow
                       key={ccPairsIndexingStatus.cc_pair_id}
@@ -314,12 +358,11 @@ export function CCPairIndexingStatusTable({
                   ))}
                 </>
               )}
-            </div>
-          </div>
+            </React.Fragment>
+          ))}
+        </TableBody>
+      </Table>
 
-          <div className="mt-4"></div>
-        </div>
-      ))}
       {totalPages > 1 && (
         <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
           <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">

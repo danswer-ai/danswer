@@ -88,6 +88,7 @@ const FormikWrapper = ({
       submitCredential({
         credential_json: values,
         admin_public: true,
+        source: "slab",
       }).then(({ message, isSuccess }) => {
         formikHelpers.setSubmitting(false);
         setTimeout(() => {
@@ -269,6 +270,7 @@ const MainSection = ({
                 await submitCredential({
                   credential_json: "-",
                   admin_public: true,
+                  source: "confluence",
                 });
                 refreshCredentials();
               },

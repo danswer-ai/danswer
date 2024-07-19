@@ -4,10 +4,9 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { ConnectorIcon } from "@/components/icons/icons";
 import { SourceCategory, SourceMetadata } from "@/lib/search/interfaces";
 import { listSourceMetadata } from "@/lib/sources";
-import { GroupedConnectorSummaries } from "@/lib/types";
 import { Title, Text } from "@tremor/react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 function SourceTile({ sourceMetadata }: { sourceMetadata: SourceMetadata }) {
   return (
@@ -33,10 +32,17 @@ function SourceTile({ sourceMetadata }: { sourceMetadata: SourceMetadata }) {
     </Link>
   );
 }
-
 export default function Page() {
   const sources = useMemo(() => listSourceMetadata(), []);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
 
   const filterSources = (sources: SourceMetadata[]) => {
     return sources.filter((source) =>
@@ -55,7 +61,7 @@ export default function Page() {
       },
       {} as Record<SourceCategory, SourceMetadata[]>
     );
-  }, [sources, searchTerm]);
+  }, [sources, searchTerm, filterSources]);
 
   return (
     <div className="mx-auto container">
@@ -66,6 +72,7 @@ export default function Page() {
 
       <input
         type="text"
+        ref={searchInputRef}
         placeholder="Search connectors..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}

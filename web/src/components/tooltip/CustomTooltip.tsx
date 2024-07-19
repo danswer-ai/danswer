@@ -40,6 +40,7 @@ export const CustomTooltip = ({
   light,
   citation,
   line,
+  wrap,
   showTick = false,
   delay = 500,
 }: {
@@ -50,6 +51,8 @@ export const CustomTooltip = ({
   light?: boolean;
   showTick?: boolean;
   delay?: number;
+
+  wrap?: boolean;
   citation?: boolean;
 }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -99,7 +102,7 @@ export const CustomTooltip = ({
       </span>
       {isVisible && (
         <div
-          className={`absolute z-10 ${citation ? "max-w-[350px]" : "w-40"} ${large ? "w-96" : line && "max-w-64 w-auto"} 
+          className={`absolute z-10  ${citation ? "max-w-[350px]" : "w-40"} ${large ? "w-96" : line && "max-w-64 w-auto"} 
               left-1/2 transform -translate-x-1/2 mt-2 text-sm 
               ${
                 light
@@ -110,16 +113,15 @@ export const CustomTooltip = ({
         >
           {showTick && (
             <div
-              className={`absolute w-3 h-3 -top-1.5 left-1/2 transform -translate-x-1/2 rotate-45 
-                  ${light ? "bg-background-200" : "bg-background-800"}`}
+              className={`absolute w-3 h-3 -top-1.5 left-1/2 transform -translate-x-1/2 rotate-45 ${light ? "bg-background-200" : "bg-background-800"}`}
             />
           )}
           <div
-            className={` relative ${line ? "" : "flex"} p-2`}
+            className={`flex-wrap ${wrap && "w-full"} relative ${line ? "" : "flex"} p-2`}
             style={
-              line
+              line || wrap
                 ? {
-                    whiteSpace: "nowrap",
+                    whiteSpace: wrap ? "normal" : "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                   }

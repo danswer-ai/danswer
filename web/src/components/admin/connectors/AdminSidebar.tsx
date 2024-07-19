@@ -62,13 +62,6 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
             </Link>
           </div>
         </div>
-        <button
-          onClick={() => window.open("/chat", "_self")}
-          className="text-sm block w-48 bg-neutral-500 text-white  py-2.5 px-2 text-left  rounded"
-        >
-          <div className="mx-auto font-semibold">Back to Danswer</div>
-        </button>
-
         {collections.map((collection, collectionInd) => (
           <div key={collectionInd}>
             <h2 className="text-xs text-strong font-bold pb-2">

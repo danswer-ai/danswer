@@ -134,7 +134,6 @@ export default function ModifyCredentialModal({
     onClose();
     return <></>;
   }
-  const [loading, setLoading] = useState<boolean>(false);
 
   return (
     <Modal
@@ -161,10 +160,10 @@ export default function ModifyCredentialModal({
         )}
 
         <div className="flex mt-8 justify-end">
-          {credentials.length > 1 ? (
+          {credentials.length > 1 && selectedCredential ? (
             <Button
               disabled={selectedCredential == null}
-              onClick={() => onSwap(selectedCredential.id, connectorId)}
+              onClick={() => onSwap(selectedCredential?.id!, connectorId)}
               className="bg-indigo-500 disabled:border-transparent transition-colors duration-150 ease-in disabled:bg-indigo-300 disabled:hover:bg-indigo-300 hover:bg-indigo-600 cursor-pointer"
             >
               <div className="flex gap-x-2 items-center w-full border-none">
