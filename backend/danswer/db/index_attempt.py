@@ -185,6 +185,30 @@ def get_latest_index_attempts(
     return db_session.execute(stmt).scalars().all()
 
 
+def get_index_attempts_for_connector(
+    db_session: Session,
+    connector_id: int,
+    only_current: bool = True,
+    disinclude_finished: bool = False,
+) -> Sequence[IndexAttempt]:
+    stmt = select(IndexAttempt).where(
+        IndexAttempt.connector_id == connector_id,
+    )
+    if disinclude_finished:
+        stmt = stmt.where(
+            IndexAttempt.status.in_(
+                [IndexingStatus.NOT_STARTED, IndexingStatus.IN_PROGRESS]
+            )
+        )
+    if only_current:
+        stmt = stmt.join(EmbeddingModel).where(
+            EmbeddingModel.status == IndexModelStatus.PRESENT
+        )
+
+    stmt = stmt.order_by(IndexAttempt.time_created.desc())
+    return db_session.execute(stmt).scalars().all()
+
+
 def get_index_attempts_for_cc_pair(
     db_session: Session,
     cc_pair_identifier: ConnectorCredentialPairIdentifier,

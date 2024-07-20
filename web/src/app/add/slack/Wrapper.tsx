@@ -1,8 +1,6 @@
 "use client";
 
 import { ChatSession } from "@/app/chat/interfaces";
-import { Folder } from "@/app/chat/folders/interfaces";
-import { Persona } from "@/app/admin/assistants/interfaces";
 import { User } from "@/lib/types";
 import SidebarWrapper from "@/app/assistants/SidebarWrapper";
 import SlackPage from "./SlackPage";

@@ -2,7 +2,11 @@ import * as Yup from "yup";
 import React, { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text, Badge, Card } from "@tremor/react";
-import { ConfluenceCredentialJson, Credential } from "@/lib/types";
+import {
+  Credential,
+  credentialDisplayNames,
+  getDisplayNameForCredentialKey,
+} from "@/lib/types";
 import { FaAccusoft, FaSwatchbook } from "react-icons/fa";
 
 import { submitCredential } from "@/components/admin/connectors/CredentialForm";
@@ -12,48 +16,57 @@ import Popup from "@/components/popup/Popup";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { linkCredential } from "@/lib/credential";
 import { ModalWrapper } from "@/app/chat/modal/ModalWrapper";
-interface CredentialSelectionTableProps {
-  credentials: Credential<any>[];
-  onSelectCredential: (credential: Credential<any> | null) => void;
-}
-
-interface FormValues {
-  confluence_username: string;
-  confluence_access_token: string;
-  name: string;
-}
+import { CCPairFullInfo } from "./types";
 
 type ActionType = "create" | "createAndSwap";
 
 export default function CreateCredentialModal({
-  connectorId,
-  id,
+  ccPair,
   onClose,
   onSwap,
   onCreateNew,
   setPopup,
 }: {
   setPopup: (popupSpec: PopupSpec | null) => void;
-  connectorId: number;
-  id: number;
+  ccPair: CCPairFullInfo;
   onClose: () => void;
   onSwap: (selectedCredentialId: number, connectorId: number) => Promise<void>;
   onCreateNew: () => void;
 }) {
   const handleSubmit = async (
-    values: FormValues,
-    formikHelpers: Pick<FormikHelpers<FormValues>, "setSubmitting">,
+    values: JsonValues & { name?: string },
+    formikHelpers: FormikHelpers<FormValues>,
     action: ActionType
   ) => {
+    const { setSubmitting, validateForm } = formikHelpers;
+
+    // Validate the form
+    const errors = await validateForm(values);
+
+    if (Object.keys(errors).length > 0) {
+      // If there are validation errors, set them and return
+      formikHelpers.setErrors(errors);
+      return;
+    }
+
+    setSubmitting(true);
+
+    // Validate the form
+
+    if (Object.keys(errors).length > 0) {
+      // If there are validation errors, set them and return
+      formikHelpers.setErrors(errors);
+      return;
+    }
     formikHelpers.setSubmitting(true);
-    const { confluence_username, confluence_access_token, name } = values;
+    const { name, ...credentialValues } = values;
 
     try {
       const response = await submitCredential({
-        credential_json: { confluence_username, confluence_access_token },
+        credential_json: credentialValues,
         admin_public: true,
         name: name,
-        source: "confluence",
+        source: ccPair.connector.source,
       });
 
       const { message, isSuccess, credentialId } = response;
@@ -65,7 +78,7 @@ export default function CreateCredentialModal({
       if (isSuccess) {
         onClose();
         if (action === "createAndSwap") {
-          const swap = await onSwap(credentialId, connectorId);
+          const swap = await onSwap(credentialId, ccPair.connector.id);
         } else {
           setPopup({ type: "success", message: "Created new credneital!!" });
           setTimeout(() => setPopup(null), 4000);
@@ -81,6 +94,46 @@ export default function CreateCredentialModal({
     }
   };
 
+  const input_values = Object.keys(ccPair.credential.credential_json);
+  interface JsonValues {
+    [key: string]: string;
+  }
+  interface FormValues extends JsonValues {
+    name: string;
+  }
+
+  const json_values: JsonValues = ccPair.credential.credential_json;
+
+  function createValidationSchema(json_values: JsonValues) {
+    const schemaFields: { [key: string]: Yup.StringSchema } = {};
+
+    for (const key in json_values) {
+      if (Object.prototype.hasOwnProperty.call(json_values, key)) {
+        schemaFields[key] = Yup.string().required(
+          `Please enter your ${getDisplayNameForCredentialKey(key)}`
+        );
+      }
+    }
+
+    // Add the optional 'name' field
+    schemaFields["name"] = Yup.string().optional();
+
+    return Yup.object().shape(schemaFields);
+  }
+
+  function createInitialValues(json_values: JsonValues): FormValues {
+    const initialValues: FormValues = { name: "" };
+    for (const key in json_values) {
+      if (Object.prototype.hasOwnProperty.call(json_values, key)) {
+        initialValues[key] = "";
+      }
+    }
+    return initialValues;
+  }
+
+  const validationSchema = createValidationSchema(json_values);
+
+  console.log(input_values);
   return (
     <Modal
       onOutsideClick={onClose}
@@ -89,22 +142,12 @@ export default function CreateCredentialModal({
     >
       <Formik
         initialValues={{
-          confluence_username: "",
-          confluence_access_token: "",
           name: "",
         }}
-        validationSchema={Yup.object().shape({
-          confluence_username: Yup.string().required(
-            "Please enter your username on Confluence"
-          ),
-          confluence_access_token: Yup.string().required(
-            "Please enter your Confluence access token"
-          ),
-          name: Yup.string().optional(),
-        })}
+        validationSchema={validationSchema}
         onSubmit={(values, formikHelpers) => {}} // This will be overridden by our custom submit handlers
       >
-        {({ isSubmitting, submitForm, setSubmitting, values }) => (
+        {(formikProps) => (
           <Form>
             <Card className="mt-4">
               <TextFormField
@@ -112,26 +155,30 @@ export default function CreateCredentialModal({
                 placeholder="(Optional) credential name.."
                 label="Name:"
               />
-              <TextFormField
-                name="confluence_username"
-                placeholder="Confluence username"
-                label="Username:"
-              />
-              <TextFormField
-                placeholder="Confluence access token"
-                name="confluence_access_token"
-                label="Access Token:"
-                type="password"
-              />
+
+              {Object.entries(json_values).map(([key, val]) => (
+                <TextFormField
+                  key={key}
+                  name={key}
+                  placeholder={val}
+                  label={getDisplayNameForCredentialKey(key)}
+                  type={
+                    key.toLowerCase().includes("token") ||
+                    key.toLowerCase().includes("password")
+                      ? "password"
+                      : "text"
+                  }
+                />
+              ))}
             </Card>
             <div className="flex gap-x-4 mt-8 justify-end">
               <Button
                 className="bg-rose-500 hover:bg-rose-400 border-rose-800"
                 onClick={() =>
-                  handleSubmit(values, { setSubmitting }, "createAndSwap")
+                  handleSubmit(formikProps.values, formikProps, "createAndSwap")
                 }
                 type="button"
-                disabled={isSubmitting}
+                disabled={formikProps.isSubmitting}
               >
                 <div className="flex gap-x-2 items-center w-full border-none">
                   <FaAccusoft />
@@ -141,10 +188,10 @@ export default function CreateCredentialModal({
               <Button
                 className="bg-indigo-500 hover:bg-indigo-400"
                 onClick={() =>
-                  handleSubmit(values, { setSubmitting }, "create")
+                  handleSubmit(formikProps.values, formikProps, "create")
                 }
                 type="button"
-                disabled={isSubmitting}
+                disabled={formikProps.isSubmitting}
               >
                 <div className="flex gap-x-2 items-center w-full border-none">
                   <FaSwatchbook />

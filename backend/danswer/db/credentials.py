@@ -2,7 +2,9 @@ from typing import Any
 
 from sqlalchemy import Select
 from sqlalchemy import select
+from sqlalchemy import update
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import and_
 from sqlalchemy.sql.expression import or_
 
 from danswer.auth.schemas import UserRole
@@ -15,6 +17,7 @@ from danswer.connectors.google_drive.constants import (
 )
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
+from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.models import User
 from danswer.server.documents.models import CredentialBase
 from danswer.server.documents.models import CredentialDataUpdateRequest
@@ -89,7 +92,7 @@ def fetch_credentials_by_source(
 def swap_credentials_connector(
     new_credential_id: int, connector_id: int, db_session: Session
 ) -> ConnectorCredentialPair:
-    # Find the existing ConnectorCredentialPair
+    # Existing pair
     existing_pair = db_session.execute(
         select(ConnectorCredentialPair).where(
             ConnectorCredentialPair.connector_id == connector_id
@@ -114,6 +117,17 @@ def swap_credentials_connector(
         raise ValueError(
             f"New credential source {new_credential.source} does not match connector source {existing_pair.connector.source}"
         )
+
+    db_session.execute(
+        update(DocumentByConnectorCredentialPair)
+        .where(
+            and_(
+                DocumentByConnectorCredentialPair.connector_id == connector_id,
+                DocumentByConnectorCredentialPair.credential_id == existing_pair.id,
+            )
+        )
+        .values(credential_id=new_credential_id)
+    )
 
     # Update the existing pair with the new credential
     existing_pair.credential_id = new_credential_id
@@ -206,10 +220,40 @@ def backend_update_credential_json(
     db_session.commit()
 
 
+# def delete_credential(
+#     credential_id: int,
+#     user: User | None,
+#     db_session: Session,
+# ) -> None:
+#     credential = fetch_credential_by_id(credential_id, user, db_session)
+#     if credential is None:
+#         raise ValueError(
+#             f"Credential by provided id {credential_id} does not exist or does not belong to user"
+#         )
+
+#     associated_connectors = (
+#         db_session.query(ConnectorCredentialPair)
+#         .filter(ConnectorCredentialPair.credential_id == credential_id)
+#         .all()
+#     )
+
+#     if associated_connectors:
+#         raise ValueError(
+#             f"Cannot delete credential {credential_id}
+#  as it is still associated with {len(associated_connectors)} connector(s). "
+#             "Please delete all associated connectors first."
+#         )
+
+
+#     db_session.delete(credential)
+#     db_session.commit()
+
+
 def delete_credential(
     credential_id: int,
     user: User | None,
     db_session: Session,
+    force: bool = False,
 ) -> None:
     credential = fetch_credential_by_id(credential_id, user, db_session)
     if credential is None:
@@ -223,11 +267,39 @@ def delete_credential(
         .all()
     )
 
-    if associated_connectors:
-        raise ValueError(
-            f"Cannot delete credential {credential_id} as it is still associated with {len(associated_connectors)} connector(s). "
-            "Please delete all associated connectors first."
-        )
+    associated_doc_cc_pairs = (
+        db_session.query(DocumentByConnectorCredentialPair)
+        .filter(DocumentByConnectorCredentialPair.credential_id == credential_id)
+        .all()
+    )
+
+    if associated_connectors or associated_doc_cc_pairs:
+        if force:
+            logger.warning(
+                f"Force deleting credential {credential_id} and its associated records"
+            )
+
+            # Delete DocumentByConnectorCredentialPair records first
+            for doc_cc_pair in associated_doc_cc_pairs:
+                db_session.delete(doc_cc_pair)
+
+            # Then delete ConnectorCredentialPair records
+            for connector in associated_connectors:
+                db_session.delete(connector)
+
+            # Commit these deletions before deleting the credential
+            db_session.flush()
+        else:
+            raise ValueError(
+                f"Cannot delete credential {credential_id} as it is still associated with "
+                f"{len(associated_connectors)} connector(s) and {len(associated_doc_cc_pairs)} document(s). "
+                "Please delete all associated records first or use force=True to cascade deletions."
+            )
+
+    if force:
+        logger.info(f"Force deleting credential {credential_id}")
+    else:
+        logger.info(f"Deleting credential {credential_id}")
 
     db_session.delete(credential)
     db_session.commit()

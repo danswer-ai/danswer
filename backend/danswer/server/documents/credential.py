@@ -201,9 +201,25 @@ def delete_credential_by_id(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
-    response = delete_credential(credential_id, user, db_session)
-    print("rezzy is")
-    print(response)
+    delete_credential(
+        credential_id,
+        user,
+        db_session,
+    )
+
+    return StatusResponse(
+        success=True, message="Credential deleted successfully", data=credential_id
+    )
+
+
+@router.delete("/credential/force/{credential_id}")
+def force_delete_credential_by_id(
+    credential_id: int,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse:
+    delete_credential(credential_id, user, db_session, True)
+
     return StatusResponse(
         success=True, message="Credential deleted successfully", data=credential_id
     )

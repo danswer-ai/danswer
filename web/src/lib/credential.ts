@@ -19,8 +19,23 @@ export async function adminDeleteCredential<T>(credentialId: number) {
   });
 }
 
-export async function deleteCredential<T>(credentialId: number) {
+export async function deleteCredential<T>(
+  credentialId: number,
+  force?: boolean
+) {
   return await fetch(`/api/manage/credential/${credentialId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+export async function forceDeleteCredential<T>(
+  credentialId: number,
+  force?: boolean
+) {
+  return await fetch(`/api/manage/credential/force/${credentialId}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",

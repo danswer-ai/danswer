@@ -8,7 +8,13 @@ import { Title, Text } from "@tremor/react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-function SourceTile({ sourceMetadata }: { sourceMetadata: SourceMetadata }) {
+function SourceTile({
+  sourceMetadata,
+  preSelect,
+}: {
+  sourceMetadata: SourceMetadata;
+  preSelect?: boolean;
+}) {
   return (
     <Link
       className={`flex 
@@ -19,9 +25,9 @@ function SourceTile({ sourceMetadata }: { sourceMetadata: SourceMetadata }) {
         rounded-lg 
         w-40 
         cursor-pointer
-        bg-hover-light
         shadow-md
         hover:bg-hover
+        ${preSelect ? "bg-hover" : "bg-hover-light"}
       `}
       href={sourceMetadata.adminUrl}
     >
@@ -63,6 +69,28 @@ export default function Page() {
     );
   }, [sources, searchTerm, filterSources]);
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      const filteredCategories = Object.entries(categorizedSources).filter(
+        ([_, sources]) => sources.length > 0
+      );
+      if (
+        filteredCategories.length > 0 &&
+        filteredCategories[0][1].length > 0
+      ) {
+        const firstSource = filteredCategories[0][1][0];
+        // Assuming SourceTile has an onSelect prop or similar to handle selection
+        // You might need to adjust this based on your actual implementation
+        if (firstSource) {
+          // Handle the selection of the first source
+          console.log("Selected source:", firstSource.internalName);
+          window.open(`/admin/connectors/${firstSource.internalName}`, "_self");
+          // You might want to navigate to a new page or open a modal here
+        }
+      }
+    }
+  };
+
   return (
     <div className="mx-auto container">
       <AdminPageTitle
@@ -76,28 +104,32 @@ export default function Page() {
         placeholder="Search connectors..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
+        onKeyDown={handleKeyPress}
         className="flex mt-2 max-w-sm h-9 w-full rounded-md border-2 border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       />
 
-      {Object.entries(categorizedSources).map(
-        ([category, sources]) =>
-          sources.length > 0 && (
-            <div key={category} className="mb-8">
-              <div className="flex mt-8">
-                <Title>{category}</Title>
-              </div>
-              <Text>{getCategoryDescription(category as SourceCategory)}</Text>
-              <div className="flex flex-wrap gap-4 p-4">
-                {sources.map((source) => (
-                  <SourceTile
-                    key={source.internalName}
-                    sourceMetadata={source}
-                  />
-                ))}
-              </div>
+      {Object.entries(categorizedSources)
+        .filter(([_, sources]) => sources.length > 0)
+        .map(([category, sources], categoryInd) => (
+          // sources.length > 0 &&
+          <div key={category} className="mb-8">
+            <div className="flex mt-8">
+              <Title>{category}</Title>
             </div>
-          )
-      )}
+            <Text>{getCategoryDescription(category as SourceCategory)}</Text>
+            <div className="flex flex-wrap gap-4 p-4">
+              {sources.map((source, sourceInd) => (
+                <SourceTile
+                  preSelect={
+                    searchTerm.length > 0 && categoryInd == 0 && sourceInd == 0
+                  }
+                  key={source.internalName}
+                  sourceMetadata={source}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
     </div>
   );
 }

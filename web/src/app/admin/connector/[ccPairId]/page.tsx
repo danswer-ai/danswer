@@ -13,11 +13,7 @@ import { DeletionButton } from "./DeletionButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ReIndexButton } from "./ReIndexButton";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
-import {
-  ConfluenceCredentialJson,
-  Credential,
-  ValidSources,
-} from "@/lib/types";
+import { Credential, ValidSources } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ThreeDotsLoader } from "@/components/Loading";
@@ -29,6 +25,7 @@ import { useState } from "react";
 import CreateCredentialModal from "./CreateCredentialModal";
 import {
   deleteCredential,
+  forceDeleteCredential,
   swapCredential,
   updateCredential,
 } from "@/lib/credential";
@@ -46,7 +43,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
   const [showModifyCredential, setShowModifyCredential] = useState(false);
   const [showCreateCredential, setShowCreateCredential] = useState(false);
   const [editingCredential, setEditingCredential] =
-    useState<Credential<ConfluenceCredentialJson> | null>(null);
+    useState<Credential<any> | null>(null);
 
   const closeModifyCredential = () => {
     setShowModifyCredential(false);
@@ -69,6 +66,14 @@ function Main({ ccPairId }: { ccPairId: number }) {
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
+
+  const { data: ccPair2 } = useSWR<CCPairFullInfo>(
+    buildCCPairInfoUrl(ccPairId),
+    errorHandlingFetcher,
+    { refreshInterval: 5000 } // 5 seconds
+  );
+  console.log(buildCCPairInfoUrl(ccPairId));
+  console.log(ccPair);
 
   if (isLoading) {
     return <ThreeDotsLoader />;
@@ -131,15 +136,13 @@ function Main({ ccPairId }: { ccPairId: number }) {
     }
   };
 
-  const onEditCredential = (
-    credential: Credential<ConfluenceCredentialJson>
-  ) => {
+  const onEditCredential = (credential: Credential<any>) => {
     closeModifyCredential();
     setEditingCredential(credential);
   };
 
   const onDeleteCredential = async (credential: Credential<any | null>) => {
-    await deleteCredential(credential.id);
+    await deleteCredential(credential.id, true);
     mutate(buildCCPairInfoUrl(ccPairId));
   };
 
@@ -179,11 +182,8 @@ function Main({ ccPairId }: { ccPairId: number }) {
       <div className="flex justify-start flex-col gap-y-2">
         <div className="flex gap-x-2">
           <p>Current credential:</p>
-          <Text className="ml-1 italic my-auto">
-            {
-              (ccPair.credential.credential_json as ConfluenceCredentialJson)
-                .confluence_access_token
-            }
+          <Text className="ml-1 italic font-bold my-auto">
+            {ccPair.credential.name || `Credential #${ccPair.credential.id}`}
           </Text>
         </div>
         <div className="flex text-sm justify-start mr-auto gap-x-2">
@@ -208,13 +208,11 @@ function Main({ ccPairId }: { ccPairId: number }) {
         <>
           <ModifyCredentialModal
             setPopup={setPopup}
+            ccPair={ccPair}
             onDeleteCredential={onDeleteCredential}
-            onEditCredential={(
-              credential: Credential<ConfluenceCredentialJson>
-            ) => onEditCredential(credential)}
-            connectorId={ccPair.connector.id}
-            credentialId={ccPair.credential.id}
-            id={ccPairId}
+            onEditCredential={(credential: Credential<any>) =>
+              onEditCredential(credential)
+            }
             onSwap={onSwap}
             onCreateNew={() => makeShowCreateCredential()}
             onClose={() => closeModifyCredential()}
@@ -233,11 +231,10 @@ function Main({ ccPairId }: { ccPairId: number }) {
 
       {showCreateCredential && (
         <CreateCredentialModal
-          connectorId={ccPair.connector.id}
+          ccPair={ccPair}
           setPopup={setPopup}
           onSwap={onSwap}
           onCreateNew={() => makeShowCreateCredential()}
-          id={ccPairId}
           onClose={closeCreateCredential}
         />
       )}
@@ -253,8 +250,9 @@ function Main({ ccPairId }: { ccPairId: number }) {
         <div className="flex">
           <Title>Indexing Attempts</Title>
         </div>
-
         <IndexingAttemptsTable ccPair={ccPair} />
+
+        {/* <IndexingAttemptsTable ccPair={ccPair} /> */}
       </div>
       <Divider />
       <div className="flex mt-4">

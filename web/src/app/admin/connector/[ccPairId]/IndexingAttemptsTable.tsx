@@ -74,6 +74,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
             </div>
           </Modal>
         )}
+
       <Table>
         <TableHead>
           <TableRow>
@@ -82,6 +83,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
             <TableHeaderCell>New Doc Cnt</TableHeaderCell>
             <TableHeaderCell>Total Doc Cnt</TableHeaderCell>
             <TableHeaderCell>Error Msg</TableHeaderCell>
+            <TableHeaderCell>Credential Name</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -138,6 +140,10 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                         </div>
                       )}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {indexAttempt.credential.name ||
+                      `Credential #${indexAttempt.credential.id}`}
                   </TableCell>
                 </TableRow>
               );

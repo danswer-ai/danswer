@@ -26,38 +26,6 @@ class ChunkInfo(BaseModel):
     num_tokens: int
 
 
-class IndexAttemptSnapshot(BaseModel):
-    id: int
-    status: IndexingStatus | None
-    new_docs_indexed: int  # only includes completely new docs
-    total_docs_indexed: int  # includes docs that are updated
-    docs_removed_from_index: int
-    error_msg: str | None
-    full_exception_trace: str | None
-    time_started: str | None
-    time_updated: str
-
-    @classmethod
-    def from_index_attempt_db_model(
-        cls, index_attempt: IndexAttempt
-    ) -> "IndexAttemptSnapshot":
-        return IndexAttemptSnapshot(
-            id=index_attempt.id,
-            status=index_attempt.status,
-            new_docs_indexed=index_attempt.new_docs_indexed or 0,
-            total_docs_indexed=index_attempt.total_docs_indexed or 0,
-            docs_removed_from_index=index_attempt.docs_removed_from_index or 0,
-            error_msg=index_attempt.error_msg,
-            full_exception_trace=index_attempt.full_exception_trace,
-            time_started=(
-                index_attempt.time_started.isoformat()
-                if index_attempt.time_started
-                else None
-            ),
-            time_updated=index_attempt.time_updated.isoformat(),
-        )
-
-
 class DeletionAttemptSnapshot(BaseModel):
     connector_id: int
     credential_id: int
@@ -105,6 +73,10 @@ class CredentialSwapRequest(BaseModel):
     connector_id: int
 
 
+class CredentialDeletionForce(BaseModel):
+    force: bool
+
+
 class CredentialDataUpdateRequest(BaseModel):
     name: str
     credential_json: dict[str, Any]
@@ -137,8 +109,44 @@ class CredentialSnapshot(CredentialBase):
             admin_public=credential.admin_public,
             time_created=credential.time_created,
             time_updated=credential.time_updated,
-            source=credential.source,
+            source=credential.source or DocumentSource.NOT_APPLICABLE,
             name=credential.name,
+        )
+
+
+class IndexAttemptSnapshot(BaseModel):
+    id: int
+    status: IndexingStatus | None
+    new_docs_indexed: int  # only includes completely new docs
+    total_docs_indexed: int  # includes docs that are updated
+    docs_removed_from_index: int
+    error_msg: str | None
+    full_exception_trace: str | None
+    time_started: str | None
+    time_updated: str
+    credential: CredentialSnapshot
+
+    @classmethod
+    def from_index_attempt_db_model(
+        cls, index_attempt: IndexAttempt
+    ) -> "IndexAttemptSnapshot":
+        return IndexAttemptSnapshot(
+            id=index_attempt.id,
+            status=index_attempt.status,
+            new_docs_indexed=index_attempt.new_docs_indexed or 0,
+            total_docs_indexed=index_attempt.total_docs_indexed or 0,
+            docs_removed_from_index=index_attempt.docs_removed_from_index or 0,
+            error_msg=index_attempt.error_msg,
+            full_exception_trace=index_attempt.full_exception_trace,
+            time_started=(
+                index_attempt.time_started.isoformat()
+                if index_attempt.time_started
+                else None
+            ),
+            credential=CredentialSnapshot.from_credential_db_model(
+                index_attempt.credential
+            ),
+            time_updated=index_attempt.time_updated.isoformat(),
         )
 
 
