@@ -104,6 +104,7 @@ async function* sendMessage({
           Authorization: `Bearer ${API_KEY}`,
         },
         body: JSON.stringify({
+          // or specify an assistant you have defined
           persona_id: 0,
         }),
       },
@@ -132,9 +133,10 @@ async function* sendMessage({
       prompt_id: null,
       search_doc_ids: null,
       file_descriptors: [],
+      // checkout https://github.com/danswer-ai/danswer/blob/main/backend/danswer/search/models.py#L105 for
+      // all available options
       retrieval_options: {
         run_search: "always",
-        // Checkout <> TODO
         filters: null,
       },
       query_override: null,
