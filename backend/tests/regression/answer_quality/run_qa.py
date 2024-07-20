@@ -46,19 +46,16 @@ def _get_test_output_folder(config: dict) -> str:
     base_output_folder = os.path.expanduser(config["output_folder"])
     if config["run_suffix"]:
         base_output_folder = os.path.join(
-            base_output_folder, ("test" + config["run_suffix"]), "evaluations_output"
+            base_output_folder, config["run_suffix"], "evaluations_output"
         )
     else:
         base_output_folder = os.path.join(base_output_folder, "no_defined_suffix")
 
     counter = 1
-    run_suffix = config["run_suffix"][1:]
-    output_folder_path = os.path.join(base_output_folder, f"{run_suffix}_run_1")
+    output_folder_path = os.path.join(base_output_folder, "run_1")
     while os.path.exists(output_folder_path):
         output_folder_path = os.path.join(
-            output_folder_path.replace(
-                f"{run_suffix}_run_{counter-1}", f"{run_suffix}_run_{counter}"
-            ),
+            output_folder_path.replace(f"run_{counter-1}", f"run_{counter}"),
         )
         counter += 1
 
@@ -162,6 +159,9 @@ def _process_and_write_query_results(config: dict) -> None:
     for result in results:
         if not result.get("answer"):
             invalid_answer_count += 1
+
+        if not result.get("context_data_list"):
+            raise RuntimeError("Search failed, this is a critical failure!")
 
     _update_metadata_file(test_output_folder, invalid_answer_count)
 
