@@ -17,6 +17,7 @@ from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
 from danswer.db.models import User
 from danswer.server.documents.models import CredentialBase
+from danswer.server.documents.models import CredentialDataUpdateRequest
 from danswer.utils.logger import setup_logger
 
 
@@ -81,8 +82,6 @@ def fetch_credentials_by_source(
     document_source: DocumentSource | None = None,
 ) -> list[Credential]:
     base_query = select(Credential).where(Credential.source == document_source)
-    print("querying")
-    print(base_query)
     credentials = db_session.execute(base_query).scalars().all()
     return list(credentials)
 
@@ -125,7 +124,6 @@ def swap_credentials_connector(
 
     # Refresh the object to ensure all relationships are up-to-date
     db_session.refresh(existing_pair)
-
     return existing_pair
 
 
@@ -144,6 +142,25 @@ def create_credential(
     db_session.add(credential)
     db_session.commit()
 
+    return credential
+
+
+def alter_credential(
+    credential_id: int,
+    credential_data: CredentialDataUpdateRequest,
+    user: User,
+    db_session: Session,
+) -> Credential | None:
+    credential = fetch_credential_by_id(credential_id, user, db_session)
+
+    if credential is None:
+        return None
+
+    credential.name = credential_data.name
+    credential.credential_json = credential_data.credential_json
+    credential.user_id = user.id if user is not None else None
+
+    db_session.commit()
     return credential
 
 

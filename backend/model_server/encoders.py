@@ -65,6 +65,7 @@ class CloudEmbedding:
             credentials = service_account.Credentials.from_service_account_info(
                 json.loads(self.api_key)
             )
+
             project_id = json.loads(self.api_key)["project_id"]
             vertexai.init(project=project_id, credentials=credentials)
             return TextEmbeddingModel.from_pretrained(
@@ -214,12 +215,9 @@ def embed_text(
     api_key: str | None,
     provider_type: str | None,
 ) -> list[list[float]]:
-    print("encoding")
-    print(text_type)
     if provider_type is not None:
         if api_key is None:
             raise RuntimeError("API key not provided for cloud model")
-
         cloud_model = CloudEmbedding(
             api_key=api_key, provider=provider_type, model=model_name
         )

@@ -43,10 +43,29 @@ export function linkCredential(
       },
       body: JSON.stringify({
         name: name || null,
-        is_public: isPublic !== undefined ? isPublic : true, // default to public
+        is_public: isPublic !== undefined ? isPublic : true,
       }),
     }
   );
+}
+
+export function updateCredential(credentialId: number, newDetails: any) {
+  const name = newDetails.name;
+  const details = Object.fromEntries(
+    Object.entries(newDetails).filter(
+      ([key, value]) => key !== "name" && value !== ""
+    )
+  );
+  return fetch(`/api/manage/admin/alter-credential/${credentialId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: name,
+      credential_json: details,
+    }),
+  });
 }
 
 export function swapCredential(newCredentialId: number, connectorId: number) {

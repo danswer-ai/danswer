@@ -23,12 +23,17 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { buildCCPairInfoUrl } from "./lib";
 import { FaSwatchbook } from "react-icons/fa";
-import { NewChatIcon, TrashIcon } from "@/components/icons/icons";
+import { NewChatIcon } from "@/components/icons/icons";
 import ModifyCredentialModal from "./ModifyCredentialModal";
 import { useState } from "react";
 import CreateCredentialModal from "./CreateCredentialModal";
-import { swapCredential } from "@/lib/credential";
+import {
+  deleteCredential,
+  swapCredential,
+  updateCredential,
+} from "@/lib/credential";
 import EditCredentialModal from "./EditCredentialModal";
+import { usePopup } from "@/components/admin/connectors/Popup";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -36,18 +41,24 @@ import EditCredentialModal from "./EditCredentialModal";
 const CONNECTOR_TYPES_THAT_CANT_REINDEX: ValidSources[] = ["file"];
 
 function Main({ ccPairId }: { ccPairId: number }) {
+  const { popup, setPopup } = usePopup();
+
   const [showModifyCredential, setShowModifyCredential] = useState(false);
   const [showCreateCredential, setShowCreateCredential] = useState(false);
   const [editingCredential, setEditingCredential] =
     useState<Credential<ConfluenceCredentialJson> | null>(null);
+
   const closeModifyCredential = () => {
     setShowModifyCredential(false);
   };
+
   const closeCreateCredential = () => {
     setShowCreateCredential(false);
   };
+
   const closeEditingCredential = () => {
     setEditingCredential(null);
+    setShowModifyCredential(true);
   };
   const {
     data: ccPair,
@@ -93,6 +104,31 @@ function Main({ ccPairId }: { ccPairId: number }) {
   const onSwap = async (selectedCredentialId: number, connectorId: number) => {
     await swapCredential(selectedCredentialId, connectorId);
     mutate(buildCCPairInfoUrl(ccPairId));
+
+    setPopup({
+      message: "Swapped credential succesfully!",
+      type: "success",
+    });
+  };
+
+  const onUpdateCredential = async (
+    selectedCredential: Credential<any | null>,
+    details: any,
+    onSucces: () => void
+  ) => {
+    const response = await updateCredential(selectedCredential.id, details);
+    if (response.ok) {
+      setPopup({
+        message: "Updated credential",
+        type: "success",
+      });
+      onSucces();
+    } else {
+      setPopup({
+        message: "Issue updating credential",
+        type: "error",
+      });
+    }
   };
 
   const onEditCredential = (
@@ -102,9 +138,15 @@ function Main({ ccPairId }: { ccPairId: number }) {
     setEditingCredential(credential);
   };
 
+  const onDeleteCredential = async (credential: Credential<any | null>) => {
+    await deleteCredential(credential.id);
+    mutate(buildCCPairInfoUrl(ccPairId));
+  };
+
   return (
     <>
       <BackButton />
+      {popup}
       <div className="pb-1 flex mt-1">
         <h1 className="text-3xl text-emphasis font-bold">{ccPair.name}</h1>
 
@@ -163,19 +205,27 @@ function Main({ ccPairId }: { ccPairId: number }) {
       </div>
 
       {showModifyCredential && (
-        <ModifyCredentialModal
-          onEditCredential={onEditCredential}
-          connectorId={ccPair.connector.id}
-          credentialId={ccPair.credential.id}
-          id={ccPairId}
-          onSwap={onSwap}
-          onCreateNew={() => makeShowCreateCredential()}
-          onClose={closeModifyCredential}
-        />
+        <>
+          <ModifyCredentialModal
+            setPopup={setPopup}
+            onDeleteCredential={onDeleteCredential}
+            onEditCredential={(
+              credential: Credential<ConfluenceCredentialJson>
+            ) => onEditCredential(credential)}
+            connectorId={ccPair.connector.id}
+            credentialId={ccPair.credential.id}
+            id={ccPairId}
+            onSwap={onSwap}
+            onCreateNew={() => makeShowCreateCredential()}
+            onClose={() => closeModifyCredential()}
+          />
+        </>
       )}
 
       {editingCredential && (
         <EditCredentialModal
+          onUpdate={onUpdateCredential}
+          setPopup={setPopup}
           credential={editingCredential}
           onClose={closeEditingCredential}
         />
@@ -183,7 +233,9 @@ function Main({ ccPairId }: { ccPairId: number }) {
 
       {showCreateCredential && (
         <CreateCredentialModal
-          onSwap={(credential: Credential<ConfluenceCredentialJson>) => null}
+          connectorId={ccPair.connector.id}
+          setPopup={setPopup}
+          onSwap={onSwap}
           onCreateNew={() => makeShowCreateCredential()}
           id={ccPairId}
           onClose={closeCreateCredential}

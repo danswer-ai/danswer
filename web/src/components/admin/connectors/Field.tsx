@@ -114,9 +114,11 @@ export function TextFormField({
   explanationText,
   explanationLink,
   small,
+  value,
   noPadding,
 }: {
   name: string;
+  value?: string;
   label: string;
   subtext?: string | JSX.Element;
   placeholder?: string;
@@ -167,6 +169,7 @@ export function TextFormField({
         type={type}
         name={name}
         id={name}
+        value={value}
         className={`
           ${small && "text-sm"}
           border 

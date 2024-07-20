@@ -10,12 +10,15 @@ import { ConfluenceCredentialJson, Credential } from "@/lib/types";
 import { FaCreativeCommons, FaSwatchbook } from "react-icons/fa";
 import { swapCredential } from "@/lib/credential";
 import { EditIcon, SwapIcon, TrashIcon } from "@/components/icons/icons";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 
 interface CredentialSelectionTableProps {
   credentials: Credential<any>[];
   onSelectCredential: (credential: Credential<any> | null) => void;
   currentCredentialId: number;
-  onEditCredential: (credential: Credential<ConfluenceCredentialJson>) => void;
+  onDeleteCredential: (credential: Credential<any>) => void;
+  onEditCredential: (credential: Credential<any>) => void;
+  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
@@ -23,6 +26,8 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
   onEditCredential,
   onSelectCredential,
   currentCredentialId,
+  onDeleteCredential,
+  setPopup,
 }) => {
   const [selectedCredentialId, setSelectedCredentialId] = useState<
     number | null
@@ -53,44 +58,57 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
           </tr>
         </thead>
         <tbody>
-          {credentials.map((credential, ind) => (
-            <tr key={credential.id} className="border-b hover:bg-gray-50">
-              <td className="p-2">
-                {credential.id != currentCredentialId ? (
-                  <input
-                    type="radio"
-                    name="credentialSelection"
-                    checked={selectedCredentialId === credential.id}
-                    onChange={() => handleSelectCredential(credential.id)}
-                    className="form-radio h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                  />
-                ) : (
-                  <Badge>current</Badge>
-                )}
-              </td>
-              <td className="p-2">{credential.id}</td>
-              <td className="p-2">
-                <p>{credential.name ?? "Untitled"}</p>
-              </td>
-              <td className="p-2">
-                {new Date(credential.time_created).toLocaleString()}
-              </td>
-              <td className="p-2">
-                {new Date(credential.time_updated).toLocaleString()}
-              </td>
-              <td className="pt-3 flex gap-x-2  content-center mt-auto">
-                <button className="cursor-pointer my-auto">
-                  <TrashIcon />
-                </button>
-                <button
-                  onClick={() => onEditCredential(credential)}
-                  className="cursor-pointer my-auto"
-                >
-                  <EditIcon />
-                </button>
-              </td>
-            </tr>
-          ))}
+          {credentials.map((credential, ind) => {
+            const selected = credential.id == currentCredentialId;
+            return (
+              <tr key={credential.id} className="border-b hover:bg-gray-50">
+                <td className="p-2">
+                  {!selected ? (
+                    <input
+                      type="radio"
+                      name="credentialSelection"
+                      checked={selectedCredentialId === credential.id}
+                      onChange={() => handleSelectCredential(credential.id)}
+                      className="form-radio h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                    />
+                  ) : (
+                    <Badge>current</Badge>
+                  )}
+                </td>
+                <td className="p-2">{credential.id}</td>
+                <td className="p-2">
+                  <p>{credential.name ?? "Untitled"}</p>
+                </td>
+                <td className="p-2">
+                  {new Date(credential.time_created).toLocaleString()}
+                </td>
+                <td className="p-2">
+                  {new Date(credential.time_updated).toLocaleString()}
+                </td>
+                <td className="pt-3 flex gap-x-2  content-center mt-auto">
+                  <button
+                    disabled={selected}
+                    onClick={async () => {
+                      await onDeleteCredential(credential);
+                      setPopup({
+                        message: "Credential deleted",
+                        type: "success",
+                      });
+                    }}
+                    className="disabled:opacity-20 enabled:cursor-pointer my-auto"
+                  >
+                    <TrashIcon />
+                  </button>
+                  <button
+                    onClick={() => onEditCredential(credential)}
+                    className="cursor-pointer my-auto"
+                  >
+                    <EditIcon />
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -105,7 +123,11 @@ export default function ModifyCredentialModal({
   onSwap,
   onCreateNew,
   onEditCredential,
+  onDeleteCredential,
+  setPopup,
 }: {
+  setPopup: (popupSpec: PopupSpec | null) => void;
+  onDeleteCredential: (credential: Credential<any | null>) => void;
   onEditCredential: (credential: Credential<ConfluenceCredentialJson>) => void;
   id: number;
   connectorId: number;
@@ -131,7 +153,6 @@ export default function ModifyCredentialModal({
     { refreshInterval: 5000 } // 5 seconds
   );
   if (!credentials) {
-    onClose();
     return <></>;
   }
 
@@ -148,10 +169,19 @@ export default function ModifyCredentialModal({
         </Text>
         {credentials.length > 1 ? (
           <CredentialSelectionTable
-            onEditCredential={onEditCredential}
+            setPopup={setPopup}
+            onDeleteCredential={async (credential: Credential<any | null>) => {
+              await onDeleteCredential(credential);
+              mutate(buildSimilarCredentialInfoURL(id));
+            }}
+            onEditCredential={(
+              credential: Credential<ConfluenceCredentialJson>
+            ) => onEditCredential(credential)}
             currentCredentialId={credentialId}
             credentials={credentials}
-            onSelectCredential={handleSelectCredential}
+            onSelectCredential={(credential: Credential<any> | null) =>
+              handleSelectCredential(credential)
+            }
           />
         ) : (
           <p className="text-lg">
@@ -160,11 +190,21 @@ export default function ModifyCredentialModal({
         )}
 
         <div className="flex mt-8 justify-end">
-          {credentials.length > 1 && selectedCredential ? (
+          {credentials.length > 1 ? (
             <Button
               disabled={selectedCredential == null}
-              onClick={() => onSwap(selectedCredential?.id!, connectorId)}
-              className="bg-indigo-500 disabled:border-transparent transition-colors duration-150 ease-in disabled:bg-indigo-300 disabled:hover:bg-indigo-300 hover:bg-indigo-600 cursor-pointer"
+              onClick={() => {
+                if (selectedCredential) {
+                  onSwap(selectedCredential?.id, connectorId);
+                }
+                setPopup({
+                  message: "Swapped credential",
+                  type: "success",
+                });
+              }}
+              className="bg-indigo-500 disabled:border-transparent 
+              transition-colors duration-150 ease-in disabled:bg-indigo-300 
+              disabled:hover:bg-indigo-300 hover:bg-indigo-600 cursor-pointer"
             >
               <div className="flex gap-x-2 items-center w-full border-none">
                 <SwapIcon className="text-white" />

@@ -73,7 +73,7 @@ def upgrade() -> None:
         sa.Column(
             "name",
             sa.String(),
-            nullable=True,  # Initially allow NULL values
+            nullable=True,
         ),
     )
 
@@ -100,10 +100,8 @@ def upgrade() -> None:
     )
     """
     )
-
-    # Drop the temporary table
-    op.execute("DROP TABLE temp_connector_credential")
-    op.alter_column("credential", "source", nullable=False)
+    # If no exception was raised, alter the column
+    op.alter_column("credential", "source", nullable=True)  # TODO modify
     # # ### end Alembic commands ###
 
 

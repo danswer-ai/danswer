@@ -7,6 +7,7 @@ from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.connector_credential_pair import get_connector_credential_source_from_id
+from danswer.db.credentials import alter_credential
 from danswer.db.credentials import create_credential
 from danswer.db.credentials import delete_credential
 from danswer.db.credentials import fetch_credential_by_id
@@ -17,6 +18,7 @@ from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.server.documents.models import CredentialBase
+from danswer.server.documents.models import CredentialDataUpdateRequest
 from danswer.server.documents.models import CredentialSnapshot
 from danswer.server.documents.models import CredentialSwapRequest
 from danswer.server.documents.models import ObjectCreationIdResponse
@@ -149,6 +151,24 @@ def get_credential_by_id(
     return CredentialSnapshot.from_credential_db_model(credential)
 
 
+@router.patch("/admin/alter-credential/{credential_id}")
+def update_credential_data(
+    credential_id: int,
+    credential_update: CredentialDataUpdateRequest,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> CredentialBase:
+    credential = alter_credential(credential_id, credential_update, user, db_session)
+
+    if credential is None:
+        raise HTTPException(
+            status_code=401,
+            detail=f"Credential {credential_id} does not exist or does not belong to user",
+        )
+
+    return CredentialSnapshot.from_credential_db_model(credential)
+
+
 @router.patch("/credential/{credential_id}")
 def update_credential_from_model(
     credential_id: int,
@@ -181,7 +201,9 @@ def delete_credential_by_id(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
-    delete_credential(credential_id, user, db_session)
+    response = delete_credential(credential_id, user, db_session)
+    print("rezzy is")
+    print(response)
     return StatusResponse(
         success=True, message="Credential deleted successfully", data=credential_id
     )
