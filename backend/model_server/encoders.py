@@ -44,7 +44,9 @@ _GLOBAL_MODELS_DICT: dict[str, "SentenceTransformer"] = {}
 _RERANK_MODELS: Optional[list["CrossEncoder"]] = None
 
 
-def _initialize_client(api_key: str, provider: str, model: str | None = None) -> Any:
+def _initialize_client(
+    api_key: str, provider: EmbeddingProvider, model: str | None = None
+) -> Any:
     if provider == EmbeddingProvider.OPENAI:
         return openai.OpenAI(api_key=api_key)
     elif provider == EmbeddingProvider.COHERE:
@@ -125,12 +127,13 @@ class CloudEmbedding:
     def _embed(
         self, *, text: str, text_type: EmbedTextType, model: str | None = None
     ) -> list[float]:
-        embedding_type = EmbeddingModelTextType.get_type(self.provider, text_type)
         logger.debug(f"Embedding text with provider: {self.provider}")
         try:
             if self.provider == EmbeddingProvider.OPENAI:
                 return self._embed_openai(text, model)
-            elif self.provider == EmbeddingProvider.COHERE:
+
+            embedding_type = EmbeddingModelTextType.get_type(self.provider, text_type)
+            if self.provider == EmbeddingProvider.COHERE:
                 return self._embed_cohere(text, model, embedding_type)
             elif self.provider == EmbeddingProvider.VOYAGE:
                 return self._embed_voyage(text, model, embedding_type)
