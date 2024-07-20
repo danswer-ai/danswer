@@ -111,7 +111,7 @@ def _process_file(
         for k, v in all_metadata.items()
         if k
         not in [
-            "document_id"
+            "document_id",
             "time_updated",
             "doc_updated_at",
             "link",
