@@ -1,3 +1,4 @@
+import concurrent.futures
 import gc
 import json
 from typing import Any
@@ -10,6 +11,7 @@ from cohere import Client as CohereClient
 from fastapi import APIRouter
 from fastapi import HTTPException
 from google.oauth2 import service_account  # type: ignore
+from retry import retry
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 from vertexai.language_models import TextEmbeddingInput  # type: ignore
@@ -42,63 +44,37 @@ _GLOBAL_MODELS_DICT: dict[str, "SentenceTransformer"] = {}
 _RERANK_MODELS: Optional[list["CrossEncoder"]] = None
 
 
-class CloudEmbedding:
-    def __init__(self, api_key: str, provider: str, model: str | None = None):
-        self.api_key = api_key
+def _initialize_client(api_key: str, provider: str, model: str | None = None) -> Any:
+    if provider == EmbeddingProvider.OPENAI:
+        return openai.OpenAI(api_key=api_key)
+    elif provider == EmbeddingProvider.COHERE:
+        return CohereClient(api_key=api_key)
+    elif provider == EmbeddingProvider.VOYAGE:
+        return voyageai.Client(api_key=api_key)
+    elif provider == EmbeddingProvider.GOOGLE:
+        credentials = service_account.Credentials.from_service_account_info(
+            json.loads(api_key)
+        )
+        project_id = json.loads(api_key)["project_id"]
+        vertexai.init(project=project_id, credentials=credentials)
+        return TextEmbeddingModel.from_pretrained(model or DEFAULT_VERTEX_MODEL)
+    else:
+        raise ValueError(f"Unsupported provider: {provider}")
 
+
+class CloudEmbedding:
+    def __init__(
+        self,
+        api_key: str,
+        provider: str,
         # Only for Google as is needed on client setup
-        self.model = model
+        model: str | None = None,
+    ) -> None:
         try:
             self.provider = EmbeddingProvider(provider.lower())
         except ValueError:
             raise ValueError(f"Unsupported provider: {provider}")
-        self.client = self._initialize_client()
-
-    def _initialize_client(self) -> Any:
-        if self.provider == EmbeddingProvider.OPENAI:
-            return openai.OpenAI(api_key=self.api_key)
-        elif self.provider == EmbeddingProvider.COHERE:
-            return CohereClient(api_key=self.api_key)
-        elif self.provider == EmbeddingProvider.VOYAGE:
-            return voyageai.Client(api_key=self.api_key)
-        elif self.provider == EmbeddingProvider.GOOGLE:
-            credentials = service_account.Credentials.from_service_account_info(
-                json.loads(self.api_key)
-            )
-            project_id = json.loads(self.api_key)["project_id"]
-            vertexai.init(project=project_id, credentials=credentials)
-            return TextEmbeddingModel.from_pretrained(
-                self.model or DEFAULT_VERTEX_MODEL
-            )
-
-        else:
-            raise ValueError(f"Unsupported provider: {self.provider}")
-
-    def encode(
-        self, texts: list[str], model_name: str | None, text_type: EmbedTextType
-    ) -> list[list[float]]:
-        return [
-            self.embed(text=text, text_type=text_type, model=model_name)
-            for text in texts
-        ]
-
-    def embed(
-        self, *, text: str, text_type: EmbedTextType, model: str | None = None
-    ) -> list[float]:
-        logger.debug(f"Embedding text with provider: {self.provider}")
-        if self.provider == EmbeddingProvider.OPENAI:
-            return self._embed_openai(text, model)
-
-        embedding_type = EmbeddingModelTextType.get_type(self.provider, text_type)
-
-        if self.provider == EmbeddingProvider.COHERE:
-            return self._embed_cohere(text, model, embedding_type)
-        elif self.provider == EmbeddingProvider.VOYAGE:
-            return self._embed_voyage(text, model, embedding_type)
-        elif self.provider == EmbeddingProvider.GOOGLE:
-            return self._embed_vertex(text, model, embedding_type)
-        else:
-            raise ValueError(f"Unsupported provider: {self.provider}")
+        self.client = _initialize_client(api_key, self.provider, model)
 
     def _embed_openai(self, text: str, model: str | None) -> list[float]:
         if model is None:
@@ -144,6 +120,41 @@ class CloudEmbedding:
             ]
         )
         return embedding[0].values
+
+    @retry(tries=3, backoff=2, delay=5)
+    def _embed(
+        self, *, text: str, text_type: EmbedTextType, model: str | None = None
+    ) -> list[float]:
+        embedding_type = EmbeddingModelTextType.get_type(self.provider, text_type)
+        logger.debug(f"Embedding text with provider: {self.provider}")
+        try:
+            if self.provider == EmbeddingProvider.OPENAI:
+                return self._embed_openai(text, model)
+            elif self.provider == EmbeddingProvider.COHERE:
+                return self._embed_cohere(text, model, embedding_type)
+            elif self.provider == EmbeddingProvider.VOYAGE:
+                return self._embed_voyage(text, model, embedding_type)
+            elif self.provider == EmbeddingProvider.GOOGLE:
+                return self._embed_vertex(text, model, embedding_type)
+            else:
+                raise ValueError(f"Unsupported provider: {self.provider}")
+        except Exception as e:
+            logger.error(f"Error embedding text with {self.provider}: {str(e)}")
+            raise
+
+    def encode(
+        self, texts: list[str], model_name: str | None, text_type: EmbedTextType
+    ) -> list[list[float]]:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(
+                    self._embed, text=text, text_type=text_type, model=model_name
+                )
+                for text in texts
+            ]
+            return [
+                future.result() for future in concurrent.futures.as_completed(futures)
+            ]
 
     @staticmethod
     def create(
