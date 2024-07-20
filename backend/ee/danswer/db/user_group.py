@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Document
 from danswer.db.models import DocumentByConnectorCredentialPair
+from danswer.db.models import LLMProvider__UserGroup
 from danswer.db.models import TokenRateLimit__UserGroup
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
@@ -194,6 +195,15 @@ def _cleanup_user__user_group_relationships__no_commit(
         db_session.delete(user__user_group_relationship)
 
 
+def _cleanup_llm_provider__user_group_relationships__no_commit(
+    db_session: Session, user_group_id: int
+) -> None:
+    """NOTE: does not commit the transaction."""
+    db_session.query(LLMProvider__UserGroup).filter(
+        LLMProvider__UserGroup.user_group_id == user_group_id
+    ).delete(synchronize_session=False)
+
+
 def _mark_user_group__cc_pair_relationships_outdated__no_commit(
     db_session: Session, user_group_id: int
 ) -> None:
@@ -316,6 +326,9 @@ def mark_user_group_as_synced(db_session: Session, user_group: UserGroup) -> Non
 
 
 def delete_user_group(db_session: Session, user_group: UserGroup) -> None:
+    _cleanup_llm_provider__user_group_relationships__no_commit(
+        db_session=db_session, user_group_id=user_group.id
+    )
     _cleanup_user__user_group_relationships__no_commit(
         db_session=db_session, user_group_id=user_group.id
     )

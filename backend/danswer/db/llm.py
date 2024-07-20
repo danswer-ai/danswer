@@ -78,6 +78,10 @@ def upsert_llm_provider(
     existing_llm_provider.model_names = llm_provider.model_names
     existing_llm_provider.is_public = llm_provider.is_public
 
+    if not existing_llm_provider.id:
+        # If its not already in the db, we need to generate an ID by flushing
+        db_session.flush()
+
     # Make sure the relationship table stays up to date
     update_group_llm_provider_relationships(
         llm_provider_id=existing_llm_provider.id,
