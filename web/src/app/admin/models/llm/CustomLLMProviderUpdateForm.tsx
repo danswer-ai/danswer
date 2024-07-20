@@ -1,5 +1,6 @@
 import { LoadingAnimation } from "@/components/Loading";
 import { Button, Divider, Text } from "@tremor/react";
+import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import {
   ArrayHelpers,
   ErrorMessage,
@@ -27,7 +28,6 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import * as Yup from "yup";
 import isEqual from "lodash/isEqual";
-// import { useFormikContext } from 'formik';
 
 function customConfigProcessing(customConfigsList: [string, string][]) {
   const customConfig: { [key: string]: string } = {};
@@ -57,6 +57,8 @@ export function CustomLLMProviderUpdateForm({
 
   const [isTesting, setIsTesting] = useState(false);
   const [testError, setTestError] = useState<string>("");
+
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
   // Define the initial values based on the provider's requirements
   const initialValues = {
@@ -400,57 +402,68 @@ export function CustomLLMProviderUpdateForm({
 
             <Divider />
 
-            {isPaidEnterpriseFeaturesEnabled && userGroups && (
+            <AdvancedOptionsToggle
+              showAdvancedOptions={showAdvancedOptions}
+              setShowAdvancedOptions={setShowAdvancedOptions}
+            />
+
+            {showAdvancedOptions && (
               <>
-                <Divider />
+                {isPaidEnterpriseFeaturesEnabled && userGroups && (
+                  <>
+                    <BooleanFormField
+                      small
+                      noPadding
+                      alignTop
+                      name="is_public"
+                      label="Is Public?"
+                      subtext="If set, this LLM Provider will be available to all users. If not, only the specified User Groups will be able to use it."
+                    />
 
-                <BooleanFormField
-                  small
-                  noPadding
-                  alignTop
-                  name="is_public"
-                  label="Is Public?"
-                  subtext="If set, this LLM Provider will be available to all users. If not, only the specified User Groups will be able to use it."
-                />
-
-                {userGroups && userGroups.length > 0 && !values.is_public && (
-                  <div>
-                    <Text>
-                      Select which User Groups should have access to this LLM
-                      Provider.
-                    </Text>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {userGroups.map((userGroup) => {
-                        const isSelected = values.groups.includes(userGroup.id);
-                        return (
-                          <Bubble
-                            key={userGroup.id}
-                            isSelected={isSelected}
-                            onClick={() => {
-                              if (isSelected) {
-                                setFieldValue(
-                                  "groups",
-                                  values.groups.filter(
-                                    (id) => id !== userGroup.id
-                                  )
-                                );
-                              } else {
-                                setFieldValue("groups", [
-                                  ...values.groups,
-                                  userGroup.id,
-                                ]);
-                              }
-                            }}
-                          >
-                            <div className="flex">
-                              <GroupsIcon />
-                              <div className="ml-1">{userGroup.name}</div>
-                            </div>
-                          </Bubble>
-                        );
-                      })}
-                    </div>
-                  </div>
+                    {userGroups &&
+                      userGroups.length > 0 &&
+                      !values.is_public && (
+                        <div>
+                          <Text>
+                            Select which User Groups should have access to this
+                            LLM Provider.
+                          </Text>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {userGroups.map((userGroup) => {
+                              const isSelected = values.groups.includes(
+                                userGroup.id
+                              );
+                              return (
+                                <Bubble
+                                  key={userGroup.id}
+                                  isSelected={isSelected}
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setFieldValue(
+                                        "groups",
+                                        values.groups.filter(
+                                          (id) => id !== userGroup.id
+                                        )
+                                      );
+                                    } else {
+                                      setFieldValue("groups", [
+                                        ...values.groups,
+                                        userGroup.id,
+                                      ]);
+                                    }
+                                  }}
+                                >
+                                  <div className="flex">
+                                    <GroupsIcon />
+                                    <div className="ml-1">{userGroup.name}</div>
+                                  </div>
+                                </Bubble>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                  </>
                 )}
               </>
             )}
