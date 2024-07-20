@@ -70,7 +70,7 @@ Edit `search_test_config.yaml` to set:
 - model_server_port
     - This is the port of the remote model server
     - Only need to set this if use_cloud_gpu is true
-- existing_test_suffix
+- existing_test_suffix (THIS IS NOT A SUFFIX ANYMORE, TODO UPDATE THE DOCS HERE)
     - Use this if you would like to relaunch a previous test instance
     - Input the suffix of the test you'd like to re-launch 
     - (E.g. to use the data from folder "test-1234-5678" put "-1234-5678")
