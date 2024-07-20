@@ -20,18 +20,10 @@ schema DANSWER_CHUNK_NAME {
         # `semantic_identifier` will be the channel name, but the `title` will be empty
         field title type string {
             indexing: summary | index | attribute
-            match {
-                gram
-                gram-size: 3
-            }
             index: enable-bm25
         }
         field content type string {
             indexing: summary | index
-            match {
-                gram
-                gram-size: 3
-            }
             index: enable-bm25
         }
         # duplication of `content` is far from ideal, but is needed for 
