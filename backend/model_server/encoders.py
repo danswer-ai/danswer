@@ -84,6 +84,9 @@ class CloudEmbedding:
         if model is None:
             model = DEFAULT_OPENAI_MODEL
 
+        # OpenAI does not seem to provide truncation option, however
+        # the context lengths used by Danswer currently are smaller than the max token length
+        # for OpenAI embeddings so it's not a big deal
         response = self.client.embeddings.create(input=texts, model=model)
         return [embedding.embedding for embedding in response.data]
 
@@ -93,11 +96,13 @@ class CloudEmbedding:
         if model is None:
             model = DEFAULT_COHERE_MODEL
 
+        # Does not use the same tokenizer as the Danswer API server but it's approximately the same
+        # empirically it's only off by a very few tokens so it's not a big deal
         response = self.client.embed(
             texts=texts,
             model=model,
             input_type=embedding_type,
-            truncate="NONE",
+            truncate="END",
         )
         return response.embeddings
 
@@ -107,7 +112,14 @@ class CloudEmbedding:
         if model is None:
             model = DEFAULT_VOYAGE_MODEL
 
-        response = self.client.embed(texts, model=model, input_type=embedding_type)
+        # Similar to Cohere, the API server will do approximate size chunking
+        # it's acceptable to miss by a few tokens
+        response = self.client.embed(
+            texts,
+            model=model,
+            input_type=embedding_type,
+            truncation=True,  # Also this is default
+        )
         return response.embeddings
 
     def _embed_vertex(
@@ -123,7 +135,8 @@ class CloudEmbedding:
                     embedding_type,
                 )
                 for text in texts
-            ]
+            ],
+            auto_truncate=True,  # Also this is default
         )
         return [embedding.values for embedding in embeddings]
 
