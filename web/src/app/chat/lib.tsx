@@ -505,7 +505,7 @@ export function removeMessage(
 
 export function checkAnyAssistantHasSearch(
   messageHistory: Message[],
-  availablePersonas: Persona[],
+  availableAssistants: Persona[],
   livePersona: Persona
 ): boolean {
   const response =
@@ -516,8 +516,8 @@ export function checkAnyAssistantHasSearch(
       ) {
         return false;
       }
-      const alternateAssistant = availablePersonas.find(
-        (persona) => persona.id === message.alternateAssistantID
+      const alternateAssistant = availableAssistants.find(
+        (assistant) => assistant.id === message.alternateAssistantID
       );
       return alternateAssistant
         ? personaIncludesRetrieval(alternateAssistant)

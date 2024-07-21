@@ -21,7 +21,6 @@ import { IconType } from "react-icons";
 import Popup from "../../../components/popup/Popup";
 import { LlmTab } from "../modal/configuration/LlmTab";
 import { AssistantsTab } from "../modal/configuration/AssistantsTab";
-import ChatInputAssistant from "./ChatInputAssistant";
 import { DanswerDocument } from "@/lib/search/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
@@ -29,7 +28,6 @@ import { Hoverable } from "@/components/Hoverable";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
-  personas,
   showDocs,
   selectedDocuments,
   message,
@@ -37,34 +35,32 @@ export function ChatInputBar({
   onSubmit,
   isStreaming,
   setIsCancelled,
-  retrievalDisabled,
   filterManager,
   llmOverrideManager,
-  onSetSelectedAssistant,
-  selectedAssistant,
-  files,
 
+  // assistants
+  selectedAssistant,
+  assistantOptions,
   setSelectedAssistant,
+  setAlternativeAssistant,
+
+  files,
   setFiles,
   handleFileUpload,
-  setConfigModalActiveTab,
   textAreaRef,
   alternativeAssistant,
   chatSessionId,
-  availableAssistants,
 }: {
   showDocs: () => void;
   selectedDocuments: DanswerDocument[];
-  availableAssistants: Persona[];
-  onSetSelectedAssistant: (alternativeAssistant: Persona | null) => void;
+  assistantOptions: Persona[];
+  setAlternativeAssistant: (alternativeAssistant: Persona | null) => void;
   setSelectedAssistant: (assistant: Persona) => void;
-  personas: Persona[];
   message: string;
   setMessage: (message: string) => void;
   onSubmit: () => void;
   isStreaming: boolean;
   setIsCancelled: (value: boolean) => void;
-  retrievalDisabled: boolean;
   filterManager: FilterManager;
   llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
@@ -72,7 +68,6 @@ export function ChatInputBar({
   files: FileDescriptor[];
   setFiles: (files: FileDescriptor[]) => void;
   handleFileUpload: (files: File[]) => void;
-  setConfigModalActiveTab: (tab: string) => void;
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
   chatSessionId?: number;
 }) {
@@ -136,8 +131,10 @@ export function ChatInputBar({
   };
 
   // Update selected persona
-  const updateCurrentPersona = (persona: Persona) => {
-    onSetSelectedAssistant(persona.id == selectedAssistant.id ? null : persona);
+  const updatedTaggedAssistant = (assistant: Persona) => {
+    setAlternativeAssistant(
+      assistant.id == selectedAssistant.id ? null : assistant
+    );
     hideSuggestions();
     setMessage("");
   };
@@ -160,8 +157,8 @@ export function ChatInputBar({
     }
   };
 
-  const filteredPersonas = personas.filter((persona) =>
-    persona.name.toLowerCase().startsWith(
+  const assistantTagOptions = assistantOptions.filter((assistant) =>
+    assistant.name.toLowerCase().startsWith(
       message
         .slice(message.lastIndexOf("@") + 1)
         .split(/\s/)[0]
@@ -174,18 +171,18 @@ export function ChatInputBar({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (
       showSuggestions &&
-      filteredPersonas.length > 0 &&
+      assistantTagOptions.length > 0 &&
       (e.key === "Tab" || e.key == "Enter")
     ) {
       e.preventDefault();
-      if (assistantIconIndex == filteredPersonas.length) {
+      if (assistantIconIndex == assistantTagOptions.length) {
         window.open("/assistants/new", "_blank");
         hideSuggestions();
         setMessage("");
       } else {
         const option =
-          filteredPersonas[assistantIconIndex >= 0 ? assistantIconIndex : 0];
-        updateCurrentPersona(option);
+          assistantTagOptions[assistantIconIndex >= 0 ? assistantIconIndex : 0];
+        updatedTaggedAssistant(option);
       }
     }
     if (!showSuggestions) {
@@ -195,7 +192,7 @@ export function ChatInputBar({
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setAssistantIconIndex((assistantIconIndex) =>
-        Math.min(assistantIconIndex + 1, filteredPersonas.length)
+        Math.min(assistantIconIndex + 1, assistantTagOptions.length)
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -219,35 +216,36 @@ export function ChatInputBar({
             mx-auto
           "
         >
-          {showSuggestions && filteredPersonas.length > 0 && (
+          {showSuggestions && assistantTagOptions.length > 0 && (
             <div
               ref={suggestionsRef}
               className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full"
             >
               <div className="rounded-lg py-1.5 bg-background border border-border-medium shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
-                {filteredPersonas.map((currentPersona, index) => (
+                {assistantTagOptions.map((currentAssistant, index) => (
                   <button
                     key={index}
                     className={`px-2 ${
                       assistantIconIndex == index && "bg-hover-lightish"
                     } rounded  rounded-lg content-start flex gap-x-1 py-2 w-full  hover:bg-hover-lightish cursor-pointer`}
                     onClick={() => {
-                      updateCurrentPersona(currentPersona);
+                      updatedTaggedAssistant(currentAssistant);
                     }}
                   >
-                    <p className="font-bold">{currentPersona.name}</p>
+                    <p className="font-bold">{currentAssistant.name}</p>
                     <p className="line-clamp-1">
-                      {currentPersona.id == selectedAssistant.id &&
+                      {currentAssistant.id == selectedAssistant.id &&
                         "(default) "}
-                      {currentPersona.description}
+                      {currentAssistant.description}
                     </p>
                   </button>
                 ))}
                 <a
-                  key={filteredPersonas.length}
+                  key={assistantTagOptions.length}
                   target="_blank"
                   className={`${
-                    assistantIconIndex == filteredPersonas.length && "bg-hover"
+                    assistantIconIndex == assistantTagOptions.length &&
+                    "bg-hover"
                   } rounded rounded-lg px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-lightish cursor-pointer"`}
                   href="/assistants/new"
                 >
@@ -301,7 +299,7 @@ export function ChatInputBar({
 
                     <Hoverable
                       icon={FiX}
-                      onClick={() => onSetSelectedAssistant(null)}
+                      onClick={() => setAlternativeAssistant(null)}
                     />
                   </div>
                 </div>
@@ -409,7 +407,7 @@ export function ChatInputBar({
                 removePadding
                 content={(close) => (
                   <AssistantsTab
-                    availableAssistants={availableAssistants}
+                    availableAssistants={assistantOptions}
                     llmProviders={llmProviders}
                     selectedAssistant={selectedAssistant}
                     onSelect={(assistant) => {

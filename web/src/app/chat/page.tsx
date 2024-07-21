@@ -35,7 +35,7 @@ export default async function Page({
     folders,
     toggleSidebar,
     openedFolders,
-    defaultPersonaId,
+    defaultAssistantId,
     finalDocumentSidebarInitialWidth,
     shouldShowWelcomeModal,
     shouldDisplaySourcesIncompleteModal,
@@ -58,7 +58,7 @@ export default async function Page({
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,
-          availablePersonas: assistants,
+          availableAssistants: assistants,
           availableTags: tags,
           llmProviders,
           folders,
@@ -66,7 +66,7 @@ export default async function Page({
         }}
       >
         <WrappedChat
-          defaultPersonaId={defaultPersonaId}
+          defaultAssistantId={defaultAssistantId}
           initiallyToggled={toggleSidebar}
         />
       </ChatProvider>
