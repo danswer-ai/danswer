@@ -4,6 +4,8 @@ import * as Yup from "yup";
 import { FaNewspaper, FaPlus, FaTrash } from "react-icons/fa";
 import { EditingValue } from "@/components/credentials/EditingValue";
 import { DynamicConnectionFormProps } from "./types";
+import { Divider } from "@tremor/react";
+import CredentialSubText from "@/components/credentials/CredentialSubText";
 
 const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   config,
@@ -40,11 +42,10 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   );
 
   return (
-    <div className="brounded-lg p-6 max-w-2xl mx-auto">
+    <div className="py-4 rounded-lg  max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold mb-4 text-neutral-800">
-        Connection Configuration
+        {config.description}
       </h2>
-      <p className="mb-6 text-neutral-600">{config.description}</p>
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
@@ -61,28 +62,43 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
       >
         {({ setFieldValue, values }) => (
           <Form className="space-y-6">
+            <EditingValue
+              // optional
+              description="A descriptive name for the connector. This will just be used to identify the connector in the Admin UI."
+              setFieldValue={setFieldValue}
+              type={"text"}
+              label={"Connector Name"}
+              name={"Name"}
+              currentValue=""
+            />
             {config.values.map((field) => (
               <div key={field.name}>
-                <label
-                  htmlFor={field.name}
-                  className="block text-sm font-medium text-neutral-700 mb-1"
-                >
-                  {field.label}
-                  {field.optional && (
-                    <span className="text-neutral-500 ml-1">(optional)</span>
-                  )}
-                </label>
-
                 {field.type === "list" ? (
                   <FieldArray name={field.name}>
                     {({ push, remove }) => (
                       <div>
+                        <label
+                          htmlFor={field.name}
+                          className="block text-sm font-medium text-neutral-700 mb-1"
+                        >
+                          {field.label}
+                          {field.optional && (
+                            <span className="text-neutral-500 ml-1">
+                              (optional)
+                            </span>
+                          )}
+                        </label>
+                        {field.description && (
+                          <CredentialSubText>
+                            {field.description}
+                          </CredentialSubText>
+                        )}
                         {values[field.name].map((_: any, index: number) => (
                           <div key={index} className="w-full flex mb-2">
                             <Field
                               name={`${field.name}.${index}`}
                               placeholder={field.query}
-                              className="w-full p-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2"
+                              className="w-full text-sm p-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2"
                             />
                             <button
                               type="button"
@@ -96,7 +112,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                         <button
                           type="button"
                           onClick={() => push("")}
-                          className="mt-2 p-2 bg-rose-500 text-white rounded-md hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-opacity-50 flex items-center"
+                          className="mt-2 p-2 bg-rose-500 text-xs text-white rounded-md hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-opacity-50 flex items-center"
                         >
                           <FaPlus className="mr-2" />
                           Add {field.label}
@@ -118,26 +134,36 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                     ))}
                   </Field>
                 ) : (
-                  <EditingValue
-                    setFieldValue={setFieldValue}
-                    type={field.type === "checkbox" ? "checkbox" : "text"}
-                    label={field.name}
-                    name={field.name}
-                    currentValue={field.query}
-                    className={
-                      field.type === "checkbox"
-                        ? "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-neutral-300 rounded"
-                        : "w-full p-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    }
-                  />
+                  <>
+                    <EditingValue
+                      description={field.description}
+                      optional={field.optional}
+                      setFieldValue={setFieldValue}
+                      type={field.type === "checkbox" ? "checkbox" : "text"}
+                      label={field.label}
+                      name={field.name}
+                      currentValue={field.query}
+                    />
+                  </>
                 )}
-                <ErrorMessage
+                {/* <ErrorMessage
                   name={field.name}
                   component="div"
                   className="text-red-500 text-sm mt-1"
-                />
+                /> */}
               </div>
             ))}
+            <Divider />
+
+            <EditingValue
+              description={`If set, then documents indexed by this connector will be visible to all users. If turned off, then only users who explicitly have been given access to the documents (e.g. through a User Group) will have access`}
+              optional
+              setFieldValue={setFieldValue}
+              type={"checkbox"}
+              label={"Documents are Public?"}
+              name={"Documents are Public?"}
+              currentValue=""
+            />
           </Form>
         )}
       </Formik>

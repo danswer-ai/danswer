@@ -5,7 +5,7 @@ import React, {
   ReactNode,
   useEffect,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface FormContextType {
   formStep: number;
@@ -38,8 +38,19 @@ export const FormProvider: React.FC<{ children: ReactNode }> = ({
     setFormStep(2);
   };
 
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   useEffect(() => {
-    router.push(`/add/google_drive?step=${formStep}`);
+    // Create a new URLSearchParams object
+    const updatedSearchParams = new URLSearchParams(searchParams.toString());
+    // Update or add the 'step' parameter
+    updatedSearchParams.set("step", formStep.toString());
+
+    // Construct the new URL
+    const newUrl = `${pathname}?${updatedSearchParams.toString()}`;
+
+    // Use router.push with the constructed URL
+    router.push(newUrl);
   }, [formStep, router]);
 
   const contextValue: FormContextType = {

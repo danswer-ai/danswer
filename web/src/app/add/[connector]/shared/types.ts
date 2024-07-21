@@ -1,4 +1,4 @@
-export type InputType = "list" | "text" | "checkbox" | "select";
+export type InputType = "list" | "text" | "checkbox" | "select" | "number";
 
 export type StringWithDescription = {
   value: string;

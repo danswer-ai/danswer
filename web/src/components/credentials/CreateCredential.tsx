@@ -20,7 +20,7 @@ import { CCPairFullInfo } from "../../app/admin/connector/[ccPairId]/types";
 
 type ActionType = "create" | "createAndSwap";
 
-export default function CreateCredentialModal({
+export default function CreateCredential({
   ccPair,
   onClose,
   onSwap,
@@ -135,73 +135,67 @@ export default function CreateCredentialModal({
 
   console.log(input_values);
   return (
-    <Modal
-      onOutsideClick={onClose}
-      className="max-w-2xl rounded-lg"
-      title={`Create Credential`}
+    <Formik
+      initialValues={{
+        name: "",
+      }}
+      validationSchema={validationSchema}
+      onSubmit={(values, formikHelpers) => {}} // This will be overridden by our custom submit handlers
     >
-      <Formik
-        initialValues={{
-          name: "",
-        }}
-        validationSchema={validationSchema}
-        onSubmit={(values, formikHelpers) => {}} // This will be overridden by our custom submit handlers
-      >
-        {(formikProps) => (
-          <Form>
-            <Card className="mt-4">
-              <TextFormField
-                name="name"
-                placeholder="(Optional) credential name.."
-                label="Name:"
-              />
+      {(formikProps) => (
+        <Form>
+          <Card className="mt-4">
+            <TextFormField
+              name="name"
+              placeholder="(Optional) credential name.."
+              label="Name:"
+            />
 
-              {Object.entries(json_values).map(([key, val]) => (
-                <TextFormField
-                  key={key}
-                  name={key}
-                  placeholder={val}
-                  label={getDisplayNameForCredentialKey(key)}
-                  type={
-                    key.toLowerCase().includes("token") ||
-                    key.toLowerCase().includes("password")
-                      ? "password"
-                      : "text"
-                  }
-                />
-              ))}
-            </Card>
-            <div className="flex gap-x-4 mt-8 justify-end">
-              <Button
-                className="bg-rose-500 hover:bg-rose-400 border-rose-800"
-                onClick={() =>
-                  handleSubmit(formikProps.values, formikProps, "createAndSwap")
+            {Object.entries(json_values).map(([key, val]) => (
+              <TextFormField
+                key={key}
+                name={key}
+                placeholder={val}
+                label={getDisplayNameForCredentialKey(key)}
+                type={
+                  key.toLowerCase().includes("token") ||
+                  key.toLowerCase().includes("password")
+                    ? "password"
+                    : "text"
                 }
-                type="button"
-                disabled={formikProps.isSubmitting}
-              >
-                <div className="flex gap-x-2 items-center w-full border-none">
-                  <FaAccusoft />
-                  <p>Create + Swap</p>
-                </div>
-              </Button>
-              <Button
-                className="bg-indigo-500 hover:bg-indigo-400"
-                onClick={() =>
-                  handleSubmit(formikProps.values, formikProps, "create")
-                }
-                type="button"
-                disabled={formikProps.isSubmitting}
-              >
-                <div className="flex gap-x-2 items-center w-full border-none">
-                  <FaSwatchbook />
-                  <p>Create</p>
-                </div>
-              </Button>
-            </div>
-          </Form>
-        )}
-      </Formik>
-    </Modal>
+              />
+            ))}
+          </Card>
+          <div className="flex gap-x-4 mt-8 justify-end">
+            <Button
+              className="bg-rose-500 hover:bg-rose-400 border-rose-800"
+              onClick={() =>
+                handleSubmit(formikProps.values, formikProps, "createAndSwap")
+              }
+              type="button"
+              disabled={formikProps.isSubmitting}
+            >
+              <div className="flex gap-x-2 items-center w-full border-none">
+                <FaAccusoft />
+                <p>Create + Swap</p>
+              </div>
+            </Button>
+            <Button
+              className="bg-indigo-500 hover:bg-indigo-400"
+              onClick={() =>
+                handleSubmit(formikProps.values, formikProps, "create")
+              }
+              type="button"
+              disabled={formikProps.isSubmitting}
+            >
+              <div className="flex gap-x-2 items-center w-full border-none">
+                <FaSwatchbook />
+                <p>Create</p>
+              </div>
+            </Button>
+          </div>
+        </Form>
+      )}
+    </Formik>
   );
 }

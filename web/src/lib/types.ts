@@ -993,10 +993,17 @@ export const getCredentialTemplate = <T extends ValidSources>(
 };
 
 // Type definitions
-export type InputType = "list" | "text" | "select" | "multiselect" | "boolean";
+export type InputType =
+  | "list"
+  | "text"
+  | "select"
+  | "multiselect"
+  | "boolean"
+  | "number";
 
 // Updated function
-export const getConnectorConfigTemplate = <T extends ValidSources>(
+
+export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
   source: T
 ): ConnectionConfiguration => {
   switch (source) {
@@ -1018,22 +1025,14 @@ export const getConnectorConfigTemplate = <T extends ValidSources>(
             name: "web_connector_type",
             optional: true,
             options: [
-              {
-                name: "recursive",
-                value: "recursive",
-              },
-              {
-                name: "single",
-                value: "single",
-              },
-              {
-                name: "sitemap",
-                value: "sitemap",
-              },
+              { name: "recursive", value: "recursive" },
+              { name: "single", value: "single" },
+              { name: "sitemap", value: "sitemap" },
             ],
           },
         ],
       };
+
     case "github":
       return {
         description: "Configuration for GitHub connector",
@@ -1068,39 +1067,48 @@ export const getConnectorConfigTemplate = <T extends ValidSources>(
           },
         ],
       };
-    case "slack":
+
+    case "gitlab":
       return {
-        description: "Configuration for Slack connector",
+        description: "Configuration for GitLab connector",
         values: [
           {
             type: "text",
-            query: "Enter the Slack workspace:",
-            label: "Workspace",
-            name: "workspace",
+            query: "Enter the project owner:",
+            label: "Project Owner",
+            name: "project_owner",
             optional: false,
           },
           {
-            type: "select",
-            query: "Select channels to include:",
-            label: "Channels",
-            name: "channels",
+            type: "text",
+            query: "Enter the project name:",
+            label: "Project Name",
+            name: "project_name",
+            optional: false,
+          },
+          {
+            type: "checkbox",
+            query: "Include merge requests?",
+            label: "Include MRs",
+            name: "include_mrs",
             optional: true,
           },
           {
             type: "checkbox",
-            query: "Enable channel regex?",
-            label: "Enable Channel Regex",
-            name: "channel_regex_enabled",
+            query: "Include issues?",
+            label: "Include Issues",
+            name: "include_issues",
             optional: true,
           },
         ],
       };
+
     case "google_drive":
       return {
         description: "Configuration for Google Drive connector",
         values: [
           {
-            type: "select",
+            type: "list",
             query: "Enter folder paths:",
             label: "Folder Paths",
             name: "folder_paths",
@@ -1129,13 +1137,498 @@ export const getConnectorConfigTemplate = <T extends ValidSources>(
           },
         ],
       };
-    // Add more cases for other sources...
-    case "not_applicable":
+
+    case "gmail":
       return {
-        description: "No configuration needed",
-        values: [],
+        description: "Configuration for Gmail connector",
+        values: [], // No specific configuration needed based on the interface
       };
-    default:
-      throw new Error(`Unsupported source: ${source}`);
+
+    case "bookstack":
+      return {
+        description: "Configuration for Bookstack connector",
+        values: [], // No specific configuration needed based on the interface
+      };
+
+    case "confluence":
+      return {
+        description: "Configuration for Confluence connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the wiki page URL:",
+            label: "Wiki Page URL",
+            name: "wiki_page_url",
+            optional: false,
+          },
+          {
+            type: "checkbox",
+            query: "Index origin?",
+            label: "Index Origin",
+            name: "index_origin",
+            optional: true,
+          },
+        ],
+      };
+
+    case "jira":
+      return {
+        description: "Configuration for Jira connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the Jira project URL:",
+            label: "Jira Project URL",
+            name: "jira_project_url",
+            optional: false,
+          },
+          {
+            type: "list",
+            query: "Enter email addresses to blacklist from comments:",
+            label: "Comment Email Blacklist",
+            name: "comment_email_blacklist",
+            optional: true,
+          },
+        ],
+      };
+
+    case "salesforce":
+      return {
+        description: "Configuration for Salesforce connector",
+        values: [
+          {
+            type: "list",
+            query: "Enter requested objects:",
+            label: "Requested Objects",
+            name: "requested_objects",
+            optional: true,
+          },
+        ],
+      };
+
+    case "sharepoint":
+      return {
+        description: "Configuration for SharePoint connector",
+        values: [
+          {
+            type: "list",
+            query: "Enter SharePoint sites:",
+            label: "Sites",
+            name: "sites",
+            optional: true,
+          },
+        ],
+      };
+
+    case "teams":
+      return {
+        description: "Configuration for Teams connector",
+        values: [
+          {
+            type: "list",
+            query: "Enter Teams to include:",
+            label: "Teams",
+            name: "teams",
+            optional: true,
+          },
+        ],
+      };
+
+    case "discourse":
+      return {
+        description: "Configuration for Discourse connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the base URL:",
+            label: "Base URL",
+            name: "base_url",
+            optional: false,
+          },
+          {
+            type: "list",
+            query: "Enter categories to include:",
+            label: "Categories",
+            name: "categories",
+            optional: true,
+          },
+        ],
+      };
+
+    case "axero":
+      return {
+        description: "Configuration for Axero connector",
+        values: [
+          {
+            type: "list",
+            query: "Enter spaces to include:",
+            label: "Spaces",
+            name: "spaces",
+            optional: true,
+          },
+        ],
+      };
+
+    case "productboard":
+      return {
+        description: "Configuration for Productboard connector",
+        values: [], // No specific configuration needed based on the interface
+      };
+
+    case "slack":
+      return {
+        description: "Configuration for Slack connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the Slack workspace:",
+            label: "Workspace",
+            name: "Workspace",
+            optional: false,
+          },
+          {
+            type: "list",
+            query: "Enter channels to include:",
+            label: "Channels",
+            name: "channels",
+            description: `Specify 0 or more channels to index. For example, specifying the channel "support" will cause us to only index all content within the "#support" channel. If no channels are specified, all channels in your workspace will be indexed.`,
+            optional: true,
+          },
+          {
+            type: "checkbox",
+            query: "Enable channel regex?",
+            label: "Enable Channel Regex",
+            name: "channel_regex_enabled",
+            description: `If enabled, we will treat the "channels" specified above as regular expressions. A channel's messages will be pulled in by the connector if the name of the channel fully matches any of the specified regular expressions.
+For example, specifying .*-support.* as a "channel" will cause the connector to include any channels with "-support" in the name.`,
+            optional: true,
+          },
+        ],
+      };
+
+    case "slab":
+      return {
+        description: "Configuration for Slab connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the base URL:",
+            label: "Base URL",
+            name: "base_url",
+            optional: false,
+          },
+        ],
+      };
+
+    case "guru":
+      return {
+        description: "Configuration for Guru connector",
+        values: [], // No specific configuration needed based on the interface
+      };
+
+    case "gong":
+      return {
+        description: "Configuration for Gong connector",
+        values: [
+          {
+            type: "list",
+            query: "Enter workspaces to include:",
+            label: "Workspaces",
+            name: "workspaces",
+            optional: true,
+          },
+        ],
+      };
+
+    case "loopio":
+      return {
+        description: "Configuration for Loopio connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the Loopio stack name:",
+            label: "Loopio Stack Name",
+            name: "loopio_stack_name",
+            optional: true,
+          },
+        ],
+      };
+
+    case "file":
+      return {
+        description: "Configuration for File connector",
+        values: [
+          {
+            type: "list",
+            query: "Enter file locations:",
+            label: "File Locations",
+            name: "file_locations",
+            optional: false,
+          },
+        ],
+      };
+
+    case "zulip":
+      return {
+        description: "Configuration for Zulip connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the realm name:",
+            label: "Realm Name",
+            name: "realm_name",
+            optional: false,
+          },
+          {
+            type: "text",
+            query: "Enter the realm URL:",
+            label: "Realm URL",
+            name: "realm_url",
+            optional: false,
+          },
+        ],
+      };
+
+    case "notion":
+      return {
+        description: "Configuration for Notion connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the root page ID:",
+            label: "Root Page ID",
+            name: "root_page_id",
+            optional: true,
+          },
+        ],
+      };
+
+    case "hubspot":
+      return {
+        description: "Configuration for HubSpot connector",
+        values: [], // No specific configuration needed based on the interface
+      };
+
+    case "document360":
+      return {
+        description: "Configuration for Document360 connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the workspace:",
+            label: "Workspace",
+            name: "workspace",
+            optional: false,
+          },
+          {
+            type: "list",
+            query: "Enter categories to include:",
+            label: "Categories",
+            name: "categories",
+            optional: true,
+          },
+        ],
+      };
+
+    case "clickup":
+      return {
+        description: "Configuration for ClickUp connector",
+        values: [
+          {
+            type: "select",
+            query: "Select the connector type:",
+            label: "Connector Type",
+            name: "connector_type",
+            optional: false,
+            options: [
+              { name: "list", value: "list" },
+              { name: "folder", value: "folder" },
+              { name: "space", value: "space" },
+              { name: "workspace", value: "workspace" },
+            ],
+          },
+          {
+            type: "list",
+            query: "Enter connector IDs:",
+            label: "Connector IDs",
+            name: "connector_ids",
+            optional: true,
+          },
+          {
+            type: "checkbox",
+            query: "Retrieve task comments?",
+            label: "Retrieve Task Comments",
+            name: "retrieve_task_comments",
+            optional: false,
+          },
+        ],
+      };
+
+    case "google_sites":
+      return {
+        description: "Configuration for Google Sites connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the zip path:",
+            label: "Zip Path",
+            name: "zip_path",
+            optional: false,
+          },
+          {
+            type: "text",
+            query: "Enter the base URL:",
+            label: "Base URL",
+            name: "base_url",
+            optional: false,
+          },
+        ],
+      };
+
+    case "zendesk":
+      return {
+        description: "Configuration for Zendesk connector",
+        values: [], // No specific configuration needed based on the interface
+      };
+
+    case "dropbox":
+      return {
+        description: "Configuration for Dropbox connector",
+        values: [], // No specific configuration needed based on the interface
+      };
+
+    case "s3":
+      return {
+        description: "Configuration for S3 connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the bucket name:",
+            label: "Bucket Name",
+            name: "bucket_name",
+            optional: false,
+          },
+          {
+            type: "text",
+            query: "Enter the prefix:",
+            label: "Prefix",
+            name: "prefix",
+            optional: false,
+          },
+        ],
+      };
+
+    case "r2":
+      return {
+        description: "Configuration for R2 connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the bucket name:",
+            label: "Bucket Name",
+            name: "bucket_name",
+            optional: false,
+          },
+          {
+            type: "text",
+            query: "Enter the prefix:",
+            label: "Prefix",
+            name: "prefix",
+            optional: false,
+          },
+        ],
+      };
+
+    case "google_cloud_storage":
+      return {
+        description: "Configuration for Google Cloud Storage connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the bucket name:",
+            label: "Bucket Name",
+            name: "bucket_name",
+            optional: false,
+          },
+          {
+            type: "text",
+            query: "Enter the prefix:",
+            label: "Prefix",
+            name: "prefix",
+            optional: false,
+          },
+        ],
+      };
+
+    case "oci_storage":
+      return {
+        description: "Configuration for OCI Storage connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the bucket name:",
+            label: "Bucket Name",
+            name: "bucket_name",
+            optional: false,
+          },
+          {
+            type: "text",
+            query: "Enter the prefix:",
+            label: "Prefix",
+            name: "prefix",
+            optional: false,
+          },
+        ],
+      };
+
+    case "mediawiki":
+      return {
+        description: "Configuration for MediaWiki connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the connector name:",
+            label: "Connector Name",
+            name: "connector_name",
+            optional: false,
+          },
+          {
+            type: "text",
+            query: "Enter the language code:",
+            label: "Language Code",
+            name: "language_code",
+            optional: false,
+          },
+          {
+            type: "list",
+            query: "Enter categories to include:",
+            label: "Categories",
+            name: "categories",
+            optional: true,
+          },
+          {
+            type: "list",
+            query: "Enter pages to include:",
+            label: "Pages",
+            name: "pages",
+            optional: true,
+          },
+          {
+            type: "number",
+            query: "Enter the recursion depth:",
+            label: "Recursion Depth",
+            name: "recurse_depth",
+            optional: true,
+          },
+          {
+            type: "text",
+            query: "Enter the hostname:",
+            label: "Hostname",
+            name: "hostname",
+            optional: false,
+          },
+        ],
+      };
   }
+  return {} as any;
 };

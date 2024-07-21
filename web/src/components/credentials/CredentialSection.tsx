@@ -17,12 +17,13 @@ import {
 
 import { usePopup } from "@/components/admin/connectors/Popup";
 
-import CreateCredentialModal from "./CreateCredentialModal";
+import CreateCredential from "./CreateCredential";
 import { CCPairFullInfo } from "@/app/admin/connector/[ccPairId]/types";
-import ModifyCredentialModal from "./ModifyCredentialModal";
-import EditCredentialModal from "./EditCredentialModal";
+import ModifyCredential from "./ModifyCredential";
+import EditCredential from "./EditCredential";
 import { Text } from "@tremor/react";
 import { buildCCPairInfoUrl } from "@/app/admin/connector/[ccPairId]/lib";
+import { Modal } from "../Modal";
 
 export default function CredentialSection({
   ccPair,
@@ -120,8 +121,12 @@ export default function CredentialSection({
         </button>
       </div>
       {showModifyCredential && (
-        <>
-          <ModifyCredentialModal
+        <Modal
+          onOutsideClick={closeModifyCredential}
+          className="max-w-2xl rounded-lg"
+          title="Modify Credential"
+        >
+          <ModifyCredential
             setPopup={setPopup}
             ccPair={ccPair}
             onDeleteCredential={onDeleteCredential}
@@ -132,26 +137,38 @@ export default function CredentialSection({
             onCreateNew={() => makeShowCreateCredential()}
             onClose={() => closeModifyCredential()}
           />
-        </>
+        </Modal>
       )}
 
       {editingCredential && (
-        <EditCredentialModal
-          onUpdate={onUpdateCredential}
-          setPopup={setPopup}
-          credential={editingCredential}
-          onClose={closeEditingCredential}
-        />
+        <Modal
+          onOutsideClick={closeEditingCredential}
+          className="max-w-2xl rounded-lg"
+          title="Edit Credential"
+        >
+          <EditCredential
+            onUpdate={onUpdateCredential}
+            setPopup={setPopup}
+            credential={editingCredential}
+            onClose={closeEditingCredential}
+          />
+        </Modal>
       )}
 
       {showCreateCredential && (
-        <CreateCredentialModal
-          ccPair={ccPair}
-          setPopup={setPopup}
-          onSwap={onSwap}
-          onCreateNew={() => makeShowCreateCredential()}
-          onClose={closeCreateCredential}
-        />
+        <Modal
+          onOutsideClick={closeCreateCredential}
+          className="max-w-2xl rounded-lg"
+          title={`Create Credential`}
+        >
+          <CreateCredential
+            ccPair={ccPair}
+            setPopup={setPopup}
+            onSwap={onSwap}
+            onCreateNew={() => makeShowCreateCredential()}
+            onClose={closeCreateCredential}
+          />
+        </Modal>
       )}
     </div>
   );

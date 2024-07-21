@@ -114,7 +114,7 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
   );
 };
 
-export default function ModifyCredentialModal({
+export default function ModifyCredential({
   onClose,
   onSwap,
   onCreateNew,
