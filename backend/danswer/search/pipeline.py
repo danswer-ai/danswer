@@ -242,41 +242,32 @@ class SearchPipeline:
             merge_chunk_intervals(ranges) for ranges in doc_chunk_ranges_map.values()
         ]
 
-
         flat_ranges = [r for ranges in merged_ranges for r in ranges]
         flattened_inference_chunks = []
+        parallel_functions_with_args = []
+
         for chunk_range in flat_ranges:
-            flattened_inference_chunks.append(chunk_range.chunks[0])
-            # print(len(chunk_range.chunks))
-            # chunks.append(chunk_range.chunks[0])
+            if chunk_range.start == chunk_range.end:
+                flattened_inference_chunks.append(chunk_range.chunks[0])
+            else:
+                parallel_functions_with_args.append(
+                    (
+                        self.document_index.id_based_retrieval,
+                        (
+                            chunk_range.chunks[0].document_id,
+                            chunk_range.start,
+                            chunk_range.end,
+                            IndexFilters(access_control_list=None),
+                        ),
+                    )
+                )
 
-
-        # for chunk_range in flat_ranges:
-        #     functions_with_args.append(
-        #         (
-        #             # If Large Chunks are introduced, additional filters need to be added here
-        #             self.document_index.id_based_retrieval,
-        #             (
-        #                 # Only need the document_id here, just use any chunk in the range is fine
-        #                 chunk_range.chunks[0].document_id,
-        #                 chunk_range.start,
-        #                 chunk_range.end,
-        #                 # There is no chunk level permissioning, this expansion around chunks
-        #                 # can be assumed to be safe
-        #                 IndexFilters(access_control_list=None),
-        #             ),
-        #         )
-        #     )
-
-        # list of list of inference chunks where the inner list needs to be combined for content
-        # list_inference_chunks = run_functions_tuples_in_parallel(
-        #     functions_with_args, allow_failures=False
-        # )
-
-
-        # flattened_inference_chunks = [
-        #     chunk for sublist in list_inference_chunks for chunk in sublist
-        # ]
+        if parallel_functions_with_args:
+            parallel_results = run_functions_tuples_in_parallel(
+                parallel_functions_with_args, allow_failures=False
+            )
+            for result in parallel_results:
+                flattened_inference_chunks.extend(result)
 
         doc_chunk_ind_to_chunk = {
             (chunk.document_id, chunk.chunk_id): chunk
