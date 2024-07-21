@@ -17,20 +17,8 @@ import { Credential, ValidSources } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ThreeDotsLoader } from "@/components/Loading";
+import CredentialSection from "@/components/credentials/CredentialSection";
 import { buildCCPairInfoUrl } from "./lib";
-import { FaSwatchbook } from "react-icons/fa";
-import { NewChatIcon } from "@/components/icons/icons";
-import ModifyCredentialModal from "./ModifyCredentialModal";
-import { useState } from "react";
-import CreateCredentialModal from "./CreateCredentialModal";
-import {
-  deleteCredential,
-  forceDeleteCredential,
-  swapCredential,
-  updateCredential,
-} from "@/lib/credential";
-import EditCredentialModal from "./EditCredentialModal";
-import { usePopup } from "@/components/admin/connectors/Popup";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -38,25 +26,6 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 const CONNECTOR_TYPES_THAT_CANT_REINDEX: ValidSources[] = ["file"];
 
 function Main({ ccPairId }: { ccPairId: number }) {
-  const { popup, setPopup } = usePopup();
-
-  const [showModifyCredential, setShowModifyCredential] = useState(false);
-  const [showCreateCredential, setShowCreateCredential] = useState(false);
-  const [editingCredential, setEditingCredential] =
-    useState<Credential<any> | null>(null);
-
-  const closeModifyCredential = () => {
-    setShowModifyCredential(false);
-  };
-
-  const closeCreateCredential = () => {
-    setShowCreateCredential(false);
-  };
-
-  const closeEditingCredential = () => {
-    setEditingCredential(null);
-    setShowModifyCredential(true);
-  };
   const {
     data: ccPair,
     isLoading,
@@ -67,11 +36,6 @@ function Main({ ccPairId }: { ccPairId: number }) {
     { refreshInterval: 5000 } // 5 seconds
   );
 
-  const { data: ccPair2 } = useSWR<CCPairFullInfo>(
-    buildCCPairInfoUrl(ccPairId),
-    errorHandlingFetcher,
-    { refreshInterval: 5000 } // 5 seconds
-  );
   console.log(buildCCPairInfoUrl(ccPairId));
   console.log(ccPair);
 
@@ -101,55 +65,9 @@ function Main({ ccPairId }: { ccPairId: number }) {
       ? lastIndexAttempt.total_docs_indexed
       : ccPair.num_docs_indexed;
 
-  const makeShowCreateCredential = () => {
-    setShowModifyCredential(false);
-    setShowCreateCredential(true);
-  };
-
-  const onSwap = async (selectedCredentialId: number, connectorId: number) => {
-    await swapCredential(selectedCredentialId, connectorId);
-    mutate(buildCCPairInfoUrl(ccPairId));
-
-    setPopup({
-      message: "Swapped credential succesfully!",
-      type: "success",
-    });
-  };
-
-  const onUpdateCredential = async (
-    selectedCredential: Credential<any | null>,
-    details: any,
-    onSucces: () => void
-  ) => {
-    const response = await updateCredential(selectedCredential.id, details);
-    if (response.ok) {
-      setPopup({
-        message: "Updated credential",
-        type: "success",
-      });
-      onSucces();
-    } else {
-      setPopup({
-        message: "Issue updating credential",
-        type: "error",
-      });
-    }
-  };
-
-  const onEditCredential = (credential: Credential<any>) => {
-    closeModifyCredential();
-    setEditingCredential(credential);
-  };
-
-  const onDeleteCredential = async (credential: Credential<any | null>) => {
-    await deleteCredential(credential.id, true);
-    mutate(buildCCPairInfoUrl(ccPairId));
-  };
-
   return (
     <>
       <BackButton />
-      {popup}
       <div className="pb-1 flex mt-1">
         <h1 className="text-3xl text-emphasis font-bold">{ccPair.name}</h1>
 
@@ -178,67 +96,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
       </div>
       <Divider />
       <Title className="mb-2">Credentials</Title>
-      {/* <div className="flex gap-x-2"> */}
-      <div className="flex justify-start flex-col gap-y-2">
-        <div className="flex gap-x-2">
-          <p>Current credential:</p>
-          <Text className="ml-1 italic font-bold my-auto">
-            {ccPair.credential.name || `Credential #${ccPair.credential.id}`}
-          </Text>
-        </div>
-        <div className="flex text-sm justify-start mr-auto gap-x-2">
-          <button
-            onClick={() => setShowModifyCredential(true)}
-            className="flex items-center gap-x-2 cursor-pointer bg-neutral-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-neutral-700"
-          >
-            <FaSwatchbook />
-            Swap credential
-          </button>
-          <button
-            onClick={() => setShowCreateCredential(true)}
-            className="flex items-center gap-x-2 cursor-pointer bg-neutral-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-neutral-700"
-          >
-            <NewChatIcon />
-            New Credential
-          </button>
-        </div>
-      </div>
-
-      {showModifyCredential && (
-        <>
-          <ModifyCredentialModal
-            setPopup={setPopup}
-            ccPair={ccPair}
-            onDeleteCredential={onDeleteCredential}
-            onEditCredential={(credential: Credential<any>) =>
-              onEditCredential(credential)
-            }
-            onSwap={onSwap}
-            onCreateNew={() => makeShowCreateCredential()}
-            onClose={() => closeModifyCredential()}
-          />
-        </>
-      )}
-
-      {editingCredential && (
-        <EditCredentialModal
-          onUpdate={onUpdateCredential}
-          setPopup={setPopup}
-          credential={editingCredential}
-          onClose={closeEditingCredential}
-        />
-      )}
-
-      {showCreateCredential && (
-        <CreateCredentialModal
-          ccPair={ccPair}
-          setPopup={setPopup}
-          onSwap={onSwap}
-          onCreateNew={() => makeShowCreateCredential()}
-          onClose={closeCreateCredential}
-        />
-      )}
-
+      <CredentialSection ccPair={ccPair} />
       <Divider />
       <ConfigDisplay
         connectorSpecificConfig={ccPair.connector.connector_specific_config}
@@ -251,8 +109,6 @@ function Main({ ccPairId }: { ccPairId: number }) {
           <Title>Indexing Attempts</Title>
         </div>
         <IndexingAttemptsTable ccPair={ccPair} />
-
-        {/* <IndexingAttemptsTable ccPair={ccPair} /> */}
       </div>
       <Divider />
       <div className="flex mt-4">
@@ -260,7 +116,6 @@ function Main({ ccPairId }: { ccPairId: number }) {
           <DeletionButton ccPair={ccPair} />
         </div>
       </div>
-      {/* TODO: add document search*/}
     </>
   );
 }

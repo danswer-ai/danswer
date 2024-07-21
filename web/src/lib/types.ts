@@ -718,3 +718,424 @@ export const credentialDisplayNames: Record<string, string> = {
 export function getDisplayNameForCredentialKey(key: string): string {
   return credentialDisplayNames[key] || key;
 }
+
+export type CredentialJsonMap = {
+  [K in ValidSources]: K extends
+    | "web"
+    | "file"
+    | "google_sites"
+    | "not_applicable"
+    ? null
+    : K extends "google_drive"
+      ? GoogleDriveCredentialJson | GoogleDriveServiceAccountCredentialJson
+      : K extends "gmail"
+        ? GmailCredentialJson | GmailServiceAccountCredentialJson
+        : K extends "jira"
+          ? JiraCredentialJson | JiraServerCredentialJson
+          : K extends "github"
+            ? GithubCredentialJson
+            : K extends "gitlab"
+              ? GitlabCredentialJson
+              : K extends "slack"
+                ? SlackCredentialJson
+                : K extends "bookstack"
+                  ? BookstackCredentialJson
+                  : K extends "confluence"
+                    ? ConfluenceCredentialJson
+                    : K extends "productboard"
+                      ? ProductboardCredentialJson
+                      : K extends "slab"
+                        ? SlabCredentialJson
+                        : K extends "notion"
+                          ? NotionCredentialJson
+                          : K extends "guru"
+                            ? GuruCredentialJson
+                            : K extends "gong"
+                              ? GongCredentialJson
+                              : K extends "zulip"
+                                ? ZulipCredentialJson
+                                : K extends "linear"
+                                  ? LinearCredentialJson
+                                  : K extends "hubspot"
+                                    ? HubSpotCredentialJson
+                                    : K extends "document360"
+                                      ? Document360CredentialJson
+                                      : K extends "requesttracker"
+                                        ? RequestTrackerCredentialJson
+                                        : K extends "loopio"
+                                          ? LoopioCredentialJson
+                                          : K extends "dropbox"
+                                            ? DropboxCredentialJson
+                                            : K extends "salesforce"
+                                              ? SalesforceCredentialJson
+                                              : K extends "sharepoint"
+                                                ? SharepointCredentialJson
+                                                : K extends "teams"
+                                                  ? TeamsCredentialJson
+                                                  : K extends "zendesk"
+                                                    ? ZendeskCredentialJson
+                                                    : K extends "discourse"
+                                                      ? DiscourseCredentialJson
+                                                      : K extends "axero"
+                                                        ? AxeroCredentialJson
+                                                        : K extends "clickup"
+                                                          ? ClickupCredentialJson
+                                                          : K extends "wikipedia"
+                                                            ? WikipediaCredentialJson
+                                                            : K extends "mediawiki"
+                                                              ? MediaWikiCredentialJson
+                                                              : K extends "s3"
+                                                                ? S3CredentialJson
+                                                                : K extends "r2"
+                                                                  ? R2CredentialJson
+                                                                  : K extends "google_cloud_storage"
+                                                                    ? GCSCredentialJson
+                                                                    : K extends "oci_storage"
+                                                                      ? OCICredentialJson
+                                                                      : never;
+};
+
+// Type guard function to check if a string is a valid source
+export function isValidSource(source: string): source is ValidSources {
+  return [
+    "web",
+    "github",
+    "gitlab",
+    "slack",
+    "google_drive",
+    "gmail",
+    "bookstack",
+    "confluence",
+    "jira",
+    "productboard",
+    "slab",
+    "notion",
+    "guru",
+    "gong",
+    "zulip",
+    "linear",
+    "hubspot",
+    "document360",
+    "requesttracker",
+    "file",
+    "google_sites",
+    "loopio",
+    "dropbox",
+    "salesforce",
+    "sharepoint",
+    "teams",
+    "zendesk",
+    "discourse",
+    "axero",
+    "clickup",
+    "wikipedia",
+    "mediawiki",
+    "s3",
+    "r2",
+    "google_cloud_storage",
+    "oci_storage",
+    "not_applicable",
+  ].includes(source);
+}
+
+// Helper function to get credential JSON type for a given source
+export function getCredentialJsonType<T extends ValidSources>(
+  source: T
+): CredentialJsonMap[T] {
+  return null as any as CredentialJsonMap[T]; // This is a type-level operation, it doesn't actually return a value
+}
+
+export const getCredentialTemplate = <T extends ValidSources>(
+  source: T
+): any => {
+  switch (source) {
+    case "github":
+      return { github_access_token: "" } as GithubCredentialJson;
+    case "gitlab":
+      return {
+        gitlab_url: "",
+        gitlab_access_token: "",
+      } as GitlabCredentialJson;
+    case "slack":
+      return { slack_bot_token: "" } as SlackCredentialJson;
+    case "google_drive":
+      return { google_drive_tokens: "" } as GoogleDriveCredentialJson;
+    case "gmail":
+      return { gmail_tokens: "" } as GmailCredentialJson;
+    case "bookstack":
+      return {
+        bookstack_base_url: "",
+        bookstack_api_token_id: "",
+        bookstack_api_token_secret: "",
+      } as BookstackCredentialJson;
+    case "confluence":
+      return {
+        confluence_username: "",
+        confluence_access_token: "",
+      } as ConfluenceCredentialJson;
+    case "jira":
+      return {
+        jira_user_email: "",
+        jira_api_token: "",
+      } as JiraCredentialJson;
+    case "productboard":
+      return { productboard_access_token: "" } as ProductboardCredentialJson;
+    case "slab":
+      return { slab_bot_token: "" } as SlabCredentialJson;
+    case "notion":
+      return { notion_integration_token: "" } as NotionCredentialJson;
+    case "guru":
+      return { guru_user: "", guru_user_token: "" } as GuruCredentialJson;
+    case "gong":
+      return {
+        gong_access_key: "",
+        gong_access_key_secret: "",
+      } as GongCredentialJson;
+    case "zulip":
+      return { zuliprc_content: "" } as ZulipCredentialJson;
+    case "linear":
+      return { linear_api_key: "" } as LinearCredentialJson;
+    case "hubspot":
+      return { hubspot_access_token: "" } as HubSpotCredentialJson;
+    case "document360":
+      return {
+        portal_id: "",
+        document360_api_token: "",
+      } as Document360CredentialJson;
+    case "requesttracker":
+      return {
+        requesttracker_username: "",
+        requesttracker_password: "",
+        requesttracker_base_url: "",
+      } as RequestTrackerCredentialJson;
+    case "loopio":
+      return {
+        loopio_subdomain: "",
+        loopio_client_id: "",
+        loopio_client_token: "",
+      } as LoopioCredentialJson;
+    case "dropbox":
+      return { dropbox_access_token: "" } as DropboxCredentialJson;
+    case "salesforce":
+      return {
+        sf_username: "",
+        sf_password: "",
+        sf_security_token: "",
+      } as SalesforceCredentialJson;
+    case "sharepoint":
+      return {
+        sp_client_id: "",
+        sp_client_secret: "",
+        sp_directory_id: "",
+      } as SharepointCredentialJson;
+    case "teams":
+      return {
+        teams_client_id: "",
+        teams_client_secret: "",
+        teams_directory_id: "",
+      } as TeamsCredentialJson;
+    case "zendesk":
+      return {
+        zendesk_subdomain: "",
+        zendesk_email: "",
+        zendesk_token: "",
+      } as ZendeskCredentialJson;
+    case "discourse":
+      return {
+        discourse_api_key: "",
+        discourse_api_username: "",
+      } as DiscourseCredentialJson;
+    case "axero":
+      return {
+        base_url: "",
+        axero_api_token: "",
+      } as AxeroCredentialJson;
+    case "clickup":
+      return {
+        clickup_api_token: "",
+        clickup_team_id: "",
+      } as ClickupCredentialJson;
+    case "wikipedia":
+    case "mediawiki":
+      return {} as MediaWikiCredentialJson;
+    case "s3":
+      return {
+        aws_access_key_id: "",
+        aws_secret_access_key: "",
+      } as S3CredentialJson;
+    case "r2":
+      return {
+        account_id: "",
+        r2_access_key_id: "",
+        r2_secret_access_key: "",
+      } as R2CredentialJson;
+    case "google_cloud_storage":
+      return {
+        access_key_id: "",
+        secret_access_key: "",
+      } as GCSCredentialJson;
+    case "oci_storage":
+      return {
+        namespace: "",
+        region: "",
+        access_key_id: "",
+        secret_access_key: "",
+      } as OCICredentialJson;
+    case "web":
+    case "file":
+    case "google_sites":
+    case "not_applicable":
+      return null;
+    default:
+      throw new Error(`Unsupported source: ${source}`);
+  }
+};
+
+// Type definitions
+type InputType = "text" | "select" | "multiselect" | "boolean";
+
+interface InputOption {
+  type: InputType;
+  query: string;
+  label: string;
+  name: string;
+  optional: boolean;
+  options?: string[]; // For select type
+}
+
+export interface ConnectionConfiguration {
+  description: string;
+  values: InputOption[];
+}
+
+// Updated function
+export const getConnectorConfigTemplate = <T extends ValidSources>(
+  source: T
+): ConnectionConfiguration => {
+  switch (source) {
+    case "web":
+      return {
+        description: "Configuration for Web connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the base URL:",
+            label: "Base URL",
+            name: "base_url",
+            optional: false,
+          },
+          {
+            type: "select",
+            query: "Select the web connector type:",
+            label: "Web Connector Type",
+            name: "web_connector_type",
+            optional: true,
+            options: ["recursive", "single", "sitemap"],
+          },
+        ],
+      };
+    case "github":
+      return {
+        description: "Configuration for GitHub connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the repository owner:",
+            label: "Repository Owner",
+            name: "repo_owner",
+            optional: false,
+          },
+          {
+            type: "text",
+            query: "Enter the repository name:",
+            label: "Repository Name",
+            name: "repo_name",
+            optional: false,
+          },
+          {
+            type: "boolean",
+            query: "Include pull requests?",
+            label: "Include PRs",
+            name: "include_prs",
+            optional: true,
+          },
+          {
+            type: "boolean",
+            query: "Include issues?",
+            label: "Include Issues",
+            name: "include_issues",
+            optional: true,
+          },
+        ],
+      };
+    case "slack":
+      return {
+        description: "Configuration for Slack connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the Slack workspace:",
+            label: "Workspace",
+            name: "workspace",
+            optional: false,
+          },
+          {
+            type: "multiselect",
+            query: "Select channels to include:",
+            label: "Channels",
+            name: "channels",
+            optional: true,
+          },
+          {
+            type: "boolean",
+            query: "Enable channel regex?",
+            label: "Enable Channel Regex",
+            name: "channel_regex_enabled",
+            optional: true,
+          },
+        ],
+      };
+    case "google_drive":
+      return {
+        description: "Configuration for Google Drive connector",
+        values: [
+          {
+            type: "multiselect",
+            query: "Enter folder paths:",
+            label: "Folder Paths",
+            name: "folder_paths",
+            optional: true,
+          },
+          {
+            type: "boolean",
+            query: "Include shared files?",
+            label: "Include Shared",
+            name: "include_shared",
+            optional: true,
+          },
+          {
+            type: "boolean",
+            query: "Follow shortcuts?",
+            label: "Follow Shortcuts",
+            name: "follow_shortcuts",
+            optional: true,
+          },
+          {
+            type: "boolean",
+            query: "Only include organization public files?",
+            label: "Only Org Public",
+            name: "only_org_public",
+            optional: true,
+          },
+        ],
+      };
+    // Add more cases for other sources...
+    case "not_applicable":
+      return {
+        description: "No configuration needed",
+        values: [],
+      };
+    default:
+      throw new Error(`Unsupported source: ${source}`);
+  }
+};

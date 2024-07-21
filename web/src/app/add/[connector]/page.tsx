@@ -1,12 +1,15 @@
 import Cookies from "js-cookie";
 import WrappedSlackPage from "./Wrapper";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
-import { useUsers } from "@/lib/hooks";
 import { cookies } from "next/headers";
 import { getCurrentUserSS } from "@/lib/userSS";
 import { User } from "@/lib/types";
 
-export default async function Slack() {
+export default async function Page({
+  params,
+}: {
+  params: { connector: string };
+}) {
   const sidebarToggled = cookies().get(SIDEBAR_TOGGLED_COOKIE_NAME);
 
   const tasks = [getCurrentUserSS()];
@@ -27,6 +30,13 @@ export default async function Slack() {
   const toggleSidebar = sidebarToggled
     ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
     : false;
+  console.log(params.connector);
 
-  return <WrappedSlackPage user={user} initiallyToggled={toggleSidebar} />;
+  return (
+    <WrappedSlackPage
+      connector={params.connector}
+      user={user}
+      initiallyToggled={toggleSidebar}
+    />
+  );
 }

@@ -141,9 +141,6 @@ function ConnectorRow({
   ccPairsIndexingStatus: any;
 }) {
   const router = useRouter();
-  const docsPerMinute = getDocsProcessedPerMinute(
-    ccPairsIndexingStatus.latest_index_attempt
-  )?.toFixed(2);
 
   const handleManageClick = (e: any) => {
     e.stopPropagation();

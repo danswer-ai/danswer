@@ -16,7 +16,7 @@ import Popup from "@/components/popup/Popup";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { linkCredential } from "@/lib/credential";
 import { ModalWrapper } from "@/app/chat/modal/ModalWrapper";
-import { CCPairFullInfo } from "./types";
+import { CCPairFullInfo } from "../../app/admin/connector/[ccPairId]/types";
 
 type ActionType = "create" | "createAndSwap";
 

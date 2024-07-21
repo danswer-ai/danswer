@@ -1,3 +1,4 @@
+// File: ./src/components/MultiStepForm.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -6,11 +7,11 @@ import { useRouter } from "next/navigation";
 interface FieldSchema {
   type: string;
   label: string;
-  component: JSX.Element;
+  component: React.ComponentType<any>;
   props?: Record<string, any>;
 }
 
-interface FormSchema {
+export interface FormSchema {
   [key: string]: FieldSchema;
 }
 
@@ -22,9 +23,14 @@ interface Step {
 interface MultiStepFormProps {
   schema: FormSchema;
   steps: Step[];
+  onSubmit: (data: Record<string, any>) => Promise<void>;
 }
 
-const MultiStepForm: React.FC<MultiStepFormProps> = ({ schema, steps }) => {
+const MultiStepForm: React.FC<MultiStepFormProps> = ({
+  schema,
+  steps,
+  onSubmit,
+}) => {
   const router = useRouter();
   const [formStep, setFormStep] = useState<number>(0);
   const [formData, setFormData] = useState<Record<string, any>>(
@@ -50,24 +56,24 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ schema, steps }) => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // await onSubmit(formData)
+    await onSubmit(formData);
   };
 
   const renderField = (fieldName: string) => {
     const field = schema[fieldName];
-    // const Component = field.component
-    // return (
-    //     <div key={fieldName}>
-    //         <label htmlFor={fieldName}>{field.label}</label>
-    //         <Component
-    //             id={fieldName}
-    //             name={fieldName}
-    //             value={formData[fieldName]}
-    //             onChange={(value: any) => handleInputChange(fieldName, value)}
-    //             {...field.props}
-    //         />
-    //     </div>
-    // )
+    const Component = field.component;
+    return (
+      <div key={fieldName}>
+        <label htmlFor={fieldName}>{field.label}</label>
+        <Component
+          id={fieldName}
+          name={fieldName}
+          value={formData[fieldName]}
+          onChange={(value: any) => handleInputChange(fieldName, value)}
+          {...field.props}
+        />
+      </div>
+    );
   };
 
   const currentStep = steps[formStep];
@@ -75,8 +81,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ schema, steps }) => {
   return (
     <form onSubmit={handleSubmit}>
       <h2>{currentStep.title}</h2>
-      {schema.contract.component}
-      {/* {currentStep.fields.map(renderField)} */}
+      {renderField(currentStep.fields[0])}
       {formStep > 0 && (
         <button type="button" onClick={prevFormStep}>
           Previous

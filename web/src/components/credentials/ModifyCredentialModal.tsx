@@ -4,14 +4,14 @@ import React, { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text, Callout, Badge } from "@tremor/react";
 
-import { buildSimilarCredentialInfoURL } from "./lib";
+import { buildSimilarCredentialInfoURL } from "../../app/admin/connector/[ccPairId]/lib";
 import useSWR, { mutate } from "swr";
 import { ConfluenceCredentialJson, Credential } from "@/lib/types";
 import { FaCreativeCommons, FaSwatchbook } from "react-icons/fa";
 import { swapCredential } from "@/lib/credential";
 import { EditIcon, SwapIcon, TrashIcon } from "@/components/icons/icons";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { CCPairFullInfo } from "./types";
+import { CCPairFullInfo } from "../../app/admin/connector/[ccPairId]/types";
 import { getSourceDisplayName } from "@/lib/sources";
 import { setDefaultResultOrder } from "dns";
 
