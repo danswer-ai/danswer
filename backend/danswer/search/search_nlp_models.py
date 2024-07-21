@@ -5,6 +5,7 @@ from typing import Optional
 from typing import TYPE_CHECKING
 
 import requests
+from httpx import HTTPError
 from transformers import logging as transformer_logging  # type:ignore
 
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
@@ -131,7 +132,13 @@ class EmbeddingModel:
             response = requests.post(
                 self.embed_server_endpoint, json=embed_request.dict()
             )
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                error_detail = response.json().get("detail", str(e))
+                raise HTTPError(f"HTTP error occurred: {error_detail}") from e
+            except requests.RequestException as e:
+                raise HTTPError(f"Request failed: {str(e)}") from e
             return EmbedResponse(**response.json()).embeddings
 
         # Batching for local embedding
@@ -153,7 +160,13 @@ class EmbeddingModel:
             response = requests.post(
                 self.embed_server_endpoint, json=embed_request.dict()
             )
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                error_detail = response.json().get("detail", str(e))
+                raise HTTPError(f"HTTP error occurred: {error_detail}") from e
+            except requests.RequestException as e:
+                raise HTTPError(f"Request failed: {str(e)}") from e
             # Normalize embeddings is only configured via model_configs.py, be sure to use right
             # value for the set loss
             embeddings.extend(EmbedResponse(**response.json()).embeddings)
