@@ -92,9 +92,6 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         embeddings = self.embedding_model.encode(
             chunk_texts, text_type=EmbedTextType.PASSAGE
         )
-        # Replace line above with the line below for easy debugging of indexing flow
-        # skipping the actual model
-        # embeddings.extend([[0.0] * 384 for _ in range(len(text_batch))])
 
         chunk_titles = {
             chunk.source_document.get_title_for_document_index() for chunk in chunks

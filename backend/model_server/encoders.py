@@ -127,7 +127,11 @@ class CloudEmbedding:
         return embedding[0].values
 
     def _embed(
-        self, *, text: str, text_type: EmbedTextType, model: str | None = None
+        self,
+        *,
+        text: str,
+        text_type: EmbedTextType,
+        model: str | None = None,
     ) -> list[float]:
         try:
             if self.provider == EmbeddingProvider.OPENAI:
@@ -149,12 +153,18 @@ class CloudEmbedding:
             )
 
     def encode(
-        self, texts: list[str], model_name: str | None, text_type: EmbedTextType
+        self,
+        texts: list[str],
+        model_name: str | None,
+        text_type: EmbedTextType,
     ) -> list[list[float]]:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(
-                    self._embed, text=text, text_type=text_type, model=model_name
+                    self._embed,
+                    text=text,
+                    text_type=text_type,
+                    model=model_name,
                 )
                 for text in texts
             ]
@@ -240,30 +250,50 @@ def embed_text(
     normalize_embeddings: bool,
     api_key: str | None,
     provider_type: str | None,
+    prefix: str | None,
 ) -> list[list[float]]:
     if provider_type is not None:
         logger.debug(f"Embedding text with provider: {provider_type}")
         if api_key is None:
             raise RuntimeError("API key not provided for cloud model")
 
+        if prefix:
+            # This may change in the future if some providers require the user
+            # to manually append a prefix but this is not the case currently
+            raise ValueError(
+                "Prefix string is not valid for cloud models. "
+                "Cloud models take an explicit text type instead."
+            )
+
         cloud_model = CloudEmbedding(
             api_key=api_key, provider=provider_type, model=model_name
         )
-        embeddings = cloud_model.encode(texts, model_name, text_type)
+        embeddings = cloud_model.encode(
+            texts=texts,
+            model_name=model_name,
+            text_type=text_type,
+        )
 
     elif model_name is not None:
+        prefixed_texts = [f"{prefix}{text}" for text in texts] if prefix else texts
         hosted_model = get_embedding_model(
             model_name=model_name, max_context_length=max_context_length
         )
         embeddings = hosted_model.encode(
-            texts, normalize_embeddings=normalize_embeddings
+            prefixed_texts, normalize_embeddings=normalize_embeddings
+        )
+
+    else:
+        raise ValueError(
+            "Either model name or provider must be provided to run embeddings."
         )
 
     if embeddings is None:
-        raise RuntimeError("Embeddings were not created")
+        raise RuntimeError("Failed to create Embeddings")
 
     if not isinstance(embeddings, list):
         embeddings = embeddings.tolist()
+
     return embeddings
 
 
@@ -282,6 +312,13 @@ async def process_embed_request(
     embed_request: EmbedRequest,
 ) -> EmbedResponse:
     try:
+        if embed_request.text_type == EmbedTextType.QUERY:
+            prefix = embed_request.manual_query_prefix
+        elif embed_request.text_type == EmbedTextType.PASSAGE:
+            prefix = embed_request.manual_passage_prefix
+        else:
+            prefix = None
+
         embeddings = embed_text(
             texts=embed_request.texts,
             model_name=embed_request.model_name,
@@ -290,6 +327,7 @@ async def process_embed_request(
             api_key=embed_request.api_key,
             provider_type=embed_request.provider_type,
             text_type=embed_request.text_type,
+            prefix=prefix,
         )
         return EmbedResponse(embeddings=embeddings)
     except Exception as e:

@@ -108,26 +108,21 @@ class EmbeddingModel:
 
     def encode(
         self,
-        chunk_texts: list[str],
+        texts: list[str],
         text_type: EmbedTextType,
         batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
     ) -> list[list[float]]:
-        if text_type == EmbedTextType.QUERY and self.query_prefix:
-            prefixed_texts = [self.query_prefix + text for text in chunk_texts]
-        elif text_type == EmbedTextType.PASSAGE and self.passage_prefix:
-            prefixed_texts = [self.passage_prefix + text for text in chunk_texts]
-        else:
-            prefixed_texts = chunk_texts
-
         if self.provider_type:
             embed_request = EmbedRequest(
                 model_name=self.model_name,
-                texts=prefixed_texts,
+                texts=texts,
                 max_context_length=self.max_seq_length,
                 normalize_embeddings=self.normalize,
                 api_key=self.api_key,
                 provider_type=self.provider_type,
                 text_type=text_type,
+                manual_query_prefix=self.query_prefix,
+                manual_passage_prefix=self.passage_prefix,
             )
             response = requests.post(
                 self.embed_server_endpoint, json=embed_request.dict()
@@ -142,7 +137,7 @@ class EmbeddingModel:
             return EmbedResponse(**response.json()).embeddings
 
         # Batching for local embedding
-        text_batches = batch_list(prefixed_texts, batch_size)
+        text_batches = batch_list(texts, batch_size)
         embeddings: list[list[float]] = []
         for idx, text_batch in enumerate(text_batches, start=1):
             logger.debug(f"Embedding Content Texts batch {idx} of {len(text_batches)}")
@@ -155,6 +150,8 @@ class EmbeddingModel:
                 api_key=self.api_key,
                 provider_type=self.provider_type,
                 text_type=text_type,
+                manual_query_prefix=self.query_prefix,
+                manual_passage_prefix=self.passage_prefix,
             )
 
             response = requests.post(
@@ -248,7 +245,7 @@ def warm_up_encoders(
     wait_time = 5
     for attempt in range(20):
         try:
-            embed_model.encode(chunk_texts=[warm_up_str], text_type=EmbedTextType.QUERY)
+            embed_model.encode(texts=[warm_up_str], text_type=EmbedTextType.QUERY)
             return
         except Exception:
             logger.exception(
