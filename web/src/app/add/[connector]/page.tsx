@@ -1,5 +1,5 @@
 import Cookies from "js-cookie";
-import WrappedSlackPage from "./Wrapper";
+import WrappedPage from "./Wrapper";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
 import { cookies } from "next/headers";
 import { getCurrentUserSS } from "@/lib/userSS";
@@ -33,7 +33,7 @@ export default async function Page({
   console.log(params.connector);
 
   return (
-    <WrappedSlackPage
+    <WrappedPage
       connector={params.connector}
       user={user}
       initiallyToggled={toggleSidebar}

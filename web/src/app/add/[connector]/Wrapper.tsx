@@ -1,13 +1,14 @@
 "use client";
 
 import { ChatSession } from "@/app/chat/interfaces";
-import { User } from "@/lib/types";
+import { User, ValidSources } from "@/lib/types";
 import SidebarWrapper from "@/app/assistants/SidebarWrapper";
 import AddConnector from "./AddConnectorPage";
 import { useState } from "react";
 import { FormProvider } from "@/components/context/FormContext";
+import { SourceCategory } from "@/lib/search/interfaces";
 
-export default function WrappedSlackPage({
+export default function WrappedPage({
   initiallyToggled,
   connector,
   user,
@@ -42,7 +43,9 @@ export default function WrappedSlackPage({
           increment,
           decrement,
         }}
-        content={(contentProps) => <AddConnector connector={connector} />}
+        content={(contentProps) => (
+          <AddConnector connector={connector as ValidSources} />
+        )}
       />
     </FormProvider>
   );

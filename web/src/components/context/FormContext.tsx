@@ -1,4 +1,10 @@
-import React, { createContext, useState, useContext, ReactNode } from "react";
+import React, {
+  createContext,
+  useState,
+  useContext,
+  ReactNode,
+  useEffect,
+} from "react";
 import { useRouter } from "next/navigation";
 
 interface FormContextType {
@@ -32,8 +38,8 @@ export const FormProvider: React.FC<{ children: ReactNode }> = ({
     setFormStep(2);
   };
 
-  React.useEffect(() => {
-    router.push(`/add/slack?step=${formStep}`);
+  useEffect(() => {
+    router.push(`/add/google_drive?step=${formStep}`);
   }, [formStep, router]);
 
   const contextValue: FormContextType = {

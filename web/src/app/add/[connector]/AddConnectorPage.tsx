@@ -21,6 +21,7 @@ import {
   ValidSources,
   getCredentialJsonType,
   getCredentialTemplate,
+  getConnectorConfigTemplate,
 } from "@/lib/types";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import {
@@ -431,9 +432,11 @@ const MainSection = ({
   );
 };
 
-export default function AddConnector({ connector }: { connector: string }) {
-  const { popup, setPopup } = usePopup();
-
+export default function AddConnector({
+  connector,
+}: {
+  connector: ValidSources;
+}) {
   const {
     data: ccPair,
     isLoading,
@@ -443,7 +446,7 @@ export default function AddConnector({ connector }: { connector: string }) {
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
-  const d = getCredentialTemplate("slack");
+  const d = getCredentialTemplate("google_drive");
   console.log(d);
 
   const { setFormValues, formStep, formValues, nextFormStep, prevFormStep } =
@@ -452,40 +455,43 @@ export default function AddConnector({ connector }: { connector: string }) {
   if (!ccPair) {
     return <></>;
   }
-  const config: ConnectionConfiguration = {
-    description: "Configure your connection settings",
-    values: [
-      {
-        type: "string",
-        query: "Enter your API key",
-        label: "API Key",
-        name: "apiKey",
-        optional: false,
-      },
-      {
-        type: "list",
-        query: "Enter a domain",
-        label: "Domains",
-        name: "domains",
-        optional: true,
-      },
-      {
-        type: "checkbox",
-        query: "Enable advanced features?",
-        label: "Advanced Features",
-        name: "advancedFeatures",
-        optional: true,
-      },
-      {
-        type: "select",
-        query: "Select your plan",
-        label: "Plan",
-        name: "plan",
-        optional: false,
-        options: ["Basic", "Pro", "Enterprise"],
-      },
-    ],
-  };
+
+  const configuration: ConnectionConfiguration =
+    getConnectorConfigTemplate(connector);
+  // const config: ConnectionConfiguration = {
+  //   description: "Configure your connection settings",
+  //   values: [
+  //     {
+  //       type: "string",
+  //       query: "Enter your API key",
+  //       label: "API Key",
+  //       name: "apiKey",
+  //       optional: false,
+  //     },
+  //     {
+  //       type: "list",
+  //       query: "Enter a domain",
+  //       label: "Domains",
+  //       name: "domains",
+  //       optional: true,
+  //     },
+  //     {
+  //       type: "checkbox",
+  //       query: "Enable advanced features?",
+  //       label: "Advanced Features",
+  //       name: "advancedFeatures",
+  //       optional: true,
+  //     },
+  //     {
+  //       type: "select",
+  //       query: "Select your plan",
+  //       label: "Plan",
+  //       name: "plan",
+  //       optional: false,
+  //       options: ["Basic", "Pro", "Enterprise"],
+  //     },
+  //   ],
+  // };
 
   return (
     <div className="mx-auto w-full">
@@ -505,7 +511,7 @@ export default function AddConnector({ connector }: { connector: string }) {
       {formStep == 1 && (
         <Card>
           <DynamicConnectionForm
-            config={config}
+            config={configuration}
             onSubmit={() => null}
             onClose={() => null}
           />

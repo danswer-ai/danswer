@@ -3,28 +3,7 @@ import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { FaNewspaper, FaPlus, FaTrash } from "react-icons/fa";
 import { EditingValue } from "@/components/credentials/EditingValue";
-
-export type InputType = "list" | "string" | "checkbox" | "select";
-
-export type InputOption = {
-  type: InputType;
-  query: string;
-  label: string;
-  name: string;
-  optional: boolean;
-  options?: string[]; // For select type
-};
-
-export interface ConnectionConfiguration {
-  description: string;
-  values: InputOption[];
-}
-
-interface DynamicConnectionFormProps {
-  config: ConnectionConfiguration;
-  onSubmit: () => void;
-  onClose: () => void;
-}
+import { DynamicConnectionFormProps } from "./types";
 
 const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   config,
@@ -53,7 +32,6 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
         if (!field.optional) {
           schema = schema.required(`${field.label} is required`);
         }
-
         acc[field.name] = schema;
         return acc;
       },
@@ -63,14 +41,14 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
 
   return (
     <div className="brounded-lg p-6 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">
+      <h2 className="text-2xl font-bold mb-4 text-neutral-800">
         Connection Configuration
       </h2>
-      <p className="mb-6 text-gray-600">{config.description}</p>
+      <p className="mb-6 text-neutral-600">{config.description}</p>
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
-        onSubmit={async (values, { setSubmitting }) => {
+        onSubmit={async (_, { setSubmitting }) => {
           try {
             onSubmit();
             onClose();
@@ -81,17 +59,17 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
           }
         }}
       >
-        {({ setFieldValue, isSubmitting, values }) => (
+        {({ setFieldValue, values }) => (
           <Form className="space-y-6">
             {config.values.map((field) => (
               <div key={field.name}>
                 <label
                   htmlFor={field.name}
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-neutral-700 mb-1"
                 >
                   {field.label}
                   {field.optional && (
-                    <span className="text-gray-500 ml-1">(optional)</span>
+                    <span className="text-neutral-500 ml-1">(optional)</span>
                   )}
                 </label>
 
@@ -104,7 +82,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                             <Field
                               name={`${field.name}.${index}`}
                               placeholder={field.query}
-                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2"
+                              className="w-full p-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2"
                             />
                             <button
                               type="button"
@@ -130,12 +108,12 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                   <Field
                     as="select"
                     name={field.name}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="">Select an option</option>
                     {field.options?.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
+                      <option key={option.name} value={option.name}>
+                        {option.name}
                       </option>
                     ))}
                   </Field>
@@ -148,8 +126,8 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                     currentValue={field.query}
                     className={
                       field.type === "checkbox"
-                        ? "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                        : "w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        ? "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-neutral-300 rounded"
+                        : "w-full p-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     }
                   />
                 )}

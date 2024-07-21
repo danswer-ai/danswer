@@ -1,3 +1,4 @@
+import { ConnectionConfiguration } from "@/app/add/[connector]/shared/types";
 import { Persona } from "@/app/admin/assistants/interfaces";
 
 export interface UserPreferences {
@@ -992,21 +993,7 @@ export const getCredentialTemplate = <T extends ValidSources>(
 };
 
 // Type definitions
-type InputType = "text" | "select" | "multiselect" | "boolean";
-
-interface InputOption {
-  type: InputType;
-  query: string;
-  label: string;
-  name: string;
-  optional: boolean;
-  options?: string[]; // For select type
-}
-
-export interface ConnectionConfiguration {
-  description: string;
-  values: InputOption[];
-}
+export type InputType = "list" | "text" | "select" | "multiselect" | "boolean";
 
 // Updated function
 export const getConnectorConfigTemplate = <T extends ValidSources>(
@@ -1030,7 +1017,20 @@ export const getConnectorConfigTemplate = <T extends ValidSources>(
             label: "Web Connector Type",
             name: "web_connector_type",
             optional: true,
-            options: ["recursive", "single", "sitemap"],
+            options: [
+              {
+                name: "recursive",
+                value: "recursive",
+              },
+              {
+                name: "single",
+                value: "single",
+              },
+              {
+                name: "sitemap",
+                value: "sitemap",
+              },
+            ],
           },
         ],
       };
@@ -1053,14 +1053,14 @@ export const getConnectorConfigTemplate = <T extends ValidSources>(
             optional: false,
           },
           {
-            type: "boolean",
+            type: "checkbox",
             query: "Include pull requests?",
             label: "Include PRs",
             name: "include_prs",
             optional: true,
           },
           {
-            type: "boolean",
+            type: "checkbox",
             query: "Include issues?",
             label: "Include Issues",
             name: "include_issues",
@@ -1080,14 +1080,14 @@ export const getConnectorConfigTemplate = <T extends ValidSources>(
             optional: false,
           },
           {
-            type: "multiselect",
+            type: "select",
             query: "Select channels to include:",
             label: "Channels",
             name: "channels",
             optional: true,
           },
           {
-            type: "boolean",
+            type: "checkbox",
             query: "Enable channel regex?",
             label: "Enable Channel Regex",
             name: "channel_regex_enabled",
@@ -1100,28 +1100,28 @@ export const getConnectorConfigTemplate = <T extends ValidSources>(
         description: "Configuration for Google Drive connector",
         values: [
           {
-            type: "multiselect",
+            type: "select",
             query: "Enter folder paths:",
             label: "Folder Paths",
             name: "folder_paths",
             optional: true,
           },
           {
-            type: "boolean",
+            type: "checkbox",
             query: "Include shared files?",
             label: "Include Shared",
             name: "include_shared",
             optional: true,
           },
           {
-            type: "boolean",
+            type: "checkbox",
             query: "Follow shortcuts?",
             label: "Follow Shortcuts",
             name: "follow_shortcuts",
             optional: true,
           },
           {
-            type: "boolean",
+            type: "checkbox",
             query: "Only include organization public files?",
             label: "Only Org Public",
             name: "only_org_public",
