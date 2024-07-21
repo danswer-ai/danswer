@@ -674,7 +674,7 @@ export const credentialDisplayNames: Record<string, string> = {
   zendesk_token: "Zendesk Token",
 
   // Dropbox
-  dropbox_access_token: "Dropbox Access Token",
+  dropbox_access_token: "Dropbox API Key",
 
   // R2
   account_id: "R2 Account ID",

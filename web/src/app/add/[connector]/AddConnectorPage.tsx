@@ -70,7 +70,7 @@ export default function AddConnector({
         <>
           <Card>
             <Title className="mb-2">Select a credential</Title>
-            <CredentialSection ccPair={ccPair} />
+            <CredentialSection sourceType={connector} ccPair={ccPair} />
           </Card>
 
           <div className="mt-4 flex w-full justify-end">

@@ -25,11 +25,15 @@ import { Text } from "@tremor/react";
 import { buildCCPairInfoUrl } from "@/app/admin/connector/[ccPairId]/lib";
 import { Modal } from "../Modal";
 import EditCredential from "./EditCredential";
+import { getSourceDisplayName } from "@/lib/sources";
 
 export default function CredentialSection({
   ccPair,
+  sourceType,
 }: {
   ccPair: CCPairFullInfo;
+
+  sourceType: ValidSources;
 }) {
   const makeShowCreateCredential = () => {
     setShowModifyCredential(false);
@@ -124,7 +128,7 @@ export default function CredentialSection({
       {showModifyCredential && (
         <Modal
           onOutsideClick={closeModifyCredential}
-          className="max-w-2xl rounded-lg"
+          className="max-w-3xl rounded-lg"
           title="Modify Credential"
         >
           <ModifyCredential
@@ -144,7 +148,7 @@ export default function CredentialSection({
       {editingCredential && (
         <Modal
           onOutsideClick={closeEditingCredential}
-          className="max-w-2xl rounded-lg"
+          className="max-w-3xl rounded-lg"
           title="Edit Credential"
         >
           <EditCredential
@@ -159,14 +163,14 @@ export default function CredentialSection({
       {showCreateCredential && (
         <Modal
           onOutsideClick={closeCreateCredential}
-          className="max-w-2xl rounded-lg"
-          title={`Create Credential`}
+          className="max-w-3xl rounded-lg"
+          title={`Create ${getSourceDisplayName(sourceType)} Credential`}
         >
           <CreateCredential
-            ccPair={ccPair}
+            sourceType={sourceType}
+            connector={ccPair.connector}
             setPopup={setPopup}
             onSwap={onSwap}
-            onCreateNew={() => makeShowCreateCredential()}
             onClose={closeCreateCredential}
           />
         </Modal>

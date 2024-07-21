@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.db.connector_credential_pair import get_connector_credential_source_from_id
 from danswer.db.credentials import alter_credential
 from danswer.db.credentials import create_credential
 from danswer.db.credentials import delete_credential
@@ -44,19 +43,18 @@ def list_credentials_admin(
     ]
 
 
-@router.get("/admin/similar-credentials/{cc_pair_id}")
+@router.get("/admin/similar-credentials/{credential_id}")
 def get_cc_source_full_info(
-    cc_pair_id: int,
+    credential_id: int,
     user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[CredentialSnapshot]:
-    source = get_connector_credential_source_from_id(
-        cc_pair_id=cc_pair_id,
-        db_session=db_session,
+    credential = get_credential_by_id(
+        credential_id=credential_id, db_session=db_session, user=user
     )
 
     credentials = fetch_credentials_by_source(
-        db_session=db_session, user=user, document_source=source
+        db_session=db_session, user=user, document_source=credential.source
     )
 
     return [

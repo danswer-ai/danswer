@@ -145,7 +145,7 @@ export default function ModifyCredential({
     isLoading,
     error,
   } = useSWR<Credential<ConfluenceCredentialJson>[]>(
-    buildSimilarCredentialInfoURL(ccPair.id),
+    buildSimilarCredentialInfoURL(ccPair.connector.id),
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
@@ -177,10 +177,12 @@ export default function ModifyCredential({
                   className="rounded py-1 px-1.5 bg-neutral-800 text-neutral-200"
                   onClick={async () => {
                     await onDeleteCredential(confirmDeletionCredential);
+
                     setPopup({
                       message: "Swapped credential",
                       type: "success",
                     });
+
                     mutate(buildSimilarCredentialInfoURL(ccPair.credential.id));
                     setConfirmDeletionCredential(null);
                     setPopup({

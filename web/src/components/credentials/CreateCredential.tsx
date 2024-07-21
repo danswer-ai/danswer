@@ -1,37 +1,37 @@
 import * as Yup from "yup";
-import React, { useState } from "react";
-import { Modal } from "@/components/Modal";
-import { Button, Text, Badge, Card } from "@tremor/react";
+import React from "react";
+import { Button, Card } from "@tremor/react";
 import {
+  Connector,
   Credential,
-  credentialDisplayNames,
+  getCredentialTemplate,
   getDisplayNameForCredentialKey,
+  ValidSources,
 } from "@/lib/types";
 import { FaAccusoft, FaSwatchbook } from "react-icons/fa";
 
 import { submitCredential } from "@/components/admin/connectors/CredentialForm";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik, FormikHelpers } from "formik";
-import Popup from "@/components/popup/Popup";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { linkCredential } from "@/lib/credential";
-import { ModalWrapper } from "@/app/chat/modal/ModalWrapper";
-import { CCPairFullInfo } from "../../app/admin/connector/[ccPairId]/types";
+
+import { PopupSpec } from "@/components/admin/connectors/Popup";
+import { getSourceDocLink } from "@/lib/sources";
 
 type ActionType = "create" | "createAndSwap";
 
 export default function CreateCredential({
-  ccPair,
   onClose,
+  connector,
+
   onSwap,
-  onCreateNew,
   setPopup,
+  sourceType,
 }: {
+  sourceType: ValidSources;
+  connector?: Connector<any>;
   setPopup: (popupSpec: PopupSpec | null) => void;
-  ccPair: CCPairFullInfo;
   onClose: () => void;
   onSwap: (selectedCredentialId: number, connectorId: number) => Promise<void>;
-  onCreateNew: () => void;
 }) {
   const handleSubmit = async (
     values: JsonValues & { name?: string },
@@ -66,7 +66,7 @@ export default function CreateCredential({
         credential_json: credentialValues,
         admin_public: true,
         name: name,
-        source: ccPair.connector.source,
+        source: sourceType,
       });
 
       const { message, isSuccess, credentialId } = response;
@@ -75,10 +75,10 @@ export default function CreateCredential({
         throw new Error("No credential ID returned");
       }
 
-      if (isSuccess) {
+      if (isSuccess && connector) {
         onClose();
         if (action === "createAndSwap") {
-          const swap = await onSwap(credentialId, ccPair.connector.id);
+          const swap = await onSwap(credentialId, connector.id);
         } else {
           setPopup({ type: "success", message: "Created new credneital!!" });
           setTimeout(() => setPopup(null), 4000);
@@ -94,7 +94,10 @@ export default function CreateCredential({
     }
   };
 
-  const input_values = Object.keys(ccPair.credential.credential_json);
+  const types = getCredentialTemplate(sourceType);
+
+  const input_values = Object.keys(types);
+
   interface JsonValues {
     [key: string]: string;
   }
@@ -102,7 +105,7 @@ export default function CreateCredential({
     name: string;
   }
 
-  const json_values: JsonValues = ccPair.credential.credential_json;
+  const json_values: JsonValues = types;
 
   function createValidationSchema(json_values: JsonValues) {
     const schemaFields: { [key: string]: Yup.StringSchema } = {};
@@ -144,6 +147,18 @@ export default function CreateCredential({
     >
       {(formikProps) => (
         <Form>
+          <p>
+            Check our
+            <a
+              className="text-blue-600 hover:underline"
+              target="_blank"
+              href={getSourceDocLink(sourceType) || ""}
+            >
+              {" "}
+              docs{" "}
+            </a>
+            for information on setting up this connector.
+          </p>
           <Card className="mt-4">
             <TextFormField
               name="name"
@@ -167,19 +182,21 @@ export default function CreateCredential({
             ))}
           </Card>
           <div className="flex gap-x-4 mt-8 justify-end">
-            <Button
-              className="bg-rose-500 hover:bg-rose-400 border-rose-800"
-              onClick={() =>
-                handleSubmit(formikProps.values, formikProps, "createAndSwap")
-              }
-              type="button"
-              disabled={formikProps.isSubmitting}
-            >
-              <div className="flex gap-x-2 items-center w-full border-none">
-                <FaAccusoft />
-                <p>Create + Swap</p>
-              </div>
-            </Button>
+            {connector && (
+              <Button
+                className="bg-rose-500 hover:bg-rose-400 border-rose-800"
+                onClick={() =>
+                  handleSubmit(formikProps.values, formikProps, "createAndSwap")
+                }
+                type="button"
+                disabled={formikProps.isSubmitting}
+              >
+                <div className="flex gap-x-2 items-center w-full border-none">
+                  <FaAccusoft />
+                  <p>Create + Swap</p>
+                </div>
+              </Button>
+            )}
             <Button
               className="bg-indigo-500 hover:bg-indigo-400"
               onClick={() =>

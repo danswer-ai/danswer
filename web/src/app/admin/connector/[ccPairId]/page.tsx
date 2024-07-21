@@ -96,7 +96,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
       </div>
       <Divider />
       <Title className="mb-2">Credentials</Title>
-      <CredentialSection ccPair={ccPair} />
+      <CredentialSection ccPair={ccPair} sourceType={ccPair.connector.source} />
       <Divider />
       <ConfigDisplay
         connectorSpecificConfig={ccPair.connector.connector_specific_config}
