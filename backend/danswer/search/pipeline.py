@@ -263,10 +263,10 @@ class SearchPipeline:
                 )
 
         if parallel_functions_with_args:
-            parallel_results = run_functions_tuples_in_parallel(
+            list_inference_chunks = run_functions_tuples_in_parallel(
                 parallel_functions_with_args, allow_failures=False
             )
-            for result in parallel_results:
+            for result in list_inference_chunks:
                 flattened_inference_chunks.extend(result)
 
         doc_chunk_ind_to_chunk = {
