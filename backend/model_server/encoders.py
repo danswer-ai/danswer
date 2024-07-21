@@ -284,6 +284,9 @@ def calc_sim_scores(query: str, docs: list[str]) -> list[list[float]]:
 async def process_embed_request(
     embed_request: EmbedRequest,
 ) -> EmbedResponse:
+    if not embed_request.texts:
+        raise HTTPException(status_code=400, detail="No texts to be embedded")
+
     try:
         if embed_request.text_type == EmbedTextType.QUERY:
             prefix = embed_request.manual_query_prefix
@@ -314,6 +317,11 @@ async def process_rerank_request(embed_request: RerankRequest) -> RerankResponse
     """Cross encoders can be purely black box from the app perspective"""
     if INDEXING_ONLY:
         raise RuntimeError("Indexing model server should not call intent endpoint")
+
+    if not embed_request.documents or not embed_request.query:
+        raise HTTPException(
+            status_code=400, detail="No documents or query to be reranked"
+        )
 
     try:
         sim_scores = calc_sim_scores(
