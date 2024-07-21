@@ -171,7 +171,7 @@ class SearchPipeline:
         above = self.search_query.chunks_above
         below = self.search_query.chunks_below
 
-        # functions_with_args: list[tuple[Callable, tuple]] = []
+        functions_with_args: list[tuple[Callable, tuple]] = []
         expanded_inference_sections = []
 
         # Full doc setting takes priority
@@ -180,30 +180,29 @@ class SearchPipeline:
             seen_document_ids = set()
             unique_chunks = []
             list_inference_chunks = []
+
             # This preserves the ordering since the chunks are retrieved in score order
             for chunk in retrieved_chunks:
                 if chunk.document_id not in seen_document_ids:
                     seen_document_ids.add(chunk.document_id)
                     unique_chunks.append(chunk)
-                    list_inference_chunks.append([chunk])
 
-                    # NOTE: left in for eventual refactor with Vespa API
-                    # functions_with_args.append(
-                    #     (
-                    #         self.document_index.id_based_retrieval,
-                    #         (
-                    #             chunk.document_id,
-                    #             None,  # Start chunk ind
-                    #             None,  # End chunk ind
-                    #             # There is no chunk level permissioning, this expansion around chunks
-                    #             # can be assumed to be safe
-                    #             IndexFilters(access_control_list=None),
-                    #         ),
-                    #     )
-                    # )
-            # list_inference_chunks = run_functions_tuples_in_parallel(
-            #     functions_with_args, allow_failures=False
-            # )
+                    functions_with_args.append(
+                        (
+                            self.document_index.id_based_retrieval,
+                            (
+                                chunk.document_id,
+                                None,  # Start chunk ind
+                                None,  # End chunk ind
+                                # There is no chunk level permissioning, this expansion around chunks
+                                # can be assumed to be safe
+                                IndexFilters(access_control_list=None),
+                            ),
+                        )
+                    )
+            list_inference_chunks = run_functions_tuples_in_parallel(
+                functions_with_args, allow_failures=False
+            )
 
             for ind, chunk in enumerate(unique_chunks):
                 inf_chunks = list_inference_chunks[ind]
@@ -246,13 +245,15 @@ class SearchPipeline:
             merge_chunk_intervals(ranges) for ranges in doc_chunk_ranges_map.values()
         ]
 
-        flat_ranges = [r for ranges in merged_ranges for r in ranges]
-        flattened_inference_chunks = []
+        flat_ranges: list[ChunkRange] = [r for ranges in merged_ranges for r in ranges]
+        flattened_inference_chunks: list[InferenceChunk] = []
         parallel_functions_with_args = []
 
         for chunk_range in flat_ranges:
-            if chunk_range.start == chunk_range.end:
-                flattened_inference_chunks.append(chunk_range.chunks[0])
+            # Don't need to fetch chunks within range for merging if chunk_above / below are 0.
+            if above == below == 0:
+                flattened_inference_chunks.extend(chunk_range.chunks)
+
             else:
                 parallel_functions_with_args.append(
                     (
