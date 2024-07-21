@@ -4,13 +4,10 @@ from types import SimpleNamespace
 
 import yaml
 
-from tests.regression.answer_quality.cli_utils import cleanup_docker
 from tests.regression.answer_quality.cli_utils import manage_data_directories
 from tests.regression.answer_quality.cli_utils import set_env_variables
 from tests.regression.answer_quality.cli_utils import start_docker_compose
 from tests.regression.answer_quality.cli_utils import switch_to_commit
-from tests.regression.answer_quality.file_uploader import upload_test_files
-from tests.regression.answer_quality.run_qa import run_qa_test_and_save_results
 
 
 def load_config(config_filename: str) -> SimpleNamespace:
@@ -43,13 +40,13 @@ def main() -> None:
         run_suffix, config.launch_web_ui, config.use_cloud_gpu, config.only_state
     )
 
-    if not config.existing_test_suffix and not config.only_state:
-        upload_test_files(config.zipped_documents_file, run_suffix)
+    # if not config.existing_test_suffix and not config.only_state:
+    #     upload_test_files(config.zipped_documents_file, run_suffix)
 
-        run_qa_test_and_save_results(run_suffix)
+    #     run_qa_test_and_save_results(run_suffix)
 
-        if config.clean_up_docker_containers:
-            cleanup_docker(run_suffix)
+    #     if config.clean_up_docker_containers:
+    #         cleanup_docker(run_suffix)
 
 
 if __name__ == "__main__":

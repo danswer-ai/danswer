@@ -42,7 +42,7 @@ def test_embedding_configuration(
             passage_prefix=None,
             model_name=None,
         )
-        test_model.encode(["Test String"], text_type=EmbedTextType.QUERY)
+        test_model.encode(["Testing Embedding"], text_type=EmbedTextType.QUERY)
 
     except ValueError as e:
         error_msg = f"Not a valid embedding model. Exception thrown: {e}"
