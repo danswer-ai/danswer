@@ -5,10 +5,13 @@ from typing import Optional
 from typing import TYPE_CHECKING
 
 import requests
+from httpx import HTTPError
 from transformers import logging as transformer_logging  # type:ignore
 
+from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
+from danswer.utils.batching import batch_list
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
@@ -103,28 +106,69 @@ class EmbeddingModel:
         model_server_url = build_model_server_url(server_host, server_port)
         self.embed_server_endpoint = f"{model_server_url}/encoder/bi-encoder-embed"
 
-    def encode(self, texts: list[str], text_type: EmbedTextType) -> list[list[float]]:
-        if text_type == EmbedTextType.QUERY and self.query_prefix:
-            prefixed_texts = [self.query_prefix + text for text in texts]
-        elif text_type == EmbedTextType.PASSAGE and self.passage_prefix:
-            prefixed_texts = [self.passage_prefix + text for text in texts]
-        else:
-            prefixed_texts = texts
+    def encode(
+        self,
+        texts: list[str],
+        text_type: EmbedTextType,
+        batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
+    ) -> list[list[float]]:
+        if self.provider_type:
+            embed_request = EmbedRequest(
+                model_name=self.model_name,
+                texts=texts,
+                max_context_length=self.max_seq_length,
+                normalize_embeddings=self.normalize,
+                api_key=self.api_key,
+                provider_type=self.provider_type,
+                text_type=text_type,
+                manual_query_prefix=self.query_prefix,
+                manual_passage_prefix=self.passage_prefix,
+            )
+            response = requests.post(
+                self.embed_server_endpoint, json=embed_request.dict()
+            )
+            try:
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                error_detail = response.json().get("detail", str(e))
+                raise HTTPError(f"HTTP error occurred: {error_detail}") from e
+            except requests.RequestException as e:
+                raise HTTPError(f"Request failed: {str(e)}") from e
+            return EmbedResponse(**response.json()).embeddings
 
-        embed_request = EmbedRequest(
-            model_name=self.model_name,
-            texts=prefixed_texts,
-            max_context_length=self.max_seq_length,
-            normalize_embeddings=self.normalize,
-            api_key=self.api_key,
-            provider_type=self.provider_type,
-            text_type=text_type,
-        )
+        # Batching for local embedding
+        text_batches = batch_list(texts, batch_size)
+        embeddings: list[list[float]] = []
+        for idx, text_batch in enumerate(text_batches, start=1):
+            logger.debug(f"Embedding Content Texts batch {idx} of {len(text_batches)}")
 
-        response = requests.post(self.embed_server_endpoint, json=embed_request.dict())
-        response.raise_for_status()
+            embed_request = EmbedRequest(
+                model_name=self.model_name,
+                texts=text_batch,
+                max_context_length=self.max_seq_length,
+                normalize_embeddings=self.normalize,
+                api_key=self.api_key,
+                provider_type=self.provider_type,
+                text_type=text_type,
+                manual_query_prefix=self.query_prefix,
+                manual_passage_prefix=self.passage_prefix,
+            )
 
-        return EmbedResponse(**response.json()).embeddings
+            response = requests.post(
+                self.embed_server_endpoint, json=embed_request.dict()
+            )
+            try:
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                error_detail = response.json().get("detail", str(e))
+                raise HTTPError(f"HTTP error occurred: {error_detail}") from e
+            except requests.RequestException as e:
+                raise HTTPError(f"Request failed: {str(e)}") from e
+            # Normalize embeddings is only configured via model_configs.py, be sure to use right
+            # value for the set loss
+            embeddings.extend(EmbedResponse(**response.json()).embeddings)
+
+        return embeddings
 
 
 class CrossEncoderEnsembleModel:
