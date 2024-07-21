@@ -179,7 +179,6 @@ class SearchPipeline:
         if self.search_query.full_doc:
             seen_document_ids = set()
             unique_chunks = []
-            list_inference_chunks = []
 
             # This preserves the ordering since the chunks are retrieved in score order
             for chunk in retrieved_chunks:
