@@ -40,7 +40,9 @@ def _create_new_chat_session(run_suffix: str) -> int:
 
 
 @retry(tries=10, delay=10)
-def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
+def get_answer_from_query(
+    query: str, only_retrieve_docs: bool, run_suffix: str
+) -> tuple[list[str], str]:
     filters = IndexFilters(
         source_type=None,
         document_set=None,
@@ -64,6 +66,7 @@ def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
         message=query,
         retrieval_options=retrieval_options,
         query_override=query,
+        only_retrieve_search_docs=only_retrieve_docs,
     )
 
     body = new_message_request.dict()
@@ -82,7 +85,7 @@ def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
 
 
 @retry(tries=10, delay=10)
-def check_if_query_ready(run_suffix: str) -> bool:
+def check_indexing_status(run_suffix: str) -> tuple[int, bool]:
     url = _api_url_builder(run_suffix, "/manage/admin/connector/indexing-status/")
     try:
         indexing_status_dict = requests.get(url, headers=GENERAL_HEADERS).json()
@@ -100,14 +103,7 @@ def check_if_query_ready(run_suffix: str) -> bool:
             ongoing_index_attempts = True
         doc_count += index_attempt["docs_indexed"]
 
-    if not doc_count:
-        print("No docs indexed, waiting for indexing to start")
-    elif ongoing_index_attempts:
-        print(
-            f"{doc_count} docs indexed but waiting for ongoing indexing jobs to finish..."
-        )
-
-    return doc_count > 0 and not ongoing_index_attempts
+    return doc_count, ongoing_index_attempts
 
 
 def run_cc_once(run_suffix: str, connector_id: int, credential_id: int) -> None:

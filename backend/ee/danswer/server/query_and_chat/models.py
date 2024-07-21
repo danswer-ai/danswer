@@ -41,6 +41,8 @@ class BasicCreateChatMessageRequest(ChunkContext):
     query_override: str | None = None
     # If search_doc_ids provided, then retrieval options are unused
     search_doc_ids: list[int] | None = None
+    # If this is true, dont query llm for an answer
+    only_retrieve_search_docs: bool = False
 
 
 class SimpleDoc(BaseModel):

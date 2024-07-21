@@ -6,7 +6,6 @@ import time
 
 import yaml
 
-from tests.regression.answer_quality.api_utils import check_if_query_ready
 from tests.regression.answer_quality.api_utils import get_answer_from_query
 from tests.regression.answer_quality.cli_utils import get_current_commit_sha
 from tests.regression.answer_quality.cli_utils import get_docker_container_env_vars
@@ -118,6 +117,7 @@ def _process_question(question_data: dict, config: dict, question_number: int) -
     print(f"query: {query}")
     context_data_list, answer = get_answer_from_query(
         query=query,
+        only_retrieve_docs=config["only_retrieve_docs"],
         run_suffix=config["run_suffix"],
     )
 
@@ -141,9 +141,6 @@ def _process_and_write_query_results(config: dict) -> None:
     start_time = time.time()
     test_output_folder, questions = _initialize_files(config)
     print("saving test results to folder:", test_output_folder)
-
-    while not check_if_query_ready(config["run_suffix"]):
-        time.sleep(5)
 
     if config["limit"] is not None:
         questions = questions[: config["limit"]]
