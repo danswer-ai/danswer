@@ -173,6 +173,7 @@ class SearchPipeline:
         expanded_inference_sections = []
 
         # Full doc setting takes priority
+
         if self.search_query.full_doc:
             seen_document_ids = set()
             unique_chunks = []
@@ -240,32 +241,42 @@ class SearchPipeline:
         merged_ranges = [
             merge_chunk_intervals(ranges) for ranges in doc_chunk_ranges_map.values()
         ]
-        flat_ranges = [r for ranges in merged_ranges for r in ranges]
 
+
+        flat_ranges = [r for ranges in merged_ranges for r in ranges]
+        flattened_inference_chunks = []
         for chunk_range in flat_ranges:
-            functions_with_args.append(
-                (
-                    # If Large Chunks are introduced, additional filters need to be added here
-                    self.document_index.id_based_retrieval,
-                    (
-                        # Only need the document_id here, just use any chunk in the range is fine
-                        chunk_range.chunks[0].document_id,
-                        chunk_range.start,
-                        chunk_range.end,
-                        # There is no chunk level permissioning, this expansion around chunks
-                        # can be assumed to be safe
-                        IndexFilters(access_control_list=None),
-                    ),
-                )
-            )
+            flattened_inference_chunks.append(chunk_range.chunks[0])
+            # print(len(chunk_range.chunks))
+            # chunks.append(chunk_range.chunks[0])
+
+
+        # for chunk_range in flat_ranges:
+        #     functions_with_args.append(
+        #         (
+        #             # If Large Chunks are introduced, additional filters need to be added here
+        #             self.document_index.id_based_retrieval,
+        #             (
+        #                 # Only need the document_id here, just use any chunk in the range is fine
+        #                 chunk_range.chunks[0].document_id,
+        #                 chunk_range.start,
+        #                 chunk_range.end,
+        #                 # There is no chunk level permissioning, this expansion around chunks
+        #                 # can be assumed to be safe
+        #                 IndexFilters(access_control_list=None),
+        #             ),
+        #         )
+        #     )
 
         # list of list of inference chunks where the inner list needs to be combined for content
-        list_inference_chunks = run_functions_tuples_in_parallel(
-            functions_with_args, allow_failures=False
-        )
-        flattened_inference_chunks = [
-            chunk for sublist in list_inference_chunks for chunk in sublist
-        ]
+        # list_inference_chunks = run_functions_tuples_in_parallel(
+        #     functions_with_args, allow_failures=False
+        # )
+
+
+        # flattened_inference_chunks = [
+        #     chunk for sublist in list_inference_chunks for chunk in sublist
+        # ]
 
         doc_chunk_ind_to_chunk = {
             (chunk.document_id, chunk.chunk_id): chunk
