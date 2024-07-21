@@ -5,10 +5,10 @@ import { ChatPage } from "./ChatPage";
 import FunctionalWrapper from "./shared_chat_search/FunctionalWrapper";
 
 export default function WrappedChat({
-  defaultPersonaId,
+  defaultAssistantId,
   initiallyToggled,
 }: {
-  defaultPersonaId?: number;
+  defaultAssistantId?: number;
   initiallyToggled: boolean;
 }) {
   return (
@@ -17,7 +17,7 @@ export default function WrappedChat({
       content={(toggledSidebar, toggle) => (
         <ChatPage
           toggle={toggle}
-          defaultSelectedPersonaId={defaultPersonaId}
+          defaultSelectedAssistantId={defaultAssistantId}
           toggledSidebar={toggledSidebar}
         />
       )}
