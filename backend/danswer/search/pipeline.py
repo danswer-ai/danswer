@@ -155,7 +155,7 @@ class SearchPipeline:
 
         return cast(list[InferenceChunk], self._retrieved_chunks)
 
-    @log_function_time()
+    @log_function_time(print_only=True)
     def _get_sections(self) -> list[InferenceSection]:
         """Returns an expanded section from each of the chunks.
         If whole docs (instead of above/below context) is specified then it will give back all of the whole docs
