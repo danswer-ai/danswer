@@ -34,6 +34,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
+from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
@@ -154,6 +155,7 @@ class SearchPipeline:
 
         return cast(list[InferenceChunk], self._retrieved_chunks)
 
+    @log_function_time()
     def _get_sections(self) -> list[InferenceSection]:
         """Returns an expanded section from each of the chunks.
         If whole docs (instead of above/below context) is specified then it will give back all of the whole docs
@@ -177,13 +179,13 @@ class SearchPipeline:
         if self.search_query.full_doc:
             seen_document_ids = set()
             unique_chunks = []
-            list_inference_chunks: list[InferenceChunk] = []
+            list_inference_chunks = []
             # This preserves the ordering since the chunks are retrieved in score order
             for chunk in retrieved_chunks:
                 if chunk.document_id not in seen_document_ids:
                     seen_document_ids.add(chunk.document_id)
                     unique_chunks.append(chunk)
-                    list_inference_chunks.append(chunk)
+                    list_inference_chunks.append([chunk])
 
                     # NOTE: left in for eventual refactor with Vespa API
                     # functions_with_args.append(
@@ -199,7 +201,6 @@ class SearchPipeline:
                     #         ),
                     #     )
                     # )
-
             # list_inference_chunks = run_functions_tuples_in_parallel(
             #     functions_with_args, allow_failures=False
             # )
@@ -269,8 +270,8 @@ class SearchPipeline:
             list_inference_chunks = run_functions_tuples_in_parallel(
                 parallel_functions_with_args, allow_failures=False
             )
-            for result in list_inference_chunks:
-                flattened_inference_chunks.extend(result)
+            for inference_chunks in list_inference_chunks:
+                flattened_inference_chunks.extend(inference_chunks)
 
         doc_chunk_ind_to_chunk = {
             (chunk.document_id, chunk.chunk_id): chunk
