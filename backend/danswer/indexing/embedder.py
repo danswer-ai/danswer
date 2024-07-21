@@ -100,15 +100,16 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         # Drop any None or empty strings
         chunk_titles_list = [title for title in chunk_titles if title]
 
-        title_embeddings = self.embedding_model.encode(
-            chunk_titles_list, text_type=EmbedTextType.PASSAGE
-        )
-        title_embed_dict.update(
-            {
-                title: vector
-                for title, vector in zip(chunk_titles_list, title_embeddings)
-            }
-        )
+        if chunk_titles_list:
+            title_embeddings = self.embedding_model.encode(
+                chunk_titles_list, text_type=EmbedTextType.PASSAGE
+            )
+            title_embed_dict.update(
+                {
+                    title: vector
+                    for title, vector in zip(chunk_titles_list, title_embeddings)
+                }
+            )
 
         # Mapping embeddings to chunks
         embedding_ind_start = 0

@@ -112,6 +112,10 @@ class EmbeddingModel:
         text_type: EmbedTextType,
         batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
     ) -> list[list[float]]:
+        if not texts:
+            logger.warning("No texts to be embedded")
+            return []
+
         if self.provider_type:
             embed_request = EmbedRequest(
                 model_name=self.model_name,
