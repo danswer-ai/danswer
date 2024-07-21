@@ -11,7 +11,7 @@ export default function FixedLogo() {
   const enterpriseSettings = combinedSettings?.enterpriseSettings;
 
   return (
-    <div className="fixed flex z-40 left-4 top-2">
+    <div className="absolute flex z-40 left-4 top-2">
       {" "}
       <a href="/chat" className="ml-7 text-text-700 text-xl">
         <div>

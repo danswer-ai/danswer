@@ -62,11 +62,10 @@ export function AssistantsTab({
                     toolName = "Image Generation";
                     toolIcon = <FiImage className="mr-1 my-auto" />;
                   }
-
                   return (
                     <Bubble key={tool.id} isSelected={false}>
-                      <div className="flex flex-row gap-1">
-                        {toolIcon}
+                      <div className="flex line-wrap break-all flex-row gap-1">
+                        <div className="flex-none my-auto">{toolIcon}</div>
                         {toolName}
                       </div>
                     </Bubble>
