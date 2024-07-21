@@ -97,6 +97,7 @@ class CloudEmbedding:
             texts=texts,
             model=model,
             input_type=embedding_type,
+            truncate="NONE",
         )
         return response.embeddings
 
@@ -126,6 +127,7 @@ class CloudEmbedding:
         )
         return [embedding.values for embedding in embeddings]
 
+    @retry(tries=_RETRY_TRIES, delay=_RETRY_DELAY)
     def embed(
         self,
         *,
@@ -211,7 +213,6 @@ def warm_up_cross_encoders() -> None:
 
 
 @simple_log_function_time()
-@retry(tries=_RETRY_TRIES, delay=_RETRY_DELAY)
 def embed_text(
     texts: list[str],
     text_type: EmbedTextType,
