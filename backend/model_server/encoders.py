@@ -43,8 +43,8 @@ router = APIRouter(prefix="/encoder")
 _GLOBAL_MODELS_DICT: dict[str, "SentenceTransformer"] = {}
 _RERANK_MODELS: Optional[list["CrossEncoder"]] = None
 # If we are not only indexing, dont want retry very long
-_RETRY_DELAY = 10 if INDEXING_ONLY else 2
-_RETRY_TRIES = 10 if INDEXING_ONLY else 0.1
+_RETRY_DELAY = 10 if INDEXING_ONLY else 0.1
+_RETRY_TRIES = 10 if INDEXING_ONLY else 2
 
 
 def _initialize_client(
@@ -126,11 +126,9 @@ class CloudEmbedding:
         )
         return embedding[0].values
 
-    @retry(tries=_RETRY_TRIES, delay=_RETRY_DELAY)
     def _embed(
         self, *, text: str, text_type: EmbedTextType, model: str | None = None
     ) -> list[float]:
-        logger.debug(f"Embedding text with provider: {self.provider}")
         try:
             if self.provider == EmbeddingProvider.OPENAI:
                 return self._embed_openai(text, model)
@@ -145,21 +143,34 @@ class CloudEmbedding:
             else:
                 raise ValueError(f"Unsupported provider: {self.provider}")
         except Exception as e:
-            logger.error(f"Error embedding text with {self.provider}: {str(e)}")
-            raise
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error embedding text with {self.provider}: {str(e)}",
+            )
 
     def encode(
         self, texts: list[str], model_name: str | None, text_type: EmbedTextType
     ) -> list[list[float]]:
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            return list(
-                executor.map(
-                    lambda text: self._embed(
-                        text=text, text_type=text_type, model=model_name
-                    ),
-                    texts,
+            futures = [
+                executor.submit(
+                    self._embed, text=text, text_type=text_type, model=model_name
                 )
-            )
+                for text in texts
+            ]
+
+            results = []
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    results.append(future.result())
+                except Exception as e:
+                    # Cancel all pending futures
+                    for f in futures:
+                        f.cancel()
+                    # Raise the exception immediately
+                    raise e
+
+            return results
 
     @staticmethod
     def create(
@@ -220,6 +231,7 @@ def warm_up_cross_encoders() -> None:
 
 
 @simple_log_function_time()
+@retry(tries=_RETRY_TRIES, delay=_RETRY_DELAY)
 def embed_text(
     texts: list[str],
     text_type: EmbedTextType,
@@ -230,6 +242,7 @@ def embed_text(
     provider_type: str | None,
 ) -> list[list[float]]:
     if provider_type is not None:
+        logger.debug(f"Embedding text with provider: {provider_type}")
         if api_key is None:
             raise RuntimeError("API key not provided for cloud model")
 
@@ -280,10 +293,9 @@ async def process_embed_request(
         )
         return EmbedResponse(embeddings=embeddings)
     except Exception as e:
-        logger.exception(f"Error during embedding process:\n{str(e)}")
-        raise HTTPException(
-            status_code=500, detail="Failed to run Bi-Encoder embedding"
-        )
+        exception_detail = f"Error during embedding process:\n{str(e)}"
+        logger.exception(exception_detail)
+        raise HTTPException(status_code=500, detail=exception_detail)
 
 
 @router.post("/cross-encoder-scores")
