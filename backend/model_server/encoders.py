@@ -42,6 +42,9 @@ router = APIRouter(prefix="/encoder")
 
 _GLOBAL_MODELS_DICT: dict[str, "SentenceTransformer"] = {}
 _RERANK_MODELS: Optional[list["CrossEncoder"]] = None
+# If we are not only indexing, dont want retry very long
+_RETRY_DELAY = 10 if INDEXING_ONLY else 2
+_RETRY_TRIES = 10 if INDEXING_ONLY else 0.1
 
 
 def _initialize_client(
@@ -123,7 +126,7 @@ class CloudEmbedding:
         )
         return embedding[0].values
 
-    @retry(tries=3, backoff=2, delay=5)
+    @retry(tries=_RETRY_TRIES, delay=_RETRY_DELAY)
     def _embed(
         self, *, text: str, text_type: EmbedTextType, model: str | None = None
     ) -> list[float]:
@@ -149,15 +152,14 @@ class CloudEmbedding:
         self, texts: list[str], model_name: str | None, text_type: EmbedTextType
     ) -> list[list[float]]:
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(
-                    self._embed, text=text, text_type=text_type, model=model_name
+            return list(
+                executor.map(
+                    lambda text: self._embed(
+                        text=text, text_type=text_type, model=model_name
+                    ),
+                    texts,
                 )
-                for text in texts
-            ]
-            return [
-                future.result() for future in concurrent.futures.as_completed(futures)
-            ]
+            )
 
     @staticmethod
     def create(
