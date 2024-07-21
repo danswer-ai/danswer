@@ -17,7 +17,7 @@ export const EditingValue: React.FC<{
     shouldValidate?: boolean
   ) => Promise<any>;
   name: string;
-  currentValue: string;
+  currentValue?: any;
   label: string;
   type?: string;
   includRevert?: boolean;
@@ -40,7 +40,7 @@ export const EditingValue: React.FC<{
   const [value, setValue] = useState(currentValue);
 
   const updateValue = (newValue: string | boolean) => {
-    setValue(newValue.toString());
+    setValue(newValue);
     setFieldValue(name, newValue);
   };
 
@@ -52,7 +52,7 @@ export const EditingValue: React.FC<{
             <div className="flex items-center">
               <AdminBooleanFormField
                 subtext={description}
-                onChange={(e) => e.target.value}
+                onChange={(e) => updateValue(e.target.value)}
                 name={name}
                 label={label}
               />
@@ -63,7 +63,6 @@ export const EditingValue: React.FC<{
               noPadding
               description={description}
               onChange={(e) => updateValue(e.target.value)}
-              value={value}
               type={type}
               name={name}
               placeholder={currentValue}
@@ -110,7 +109,7 @@ export const AdminBooleanFormField = ({
   alignTop,
 }: BooleanFormFieldProps) => {
   return (
-    <div className="mb-4">
+    <div>
       <label className="flex text-sm">
         <Field
           name={name}

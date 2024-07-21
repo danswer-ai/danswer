@@ -1,0 +1,61 @@
+import React from "react";
+import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
+import * as Yup from "yup";
+import { FaNewspaper, FaPlus, FaTrash } from "react-icons/fa";
+import { EditingValue } from "@/components/credentials/EditingValue";
+import { DynamicConnectionFormProps } from "./types";
+import { Divider } from "@tremor/react";
+import CredentialSubText from "@/components/credentials/CredentialSubText";
+
+const AdvancedFormPage = ({
+  onSubmit,
+  onClose,
+}: {
+  onSubmit: () => void;
+  onClose: () => void;
+}) => {
+  return (
+    <div className="py-4 rounded-lg  max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold mb-4 text-neutral-800">
+        Advanced Configuration
+      </h2>
+      <Formik
+        initialValues={{
+          pruneFreq: 0,
+          refreshFreq: 0,
+        }}
+        validationSchema={Yup.object().shape({
+          name: Yup.string().required("Must provide a name for the Assistant"),
+        })}
+        onSubmit={async (_, { setSubmitting }) => {}}
+      >
+        {({ setFieldValue, values }) => (
+          <Form className="space-y-6">
+            <div key="prune_freq">
+              <EditingValue
+                description="How often to prune your documents"
+                optional
+                setFieldValue={setFieldValue}
+                type="number"
+                label="Prune Frequency"
+                name="prune_freq"
+              />
+            </div>
+            <div key="refresh_freq">
+              <EditingValue
+                description="How often to refresh your documents"
+                optional
+                setFieldValue={setFieldValue}
+                type="number"
+                label="Refresh Frequency"
+                name="refresh_freq"
+              />
+            </div>
+          </Form>
+        )}
+      </Formik>
+    </div>
+  );
+};
+
+export default AdvancedFormPage;

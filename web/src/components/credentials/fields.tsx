@@ -38,14 +38,12 @@ export function AdminTextField({
   explanationText,
   explanationLink,
   small,
-  value,
   noPadding,
   removeLabel,
   optional,
 }: {
   description?: string;
   name: string;
-  value?: string;
   removeLabel?: boolean;
   label: string;
   subtext?: string | JSX.Element;
@@ -104,7 +102,7 @@ export function AdminTextField({
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
       <Field
-        as={isTextArea ? "textarea" : "input"}
+        as={type != "number" && isTextArea ? "textarea" : "input"}
         type={type}
         name={name}
         id={name}
@@ -114,6 +112,7 @@ export function AdminTextField({
                 border-border 
                 rounded 
                 w-full 
+                bg-input
                 py-2 
                 px-3 
                 mt-1

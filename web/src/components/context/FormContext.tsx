@@ -26,7 +26,7 @@ export const FormProvider: React.FC<{ children: ReactNode }> = ({
   const [formValues, setFormValues] = useState<Record<string, any>>({});
 
   const nextFormStep = (values = "") => {
-    setFormStep(1);
+    setFormStep((formStep) => formStep + 1);
     setFormValues((prevValues) => ({ ...prevValues, values }));
   };
 

@@ -23,6 +23,8 @@ import { getSourceDisplayName } from "@/lib/sources";
 import DynamicConnectionForm from "./shared/CreateConnector";
 import { ConnectionConfiguration } from "./shared/types";
 import EditCredential from "@/components/credentials/EditCredential";
+import AdvancedFormPage from "./shared/AdvancedFormPage";
+import { SourceIcon } from "@/components/SourceIcon";
 
 export default function AddConnector({
   connector,
@@ -46,48 +48,80 @@ export default function AddConnector({
   if (!ccPair) {
     return <></>;
   }
-  console.log(connector);
 
   const configuration: ConnectionConfiguration =
     getComprehensiveConnectorConfigTemplate(connector);
 
-  console.log(configuration);
+  const createCredential = () => {};
+  const displayName = getSourceDisplayName(connector) || connector;
+
   return (
     <div className="mx-auto w-full">
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      {getSourceDisplayName(connector as ValidSources)}
-      <AdminPageTitle icon={<SlackIcon size={32} />} title="Slack" />
-      {formStep == 0 && (
-        <Card>
-          <Title className="mb-2">Select a credential</Title>
-          <CredentialSection ccPair={ccPair} />
-        </Card>
-      )}
-      {formStep == 1 && (
-        <Card>
-          <DynamicConnectionForm
-            config={configuration}
-            onSubmit={() => null}
-            onClose={() => null}
-          />
-          <div className="flex w-full">
-            <Button className="ml-auto">Advanced?</Button>
-          </div>
-        </Card>
-      )}
-      {formStep === 2 && <Card>{/* Advanced settings */}</Card>}
-      {formStep === 3 && (
-        <Card>{/* Move to the connector's page iteslf */}</Card>
-      )}
-      <div className="mt-4 flex w-full justify-between">
-        <Button className="bg-accent" onClick={() => prevFormStep()}>
-          Previous
-        </Button>
 
-        <Button onClick={() => nextFormStep()}>Continue</Button>
-      </div>
+      <AdminPageTitle
+        icon={<SourceIcon iconSize={32} sourceType={connector} />}
+        title={displayName}
+      />
+
+      {formStep == 0 && (
+        <>
+          <Card>
+            <Title className="mb-2">Select a credential</Title>
+            <CredentialSection ccPair={ccPair} />
+          </Card>
+
+          <div className="mt-4 flex w-full justify-end">
+            <Button onClick={() => nextFormStep()}>Continue</Button>
+          </div>
+        </>
+      )}
+
+      {formStep == 1 && (
+        <>
+          <Card>
+            <DynamicConnectionForm
+              config={configuration}
+              onSubmit={() => null}
+              onClose={() => null}
+            />
+            <div className="flex w-full">
+              <Button onClick={() => nextFormStep()} className="ml-auto">
+                Advanced?
+              </Button>
+            </div>
+          </Card>
+          <div className="mt-4 flex w-full justify-between">
+            <Button className="bg-accent" onClick={() => prevFormStep()}>
+              Back
+            </Button>
+            <Button onClick={() => createCredential()}>Create</Button>
+          </div>
+        </>
+      )}
+
+      {formStep === 2 && (
+        <>
+          <Card>
+            <AdvancedFormPage onClose={() => null} onSubmit={() => null} />
+          </Card>
+          <div className="mt-4 flex w-full justify-between">
+            <Button className="bg-accent" onClick={() => prevFormStep()}>
+              Back
+            </Button>
+            <Button onClick={() => nextFormStep()}>Finalize</Button>
+          </div>
+        </>
+      )}
+
+      {formStep === 3 && (
+        <>
+          <Card>{/* Move to the connector's page iteslf */}</Card>
+        </>
+      )}
+
       <FixedLogo />
     </div>
   );

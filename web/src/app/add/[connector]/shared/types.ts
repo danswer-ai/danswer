@@ -6,19 +6,51 @@ export type StringWithDescription = {
   description?: string;
 };
 
-export type InputOption = {
-  type: InputType;
-  query: string;
+export interface Option {
   label: string;
   name: string;
-  optional: boolean;
   description?: string;
+  query?: string;
+  optional?: boolean;
+  hidden?: boolean;
+}
+
+export interface SelectOption extends Option {
+  type: "select";
+  default?: number;
   options?: StringWithDescription[];
-};
+}
+
+export interface ListOption extends Option {
+  type: "list";
+  default?: string[];
+}
+
+export interface TextOption extends Option {
+  type: "text";
+  default?: string;
+}
+
+export interface NumberOption extends Option {
+  type: "number";
+  default?: number;
+}
+
+export interface BooleanOption extends Option {
+  type: "checkbox";
+  default?: boolean;
+}
 
 export interface ConnectionConfiguration {
   description: string;
-  values: InputOption[];
+  subtext?: string;
+  values: (
+    | BooleanOption
+    | ListOption
+    | TextOption
+    | NumberOption
+    | SelectOption
+  )[];
 }
 
 export interface DynamicConnectionFormProps {

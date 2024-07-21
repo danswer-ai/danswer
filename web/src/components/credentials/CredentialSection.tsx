@@ -20,10 +20,11 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import CreateCredential from "./CreateCredential";
 import { CCPairFullInfo } from "@/app/admin/connector/[ccPairId]/types";
 import ModifyCredential from "./ModifyCredential";
-import EditCredential from "./EditCredential";
+
 import { Text } from "@tremor/react";
 import { buildCCPairInfoUrl } from "@/app/admin/connector/[ccPairId]/lib";
 import { Modal } from "../Modal";
+import EditCredential from "./EditCredential";
 
 export default function CredentialSection({
   ccPair,

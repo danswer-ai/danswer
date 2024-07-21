@@ -957,6 +957,7 @@ export const getCredentialTemplate = <T extends ValidSources>(
         clickup_team_id: "",
       } as ClickupCredentialJson;
     case "wikipedia":
+
     case "mediawiki":
       return {} as MediaWikiCredentialJson;
     case "s3":
@@ -1013,7 +1014,8 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
         values: [
           {
             type: "text",
-            query: "Enter the base URL:",
+            query:
+              "Enter the website URL to scrape e.g. https://docs.danswer.dev/:",
             label: "Base URL",
             name: "base_url",
             optional: false,
@@ -1021,7 +1023,7 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
           {
             type: "select",
             query: "Select the web connector type:",
-            label: "Web Connector Type",
+            label: "Scrape Method",
             name: "web_connector_type",
             optional: true,
             options: [
@@ -1054,7 +1056,8 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
           {
             type: "checkbox",
             query: "Include pull requests?",
-            label: "Include PRs",
+            label: "Include pull requests?",
+            description: "Index pull requests from this repository",
             name: "include_prs",
             optional: true,
           },
@@ -1063,6 +1066,7 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
             query: "Include issues?",
             label: "Include Issues",
             name: "include_issues",
+            description: "Index issues from this repository",
             optional: true,
           },
         ],
@@ -1091,7 +1095,8 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
             query: "Include merge requests?",
             label: "Include MRs",
             name: "include_mrs",
-            optional: true,
+            default: true,
+            hidden: true,
           },
           {
             type: "checkbox",
@@ -1099,6 +1104,7 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
             label: "Include Issues",
             name: "include_issues",
             optional: true,
+            hidden: true,
           },
         ],
       };
@@ -1153,6 +1159,9 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
     case "confluence":
       return {
         description: "Configuration for Confluence connector",
+        subtext: `Specify any link to a Confluence page below and click "Index" to Index. Based on the provided link, we will index either the entire page and its subpages OR the entire space. For example, entering https://danswer.atlassian.net/wiki/spaces/Engineering/overview and clicking the Index button will index the whole Engineering Confluence space, but entering https://danswer.atlassian.net/wiki/spaces/Engineering/pages/164331/example+page will index that page's children (and optionally, itself). Use the checkbox below to determine whether or not to index the parent page in addition to its children.
+
+We pull the latest pages and comments from each space listed below every 10 minutes`,
         values: [
           {
             type: "text",
@@ -1160,11 +1169,12 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
             label: "Wiki Page URL",
             name: "wiki_page_url",
             optional: false,
+            description: "Enter any link to a Confluence space or Page",
           },
           {
             type: "checkbox",
-            query: "Index origin?",
-            label: "Index Origin",
+            query: "(For pages) Index the page itself",
+            label: "(For pages) Index the page itself",
             name: "index_origin",
             optional: true,
           },
@@ -1174,6 +1184,7 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
     case "jira":
       return {
         description: "Configuration for Jira connector",
+        subtext: `Specify any link to a Jira page below and click "Index" to Index. Based on the provided link, we will index the ENTIRE PROJECT, not just the specified page. For example, entering https://danswer.atlassian.net/jira/software/projects/DAN/boards/1 and clicking the Index button will index the whole DAN Jira project.`,
         values: [
           {
             type: "text",
@@ -1187,6 +1198,8 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
             query: "Enter email addresses to blacklist from comments:",
             label: "Comment Email Blacklist",
             name: "comment_email_blacklist",
+            description:
+              "This is generally useful to ignore certain bots. Add user emails which comments should NOT be indexed.",
             optional: true,
           },
         ],
@@ -1202,6 +1215,9 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
             label: "Requested Objects",
             name: "requested_objects",
             optional: true,
+            description: `Specify the Salesforce object types you want us to index. If unsure, don't specify any objects and Danswer will default to indexing by 'Account'.
+
+Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of 'Opportunities').`,
           },
         ],
       };
@@ -1216,6 +1232,10 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
             label: "Sites",
             name: "sites",
             optional: true,
+            description: `• If no sites are specified, all sites in your organization will be indexed (Sites.Read.All permission required).
+• Specifying 'https://danswerai.sharepoint.com/sites/support' for example will only index documents within this site.
+• Specifying 'https://danswerai.sharepoint.com/sites/support/subfolder' for example will only index documents within this folder.
+`,
           },
         ],
       };
@@ -1230,6 +1250,7 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
             label: "Teams",
             name: "teams",
             optional: true,
+            description: `Specify 0 or more Teams to index. For example, specifying the Team 'Support' for the 'danswerai' Org will cause us to only index messages sent in channels belonging to the 'Support' Team. If no Teams are specified, all Teams in your organization will be indexed.`,
           },
         ],
       };
@@ -1265,6 +1286,8 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
             label: "Spaces",
             name: "spaces",
             optional: true,
+            description:
+              "Specify zero or more Spaces to index (by the Space IDs). If no Space IDs are specified, all Spaces will be indexed.",
           },
         ],
       };
@@ -1316,6 +1339,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             label: "Base URL",
             name: "base_url",
             optional: false,
+            description: `Specify the base URL for your Slab team. This will look something like: https://danswer.slab.com/`,
           },
         ],
       };
@@ -1336,6 +1360,8 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             label: "Workspaces",
             name: "workspaces",
             optional: true,
+            description:
+              "Specify 0 or more workspaces to index. Provide the workspace ID or the EXACT workspace name from Gong. If no workspaces are specified, transcripts from all workspaces will be indexed.",
           },
         ],
       };
@@ -1346,9 +1372,11 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         values: [
           {
             type: "text",
-            query: "Enter the Loopio stack name:",
+            query: "Enter the Loopio stack name",
             label: "Loopio Stack Name",
             name: "loopio_stack_name",
+            description:
+              "Must be exact match to the name in Library Management, leave this blank if you want to index all Stacks",
             optional: true,
           },
         ],
@@ -1374,14 +1402,14 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         values: [
           {
             type: "text",
-            query: "Enter the realm name:",
+            query: "Enter the realm name",
             label: "Realm Name",
             name: "realm_name",
             optional: false,
           },
           {
             type: "text",
-            query: "Enter the realm URL:",
+            query: "Enter the realm URL",
             label: "Realm URL",
             name: "realm_url",
             optional: false,
@@ -1395,12 +1423,20 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         values: [
           {
             type: "text",
-            query: "Enter the root page ID:",
+            query: "Enter the root page ID",
             label: "Root Page ID",
             name: "root_page_id",
             optional: true,
+            description:
+              "If specified, will only index the specified page + all of its child pages. If left blank, will index all pages the integration has been given access to.",
           },
         ],
+      };
+
+    case "requesttracker":
+      return {
+        description: "Configuration for HubSpot connector",
+        values: [], // No specific configuration needed based on the interface
       };
 
     case "hubspot":
@@ -1415,17 +1451,19 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         values: [
           {
             type: "text",
-            query: "Enter the workspace:",
+            query: "Enter the workspace",
             label: "Workspace",
             name: "workspace",
             optional: false,
           },
           {
             type: "list",
-            query: "Enter categories to include:",
+            query: "Enter categories to include",
             label: "Categories",
             name: "categories",
             optional: true,
+            description:
+              "Specify 0 or more categories to index. For instance, specifying the category 'Help' will cause us to only index all content within the 'Help' category. If no categories are specified, all categories in your workspace will be indexed.",
           },
         ],
       };
@@ -1452,6 +1490,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             query: "Enter connector IDs:",
             label: "Connector IDs",
             name: "connector_ids",
+            description: "Specify 0 or more id(s) to index from.",
             optional: true,
           },
           {
@@ -1459,6 +1498,8 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             query: "Retrieve task comments?",
             label: "Retrieve Task Comments",
             name: "retrieve_task_comments",
+            description:
+              "If checked, then all the comments for each task will also be retrieved and indexed.",
             optional: false,
           },
         ],
@@ -1490,7 +1531,11 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         description: "Configuration for Zendesk connector",
         values: [], // No specific configuration needed based on the interface
       };
-
+    case "linear":
+      return {
+        description: "Configuration for Dropbox connector",
+        values: [], // No specific configuration needed based on the interface
+      };
     case "dropbox":
       return {
         description: "Configuration for Dropbox connector",
@@ -1513,7 +1558,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             query: "Enter the prefix:",
             label: "Prefix",
             name: "prefix",
-            optional: false,
+            optional: true,
           },
         ],
       };
@@ -1534,7 +1579,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             query: "Enter the prefix:",
             label: "Prefix",
             name: "prefix",
-            optional: false,
+            optional: true,
           },
         ],
       };
@@ -1549,11 +1594,12 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             label: "Bucket Name",
             name: "bucket_name",
             optional: false,
+            description: "Name of the GCS bucket to index, e.g. my-gcs-bucket",
           },
           {
             type: "text",
             query: "Enter the prefix:",
-            label: "Prefix",
+            label: "Path Prefix",
             name: "prefix",
             optional: false,
           },
@@ -1581,29 +1627,33 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         ],
       };
 
-    case "mediawiki":
+    case "wikipedia":
       return {
-        description: "Configuration for MediaWiki connector",
+        description: "Configuration for Wikipedia connector",
         values: [
-          {
-            type: "text",
-            query: "Enter the connector name:",
-            label: "Connector Name",
-            name: "connector_name",
-            optional: false,
-          },
           {
             type: "text",
             query: "Enter the language code:",
             label: "Language Code",
             name: "language_code",
             optional: false,
+            description:
+              "Input a valid Wikipedia language code (e.g. 'en', 'es')",
+          },
+          {
+            type: "text",
+            query: "Enter the Wikipedia Site URL",
+            label: "Wikipedia Site URL",
+            name: "hostname",
+            optional: false,
           },
           {
             type: "list",
             query: "Enter categories to include:",
-            label: "Categories",
+            label: "Categories to index",
             name: "categories",
+            description:
+              "Specify 0 or more names of categories to index. For most Wikipedia sites, these are pages with a name of the form 'Category: XYZ', that are lists of other pages/categories. Only specify the name of the category, not its url.",
             optional: true,
           },
           {
@@ -1612,20 +1662,67 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             label: "Pages",
             name: "pages",
             optional: true,
+            description:
+              "Specify 0 or more names of pages to index. Only specify the name of the page, not its url.",
           },
           {
             type: "number",
             query: "Enter the recursion depth:",
             label: "Recursion Depth",
             name: "recurse_depth",
+            description:
+              "When indexing categories that have sub-categories, this will determine how may levels to index. Specify 0 to only index the category itself (i.e. no recursion). Specify -1 for unlimited recursion depth. Note, that in some rare instances, a category might contain itself in its dependencies, which will cause an infinite loop. Only use -1 if you confident that this will not happen.",
             optional: true,
+          },
+        ],
+      };
+
+    case "mediawiki":
+      return {
+        description: "Configuration for MediaWiki connector",
+        values: [
+          {
+            type: "text",
+            query: "Enter the language code:",
+            label: "Language Code",
+            name: "language_code",
+            optional: false,
+            description:
+              "Input a valid MediaWiki language code (e.g. 'en', 'es')",
           },
           {
             type: "text",
-            query: "Enter the hostname:",
-            label: "Hostname",
+            query: "Enter the MediaWiki Site URL",
+            label: "MediaWiki Site URL",
             name: "hostname",
             optional: false,
+          },
+          {
+            type: "list",
+            query: "Enter categories to include:",
+            label: "Categories to index",
+            name: "categories",
+            description:
+              "Specify 0 or more names of categories to index. For most MediaWiki sites, these are pages with a name of the form 'Category: XYZ', that are lists of other pages/categories. Only specify the name of the category, not its url.",
+            optional: true,
+          },
+          {
+            type: "list",
+            query: "Enter pages to include:",
+            label: "Pages",
+            name: "pages",
+            optional: true,
+            description:
+              "Specify 0 or more names of pages to index. Only specify the name of the page, not its url.",
+          },
+          {
+            type: "number",
+            query: "Enter the recursion depth:",
+            label: "Recursion Depth",
+            name: "recurse_depth",
+            description:
+              "When indexing categories that have sub-categories, this will determine how may levels to index. Specify 0 to only index the category itself (i.e. no recursion). Specify -1 for unlimited recursion depth. Note, that in some rare instances, a category might contain itself in its dependencies, which will cause an infinite loop. Only use -1 if you confident that this will not happen.",
+            optional: true,
           },
         ],
       };
