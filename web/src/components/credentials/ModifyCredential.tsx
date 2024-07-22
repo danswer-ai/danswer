@@ -124,6 +124,7 @@ export default function ModifyCredential({
   onClose,
   onSwap,
   onCreateNew,
+  display,
   onEditCredential,
   onDeleteCredential,
   setPopup,
@@ -133,7 +134,7 @@ export default function ModifyCredential({
   defaultedCredential,
 }: {
   defaultedCredential?: Credential<any>;
-
+  display?: boolean;
   credentials: Credential<any>[];
   source: ValidSources;
   setPopup: (popupSpec: PopupSpec | null) => void;
@@ -211,7 +212,8 @@ export default function ModifyCredential({
             Swap credentials as needed! Ensure that you have selected a
             credential with the proper permissions for this connector!
           </Text>
-          {credentials.length > 1 ? (
+
+          {credentials.length > 1 || (display && credentials.length == 1) ? (
             <CredentialSelectionTable
               setPopup={setPopup}
               onDeleteCredential={async (
@@ -238,7 +240,7 @@ export default function ModifyCredential({
           )}
 
           <div className="flex mt-8 justify-end">
-            {credentials.length > 1 ? (
+            {credentials.length > 1 || (display && credentials.length == 1) ? (
               <Button
                 disabled={selectedCredential == null}
                 onClick={() => {

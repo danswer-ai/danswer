@@ -18,8 +18,9 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
     defaultValues ||
     config.values.reduce(
       (acc, field) => {
-        acc[field.name] =
-          defaultValues[field.name] || field.type === "list"
+        acc[field.name] = defaultValues
+          ? defaultValues[field.name]
+          : field.type === "list"
             ? [""]
             : field.type === "checkbox"
               ? false
@@ -29,8 +30,6 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
       {} as Record<string, any>
     );
 
-  // console.log(defaultValues)
-  // console.log(initialValues)
   const validationSchema = Yup.object().shape(
     config.values.reduce(
       (acc, field) => {

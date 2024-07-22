@@ -65,7 +65,7 @@ export default function AddConnector({
   const configuration: ConnectionConfiguration =
     getComprehensiveConnectorConfigTemplate(connector);
 
-  const [values, setValues] = useState({});
+  const [values, setValues] = useState(null);
 
   const createCredential = () => {};
   const displayName = getSourceDisplayName(connector) || connector;
@@ -103,6 +103,7 @@ export default function AddConnector({
               </div>
             ) : (
               <CreateConnectorCredentialSection
+                credentials={credentials}
                 ccPair={ccPair}
                 refresh={() => mutate(buildSimilarCredentialInfoURL(connector))}
                 updateCredential={setCurrentCredential}

@@ -37,10 +37,12 @@ import EditCredential from "@/components/credentials/EditCredential";
 export default function CreateConnectorCredentialSection({
   ccPair,
   sourceType,
+  credentials,
   refresh,
   updateCredential,
   currentCredential,
 }: {
+  credentials: Credential<any>[];
   refresh: () => void;
   currentCredential: Credential<any> | null;
   updateCredential: (credential: Credential<any>) => void;
@@ -51,12 +53,6 @@ export default function CreateConnectorCredentialSection({
     setShowModifyCredential(false);
     setShowCreateCredential(true);
   };
-
-  const { data: credentials } = useSWR<Credential<ConfluenceCredentialJson>[]>(
-    buildSimilarCredentialInfoURL(sourceType),
-    errorHandlingFetcher,
-    { refreshInterval: 5000 } // 5 seconds
-  );
 
   const onSwap = async (
     selectedCredential: Credential<any>,
@@ -162,6 +158,7 @@ export default function CreateConnectorCredentialSection({
           title="Modify Credential"
         >
           <ModifyCredential
+            display
             source={sourceType}
             defaultedCredential={currentCredential!}
             credentials={credentials}
