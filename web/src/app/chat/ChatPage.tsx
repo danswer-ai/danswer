@@ -1203,6 +1203,23 @@ export function ChatPage({
                 currentChatSession={selectedChatSession}
               />
             )}
+            <div className="w-full flex">
+              <div
+                style={{ transition: "width 0.30s ease-out" }}
+                className={`
+                  flex-none 
+                  overflow-y-hidden 
+                  bg-background-100 
+                  transition-all 
+                  bg-opacity-80
+                  duration-300 
+                  ease-in-out
+                  h-full
+                  ${toggledSidebar || showDocSidebar ? "w-[300px]" : "w-[0px]"}
+                  `}
+              />
+              <ChatBanner />
+            </div>
             {documentSidebarInitialWidth !== undefined ? (
               <Dropzone onDrop={handleImageUpload} noClick>
                 {({ getRootProps }) => (
@@ -1231,8 +1248,7 @@ export function ChatPage({
                         ref={scrollableDivRef}
                       >
                         {/* ChatBanner is a custom banner that displays a admin-specified message at 
-                      the top of the chat page. Only used in the EE version of the app. */}
-                        <ChatBanner />
+                      the top of the chat page. Oly used in the EE version of the app. */}
 
                         {messageHistory.length === 0 &&
                           !isFetchingChatMessages &&

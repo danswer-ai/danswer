@@ -178,7 +178,7 @@ export default async function Home() {
     : false;
 
   const agenticSearchEnabled = agenticSearchToggle
-    ? agenticSearchToggle.value.toLocaleLowerCase() == "true" || true
+    ? agenticSearchToggle.value.toLocaleLowerCase() == "true" || false
     : false;
 
   return (
