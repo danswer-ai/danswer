@@ -58,7 +58,6 @@ import { ValidSources } from "@/lib/types";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useMouseTracking } from "./hooks";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
-import { getTitleFromDocument } from "@/lib/sources";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
