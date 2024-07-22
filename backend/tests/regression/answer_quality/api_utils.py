@@ -2,14 +2,15 @@ import requests
 from retry import retry
 
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import MessageType
 from danswer.connectors.models import InputType
 from danswer.db.enums import IndexingStatus
+from danswer.one_shot_answer.models import DirectQARequest
+from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.models import IndexFilters
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
 from danswer.server.documents.models import ConnectorBase
-from danswer.server.query_and_chat.models import ChatSessionCreationRequest
-from ee.danswer.server.query_and_chat.models import BasicCreateChatMessageRequest
 from tests.regression.answer_quality.cli_utils import get_api_server_host_port
 
 GENERAL_HEADERS = {"Content-Type": "application/json"}
@@ -17,36 +18,6 @@ GENERAL_HEADERS = {"Content-Type": "application/json"}
 
 def _api_url_builder(run_suffix: str, api_path: str) -> str:
     return f"http://localhost:{get_api_server_host_port(run_suffix)}" + api_path
-
-
-def _create_new_chat_session(run_suffix: str) -> int:
-    create_chat_request = ChatSessionCreationRequest(
-        persona_id=0,
-        description=None,
-    )
-    body = create_chat_request.dict()
-
-    create_chat_url = _api_url_builder(run_suffix, "/chat/create-chat-session/")
-
-    response_json = requests.post(
-        create_chat_url, headers=GENERAL_HEADERS, json=body
-    ).json()
-    chat_session_id = response_json.get("chat_session_id")
-
-    if isinstance(chat_session_id, int):
-        return chat_session_id
-    else:
-        raise RuntimeError(response_json)
-
-
-def _delete_chat_session(chat_session_id: int, run_suffix: str) -> None:
-    delete_chat_url = _api_url_builder(
-        run_suffix, f"/chat/delete-chat-session/{chat_session_id}"
-    )
-
-    response = requests.delete(delete_chat_url, headers=GENERAL_HEADERS)
-    if response.status_code != 200:
-        raise RuntimeError(response.__dict__)
 
 
 @retry(tries=5, delay=5)
@@ -58,39 +29,42 @@ def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
         tags=None,
         access_control_list=None,
     )
-    retrieval_options = RetrievalDetails(
-        run_search=OptionalSearchSetting.ALWAYS,
-        real_time=True,
-        filters=filters,
-        enable_auto_detect_filters=False,
+
+    messages = [ThreadMessage(message=query, sender=None, role=MessageType.USER)]
+
+    new_message_request = DirectQARequest(
+        messages=messages,
+        prompt_id=0,
+        persona_id=0,
+        retrieval_options=RetrievalDetails(
+            run_search=OptionalSearchSetting.ALWAYS,
+            real_time=True,
+            filters=filters,
+            enable_auto_detect_filters=False,
+        ),
+        chain_of_thought=False,
+        return_contexts=True,
+        skip_gen_ai_answer_generation=True,
     )
 
-    chat_session_id = _create_new_chat_session(run_suffix)
-
-    url = _api_url_builder(run_suffix, "/chat/send-message-simple-api/")
-
-    new_message_request = BasicCreateChatMessageRequest(
-        chat_session_id=chat_session_id,
-        message=query,
-        retrieval_options=retrieval_options,
-        query_override=query,
-    )
+    url = _api_url_builder(run_suffix, "/query/answer-with-quote/")
+    headers = {
+        "Content-Type": "application/json",
+    }
 
     body = new_message_request.dict()
     body["user"] = None
     try:
-        response_json = requests.post(url, headers=GENERAL_HEADERS, json=body).json()
-        simple_search_docs = response_json.get("simple_search_docs", [])
-        answer = response_json.get("answer", "")
+        response_json = requests.post(url, headers=headers, json=body).json()
+        context_data_list = response_json.get("contexts", {}).get("contexts", [])
+        answer = response_json.get("answer", "") or ""
     except Exception as e:
         print("Failed to answer the questions:")
         print(f"\t {str(e)}")
-        print("trying again")
+        print("Try restarting vespa container and trying agian")
         raise e
 
-    _delete_chat_session(chat_session_id, run_suffix)
-
-    return simple_search_docs, answer
+    return context_data_list, answer
 
 
 @retry(tries=10, delay=10)
