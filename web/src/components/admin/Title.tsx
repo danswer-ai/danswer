@@ -23,7 +23,7 @@ export function AdminPageTitle({
         </h1>
         {farRightElement && <div className="ml-auto">{farRightElement}</div>}
       </div>
-      {includeDivider && <Divider />}
+      {includeDivider ? <Divider /> : <div className="mb-6" />}
     </div>
   );
 }

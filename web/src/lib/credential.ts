@@ -1,6 +1,7 @@
 import { CredentialBase } from "./types";
 
 export async function createCredential(credential: CredentialBase<any>) {
+  console.log("CREATE");
   return await fetch(`/api/manage/credential`, {
     method: "POST",
     headers: {
@@ -49,6 +50,7 @@ export function linkCredential(
   name?: string,
   isPublic?: boolean
 ) {
+  console.log("LINKING?");
   return fetch(
     `/api/manage/connector/${connectorId}/credential/${credentialId}`,
     {

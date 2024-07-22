@@ -4,7 +4,7 @@ import * as Yup from "yup";
 import { FaPlus } from "react-icons/fa";
 import { EditingValue } from "@/components/credentials/EditingValue";
 import { DynamicConnectionFormProps } from "./types";
-import { Divider } from "@tremor/react";
+import { Button, Divider } from "@tremor/react";
 import CredentialSubText from "@/components/credentials/CredentialSubText";
 import { TrashIcon } from "@/components/icons/icons";
 
@@ -12,6 +12,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   config,
   onSubmit,
   onClose,
+  setName,
   defaultValues,
 }) => {
   const initialValues =
@@ -72,8 +73,9 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
               setFieldValue={setFieldValue}
               type={"text"}
               label={"Connector Name"}
-              name={"Name"}
+              name={"name"}
               currentValue=""
+              onChange={(value: string) => setName(value)}
             />
             {config.values.map((field) => {
               if (!field.hidden) {
@@ -182,9 +184,10 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
               setFieldValue={setFieldValue}
               type={"checkbox"}
               label={"Documents are Public?"}
-              name={"Documents are Public?"}
+              name={"public"}
               currentValue=""
             />
+            <Button>Update (temporary)</Button>
           </Form>
         )}
       </Formik>

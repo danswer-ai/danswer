@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { Popup } from "./Popup";
-import { Credential, CredentialBase } from "@/lib/types";
+import { Credential, CredentialBase, ValidSources } from "@/lib/types";
 import { createCredential } from "@/lib/credential";
 import { Button } from "@tremor/react";
 
@@ -36,12 +36,14 @@ interface Props<YupObjectType extends Yup.AnyObject> {
   validationSchema: Yup.ObjectSchema<YupObjectType>;
   initialValues: YupObjectType;
   onSubmit: (isSuccess: boolean) => void;
+  source: ValidSources;
 }
 
 export function CredentialForm<T extends Yup.AnyObject>({
   formBody,
   validationSchema,
   initialValues,
+  source,
   onSubmit,
 }: Props<T>): JSX.Element {
   const [popup, setPopup] = useState<{
@@ -60,7 +62,7 @@ export function CredentialForm<T extends Yup.AnyObject>({
           submitCredential<T>({
             credential_json: values,
             admin_public: true,
-            source: "confluence",
+            source: source,
           }).then(({ message, isSuccess }) => {
             setPopup({ message, type: isSuccess ? "success" : "error" });
             formikHelpers.setSubmitting(false);

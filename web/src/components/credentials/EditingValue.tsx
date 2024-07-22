@@ -25,6 +25,8 @@ export const EditingValue: React.FC<{
   removeLabel?: boolean;
   optional?: boolean;
   description?: string;
+  onChange?: (value: string) => void;
+  onChangeBool?: (value: boolean) => void;
 }> = ({
   setFieldValue,
   name,
@@ -36,6 +38,8 @@ export const EditingValue: React.FC<{
   description,
   removeLabel,
   optional,
+  onChange,
+  onChangeBool,
 }) => {
   const [value, setValue] = useState(currentValue);
 
@@ -52,7 +56,14 @@ export const EditingValue: React.FC<{
             <div className="flex items-center">
               <AdminBooleanFormField
                 subtext={description}
-                onChange={(e) => updateValue(e.target.value)}
+                onChange={(e) => {
+                  updateValue(e.target.value);
+                  if (onChangeBool) {
+                    console.log(e.target.value);
+                    console.log(typeof e.target.value);
+                    // onChangeBool(e.target.value!)
+                  }
+                }}
                 name={name}
                 label={label}
               />
@@ -62,7 +73,12 @@ export const EditingValue: React.FC<{
               optional={optional}
               noPadding
               description={description}
-              onChange={(e) => updateValue(e.target.value)}
+              onChange={(e) => {
+                updateValue(e.target.value);
+                if (onChange) {
+                  onChange(e.target.value!);
+                }
+              }}
               type={type}
               name={name}
               placeholder={currentValue}

@@ -25,8 +25,10 @@ export default function CreateCredential({
   onSwap = async () => null,
   setPopup,
   sourceType,
+  refresh = () => null,
   hideSource,
 }: {
+  refresh?: () => void;
   hideSource?: boolean;
   sourceType: ValidSources;
   connector?: Connector<any>;
@@ -85,7 +87,7 @@ export default function CreateCredential({
         }
         onClose();
       } else {
-        setPopup({ message, type: "error" });
+        setPopup({ message, type: isSuccess ? "success" : "error" });
       }
     } catch (error) {
       console.error("Error submitting credential:", error);
@@ -93,6 +95,7 @@ export default function CreateCredential({
     } finally {
       formikHelpers.setSubmitting(false);
     }
+    refresh();
   };
 
   const types = getCredentialTemplate(sourceType);

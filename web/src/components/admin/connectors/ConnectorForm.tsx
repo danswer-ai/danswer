@@ -26,6 +26,8 @@ export async function submitConnector<T>(
   connectorId?: number
 ): Promise<{ message: string; isSuccess: boolean; response?: Connector<T> }> {
   const isUpdate = connectorId !== undefined;
+  console.log("submitting connector");
+  console.log(connector);
 
   try {
     const response = await fetch(
@@ -163,6 +165,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             });
             return;
           }
+
           const { message, isSuccess, response } = await submitConnector<T>({
             name: connectorName,
             source,
@@ -188,7 +191,9 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             const createCredentialResponse = await createCredential({
               credential_json: {},
               admin_public: true,
+              source: source,
             });
+
             if (!createCredentialResponse.ok) {
               const errorMsg = await createCredentialResponse.text();
               setPopup({

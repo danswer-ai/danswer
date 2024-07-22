@@ -6,11 +6,13 @@ import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
   ConfluenceCredentialJson,
+  Connector,
   Credential,
   ValidSources,
   getComprehensiveConnectorConfigTemplate,
+  isValidSource,
 } from "@/lib/types";
-import { Button, Card, Title } from "@tremor/react";
+import { Button, Card, Divider, Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
 import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/lib";
@@ -25,6 +27,15 @@ import CreateCredential from "@/components/credentials/CreateCredential";
 import { useState } from "react";
 import CreateConnectorCredentialSection from "./shared/CreatingConnectorCredentialPage";
 import { FiChevronLeft } from "react-icons/fi";
+import { submitConnector } from "@/components/admin/connectors/ConnectorForm";
+import {
+  deleteCredential,
+  linkCredential,
+  updateCredential,
+} from "@/lib/credential";
+import { redirect } from "next/navigation";
+import { HeaderTitle } from "@/components/header/Header";
+import ModifyCredential from "@/components/credentials/ModifyCredential";
 
 export type advancedConfig = {
   pruneFreq: number;
@@ -36,6 +47,7 @@ export default function AddConnector({
 }: {
   connector: ValidSources;
 }) {
+  const [name, setName] = useState("");
   const [currentCredential, setCurrentCredential] =
     useState<Credential<any> | null>(null);
 
@@ -58,11 +70,73 @@ export default function AddConnector({
     setFormStep(Math.min(formStep, 0));
   }
 
-  const [advancedConfig, setAdvancedConfig] = useState<advancedConfig | null>(
-    null
-  );
+  const [refreshFreq, setRefreshFreq] = useState<number>(0);
+  const [pruneFreq, setPruneFreq] = useState<number>(0);
+  const [isPublic, setIsPublic] = useState(false);
 
-  const createCredential = () => {};
+  const createConnector = async () => {
+    if (!currentCredential) {
+      return;
+    }
+
+    const { message, isSuccess, response } = await submitConnector<any>({
+      connector_specific_config: values,
+      input_type: "load_state",
+      name: name,
+      source: connector,
+      refresh_freq: refreshFreq || 0,
+      prune_freq: pruneFreq ?? null,
+      disabled: false,
+    });
+
+    console.log({
+      connector_specific_config: values,
+      input_type: "load_state",
+      name: name,
+      source: connector,
+      refresh_freq: refreshFreq || 0,
+      prune_freq: pruneFreq ?? null,
+      disabled: false,
+    });
+    console.log(response?.id, currentCredential.id, "random name", isPublic);
+
+    if (isSuccess && response) {
+      const linkCredentialResponse = await linkCredential(
+        response.id,
+        currentCredential.id,
+        "random name",
+        isPublic
+      );
+      if (linkCredentialResponse.ok) {
+        setPopup({
+          message: "Connector created! Redirecting to connector home page",
+          type: "success",
+        });
+        setTimeout(() => {
+          window.open("/admin/indexing/status", "_self");
+        }, 1000);
+      }
+    } else {
+      setPopup({ message: message, type: "error" });
+    }
+  };
+  if (!isValidSource(connector)) {
+    return (
+      <div className="mx-auto flex flex-col gap-y-2">
+        <HeaderTitle>
+          <p>'{connector}' is not a valid Connector Type!</p>
+        </HeaderTitle>
+        <Button
+          onClick={() => window.open("/admin/indexing/status", "_self")}
+          className="mr-auto"
+        >
+          {" "}
+          Go home{" "}
+        </Button>
+        <FixedLogo />
+      </div>
+    );
+  }
   const displayName = getSourceDisplayName(connector) || connector;
   if (!credentials) {
     return <></>;
@@ -70,6 +144,19 @@ export default function AddConnector({
 
   const refresh = () => {
     mutate(buildSimilarCredentialInfoURL(connector));
+  };
+  const onDeleteCredential = async (credential: Credential<any | null>) => {
+    await deleteCredential(credential.id, true);
+  };
+
+  const onSwap = async (selectedCredential: Credential<any>) => {
+    setCurrentCredential(selectedCredential);
+    setPopup({
+      message: "Swapped credential succesfully!",
+      type: "success",
+    });
+    // setShowModifyCredential(false);
+    refresh();
   };
 
   return (
@@ -89,7 +176,15 @@ export default function AddConnector({
         <>
           <Card>
             <Title className="mb-2">Select a credential</Title>
-            {credentials.length == 0 ? (
+            {currentCredential ? (
+              <CreateConnectorCredentialSection
+                credentials={credentials}
+                refresh={() => refresh()}
+                updateCredential={setCurrentCredential}
+                currentCredential={currentCredential}
+                sourceType={connector}
+              />
+            ) : credentials.length == 0 ? (
               <div className="mt-4">
                 <p>
                   No credentials exist! Create your first {displayName}{" "}
@@ -98,13 +193,29 @@ export default function AddConnector({
                 <CreateCredential sourceType={connector} setPopup={setPopup} />
               </div>
             ) : (
-              <CreateConnectorCredentialSection
-                credentials={credentials}
-                refresh={() => refresh()}
-                updateCredential={setCurrentCredential}
-                currentCredential={currentCredential}
-                sourceType={connector}
-              />
+              <>
+                <ModifyCredential
+                  display
+                  source={connector}
+                  defaultedCredential={currentCredential!}
+                  credentials={credentials}
+                  setPopup={setPopup}
+                  onDeleteCredential={onDeleteCredential}
+                  onSwitch={onSwap}
+                />
+                <div className="my-8 w-full flex gap-x-2 items-center">
+                  <div className="w-full h-[2px] bg-neutral-300" />
+                  <p className="text-sm flex-none">or create</p>
+                  <div className="w-full h-[2px] bg-neutral-300" />
+                </div>
+                <Title className="mb-2">Create a credential</Title>
+
+                <CreateCredential
+                  refresh={refresh}
+                  sourceType={connector}
+                  setPopup={setPopup}
+                />
+              </>
             )}
           </Card>
           <div className="mt-4 flex w-full justify-end">
@@ -122,9 +233,11 @@ export default function AddConnector({
         <>
           <Card>
             <DynamicConnectionForm
+              setName={setName}
               config={configuration}
               onSubmit={(values: any) => {
-                setValues(values);
+                const { name: _, public: __, ...valuesWithoutName } = values;
+                setValues(valuesWithoutName);
               }}
               onClose={() => null}
               defaultValues={values}
@@ -146,7 +259,7 @@ export default function AddConnector({
             >
               <FiChevronLeft className="text-neutral-200 h-6 w-6" />
             </button>
-            <Button color="gray" onClick={() => createCredential()}>
+            <Button color="gray" onClick={() => createConnector()}>
               Create
             </Button>
           </div>
@@ -156,7 +269,8 @@ export default function AddConnector({
       {formStep === 2 && (
         <Card>
           <AdvancedFormPage
-            setAdvancedConfig={setAdvancedConfig}
+            setPruneFreq={setPruneFreq}
+            setRefreshFreq={setRefreshFreq}
             onClose={() => null}
             onSubmit={() => null}
           />

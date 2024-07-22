@@ -1,3 +1,5 @@
+import { Dispatch, SetStateAction } from "react";
+
 export type InputType = "list" | "text" | "checkbox" | "select" | "number";
 
 export type StringWithDescription = {
@@ -58,4 +60,5 @@ export interface DynamicConnectionFormProps {
   onSubmit: (values: any) => void;
   onClose: () => void;
   defaultValues: any;
+  setName: Dispatch<SetStateAction<string>>;
 }

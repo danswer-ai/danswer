@@ -479,7 +479,7 @@ function fillSourceMetadata(
   return {
     internalName: internalName,
     ...partialMetadata,
-    adminUrl: `/admin/connectors/${partialMetadata.displayName
+    adminUrl: `/add/${partialMetadata.displayName
       .toLowerCase()
       .replaceAll(" ", "-")}`,
   };
@@ -506,6 +506,9 @@ export function listSourceMetadata(): SourceMetadata[] {
 export function getSourceDocLink(sourceType: ValidSources): string | null {
   return SOURCE_METADATA_MAP[sourceType].docs || null;
 }
+export const isValidSource = (sourceType: string) => {
+  return Object.keys(SOURCE_METADATA_MAP).includes(sourceType);
+};
 
 export function getSourceDisplayName(sourceType: ValidSources): string | null {
   return getSourceMetadata(sourceType).displayName;

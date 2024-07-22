@@ -20,7 +20,7 @@ interface CredentialSelectionTableProps {
   onSelectCredential: (credential: Credential<any> | null) => void;
   currentCredentialId?: number;
   onDeleteCredential: (credential: Credential<any>) => void;
-  onEditCredential: (credential: Credential<any>) => void;
+  onEditCredential?: (credential: Credential<any>) => void;
 }
 
 const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
@@ -98,12 +98,14 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
                   >
                     <TrashIcon />
                   </button>
-                  <button
-                    onClick={() => onEditCredential(credential)}
-                    className="cursor-pointer my-auto"
-                  >
-                    <EditIcon />
-                  </button>
+                  {onEditCredential && (
+                    <button
+                      onClick={() => onEditCredential(credential)}
+                      className="cursor-pointer my-auto"
+                    >
+                      <EditIcon />
+                    </button>
+                  )}
                 </td>
               </tr>
             );
@@ -115,10 +117,10 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
 };
 
 export default function ModifyCredential({
-  onClose,
+  onClose = () => null,
   attachedConnector,
   onSwap,
-  onCreateNew,
+  onCreateNew = () => null,
   display,
   onEditCredential,
   onDeleteCredential,
@@ -135,11 +137,11 @@ export default function ModifyCredential({
   source: ValidSources;
   setPopup: (popupSpec: PopupSpec | null) => void;
   onDeleteCredential: (credential: Credential<any | null>) => void;
-  onEditCredential: (credential: Credential<ConfluenceCredentialJson>) => void;
-  onClose: () => void;
+  onEditCredential?: (credential: Credential<ConfluenceCredentialJson>) => void;
+  onClose?: () => void;
   onSwitch?: (newCredential: Credential<any>) => void;
   onSwap?: (newCredential: Credential<any>, connectorId: number) => void;
-  onCreateNew: () => void;
+  onCreateNew?: () => void;
 }) {
   const [selectedCredential, setSelectedCredential] =
     React.useState<Credential<any> | null>(null);
@@ -157,118 +159,113 @@ export default function ModifyCredential({
   const sourceName = getSourceDisplayName(source);
 
   return (
-    <Modal
-      onOutsideClick={onClose}
-      className="max-w-3xl rounded-lg"
-      title={`Swap ${sourceName} Credential`}
-    >
-      <>
-        {confirmDeletionCredential != null && (
-          <Modal
-            onOutsideClick={() => setConfirmDeletionCredential(null)}
-            className="max-w-sm"
-          >
-            <>
-              <p className="text-base mb-2">
-                Are you sure you want to delete this? All historical data will
-                be deleted as well.
-              </p>
-              <div className="flex -sm justify-between">
-                <button
-                  className="rounded py-1 px-1.5 bg-neutral-800 text-neutral-200"
-                  onClick={async () => {
-                    await onDeleteCredential(confirmDeletionCredential);
+    <>
+      {confirmDeletionCredential != null && (
+        <Modal
+          onOutsideClick={() => setConfirmDeletionCredential(null)}
+          className="max-w-sm"
+        >
+          <>
+            <p className="text-base mb-2">
+              Are you sure you want to delete this? All historical data will be
+              deleted as well.
+            </p>
+            <div className="flex -sm justify-between">
+              <button
+                className="rounded py-1 px-1.5 bg-neutral-800 text-neutral-200"
+                onClick={async () => {
+                  await onDeleteCredential(confirmDeletionCredential);
 
-                    setPopup({
-                      message: "Swapped credential",
-                      type: "success",
-                    });
+                  setPopup({
+                    message: "Swapped credential",
+                    type: "success",
+                  });
 
-                    mutate(buildSimilarCredentialInfoURL(source));
-                    setConfirmDeletionCredential(null);
-                    setPopup({
-                      message: "Credential deleted",
-                      type: "success",
-                    });
-                  }}
-                >
-                  yes
-                </button>
-                <button className="rounded py-1 px-1.5 bg-neutral-200 text-neutral-800">
-                  {" "}
-                  no
-                </button>
-              </div>
-            </>
-          </Modal>
+                  mutate(buildSimilarCredentialInfoURL(source));
+                  setConfirmDeletionCredential(null);
+                  setPopup({
+                    message: "Credential deleted",
+                    type: "success",
+                  });
+                }}
+              >
+                yes
+              </button>
+              <button className="rounded py-1 px-1.5 bg-neutral-200 text-neutral-800">
+                {" "}
+                no
+              </button>
+            </div>
+          </>
+        </Modal>
+      )}
+
+      <div className="mb-0">
+        <Text className="mb-4 ">
+          Swap credentials as needed! Ensure that you have selected a credential
+          with the proper permissions for this connector!
+        </Text>
+
+        {credentials.length > 1 || (display && credentials.length == 1) ? (
+          <CredentialSelectionTable
+            onDeleteCredential={async (credential: Credential<any | null>) => {
+              // await onDeleteCredential(credential);
+              setConfirmDeletionCredential(credential);
+            }}
+            onEditCredential={
+              onEditCredential
+                ? (credential: Credential<ConfluenceCredentialJson>) =>
+                    onEditCredential(credential)
+                : undefined
+            }
+            currentCredentialId={
+              defaultedCredential ? defaultedCredential.id : undefined
+            }
+            credentials={credentials}
+            onSelectCredential={(credential: Credential<any> | null) =>
+              handleSelectCredential(credential)
+            }
+          />
+        ) : (
+          <p className="text-lg">
+            You have no additional {sourceName} credentials. Create a new one?
+          </p>
         )}
 
-        <div className="mb-0">
-          <Text className="mb-4 ">
-            Swap credentials as needed! Ensure that you have selected a
-            credential with the proper permissions for this connector!
-          </Text>
-
+        <div className="flex mt-8 justify-end">
           {credentials.length > 1 || (display && credentials.length == 1) ? (
-            <CredentialSelectionTable
-              onDeleteCredential={async (
-                credential: Credential<any | null>
-              ) => {
-                // await onDeleteCredential(credential);
-                setConfirmDeletionCredential(credential);
+            <Button
+              disabled={selectedCredential == null}
+              onClick={() => {
+                if (onSwap && attachedConnector) {
+                  onSwap(selectedCredential!, attachedConnector.id);
+                }
+                if (onSwitch) {
+                  onSwitch(selectedCredential!);
+                }
               }}
-              onEditCredential={(
-                credential: Credential<ConfluenceCredentialJson>
-              ) => onEditCredential(credential)}
-              currentCredentialId={
-                defaultedCredential ? defaultedCredential.id : undefined
-              }
-              credentials={credentials}
-              onSelectCredential={(credential: Credential<any> | null) =>
-                handleSelectCredential(credential)
-              }
-            />
-          ) : (
-            <p className="text-lg">
-              You have no additional {sourceName} credentials. Create a new one?
-            </p>
-          )}
-
-          <div className="flex mt-8 justify-end">
-            {credentials.length > 1 || (display && credentials.length == 1) ? (
-              <Button
-                disabled={selectedCredential == null}
-                onClick={() => {
-                  if (onSwap && attachedConnector) {
-                    onSwap(selectedCredential!, attachedConnector.id);
-                  }
-                  if (onSwitch) {
-                    onSwitch(selectedCredential!);
-                  }
-                }}
-                className="bg-indigo-500 disabled:border-transparent 
+              className="bg-indigo-500 disabled:border-transparent 
               transition-colors duration-150 ease-in disabled:bg-indigo-300 
               disabled:hover:bg-indigo-300 hover:bg-indigo-600 cursor-pointer"
-              >
-                <div className="flex gap-x-2 items-center w-full border-none">
-                  <SwapIcon className="text-white" />
-                  <p>Swap</p>
-                </div>
-              </Button>
-            ) : (
-              <Button
-                onClick={onCreateNew}
-                className="bg-indigo-500 disabled:bg-indigo-300 hover:bg-indigo-400"
-              >
-                <div className="flex gap-x-2 items-center w-full border-none">
-                  <FaCreativeCommons />
-                  <p>Create New</p>
-                </div>
-              </Button>
-            )}
-          </div>
+            >
+              <div className="flex gap-x-2 items-center w-full border-none">
+                <SwapIcon className="text-white" />
+                <p>Swap</p>
+              </div>
+            </Button>
+          ) : (
+            <Button
+              onClick={onCreateNew}
+              className="bg-indigo-500 disabled:bg-indigo-300 hover:bg-indigo-400"
+            >
+              <div className="flex gap-x-2 items-center w-full border-none">
+                <FaCreativeCommons />
+                <p>Create New</p>
+              </div>
+            </Button>
+          )}
         </div>
-      </>
-    </Modal>
+      </div>
+    </>
   );
 }

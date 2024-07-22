@@ -87,8 +87,8 @@ export interface DocumentBoostStatus {
 // CONNECTORS
 export interface ConnectorBase<T> {
   name: string;
-  input_type: ValidInputTypes;
   source: ValidSources;
+  input_type: ValidInputTypes;
   connector_specific_config: T;
   refresh_freq: number | null;
   prune_freq: number | null;
@@ -316,7 +316,7 @@ export type GroupedConnectorSummaries = Record<ValidSources, ConnectorSummary>;
 export interface CredentialBase<T> {
   credential_json: T;
   admin_public: boolean;
-  source?: ValidSources;
+  source: ValidSources;
   name?: string;
 }
 

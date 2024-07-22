@@ -128,6 +128,7 @@ const Main = () => {
                   />
                 </>
               }
+              source="github"
               validationSchema={Yup.object().shape({
                 github_access_token: Yup.string().required(
                   "Please enter the access token for Github"

@@ -84,7 +84,7 @@ export default function Page() {
         if (firstSource) {
           // Handle the selection of the first source
           console.log("Selected source:", firstSource.internalName);
-          window.open(`/admin/connectors/${firstSource.internalName}`, "_self");
+          window.open(firstSource.adminUrl, "_self");
           // You might want to navigate to a new page or open a modal here
         }
       }
