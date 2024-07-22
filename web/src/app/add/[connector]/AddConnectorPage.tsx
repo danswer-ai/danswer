@@ -65,6 +65,8 @@ export default function AddConnector({
   const configuration: ConnectionConfiguration =
     getComprehensiveConnectorConfigTemplate(connector);
 
+  const [values, setValues] = useState({});
+
   const createCredential = () => {};
   const displayName = getSourceDisplayName(connector) || connector;
 
@@ -87,33 +89,27 @@ export default function AddConnector({
         <>
           <Card>
             <Title className="mb-2">Select a credential</Title>
-            {
-              credentials.length == 0 ? (
-                <div className="mt-4">
-                  <p>
-                    No credentials exist! Create your first {displayName}{" "}
-                    credential!
-                  </p>
-                  <CreateCredential
-                    sourceType={connector}
-                    connector={ccPair.connector}
-                    setPopup={setPopup}
-                  />
-                </div>
-              ) : (
-                <CreateConnectorCredentialSection
-                  ccPair={ccPair}
-                  refresh={() =>
-                    mutate(buildSimilarCredentialInfoURL(connector))
-                  }
-                  updateCredential={setCurrentCredential}
-                  currentCredential={currentCredential}
+            {credentials.length == 0 ? (
+              <div className="mt-4">
+                <p>
+                  No credentials exist! Create your first {displayName}{" "}
+                  credential!
+                </p>
+                <CreateCredential
                   sourceType={connector}
+                  connector={ccPair.connector}
+                  setPopup={setPopup}
                 />
-              )
-
-              // <CredentialSection sourceType={connector} ccPair={ccPair} />
-            }
+              </div>
+            ) : (
+              <CreateConnectorCredentialSection
+                ccPair={ccPair}
+                refresh={() => mutate(buildSimilarCredentialInfoURL(connector))}
+                updateCredential={setCurrentCredential}
+                currentCredential={currentCredential}
+                sourceType={connector}
+              />
+            )}
           </Card>
 
           <div className="mt-4 flex w-full justify-end">
@@ -132,8 +128,12 @@ export default function AddConnector({
           <Card>
             <DynamicConnectionForm
               config={configuration}
-              onSubmit={() => null}
+              onSubmit={(values: any) => {
+                console.log(values);
+                setValues(values);
+              }}
               onClose={() => null}
+              defaultValues={values}
             />
             <div className="flex w-full">
               <Button onClick={() => nextFormStep()} className="ml-auto">

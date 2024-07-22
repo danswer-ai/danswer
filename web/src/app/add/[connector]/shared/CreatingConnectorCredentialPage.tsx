@@ -137,6 +137,7 @@ export default function CreateConnectorCredentialSection({
           <p>No Credential selected!</p>
         )}
       </div>
+
       <div className="flex text-sm justify-start mr-auto gap-x-2">
         <button
           onClick={() => setShowModifyCredential(true)}
@@ -153,6 +154,7 @@ export default function CreateConnectorCredentialSection({
           New Credential
         </button>
       </div>
+
       {showModifyCredential && (
         <Modal
           onOutsideClick={closeModifyCredential}

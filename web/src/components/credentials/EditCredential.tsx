@@ -76,11 +76,6 @@ const EditCredential: React.FC<EditCredentialProps> = ({
   };
 
   return (
-    // <Modal
-    //   onOutsideClick={onClose}
-    //   className="max-w-2xl rounded-lg"
-    //   title="Edit Credential"
-    // >
     <div className="mb-4">
       <Text>
         Ensure that you update to a credential with the proper permissions!
@@ -137,7 +132,6 @@ const EditCredential: React.FC<EditCredentialProps> = ({
         )}
       </Formik>
     </div>
-    // </Modal>
   );
 };
 

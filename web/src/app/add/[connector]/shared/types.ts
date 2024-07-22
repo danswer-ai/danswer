@@ -55,6 +55,7 @@ export interface ConnectionConfiguration {
 
 export interface DynamicConnectionFormProps {
   config: ConnectionConfiguration;
-  onSubmit: () => void;
+  onSubmit: (values: any) => void;
   onClose: () => void;
+  defaultValues: any;
 }

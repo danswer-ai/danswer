@@ -4,7 +4,7 @@ import * as Yup from "yup";
 import { FaNewspaper, FaPlus, FaTrash } from "react-icons/fa";
 import { EditingValue } from "@/components/credentials/EditingValue";
 import { DynamicConnectionFormProps } from "./types";
-import { Divider } from "@tremor/react";
+import { Button, Divider } from "@tremor/react";
 import CredentialSubText from "@/components/credentials/CredentialSubText";
 import { TrashIcon } from "@/components/icons/icons";
 
@@ -12,16 +12,25 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   config,
   onSubmit,
   onClose,
+  defaultValues,
 }) => {
-  const initialValues = config.values.reduce(
-    (acc, field) => {
-      acc[field.name] =
-        field.type === "list" ? [""] : field.type === "checkbox" ? false : "";
-      return acc;
-    },
-    {} as Record<string, any>
-  );
+  const initialValues =
+    defaultValues ||
+    config.values.reduce(
+      (acc, field) => {
+        acc[field.name] =
+          defaultValues[field.name] || field.type === "list"
+            ? [""]
+            : field.type === "checkbox"
+              ? false
+              : "";
+        return acc;
+      },
+      {} as Record<string, any>
+    );
 
+  // console.log(defaultValues)
+  // console.log(initialValues)
   const validationSchema = Yup.object().shape(
     config.values.reduce(
       (acc, field) => {
@@ -53,15 +62,8 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
-        onSubmit={async (_, { setSubmitting }) => {
-          try {
-            onSubmit();
-            onClose();
-          } catch (error) {
-            console.error("Error submitting form:", error);
-          } finally {
-            setSubmitting(false);
-          }
+        onSubmit={(values, formikHelpers) => {
+          onSubmit(values);
         }}
       >
         {({ setFieldValue, values }) => (
@@ -175,7 +177,6 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
               }
             })}
             <Divider />
-
             <EditingValue
               description={`If set, then documents indexed by this connector will be visible to all users. If turned off, then only users who explicitly have been given access to the documents (e.g. through a User Group) will have access`}
               optional

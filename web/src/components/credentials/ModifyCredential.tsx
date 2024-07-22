@@ -22,7 +22,7 @@ import { setDefaultResultOrder } from "dns";
 interface CredentialSelectionTableProps {
   credentials: Credential<any>[];
   onSelectCredential: (credential: Credential<any> | null) => void;
-  currentCredentialId: number;
+  currentCredentialId?: number;
   onDeleteCredential: (credential: Credential<any>) => void;
   onEditCredential: (credential: Credential<any>) => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
@@ -61,12 +61,14 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
             <th className="p-2 text-left font-medium text-gray-600">
               Last Updated
             </th>
-            <th></th>
+            <th />
           </tr>
         </thead>
         <tbody>
           {credentials.map((credential, ind) => {
-            const selected = credential.id == currentCredentialId;
+            const selected = currentCredentialId
+              ? credential.id == currentCredentialId
+              : false;
             return (
               <tr key={credential.id} className="border-b hover:bg-gray-50">
                 <td className="p-2">
@@ -130,7 +132,7 @@ export default function ModifyCredential({
   source,
   defaultedCredential,
 }: {
-  defaultedCredential: Credential<any>;
+  defaultedCredential?: Credential<any>;
 
   credentials: Credential<any>[];
   source: ValidSources;
@@ -221,7 +223,9 @@ export default function ModifyCredential({
               onEditCredential={(
                 credential: Credential<ConfluenceCredentialJson>
               ) => onEditCredential(credential)}
-              currentCredentialId={defaultedCredential.id}
+              currentCredentialId={
+                defaultedCredential ? defaultedCredential.id : undefined
+              }
               credentials={credentials}
               onSelectCredential={(credential: Credential<any> | null) =>
                 handleSelectCredential(credential)

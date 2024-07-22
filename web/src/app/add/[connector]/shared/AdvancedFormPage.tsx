@@ -33,7 +33,7 @@ const AdvancedFormPage = ({
           <Form className="space-y-6">
             <div key="prune_freq">
               <EditingValue
-                description="How often to prune your documents"
+                description="How often to prune your documents (in minutes)"
                 optional
                 setFieldValue={setFieldValue}
                 type="number"
@@ -43,7 +43,7 @@ const AdvancedFormPage = ({
             </div>
             <div key="refresh_freq">
               <EditingValue
-                description="How often to refresh your documents"
+                description="How often to refresh your documents (in minutes)"
                 optional
                 setFieldValue={setFieldValue}
                 type="number"
