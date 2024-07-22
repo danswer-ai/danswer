@@ -13,12 +13,16 @@ import { DeletionButton } from "./DeletionButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ReIndexButton } from "./ReIndexButton";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
-import { Credential, ValidSources } from "@/lib/types";
+import {
+  ConfluenceCredentialJson,
+  Credential,
+  ValidSources,
+} from "@/lib/types";
 import useSWR, { mutate } from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ThreeDotsLoader } from "@/components/Loading";
 import CredentialSection from "@/components/credentials/CredentialSection";
-import { buildCCPairInfoUrl } from "./lib";
+import { buildCCPairInfoUrl, buildSimilarCredentialInfoURL } from "./lib";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -35,9 +39,6 @@ function Main({ ccPairId }: { ccPairId: number }) {
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
-
-  console.log(buildCCPairInfoUrl(ccPairId));
-  console.log(ccPair);
 
   if (isLoading) {
     return <ThreeDotsLoader />;

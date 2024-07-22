@@ -21,23 +21,29 @@ import {
 
 import { usePopup } from "@/components/admin/connectors/Popup";
 
-import CreateCredential from "./CreateCredential";
 import { CCPairFullInfo } from "@/app/admin/connector/[ccPairId]/types";
-import ModifyCredential from "./ModifyCredential";
 
 import { Text } from "@tremor/react";
 import {
   buildCCPairInfoUrl,
   buildSimilarCredentialInfoURL,
 } from "@/app/admin/connector/[ccPairId]/lib";
-import { Modal } from "../Modal";
-import EditCredential from "./EditCredential";
 import { getSourceDisplayName } from "@/lib/sources";
+import { Modal } from "@/components/Modal";
+import ModifyCredential from "@/components/credentials/ModifyCredential";
+import CreateCredential from "@/components/credentials/CreateCredential";
+import EditCredential from "@/components/credentials/EditCredential";
 
-export default function CredentialSection({
+export default function CreateConnectorCredentialSection({
   ccPair,
   sourceType,
+  refresh,
+  updateCredential,
+  currentCredential,
 }: {
+  refresh: () => void;
+  currentCredential: Credential<any> | null;
+  updateCredential: (credential: Credential<any>) => void;
   ccPair: CCPairFullInfo;
   sourceType: ValidSources;
 }) {
@@ -56,9 +62,7 @@ export default function CredentialSection({
     selectedCredential: Credential<any>,
     connectorId: number
   ) => {
-    await swapCredential(selectedCredential.id, connectorId);
-    mutate(buildSimilarCredentialInfoURL(sourceType));
-
+    updateCredential(selectedCredential);
     setPopup({
       message: "Swapped credential succesfully!",
       type: "success",
@@ -70,7 +74,7 @@ export default function CredentialSection({
     details: any,
     onSucces: () => void
   ) => {
-    const response = await updateCredential(selectedCredential.id, details);
+    const response = await swapCredential(selectedCredential.id, details);
     if (response.ok) {
       setPopup({
         message: "Updated credential",
@@ -92,9 +96,7 @@ export default function CredentialSection({
 
   const onDeleteCredential = async (credential: Credential<any | null>) => {
     await deleteCredential(credential.id, true);
-    mutate(buildCCPairInfoUrl(ccPair.id));
   };
-  const defaultedCredential = ccPair.credential;
 
   const [showModifyCredential, setShowModifyCredential] = useState(false);
   const [showCreateCredential, setShowCreateCredential] = useState(false);
@@ -124,10 +126,16 @@ export default function CredentialSection({
       {popup}
 
       <div className="flex gap-x-2">
-        <p>Current credential:</p>
-        <Text className="ml-1 italic font-bold my-auto">
-          {ccPair.credential.name || `Credential #${ccPair.credential.id}`}
-        </Text>
+        {currentCredential ? (
+          <>
+            <p>Current credential:</p>
+            <Text className="ml-1 italic font-bold my-auto">
+              {currentCredential.name || `Credential #${currentCredential.id}`}
+            </Text>
+          </>
+        ) : (
+          <p>No Credential selected!</p>
+        )}
       </div>
       <div className="flex text-sm justify-start mr-auto gap-x-2">
         <button
@@ -153,7 +161,7 @@ export default function CredentialSection({
         >
           <ModifyCredential
             source={sourceType}
-            defaultedCredential={defaultedCredential}
+            defaultedCredential={currentCredential!}
             credentials={credentials}
             setPopup={setPopup}
             ccPair={ccPair}

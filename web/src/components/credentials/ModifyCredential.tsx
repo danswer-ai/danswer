@@ -1,12 +1,16 @@
 import { errorHandlingFetcher } from "@/lib/fetcher";
 
-import React, { useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text, Callout, Badge } from "@tremor/react";
 
 import { buildSimilarCredentialInfoURL } from "../../app/admin/connector/[ccPairId]/lib";
 import useSWR, { mutate } from "swr";
-import { ConfluenceCredentialJson, Credential } from "@/lib/types";
+import {
+  ConfluenceCredentialJson,
+  Credential,
+  ValidSources,
+} from "@/lib/types";
 import { FaCreativeCommons, FaSwatchbook } from "react-icons/fa";
 import { swapCredential } from "@/lib/credential";
 import { EditIcon, SwapIcon, TrashIcon } from "@/components/icons/icons";
@@ -121,14 +125,21 @@ export default function ModifyCredential({
   onEditCredential,
   onDeleteCredential,
   setPopup,
+  credentials,
   ccPair,
+  source,
+  defaultedCredential,
 }: {
+  defaultedCredential: Credential<any>;
+
+  credentials: Credential<any>[];
+  source: ValidSources;
   setPopup: (popupSpec: PopupSpec | null) => void;
   onDeleteCredential: (credential: Credential<any | null>) => void;
   onEditCredential: (credential: Credential<ConfluenceCredentialJson>) => void;
   ccPair: CCPairFullInfo;
   onClose: () => void;
-  onSwap: (newCredentialId: number, connectorId: number) => void;
+  onSwap: (newCredential: Credential<any>, connectorId: number) => void;
   onCreateNew: () => void;
 }) {
   const [selectedCredential, setSelectedCredential] =
@@ -140,20 +151,11 @@ export default function ModifyCredential({
     setSelectedCredential(credential);
   };
 
-  const {
-    data: credentials,
-    isLoading,
-    error,
-  } = useSWR<Credential<ConfluenceCredentialJson>[]>(
-    buildSimilarCredentialInfoURL(ccPair.connector.id),
-    errorHandlingFetcher,
-    { refreshInterval: 5000 } // 5 seconds
-  );
   if (!credentials) {
     return <></>;
   }
 
-  const sourceName = getSourceDisplayName(ccPair.connector.source);
+  const sourceName = getSourceDisplayName(source);
 
   return (
     <Modal
@@ -183,7 +185,7 @@ export default function ModifyCredential({
                       type: "success",
                     });
 
-                    mutate(buildSimilarCredentialInfoURL(ccPair.credential.id));
+                    mutate(buildSimilarCredentialInfoURL(source));
                     setConfirmDeletionCredential(null);
                     setPopup({
                       message: "Credential deleted",
@@ -219,7 +221,7 @@ export default function ModifyCredential({
               onEditCredential={(
                 credential: Credential<ConfluenceCredentialJson>
               ) => onEditCredential(credential)}
-              currentCredentialId={ccPair.credential.id}
+              currentCredentialId={defaultedCredential.id}
               credentials={credentials}
               onSelectCredential={(credential: Credential<any> | null) =>
                 handleSelectCredential(credential)
@@ -236,7 +238,7 @@ export default function ModifyCredential({
               <Button
                 disabled={selectedCredential == null}
                 onClick={() => {
-                  onSwap(selectedCredential?.id!, ccPair.connector.id);
+                  onSwap(selectedCredential!, ccPair.connector.id);
                 }}
                 className="bg-indigo-500 disabled:border-transparent 
               transition-colors duration-150 ease-in disabled:bg-indigo-300 

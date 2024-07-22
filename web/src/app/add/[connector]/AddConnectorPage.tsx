@@ -3,9 +3,11 @@
 import * as Yup from "yup";
 import { SlackIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import useSWR, { useSWRConfig } from "swr";
+import useSWR, { mutate, useSWRConfig } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
+  ConfluenceCredentialJson,
+  Connector,
   Credential,
   ValidSources,
   getComprehensiveConnectorConfigTemplate,
@@ -14,7 +16,10 @@ import { Button, Card, Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
 import { CCPairFullInfo } from "@/app/admin/connector/[ccPairId]/types";
-import { buildCCPairInfoUrl } from "@/app/admin/connector/[ccPairId]/lib";
+import {
+  buildCCPairInfoUrl,
+  buildSimilarCredentialInfoURL,
+} from "@/app/admin/connector/[ccPairId]/lib";
 import CredentialSection from "@/components/credentials/CredentialSection";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
@@ -25,6 +30,10 @@ import { ConnectionConfiguration } from "./shared/types";
 import EditCredential from "@/components/credentials/EditCredential";
 import AdvancedFormPage from "./shared/AdvancedFormPage";
 import { SourceIcon } from "@/components/SourceIcon";
+import CreateCredential from "@/components/credentials/CreateCredential";
+import { useStandardAnswerCategories } from "@/app/admin/standard-answer/hooks";
+import { useState } from "react";
+import CreateConnectorCredentialSection from "./shared/CreatingConnectorCredentialPage";
 
 export default function AddConnector({
   connector,
@@ -41,19 +50,27 @@ export default function AddConnector({
     { refreshInterval: 5000 } // 5 seconds
   );
 
-  const { setFormValues, formStep, formValues, nextFormStep, prevFormStep } =
-    useFormContext();
+  const [currentCredential, setCurrentCredential] =
+    useState<Credential<any> | null>(null);
+
+  const { data: credentials } = useSWR<Credential<ConfluenceCredentialJson>[]>(
+    buildSimilarCredentialInfoURL(connector),
+    errorHandlingFetcher,
+    { refreshInterval: 5000 } // 5 seconds
+  );
+  const { formStep, formValues, nextFormStep, prevFormStep } = useFormContext();
 
   const { popup, setPopup } = usePopup();
-  if (!ccPair) {
-    return <></>;
-  }
 
   const configuration: ConnectionConfiguration =
     getComprehensiveConnectorConfigTemplate(connector);
 
   const createCredential = () => {};
   const displayName = getSourceDisplayName(connector) || connector;
+
+  if (!credentials || !ccPair) {
+    return <></>;
+  }
 
   return (
     <div className="mx-auto w-full">
@@ -70,11 +87,42 @@ export default function AddConnector({
         <>
           <Card>
             <Title className="mb-2">Select a credential</Title>
-            <CredentialSection sourceType={connector} ccPair={ccPair} />
+            {
+              credentials.length == 0 ? (
+                <div className="mt-4">
+                  <p>
+                    No credentials exist! Create your first {displayName}{" "}
+                    credential!
+                  </p>
+                  <CreateCredential
+                    sourceType={connector}
+                    connector={ccPair.connector}
+                    setPopup={setPopup}
+                  />
+                </div>
+              ) : (
+                <CreateConnectorCredentialSection
+                  ccPair={ccPair}
+                  refresh={() =>
+                    mutate(buildSimilarCredentialInfoURL(connector))
+                  }
+                  updateCredential={setCurrentCredential}
+                  currentCredential={currentCredential}
+                  sourceType={connector}
+                />
+              )
+
+              // <CredentialSection sourceType={connector} ccPair={ccPair} />
+            }
           </Card>
 
           <div className="mt-4 flex w-full justify-end">
-            <Button onClick={() => nextFormStep()}>Continue</Button>
+            <Button
+              disabled={currentCredential == null}
+              onClick={() => nextFormStep()}
+            >
+              Continue
+            </Button>
           </div>
         </>
       )}

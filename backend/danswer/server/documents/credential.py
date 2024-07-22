@@ -15,6 +15,7 @@ from danswer.db.credentials import fetch_credentials_by_source
 from danswer.db.credentials import swap_credentials_connector
 from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
+from danswer.db.models import DocumentSource
 from danswer.db.models import User
 from danswer.server.documents.models import CredentialBase
 from danswer.server.documents.models import CredentialDataUpdateRequest
@@ -43,18 +44,14 @@ def list_credentials_admin(
     ]
 
 
-@router.get("/admin/similar-credentials/{credential_id}")
+@router.get("/admin/similar-credentials/{source_type}")
 def get_cc_source_full_info(
-    credential_id: int,
+    source_type: DocumentSource,
     user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[CredentialSnapshot]:
-    credential = get_credential_by_id(
-        credential_id=credential_id, db_session=db_session, user=user
-    )
-
     credentials = fetch_credentials_by_source(
-        db_session=db_session, user=user, document_source=credential.source
+        db_session=db_session, user=user, document_source=source_type
     )
 
     return [
@@ -130,7 +127,7 @@ def create_credential_from_model(
         )
 
     credential = create_credential(credential_info, user, db_session)
-    return ObjectCreationIdResponse(id=credential.id)
+    return ObjectCreationIdResponse(id=credential.id, credential=credential)
 
 
 @router.get("/credential/{credential_id}")
