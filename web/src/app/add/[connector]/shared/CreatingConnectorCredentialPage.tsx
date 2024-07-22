@@ -1,33 +1,12 @@
 "use client";
 
-import {
-  ConfluenceCredentialJson,
-  Credential,
-  ValidSources,
-} from "@/lib/types";
-import useSWR, { mutate } from "swr";
-import { errorHandlingFetcher } from "@/lib/fetcher";
-import { ThreeDotsLoader } from "@/components/Loading";
-
+import { Credential, ValidSources } from "@/lib/types";
 import { FaSwatchbook } from "react-icons/fa";
 import { NewChatIcon } from "@/components/icons/icons";
-import { Dispatch, SetStateAction, useState } from "react";
-import {
-  deleteCredential,
-  forceDeleteCredential,
-  swapCredential,
-  updateCredential,
-} from "@/lib/credential";
-
+import { useState } from "react";
+import { deleteCredential, swapCredential } from "@/lib/credential";
 import { usePopup } from "@/components/admin/connectors/Popup";
-
-import { CCPairFullInfo } from "@/app/admin/connector/[ccPairId]/types";
-
 import { Text } from "@tremor/react";
-import {
-  buildCCPairInfoUrl,
-  buildSimilarCredentialInfoURL,
-} from "@/app/admin/connector/[ccPairId]/lib";
 import { getSourceDisplayName } from "@/lib/sources";
 import { Modal } from "@/components/Modal";
 import ModifyCredential from "@/components/credentials/ModifyCredential";
@@ -35,7 +14,6 @@ import CreateCredential from "@/components/credentials/CreateCredential";
 import EditCredential from "@/components/credentials/EditCredential";
 
 export default function CreateConnectorCredentialSection({
-  ccPair,
   sourceType,
   credentials,
   refresh,
@@ -46,7 +24,6 @@ export default function CreateConnectorCredentialSection({
   refresh: () => void;
   currentCredential: Credential<any> | null;
   updateCredential: (credential: Credential<any>) => void;
-  ccPair: CCPairFullInfo;
   sourceType: ValidSources;
 }) {
   const makeShowCreateCredential = () => {
@@ -54,15 +31,14 @@ export default function CreateConnectorCredentialSection({
     setShowCreateCredential(true);
   };
 
-  const onSwap = async (
-    selectedCredential: Credential<any>,
-    connectorId: number
-  ) => {
+  const onSwap = async (selectedCredential: Credential<any>) => {
     updateCredential(selectedCredential);
     setPopup({
       message: "Swapped credential succesfully!",
       type: "success",
     });
+    setShowModifyCredential(false);
+    refresh();
   };
 
   const onUpdateCredential = async (
@@ -163,12 +139,11 @@ export default function CreateConnectorCredentialSection({
             defaultedCredential={currentCredential!}
             credentials={credentials}
             setPopup={setPopup}
-            ccPair={ccPair}
             onDeleteCredential={onDeleteCredential}
             onEditCredential={(credential: Credential<any>) =>
               onEditCredential(credential)
             }
-            onSwap={onSwap}
+            onSwitch={onSwap}
             onCreateNew={() => makeShowCreateCredential()}
             onClose={() => closeModifyCredential()}
           />
@@ -198,7 +173,6 @@ export default function CreateConnectorCredentialSection({
         >
           <CreateCredential
             sourceType={sourceType}
-            connector={ccPair.connector}
             setPopup={setPopup}
             onSwap={onSwap}
             onClose={closeCreateCredential}

@@ -48,8 +48,6 @@ export const FormProvider: React.FC<{ children: ReactNode }> = ({
 
     // Construct the new URL
     const newUrl = `${pathname}?${updatedSearchParams.toString()}`;
-
-    // Use router.push with the constructed URL
     router.push(newUrl);
   }, [formStep, router]);
 

@@ -127,7 +127,11 @@ def create_credential_from_model(
         )
 
     credential = create_credential(credential_info, user, db_session)
-    return ObjectCreationIdResponse(id=credential.id, credential=credential)
+
+    return ObjectCreationIdResponse(
+        id=credential.id,
+        credential=CredentialSnapshot.from_credential_db_model(credential),
+    )
 
 
 @router.get("/credential/{credential_id}")

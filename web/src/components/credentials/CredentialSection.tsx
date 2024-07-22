@@ -7,24 +7,18 @@ import {
 } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { ThreeDotsLoader } from "@/components/Loading";
-
 import { FaSwatchbook } from "react-icons/fa";
 import { NewChatIcon } from "@/components/icons/icons";
-import { Dispatch, SetStateAction, useState } from "react";
+import { useState } from "react";
 import {
   deleteCredential,
-  forceDeleteCredential,
   swapCredential,
   updateCredential,
 } from "@/lib/credential";
-
 import { usePopup } from "@/components/admin/connectors/Popup";
-
 import CreateCredential from "./CreateCredential";
 import { CCPairFullInfo } from "@/app/admin/connector/[ccPairId]/types";
 import ModifyCredential from "./ModifyCredential";
-
 import { Text } from "@tremor/react";
 import {
   buildCCPairInfoUrl,
@@ -156,7 +150,6 @@ export default function CredentialSection({
             defaultedCredential={defaultedCredential}
             credentials={credentials}
             setPopup={setPopup}
-            ccPair={ccPair}
             onDeleteCredential={onDeleteCredential}
             onEditCredential={(credential: Credential<any>) =>
               onEditCredential(credential)

@@ -1,23 +1,19 @@
-import { errorHandlingFetcher } from "@/lib/fetcher";
-
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, { useState } from "react";
 import { Modal } from "@/components/Modal";
-import { Button, Text, Callout, Badge } from "@tremor/react";
+import { Button, Text, Badge } from "@tremor/react";
 
 import { buildSimilarCredentialInfoURL } from "../../app/admin/connector/[ccPairId]/lib";
-import useSWR, { mutate } from "swr";
+import { mutate } from "swr";
 import {
   ConfluenceCredentialJson,
+  Connector,
   Credential,
   ValidSources,
 } from "@/lib/types";
-import { FaCreativeCommons, FaSwatchbook } from "react-icons/fa";
-import { swapCredential } from "@/lib/credential";
+import { FaCreativeCommons } from "react-icons/fa";
 import { EditIcon, SwapIcon, TrashIcon } from "@/components/icons/icons";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { CCPairFullInfo } from "../../app/admin/connector/[ccPairId]/types";
 import { getSourceDisplayName } from "@/lib/sources";
-import { setDefaultResultOrder } from "dns";
 
 interface CredentialSelectionTableProps {
   credentials: Credential<any>[];
@@ -25,7 +21,6 @@ interface CredentialSelectionTableProps {
   currentCredentialId?: number;
   onDeleteCredential: (credential: Credential<any>) => void;
   onEditCredential: (credential: Credential<any>) => void;
-  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
@@ -34,7 +29,6 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
   onSelectCredential,
   currentCredentialId,
   onDeleteCredential,
-  setPopup,
 }) => {
   const [selectedCredentialId, setSelectedCredentialId] = useState<
     number | null
@@ -122,6 +116,7 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
 
 export default function ModifyCredential({
   onClose,
+  attachedConnector,
   onSwap,
   onCreateNew,
   display,
@@ -129,10 +124,11 @@ export default function ModifyCredential({
   onDeleteCredential,
   setPopup,
   credentials,
-  ccPair,
   source,
   defaultedCredential,
+  onSwitch,
 }: {
+  attachedConnector?: Connector<any>;
   defaultedCredential?: Credential<any>;
   display?: boolean;
   credentials: Credential<any>[];
@@ -140,9 +136,9 @@ export default function ModifyCredential({
   setPopup: (popupSpec: PopupSpec | null) => void;
   onDeleteCredential: (credential: Credential<any | null>) => void;
   onEditCredential: (credential: Credential<ConfluenceCredentialJson>) => void;
-  ccPair: CCPairFullInfo;
   onClose: () => void;
-  onSwap: (newCredential: Credential<any>, connectorId: number) => void;
+  onSwitch?: (newCredential: Credential<any>) => void;
+  onSwap?: (newCredential: Credential<any>, connectorId: number) => void;
   onCreateNew: () => void;
 }) {
   const [selectedCredential, setSelectedCredential] =
@@ -215,7 +211,6 @@ export default function ModifyCredential({
 
           {credentials.length > 1 || (display && credentials.length == 1) ? (
             <CredentialSelectionTable
-              setPopup={setPopup}
               onDeleteCredential={async (
                 credential: Credential<any | null>
               ) => {
@@ -244,7 +239,12 @@ export default function ModifyCredential({
               <Button
                 disabled={selectedCredential == null}
                 onClick={() => {
-                  onSwap(selectedCredential!, ccPair.connector.id);
+                  if (onSwap && attachedConnector) {
+                    onSwap(selectedCredential!, attachedConnector.id);
+                  }
+                  if (onSwitch) {
+                    onSwitch(selectedCredential!);
+                  }
                 }}
                 className="bg-indigo-500 disabled:border-transparent 
               transition-colors duration-150 ease-in disabled:bg-indigo-300 

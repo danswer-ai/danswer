@@ -271,6 +271,7 @@ class FileUploadResponse(BaseModel):
 
 class ObjectCreationIdResponse(BaseModel):
     id: int | str
+    credential: CredentialSnapshot
 
 
 class AuthStatus(BaseModel):

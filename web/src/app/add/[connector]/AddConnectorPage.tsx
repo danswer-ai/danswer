@@ -1,13 +1,11 @@
 "use client";
 
-import * as Yup from "yup";
-import { SlackIcon } from "@/components/icons/icons";
+import { SettingsIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import useSWR, { mutate, useSWRConfig } from "swr";
+import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
   ConfluenceCredentialJson,
-  Connector,
   Credential,
   ValidSources,
   getComprehensiveConnectorConfigTemplate,
@@ -15,23 +13,15 @@ import {
 import { Button, Card, Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
-import { CCPairFullInfo } from "@/app/admin/connector/[ccPairId]/types";
-import {
-  buildCCPairInfoUrl,
-  buildSimilarCredentialInfoURL,
-} from "@/app/admin/connector/[ccPairId]/lib";
-import CredentialSection from "@/components/credentials/CredentialSection";
+import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/lib";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { useRouter } from "next/navigation";
 import { useFormContext } from "@/components/context/FormContext";
 import { getSourceDisplayName } from "@/lib/sources";
 import DynamicConnectionForm from "./shared/CreateConnector";
 import { ConnectionConfiguration } from "./shared/types";
-import EditCredential from "@/components/credentials/EditCredential";
 import AdvancedFormPage from "./shared/AdvancedFormPage";
 import { SourceIcon } from "@/components/SourceIcon";
 import CreateCredential from "@/components/credentials/CreateCredential";
-import { useStandardAnswerCategories } from "@/app/admin/standard-answer/hooks";
 import { useState } from "react";
 import CreateConnectorCredentialSection from "./shared/CreatingConnectorCredentialPage";
 
@@ -40,26 +30,15 @@ export default function AddConnector({
 }: {
   connector: ValidSources;
 }) {
-  const {
-    data: ccPair,
-    isLoading,
-    error,
-  } = useSWR<CCPairFullInfo>(
-    buildCCPairInfoUrl(2),
-    errorHandlingFetcher,
-    { refreshInterval: 5000 } // 5 seconds
-  );
-
   const [currentCredential, setCurrentCredential] =
     useState<Credential<any> | null>(null);
 
   const { data: credentials } = useSWR<Credential<ConfluenceCredentialJson>[]>(
     buildSimilarCredentialInfoURL(connector),
     errorHandlingFetcher,
-    { refreshInterval: 5000 } // 5 seconds
+    { refreshInterval: 5000 }
   );
-  const { formStep, formValues, nextFormStep, prevFormStep } = useFormContext();
-
+  const { formStep, nextFormStep, prevFormStep } = useFormContext();
   const { popup, setPopup } = usePopup();
 
   const configuration: ConnectionConfiguration =
@@ -69,18 +48,19 @@ export default function AddConnector({
 
   const createCredential = () => {};
   const displayName = getSourceDisplayName(connector) || connector;
-
-  if (!credentials || !ccPair) {
+  if (!credentials) {
     return <></>;
   }
 
   return (
     <div className="mx-auto w-full">
+      {popup}
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
 
       <AdminPageTitle
+        includeDivider={false}
         icon={<SourceIcon iconSize={32} sourceType={connector} />}
         title={displayName}
       />
@@ -95,16 +75,11 @@ export default function AddConnector({
                   No credentials exist! Create your first {displayName}{" "}
                   credential!
                 </p>
-                <CreateCredential
-                  sourceType={connector}
-                  connector={ccPair.connector}
-                  setPopup={setPopup}
-                />
+                <CreateCredential sourceType={connector} setPopup={setPopup} />
               </div>
             ) : (
               <CreateConnectorCredentialSection
                 credentials={credentials}
-                ccPair={ccPair}
                 refresh={() => mutate(buildSimilarCredentialInfoURL(connector))}
                 updateCredential={setCurrentCredential}
                 currentCredential={currentCredential}
@@ -112,7 +87,6 @@ export default function AddConnector({
               />
             )}
           </Card>
-
           <div className="mt-4 flex w-full justify-end">
             <Button
               disabled={currentCredential == null}
@@ -137,8 +111,15 @@ export default function AddConnector({
               defaultValues={values}
             />
             <div className="flex w-full">
-              <Button onClick={() => nextFormStep()} className="ml-auto">
-                Advanced?
+              <Button
+                color="violet"
+                onClick={() => nextFormStep()}
+                className="flex gap-x-2 ml-auto"
+              >
+                <div className="w-full items-center  gap-x-2 flex">
+                  <SettingsIcon className=" h-4 w-4" />
+                  Advanced?
+                </div>
               </Button>
             </div>
           </Card>
@@ -152,23 +133,19 @@ export default function AddConnector({
       )}
 
       {formStep === 2 && (
-        <>
-          <Card>
-            <AdvancedFormPage onClose={() => null} onSubmit={() => null} />
-          </Card>
-          <div className="mt-4 flex w-full justify-between">
-            <Button className="bg-accent" onClick={() => prevFormStep()}>
-              Back
+        <Card>
+          <AdvancedFormPage onClose={() => null} onSubmit={() => null} />
+          <div className="mt-4 flex w-full mx-auto max-w-2xl justify-between">
+            <Button
+              color="violet"
+              onClick={() => prevFormStep()}
+              className="flex gap-x-2"
+            >
+              <div className="w-full items-center  gap-x-2 flex">Abandon?</div>
             </Button>
-            <Button onClick={() => nextFormStep()}>Finalize</Button>
+            <Button onClick={() => nextFormStep()}>Update</Button>
           </div>
-        </>
-      )}
-
-      {formStep === 3 && (
-        <>
-          <Card>{/* Move to the connector's page iteslf */}</Card>
-        </>
+        </Card>
       )}
 
       <FixedLogo />

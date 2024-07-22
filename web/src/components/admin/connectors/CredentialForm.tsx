@@ -18,7 +18,9 @@ export async function submitCredential<T>(
     const response = await createCredential(credential);
 
     if (response.ok) {
-      const credential = (await response.json()).credential;
+      const parsed_response = await response.json();
+      console.log(parsed_response);
+      const credential = parsed_response.credential;
       isSuccess = true;
       return { credential, message: "Success!", isSuccess: true };
     } else {
