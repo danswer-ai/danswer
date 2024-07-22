@@ -166,13 +166,13 @@ export default function ModifyCredential({
           className="max-w-sm"
         >
           <>
-            <p className="text-base mb-2">
+            <p className="text-lg mb-2">
               Are you sure you want to delete this? All historical data will be
               deleted as well.
             </p>
-            <div className="flex -sm justify-between">
+            <div className="mt-6 flex justify-between">
               <button
-                className="rounded py-1 px-1.5 bg-neutral-800 text-neutral-200"
+                className="rounded py-1.5 px-2 bg-neutral-800 text-neutral-200"
                 onClick={async () => {
                   await onDeleteCredential(confirmDeletionCredential);
 
@@ -189,11 +189,11 @@ export default function ModifyCredential({
                   });
                 }}
               >
-                yes
+                Yes
               </button>
-              <button className="rounded py-1 px-1.5 bg-neutral-200 text-neutral-800">
+              <button className="rounded py-1.5 px-2 bg-background-150 text-neutral-800">
                 {" "}
-                no
+                No
               </button>
             </div>
           </>

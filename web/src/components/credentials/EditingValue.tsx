@@ -27,8 +27,10 @@ export const EditingValue: React.FC<{
   description?: string;
   onChange?: (value: string) => void;
   onChangeBool?: (value: boolean) => void;
+  onChangeNumber?: (value: number) => void;
 }> = ({
   setFieldValue,
+  onChangeNumber,
   name,
   currentValue,
   label,
@@ -77,6 +79,9 @@ export const EditingValue: React.FC<{
                 updateValue(e.target.value);
                 if (onChange) {
                   onChange(e.target.value!);
+                }
+                if (onChangeNumber) {
+                  onChangeNumber(parseInt(e.target.value)!);
                 }
               }}
               type={type}

@@ -190,7 +190,11 @@ export default function AddConnector({
                   No credentials exist! Create your first {displayName}{" "}
                   credential!
                 </p>
-                <CreateCredential sourceType={connector} setPopup={setPopup} />
+                <CreateCredential
+                  refresh={refresh}
+                  sourceType={connector}
+                  setPopup={setPopup}
+                />
               </div>
             ) : (
               <>
@@ -270,6 +274,8 @@ export default function AddConnector({
       {formStep === 2 && (
         <Card>
           <AdvancedFormPage
+            currentPruneFreq={pruneFreq}
+            currentRefreshFreq={refreshFreq}
             setPruneFreq={setPruneFreq}
             setRefreshFreq={setRefreshFreq}
             onClose={() => null}

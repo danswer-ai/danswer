@@ -9,7 +9,11 @@ const AdvancedFormPage = ({
   onClose,
   setRefreshFreq,
   setPruneFreq,
+  currentPruneFreq,
+  currentRefreshFreq,
 }: {
+  currentPruneFreq: number;
+  currentRefreshFreq: number;
   setRefreshFreq: Dispatch<SetStateAction<number>>;
   setPruneFreq: Dispatch<SetStateAction<number>>;
   onSubmit: () => void;
@@ -36,6 +40,10 @@ const AdvancedFormPage = ({
               <EditingValue
                 description="How often to prune your documents (in minutes)"
                 optional
+                currentValue={
+                  currentPruneFreq == 0 ? undefined : currentPruneFreq
+                }
+                onChangeNumber={(value: number) => setPruneFreq(value)}
                 setFieldValue={setFieldValue}
                 type="number"
                 label="Prune Frequency"
@@ -46,6 +54,10 @@ const AdvancedFormPage = ({
               <EditingValue
                 description="How often to refresh your documents (in minutes)"
                 optional
+                currentValue={
+                  currentRefreshFreq == 0 ? undefined : currentRefreshFreq
+                }
+                onChangeNumber={(value: number) => setRefreshFreq(value)}
                 setFieldValue={setFieldValue}
                 type="number"
                 label="Refresh Frequency"
