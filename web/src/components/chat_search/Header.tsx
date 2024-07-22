@@ -40,10 +40,10 @@ export default function FunctionalHeader({
             event.preventDefault();
             window.open(
               `/${page}` +
-              (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
+                (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
                 currentChatSession
-                ? `?assistantId=${currentChatSession.persona_id}`
-                : ""),
+                  ? `?assistantId=${currentChatSession.persona_id}`
+                  : ""),
               "_self"
             );
             break;
@@ -64,7 +64,6 @@ export default function FunctionalHeader({
           </div>
           <div className="break-words inline-block w-fit  ml-2 text-text-700 text-xl">
             <div className="max-w-[200px]">
-
               {enterpriseSettings && enterpriseSettings.application_name ? (
                 <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
               ) : (
@@ -75,20 +74,18 @@ export default function FunctionalHeader({
 
           {page == "chat" && (
             <Tooltip delayDuration={1000} content={`${commandSymbol}U`}>
-              <Link className="mb-auto pt-[2px]"
+              <Link
+                className="mb-auto pt-[2px]"
                 href={
                   `/${page}` +
                   (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                    currentChatSession
+                  currentChatSession
                     ? `?assistantId=${currentChatSession.persona_id}`
                     : "")
                 }
               >
                 <div className="cursor-pointer ml-2  flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
-                  <NewChatIcon
-                    size={20}
-                    className=""
-                  />
+                  <NewChatIcon size={20} className="" />
                 </div>
               </Link>
             </Tooltip>

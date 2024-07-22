@@ -13,8 +13,6 @@ export default function FixedLogo() {
 
   return (
     <div className="absolute flex z-40 left-2.5 top-2">
-
-
       <div className="max-w-[200px] flex gap-x-1 my-auto">
         <div className="flex-none invisible mb-auto">
           <Logo />
@@ -22,13 +20,9 @@ export default function FixedLogo() {
         <div className="">
           {enterpriseSettings && enterpriseSettings.application_name ? (
             <div>
-              <HeaderTitle>
-                {enterpriseSettings.application_name}
-              </HeaderTitle>
+              <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
               {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                <p className="text-xs text-subtle">
-                  Powered by Danswer
-                </p>
+                <p className="text-xs text-subtle">Powered by Danswer</p>
               )}
             </div>
           ) : (
@@ -36,9 +30,6 @@ export default function FixedLogo() {
           )}
         </div>
       </div>
-
-
-
     </div>
   );
 }

@@ -111,9 +111,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                     {enterpriseSettings.application_name}
                   </HeaderTitle>
                   {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                    <p className="text-xs text-subtle">
-                      Powered by Danswer
-                    </p>
+                    <p className="text-xs text-subtle">Powered by Danswer</p>
                   )}
                 </div>
               ) : (
@@ -134,7 +132,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 href={
                   "/chat" +
                   (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                    currentChatSession
+                  currentChatSession
                     ? `?assistantId=${currentChatSession.persona_id}`
                     : "")
                 }

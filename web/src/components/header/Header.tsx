@@ -11,7 +11,11 @@ import { Logo } from "../Logo";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
 
 export function HeaderTitle({ children }: { children: JSX.Element | string }) {
-  return <h1 className="flex text-2xl text-strong leading-none font-bold">{children}</h1>;
+  return (
+    <h1 className="flex text-2xl text-strong leading-none font-bold">
+      {children}
+    </h1>
+  );
 }
 
 interface HeaderProps {
@@ -47,9 +51,7 @@ export function Header({ user, page }: HeaderProps) {
                     {enterpriseSettings.application_name}
                   </HeaderTitle>
                   {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                    <p className="text-xs text-subtle">
-                      Powered by Danswer
-                    </p>
+                    <p className="text-xs text-subtle">Powered by Danswer</p>
                   )}
                 </div>
               ) : (
