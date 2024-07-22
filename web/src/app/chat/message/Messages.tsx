@@ -445,7 +445,8 @@ export const AIMessage = ({
                                   >
                                     <Citation link={doc.link} index={ind + 1} />
                                     <p className="shrink truncate ellipsis break-all ">
-                                      {getTitleFromDocument(doc)}
+                                      {doc.semantic_identifier ||
+                                        doc.document_id}
                                     </p>
                                     <div className="ml-auto flex-none">
                                       {doc.is_internet ? (
