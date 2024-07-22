@@ -89,6 +89,8 @@ def upsert_llm_provider(
         db_session=db_session,
     )
 
+    db_session.commit()
+
     return FullLLMProvider.from_model(existing_llm_provider)
 
 
