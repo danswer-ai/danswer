@@ -73,10 +73,6 @@ class CredentialSwapRequest(BaseModel):
     connector_id: int
 
 
-class CredentialDeletionForce(BaseModel):
-    force: bool
-
-
 class CredentialDataUpdateRequest(BaseModel):
     name: str
     credential_json: dict[str, Any]

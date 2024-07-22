@@ -43,10 +43,6 @@ def get_cc_pair_full_info(
         credential_id=cc_pair.credential_id,
     )
 
-    # index_attempts = get_index_attempts_for_cc_pair(
-    #     db_session=db_session,
-    #     cc_pair_identifier=cc_pair_identifier,
-    # )
     index_attempts = get_index_attempts_for_connector(
         db_session,
         cc_pair.connector_id,

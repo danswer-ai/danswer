@@ -67,7 +67,6 @@ function Main({ ccPairId }: { ccPairId: number }) {
       : ccPair.num_docs_indexed;
 
   const refresh = () => {
-    console.log("refreshing this code credential pages");
     mutate(buildCCPairInfoUrl(ccPairId));
   };
 

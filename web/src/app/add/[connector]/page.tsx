@@ -30,7 +30,6 @@ export default async function Page({
   const toggleSidebar = sidebarToggled
     ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
     : false;
-  console.log(params.connector);
 
   return (
     <WrappedPage

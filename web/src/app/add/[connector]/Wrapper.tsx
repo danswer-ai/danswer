@@ -25,7 +25,6 @@ export default function WrappedPage({
   const decrement = () => {
     setIndex((index) => index - 1);
   };
-  console.log(connector);
 
   return (
     <FormProvider>

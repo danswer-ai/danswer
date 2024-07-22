@@ -52,7 +52,6 @@ export default function CredentialSection({
     selectedCredential: Credential<any>,
     connectorId: number
   ) => {
-    console.log("I am logging");
     await swapCredential(selectedCredential.id, connectorId);
     mutate(buildSimilarCredentialInfoURL(sourceType));
     refresh();
