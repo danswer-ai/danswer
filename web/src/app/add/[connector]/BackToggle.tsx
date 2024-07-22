@@ -15,7 +15,7 @@ export default function BackToggle({
 }) {
   return (
     <div className="flex mt-8 flex-col mb-12">
-      <div className="  flex w-full justify-between">
+      <div className="flex w-full justify-between">
         {button1 && (
           <Button color="teal" className="mr-auto" onClick={button1.onClick}>
             {button1.text}

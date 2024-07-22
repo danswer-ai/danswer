@@ -66,6 +66,11 @@ function Main({ ccPairId }: { ccPairId: number }) {
       ? lastIndexAttempt.total_docs_indexed
       : ccPair.num_docs_indexed;
 
+  const refresh = () => {
+    console.log("refreshing this code credential pages");
+    mutate(buildCCPairInfoUrl(ccPairId));
+  };
+
   return (
     <>
       <BackButton />
@@ -97,7 +102,11 @@ function Main({ ccPairId }: { ccPairId: number }) {
       </div>
       <Divider />
       <Title className="mb-2">Credentials</Title>
-      <CredentialSection ccPair={ccPair} sourceType={ccPair.connector.source} />
+      <CredentialSection
+        ccPair={ccPair}
+        sourceType={ccPair.connector.source}
+        refresh={() => refresh()}
+      />
       <Divider />
       <ConfigDisplay
         connectorSpecificConfig={ccPair.connector.connector_specific_config}

@@ -88,7 +88,7 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
                 <td className="p-2">
                   {new Date(credential.time_updated).toLocaleString()}
                 </td>
-                <td className="pt-3 flex gap-x-2  content-center mt-auto">
+                <td className="pt-3 flex gap-x-2 content-center mt-auto">
                   <button
                     disabled={selected}
                     onClick={async () => {

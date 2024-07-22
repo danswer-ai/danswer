@@ -14,6 +14,7 @@ interface FormContextType {
   nextFormStep: (contract?: string) => void;
   prevFormStep: () => void;
   formStepToLast: () => void;
+  setFormStep: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const FormContext = createContext<FormContextType | undefined>(undefined);
@@ -22,34 +23,42 @@ export const FormProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const router = useRouter();
-  const [formStep, setFormStep] = useState(0);
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  // Initialize formStep based on the URL parameter
+  const initialStep = parseInt(searchParams.get("step") || "1", 10);
+  const [formStep, setFormStep] = useState(initialStep);
   const [formValues, setFormValues] = useState<Record<string, any>>({});
 
   const nextFormStep = (values = "") => {
-    setFormStep((formStep) => formStep + 1);
+    setFormStep((prevStep) => prevStep + 1);
     setFormValues((prevValues) => ({ ...prevValues, values }));
   };
 
   const prevFormStep = () => {
-    setFormStep((currentStep) => Math.max(currentStep - 1, 0));
+    setFormStep((currentStep) => Math.max(currentStep - 1, 1));
   };
 
   const formStepToLast = () => {
     setFormStep(2);
   };
 
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   useEffect(() => {
-    // Create a new URLSearchParams object
+    // Update URL when formStep changes
     const updatedSearchParams = new URLSearchParams(searchParams.toString());
-    // Update or add the 'step' parameter
     updatedSearchParams.set("step", formStep.toString());
-
-    // Construct the new URL
     const newUrl = `${pathname}?${updatedSearchParams.toString()}`;
-    router.push(newUrl);
-  }, [formStep, router]);
+    router.replace(newUrl);
+  }, [formStep, router, pathname, searchParams]);
+
+  // Update formStep when URL changes
+  useEffect(() => {
+    const stepFromUrl = parseInt(searchParams.get("step") || "1", 10);
+    if (stepFromUrl !== formStep) {
+      setFormStep(stepFromUrl);
+    }
+  }, [searchParams]);
 
   const contextValue: FormContextType = {
     formStep,
@@ -59,6 +68,7 @@ export const FormProvider: React.FC<{ children: ReactNode }> = ({
     nextFormStep,
     prevFormStep,
     formStepToLast,
+    setFormStep,
   };
 
   return (

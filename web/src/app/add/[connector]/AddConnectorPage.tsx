@@ -24,6 +24,12 @@ import { SourceIcon } from "@/components/SourceIcon";
 import CreateCredential from "@/components/credentials/CreateCredential";
 import { useState } from "react";
 import CreateConnectorCredentialSection from "./shared/CreatingConnectorCredentialPage";
+import { FiChevronLeft } from "react-icons/fi";
+
+export type advancedConfig = {
+  pruneFreq: number;
+  refreshFreq: number;
+};
 
 export default function AddConnector({
   connector,
@@ -38,7 +44,9 @@ export default function AddConnector({
     errorHandlingFetcher,
     { refreshInterval: 5000 }
   );
-  const { formStep, nextFormStep, prevFormStep } = useFormContext();
+  const { setFormStep, formStep, nextFormStep, prevFormStep } =
+    useFormContext();
+
   const { popup, setPopup } = usePopup();
 
   const configuration: ConnectionConfiguration =
@@ -46,11 +54,23 @@ export default function AddConnector({
 
   const [values, setValues] = useState(null);
 
+  if (!currentCredential) {
+    setFormStep(Math.min(formStep, 0));
+  }
+
+  const [advancedConfig, setAdvancedConfig] = useState<advancedConfig | null>(
+    null
+  );
+
   const createCredential = () => {};
   const displayName = getSourceDisplayName(connector) || connector;
   if (!credentials) {
     return <></>;
   }
+
+  const refresh = () => {
+    mutate(buildSimilarCredentialInfoURL(connector));
+  };
 
   return (
     <div className="mx-auto w-full">
@@ -80,7 +100,7 @@ export default function AddConnector({
             ) : (
               <CreateConnectorCredentialSection
                 credentials={credentials}
-                refresh={() => mutate(buildSimilarCredentialInfoURL(connector))}
+                refresh={() => refresh()}
                 updateCredential={setCurrentCredential}
                 currentCredential={currentCredential}
                 sourceType={connector}
@@ -104,7 +124,6 @@ export default function AddConnector({
             <DynamicConnectionForm
               config={configuration}
               onSubmit={(values: any) => {
-                console.log(values);
                 setValues(values);
               }}
               onClose={() => null}
@@ -112,38 +131,44 @@ export default function AddConnector({
             />
             <div className="flex w-full">
               <Button
-                color="violet"
+                color="zinc"
                 onClick={() => nextFormStep()}
                 className="flex gap-x-2 ml-auto"
               >
-                <div className="w-full items-center  gap-x-2 flex">
-                  <SettingsIcon className=" h-4 w-4" />
-                  Advanced?
-                </div>
+                <SettingsIcon className=" h-3 w-3" />
               </Button>
             </div>
           </Card>
           <div className="mt-4 flex w-full justify-between">
-            <Button className="bg-accent" onClick={() => prevFormStep()}>
-              Back
+            <button
+              className="px-2 hover:bg-accent/80 transition-color duration-300 rounded-lg bg-accent"
+              onClick={() => prevFormStep()}
+            >
+              <FiChevronLeft className="text-neutral-200 h-6 w-6" />
+            </button>
+            <Button color="gray" onClick={() => createCredential()}>
+              Create
             </Button>
-            <Button onClick={() => createCredential()}>Create</Button>
           </div>
         </>
       )}
 
       {formStep === 2 && (
         <Card>
-          <AdvancedFormPage onClose={() => null} onSubmit={() => null} />
+          <AdvancedFormPage
+            setAdvancedConfig={setAdvancedConfig}
+            onClose={() => null}
+            onSubmit={() => null}
+          />
           <div className="mt-4 flex w-full mx-auto max-w-2xl justify-between">
             <Button
               color="violet"
               onClick={() => prevFormStep()}
               className="flex gap-x-2"
             >
-              <div className="w-full items-center  gap-x-2 flex">Abandon?</div>
+              <div className="w-full items-center gap-x-2 flex">Quit?</div>
             </Button>
-            <Button onClick={() => nextFormStep()}>Update</Button>
+            <Button onClick={() => prevFormStep()}>Update</Button>
           </div>
         </Card>
       )}

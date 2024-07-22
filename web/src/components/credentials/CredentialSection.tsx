@@ -31,9 +31,11 @@ import { getSourceDisplayName } from "@/lib/sources";
 export default function CredentialSection({
   ccPair,
   sourceType,
+  refresh,
 }: {
   ccPair: CCPairFullInfo;
   sourceType: ValidSources;
+  refresh: () => void;
 }) {
   const makeShowCreateCredential = () => {
     setShowModifyCredential(false);
@@ -50,8 +52,10 @@ export default function CredentialSection({
     selectedCredential: Credential<any>,
     connectorId: number
   ) => {
+    console.log("I am logging");
     await swapCredential(selectedCredential.id, connectorId);
     mutate(buildSimilarCredentialInfoURL(sourceType));
+    refresh();
 
     setPopup({
       message: "Swapped credential succesfully!",
@@ -147,6 +151,7 @@ export default function CredentialSection({
         >
           <ModifyCredential
             source={sourceType}
+            attachedConnector={ccPair.connector}
             defaultedCredential={defaultedCredential}
             credentials={credentials}
             setPopup={setPopup}

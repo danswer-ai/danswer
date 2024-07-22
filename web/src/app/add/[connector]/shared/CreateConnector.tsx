@@ -51,7 +51,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   );
 
   return (
-    <div className="py-4 rounded-lg  max-w-2xl mx-auto">
+    <div className="py-4 rounded-lg max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold mb-4 text-neutral-800">
         {config.description}
       </h2>

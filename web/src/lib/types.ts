@@ -1010,7 +1010,7 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
   switch (source) {
     case "web":
       return {
-        description: "Configuration for Web connector",
+        description: "Configure Web connector",
         values: [
           {
             type: "text",
@@ -1037,7 +1037,7 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
 
     case "github":
       return {
-        description: "Configuration for GitHub connector",
+        description: "Configure GitHub connector",
         values: [
           {
             type: "text",
@@ -1074,7 +1074,7 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
 
     case "gitlab":
       return {
-        description: "Configuration for GitLab connector",
+        description: "Configure GitLab connector",
         values: [
           {
             type: "text",
@@ -1111,7 +1111,7 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
 
     case "google_drive":
       return {
-        description: "Configuration for Google Drive connector",
+        description: "Configure Google Drive connector",
         values: [
           {
             type: "list",
@@ -1146,19 +1146,19 @@ export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
 
     case "gmail":
       return {
-        description: "Configuration for Gmail connector",
+        description: "Configure Gmail connector",
         values: [], // No specific configuration needed based on the interface
       };
 
     case "bookstack":
       return {
-        description: "Configuration for Bookstack connector",
+        description: "Configure Bookstack connector",
         values: [], // No specific configuration needed based on the interface
       };
 
     case "confluence":
       return {
-        description: "Configuration for Confluence connector",
+        description: "Configure Confluence connector",
         subtext: `Specify any link to a Confluence page below and click "Index" to Index. Based on the provided link, we will index either the entire page and its subpages OR the entire space. For example, entering https://danswer.atlassian.net/wiki/spaces/Engineering/overview and clicking the Index button will index the whole Engineering Confluence space, but entering https://danswer.atlassian.net/wiki/spaces/Engineering/pages/164331/example+page will index that page's children (and optionally, itself). Use the checkbox below to determine whether or not to index the parent page in addition to its children.
 
 We pull the latest pages and comments from each space listed below every 10 minutes`,
@@ -1183,7 +1183,7 @@ We pull the latest pages and comments from each space listed below every 10 minu
 
     case "jira":
       return {
-        description: "Configuration for Jira connector",
+        description: "Configure Jira connector",
         subtext: `Specify any link to a Jira page below and click "Index" to Index. Based on the provided link, we will index the ENTIRE PROJECT, not just the specified page. For example, entering https://danswer.atlassian.net/jira/software/projects/DAN/boards/1 and clicking the Index button will index the whole DAN Jira project.`,
         values: [
           {
@@ -1207,7 +1207,7 @@ We pull the latest pages and comments from each space listed below every 10 minu
 
     case "salesforce":
       return {
-        description: "Configuration for Salesforce connector",
+        description: "Configure Salesforce connector",
         values: [
           {
             type: "list",
@@ -1224,7 +1224,7 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
 
     case "sharepoint":
       return {
-        description: "Configuration for SharePoint connector",
+        description: "Configure SharePoint connector",
         values: [
           {
             type: "list",
@@ -1242,7 +1242,7 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
 
     case "teams":
       return {
-        description: "Configuration for Teams connector",
+        description: "Configure Teams connector",
         values: [
           {
             type: "list",
@@ -1257,7 +1257,7 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
 
     case "discourse":
       return {
-        description: "Configuration for Discourse connector",
+        description: "Configure Discourse connector",
         values: [
           {
             type: "text",
@@ -1278,7 +1278,7 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
 
     case "axero":
       return {
-        description: "Configuration for Axero connector",
+        description: "Configure Axero connector",
         values: [
           {
             type: "list",
@@ -1294,13 +1294,13 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
 
     case "productboard":
       return {
-        description: "Configuration for Productboard connector",
+        description: "Configure Productboard connector",
         values: [], // No specific configuration needed based on the interface
       };
 
     case "slack":
       return {
-        description: "Configuration for Slack connector",
+        description: "Configure Slack connector",
         values: [
           {
             type: "text",
@@ -1331,7 +1331,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "slab":
       return {
-        description: "Configuration for Slab connector",
+        description: "Configure Slab connector",
         values: [
           {
             type: "text",
@@ -1346,13 +1346,13 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "guru":
       return {
-        description: "Configuration for Guru connector",
+        description: "Configure Guru connector",
         values: [], // No specific configuration needed based on the interface
       };
 
     case "gong":
       return {
-        description: "Configuration for Gong connector",
+        description: "Configure Gong connector",
         values: [
           {
             type: "list",
@@ -1368,7 +1368,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "loopio":
       return {
-        description: "Configuration for Loopio connector",
+        description: "Configure Loopio connector",
         values: [
           {
             type: "text",
@@ -1384,7 +1384,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "file":
       return {
-        description: "Configuration for File connector",
+        description: "Configure File connector",
         values: [
           {
             type: "list",
@@ -1398,7 +1398,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "zulip":
       return {
-        description: "Configuration for Zulip connector",
+        description: "Configure Zulip connector",
         values: [
           {
             type: "text",
@@ -1419,7 +1419,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "notion":
       return {
-        description: "Configuration for Notion connector",
+        description: "Configure Notion connector",
         values: [
           {
             type: "text",
@@ -1435,19 +1435,19 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "requesttracker":
       return {
-        description: "Configuration for HubSpot connector",
+        description: "Configure HubSpot connector",
         values: [], // No specific configuration needed based on the interface
       };
 
     case "hubspot":
       return {
-        description: "Configuration for HubSpot connector",
+        description: "Configure HubSpot connector",
         values: [], // No specific configuration needed based on the interface
       };
 
     case "document360":
       return {
-        description: "Configuration for Document360 connector",
+        description: "Configure Document360 connector",
         values: [
           {
             type: "text",
@@ -1470,7 +1470,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "clickup":
       return {
-        description: "Configuration for ClickUp connector",
+        description: "Configure ClickUp connector",
         values: [
           {
             type: "select",
@@ -1507,7 +1507,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "google_sites":
       return {
-        description: "Configuration for Google Sites connector",
+        description: "Configure Google Sites connector",
         values: [
           {
             type: "text",
@@ -1528,23 +1528,23 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "zendesk":
       return {
-        description: "Configuration for Zendesk connector",
+        description: "Configure Zendesk connector",
         values: [], // No specific configuration needed based on the interface
       };
     case "linear":
       return {
-        description: "Configuration for Dropbox connector",
+        description: "Configure Dropbox connector",
         values: [], // No specific configuration needed based on the interface
       };
     case "dropbox":
       return {
-        description: "Configuration for Dropbox connector",
+        description: "Configure Dropbox connector",
         values: [], // No specific configuration needed based on the interface
       };
 
     case "s3":
       return {
-        description: "Configuration for S3 connector",
+        description: "Configure S3 connector",
         values: [
           {
             type: "text",
@@ -1565,7 +1565,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "r2":
       return {
-        description: "Configuration for R2 connector",
+        description: "Configure R2 connector",
         values: [
           {
             type: "text",
@@ -1586,7 +1586,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "google_cloud_storage":
       return {
-        description: "Configuration for Google Cloud Storage connector",
+        description: "Configure Google Cloud Storage connector",
         values: [
           {
             type: "text",
@@ -1608,7 +1608,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "oci_storage":
       return {
-        description: "Configuration for OCI Storage connector",
+        description: "Configure OCI Storage connector",
         values: [
           {
             type: "text",
@@ -1629,7 +1629,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "wikipedia":
       return {
-        description: "Configuration for Wikipedia connector",
+        description: "Configure Wikipedia connector",
         values: [
           {
             type: "text",
@@ -1679,7 +1679,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 
     case "mediawiki":
       return {
-        description: "Configuration for MediaWiki connector",
+        description: "Configure MediaWiki connector",
         values: [
           {
             type: "text",
