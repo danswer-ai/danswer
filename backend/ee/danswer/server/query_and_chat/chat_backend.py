@@ -102,7 +102,6 @@ def handle_simplified_chat_message(
         new_msg_req=full_chat_msg_info,
         user=user,
         db_session=db_session,
-        return_only_source_docs=chat_message_req.only_retrieve_search_docs,
     )
 
     response = ChatBasicResponse()

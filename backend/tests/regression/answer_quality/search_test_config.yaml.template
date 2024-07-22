@@ -22,9 +22,6 @@ launch_web_ui: false
 # Whether to only run Vespa and Postgres
 only_state: false
 
-# Only retrieve documents, not LLM response
-only_retrieve_docs: false
-
 # Whether to use a cloud GPU for processing
 use_cloud_gpu: false
 

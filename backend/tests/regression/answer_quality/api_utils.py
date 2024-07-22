@@ -50,9 +50,7 @@ def _delete_chat_session(chat_session_id: int, run_suffix: str) -> None:
 
 
 @retry(tries=5, delay=5)
-def get_answer_from_query(
-    query: str, only_retrieve_docs: bool, run_suffix: str
-) -> tuple[list[str], str]:
+def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
     filters = IndexFilters(
         source_type=None,
         document_set=None,
@@ -76,7 +74,6 @@ def get_answer_from_query(
         message=query,
         retrieval_options=retrieval_options,
         query_override=query,
-        only_retrieve_search_docs=only_retrieve_docs,
     )
 
     body = new_message_request.dict()
