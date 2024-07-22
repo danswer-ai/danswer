@@ -78,6 +78,9 @@ class EmbeddingModel:
             return []
 
         if self.retrim_content:
+            # This is applied during indexing as a catchall for overly long titles (or other uncapped fields)
+            # Note that this uses just the default tokenizer which may also lead to very minor miscountings
+            # However this slight miscounting is very unlikely to have any material impact.
             texts = [
                 tokenizer_trim_content(
                     content=text,
