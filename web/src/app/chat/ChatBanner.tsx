@@ -14,11 +14,14 @@ export function ChatBanner() {
   return (
     <div
       className={`
+        mt-8
+        mb-2
+        mx-2
       z-[39] 
+      w-full
       h-[30px]
       bg-background-100
       shadow-sm
-      m-2
       rounded
       border-border
       border

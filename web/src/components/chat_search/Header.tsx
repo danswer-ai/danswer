@@ -40,10 +40,10 @@ export default function FunctionalHeader({
             event.preventDefault();
             window.open(
               `/${page}` +
-                (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
+              (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
                 currentChatSession
-                  ? `?assistantId=${currentChatSession.persona_id}`
-                  : ""),
+                ? `?assistantId=${currentChatSession.persona_id}`
+                : ""),
               "_self"
             );
             break;
@@ -59,8 +59,10 @@ export default function FunctionalHeader({
     <div className="pb-6 left-0 sticky top-0 z-10 w-full relative flex">
       <div className="mt-2 mx-4 text-text-700 flex w-full">
         <div className="absolute z-[100] my-auto flex items-center text-xl font-bold">
-          <FiSidebar size={20} />
-          <div className="ml-2 text-text-700 text-xl">
+          <div className="pt-[2px] mb-auto">
+            <FiSidebar size={20} />
+          </div>
+          <div className="max-w-[200px] ml-2 text-text-700 text-xl">
             {enterpriseSettings && enterpriseSettings.application_name ? (
               <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
             ) : (
@@ -70,19 +72,23 @@ export default function FunctionalHeader({
 
           {page == "chat" && (
             <Tooltip delayDuration={1000} content={`${commandSymbol}U`}>
-              <Link
+              <Link className="mb-auto pt-[2px]"
                 href={
                   `/${page}` +
                   (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                  currentChatSession
+                    currentChatSession
                     ? `?assistantId=${currentChatSession.persona_id}`
                     : "")
                 }
               >
+                <div className="cursor-pointer ml-2  flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
+                  
                 <NewChatIcon
                   size={20}
-                  className="ml-2 my-auto cursor-pointer text-text-700 hover:text-text-600 transition-colors duration-300"
+                  className=""
                 />
+                </div>
+
               </Link>
             </Tooltip>
           )}
