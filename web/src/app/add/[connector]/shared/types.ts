@@ -61,4 +61,5 @@ export interface DynamicConnectionFormProps {
   onClose: () => void;
   defaultValues: any;
   setName: Dispatch<SetStateAction<string>>;
+  updateValues: (field: string, value: any) => void;
 }

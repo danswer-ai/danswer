@@ -151,7 +151,6 @@ const Main = () => {
                   const createCredentialResponse = await createCredential({
                     credential_json: {},
                     admin_public: true,
-                    source: "file",
                   });
                   if (!createCredentialResponse.ok) {
                     const errorMsg = await createCredentialResponse.text();

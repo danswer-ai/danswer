@@ -46,11 +46,12 @@ def get_connector_credential_pair(
 def get_connector_credential_source_from_id(
     cc_pair_id: int,
     db_session: Session,
-) -> DocumentSource:
+) -> DocumentSource | None:
     stmt = select(ConnectorCredentialPair)
     stmt = stmt.where(ConnectorCredentialPair.id == cc_pair_id)
     result = db_session.execute(stmt)
-    return result.scalar_one_or_none().connector.source
+    cc_pair = result.scalar_one_or_none()
+    return cc_pair.connector.source if cc_pair else None
 
 
 def get_connector_credential_pair_from_id(
@@ -86,16 +87,19 @@ def get_last_successful_attempt_time(
     # For Secondary Index we don't keep track of the latest success, so have to calculate it live
     attempt = (
         db_session.query(IndexAttempt)
+        .join(
+            ConnectorCredentialPair,
+            IndexAttempt.connector_credential_pair_id == ConnectorCredentialPair.id,
+        )
         .filter(
-            IndexAttempt.connector_id == connector_id,
-            IndexAttempt.credential_id == credential_id,
+            ConnectorCredentialPair.connector_id == connector_id,
+            ConnectorCredentialPair.credential_id == credential_id,
             IndexAttempt.embedding_model_id == embedding_model.id,
             IndexAttempt.status == IndexingStatus.SUCCESS,
         )
         .order_by(IndexAttempt.time_started.desc())
         .first()
     )
-
     if not attempt or not attempt.time_started:
         return 0.0
 
@@ -266,8 +270,8 @@ def resync_cc_pair(
             db_session.query(IndexAttempt)
             .join(EmbeddingModel, IndexAttempt.embedding_model_id == EmbeddingModel.id)
             .filter(
-                IndexAttempt.connector_id == connector_id,
-                IndexAttempt.credential_id == credential_id,
+                IndexAttempt.connector_credential_pair.connector_id == connector_id,
+                IndexAttempt.connector_credential_pair.credential_id == credential_id,
                 EmbeddingModel.status == IndexModelStatus.PRESENT,
             )
         )

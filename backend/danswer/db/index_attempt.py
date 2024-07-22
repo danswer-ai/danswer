@@ -15,6 +15,7 @@ from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
+from danswer.server.documents.models import ConnectorCredentialPair
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
@@ -56,7 +57,9 @@ def get_inprogress_index_attempts(
 ) -> list[IndexAttempt]:
     stmt = select(IndexAttempt)
     if connector_id is not None:
-        stmt = stmt.where(IndexAttempt.connector_id == connector_id)
+        stmt = stmt.where(
+            IndexAttempt.connector_credential_pair.has(connector_id=connector_id)
+        )
     stmt = stmt.where(IndexAttempt.status == IndexingStatus.IN_PROGRESS)
 
     incomplete_attempts = db_session.scalars(stmt)
@@ -69,7 +72,12 @@ def get_not_started_index_attempts(db_session: Session) -> list[IndexAttempt]:
     stmt = select(IndexAttempt)
     stmt = stmt.where(IndexAttempt.status == IndexingStatus.NOT_STARTED)
     stmt = stmt.options(
-        joinedload(IndexAttempt.connector), joinedload(IndexAttempt.credential)
+        joinedload(IndexAttempt.connector_credential_pair).joinedload(
+            ConnectorCredentialPair.connector
+        ),
+        joinedload(IndexAttempt.connector_credential_pair).joinedload(
+            ConnectorCredentialPair.credential
+        ),
     )
     new_attempts = db_session.scalars(stmt)
     return list(new_attempts.all())
@@ -103,7 +111,7 @@ def mark_attempt_failed(
     db_session.add(index_attempt)
     db_session.commit()
 
-    source = index_attempt.connector.source
+    source = index_attempt.connector_credential_pair.connector.source
     optional_telemetry(record_type=RecordType.FAILURE, data={"connector": source})
 
 
@@ -129,10 +137,12 @@ def get_last_attempt(
     db_session: Session,
 ) -> IndexAttempt | None:
     stmt = select(IndexAttempt).where(
-        IndexAttempt.connector_id == connector_id,
-        IndexAttempt.credential_id == credential_id,
+        IndexAttempt.connector_credential_pair.has(
+            connector_id=connector_id, credential_id=credential_id
+        ),
         IndexAttempt.embedding_model_id == embedding_model_id,
     )
+
     # Note, the below is using time_created instead of time_updated
     stmt = stmt.order_by(desc(IndexAttempt.time_created))
 
@@ -145,8 +155,7 @@ def get_latest_index_attempts(
     db_session: Session,
 ) -> Sequence[IndexAttempt]:
     ids_stmt = select(
-        IndexAttempt.connector_id,
-        IndexAttempt.credential_id,
+        IndexAttempt.connector_credential_pair_id,
         func.max(IndexAttempt.time_created).label("max_time_created"),
     ).join(EmbeddingModel, IndexAttempt.embedding_model_id == EmbeddingModel.id)
 
@@ -158,28 +167,31 @@ def get_latest_index_attempts(
     where_stmts: list[ColumnElement] = []
     for connector_credential_pair_identifier in connector_credential_pair_identifiers:
         where_stmts.append(
-            and_(
-                IndexAttempt.connector_id
-                == connector_credential_pair_identifier.connector_id,
-                IndexAttempt.credential_id
-                == connector_credential_pair_identifier.credential_id,
+            IndexAttempt.connector_credential_pair_id
+            == (
+                select(ConnectorCredentialPair.id)
+                .where(
+                    ConnectorCredentialPair.connector_id
+                    == connector_credential_pair_identifier.connector_id,
+                    ConnectorCredentialPair.credential_id
+                    == connector_credential_pair_identifier.credential_id,
+                )
+                .scalar_subquery()
             )
         )
     if where_stmts:
         ids_stmt = ids_stmt.where(or_(*where_stmts))
-    ids_stmt = ids_stmt.group_by(IndexAttempt.connector_id, IndexAttempt.credential_id)
-    ids_subqery = ids_stmt.subquery()
+    ids_stmt = ids_stmt.group_by(IndexAttempt.connector_credential_pair_id)
+    ids_subquery = ids_stmt.subquery()
 
     stmt = (
         select(IndexAttempt)
         .join(
-            ids_subqery,
-            and_(
-                ids_subqery.c.connector_id == IndexAttempt.connector_id,
-                ids_subqery.c.credential_id == IndexAttempt.credential_id,
-            ),
+            ids_subquery,
+            IndexAttempt.connector_credential_pair_id
+            == ids_subquery.c.connector_credential_pair_id,
         )
-        .where(IndexAttempt.time_created == ids_subqery.c.max_time_created)
+        .where(IndexAttempt.time_created == ids_subquery.c.max_time_created)
     )
 
     return db_session.execute(stmt).scalars().all()
@@ -192,7 +204,7 @@ def get_index_attempts_for_connector(
     disinclude_finished: bool = False,
 ) -> Sequence[IndexAttempt]:
     stmt = select(IndexAttempt).where(
-        IndexAttempt.connector_id == connector_id,
+        IndexAttempt.connector_credential_pair.connector_id == connector_id,
     )
     if disinclude_finished:
         stmt = stmt.where(
@@ -217,8 +229,10 @@ def get_index_attempts_for_cc_pair(
 ) -> Sequence[IndexAttempt]:
     stmt = select(IndexAttempt).where(
         and_(
-            IndexAttempt.connector_id == cc_pair_identifier.connector_id,
-            IndexAttempt.credential_id == cc_pair_identifier.credential_id,
+            IndexAttempt.connector_credential_pair.connector_id
+            == cc_pair_identifier.connector_id,
+            IndexAttempt.connector_credential_pair.credential_id
+            == cc_pair_identifier.credential_id,
         )
     )
     if disinclude_finished:
@@ -242,8 +256,8 @@ def delete_index_attempts(
     db_session: Session,
 ) -> None:
     stmt = delete(IndexAttempt).where(
-        IndexAttempt.connector_id == connector_id,
-        IndexAttempt.credential_id == credential_id,
+        IndexAttempt.connector_credential_pair.connector_id == connector_id,
+        IndexAttempt.connector_credential_pair.credential_id == credential_id,
     )
     db_session.execute(stmt)
 
@@ -279,7 +293,7 @@ def cancel_indexing_attempts_for_connector(
     include_secondary_index: bool = False,
 ) -> None:
     stmt = delete(IndexAttempt).where(
-        IndexAttempt.connector_id == connector_id,
+        IndexAttempt.connector_credential_pair.connector_id == connector_id,
         IndexAttempt.status == IndexingStatus.NOT_STARTED,
     )
 
@@ -320,7 +334,7 @@ def count_unique_cc_pairs_with_successful_index_attempts(
     Then do distinct by connector_id and credential_id which is equivalent to the cc-pair. Finally,
     do a count to get the total number of unique cc-pairs with successful attempts"""
     unique_pairs_count = (
-        db_session.query(IndexAttempt.connector_id, IndexAttempt.credential_id)
+        db_session.query(IndexAttempt.connector_credential_pair)
         .filter(
             IndexAttempt.embedding_model_id == embedding_model_id,
             IndexAttempt.status == IndexingStatus.SUCCESS,

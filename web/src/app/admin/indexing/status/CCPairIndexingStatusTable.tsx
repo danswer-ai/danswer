@@ -79,7 +79,7 @@ function SummaryRow({
         <div className="text-xl font-semibold">{summary.count}</div>
       </TableCell>
 
-      <TableCell className={`py-4 w-[${columnWidths.second}]`}>
+      <TableCell className={` py-4 w-[${columnWidths.second}]`}>
         <div className="text-sm text-gray-500">Active Connectors</div>
         <Tooltip
           content={`${summary.active} out of ${summary.count} connectors are active`}
@@ -100,7 +100,7 @@ function SummaryRow({
 
       <TableCell className={`py-4 w-[${columnWidths.fourth}]`}>
         <div className="text-sm text-gray-500">Public Connectors</div>
-        <p className="flex text-xl font-semibolditems-center text-lg mt-1">
+        <p className="flex text-xl mx-auto font-semibolditems-center text-lg mt-1">
           {summary.public}/{summary.count}
         </p>
       </TableCell>
@@ -181,11 +181,11 @@ function ConnectorRow({
           <FiXCircle className="my-auto text-red-600" />
         )}
       </TableCell>
-      <TableCell className={`w-[${columnWidths.fifth}]`}>
-        {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
-      </TableCell>
       <TableCell className={`w-[${columnWidths.sixth}]`}>
         {ccPairsIndexingStatus.docs_indexed}
+      </TableCell>
+      <TableCell className={`w-[${columnWidths.fifth}]`}>
+        {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
       </TableCell>
       <TableCell className={`w-[${columnWidths.seventh}]`}>
         <CustomTooltip content="Manage Connector">
@@ -297,11 +297,11 @@ export function CCPairIndexingStatusTable({
             <TableHeaderCell className={`w-[${columnWidths.fourth}]`}>
               Public
             </TableHeaderCell>
-            <TableHeaderCell className={`w-[${columnWidths.fifth}]`}>
-              Last Indexed
-            </TableHeaderCell>
             <TableHeaderCell className={`w-[${columnWidths.sixth}]`}>
               Total Docs
+            </TableHeaderCell>
+            <TableHeaderCell className={`w-[${columnWidths.fifth}]`}>
+              Last Indexed
             </TableHeaderCell>
             <TableHeaderCell
               className={`w-[${columnWidths.seventh}]`}
@@ -334,11 +334,11 @@ export function CCPairIndexingStatusTable({
                     <TableHeaderCell className={`w-[${columnWidths.fourth}]`}>
                       Public
                     </TableHeaderCell>
-                    <TableHeaderCell className={`w-[${columnWidths.fifth}]`}>
-                      Last Indexed
-                    </TableHeaderCell>
                     <TableHeaderCell className={`w-[${columnWidths.sixth}]`}>
                       Total Docs
+                    </TableHeaderCell>
+                    <TableHeaderCell className={`w-[${columnWidths.fifth}]`}>
+                      Last Indexed
                     </TableHeaderCell>
                     <TableHeaderCell
                       className={`w-[${columnWidths.seventh}]`}

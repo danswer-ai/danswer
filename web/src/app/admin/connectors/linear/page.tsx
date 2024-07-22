@@ -135,7 +135,6 @@ const Main = () => {
                   />
                 </>
               }
-              source="linear"
               validationSchema={Yup.object().shape({
                 linear_api_key: Yup.string().required(
                   "Please enter your Linear API Key!"

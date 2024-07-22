@@ -142,7 +142,7 @@ export default function CreateCredential({
       {(formikProps) => (
         <Form>
           {!hideSource && (
-            <p>
+            <p className="text-sm">
               Check our
               <a
                 className="text-blue-600 hover:underline"
@@ -176,23 +176,23 @@ export default function CreateCredential({
                 }
               />
             ))}
-            {hideSource && (
-              <Button
-                className="bg-indigo-500 hover:bg-indigo-400"
-                onClick={() =>
-                  handleSubmit(formikProps.values, formikProps, "create")
-                }
-                type="button"
-                disabled={formikProps.isSubmitting}
-              >
-                <div className="flex gap-x-2 items-center w-full border-none">
-                  <FaSwatchbook />
-                  <p>Create</p>
-                </div>
-              </Button>
-            )}
+            {/* {hideSource && ( */}
+            <Button
+              className="bg-indigo-500 hover:bg-indigo-400"
+              onClick={() =>
+                handleSubmit(formikProps.values, formikProps, "create")
+              }
+              type="button"
+              disabled={formikProps.isSubmitting}
+            >
+              <div className="flex gap-x-2 items-center w-full border-none">
+                <FaSwatchbook />
+                <p>Create</p>
+              </div>
+            </Button>
+            {/* )} */}
           </Card>
-          <div className="flex gap-x-4 mt-8 justify-end">
+          <div className="flex gap-x-4 w-full mt-8 justify-end">
             {connector && (
               <Button
                 className="bg-rose-500 hover:bg-rose-400 border-rose-800"
@@ -205,21 +205,6 @@ export default function CreateCredential({
                 <div className="flex gap-x-2 items-center w-full border-none">
                   <FaAccusoft />
                   <p>Create + Swap</p>
-                </div>
-              </Button>
-            )}
-            {!hideSource && (
-              <Button
-                className="bg-indigo-500 hover:bg-indigo-400"
-                onClick={() =>
-                  handleSubmit(formikProps.values, formikProps, "create")
-                }
-                type="button"
-                disabled={formikProps.isSubmitting}
-              >
-                <div className="flex gap-x-2 items-center w-full border-none">
-                  <FaSwatchbook />
-                  <p>Create</p>
                 </div>
               </Button>
             )}

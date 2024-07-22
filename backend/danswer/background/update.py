@@ -111,8 +111,8 @@ def _mark_run_failed(
     """Marks the `index_attempt` row as failed + updates the `
     connector_credential_pair` to reflect that the run failed"""
     logger.warning(
-        f"Marking in-progress attempt 'connector: {index_attempt.connector_id}, "
-        f"credential: {index_attempt.credential_id}' as failed due to {failure_reason}"
+        f"Marking in-progress attempt 'connector: {index_attempt.connector_credential_pair.connector_id}, "
+        f"credential: {index_attempt.connector_credential_pair.credential_id}' as failed due to {failure_reason}"
     )
     mark_attempt_failed(
         index_attempt=index_attempt,
@@ -144,8 +144,8 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
                 continue
             ongoing.add(
                 (
-                    attempt.connector_id,
-                    attempt.credential_id,
+                    attempt.connector_credential_pair.connector_id,
+                    attempt.connector_credential_pair.credential_id,
                     attempt.embedding_model_id,
                 )
             )
@@ -288,7 +288,7 @@ def kickoff_indexing_jobs(
             if embedding_model is not None
             else False
         )
-        if attempt.connector is None:
+        if attempt.connector_credential_pair.connector is None:
             logger.warning(
                 f"Skipping index attempt as Connector has been deleted: {attempt}"
             )
@@ -297,7 +297,7 @@ def kickoff_indexing_jobs(
                     attempt, db_session, failure_reason="Connector is null"
                 )
             continue
-        if attempt.credential is None:
+        if attempt.connector_credential_pair.credential is None:
             logger.warning(
                 f"Skipping index attempt as Credential has been deleted: {attempt}"
             )
@@ -326,9 +326,9 @@ def kickoff_indexing_jobs(
             secondary_str = "(secondary index) " if use_secondary_index else ""
             logger.info(
                 f"Kicked off {secondary_str}"
-                f"indexing attempt for connector: '{attempt.connector.name}', "
-                f"with config: '{attempt.connector.connector_specific_config}', and "
-                f"with credentials: '{attempt.credential_id}'"
+                f"indexing attempt for connector: '{attempt.connector_credential_pair.connector.name}', "
+                f"with config: '{attempt.connector_credential_pair.connector.connector_specific_config}', and "
+                f"with credentials: '{attempt.connector_credential_pair.credential_id}'"
             )
             existing_jobs_copy[attempt.id] = run
 

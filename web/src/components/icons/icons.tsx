@@ -69,7 +69,7 @@ import dropboxIcon from "../../../public/Dropbox.png";
 import slackIcon from "../../../public/Slack.png";
 
 import s3Icon from "../../../public/S3.png";
-import r2Icon from "../../../public/r2.webp";
+import r2Icon from "../../../public/r2.png";
 import salesforceIcon from "../../../public/Salesforce.png";
 import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";

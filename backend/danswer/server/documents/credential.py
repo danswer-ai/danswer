@@ -17,6 +17,7 @@ from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
 from danswer.db.models import DocumentSource
 from danswer.db.models import User
+from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import CredentialBase
 from danswer.server.documents.models import CredentialDataUpdateRequest
 from danswer.server.documents.models import CredentialSnapshot
@@ -90,13 +91,13 @@ def swap_credentials_for_connector(
     credentail_swap_req: CredentialSwapRequest,
     _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> None:
+) -> CCPairFullInfo:
     new_pair = swap_credentials_connector(
         new_credential_id=credentail_swap_req.new_credential_id,
         connector_id=credentail_swap_req.connector_id,
         db_session=db_session,
     )
-    return new_pair
+    return CCPairFullInfo.from_cc_pair_db_model(new_pair)
 
 
 """Endpoints for all"""
@@ -185,6 +186,7 @@ def update_credential_from_model(
         )
 
     return CredentialSnapshot(
+        source=updated_credential.source,
         id=updated_credential.id,
         credential_json=updated_credential.credential_json,
         user_id=updated_credential.user_id,

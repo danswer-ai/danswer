@@ -22,7 +22,7 @@ import useSWR, { mutate } from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ThreeDotsLoader } from "@/components/Loading";
 import CredentialSection from "@/components/credentials/CredentialSection";
-import { buildCCPairInfoUrl, buildSimilarCredentialInfoURL } from "./lib";
+import { buildCCPairInfoUrl } from "./lib";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not

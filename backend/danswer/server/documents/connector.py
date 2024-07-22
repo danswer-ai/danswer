@@ -387,7 +387,10 @@ def get_connector_indexing_status(
         db_session=db_session,
     )
     cc_pair_to_latest_index_attempt = {
-        (index_attempt.connector_id, index_attempt.credential_id): index_attempt
+        (
+            index_attempt.connector_credential_pair.connector_id,
+            index_attempt.connector_credential_pair.credential_id,
+        ): index_attempt
         for index_attempt in latest_index_attempts
     }
 

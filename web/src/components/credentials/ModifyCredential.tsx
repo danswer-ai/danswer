@@ -38,6 +38,7 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
     const newSelectedId =
       selectedCredentialId === credentialId ? null : credentialId;
     setSelectedCredentialId(newSelectedId);
+
     const selectedCredential =
       credentials.find((cred) => cred.id === newSelectedId) || null;
     onSelectCredential(selectedCredential);
@@ -58,59 +59,64 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
             <th />
           </tr>
         </thead>
-        <tbody>
-          {credentials.map((credential, ind) => {
-            const selected = currentCredentialId
-              ? credential.id == currentCredentialId
-              : false;
-            return (
-              <tr key={credential.id} className="border-b hover:bg-gray-50">
-                <td className="p-2">
-                  {!selected ? (
-                    <input
-                      type="radio"
-                      name="credentialSelection"
-                      checked={selectedCredentialId === credential.id}
-                      onChange={() => handleSelectCredential(credential.id)}
-                      className="form-radio h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                    />
-                  ) : (
-                    <Badge>current</Badge>
-                  )}
-                </td>
-                <td className="p-2">{credential.id}</td>
-                <td className="p-2">
-                  <p>{credential.name ?? "Untitled"}</p>
-                </td>
-                <td className="p-2">
-                  {new Date(credential.time_created).toLocaleString()}
-                </td>
-                <td className="p-2">
-                  {new Date(credential.time_updated).toLocaleString()}
-                </td>
-                <td className="pt-3 flex gap-x-2 content-center mt-auto">
-                  <button
-                    disabled={selected}
-                    onClick={async () => {
-                      onDeleteCredential(credential);
-                    }}
-                    className="disabled:opacity-20 enabled:cursor-pointer my-auto"
-                  >
-                    <TrashIcon />
-                  </button>
-                  {onEditCredential && (
+
+        {credentials.length > 0 ? (
+          <tbody>
+            {credentials.map((credential, ind) => {
+              const selected = currentCredentialId
+                ? credential.id == currentCredentialId
+                : false;
+              return (
+                <tr key={credential.id} className="border-b hover:bg-gray-50">
+                  <td className="p-2">
+                    {!selected ? (
+                      <input
+                        type="radio"
+                        name="credentialSelection"
+                        checked={selectedCredentialId === credential.id}
+                        onChange={() => handleSelectCredential(credential.id)}
+                        className="form-radio h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                      />
+                    ) : (
+                      <Badge>current</Badge>
+                    )}
+                  </td>
+                  <td className="p-2">{credential.id}</td>
+                  <td className="p-2">
+                    <p>{credential.name ?? "Untitled"}</p>
+                  </td>
+                  <td className="p-2">
+                    {new Date(credential.time_created).toLocaleString()}
+                  </td>
+                  <td className="p-2">
+                    {new Date(credential.time_updated).toLocaleString()}
+                  </td>
+                  <td className="pt-3 flex gap-x-2 content-center mt-auto">
                     <button
-                      onClick={() => onEditCredential(credential)}
-                      className="cursor-pointer my-auto"
+                      disabled={selected}
+                      onClick={async () => {
+                        onDeleteCredential(credential);
+                      }}
+                      className="disabled:opacity-20 enabled:cursor-pointer my-auto"
                     >
-                      <EditIcon />
+                      <TrashIcon />
                     </button>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
+                    {onEditCredential && (
+                      <button
+                        onClick={() => onEditCredential(credential)}
+                        className="cursor-pointer my-auto"
+                      >
+                        <EditIcon />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        ) : (
+          <p> No credentials exist for this connector!</p>
+        )}
       </table>
     </div>
   );
@@ -118,6 +124,7 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
 
 export default function ModifyCredential({
   onClose = () => null,
+  showIfEmpty,
   attachedConnector,
   onSwap,
   onCreateNew = () => null,
@@ -130,6 +137,7 @@ export default function ModifyCredential({
   defaultedCredential,
   onSwitch,
 }: {
+  showIfEmpty?: boolean;
   attachedConnector?: Connector<any>;
   defaultedCredential?: Credential<any>;
   display?: boolean;
@@ -202,14 +210,16 @@ export default function ModifyCredential({
 
       <div className="mb-0">
         <Text className="mb-4 ">
-          Swap credentials as needed! Ensure that you have selected a credential
-          with the proper permissions for this connector!
+          {showIfEmpty ? "Select" : "Swap"} credentials as needed! Ensure that
+          you have selected a credential with the proper permissions for this
+          connector!
         </Text>
 
-        {credentials.length > 1 || (display && credentials.length == 1) ? (
+        {showIfEmpty ||
+        credentials.length > 1 ||
+        (display && credentials.length == 1) ? (
           <CredentialSelectionTable
             onDeleteCredential={async (credential: Credential<any | null>) => {
-              // await onDeleteCredential(credential);
               setConfirmDeletionCredential(credential);
             }}
             onEditCredential={
@@ -222,9 +232,11 @@ export default function ModifyCredential({
               defaultedCredential ? defaultedCredential.id : undefined
             }
             credentials={credentials}
-            onSelectCredential={(credential: Credential<any> | null) =>
-              handleSelectCredential(credential)
-            }
+            onSelectCredential={(credential: Credential<any> | null) => {
+              if (credential && onSwitch) {
+                onSwitch(credential);
+              }
+            }}
           />
         ) : (
           <p className="text-lg">
@@ -232,39 +244,41 @@ export default function ModifyCredential({
           </p>
         )}
 
-        <div className="flex mt-8 justify-end">
-          {credentials.length > 1 || (display && credentials.length == 1) ? (
-            <Button
-              disabled={selectedCredential == null}
-              onClick={() => {
-                if (onSwap && attachedConnector) {
-                  onSwap(selectedCredential!, attachedConnector.id);
-                }
-                if (onSwitch) {
-                  onSwitch(selectedCredential!);
-                }
-              }}
-              className="bg-indigo-500 disabled:border-transparent 
+        {!showIfEmpty && (
+          <div className="flex mt-8 justify-end">
+            {credentials.length > 1 || (display && credentials.length == 1) ? (
+              <Button
+                disabled={selectedCredential == null}
+                onClick={() => {
+                  if (onSwap && attachedConnector) {
+                    onSwap(selectedCredential!, attachedConnector.id);
+                  }
+                  if (onSwitch) {
+                    onSwitch(selectedCredential!);
+                  }
+                }}
+                className="bg-indigo-500 disabled:border-transparent 
               transition-colors duration-150 ease-in disabled:bg-indigo-300 
               disabled:hover:bg-indigo-300 hover:bg-indigo-600 cursor-pointer"
-            >
-              <div className="flex gap-x-2 items-center w-full border-none">
-                <SwapIcon className="text-white" />
-                <p>Swap</p>
-              </div>
-            </Button>
-          ) : (
-            <Button
-              onClick={onCreateNew}
-              className="bg-indigo-500 disabled:bg-indigo-300 hover:bg-indigo-400"
-            >
-              <div className="flex gap-x-2 items-center w-full border-none">
-                <FaCreativeCommons />
-                <p>Create New</p>
-              </div>
-            </Button>
-          )}
-        </div>
+              >
+                <div className="flex gap-x-2 items-center w-full border-none">
+                  <SwapIcon className="text-white" />
+                  <p>Swap</p>
+                </div>
+              </Button>
+            ) : (
+              <Button
+                onClick={onCreateNew}
+                className="bg-indigo-500 disabled:bg-indigo-300 hover:bg-indigo-400"
+              >
+                <div className="flex gap-x-2 items-center w-full border-none">
+                  <FaCreativeCommons />
+                  <p>Create New</p>
+                </div>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </>
   );

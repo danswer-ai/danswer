@@ -266,7 +266,6 @@ export interface WikipediaConfig extends MediaWikiBaseConfig {}
 
 export interface IndexAttemptSnapshot {
   id: number;
-  credential: Credential<any>;
   status: ValidStatuses | null;
   new_docs_indexed: number;
   docs_removed_from_index: number;
@@ -1589,6 +1588,14 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             name: "prefix",
             optional: true,
           },
+          {
+            type: "text",
+            label: "Bucket Type",
+            name: "bucket_type",
+            optional: false,
+            default: "r2",
+            hidden: true,
+          },
         ],
       };
 
@@ -1609,7 +1616,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             query: "Enter the prefix:",
             label: "Path Prefix",
             name: "prefix",
-            optional: false,
+            optional: true,
           },
         ],
       };
@@ -1630,7 +1637,15 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             query: "Enter the prefix:",
             label: "Prefix",
             name: "prefix",
+            optional: true,
+          },
+          {
+            type: "text",
+            label: "Bucket Type",
+            name: "bucket_type",
             optional: false,
+            default: "oci_storage",
+            hidden: true,
           },
         ],
       };

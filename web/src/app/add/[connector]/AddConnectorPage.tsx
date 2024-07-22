@@ -64,7 +64,7 @@ export default function AddConnector({
   const configuration: ConnectionConfiguration =
     getComprehensiveConnectorConfigTemplate(connector);
 
-  const [values, setValues] = useState(null);
+  const [values, setValues] = useState<{ [record: string]: any } | null>(null);
 
   if (!currentCredential) {
     setFormStep(Math.min(formStep, 0));
@@ -73,6 +73,11 @@ export default function AddConnector({
   const [refreshFreq, setRefreshFreq] = useState<number>(0);
   const [pruneFreq, setPruneFreq] = useState<number>(0);
   const [isPublic, setIsPublic] = useState(false);
+
+  const resetAdvancedSettings = () => {
+    setPruneFreq(0);
+    setRefreshFreq(0);
+  };
 
   const createConnector = async () => {
     if (!currentCredential) {
@@ -104,7 +109,7 @@ export default function AddConnector({
       const linkCredentialResponse = await linkCredential(
         response.id,
         currentCredential.id,
-        "random name",
+        name,
         isPublic
       );
       if (linkCredentialResponse.ok) {
@@ -124,7 +129,7 @@ export default function AddConnector({
     return (
       <div className="mx-auto flex flex-col gap-y-2">
         <HeaderTitle>
-          <p>'{connector}' is not a valid Connector Type!</p>
+          <p>&lsquo;{connector}&lsquo; is not a valid Connector Type!</p>
         </HeaderTitle>
         <Button
           onClick={() => window.open("/admin/indexing/status", "_self")}
@@ -159,6 +164,16 @@ export default function AddConnector({
     refresh();
   };
 
+  const updateValues = (field: string, value: any) => {
+    setValues((values) => {
+      if (!values) {
+        return { [field]: value };
+      } else {
+        return { ...values, [field]: value };
+      }
+    });
+  };
+
   return (
     <div className="mx-auto w-full">
       {popup}
@@ -175,52 +190,34 @@ export default function AddConnector({
       {formStep == 0 && (
         <>
           <Card>
-            <Title className="mb-2">Select a credential</Title>
-            {currentCredential ? (
-              <CreateConnectorCredentialSection
-                credentials={credentials}
-                refresh={() => refresh()}
-                updateCredential={setCurrentCredential}
-                currentCredential={currentCredential}
-                sourceType={connector}
-              />
-            ) : credentials.length == 0 ? (
-              <div className="mt-4">
-                <p>
-                  No credentials exist! Create your first {displayName}{" "}
-                  credential!
-                </p>
-                <CreateCredential
-                  refresh={refresh}
-                  sourceType={connector}
-                  setPopup={setPopup}
-                />
-              </div>
-            ) : (
-              <>
-                <ModifyCredential
-                  display
-                  source={connector}
-                  defaultedCredential={currentCredential!}
-                  credentials={credentials}
-                  setPopup={setPopup}
-                  onDeleteCredential={onDeleteCredential}
-                  onSwitch={onSwap}
-                />
-                <div className="my-8 w-full flex gap-x-2 items-center">
-                  <div className="w-full h-[2px] bg-neutral-300" />
-                  <p className="text-sm flex-none">or create</p>
-                  <div className="w-full h-[2px] bg-neutral-300" />
-                </div>
-                <Title className="mb-2">Create a credential</Title>
+            <Title className="mb-2 text-lg">Select a credential</Title>
 
-                <CreateCredential
-                  refresh={refresh}
-                  sourceType={connector}
-                  setPopup={setPopup}
-                />
-              </>
-            )}
+            <ModifyCredential
+              showIfEmpty
+              display
+              source={connector}
+              defaultedCredential={currentCredential!}
+              credentials={credentials}
+              setPopup={setPopup}
+              onDeleteCredential={onDeleteCredential}
+              onSwitch={onSwap}
+            />
+
+            <div className="my-8 w-full flex gap-x-2 items-center">
+              <div className="w-full h-[1px] bg-neutral-300" />
+              <p className="text-sm flex-none">or create</p>
+              <div className="w-full h-[1px] bg-neutral-300" />
+            </div>
+
+            <Title className="mb-2 text-lg">Create a credential</Title>
+
+            <CreateCredential
+              refresh={refresh}
+              sourceType={connector}
+              setPopup={setPopup}
+            />
+
+            {/* )} */}
           </Card>
           <div className="mt-4 flex w-full justify-end">
             <Button
@@ -237,6 +234,7 @@ export default function AddConnector({
         <>
           <Card>
             <DynamicConnectionForm
+              updateValues={updateValues}
               setName={setName}
               config={configuration}
               onSubmit={(values: any) => {
@@ -247,26 +245,30 @@ export default function AddConnector({
               onClose={() => null}
               defaultValues={values}
             />
-            <div className="flex w-full">
-              <Button
-                color="zinc"
-                onClick={() => nextFormStep()}
-                className="flex gap-x-2 ml-auto"
-              >
-                <SettingsIcon className=" h-3 w-3" />
-              </Button>
-            </div>
           </Card>
-          <div className="mt-4 flex w-full justify-between">
+          <div className="mt-4 flex w-full grid grid-cols-3 ">
             <button
-              className="px-2 hover:bg-accent/80 transition-color duration-300 rounded-lg bg-accent"
+              className="px-2 mr-auto hover:bg-accent/80 transition-color text-white duration-300 rounded-lg bg-accent"
               onClick={() => prevFormStep()}
             >
-              <FiChevronLeft className="text-neutral-200 h-6 w-6" />
+              Previous
             </button>
-            <Button color="gray" onClick={() => createConnector()}>
+
+            <Button
+              className="mx-auto"
+              type="button"
+              color="gray"
+              onClick={() => createConnector()}
+            >
               Create
             </Button>
+
+            <button
+              className="ml-auto hover:underline"
+              onClick={() => nextFormStep()}
+            >
+              Advanced Settings
+            </button>
           </div>
         </>
       )}
@@ -284,10 +286,10 @@ export default function AddConnector({
           <div className="mt-4 flex w-full mx-auto max-w-2xl justify-between">
             <Button
               color="violet"
-              onClick={() => prevFormStep()}
+              onClick={() => resetAdvancedSettings()}
               className="flex gap-x-2"
             >
-              <div className="w-full items-center gap-x-2 flex">Quit?</div>
+              <div className="w-full items-center gap-x-2 flex">Reset?</div>
             </Button>
             <Button onClick={() => prevFormStep()}>Update</Button>
           </div>

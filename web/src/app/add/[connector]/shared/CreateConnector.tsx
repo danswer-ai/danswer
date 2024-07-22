@@ -13,6 +13,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   onSubmit,
   onClose,
   setName,
+  updateValues,
   defaultValues,
 }) => {
   const initialValues =
@@ -52,9 +53,12 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
       {} as Record<string, any>
     )
   );
-  console.log(validationSchema);
-  console.log(initialValues);
-  console.log(config.values);
+
+  const updateValue =
+    (setFieldValue: Function) => (field: string, value: any) => {
+      setFieldValue(field, value);
+      updateValues(field, value);
+    };
 
   return (
     <div className="py-4 rounded-lg max-w-2xl mx-auto">
@@ -68,7 +72,6 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
         initialValues={initialValues}
         validationSchema={validationSchema}
         onSubmit={(values, formikHelpers) => {
-          console.log("SUBMITTING?");
           onSubmit(values);
         }}
       >
@@ -76,13 +79,14 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
           <Form className="space-y-6">
             <EditingValue
               description="A descriptive name for the connector. This will just be used to identify the connector in the Admin UI."
-              setFieldValue={setFieldValue}
+              setFieldValue={updateValue(setFieldValue)}
               type={"text"}
               label={"Connector Name"}
               name={"name"}
               currentValue=""
               onChange={(value: string) => setName(value)}
             />
+
             {config.values.map((field) => {
               if (!field.hidden) {
                 return (
@@ -113,10 +117,31 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                                 <Field
                                   name={`${field.name}.${index}`}
                                   className="w-full bg-input text-sm p-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2"
+                                  onChange={(
+                                    e: React.ChangeEvent<HTMLInputElement>
+                                  ) => {
+                                    const newValue = [...values[field.name]];
+                                    newValue[index] = e.target.value;
+                                    updateValue(setFieldValue)(
+                                      field.name,
+                                      newValue
+                                    );
+                                  }}
+                                  value={values[field.name][index]}
                                 />
+
                                 <button
                                   type="button"
-                                  onClick={() => remove(index)}
+                                  onClick={() => {
+                                    remove(index);
+                                    const newValue = values[field.name].filter(
+                                      (_: any, i: number) => i !== index
+                                    );
+                                    updateValue(setFieldValue)(
+                                      field.name,
+                                      newValue
+                                    );
+                                  }}
                                   className="p-2 my-auto bg-input flex-none rounded-md bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
                                 >
                                   <TrashIcon className="text-white my-auto" />
@@ -171,7 +196,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                         <EditingValue
                           description={field.description}
                           optional={field.optional}
-                          setFieldValue={setFieldValue}
+                          setFieldValue={updateValue(setFieldValue)}
                           type={field.type}
                           label={field.label}
                           name={field.name}
@@ -187,13 +212,12 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
             <EditingValue
               description={`If set, then documents indexed by this connector will be visible to all users. If turned off, then only users who explicitly have been given access to the documents (e.g. through a User Group) will have access`}
               optional
-              setFieldValue={setFieldValue}
+              setFieldValue={updateValue(setFieldValue)}
               type={"checkbox"}
               label={"Documents are Public?"}
               name={"public"}
               currentValue=""
             />
-            <Button type="submit">Update (temporary)</Button>
           </Form>
         )}
       </Formik>

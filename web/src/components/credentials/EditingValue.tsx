@@ -11,11 +11,7 @@ import { AdminTextField } from "./fields";
 import { ErrorMessage, Field } from "formik";
 
 export const EditingValue: React.FC<{
-  setFieldValue: (
-    field: string,
-    value: any,
-    shouldValidate?: boolean
-  ) => Promise<any>;
+  setFieldValue: (field: string, value: any) => void;
   name: string;
   currentValue?: any;
   label: string;
@@ -57,13 +53,12 @@ export const EditingValue: React.FC<{
           {type === "checkbox" ? (
             <div className="flex items-center">
               <AdminBooleanFormField
+                checked={value}
                 subtext={description}
-                onChange={(e) => {
-                  updateValue(e.target.value);
+                onChange={() => {
+                  updateValue(!(value as boolean));
                   if (onChangeBool) {
-                    console.log(e.target.value);
-                    console.log(typeof e.target.value);
-                    // onChangeBool(e.target.value!)
+                    onChangeBool(!value);
                   }
                 }}
                 name={name}
@@ -118,6 +113,7 @@ interface BooleanFormFieldProps {
   small?: boolean;
   alignTop?: boolean;
   noLabel?: boolean;
+  checked: boolean;
 }
 
 export const AdminBooleanFormField = ({
@@ -127,6 +123,7 @@ export const AdminBooleanFormField = ({
   onChange,
   noLabel,
   small,
+  checked,
   alignTop,
 }: BooleanFormFieldProps) => {
   return (
@@ -134,6 +131,7 @@ export const AdminBooleanFormField = ({
       <label className="flex text-sm">
         <Field
           name={name}
+          checked={checked}
           type="checkbox"
           className={`mr-3 bg-white px-5 w-3.5 h-3.5 ${
             alignTop ? "mt-1" : "my-auto"

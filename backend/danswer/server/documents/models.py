@@ -120,7 +120,6 @@ class IndexAttemptSnapshot(BaseModel):
     full_exception_trace: str | None
     time_started: str | None
     time_updated: str
-    credential: CredentialSnapshot
 
     @classmethod
     def from_index_attempt_db_model(
@@ -138,9 +137,6 @@ class IndexAttemptSnapshot(BaseModel):
                 index_attempt.time_started.isoformat()
                 if index_attempt.time_started
                 else None
-            ),
-            credential=CredentialSnapshot.from_credential_db_model(
-                index_attempt.credential
             ),
             time_updated=index_attempt.time_updated.isoformat(),
         )
