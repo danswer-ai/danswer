@@ -61,6 +61,8 @@ SEARCH_DISTANCE_CUTOFF = 0
 GEN_AI_MODEL_PROVIDER = os.environ.get("GEN_AI_MODEL_PROVIDER") or "openai"
 # If using Azure, it's the engine name, for example: Danswer
 GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION")
+# The fallback display name to use for default model when using a custom model provider
+GEN_AI_DISPLAY_NAME = os.environ.get("GEN_AI_DISPLAY_NAME") or "Custom LLM"
 
 # For secondary flows like extracting filters or deciding if a chunk is useful, we don't need
 # as powerful of a model as say GPT-4 so we can use an alternative that is faster and cheaper
