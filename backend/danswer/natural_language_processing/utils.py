@@ -16,24 +16,20 @@ from danswer.search.models import InferenceChunk
 from danswer.utils.logger import setup_logger
 
 
-logger = setup_logger()
-
-_LLM_TOKENIZER: Any = None
-_LLM_TOKENIZER_ENCODE: Callable[[str], Any] | None = None
-transformer_logging.set_verbosity_error()
-
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
-os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
-
-logger = setup_logger()
-
-
 if TYPE_CHECKING:
     from transformers import AutoTokenizer  # type: ignore
 
 
+logger = setup_logger()
+transformer_logging.set_verbosity_error()
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
+
+
 _TOKENIZER: tuple[Optional["AutoTokenizer"], str | None] = (None, None)
+_LLM_TOKENIZER: Any = None
+_LLM_TOKENIZER_ENCODE: Callable[[str], Any] | None = None
 
 
 # NOTE: If no model_name is specified, it may not be using the "correct" tokenizer

@@ -6,6 +6,7 @@ from httpx import HTTPError
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.natural_language_processing.utils import get_default_tokenizer
+from danswer.natural_language_processing.utils import tokenizer_trim_content
 from danswer.utils.batching import batch_list
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import MODEL_SERVER_HOST
@@ -52,6 +53,7 @@ class EmbeddingModel:
         provider_type: str | None,
         # The following are globals are currently not configurable
         max_seq_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
+        retrim_content: bool = False,
     ) -> None:
         self.api_key = api_key
         self.provider_type = provider_type
@@ -60,6 +62,7 @@ class EmbeddingModel:
         self.passage_prefix = passage_prefix
         self.normalize = normalize
         self.model_name = model_name
+        self.retrim_content = retrim_content
 
         model_server_url = build_model_server_url(server_host, server_port)
         self.embed_server_endpoint = f"{model_server_url}/encoder/bi-encoder-embed"
@@ -73,6 +76,16 @@ class EmbeddingModel:
         if not texts:
             logger.warning("No texts to be embedded")
             return []
+
+        if self.retrim_content:
+            texts = [
+                tokenizer_trim_content(
+                    content=text,
+                    desired_length=self.max_seq_length,
+                    tokenizer=get_default_tokenizer(),
+                )
+                for text in texts
+            ]
 
         if self.provider_type:
             embed_request = EmbedRequest(
@@ -205,7 +218,7 @@ def warm_up_encoders(
     # First time downloading the models it may take even longer, but just in case,
     # retry the whole server
     wait_time = 5
-    for attempt in range(20):
+    for _ in range(20):
         try:
             embed_model.encode(texts=[warm_up_str], text_type=EmbedTextType.QUERY)
             return

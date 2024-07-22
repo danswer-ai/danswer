@@ -64,6 +64,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
             # The below are globally set, this flow always uses the indexing one
             server_host=INDEXING_MODEL_SERVER_HOST,
             server_port=INDEXING_MODEL_SERVER_PORT,
+            retrim_content=True,
         )
 
     def embed_chunks(
