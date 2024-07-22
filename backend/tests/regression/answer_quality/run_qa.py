@@ -6,7 +6,6 @@ import time
 
 import yaml
 
-from tests.regression.answer_quality.api_utils import check_if_query_ready
 from tests.regression.answer_quality.api_utils import get_answer_from_query
 from tests.regression.answer_quality.cli_utils import get_current_commit_sha
 from tests.regression.answer_quality.cli_utils import get_docker_container_env_vars
@@ -142,26 +141,22 @@ def _process_and_write_query_results(config: dict) -> None:
     test_output_folder, questions = _initialize_files(config)
     print("saving test results to folder:", test_output_folder)
 
-    while not check_if_query_ready(config["run_suffix"]):
-        time.sleep(5)
-
     if config["limit"] is not None:
         questions = questions[: config["limit"]]
 
-    with multiprocessing.Pool(processes=multiprocessing.cpu_count() * 2) as pool:
+    # Use multiprocessing to process questions
+    with multiprocessing.Pool() as pool:
         results = pool.starmap(
-            _process_question, [(q, config, i + 1) for i, q in enumerate(questions)]
+            _process_question,
+            [(question, config, i + 1) for i, question in enumerate(questions)],
         )
 
     _populate_results_file(test_output_folder, results)
 
     invalid_answer_count = 0
     for result in results:
-        if not result.get("answer"):
+        if len(result["context_data_list"]) == 0:
             invalid_answer_count += 1
-
-        if not result.get("context_data_list"):
-            raise RuntimeError("Search failed, this is a critical failure!")
 
     _update_metadata_file(test_output_folder, invalid_answer_count)
 

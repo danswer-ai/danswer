@@ -61,6 +61,8 @@ Edit `search_test_config.yaml` to set:
     - Set this to true to automatically delete all docker containers, networks and volumes after the test
 - launch_web_ui
     - Set this to true if you want to use the UI during/after the testing process
+- only_state
+    - Whether to only run Vespa and Postgres
 - use_cloud_gpu
     - Set to true or false depending on if you want to use the remote gpu
     - Only need to set this if use_cloud_gpu is true

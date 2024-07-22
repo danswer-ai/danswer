@@ -39,7 +39,17 @@ def _create_new_chat_session(run_suffix: str) -> int:
         raise RuntimeError(response_json)
 
 
-@retry(tries=10, delay=10)
+def _delete_chat_session(chat_session_id: int, run_suffix: str) -> None:
+    delete_chat_url = _api_url_builder(
+        run_suffix, f"/chat/delete-chat-session/{chat_session_id}"
+    )
+
+    response = requests.delete(delete_chat_url, headers=GENERAL_HEADERS)
+    if response.status_code != 200:
+        raise RuntimeError(response.__dict__)
+
+
+@retry(tries=5, delay=5)
 def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
     filters = IndexFilters(
         source_type=None,
@@ -78,11 +88,13 @@ def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
         print("trying again")
         raise e
 
+    _delete_chat_session(chat_session_id, run_suffix)
+
     return simple_search_docs, answer
 
 
 @retry(tries=10, delay=10)
-def check_if_query_ready(run_suffix: str) -> bool:
+def check_indexing_status(run_suffix: str) -> tuple[int, bool]:
     url = _api_url_builder(run_suffix, "/manage/admin/connector/indexing-status/")
     try:
         indexing_status_dict = requests.get(url, headers=GENERAL_HEADERS).json()
@@ -98,16 +110,17 @@ def check_if_query_ready(run_suffix: str) -> bool:
         status = index_attempt["last_status"]
         if status == IndexingStatus.IN_PROGRESS or status == IndexingStatus.NOT_STARTED:
             ongoing_index_attempts = True
+        elif status == IndexingStatus.SUCCESS:
+            doc_count += 16
         doc_count += index_attempt["docs_indexed"]
+        doc_count -= 16
 
-    if not doc_count:
-        print("No docs indexed, waiting for indexing to start")
-    elif ongoing_index_attempts:
-        print(
-            f"{doc_count} docs indexed but waiting for ongoing indexing jobs to finish..."
-        )
-
-    return doc_count > 0 and not ongoing_index_attempts
+    # all the +16 and -16 are to account for the fact that the indexing status
+    # is only updated every 16 documents and will tells us how many are
+    # chunked, not indexed. probably need to fix this. in the future!
+    if doc_count:
+        doc_count += 16
+    return doc_count, ongoing_index_attempts
 
 
 def run_cc_once(run_suffix: str, connector_id: int, credential_id: int) -> None:

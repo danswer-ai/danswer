@@ -253,7 +253,6 @@ def stream_chat_message_objects(
     2. [conditional] LLM selected chunk indices if LLM chunk filtering is turned on
     3. [always] A set of streamed LLM tokens or an error anywhere along the line if something fails
     4. [always] Details on the final AI response message that is created
-
     """
     try:
         user_id = user.id if user is not None else None
