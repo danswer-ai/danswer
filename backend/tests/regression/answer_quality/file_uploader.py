@@ -46,7 +46,7 @@ def upload_test_files(zip_file_path: str, run_suffix: str) -> None:
     run_cc_once(run_suffix, conn_id, cred_id)
 
 
-def manage_file_upload(zip_file_path: str, run_suffix: str):
+def manage_file_upload(zip_file_path: str, run_suffix: str) -> None:
     unzipped_file_paths = unzip_and_get_file_paths(zip_file_path)
     total_file_count = len(unzipped_file_paths)
 

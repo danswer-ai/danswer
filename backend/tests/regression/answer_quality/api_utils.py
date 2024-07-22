@@ -39,6 +39,16 @@ def _create_new_chat_session(run_suffix: str) -> int:
         raise RuntimeError(response_json)
 
 
+def _delete_chat_session(chat_session_id: int, run_suffix: str) -> None:
+    delete_chat_url = _api_url_builder(
+        run_suffix, f"/chat/delete-chat-session/{chat_session_id}"
+    )
+
+    response = requests.delete(delete_chat_url, headers=GENERAL_HEADERS)
+    if response.status_code != 200:
+        raise RuntimeError(response.__dict__)
+
+
 @retry(tries=5, delay=5)
 def get_answer_from_query(
     query: str, only_retrieve_docs: bool, run_suffix: str
@@ -80,6 +90,8 @@ def get_answer_from_query(
         print(f"\t {str(e)}")
         print("trying again")
         raise e
+
+    _delete_chat_session(chat_session_id, run_suffix)
 
     return simple_search_docs, answer
 

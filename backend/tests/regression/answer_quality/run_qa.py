@@ -1,4 +1,5 @@
 import json
+import multiprocessing
 import os
 import shutil
 import time
@@ -144,15 +145,18 @@ def _process_and_write_query_results(config: dict) -> None:
     if config["limit"] is not None:
         questions = questions[: config["limit"]]
 
-    results = []
-    for i, question in enumerate(questions):
-        results.append(_process_question(question, config, i + 1))
+    # Use multiprocessing to process questions
+    with multiprocessing.Pool() as pool:
+        results = pool.starmap(
+            _process_question,
+            [(question, config, i + 1) for i, question in enumerate(questions)],
+        )
 
     _populate_results_file(test_output_folder, results)
 
     invalid_answer_count = 0
     for result in results:
-        if not result.get("context_data_list"):
+        if len(result["context_data_list"]) == 0:
             invalid_answer_count += 1
 
     _update_metadata_file(test_output_folder, invalid_answer_count)
