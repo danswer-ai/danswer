@@ -17,15 +17,15 @@ export function ChatBanner() {
         mt-8
         mb-2
         mx-2
-      z-[39] 
-      w-full
-      h-[30px]
-      bg-background-100
-      shadow-sm
-      rounded
-      border-border
-      border
-      flex`}
+        z-[39] 
+        w-full
+        h-[30px]
+        bg-background-100
+        shadow-sm
+        rounded
+        border-border
+        border
+        flex`}
     >
       <div className="mx-auto text-emphasis text-sm flex flex-col">
         <div className="my-auto">
