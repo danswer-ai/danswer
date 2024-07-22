@@ -8,7 +8,6 @@ from danswer.db.models import LLMProvider as LLMProviderModel
 from danswer.db.models import LLMProvider__UserGroup
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
-from danswer.db.models import UserGroup
 from danswer.server.manage.embedding.models import CloudEmbeddingProvider
 from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
 from danswer.server.manage.llm.models import FullLLMProvider
@@ -29,7 +28,8 @@ def update_group_llm_provider_relationships(
     if group_ids:
         new_relationships = [
             LLMProvider__UserGroup(
-                llm_provider_id=llm_provider_id, user_group_id=group_id
+                llm_provider_id=llm_provider_id,
+                user_group_id=group_id,
             )
             for group_id in group_ids
         ]
@@ -88,14 +88,6 @@ def upsert_llm_provider(
         group_ids=llm_provider.groups,
         db_session=db_session,
     )
-
-    user_groups = (
-        db_session.query(UserGroup).filter(UserGroup.id.in_(llm_provider.groups)).all()
-        if llm_provider.groups
-        else []
-    )
-    existing_llm_provider.groups = user_groups
-    db_session.commit()
 
     return FullLLMProvider.from_model(existing_llm_provider)
 
