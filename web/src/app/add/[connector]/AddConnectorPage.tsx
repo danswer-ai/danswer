@@ -237,6 +237,7 @@ export default function AddConnector({
               config={configuration}
               onSubmit={(values: any) => {
                 const { name: _, public: __, ...valuesWithoutName } = values;
+                console.log(valuesWithoutName);
                 setValues(valuesWithoutName);
               }}
               onClose={() => null}

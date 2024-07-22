@@ -41,6 +41,7 @@ import { ValidSources } from "./types";
 import { SourceCategory, SourceMetadata } from "./search/interfaces";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { FaAccessibleIcon, FaSlack } from "react-icons/fa";
+import { getDisplayName } from "next/dist/shared/lib/utils";
 
 interface PartialSourceMetadata {
   icon: React.FC<{ size?: number; className?: string }>;
@@ -479,9 +480,8 @@ function fillSourceMetadata(
   return {
     internalName: internalName,
     ...partialMetadata,
-    adminUrl: `/add/${partialMetadata.displayName
-      .toLowerCase()
-      .replaceAll(" ", "-")}`,
+    adminUrl: `/add/${internalName}
+`,
   };
 }
 

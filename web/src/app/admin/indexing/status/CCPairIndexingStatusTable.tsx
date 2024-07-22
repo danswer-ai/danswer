@@ -7,7 +7,7 @@ import {
   TableBody,
   TableCell,
 } from "@tremor/react";
-import { CCPairStatus, IndexAttemptStatus } from "@/components/Status";
+import { IndexAttemptStatus } from "@/components/Status";
 import { PageSelector } from "@/components/PageSelector";
 import { timeAgo } from "@/lib/time";
 import {
@@ -16,10 +16,7 @@ import {
   GroupedConnectorSummaries,
   ValidSources,
 } from "@/lib/types";
-import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
-import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
 import { useRouter } from "next/navigation";
-import { isCurrentlyDeleting } from "@/lib/documentDeletion";
 import {
   FiCheck,
   FiChevronDown,

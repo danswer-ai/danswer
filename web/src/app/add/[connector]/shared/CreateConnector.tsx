@@ -18,14 +18,16 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   const initialValues =
     defaultValues ||
     config.values.reduce(
-      (acc, field) => {
+      (acc, field, ind) => {
         acc[field.name] = defaultValues
           ? defaultValues[field.name]
-          : field.type === "list"
-            ? [""]
-            : field.type === "checkbox"
-              ? false
-              : "";
+          : config.values[ind].hidden
+            ? config.values[ind].default
+            : field.type === "list"
+              ? [""]
+              : field.type === "checkbox"
+                ? false
+                : "";
         return acc;
       },
       {} as Record<string, any>
@@ -50,6 +52,9 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
       {} as Record<string, any>
     )
   );
+  console.log(validationSchema);
+  console.log(initialValues);
+  console.log(config.values);
 
   return (
     <div className="py-4 rounded-lg max-w-2xl mx-auto">
@@ -63,6 +68,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
         initialValues={initialValues}
         validationSchema={validationSchema}
         onSubmit={(values, formikHelpers) => {
+          console.log("SUBMITTING?");
           onSubmit(values);
         }}
       >
@@ -187,7 +193,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
               name={"public"}
               currentValue=""
             />
-            <Button>Update (temporary)</Button>
+            <Button type="submit">Update (temporary)</Button>
           </Form>
         )}
       </Formik>

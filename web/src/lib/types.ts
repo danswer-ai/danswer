@@ -1560,6 +1560,14 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             name: "prefix",
             optional: true,
           },
+          {
+            type: "text",
+            label: "Bucket Type",
+            name: "bucket_type",
+            optional: false,
+            default: "s3",
+            hidden: true,
+          },
         ],
       };
 
