@@ -34,7 +34,7 @@ from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.models import QuotesConfig
 from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
-from danswer.llm.utils import get_default_llm_token_encode
+from danswer.natural_language_processing.utils import get_default_llm_token_encode
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.one_shot_answer.models import QueryRephrase

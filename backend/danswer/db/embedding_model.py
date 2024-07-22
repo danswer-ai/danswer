@@ -15,7 +15,7 @@ from danswer.db.models import CloudEmbeddingProvider
 from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexModelStatus
 from danswer.indexing.models import EmbeddingModelDetail
-from danswer.search.search_nlp_models import clean_model_name
+from danswer.natural_language_processing.search_nlp_models import clean_model_name
 from danswer.server.manage.embedding.models import (
     CloudEmbeddingProvider as ServerCloudEmbeddingProvider,
 )

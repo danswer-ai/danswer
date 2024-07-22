@@ -2,7 +2,7 @@ import json
 
 from tiktoken import Encoding
 
-from danswer.llm.utils import get_default_llm_tokenizer
+from danswer.natural_language_processing.utils import get_default_llm_tokenizer
 from danswer.tools.tool import Tool
 
 
