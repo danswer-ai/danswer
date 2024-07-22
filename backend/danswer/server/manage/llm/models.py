@@ -60,7 +60,7 @@ class LLMProvider(BaseModel):
     custom_config: dict[str, str] | None
     default_model_name: str
     fast_default_model_name: str | None
-    is_public: bool
+    is_public: bool = True
     groups: list[int] | None = None
 
 
