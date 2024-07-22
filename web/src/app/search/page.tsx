@@ -148,7 +148,7 @@ export default async function Home() {
     | undefined;
   let searchTypeDefault: SearchType =
     storedSearchType !== undefined &&
-    SearchType.hasOwnProperty(storedSearchType)
+      SearchType.hasOwnProperty(storedSearchType)
       ? (storedSearchType as SearchType)
       : SearchType.SEMANTIC; // default to semantic
 
@@ -168,7 +168,7 @@ export default async function Home() {
       (ccPair) => ccPair.has_successful_run && ccPair.docs_indexed > 0
     ) &&
     !shouldDisplayNoSourcesModal &&
-    !shouldShowWelcomeModal;
+    !shouldShowWelcomeModal && (!user || user.role == "admin");;
 
   const sidebarToggled = cookies().get(SIDEBAR_TOGGLED_COOKIE_NAME);
   const agenticSearchToggle = cookies().get(AGENTIC_SEARCH_TYPE_COOKIE_NAME);
