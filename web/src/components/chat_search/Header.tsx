@@ -62,12 +62,15 @@ export default function FunctionalHeader({
           <div className="pt-[2px] mb-auto">
             <FiSidebar size={20} />
           </div>
-          <div className="max-w-[200px] ml-2 text-text-700 text-xl">
-            {enterpriseSettings && enterpriseSettings.application_name ? (
-              <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
-            ) : (
-              <HeaderTitle>Danswer</HeaderTitle>
-            )}
+          <div className="break-words inline-block w-fit  ml-2 text-text-700 text-xl">
+            <div className="max-w-[200px]">
+
+              {enterpriseSettings && enterpriseSettings.application_name ? (
+                <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
+              ) : (
+                <HeaderTitle>Danswer</HeaderTitle>
+              )}
+            </div>
           </div>
 
           {page == "chat" && (
@@ -82,13 +85,11 @@ export default function FunctionalHeader({
                 }
               >
                 <div className="cursor-pointer ml-2  flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
-                  
-                <NewChatIcon
-                  size={20}
-                  className=""
-                />
+                  <NewChatIcon
+                    size={20}
+                    className=""
+                  />
                 </div>
-
               </Link>
             </Tooltip>
           )}
