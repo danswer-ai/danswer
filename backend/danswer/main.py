@@ -50,8 +50,8 @@ from danswer.db.standard_answer import create_initial_default_standard_answer_ca
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.llm_initialization import load_llm_providers
+from danswer.natural_language_processing.search_nlp_models import warm_up_encoders
 from danswer.search.retrieval.search_runner import download_nltk_data
-from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.server.auth_check import check_router_auth
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router

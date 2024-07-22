@@ -34,8 +34,8 @@ from danswer.llm.answering.stream_processing.quotes_processing import (
 from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 from danswer.llm.answering.stream_processing.utils import map_document_id_order
 from danswer.llm.interfaces import LLM
-from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import message_generator_to_string_generator
+from danswer.natural_language_processing.utils import get_default_llm_tokenizer
 from danswer.tools.custom.custom_tool_prompt_builder import (
     build_user_message_for_custom_tool_for_non_tool_calling_llm,
 )

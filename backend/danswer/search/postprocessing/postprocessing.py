@@ -12,6 +12,9 @@ from danswer.document_index.document_index_utils import (
     translate_boost_count_to_multiplier,
 )
 from danswer.llm.interfaces import LLM
+from danswer.natural_language_processing.search_nlp_models import (
+    CrossEncoderEnsembleModel,
+)
 from danswer.search.models import ChunkMetric
 from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceChunkUncleaned
@@ -20,7 +23,6 @@ from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
-from danswer.search.search_nlp_models import CrossEncoderEnsembleModel
 from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_sections
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall

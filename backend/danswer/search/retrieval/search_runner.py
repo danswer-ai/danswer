@@ -11,6 +11,7 @@ from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.document_index.interfaces import DocumentIndex
+from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.search.models import ChunkMetric
 from danswer.search.models import IndexFilters
 from danswer.search.models import InferenceChunk
@@ -20,7 +21,6 @@ from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.postprocessing.postprocessing import cleanup_chunks
-from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.search.utils import inference_section_from_chunks
 from danswer.secondary_llm_flows.query_expansion import multilingual_query_expansion
 from danswer.utils.logger import setup_logger

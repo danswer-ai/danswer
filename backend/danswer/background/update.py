@@ -33,7 +33,7 @@ from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
 from danswer.db.swap_index import check_index_swap
-from danswer.search.search_nlp_models import warm_up_encoders
+from danswer.natural_language_processing.search_nlp_models import warm_up_encoders
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable

@@ -50,9 +50,9 @@ from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.natural_language_processing.search_nlp_models import warm_up_encoders
 from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.retrieval.search_runner import download_nltk_data
-from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import MODEL_SERVER_HOST

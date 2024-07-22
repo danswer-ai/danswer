@@ -51,7 +51,7 @@ from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
 from danswer.llm.interfaces import LLMConfig
-from danswer.llm.utils import get_default_llm_tokenizer
+from danswer.natural_language_processing.utils import get_default_llm_tokenizer
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType

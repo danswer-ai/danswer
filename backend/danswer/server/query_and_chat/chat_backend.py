@@ -45,7 +45,7 @@ from danswer.llm.answering.prompts.citations_prompt import (
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llms
 from danswer.llm.headers import get_litellm_additional_request_headers
-from danswer.llm.utils import get_default_llm_tokenizer
+from danswer.natural_language_processing.utils import get_default_llm_tokenizer
 from danswer.secondary_llm_flows.chat_session_naming import (
     get_renamed_conversation_name,
 )
