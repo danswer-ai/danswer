@@ -61,7 +61,7 @@ HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.62)))
 # Content. This is to avoid cases where the Content is very relevant but it may not be clear
 # if the title is separated out. Title is most of a "boost" than a separate field.
 TITLE_CONTENT_RATIO = max(
-    0, min(1, float(os.environ.get("TITLE_CONTENT_RATIO") or 0.20))
+    0, min(1, float(os.environ.get("TITLE_CONTENT_RATIO") or 0.10))
 )
 # A list of languages passed to the LLM to rephase the query
 # For example "English,French,Spanish", be sure to use the "," separator
