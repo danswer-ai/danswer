@@ -49,13 +49,13 @@ def upload_test_files(zip_file_path: str, run_suffix: str) -> None:
 def manage_file_upload(zip_file_path: str, run_suffix: str):
     unzipped_file_paths = unzip_and_get_file_paths(zip_file_path)
     total_file_count = len(unzipped_file_paths)
-    upload_test_files(zip_file_path, run_suffix)
 
     while True:
         doc_count, ongoing_index_attempts = check_indexing_status(run_suffix)
 
         if not doc_count:
             print("No docs indexed, waiting for indexing to start")
+            upload_test_files(zip_file_path, run_suffix)
         elif ongoing_index_attempts:
             print(
                 f"{doc_count} docs indexed but waiting for ongoing indexing jobs to finish..."

@@ -39,7 +39,7 @@ def _create_new_chat_session(run_suffix: str) -> int:
         raise RuntimeError(response_json)
 
 
-@retry(tries=10, delay=10)
+@retry(tries=5, delay=5)
 def get_answer_from_query(
     query: str, only_retrieve_docs: bool, run_suffix: str
 ) -> tuple[list[str], str]:
@@ -101,8 +101,16 @@ def check_indexing_status(run_suffix: str) -> tuple[int, bool]:
         status = index_attempt["last_status"]
         if status == IndexingStatus.IN_PROGRESS or status == IndexingStatus.NOT_STARTED:
             ongoing_index_attempts = True
+        elif status == IndexingStatus.SUCCESS:
+            doc_count += 16
         doc_count += index_attempt["docs_indexed"]
+        doc_count -= 16
 
+    # all the +16 and -16 are to account for the fact that the indexing status
+    # is only updated every 16 documents and will tells us how many are
+    # chunked, not indexed. probably need to fix this. in the future!
+    if doc_count:
+        doc_count += 16
     return doc_count, ongoing_index_attempts
 
 

@@ -283,39 +283,13 @@ def get_api_server_host_port(suffix: str) -> str:
     return matching_ports[0]
 
 
-# Added function to check Vespa container health status
-def is_vespa_container_healthy(suffix: str) -> bool:
-    print(f"Checking health status of Vespa container for suffix: {suffix}")
-
-    # Find the Vespa container
-    stdout, _ = _run_command(
-        f"docker ps -a --format '{{{{.Names}}}}' | awk /vespa/ && /{suffix}/"
-    )
-    container_name = stdout.strip()
-
-    if not container_name:
-        print(f"No Vespa container found with suffix: {suffix}")
-        return False
-
-    # Get the health status
-    stdout, _ = _run_command(
-        f"docker inspect --format='{{{{.State.Health.Status}}}}' {container_name}"
-    )
-    health_status = stdout.strip()
-
-    is_healthy = health_status.lower() == "healthy"
-    print(f"Vespa container '{container_name}' health status: {health_status}")
-
-    return is_healthy
-
-
 # Added function to restart Vespa container
 def restart_vespa_container(suffix: str) -> None:
     print(f"Restarting Vespa container for suffix: {suffix}")
 
     # Find the Vespa container
     stdout, _ = _run_command(
-        f"docker ps -a --format '{{{{.Names}}}}' | awk /vespa/ && /{suffix}/"
+        f"docker ps -a --format '{{{{.Names}}}}' | awk '/index-1/ && /{suffix}/'"
     )
     container_name = stdout.strip()
 
@@ -327,11 +301,7 @@ def restart_vespa_container(suffix: str) -> None:
 
     print(f"Vespa container '{container_name}' has begun restarting")
 
-    time_to_wait = 5
-    while not is_vespa_container_healthy(suffix):
-        print(f"Waiting {time_to_wait} seconds for vespa container to restart")
-        time.sleep(5)
-
+    time.sleep(30)
     print(f"Vespa container '{container_name}' has been restarted")
 
 
