@@ -5,7 +5,7 @@ import AddConnector from "./AddConnectorPage";
 import { FormProvider } from "@/components/context/FormContext";
 import Sidebar from "./Sidebar";
 
-export default function WrappedPage({ connector }: { connector: string }) {
+export default function ConnectorWrapper({ connector }: { connector: string }) {
   return (
     <FormProvider>
       <div className="flex justify-center w-full h-full">

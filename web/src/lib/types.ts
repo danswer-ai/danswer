@@ -1,4 +1,4 @@
-import { ConnectionConfiguration } from "@/app/add/[connector]/shared/types";
+import { ConnectionConfiguration } from "@/app/add/[connector]/types";
 import { Persona } from "@/app/admin/assistants/interfaces";
 
 export interface UserPreferences {

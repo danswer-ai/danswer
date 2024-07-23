@@ -72,7 +72,9 @@ export interface DynamicConnectionFormProps {
   onSubmit: (values: any) => void;
   selectedFiles: File[];
   setSelectedFiles: Dispatch<SetStateAction<File[]>>;
+  setIsPublic: Dispatch<SetStateAction<boolean>>;
   defaultValues: any;
   setName: Dispatch<SetStateAction<string>>;
   updateValues: (field: string, value: any) => void;
+  isPublic: boolean;
 }

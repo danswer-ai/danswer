@@ -2,17 +2,22 @@ import React, { Dispatch, SetStateAction } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { EditingValue } from "@/components/credentials/EditingValue";
+import { last } from "lodash";
 
 const AdvancedFormPage = ({
   setRefreshFreq,
   setPruneFreq,
   currentPruneFreq,
   currentRefreshFreq,
+  lastIndexing,
+  setLastIndexing,
 }: {
   currentPruneFreq: number;
   currentRefreshFreq: number;
   setRefreshFreq: Dispatch<SetStateAction<number>>;
   setPruneFreq: Dispatch<SetStateAction<number>>;
+  setLastIndexing: Dispatch<SetStateAction<Date | null>>;
+  lastIndexing: Date | null;
 }) => {
   return (
     <div className="py-4 rounded-lg max-w-2xl mx-auto">
@@ -33,7 +38,7 @@ const AdvancedFormPage = ({
           <Form className="space-y-6">
             <div key="prune_freq">
               <EditingValue
-                description="How often to prune your documents (in minutes)"
+                description="Checking all documents against the source to see if any no longer exist. Documents are deleted based on this. Note: To do this, we must check every document with the source so careful turning up the frequency of this (in minutes)"
                 optional
                 currentValue={
                   currentPruneFreq == 0 ? undefined : currentPruneFreq
@@ -47,7 +52,7 @@ const AdvancedFormPage = ({
             </div>
             <div key="refresh_freq">
               <EditingValue
-                description="How often to refresh your documents (in minutes)"
+                description="This is how frequently we pull new documents from the source (in minutes)"
                 optional
                 currentValue={
                   currentRefreshFreq == 0 ? undefined : currentRefreshFreq
@@ -57,6 +62,18 @@ const AdvancedFormPage = ({
                 type="number"
                 label="Refresh Frequency"
                 name="refresh_freq"
+              />
+            </div>
+            <div key="indexing_start">
+              <EditingValue
+                description="Documents prior to this date will not be pulled in"
+                optional
+                currentValue={lastIndexing ? lastIndexing : undefined}
+                onChangeDate={(value: Date | null) => setLastIndexing(value)}
+                setFieldValue={setFieldValue}
+                type="date"
+                label="Indexing Start Date"
+                name="indexing_start"
               />
             </div>
           </Form>

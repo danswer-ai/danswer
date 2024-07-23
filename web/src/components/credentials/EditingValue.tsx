@@ -24,6 +24,7 @@ export const EditingValue: React.FC<{
   onChange?: (value: string) => void;
   onChangeBool?: (value: boolean) => void;
   onChangeNumber?: (value: number) => void;
+  onChangeDate?: (value: Date | null) => void;
 }> = ({
   setFieldValue,
   onChangeNumber,
@@ -38,10 +39,11 @@ export const EditingValue: React.FC<{
   optional,
   onChange,
   onChangeBool,
+  onChangeDate,
 }) => {
   const [value, setValue] = useState(currentValue);
 
-  const updateValue = (newValue: string | boolean) => {
+  const updateValue = (newValue: string | boolean | Date) => {
     setValue(newValue);
     setFieldValue(name, newValue);
   };
@@ -63,6 +65,43 @@ export const EditingValue: React.FC<{
                 }}
                 name={name}
                 label={label}
+              />
+            </div>
+          ) : type === "date" ? (
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                {label}
+                {optional && (
+                  <span className="text-neutral-500 ml-1">(optional)</span>
+                )}
+              </label>
+              {description && <SubLabel>{description}</SubLabel>}
+
+              <input
+                type="date"
+                name={name}
+                value={
+                  value instanceof Date ? value.toISOString().split("T")[0] : ""
+                }
+                onChange={(e) => {
+                  const dateValue = e.target.value
+                    ? new Date(e.target.value)
+                    : null;
+                  if (dateValue) {
+                    updateValue(dateValue);
+                  }
+                  console.log(dateValue);
+                  if (onChangeDate) {
+                    console.log("CHANGING THE DSATE");
+
+                    onChangeDate(dateValue);
+                  }
+                }}
+                className="mt-2 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
+                    focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500
+                    disabled:bg-gray-50 disabled:text-gray-500 disabled:border-gray-200 disabled:shadow-none
+                    invalid:border-pink-500 invalid:text-pink-600
+                    focus:invalid:border-pink-500 focus:invalid:ring-pink-500"
               />
             </div>
           ) : (

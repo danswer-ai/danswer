@@ -1,9 +1,9 @@
-import WrappedPage from "./Wrapper";
+import ConnectorWrapper from "./ConnectorWrapper";
 
 export default async function Page({
   params,
 }: {
   params: { connector: string };
 }) {
-  return <WrappedPage connector={params.connector} />;
+  return <ConnectorWrapper connector={params.connector} />;
 }

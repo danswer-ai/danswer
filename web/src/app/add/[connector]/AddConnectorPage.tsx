@@ -17,9 +17,9 @@ import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useFormContext } from "@/components/context/FormContext";
 import { getSourceDisplayName } from "@/lib/sources";
-import DynamicConnectionForm from "./shared/CreateConnector";
-import { ConnectionConfiguration } from "./shared/types";
-import AdvancedFormPage from "./shared/AdvancedFormPage";
+import DynamicConnectionForm from "./pages/CreateConnector";
+import { ConnectionConfiguration } from "./types";
+import AdvancedFormPage from "./pages/AdvancedFormPage";
 import { SourceIcon } from "@/components/SourceIcon";
 import CreateCredential from "@/components/credentials/CreateCredential";
 import { useState } from "react";
@@ -27,8 +27,8 @@ import { submitConnector } from "@/components/admin/connectors/ConnectorForm";
 import { deleteCredential, linkCredential } from "@/lib/credential";
 import { HeaderTitle } from "@/components/header/Header";
 import ModifyCredential from "@/components/credentials/ModifyCredential";
-import { submitFiles } from "./shared/handlers/files";
-import { submitGoogleSite } from "./shared/handlers/google_site";
+import { submitFiles } from "./pages/handlers/files";
+import { submitGoogleSite } from "./pages/handlers/google_site";
 
 export type advancedConfig = {
   pruneFreq: number;
@@ -76,11 +76,13 @@ export default function AddConnector({
 
   const [refreshFreq, setRefreshFreq] = useState<number>(0);
   const [pruneFreq, setPruneFreq] = useState<number>(0);
+  const [lastIndexing, setLastIndexing] = useState<Date | null>(null);
   const [isPublic, setIsPublic] = useState(false);
 
   const resetAdvancedSettings = () => {
     setPruneFreq(0);
     setRefreshFreq(0);
+    setLastIndexing(null);
     prevFormStep();
   };
 
@@ -93,7 +95,7 @@ export default function AddConnector({
       return;
     }
 
-    if (selectedFiles) {
+    if (selectedFiles.length > 0) {
       await submitFiles(selectedFiles, setPopup, setSelectedFiles, values);
       return "valid response";
     }
@@ -170,6 +172,9 @@ export default function AddConnector({
   };
 
   const updateValues = (field: string, value: any) => {
+    if (field == "name") {
+      return;
+    }
     setValues((values) => {
       if (!values) {
         return { [field]: value };
@@ -238,12 +243,20 @@ export default function AddConnector({
             <DynamicConnectionForm
               setSelectedFiles={setSelectedFiles}
               selectedFiles={selectedFiles}
+              setIsPublic={setIsPublic}
               updateValues={updateValues}
               setName={setName}
               config={configuration}
+              isPublic={isPublic}
               onSubmit={(values: any) => {
-                const { name: _, public: __, ...valuesWithoutName } = values;
+                const {
+                  name: _,
+                  public: isPublic,
+                  ...valuesWithoutName
+                } = values;
+                console.log(`Setting public to ${isPublic}`);
                 setValues(valuesWithoutName);
+                setIsPublic(isPublic);
               }}
               defaultValues={values}
             />
@@ -287,6 +300,8 @@ export default function AddConnector({
       {formStep === 2 && (
         <Card>
           <AdvancedFormPage
+            setLastIndexing={setLastIndexing}
+            lastIndexing={lastIndexing}
             currentPruneFreq={pruneFreq}
             currentRefreshFreq={refreshFreq}
             setPruneFreq={setPruneFreq}
@@ -300,7 +315,14 @@ export default function AddConnector({
             >
               <div className="w-full items-center gap-x-2 flex">Reset</div>
             </Button>
-            <Button onClick={() => prevFormStep()}>Update</Button>
+            <Button
+              onClick={() => {
+                console.log(lastIndexing);
+                prevFormStep();
+              }}
+            >
+              Update
+            </Button>
           </div>
         </Card>
       )}

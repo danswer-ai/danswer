@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useContext } from "react";
 
 export default function Sidebar() {
-  const { formStep } = useFormContext();
+  const { formStep, setFormStep } = useFormContext();
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -24,10 +24,6 @@ export default function Sidebar() {
     <div className="flex bg-background text-default ">
       <div
         className={`flex-none
-                absolute
-                left-0
-                z-20
-                sidebar
                 bg-background-100
                 h-screen
                 transition-all
@@ -36,7 +32,7 @@ export default function Sidebar() {
                 ease-in-out
                 w-[300px]`}
       >
-        <div className="fixd h-full left-0 top-0 w-[300px]">
+        <div className="fixed h-full left-0 top-0 w-[300px]">
           <div className="ml-4 mr-3 flex flex gap-x-1 items-center mt-2 my-auto text-text-700 text-xl">
             <div className="mr-1 my-auto h-6 w-6">
               <Logo height={24} width={24} />
@@ -75,24 +71,50 @@ export default function Sidebar() {
               <div className="relative">
                 {/* Continuous vertical line */}
                 <div className="absolute left-[7px] top-[10px] bottom-0 w-0.5 bg-gray-300"></div>
-                {settingSteps.map((step, index) => (
-                  <div key={index} className="flex items-center mb-6 relative">
-                    <div className="flex-shrink-0 mr-4 z-10">
+                {settingSteps.map((step, index) =>
+                  index >= formStep ? (
+                    <div
+                      key={index}
+                      className={`flex  ${index != formStep && "cursor-not-allowed"} items-center mb-6 relative`}
+                    >
+                      <div className="flex-shrink-0 mr-4 z-10">
+                        <div
+                          className={`rounded-full h-3.5 w-3.5 flex items-center justify-center ${index <= formStep ? "bg-blue-500" : "bg-gray-300"}`}
+                        >
+                          {formStep === index && (
+                            <div className="h-2 w-2 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                      </div>
                       <div
-                        className={`rounded-full h-3.5 w-3.5 flex items-center justify-center ${index <= formStep ? "bg-blue-500" : "bg-gray-300"}`}
+                        className={`${index <= index ? "text-gray-800" : "text-gray-500"}`}
                       >
-                        {formStep === index && (
-                          <div className="h-2 w-2 rounded-full bg-white"></div>
-                        )}
+                        {step}
                       </div>
                     </div>
-                    <div
-                      className={`${index <= index ? "text-gray-800" : "text-gray-500"}`}
+                  ) : (
+                    <button
+                      onClick={() => setFormStep(index)}
+                      key={index}
+                      className="cursor-pointer flex items-center mb-6 relative"
                     >
-                      {step}
-                    </div>
-                  </div>
-                ))}
+                      <div className="flex-shrink-0 mr-4 z-10">
+                        <div
+                          className={`rounded-full h-3.5 w-3.5 flex items-center justify-center ${index <= formStep ? "bg-blue-500" : "bg-gray-300"}`}
+                        >
+                          {formStep === index && (
+                            <div className="h-2 w-2 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                      </div>
+                      <div
+                        className={`${index <= index ? "text-gray-800" : "text-gray-500"}`}
+                      >
+                        {step}
+                      </div>
+                    </button>
+                  )
+                )}
               </div>
             </div>
           </div>
