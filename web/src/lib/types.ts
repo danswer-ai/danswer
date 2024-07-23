@@ -893,6 +893,8 @@ export const getCredentialTemplate = <T extends ValidSources>(
       } as GongCredentialJson;
     case "zulip":
       return { zuliprc_content: "" } as ZulipCredentialJson;
+    case "file":
+      return "adjacent";
     case "linear":
       return { linear_api_key: "" } as LinearCredentialJson;
     case "hubspot":
@@ -999,7 +1001,8 @@ export type InputType =
   | "select"
   | "multiselect"
   | "boolean"
-  | "number";
+  | "number"
+  | "file";
 
 // Updated function
 
@@ -1386,7 +1389,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         description: "Configure File connector",
         values: [
           {
-            type: "list",
+            type: "file",
             query: "Enter file locations:",
             label: "File Locations",
             name: "file_locations",

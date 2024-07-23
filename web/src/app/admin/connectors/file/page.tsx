@@ -124,6 +124,7 @@ const Main = () => {
                   }
 
                   const filePaths = responseJson.file_paths as string[];
+
                   const [connectorErrorMsg, connector] =
                     await createConnector<FileConfig>({
                       name: "FileConnector-" + Date.now(),
@@ -151,6 +152,8 @@ const Main = () => {
                   const createCredentialResponse = await createCredential({
                     credential_json: {},
                     admin_public: true,
+                    source: "file",
+                    name: values.name,
                   });
                   if (!createCredentialResponse.ok) {
                     const errorMsg = await createCredentialResponse.text();

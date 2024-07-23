@@ -223,14 +223,13 @@ def fetch_latest_index_attempts_by_status(
     query = db_session.query(IndexAttempt).join(
         alias,
         and_(
-            IndexAttempt.connector_credential_pair.connector_id
-            == alias.connector_credential_pair.connector_id,
-            IndexAttempt.connector_credential_pair.credential_id
-            == alias.connector_credential_pair.credential_id,
+            IndexAttempt.connector_credential_pair_id
+            == alias.connector_credential_pair_id,
             IndexAttempt.status == alias.status,
             IndexAttempt.time_updated == alias.time_updated,
         ),
     )
+
     return cast(list[IndexAttempt], query.all())
 
 

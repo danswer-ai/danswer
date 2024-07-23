@@ -10,32 +10,5 @@ export default async function Page({
 }: {
   params: { connector: string };
 }) {
-  const sidebarToggled = cookies().get(SIDEBAR_TOGGLED_COOKIE_NAME);
-
-  const tasks = [getCurrentUserSS()];
-
-  // catch cases where the backend is completely unreachable here
-  // without try / catch, will just raise an exception and the page
-  // will not render
-  let results: (User | null)[] = [null];
-
-  try {
-    results = await Promise.all(tasks);
-  } catch (e) {
-    console.log(`Some fetch failed for the main search page - ${e}`);
-  }
-
-  const user = results[1] as User | null;
-
-  const toggleSidebar = sidebarToggled
-    ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
-    : false;
-
-  return (
-    <WrappedPage
-      connector={params.connector}
-      user={user}
-      initiallyToggled={toggleSidebar}
-    />
-  );
+  return <WrappedPage connector={params.connector} />;
 }

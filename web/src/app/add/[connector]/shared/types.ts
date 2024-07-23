@@ -43,6 +43,11 @@ export interface BooleanOption extends Option {
   default?: boolean;
 }
 
+export interface FileOption extends Option {
+  type: "file";
+  default?: string;
+}
+
 export interface ConnectionConfiguration {
   description: string;
   subtext?: string;
@@ -52,6 +57,7 @@ export interface ConnectionConfiguration {
     | TextOption
     | NumberOption
     | SelectOption
+    | FileOption
   )[];
 }
 
@@ -59,6 +65,8 @@ export interface DynamicConnectionFormProps {
   config: ConnectionConfiguration;
   onSubmit: (values: any) => void;
   onClose: () => void;
+  selectedFiles: File[];
+  setSelectedFiles: Dispatch<SetStateAction<File[]>>;
   defaultValues: any;
   setName: Dispatch<SetStateAction<string>>;
   updateValues: (field: string, value: any) => void;

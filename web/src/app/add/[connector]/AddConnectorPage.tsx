@@ -10,6 +10,7 @@ import {
   Credential,
   ValidSources,
   getComprehensiveConnectorConfigTemplate,
+  getCredentialTemplate,
   isValidSource,
 } from "@/lib/types";
 import { Button, Card, Divider, Title } from "@tremor/react";
@@ -25,17 +26,11 @@ import AdvancedFormPage from "./shared/AdvancedFormPage";
 import { SourceIcon } from "@/components/SourceIcon";
 import CreateCredential from "@/components/credentials/CreateCredential";
 import { useState } from "react";
-import CreateConnectorCredentialSection from "./shared/CreatingConnectorCredentialPage";
-import { FiChevronLeft } from "react-icons/fi";
 import { submitConnector } from "@/components/admin/connectors/ConnectorForm";
-import {
-  deleteCredential,
-  linkCredential,
-  updateCredential,
-} from "@/lib/credential";
-import { redirect } from "next/navigation";
+import { deleteCredential, linkCredential } from "@/lib/credential";
 import { HeaderTitle } from "@/components/header/Header";
 import ModifyCredential from "@/components/credentials/ModifyCredential";
+import { submitFiles } from "./shared/files";
 
 export type advancedConfig = {
   pruneFreq: number;
@@ -51,11 +46,15 @@ export default function AddConnector({
   const [currentCredential, setCurrentCredential] =
     useState<Credential<any> | null>(null);
 
-  const { data: credentials } = useSWR<Credential<ConfluenceCredentialJson>[]>(
+  const { data: credentials } = useSWR<Credential<any>[]>(
     buildSimilarCredentialInfoURL(connector),
     errorHandlingFetcher,
     { refreshInterval: 5000 }
   );
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  const credentialTemplate = getCredentialTemplate(connector);
+
   const { setFormStep, formStep, nextFormStep, prevFormStep } =
     useFormContext();
 
@@ -66,7 +65,9 @@ export default function AddConnector({
 
   const [values, setValues] = useState<{ [record: string]: any } | null>(null);
 
-  if (!currentCredential) {
+  if (credentialTemplate === "adjacent") {
+    setFormStep(Math.max(1, formStep));
+  } else if (!currentCredential) {
     setFormStep(Math.min(formStep, 0));
   }
 
@@ -80,6 +81,14 @@ export default function AddConnector({
   };
 
   const createConnector = async () => {
+    if (!currentCredential && credentialTemplate === "adjacent") {
+      return;
+    }
+
+    if (selectedFiles) {
+      await submitFiles(selectedFiles, setPopup, setSelectedFiles, values);
+      return "valid response";
+    }
     if (!currentCredential) {
       return;
     }
@@ -93,17 +102,6 @@ export default function AddConnector({
       prune_freq: pruneFreq ?? null,
       disabled: false,
     });
-
-    console.log({
-      connector_specific_config: values,
-      input_type: "load_state",
-      name: name,
-      source: connector,
-      refresh_freq: refreshFreq || 0,
-      prune_freq: pruneFreq ?? null,
-      disabled: false,
-    });
-    console.log(response?.id, currentCredential.id, "random name", isPublic);
 
     if (isSuccess && response) {
       const linkCredentialResponse = await linkCredential(
@@ -159,7 +157,6 @@ export default function AddConnector({
       message: "Swapped credential succesfully!",
       type: "success",
     });
-    // setShowModifyCredential(false);
     refresh();
   };
 
@@ -209,14 +206,11 @@ export default function AddConnector({
             </div>
 
             <Title className="mb-2 text-lg">Create a credential</Title>
-
             <CreateCredential
               refresh={refresh}
               sourceType={connector}
               setPopup={setPopup}
             />
-
-            {/* )} */}
           </Card>
           <div className="mt-4 flex w-full justify-end">
             <Button
@@ -233,25 +227,30 @@ export default function AddConnector({
         <>
           <Card>
             <DynamicConnectionForm
+              setSelectedFiles={setSelectedFiles}
+              selectedFiles={selectedFiles}
               updateValues={updateValues}
               setName={setName}
               config={configuration}
               onSubmit={(values: any) => {
                 const { name: _, public: __, ...valuesWithoutName } = values;
-                console.log(valuesWithoutName);
                 setValues(valuesWithoutName);
               }}
               onClose={() => null}
               defaultValues={values}
             />
           </Card>
-          <div className="mt-4 flex w-full grid grid-cols-3 ">
-            <button
-              className="px-2 mr-auto hover:bg-accent/80 transition-color text-white duration-300 rounded-lg bg-accent"
-              onClick={() => prevFormStep()}
-            >
-              Previous
-            </button>
+          <div className={`mt-4 flex w-full grid grid-cols-3`}>
+            {credentialTemplate !== "adjacent" ? (
+              <button
+                className="px-2 mr-auto hover:bg-accent/80 transition-color text-white duration-300 rounded-lg bg-accent"
+                onClick={() => prevFormStep()}
+              >
+                Previous
+              </button>
+            ) : (
+              <div />
+            )}
 
             <Button
               className="mt-auto mx-auto"

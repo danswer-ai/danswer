@@ -8,29 +8,24 @@ import Link from "next/link";
 import { useContext } from "react";
 import { FiArrowDown } from "react-icons/fi";
 
-interface adminSetupPropsType {
-  steps: string[];
-  index: number;
-}
-
-export default function Sidebar({
-  adminSetupProps,
-}: {
-  adminSetupProps: adminSetupPropsType;
-}) {
+export default function Sidebar() {
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
   }
-  const settings = combinedSettings.settings;
   const enterpriseSettings = combinedSettings.enterpriseSettings;
   const { formStep } = useFormContext();
+  const settingSteps = [
+    "Credential",
+    "Connector",
+    "Advanced (optional)",
+    "Finalize",
+  ];
 
   return (
     <div className="flex bg-background text-default ">
       <div
-        className={`
-                flex-none
+        className={`flex-none
                 absolute
                 left-0
                 z-20
@@ -82,7 +77,7 @@ export default function Sidebar({
               <div className="relative">
                 {/* Continuous vertical line */}
                 <div className="absolute left-[7px] top-[10px] bottom-0 w-0.5 bg-gray-300"></div>
-                {adminSetupProps.steps.map((step, index) => (
+                {settingSteps.map((step, index) => (
                   <div key={index} className="flex items-center mb-6 relative">
                     <div className="flex-shrink-0 mr-4 z-10">
                       <div
@@ -94,7 +89,7 @@ export default function Sidebar({
                       </div>
                     </div>
                     <div
-                      className={`${index <= adminSetupProps.index ? "text-gray-800" : "text-gray-500"}`}
+                      className={`${index <= index ? "text-gray-800" : "text-gray-500"}`}
                     >
                       {step}
                     </div>

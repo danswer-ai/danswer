@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Formik, Form, Field, FieldArray } from "formik";
 import * as Yup from "yup";
 import { FaPlus } from "react-icons/fa";
@@ -7,6 +7,7 @@ import { DynamicConnectionFormProps } from "./types";
 import { Button, Divider } from "@tremor/react";
 import CredentialSubText from "@/components/credentials/CredentialSubText";
 import { TrashIcon } from "@/components/icons/icons";
+import { FileUpload } from "@/components/admin/connectors/FileUpload";
 
 const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   config,
@@ -15,6 +16,8 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   setName,
   updateValues,
   defaultValues,
+  selectedFiles,
+  setSelectedFiles,
 }) => {
   const initialValues =
     defaultValues ||
@@ -91,7 +94,12 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
               if (!field.hidden) {
                 return (
                   <div key={field.name}>
-                    {field.type === "list" ? (
+                    {field.type == "file" ? (
+                      <FileUpload
+                        selectedFiles={selectedFiles}
+                        setSelectedFiles={setSelectedFiles}
+                      />
+                    ) : field.type === "list" ? (
                       <FieldArray name={field.name}>
                         {({ push, remove }) => (
                           <div>

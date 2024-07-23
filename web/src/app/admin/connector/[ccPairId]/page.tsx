@@ -101,11 +101,13 @@ function Main({ ccPairId }: { ccPairId: number }) {
       </div>
       <Divider />
       <Title className="mb-2">Credentials</Title>
-      <CredentialSection
-        ccPair={ccPair}
-        sourceType={ccPair.connector.source}
-        refresh={() => refresh()}
-      />
+      {ccPair.connector.source !== "file" && (
+        <CredentialSection
+          ccPair={ccPair}
+          sourceType={ccPair.connector.source}
+          refresh={() => refresh()}
+        />
+      )}
       <Divider />
       <ConfigDisplay
         connectorSpecificConfig={ccPair.connector.connector_specific_config}

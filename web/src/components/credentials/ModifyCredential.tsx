@@ -71,7 +71,7 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
                   <td className="min-w-[60px] p-2">
                     {!selected ? (
                       <input
-                        type="checkbox"
+                        type="radio"
                         name="credentialSelection"
                         onChange={() => handleSelectCredential(credential.id)}
                         className="form-radio ml-4 h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
@@ -232,6 +232,8 @@ export default function ModifyCredential({
             onSelectCredential={(credential: Credential<any> | null) => {
               if (credential && onSwitch) {
                 onSwitch(credential);
+              } else {
+                setSelectedCredential(credential);
               }
             }}
           />

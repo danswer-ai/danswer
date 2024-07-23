@@ -14,7 +14,6 @@ async function handleResponse(
 export async function createConnector<T>(
   connector: ConnectorBase<T>
 ): Promise<[string | null, Connector<T> | null]> {
-  console.log("CREATING CONNECTORs");
   const response = await fetch(`/api/manage/admin/connector`, {
     method: "POST",
     headers: {
@@ -22,6 +21,7 @@ export async function createConnector<T>(
     },
     body: JSON.stringify(connector),
   });
+  console.log(JSON.stringify(connector));
   return handleResponse(response);
 }
 

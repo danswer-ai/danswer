@@ -220,9 +220,19 @@ def get_index_attempts_for_connector(
     only_current: bool = True,
     disinclude_finished: bool = False,
 ) -> Sequence[IndexAttempt]:
-    stmt = select(IndexAttempt).where(
-        IndexAttempt.connector_credential_pair.connector_id == connector_id,
+    #     select(IndexAttempt)
+    # .join(ConnectorCredentialPair)
+
+    stmt = (
+        select(IndexAttempt)
+        .join(ConnectorCredentialPair)
+        .where(ConnectorCredentialPair.connector_id == connector_id)
     )
+
+    # where(
+    #
+    # IndexAttempt.connector_credential_pair.connector_id == connector_id,
+    #     )
     if disinclude_finished:
         stmt = stmt.where(
             IndexAttempt.status.in_(

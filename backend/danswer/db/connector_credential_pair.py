@@ -274,10 +274,14 @@ def resync_cc_pair(
     ) -> IndexAttempt | None:
         query = (
             db_session.query(IndexAttempt)
+            .join(
+                ConnectorCredentialPair,
+                IndexAttempt.connector_credential_pair_id == ConnectorCredentialPair.id,
+            )
             .join(EmbeddingModel, IndexAttempt.embedding_model_id == EmbeddingModel.id)
             .filter(
-                IndexAttempt.connector_credential_pair.connector_id == connector_id,
-                IndexAttempt.connector_credential_pair.credential_id == credential_id,
+                ConnectorCredentialPair.connector_id == connector_id,
+                ConnectorCredentialPair.credential_id == credential_id,
                 EmbeddingModel.status == IndexModelStatus.PRESENT,
             )
         )
