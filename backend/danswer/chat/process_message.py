@@ -187,12 +187,29 @@ def _handle_internet_search_tool_response_summary(
     )
 
 
-def _get_force_search_settings(new_msg_req: CreateChatMessageRequest) -> ForceUseTool:
-    args = {"query": new_msg_req.query_override} if new_msg_req.query_override else None
+def _get_force_search_settings(
+    new_msg_req: CreateChatMessageRequest, tools: list[Tool]
+) -> ForceUseTool:
+    internet_search_available = any(
+        isinstance(tool, InternetSearchTool) for tool in tools
+    )
+    search_tool_available = any(isinstance(tool, SearchTool) for tool in tools)
 
-    # Don't run search if files are already provided
+    if not internet_search_available and not search_tool_available:
+        # Does not matter much tool as force is false and neither tool is available
+        return ForceUseTool(force_use=False, tool_name=SearchTool._NAME)
+
+    tool_name = SearchTool._NAME if search_tool_available else InternetSearchTool._NAME
+    # Currently, the internet search tool does not support query override
+    args = (
+        {"query": new_msg_req.query_override}
+        if new_msg_req.query_override and tool_name == SearchTool._NAME
+        else None
+    )
+
     if new_msg_req.file_descriptors:
-        return ForceUseTool(force_use=False, tool_name=SearchTool._NAME, args=args)
+        # If files are already provided, don't run the search tool
+        return ForceUseTool(force_use=False, tool_name=tool_name)
 
     should_force_search = any(
         [
@@ -205,14 +222,11 @@ def _get_force_search_settings(new_msg_req: CreateChatMessageRequest) -> ForceUs
     )
 
     if should_force_search:
-        # if we are using selected docs, just put something here so the Tool doesn't need
-        # to build its own args via an LLM call
-        if new_msg_req.search_doc_ids:
-            args = {"query": new_msg_req.message}
+        # If we are using selected docs, just put something here so the Tool doesn't need to build its own args via an LLM call
+        args = {"query": new_msg_req.message} if new_msg_req.search_doc_ids else args
+        return ForceUseTool(force_use=True, tool_name=tool_name, args=args)
 
-        return ForceUseTool(force_use=True, tool_name=SearchTool._NAME, args=args)
-
-    return ForceUseTool(force_use=False, tool_name=SearchTool._NAME, args=args)
+    return ForceUseTool(force_use=False, tool_name=tool_name, args=args)
 
 
 ChatPacket = (
@@ -551,12 +565,6 @@ def stream_chat_message_objects(
             llm.config.model_provider, llm.config.model_name
         )
 
-        force_search = (
-            _get_force_search_settings(new_msg_req)
-            if search_tool and len(tools) == 1
-            else ForceUseTool(force_use=False, tool_name=SearchTool._NAME, args=None)
-        )
-
         # LLM prompt building, response capturing, etc.
         answer = Answer(
             question=final_msg.message,
@@ -584,7 +592,7 @@ def stream_chat_message_objects(
                 PreviousMessage.from_chat_message(msg, files) for msg in history_msgs
             ],
             tools=tools,
-            force_use_tool=force_search,
+            force_use_tool=_get_force_search_settings(new_msg_req, tools),
         )
 
         reference_db_search_docs = None
