@@ -31,6 +31,7 @@ import { deleteCredential, linkCredential } from "@/lib/credential";
 import { HeaderTitle } from "@/components/header/Header";
 import ModifyCredential from "@/components/credentials/ModifyCredential";
 import { submitFiles } from "./shared/files";
+import { submitGoogleSite } from "./shared/google_site";
 
 export type advancedConfig = {
   pruneFreq: number;
@@ -64,8 +65,13 @@ export default function AddConnector({
     getComprehensiveConnectorConfigTemplate(connector);
 
   const [values, setValues] = useState<{ [record: string]: any } | null>(null);
+  const noCredentials =
+    credentialTemplate === "file" ||
+    credentialTemplate == "sites" ||
+    credentialTemplate == "web" ||
+    credentialTemplate == "wiki";
 
-  if (credentialTemplate === "adjacent") {
+  if (noCredentials) {
     setFormStep(Math.max(1, formStep));
   } else if (!currentCredential) {
     setFormStep(Math.min(formStep, 0));
@@ -78,10 +84,15 @@ export default function AddConnector({
   const resetAdvancedSettings = () => {
     setPruneFreq(0);
     setRefreshFreq(0);
+    prevFormStep();
   };
 
   const createConnector = async () => {
-    if (!currentCredential && credentialTemplate === "adjacent") {
+    if (credentialTemplate === "sites") {
+      await submitGoogleSite(selectedFiles, values?.base_url, setPopup);
+    }
+
+    if (!currentCredential && credentialTemplate === "file") {
       return;
     }
 
@@ -89,6 +100,7 @@ export default function AddConnector({
       await submitFiles(selectedFiles, setPopup, setSelectedFiles, values);
       return "valid response";
     }
+
     if (!currentCredential) {
       return;
     }
@@ -171,7 +183,7 @@ export default function AddConnector({
   };
 
   return (
-    <div className="mx-auto w-full">
+    <div className="mx-auto mb-8 w-full">
       {popup}
       <div className="mb-4">
         <HealthCheckBanner />
@@ -241,7 +253,9 @@ export default function AddConnector({
             />
           </Card>
           <div className={`mt-4 flex w-full grid grid-cols-3`}>
-            {credentialTemplate !== "adjacent" ? (
+            {!noCredentials &&
+            (credentialTemplate !== "file" ||
+              credentialTemplate !== "sites") ? (
               <button
                 className="px-2 mr-auto hover:bg-accent/80 transition-color text-white duration-300 rounded-lg bg-accent"
                 onClick={() => prevFormStep()}
@@ -290,7 +304,7 @@ export default function AddConnector({
               onClick={() => resetAdvancedSettings()}
               className="flex gap-x-2"
             >
-              <div className="w-full items-center gap-x-2 flex">Reset?</div>
+              <div className="w-full items-center gap-x-2 flex">Reset</div>
             </Button>
             <Button onClick={() => prevFormStep()}>Update</Button>
           </div>

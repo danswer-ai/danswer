@@ -48,6 +48,11 @@ export interface FileOption extends Option {
   default?: string;
 }
 
+export interface ZipOption extends Option {
+  type: "zip";
+  default?: string;
+}
+
 export interface ConnectionConfiguration {
   description: string;
   subtext?: string;
@@ -58,6 +63,7 @@ export interface ConnectionConfiguration {
     | NumberOption
     | SelectOption
     | FileOption
+    | ZipOption
   )[];
 }
 

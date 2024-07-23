@@ -99,6 +99,29 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                         selectedFiles={selectedFiles}
                         setSelectedFiles={setSelectedFiles}
                       />
+                    ) : field.type == "zip" ? (
+                      <>
+                        <label
+                          htmlFor={field.name}
+                          className="block text-sm font-medium text-neutral-700 mb-1"
+                        >
+                          {field.label}
+                          {field.optional && (
+                            <span className="text-neutral-500 ml-1">
+                              (optional)
+                            </span>
+                          )}
+                        </label>
+                        {field.description && (
+                          <CredentialSubText>
+                            {field.description}
+                          </CredentialSubText>
+                        )}
+                        <FileUpload
+                          selectedFiles={selectedFiles}
+                          setSelectedFiles={setSelectedFiles}
+                        />
+                      </>
                     ) : field.type === "list" ? (
                       <FieldArray name={field.name}>
                         {({ push, remove }) => (

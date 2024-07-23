@@ -893,8 +893,10 @@ export const getCredentialTemplate = <T extends ValidSources>(
       } as GongCredentialJson;
     case "zulip":
       return { zuliprc_content: "" } as ZulipCredentialJson;
+    case "google_sites":
+      return "sites";
     case "file":
-      return "adjacent";
+      return "files";
     case "linear":
       return { linear_api_key: "" } as LinearCredentialJson;
     case "hubspot":
@@ -958,9 +960,8 @@ export const getCredentialTemplate = <T extends ValidSources>(
         clickup_team_id: "",
       } as ClickupCredentialJson;
     case "wikipedia":
-
     case "mediawiki":
-      return {} as MediaWikiCredentialJson;
+      return "wiki";
     case "s3":
       return {
         aws_access_key_id: "",
@@ -985,8 +986,8 @@ export const getCredentialTemplate = <T extends ValidSources>(
         secret_access_key: "",
       } as OCICredentialJson;
     case "web":
+      return "web";
     case "file":
-    case "google_sites":
     case "not_applicable":
       return null;
     default:
@@ -1512,11 +1513,13 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         description: "Configure Google Sites connector",
         values: [
           {
-            type: "text",
+            type: "zip",
             query: "Enter the zip path:",
             label: "Zip Path",
             name: "zip_path",
             optional: false,
+            description:
+              "Upload a zip file containing the HTML of your Google Site",
           },
           {
             type: "text",

@@ -1,12 +1,16 @@
 import { useFormContext } from "@/components/context/FormContext";
 import { HeaderTitle } from "@/components/header/Header";
-import { BackIcon } from "@/components/icons/icons";
+import {
+  BackIcon,
+  SettingsIcon,
+  SettingsIconSkeleton,
+} from "@/components/icons/icons";
 import { Logo } from "@/components/Logo";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
 import Link from "next/link";
 import { useContext } from "react";
-import { FiArrowDown } from "react-icons/fi";
+import { FiArrowDown, FiSettings } from "react-icons/fi";
 
 export default function Sidebar() {
   const combinedSettings = useContext(SettingsContext);
@@ -67,7 +71,7 @@ export default function Sidebar() {
               href={"/admin/add-connector"}
               className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
             >
-              <FiArrowDown className="flex-none " />
+              <SettingsIcon className="flex-none " />
               <p className="my-auto flex items-center text-sm">Admin Page</p>
             </Link>
           </div>
