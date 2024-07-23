@@ -21,7 +21,9 @@ def _api_url_builder(run_suffix: str, api_path: str) -> str:
 
 
 @retry(tries=5, delay=5)
-def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
+def get_answer_from_query(
+    query: str, only_retrieve_docs: bool, run_suffix: str
+) -> tuple[list[str], str]:
     filters = IndexFilters(
         source_type=None,
         document_set=None,
@@ -44,7 +46,7 @@ def get_answer_from_query(query: str, run_suffix: str) -> tuple[list[str], str]:
         ),
         chain_of_thought=False,
         return_contexts=True,
-        skip_gen_ai_answer_generation=True,
+        skip_gen_ai_answer_generation=only_retrieve_docs,
     )
 
     url = _api_url_builder(run_suffix, "/query/answer-with-quote/")

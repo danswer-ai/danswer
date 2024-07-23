@@ -63,6 +63,9 @@ Edit `search_test_config.yaml` to set:
     - Set this to true if you want to use the UI during/after the testing process
 - only_state
     - Whether to only run Vespa and Postgres
+- only_retrieve_docs
+    - Set true to only retrieve documents, not LLM response
+    - This is to save on API costs
 - use_cloud_gpu
     - Set to true or false depending on if you want to use the remote gpu
     - Only need to set this if use_cloud_gpu is true
