@@ -87,7 +87,9 @@ class CloudEmbedding:
         # OpenAI does not seem to provide truncation option, however
         # the context lengths used by Danswer currently are smaller than the max token length
         # for OpenAI embeddings so it's not a big deal
+        print(f"I am embedding {texts}")
         response = self.client.embeddings.create(input=texts, model=model)
+        print("That was embedded")
         return [embedding.embedding for embedding in response.data]
 
     def _embed_cohere(
@@ -134,7 +136,7 @@ class CloudEmbedding:
                     text,
                     embedding_type,
                 )
-                for text in texts
+                for text in texts 
             ],
             auto_truncate=True,  # Also this is default
         )
@@ -235,7 +237,19 @@ def embed_text(
     api_key: str | None,
     provider_type: str | None,
     prefix: str | None,
-) -> list[list[float]]:
+) -> list[list[float] | None]:
+    
+    non_empty_texts = []
+    empty_indices = []
+    for idx, text in enumerate(texts):
+        print(text)
+        print(len(text)) #TODO verify that this works when you get back
+        if text.strip():
+            non_empty_texts.append(text)
+        else:
+            empty_indices.append(idx)
+
+
     # Third party API based embedding model
     if provider_type is not None:
         logger.debug(f"Embedding text with provider: {provider_type}")
@@ -254,14 +268,14 @@ def embed_text(
             api_key=api_key, provider=provider_type, model=model_name
         )
         embeddings = cloud_model.embed(
-            texts=texts,
+            texts=non_empty_texts,
             model_name=model_name,
             text_type=text_type,
         )
 
     # Locally running model
     elif model_name is not None:
-        prefixed_texts = [f"{prefix}{text}" for text in texts] if prefix else texts
+        prefixed_texts = [f"{prefix}{text}" for text in non_empty_texts] if prefix else texts
         local_model = get_embedding_model(
             model_name=model_name, max_context_length=max_context_length
         )
@@ -276,9 +290,13 @@ def embed_text(
 
     if embeddings is None:
         raise RuntimeError("Failed to create Embeddings")
+    
+    for idx in empty_indices:
+        embeddings.insert(idx, None)
 
     if not isinstance(embeddings, list):
         embeddings = embeddings.tolist()
+    
 
     return embeddings
 

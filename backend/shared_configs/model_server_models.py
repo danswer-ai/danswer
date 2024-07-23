@@ -17,7 +17,7 @@ class EmbedRequest(BaseModel):
 
 
 class EmbedResponse(BaseModel):
-    embeddings: list[list[float]]
+    embeddings: list[list[float] | None]
 
 
 class RerankRequest(BaseModel):

@@ -90,7 +90,9 @@ class EmbeddingModel:
                 for text in texts
             ]
 
+
         if self.provider_type:
+            # print("I am embedding")
             embed_request = EmbedRequest(
                 model_name=self.model_name,
                 texts=texts,
@@ -105,6 +107,7 @@ class EmbeddingModel:
             response = requests.post(
                 self.embed_server_endpoint, json=embed_request.dict()
             )
+            print()
             try:
                 response.raise_for_status()
             except requests.HTTPError as e:
@@ -112,6 +115,9 @@ class EmbeddingModel:
                 raise HTTPError(f"HTTP error occurred: {error_detail}") from e
             except requests.RequestException as e:
                 raise HTTPError(f"Request failed: {str(e)}") from e
+            embeds = EmbedResponse(**response.json()).embeddings
+            print(len(embeds))
+            print(embeds[-1])
             return EmbedResponse(**response.json()).embeddings
 
         # Batching for local embedding
