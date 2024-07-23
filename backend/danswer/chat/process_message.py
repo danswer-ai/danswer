@@ -196,7 +196,7 @@ def _get_force_search_settings(
     search_tool_available = any(isinstance(tool, SearchTool) for tool in tools)
 
     if not internet_search_available and not search_tool_available:
-        # Does not matter much tool as force is false and neither tool is available
+        # Does not matter much which tool is set here as force is false and neither tool is available
         return ForceUseTool(force_use=False, tool_name=SearchTool._NAME)
 
     tool_name = SearchTool._NAME if search_tool_available else InternetSearchTool._NAME
@@ -208,7 +208,7 @@ def _get_force_search_settings(
     )
 
     if new_msg_req.file_descriptors:
-        # If files are already provided, don't run the search tool
+        # If files are already provided, don't run any of the search tools
         return ForceUseTool(force_use=False, tool_name=tool_name)
 
     should_force_search = any(
