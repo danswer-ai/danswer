@@ -168,4 +168,6 @@ def get_embedding_model_from_db_embedding_model(
         normalize=db_embedding_model.normalize,
         query_prefix=db_embedding_model.query_prefix,
         passage_prefix=db_embedding_model.passage_prefix,
+        provider_type=db_embedding_model.provider_type,
+        api_key=db_embedding_model.api_key
     )
