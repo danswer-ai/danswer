@@ -1,24 +1,18 @@
 import { useFormContext } from "@/components/context/FormContext";
 import { HeaderTitle } from "@/components/header/Header";
-import {
-  BackIcon,
-  SettingsIcon,
-  SettingsIconSkeleton,
-} from "@/components/icons/icons";
+import { BackIcon, SettingsIcon } from "@/components/icons/icons";
 import { Logo } from "@/components/Logo";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
 import Link from "next/link";
 import { useContext } from "react";
-import { FiArrowDown, FiSettings } from "react-icons/fi";
 
 export default function Sidebar() {
+  const { formStep } = useFormContext();
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
   }
   const enterpriseSettings = combinedSettings.enterpriseSettings;
-  const { formStep } = useFormContext();
   const settingSteps = [
     "Credential",
     "Connector",
@@ -42,7 +36,7 @@ export default function Sidebar() {
                 ease-in-out
                 w-[300px]`}
       >
-        <div className="fixed h-full left-0 top-0 w-[300px]">
+        <div className="fixd h-full left-0 top-0 w-[300px]">
           <div className="ml-4 mr-3 flex flex gap-x-1 items-center mt-2 my-auto text-text-700 text-xl">
             <div className="mr-1 my-auto h-6 w-6">
               <Logo height={24} width={24} />

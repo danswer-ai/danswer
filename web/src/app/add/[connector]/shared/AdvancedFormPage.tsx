@@ -2,11 +2,8 @@ import React, { Dispatch, SetStateAction } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { EditingValue } from "@/components/credentials/EditingValue";
-import { advancedConfig } from "../AddConnectorPage";
 
 const AdvancedFormPage = ({
-  onSubmit,
-  onClose,
   setRefreshFreq,
   setPruneFreq,
   currentPruneFreq,
@@ -16,8 +13,6 @@ const AdvancedFormPage = ({
   currentRefreshFreq: number;
   setRefreshFreq: Dispatch<SetStateAction<number>>;
   setPruneFreq: Dispatch<SetStateAction<number>>;
-  onSubmit: () => void;
-  onClose: () => void;
 }) => {
   return (
     <div className="py-4 rounded-lg max-w-2xl mx-auto">

@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { Formik, Form, Field, FieldArray } from "formik";
 import * as Yup from "yup";
 import { FaPlus } from "react-icons/fa";
 import { EditingValue } from "@/components/credentials/EditingValue";
 import { DynamicConnectionFormProps } from "./types";
-import { Button, Divider } from "@tremor/react";
+import { Divider } from "@tremor/react";
 import CredentialSubText from "@/components/credentials/CredentialSubText";
 import { TrashIcon } from "@/components/icons/icons";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
@@ -12,7 +12,6 @@ import { FileUpload } from "@/components/admin/connectors/FileUpload";
 const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   config,
   onSubmit,
-  onClose,
   setName,
   updateValues,
   defaultValues,

@@ -26,9 +26,6 @@ export async function submitConnector<T>(
   connectorId?: number
 ): Promise<{ message: string; isSuccess: boolean; response?: Connector<T> }> {
   const isUpdate = connectorId !== undefined;
-  console.log("submitting connector");
-  console.log(connector);
-
   try {
     const response = await fetch(
       BASE_CONNECTOR_URL + (isUpdate ? `/${connectorId}` : ""),

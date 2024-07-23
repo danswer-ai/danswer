@@ -480,7 +480,6 @@ def create_connector_from_model(
         _validate_connector_allowed(connector_data.source)
         return create_connector(connector_data, db_session)
     except ValueError as e:
-        print(e)
         raise HTTPException(status_code=400, detail=str(e))
 
 

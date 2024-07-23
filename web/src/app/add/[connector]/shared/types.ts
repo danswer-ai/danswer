@@ -70,7 +70,6 @@ export interface ConnectionConfiguration {
 export interface DynamicConnectionFormProps {
   config: ConnectionConfiguration;
   onSubmit: (values: any) => void;
-  onClose: () => void;
   selectedFiles: File[];
   setSelectedFiles: Dispatch<SetStateAction<File[]>>;
   defaultValues: any;

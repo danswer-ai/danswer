@@ -106,7 +106,6 @@ class CloudEmbedding:
             model = DEFAULT_OPENAI_MODEL
 
         response = self.client.embeddings.create(input=text, model=model)
-        print(len(response.data[0].embedding))
         return response.data[0].embedding
 
     def _embed_cohere(

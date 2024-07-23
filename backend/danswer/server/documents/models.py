@@ -159,8 +159,6 @@ class CCPairFullInfo(BaseModel):
         latest_deletion_attempt: DeletionAttemptSnapshot | None,
         num_docs_indexed: int,  # not ideal, but this must be computed separately
     ) -> "CCPairFullInfo":
-        print(cc_pair_model.credential.__dict__)
-
         return cls(
             id=cc_pair_model.id,
             name=cc_pair_model.name,

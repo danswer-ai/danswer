@@ -122,15 +122,11 @@ export default function CreateCredential({
       }
     }
 
-    // Add the optional 'name' field
     schemaFields["name"] = Yup.string().optional();
-
     return Yup.object().shape(schemaFields);
   }
-
   const validationSchema = createValidationSchema(json_values);
 
-  console.log(input_values);
   return (
     <Formik
       initialValues={{

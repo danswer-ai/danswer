@@ -21,7 +21,6 @@ export async function createConnector<T>(
     },
     body: JSON.stringify(connector),
   });
-  console.log(JSON.stringify(connector));
   return handleResponse(response);
 }
 
@@ -78,7 +77,6 @@ export async function runConnector(
   credentialIds: number[],
   fromBeginning: boolean = false
 ): Promise<string | null> {
-  console.log("TEST");
   const response = await fetch("/api/manage/admin/connector/run-once", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

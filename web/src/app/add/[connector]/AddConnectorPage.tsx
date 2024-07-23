@@ -1,21 +1,18 @@
 "use client";
 
-import { PlusCircleIcon, SettingsIcon } from "@/components/icons/icons";
+import { PlusCircleIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
-  ConfluenceCredentialJson,
-  Connector,
   Credential,
   ValidSources,
   getComprehensiveConnectorConfigTemplate,
   getCredentialTemplate,
   isValidSource,
 } from "@/lib/types";
-import { Button, Card, Divider, Title } from "@tremor/react";
+import { Button, Card, Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
-import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
 import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/lib";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useFormContext } from "@/components/context/FormContext";
@@ -30,8 +27,8 @@ import { submitConnector } from "@/components/admin/connectors/ConnectorForm";
 import { deleteCredential, linkCredential } from "@/lib/credential";
 import { HeaderTitle } from "@/components/header/Header";
 import ModifyCredential from "@/components/credentials/ModifyCredential";
-import { submitFiles } from "./shared/files";
-import { submitGoogleSite } from "./shared/google_site";
+import { submitFiles } from "./shared/handlers/files";
+import { submitGoogleSite } from "./shared/handlers/google_site";
 
 export type advancedConfig = {
   pruneFreq: number;
@@ -248,7 +245,6 @@ export default function AddConnector({
                 const { name: _, public: __, ...valuesWithoutName } = values;
                 setValues(valuesWithoutName);
               }}
-              onClose={() => null}
               defaultValues={values}
             />
           </Card>
@@ -295,8 +291,6 @@ export default function AddConnector({
             currentRefreshFreq={refreshFreq}
             setPruneFreq={setPruneFreq}
             setRefreshFreq={setRefreshFreq}
-            onClose={() => null}
-            onSubmit={() => null}
           />
           <div className="mt-4 flex w-full mx-auto max-w-2xl justify-between">
             <Button

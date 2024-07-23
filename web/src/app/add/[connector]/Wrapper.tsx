@@ -1,8 +1,7 @@
 "use client";
 
-import { User, ValidSources } from "@/lib/types";
+import { ValidSources } from "@/lib/types";
 import AddConnector from "./AddConnectorPage";
-import { useState } from "react";
 import { FormProvider } from "@/components/context/FormContext";
 import Sidebar from "./Sidebar";
 
