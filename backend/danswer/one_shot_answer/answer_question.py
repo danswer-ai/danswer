@@ -206,6 +206,7 @@ def stream_answer_objects(
         single_message_history=history_str,
         tools=[search_tool],
         force_use_tool=ForceUseTool(
+            force_use=True,
             tool_name=search_tool.name,
             args={"query": rephrased_query},
         ),

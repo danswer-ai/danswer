@@ -118,8 +118,6 @@ class EmbeddingModel:
         text_batches = batch_list(texts, batch_size)
         embeddings: list[list[float]] = []
         for idx, text_batch in enumerate(text_batches, start=1):
-            logger.debug(f"Embedding Content Texts batch {idx} of {len(text_batches)}")
-
             embed_request = EmbedRequest(
                 model_name=self.model_name,
                 texts=text_batch,
