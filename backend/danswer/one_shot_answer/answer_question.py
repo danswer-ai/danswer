@@ -256,6 +256,9 @@ def stream_answer_objects(
                 )
                 yield initial_response
 
+            elif packet.id == SEARCH_DOC_CONTENT_ID:
+                yield packet.response
+
             elif packet.id == SECTION_RELEVANCE_LIST_ID:
                 chunk_indices = packet.response
 
@@ -267,9 +270,12 @@ def stream_answer_objects(
                     )
 
                 yield LLMRelevanceFilterResponse(relevant_chunk_indices=packet.response)
-
-            elif packet.id == SEARCH_DOC_CONTENT_ID:
-                yield packet.response
+                if query_req.skip_gen_ai_answer_generation:
+                    # Exit early if only source docs + contexts are requested
+                    # Putting exit here assumes that a packet with the ID
+                    # SECTION_RELEVANCE_LIST_ID is the last one yielded before
+                    # calling the LLM
+                    return
 
             elif packet.id == SEARCH_EVALUATION_ID:
                 evaluation_response = LLMRelevanceSummaryResponse(
