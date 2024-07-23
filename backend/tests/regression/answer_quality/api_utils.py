@@ -17,7 +17,10 @@ GENERAL_HEADERS = {"Content-Type": "application/json"}
 
 
 def _api_url_builder(run_suffix: str, api_path: str) -> str:
-    return f"http://localhost:{get_api_server_host_port(run_suffix)}" + api_path
+    if run_suffix:
+        return f"http://localhost:{get_api_server_host_port(run_suffix)}" + api_path
+    else:
+        return "http://localhost:8080" + api_path
 
 
 @retry(tries=5, delay=5)
