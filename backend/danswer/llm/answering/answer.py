@@ -245,7 +245,8 @@ class Answer:
             ][0]
             tool_args = (
                 self.force_use_tool.args
-                if self.force_use_tool.args
+                if self.force_use_tool.tool_name == tool.name
+                and self.force_use_tool.args
                 else tool_call_request["args"]
             )
 
