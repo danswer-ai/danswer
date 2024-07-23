@@ -7,6 +7,8 @@ import AddConnector from "./AddConnectorPage";
 import { useState } from "react";
 import { FormProvider } from "@/components/context/FormContext";
 import { SourceCategory } from "@/lib/search/interfaces";
+import { AdminSidebar } from "@/components/admin/connectors/AdminSidebar";
+import Sidebar from "./Sidebar";
 
 export default function WrappedPage({
   initiallyToggled,
@@ -25,10 +27,14 @@ export default function WrappedPage({
   const decrement = () => {
     setIndex((index) => index - 1);
   };
+  const adminSetupProps = {
+    steps: ["Credential", "Connector", "Advanced (optional)", "Finalize"],
+    index: index - 1,
+  };
 
   return (
     <FormProvider>
-      <SidebarWrapper
+      {/* <SidebarWrapper
         adminSetupProps={{
           steps: ["Credentials", "Channel", "Finalize"],
           index: index - 1,
@@ -42,10 +48,17 @@ export default function WrappedPage({
           increment,
           decrement,
         }}
-        content={(contentProps) => (
+        content={(contentProps) => ( */}
+
+      <div className="flex justify-center w-full h-full">
+        <Sidebar adminSetupProps={adminSetupProps} />
+        <div className="mt-12 w-full max-w-3xl mx-auto">
           <AddConnector connector={connector as ValidSources} />
-        )}
-      />
+        </div>
+      </div>
+
+      {/* )}
+      /> */}
     </FormProvider>
   );
 }

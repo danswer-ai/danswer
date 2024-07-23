@@ -1,16 +1,13 @@
 "use client";
 
-import {
-  adminSetupPropsType,
-  HistorySidebar,
-} from "@/app/chat/sessionSidebar/HistorySidebar";
+import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
 
 import { ChatSession } from "@/app/chat/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
 import { User } from "@/lib/types";
 import Cookies from "js-cookie";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useRouter } from "next/navigation";
@@ -28,7 +25,6 @@ interface SidebarWrapperProps<T extends object> {
   };
   contentProps: T;
   page: pageType;
-  adminSetupProps?: adminSetupPropsType;
 }
 
 export default function SidebarWrapper<T extends object>({
@@ -37,7 +33,6 @@ export default function SidebarWrapper<T extends object>({
   folders,
   openedFolders,
   page,
-  adminSetupProps,
   headerProps,
   contentProps,
   content,
@@ -111,7 +106,6 @@ export default function SidebarWrapper<T extends object>({
       >
         <div className="w-full relative">
           <HistorySidebar
-            adminSetupProps={adminSetupProps}
             page={page}
             ref={innerSidebarElementRef}
             toggleSidebar={toggleSidebar}

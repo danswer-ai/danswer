@@ -60,7 +60,7 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
           </tr>
         </thead>
 
-        {credentials.length > 0 ? (
+        {credentials.length > 0 && (
           <tbody>
             {credentials.map((credential, ind) => {
               const selected = currentCredentialId
@@ -68,14 +68,13 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
                 : false;
               return (
                 <tr key={credential.id} className="border-b hover:bg-gray-50">
-                  <td className="p-2">
+                  <td className="min-w-[60px] p-2">
                     {!selected ? (
                       <input
-                        type="radio"
+                        type="checkbox"
                         name="credentialSelection"
-                        checked={selectedCredentialId === credential.id}
                         onChange={() => handleSelectCredential(credential.id)}
-                        className="form-radio h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                        className="form-radio ml-4 h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
                       />
                     ) : (
                       <Badge>current</Badge>
@@ -114,10 +113,12 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
               );
             })}
           </tbody>
-        ) : (
-          <p> No credentials exist for this connector!</p>
         )}
       </table>
+
+      {credentials.length == 0 && (
+        <p className="mt-4"> No credentials exist for this connector!</p>
+      )}
     </div>
   );
 };
@@ -155,10 +156,6 @@ export default function ModifyCredential({
     React.useState<Credential<any> | null>(null);
   const [confirmDeletionCredential, setConfirmDeletionCredential] =
     useState<null | Credential<any>>(null);
-
-  const handleSelectCredential = (credential: Credential<any> | null) => {
-    setSelectedCredential(credential);
-  };
 
   if (!credentials) {
     return <></>;

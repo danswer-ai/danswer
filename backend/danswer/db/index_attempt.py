@@ -24,6 +24,22 @@ from danswer.utils.telemetry import RecordType
 logger = setup_logger()
 
 
+def get_last_attempt_for_cc_pair(
+    cc_pair_id: int,
+    embedding_model_id: int,
+    db_session: Session,
+) -> IndexAttempt | None:
+    return (
+        db_session.query(IndexAttempt)
+        .filter(
+            IndexAttempt.connector_credential_pair_id == cc_pair_id,
+            IndexAttempt.embedding_model_id == embedding_model_id,
+        )
+        .order_by(IndexAttempt.time_updated.desc())
+        .first()
+    )
+
+
 def get_index_attempt(
     db_session: Session, index_attempt_id: int
 ) -> IndexAttempt | None:
@@ -32,15 +48,13 @@ def get_index_attempt(
 
 
 def create_index_attempt(
-    connector_id: int,
-    credential_id: int,
+    connector_credential_pair_id: int,
     embedding_model_id: int,
     db_session: Session,
     from_beginning: bool = False,
 ) -> int:
     new_attempt = IndexAttempt(
-        connector_id=connector_id,
-        credential_id=credential_id,
+        connector_credential_pair_id=connector_credential_pair_id,
         embedding_model_id=embedding_model_id,
         from_beginning=from_beginning,
         status=IndexingStatus.NOT_STARTED,
@@ -136,11 +150,14 @@ def get_last_attempt(
     embedding_model_id: int | None,
     db_session: Session,
 ) -> IndexAttempt | None:
-    stmt = select(IndexAttempt).where(
-        IndexAttempt.connector_credential_pair.has(
-            connector_id=connector_id, credential_id=credential_id
-        ),
-        IndexAttempt.embedding_model_id == embedding_model_id,
+    stmt = (
+        select(IndexAttempt)
+        .join(ConnectorCredentialPair)
+        .where(
+            ConnectorCredentialPair.connector_id == connector_id,
+            ConnectorCredentialPair.credential_id == credential_id,
+            IndexAttempt.embedding_model_id == embedding_model_id,
+        )
     )
 
     # Note, the below is using time_created instead of time_updated

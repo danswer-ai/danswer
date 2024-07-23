@@ -256,6 +256,12 @@ def remove_credential_from_connector(
     )
 
 
+def fetch_connector_credential_pairs(
+    db_session: Session,
+) -> list[ConnectorCredentialPair]:
+    return db_session.query(ConnectorCredentialPair).all()
+
+
 def resync_cc_pair(
     cc_pair: ConnectorCredentialPair,
     db_session: Session,

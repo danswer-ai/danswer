@@ -40,12 +40,6 @@ import { Tooltip } from "@/components/tooltip/Tooltip";
 import KeyboardSymbol from "@/lib/browserUtilities";
 import { pageType } from "./types";
 
-export type adminSetupPropsType = {
-  index: number;
-  steps: string[];
-  max_index: number;
-};
-
 interface HistorySidebarProps {
   page: pageType;
   existingChats?: ChatSession[];
@@ -54,7 +48,6 @@ interface HistorySidebarProps {
   openedFolders?: { [key: number]: boolean };
   toggleSidebar?: () => void;
   toggled?: boolean;
-  adminSetupProps?: adminSetupPropsType;
 }
 
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
@@ -62,7 +55,6 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
     {
       toggled,
       page,
-      adminSetupProps,
       existingChats,
       currentChatSession,
       folders,
@@ -130,65 +122,6 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             )}
           </div>
 
-          {page == "admin" && adminSetupProps && (
-            <>
-              <div className="mx-3 mt-4 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
-                <Link
-                  href={
-                    "/chat" +
-                    (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                    currentChatSession
-                      ? `?assistantId=${currentChatSession.persona_id}`
-                      : "")
-                  }
-                  className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
-                >
-                  <BackIcon className="flex-none " />
-                  <p className="my-auto flex items-center text-sm">
-                    Back to Danswer
-                  </p>
-                </Link>
-                <Link
-                  href={"/admin/add-connector"}
-                  className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
-                >
-                  <FiArrowDown className="flex-none " />
-                  <p className="my-auto flex items-center text-sm">
-                    Admin Page
-                  </p>
-                </Link>
-              </div>
-              <div className="h-full flex">
-                <div className="mx-auto w-full max-w-2xl px-4 py-8">
-                  <div className="relative">
-                    {/* Continuous vertical line */}
-                    <div className="absolute left-[7px] top-[10px] bottom-0 w-0.5 bg-gray-300"></div>
-                    {adminSetupProps.steps.map((step, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center mb-6 relative"
-                      >
-                        <div className="flex-shrink-0 mr-4 z-10">
-                          <div
-                            className={`rounded-full h-3.5 w-3.5 flex items-center justify-center ${index <= adminSetupProps.index ? "bg-blue-500" : "bg-gray-300"}`}
-                          >
-                            {index === adminSetupProps.index && (
-                              <div className="h-2 w-2 rounded-full bg-white"></div>
-                            )}
-                          </div>
-                        </div>
-                        <div
-                          className={`${index <= adminSetupProps.index ? "text-gray-800" : "text-gray-500"}`}
-                        >
-                          {step}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
           {page == "chat" && (
             <div className="mx-3 mt-4 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
               <Link

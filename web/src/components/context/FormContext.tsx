@@ -37,7 +37,8 @@ export const FormProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const prevFormStep = () => {
-    setFormStep((currentStep) => Math.max(currentStep - 1, 1));
+    console.log("HI");
+    setFormStep((currentStep) => Math.max(currentStep - 1, 0));
   };
 
   const formStepToLast = () => {

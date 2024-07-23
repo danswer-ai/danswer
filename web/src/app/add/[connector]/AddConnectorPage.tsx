@@ -1,6 +1,6 @@
 "use client";
 
-import { SettingsIcon } from "@/components/icons/icons";
+import { PlusCircleIcon, SettingsIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -138,7 +138,6 @@ export default function AddConnector({
           {" "}
           Go home{" "}
         </Button>
-        <FixedLogo />
       </div>
     );
   }
@@ -255,16 +254,19 @@ export default function AddConnector({
             </button>
 
             <Button
-              className="mx-auto"
+              className="mt-auto mx-auto"
               type="button"
               color="gray"
               onClick={() => createConnector()}
             >
-              Create
+              <div className="flex items-center gap-x-2">
+                Create
+                <PlusCircleIcon className="text-neutral-200" />
+              </div>
             </Button>
 
             <button
-              className="ml-auto hover:underline"
+              className="ml-auto mt-auto hover:underline"
               onClick={() => nextFormStep()}
             >
               Advanced Settings
@@ -295,8 +297,6 @@ export default function AddConnector({
           </div>
         </Card>
       )}
-
-      <FixedLogo />
     </div>
   );
 }
