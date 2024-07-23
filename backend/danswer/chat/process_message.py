@@ -208,7 +208,7 @@ def _get_force_search_settings(
     )
 
     if new_msg_req.file_descriptors:
-        # If files are already provided, don't run any of the search tools
+        # If user has uploaded files they're using, don't run any of the search tools
         return ForceUseTool(force_use=False, tool_name=tool_name)
 
     should_force_search = any(
