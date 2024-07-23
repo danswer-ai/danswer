@@ -101,6 +101,9 @@ def get_last_successful_attempt_time(
         .first()
     )
     if not attempt or not attempt.time_started:
+        connector = fetch_connector_by_id(connector_id, db_session)
+        if connector and connector.indexing_start:
+            return connector.indexing_start.timestamp()
         return 0.0
 
     return attempt.time_started.timestamp()

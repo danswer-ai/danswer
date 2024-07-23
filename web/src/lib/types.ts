@@ -92,6 +92,7 @@ export interface ConnectorBase<T> {
   connector_specific_config: T;
   refresh_freq: number | null;
   prune_freq: number | null;
+  indexing_start: Date | null;
   disabled: boolean;
 }
 

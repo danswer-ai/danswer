@@ -419,6 +419,9 @@ class Connector(Base):
     connector_specific_config: Mapped[dict[str, Any]] = mapped_column(
         postgresql.JSONB()
     )
+    indexing_start: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )
     refresh_freq: Mapped[int | None] = mapped_column(Integer, nullable=True)
     prune_freq: Mapped[int | None] = mapped_column(Integer, nullable=True)
     time_created: Mapped[datetime.datetime] = mapped_column(

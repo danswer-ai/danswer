@@ -85,6 +85,7 @@ def create_connector(
         input_type=connector_data.input_type,
         connector_specific_config=connector_data.connector_specific_config,
         refresh_freq=connector_data.refresh_freq,
+        indexing_start=connector_data.indexing_start,
         prune_freq=connector_data.prune_freq
         if connector_data.prune_freq is not None
         else DEFAULT_PRUNING_FREQ,

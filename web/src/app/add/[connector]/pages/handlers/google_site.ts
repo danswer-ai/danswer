@@ -3,11 +3,13 @@ import { createConnector, runConnector } from "@/lib/connector";
 import { linkCredential } from "@/lib/credential";
 import { GoogleSitesConfig } from "@/lib/types";
 import { mutate } from "swr";
+import { AdvancedConfig } from "../../AddConnectorPage";
 
 export const submitGoogleSite = async (
   selectedFiles: File[],
   base_url: any,
   setPopup: (popup: PopupSpec) => void,
+  advancedConfig: AdvancedConfig,
   name?: string
 ) => {
   const uploadCreateAndTriggerConnector = async () => {
@@ -40,8 +42,9 @@ export const submitGoogleSite = async (
           base_url: base_url,
           zip_path: filePaths[0],
         },
-        refresh_freq: null,
-        prune_freq: 0,
+        refresh_freq: advancedConfig.refreshFreq,
+        prune_freq: advancedConfig.pruneFreq,
+        indexing_start: advancedConfig.indexingStart,
         disabled: false,
       });
     if (connectorErrorMsg || !connector) {

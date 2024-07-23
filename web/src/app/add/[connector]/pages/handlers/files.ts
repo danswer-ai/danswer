@@ -2,13 +2,14 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { createCredential, linkCredential } from "@/lib/credential";
 import { FileConfig } from "@/lib/types";
+import { AdvancedConfig } from "../../AddConnectorPage";
 
 export const submitFiles = async (
   selectedFiles: File[],
   setPopup: (popup: PopupSpec) => void,
   setSelectedFiles: (files: File[]) => void,
-  values: any,
   name: string,
+  advancedConfig: AdvancedConfig,
   isPublic: boolean
 ) => {
   const formData = new FormData();
@@ -39,8 +40,9 @@ export const submitFiles = async (
     connector_specific_config: {
       file_locations: filePaths,
     },
-    refresh_freq: null,
-    prune_freq: 0,
+    refresh_freq: advancedConfig.refreshFreq,
+    prune_freq: advancedConfig.pruneFreq,
+    indexing_start: advancedConfig.indexingStart,
     disabled: false,
   });
   if (connectorErrorMsg || !connector) {

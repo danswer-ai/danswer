@@ -25,15 +25,15 @@ import CreateCredential from "@/components/credentials/CreateCredential";
 import { useState } from "react";
 import { submitConnector } from "@/components/admin/connectors/ConnectorForm";
 import { deleteCredential, linkCredential } from "@/lib/credential";
-import { HeaderTitle } from "@/components/header/Header";
 import ModifyCredential from "@/components/credentials/ModifyCredential";
 import { submitFiles } from "./pages/handlers/files";
 import { submitGoogleSite } from "./pages/handlers/google_site";
 import { redirect } from "next/dist/server/api-utils";
 
-export type advancedConfig = {
-  pruneFreq: number;
-  refreshFreq: number;
+export type AdvancedConfig = {
+  pruneFreq: number | null;
+  refreshFreq: number | null;
+  indexingStart: Date | null;
 };
 
 export default function AddConnector({
@@ -90,22 +90,28 @@ export default function AddConnector({
 
   const [refreshFreq, setRefreshFreq] = useState<number>(0);
   const [pruneFreq, setPruneFreq] = useState<number>(0);
-  const [lastIndexing, setLastIndexing] = useState<Date | null>(null);
+  const [indexingStart, setIndexingStart] = useState<Date | null>(null);
   const [isPublic, setIsPublic] = useState(false);
 
   const resetAdvancedSettings = () => {
     setPruneFreq(0);
     setRefreshFreq(0);
-    setLastIndexing(null);
+    setIndexingStart(null);
     prevFormStep();
   };
 
   const createConnector = async () => {
+    const AdvancedConfig: AdvancedConfig = {
+      pruneFreq: pruneFreq,
+      indexingStart: indexingStart,
+      refreshFreq: refreshFreq,
+    };
     if (credentialTemplate === "sites") {
       const response = await submitGoogleSite(
         selectedFiles,
         values?.base_url,
         setPopup,
+        AdvancedConfig,
         name
       );
       if (response) {
@@ -123,8 +129,8 @@ export default function AddConnector({
         selectedFiles,
         setPopup,
         setSelectedFiles,
-        values,
         name,
+        AdvancedConfig,
         isPublic
       );
       if (response) {
@@ -150,7 +156,8 @@ export default function AddConnector({
           name: name,
           source: connector,
           refresh_freq: refreshFreq || 0,
-          prune_freq: pruneFreq ?? null,
+          prune_freq: pruneFreq || null,
+          indexing_start: indexingStart,
           disabled: false,
         },
         undefined,
@@ -177,6 +184,7 @@ export default function AddConnector({
       source: connector,
       refresh_freq: refreshFreq || 0,
       prune_freq: pruneFreq ?? null,
+      indexing_start: indexingStart,
       disabled: false,
     });
 
@@ -353,8 +361,8 @@ export default function AddConnector({
       {formStep === 2 && (
         <Card>
           <AdvancedFormPage
-            setLastIndexing={setLastIndexing}
-            lastIndexing={lastIndexing}
+            setIndexingStart={setIndexingStart}
+            indexingStart={indexingStart}
             currentPruneFreq={pruneFreq}
             currentRefreshFreq={refreshFreq}
             setPruneFreq={setPruneFreq}
@@ -370,7 +378,7 @@ export default function AddConnector({
             </Button>
             <Button
               onClick={() => {
-                console.log(lastIndexing);
+                console.log(indexingStart);
                 prevFormStep();
               }}
             >

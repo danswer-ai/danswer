@@ -9,15 +9,15 @@ const AdvancedFormPage = ({
   setPruneFreq,
   currentPruneFreq,
   currentRefreshFreq,
-  lastIndexing,
-  setLastIndexing,
+  indexingStart,
+  setIndexingStart,
 }: {
   currentPruneFreq: number;
   currentRefreshFreq: number;
   setRefreshFreq: Dispatch<SetStateAction<number>>;
   setPruneFreq: Dispatch<SetStateAction<number>>;
-  setLastIndexing: Dispatch<SetStateAction<Date | null>>;
-  lastIndexing: Date | null;
+  setIndexingStart: Dispatch<SetStateAction<Date | null>>;
+  indexingStart: Date | null;
 }) => {
   return (
     <div className="py-4 rounded-lg max-w-2xl mx-auto">
@@ -68,8 +68,8 @@ const AdvancedFormPage = ({
               <EditingValue
                 description="Documents prior to this date will not be pulled in"
                 optional
-                currentValue={lastIndexing ? lastIndexing : undefined}
-                onChangeDate={(value: Date | null) => setLastIndexing(value)}
+                currentValue={indexingStart ? indexingStart : undefined}
+                onChangeDate={(value: Date | null) => setIndexingStart(value)}
                 setFieldValue={setFieldValue}
                 type="date"
                 label="Indexing Start Date"

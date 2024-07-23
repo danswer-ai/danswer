@@ -550,6 +550,7 @@ def update_connector_from_model(
         credential_ids=[
             association.credential.id for association in updated_connector.credentials
         ],
+        indexing_start=updated_connector.indexing_start,
         time_created=updated_connector.time_created,
         time_updated=updated_connector.time_updated,
         disabled=updated_connector.disabled,
@@ -765,6 +766,7 @@ def get_connector_by_id(
         id=connector.id,
         name=connector.name,
         source=connector.source,
+        indexing_start=connector.indexing_start,
         input_type=connector.input_type,
         connector_specific_config=connector.connector_specific_config,
         refresh_freq=connector.refresh_freq,

@@ -40,6 +40,7 @@ class ConnectorBase(BaseModel):
     refresh_freq: int | None  # In seconds, None for one time index with no refresh
     prune_freq: int | None
     disabled: bool
+    indexing_start: datetime | None
 
 
 class ConnectorSnapshot(ConnectorBase):
@@ -62,6 +63,7 @@ class ConnectorSnapshot(ConnectorBase):
             credential_ids=[
                 association.credential.id for association in connector.credentials
             ],
+            indexing_start=connector.indexing_start,
             time_created=connector.time_created,
             time_updated=connector.time_updated,
             disabled=connector.disabled,

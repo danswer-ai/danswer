@@ -132,14 +132,19 @@ def _run_indexing(
 
     db_connector = index_attempt.connector_credential_pair.connector
     db_credential = index_attempt.connector_credential_pair.credential
+
     last_successful_index_time = (
-        0.0
-        if index_attempt.from_beginning
-        else get_last_successful_attempt_time(
-            connector_id=db_connector.id,
-            credential_id=db_credential.id,
-            embedding_model=index_attempt.embedding_model,
-            db_session=db_session,
+        db_connector.indexing_start.timestamp()
+        if index_attempt.from_beginning and db_connector.indexing_start is not None
+        else (
+            0.0
+            if index_attempt.from_beginning
+            else get_last_successful_attempt_time(
+                connector_id=db_connector.id,
+                credential_id=db_credential.id,
+                embedding_model=index_attempt.embedding_model,
+                db_session=db_session,
+            )
         )
     )
 
