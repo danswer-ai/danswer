@@ -29,6 +29,7 @@ import { HeaderTitle } from "@/components/header/Header";
 import ModifyCredential from "@/components/credentials/ModifyCredential";
 import { submitFiles } from "./pages/handlers/files";
 import { submitGoogleSite } from "./pages/handlers/google_site";
+import { redirect } from "next/dist/server/api-utils";
 
 export type advancedConfig = {
   pruneFreq: number;
@@ -61,7 +62,20 @@ export default function AddConnector({
   const configuration: ConnectionConfiguration =
     getComprehensiveConnectorConfigTemplate(connector);
 
-  const [values, setValues] = useState<{ [record: string]: any } | null>(null);
+  const initialValues = configuration.values.reduce(
+    (acc, field) => {
+      if (field.type === "list") {
+        acc[field.name] = [];
+      }
+      return acc;
+    },
+    {} as { [record: string]: any }
+  );
+
+  const [values, setValues] = useState<{ [record: string]: any } | null>(
+    Object.keys(initialValues).length > 0 ? initialValues : null
+  );
+
   const noCredentials =
     credentialTemplate === "file" ||
     credentialTemplate == "sites" ||
@@ -88,19 +102,71 @@ export default function AddConnector({
 
   const createConnector = async () => {
     if (credentialTemplate === "sites") {
-      await submitGoogleSite(selectedFiles, values?.base_url, setPopup);
+      const response = await submitGoogleSite(
+        selectedFiles,
+        values?.base_url,
+        setPopup,
+        name
+      );
+      if (response) {
+        setTimeout(() => {
+          window.open("/admin/indexing/status", "_self");
+        }, 1000);
+      } else {
+        console.log("No repsonse");
+      }
+      return;
+    }
+
+    if (credentialTemplate == "file" && selectedFiles.length > 0) {
+      const response = await submitFiles(
+        selectedFiles,
+        setPopup,
+        setSelectedFiles,
+        values,
+        name,
+        isPublic
+      );
+      if (response) {
+        setTimeout(() => {
+          window.open("/admin/indexing/status", "_self");
+        }, 1000);
+      }
+      return;
     }
 
     if (!currentCredential && credentialTemplate === "file") {
       return;
     }
 
-    if (selectedFiles.length > 0) {
-      await submitFiles(selectedFiles, setPopup, setSelectedFiles, values);
-      return "valid response";
+    if (!currentCredential && credentialTemplate != "wiki") {
+      return;
     }
-
     if (!currentCredential) {
+      const { message, isSuccess, response } = await submitConnector<any>(
+        {
+          connector_specific_config: values,
+          input_type: "load_state",
+          name: name,
+          source: connector,
+          refresh_freq: refreshFreq || 0,
+          prune_freq: pruneFreq ?? null,
+          disabled: false,
+        },
+        undefined,
+        true
+      );
+      if (isSuccess) {
+        setPopup({
+          message: "Connector created! Redirecting to connector home page",
+          type: "success",
+        });
+        setTimeout(() => {
+          window.open("/admin/indexing/status", "_self");
+        }, 1000);
+      } else {
+        setPopup({ message: message, type: "error" });
+      }
       return;
     }
 
@@ -114,7 +180,7 @@ export default function AddConnector({
       disabled: false,
     });
 
-    if (isSuccess && response) {
+    if (isSuccess && response && currentCredential) {
       const linkCredentialResponse = await linkCredential(
         response.id,
         currentCredential.id,
@@ -134,22 +200,7 @@ export default function AddConnector({
       setPopup({ message: message, type: "error" });
     }
   };
-  if (!isValidSource(connector)) {
-    return (
-      <div className="mx-auto flex flex-col gap-y-2">
-        <HeaderTitle>
-          <p>&lsquo;{connector}&lsquo; is not a valid Connector Type!</p>
-        </HeaderTitle>
-        <Button
-          onClick={() => window.open("/admin/indexing/status", "_self")}
-          className="mr-auto"
-        >
-          {" "}
-          Go home{" "}
-        </Button>
-      </div>
-    );
-  }
+
   const displayName = getSourceDisplayName(connector) || connector;
   if (!credentials) {
     return <></>;
@@ -262,9 +313,7 @@ export default function AddConnector({
             />
           </Card>
           <div className={`mt-4 flex w-full grid grid-cols-3`}>
-            {!noCredentials &&
-            (credentialTemplate !== "file" ||
-              credentialTemplate !== "sites") ? (
+            {!noCredentials ? (
               <button
                 className="px-2 mr-auto hover:bg-accent/80 transition-color text-white duration-300 rounded-lg bg-accent"
                 onClick={() => prevFormStep()}
@@ -287,12 +336,16 @@ export default function AddConnector({
               </div>
             </Button>
 
-            <button
-              className="ml-auto mt-auto hover:underline"
-              onClick={() => nextFormStep()}
-            >
-              Advanced Settings
-            </button>
+            {!noCredentials ? (
+              <button
+                className="ml-auto mt-auto hover:underline"
+                onClick={() => nextFormStep()}
+              >
+                Advanced Settings
+              </button>
+            ) : (
+              <div />
+            )}
           </div>
         </>
       )}

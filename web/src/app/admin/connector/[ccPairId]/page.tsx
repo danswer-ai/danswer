@@ -16,6 +16,7 @@ import { isCurrentlyDeleting } from "@/lib/documentDeletion";
 import {
   ConfluenceCredentialJson,
   Credential,
+  sourcesWithoutCredentials,
   ValidSources,
 } from "@/lib/types";
 import useSWR, { mutate } from "swr";
@@ -99,14 +100,18 @@ function Main({ ccPairId }: { ccPairId: number }) {
         Total Documents Indexed:{" "}
         <b className="text-emphasis">{totalDocsIndexed}</b>
       </div>
-      <Divider />
-      <Title className="mb-2">Credentials</Title>
-      {ccPair.connector.source !== "file" && (
-        <CredentialSection
-          ccPair={ccPair}
-          sourceType={ccPair.connector.source}
-          refresh={() => refresh()}
-        />
+      {!sourcesWithoutCredentials.includes(ccPair.connector.source) && (
+        <>
+          <Divider />
+
+          <Title className="mb-2">Credentials</Title>
+
+          <CredentialSection
+            ccPair={ccPair}
+            sourceType={ccPair.connector.source}
+            refresh={() => refresh()}
+          />
+        </>
       )}
       <Divider />
       <ConfigDisplay

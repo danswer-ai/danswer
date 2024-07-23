@@ -7,7 +7,9 @@ export const submitFiles = async (
   selectedFiles: File[],
   setPopup: (popup: PopupSpec) => void,
   setSelectedFiles: (files: File[]) => void,
-  values: any
+  values: any,
+  name: string,
+  isPublic: boolean
 ) => {
   const formData = new FormData();
 
@@ -57,7 +59,7 @@ export const submitFiles = async (
     credential_json: {},
     admin_public: true,
     source: "file",
-    name: values.name,
+    name,
   });
   if (!createCredentialResponse.ok) {
     const errorMsg = await createCredentialResponse.text();
@@ -66,14 +68,15 @@ export const submitFiles = async (
       type: "error",
     });
     return;
+    false;
   }
   const credentialId = (await createCredentialResponse.json()).id;
 
   const credentialResponse = await linkCredential(
     connector.id,
     credentialId,
-    values.name,
-    values.is_public
+    name,
+    isPublic
   );
   if (!credentialResponse.ok) {
     const credentialResponseJson = await credentialResponse.json();
@@ -81,7 +84,7 @@ export const submitFiles = async (
       message: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
       type: "error",
     });
-    return;
+    return false;
   }
 
   const runConnectorErrorMsg = await runConnector(connector.id, [0]);
@@ -90,7 +93,7 @@ export const submitFiles = async (
       message: `Unable to run connector - ${runConnectorErrorMsg}`,
       type: "error",
     });
-    return;
+    return false;
   }
 
   setSelectedFiles([]);
@@ -98,4 +101,5 @@ export const submitFiles = async (
     type: "success",
     message: "Successfully uploaded files!",
   });
+  return true;
 };

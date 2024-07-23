@@ -7,7 +7,8 @@ import { mutate } from "swr";
 export const submitGoogleSite = async (
   selectedFiles: File[],
   base_url: any,
-  setPopup: (popup: PopupSpec) => void
+  setPopup: (popup: PopupSpec) => void,
+  name?: string
 ) => {
   const uploadCreateAndTriggerConnector = async () => {
     const formData = new FormData();
@@ -26,13 +27,13 @@ export const submitGoogleSite = async (
         message: `Unable to upload files - ${responseJson.detail}`,
         type: "error",
       });
-      return;
+      return false;
     }
 
     const filePaths = responseJson.file_paths as string[];
     const [connectorErrorMsg, connector] =
       await createConnector<GoogleSitesConfig>({
-        name: `GoogleSitesConnector-${base_url}`,
+        name: name ? name : `GoogleSitesConnector-${base_url}`,
         source: "google_sites",
         input_type: "load_state",
         connector_specific_config: {
@@ -48,7 +49,7 @@ export const submitGoogleSite = async (
         message: `Unable to create connector - ${connectorErrorMsg}`,
         type: "error",
       });
-      return;
+      return false;
     }
 
     const credentialResponse = await linkCredential(connector.id, 0, base_url);
@@ -58,7 +59,7 @@ export const submitGoogleSite = async (
         message: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
         type: "error",
       });
-      return;
+      return false;
     }
 
     const runConnectorErrorMsg = await runConnector(connector.id, [0]);
@@ -67,17 +68,20 @@ export const submitGoogleSite = async (
         message: `Unable to run connector - ${runConnectorErrorMsg}`,
         type: "error",
       });
-      return;
+      return false;
     }
     setPopup({
       type: "success",
-      message: "Successfully uploaded files!",
+      message: "Successfully created Google Site connector!",
     });
+    return true;
   };
 
   try {
-    await uploadCreateAndTriggerConnector();
+    const response = await uploadCreateAndTriggerConnector();
+    return response;
   } catch (e) {
+    return false;
     console.log("Failed to index filels: ", e);
   }
 };

@@ -254,12 +254,15 @@ def get_index_attempts_for_cc_pair(
     only_current: bool = True,
     disinclude_finished: bool = False,
 ) -> Sequence[IndexAttempt]:
-    stmt = select(IndexAttempt).where(
-        and_(
-            IndexAttempt.connector_credential_pair.connector_id
-            == cc_pair_identifier.connector_id,
-            IndexAttempt.connector_credential_pair.credential_id
-            == cc_pair_identifier.credential_id,
+    stmt = (
+        select(IndexAttempt)
+        .join(ConnectorCredentialPair)
+        .where(
+            and_(
+                ConnectorCredentialPair.connector_id == cc_pair_identifier.connector_id,
+                ConnectorCredentialPair.credential_id
+                == cc_pair_identifier.credential_id,
+            )
         )
     )
     if disinclude_finished:

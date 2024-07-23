@@ -23,27 +23,50 @@ const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
 export async function submitConnector<T>(
   connector: ConnectorBase<T>,
-  connectorId?: number
+  connectorId?: number,
+  fake_credential?: boolean
 ): Promise<{ message: string; isSuccess: boolean; response?: Connector<T> }> {
   const isUpdate = connectorId !== undefined;
-  try {
-    const response = await fetch(
-      BASE_CONNECTOR_URL + (isUpdate ? `/${connectorId}` : ""),
-      {
-        method: isUpdate ? "PATCH" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(connector),
-      }
-    );
 
-    if (response.ok) {
-      const responseJson = await response.json();
-      return { message: "Success!", isSuccess: true, response: responseJson };
+  try {
+    if (fake_credential) {
+      console.log("Looknig for fake cred");
+      const response = await fetch(
+        "/api/manage/admin/connector-with-fake-credential",
+        {
+          method: isUpdate ? "PATCH" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(connector),
+        }
+      );
+      if (response.ok) {
+        const responseJson = await response.json();
+        return { message: "Success!", isSuccess: true, response: responseJson };
+      } else {
+        const errorData = await response.json();
+        return { message: `Error: ${errorData.detail}`, isSuccess: false };
+      }
     } else {
-      const errorData = await response.json();
-      return { message: `Error: ${errorData.detail}`, isSuccess: false };
+      const response = await fetch(
+        BASE_CONNECTOR_URL + (isUpdate ? `/${connectorId}` : ""),
+        {
+          method: isUpdate ? "PATCH" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(connector),
+        }
+      );
+
+      if (response.ok) {
+        const responseJson = await response.json();
+        return { message: "Success!", isSuccess: true, response: responseJson };
+      } else {
+        const errorData = await response.json();
+        return { message: `Error: ${errorData.detail}`, isSuccess: false };
+      }
     }
   } catch (error) {
     return { message: `Error: ${error}`, isSuccess: false };

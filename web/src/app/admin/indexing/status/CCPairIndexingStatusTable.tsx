@@ -134,8 +134,10 @@ function SummaryRow({
 
 function ConnectorRow({
   ccPairsIndexingStatus,
+  invisible,
 }: {
   ccPairsIndexingStatus: any;
+  invisible?: boolean;
 }) {
   const router = useRouter();
 
@@ -146,7 +148,7 @@ function ConnectorRow({
 
   return (
     <TableRow
-      className="hover:bg-hover-light border border-border !border-b w-full cursor-pointer relative"
+      className={`hover:bg-hover-light ${invisible ? "invisible h-0 !-mb-10" : "border border-border !border-b"}  w-full cursor-pointer relative`}
       onClick={() =>
         router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`)
       }
@@ -281,7 +283,7 @@ export function CCPairIndexingStatusTable({
   const totalPages = Math.ceil(ccPairsIndexingStatuses.length / NUM_IN_PAGE);
 
   return (
-    <div className="overflow-">
+    <div className="overflow- -mt-20">
       <Table>
         <TableHead>
           <TableRow className="invisible">
@@ -308,6 +310,11 @@ export function CCPairIndexingStatusTable({
             ></TableHeaderCell>
           </TableRow>
         </TableHead>
+        <ConnectorRow
+          invisible
+          ccPairsIndexingStatus={groupedStatuses.file[0]}
+        />
+        <div className="-mb-10" />
         <TableBody>
           {sortedSources.map((source, ind) => (
             <React.Fragment key={ind}>

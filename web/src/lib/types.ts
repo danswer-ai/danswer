@@ -896,7 +896,7 @@ export const getCredentialTemplate = <T extends ValidSources>(
     case "google_sites":
       return "sites";
     case "file":
-      return "files";
+      return "file";
     case "linear":
       return { linear_api_key: "" } as LinearCredentialJson;
     case "hubspot":
@@ -989,9 +989,8 @@ export const getCredentialTemplate = <T extends ValidSources>(
       return "web";
     case "file":
     case "not_applicable":
-      return null;
     default:
-      throw new Error(`Unsupported source: ${source}`);
+      return null;
   }
 };
 
@@ -1669,13 +1668,13 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             description:
               "Input a valid Wikipedia language code (e.g. 'en', 'es')",
           },
-          {
-            type: "text",
-            query: "Enter the Wikipedia Site URL",
-            label: "Wikipedia Site URL",
-            name: "hostname",
-            optional: false,
-          },
+          // {
+          //   type: "text",
+          //   query: "Enter the Wikipedia Site URL",
+          //   label: "Wikipedia Site URL",
+          //   name: "hostname",
+          //   optional: false,
+          // },
           {
             type: "list",
             query: "Enter categories to include:",
@@ -1691,8 +1690,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             label: "Pages",
             name: "pages",
             optional: true,
-            description:
-              "Specify 0 or more names of pages to index. Only specify the name of the page, not its url.",
+            description: "Specify 0 or more names of pages to index.",
           },
           {
             type: "number",
@@ -1701,7 +1699,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             name: "recurse_depth",
             description:
               "When indexing categories that have sub-categories, this will determine how may levels to index. Specify 0 to only index the category itself (i.e. no recursion). Specify -1 for unlimited recursion depth. Note, that in some rare instances, a category might contain itself in its dependencies, which will cause an infinite loop. Only use -1 if you confident that this will not happen.",
-            optional: true,
+            optional: false,
           },
         ],
       };
@@ -1758,3 +1756,10 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
   }
   return {} as any;
 };
+
+export const sourcesWithoutCredentials: ValidSources[] = [
+  "file",
+  "google_sites",
+  "wikipedia",
+  "mediawiki",
+];
