@@ -149,7 +149,7 @@ function Main() {
       }
     );
     if (response.ok) {
-      setShowTentativeOpenProvider(null)
+      setShowTentativeOpenProvider(null);
       setShowTentativeModel(null);
       mutate("/api/secondary-index/get-secondary-embedding-model");
       if (!connectors || !connectors.length) {
@@ -370,20 +370,22 @@ function Main() {
           <div className="mt-8 text-sm mr-auto mb-12 divide-x-2 flex">
             <button
               onClick={() => setOpenToggle(true)}
-              className={` mx-2 p-2 font-bold  ${openToggle
-                ? "rounded bg-neutral-900 text-neutral-100 underline"
-                : "hover:underline"
-                }`}
+              className={` mx-2 p-2 font-bold  ${
+                openToggle
+                  ? "rounded bg-neutral-900 text-neutral-100 underline"
+                  : "hover:underline"
+              }`}
             >
               Self-hosted
             </button>
             <div className="px-2 ">
               <button
                 onClick={() => setOpenToggle(false)}
-                className={`mx-2 p-2 font-bold  ${!openToggle
-                  ? "rounded bg-neutral-900   text-neutral-100 underline"
-                  : " hover:underline"
-                  }`}
+                className={`mx-2 p-2 font-bold  ${
+                  !openToggle
+                    ? "rounded bg-neutral-900   text-neutral-100 underline"
+                    : " hover:underline"
+                }`}
               >
                 Cloud-based
               </button>
