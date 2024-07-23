@@ -27,6 +27,10 @@ export async function submitConnector<T>(
   fake_credential?: boolean
 ): Promise<{ message: string; isSuccess: boolean; response?: Connector<T> }> {
   const isUpdate = connectorId !== undefined;
+  if (!connector.connector_specific_config) {
+    connector.connector_specific_config = {} as T;
+    // connector.connector_specific_config={}
+  }
 
   try {
     if (fake_credential) {
@@ -49,6 +53,7 @@ export async function submitConnector<T>(
         return { message: `Error: ${errorData.detail}`, isSuccess: false };
       }
     } else {
+      console.log(connector);
       const response = await fetch(
         BASE_CONNECTOR_URL + (isUpdate ? `/${connectorId}` : ""),
         {

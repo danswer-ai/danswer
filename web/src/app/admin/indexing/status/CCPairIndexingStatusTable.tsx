@@ -285,34 +285,20 @@ export function CCPairIndexingStatusTable({
   return (
     <div className="overflow- -mt-20">
       <Table>
-        <TableHead>
-          <TableRow className="invisible">
-            <TableHeaderCell className={`w-[${columnWidths.first}]`}>
-              Name
-            </TableHeaderCell>
-            <TableHeaderCell className={`w-[${columnWidths.second}]`}>
-              Status
-            </TableHeaderCell>
-            <TableHeaderCell className={`w-[${columnWidths.third}]`}>
-              Active
-            </TableHeaderCell>
-            <TableHeaderCell className={`w-[${columnWidths.fourth}]`}>
-              Public
-            </TableHeaderCell>
-            <TableHeaderCell className={`w-[${columnWidths.sixth}]`}>
-              Total Docs
-            </TableHeaderCell>
-            <TableHeaderCell className={`w-[${columnWidths.fifth}]`}>
-              Last Indexed
-            </TableHeaderCell>
-            <TableHeaderCell
-              className={`w-[${columnWidths.seventh}]`}
-            ></TableHeaderCell>
-          </TableRow>
-        </TableHead>
         <ConnectorRow
           invisible
-          ccPairsIndexingStatus={groupedStatuses.file[0]}
+          ccPairsIndexingStatus={{
+            cc_pair_id: 1,
+            name: "Sample File Connector",
+            last_status: "success",
+            connector: {
+              source: "file",
+              disabled: false,
+            },
+            public_doc: true,
+            docs_indexed: 1000,
+            last_success: "2023-07-01T12:00:00Z",
+          }}
         />
         <div className="-mb-10" />
         <TableBody>

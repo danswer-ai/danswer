@@ -24,6 +24,7 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ThreeDotsLoader } from "@/components/Loading";
 import CredentialSection from "@/components/credentials/CredentialSection";
 import { buildCCPairInfoUrl } from "./lib";
+import { SourceIcon } from "@/components/SourceIcon";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -75,7 +76,10 @@ function Main({ ccPairId }: { ccPairId: number }) {
     <>
       <BackButton />
       <div className="pb-1 flex mt-1">
-        <h1 className="text-3xl text-emphasis font-bold">{ccPair.name}</h1>
+        <div className="mr-2 my-auto ">
+          <SourceIcon iconSize={24} sourceType={ccPair.connector.source} />
+        </div>
+        <h1 className="text-3xl text-emphasis font-bold">{ccPair.name} </h1>
 
         <div className="ml-auto flex gap-x-2">
           {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(

@@ -9,7 +9,6 @@ import {
   ValidSources,
   getComprehensiveConnectorConfigTemplate,
   getCredentialTemplate,
-  isValidSource,
 } from "@/lib/types";
 import { Button, Card, Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
@@ -28,7 +27,6 @@ import { deleteCredential, linkCredential } from "@/lib/credential";
 import ModifyCredential from "@/components/credentials/ModifyCredential";
 import { submitFiles } from "./pages/handlers/files";
 import { submitGoogleSite } from "./pages/handlers/google_site";
-import { redirect } from "next/dist/server/api-utils";
 
 export type AdvancedConfig = {
   pruneFreq: number | null;
@@ -65,7 +63,9 @@ export default function AddConnector({
   const initialValues = configuration.values.reduce(
     (acc, field) => {
       if (field.type === "list") {
-        acc[field.name] = [];
+        acc[field.name] = field.default || [];
+      } else if (field.default !== undefined) {
+        acc[field.name] = field.default;
       }
       return acc;
     },
@@ -152,10 +152,10 @@ export default function AddConnector({
       const { message, isSuccess, response } = await submitConnector<any>(
         {
           connector_specific_config: values,
-          input_type: "load_state",
+          input_type: "poll",
           name: name,
           source: connector,
-          refresh_freq: refreshFreq || 0,
+          refresh_freq: refreshFreq || null,
           prune_freq: pruneFreq || null,
           indexing_start: indexingStart,
           disabled: false,
@@ -179,11 +179,11 @@ export default function AddConnector({
 
     const { message, isSuccess, response } = await submitConnector<any>({
       connector_specific_config: values,
-      input_type: "load_state",
+      input_type: "poll",
       name: name,
       source: connector,
-      refresh_freq: refreshFreq || 0,
-      prune_freq: pruneFreq ?? null,
+      refresh_freq: refreshFreq || null,
+      prune_freq: pruneFreq || null,
       indexing_start: indexingStart,
       disabled: false,
     });

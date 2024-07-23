@@ -16,6 +16,7 @@ import { Form, Formik, FormikHelpers } from "formik";
 
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDocLink } from "@/lib/sources";
+import GDriveMain from "@/app/add/[connector]/pages/GoogleDrivePage";
 
 type ActionType = "create" | "createAndSwap";
 
@@ -124,6 +125,16 @@ export default function CreateCredential({
 
     schemaFields["name"] = Yup.string().optional();
     return Yup.object().shape(schemaFields);
+  }
+
+  if (sourceType == "google_drive") {
+    return (
+      <GDriveMain />
+      // <DriveJsonUploadSection
+      //   setPopup={setPopup}
+      // />
+      // <DriveJsonUpload setPopup={setPopup} />
+    );
   }
   const validationSchema = createValidationSchema(json_values);
 

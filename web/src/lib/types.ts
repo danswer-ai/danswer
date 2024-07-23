@@ -1309,7 +1309,7 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
             type: "text",
             query: "Enter the Slack workspace:",
             label: "Workspace",
-            name: "Workspace",
+            name: "workspace",
             optional: false,
           },
           {
@@ -1604,7 +1604,6 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
           },
         ],
       };
-
     case "google_cloud_storage":
       return {
         description: "Configure Google Cloud Storage connector",
@@ -1623,6 +1622,14 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
             label: "Path Prefix",
             name: "prefix",
             optional: true,
+          },
+          {
+            type: "text",
+            label: "Bucket Type",
+            name: "bucket_type",
+            optional: false,
+            default: "google_cloud_storage",
+            hidden: true,
           },
         ],
       };
@@ -1764,3 +1771,8 @@ export const sourcesWithoutCredentials: ValidSources[] = [
   "wikipedia",
   "mediawiki",
 ];
+
+//  Poll sources
+// // All but below
+
+// load_state: web
