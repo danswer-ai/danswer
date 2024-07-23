@@ -167,6 +167,7 @@ services:
       - GONG_CONNECTOR_START_TIME=${GONG_CONNECTOR_START_TIME:-}
       - NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP=${NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP:-}
       - GITHUB_CONNECTOR_BASE_URL=${GITHUB_CONNECTOR_BASE_URL:-}
+      - GITHUB_CONNECTOR_INCLUDE_CODE_FILES=${GITHUB_CONNECTOR_INCLUDE_CODE_FILES:-}
       # Danswer SlackBot Configs
       - DANSWER_BOT_SLACK_APP_TOKEN=${DANSWER_BOT_SLACK_APP_TOKEN:-}
       - DANSWER_BOT_SLACK_BOT_TOKEN=${DANSWER_BOT_SLACK_BOT_TOKEN:-}
@@ -329,7 +330,7 @@ services:
     image: nginx:1.23.4-alpine
     restart: always
     # nginx will immediately crash with `nginx: [emerg] host not found in upstream`
-    # if api_server / web_server are not up 
+    # if api_server / web_server are not up
     depends_on:
       - api_server
       - web_server
@@ -345,15 +346,15 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
-    # The specified script waits for the api_server to start up. 
-    # Without this we've seen issues where nginx shows no error logs but 
+    # The specified script waits for the api_server to start up.
+    # Without this we've seen issues where nginx shows no error logs but
     # does not recieve any traffic
     # NOTE: we have to use dos2unix to remove Carriage Return chars from the file
     # in order to make this work on both Unix-like systems and windows
-    command: > 
-      /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
+    command: >
+      /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh
       && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
-        
+
 
 volumes:
   db_volume:
