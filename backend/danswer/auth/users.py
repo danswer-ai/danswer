@@ -103,12 +103,8 @@ def verify_email_in_whitelist(
     email: str,
     db_session: Session = Depends(get_session),
 ) -> None:
-    if get_user_by_email(email, db_session):
-        return
-
-    whitelist = get_invited_users()
-    if (whitelist and email not in whitelist) or not email:
-        raise PermissionError("User not on allowed user whitelist")
+    if not get_user_by_email(email, db_session):
+        verify_email_is_invited(email)
 
 
 def verify_email_domain(email: str) -> None:
