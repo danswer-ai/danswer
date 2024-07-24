@@ -1,4 +1,4 @@
-import { Credential } from "@/lib/types";
+import { Credential } from "./ccs/credentials";
 
 export const setupGoogleDriveOAuth = async ({
   isAdmin,

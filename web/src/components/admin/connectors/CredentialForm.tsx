@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { Popup } from "./Popup";
-import { Credential, CredentialBase, ValidSources } from "@/lib/types";
+import { ValidSources } from "@/lib/types";
+
 import { createCredential } from "@/lib/credential";
 import { Button } from "@tremor/react";
+import { CredentialBase, Credential } from "@/lib/ccs/credentials";
 
 export async function submitCredential<T>(
   credential: CredentialBase<T>
