@@ -79,8 +79,11 @@ export const EditingValue: React.FC<{
                 type="date"
                 name={name}
                 value={
-                  value instanceof Date ? value.toISOString().split("T")[0] : ""
+                  currentValue instanceof Date
+                    ? currentValue.toISOString().split("T")[0]
+                    : ""
                 }
+                placeholder={currentValue}
                 onChange={(e) => {
                   const dateValue = e.target.value
                     ? new Date(e.target.value)
@@ -116,6 +119,7 @@ export const EditingValue: React.FC<{
                 type="number"
                 name={name}
                 value={value as number}
+                placeholder={currentValue}
                 onChange={(e) => {
                   const value = parseInt(e.target.value);
                   updateValue(value);

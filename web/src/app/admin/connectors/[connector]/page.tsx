@@ -5,5 +5,5 @@ export default async function Page({
 }: {
   params: { connector: string };
 }) {
-  return <ConnectorWrapper connector={params.connector} />;
+  return <ConnectorWrapper connector={params.connector.replace("-", "_")} />;
 }

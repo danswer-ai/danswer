@@ -2,7 +2,7 @@
 
 import * as Yup from "yup";
 import { GoogleDriveIcon } from "@/components/icons/icons";
-import useSWR, { useSWRConfig } from "swr";
+import useSWR from "swr";
 import { FetchError, errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { LoadingAnimation } from "@/components/Loading";

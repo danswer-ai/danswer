@@ -282,8 +282,7 @@ function fillSourceMetadata(
   return {
     internalName: internalName,
     ...partialMetadata,
-    adminUrl: `/add/${internalName}
-`,
+    adminUrl: `/admin/connectors/${internalName}`,
   };
 }
 

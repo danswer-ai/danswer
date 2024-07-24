@@ -720,6 +720,46 @@ export function getDisplayNameForCredentialKey(key: string): string {
   return credentialDisplayNames[key] || key;
 }
 
+const validSources = [
+  "web",
+  "github",
+  "gitlab",
+  "slack",
+  "google_drive",
+  "gmail",
+  "bookstack",
+  "confluence",
+  "jira",
+  "productboard",
+  "slab",
+  "notion",
+  "guru",
+  "gong",
+  "zulip",
+  "linear",
+  "hubspot",
+  "document360",
+  "requesttracker",
+  "file",
+  "google_sites",
+  "loopio",
+  "dropbox",
+  "salesforce",
+  "sharepoint",
+  "teams",
+  "zendesk",
+  "discourse",
+  "axero",
+  "clickup",
+  "wikipedia",
+  "mediawiki",
+  "s3",
+  "r2",
+  "google_cloud_storage",
+  "oci_storage",
+  "not_applicable",
+];
+
 export type CredentialJsonMap = {
   [K in ValidSources]: K extends
     | "web"
@@ -798,45 +838,7 @@ export type CredentialJsonMap = {
 
 // Type guard function to check if a string is a valid source
 export function isValidSource(source: string): source is ValidSources {
-  return [
-    "web",
-    "github",
-    "gitlab",
-    "slack",
-    "google_drive",
-    "gmail",
-    "bookstack",
-    "confluence",
-    "jira",
-    "productboard",
-    "slab",
-    "notion",
-    "guru",
-    "gong",
-    "zulip",
-    "linear",
-    "hubspot",
-    "document360",
-    "requesttracker",
-    "file",
-    "google_sites",
-    "loopio",
-    "dropbox",
-    "salesforce",
-    "sharepoint",
-    "teams",
-    "zendesk",
-    "discourse",
-    "axero",
-    "clickup",
-    "wikipedia",
-    "mediawiki",
-    "s3",
-    "r2",
-    "google_cloud_storage",
-    "oci_storage",
-    "not_applicable",
-  ].includes(source);
+  return validSources.includes(source);
 }
 
 // Helper function to get credential JSON type for a given source
