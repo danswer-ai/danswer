@@ -72,7 +72,7 @@ class EmbeddingModel:
         texts: list[str],
         text_type: EmbedTextType,
         batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
-    ) -> list[list[float]]:
+    ) -> list[list[float] | None]:
         if not texts:
             logger.warning("No texts to be embedded")
             return []
@@ -89,8 +89,12 @@ class EmbeddingModel:
                 )
                 for text in texts
             ]
-
-
+        
+        print("HERE ARE THE TEXTS")
+        print(texts)
+        if ("zz" in texts[0]):
+            texts = [""]
+            print("I CAN CHANGE")
         if self.provider_type:
             # print("I am embedding")
             embed_request = EmbedRequest(
@@ -116,13 +120,13 @@ class EmbeddingModel:
             except requests.RequestException as e:
                 raise HTTPError(f"Request failed: {str(e)}") from e
             embeds = EmbedResponse(**response.json()).embeddings
-            print(len(embeds))
+
             print(embeds[-1])
             return EmbedResponse(**response.json()).embeddings
 
         # Batching for local embedding
         text_batches = batch_list(texts, batch_size)
-        embeddings: list[list[float]] = []
+        embeddings: list[list[float] | None] = []
         for idx, text_batch in enumerate(text_batches, start=1):
             embed_request = EmbedRequest(
                 model_name=self.model_name,
@@ -149,7 +153,7 @@ class EmbeddingModel:
             # Normalize embeddings is only configured via model_configs.py, be sure to use right
             # value for the set loss
             embeddings.extend(EmbedResponse(**response.json()).embeddings)
-
+        print(embeddings[-1])
         return embeddings
 
 
@@ -162,7 +166,7 @@ class CrossEncoderEnsembleModel:
         model_server_url = build_model_server_url(model_server_host, model_server_port)
         self.rerank_server_endpoint = model_server_url + "/encoder/cross-encoder-scores"
 
-    def predict(self, query: str, passages: list[str]) -> list[list[float]]:
+    def predict(self, query: str, passages: list[str]) -> list[list[float] | None]:
         rerank_request = RerankRequest(query=query, documents=passages)
 
         response = requests.post(

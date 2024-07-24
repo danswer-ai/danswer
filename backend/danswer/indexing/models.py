@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 logger = setup_logger()
 
 
-Embedding = list[float]
+Embedding = list[float] | None
 
 
 class ChunkEmbedding(BaseModel):

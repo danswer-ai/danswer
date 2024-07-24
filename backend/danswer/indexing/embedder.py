@@ -73,7 +73,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
     ) -> list[IndexChunk]:
         # Cache the Title embeddings to only have to do it once
-        title_embed_dict: dict[str, list[float]] = {}
+        title_embed_dict: dict[str, list[float] | None] = {}
         embedded_chunks: list[IndexChunk] = []
 
         # Create Mini Chunks for more precise matching of details
@@ -93,6 +93,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         embeddings = self.embedding_model.encode(
             chunk_texts, text_type=EmbedTextType.PASSAGE
         )
+        print(f"overall length of the embeddings is {len(embeddings)}")
 
         chunk_titles = {
             chunk.source_document.get_title_for_document_index() for chunk in chunks

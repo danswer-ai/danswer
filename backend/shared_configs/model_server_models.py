@@ -26,7 +26,7 @@ class RerankRequest(BaseModel):
 
 
 class RerankResponse(BaseModel):
-    scores: list[list[float]]
+    scores: list[list[float] | None]
 
 
 class IntentRequest(BaseModel):

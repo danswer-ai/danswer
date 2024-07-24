@@ -6,6 +6,7 @@ from nltk.corpus import stopwords  # type:ignore
 from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
 from sqlalchemy.orm import Session
+from typing import cast
 
 from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
@@ -143,7 +144,7 @@ def doc_index_retrieval(
         if query.search_type == SearchType.SEMANTIC:
             top_chunks = document_index.semantic_retrieval(
                 query=query.query,
-                query_embedding=query_embedding,
+                query_embedding=cast(list[float], query_embedding), # query embeddings should always have vector representations
                 filters=query.filters,
                 time_decay_multiplier=query.recency_bias_multiplier,
                 num_to_retrieve=query.num_hits,
@@ -152,7 +153,7 @@ def doc_index_retrieval(
         elif query.search_type == SearchType.HYBRID:
             top_chunks = document_index.hybrid_retrieval(
                 query=query.query,
-                query_embedding=query_embedding,
+                query_embedding=cast(list[float], query_embedding), # query embeddings should always have vector representations
                 filters=query.filters,
                 time_decay_multiplier=query.recency_bias_multiplier,
                 num_to_retrieve=query.num_hits,

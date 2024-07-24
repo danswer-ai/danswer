@@ -80,7 +80,7 @@ class CloudEmbedding:
             raise ValueError(f"Unsupported provider: {provider}")
         self.client = _initialize_client(api_key, self.provider, model)
 
-    def _embed_openai(self, texts: list[str], model: str | None) -> list[list[float]]:
+    def _embed_openai(self, texts: list[str], model: str | None) -> list[list[float] | None]:
         if model is None:
             model = DEFAULT_OPENAI_MODEL
 
@@ -94,7 +94,7 @@ class CloudEmbedding:
 
     def _embed_cohere(
         self, texts: list[str], model: str | None, embedding_type: str
-    ) -> list[list[float]]:
+    ) -> list[list[float] | None]:
         if model is None:
             model = DEFAULT_COHERE_MODEL
 
@@ -110,7 +110,7 @@ class CloudEmbedding:
 
     def _embed_voyage(
         self, texts: list[str], model: str | None, embedding_type: str
-    ) -> list[list[float]]:
+    ) -> list[list[float] | None]:
         if model is None:
             model = DEFAULT_VOYAGE_MODEL
 
@@ -126,7 +126,7 @@ class CloudEmbedding:
 
     def _embed_vertex(
         self, texts: list[str], model: str | None, embedding_type: str
-    ) -> list[list[float]]:
+    ) -> list[list[float] | None]:
         if model is None:
             model = DEFAULT_VERTEX_MODEL
 
@@ -149,7 +149,7 @@ class CloudEmbedding:
         texts: list[str],
         text_type: EmbedTextType,
         model_name: str | None = None,
-    ) -> list[list[float]]:
+    ) -> list[list[float] | None]:
         try:
             if self.provider == EmbeddingProvider.OPENAI:
                 return self._embed_openai(texts, model_name)
@@ -242,13 +242,12 @@ def embed_text(
     non_empty_texts = []
     empty_indices = []
     for idx, text in enumerate(texts):
-        print(text)
-        print(len(text)) #TODO verify that this works when you get back
         if text.strip():
             non_empty_texts.append(text)
         else:
             empty_indices.append(idx)
-
+    print(f"Non empty is {non_empty_texts}")
+    print(f"Empty is {empty_indices}")
 
     # Third party API based embedding model
     if provider_type is not None:
@@ -287,22 +286,32 @@ def embed_text(
         raise ValueError(
             "Either model name or provider must be provided to run embeddings."
         )
-
+    print(f" Length of hte mebddings is {len(embeddings)}")
     if embeddings is None:
         raise RuntimeError("Failed to create Embeddings")
+    embeddings_with_nulls = []
     
-    for idx in empty_indices:
-        embeddings.insert(idx, None)
+    current_embedding_index = 0
+    for idx in range(len(texts)):
+        if idx in empty_indices:
+            embeddings_with_nulls.append(None)
+        else:
+            if not isinstance(embeddings[current_embedding_index], list):
+                embeddings_with_nulls.append(embeddings[current_embedding_index].tolist())
+            else: 
+                embeddings_with_nulls.append(embeddings[current_embedding_index])
+            current_embedding_index += 1
+    embeddings = embeddings_with_nulls
 
-    if not isinstance(embeddings, list):
-        embeddings = embeddings.tolist()
+    # if not isinstance(embeddings, list):
+    #     embeddings = embeddings.tolist()
     
-
+    print("About to hit error?")
     return embeddings
 
 
 @simple_log_function_time()
-def calc_sim_scores(query: str, docs: list[str]) -> list[list[float]]:
+def calc_sim_scores(query: str, docs: list[str]) -> list[list[float] | None]:
     cross_encoders = get_local_reranking_model_ensemble()
     sim_scores = [
         encoder.predict([(query, doc) for doc in docs]).tolist()  # type: ignore
@@ -336,6 +345,8 @@ async def process_embed_request(
             text_type=embed_request.text_type,
             prefix=prefix,
         )
+        print("RESPONSE IS")
+        print(embeddings)
         return EmbedResponse(embeddings=embeddings)
     except Exception as e:
         exception_detail = f"Error during embedding process:\n{str(e)}"
