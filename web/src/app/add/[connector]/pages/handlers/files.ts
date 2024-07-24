@@ -40,9 +40,9 @@ export const submitFiles = async (
     connector_specific_config: {
       file_locations: filePaths,
     },
-    refresh_freq: advancedConfig.refreshFreq,
-    prune_freq: advancedConfig.pruneFreq,
-    indexing_start: advancedConfig.indexingStart,
+    refresh_freq: null,
+    prune_freq: null,
+    indexing_start: null,
     disabled: false,
   });
   if (connectorErrorMsg || !connector) {

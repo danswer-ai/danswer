@@ -39,7 +39,7 @@ export const EditingValue: React.FC<{
   onChangeBool,
   onChangeDate,
 }) => {
-  const [value, setValue] = useState(currentValue);
+  const [value, setValue] = useState<boolean | string | number | Date>();
 
   const updateValue = (newValue: string | boolean | number | Date) => {
     setValue(newValue);
@@ -53,7 +53,7 @@ export const EditingValue: React.FC<{
           {type === "checkbox" ? (
             <div className="flex items-center">
               <AdminBooleanFormField
-                checked={value}
+                checked={value as boolean}
                 subtext={description}
                 onChange={() => {
                   updateValue(!(value as boolean));
@@ -115,7 +115,7 @@ export const EditingValue: React.FC<{
               <input
                 type="number"
                 name={name}
-                value={value}
+                value={value as number}
                 onChange={(e) => {
                   const value = parseInt(e.target.value);
                   updateValue(value);

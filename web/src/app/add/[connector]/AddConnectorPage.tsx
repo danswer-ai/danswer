@@ -7,8 +7,9 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
   Credential,
   ValidSources,
-  getComprehensiveConnectorConfigTemplate,
+  getConnectorConfig,
   getCredentialTemplate,
+  longRefresh,
 } from "@/lib/types";
 import { Button, Card, Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
@@ -57,8 +58,7 @@ export default function AddConnector({
 
   const { popup, setPopup } = usePopup();
 
-  const configuration: ConnectionConfiguration =
-    getComprehensiveConnectorConfigTemplate(connector);
+  const configuration: ConnectionConfiguration = getConnectorConfig(connector);
 
   const initialValues = configuration.values.reduce(
     (acc, field) => {
@@ -88,33 +88,34 @@ export default function AddConnector({
     setFormStep(Math.min(formStep, 0));
   }
 
-  const [advancedConfig, setAdvancedConfig] = useState<AdvancedConfig>({
-    pruneFreq: 0,
-    refreshFreq: 0,
-    indexingStart: null,
-  });
+  const defaultRefresh = longRefresh.includes(connector)
+    ? 60 * 60 * 24
+    : 10 * 60;
 
-  // const [refreshFreq, setRefreshFreq] = useState<number>(0);
-  // const [pruneFreq, setPruneFreq] = useState<number>(0);
-  // const [indexingStart, setIndexingStart] = useState<Date | null>(null);
+  const [refreshFreq, setRefreshFreq] = useState<number>(defaultRefresh || 0);
+  const [pruneFreq, setPruneFreq] = useState<number>(0);
+  const [indexingStart, setIndexingStart] = useState<Date | null>(null);
   const [isPublic, setIsPublic] = useState(false);
 
   const resetAdvancedSettings = () => {
-    setAdvancedConfig({
-      pruneFreq: 0,
-      refreshFreq: 0,
-      indexingStart: null,
-    });
+    setPruneFreq(0);
+    setRefreshFreq(defaultRefresh);
+    setIndexingStart(null);
     prevFormStep();
   };
 
   const createConnector = async () => {
+    const AdvancedConfig: AdvancedConfig = {
+      pruneFreq: pruneFreq || defaultRefresh,
+      indexingStart,
+      refreshFreq,
+    };
     if (credentialTemplate === "sites") {
       const response = await submitGoogleSite(
         selectedFiles,
         values?.base_url,
         setPopup,
-        advancedConfig,
+        AdvancedConfig,
         name
       );
       if (response) {
@@ -133,7 +134,7 @@ export default function AddConnector({
         setPopup,
         setSelectedFiles,
         name,
-        advancedConfig,
+        AdvancedConfig,
         isPublic
       );
       if (response) {
@@ -158,9 +159,9 @@ export default function AddConnector({
           input_type: "poll",
           name: name,
           source: connector,
-          refresh_freq: advancedConfig.refreshFreq || null,
-          prune_freq: advancedConfig.pruneFreq || null,
-          indexing_start: advancedConfig.indexingStart,
+          refresh_freq: refreshFreq || defaultRefresh,
+          prune_freq: pruneFreq || null,
+          indexing_start: indexingStart,
           disabled: false,
         },
         undefined,
@@ -185,9 +186,9 @@ export default function AddConnector({
       input_type: "poll",
       name: name,
       source: connector,
-      refresh_freq: advancedConfig.refreshFreq || null,
-      prune_freq: advancedConfig.pruneFreq || null,
-      indexing_start: advancedConfig.indexingStart,
+      refresh_freq: refreshFreq || defaultRefresh,
+      prune_freq: pruneFreq || null,
+      indexing_start: indexingStart,
       disabled: false,
     });
 

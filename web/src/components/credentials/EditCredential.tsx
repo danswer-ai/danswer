@@ -46,11 +46,14 @@ function createValidationSchema(json_values: JsonValues) {
 function createInitialValues(credential: Credential<JsonValues>): FormValues {
   const initialValues: FormValues = {
     name: credential.name || "",
-    ...credential.credential_json,
   };
+
+  for (const key in credential.credential_json) {
+    initialValues[key] = "";
+  }
+
   return initialValues;
 }
-
 const EditCredential: React.FC<EditCredentialProps> = ({
   credential,
   onClose,

@@ -171,7 +171,12 @@ def alter_credential(
         return None
 
     credential.name = credential_data.name
-    credential.credential_json = credential_data.credential_json
+    credential.name = credential_data.name
+
+    # Update only the keys present in credential_data.credential_json
+    for key, value in credential_data.credential_json.items():
+        credential.credential_json[key] = value
+
     credential.user_id = user.id if user is not None else None
 
     db_session.commit()

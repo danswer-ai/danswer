@@ -1007,7 +1007,7 @@ export type InputType =
 
 // Updated function
 
-export const getComprehensiveConnectorConfigTemplate = <T extends ValidSources>(
+export const getConnectorConfig = <T extends ValidSources>(
   source: T
 ): ConnectionConfiguration => {
   switch (source) {
@@ -1770,4 +1770,14 @@ export const sourcesWithoutCredentials: ValidSources[] = [
   "google_sites",
   "wikipedia",
   "mediawiki",
+];
+
+// These are sources that have a refresh time of 1 day / 24 hours
+export const longRefresh: ValidSources[] = [
+  "axero",
+  "loopio",
+  "google_cloud_storage",
+  "web",
+  "loopio",
+  "s3",
 ];
