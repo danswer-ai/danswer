@@ -397,20 +397,6 @@ export function ChatPage({
       )
     : { aiMessage: null };
 
-  const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
-    existingChatSessionPersonaId !== undefined
-      ? filteredAssistants.find(
-          (persona) => persona.id === existingChatSessionPersonaId
-        )
-      : defaultSelectedPersonaId !== undefined
-        ? filteredAssistants.find(
-            (persona) => persona.id === defaultSelectedPersonaId
-          )
-        : undefined
-  );
-  const livePersona =
-    selectedPersona || filteredAssistants[0] || availablePersonas[0];
-
   const [chatSessionSharedStatus, setChatSessionSharedStatus] =
     useState<ChatSessionSharedStatus>(ChatSessionSharedStatus.Private);
 
