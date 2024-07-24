@@ -26,6 +26,7 @@ import {
 } from "@/components/resizable/constants";
 import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { fetchAssistantsSS } from "../assistants/fetchAssistantsSS";
+import { DEFAULT_SIDEBAR_OPEN } from "../constants";
 
 interface FetchChatDataResult {
   user: User | null;
@@ -161,7 +162,7 @@ export async function fetchChatData(searchParams: {
 
   const toggleSidebar = sidebarToggled
     ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
-    : false;
+    : DEFAULT_SIDEBAR_OPEN;
 
   const finalDocumentSidebarInitialWidth = documentSidebarCookieInitialWidth
     ? parseInt(documentSidebarCookieInitialWidth.value)
