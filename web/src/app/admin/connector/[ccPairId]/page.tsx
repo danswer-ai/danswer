@@ -4,21 +4,15 @@ import { CCPairFullInfo } from "./types";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
-import { Button, Divider, Title } from "@tremor/react";
+import { Divider, Title } from "@tremor/react";
 import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
-import { Text } from "@tremor/react";
 import { ConfigDisplay } from "./ConfigDisplay";
 import { ModifyStatusButtonCluster } from "./ModifyStatusButtonCluster";
 import { DeletionButton } from "./DeletionButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ReIndexButton } from "./ReIndexButton";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
-import {
-  ConfluenceCredentialJson,
-  Credential,
-  sourcesWithoutCredentials,
-  ValidSources,
-} from "@/lib/types";
+import { sourcesWithoutCredentials, ValidSources } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ThreeDotsLoader } from "@/components/Loading";

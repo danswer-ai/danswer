@@ -16,17 +16,17 @@ import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useFormContext } from "@/components/context/FormContext";
 import { getSourceDisplayName } from "@/lib/sources";
-import DynamicConnectionForm from "./pages/CreateConnector";
 import { ConnectionConfiguration } from "./types";
-import AdvancedFormPage from "./pages/AdvancedFormPage";
 import { SourceIcon } from "@/components/SourceIcon";
-import CreateCredential from "@/components/credentials/CreateCredential";
 import { useState } from "react";
 import { submitConnector } from "@/components/admin/connectors/ConnectorForm";
 import { deleteCredential, linkCredential } from "@/lib/credential";
-import ModifyCredential from "@/components/credentials/ModifyCredential";
 import { submitFiles } from "./pages/handlers/files";
 import { submitGoogleSite } from "./pages/handlers/google_site";
+import AdvancedFormPage from "./pages/AdvancedFormPage";
+import DynamicConnectionForm from "./pages/CreateConnector";
+import CreateCredential from "@/components/credentials/CreateCredential";
+import ModifyCredential from "@/components/credentials/ModifyCredential";
 
 export type AdvancedConfig = {
   pruneFreq: number | null;
@@ -88,30 +88,33 @@ export default function AddConnector({
     setFormStep(Math.min(formStep, 0));
   }
 
-  const [refreshFreq, setRefreshFreq] = useState<number>(0);
-  const [pruneFreq, setPruneFreq] = useState<number>(0);
-  const [indexingStart, setIndexingStart] = useState<Date | null>(null);
+  const [advancedConfig, setAdvancedConfig] = useState<AdvancedConfig>({
+    pruneFreq: 0,
+    refreshFreq: 0,
+    indexingStart: null,
+  });
+
+  // const [refreshFreq, setRefreshFreq] = useState<number>(0);
+  // const [pruneFreq, setPruneFreq] = useState<number>(0);
+  // const [indexingStart, setIndexingStart] = useState<Date | null>(null);
   const [isPublic, setIsPublic] = useState(false);
 
   const resetAdvancedSettings = () => {
-    setPruneFreq(0);
-    setRefreshFreq(0);
-    setIndexingStart(null);
+    setAdvancedConfig({
+      pruneFreq: 0,
+      refreshFreq: 0,
+      indexingStart: null,
+    });
     prevFormStep();
   };
 
   const createConnector = async () => {
-    const AdvancedConfig: AdvancedConfig = {
-      pruneFreq: pruneFreq,
-      indexingStart: indexingStart,
-      refreshFreq: refreshFreq,
-    };
     if (credentialTemplate === "sites") {
       const response = await submitGoogleSite(
         selectedFiles,
         values?.base_url,
         setPopup,
-        AdvancedConfig,
+        advancedConfig,
         name
       );
       if (response) {
@@ -130,7 +133,7 @@ export default function AddConnector({
         setPopup,
         setSelectedFiles,
         name,
-        AdvancedConfig,
+        advancedConfig,
         isPublic
       );
       if (response) {
@@ -155,9 +158,9 @@ export default function AddConnector({
           input_type: "poll",
           name: name,
           source: connector,
-          refresh_freq: refreshFreq || null,
-          prune_freq: pruneFreq || null,
-          indexing_start: indexingStart,
+          refresh_freq: advancedConfig.refreshFreq || null,
+          prune_freq: advancedConfig.pruneFreq || null,
+          indexing_start: advancedConfig.indexingStart,
           disabled: false,
         },
         undefined,
@@ -182,9 +185,9 @@ export default function AddConnector({
       input_type: "poll",
       name: name,
       source: connector,
-      refresh_freq: refreshFreq || null,
-      prune_freq: pruneFreq || null,
-      indexing_start: indexingStart,
+      refresh_freq: advancedConfig.refreshFreq || null,
+      prune_freq: advancedConfig.pruneFreq || null,
+      indexing_start: advancedConfig.indexingStart,
       disabled: false,
     });
 

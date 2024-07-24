@@ -1771,8 +1771,3 @@ export const sourcesWithoutCredentials: ValidSources[] = [
   "wikipedia",
   "mediawiki",
 ];
-
-//  Poll sources
-// // All but below
-
-// load_state: web

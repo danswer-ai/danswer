@@ -34,7 +34,7 @@ const AdvancedFormPage = ({
         })}
         onSubmit={async (_, { setSubmitting }) => {}}
       >
-        {({ setFieldValue, values }) => (
+        {({ setFieldValue }) => (
           <Form className="space-y-6">
             <div key="prune_freq">
               <EditingValue

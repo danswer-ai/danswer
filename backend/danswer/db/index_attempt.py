@@ -220,19 +220,11 @@ def get_index_attempts_for_connector(
     only_current: bool = True,
     disinclude_finished: bool = False,
 ) -> Sequence[IndexAttempt]:
-    #     select(IndexAttempt)
-    # .join(ConnectorCredentialPair)
-
     stmt = (
         select(IndexAttempt)
         .join(ConnectorCredentialPair)
         .where(ConnectorCredentialPair.connector_id == connector_id)
     )
-
-    # where(
-    #
-    # IndexAttempt.connector_credential_pair.connector_id == connector_id,
-    #     )
     if disinclude_finished:
         stmt = stmt.where(
             IndexAttempt.status.in_(
@@ -286,9 +278,11 @@ def delete_index_attempts(
     db_session: Session,
 ) -> None:
     stmt = delete(IndexAttempt).where(
-        IndexAttempt.connector_credential_pair.connector_id == connector_id,
-        IndexAttempt.connector_credential_pair.credential_id == credential_id,
+        IndexAttempt.connector_credential_pair_id == ConnectorCredentialPair.id,
+        ConnectorCredentialPair.connector_id == connector_id,
+        ConnectorCredentialPair.credential_id == credential_id,
     )
+
     db_session.execute(stmt)
 
 
@@ -322,9 +316,11 @@ def cancel_indexing_attempts_for_connector(
     db_session: Session,
     include_secondary_index: bool = False,
 ) -> None:
-    stmt = delete(IndexAttempt).where(
-        IndexAttempt.connector_credential_pair.connector_id == connector_id,
-        IndexAttempt.status == IndexingStatus.NOT_STARTED,
+    stmt = (
+        delete(IndexAttempt)
+        .where(IndexAttempt.connector_credential_pair_id == ConnectorCredentialPair.id)
+        .where(ConnectorCredentialPair.connector_id == connector_id)
+        .where(IndexAttempt.status == IndexingStatus.NOT_STARTED)
     )
 
     if not include_secondary_index:

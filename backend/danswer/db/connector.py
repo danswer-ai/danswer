@@ -11,6 +11,7 @@ from danswer.configs.app_configs import DEFAULT_PRUNING_FREQ
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
 from danswer.db.models import Connector
+from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import IndexAttempt
 from danswer.server.documents.models import ConnectorBase
 from danswer.server.documents.models import ObjectCreationIdResponse
@@ -192,7 +193,8 @@ def fetch_latest_index_attempt_by_connector(
     for connector in connectors:
         latest_index_attempt = (
             db_session.query(IndexAttempt)
-            .filter(IndexAttempt.connector_credential_pair.connector_id == connector.id)
+            .join(ConnectorCredentialPair)
+            .filter(ConnectorCredentialPair.connector_id == connector.id)
             .order_by(IndexAttempt.time_updated.desc())
             .first()
         )
@@ -208,13 +210,11 @@ def fetch_latest_index_attempts_by_status(
 ) -> list[IndexAttempt]:
     subquery = (
         db_session.query(
-            IndexAttempt.connector_credential_pair.connector_id,
-            IndexAttempt.connector_credential_pair.credential_id,
+            IndexAttempt.connector_credential_pair_id,
             IndexAttempt.status,
             func.max(IndexAttempt.time_updated).label("time_updated"),
         )
-        .group_by(IndexAttempt.connector_credential_pair.connector_id)
-        .group_by(IndexAttempt.connector_credential_pair.credential_id)
+        .group_by(IndexAttempt.connector_credential_pair_id)
         .group_by(IndexAttempt.status)
         .subquery()
     )
