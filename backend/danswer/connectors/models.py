@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import INDEX_SEPARATOR
+from danswer.configs.constants import MAX_CHUNK_TITLE_LEN
 from danswer.configs.constants import RETURN_SEPARATOR
 from danswer.utils.text_processing import make_url_compatible
 
@@ -114,7 +115,9 @@ class DocumentBase(BaseModel):
     title: str | None = None
     from_ingestion_api: bool = False
 
-    def get_title_for_document_index(self) -> str | None:
+    def get_title_for_document_index(
+        self, include_separator: bool = False, truncate: bool = False
+    ) -> str | None:
         # If title is explicitly empty, return a None here for embedding purposes
         if self.title == "":
             return None
@@ -123,8 +126,12 @@ class DocumentBase(BaseModel):
         for char in replace_chars:
             title = title.replace(char, " ")
         title = title.strip()
-        # Title could be quite long here as there is no truncation done
-        # just prior to embedding, it could be truncated
+        if truncate:
+            # Must be this exact size to match it on the retrieval side
+            title = title[:MAX_CHUNK_TITLE_LEN]
+
+        if include_separator:
+            return title + RETURN_SEPARATOR
         return title
 
     def get_metadata_str_attributes(self) -> list[str] | None:
