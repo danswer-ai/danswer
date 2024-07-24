@@ -90,11 +90,6 @@ class EmbeddingModel:
                 for text in texts
             ]
         
-        print("HERE ARE THE TEXTS")
-        print(texts)
-        if ("zz" in texts[0]):
-            texts = [""]
-            print("I CAN CHANGE")
         if self.provider_type:
             # print("I am embedding")
             embed_request = EmbedRequest(
