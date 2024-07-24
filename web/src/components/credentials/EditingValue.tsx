@@ -91,9 +91,7 @@ export const EditingValue: React.FC<{
                   if (dateValue) {
                     updateValue(dateValue);
                   }
-                  console.log(dateValue);
                   if (onChangeDate) {
-                    console.log("CHANGING THE DSATE");
 
                     onChangeDate(dateValue);
                   }

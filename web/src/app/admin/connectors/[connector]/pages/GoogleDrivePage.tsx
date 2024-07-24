@@ -55,8 +55,6 @@ const GoogleDriveConnectorManagement = ({
 }: GoogleDriveConnectorManagementProps) => {
   const liveCredential =
     googleDrivePublicCredential || googleDriveServiceAccountCredential;
-  console.log("The management here si the live credential!");
-  console.log(liveCredential);
   if (!liveCredential) {
     return (
       <Text>

@@ -6,12 +6,13 @@ import { ChatSession } from "@/app/chat/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
 import { User } from "@/lib/types";
 import Cookies from "js-cookie";
-import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/contants";
+import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import { ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useRouter } from "next/navigation";
 import { pageType } from "../chat/sessionSidebar/types";
+import FixedLogo from "../chat/shared_chat_search/FixedLogo";
 
 interface SidebarWrapperProps<T extends object> {
   chatSessions?: ChatSession[];

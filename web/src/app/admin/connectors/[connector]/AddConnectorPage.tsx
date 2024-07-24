@@ -75,7 +75,6 @@ export default function AddConnector({
   const [values, setValues] = useState<{ [record: string]: any } | null>(
     Object.keys(initialValues).length > 0 ? initialValues : null
   );
-  console.log(values);
 
   const noCredentials =
     credentialTemplate === "file" ||
@@ -320,7 +319,6 @@ export default function AddConnector({
                   public: isPublic,
                   ...valuesWithoutName
                 } = values;
-                console.log(`Setting public to ${isPublic}`);
                 setValues(valuesWithoutName);
                 setIsPublic(isPublic);
               }}
@@ -385,7 +383,6 @@ export default function AddConnector({
             </Button>
             <Button
               onClick={() => {
-                console.log(indexingStart);
                 prevFormStep();
               }}
             >

@@ -61,10 +61,6 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   const updateValue =
     (setFieldValue: Function) => (field: string, value: any) => {
       setFieldValue(field, value);
-      updateValues(field, value);
-      console.log("updating");
-      console.log(value);
-      console.log(typeof value);
     };
 
   return (

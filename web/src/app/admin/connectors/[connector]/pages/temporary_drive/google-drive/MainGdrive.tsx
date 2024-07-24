@@ -53,8 +53,6 @@ const GoogleDriveConnectorManagement = ({
 }: GoogleDriveConnectorManagementProps) => {
   const liveCredential =
     googleDrivePublicCredential || googleDriveServiceAccountCredential;
-  console.log("The management here si the live credential!");
-  console.log(liveCredential);
   if (!liveCredential) {
     return (
       <Text>
@@ -63,95 +61,6 @@ const GoogleDriveConnectorManagement = ({
       </Text>
     );
   }
-
-  // NOTE: if the connector has no credential linked, then it will not be
-  // returned by the indexing-status API
-  // if (!googleDriveConnectorIndexingStatus) {
-  //   return (
-  //     <>
-  //       <p className="text-sm mb-2">
-  //         Fill out the form below to create a connector. We will refresh the
-  //         latest documents from Google Drive every <b>10</b> minutes.
-  //       </p>
-  //       <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-  //         <h2 className="font-bold mb-3">Add Connector</h2>
-  //         <ConnectorForm<GoogleDriveConfig>
-  //           nameBuilder={googleDriveConnectorNameBuilder}
-  //           source="google_drive"
-  //           inputType="poll"
-  //           formBodyBuilder={(values) => (
-  //             <div>
-  //               {TextArrayFieldBuilder({
-  //                 name: "folder_paths",
-  //                 label: "Folder Paths",
-  //                 subtext:
-  //                   "Specify 0 or more folder paths to index! For example, specifying the path " +
-  //                   "'Engineering/Materials' will cause us to only index all files contained " +
-  //                   "within the 'Materials' folder within the 'Engineering' folder. " +
-  //                   "If no folder paths are specified, we will index all documents in your drive.",
-  //               })(values)}
-  //               <BooleanFormField
-  //                 name="include_shared"
-  //                 label="Include Shared"
-  //               />
-  //             </div>
-  //           )}
-  //           validationSchema={Yup.object().shape({
-  //             folder_paths: Yup.array()
-  //               .of(
-  //                 Yup.string().required(
-  //                   "Please specify a folder path for your google drive e.g. 'Engineering/Materials'"
-  //                 )
-  //               )
-  //               .required(),
-  //             include_shared: Yup.boolean().required(),
-  //           })}
-  //           initialValues={{
-  //             folder_paths: [],
-  //           }}
-  //           refreshFreq={10 * 60} // 10 minutes
-  //           onSubmit={async (isSuccess, responseJson) => {
-  //             if (isSuccess && responseJson) {
-  //               await linkCredential(
-  //                 responseJson.id,
-  //                 googleDrivePublicCredential.id
-  //               );
-  //               mutate("/api/manage/admin/connector/indexing-status");
-  //             }
-  //           }}
-  //         />
-  //       </div>
-  //     </>
-  //   );
-  // }
-
-  // If the connector has no credential, we will just hit the ^ section.
-  // Leaving this in for now in case we want to change this behavior later
-  // if (!credentialIsLinked) {
-  //   <>
-  //     <p className="text-sm mb-2">
-  //       Click the button below to link your credentials! Once this is done, all
-  //       public documents in your Google Drive will be searchable. We will
-  //       refresh the latest documents every <b>10</b> minutes.
-  //     </p>
-  //     <Button
-  //       onClick={async () => {
-  //         await linkCredential(
-  //           googleDriveConnectorIndexingStatus.connector.id,
-  //           googleDrivePublicCredential.id
-  //         );
-  //         setPopup({
-  //           message: "Successfully linked credentials!",
-  //           type: "success",
-  //         });
-  //         mutate("/api/manage/admin/connector/indexing-status");
-  //       }}
-  //     >
-  //       Link Credentials
-  //     </Button>
-  //   </>;
-  // }
-
   return (
     <div>
       <Text>

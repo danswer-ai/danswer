@@ -85,6 +85,5 @@ export const submitGoogleSite = async (
     return response;
   } catch (e) {
     return false;
-    console.log("Failed to index filels: ", e);
   }
 };

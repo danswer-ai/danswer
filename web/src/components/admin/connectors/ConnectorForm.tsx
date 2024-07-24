@@ -34,7 +34,6 @@ export async function submitConnector<T>(
 
   try {
     if (fake_credential) {
-      console.log("Looknig for fake cred");
       const response = await fetch(
         "/api/manage/admin/connector-with-fake-credential",
         {
@@ -53,7 +52,6 @@ export async function submitConnector<T>(
         return { message: `Error: ${errorData.detail}`, isSuccess: false };
       }
     } else {
-      console.log(connector);
       const response = await fetch(
         BASE_CONNECTOR_URL + (isUpdate ? `/${connectorId}` : ""),
         {

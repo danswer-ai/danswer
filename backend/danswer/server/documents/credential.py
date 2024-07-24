@@ -157,8 +157,6 @@ def update_credential_data(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> CredentialBase:
-    print("i am altering")
-    print(credential_update)
     credential = alter_credential(credential_id, credential_update, user, db_session)
 
     if credential is None:
