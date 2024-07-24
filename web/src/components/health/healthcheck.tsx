@@ -1,8 +1,7 @@
 "use client";
 
-import { errorHandlingFetcher, FetchError, RedirectError } from "@/lib/fetcher";
+import { errorHandlingFetcher, RedirectError } from "@/lib/fetcher";
 import useSWR from "swr";
-import { useRouter } from "next/navigation";
 import { Modal } from "../Modal";
 import { useState } from "react";
 
@@ -14,7 +13,7 @@ export const HealthCheckBanner = ({
   const { error } = useSWR("/api/health", errorHandlingFetcher);
   const [expired, setExpired] = useState(false);
 
-  if (secondsUntilExpiration) {
+  if (secondsUntilExpiration !== null && secondsUntilExpiration !== undefined) {
     setTimeout(
       () => {
         setExpired(true);
@@ -32,12 +31,11 @@ export const HealthCheckBanner = ({
       <Modal
         width="w-1/4"
         className="overflow-y-hidden flex flex-col"
-        title="You have been logged out!"
+        title="You've been logged out"
       >
         <div className="flex flex-col gap-y-4">
-          <p className="text-lg">
-            You can click &quot;Log in&quot; to log back in! Apologies for the
-            inconvenience.
+          <p className="text-sm">
+            Your session has expired. Please log in again to continue.
           </p>
           <a
             href="/auth/login"

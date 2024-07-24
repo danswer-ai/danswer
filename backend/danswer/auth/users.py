@@ -187,7 +187,10 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             is_verified_by_default=is_verified_by_default,
         )
 
-        if expires_at:
+        # NOTE: google oauth expires after 1hr. We don't want to force the user to
+        # re-authenticate that frequently, so for now we'll just ignore this for
+        # google oauth users
+        if expires_at and AUTH_TYPE != AuthType.GOOGLE_OAUTH:
             oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
             await self.user_db.update(user, update_dict={"oidc_expiry": oidc_expiry})
         return user
