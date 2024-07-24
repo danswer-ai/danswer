@@ -2,13 +2,17 @@ import * as Yup from "yup";
 import React, { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text, Card } from "@tremor/react";
-import { Credential, getDisplayNameForCredentialKey } from "@/lib/types";
+
 import { FaNewspaper } from "react-icons/fa";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik, FormikHelpers } from "formik";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { EditIcon } from "@/components/icons/icons";
 import { EditingValue } from "./EditingValue";
+import {
+  Credential,
+  getDisplayNameForCredentialKey,
+} from "@/lib/ccs/credentials";
 
 interface JsonValues {
   [key: string]: string;

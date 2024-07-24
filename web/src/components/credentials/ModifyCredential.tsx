@@ -4,16 +4,13 @@ import { Button, Text, Badge } from "@tremor/react";
 
 import { buildSimilarCredentialInfoURL } from "../../app/admin/connector/[ccPairId]/lib";
 import { mutate } from "swr";
-import {
-  ConfluenceCredentialJson,
-  Connector,
-  Credential,
-  ValidSources,
-} from "@/lib/types";
+import { ValidSources } from "@/lib/types";
 import { FaCreativeCommons } from "react-icons/fa";
 import { EditIcon, SwapIcon, TrashIcon } from "@/components/icons/icons";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDisplayName } from "@/lib/sources";
+import { ConfluenceCredentialJson, Credential } from "@/lib/ccs/credentials";
+import { Connector } from "@/lib/ccs/connectors";
 
 interface CredentialSelectionTableProps {
   credentials: Credential<any>[];

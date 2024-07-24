@@ -1,4 +1,4 @@
-import { GoogleDriveConfig } from "@/lib/types";
+import { GoogleDriveConfig } from "@/lib/ccs/connectors";
 
 export const googleDriveConnectorNameBuilder = (values: GoogleDriveConfig) =>
   `GoogleDriveConnector-${

@@ -8,20 +8,19 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { LoadingAnimation } from "@/components/Loading";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
+import { ConnectorIndexingStatus } from "@/lib/types";
 import {
-  ConnectorIndexingStatus,
   Credential,
   GmailCredentialJson,
   GmailServiceAccountCredentialJson,
-  GmailConfig,
-} from "@/lib/types";
+} from "@/lib/ccs/credentials";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { GmailConnectorsTable } from "./GmailConnectorsTable";
 import { gmailConnectorNameBuilder } from "./utils";
 import { GmailOAuthSection, GmailJsonUploadSection } from "./Credential";
 import { usePublicCredentials } from "@/lib/hooks";
-import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, Divider, Text, Title } from "@tremor/react";
+import { GmailConfig } from "@/lib/ccs/connectors";
 
 interface GmailConnectorManagementProps {
   gmailPublicCredential?: Credential<GmailCredentialJson>;

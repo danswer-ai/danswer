@@ -1,7 +1,7 @@
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { createCredential, linkCredential } from "@/lib/credential";
-import { FileConfig } from "@/lib/types";
+import { FileConfig } from "@/lib/ccs/connectors";
 import { AdvancedConfig } from "../../AddConnectorPage";
 
 export const submitFiles = async (

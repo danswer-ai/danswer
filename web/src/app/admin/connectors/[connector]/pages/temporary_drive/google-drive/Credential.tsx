@@ -4,11 +4,6 @@ import { useState } from "react";
 import { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
-import {
-  Credential,
-  GoogleDriveCredentialJson,
-  GoogleDriveServiceAccountCredentialJson,
-} from "@/lib/types";
 import { adminDeleteCredential } from "@/lib/credential";
 import { setupGoogleDriveOAuth } from "@/lib/googleDrive";
 import { GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME } from "@/lib/constants";
@@ -16,6 +11,11 @@ import Cookies from "js-cookie";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik } from "formik";
 import { Card } from "@tremor/react";
+import {
+  Credential,
+  GoogleDriveCredentialJson,
+  GoogleDriveServiceAccountCredentialJson,
+} from "@/lib/ccs/credentials";
 
 type GoogleDriveCredentialJsonTypes = "authorized_user" | "service_account";
 

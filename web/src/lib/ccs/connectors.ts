@@ -1,4 +1,4 @@
-import { ValidSources } from "../types";
+import { ValidInputTypes, ValidSources } from "../types";
 
 // Type definitions
 export type InputType =
@@ -760,3 +760,184 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
     ],
   },
 };
+
+// CONNECTORS
+export interface ConnectorBase<T> {
+  name: string;
+  source: ValidSources;
+  input_type: ValidInputTypes;
+  connector_specific_config: T;
+  refresh_freq: number | null;
+  prune_freq: number | null;
+  indexing_start: Date | null;
+  disabled: boolean;
+}
+
+export interface Connector<T> extends ConnectorBase<T> {
+  id: number;
+  credential_ids: number[];
+  time_created: string;
+  time_updated: string;
+}
+
+export interface WebConfig {
+  base_url: string;
+  web_connector_type?: "recursive" | "single" | "sitemap";
+}
+
+export interface GithubConfig {
+  repo_owner: string;
+  repo_name: string;
+  include_prs: boolean;
+  include_issues: boolean;
+}
+
+export interface GitlabConfig {
+  project_owner: string;
+  project_name: string;
+  include_mrs: boolean;
+  include_issues: boolean;
+}
+
+export interface GoogleDriveConfig {
+  folder_paths?: string[];
+  include_shared?: boolean;
+  follow_shortcuts?: boolean;
+  only_org_public?: boolean;
+}
+
+export interface GmailConfig {}
+
+export interface BookstackConfig {}
+
+export interface ConfluenceConfig {
+  wiki_page_url: string;
+  index_origin?: boolean;
+}
+
+export interface JiraConfig {
+  jira_project_url: string;
+  comment_email_blacklist?: string[];
+}
+
+export interface SalesforceConfig {
+  requested_objects?: string[];
+}
+
+export interface SharepointConfig {
+  sites?: string[];
+}
+
+export interface TeamsConfig {
+  teams?: string[];
+}
+
+export interface DiscourseConfig {
+  base_url: string;
+  categories?: string[];
+}
+
+export interface AxeroConfig {
+  spaces?: string[];
+}
+
+export interface TeamsConfig {
+  teams?: string[];
+}
+
+export interface ProductboardConfig {}
+
+export interface SlackConfig {
+  workspace: string;
+  channels?: string[];
+  channel_regex_enabled?: boolean;
+}
+
+export interface SlabConfig {
+  base_url: string;
+}
+
+export interface GuruConfig {}
+
+export interface GongConfig {
+  workspaces?: string[];
+}
+
+export interface LoopioConfig {
+  loopio_stack_name?: string;
+}
+
+export interface FileConfig {
+  file_locations: string[];
+}
+
+export interface ZulipConfig {
+  realm_name: string;
+  realm_url: string;
+}
+
+export interface NotionConfig {
+  root_page_id?: string;
+}
+
+export interface HubSpotConfig {}
+
+export interface RequestTrackerConfig {}
+
+export interface Document360Config {
+  workspace: string;
+  categories?: string[];
+}
+
+export interface ClickupConfig {
+  connector_type: "list" | "folder" | "space" | "workspace";
+  connector_ids?: string[];
+  retrieve_task_comments: boolean;
+}
+
+export interface GoogleSitesConfig {
+  zip_path: string;
+  base_url: string;
+}
+
+export interface ZendeskConfig {}
+
+export interface DropboxConfig {}
+
+export interface S3Config {
+  bucket_type: "s3";
+  bucket_name: string;
+  prefix: string;
+}
+
+export interface R2Config {
+  bucket_type: "r2";
+  bucket_name: string;
+  prefix: string;
+}
+
+export interface GCSConfig {
+  bucket_type: "google_cloud_storage";
+  bucket_name: string;
+  prefix: string;
+}
+
+export interface OCIConfig {
+  bucket_type: "oci_storage";
+  bucket_name: string;
+  prefix: string;
+}
+
+export interface MediaWikiBaseConfig {
+  connector_name: string;
+  language_code: string;
+  categories?: string[];
+  pages?: string[];
+  recurse_depth?: number;
+}
+
+export interface MediaWikiConfig extends MediaWikiBaseConfig {
+  hostname: string;
+}
+
+export interface WikipediaConfig extends MediaWikiBaseConfig {}

@@ -8,14 +8,7 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { LoadingAnimation } from "@/components/Loading";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import {
-  ConnectorIndexingStatus,
-  Credential,
-  GoogleDriveConfig,
-  GoogleDriveCredentialJson,
-  GoogleDriveServiceAccountCredentialJson,
-} from "@/lib/types";
-import { linkCredential } from "@/lib/credential";
+import { ConnectorIndexingStatus } from "@/lib/types";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import {
   BooleanFormField,
@@ -27,6 +20,12 @@ import { DriveOAuthSection, DriveJsonUploadSection } from "./Credential";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, Divider, Text, Title } from "@tremor/react";
+import {
+  Credential,
+  GoogleDriveCredentialJson,
+  GoogleDriveServiceAccountCredentialJson,
+} from "@/lib/ccs/credentials";
+import { GoogleDriveConfig } from "@/lib/ccs/connectors";
 
 interface GoogleDriveConnectorManagementProps {
   googleDrivePublicCredential?: Credential<GoogleDriveCredentialJson>;

@@ -4,11 +4,11 @@ import {
   TextArrayFieldBuilder,
 } from "@/components/admin/connectors/Field";
 import { XIcon } from "@/components/icons/icons";
-import { Connector, GoogleDriveConfig } from "@/lib/types";
 import * as Yup from "yup";
 import { googleDriveConnectorNameBuilder } from "./utils";
 import { Modal } from "@/components/Modal";
 import { Divider, Text } from "@tremor/react";
+import { Connector, GoogleDriveConfig } from "@/lib/ccs/connectors";
 
 interface Props {
   existingConnector: Connector<GoogleDriveConfig>;

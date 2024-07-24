@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  ConfluenceCredentialJson,
-  Credential,
-  ValidSources,
-} from "@/lib/types";
+import { ValidSources } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { FaSwatchbook } from "react-icons/fa";
@@ -27,6 +23,7 @@ import {
 import { Modal } from "../Modal";
 import EditCredential from "./EditCredential";
 import { getSourceDisplayName } from "@/lib/sources";
+import { ConfluenceCredentialJson, Credential } from "@/lib/ccs/credentials";
 
 export default function CredentialSection({
   ccPair,

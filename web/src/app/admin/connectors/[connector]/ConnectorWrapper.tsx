@@ -1,11 +1,12 @@
 "use client";
 
-import { isValidSource, ValidSources } from "@/lib/types";
+import { ValidSources } from "@/lib/types";
 import AddConnector from "./AddConnectorPage";
 import { FormProvider } from "@/components/context/FormContext";
 import Sidebar from "./Sidebar";
 import { HeaderTitle } from "@/components/header/Header";
 import { Button } from "@tremor/react";
+import { isValidSource } from "@/lib/sources";
 
 export default function ConnectorWrapper({ connector }: { connector: string }) {
   return (

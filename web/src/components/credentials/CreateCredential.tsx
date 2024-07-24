@@ -1,13 +1,7 @@
 import * as Yup from "yup";
 import React from "react";
 import { Button, Card } from "@tremor/react";
-import {
-  Connector,
-  Credential,
-  getCredentialTemplate,
-  getDisplayNameForCredentialKey,
-  ValidSources,
-} from "@/lib/types";
+import { ValidSources } from "@/lib/types";
 import { FaAccusoft, FaSwatchbook } from "react-icons/fa";
 
 import { submitCredential } from "@/components/admin/connectors/CredentialForm";
@@ -18,6 +12,12 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDocLink } from "@/lib/sources";
 import GDriveMain from "@/app/admin/connectors/[connector]/pages/GoogleDrivePage";
 import { GmailMain } from "@/app/admin/connectors/[connector]/pages/temporary_gmail/gmail/GmailPage";
+import { Connector } from "@/lib/ccs/connectors";
+import {
+  Credential,
+  credentialTemplates,
+  getDisplayNameForCredentialKey,
+} from "@/lib/ccs/credentials";
 
 type ActionType = "create" | "createAndSwap";
 
@@ -100,7 +100,7 @@ export default function CreateCredential({
     refresh();
   };
 
-  const types = getCredentialTemplate(sourceType);
+  const types = credentialTemplates[sourceType];
 
   const input_values = Object.keys(types);
 

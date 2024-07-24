@@ -12,13 +12,15 @@ import { DeletionButton } from "./DeletionButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ReIndexButton } from "./ReIndexButton";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
-import { sourcesWithoutCredentials, ValidSources } from "@/lib/types";
+import { ValidSources } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ThreeDotsLoader } from "@/components/Loading";
 import CredentialSection from "@/components/credentials/CredentialSection";
 import { buildCCPairInfoUrl } from "./lib";
 import { SourceIcon } from "@/components/SourceIcon";
+import { connectorConfigs } from "@/lib/ccs/connectors";
+import { credentialTemplates } from "@/lib/ccs/credentials";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -98,7 +100,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
         Total Documents Indexed:{" "}
         <b className="text-emphasis">{totalDocsIndexed}</b>
       </div>
-      {!sourcesWithoutCredentials.includes(ccPair.connector.source) && (
+      {credentialTemplates[ccPair.connector.source] && (
         <>
           <Divider />
 

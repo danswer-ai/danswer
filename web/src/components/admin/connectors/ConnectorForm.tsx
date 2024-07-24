@@ -4,12 +4,7 @@ import React, { useState } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { Popup, usePopup } from "./Popup";
-import {
-  Connector,
-  ConnectorBase,
-  ValidInputTypes,
-  ValidSources,
-} from "@/lib/types";
+import { ValidInputTypes, ValidSources } from "@/lib/types";
 import { deleteConnectorIfExistsAndIsUnlinked } from "@/lib/connector";
 import { FormBodyBuilder, RequireAtLeastOne } from "./types";
 import { BooleanFormField, TextFormField } from "./Field";
@@ -18,6 +13,7 @@ import { useSWRConfig } from "swr";
 import { Button, Divider } from "@tremor/react";
 import IsPublicField from "./IsPublicField";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { Connector, ConnectorBase } from "@/lib/ccs/connectors";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
