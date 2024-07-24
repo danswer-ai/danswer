@@ -80,7 +80,9 @@ class CloudEmbedding:
             raise ValueError(f"Unsupported provider: {provider}")
         self.client = _initialize_client(api_key, self.provider, model)
 
-    def _embed_openai(self, texts: list[str], model: str | None) -> list[list[float] | None]:
+    def _embed_openai(
+        self, texts: list[str], model: str | None
+    ) -> list[list[float] | None]:
         if model is None:
             model = DEFAULT_OPENAI_MODEL
 
@@ -134,7 +136,7 @@ class CloudEmbedding:
                     text,
                     embedding_type,
                 )
-                for text in texts 
+                for text in texts
             ],
             auto_truncate=True,  # Also this is default
         )
@@ -236,7 +238,6 @@ def embed_text(
     provider_type: str | None,
     prefix: str | None,
 ) -> list[list[float] | None]:
-    
     non_empty_texts = []
     empty_indices = []
     for idx, text in enumerate(texts):
@@ -270,7 +271,9 @@ def embed_text(
 
     # Locally running model
     elif model_name is not None:
-        prefixed_texts = [f"{prefix}{text}" for text in non_empty_texts] if prefix else texts
+        prefixed_texts = (
+            [f"{prefix}{text}" for text in non_empty_texts] if prefix else texts
+        )
         local_model = get_embedding_model(
             model_name=model_name, max_context_length=max_context_length
         )
@@ -285,17 +288,18 @@ def embed_text(
 
     if embeddings is None:
         raise RuntimeError("Failed to create Embeddings")
-    embeddings_with_nulls = []
-    
+    embeddings_with_nulls: list[list[float] | None] = []
+
     current_embedding_index = 0
     for idx in range(len(texts)):
         if idx in empty_indices:
             embeddings_with_nulls.append(None)
         else:
-            if not isinstance(embeddings[current_embedding_index], list):
-                embeddings_with_nulls.append(embeddings[current_embedding_index].tolist())
-            else: 
-                embeddings_with_nulls.append(embeddings[current_embedding_index])
+            embedding = embeddings[current_embedding_index]
+            if isinstance(embedding, list) or embedding is None:
+                embeddings_with_nulls.append(embedding)
+            else:
+                embeddings_with_nulls.append(embedding.tolist())
             current_embedding_index += 1
     embeddings = embeddings_with_nulls
 

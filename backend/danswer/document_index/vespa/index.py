@@ -334,7 +334,7 @@ def _index_vespa_chunk(
 
     embeddings = chunk.embeddings
     embeddings_name_vector_map = {"full_chunk": embeddings.full_embedding}
-    if (chunk.embeddings.full_embedding is None):
+    if chunk.embeddings.full_embedding is None:
         embeddings.full_embedding = chunk.title_embedding
 
     if embeddings.mini_chunk_embeddings:

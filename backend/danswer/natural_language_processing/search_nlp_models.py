@@ -89,7 +89,7 @@ class EmbeddingModel:
                 )
                 for text in texts
             ]
-        
+
         if self.provider_type:
             # print("I am embedding")
             embed_request = EmbedRequest(
