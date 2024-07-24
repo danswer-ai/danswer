@@ -1,6 +1,8 @@
 import smtplib
 import uuid
 from collections.abc import AsyncGenerator
+from datetime import datetime
+from datetime import timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Optional
@@ -173,7 +175,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         verify_email_in_whitelist(account_email)
         verify_email_domain(account_email)
 
-        return await super().oauth_callback(  # type: ignore
+        user = await super().oauth_callback(  # type: ignore
             oauth_name=oauth_name,
             access_token=access_token,
             account_id=account_id,
@@ -184,6 +186,14 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             associate_by_email=associate_by_email,
             is_verified_by_default=is_verified_by_default,
         )
+
+        # NOTE: google oauth expires after 1hr. We don't want to force the user to
+        # re-authenticate that frequently, so for now we'll just ignore this for
+        # google oauth users
+        if expires_at and AUTH_TYPE != AuthType.GOOGLE_OAUTH:
+            oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
+            await self.user_db.update(user, update_dict={"oidc_expiry": oidc_expiry})
+        return user
 
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
@@ -227,9 +237,11 @@ cookie_transport = CookieTransport(
 def get_database_strategy(
     access_token_db: AccessTokenDatabase[AccessToken] = Depends(get_access_token_db),
 ) -> DatabaseStrategy:
-    return DatabaseStrategy(
+    strategy = DatabaseStrategy(
         access_token_db, lifetime_seconds=SESSION_EXPIRE_TIME_SECONDS  # type: ignore
     )
+
+    return strategy
 
 
 auth_backend = AuthenticationBackend(
