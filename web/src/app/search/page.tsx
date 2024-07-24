@@ -34,7 +34,7 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import ToggleSearch from "./WrappedSearch";
 import {
   AGENTIC_SEARCH_TYPE_COOKIE_NAME,
-  DEFAULT_SIDEBAR_OPEN,
+  NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN,
   DISABLE_AGENTIC_SEARCH,
 } from "@/lib/constants";
 import WrappedSearch from "./WrappedSearch";
@@ -177,7 +177,7 @@ export default async function Home() {
 
   const toggleSidebar = sidebarToggled
     ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
-    : DEFAULT_SIDEBAR_OPEN;
+    : NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN;
 
   const agenticSearchEnabled = agenticSearchToggle
     ? agenticSearchToggle.value.toLocaleLowerCase() == "true" || false
