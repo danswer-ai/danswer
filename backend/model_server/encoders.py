@@ -240,6 +240,7 @@ def embed_text(
 ) -> list[list[float] | None]:
     non_empty_texts = []
     empty_indices = []
+
     for idx, text in enumerate(texts):
         if text.strip():
             non_empty_texts.append(text)
@@ -247,7 +248,9 @@ def embed_text(
             empty_indices.append(idx)
 
     # Third party API based embedding model
-    if provider_type is not None:
+    if not non_empty_texts:
+        embeddings = []
+    elif provider_type is not None:
         logger.debug(f"Embedding text with provider: {provider_type}")
         if api_key is None:
             raise RuntimeError("API key not provided for cloud model")

@@ -331,15 +331,18 @@ def _index_vespa_chunk(
     document = chunk.source_document
     # No minichunk documents in vespa, minichunk vectors are stored in the chunk itself
     vespa_chunk_id = str(get_uuid_from_chunk(chunk))
-
     embeddings = chunk.embeddings
-    embeddings_name_vector_map = {"full_chunk": embeddings.full_embedding}
+
     if chunk.embeddings.full_embedding is None:
         embeddings.full_embedding = chunk.title_embedding
+    embeddings_name_vector_map = {"full_chunk": embeddings.full_embedding}
 
     if embeddings.mini_chunk_embeddings:
         for ind, m_c_embed in enumerate(embeddings.mini_chunk_embeddings):
-            embeddings_name_vector_map[f"mini_chunk_{ind}"] = m_c_embed
+            if m_c_embed is None:
+                embeddings_name_vector_map[f"mini_chunk_{ind}"] = chunk.title_embedding
+            else:
+                embeddings_name_vector_map[f"mini_chunk_{ind}"] = m_c_embed
 
     title = document.get_title_for_document_index()
 
