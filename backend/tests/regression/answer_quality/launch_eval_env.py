@@ -24,7 +24,7 @@ def main() -> None:
     else:
         print("No env name defined. Not launching docker.")
         print(
-            "Please define a name in the config yaml to start a new env"
+            "Please define a name in the config yaml to start a new env "
             "or use an existing env"
         )
         return
