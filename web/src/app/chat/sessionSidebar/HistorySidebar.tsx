@@ -1,6 +1,6 @@
 "use client";
 
-import { FiEdit, FiFolderPlus } from "react-icons/fi";
+import { FiArrowDown, FiEdit, FiFolderPlus } from "react-icons/fi";
 import {
   Dispatch,
   ForwardedRef,
@@ -38,9 +38,10 @@ import {
 import { PagesTab } from "./PagesTab";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import KeyboardSymbol from "@/lib/browserUtilities";
+import { pageType } from "./types";
 
 interface HistorySidebarProps {
-  page: "search" | "chat" | "assistants";
+  page: pageType;
   existingChats?: ChatSession[];
   currentChatSession?: ChatSession | null | undefined;
   folders?: Folder[];
@@ -126,7 +127,8 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
               </Tooltip>
             )}
           </div>
-          {!(page == "search") && (
+
+          {page == "chat" && (
             <div className="mx-3 mt-4 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
               <Link
                 href={

@@ -64,6 +64,7 @@ module.exports = {
         // background
 
         "background-search": "#ffffff", // white
+        input: "#f5f5f5",
 
         background: "#fafafa", // 50
         "background-100": "#f5f5f5", // neutral-100

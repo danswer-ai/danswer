@@ -114,8 +114,13 @@ export function TextFormField({
   explanationText,
   explanationLink,
   small,
+  value,
+  noPadding,
+  removeLabel,
 }: {
   name: string;
+  value?: string;
+  removeLabel?: boolean;
   label: string;
   subtext?: string | JSX.Element;
   placeholder?: string;
@@ -123,6 +128,7 @@ export function TextFormField({
   type?: string;
   isTextArea?: boolean;
   disabled?: boolean;
+  noPadding?: boolean;
   autoCompleteDisabled?: boolean;
   error?: string;
   defaultHeight?: string;
@@ -140,12 +146,10 @@ export function TextFormField({
   }
 
   return (
-    <div className="mb-6">
+    <div className={`${!noPadding && "mb-6"}`}>
       <div className="flex gap-x-2 items-center">
-        <Label small={small}>{label}</Label>
-
+        {!removeLabel && <Label small={small}>{label}</Label>}
         {tooltip && <ToolTipDetails>{tooltip}</ToolTipDetails>}
-
         {error ? (
           <ManualErrorMessage>{error}</ManualErrorMessage>
         ) : (
@@ -160,11 +164,13 @@ export function TextFormField({
       </div>
 
       {subtext && <SubLabel>{subtext}</SubLabel>}
+
       <Field
         as={isTextArea ? "textarea" : "input"}
         type={type}
         name={name}
         id={name}
+        value={value}
         className={`
           ${small && "text-sm"}
           border 
@@ -184,6 +190,7 @@ export function TextFormField({
         autoComplete={autoCompleteDisabled ? "off" : undefined}
         {...(onChange ? { onChange } : {})}
       />
+
       {explanationText && (
         <ExplanationText link={explanationLink} text={explanationText} />
       )}
@@ -268,6 +275,7 @@ interface BooleanFormFieldProps {
   noPadding?: boolean;
   small?: boolean;
   alignTop?: boolean;
+  noLabel?: boolean;
 }
 
 export const BooleanFormField = ({
@@ -276,6 +284,7 @@ export const BooleanFormField = ({
   subtext,
   onChange,
   noPadding,
+  noLabel,
   small,
   alignTop,
 }: BooleanFormFieldProps) => {
@@ -290,10 +299,12 @@ export const BooleanFormField = ({
           }`}
           {...(onChange ? { onChange } : {})}
         />
-        <div>
-          <Label small={small}>{label}</Label>
-          {subtext && <SubLabel>{subtext}</SubLabel>}
-        </div>
+        {!noLabel && (
+          <div>
+            <Label small={small}>{label}</Label>
+            {subtext && <SubLabel>{subtext}</SubLabel>}
+          </div>
+        )}
       </label>
       <ErrorMessage
         name={name}
