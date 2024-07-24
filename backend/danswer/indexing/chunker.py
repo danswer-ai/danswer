@@ -19,7 +19,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import shared_precompare_cleanup
 
 if TYPE_CHECKING:
-    from transformers import AutoTokenizer  # type:ignore
+    from llama_index.text_splitter import SentenceSplitter  # type:ignore
 
 
 # Not supporting overlaps, we need a clean combination of chunks and it is unclear if overlaps
@@ -27,6 +27,8 @@ if TYPE_CHECKING:
 CHUNK_OVERLAP = 0
 # Fairly arbitrary numbers but the general concept is we don't want the title/metadata to
 # overwhelm the actual contents of the chunk
+# For example in a rare case, this could be 128 tokens for the 512 chunk and title prefix
+# could be another 128 tokens leaving 256 for the actual contents
 MAX_METADATA_PERCENTAGE = 0.25
 CHUNK_MIN_CONTENT = 256
 
@@ -35,14 +37,7 @@ logger = setup_logger()
 ChunkFunc = Callable[[Document], list[DocAwareChunk]]
 
 
-def extract_blurb(text: str, blurb_size: int) -> str:
-    from llama_index.text_splitter import SentenceSplitter
-
-    token_count_func = get_default_tokenizer().tokenize
-    blurb_splitter = SentenceSplitter(
-        tokenizer=token_count_func, chunk_size=blurb_size, chunk_overlap=0
-    )
-
+def extract_blurb(text: str, blurb_splitter: "SentenceSplitter") -> str:
     return blurb_splitter.split_text(text)[0]
 
 
@@ -51,23 +46,13 @@ def chunk_large_section(
     section_link_text: str,
     document: Document,
     start_chunk_id: int,
-    tokenizer: "AutoTokenizer",
-    chunk_size: int = DOC_EMBEDDING_CONTEXT_SIZE,
-    chunk_overlap: int = CHUNK_OVERLAP,
-    blurb_size: int = BLURB_SIZE,
+    blurb: str,
+    chunk_splitter: "SentenceSplitter",
     title_prefix: str = "",
     metadata_suffix_semantic: str = "",
     metadata_suffix_keyword: str = "",
 ) -> list[DocAwareChunk]:
-    from llama_index.text_splitter import SentenceSplitter
-
-    blurb = extract_blurb(section_text, blurb_size)
-
-    sentence_aware_splitter = SentenceSplitter(
-        tokenizer=tokenizer.tokenize, chunk_size=chunk_size, chunk_overlap=chunk_overlap
-    )
-
-    split_texts = sentence_aware_splitter.split_text(section_text)
+    split_texts = chunk_splitter.split_text(section_text)
 
     chunks = [
         DocAwareChunk(
@@ -131,15 +116,25 @@ def chunk_document(
     document: Document,
     chunk_tok_size: int = DOC_EMBEDDING_CONTEXT_SIZE,
     subsection_overlap: int = CHUNK_OVERLAP,
-    blurb_size: int = BLURB_SIZE,
+    blurb_size: int = BLURB_SIZE,  # Used for both title and content
     include_metadata: bool = not SKIP_METADATA_IN_CHUNK,
 ) -> list[DocAwareChunk]:
+    from llama_index.text_splitter import SentenceSplitter
+
     tokenizer = get_default_tokenizer()
 
-    title_prefix = (
-        document.get_title_for_document_index(include_separator=True, truncate=True)
-        or ""
+    blurb_splitter = SentenceSplitter(
+        tokenizer=tokenizer.tokenize, chunk_size=blurb_size, chunk_overlap=0
     )
+
+    chunk_splitter = SentenceSplitter(
+        tokenizer=tokenizer.tokenize,
+        chunk_size=chunk_tok_size,
+        chunk_overlap=subsection_overlap,
+    )
+
+    title = extract_blurb(document.get_title_for_document_index() or "", blurb_splitter)
+    title_prefix = title + RETURN_SEPARATOR if title else ""
     title_tokens = len(tokenizer.tokenize(title_prefix))
 
     metadata_suffix_semantic = ""
@@ -187,7 +182,7 @@ def chunk_document(
                     DocAwareChunk(
                         source_document=document,
                         chunk_id=len(chunks),
-                        blurb=extract_blurb(chunk_text, blurb_size),
+                        blurb=extract_blurb(chunk_text, blurb_splitter),
                         content=chunk_text,
                         source_links=link_offsets,
                         section_continuation=False,
@@ -204,10 +199,8 @@ def chunk_document(
                 section_link_text=section_link_text,
                 document=document,
                 start_chunk_id=len(chunks),
-                tokenizer=tokenizer,
-                chunk_size=content_token_limit,
-                chunk_overlap=subsection_overlap,
-                blurb_size=blurb_size,
+                chunk_splitter=chunk_splitter,
+                blurb=extract_blurb(section_text, blurb_splitter),
                 title_prefix=title_prefix,
                 metadata_suffix_semantic=metadata_suffix_semantic,
                 metadata_suffix_keyword=metadata_suffix_keyword,
@@ -231,7 +224,7 @@ def chunk_document(
                 DocAwareChunk(
                     source_document=document,
                     chunk_id=len(chunks),
-                    blurb=extract_blurb(chunk_text, blurb_size),
+                    blurb=extract_blurb(chunk_text, blurb_splitter),
                     content=chunk_text,
                     source_links=link_offsets,
                     section_continuation=False,
@@ -250,7 +243,7 @@ def chunk_document(
             DocAwareChunk(
                 source_document=document,
                 chunk_id=len(chunks),
-                blurb=extract_blurb(chunk_text, blurb_size),
+                blurb=extract_blurb(chunk_text, blurb_splitter),
                 content=chunk_text,
                 source_links=link_offsets,
                 section_continuation=False,
