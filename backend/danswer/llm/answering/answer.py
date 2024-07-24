@@ -240,9 +240,15 @@ class Answer:
         # if we have a tool call, we need to call the tool
         tool_call_requests = tool_call_chunk.tool_calls
         for tool_call_request in tool_call_requests:
-            tool = [
+            known_tools_by_name = [
                 tool for tool in self.tools if tool.name == tool_call_request["name"]
-            ][0]
+            ]
+
+            if not known_tools_by_name:
+                logger.warning("Tool call requested with unknown name field")
+                continue
+
+            tool = known_tools_by_name[0]
             tool_args = (
                 self.force_use_tool.args
                 if self.force_use_tool.tool_name == tool.name
