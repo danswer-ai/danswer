@@ -91,7 +91,6 @@ class EmbeddingModel:
             ]
 
         if self.provider_type:
-            # print("I am embedding")
             embed_request = EmbedRequest(
                 model_name=self.model_name,
                 texts=texts,
@@ -113,9 +112,8 @@ class EmbeddingModel:
                 raise HTTPError(f"HTTP error occurred: {error_detail}") from e
             except requests.RequestException as e:
                 raise HTTPError(f"Request failed: {str(e)}") from e
-            embeds = EmbedResponse(**response.json()).embeddings
+            EmbedResponse(**response.json()).embeddings
 
-            print(embeds[-1])
             return EmbedResponse(**response.json()).embeddings
 
         # Batching for local embedding
@@ -147,7 +145,6 @@ class EmbeddingModel:
             # Normalize embeddings is only configured via model_configs.py, be sure to use right
             # value for the set loss
             embeddings.extend(EmbedResponse(**response.json()).embeddings)
-        print(embeddings[-1])
         return embeddings
 
 
