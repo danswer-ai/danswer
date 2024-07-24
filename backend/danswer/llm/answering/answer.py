@@ -287,7 +287,7 @@ class Answer:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
         chosen_tool_and_args: tuple[Tool, dict] | None = None
 
-        if self.force_use_tool:
+        if self.force_use_tool and self.force_use_tool.force_use:
             # if we are forcing a tool, we don't need to check which tools to run
             tool = next(
                 iter(
