@@ -6,7 +6,9 @@ services:
       context: ../../backend
       dockerfile: Dockerfile
     command: >
-      /bin/sh -c "alembic upgrade head && echo \"Starting Danswer Api Server\" && uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
+      /bin/sh -c "alembic upgrade head &&
+      echo \"Starting Danswer Api Server\" &&
+      uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
       - index
@@ -336,8 +338,9 @@ services:
     # does not recieve any traffic
     # NOTE: we have to use dos2unix to remove Carriage Return chars from the file
     # in order to make this work on both Unix-like systems and windows
-    command: >+
-      /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh  && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
+    command: > 
+      /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
+      && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
         
 volumes:
   db_volume:
