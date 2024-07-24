@@ -16,13 +16,16 @@ from tests.regression.answer_quality.cli_utils import get_api_server_host_port
 GENERAL_HEADERS = {"Content-Type": "application/json"}
 
 
-def _api_url_builder(run_suffix: str, api_path: str) -> str:
-    return f"http://localhost:{get_api_server_host_port(run_suffix)}" + api_path
+def _api_url_builder(env_name: str, api_path: str) -> str:
+    if env_name:
+        return f"http://localhost:{get_api_server_host_port(env_name)}" + api_path
+    else:
+        return "http://localhost:8080" + api_path
 
 
 @retry(tries=5, delay=5)
 def get_answer_from_query(
-    query: str, only_retrieve_docs: bool, run_suffix: str
+    query: str, only_retrieve_docs: bool, env_name: str
 ) -> tuple[list[str], str]:
     filters = IndexFilters(
         source_type=None,
@@ -49,7 +52,7 @@ def get_answer_from_query(
         skip_gen_ai_answer_generation=only_retrieve_docs,
     )
 
-    url = _api_url_builder(run_suffix, "/query/answer-with-quote/")
+    url = _api_url_builder(env_name, "/query/answer-with-quote/")
     headers = {
         "Content-Type": "application/json",
     }
@@ -70,8 +73,8 @@ def get_answer_from_query(
 
 
 @retry(tries=10, delay=10)
-def check_indexing_status(run_suffix: str) -> tuple[int, bool]:
-    url = _api_url_builder(run_suffix, "/manage/admin/connector/indexing-status/")
+def check_indexing_status(env_name: str) -> tuple[int, bool]:
+    url = _api_url_builder(env_name, "/manage/admin/connector/indexing-status/")
     try:
         indexing_status_dict = requests.get(url, headers=GENERAL_HEADERS).json()
     except Exception as e:
@@ -99,8 +102,8 @@ def check_indexing_status(run_suffix: str) -> tuple[int, bool]:
     return doc_count, ongoing_index_attempts
 
 
-def run_cc_once(run_suffix: str, connector_id: int, credential_id: int) -> None:
-    url = _api_url_builder(run_suffix, "/manage/admin/connector/run-once/")
+def run_cc_once(env_name: str, connector_id: int, credential_id: int) -> None:
+    url = _api_url_builder(env_name, "/manage/admin/connector/run-once/")
     body = {
         "connector_id": connector_id,
         "credential_ids": [credential_id],
@@ -115,9 +118,9 @@ def run_cc_once(run_suffix: str, connector_id: int, credential_id: int) -> None:
         print("Failed text:", response.text)
 
 
-def create_cc_pair(run_suffix: str, connector_id: int, credential_id: int) -> None:
+def create_cc_pair(env_name: str, connector_id: int, credential_id: int) -> None:
     url = _api_url_builder(
-        run_suffix, f"/manage/connector/{connector_id}/credential/{credential_id}"
+        env_name, f"/manage/connector/{connector_id}/credential/{credential_id}"
     )
 
     body = {"name": "zip_folder_contents", "is_public": True}
@@ -130,8 +133,8 @@ def create_cc_pair(run_suffix: str, connector_id: int, credential_id: int) -> No
         print("Failed text:", response.text)
 
 
-def _get_existing_connector_names(run_suffix: str) -> list[str]:
-    url = _api_url_builder(run_suffix, "/manage/connector")
+def _get_existing_connector_names(env_name: str) -> list[str]:
+    url = _api_url_builder(env_name, "/manage/connector")
 
     body = {
         "credential_json": {},
@@ -145,10 +148,10 @@ def _get_existing_connector_names(run_suffix: str) -> list[str]:
         raise RuntimeError(response.__dict__)
 
 
-def create_connector(run_suffix: str, file_paths: list[str]) -> int:
-    url = _api_url_builder(run_suffix, "/manage/admin/connector")
+def create_connector(env_name: str, file_paths: list[str]) -> int:
+    url = _api_url_builder(env_name, "/manage/admin/connector")
     connector_name = base_connector_name = "search_eval_connector"
-    existing_connector_names = _get_existing_connector_names(run_suffix)
+    existing_connector_names = _get_existing_connector_names(env_name)
 
     count = 1
     while connector_name in existing_connector_names:
@@ -175,8 +178,8 @@ def create_connector(run_suffix: str, file_paths: list[str]) -> int:
         raise RuntimeError(response.__dict__)
 
 
-def create_credential(run_suffix: str) -> int:
-    url = _api_url_builder(run_suffix, "/manage/credential")
+def create_credential(env_name: str) -> int:
+    url = _api_url_builder(env_name, "/manage/credential")
     body = {
         "credential_json": {},
         "admin_public": True,
@@ -190,12 +193,12 @@ def create_credential(run_suffix: str) -> int:
 
 
 @retry(tries=10, delay=2, backoff=2)
-def upload_file(run_suffix: str, zip_file_path: str) -> list[str]:
+def upload_file(env_name: str, zip_file_path: str) -> list[str]:
     files = [
         ("files", open(zip_file_path, "rb")),
     ]
 
-    api_path = _api_url_builder(run_suffix, "/manage/admin/connector/file/upload")
+    api_path = _api_url_builder(env_name, "/manage/admin/connector/file/upload")
     try:
         response = requests.post(api_path, files=files)
         response.raise_for_status()  # Raises an HTTPError for bad responses

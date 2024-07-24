@@ -13,7 +13,6 @@ from tests.regression.answer_quality.api_utils import create_connector
 from tests.regression.answer_quality.api_utils import create_credential
 from tests.regression.answer_quality.api_utils import run_cc_once
 from tests.regression.answer_quality.api_utils import upload_file
-from tests.regression.answer_quality.cli_utils import restart_vespa_container
 
 
 def unzip_and_get_file_paths(zip_file_path: str) -> list[str]:
@@ -35,40 +34,37 @@ def create_temp_zip_from_files(file_paths: list[str]) -> str:
     return zip_file_path
 
 
-def upload_test_files(zip_file_path: str, run_suffix: str) -> None:
+def upload_test_files(zip_file_path: str, env_name: str) -> None:
     print("zip:", zip_file_path)
-    file_paths = upload_file(run_suffix, zip_file_path)
+    file_paths = upload_file(env_name, zip_file_path)
 
-    conn_id = create_connector(run_suffix, file_paths)
-    cred_id = create_credential(run_suffix)
+    conn_id = create_connector(env_name, file_paths)
+    cred_id = create_credential(env_name)
 
-    create_cc_pair(run_suffix, conn_id, cred_id)
-    run_cc_once(run_suffix, conn_id, cred_id)
+    create_cc_pair(env_name, conn_id, cred_id)
+    run_cc_once(env_name, conn_id, cred_id)
 
 
-def manage_file_upload(zip_file_path: str, run_suffix: str) -> None:
+def manage_file_upload(zip_file_path: str, env_name: str) -> None:
     unzipped_file_paths = unzip_and_get_file_paths(zip_file_path)
     total_file_count = len(unzipped_file_paths)
 
     while True:
-        doc_count, ongoing_index_attempts = check_indexing_status(run_suffix)
+        doc_count, ongoing_index_attempts = check_indexing_status(env_name)
 
-        if not doc_count:
-            print("No docs indexed, waiting for indexing to start")
-            upload_test_files(zip_file_path, run_suffix)
-        elif ongoing_index_attempts:
+        if ongoing_index_attempts:
             print(
                 f"{doc_count} docs indexed but waiting for ongoing indexing jobs to finish..."
             )
+        elif not doc_count:
+            print("No docs indexed, waiting for indexing to start")
+            upload_test_files(zip_file_path, env_name)
         elif doc_count < total_file_count:
             print(f"No ongooing indexing attempts but only {doc_count} docs indexed")
-            print("Restarting vespa...")
-            restart_vespa_container(run_suffix)
-            print(f"Rerunning with {total_file_count - doc_count} missing docs")
             remaining_files = unzipped_file_paths[doc_count:]
             print(f"Grabbed last {len(remaining_files)} docs to try agian")
             temp_zip_file_path = create_temp_zip_from_files(remaining_files)
-            upload_test_files(temp_zip_file_path, run_suffix)
+            upload_test_files(temp_zip_file_path, env_name)
             os.unlink(temp_zip_file_path)
         else:
             print(f"Successfully uploaded {doc_count} docs!")
@@ -86,5 +82,5 @@ if __name__ == "__main__":
     with open(config_path, "r") as file:
         config = SimpleNamespace(**yaml.safe_load(file))
     file_location = config.zipped_documents_file
-    run_suffix = config.existing_test_suffix
-    manage_file_upload(file_location, run_suffix)
+    env_name = config.environment_name
+    manage_file_upload(file_location, env_name)
