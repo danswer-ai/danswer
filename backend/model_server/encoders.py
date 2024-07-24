@@ -269,10 +269,11 @@ def embed_text(
             text_type=text_type,
         )
 
-    # Locally running model
     elif model_name is not None:
         prefixed_texts = (
-            [f"{prefix}{text}" for text in non_empty_texts] if prefix else texts
+            [f"{prefix}{text}" for text in non_empty_texts]
+            if prefix
+            else non_empty_texts
         )
         local_model = get_embedding_model(
             model_name=model_name, max_context_length=max_context_length
@@ -288,9 +289,10 @@ def embed_text(
 
     if embeddings is None:
         raise RuntimeError("Failed to create Embeddings")
-    embeddings_with_nulls: list[list[float] | None] = []
 
+    embeddings_with_nulls: list[list[float] | None] = []
     current_embedding_index = 0
+
     for idx in range(len(texts)):
         if idx in empty_indices:
             embeddings_with_nulls.append(None)
@@ -301,8 +303,8 @@ def embed_text(
             else:
                 embeddings_with_nulls.append(embedding.tolist())
             current_embedding_index += 1
-    embeddings = embeddings_with_nulls
 
+    embeddings = embeddings_with_nulls
     return embeddings
 
 
