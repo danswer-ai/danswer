@@ -87,9 +87,7 @@ class CloudEmbedding:
         # OpenAI does not seem to provide truncation option, however
         # the context lengths used by Danswer currently are smaller than the max token length
         # for OpenAI embeddings so it's not a big deal
-        print(f"I am embedding {texts}")
         response = self.client.embeddings.create(input=texts, model=model)
-        print("That was embedded")
         return [embedding.embedding for embedding in response.data]
 
     def _embed_cohere(
@@ -246,8 +244,6 @@ def embed_text(
             non_empty_texts.append(text)
         else:
             empty_indices.append(idx)
-    print(f"Non empty is {non_empty_texts}")
-    print(f"Empty is {empty_indices}")
 
     # Third party API based embedding model
     if provider_type is not None:
@@ -286,7 +282,7 @@ def embed_text(
         raise ValueError(
             "Either model name or provider must be provided to run embeddings."
         )
-    print(f" Length of hte mebddings is {len(embeddings)}")
+
     if embeddings is None:
         raise RuntimeError("Failed to create Embeddings")
     embeddings_with_nulls = []
@@ -303,10 +299,6 @@ def embed_text(
             current_embedding_index += 1
     embeddings = embeddings_with_nulls
 
-    # if not isinstance(embeddings, list):
-    #     embeddings = embeddings.tolist()
-    
-    print("About to hit error?")
     return embeddings
 
 
@@ -345,8 +337,6 @@ async def process_embed_request(
             text_type=embed_request.text_type,
             prefix=prefix,
         )
-        print("RESPONSE IS")
-        print(embeddings)
         return EmbedResponse(embeddings=embeddings)
     except Exception as e:
         exception_detail = f"Error during embedding process:\n{str(e)}"

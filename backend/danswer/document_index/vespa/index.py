@@ -339,7 +339,6 @@ def _index_vespa_chunk(
 
     if embeddings.mini_chunk_embeddings:
         for ind, m_c_embed in enumerate(embeddings.mini_chunk_embeddings):
-            print(type(m_c_embed))
             embeddings_name_vector_map[f"mini_chunk_{ind}"] = m_c_embed
 
     title = document.get_title_for_document_index()

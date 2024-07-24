@@ -93,7 +93,6 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         embeddings = self.embedding_model.encode(
             chunk_texts, text_type=EmbedTextType.PASSAGE
         )
-        print(f"overall length of the embeddings is {len(embeddings)}")
 
         chunk_titles = {
             chunk.source_document.get_title_for_document_index() for chunk in chunks

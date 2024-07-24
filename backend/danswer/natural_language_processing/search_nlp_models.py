@@ -106,7 +106,6 @@ class EmbeddingModel:
             response = requests.post(
                 self.embed_server_endpoint, json=embed_request.dict()
             )
-            print()
             try:
                 response.raise_for_status()
             except requests.HTTPError as e:
