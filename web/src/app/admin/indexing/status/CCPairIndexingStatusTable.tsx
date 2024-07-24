@@ -280,7 +280,7 @@ export function CCPairIndexingStatusTable({
     };
   }, [router, allToggleTracker]);
 
-  const totalPages = Math.ceil(ccPairsIndexingStatuses.length / NUM_IN_PAGE);
+  // const totalPages = Math.ceil(ccPairsIndexingStatuses.length / NUM_IN_PAGE);
 
   return (
     <div className="overflow- -mt-20">
@@ -312,6 +312,7 @@ export function CCPairIndexingStatusTable({
                 isOpen={openSources[source] || false}
                 onToggle={() => toggleSource(source)}
               />
+
               {openSources[source] && (
                 <>
                   <TableRow className="border border-border">
@@ -348,9 +349,12 @@ export function CCPairIndexingStatusTable({
             </React.Fragment>
           ))}
         </TableBody>
+
+        {/* Padding between table and bottom of page */}
+        <div className="invisible w-full pb-40" />
       </Table>
 
-      {totalPages > 1 && (
+      {/* {totalPages > 1 && (
         <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
           <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
@@ -375,7 +379,7 @@ export function CCPairIndexingStatusTable({
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }
