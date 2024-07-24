@@ -43,12 +43,12 @@ def _read_questions_jsonl(questions_file_path: str) -> list[dict]:
 
 def _get_test_output_folder(config: dict) -> str:
     base_output_folder = os.path.expanduser(config["output_folder"])
-    if config["run_suffix"]:
+    if config["env_name"]:
         base_output_folder = os.path.join(
-            base_output_folder, config["run_suffix"], "evaluations_output"
+            base_output_folder, config["env_name"], "evaluations_output"
         )
     else:
-        base_output_folder = os.path.join(base_output_folder, "no_defined_suffix")
+        base_output_folder = os.path.join(base_output_folder, "no_defined_env_name")
 
     counter = 1
     output_folder_path = os.path.join(base_output_folder, "run_1")
@@ -72,12 +72,12 @@ def _initialize_files(config: dict) -> tuple[str, list[dict]]:
 
     metadata = {
         "commit_sha": get_current_commit_sha(),
-        "run_suffix": config["run_suffix"],
+        "env_name": config["env_name"],
         "test_config": config,
         "number_of_questions_in_dataset": len(questions),
     }
 
-    env_vars = get_docker_container_env_vars(config["run_suffix"])
+    env_vars = get_docker_container_env_vars(config["env_name"])
     if env_vars["ENV_SEED_CONFIGURATION"]:
         del env_vars["ENV_SEED_CONFIGURATION"]
     if env_vars["GPG_KEY"]:
@@ -118,7 +118,7 @@ def _process_question(question_data: dict, config: dict, question_number: int) -
     context_data_list, answer = get_answer_from_query(
         query=query,
         only_retrieve_docs=config["only_retrieve_docs"],
-        run_suffix=config["run_suffix"],
+        env_name=config["env_name"],
     )
 
     if not context_data_list:
@@ -173,7 +173,7 @@ def _process_and_write_query_results(config: dict) -> None:
     print("saved test results to folder:", test_output_folder)
 
 
-def run_qa_test_and_save_results(run_suffix: str = "") -> None:
+def run_qa_test_and_save_results(env_name: str = "") -> None:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(current_dir, "search_test_config.yaml")
     with open(config_path, "r") as file:
@@ -182,16 +182,16 @@ def run_qa_test_and_save_results(run_suffix: str = "") -> None:
     if not isinstance(config, dict):
         raise TypeError("config must be a dictionary")
 
-    if not run_suffix:
-        run_suffix = config["existing_test_suffix"]
+    if not env_name:
+        env_name = config["environment_name"]
 
-    config["run_suffix"] = run_suffix
+    config["env_name"] = env_name
     _process_and_write_query_results(config)
 
 
 if __name__ == "__main__":
     """
     To run a different set of questions, update the questions_file in search_test_config.yaml
-    If there is more than one instance of Danswer running, specify the suffix in search_test_config.yaml
+    If there is more than one instance of Danswer running, specify the env_name in search_test_config.yaml
     """
     run_qa_test_and_save_results()
