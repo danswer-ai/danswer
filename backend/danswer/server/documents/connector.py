@@ -266,7 +266,8 @@ def upsert_service_account_credential(
     `Credential` table."""
     try:
         credential_base = build_service_account_creds(
-            delegated_user_email=service_account_credential_request.google_drive_delegated_user
+            DocumentSource.GOOGLE_DRIVE,
+            delegated_user_email=service_account_credential_request.google_drive_delegated_user,
         )
     except ConfigNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -291,7 +292,8 @@ def upsert_gmail_service_account_credential(
     `Credential` table."""
     try:
         credential_base = build_service_account_creds(
-            delegated_user_email=service_account_credential_request.gmail_delegated_user
+            DocumentSource.GMAIL,
+            delegated_user_email=service_account_credential_request.gmail_delegated_user,
         )
     except ConfigNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))

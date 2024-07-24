@@ -1,4 +1,4 @@
-import { ConnectionConfiguration } from "@/app/add/[connector]/types";
+import { ConnectionConfiguration } from "@/app/admin/connectors/[connector]/types";
 import { Persona } from "@/app/admin/assistants/interfaces";
 
 export interface UserPreferences {
@@ -1128,21 +1128,24 @@ export const getConnectorConfig = <T extends ValidSources>(
             query: "Include shared files?",
             label: "Include Shared",
             name: "include_shared",
-            optional: true,
+            optional: false,
+            default: false,
           },
           {
             type: "checkbox",
             query: "Follow shortcuts?",
             label: "Follow Shortcuts",
             name: "follow_shortcuts",
-            optional: true,
+            optional: false,
+            default: false,
           },
           {
             type: "checkbox",
             query: "Only include organization public files?",
             label: "Only Org Public",
             name: "only_org_public",
-            optional: true,
+            optional: false,
+            default: false,
           },
         ],
       };

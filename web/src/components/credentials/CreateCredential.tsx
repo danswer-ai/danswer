@@ -16,7 +16,8 @@ import { Form, Formik, FormikHelpers } from "formik";
 
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDocLink } from "@/lib/sources";
-import GDriveMain from "@/app/add/[connector]/pages/GoogleDrivePage";
+import GDriveMain from "@/app/admin/connectors/[connector]/pages/GoogleDrivePage";
+import { GmailMain } from "@/app/admin/connectors/[connector]/pages/temporary_gmail/gmail/page";
 
 type ActionType = "create" | "createAndSwap";
 
@@ -125,6 +126,9 @@ export default function CreateCredential({
 
     schemaFields["name"] = Yup.string().optional();
     return Yup.object().shape(schemaFields);
+  }
+  if (sourceType == "gmail") {
+    return <GmailMain />;
   }
 
   if (sourceType == "google_drive") {

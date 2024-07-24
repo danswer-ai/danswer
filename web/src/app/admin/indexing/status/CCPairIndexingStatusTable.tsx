@@ -283,7 +283,7 @@ export function CCPairIndexingStatusTable({
   // const totalPages = Math.ceil(ccPairsIndexingStatuses.length / NUM_IN_PAGE);
 
   return (
-    <div className="overflow- -mt-20">
+    <div className="-mt-20">
       <Table>
         <ConnectorRow
           invisible

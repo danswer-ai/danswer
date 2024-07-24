@@ -119,6 +119,7 @@ def update_credential_access_tokens(
 
 
 def build_service_account_creds(
+    source: DocumentSource,
     delegated_user_email: str | None = None,
 ) -> CredentialBase:
     service_account_key = get_service_account_key()

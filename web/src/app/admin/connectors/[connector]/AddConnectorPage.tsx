@@ -75,6 +75,7 @@ export default function AddConnector({
   const [values, setValues] = useState<{ [record: string]: any } | null>(
     Object.keys(initialValues).length > 0 ? initialValues : null
   );
+  console.log(values);
 
   const noCredentials =
     credentialTemplate === "file" ||
@@ -275,19 +276,21 @@ export default function AddConnector({
               onDeleteCredential={onDeleteCredential}
               onSwitch={onSwap}
             />
-
-            <div className="my-8 w-full flex gap-x-2 items-center">
-              <div className="w-full h-[1px] bg-neutral-300" />
-              <p className="text-sm flex-none">or create</p>
-              <div className="w-full h-[1px] bg-neutral-300" />
-            </div>
-
-            <Title className="mb-2 text-lg">Create a credential</Title>
-            <CreateCredential
-              refresh={refresh}
-              sourceType={connector}
-              setPopup={setPopup}
-            />
+            {/* {!(connector == "google_drive") && */}
+            <>
+              <div className="my-8 w-full flex gap-x-2 items-center">
+                <div className="w-full h-[1px] bg-neutral-300" />
+                <p className="text-sm flex-none">or create</p>
+                <div className="w-full h-[1px] bg-neutral-300" />
+              </div>
+              <Title className="mb-2 text-lg">Create a credential</Title>
+              <CreateCredential
+                refresh={refresh}
+                sourceType={connector}
+                setPopup={setPopup}
+              />
+            </>
+            {/* } */}
           </Card>
           <div className="mt-4 flex w-full justify-end">
             <Button

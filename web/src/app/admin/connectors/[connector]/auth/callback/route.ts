@@ -31,7 +31,7 @@ export const GET = async (request: NextRequest) => {
       ?.value?.toLowerCase() === "true"
   ) {
     return NextResponse.redirect(
-      new URL("/admin/connectors/google-drive", getDomain(request))
+      new URL("/admin/connectors/google_drive", getDomain(request))
     );
   }
   return NextResponse.redirect(new URL("/user/connectors", getDomain(request)));
