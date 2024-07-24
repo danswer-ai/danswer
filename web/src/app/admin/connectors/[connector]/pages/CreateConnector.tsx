@@ -1,13 +1,26 @@
-import React from "react";
+import React, { Dispatch, SetStateAction } from "react";
 import { Formik, Form, Field, FieldArray } from "formik";
 import * as Yup from "yup";
 import { FaPlus } from "react-icons/fa";
 import { EditingValue } from "@/components/credentials/EditingValue";
-import { DynamicConnectionFormProps } from "../types";
+
 import { Divider } from "@tremor/react";
 import CredentialSubText from "@/components/credentials/CredentialSubText";
 import { TrashIcon } from "@/components/icons/icons";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
+import { ConnectionConfiguration } from "@/lib/ccs/connectors";
+
+export interface DynamicConnectionFormProps {
+  config: ConnectionConfiguration;
+  onSubmit: (values: any) => void;
+  selectedFiles: File[];
+  setSelectedFiles: Dispatch<SetStateAction<File[]>>;
+  setIsPublic: Dispatch<SetStateAction<boolean>>;
+  defaultValues: any;
+  setName: Dispatch<SetStateAction<string>>;
+  updateValues: (field: string, value: any) => void;
+  isPublic: boolean;
+}
 
 const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   config,

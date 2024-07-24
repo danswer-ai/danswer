@@ -4,20 +4,13 @@ import { PlusCircleIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import {
-  Credential,
-  ValidSources,
-  getConnectorConfig,
-  getCredentialTemplate,
-  longRefresh,
-} from "@/lib/types";
+
 import { Button, Card, Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/lib";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useFormContext } from "@/components/context/FormContext";
 import { getSourceDisplayName } from "@/lib/sources";
-import { ConnectionConfiguration } from "./types";
 import { SourceIcon } from "@/components/SourceIcon";
 import { useState } from "react";
 import { submitConnector } from "@/components/admin/connectors/ConnectorForm";
@@ -28,6 +21,12 @@ import AdvancedFormPage from "./pages/AdvancedFormPage";
 import DynamicConnectionForm from "./pages/CreateConnector";
 import CreateCredential from "@/components/credentials/CreateCredential";
 import ModifyCredential from "@/components/credentials/ModifyCredential";
+import { ValidSources } from "@/lib/types";
+import { Credential, credentialTemplates } from "@/lib/ccs/credentials";
+import {
+  ConnectionConfiguration,
+  connectorConfigs,
+} from "@/lib/ccs/connectors";
 
 export type AdvancedConfig = {
   pruneFreq: number | null;
@@ -51,14 +50,14 @@ export default function AddConnector({
   );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  const credentialTemplate = getCredentialTemplate(connector);
+  const credentialTemplate = credentialTemplates[connector];
 
   const { setFormStep, formStep, nextFormStep, prevFormStep } =
     useFormContext();
 
   const { popup, setPopup } = usePopup();
 
-  const configuration: ConnectionConfiguration = getConnectorConfig(connector);
+  const configuration: ConnectionConfiguration = connectorConfigs[connector];
 
   const initialValues = configuration.values.reduce(
     (acc, field) => {
@@ -89,10 +88,8 @@ export default function AddConnector({
     setFormStep(Math.min(formStep, 0));
   }
 
-  const defaultRefresh = longRefresh.includes(connector)
-    ? 60 * 60 * 24
-    : 10 * 60;
-
+  // Default to 10 minutes unless otherwise specified
+  const defaultRefresh = configuration.overrideDefaultFreq || 10 * 60;
   const [refreshFreq, setRefreshFreq] = useState<number>(defaultRefresh || 0);
   const [pruneFreq, setPruneFreq] = useState<number>(0);
   const [indexingStart, setIndexingStart] = useState<Date | null>(null);
