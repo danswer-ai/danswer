@@ -1,6 +1,10 @@
 "use client";
 
-import { createSVG, generateRandomShape } from "@/lib/assistantIconUtils";
+import {
+  createSVG,
+  generateRandomShape,
+  GridShape,
+} from "@/lib/assistantIconUtils";
 import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
 import { Button, Divider, Italic, Text } from "@tremor/react";
 import {
@@ -86,8 +90,11 @@ export function AssistantEditor({
   const router = useRouter();
   const { popup, setPopup } = usePopup();
 
-  const [iconShape, setIconShape] = useState(generateRandomShape());
-  const [iconColor, setIconColor] = useState("#FF6FBF"); // Default color
+  const [iconShape, setIconShape] = useState<GridShape | null>(null);
+  const [iconColor, setIconColor] = useState<string | null>(null);
+
+  // const [iconShape, setIconShape] = useState(generateRandomShape());
+  // const [iconColor, setIconColor] = useState("#FF6FBF"); // Default color
 
   const colorOptions = ["#FF6FBF", "#6FB1FF", "#B76FFF", "#FFB56F", "#6FFF8D"];
 
@@ -287,7 +294,6 @@ export function AssistantEditor({
           }
 
           formikHelpers.setSubmitting(true);
-
           let enabledTools = Object.keys(values.enabled_tools_map)
             .map((toolId) => Number(toolId))
             .filter((toolId) => values.enabled_tools_map[toolId]);
@@ -330,7 +336,7 @@ export function AssistantEditor({
               existingPromptId: existingPrompt?.id,
               ...values,
               icon_color: iconColor,
-              icon_shape: iconShape.encodedGrid,
+              icon_shape: iconShape ? iconShape.encodedGrid : null,
               num_chunks: numChunks,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
@@ -342,7 +348,7 @@ export function AssistantEditor({
               ...values,
               num_chunks: numChunks,
               icon_color: iconColor,
-              icon_shape: iconShape.encodedGrid,
+              icon_shape: iconShape ? iconShape.encodedGrid : null,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,
@@ -436,6 +442,83 @@ export function AssistantEditor({
                         <TooltipContent side="top" align="center">
                           <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
                             Choose an icon to visually represent your Assistant
+                            (optional)
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="my-1 flex items-center space-x-2">
+                    {iconShape && iconColor ? (
+                      createSVG(
+                        {
+                          encodedGrid: iconShape.encodedGrid,
+                          filledSquares: 0,
+                        },
+                        iconColor
+                      )
+                    ) : (
+                      <p className="font-bold text-gray-800">No Icon</p>
+                    )}
+                  </div>
+                  <div className="mb-2 flex gap-x-2 items-center">
+                    <Button
+                      onClick={() => {
+                        if (iconShape && iconColor) {
+                          setIconShape(null);
+                          setIconColor(null);
+                        } else {
+                          regenerateIcon();
+                          setIconColor(colorOptions[0]);
+                        }
+                      }}
+                      color="blue"
+                      size="xs"
+                      type="button"
+                    >
+                      {iconShape && iconColor ? "Remove Icon" : "Generate Icon"}
+                    </Button>
+                    {iconShape && iconColor && (
+                      <>
+                        <Button
+                          onClick={regenerateIcon}
+                          color="blue"
+                          size="xs"
+                          type="button"
+                        >
+                          Regenerate Shape
+                        </Button>
+                        <div className="flex space-x-3">
+                          {colorOptions.map((color) => (
+                            <div
+                              key={color}
+                              className={`w-6 h-6 rounded-full cursor-pointer ${
+                                color === iconColor
+                                  ? "ring-2 ring-offset-2 ring-blue-500"
+                                  : ""
+                              }`}
+                              style={{ backgroundColor: color }}
+                              onClick={() => setIconColor(color)}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {/* <div className="mb-6">
+                  <div className="flex gap-x-2 items-center">
+                    <div className="block font-medium text-base">
+                      Assistant Icon{" "}
+                    </div>
+                    <TooltipProvider delayDuration={50}>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <FiInfo size={12} />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center">
+                          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                            Choose an icon to visually represent your Assistant
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -460,18 +543,17 @@ export function AssistantEditor({
                       {colorOptions.map((color) => (
                         <div
                           key={color}
-                          className={`w-6 h-6 rounded-full cursor-pointer ${
-                            color === iconColor
-                              ? "ring-2 ring-offset-2 ring-blue-500"
-                              : ""
-                          }`}
+                          className={`w-6 h-6 rounded-full cursor-pointer ${color === iconColor
+                            ? "ring-2 ring-offset-2 ring-blue-500"
+                            : ""
+                            }`}
                           style={{ backgroundColor: color }}
                           onClick={() => setIconColor(color)}
                         />
                       ))}
                     </div>
                   </div>
-                </div>
+                </div> */}
                 <TextFormField
                   tooltip="Used for identifying assistants and their use cases."
                   name="description"

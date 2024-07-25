@@ -1,4 +1,4 @@
-interface GridShape {
+export interface GridShape {
   encodedGrid: number;
   filledSquares: number;
 }
