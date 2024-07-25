@@ -90,6 +90,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
             .map((indexAttempt) => {
               const docsPerMinute =
                 getDocsProcessedPerMinute(indexAttempt)?.toFixed(2);
+              const docsPerHour = (parseFloat(docsPerMinute ?? '0') * 60)?.toFixed(2);
               return (
                 <TableRow key={indexAttempt.id}>
                   <TableCell>
@@ -104,7 +105,8 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                     />
                     {docsPerMinute && (
                       <div className="text-xs mt-1">
-                        {docsPerMinute} docs / min
+                        {docsPerMinute} docs / min <br />
+                        {docsPerHour} docs / hour
                       </div>
                     )}
                   </TableCell>
