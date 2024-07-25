@@ -40,4 +40,5 @@ export interface Persona {
   groups: number[];
   icon_shape?: number;
   icon_color?: string;
+  uploaded_image_id?: string;
 }

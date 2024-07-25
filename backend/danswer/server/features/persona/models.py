@@ -35,6 +35,7 @@ class CreatePersonaRequest(BaseModel):
     groups: list[int] | None = None
     icon_color: str | None = None
     icon_shape: int | None = None
+    uploaded_image_id: str | None = None  # New field for uploaded image
 
 
 class PersonaSnapshot(BaseModel):
@@ -59,6 +60,7 @@ class PersonaSnapshot(BaseModel):
     groups: list[int]
     icon_color: str | None
     icon_shape: int | None
+    uploaded_image_id: str | None = None
 
     @classmethod
     def from_model(
@@ -103,6 +105,7 @@ class PersonaSnapshot(BaseModel):
             groups=[user_group.id for user_group in persona.groups],
             icon_color=persona.icon_color,
             icon_shape=persona.icon_shape,
+            uploaded_image_id=persona.uploaded_image_id,
         )
 
 

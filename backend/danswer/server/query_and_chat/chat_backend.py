@@ -103,6 +103,26 @@ def get_user_chat_sessions(
     )
 
 
+@router.post("/upload-file")
+def upload_file(
+    file: UploadFile,
+    db_session: Session = Depends(get_session),
+    _: User | None = Depends(current_user),
+) -> dict[str, str]:
+    file_store = get_default_file_store(db_session)
+    file_type = ChatFileType.IMAGE
+    file_id = str(uuid.uuid4())
+    file_store.save_file(
+        file_name=file_id,
+        content=file.file,
+        display_name=file.filename,
+        file_origin=FileOrigin.CHAT_UPLOAD,
+        file_type=file.content_type or file_type.value,
+    )
+
+    return {"file_id": file_id}
+
+
 @router.put("/update-chat-session-model")
 def update_chat_session_model(
     update_thread_req: UpdateChatSessionThreadRequest,

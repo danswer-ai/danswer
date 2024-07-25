@@ -19,8 +19,10 @@ depends_on = None
 def upgrade() -> None:
     op.add_column("persona", sa.Column("icon_color", sa.String(), nullable=True))
     op.add_column("persona", sa.Column("icon_shape", sa.Integer(), nullable=True))
+    op.add_column("persona", sa.Column("uploaded_image_id", sa.String(), nullable=True))
 
 
 def downgrade() -> None:
     op.drop_column("persona", "icon_shape")
+    op.drop_column("persona", "uploaded_image_id")
     op.drop_column("persona", "icon_color")

@@ -82,6 +82,7 @@ def create_update_persona(
             db_session=db_session,
             icon_color=create_persona_request.icon_color,
             icon_shape=create_persona_request.icon_shape,
+            uploaded_image_id=create_persona_request.uploaded_image_id,
         )
 
         versioned_make_persona_private = fetch_versioned_implementation(
@@ -332,7 +333,10 @@ def upsert_persona(
     commit: bool = True,
     icon_color: str | None = None,
     icon_shape: int | None = None,
+    uploaded_image_id: str | None = None,
 ) -> Persona:
+    print("UPSERT PERSONA:")
+    print(uploaded_image_id)
     if persona_id is not None:
         persona = db_session.query(Persona).filter_by(id=persona_id).first()
     else:
@@ -389,6 +393,7 @@ def upsert_persona(
         persona.is_public = is_public
         persona.icon_color = icon_color
         persona.icon_shape = icon_shape
+        persona.uploaded_image_id = uploaded_image_id
 
         # Do not delete any associations manually added unless
         # a new updated list is provided
@@ -423,6 +428,7 @@ def upsert_persona(
             tools=tools or [],
             icon_shape=icon_shape,
             icon_color=icon_color,
+            uploaded_image_id=uploaded_image_id,
         )
         db_session.add(persona)
 

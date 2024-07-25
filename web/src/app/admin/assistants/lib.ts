@@ -16,8 +16,9 @@ interface PersonaCreationRequest {
   users?: string[];
   groups: number[];
   tool_ids: number[];
-  icon_color?: string | null;
-  icon_shape?: number | null;
+  icon_color: string | null;
+  icon_shape: number | null;
+  uploaded_image: File | null;
 }
 
 interface PersonaUpdateRequest {
@@ -38,8 +39,9 @@ interface PersonaUpdateRequest {
   users?: string[];
   groups: number[];
   tool_ids: number[];
-  icon_color?: string | null;
-  icon_shape?: number | null;
+  icon_color: string | null;
+  icon_shape: number | null;
+  uploaded_image: File | null;
 }
 
 function promptNameFromPersonaName(personaName: string) {
@@ -102,7 +104,8 @@ function updatePrompt({
 
 function buildPersonaAPIBody(
   creationRequest: PersonaCreationRequest | PersonaUpdateRequest,
-  promptId: number
+  promptId: number,
+  uploaded_image_id?: string //
 ) {
   const {
     name,
@@ -136,12 +139,32 @@ function buildPersonaAPIBody(
     tool_ids,
     icon_color,
     icon_shape,
+    uploaded_image_id,
   };
+}
+
+export async function uploadFile(file: File): Promise<string | null> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch("/api/chat/upload-file", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    console.error("Failed to upload file");
+    return null;
+  }
+
+  const responseJson = await response.json();
+  return responseJson.file_id;
 }
 
 export async function createPersona(
   personaCreationRequest: PersonaCreationRequest
 ): Promise<[Response, Response | null]> {
+  console.log(personaCreationRequest);
+
   // first create prompt
   const createPromptResponse = await createPrompt({
     personaName: personaCreationRequest.name,
@@ -153,6 +176,16 @@ export async function createPersona(
     ? (await createPromptResponse.json()).id
     : null;
 
+  let fileId = null;
+  if (personaCreationRequest.uploaded_image) {
+    fileId = await uploadFile(personaCreationRequest.uploaded_image);
+    if (!fileId) {
+      return [createPromptResponse, null];
+    }
+  }
+  console.log("MY FILE ID IS ");
+  console.log(fileId);
+
   const createPersonaResponse =
     promptId !== null
       ? await fetch("/api/persona", {
@@ -161,7 +194,7 @@ export async function createPersona(
             "Content-Type": "application/json",
           },
           body: JSON.stringify(
-            buildPersonaAPIBody(personaCreationRequest, promptId)
+            buildPersonaAPIBody(personaCreationRequest, promptId, fileId!)
           ),
         })
       : null;

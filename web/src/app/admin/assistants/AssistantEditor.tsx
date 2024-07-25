@@ -56,6 +56,12 @@ import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";
 import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
 import { FaPlus, FaSwatchbook } from "react-icons/fa";
+import {
+  IconImageSelection,
+  IconImageUpload,
+  ImageUpload,
+} from "@/app/ee/admin/whitelabeling/ImageUpload";
+import { buildImgUrl } from "@/app/chat/files/images/utils";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -214,8 +220,9 @@ export function AssistantEditor({
       existingPersona?.llm_model_version_override ?? null,
     starter_messages: existingPersona?.starter_messages ?? [],
     enabled_tools_map: enabledToolsMap,
-    icon_color: existingPersona?.icon_color ?? null,
-    icon_shape: existingPersona?.icon_shape ?? null,
+    icon_color: existingPersona?.icon_color ?? "#FF6FBF",
+    icon_shape: existingPersona?.icon_shape ?? 123242312,
+    uploaded_image: null,
 
     //   search_tool_enabled: existingPersona
     //   ? personaCurrentToolIds.includes(searchTool!.id)
@@ -257,8 +264,9 @@ export function AssistantEditor({
                 message: Yup.string().required(),
               })
             ),
-            icon_color: Yup.string().nullable(),
-            icon_shape: Yup.string().nullable(),
+            icon_color: Yup.string(),
+            icon_shape: Yup.number(),
+            uploaded_image: Yup.mixed().nullable(),
             // EE Only
             groups: Yup.array().of(Yup.number()),
           })
@@ -435,7 +443,7 @@ export function AssistantEditor({
                   disabled={isUpdate}
                   placeholder="e.g. 'Email Assistant'"
                 />
-                <div className="mb-6">
+                <div className="mb-6 ">
                   <div className="flex gap-x-2 items-center">
                     <div className="block font-medium text-base">
                       Assistant Icon (Optional){" "}
@@ -454,78 +462,48 @@ export function AssistantEditor({
                       </Tooltip>
                     </TooltipProvider>
                   </div>
-                  <div className="my-1 flex items-center space-x-2">
-                    {values.icon_shape && values.icon_color ? (
-                      createSVG(
-                        {
-                          encodedGrid: values.icon_shape,
-                          filledSquares: 0,
-                        },
-                        values.icon_color
-                      )
-                    ) : (
-                      <p className="font-bold text-gray-800">No Icon</p>
+
+                  <div className="flex -mb-2 mt-2 items-center space-x-2">
+                    {createSVG(
+                      {
+                        encodedGrid: values.icon_shape,
+                        filledSquares: 0,
+                      },
+                      values.icon_color
                     )}
                   </div>
                   <div className="mb-2 flex gap-x-2 items-center">
-                    {values.icon_shape && values.icon_color ? (
-                      <Button
-                        onClick={() => {
-                          setFieldValue("icon_shape", null);
-                          setFieldValue("icon_color", null);
-                        }}
-                        color="red"
-                        size="xs"
-                        type="button"
-                      >
-                        <TrashIcon className="m-auto text-white" />
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => {
-                          const newShape = generateRandomIconShape();
-                          setFieldValue("icon_shape", newShape.encodedGrid);
-                          setFieldValue("icon_color", colorOptions[0]);
-                        }}
-                        color="slate"
-                        size="xs"
-                        type="button"
-                      >
-                        <FaPlus />
-                      </Button>
-                    )}
-
-                    {values.icon_shape && values.icon_color && (
-                      <>
-                        <Button
-                          onClick={() => {
-                            const newShape = generateRandomIconShape();
-                            setFieldValue("icon_shape", newShape.encodedGrid);
-                          }}
-                          color="blue"
-                          size="xs"
-                          type="button"
-                          className="h-full"
-                        >
-                          <SwapIcon className="m-auto text-white" />
-                        </Button>
-                        <div className="flex space-x-3">
-                          {colorOptions.map((color) => (
-                            <div
-                              key={color}
-                              className={`w-6 h-6 rounded-full cursor-pointer ${
-                                color === values.icon_color
-                                  ? "ring-2 ring-offset-2 ring-blue-500"
-                                  : ""
-                              }`}
-                              style={{ backgroundColor: color }}
-                              onClick={() => setFieldValue("icon_color", color)}
-                            />
-                          ))}
-                        </div>
-                      </>
-                    )}
+                    <Button
+                      onClick={() => {
+                        const newShape = generateRandomIconShape();
+                        setFieldValue("icon_shape", newShape.encodedGrid);
+                      }}
+                      color="blue"
+                      size="xs"
+                      type="button"
+                      className="h-full"
+                    >
+                      <SwapIcon className="m-auto text-white" />
+                    </Button>
+                    <div className="flex space-x-3">
+                      {colorOptions.map((color) => (
+                        <div
+                          key={color}
+                          className={`w-6 h-6 rounded-full cursor-pointer ${
+                            color === values.icon_color
+                              ? "ring-2 ring-offset-2 ring-blue-500"
+                              : ""
+                          }`}
+                          style={{ backgroundColor: color }}
+                          onClick={() => setFieldValue("icon_color", color)}
+                        />
+                      ))}
+                    </div>
                   </div>
+                  <IconImageSelection
+                    setFieldValue={setFieldValue}
+                    existingPersona={existingPersona!}
+                  />
                 </div>
 
                 <TextFormField
