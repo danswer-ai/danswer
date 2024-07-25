@@ -30,7 +30,7 @@ colorOptions = [
 
 
 # Function to generate a random shape ensuring at least 3 of the middle 4 squares are filled
-def generate_random_shape():
+def generate_random_shape() -> int:
     center_squares = [12, 10, 6, 14, 13, 11, 7, 15]
     center_fill = random.choice(center_squares)
     remaining_squares = [i for i in range(16) if not (center_fill & (1 << i))]
