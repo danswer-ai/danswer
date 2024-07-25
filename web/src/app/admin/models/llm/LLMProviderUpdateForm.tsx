@@ -117,7 +117,6 @@ export function LLMProviderUpdateForm({
     display_model_names: Yup.array().of(Yup.string()),
   });
 
-  console.log(llmProviderDescriptor.name);
   return (
     <Formik
       initialValues={initialValues}
