@@ -49,7 +49,6 @@ export async function submitConnector<T>(
         return { message: `Error: ${errorData.detail}`, isSuccess: false };
       }
     } else {
-      console.log(connector);
       const response = await fetch(
         BASE_CONNECTOR_URL + (isUpdate ? `/${connectorId}` : ""),
         {

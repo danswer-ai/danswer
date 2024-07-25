@@ -177,18 +177,6 @@ export default function ModifyCredential({
                 className="rounded py-1.5 px-2 bg-neutral-800 text-neutral-200"
                 onClick={async () => {
                   await onDeleteCredential(confirmDeletionCredential);
-
-                  setPopup({
-                    message: "Swapped credential",
-                    type: "success",
-                  });
-
-                  mutate(buildSimilarCredentialInfoURL(source));
-                  setConfirmDeletionCredential(null);
-                  setPopup({
-                    message: "Credential deleted",
-                    type: "success",
-                  });
                 }}
               >
                 Yes

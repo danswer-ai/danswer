@@ -16,6 +16,8 @@ interface PersonaCreationRequest {
   users?: string[];
   groups: number[];
   tool_ids: number[]; // Added tool_ids to the interface
+  icon_color?: string | null;
+  icon_shape?: number | null;
 }
 
 interface PersonaUpdateRequest {

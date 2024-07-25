@@ -225,35 +225,6 @@ def backend_update_credential_json(
     db_session.commit()
 
 
-# def delete_credential(
-#     credential_id: int,
-#     user: User | None,
-#     db_session: Session,
-# ) -> None:
-#     credential = fetch_credential_by_id(credential_id, user, db_session)
-#     if credential is None:
-#         raise ValueError(
-#             f"Credential by provided id {credential_id} does not exist or does not belong to user"
-#         )
-
-#     associated_connectors = (
-#         db_session.query(ConnectorCredentialPair)
-#         .filter(ConnectorCredentialPair.credential_id == credential_id)
-#         .all()
-#     )
-
-#     if associated_connectors:
-#         raise ValueError(
-#             f"Cannot delete credential {credential_id}
-#  as it is still associated with {len(associated_connectors)} connector(s). "
-#             "Please delete all associated connectors first."
-#         )
-
-
-#     db_session.delete(credential)
-#     db_session.commit()
-
-
 def delete_credential(
     credential_id: int,
     user: User | None,
@@ -296,9 +267,8 @@ def delete_credential(
             db_session.flush()
         else:
             raise ValueError(
-                f"Cannot delete credential {credential_id} as it is still associated with "
+                f"Cannot delete credential as it is still associated with "
                 f"{len(associated_connectors)} connector(s) and {len(associated_doc_cc_pairs)} document(s). "
-                "Please delete all associated records first or use force=True to cascade deletions."
             )
 
     if force:

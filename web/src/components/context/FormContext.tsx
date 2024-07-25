@@ -49,7 +49,7 @@ export const FormProvider: React.FC<{ children: ReactNode }> = ({
     const updatedSearchParams = new URLSearchParams(searchParams.toString());
     updatedSearchParams.set("step", formStep.toString());
     const newUrl = `${pathname}?${updatedSearchParams.toString()}`;
-    router.replace(newUrl);
+    router.push(newUrl);
   }, [formStep, router, pathname, searchParams]);
 
   // Update formStep when URL changes

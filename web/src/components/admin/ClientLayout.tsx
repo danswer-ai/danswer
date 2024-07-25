@@ -44,7 +44,7 @@ export function ClientLayout({
   return (
     <div className="h-screen overflow-y-hidden">
       <div className="flex h-full">
-        <div className="w-64 z-20 bg-background-100 pt-4 pb-8 h-full border-r border-border miniscroll overflow-auto">
+        <div className="w-[300px] z-20 bg-background-100 pt-4 pb-8 h-full border-r border-border miniscroll overflow-auto">
           <AdminSidebar
             collections={[
               {
@@ -206,7 +206,6 @@ export function ClientLayout({
                   {
                     name: (
                       <div className="flex">
-                        {/* <FiShield size={18} /> */}
                         <ShieldIconSkeleton size={18} />
                         <div className="ml-1">Token Rate Limits</div>
                       </div>

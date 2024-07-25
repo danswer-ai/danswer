@@ -69,52 +69,37 @@ export default function Sidebar() {
           <div className="h-full flex">
             <div className="mx-auto w-full max-w-2xl px-4 py-8">
               <div className="relative">
-                {/* Continuous vertical line */}
-                <div className="absolute left-[7px] top-[10px] bottom-0 w-0.5 bg-gray-300"></div>
-                {settingSteps.map((step, index) =>
-                  index >= formStep ? (
-                    <div
-                      key={index}
-                      className={`flex  ${index != formStep && "cursor-not-allowed"} items-center mb-6 relative`}
-                    >
-                      <div className="flex-shrink-0 mr-4 z-10">
-                        <div
-                          className={`rounded-full h-3.5 w-3.5 flex items-center justify-center ${index <= formStep ? "bg-blue-500" : "bg-gray-300"}`}
-                        >
-                          {formStep === index && (
-                            <div className="h-2 w-2 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                      </div>
+                <div className="absolute  h-[90%] left-[6px] top-[8px] bottom-0 w-0.5 bg-gray-300"></div>
+                {settingSteps.map((step, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-center mb-6 relative ${
+                      index >= formStep
+                        ? "cursor-not-allowed"
+                        : "cursor-pointer"
+                    }`}
+                    onClick={() => index < formStep && setFormStep(index)}
+                  >
+                    <div className="flex-shrink-0 mr-4 z-10">
                       <div
-                        className={`${index <= index ? "text-gray-800" : "text-gray-500"}`}
+                        className={`rounded-full h-3.5 w-3.5 flex items-center justify-center ${
+                          index <= formStep ? "bg-blue-500" : "bg-gray-300"
+                        }`}
                       >
-                        {step}
+                        {formStep === index && (
+                          <div className="h-2 w-2 rounded-full bg-white"></div>
+                        )}
                       </div>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setFormStep(index)}
-                      key={index}
-                      className="cursor-pointer flex items-center mb-6 relative"
+                    <div
+                      className={`${
+                        index <= formStep ? "text-gray-800" : "text-gray-500"
+                      }`}
                     >
-                      <div className="flex-shrink-0 mr-4 z-10">
-                        <div
-                          className={`rounded-full h-3.5 w-3.5 flex items-center justify-center ${index <= formStep ? "bg-blue-500" : "bg-gray-300"}`}
-                        >
-                          {formStep === index && (
-                            <div className="h-2 w-2 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                      </div>
-                      <div
-                        className={`${index <= index ? "text-gray-800" : "text-gray-500"}`}
-                      >
-                        {step}
-                      </div>
-                    </button>
-                  )
-                )}
+                      {step}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

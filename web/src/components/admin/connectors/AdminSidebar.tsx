@@ -27,9 +27,9 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
 
   return (
     <aside className="pl-0">
-      <nav className="space-y-2 pl-4">
+      <nav className="space-y-2 mx-4">
         <div className="pb-12 flex">
-          <div className="fixed left-0 top-0 py-2 pl-4 bg-background-100 w-[200px]">
+          <div className="fixed left-0 top-0 py-2 px-4 w-[300px]">
             <Link
               className="flex flex-col"
               href={
@@ -63,13 +63,13 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
           </div>
         </div>
         {collections.map((collection, collectionInd) => (
-          <div key={collectionInd}>
+          <div className="mx-2" key={collectionInd}>
             <h2 className="text-xs text-strong font-bold pb-2">
               <div>{collection.name}</div>
             </h2>
             {collection.items.map((item) => (
               <Link key={item.link} href={item.link}>
-                <button className="text-sm block w-48 py-2.5 px-2 text-left hover:bg-hover rounded">
+                <button className="text-sm block w-full py-2.5 px-2 text-left hover:bg-hover rounded">
                   <div className="">{item.name}</div>
                 </button>
               </Link>

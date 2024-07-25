@@ -4,7 +4,7 @@ import * as Yup from "yup";
 import { FaPlus } from "react-icons/fa";
 import { EditingValue } from "@/components/credentials/EditingValue";
 
-import { Divider } from "@tremor/react";
+import { Button, Divider } from "@tremor/react";
 import CredentialSubText from "@/components/credentials/CredentialSubText";
 import { TrashIcon } from "@/components/icons/icons";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
@@ -12,7 +12,6 @@ import { ConnectionConfiguration } from "@/lib/ccs/connectors";
 
 export interface DynamicConnectionFormProps {
   config: ConnectionConfiguration;
-  onSubmit: (values: any) => void;
   selectedFiles: File[];
   setSelectedFiles: Dispatch<SetStateAction<File[]>>;
   setIsPublic: Dispatch<SetStateAction<boolean>>;
@@ -24,7 +23,6 @@ export interface DynamicConnectionFormProps {
 
 const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   config,
-  onSubmit,
   setName,
   updateValues,
   defaultValues,
@@ -51,8 +49,9 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
       {} as Record<string, any>
     );
 
-  const validationSchema = Yup.object().shape(
-    config.values.reduce(
+  const validationSchema = Yup.object().shape({
+    name: Yup.string().required("Connector Name is required"),
+    ...config.values.reduce(
       (acc, field) => {
         let schema: any =
           field.type === "list"
@@ -68,8 +67,8 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
         return acc;
       },
       {} as Record<string, any>
-    )
-  );
+    ),
+  });
 
   const updateValue =
     (setFieldValue: Function) => (field: string, value: any) => {

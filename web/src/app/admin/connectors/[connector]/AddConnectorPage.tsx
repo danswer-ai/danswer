@@ -1,6 +1,10 @@
 "use client";
 
-import { PlusCircleIcon } from "@/components/icons/icons";
+import {
+  NewChatIcon,
+  PlusCircleIcon,
+  TrashIcon,
+} from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -27,6 +31,12 @@ import {
   ConnectionConfiguration,
   connectorConfigs,
 } from "@/lib/ccs/connectors";
+import { Modal } from "@/components/Modal";
+import { ArrowArcLeft, ArrowRight } from "@phosphor-icons/react";
+import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
+import { FaPlus } from "react-icons/fa";
+import { FiPlus } from "react-icons/fi";
+import { getDisplayName } from "next/dist/shared/lib/utils";
 
 export type AdvancedConfig = {
   pruneFreq: number | null;
@@ -76,12 +86,7 @@ export default function AddConnector({
   );
   console.log(values);
 
-  const noCredentials =
-    credentialTemplate === "file" ||
-    credentialTemplate == "sites" ||
-    credentialTemplate == "web" ||
-    credentialTemplate == "wiki";
-
+  const noCredentials = credentialTemplate == null;
   if (noCredentials) {
     setFormStep(Math.max(1, formStep));
   } else if (!currentCredential) {
@@ -94,6 +99,7 @@ export default function AddConnector({
   const [pruneFreq, setPruneFreq] = useState<number>(0);
   const [indexingStart, setIndexingStart] = useState<Date | null>(null);
   const [isPublic, setIsPublic] = useState(false);
+  const [createConnectorToggle, setCreateConnectorToggle] = useState(false);
 
   const resetAdvancedSettings = () => {
     setPruneFreq(0);
@@ -108,7 +114,7 @@ export default function AddConnector({
       indexingStart,
       refreshFreq,
     };
-    if (credentialTemplate === "sites") {
+    if (connector == "google_site") {
       const response = await submitGoogleSite(
         selectedFiles,
         values?.base_url,
@@ -126,7 +132,7 @@ export default function AddConnector({
       return;
     }
 
-    if (credentialTemplate == "file" && selectedFiles.length > 0) {
+    if (connector == "file" && selectedFiles.length > 0) {
       const response = await submitFiles(
         selectedFiles,
         setPopup,
@@ -176,7 +182,6 @@ export default function AddConnector({
       } else {
         setPopup({ message: message, type: "error" });
       }
-      return;
     }
 
     const { message, isSuccess, response } = await submitConnector<any>({
@@ -220,13 +225,39 @@ export default function AddConnector({
     mutate(buildSimilarCredentialInfoURL(connector));
   };
   const onDeleteCredential = async (credential: Credential<any | null>) => {
-    await deleteCredential(credential.id, true);
+    const response = await deleteCredential(credential.id, true);
+    console.log(response);
+    if (response.ok) {
+      setPopup({
+        message: "Credential deleted successfully!",
+        type: "success",
+      });
+    } else {
+      const errorData = await response.json();
+      setPopup({
+        message: errorData.message,
+        type: "error",
+      });
+    }
   };
 
+  const updateCredential = (id?: number) => {
+    // console.log("UPDATINGGGG")
+    // console.log(id)
+    // console.log(credentials)
+    // setTimeout(() => {
+    //   if (id) {
+    //     const newCredential = credentials.find(cred => cred.id === id);
+    //     if (newCredential) {
+    //       setCurrentCredential(newCredential);
+    //     }
+    //   }
+    // }, 400)
+  };
   const onSwap = async (selectedCredential: Credential<any>) => {
     setCurrentCredential(selectedCredential);
     setPopup({
-      message: "Swapped credential succesfully!",
+      message: "Swapped credential successfully!",
       type: "success",
     });
     refresh();
@@ -262,7 +293,6 @@ export default function AddConnector({
         <>
           <Card>
             <Title className="mb-2 text-lg">Select a credential</Title>
-
             <ModifyCredential
               showIfEmpty
               display
@@ -273,29 +303,55 @@ export default function AddConnector({
               onDeleteCredential={onDeleteCredential}
               onSwitch={onSwap}
             />
-            {/* {!(connector == "google_drive") && */}
-            <>
-              <div className="my-8 w-full flex gap-x-2 items-center">
+            {!createConnectorToggle && (
+              <div className="mt-8 w-full flex gap-x-2 items-center">
                 <div className="w-full h-[1px] bg-neutral-300" />
-                <p className="text-sm flex-none">or create</p>
+                <button
+                  className="text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded"
+                  onClick={() =>
+                    setCreateConnectorToggle(
+                      (createConnectorToggle) => !createConnectorToggle
+                    )
+                  }
+                >
+                  Create New
+                </button>
+                {/* <p className="text-sm flex-none">or create</p> */}
                 <div className="w-full h-[1px] bg-neutral-300" />
               </div>
-              <Title className="mb-2 text-lg">Create a credential</Title>
-              <CreateCredential
-                refresh={refresh}
-                sourceType={connector}
-                setPopup={setPopup}
-              />
-            </>
-            {/* } */}
+            )}
+
+            {!(connector == "google_drive") && createConnectorToggle && (
+              <Modal
+                className="max-w-3xl rounded-lg"
+                onOutsideClick={() => setCreateConnectorToggle(false)}
+              >
+                <>
+                  {/* < */}
+                  <Title className="mb-2 text-lg">
+                    Create a {getSourceDisplayName(connector)} credential
+                  </Title>
+                  <CreateCredential
+                    close
+                    onSwitch={onSwap}
+                    refresh={refresh}
+                    onClose={() => setCreateConnectorToggle(false)}
+                    sourceType={connector}
+                    setPopup={setPopup}
+                  />
+                </>
+              </Modal>
+            )}
           </Card>
           <div className="mt-4 flex w-full justify-end">
-            <Button
+            <button
+              className="enabled:cursor-pointer disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
               disabled={currentCredential == null}
               onClick={() => nextFormStep()}
             >
               Continue
-            </Button>
+              <ArrowRight />
+            </button>
           </div>
         </>
       )}
@@ -311,85 +367,86 @@ export default function AddConnector({
               setName={setName}
               config={configuration}
               isPublic={isPublic}
-              onSubmit={(values: any) => {
-                const {
-                  name: _,
-                  public: isPublic,
-                  ...valuesWithoutName
-                } = values;
-                console.log(`Setting public to ${isPublic}`);
-                setValues(valuesWithoutName);
-                setIsPublic(isPublic);
-              }}
               defaultValues={values}
             />
           </Card>
-          <div className={`mt-4 flex w-full grid grid-cols-3`}>
+          <div className={`mt-4 w-full grid grid-cols-3`}>
             {!noCredentials ? (
               <button
-                className="px-2 mr-auto hover:bg-accent/80 transition-color text-white duration-300 rounded-lg bg-accent"
+                className="border-neutral-600 mr-auto border flex gap-x-1 items-center text-text p-2.5 text-sm font-regular rounded-sm "
+                disabled={currentCredential == null}
                 onClick={() => prevFormStep()}
               >
+                <ArrowLeft />
                 Previous
               </button>
             ) : (
               <div />
             )}
-
-            <Button
-              className="mt-auto mx-auto"
-              type="button"
-              color="gray"
-              onClick={() => createConnector()}
+            <button
+              className="bg-indigo-500 rounded-full p-1.5 m-auto hover:bg-indigo-500/80 flex gap-x-1 items-center text-text text-sm font-regular text-white flex-none"
+              onClick={async () => {
+                await createConnector();
+              }}
             >
-              <div className="flex items-center gap-x-2">
-                Create
-                <PlusCircleIcon className="text-neutral-200" />
-              </div>
-            </Button>
+              <FiPlus className="text-white h-4 w-4" />
+            </button>
 
-            {!noCredentials ? (
+            <div className="flex w-full justify-end">
               <button
-                className="ml-auto mt-auto hover:underline"
+                className="enabled:cursor-pointer ml-auto disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm "
+                disabled={currentCredential == null}
                 onClick={() => nextFormStep()}
               >
-                Advanced Settings
+                Advanced
+                <ArrowRight />
               </button>
-            ) : (
-              <div />
-            )}
+            </div>
           </div>
         </>
       )}
 
       {formStep === 2 && (
-        <Card>
-          <AdvancedFormPage
-            setIndexingStart={setIndexingStart}
-            indexingStart={indexingStart}
-            currentPruneFreq={pruneFreq}
-            currentRefreshFreq={refreshFreq}
-            setPruneFreq={setPruneFreq}
-            setRefreshFreq={setRefreshFreq}
-          />
-          <div className="mt-4 flex w-full mx-auto max-w-2xl justify-between">
-            <Button
-              color="violet"
-              onClick={() => resetAdvancedSettings()}
-              className="flex gap-x-2"
+        <>
+          <Card>
+            <AdvancedFormPage
+              setIndexingStart={setIndexingStart}
+              indexingStart={indexingStart}
+              currentPruneFreq={pruneFreq}
+              currentRefreshFreq={refreshFreq}
+              setPruneFreq={setPruneFreq}
+              setRefreshFreq={setRefreshFreq}
+            />
+            <div className="mt-4 flex w-full mx-auto max-w-2xl justify-start">
+              <button
+                className="flex gap-x-1 bg-red-500 hover:bg-red-500/80 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded "
+                disabled={currentCredential == null}
+                onClick={() => prevFormStep()}
+              >
+                <TrashIcon size={20} className="text-white" />
+                <div className="w-full items-center gap-x-2 flex">Reset</div>
+              </button>
+            </div>
+          </Card>
+          <div className={`mt-4 grid grid-cols-3 w-full `}>
+            <button
+              className="border-neutral-600 border mr-auto flex gap-x-1 items-center text-text py-2.5 px-3.5 text-sm font-regular rounded-sm"
+              disabled={currentCredential == null}
+              onClick={() => prevFormStep()}
             >
-              <div className="w-full items-center gap-x-2 flex">Reset</div>
-            </Button>
-            <Button
-              onClick={() => {
-                console.log(indexingStart);
-                prevFormStep();
+              <ArrowLeft />
+              Previous
+            </button>
+            <button
+              className="bg-indigo-500 rounded-full p-1.5 m-auto hover:bg-indigo-500/80 flex gap-x-1 items-center text-text text-sm font-regular text-white flex-none"
+              onClick={async () => {
+                await createConnector();
               }}
             >
-              Update
-            </Button>
+              <FiPlus className="text-white h-4 w-4" />
+            </button>
           </div>
-        </Card>
+        </>
       )}
     </div>
   );

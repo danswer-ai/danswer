@@ -18,6 +18,7 @@ import {
   credentialTemplates,
   getDisplayNameForCredentialKey,
 } from "@/lib/ccs/credentials";
+import { PlusCircleIcon } from "../icons/icons";
 
 type ActionType = "create" | "createAndSwap";
 
@@ -27,11 +28,17 @@ export default function CreateCredential({
   onSwap = async () => null,
   setPopup,
   sourceType,
+  hideConnector,
   refresh = () => null,
   hideSource,
+  onSwitch,
+  close,
 }: {
+  hideConnector?: () => void;
+  onSwitch: (selectedCredential: Credential<any>) => Promise<void>;
   refresh?: () => void;
   hideSource?: boolean;
+  close?: boolean;
   sourceType: ValidSources;
   connector?: Connector<any>;
   setPopup: (popupSpec: PopupSpec | null) => void;
@@ -91,18 +98,28 @@ export default function CreateCredential({
       } else {
         setPopup({ message, type: isSuccess ? "success" : "error" });
       }
+      if (close) {
+        onClose();
+      }
+      // console.log("CREATING CREDENTIAL")
+      // console.log(response?.credential?.id)
+      await refresh();
+      // setTimeout(() => {
+      onSwitch(response?.credential!);
+      // updateCredential(response?.credential?.id)
+
+      // }, 10)
     } catch (error) {
       console.error("Error submitting credential:", error);
       setPopup({ message: "Error submitting credential", type: "error" });
     } finally {
       formikHelpers.setSubmitting(false);
     }
-    refresh();
   };
 
   const types = credentialTemplates[sourceType];
 
-  const input_values = Object.keys(types);
+  // const input_values = Object.keys(types);
 
   interface JsonValues {
     [key: string]: string;
@@ -132,13 +149,7 @@ export default function CreateCredential({
   }
 
   if (sourceType == "google_drive") {
-    return (
-      <GDriveMain />
-      // <DriveJsonUploadSection
-      //   setPopup={setPopup}
-      // />
-      // <DriveJsonUpload setPopup={setPopup} />
-    );
+    return <GDriveMain />;
   }
   const validationSchema = createValidationSchema(json_values);
 
@@ -187,21 +198,28 @@ export default function CreateCredential({
                 }
               />
             ))}
-            {/* {hideSource && ( */}
-            <Button
-              className="bg-indigo-500 hover:bg-indigo-400"
-              onClick={() =>
-                handleSubmit(formikProps.values, formikProps, "create")
-              }
-              type="button"
-              disabled={formikProps.isSubmitting}
-            >
-              <div className="flex gap-x-2 items-center w-full border-none">
-                <FaSwatchbook />
-                <p>Create</p>
-              </div>
-            </Button>
-            {/* )} */}
+
+            <div className="flex justify-between w-full">
+              {hideConnector && (
+                <Button size="xs" onClick={hideConnector} color="slate">
+                  Hide
+                </Button>
+              )}
+
+              <Button
+                className="bg-indigo-500 hover:bg-indigo-400"
+                onClick={() =>
+                  handleSubmit(formikProps.values, formikProps, "create")
+                }
+                type="button"
+                disabled={formikProps.isSubmitting}
+              >
+                <div className="flex items-center gap-x-1">
+                  <PlusCircleIcon size={16} className="text-indigo-100" />
+                  Create
+                </div>
+              </Button>
+            </div>
           </Card>
           <div className="flex gap-x-4 w-full mt-8 justify-end">
             {connector && (
