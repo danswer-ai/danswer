@@ -27,7 +27,12 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { Bubble } from "@/components/Bubble";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
-import { GroupsIcon } from "@/components/icons/icons";
+import {
+  GroupsIcon,
+  SwapIcon,
+  TrashIcon,
+  UndoIcon,
+} from "@/components/icons/icons";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { useUserGroups } from "@/lib/hooks";
@@ -50,6 +55,7 @@ import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";
 import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
+import { FaPlus, FaSwatchbook } from "react-icons/fa";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -91,14 +97,15 @@ export function AssistantEditor({
   const router = useRouter();
   const { popup, setPopup } = usePopup();
 
-  const [iconShape, setIconShape] = useState<GridShape | null>(null);
-  const [iconColor, setIconColor] = useState<string | null>(null);
-
-  const colorOptions = ["#FF6FBF", "#6FB1FF", "#B76FFF", "#FFB56F", "#6FFF8D"];
-
-  const regenerateIcon = () => {
-    setIconShape(generateRandomIconShape());
-  };
+  const colorOptions = [
+    "#FF6FBF",
+    "#6FB1FF",
+    "#B76FFF",
+    "#FFB56F",
+    "#6FFF8D",
+    "#FF6F6F",
+    "#6FFFFF",
+  ];
 
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
@@ -431,7 +438,7 @@ export function AssistantEditor({
                 <div className="mb-6">
                   <div className="flex gap-x-2 items-center">
                     <div className="block font-medium text-base">
-                      Assistant Icon{" "}
+                      Assistant Icon (Optional){" "}
                     </div>
                     <TooltipProvider delayDuration={50}>
                       <Tooltip>
@@ -461,25 +468,33 @@ export function AssistantEditor({
                     )}
                   </div>
                   <div className="mb-2 flex gap-x-2 items-center">
-                    <Button
-                      onClick={() => {
-                        if (values.icon_shape && values.icon_color) {
+                    {values.icon_shape && values.icon_color ? (
+                      <Button
+                        onClick={() => {
                           setFieldValue("icon_shape", null);
                           setFieldValue("icon_color", null);
-                        } else {
+                        }}
+                        color="red"
+                        size="xs"
+                        type="button"
+                      >
+                        <TrashIcon className="m-auto text-white" />
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => {
                           const newShape = generateRandomIconShape();
                           setFieldValue("icon_shape", newShape.encodedGrid);
                           setFieldValue("icon_color", colorOptions[0]);
-                        }
-                      }}
-                      color="blue"
-                      size="xs"
-                      type="button"
-                    >
-                      {values.icon_shape && values.icon_color
-                        ? "Remove Icon"
-                        : "Generate Icon"}
-                    </Button>
+                        }}
+                        color="slate"
+                        size="xs"
+                        type="button"
+                      >
+                        <FaPlus />
+                      </Button>
+                    )}
+
                     {values.icon_shape && values.icon_color && (
                       <>
                         <Button
@@ -490,8 +505,9 @@ export function AssistantEditor({
                           color="blue"
                           size="xs"
                           type="button"
+                          className="h-full"
                         >
-                          Regenerate Shape
+                          <SwapIcon className="m-auto text-white" />
                         </Button>
                         <div className="flex space-x-3">
                           {colorOptions.map((color) => (
@@ -511,82 +527,7 @@ export function AssistantEditor({
                     )}
                   </div>
                 </div>
-                {/* <div className="mb-6">
-                  <div className="flex gap-x-2 items-center">
-                    <div className="block font-medium text-base">
-                      Assistant Icon{" "}
-                    </div>
-                    <TooltipProvider delayDuration={50}>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <FiInfo size={12} />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" align="center">
-                          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                            Choose an icon to visually represent your Assistant
-                            (optional)
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <div className="my-1 flex items-center space-x-2">
-                    {iconShape && iconColor ? (
-                      createSVG(
-                        {
-                          encodedGrid: iconShape.encodedGrid,
-                          filledSquares: 0,
-                        },
-                        iconColor
-                      )
-                    ) : (
-                      <p className="font-bold text-gray-800">No Icon</p>
-                    )}
-                  </div>
-                  <div className="mb-2 flex gap-x-2 items-center">
-                    <Button
-                      onClick={() => {
-                        if (iconShape && iconColor) {
-                          setIconShape(null);
-                          setIconColor(null);
-                        } else {
-                          regenerateIcon();
-                          setIconColor(colorOptions[0]);
-                        }
-                      }}
-                      color="blue"
-                      size="xs"
-                      type="button"
-                    >
-                      {iconShape && iconColor ? "Remove Icon" : "Generate Icon"}
-                    </Button>
-                    {iconShape && iconColor && (
-                      <>
-                        <Button
-                          onClick={regenerateIcon}
-                          color="blue"
-                          size="xs"
-                          type="button"
-                        >
-                          Regenerate Shape
-                        </Button>
-                        <div className="flex space-x-3">
-                          {colorOptions.map((color) => (
-                            <div
-                              key={color}
-                              className={`w-6 h-6 rounded-full cursor-pointer ${color === iconColor
-                                  ? "ring-2 ring-offset-2 ring-blue-500"
-                                  : ""
-                                }`}
-                              style={{ backgroundColor: color }}
-                              onClick={() => setIconColor(color)}
-                            />
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div> */}
+
                 <TextFormField
                   tooltip="Used for identifying assistants and their use cases."
                   name="description"
