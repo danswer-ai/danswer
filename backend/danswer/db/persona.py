@@ -80,6 +80,8 @@ def create_update_persona(
             starter_messages=create_persona_request.starter_messages,
             is_public=create_persona_request.is_public,
             db_session=db_session,
+            icon_color=create_persona_request.icon_color,
+            icon_shape=create_persona_request.icon_shape,
         )
 
         versioned_make_persona_private = fetch_versioned_implementation(
@@ -328,6 +330,8 @@ def upsert_persona(
     persona_id: int | None = None,
     default_persona: bool = False,
     commit: bool = True,
+    icon_color: str | None = None,
+    icon_shape: int | None = None,
 ) -> Persona:
     if persona_id is not None:
         persona = db_session.query(Persona).filter_by(id=persona_id).first()
@@ -383,6 +387,8 @@ def upsert_persona(
         persona.starter_messages = starter_messages
         persona.deleted = False  # Un-delete if previously deleted
         persona.is_public = is_public
+        persona.icon_color = icon_color
+        persona.icon_shape = icon_shape
 
         # Do not delete any associations manually added unless
         # a new updated list is provided
@@ -415,6 +421,8 @@ def upsert_persona(
             llm_model_version_override=llm_model_version_override,
             starter_messages=starter_messages,
             tools=tools or [],
+            icon_shape=icon_shape,
+            icon_color=icon_color,
         )
         db_session.add(persona)
 

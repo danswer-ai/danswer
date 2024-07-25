@@ -38,4 +38,6 @@ export interface Persona {
   default_persona: boolean;
   users: MinimalUserSnapshot[];
   groups: number[];
+  icon_shape?: number;
+  icon_color?: string;
 }

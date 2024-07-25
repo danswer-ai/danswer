@@ -33,6 +33,8 @@ class CreatePersonaRequest(BaseModel):
     # For Private Personas, who should be able to access these
     users: list[UUID] | None = None
     groups: list[int] | None = None
+    icon_color: str | None = None
+    icon_shape: int | None = None
 
 
 class PersonaSnapshot(BaseModel):
@@ -55,6 +57,8 @@ class PersonaSnapshot(BaseModel):
     document_sets: list[DocumentSet]
     users: list[MinimalUserSnapshot]
     groups: list[int]
+    icon_color: str | None
+    icon_shape: int | None
 
     @classmethod
     def from_model(
@@ -97,6 +101,8 @@ class PersonaSnapshot(BaseModel):
                 for user in persona.users
             ],
             groups=[user_group.id for user_group in persona.groups],
+            icon_color=persona.icon_color,
+            icon_shape=persona.icon_shape,
         )
 
 

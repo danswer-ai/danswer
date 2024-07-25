@@ -15,7 +15,9 @@ interface PersonaCreationRequest {
   starter_messages: StarterMessage[] | null;
   users?: string[];
   groups: number[];
-  tool_ids: number[]; // Added tool_ids to the interface
+  tool_ids: number[];
+  icon_color?: string | null;
+  icon_shape?: number | null;
 }
 
 interface PersonaUpdateRequest {
@@ -35,7 +37,9 @@ interface PersonaUpdateRequest {
   starter_messages: StarterMessage[] | null;
   users?: string[];
   groups: number[];
-  tool_ids: number[]; // Added tool_ids to the interface
+  tool_ids: number[];
+  icon_color?: string | null;
+  icon_shape?: number | null;
 }
 
 function promptNameFromPersonaName(personaName: string) {
@@ -109,7 +113,9 @@ function buildPersonaAPIBody(
     is_public,
     groups,
     users,
-    tool_ids, // Added tool_ids to the destructuring
+    tool_ids,
+    icon_color,
+    icon_shape,
   } = creationRequest;
 
   return {
@@ -127,7 +133,9 @@ function buildPersonaAPIBody(
     starter_messages: creationRequest.starter_messages,
     users,
     groups,
-    tool_ids, // Added tool_ids to the return object
+    tool_ids,
+    icon_color,
+    icon_shape, // Added tool_ids to the return object
   };
 }
 
@@ -135,6 +143,8 @@ export async function createPersona(
   personaCreationRequest: PersonaCreationRequest
 ): Promise<[Response, Response | null]> {
   // first create prompt
+  console.log("creating!!!!");
+  console.log(personaCreationRequest);
   const createPromptResponse = await createPrompt({
     personaName: personaCreationRequest.name,
     systemPrompt: personaCreationRequest.system_prompt,

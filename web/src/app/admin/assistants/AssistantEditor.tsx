@@ -329,6 +329,8 @@ export function AssistantEditor({
               id: existingPersona.id,
               existingPromptId: existingPrompt?.id,
               ...values,
+              icon_color: iconColor,
+              icon_shape: iconShape.encodedGrid,
               num_chunks: numChunks,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
@@ -339,6 +341,8 @@ export function AssistantEditor({
             [promptResponse, personaResponse] = await createPersona({
               ...values,
               num_chunks: numChunks,
+              icon_color: iconColor,
+              icon_shape: iconShape.encodedGrid,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,

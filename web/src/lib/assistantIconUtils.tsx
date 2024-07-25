@@ -80,7 +80,12 @@ function decodeGrid(encoded: number): boolean[][] {
   return grid;
 }
 
-export function createSVG(shape: GridShape, color: string = "#FF6FBF") {
+export function createSVG(
+  shape: GridShape,
+  color: string = "#FF6FBF",
+  size: number = 48
+) {
+  const cellSize = size / 6;
   const grid = decodeGrid(shape.encodedGrid);
   let path = "";
   for (let row = 0; row < 4; row++) {
@@ -94,11 +99,31 @@ export function createSVG(shape: GridShape, color: string = "#FF6FBF") {
   }
 
   return (
-    <svg width="48" height="48" viewBox="0 0 48 48">
-      <path d={path} fill={color}></path>
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {grid.map((row, i) =>
+        row.map(
+          (cell, j) =>
+            cell && (
+              <rect
+                key={`${i}-${j}`}
+                x={j * cellSize}
+                y={i * cellSize}
+                width={cellSize}
+                height={cellSize}
+                fill={color}
+              />
+            )
+        )
+      )}
     </svg>
   );
 }
+
 function shuffleArray(array: any[]) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
