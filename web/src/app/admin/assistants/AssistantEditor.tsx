@@ -1,6 +1,7 @@
 "use client";
 
-import { CCPairBasicInfo, DocumentSet, User, UserGroup } from "@/lib/types";
+import { createSVG, generateRandomShape } from "@/lib/assistantIconUtils";
+import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
 import { Button, Divider, Italic, Text } from "@tremor/react";
 import {
   ArrayHelpers,
@@ -11,39 +12,39 @@ import {
   Formik,
 } from "formik";
 
-import * as Yup from "yup";
-import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
-import { useRouter } from "next/navigation";
-import { usePopup } from "@/components/admin/connectors/Popup";
-import { Persona, StarterMessage } from "./interfaces";
-import Link from "next/link";
-import { useEffect, useState } from "react";
 import {
   BooleanFormField,
   Label,
   SelectorFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
-import CollapsibleSection from "./CollapsibleSection";
-import { FiInfo, FiPlus, FiX } from "react-icons/fi";
-import { useUserGroups } from "@/lib/hooks";
+import { usePopup } from "@/components/admin/connectors/Popup";
 import { Bubble } from "@/components/Bubble";
-import { GroupsIcon } from "@/components/icons/icons";
-import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
-import { FullLLMProvider } from "../models/llm/interfaces";
 import { Option } from "@/components/Dropdown";
+import { GroupsIcon } from "@/components/icons/icons";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
+import { useUserGroups } from "@/lib/hooks";
+import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
-import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
-import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
-import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import {
-  TooltipProvider,
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { FiInfo, FiPlus, FiX } from "react-icons/fi";
+import * as Yup from "yup";
+import { FullLLMProvider } from "../models/llm/interfaces";
+import CollapsibleSection from "./CollapsibleSection";
+import { SuccessfulPersonaUpdateRedirectType } from "./enums";
+import { Persona, StarterMessage } from "./interfaces";
+import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -84,6 +85,15 @@ export function AssistantEditor({
 }) {
   const router = useRouter();
   const { popup, setPopup } = usePopup();
+
+  const [iconShape, setIconShape] = useState(generateRandomShape());
+  const [iconColor, setIconColor] = useState("#FF6FBF"); // Default color
+
+  const colorOptions = ["#FF6FBF", "#6FB1FF", "#B76FFF", "#FFB56F", "#6FFF8D"];
+
+  const regenerateIcon = () => {
+    setIconShape(generateRandomShape());
+  };
 
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
@@ -409,6 +419,55 @@ export function AssistantEditor({
                   disabled={isUpdate}
                   placeholder="e.g. 'Email Assistant'"
                 />
+                <div className="mb-6">
+                  <div className="flex gap-x-2 items-center">
+                    <div className="block font-medium text-base">
+                      Assistant Icon{" "}
+                    </div>
+                    <TooltipProvider delayDuration={50}>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <FiInfo size={12} />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center">
+                          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                            Choose an icon to visually represent your Assistant
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="my-1 flex items-center space-x-2">
+                    {createSVG(
+                      { encodedGrid: iconShape.encodedGrid, filledSquares: 0 },
+                      iconColor
+                    )}
+                  </div>
+                  <div className="my-4 flex gap-x-2 items-center">
+                    <Button
+                      onClick={regenerateIcon}
+                      color="blue"
+                      size="xs"
+                      type="button"
+                    >
+                      Regenerate Shape
+                    </Button>
+                    <div className="flex space-x-3">
+                      {colorOptions.map((color) => (
+                        <div
+                          key={color}
+                          className={`w-6 h-6 rounded-full cursor-pointer ${
+                            color === iconColor
+                              ? "ring-2 ring-offset-2 ring-blue-500"
+                              : ""
+                          }`}
+                          style={{ backgroundColor: color }}
+                          onClick={() => setIconColor(color)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
                 <TextFormField
                   tooltip="Used for identifying assistants and their use cases."
                   name="description"
