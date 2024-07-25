@@ -85,7 +85,6 @@ export async function fetchChatData(searchParams: {
     Persona[],
     string | null,
   ];
-
   const chatSessionsResponse = results[5] as Response | null;
 
   const tagsResponse = results[6] as Response | null;

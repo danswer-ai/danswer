@@ -135,7 +135,7 @@ function buildPersonaAPIBody(
     groups,
     tool_ids,
     icon_color,
-    icon_shape, // Added tool_ids to the return object
+    icon_shape,
   };
 }
 

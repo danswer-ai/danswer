@@ -35,12 +35,10 @@ export function AssistantIcon({
   assistant,
   size,
   border,
-  // encodedGrid,
 }: {
   assistant: Persona;
   size?: "small" | "medium" | "large";
   border?: boolean;
-  // encodedGrid: number;
 }) {
   const color = darkerGenerateColorFromId(assistant.id.toString());
 
