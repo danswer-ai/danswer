@@ -24,9 +24,8 @@ def run_jobs(exclude_indexing: bool) -> None:
         "ee.danswer.background.celery.celery_app",
         "worker",
         "--pool=threads",
-        "--autoscale=3,10",
+        "--concurrency=16",
         "--loglevel=INFO",
-        "--concurrency=1",
     ]
 
     cmd_beat = [
