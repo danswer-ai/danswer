@@ -1,6 +1,8 @@
 import { Bubble } from "@/components/Bubble";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
-import { FiImage, FiSearch, FiGlobe } from "react-icons/fi";
+import { FiImage, FiSearch, FiGlobe, FiMoreHorizontal } from "react-icons/fi";
+import { Persona } from "../admin/assistants/interfaces";
+import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
 
 export function ToolsDisplay({ tools }: { tools: ToolSnapshot[] }) {
   return (
@@ -30,6 +32,61 @@ export function ToolsDisplay({ tools }: { tools: ToolSnapshot[] }) {
           </Bubble>
         );
       })}
+    </div>
+  );
+}
+
+export function AsisstantTools({
+  assistant,
+  list,
+}: {
+  assistant: Persona;
+  list?: boolean;
+}) {
+  const nonDefaultTools = assistant.tools.filter(
+    (tool) => tool.name !== "SearchTool" && tool.name !== "ImageGenerationTool"
+  );
+  return (
+    <div className="relative text-xs flex items-center text-subtle">
+      <span className={`${!list ? "font-medium" : "text-subtle text-sm"}`}>
+        Powers:
+      </span>{" "}
+      {assistant.tools.length == 0 ? (
+        <p className="ml-2">None</p>
+      ) : (
+        <>
+          {assistant.tools.map((tool, ind) => {
+            if (tool.name === "SearchTool") {
+              return <FiSearch className="ml-1 h-3 w-3 my-auto" />;
+            } else if (tool.name === "ImageGenerationTool") {
+              return <FiImage className="ml-1 h-3 w-3 my-auto" />;
+            }
+          })}
+
+          {!(nonDefaultTools.length == 0) && (
+            <div className="my-auto flex items-center">
+              <CustomTooltip
+                position="top"
+                content={
+                  <div className="text-xs max-w-2xl w-full text-200">
+                    <p>Additional Tools:</p>
+                    <div className="flex flex-col mt-1 gap-y-2">
+                      {nonDefaultTools.map((tool, ind) => (
+                        <p key={ind}>
+                          {tool.display_name}:
+                          <span className="ml-2">{tool.description}</span>
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                }
+              >
+                <FiMoreHorizontal className="cursor-pointer ml-1 h-3 w-3 my-auto" />
+              </CustomTooltip>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

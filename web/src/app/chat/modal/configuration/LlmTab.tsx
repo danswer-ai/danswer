@@ -1,6 +1,7 @@
 import { useChatContext } from "@/components/context/ChatContext";
 import {
   getDisplayNameForModel,
+  isPreferredModel,
   LlmOverride,
   LlmOverrideManager,
 } from "@/lib/hooks";
@@ -49,8 +50,10 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
       currentAssistant,
       null
     );
+    const currentModelName = llmOverride.modelName || defaultLlmName;
 
-    const llmOptions: { name: string; value: string }[] = [];
+    const llmOptions: { name: string; value: string; preferred: boolean }[] =
+      [];
     llmProviders.forEach((llmProvider) => {
       llmProvider.model_names.forEach((modelName) => {
         llmOptions.push({
@@ -60,50 +63,44 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
             llmProvider.provider,
             modelName
           ),
+          preferred: isPreferredModel(modelName),
         });
       });
     });
 
     return (
-      <div>
+      <div className="w-full">
         <div className="flex w-full content-center gap-x-2">
           <label className="block text-sm font-medium mb-2">Choose Model</label>
-          <CustomTooltip
-            content={`Override the default model for the ${currentAssistant.name} assistnat. The override will only apply for the current chat session`}
-          >
-            <InfoIcon className="ml-1 text-gray-400" />
-          </CustomTooltip>
         </div>
-
-        <Text className="mb-3">
-          Default Model: <i className="font-medium">{defaultLlmName}</i>.
-        </Text>
         <div className="max-h-[300px] flex flex-col gap-y-1 overflow-y-scroll">
-          {llmOptions.map(({ name, value }, index) => {
-            return (
-              <button
-                className="w-full py-1.5 px-2  text-sm text-left bg-background-100/50 hover:bg-background-100 rounded  "
-                onClick={() => {
-                  setLlmOverride(destructureValue(value));
-                  if (chatSessionId) {
-                    updateModelOverrideForChatSession(
-                      chatSessionId,
-                      value as string
-                    );
-                  }
-                }}
-              >
-                {getDisplayNameForModel(name)}
-              </button>
-            );
+          {llmOptions.map(({ name, value, preferred }, index) => {
+            if (preferred) {
+              return (
+                <button
+                  className={`w-full py-1.5 px-2  text-sm  ${defaultLlmName == name ? "bg-background-200" : "bg-background-100/50 hover:bg-background-100"} text-left  rounded`}
+                  onClick={() => {
+                    setLlmOverride(destructureValue(value));
+                    if (chatSessionId) {
+                      updateModelOverrideForChatSession(
+                        chatSessionId,
+                        value as string
+                      );
+                    }
+                  }}
+                >
+                  {getDisplayNameForModel(name)}
+                </button>
+              );
+            }
           })}
         </div>
         <div className="mt-4">
           <button
-            className="flex items-center text-sm font-medium mb-2 p-2 rounded hover:bg-background-100 transition-colors duration-200"
+            className="flex items-center text-sm font-medium  transition-colors duration-200"
             onClick={() => setIsTemperatureExpanded(!isTemperatureExpanded)}
           >
-            <span className="mr-2 text-primary">
+            <span className="mr-2 text-xs text-primary">
               {isTemperatureExpanded ? "▼" : "►"}
             </span>
             <span>Temperature</span>
@@ -114,7 +111,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
 
           {isTemperatureExpanded && (
             <>
-              <Text className="mb-8">
+              <Text className="mt-2 mb-8">
                 Adjust the temperature of the LLM. Higher temperatures will make
                 the LLM generate more creative and diverse responses, while
                 lower temperature will make the LLM generate more conservative

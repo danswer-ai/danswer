@@ -8,11 +8,13 @@ interface PopupProps {
   ) => ReactNode;
   position?: "top" | "bottom" | "left" | "right";
   removePadding?: boolean;
+  tab?: boolean;
 }
 
 const Popup: React.FC<PopupProps> = ({
   children,
   content,
+  tab,
   removePadding,
   position = "top",
 }) => {
@@ -76,7 +78,7 @@ const Popup: React.FC<PopupProps> = ({
         break;
       default: // top
         popupStyle.bottom = `${triggerRect.height + 5}px`;
-        popupStyle.left = `${triggerRect.width + 100}px`;
+        popupStyle.left = `${triggerRect.width + 50}px`;
         popupStyle.transform = "translateX(-50%)";
     }
 
@@ -94,7 +96,7 @@ const Popup: React.FC<PopupProps> = ({
           ref={popupRef}
           className={`absolute bg-white border border-gray-200 rounded-lg shadow-lg ${
             !removePadding && "p-4"
-          } min-w-[400px]`}
+          } ${tab ? " w-[400px] " : "min-w-[400px]"}`}
           style={getPopupStyle()}
         >
           {content(closePopup, contentRef)}

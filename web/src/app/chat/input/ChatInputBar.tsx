@@ -432,6 +432,7 @@ export function ChatInputBar({
               </Popup>
 
               <Popup
+                tab
                 content={(close, ref) => (
                   <LlmTab
                     close={close}

@@ -15,7 +15,7 @@ import {
 } from "@/lib/assistants/updateAssistantPreferences";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
-import { ToolsDisplay } from "../ToolsDisplay";
+import { AsisstantTools, ToolsDisplay } from "../ToolsDisplay";
 
 export function AssistantsGallery({
   assistants,
@@ -189,13 +189,14 @@ export function AssistantsGallery({
                   </div>
                 )}
               </div>
-              {assistant.tools.length > 0 && (
-                <ToolsDisplay tools={assistant.tools} />
-              )}
+
               <p className="text-sm mt-2">{assistant.description}</p>
-              <p className="text-subtle text-sm mt-2">
+              <p className="text-subtle text-sm my-2">
                 Author: {assistant.owner?.email || "Danswer"}
               </p>
+              {assistant.tools.length > 0 && (
+                <AsisstantTools list assistant={assistant} />
+              )}
             </div>
           ))}
         </div>
