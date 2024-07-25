@@ -46,7 +46,6 @@ import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
 import OCIStorageSVG from "../../../public/OCI.svg";
 import googleCloudStorageIcon from "../../../public/GoogleCloudStorage.png";
-import guruIcon from "../../../public/Guru.svg";
 import hubSpotIcon from "../../../public/HubSpot.png";
 import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
@@ -55,11 +54,8 @@ import s3Icon from "../../../public/S3.png";
 import r2Icon from "../../../public/r2.webp";
 import salesforceIcon from "../../../public/Salesforce.png";
 import sharepointIcon from "../../../public/Sharepoint.png";
+import googleSheets from "../../../public/GoogleSheets.svg";
 import teamsIcon from "../../../public/Teams.png";
-import mediawikiIcon from "../../../public/MediaWiki.svg";
-import wikipediaIcon from "../../../public/Wikipedia.svg";
-import discourseIcon from "../../../public/Discourse.png";
-import clickupIcon from "../../../public/Clickup.svg";
 import { FaRobot } from "react-icons/fa";
 
 interface IconProps {
@@ -467,18 +463,6 @@ export const NotionIcon = ({
   );
 };
 
-export const GuruIcon = ({
-  size = 16,
-  className = defaultTailwindCSS,
-}: IconProps) => (
-  <div
-    style={{ width: `${size}px`, height: `${size}px` }}
-    className={`w-[${size}px] h-[${size}px] ` + className}
-  >
-    <Image src={guruIcon} alt="Logo" width="96" height="96" />
-  </div>
-);
-
 export const SalesforceIcon = ({
   size = 16,
   className = defaultTailwindCSS,
@@ -568,6 +552,20 @@ export const GoogleSitesIcon = ({
   );
 };
 
+export const GoogleSheetsIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src={googleSheets} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
 export const ZendeskIcon = ({
   size = 16,
   className = defaultTailwindCSS,
@@ -589,56 +587,6 @@ export const DropboxIcon = ({
     className={`w-[${size}px] h-[${size}px] ` + className}
   >
     <Image src={dropboxIcon} alt="Logo" width="96" height="96" />
-  </div>
-);
-
-export const DiscourseIcon = ({
-  size = 16,
-  className = defaultTailwindCSS,
-}: IconProps) => (
-  <div
-    style={{ width: `${size}px`, height: `${size}px` }}
-    className={`w-[${size}px] h-[${size}px] ` + className}
-  >
-    <Image src={discourseIcon} alt="Logo" width="96" height="96" />
-  </div>
-);
-
-export const ClickupIcon = ({
-  size = 16,
-  className = defaultTailwindCSS,
-}: IconProps) => {
-  return (
-    <div
-      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
-      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
-    >
-      <Image src={clickupIcon} alt="Logo" width="96" height="96" />
-    </div>
-  );
-};
-
-export const MediaWikiIcon = ({
-  size = 16,
-  className = defaultTailwindCSS,
-}: IconProps) => (
-  <div
-    style={{ width: `${size}px`, height: `${size}px` }}
-    className={`w-[${size}px] h-[${size}px] ` + className}
-  >
-    <Image src={mediawikiIcon} alt="Logo" width="96" height="96" />
-  </div>
-);
-
-export const WikipediaIcon = ({
-  size = 16,
-  className = defaultTailwindCSS,
-}: IconProps) => (
-  <div
-    style={{ width: `${size}px`, height: `${size}px` }}
-    className={`w-[${size}px] h-[${size}px] ` + className}
-  >
-    <Image src={wikipediaIcon} alt="Logo" width="96" height="96" />
   </div>
 );
 

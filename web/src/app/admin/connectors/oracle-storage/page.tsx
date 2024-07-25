@@ -18,7 +18,7 @@ import {
   ConnectorIndexingStatus,
   Credential,
   OCIConfig,
-  OCICredentialJson
+  OCICredentialJson,
 } from "@/lib/types";
 import { Card, Select, SelectItem, Text, Title } from "@tremor/react";
 import useSWR, { useSWRConfig } from "swr";

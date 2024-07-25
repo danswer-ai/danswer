@@ -76,6 +76,8 @@ export interface SearchResponse {
 export enum SourceCategory {
   AppConnection = "Connect to Apps",
   ImportedKnowledge = "Import Knowledge",
+  ComingSoon = "Coming Soon",
+  Disabled = "Disabled",
 }
 
 export interface SourceMetadata {

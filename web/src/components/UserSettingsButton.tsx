@@ -13,22 +13,10 @@ import { LOGOUT_DISABLED } from "@/lib/constants";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { SettingsContext } from "./settings/SettingsProvider";
 
-export function UserSettingsButton({
-  user,
-  hideChatAndSearch,
-}: {
-  user: User | null;
-  hideChatAndSearch?: boolean;
-}) {
+export function UserSettingsButton({ user }: { user: User | null }) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
   const userInfoRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-
-  const combinedSettings = useContext(SettingsContext);
-  if (!combinedSettings) {
-    return null;
-  }
-  const settings = combinedSettings.settings;
 
   const handleLogout = () => {
     logout().then((isSuccess) => {
@@ -39,7 +27,10 @@ export function UserSettingsButton({
     });
   };
 
-  const toPascalCase = (str : string) => (str.match(/[a-zA-Z0-9]+/g) || []).map(w => `${w.charAt(0).toUpperCase()}${w.slice(1)}`).join('');
+  const toPascalCase = (str: string) =>
+    (str.match(/[a-zA-Z0-9]+/g) || [])
+      .map((w) => `${w.charAt(0).toUpperCase()}${w.slice(1)}`)
+      .join("");
   const showAdminPanel = !user || user.role === "admin";
   const showLogout =
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
@@ -62,8 +53,16 @@ export function UserSettingsButton({
               </div>
               <div className="w-full h-full flex flex-col items-start justify-center truncate">
                 {/* TODO: Set this as a user.name - which will be added to the schema of the user and the database schema user table */}
-                <p className="text-base font-semibold">{user && user.email ? `${toPascalCase(user.email.split(".")[0])} ${toPascalCase(user.email.split(".")[1].split("@")[0])}` : "Admin"}</p>
-                <p className="text-xs">{user && user.email ? user.email : "admin@enmedd-chp.com"}</p>
+                <p className="text-base font-semibold">
+                  {user && user.email
+                    ? `${toPascalCase(user.email.split(".")[0])} ${toPascalCase(
+                        user.email.split(".")[1].split("@")[0]
+                      )}`
+                    : "Admin"}
+                </p>
+                <p className="text-xs">
+                  {user && user.email ? user.email : "admin@enmedd-chp.com"}
+                </p>
               </div>
             </div>
           </BasicClickable>
@@ -71,20 +70,21 @@ export function UserSettingsButton({
         popover={
           <div
             className={`
+                z-[60]
                 text-strong 
-                text-sm
+                text-sm 
                 border 
                 border-border 
-                bg-background
-                rounded-lg
-                shadow-lg 
+                bg-background 
+                rounded-lg 
+                shadow-lg  
                 flex 
                 flex-col 
                 w-full 
                 max-h-96 
                 overflow-y-auto 
-                p-1
-                overscroll-contain
+                p-1 
+                overscroll-contain 
               `}
           >
             {showAdminPanel && (
@@ -100,8 +100,8 @@ export function UserSettingsButton({
             )}
             {showLogout && (
               <>
-                {(!hideChatAndSearch || showAdminPanel) && (
-                  <div className="border-t border-border my-1" />
+                {showAdminPanel && (
+                  <div className="my-1 border-t border-border" />
                 )}
                 <div
                   onClick={handleLogout}

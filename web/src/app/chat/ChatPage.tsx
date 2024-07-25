@@ -1195,7 +1195,7 @@ export function ChatPage({
                                 userId={user?.id}
                               />
 
-                              <UserDropdown user={user} hideChatAndSearch />
+                              {/* <UserDropdown user={user} hideChatAndSearch /> */}
                             </div>
 
                             <div className="flex ml-auto">

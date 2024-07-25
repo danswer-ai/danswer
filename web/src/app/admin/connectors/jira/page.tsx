@@ -227,9 +227,9 @@ const Main = () => {
             Specify any link to a Jira page below and click &quot;Index&quot; to
             Index. Based on the provided link, we will index the ENTIRE PROJECT,
             not just the specified page. For example, entering{" "}
-            <a href="https://danswer.atlassian.net/jira/software/projects/DAN/boards/1"><i>
-              Atlassian Jira
-            </i>{" "}</a>
+            <a href="https://danswer.atlassian.net/jira/software/projects/DAN/boards/1">
+              <i>Atlassian Jira</i>{" "}
+            </a>
             and clicking the Index button will index the whole <i>DAN</i> Jira
             project.
           </Text>

@@ -86,7 +86,8 @@ const Main = () => {
     <>
       {popup}
       <Text>
-        This connector allows you to sync all your HubSpot Tickets into enMedD CHP.
+        This connector allows you to sync all your HubSpot Tickets into enMedD
+        CHP.
       </Text>
 
       <Title className="mb-2 mt-6 ml-auto mr-auto">

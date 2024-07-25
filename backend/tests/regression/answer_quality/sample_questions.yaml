@@ -14,8 +14,6 @@ metadata:
       detail: danswer-ai/danswer
     - name: github pull-requests
       detail: danswer-ai/danswer
-    - name: slack
-      workspace: danswer.slack.com
     - name: file
       detail: Markdown files from Danswer repo
 
@@ -84,13 +82,3 @@ questions:
     question: "What text from the Alation Connector is used to generate the docs?"
     expected_answer: "Articles are used with the body contents. Schemas, Tables, and Columns use Description"
     notes: "This is in Github PR #161"
-
-  - id: 14
-    question: "Does enMedD CHP support PDFs in Google Drive?"
-    expected_answer: "Yes"
-    notes: "This question is in Slack, if the message expires due to using free slack version, the info may be gone as well"
-
-  - id: 15
-    question: "I deleted a connector in enMedD CHP but some deleted docs are still showing in search"
-    expected_answer: "The issue was fixed via a code change, it should go away after pulling the latest code"
-    notes: "This question is in Slack, if the message expires due to using free slack version, the info may be gone as well"
