@@ -232,6 +232,7 @@ const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   "gpt-3.5-turbo-0301": "GPT 3.5 Turbo (March 2023)",
 
   // Anthropic models
+
   "claude-3-opus-20240229": "Claude 3 Opus",
   "claude-3-sonnet-20240229": "Claude 3 Sonnet",
   "claude-3-haiku-20240307": "Claude 3 Haiku",
@@ -239,8 +240,56 @@ const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   "claude-2.0": "Claude 2.0",
   "claude-instant-1.2": "Claude Instant 1.2",
   "claude-3-5-sonnet-20240620": "Claude 3.5 Sonnet",
+
+  // Bedrock models
+  "meta.llama3-1-70b-instruct-v1:0": "Llama 3 1-70B Instruct",
+  "meta.llama3-1-8b-instruct-v1:0": "Llama 3 1-8B Instruct",
+  "meta.llama3-70b-instruct-v1:0": "Llama 3 70B Instruct",
+  "meta.llama3-8b-instruct-v1:0": "Llama 3 8B Instruct",
+  "meta.llama2-70b-chat-v1": "Llama 2 70B Chat",
+  "meta.llama2-13b-chat-v1": "Llama 2 13B Chat",
+  "cohere.embed-multilingual-v3": "Embed Multilingual v3",
+  "cohere.embed-english-v3": "Embed English v3",
+  "cohere.command-r-v1:0": "Command R",
+  "cohere.command-r-plus-v1:0": "Command R Plus",
+  "cohere.command-light-text-v14": "Command Light Text",
+  "cohere.command-text-v14": "Command Text",
+  "anthropic.claude-instant-v1": "Claude Instant",
+  "anthropic.claude-v2:1": "Claude v2.1",
+  "anthropic.claude-v2": "Claude v2",
+  "anthropic.claude-v1": "Claude v1",
+  "anthropic.claude-3-opus-20240229-v1:0": "Claude 3 Opus",
+  "anthropic.claude-3-haiku-20240307-v1:0": "Claude 3 Haiku",
+  "anthropic.claude-3-5-sonnet-20240620-v1:0": "Claude 3.5 Sonnet",
+  "anthropic.claude-3-sonnet-20240229-v1:0": "Claude 3 Sonnet",
+  "mistral.mistral-large-2402-v1:0": "Mistral Large",
+  "mistral.mixtral-8x7b-instruct-v0:1": "Mixtral 8x7B Instruct",
+  "mistral.mistral-7b-instruct-v0:2": "Mistral 7B Instruct",
+  "amazon.titan-embed-text-v2:0": "Titan Embed Text v2.0",
+  "amazon.titan-embed-text-v1": "Titan Embed Text v1",
+  "amazon.titan-text-express-v1": "Titan Text Express",
+  "amazon.titan-text-lite-v1": "Titan Text Lite",
+  "ai21.jamba-instruct-v1:0": "Jamba Instruct",
+  "ai21.j2-ultra-v1": "J2 Ultra",
+  "ai21.j2-mid-v1": "J2 Mid",
 };
 
 export function getDisplayNameForModel(modelName: string): string {
   return MODEL_DISPLAY_NAMES[modelName] || modelName;
 }
+
+export const defaultModelsByProvider: { [name: string]: string[] } = {
+  openai: ["gpt-4", "gpt-4-turbo", "gpt-3.5-turbo", "gpt-3.5-turbo-16k"],
+  bedrock: [
+    "meta.llama3-1-70b-instruct-v1:0",
+    "meta.llama3-1-8b-instruct-v1:0",
+    "meta.llama2-70b-chat-v1",
+    "meta.llama2-13b-chat-v1",
+  ],
+  anthropic: [
+    "claude-3-opus-20240229",
+    "claude-3-sonnet-20240229",
+    "claude-2.1",
+    "claude-instant-1.2",
+  ],
+};

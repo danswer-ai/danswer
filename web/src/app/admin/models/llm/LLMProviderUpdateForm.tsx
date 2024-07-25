@@ -14,7 +14,11 @@ import { useState } from "react";
 import { Bubble } from "@/components/Bubble";
 import { GroupsIcon } from "@/components/icons/icons";
 import { useSWRConfig } from "swr";
-import { getDisplayNameForModel, useUserGroups } from "@/lib/hooks";
+import {
+  defaultModelsByProvider,
+  getDisplayNameForModel,
+  useUserGroups,
+} from "@/lib/hooks";
 import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "./interfaces";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
@@ -70,13 +74,13 @@ export function LLMProviderUpdateForm({
       ),
     is_public: existingLlmProvider?.is_public ?? true,
     groups: existingLlmProvider?.groups ?? [],
-    display_model_names: existingLlmProvider?.display_model_names ?? [],
+    display_model_names:
+      existingLlmProvider?.display_model_names ||
+      defaultModelsByProvider[llmProviderDescriptor.name] ||
+      [],
   };
 
-  const [validatedConfig, setValidatedConfig] = useState(
-    existingLlmProvider ? initialValues : null
-  );
-
+  console.log(defaultModelsByProvider[llmProviderDescriptor.name]);
   // Setup validation schema if required
   const validationSchema = Yup.object({
     name: Yup.string().required("Display Name is required"),
@@ -114,6 +118,7 @@ export function LLMProviderUpdateForm({
     display_model_names: Yup.array().of(Yup.string()),
   });
 
+  console.log(llmProviderDescriptor.name);
   return (
     <Formik
       initialValues={initialValues}
@@ -321,20 +326,23 @@ export function LLMProviderUpdateForm({
 
           {showAdvancedOptions && (
             <>
-              <div className="w-full">
-                <MultiSelectField
-                  name="display_model_names"
-                  label="Display Models"
-                  subtext="Select the models to make available to users. Unselected models will not be available."
-                  options={llmProviderDescriptor.llm_names.map((name) => ({
-                    value: name,
-                    label: getDisplayNameForModel(name),
-                  }))}
-                  onChange={(selected) =>
-                    setFieldValue("display_model_names", selected)
-                  }
-                />
-              </div>
+              {llmProviderDescriptor.llm_names.length > 0 && (
+                <div className="w-full">
+                  <MultiSelectField
+                    selectedInitially={values.display_model_names}
+                    name="display_model_names"
+                    label="Display Models"
+                    subtext="Select the models to make available to users. Unselected models will not be available."
+                    options={llmProviderDescriptor.llm_names.map((name) => ({
+                      value: name,
+                      label: getDisplayNameForModel(name),
+                    }))}
+                    onChange={(selected) =>
+                      setFieldValue("display_model_names", selected)
+                    }
+                  />
+                </div>
+              )}
 
               {isPaidEnterpriseFeaturesEnabled && userGroups && (
                 <>

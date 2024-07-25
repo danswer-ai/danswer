@@ -200,7 +200,9 @@ export function MultiSelectField({
   error,
   hideError,
   small,
+  selectedInitially,
 }: {
+  selectedInitially: string[];
   name: string;
   label: string;
   subtext?: string | JSX.Element;
@@ -210,7 +212,8 @@ export function MultiSelectField({
   hideError?: boolean;
   small?: boolean;
 }) {
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [selectedOptions, setSelectedOptions] =
+    useState<string[]>(selectedInitially);
 
   const handleCheckboxChange = (value: string) => {
     const newSelectedOptions = selectedOptions.includes(value)

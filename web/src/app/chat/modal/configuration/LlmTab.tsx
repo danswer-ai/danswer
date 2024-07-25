@@ -25,8 +25,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
     ref
   ) => {
     const { llmProviders } = useChatContext();
-    const { llmOverride, setLlmOverride, temperature, setTemperature } =
-      llmOverrideManager;
+    const { setLlmOverride, temperature, setTemperature } = llmOverrideManager;
     const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
     const [localTemperature, setLocalTemperature] = useState<number>(
       temperature || 0
@@ -49,7 +48,6 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
       currentAssistant,
       null
     );
-    const currentModelName = llmOverride.modelName || defaultLlmName;
 
     const llmOptions: { name: string; value: string }[] = [];
 
