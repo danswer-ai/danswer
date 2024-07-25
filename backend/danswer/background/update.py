@@ -16,6 +16,7 @@ from danswer.configs.app_configs import CLEANUP_INDEXING_JOBS_TIMEOUT
 from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
+from danswer.configs.app_configs import NUM_SECONDARY_INDEXING_WORKERS
 from danswer.db.connector import fetch_connectors
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
@@ -337,7 +338,11 @@ def kickoff_indexing_jobs(
     return existing_jobs_copy
 
 
-def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> None:
+def update_loop(
+    delay: int = 10,
+    num_workers: int = NUM_INDEXING_WORKERS,
+    num_secondary_workers: int = NUM_SECONDARY_INDEXING_WORKERS,
+) -> None:
     engine = get_sqlalchemy_engine()
     with Session(engine) as db_session:
         check_index_swap(db_session=db_session)
@@ -368,7 +373,7 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
             silence_logs=logging.ERROR,
         )
         cluster_secondary = LocalCluster(
-            n_workers=num_workers,
+            n_workers=num_secondary_workers,
             threads_per_worker=1,
             silence_logs=logging.ERROR,
         )
@@ -378,7 +383,7 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
             client_primary.register_worker_plugin(ResourceLogger())
     else:
         client_primary = SimpleJobClient(n_workers=num_workers)
-        client_secondary = SimpleJobClient(n_workers=num_workers)
+        client_secondary = SimpleJobClient(n_workers=num_secondary_workers)
 
     existing_jobs: dict[int, Future | SimpleJob] = {}
 
