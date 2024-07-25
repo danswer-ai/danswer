@@ -93,9 +93,6 @@ export function AssistantEditor({
   const [iconShape, setIconShape] = useState<GridShape | null>(null);
   const [iconColor, setIconColor] = useState<string | null>(null);
 
-  // const [iconShape, setIconShape] = useState(generateRandomShape());
-  // const [iconColor, setIconColor] = useState("#FF6FBF"); // Default color
-
   const colorOptions = ["#FF6FBF", "#6FB1FF", "#B76FFF", "#FFB56F", "#6FFF8D"];
 
   const regenerateIcon = () => {
@@ -506,54 +503,6 @@ export function AssistantEditor({
                     )}
                   </div>
                 </div>
-                {/* <div className="mb-6">
-                  <div className="flex gap-x-2 items-center">
-                    <div className="block font-medium text-base">
-                      Assistant Icon{" "}
-                    </div>
-                    <TooltipProvider delayDuration={50}>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <FiInfo size={12} />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" align="center">
-                          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                            Choose an icon to visually represent your Assistant
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <div className="my-1 flex items-center space-x-2">
-                    {createSVG(
-                      { encodedGrid: iconShape.encodedGrid, filledSquares: 0 },
-                      iconColor
-                    )}
-                  </div>
-                  <div className="my-4 flex gap-x-2 items-center">
-                    <Button
-                      onClick={regenerateIcon}
-                      color="blue"
-                      size="xs"
-                      type="button"
-                    >
-                      Regenerate Shape
-                    </Button>
-                    <div className="flex space-x-3">
-                      {colorOptions.map((color) => (
-                        <div
-                          key={color}
-                          className={`w-6 h-6 rounded-full cursor-pointer ${color === iconColor
-                            ? "ring-2 ring-offset-2 ring-blue-500"
-                            : ""
-                            }`}
-                          style={{ backgroundColor: color }}
-                          onClick={() => setIconColor(color)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div> */}
                 <TextFormField
                   tooltip="Used for identifying assistants and their use cases."
                   name="description"
