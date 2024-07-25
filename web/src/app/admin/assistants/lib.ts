@@ -143,8 +143,6 @@ export async function createPersona(
   personaCreationRequest: PersonaCreationRequest
 ): Promise<[Response, Response | null]> {
   // first create prompt
-  console.log("creating!!!!");
-  console.log(personaCreationRequest);
   const createPromptResponse = await createPrompt({
     personaName: personaCreationRequest.name,
     systemPrompt: personaCreationRequest.system_prompt,

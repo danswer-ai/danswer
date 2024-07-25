@@ -86,7 +86,6 @@ export async function fetchChatData(searchParams: {
     string | null,
   ];
 
-  console.log(rawAssistantsList);
   const chatSessionsResponse = results[5] as Response | null;
 
   const tagsResponse = results[6] as Response | null;
