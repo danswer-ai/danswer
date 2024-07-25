@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  generateRandomIconShape,
-  GridShape,
-  createSVG,
-} from "@/lib/assistantIconUtils";
+import { generateRandomIconShape, createSVG } from "@/lib/assistantIconUtils";
 
 import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
 import { Button, Divider, Italic, Text } from "@tremor/react";
@@ -27,12 +23,7 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { Bubble } from "@/components/Bubble";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
-import {
-  GroupsIcon,
-  SwapIcon,
-  TrashIcon,
-  UndoIcon,
-} from "@/components/icons/icons";
+import { GroupsIcon, SwapIcon } from "@/components/icons/icons";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { useUserGroups } from "@/lib/hooks";
@@ -55,13 +46,7 @@ import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";
 import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
-import { FaPlus, FaSwatchbook } from "react-icons/fa";
-import {
-  IconImageSelection,
-  IconImageUpload,
-  ImageUpload,
-} from "@/app/ee/admin/whitelabeling/ImageUpload";
-import { buildImgUrl } from "@/app/chat/files/images/utils";
+import { IconImageSelection } from "@/components/assistants/AssistantIconCreation";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");

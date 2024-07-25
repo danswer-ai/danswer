@@ -146,7 +146,7 @@ function buildPersonaAPIBody(
 export async function uploadFile(file: File): Promise<string | null> {
   const formData = new FormData();
   formData.append("file", file);
-  const response = await fetch("/api/chat/upload-file", {
+  const response = await fetch("/api/admin/persona/upload-image", {
     method: "POST",
     body: formData,
   });
