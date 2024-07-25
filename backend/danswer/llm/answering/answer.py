@@ -245,10 +245,17 @@ class Answer:
             ]
 
             if not known_tools_by_name:
-                logger.warning("Tool call requested with unknown name field")
-                continue
-
-            tool = known_tools_by_name[0]
+                logger.error(
+                    "Tool call requested with unknown name field. \n"
+                    f"self.tools: {self.tools}"
+                    f"tool_call_request: {tool_call_request}"
+                )
+                if self.tools:
+                    tool = self.tools[0]
+                else:
+                    continue
+            else:
+                tool = known_tools_by_name[0]
             tool_args = (
                 self.force_use_tool.args
                 if self.force_use_tool.tool_name == tool.name
