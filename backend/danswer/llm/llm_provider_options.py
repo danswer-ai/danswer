@@ -84,7 +84,7 @@ def fetch_available_well_known_llms() -> list[WellKnownLLMProviderDescriptor]:
             custom_config_keys=[],
             llm_names=fetch_models_for_provider(OPENAI_PROVIDER_NAME),
             default_model="gpt-4",
-            default_fast_model="gpt-3.5-turbo",
+            default_fast_model="gpt-4o-mini",
         ),
         WellKnownLLMProviderDescriptor(
             name=ANTHROPIC_PROVIDER_NAME,
