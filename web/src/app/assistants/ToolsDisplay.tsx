@@ -36,7 +36,7 @@ export function ToolsDisplay({ tools }: { tools: ToolSnapshot[] }) {
   );
 }
 
-export function AsisstantTools({
+export function AssistantTools({
   assistant,
   list,
 }: {
@@ -57,9 +57,9 @@ export function AsisstantTools({
         <>
           {assistant.tools.map((tool, ind) => {
             if (tool.name === "SearchTool") {
-              return <FiSearch className="ml-1 h-3 w-3 my-auto" />;
+              return <FiSearch key={ind} className="ml-1 h-3 w-3 my-auto" />;
             } else if (tool.name === "ImageGenerationTool") {
-              return <FiImage className="ml-1 h-3 w-3 my-auto" />;
+              return <FiImage key={ind} className="ml-1 h-3 w-3 my-auto" />;
             }
           })}
 

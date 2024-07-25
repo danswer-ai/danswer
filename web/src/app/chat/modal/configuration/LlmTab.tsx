@@ -78,6 +78,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
             if (preferred) {
               return (
                 <button
+                  key={index}
                   className={`w-full py-1.5 px-2  text-sm  ${defaultLlmName == name ? "bg-background-200" : "bg-background-100/50 hover:bg-background-100"} text-left  rounded`}
                   onClick={() => {
                     setLlmOverride(destructureValue(value));

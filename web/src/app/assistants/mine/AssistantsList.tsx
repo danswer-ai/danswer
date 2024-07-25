@@ -34,7 +34,7 @@ import { AssistantSharingModal } from "./AssistantSharingModal";
 import { AssistantSharedStatusDisplay } from "../AssistantSharedStatus";
 import useSWR from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { AsisstantTools, ToolsDisplay } from "../ToolsDisplay";
+import { AssistantTools, ToolsDisplay } from "../ToolsDisplay";
 import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
 
 function AssistantListItem({
@@ -101,7 +101,7 @@ function AssistantListItem({
             <div className="mt-2 flex items-center gap-x-3">
               <AssistantSharedStatusDisplay assistant={assistant} user={user} />
               {assistant.tools.length != 0 && (
-                <AsisstantTools list assistant={assistant} />
+                <AssistantTools list assistant={assistant} />
               )}
             </div>
           </div>

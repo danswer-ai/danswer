@@ -15,7 +15,7 @@ import {
 } from "@/lib/assistants/updateAssistantPreferences";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
-import { AsisstantTools, ToolsDisplay } from "../ToolsDisplay";
+import { AssistantTools, ToolsDisplay } from "../ToolsDisplay";
 
 export function AssistantsGallery({
   assistants,
@@ -195,7 +195,7 @@ export function AssistantsGallery({
                 Author: {assistant.owner?.email || "Danswer"}
               </p>
               {assistant.tools.length > 0 && (
-                <AsisstantTools list assistant={assistant} />
+                <AssistantTools list assistant={assistant} />
               )}
             </div>
           ))}

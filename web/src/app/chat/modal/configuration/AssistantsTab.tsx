@@ -1,29 +1,12 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
-import { AsisstantTools } from "@/app/assistants/ToolsDisplay";
+import { AssistantTools } from "@/app/assistants/ToolsDisplay";
 import { Bubble } from "@/components/Bubble";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
-
-import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
 import { getDisplayNameForModel } from "@/lib/hooks";
 import { getFinalLLM } from "@/lib/llm/utils";
-import {
-  Popover,
-  PopoverArrow,
-  PopoverClose,
-  PopoverContent,
-  PopoverPortal,
-  PopoverTrigger,
-} from "@radix-ui/react-popover";
 import React from "react";
-import { FaPlus } from "react-icons/fa";
-import {
-  FiBookmark,
-  FiImage,
-  FiMoreHorizontal,
-  FiPlus,
-  FiSearch,
-} from "react-icons/fi";
+import { FiBookmark, FiPlus } from "react-icons/fi";
 
 interface AssistantsTabProps {
   selectedAssistant: Persona;
@@ -116,7 +99,7 @@ const AssistantCard = ({
             assistant.llm_model_version_override || llmName
           )}
         </div>
-        <AsisstantTools assistant={assistant} />
+        <AssistantTools assistant={assistant} />
       </div>
     </div>
   );
