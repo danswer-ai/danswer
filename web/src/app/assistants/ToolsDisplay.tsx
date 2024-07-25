@@ -61,6 +61,7 @@ export function AssistantTools({
             if (tool.name === "SearchTool") {
               return (
                 <div
+                  key={ind}
                   className={`
                     px-1.5
                     py-1
@@ -82,16 +83,17 @@ export function AssistantTools({
             } else if (tool.name === "ImageGenerationTool") {
               return (
                 <div
+                  key={ind}
                   className={`
-                px-1.5
-                py-1
-                rounded-lg 
-                border
-                border-border 
-                w-fit 
-                flex
-                ${hovered ? "bg-background-300" : list ? "bg-background-125" : "bg-background-100"}
-                cursor-pointer`}
+                    px-1.5
+                    py-1
+                    rounded-lg 
+                    border
+                    border-border 
+                    w-fit 
+                    flex
+                    ${hovered ? "bg-background-300" : list ? "bg-background-125" : "bg-background-100"}
+                    cursor-pointer`}
                 >
                   <div className="flex items-center gap-x-1">
                     <FiImage
@@ -105,17 +107,18 @@ export function AssistantTools({
             } else {
               return (
                 <div
+                  key={ind}
                   className={`
-              px-1.5
-              py-1
-              rounded-lg 
-              border
-              border-border 
-              w-fit 
-              flex
-              items-center
-              ${hovered ? "bg-background-300" : list ? "bg-background-125" : "bg-background-100"}
-              cursor-pointer`}
+                  px-1.5
+                  py-1
+                  rounded-lg 
+                  border
+                  border-border 
+                  w-fit 
+                  flex
+                  items-center
+                  ${hovered ? "bg-background-300" : list ? "bg-background-125" : "bg-background-100"}
+                  cursor-pointer`}
                 >
                   <div className="flex gap-x-1">{tool.name}</div>
                 </div>

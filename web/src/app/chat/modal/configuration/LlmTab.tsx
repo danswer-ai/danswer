@@ -65,9 +65,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
         }
       );
     });
-    console.log("zzz");
 
-    console.log(llmProviders);
     return (
       <div className="w-full">
         <div className="flex w-full content-center gap-x-2">

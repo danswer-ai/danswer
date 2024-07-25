@@ -80,7 +80,6 @@ export function LLMProviderUpdateForm({
       [],
   };
 
-  console.log(defaultModelsByProvider[llmProviderDescriptor.name]);
   // Setup validation schema if required
   const validationSchema = Yup.object({
     name: Yup.string().required("Display Name is required"),
