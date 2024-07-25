@@ -1,10 +1,11 @@
 "use client";
 
 import {
-  createSVG,
-  generateRandomShape,
+  generateRandomIconShape,
   GridShape,
+  createSVG,
 } from "@/lib/assistantIconUtils";
+
 import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
 import { Button, Divider, Italic, Text } from "@tremor/react";
 import {
@@ -96,7 +97,7 @@ export function AssistantEditor({
   const colorOptions = ["#FF6FBF", "#6FB1FF", "#B76FFF", "#FFB56F", "#6FFF8D"];
 
   const regenerateIcon = () => {
-    setIconShape(generateRandomShape());
+    setIconShape(generateRandomIconShape());
   };
 
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
@@ -206,6 +207,9 @@ export function AssistantEditor({
       existingPersona?.llm_model_version_override ?? null,
     starter_messages: existingPersona?.starter_messages ?? [],
     enabled_tools_map: enabledToolsMap,
+    icon_color: existingPersona?.icon_color ?? null,
+    icon_shape: existingPersona?.icon_shape ?? null,
+
     //   search_tool_enabled: existingPersona
     //   ? personaCurrentToolIds.includes(searchTool!.id)
     //   : ccPairs.length > 0,
@@ -246,6 +250,8 @@ export function AssistantEditor({
                 message: Yup.string().required(),
               })
             ),
+            icon_color: Yup.string().nullable(),
+            icon_shape: Yup.string().nullable(),
             // EE Only
             groups: Yup.array().of(Yup.number()),
           })
@@ -332,8 +338,6 @@ export function AssistantEditor({
               id: existingPersona.id,
               existingPromptId: existingPrompt?.id,
               ...values,
-              icon_color: iconColor,
-              icon_shape: iconShape ? iconShape.encodedGrid : null,
               num_chunks: numChunks,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
@@ -344,8 +348,6 @@ export function AssistantEditor({
             [promptResponse, personaResponse] = await createPersona({
               ...values,
               num_chunks: numChunks,
-              icon_color: iconColor,
-              icon_shape: iconShape ? iconShape.encodedGrid : null,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,
@@ -446,6 +448,89 @@ export function AssistantEditor({
                     </TooltipProvider>
                   </div>
                   <div className="my-1 flex items-center space-x-2">
+                    {values.icon_shape && values.icon_color ? (
+                      createSVG(
+                        {
+                          encodedGrid: values.icon_shape,
+                          filledSquares: 0,
+                        },
+                        values.icon_color
+                      )
+                    ) : (
+                      <p className="font-bold text-gray-800">No Icon</p>
+                    )}
+                  </div>
+                  <div className="mb-2 flex gap-x-2 items-center">
+                    <Button
+                      onClick={() => {
+                        if (values.icon_shape && values.icon_color) {
+                          setFieldValue("icon_shape", null);
+                          setFieldValue("icon_color", null);
+                        } else {
+                          const newShape = generateRandomIconShape();
+                          setFieldValue("icon_shape", newShape.encodedGrid);
+                          setFieldValue("icon_color", colorOptions[0]);
+                        }
+                      }}
+                      color="blue"
+                      size="xs"
+                      type="button"
+                    >
+                      {values.icon_shape && values.icon_color
+                        ? "Remove Icon"
+                        : "Generate Icon"}
+                    </Button>
+                    {values.icon_shape && values.icon_color && (
+                      <>
+                        <Button
+                          onClick={() => {
+                            const newShape = generateRandomIconShape();
+                            setFieldValue("icon_shape", newShape.encodedGrid);
+                          }}
+                          color="blue"
+                          size="xs"
+                          type="button"
+                        >
+                          Regenerate Shape
+                        </Button>
+                        <div className="flex space-x-3">
+                          {colorOptions.map((color) => (
+                            <div
+                              key={color}
+                              className={`w-6 h-6 rounded-full cursor-pointer ${
+                                color === values.icon_color
+                                  ? "ring-2 ring-offset-2 ring-blue-500"
+                                  : ""
+                              }`}
+                              style={{ backgroundColor: color }}
+                              onClick={() => setFieldValue("icon_color", color)}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {/* <div className="mb-6">
+                  <div className="flex gap-x-2 items-center">
+                    <div className="block font-medium text-base">
+                      Assistant Icon{" "}
+                    </div>
+                    <TooltipProvider delayDuration={50}>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <FiInfo size={12} />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center">
+                          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                            Choose an icon to visually represent your Assistant
+                            (optional)
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="my-1 flex items-center space-x-2">
                     {iconShape && iconColor ? (
                       createSVG(
                         {
@@ -489,11 +574,10 @@ export function AssistantEditor({
                           {colorOptions.map((color) => (
                             <div
                               key={color}
-                              className={`w-6 h-6 rounded-full cursor-pointer ${
-                                color === iconColor
+                              className={`w-6 h-6 rounded-full cursor-pointer ${color === iconColor
                                   ? "ring-2 ring-offset-2 ring-blue-500"
                                   : ""
-                              }`}
+                                }`}
                               style={{ backgroundColor: color }}
                               onClick={() => setIconColor(color)}
                             />
@@ -502,7 +586,7 @@ export function AssistantEditor({
                       </>
                     )}
                   </div>
-                </div>
+                </div> */}
                 <TextFormField
                   tooltip="Used for identifying assistants and their use cases."
                   name="description"

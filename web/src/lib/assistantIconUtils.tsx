@@ -3,25 +3,24 @@ export interface GridShape {
   filledSquares: number;
 }
 
-export function generateRandomShape(): GridShape {
+export function generateRandomIconShape(): GridShape {
   const grid: boolean[][] = Array(4)
     .fill(null)
     .map(() => Array(4).fill(false));
 
-  // Fill the center four squares (at least 3)
   const centerSquares = [
     [1, 1],
     [1, 2],
     [2, 1],
     [2, 2],
   ];
+
   shuffleArray(centerSquares);
   const centerFillCount = Math.floor(Math.random() * 2) + 3; // 3 or 4
   for (let i = 0; i < centerFillCount; i++) {
     const [row, col] = centerSquares[i];
     grid[row][col] = true;
   }
-
   // Randomly fill remaining squares up to 10 total
   const remainingSquares = [];
   for (let row = 0; row < 4; row++) {
