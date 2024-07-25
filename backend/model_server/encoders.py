@@ -190,7 +190,7 @@ def get_embedding_model(
 
     if model_name not in _GLOBAL_MODELS_DICT:
         logger.info(f"Loading {model_name}")
-        model = SentenceTransformer(model_name)
+        model = SentenceTransformer(model_name, trust_remote_code=True)
         model.max_seq_length = max_context_length
         _GLOBAL_MODELS_DICT[model_name] = model
     elif max_context_length != _GLOBAL_MODELS_DICT[model_name].max_seq_length:
