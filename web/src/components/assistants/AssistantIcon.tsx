@@ -5,9 +5,6 @@ import { createSVG } from "@/lib/assistantIconUtils";
 import { buildImgUrl } from "@/app/chat/files/images/utils";
 
 export function darkerGenerateColorFromId(id: string): string {
-  if (id == "0") {
-    return "#262626";
-  }
   const hash = Array.from(id).reduce(
     (acc, char) => acc + char.charCodeAt(0),
     0
