@@ -13,7 +13,7 @@ import { useState } from "react";
 import { Bubble } from "@/components/Bubble";
 import { GroupsIcon } from "@/components/icons/icons";
 import { useSWRConfig } from "swr";
-import { useUserGroups } from "@/lib/hooks";
+import { getDisplayNameForModel, useUserGroups } from "@/lib/hooks";
 import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "./interfaces";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
@@ -270,7 +270,7 @@ export function LLMProviderUpdateForm({
               subtext="The model to use by default for this provider unless otherwise specified."
               label="Default Model"
               options={llmProviderDescriptor.llm_names.map((name) => ({
-                name,
+                name: getDisplayNameForModel(name),
                 value: name,
               }))}
               maxHeight="max-h-56"
@@ -292,7 +292,7 @@ export function LLMProviderUpdateForm({
                 the Default Model configured above.`}
               label="[Optional] Fast Model"
               options={llmProviderDescriptor.llm_names.map((name) => ({
-                name,
+                name: getDisplayNameForModel(name),
                 value: name,
               }))}
               includeDefault

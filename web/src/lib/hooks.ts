@@ -213,21 +213,23 @@ export const useUserGroups = (): {
 
 const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   // OpenAI models
-  "gpt-4": "GPT-4",
-  "gpt-4-0314": "GPT-4 (March 2023)",
-  "gpt-4-0613": "GPT-4 (June 2023)",
-  "gpt-4-32k-0314": "GPT-4 32k (March 2023)",
-  "gpt-4-turbo": "GPT-4 Turbo",
-  "gpt-4-turbo-preview": "GPT-4 Turbo (Preview)",
-  "gpt-4-1106-preview": "GPT-4 Turbo (November 2023)",
-  "gpt-4-vision-preview": "GPT-4 Vision (Preview)",
-  "gpt-3.5-turbo": "GPT-3.5 Turbo",
-  "gpt-3.5-turbo-0125": "GPT-3.5 Turbo (January 2024)",
-  "gpt-3.5-turbo-1106": "GPT-3.5 Turbo (November 2023)",
-  "gpt-3.5-turbo-16k": "GPT-3.5 Turbo 16k",
-  "gpt-3.5-turbo-0613": "GPT-3.5 Turbo (June 2023)",
-  "gpt-3.5-turbo-16k-0613": "GPT-3.5 Turbo 16k (June 2023)",
-  "gpt-3.5-turbo-0301": "GPT-3.5 Turbo (March 2023)",
+  "gpt-4": "GPT 4",
+  "gpt-4o": "GPT 4o",
+  "gpt-4o-mini": "GPT 4o Mini",
+  "gpt-4-0314": "GPT 4 (March 2023)",
+  "gpt-4-0613": "GPT 4 (June 2023)",
+  "gpt-4-32k-0314": "GPT 4 32k (March 2023)",
+  "gpt-4-turbo": "GPT 4 Turbo",
+  "gpt-4-turbo-preview": "GPT 4 Turbo (Preview)",
+  "gpt-4-1106-preview": "GPT 4 Turbo (November 2023)",
+  "gpt-4-vision-preview": "GPT 4 Vision (Preview)",
+  "gpt-3.5-turbo": "GPT 3.5 Turbo",
+  "gpt-3.5-turbo-0125": "GPT 3.5 Turbo (January 2024)",
+  "gpt-3.5-turbo-1106": "GPT 3.5 Turbo (November 2023)",
+  "gpt-3.5-turbo-16k": "GPT 3.5 Turbo 16k",
+  "gpt-3.5-turbo-0613": "GPT 3.5 Turbo (June 2023)",
+  "gpt-3.5-turbo-16k-0613": "GPT 3.5 Turbo 16k (June 2023)",
+  "gpt-3.5-turbo-0301": "GPT 3.5 Turbo (March 2023)",
 
   // Anthropic models
   "claude-3-opus-20240229": "Claude 3 Opus",
@@ -236,6 +238,7 @@ const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   "claude-2.1": "Claude 2.1",
   "claude-2.0": "Claude 2.0",
   "claude-instant-1.2": "Claude Instant 1.2",
+  "claude-3-5-sonnet-20240620": "Claude 3.5 Sonnet",
 };
 
 export function getDisplayNameForModel(modelName: string): string {
