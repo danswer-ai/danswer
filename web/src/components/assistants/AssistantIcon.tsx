@@ -48,7 +48,7 @@ export function AssistantIcon({
     <Tooltip delayDuration={1000} content={assistant.description}>
       {assistant.icon_shape && assistant.icon_color ? (
         <div
-          className={`flex-none
+          className={`flex-none 
         ${border && "border border-.5 border-border-strong"}
         ${(!size || size === "large") && "w-12 h-12"}
         ${size === "small" && "w-6 h-6"} 
