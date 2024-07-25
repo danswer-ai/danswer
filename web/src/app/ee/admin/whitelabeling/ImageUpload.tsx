@@ -145,8 +145,6 @@ export function IconImageUpload({
           }
           setTmpImageUrl(URL.createObjectURL(acceptedFiles[0]));
           updateFile(acceptedFiles[0]);
-          console.log("UPDATING FILE TO ");
-          console.log(acceptedFiles[0]);
           setDragActive(false);
         }}
         onDragLeave={() => setDragActive(false)}

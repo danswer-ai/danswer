@@ -99,8 +99,6 @@ def create_persona(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> PersonaSnapshot:
-    print("CREAITN GPEROSNA")
-    print(create_persona_request)
     return create_update_persona(
         persona_id=None,
         create_persona_request=create_persona_request,

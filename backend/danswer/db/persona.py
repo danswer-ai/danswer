@@ -335,8 +335,6 @@ def upsert_persona(
     icon_shape: int | None = None,
     uploaded_image_id: str | None = None,
 ) -> Persona:
-    print("UPSERT PERSONA:")
-    print(uploaded_image_id)
     if persona_id is not None:
         persona = db_session.query(Persona).filter_by(id=persona_id).first()
     else:
