@@ -52,7 +52,7 @@ export function AssistantTools({
         Powers:
       </span>{" "}
       {assistant.tools.length == 0 ? (
-        <p className="ml-2">None</p>
+        <p className="ml-1">None</p>
       ) : (
         <>
           {assistant.tools.map((tool, ind) => {

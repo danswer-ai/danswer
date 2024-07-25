@@ -1,10 +1,5 @@
 import { useChatContext } from "@/components/context/ChatContext";
-import {
-  getDisplayNameForModel,
-  isPreferredModel,
-  LlmOverride,
-  LlmOverrideManager,
-} from "@/lib/hooks";
+import { getDisplayNameForModel, LlmOverrideManager } from "@/lib/hooks";
 import React, { forwardRef, useCallback, useRef, useState } from "react";
 import { debounce } from "lodash";
 import { DefaultDropdown } from "@/components/Dropdown";
@@ -19,12 +14,16 @@ import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
 interface LlmTabProps {
   llmOverrideManager: LlmOverrideManager;
   currentAssistant: Persona;
+  currentLlm: string;
   chatSessionId?: number;
   close?: () => void;
 }
 
 export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
-  ({ llmOverrideManager, currentAssistant, chatSessionId, close }, ref) => {
+  (
+    { llmOverrideManager, currentAssistant, chatSessionId, currentLlm, close },
+    ref
+  ) => {
     const { llmProviders } = useChatContext();
     const { llmOverride, setLlmOverride, temperature, setTemperature } =
       llmOverrideManager;
@@ -52,48 +51,49 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
     );
     const currentModelName = llmOverride.modelName || defaultLlmName;
 
-    const llmOptions: { name: string; value: string; preferred: boolean }[] =
-      [];
-    llmProviders.forEach((llmProvider) => {
-      llmProvider.model_names.forEach((modelName) => {
-        llmOptions.push({
-          name: modelName,
-          value: structureValue(
-            llmProvider.name,
-            llmProvider.provider,
-            modelName
-          ),
-          preferred: isPreferredModel(modelName),
-        });
-      });
-    });
+    const llmOptions: { name: string; value: string }[] = [];
 
+    llmProviders.forEach((llmProvider) => {
+      (llmProvider.display_model_names || llmProvider.model_names).forEach(
+        (modelName) => {
+          llmOptions.push({
+            name: modelName,
+            value: structureValue(
+              llmProvider.name,
+              llmProvider.provider,
+              modelName
+            ),
+          });
+        }
+      );
+    });
+    console.log("zzz");
+
+    console.log(llmProviders);
     return (
       <div className="w-full">
         <div className="flex w-full content-center gap-x-2">
           <label className="block text-sm font-medium mb-2">Choose Model</label>
         </div>
         <div className="max-h-[300px] flex flex-col gap-y-1 overflow-y-scroll">
-          {llmOptions.map(({ name, value, preferred }, index) => {
-            if (preferred) {
-              return (
-                <button
-                  key={index}
-                  className={`w-full py-1.5 px-2  text-sm  ${defaultLlmName == name ? "bg-background-200" : "bg-background-100/50 hover:bg-background-100"} text-left  rounded`}
-                  onClick={() => {
-                    setLlmOverride(destructureValue(value));
-                    if (chatSessionId) {
-                      updateModelOverrideForChatSession(
-                        chatSessionId,
-                        value as string
-                      );
-                    }
-                  }}
-                >
-                  {getDisplayNameForModel(name)}
-                </button>
-              );
-            }
+          {llmOptions.map(({ name, value }, index) => {
+            return (
+              <button
+                key={index}
+                className={`w-full py-1.5 px-2  text-sm  ${currentLlm == name ? "bg-background-200" : "bg-background-100/50 hover:bg-background-100"} text-left  rounded`}
+                onClick={() => {
+                  setLlmOverride(destructureValue(value));
+                  if (chatSessionId) {
+                    updateModelOverrideForChatSession(
+                      chatSessionId,
+                      value as string
+                    );
+                  }
+                }}
+              >
+                {getDisplayNameForModel(name)}
+              </button>
+            );
           })}
         </div>
         <div className="mt-4">
@@ -105,9 +105,6 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
               {isTemperatureExpanded ? "▼" : "►"}
             </span>
             <span>Temperature</span>
-            <CustomTooltip content="Adjust the creativity level of the AI responses">
-              <InfoIcon className="ml-2 text-gray-400" />
-            </CustomTooltip>
           </button>
 
           {isTemperatureExpanded && (

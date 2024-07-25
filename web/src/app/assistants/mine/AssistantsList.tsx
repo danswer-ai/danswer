@@ -92,7 +92,7 @@ function AssistantListItem({
           <div className="w-3/4">
             <div className="flex items-center">
               <AssistantIcon assistant={assistant} />
-              <h2 className="text-xl font-semibold mb-2 my-auto ml-2">
+              <h2 className="text-xl font-semibold my-auto ml-2">
                 {assistant.name}
               </h2>
             </div>

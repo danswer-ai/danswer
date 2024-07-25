@@ -8,6 +8,7 @@ import {
   SelectorFormField,
   TextFormField,
   BooleanFormField,
+  MultiSelectField,
 } from "@/components/admin/connectors/Field";
 import { useState } from "react";
 import { Bubble } from "@/components/Bubble";
@@ -69,6 +70,7 @@ export function LLMProviderUpdateForm({
       ),
     is_public: existingLlmProvider?.is_public ?? true,
     groups: existingLlmProvider?.groups ?? [],
+    display_model_names: existingLlmProvider?.display_model_names ?? [],
   };
 
   const [validatedConfig, setValidatedConfig] = useState(
@@ -109,6 +111,7 @@ export function LLMProviderUpdateForm({
     // EE Only
     is_public: Yup.boolean().required(),
     groups: Yup.array().of(Yup.number()),
+    display_model_names: Yup.array().of(Yup.string()),
   });
 
   return (
@@ -318,6 +321,21 @@ export function LLMProviderUpdateForm({
 
           {showAdvancedOptions && (
             <>
+              <div className="w-full">
+                <MultiSelectField
+                  name="display_model_names"
+                  label="Display Models"
+                  subtext="Select the models to make available to users. Unselected models will not be available."
+                  options={llmProviderDescriptor.llm_names.map((name) => ({
+                    value: name,
+                    label: getDisplayNameForModel(name),
+                  }))}
+                  onChange={(selected) =>
+                    setFieldValue("display_model_names", selected)
+                  }
+                />
+              </div>
+
               {isPaidEnterpriseFeaturesEnabled && userGroups && (
                 <>
                   <BooleanFormField

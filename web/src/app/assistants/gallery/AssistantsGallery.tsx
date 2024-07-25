@@ -99,7 +99,6 @@ export function AssistantsGallery({
                   className="
                   text-xl
                   font-semibold
-                  mb-2
                   my-auto
                   ml-2
                   text-strong

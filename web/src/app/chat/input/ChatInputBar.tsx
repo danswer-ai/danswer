@@ -435,6 +435,13 @@ export function ChatInputBar({
                 tab
                 content={(close, ref) => (
                   <LlmTab
+                    currentLlm={
+                      llmOverrideManager.llmOverride.modelName ||
+                      (selectedAssistant
+                        ? selectedAssistant.llm_model_version_override ||
+                          llmName
+                        : llmName)
+                    }
                     close={close}
                     ref={ref}
                     llmOverrideManager={llmOverrideManager}

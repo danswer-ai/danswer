@@ -241,17 +241,6 @@ const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   "claude-3-5-sonnet-20240620": "Claude 3.5 Sonnet",
 };
 
-const PREFERRED_MODELS: string[] = [
-  "gpt-4",
-  "gpt-4-turbo",
-  "claude-3-opus-20240229",
-  "claude-3-sonnet-20240229",
-];
-
 export function getDisplayNameForModel(modelName: string): string {
   return MODEL_DISPLAY_NAMES[modelName] || modelName;
-}
-
-export function isPreferredModel(modelName: string): boolean {
-  return PREFERRED_MODELS.includes(modelName);
 }
