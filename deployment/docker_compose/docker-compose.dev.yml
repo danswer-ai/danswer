@@ -1,4 +1,11 @@
 version: '3'
+
+networks:
+  internal:
+    internal: true
+  external:
+    internal: false
+
 services:
   api_server:
     image: danswer/danswer-backend:latest
@@ -103,6 +110,8 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
+    networks:
+      - internal
 
   background:
     image: danswer/danswer-backend:latest
@@ -205,6 +214,8 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
+    networks:
+      - internal
 
   web_server:
     image: danswer/danswer-web-server:latest
@@ -234,6 +245,8 @@ services:
 
       # Enterprise Edition only
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
+    networks:
+      - internal
 
   inference_model_server:
     image: danswer/danswer-model-server:latest
@@ -260,6 +273,8 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
+    networks:
+      - internal
 
   indexing_model_server:
     image: danswer/danswer-model-server:latest
@@ -287,6 +302,8 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
+    networks:
+      - internal
 
   relational_db:
     image: postgres:15.2-alpine
@@ -298,6 +315,8 @@ services:
       - "5432:5432"
     volumes:
       - db_volume:/var/lib/postgresql/data
+    networks:
+      - internal
 
   # This container name cannot have an underscore in it due to Vespa expectations of the URL
   index:
@@ -313,6 +332,8 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
+    networks:
+      - internal
 
   nginx:
     image: nginx:1.23.4-alpine
@@ -342,7 +363,10 @@ services:
     command: > 
       /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
       && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
-        
+    networks:
+      - internal
+      - external
+
 volumes:
   db_volume:
   vespa_volume: # Created by the container itself
