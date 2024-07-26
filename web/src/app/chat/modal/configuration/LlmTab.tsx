@@ -52,7 +52,6 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
     const llmOptions: { name: string; value: string }[] = [];
     const uniqueModelNames = new Set();
 
-
     // Unique based on "name"
     llmProviders.forEach((llmProvider) => {
       (llmProvider.display_model_names || llmProvider.model_names).forEach(
