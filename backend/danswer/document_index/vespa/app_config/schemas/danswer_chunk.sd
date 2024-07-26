@@ -14,7 +14,7 @@ schema DANSWER_CHUNK_NAME {
         # Must have an additional field for whether to skip title embeddings
         # This information cannot be extracted from either the title field nor title embedding
         field skip_title type bool {
-            indexing: attribute
+            indexing: summary | attribute
         }
         # May not always match the `semantic_identifier` e.g. for Slack docs the
         # `semantic_identifier` will be the channel name, but the `title` will be empty
@@ -157,7 +157,7 @@ schema DANSWER_CHUNK_NAME {
         function vector_score() {
             expression {
                 # If no title, the full vector score comes from the content embedding
-                (query(title_content_ratio) * if(attribute(skip_title), closeness(field, embeddings), closeness(field, title_embedding))) +
+                (query(title_content_ratio) * max(closeness(field, embeddings), closeness(field, title_embedding))) +
                 ((1 - query(title_content_ratio)) * closeness(field, embeddings))
             }
         }

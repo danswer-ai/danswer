@@ -734,6 +734,7 @@ class VespaIndex(DocumentIndex):
         f"{SOURCE_LINKS}, "
         f"{SEMANTIC_IDENTIFIER}, "
         f"{TITLE}, "
+        f"{SKIP_TITLE}, "
         f"{SECTION_CONTINUATION}, "
         f"{BOOST}, "
         f"{HIDDEN}, "
