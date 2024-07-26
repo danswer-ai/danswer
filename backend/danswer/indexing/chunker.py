@@ -136,6 +136,9 @@ def chunk_document(
         chunk_overlap=subsection_overlap,
     )
 
+    # This could be empty even though we always have a title for embedding/bm25
+    # this title is inserted into the chunks themselves, if there is not a good title,
+    # then we don't want to add anything additional to the front of the chunk
     title = extract_blurb(document.get_title_for_document_index() or "", blurb_splitter)
     title_prefix = title + RETURN_SEPARATOR if title else ""
     title_tokens = len(tokenizer.tokenize(title_prefix))

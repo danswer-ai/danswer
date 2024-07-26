@@ -54,7 +54,7 @@ def should_apply_llm_based_relevance_filter(query: SearchQuery) -> bool:
 
 def cleanup_chunks(chunks: list[InferenceChunkUncleaned]) -> list[InferenceChunk]:
     def _remove_title(chunk: InferenceChunkUncleaned) -> str:
-        if not chunk.title or not chunk.content:
+        if not chunk.title or not chunk.content or chunk.skip_title:
             return chunk.content
 
         if chunk.content.startswith(chunk.title):

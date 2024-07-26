@@ -196,6 +196,11 @@ class InferenceChunkUncleaned(InferenceChunk):
     title: str | None  # Separate from Semantic Identifier though often same
     metadata_suffix: str | None
 
+    # If true the chunk does not have a title in front
+    # The document title is not removed from the chunk since it is just from
+    # the chunk itself
+    skip_title: bool
+
     def to_inference_chunk(self) -> InferenceChunk:
         # Create a dict of all fields except 'title' and 'metadata_suffix'
         # Assumes the cleaning has already been applied and just needs to translate to the right type

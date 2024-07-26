@@ -47,7 +47,7 @@ from danswer.configs.constants import RECENCY_BIAS
 from danswer.configs.constants import SECONDARY_OWNERS
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
-from danswer.configs.constants import SKIP_TITLE_EMBEDDING
+from danswer.configs.constants import SKIP_TITLE
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.constants import TITLE
@@ -351,7 +351,7 @@ def _index_vespa_chunk(
         CHUNK_ID: chunk.chunk_id,
         BLURB: remove_invalid_unicode_chars(chunk.blurb),
         TITLE: remove_invalid_unicode_chars(title) if title else None,
-        SKIP_TITLE_EMBEDDING: not title,
+        SKIP_TITLE: not document.get_title_for_document_index(),
         # For the BM25 index, the keyword suffix is used, the vector is already generated with the more
         # natural language representation of the metadata section
         CONTENT: remove_invalid_unicode_chars(
@@ -616,6 +616,7 @@ def _vespa_hit_to_inference_chunk(
         document_id=fields[DOCUMENT_ID],
         source_type=fields[SOURCE_TYPE],
         title=fields.get(TITLE),
+        skip_title=fields.get(SKIP_TITLE, False),
         semantic_identifier=fields[SEMANTIC_IDENTIFIER],
         boost=fields.get(BOOST, 1),
         recency_bias=fields.get("matchfeatures", {}).get(RECENCY_BIAS, 1.0),
