@@ -19,7 +19,8 @@ import {
   SelectorFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
-import { getDisplayNameForModel, usePopup } from "@/components/admin/connectors/Popup";
+import { usePopup } from "@/components/admin/connectors/Popup";
+import { getDisplayNameForModel } from "@/lib/hooks";
 import { Bubble } from "@/components/Bubble";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
