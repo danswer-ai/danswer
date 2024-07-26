@@ -50,18 +50,24 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
     );
 
     const llmOptions: { name: string; value: string }[] = [];
+    const uniqueModelNames = new Set();
 
+
+    // Unique based on "name"
     llmProviders.forEach((llmProvider) => {
       (llmProvider.display_model_names || llmProvider.model_names).forEach(
         (modelName) => {
-          llmOptions.push({
-            name: modelName,
-            value: structureValue(
-              llmProvider.name,
-              llmProvider.provider,
-              modelName
-            ),
-          });
+          if (!uniqueModelNames.has(modelName)) {
+            uniqueModelNames.add(modelName);
+            llmOptions.push({
+              name: modelName,
+              value: structureValue(
+                llmProvider.name,
+                llmProvider.provider,
+                modelName
+              ),
+            });
+          }
         }
       );
     });
