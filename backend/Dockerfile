@@ -71,6 +71,7 @@ RUN apt-get update && \
 RUN python -c "from transformers import AutoTokenizer; \
 AutoTokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1'); \
 AutoTokenizer.from_pretrained('nomic-ai/nomic-bert-2048'); \
+AutoTokenizer.from_pretrained('intfloat/e5-base-v2'); # This is to support transferring from this as the default model \
 "
 
 # Pre-downloading NLTK for setups with limited egress
