@@ -1,15 +1,11 @@
 "use client";
 
-import {
-  NewChatIcon,
-  PlusCircleIcon,
-  TrashIcon,
-} from "@/components/icons/icons";
-import { errorHandlingFetcher, FetchError } from "@/lib/fetcher";
+import { TrashIcon } from "@/components/icons/icons";
+import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 
-import { Button, Card, Title } from "@tremor/react";
+import { Card, Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/lib";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -19,36 +15,28 @@ import { SourceIcon } from "@/components/SourceIcon";
 import { useState } from "react";
 import { submitConnector } from "@/components/admin/connectors/ConnectorForm";
 import { deleteCredential, linkCredential } from "@/lib/credential";
-import { submitFiles } from "./pages/handlers/files";
-import { submitGoogleSite } from "./pages/handlers/google_site";
-import AdvancedFormPage from "./pages/AdvancedFormPage";
-import DynamicConnectionForm from "./pages/CreateConnector";
+import { submitFiles } from "./pages/utils/files";
+import { submitGoogleSite } from "./pages/utils/google_site";
+import AdvancedFormPage from "./pages/Advanced";
+import DynamicConnectionForm from "./pages/Create";
 import CreateCredential from "@/components/credentials/CreateCredential";
 import ModifyCredential from "@/components/credentials/ModifyCredential";
 import { ConnectorIndexingStatus, ValidSources } from "@/lib/types";
-import {
-  Credential,
-  credentialTemplates,
-  GoogleDriveCredentialJson,
-  GoogleDriveServiceAccountCredentialJson,
-} from "@/lib/ccs/credentials";
+import { Credential, credentialTemplates } from "@/lib/ccs/credentials";
 import {
   ConnectionConfiguration,
   connectorConfigs,
 } from "@/lib/ccs/connectors";
 import { Modal } from "@/components/Modal";
-import { ArrowArcLeft, ArrowRight } from "@phosphor-icons/react";
+import { ArrowRight } from "@phosphor-icons/react";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
-import { FaPlus } from "react-icons/fa";
 import { FiPlus } from "react-icons/fi";
-import { getDisplayName } from "next/dist/shared/lib/utils";
-import GDriveMain from "./pages/GoogleDrivePage";
-import { usePublicCredentials } from "@/lib/hooks";
-import { GmailMain } from "./pages/temporary_gmail/gmail/GmailPage";
+import GDriveMain from "./pages/gdrive/GoogleDrivePage";
+import { GmailMain } from "./pages/gmail/GmailPage";
 import {
   useGmailCredentials,
   useGoogleDriveCredentials,
-} from "./pages/temporary_gmail/gmail/utils";
+} from "./pages/utils/hooks";
 
 export type AdvancedConfig = {
   pruneFreq: number | null;
@@ -292,12 +280,7 @@ export default function AddConnector({
           <>
             <Card>
               <Title className="mb-2 text-lg">Select a credential</Title>
-
-              <GDriveMain
-                updateCredential={(credential: Credential<any>) =>
-                  setCurrentCredential(credential)
-                }
-              />
+              <GDriveMain />
             </Card>
             <div className="mt-4 flex w-full justify-end">
               <button

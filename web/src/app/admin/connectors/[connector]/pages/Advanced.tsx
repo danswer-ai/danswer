@@ -2,7 +2,6 @@ import React, { Dispatch, SetStateAction } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { EditingValue } from "@/components/credentials/EditingValue";
-import { last } from "lodash";
 
 const AdvancedFormPage = ({
   setRefreshFreq,

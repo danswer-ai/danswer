@@ -1,110 +1,19 @@
 "use client";
 
-import * as Yup from "yup";
-import { GmailIcon } from "@/components/icons/icons";
-import useSWR, { useSWRConfig } from "swr";
+import useSWR from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { ErrorCallout } from "@/components/ErrorCallout";
 import { LoadingAnimation } from "@/components/Loading";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { HealthCheckBanner } from "@/components/health/healthcheck";
+import { usePopup } from "@/components/admin/connectors/Popup";
 import { ConnectorIndexingStatus } from "@/lib/types";
 import {
   Credential,
   GmailCredentialJson,
   GmailServiceAccountCredentialJson,
 } from "@/lib/ccs/credentials";
-import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
-import { GmailConnectorsTable } from "./GmailConnectorsTable";
-import { gmailConnectorNameBuilder } from "./utils";
 import { GmailOAuthSection, GmailJsonUploadSection } from "./Credential";
 import { usePublicCredentials } from "@/lib/hooks";
-import { Card, Divider, Text, Title } from "@tremor/react";
+import { Title } from "@tremor/react";
 import { GmailConfig } from "@/lib/ccs/connectors";
-
-interface GmailConnectorManagementProps {
-  gmailPublicCredential?: Credential<GmailCredentialJson>;
-  gmailServiceAccountCredential?: Credential<GmailServiceAccountCredentialJson>;
-  gmailConnectorIndexingStatus: ConnectorIndexingStatus<
-    GmailConfig,
-    GmailCredentialJson
-  > | null;
-  gmailConnectorIndexingStatuses: ConnectorIndexingStatus<
-    GmailConfig,
-    GmailCredentialJson
-  >[];
-  credentialIsLinked: boolean;
-  setPopup: (popupSpec: PopupSpec | null) => void;
-}
-
-const GmailConnectorManagement = ({
-  gmailPublicCredential: gmailPublicCredential,
-  gmailServiceAccountCredential: gmailServiceAccountCredential,
-  gmailConnectorIndexingStatuses: gmailConnectorIndexingStatuses,
-  setPopup,
-}: GmailConnectorManagementProps) => {
-  const { mutate } = useSWRConfig();
-
-  const liveCredential = gmailPublicCredential || gmailServiceAccountCredential;
-  if (!liveCredential) {
-    return (
-      <Text>
-        Please authenticate with Gmail as described in Step 2! Once done with
-        that, you can then move on to enable this connector.
-      </Text>
-    );
-  }
-
-  return (
-    <div>
-      <Text>
-        <div className="my-3">
-          {gmailConnectorIndexingStatuses.length > 0 ? (
-            <>
-              Checkout the{" "}
-              <a href="/admin/indexing/status" className="text-blue-500">
-                status page
-              </a>{" "}
-              for the latest indexing status. We fetch the latest mails from
-              Gmail every <b>10</b> minutes.
-            </>
-          ) : (
-            <p className="text-sm mb-2">
-              Fill out the form below to create a connector. We will refresh the
-              latest documents from Gmail every <b>10</b> minutes.
-            </p>
-          )}
-        </div>
-      </Text>
-      {gmailConnectorIndexingStatuses.length > 0 && (
-        <>
-          <div className="text-sm mb-2 font-bold">Existing Connectors:</div>
-          <GmailConnectorsTable
-            gmailConnectorIndexingStatuses={gmailConnectorIndexingStatuses}
-            setPopup={setPopup}
-          />
-          <Divider />
-        </>
-      )}
-
-      {gmailConnectorIndexingStatuses.length > 0 && (
-        <h2 className="font-bold mt-3 text-sm">Add New Connector:</h2>
-      )}
-      <Card className="mt-4">
-        <ConnectorForm<GmailConfig>
-          nameBuilder={gmailConnectorNameBuilder}
-          source="gmail"
-          inputType="poll"
-          formBody={null}
-          validationSchema={Yup.object().shape({})}
-          initialValues={{}}
-          refreshFreq={10 * 60} // 10 minutes
-          credentialId={liveCredential.id}
-        />
-      </Card>
-    </div>
-  );
-};
 
 export const GmailMain = () => {
   const {
@@ -206,19 +115,6 @@ export const GmailMain = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "gmail"
   );
-  const gmailConnectorIndexingStatus = gmailConnectorIndexingStatuses[0];
-
-  const credentialIsLinked =
-    (gmailConnectorIndexingStatus !== undefined &&
-      gmailPublicCredential !== undefined &&
-      gmailConnectorIndexingStatus.connector.credential_ids.includes(
-        gmailPublicCredential.id
-      )) ||
-    (gmailConnectorIndexingStatus !== undefined &&
-      gmailServiceAccountCredential !== undefined &&
-      gmailConnectorIndexingStatus.connector.credential_ids.includes(
-        gmailServiceAccountCredential.id
-      ));
 
   return (
     <>
@@ -247,17 +143,3 @@ export const GmailMain = () => {
     </>
   );
 };
-
-// export default function Page() {
-//   return (
-//     <div className="mx-auto container">
-//       <div className="mb-4">
-//         <HealthCheckBanner />
-//       </div>
-
-//       <AdminPageTitle icon={<GmailIcon size={32} />} title="Gmail" />
-
-//       <Main />
-//     </div>
-//   );
-// }

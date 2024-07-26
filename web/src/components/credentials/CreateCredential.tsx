@@ -10,8 +10,8 @@ import { Form, Formik, FormikHelpers } from "formik";
 
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDocLink } from "@/lib/sources";
-import GDriveMain from "@/app/admin/connectors/[connector]/pages/GoogleDrivePage";
-import { GmailMain } from "@/app/admin/connectors/[connector]/pages/temporary_gmail/gmail/GmailPage";
+import GDriveMain from "@/app/admin/connectors/[connector]/pages/gdrive/GoogleDrivePage";
+
 import { Connector } from "@/lib/ccs/connectors";
 import {
   Credential,
@@ -19,6 +19,7 @@ import {
   getDisplayNameForCredentialKey,
 } from "@/lib/ccs/credentials";
 import { PlusCircleIcon } from "../icons/icons";
+import { GmailMain } from "@/app/admin/connectors/[connector]/pages/gmail/GmailPage";
 
 type ActionType = "create" | "createAndSwap";
 
