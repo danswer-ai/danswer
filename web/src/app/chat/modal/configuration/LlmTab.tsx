@@ -76,7 +76,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
             return (
               <button
                 key={index}
-                className={`w-full py-1.5 px-2  text-sm  ${currentLlm == name ? "bg-background-200" : "bg-background-100/50 hover:bg-background-100"} text-left  rounded`}
+                className={`w-full py-1.5 px-2 text-sm ${currentLlm == name ? "bg-background-200" : "bg-background-100/50 hover:bg-background-100"} text-left rounded`}
                 onClick={() => {
                   setLlmOverride(destructureValue(value));
                   if (chatSessionId) {
@@ -94,7 +94,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
         </div>
         <div className="mt-4">
           <button
-            className="flex items-center text-sm font-medium  transition-colors duration-200"
+            className="flex items-center text-sm font-medium transition-colors duration-200"
             onClick={() => setIsTemperatureExpanded(!isTemperatureExpanded)}
           >
             <span className="mr-2 text-xs text-primary">

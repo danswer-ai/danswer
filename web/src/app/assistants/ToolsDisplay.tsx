@@ -98,7 +98,7 @@ export function AssistantTools({
                   <div className="flex items-center gap-x-1">
                     <FiImage
                       key={ind}
-                      className="ml-1 my-auto  h-3 w-3 my-auto"
+                      className="ml-1 my-auto h-3 w-3 my-auto"
                     />
                     Image Generation
                   </div>
