@@ -282,10 +282,10 @@ def stream_chat_message_objects(
         # use alternate persona if alternative assistant id is passed in
         if alternate_assistant_id is not None:
             persona = get_persona_by_id(
-                alternate_assistant_id, 
-                user=user, 
+                alternate_assistant_id,
+                user=user,
                 db_session=db_session,
-                is_for_edit=False
+                is_for_edit=False,
             )
         else:
             persona = chat_session.persona
