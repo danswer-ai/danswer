@@ -1122,6 +1122,10 @@ class Persona(Base):
     display_priority: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    uploaded_image_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    icon_color: Mapped[str | None] = mapped_column(String, nullable=True)
+    icon_shape: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
     # These are only defaults, users can select from all if desired
     prompts: Mapped[list[Prompt]] = relationship(
         "Prompt",

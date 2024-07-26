@@ -50,6 +50,8 @@ personas:
     llm_filter_extraction: true
     recency_bias: "auto"
     document_sets: []
+    icon_shape: 50910
+    icon_color: "#FF6F6F"
 
 
   - id: 2
@@ -63,3 +65,6 @@ personas:
     llm_filter_extraction: true
     recency_bias: "auto"
     document_sets: []
+    icon_shape: 45519
+    icon_color: "#6FFF8D"
+
