@@ -344,7 +344,7 @@ def _index_vespa_chunk(
             else:
                 embeddings_name_vector_map[f"mini_chunk_{ind}"] = m_c_embed
 
-    title = document.get_title_for_document_index()
+    title = chunk.get_index_title()
 
     vespa_document_fields = {
         DOCUMENT_ID: document.id,

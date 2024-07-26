@@ -118,6 +118,7 @@ class DocumentBase(BaseModel):
         self,
     ) -> str | None:
         # If title is explicitly empty, return a None here for embedding purposes
+        # It will be replaced by the chunk blurb instead
         if self.title == "":
             return None
         replace_chars = set(RETURN_SEPARATOR)

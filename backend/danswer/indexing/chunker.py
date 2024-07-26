@@ -123,6 +123,9 @@ def chunk_document(
 
     tokenizer = get_default_tokenizer()
 
+    # The blurb is used as the title if there is no title, the blurb is the first little bit of the
+    # document. This covers cases like Slack and Teams where the Semantic Identifier is not a good
+    # representation of the conversation thread
     blurb_splitter = SentenceSplitter(
         tokenizer=tokenizer.tokenize, chunk_size=blurb_size, chunk_overlap=0
     )
@@ -163,12 +166,16 @@ def chunk_document(
         title_prefix = ""
         metadata_suffix_semantic = ""
 
+    blurb = ""
     chunks: list[DocAwareChunk] = []
     link_offsets: dict[int, str] = {}
     chunk_text = ""
     for section in document.sections:
         section_text = section.text
         section_link_text = section.link or ""
+
+        if not blurb:
+            blurb = extract_blurb(section_text, blurb_splitter)
 
         section_tok_length = len(tokenizer.tokenize(section_text))
         current_tok_length = len(tokenizer.tokenize(chunk_text))
@@ -182,7 +189,7 @@ def chunk_document(
                     DocAwareChunk(
                         source_document=document,
                         chunk_id=len(chunks),
-                        blurb=extract_blurb(chunk_text, blurb_splitter),
+                        blurb=blurb,
                         content=chunk_text,
                         source_links=link_offsets,
                         section_continuation=False,
@@ -200,7 +207,7 @@ def chunk_document(
                 document=document,
                 start_chunk_id=len(chunks),
                 chunk_splitter=chunk_splitter,
-                blurb=extract_blurb(section_text, blurb_splitter),
+                blurb=blurb,
                 title_prefix=title_prefix,
                 metadata_suffix_semantic=metadata_suffix_semantic,
                 metadata_suffix_keyword=metadata_suffix_keyword,
@@ -224,7 +231,7 @@ def chunk_document(
                 DocAwareChunk(
                     source_document=document,
                     chunk_id=len(chunks),
-                    blurb=extract_blurb(chunk_text, blurb_splitter),
+                    blurb=blurb,
                     content=chunk_text,
                     source_links=link_offsets,
                     section_continuation=False,
@@ -243,7 +250,7 @@ def chunk_document(
             DocAwareChunk(
                 source_document=document,
                 chunk_id=len(chunks),
-                blurb=extract_blurb(chunk_text, blurb_splitter),
+                blurb=blurb,
                 content=chunk_text,
                 source_links=link_offsets,
                 section_continuation=False,

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 from danswer.access.models import DocumentAccess
+from danswer.configs.constants import RETURN_SEPARATOR
 from danswer.connectors.models import Document
 from danswer.utils.logger import setup_logger
 
@@ -49,6 +50,14 @@ class DocAwareChunk(BaseChunk):
         return (
             f"Chunk ID: '{self.chunk_id}'; {self.source_document.to_short_descriptor()}"
         )
+
+    def get_index_title(self) -> str:
+        index_title = self.source_document.get_title_for_document_index() or self.blurb
+        replace_chars = set(RETURN_SEPARATOR)
+        for char in replace_chars:
+            index_title = index_title.replace(char, " ")
+        index_title = index_title.strip()
+        return index_title
 
 
 class IndexChunk(DocAwareChunk):

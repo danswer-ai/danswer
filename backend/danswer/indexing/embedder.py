@@ -97,9 +97,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
             chunk_texts, text_type=EmbedTextType.PASSAGE
         )
 
-        chunk_titles = {
-            chunk.source_document.get_title_for_document_index() for chunk in chunks
-        }
+        chunk_titles = {chunk.get_index_title() for chunk in chunks}
 
         # Drop any None or empty strings
         chunk_titles_list = [title for title in chunk_titles if title]
@@ -123,7 +121,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
                 embedding_ind_start : embedding_ind_start + num_embeddings
             ]
 
-            title = chunk.source_document.get_title_for_document_index()
+            title = chunk.get_index_title()
 
             title_embedding = None
             if title:
