@@ -20,6 +20,7 @@ export interface DynamicConnectionFormProps {
   setName: Dispatch<SetStateAction<string>>;
   updateValues: (field: string, value: any) => void;
   isPublic: boolean;
+  onFormStatusChange: (isValid: boolean) => void; // New prop
 }
 
 const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
@@ -32,6 +33,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   isPublic,
   setIsPublic,
   initialName,
+  onFormStatusChange,
 }) => {
   const initialValues = {
     name: initialName || "",
@@ -73,15 +75,10 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
     ),
   });
 
-  console.log(initialValues);
-
   const updateValue =
     (setFieldValue: Function) => (field: string, value: any) => {
       setFieldValue(field, value);
       updateValues(field, value);
-      // console.log("updating");
-      // console.log(value);
-      // console.log(typeof value);
     };
 
   return (
@@ -96,183 +93,193 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
         initialValues={initialValues}
         validationSchema={validationSchema}
         onSubmit={(values, formikHelpers) => {
-          // onSubmit(values);
+          // Can be used for logging
         }}
       >
-        {({ setFieldValue, values }) => (
-          <Form className="space-y-6">
-            <EditingValue
-              description="A descriptive name for the connector. This will just be used to identify the connector in the Admin UI."
-              setFieldValue={updateValue(setFieldValue)}
-              type={"text"}
-              label={"Connector Name"}
-              name={"name"}
-              currentValue=""
-              onChange={(value: string) => setName(value)}
-            />
-            {config.values.map((field) => {
-              if (!field.hidden) {
-                return (
-                  <div key={field.name}>
-                    {field.type == "file" ? (
-                      <FileUpload
-                        selectedFiles={selectedFiles}
-                        setSelectedFiles={setSelectedFiles}
-                      />
-                    ) : field.type == "zip" ? (
-                      <>
-                        <label
-                          htmlFor={field.name}
-                          className="block text-sm font-medium text-neutral-700 mb-1"
-                        >
-                          {field.label}
-                          {field.optional && (
-                            <span className="text-neutral-500 ml-1">
-                              (optional)
-                            </span>
-                          )}
-                        </label>
-                        {field.description && (
-                          <CredentialSubText>
-                            {field.description}
-                          </CredentialSubText>
-                        )}
+        {({ setFieldValue, values, dirty, isValid }) => {
+          onFormStatusChange(isValid && dirty);
+
+          return (
+            <Form className="space-y-6">
+              <EditingValue
+                description="A descriptive name for the connector. This will just be used to identify the connector in the Admin UI."
+                setFieldValue={updateValue(setFieldValue)}
+                type={"text"}
+                label={"Connector Name"}
+                name={"name"}
+                currentValue=""
+                onChange={(value: string) => setName(value)}
+              />
+              {config.values.map((field) => {
+                if (!field.hidden) {
+                  return (
+                    <div key={field.name}>
+                      {field.type == "file" ? (
                         <FileUpload
                           selectedFiles={selectedFiles}
                           setSelectedFiles={setSelectedFiles}
                         />
-                      </>
-                    ) : field.type === "list" ? (
-                      <FieldArray name={field.name}>
-                        {({ push, remove }) => (
-                          <div>
-                            <label
-                              htmlFor={field.name}
-                              className="block text-sm font-medium text-neutral-700 mb-1"
-                            >
-                              {field.label}
-                              {field.optional && (
-                                <span className="text-neutral-500 ml-1">
-                                  (optional)
-                                </span>
-                              )}
-                            </label>
-                            {field.description && (
-                              <CredentialSubText>
-                                {field.description}
-                              </CredentialSubText>
+                      ) : field.type == "zip" ? (
+                        <>
+                          <label
+                            htmlFor={field.name}
+                            className="block text-sm font-medium text-neutral-700 mb-1"
+                          >
+                            {field.label}
+                            {field.optional && (
+                              <span className="text-neutral-500 ml-1">
+                                (optional)
+                              </span>
                             )}
-
-                            {values[field.name].map((_: any, index: number) => (
-                              <div key={index} className="w-full flex mb-4">
-                                <Field
-                                  name={`${field.name}.${index}`}
-                                  className="w-full bg-input text-sm p-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2"
-                                  onChange={(
-                                    e: React.ChangeEvent<HTMLInputElement>
-                                  ) => {
-                                    const newValue = [...values[field.name]];
-                                    newValue[index] = e.target.value;
-                                    updateValue(setFieldValue)(
-                                      field.name,
-                                      newValue
-                                    );
-                                  }}
-                                  value={values[field.name][index]}
-                                />
-
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    remove(index);
-                                    const newValue = values[field.name].filter(
-                                      (_: any, i: number) => i !== index
-                                    );
-                                    updateValue(setFieldValue)(
-                                      field.name,
-                                      newValue
-                                    );
-                                  }}
-                                  className="p-2 my-auto bg-input flex-none rounded-md bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                                >
-                                  <TrashIcon className="text-white my-auto" />
-                                </button>
-                              </div>
-                            ))}
-
-                            <button
-                              type="button"
-                              onClick={() => push("")}
-                              className="mt-2 p-2 bg-rose-500 text-xs text-white rounded-md hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-opacity-50 flex items-center"
-                            >
-                              <FaPlus className="mr-2" />
-                              Add {field.label}
-                            </button>
-                          </div>
-                        )}
-                      </FieldArray>
-                    ) : field.type === "select" ? (
-                      <>
-                        <label
-                          htmlFor={field.name}
-                          className="block text-sm font-medium text-neutral-700 mb-1"
-                        >
-                          {field.label}
-                          {field.optional && (
-                            <span className="text-neutral-500 ml-1">
-                              (optional)
-                            </span>
+                          </label>
+                          {field.description && (
+                            <CredentialSubText>
+                              {field.description}
+                            </CredentialSubText>
                           )}
-                        </label>
-                        {field.description && (
-                          <CredentialSubText>
-                            {field.description}
-                          </CredentialSubText>
-                        )}
-                        <Field
-                          as="select"
+                          <FileUpload
+                            selectedFiles={selectedFiles}
+                            setSelectedFiles={setSelectedFiles}
+                          />
+                        </>
+                      ) : field.type === "list" ? (
+                        <FieldArray name={field.name}>
+                          {({ push, remove }) => (
+                            <div>
+                              <label
+                                htmlFor={field.name}
+                                className="block text-sm font-medium text-neutral-700 mb-1"
+                              >
+                                {field.label}
+                                {field.optional && (
+                                  <span className="text-neutral-500 ml-1">
+                                    (optional)
+                                  </span>
+                                )}
+                              </label>
+                              {field.description && (
+                                <CredentialSubText>
+                                  {field.description}
+                                </CredentialSubText>
+                              )}
+
+                              {values[field.name].map(
+                                (_: any, index: number) => (
+                                  <div key={index} className="w-full flex mb-4">
+                                    <Field
+                                      name={`${field.name}.${index}`}
+                                      className="w-full bg-input text-sm p-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2"
+                                      onChange={(
+                                        e: React.ChangeEvent<HTMLInputElement>
+                                      ) => {
+                                        const newValue = [
+                                          ...values[field.name],
+                                        ];
+                                        newValue[index] = e.target.value;
+                                        updateValue(setFieldValue)(
+                                          field.name,
+                                          newValue
+                                        );
+                                      }}
+                                      value={values[field.name][index]}
+                                    />
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        remove(index);
+                                        const newValue = values[
+                                          field.name
+                                        ].filter(
+                                          (_: any, i: number) => i !== index
+                                        );
+                                        updateValue(setFieldValue)(
+                                          field.name,
+                                          newValue
+                                        );
+                                      }}
+                                      className="p-2 my-auto bg-input flex-none rounded-md bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                                    >
+                                      <TrashIcon className="text-white my-auto" />
+                                    </button>
+                                  </div>
+                                )
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => push("")}
+                                className="mt-2 p-2 bg-rose-500 text-xs text-white rounded-md hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-opacity-50 flex items-center"
+                              >
+                                <FaPlus className="mr-2" />
+                                Add {field.label}
+                              </button>
+                            </div>
+                          )}
+                        </FieldArray>
+                      ) : field.type === "select" ? (
+                        <>
+                          <label
+                            htmlFor={field.name}
+                            className="block text-sm font-medium text-neutral-700 mb-1"
+                          >
+                            {field.label}
+                            {field.optional && (
+                              <span className="text-neutral-500 ml-1">
+                                (optional)
+                              </span>
+                            )}
+                          </label>
+                          {field.description && (
+                            <CredentialSubText>
+                              {field.description}
+                            </CredentialSubText>
+                          )}
+                          <Field
+                            as="select"
+                            name={field.name}
+                            className="w-full p-2 border bg-input border-neutral-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          >
+                            <option value="">Select an option</option>
+                            {field.options?.map((option) => (
+                              <option key={option.name} value={option.name}>
+                                {option.name}
+                              </option>
+                            ))}
+                          </Field>
+                        </>
+                      ) : (
+                        <EditingValue
+                          description={field.description}
+                          optional={field.optional}
+                          setFieldValue={updateValue(setFieldValue)}
+                          type={field.type}
+                          label={field.label}
                           name={field.name}
-                          className="w-full p-2 border bg-input border-neutral-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        >
-                          <option value="">Select an option</option>
-                          {field.options?.map((option) => (
-                            <option key={option.name} value={option.name}>
-                              {option.name}
-                            </option>
-                          ))}
-                        </Field>
-                      </>
-                    ) : (
-                      <EditingValue
-                        description={field.description}
-                        optional={field.optional}
-                        setFieldValue={updateValue(setFieldValue)}
-                        type={field.type}
-                        label={field.label}
-                        name={field.name}
-                        currentValue={values[field.name]}
-                      />
-                    )}
-                  </div>
-                );
-              }
-            })}
+                          currentValue={values[field.name]}
+                        />
+                      )}
+                    </div>
+                  );
+                }
+              })}
 
-            <Divider />
+              <Divider />
 
-            <EditingValue
-              description={`If set, then documents indexed by this connector will be visible to all users. If turned off, then only users who explicitly have been given access to the documents (e.g. through a User Group) will have access`}
-              optional
-              setFieldValue={(field: string, value: boolean) =>
-                setIsPublic(value)
-              }
-              type={"checkbox"}
-              label={"Documents are Public?"}
-              name={"public"}
-              currentValue={isPublic}
-            />
-          </Form>
-        )}
+              <EditingValue
+                description={`If set, then documents indexed by this connector will be visible to all users. If turned off, then only users who explicitly have been given access to the documents (e.g. through a User Group) will have access`}
+                optional
+                setFieldValue={(field: string, value: boolean) =>
+                  setIsPublic(value)
+                }
+                type={"checkbox"}
+                label={"Documents are Public?"}
+                name={"public"}
+                currentValue={isPublic}
+              />
+            </Form>
+          );
+        }}
       </Formik>
     </div>
   );

@@ -496,7 +496,7 @@ export const SearchSection = ({
             ease-in-out
             ${
               showDocSidebar || toggledSidebar
-                ? "opacity-100 w-[300px] translate-x-0"
+                ? "opacity-100 w-[250px] translate-x-0"
                 : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
             }
           `}
@@ -530,7 +530,7 @@ export const SearchSection = ({
                     bg-opacity-80
                     duration-300 
                     ease-in-out
-                    ${toggledSidebar ? "w-[300px]" : "w-[0px]"}
+                    ${toggledSidebar ? "w-[250px]" : "w-[0px]"}
                   `}
             />
 

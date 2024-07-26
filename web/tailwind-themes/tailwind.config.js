@@ -23,6 +23,10 @@ module.exports = {
       },
 
       keyframes: {
+        "subtle-pulse": {
+          "0%, 100%": { opacity: 0.9 },
+          "50%": { opacity: 0.5 },
+        },
         pulse: {
           "0%, 100%": { opacity: 0.9 },
           "50%": { opacity: 0.4 },
@@ -30,7 +34,7 @@ module.exports = {
       },
       animation: {
         "fade-in-up": "fadeInUp 0.5s ease-out",
-
+        "subtle-pulse": "subtle-pulse 2s ease-in-out infinite",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
 

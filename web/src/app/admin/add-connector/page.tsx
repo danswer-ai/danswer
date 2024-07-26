@@ -27,7 +27,7 @@ function SourceTile({
         cursor-pointer
         shadow-md
         hover:bg-hover
-        ${preSelect ? "bg-hover animate-pulse" : "bg-hover-light"}
+        ${preSelect ? "bg-hover subtle-pulse" : "bg-hover-light"}
       `}
       href={sourceMetadata.adminUrl}
     >

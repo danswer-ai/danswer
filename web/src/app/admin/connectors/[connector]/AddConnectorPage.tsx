@@ -21,7 +21,7 @@ import AdvancedFormPage from "./pages/Advanced";
 import DynamicConnectionForm from "./pages/Create";
 import CreateCredential from "@/components/credentials/CreateCredential";
 import ModifyCredential from "@/components/credentials/ModifyCredential";
-import { ConnectorIndexingStatus, ValidSources } from "@/lib/types";
+import { ValidSources } from "@/lib/types";
 import { Credential, credentialTemplates } from "@/lib/connectors/credentials";
 import {
   ConnectionConfiguration,
@@ -93,6 +93,12 @@ export default function AddConnector({
   const [isPublic, setIsPublic] = useState(false);
   const [createConnectorToggle, setCreateConnectorToggle] = useState(false);
 
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  const handleFormStatusChange = (isValid: boolean) => {
+    setIsFormValid(isValid || connector == "file");
+  };
+
   const { liveGDriveCredential } = useGoogleDriveCredentials(
     connector == "google_drive"
   );
@@ -114,6 +120,8 @@ export default function AddConnector({
       indexingStart,
       refreshFreq,
     };
+
+    // google sites-specific handling
     if (connector == "google_site") {
       const response = await submitGoogleSite(
         selectedFiles,
@@ -132,6 +140,7 @@ export default function AddConnector({
       return;
     }
 
+    // file-specific handling
     if (connector == "file" && selectedFiles.length > 0) {
       const response = await submitFiles(
         selectedFiles,
@@ -149,25 +158,23 @@ export default function AddConnector({
       return;
     }
 
-    if (!currentCredential && credentialTemplate === "file") {
-      return;
-    }
+    const { message, isSuccess, response } = await submitConnector<any>(
+      {
+        connector_specific_config: values,
+        input_type: "poll",
+        name: name,
+        source: connector,
+        refresh_freq: refreshFreq || defaultRefresh,
+        prune_freq: pruneFreq || null,
+        indexing_start: indexingStart,
+        disabled: false,
+      },
+      undefined,
+      credentialActivated ? false : true
+    );
 
+    // If no credential
     if (!credentialActivated) {
-      const { message, isSuccess, response } = await submitConnector<any>(
-        {
-          connector_specific_config: values,
-          input_type: "poll",
-          name: name,
-          source: connector,
-          refresh_freq: refreshFreq || defaultRefresh,
-          prune_freq: pruneFreq || null,
-          indexing_start: indexingStart,
-          disabled: false,
-        },
-        undefined,
-        true
-      );
       if (isSuccess) {
         setPopup({
           message: "Connector created! Redirecting to connector home page",
@@ -181,17 +188,7 @@ export default function AddConnector({
       }
     }
 
-    const { message, isSuccess, response } = await submitConnector<any>({
-      connector_specific_config: values,
-      input_type: "poll",
-      name: name,
-      source: connector,
-      refresh_freq: refreshFreq || defaultRefresh,
-      prune_freq: pruneFreq || null,
-      indexing_start: indexingStart,
-      disabled: false,
-    });
-
+    // Without credential
     if (isSuccess && response && credentialActivated) {
       const credential =
         currentCredential || liveGDriveCredential || liveGmailCredential;
@@ -367,7 +364,7 @@ export default function AddConnector({
             </Card>
             <div className="mt-4 flex w-full justify-end">
               <button
-                className="enabled:cursor-pointer disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+                className="enabled:cursor-pointer disabled:cursor-not-allowed disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
                 disabled={currentCredential == null}
                 onClick={() => nextFormStep()}
               >
@@ -391,6 +388,7 @@ export default function AddConnector({
               isPublic={isPublic}
               defaultValues={values}
               initialName={name}
+              onFormStatusChange={handleFormStatusChange}
             />
           </Card>
           <div className={`mt-4 w-full grid grid-cols-3`}>
@@ -406,7 +404,8 @@ export default function AddConnector({
               <div />
             )}
             <button
-              className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+              className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+              disabled={!isFormValid}
               onClick={async () => {
                 await createConnector();
               }}
@@ -416,17 +415,16 @@ export default function AddConnector({
             </button>
 
             <div className="flex w-full justify-end">
-              <div
-                className={`${credentialActivated ? "cursor-pointer hover:underline" : "cursor-not-allowed"} mt-auto text-neutral-600 ml-auto flex gap-x-1 items-center py-2.5 px-3.5 text-sm font-regular rounded-sm`}
+              <button
+                className={`enabled:cursor-pointer enabled:hover:underline disabled:cursor-not-allowed mt-auto enabled:text-neutral-600 disabled:text-neutral-400 ml-auto flex gap-x-1 items-center py-2.5 px-3.5 text-sm font-regular rounded-sm`}
+                disabled={!isFormValid}
                 onClick={() => {
-                  if (credentialActivated) {
-                    nextFormStep();
-                  }
+                  nextFormStep();
                 }}
               >
                 Advanced
                 <ArrowRight />
-              </div>
+              </button>
             </div>
           </div>
         </>
