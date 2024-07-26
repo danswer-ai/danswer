@@ -1,31 +1,30 @@
 "use client";
 
 import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
-import { AssistantsGallery } from "./gallery/AssistantsGallery";
-import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
-import { UserDropdown } from "@/components/UserDropdown";
+
 import { ChatSession } from "@/app/chat/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
 import { User } from "@/lib/types";
-import { Persona } from "@/app/admin/assistants/interfaces";
 import Cookies from "js-cookie";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useRouter } from "next/navigation";
+import { pageType } from "../chat/sessionSidebar/types";
 
 interface SidebarWrapperProps<T extends object> {
-  chatSessions: ChatSession[];
-  folders: Folder[];
+  chatSessions?: ChatSession[];
+  folders?: Folder[];
   initiallyToggled: boolean;
   openedFolders?: { [key: number]: boolean };
   content: (props: T) => ReactNode;
   headerProps: {
-    page: string;
+    page: pageType;
     user: User | null;
   };
   contentProps: T;
+  page: pageType;
 }
 
 export default function SidebarWrapper<T extends object>({
@@ -33,6 +32,7 @@ export default function SidebarWrapper<T extends object>({
   initiallyToggled,
   folders,
   openedFolders,
+  page,
   headerProps,
   contentProps,
   content,
@@ -106,7 +106,7 @@ export default function SidebarWrapper<T extends object>({
       >
         <div className="w-full relative">
           <HistorySidebar
-            page="chat"
+            page={page}
             ref={innerSidebarElementRef}
             toggleSidebar={toggleSidebar}
             toggled={toggledSidebar}
@@ -127,20 +127,19 @@ export default function SidebarWrapper<T extends object>({
         <div className="w-full flex">
           <div
             style={{ transition: "width 0.30s ease-out" }}
-            className={`
-                    flex-none
-                    overflow-y-hidden
-                    bg-background-100
-                    h-full
-                    transition-all
-                    bg-opacity-80
-                    duration-300 
-                    ease-in-out
-                    ${toggledSidebar ? "w-[300px]" : "w-[0px]"}
-                  `}
+            className={`flex-none
+                      overflow-y-hidden
+                      bg-background-100
+                      h-full
+                      transition-all
+                      bg-opacity-80
+                      duration-300 
+                      ease-in-out
+                      ${toggledSidebar ? "w-[300px]" : "w-[0px]"}`}
           />
-
-          <div className="mt-4 mx-auto">{content(contentProps)}</div>
+          <div className="mt-4 w-full max-w-3xl mx-auto">
+            {content(contentProps)}
+          </div>
         </div>
       </div>
       <FixedLogo />

@@ -175,6 +175,7 @@ export async function fetchChatData(searchParams: {
     !hasCompletedWelcomeFlowSS() &&
     !hasAnyConnectors &&
     (!user || user.role === "admin");
+
   const shouldDisplaySourcesIncompleteModal =
     hasAnyConnectors &&
     !shouldShowWelcomeModal &&

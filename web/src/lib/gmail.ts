@@ -1,10 +1,12 @@
-import { Credential } from "@/lib/types";
+import { Credential } from "./ccs/credentials";
 
 export const setupGmailOAuth = async ({
   isAdmin,
 }: {
   isAdmin: boolean;
 }): Promise<[string | null, string]> => {
+  console.log("I AM FETCHING");
+  console.log();
   const credentialCreationResponse = await fetch("/api/manage/credential", {
     method: "POST",
     headers: {
@@ -13,6 +15,7 @@ export const setupGmailOAuth = async ({
     body: JSON.stringify({
       admin_public: isAdmin,
       credential_json: {},
+      source: "gmail",
     }),
   });
   if (!credentialCreationResponse.ok) {
