@@ -23,7 +23,7 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { Bubble } from "@/components/Bubble";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
-import { GroupsIcon, SwapIcon } from "@/components/icons/icons";
+import { GroupsIcon, PaintingIcon, SwapIcon } from "@/components/icons/icons";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { useUserGroups } from "@/lib/hooks";
@@ -47,6 +47,7 @@ import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";
 import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
 import { IconImageSelection } from "@/components/assistants/AssistantIconCreation";
+import { FaSwatchbook } from "react-icons/fa";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -313,8 +314,8 @@ export function AssistantEditor({
                 providerDisplayNameToProviderName.get(
                   values.llm_model_provider_override || ""
                 ) ||
-                  defaultProviderName ||
-                  "",
+                defaultProviderName ||
+                "",
                 values.llm_model_version_override || defaultModelName || ""
               )
             ) {
@@ -431,7 +432,7 @@ export function AssistantEditor({
                 <div className="mb-6 ">
                   <div className="flex gap-x-2 items-center">
                     <div className="block font-medium text-base">
-                      Assistant Icon (Optional){" "}
+                      Assistant Icon{" "}
                     </div>
                     <TooltipProvider delayDuration={50}>
                       <Tooltip>
@@ -448,7 +449,7 @@ export function AssistantEditor({
                     </TooltipProvider>
                   </div>
 
-                  <div className="flex -mb-2 mt-2 items-center space-x-2">
+                  <div className="flex -mb-2 mt-2  items-center space-x-2">
                     {createSVG(
                       {
                         encodedGrid: values.icon_shape,
@@ -456,35 +457,25 @@ export function AssistantEditor({
                       },
                       values.icon_color
                     )}
-                  </div>
-                  <div className="mb-2 flex gap-x-2 items-center">
-                    <Button
-                      onClick={() => {
-                        const newShape = generateRandomIconShape();
-                        setFieldValue("icon_shape", newShape.encodedGrid);
-                      }}
-                      color="blue"
-                      size="xs"
-                      type="button"
-                      className="h-full"
-                    >
-                      <SwapIcon className="m-auto text-white" />
-                    </Button>
-                    <div className="flex space-x-3">
-                      {colorOptions.map((color) => (
-                        <div
-                          key={color}
-                          className={`w-6 h-6 rounded-full cursor-pointer ${
-                            color === values.icon_color
-                              ? "ring-2 ring-offset-2 ring-blue-500"
-                              : ""
-                          }`}
-                          style={{ backgroundColor: color }}
-                          onClick={() => setFieldValue("icon_color", color)}
-                        />
-                      ))}
+
+                    <div className="mb-2 flex gap-x-2 items-center">
+                      <Button
+                        onClick={() => {
+                          const newShape = generateRandomIconShape();
+                          setFieldValue("icon_shape", newShape.encodedGrid);
+                          const randomColor = colorOptions[Math.floor(Math.random() * colorOptions.length)];
+                          setFieldValue("icon_color", randomColor);
+                        }}
+                        color="blue"
+                        size="xs"
+                        type="button"
+                        className="h-full"
+                      >
+                        Regenerate
+                      </Button>
                     </div>
                   </div>
+
                   <IconImageSelection
                     setFieldValue={setFieldValue}
                     existingPersona={existingPersona!}
@@ -606,11 +597,11 @@ export function AssistantEditor({
                         providerDisplayNameToProviderName.get(
                           values.llm_model_provider_override || ""
                         ) ||
-                          defaultProviderName ||
-                          "",
+                        defaultProviderName ||
+                        "",
                         values.llm_model_version_override ||
-                          defaultModelName ||
-                          ""
+                        defaultModelName ||
+                        ""
                       ) && (
                         <BooleanFormField
                           noPadding
