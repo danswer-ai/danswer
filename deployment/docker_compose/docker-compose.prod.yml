@@ -118,7 +118,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
       # Not necessary, this is just to reduce download time during startup
-      - model_cache_huggingface:/root/.cache/huggingface/hub/
+      - model_cache_huggingface:/root/.cache/huggingface/
     logging:
       driver: json-file
       options:
@@ -146,7 +146,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
       # Not necessary, this is just to reduce download time during startup
-      - indexing_huggingface_model_cache:/root/.cache/huggingface/hub/
+      - indexing_huggingface_model_cache:/root/.cache/huggingface/
     logging:
       driver: json-file
       options:

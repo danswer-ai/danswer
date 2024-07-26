@@ -22,9 +22,11 @@ RUN python -c "from transformers import AutoModel, AutoTokenizer, TFDistilBertFo
 from huggingface_hub import snapshot_download; \
 AutoTokenizer.from_pretrained('danswer/intent-model'); \
 AutoTokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1'); \
+AutoTokenizer.from_pretrained('nomic-ai/nomic-bert-2048'); \
 AutoTokenizer.from_pretrained('mixedbread-ai/mxbai-rerank-xsmall-v1'); \
 snapshot_download('danswer/intent-model'); \
 snapshot_download('nomic-ai/nomic-embed-text-v1'); \
+snapshot_download('nomic-ai/nomic-bert-2048'); \
 snapshot_download('mixedbread-ai/mxbai-rerank-xsmall-v1')"
 
 WORKDIR /app
