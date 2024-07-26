@@ -5,7 +5,6 @@ Revises: 91ffac7e65b3
 Create Date: 2024-07-24 21:29:31.784562
 
 """
-
 import random
 from alembic import op
 import sqlalchemy as sa
@@ -14,8 +13,8 @@ from sqlalchemy.sql import table, column, select
 # revision identifiers, used by Alembic.
 revision = "325975216eb3"
 down_revision = "91ffac7e65b3"
-branch_labels = None
-depends_on = None
+branch_labels: None = None
+depends_on: None = None
 
 
 colorOptions = [
