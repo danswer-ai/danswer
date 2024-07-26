@@ -1,5 +1,5 @@
-import { Connector } from "@/lib/ccs/connectors";
-import { Credential } from "@/lib/ccs/credentials";
+import { Connector } from "@/lib/connectors/connectors";
+import { Credential } from "@/lib/connectors/credentials";
 import { DeletionAttemptSnapshot, IndexAttemptSnapshot } from "@/lib/types";
 
 export interface CCPairFullInfo {

@@ -1,4 +1,4 @@
-import { GmailConfig } from "@/lib/ccs/connectors";
+import { GmailConfig } from "@/lib/connectors/connectors";
 
 export const gmailConnectorNameBuilder = (values: GmailConfig) =>
   "GmailConnector";
@@ -10,7 +10,7 @@ import {
   GmailServiceAccountCredentialJson,
   GoogleDriveCredentialJson,
   GoogleDriveServiceAccountCredentialJson,
-} from "@/lib/ccs/credentials";
+} from "@/lib/connectors/credentials";
 
 export const useGmailCredentials = (active: boolean) => {
   // if (!active) {

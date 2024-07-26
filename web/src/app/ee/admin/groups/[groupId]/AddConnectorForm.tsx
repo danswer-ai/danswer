@@ -8,7 +8,7 @@ import { updateUserGroup } from "./lib";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { ConnectorIndexingStatus, UserGroup } from "@/lib/types";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
-import { Connector } from "@/lib/ccs/connectors";
+import { Connector } from "@/lib/connectors/connectors";
 interface AddConnectorFormProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
   userGroup: UserGroup;

@@ -12,12 +12,12 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDocLink } from "@/lib/sources";
 import GDriveMain from "@/app/admin/connectors/[connector]/pages/gdrive/GoogleDrivePage";
 
-import { Connector } from "@/lib/ccs/connectors";
+import { Connector } from "@/lib/connectors/connectors";
 import {
   Credential,
   credentialTemplates,
   getDisplayNameForCredentialKey,
-} from "@/lib/ccs/credentials";
+} from "@/lib/connectors/credentials";
 import { PlusCircleIcon } from "../icons/icons";
 import { GmailMain } from "@/app/admin/connectors/[connector]/pages/gmail/GmailPage";
 

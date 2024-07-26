@@ -15,7 +15,7 @@ import {
   Credential,
   GoogleDriveCredentialJson,
   GoogleDriveServiceAccountCredentialJson,
-} from "@/lib/ccs/credentials";
+} from "@/lib/connectors/credentials";
 
 type GoogleDriveCredentialJsonTypes = "authorized_user" | "service_account";
 

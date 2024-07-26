@@ -7,7 +7,7 @@ import {
   JiraConfig,
   SlackConfig,
   ZulipConfig,
-} from "@/lib/ccs/connectors";
+} from "@/lib/connectors/connectors";
 import { getSourceMetadata } from "@/lib/sources";
 
 import Link from "next/link";

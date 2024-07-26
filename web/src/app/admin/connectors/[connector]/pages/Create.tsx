@@ -8,7 +8,7 @@ import { Button, Divider } from "@tremor/react";
 import CredentialSubText from "@/components/credentials/fields";
 import { TrashIcon } from "@/components/icons/icons";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
-import { ConnectionConfiguration } from "@/lib/ccs/connectors";
+import { ConnectionConfiguration } from "@/lib/connectors/connectors";
 
 export interface DynamicConnectionFormProps {
   config: ConnectionConfiguration;

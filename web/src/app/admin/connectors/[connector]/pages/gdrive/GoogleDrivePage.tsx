@@ -14,8 +14,8 @@ import {
   Credential,
   GoogleDriveCredentialJson,
   GoogleDriveServiceAccountCredentialJson,
-} from "@/lib/ccs/credentials";
-import { GoogleDriveConfig } from "@/lib/ccs/connectors";
+} from "@/lib/connectors/credentials";
+import { GoogleDriveConfig } from "@/lib/connectors/connectors";
 
 const GDriveMain = ({}: {}) => {
   const {

@@ -17,7 +17,7 @@ import { buildFilters } from "@/lib/search/utils";
 import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
 import { DocumentSet } from "@/lib/types";
 import { SourceIcon } from "@/components/SourceIcon";
-import { Connector } from "@/lib/ccs/connectors";
+import { Connector } from "@/lib/connectors/connectors";
 
 const DocumentDisplay = ({
   document,

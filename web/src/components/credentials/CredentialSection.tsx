@@ -23,7 +23,10 @@ import {
 import { Modal } from "../Modal";
 import EditCredential from "./EditCredential";
 import { getSourceDisplayName } from "@/lib/sources";
-import { ConfluenceCredentialJson, Credential } from "@/lib/ccs/credentials";
+import {
+  ConfluenceCredentialJson,
+  Credential,
+} from "@/lib/connectors/credentials";
 
 export default function CredentialSection({
   ccPair,

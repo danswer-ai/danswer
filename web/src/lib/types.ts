@@ -1,6 +1,6 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { Credential } from "./ccs/credentials";
-import { Connector } from "./ccs/connectors";
+import { Credential } from "./connectors/credentials";
+import { Connector } from "./connectors/connectors";
 
 export interface UserPreferences {
   chosen_assistants: number[] | null;

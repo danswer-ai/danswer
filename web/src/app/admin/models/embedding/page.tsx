@@ -20,7 +20,7 @@ import {
 } from "./components/types";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ConnectorIndexingStatus } from "@/lib/types";
-import { Connector } from "@/lib/ccs/connectors";
+import { Connector } from "@/lib/connectors/connectors";
 import Link from "next/link";
 import OpenEmbeddingPage from "./OpenEmbeddingPage";
 import CloudEmbeddingPage from "./CloudEmbeddingPage";

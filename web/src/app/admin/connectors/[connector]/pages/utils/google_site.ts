@@ -1,7 +1,7 @@
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { linkCredential } from "@/lib/credential";
-import { GoogleSitesConfig } from "@/lib/ccs/connectors";
+import { GoogleSitesConfig } from "@/lib/connectors/connectors";
 import { AdvancedConfig } from "../../AddConnectorPage";
 
 export const submitGoogleSite = async (

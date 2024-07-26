@@ -19,8 +19,8 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import CredentialSection from "@/components/credentials/CredentialSection";
 import { buildCCPairInfoUrl } from "./lib";
 import { SourceIcon } from "@/components/SourceIcon";
-import { connectorConfigs } from "@/lib/ccs/connectors";
-import { credentialTemplates } from "@/lib/ccs/credentials";
+import { connectorConfigs } from "@/lib/connectors/connectors";
+import { credentialTemplates } from "@/lib/connectors/credentials";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not

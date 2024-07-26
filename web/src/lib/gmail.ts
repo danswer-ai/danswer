@@ -1,4 +1,4 @@
-import { Credential } from "./ccs/credentials";
+import { Credential } from "./connectors/credentials";
 
 export const setupGmailOAuth = async ({
   isAdmin,

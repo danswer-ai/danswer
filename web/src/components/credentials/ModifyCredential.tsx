@@ -6,8 +6,11 @@ import { FaCreativeCommons } from "react-icons/fa";
 import { EditIcon, SwapIcon, TrashIcon } from "@/components/icons/icons";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDisplayName } from "@/lib/sources";
-import { ConfluenceCredentialJson, Credential } from "@/lib/ccs/credentials";
-import { Connector } from "@/lib/ccs/connectors";
+import {
+  ConfluenceCredentialJson,
+  Credential,
+} from "@/lib/connectors/credentials";
+import { Connector } from "@/lib/connectors/connectors";
 
 interface CredentialSelectionTableProps {
   credentials: Credential<any>[];

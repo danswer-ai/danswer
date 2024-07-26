@@ -13,7 +13,7 @@ import { destructureValue } from "./llm/utils";
 import { ChatSession } from "@/app/chat/interfaces";
 import { UsersResponse } from "./users/interfaces";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
-import { Credential } from "./ccs/credentials";
+import { Credential } from "./connectors/credentials";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 

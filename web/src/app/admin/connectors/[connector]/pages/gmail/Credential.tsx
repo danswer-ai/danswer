@@ -15,7 +15,7 @@ import {
   Credential,
   GmailCredentialJson,
   GmailServiceAccountCredentialJson,
-} from "@/lib/ccs/credentials";
+} from "@/lib/connectors/credentials";
 
 type GmailCredentialJsonTypes = "authorized_user" | "service_account";
 

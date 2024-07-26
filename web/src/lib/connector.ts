@@ -1,6 +1,6 @@
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { ValidSources } from "./types";
-import { Connector, ConnectorBase } from "./ccs/connectors";
+import { Connector, ConnectorBase } from "./connectors/connectors";
 async function handleResponse(
   response: Response
 ): Promise<[string | null, any]> {

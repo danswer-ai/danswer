@@ -13,7 +13,7 @@ import { useSWRConfig } from "swr";
 import { Button, Divider } from "@tremor/react";
 import IsPublicField from "./IsPublicField";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
-import { Connector, ConnectorBase } from "@/lib/ccs/connectors";
+import { Connector, ConnectorBase } from "@/lib/connectors/connectors";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 

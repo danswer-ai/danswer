@@ -22,11 +22,11 @@ import DynamicConnectionForm from "./pages/Create";
 import CreateCredential from "@/components/credentials/CreateCredential";
 import ModifyCredential from "@/components/credentials/ModifyCredential";
 import { ConnectorIndexingStatus, ValidSources } from "@/lib/types";
-import { Credential, credentialTemplates } from "@/lib/ccs/credentials";
+import { Credential, credentialTemplates } from "@/lib/connectors/credentials";
 import {
   ConnectionConfiguration,
   connectorConfigs,
-} from "@/lib/ccs/connectors";
+} from "@/lib/connectors/connectors";
 import { Modal } from "@/components/Modal";
 import { ArrowRight } from "@phosphor-icons/react";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";

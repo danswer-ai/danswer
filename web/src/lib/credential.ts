@@ -1,4 +1,4 @@
-import { CredentialBase } from "./ccs/credentials";
+import { CredentialBase } from "./connectors/credentials";
 
 export async function createCredential(credential: CredentialBase<any>) {
   return await fetch(`/api/manage/credential`, {

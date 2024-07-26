@@ -9,11 +9,11 @@ import {
   Credential,
   GmailCredentialJson,
   GmailServiceAccountCredentialJson,
-} from "@/lib/ccs/credentials";
+} from "@/lib/connectors/credentials";
 import { GmailOAuthSection, GmailJsonUploadSection } from "./Credential";
 import { usePublicCredentials } from "@/lib/hooks";
 import { Title } from "@tremor/react";
-import { GmailConfig } from "@/lib/ccs/connectors";
+import { GmailConfig } from "@/lib/connectors/connectors";
 
 export const GmailMain = () => {
   const {

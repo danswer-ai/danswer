@@ -15,7 +15,7 @@ import {
   TableCell,
 } from "@tremor/react";
 import { FiCheck, FiXCircle } from "react-icons/fi";
-import { Credential } from "@/lib/ccs/credentials";
+import { Credential } from "@/lib/connectors/credentials";
 
 interface StatusRowProps<ConnectorConfigType, ConnectorCredentialType> {
   connectorIndexingStatus: ConnectorIndexingStatus<

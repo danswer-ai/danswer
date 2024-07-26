@@ -6,7 +6,7 @@ import { ValidSources } from "@/lib/types";
 
 import { createCredential } from "@/lib/credential";
 import { Button } from "@tremor/react";
-import { CredentialBase, Credential } from "@/lib/ccs/credentials";
+import { CredentialBase, Credential } from "@/lib/connectors/credentials";
 
 export async function submitCredential<T>(
   credential: CredentialBase<T>

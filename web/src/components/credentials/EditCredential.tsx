@@ -12,7 +12,7 @@ import { EditingValue } from "./EditingValue";
 import {
   Credential,
   getDisplayNameForCredentialKey,
-} from "@/lib/ccs/credentials";
+} from "@/lib/connectors/credentials";
 
 interface JsonValues {
   [key: string]: string;
