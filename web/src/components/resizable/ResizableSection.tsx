@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
-import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "./contants";
+import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "./constants";
 
 function applyMinAndMax(
   width: number,
@@ -56,7 +56,7 @@ export function ResizableSection({
     const handleMouseMove = (mouseMoveEvent: MouseEvent) => {
       // Calculate the change in position
       const delta = mouseMoveEvent.clientX - startX;
-      let newWidth = applyMinAndMax(width - delta, minWidth, maxWidth);
+      let newWidth = applyMinAndMax(width + delta, minWidth, maxWidth);
       setWidth(newWidth);
       if (updateSidebarWidth) {
         updateSidebarWidth(newWidth);
@@ -84,6 +84,12 @@ export function ResizableSection({
   return (
     <div className="flex h-full">
       <div
+        style={{ width: `${width}px` }}
+        className={`resize-section h-full flex`}
+      >
+        {children}
+      </div>
+      <div
         className={`
           -mr-1 
           pr-1 
@@ -95,24 +101,18 @@ export function ResizableSection({
           onMouseDown={startResizing}
           className={`
           cursor-col-resize 
-          border-l 
+          border-r 
           border-border 
           h-full
           w-full
-          transition-all duration-300 ease-in hover:border-border-strong hover:border-l-2
+          transition-all duration-300 ease-in hover:border-border-strong hover:border-r-2
           ${
             isResizing
-              ? "transition-all duration-300 ease-in border-border-strong border-l-2"
+              ? "transition-all duration-300 ease-in border-border-strong border-r-2"
               : ""
           }
           `}
         ></div>
-      </div>
-      <div
-        style={{ width: `${width}px` }}
-        className={`resize-section h-full flex`}
-      >
-        {children}
       </div>
     </div>
   );

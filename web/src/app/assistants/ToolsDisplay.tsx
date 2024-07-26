@@ -5,6 +5,7 @@ import { FiImage, FiSearch, FiGlobe } from "react-icons/fi";
 export function ToolsDisplay({ tools }: { tools: ToolSnapshot[] }) {
   return (
     <div className="text-xs text-subtle flex flex-wrap gap-1 mt-2">
+      <p className="text-sm text-default my-auto">Tools:</p>
       {tools.map((tool) => {
         let toolName = tool.name;
         let toolIcon = null;

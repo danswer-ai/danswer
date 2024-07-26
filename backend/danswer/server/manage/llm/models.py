@@ -60,6 +60,8 @@ class LLMProvider(BaseModel):
     custom_config: dict[str, str] | None
     default_model_name: str
     fast_default_model_name: str | None
+    is_public: bool = True
+    groups: list[int] | None = None
 
 
 class LLMProviderUpsertRequest(LLMProvider):
@@ -91,4 +93,6 @@ class FullLLMProvider(LLMProvider):
                 or fetch_models_for_provider(llm_provider_model.provider)
                 or [llm_provider_model.default_model_name]
             ),
+            is_public=llm_provider_model.is_public,
+            groups=[group.id for group in llm_provider_model.groups],
         )

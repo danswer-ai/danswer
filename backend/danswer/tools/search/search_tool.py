@@ -10,6 +10,7 @@ from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import DanswerContext
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import LlmDoc
+from danswer.configs.chat_configs import DISABLE_AGENTIC_SEARCH
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import JSON_ro
@@ -30,11 +31,15 @@ from danswer.secondary_llm_flows.query_expansion import history_based_query_reph
 from danswer.tools.search.search_utils import llm_doc_to_dict
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 SEARCH_RESPONSE_SUMMARY_ID = "search_response_summary"
 SEARCH_DOC_CONTENT_ID = "search_doc_content"
 SECTION_RELEVANCE_LIST_ID = "section_relevance_list"
 FINAL_CONTEXT_DOCUMENTS = "final_context_documents"
+SEARCH_EVALUATION_ID = "llm_doc_eval"
 
 
 class SearchResponseSummary(BaseModel):
@@ -80,6 +85,7 @@ class SearchTool(Tool):
         chunks_below: int = 0,
         full_doc: bool = False,
         bypass_acl: bool = False,
+        llm_doc_eval: bool = False,
     ) -> None:
         self.user = user
         self.persona = persona
@@ -96,6 +102,7 @@ class SearchTool(Tool):
         self.full_doc = full_doc
         self.bypass_acl = bypass_acl
         self.db_session = db_session
+        self.llm_doc_eval = llm_doc_eval
 
     @property
     def name(self) -> str:
@@ -218,23 +225,28 @@ class SearchTool(Tool):
                     self.retrieval_options.filters if self.retrieval_options else None
                 ),
                 persona=self.persona,
-                offset=self.retrieval_options.offset
-                if self.retrieval_options
-                else None,
+                offset=(
+                    self.retrieval_options.offset if self.retrieval_options else None
+                ),
                 limit=self.retrieval_options.limit if self.retrieval_options else None,
                 chunks_above=self.chunks_above,
                 chunks_below=self.chunks_below,
                 full_doc=self.full_doc,
-                enable_auto_detect_filters=self.retrieval_options.enable_auto_detect_filters
-                if self.retrieval_options
-                else None,
+                enable_auto_detect_filters=(
+                    self.retrieval_options.enable_auto_detect_filters
+                    if self.retrieval_options
+                    else None
+                ),
             ),
             user=self.user,
             llm=self.llm,
             fast_llm=self.fast_llm,
             bypass_acl=self.bypass_acl,
             db_session=self.db_session,
+            prompt_config=self.prompt_config,
+            pruning_config=self.pruning_config,
         )
+
         yield ToolResponse(
             id=SEARCH_RESPONSE_SUMMARY_ID,
             response=SearchResponseSummary(
@@ -246,6 +258,7 @@ class SearchTool(Tool):
                 recency_bias_multiplier=search_pipeline.search_query.recency_bias_multiplier,
             ),
         )
+
         yield ToolResponse(
             id=SEARCH_DOC_CONTENT_ID,
             response=DanswerContexts(
@@ -260,6 +273,7 @@ class SearchTool(Tool):
                 ]
             ),
         )
+
         yield ToolResponse(
             id=SECTION_RELEVANCE_LIST_ID,
             response=search_pipeline.relevant_section_indices,
@@ -280,6 +294,11 @@ class SearchTool(Tool):
         ]
 
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
+
+        if self.llm_doc_eval and not DISABLE_AGENTIC_SEARCH:
+            yield ToolResponse(
+                id=SEARCH_EVALUATION_ID, response=search_pipeline.relevance_summaries
+            )
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         final_docs = cast(

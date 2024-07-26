@@ -1,4 +1,8 @@
-import { DanswerDocument, Filters } from "@/lib/search/interfaces";
+import {
+  DanswerDocument,
+  Filters,
+  SearchDanswerDocument,
+} from "@/lib/search/interfaces";
 
 export enum RetrievalType {
   None = "none",
@@ -30,8 +34,13 @@ export interface FileDescriptor {
   id: string;
   type: ChatFileType;
   name?: string | null;
+
   // FE only
   isUploading?: boolean;
+}
+
+export interface LLMRelevanceFilterPacket {
+  relevant_chunk_indices: number[];
 }
 
 export interface ToolCallMetadata {
@@ -54,6 +63,13 @@ export interface ChatSession {
   shared_status: ChatSessionSharedStatus;
   folder_id: number | null;
   current_alternate_model: string;
+}
+
+export interface SearchSession {
+  search_session_id: number;
+  documents: SearchDanswerDocument[];
+  messages: BackendMessage[];
+  description: string;
 }
 
 export interface Message {
@@ -86,6 +102,8 @@ export interface BackendChatSession {
 
 export interface BackendMessage {
   message_id: number;
+  comments: any;
+  chat_session_id: number;
   parent_message: number | null;
   latest_child_message: number | null;
   message: string;

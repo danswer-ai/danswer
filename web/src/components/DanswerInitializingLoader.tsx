@@ -7,7 +7,7 @@ export function DanswerInitializingLoader() {
   const settings = useContext(SettingsContext);
 
   return (
-    <div className="mx-auto animate-pulse">
+    <div className="mx-auto my-auto animate-pulse">
       <Logo height={96} width={96} className="mx-auto mb-3" />
       <Bold>
         Initializing{" "}

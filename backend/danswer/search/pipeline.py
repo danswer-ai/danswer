@@ -5,10 +5,14 @@ from typing import cast
 
 from sqlalchemy.orm import Session
 
+from danswer.chat.models import RelevanceChunk
+from danswer.configs.chat_configs import DISABLE_AGENTIC_SEARCH
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
+from danswer.llm.answering.models import DocumentPruningConfig
+from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prune_and_merge import ChunkRange
 from danswer.llm.answering.prune_and_merge import merge_chunk_intervals
 from danswer.llm.interfaces import LLM
@@ -25,8 +29,12 @@ from danswer.search.postprocessing.postprocessing import search_postprocessing
 from danswer.search.preprocessing.preprocessing import retrieval_preprocessing
 from danswer.search.retrieval.search_runner import retrieve_chunks
 from danswer.search.utils import inference_section_from_chunks
+from danswer.secondary_llm_flows.agentic_evaluation import evaluate_inference_section
 from danswer.utils.logger import setup_logger
+from danswer.utils.threadpool_concurrency import FunctionCall
+from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
+from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
@@ -40,9 +48,12 @@ class SearchPipeline:
         fast_llm: LLM,
         db_session: Session,
         bypass_acl: bool = False,  # NOTE: VERY DANGEROUS, USE WITH CAUTION
-        retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-        | None = None,
+        retrieval_metrics_callback: (
+            Callable[[RetrievalMetricsContainer], None] | None
+        ) = None,
         rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+        prompt_config: PromptConfig | None = None,
+        pruning_config: DocumentPruningConfig | None = None,
     ):
         self.search_request = search_request
         self.user = user
@@ -58,6 +69,8 @@ class SearchPipeline:
             primary_index_name=self.embedding_model.index_name,
             secondary_index_name=None,
         )
+        self.prompt_config: PromptConfig | None = prompt_config
+        self.pruning_config: DocumentPruningConfig | None = pruning_config
 
         # Preprocessing steps generate this
         self._search_query: SearchQuery | None = None
@@ -74,9 +87,9 @@ class SearchPipeline:
         self._relevant_section_indices: list[int] | None = None
 
         # Generates reranked chunks and LLM selections
-        self._postprocessing_generator: Iterator[
-            list[InferenceSection] | list[int]
-        ] | None = None
+        self._postprocessing_generator: (
+            Iterator[list[InferenceSection] | list[int]] | None
+        ) = None
 
     """Pre-processing"""
 
@@ -142,6 +155,7 @@ class SearchPipeline:
 
         return cast(list[InferenceChunk], self._retrieved_chunks)
 
+    @log_function_time(print_only=True)
     def _get_sections(self) -> list[InferenceSection]:
         """Returns an expanded section from each of the chunks.
         If whole docs (instead of above/below context) is specified then it will give back all of the whole docs
@@ -161,9 +175,11 @@ class SearchPipeline:
         expanded_inference_sections = []
 
         # Full doc setting takes priority
+
         if self.search_query.full_doc:
             seen_document_ids = set()
             unique_chunks = []
+
             # This preserves the ordering since the chunks are retrieved in score order
             for chunk in retrieved_chunks:
                 if chunk.document_id not in seen_document_ids:
@@ -183,7 +199,6 @@ class SearchPipeline:
                             ),
                         )
                     )
-
             list_inference_chunks = run_functions_tuples_in_parallel(
                 functions_with_args, allow_failures=False
             )
@@ -228,32 +243,35 @@ class SearchPipeline:
         merged_ranges = [
             merge_chunk_intervals(ranges) for ranges in doc_chunk_ranges_map.values()
         ]
-        flat_ranges = [r for ranges in merged_ranges for r in ranges]
+
+        flat_ranges: list[ChunkRange] = [r for ranges in merged_ranges for r in ranges]
+        flattened_inference_chunks: list[InferenceChunk] = []
+        parallel_functions_with_args = []
 
         for chunk_range in flat_ranges:
-            functions_with_args.append(
-                (
-                    # If Large Chunks are introduced, additional filters need to be added here
-                    self.document_index.id_based_retrieval,
-                    (
-                        # Only need the document_id here, just use any chunk in the range is fine
-                        chunk_range.chunks[0].document_id,
-                        chunk_range.start,
-                        chunk_range.end,
-                        # There is no chunk level permissioning, this expansion around chunks
-                        # can be assumed to be safe
-                        IndexFilters(access_control_list=None),
-                    ),
-                )
-            )
+            # Don't need to fetch chunks within range for merging if chunk_above / below are 0.
+            if above == below == 0:
+                flattened_inference_chunks.extend(chunk_range.chunks)
 
-        # list of list of inference chunks where the inner list needs to be combined for content
-        list_inference_chunks = run_functions_tuples_in_parallel(
-            functions_with_args, allow_failures=False
-        )
-        flattened_inference_chunks = [
-            chunk for sublist in list_inference_chunks for chunk in sublist
-        ]
+            else:
+                parallel_functions_with_args.append(
+                    (
+                        self.document_index.id_based_retrieval,
+                        (
+                            chunk_range.chunks[0].document_id,
+                            chunk_range.start,
+                            chunk_range.end,
+                            IndexFilters(access_control_list=None),
+                        ),
+                    )
+                )
+
+        if parallel_functions_with_args:
+            list_inference_chunks = run_functions_tuples_in_parallel(
+                parallel_functions_with_args, allow_failures=False
+            )
+            for inference_chunks in list_inference_chunks:
+                flattened_inference_chunks.extend(inference_chunks)
 
         doc_chunk_ind_to_chunk = {
             (chunk.document_id, chunk.chunk_id): chunk
@@ -322,6 +340,32 @@ class SearchPipeline:
             cast(Iterator[list[int]], self._postprocessing_generator)
         )
         return self._relevant_section_indices
+
+    @property
+    def relevance_summaries(self) -> dict[str, RelevanceChunk]:
+        if DISABLE_AGENTIC_SEARCH:
+            raise ValueError(
+                "Agentic saerch operation called while DISABLE_AGENTIC_SEARCH is toggled"
+            )
+        if len(self.reranked_sections) == 0:
+            logger.warning(
+                "No sections found in agentic search evalution. Returning empty dict."
+            )
+            return {}
+
+        sections = self.reranked_sections
+        functions = [
+            FunctionCall(
+                evaluate_inference_section, (section, self.search_query.query, self.llm)
+            )
+            for section in sections
+        ]
+
+        results = run_functions_in_parallel(function_calls=functions)
+
+        return {
+            next(iter(value)): value[next(iter(value))] for value in results.values()
+        }
 
     @property
     def section_relevance_list(self) -> list[bool]:

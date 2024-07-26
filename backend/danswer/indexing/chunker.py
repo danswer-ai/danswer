@@ -15,7 +15,7 @@ from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
 )
 from danswer.connectors.models import Document
 from danswer.indexing.models import DocAwareChunk
-from danswer.search.search_nlp_models import get_default_tokenizer
+from danswer.natural_language_processing.search_nlp_models import get_default_tokenizer
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import shared_precompare_cleanup
 

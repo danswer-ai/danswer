@@ -232,32 +232,6 @@ class DefaultMultiLLM(LLM):
 
         self._model_kwargs = model_kwargs
 
-    @staticmethod
-    def _log_prompt(prompt: LanguageModelInput) -> None:
-        if isinstance(prompt, list):
-            for ind, msg in enumerate(prompt):
-                if isinstance(msg, AIMessageChunk):
-                    if msg.content:
-                        log_msg = msg.content
-                    elif msg.tool_call_chunks:
-                        log_msg = "Tool Calls: " + str(
-                            [
-                                {
-                                    key: value
-                                    for key, value in tool_call.items()
-                                    if key != "index"
-                                }
-                                for tool_call in msg.tool_call_chunks
-                            ]
-                        )
-                    else:
-                        log_msg = ""
-                    logger.debug(f"Message {ind}:\n{log_msg}")
-                else:
-                    logger.debug(f"Message {ind}:\n{msg.content}")
-        if isinstance(prompt, str):
-            logger.debug(f"Prompt:\n{prompt}")
-
     def log_model_configs(self) -> None:
         logger.info(f"Config: {self.config}")
 
@@ -311,7 +285,7 @@ class DefaultMultiLLM(LLM):
             api_version=self._api_version,
         )
 
-    def invoke(
+    def _invoke_implementation(
         self,
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
@@ -319,7 +293,6 @@ class DefaultMultiLLM(LLM):
     ) -> BaseMessage:
         if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
-            self._log_prompt(prompt)
 
         response = cast(
             litellm.ModelResponse, self._completion(prompt, tools, tool_choice, False)
@@ -328,7 +301,7 @@ class DefaultMultiLLM(LLM):
             response.choices[0].message
         )
 
-    def stream(
+    def _stream_implementation(
         self,
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
@@ -336,7 +309,6 @@ class DefaultMultiLLM(LLM):
     ) -> Iterator[BaseMessage]:
         if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
-            self._log_prompt(prompt)
 
         if DISABLE_LITELLM_STREAMING:
             yield self.invoke(prompt)

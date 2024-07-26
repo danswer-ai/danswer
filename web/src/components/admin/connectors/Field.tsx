@@ -86,7 +86,7 @@ export function ToolTipDetails({
           <FiInfo size={12} />
         </TooltipTrigger>
         <TooltipContent side="top" align="center">
-          <p className="bg-background-dark max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-inverted">
+          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-inverted">
             {children}
           </p>
         </TooltipContent>
@@ -285,7 +285,9 @@ export const BooleanFormField = ({
         <Field
           name={name}
           type="checkbox"
-          className={`${noPadding ? "mr-3" : "mx-3"} px-5 w-3.5 h-3.5 ${alignTop ? "mt-1" : "my-auto"}`}
+          className={`${noPadding ? "mr-3" : "mx-3"} px-5 w-3.5 h-3.5 ${
+            alignTop ? "mt-1" : "my-auto"
+          }`}
           {...(onChange ? { onChange } : {})}
         />
         <div>

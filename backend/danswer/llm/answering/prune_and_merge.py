@@ -14,8 +14,8 @@ from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prompts.citations_prompt import compute_max_document_tokens
 from danswer.llm.interfaces import LLMConfig
-from danswer.llm.utils import get_default_llm_tokenizer
-from danswer.llm.utils import tokenizer_trim_content
+from danswer.natural_language_processing.utils import get_default_llm_tokenizer
+from danswer.natural_language_processing.utils import tokenizer_trim_content
 from danswer.prompts.prompt_utils import build_doc_context_str
 from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceSection
@@ -265,6 +265,7 @@ def prune_sections(
         max_tokens=document_pruning_config.max_tokens,
         tool_token_count=document_pruning_config.tool_num_tokens,
     )
+
     return _apply_pruning(
         sections=sections,
         section_relevance_list=section_relevance_list,

@@ -8,7 +8,7 @@ from tests.regression.answer_quality.cli_utils import cleanup_docker
 from tests.regression.answer_quality.cli_utils import manage_data_directories
 from tests.regression.answer_quality.cli_utils import set_env_variables
 from tests.regression.answer_quality.cli_utils import start_docker_compose
-from tests.regression.answer_quality.cli_utils import switch_to_branch
+from tests.regression.answer_quality.cli_utils import switch_to_commit
 from tests.regression.answer_quality.file_uploader import upload_test_files
 from tests.regression.answer_quality.run_qa import run_qa_test_and_save_results
 
@@ -36,12 +36,14 @@ def main() -> None:
         config.llm,
     )
     manage_data_directories(run_suffix, config.output_folder, config.use_cloud_gpu)
-    if config.branch:
-        switch_to_branch(config.branch)
+    if config.commit_sha:
+        switch_to_commit(config.commit_sha)
 
-    start_docker_compose(run_suffix, config.launch_web_ui, config.use_cloud_gpu)
+    start_docker_compose(
+        run_suffix, config.launch_web_ui, config.use_cloud_gpu, config.only_state
+    )
 
-    if not config.existing_test_suffix:
+    if not config.existing_test_suffix and not config.only_state:
         upload_test_files(config.zipped_documents_file, run_suffix)
 
         run_qa_test_and_save_results(run_suffix)

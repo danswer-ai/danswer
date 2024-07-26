@@ -39,6 +39,7 @@ export interface EmbeddingDetails {
   default_model_id?: number;
   name: string;
 }
+import { EmbeddingIcon, PackageIcon } from "@/components/icons/icons";
 
 function Main() {
   const [openToggle, setOpenToggle] = useState(true);
@@ -148,6 +149,7 @@ function Main() {
       }
     );
     if (response.ok) {
+      setShowTentativeOpenProvider(null);
       setShowTentativeModel(null);
       mutate("/api/secondary-index/get-secondary-embedding-model");
       if (!connectors || !connectors.length) {
@@ -273,6 +275,7 @@ function Main() {
           onClose={() => setAlreadySelectedModel(null)}
         />
       )}
+
       {showTentativeOpenProvider && (
         <ModelSelectionConfirmationModal
           selectedModel={showTentativeOpenProvider}
@@ -364,17 +367,25 @@ function Main() {
             monitor the progress of the re-indexing on this page.
           </Text>
 
-          <div className="mt-8 text-sm  mr-auto  mb-12 divide-x-2  flex   ">
+          <div className="mt-8 text-sm mr-auto mb-12 divide-x-2 flex">
             <button
               onClick={() => setOpenToggle(true)}
-              className={` mx-2 p-2 font-bold  ${openToggle ? "rounded bg-neutral-900 text-neutral-100 underline" : "hover:underline"}`}
+              className={` mx-2 p-2 font-bold  ${
+                openToggle
+                  ? "rounded bg-neutral-900 text-neutral-100 underline"
+                  : "hover:underline"
+              }`}
             >
               Self-hosted
             </button>
             <div className="px-2 ">
               <button
                 onClick={() => setOpenToggle(false)}
-                className={`mx-2 p-2 font-bold  ${!openToggle ? "rounded bg-neutral-900   text-neutral-100 underline" : " hover:underline"}`}
+                className={`mx-2 p-2 font-bold  ${
+                  !openToggle
+                    ? "rounded bg-neutral-900   text-neutral-100 underline"
+                    : " hover:underline"
+                }`}
               >
                 Cloud-based
               </button>
@@ -516,7 +527,7 @@ function Page() {
     <div className="mx-auto container">
       <AdminPageTitle
         title="Embedding"
-        icon={<FiPackage size={32} className="my-auto" />}
+        icon={<EmbeddingIcon size={32} className="my-auto" />}
       />
 
       <Main />

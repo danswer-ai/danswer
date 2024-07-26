@@ -88,7 +88,7 @@ def _process_file(
     # add a prefix to avoid conflicts with other connectors
     doc_id = f"FILE_CONNECTOR__{file_name}"
     if metadata:
-        doc_id = metadata.get("id") or doc_id
+        doc_id = metadata.get("document_id") or doc_id
 
     # If this is set, we will show this in the UI as the "name" of the file
     file_display_name = all_metadata.get("file_display_name") or os.path.basename(
@@ -111,6 +111,7 @@ def _process_file(
         for k, v in all_metadata.items()
         if k
         not in [
+            "document_id",
             "time_updated",
             "doc_updated_at",
             "link",

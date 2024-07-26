@@ -38,7 +38,7 @@ def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
                     retry_after = None
                     try:
                         retry_after = int(e.response.headers.get("Retry-After"))
-                    except ValueError:
+                    except (ValueError, TypeError):
                         pass
 
                     if retry_after:

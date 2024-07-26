@@ -671,6 +671,9 @@ class SearchDoc(Base):
     )
     is_internet: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
 
+    is_relevant: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    relevance_explanation: Mapped[str | None] = mapped_column(String, nullable=True)
+
     chat_messages = relationship(
         "ChatMessage",
         secondary="chat_message__search_doc",
@@ -929,6 +932,13 @@ class LLMProvider(Base):
 
     # should only be set for a single provider
     is_default_provider: Mapped[bool | None] = mapped_column(Boolean, unique=True)
+    # EE only
+    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    groups: Mapped[list["UserGroup"]] = relationship(
+        "UserGroup",
+        secondary="llm_provider__user_group",
+        viewonly=True,
+    )
 
 
 class CloudEmbeddingProvider(Base):
@@ -1106,7 +1116,6 @@ class Persona(Base):
     # where lower value IDs (e.g. created earlier) are displayed first
     display_priority: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
-    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     # These are only defaults, users can select from all if desired
     prompts: Mapped[list[Prompt]] = relationship(
@@ -1134,6 +1143,7 @@ class Persona(Base):
         viewonly=True,
     )
     # EE only
+    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     groups: Mapped[list["UserGroup"]] = relationship(
         "UserGroup",
         secondary="persona__user_group",
@@ -1352,6 +1362,17 @@ class Persona__UserGroup(Base):
     __tablename__ = "persona__user_group"
 
     persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"), primary_key=True)
+    user_group_id: Mapped[int] = mapped_column(
+        ForeignKey("user_group.id"), primary_key=True
+    )
+
+
+class LLMProvider__UserGroup(Base):
+    __tablename__ = "llm_provider__user_group"
+
+    llm_provider_id: Mapped[int] = mapped_column(
+        ForeignKey("llm_provider.id"), primary_key=True
+    )
     user_group_id: Mapped[int] = mapped_column(
         ForeignKey("user_group.id"), primary_key=True
     )

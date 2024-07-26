@@ -10,7 +10,7 @@ from danswer.db.llm import fetch_existing_embedding_providers
 from danswer.db.llm import remove_embedding_provider
 from danswer.db.llm import upsert_cloud_embedding_provider
 from danswer.db.models import User
-from danswer.search.search_nlp_models import EmbeddingModel
+from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.server.manage.embedding.models import CloudEmbeddingProvider
 from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
 from danswer.server.manage.embedding.models import TestEmbeddingRequest
@@ -42,7 +42,7 @@ def test_embedding_configuration(
             passage_prefix=None,
             model_name=None,
         )
-        test_model.encode(["Test String"], text_type=EmbedTextType.QUERY)
+        test_model.encode(["Testing Embedding"], text_type=EmbedTextType.QUERY)
 
     except ValueError as e:
         error_msg = f"Not a valid embedding model. Exception thrown: {e}"

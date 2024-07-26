@@ -11,14 +11,19 @@ import { Logo } from "../Logo";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
 
 export function HeaderTitle({ children }: { children: JSX.Element | string }) {
-  return <h1 className="flex text-2xl text-strong font-bold">{children}</h1>;
+  return (
+    <h1 className="flex text-2xl text-strong leading-none font-bold">
+      {children}
+    </h1>
+  );
 }
 
 interface HeaderProps {
   user: User | null;
+  page?: "search" | "chat" | "assistants";
 }
 
-export function Header({ user }: HeaderProps) {
+export function Header({ user, page }: HeaderProps) {
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -35,8 +40,8 @@ export function Header({ user }: HeaderProps) {
             settings && settings.default_page === "chat" ? "/chat" : "/search"
           }
         >
-          <div className="flex my-auto">
-            <div className="mr-1 my-auto">
+          <div className="max-w-[200px] bg-black flex my-auto">
+            <div className="mr-1 mb-auto">
               <Logo />
             </div>
             <div className="my-auto">
@@ -46,9 +51,7 @@ export function Header({ user }: HeaderProps) {
                     {String(enterpriseSettings.application_name)}
                   </HeaderTitle>
                   {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                    <p className="text-xs text-subtle -mt-1.5">
-                      Powered by Danswer
-                    </p>
+                    <p className="text-xs text-subtle">Powered by Danswer</p>
                   )}
                 </div>
               ) : (
@@ -60,35 +63,9 @@ export function Header({ user }: HeaderProps) {
           </div>
         </Link>
 
-        {(!settings ||
-          (settings.search_page_enabled && settings.chat_page_enabled)) && (
-            <>
-              <Link
-                href="/search"
-                className={"ml-6 h-full flex flex-col hover:bg-hover"}
-              >
-                <div className="w-24 flex my-auto">
-                  <div className={"mx-auto flex text-strong px-2"}>
-                    <FiSearch className="my-auto mr-1" />
-                    <h1 className="flex text-sm font-bold my-auto">Search</h1>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href="/chat" className="h-full flex flex-col hover:bg-hover">
-                <div className="w-24 flex my-auto">
-                  <div className="mx-auto flex text-strong px-2">
-                    <FiMessageSquare className="my-auto mr-1" />
-                    <h1 className="flex text-sm font-bold my-auto">Chat</h1>
-                  </div>
-                </div>
-              </Link>
-            </>
-          )}
-
         <div className="ml-auto h-full flex flex-col">
           <div className="my-auto">
-            <UserDropdown user={user} hideChatAndSearch />
+            <UserDropdown user={user} page={page} />
           </div>
         </div>
       </div>

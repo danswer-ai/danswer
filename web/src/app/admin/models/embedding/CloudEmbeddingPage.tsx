@@ -116,7 +116,13 @@ export default function CloudEmbeddingPage({
                   <div
                     key={index}
                     className={`p-3 my-2 border-2 border-neutral-300 border-opacity-40 rounded-md rounded cursor-pointer  
-                    ${!provider.configured ? "opacity-80 hover:opacity-100" : enabled ? "bg-background-stronger" : "hover:bg-background-strong"}`}
+                    ${
+                      !provider.configured
+                        ? "opacity-80 hover:opacity-100"
+                        : enabled
+                          ? "bg-background-stronger"
+                          : "hover:bg-background-strong"
+                    }`}
                     onClick={() => {
                       if (enabled) {
                         setAlreadySelectedModel(model);

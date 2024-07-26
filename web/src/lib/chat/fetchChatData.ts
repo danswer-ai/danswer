@@ -20,7 +20,10 @@ import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
 import { personaComparator } from "@/app/admin/assistants/lib";
 import { cookies } from "next/headers";
-import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
+import {
+  SIDEBAR_TOGGLED_COOKIE_NAME,
+  DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME,
+} from "@/components/resizable/constants";
 import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { fetchAssistantsSS } from "../assistants/fetchAssistantsSS";
 
@@ -35,7 +38,8 @@ interface FetchChatDataResult {
   llmProviders: LLMProviderDescriptor[];
   folders: Folder[];
   openedFolders: Record<string, boolean>;
-  defaultPersonaId?: number;
+  defaultAssistantId?: number;
+  toggleSidebar: boolean;
   finalDocumentSidebarInitialWidth?: number;
   shouldShowWelcomeModal: boolean;
   shouldDisplaySourcesIncompleteModal: boolean;
@@ -81,6 +85,7 @@ export async function fetchChatData(searchParams: {
     string | null,
   ];
   const chatSessionsResponse = results[5] as Response | null;
+
   const tagsResponse = results[6] as Response | null;
   const llmProviders = (results[7] || []) as LLMProviderDescriptor[];
   const foldersResponse = results[8] as Response | null; // Handle folders result
@@ -144,14 +149,20 @@ export async function fetchChatData(searchParams: {
     console.log(`Failed to fetch tags - ${tagsResponse?.status}`);
   }
 
-  const defaultPersonaIdRaw = searchParams["assistantId"];
-  const defaultPersonaId = defaultPersonaIdRaw
-    ? parseInt(defaultPersonaIdRaw)
+  const defaultAssistantIdRaw = searchParams["assistantId"];
+  const defaultAssistantId = defaultAssistantIdRaw
+    ? parseInt(defaultAssistantIdRaw)
     : undefined;
 
   const documentSidebarCookieInitialWidth = cookies().get(
     DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME
   );
+  const sidebarToggled = cookies().get(SIDEBAR_TOGGLED_COOKIE_NAME);
+
+  const toggleSidebar = sidebarToggled
+    ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
+    : false;
+
   const finalDocumentSidebarInitialWidth = documentSidebarCookieInitialWidth
     ? parseInt(documentSidebarCookieInitialWidth.value)
     : undefined;
@@ -166,7 +177,8 @@ export async function fetchChatData(searchParams: {
     !shouldShowWelcomeModal &&
     !ccPairs.some(
       (ccPair) => ccPair.has_successful_run && ccPair.docs_indexed > 0
-    );
+    ) &&
+    (!user || user.role == "admin");
 
   // if no connectors are setup, only show personas that are pure
   // passthrough and don't do any retrieval
@@ -197,8 +209,9 @@ export async function fetchChatData(searchParams: {
     llmProviders,
     folders,
     openedFolders,
-    defaultPersonaId,
+    defaultAssistantId,
     finalDocumentSidebarInitialWidth,
+    toggleSidebar,
     shouldShowWelcomeModal,
     shouldDisplaySourcesIncompleteModal,
   };

@@ -171,7 +171,6 @@ class SearchFeedbackRequest(BaseModel):
 
         if click is False and feedback is None:
             raise ValueError("Empty feedback received.")
-
         return values
 
 
@@ -186,6 +185,7 @@ class ChatMessageDetail(BaseModel):
     time_sent: datetime
     alternate_assistant_id: str | None
     # Dict mapping citation number to db_doc_id
+    chat_session_id: int | None = None
     citations: dict[int, int] | None
     files: list[FileDescriptor]
     tool_calls: list[ToolCallFinalResult]
@@ -194,6 +194,13 @@ class ChatMessageDetail(BaseModel):
         initial_dict = super().dict(*args, **kwargs)  # type: ignore
         initial_dict["time_sent"] = self.time_sent.isoformat()
         return initial_dict
+
+
+class SearchSessionDetailResponse(BaseModel):
+    search_session_id: int
+    description: str
+    documents: list[SearchDoc]
+    messages: list[ChatMessageDetail]
 
 
 class ChatSessionDetailResponse(BaseModel):

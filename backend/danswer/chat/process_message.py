@@ -51,7 +51,7 @@ from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
 from danswer.llm.interfaces import LLMConfig
-from danswer.llm.utils import get_default_llm_tokenizer
+from danswer.natural_language_processing.utils import get_default_llm_tokenizer
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
@@ -253,7 +253,6 @@ def stream_chat_message_objects(
     2. [conditional] LLM selected chunk indices if LLM chunk filtering is turned on
     3. [always] A set of streamed LLM tokens or an error anywhere along the line if something fails
     4. [always] Details on the final AI response message that is created
-
     """
     try:
         user_id = user.id if user is not None else None
