@@ -70,6 +70,7 @@ RUN apt-get update && \
 # Pre-downloading models for setups with limited egress
 RUN python -c "from transformers import AutoTokenizer; \
 AutoTokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1'); \
+AutoTokenizer.from_pretrained('nomic-ai/nomic-bert-2048'); \
 "
 
 # Pre-downloading NLTK for setups with limited egress

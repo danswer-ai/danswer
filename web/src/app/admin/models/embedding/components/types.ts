@@ -82,7 +82,7 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     model_dim: 768,
     normalize: true,
     description:
-      "A smaller / faster model than the default model. This is around 2x faster than the default model but will result in slightly worse accuracy.",
+      "A smaller / faster model than the default model. This is around 2x faster than the default model at the cost of slightly lower search quality.",
     link: "https://huggingface.co/intfloat/e5-base-v2",
     query_prefix: "query: ",
     passage_prefix: "passage: ",
