@@ -48,7 +48,7 @@ export const EditingValue: React.FC<{
   };
 
   return (
-    <div className="flex text-neutral-800 flex-col">
+    <div className="flex text-text-800 flex-col">
       <div className={`w-full flex gap-x-2 justify-between ${className}`}>
         <div className="text-sm w-full">
           {type === "checkbox" ? (
@@ -69,10 +69,10 @@ export const EditingValue: React.FC<{
             </div>
           ) : type === "date" ? (
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-text-700 mb-1">
                 {label}
                 {optional && (
-                  <span className="text-neutral-500 ml-1">(optional)</span>
+                  <span className="text-text-500 ml-1">(optional)</span>
                 )}
               </label>
               {description && <SubLabel>{description}</SubLabel>}
@@ -106,10 +106,10 @@ export const EditingValue: React.FC<{
             </div>
           ) : type === "number" ? (
             <>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-text-700 mb-1">
                 {label}
                 {optional && (
-                  <span className="text-neutral-500 ml-1">(optional)</span>
+                  <span className="text-text-500 ml-1">(optional)</span>
                 )}
               </label>
               {description && <SubLabel>{description}</SubLabel>}
@@ -158,7 +158,7 @@ export const EditingValue: React.FC<{
         {includRevert && (
           <div className="flex-none mt-auto">
             <button
-              className="text-xs h-[35px] my-auto p-1.5 rounded bg-neutral-900 border-neutral-700 text-neutral-300 flex gap-x-1"
+              className="text-xs h-[35px] my-auto p-1.5 rounded bg-background-900 border-border-dark text-text-300 flex gap-x-1"
               onClick={(e) => {
                 updateValue("");
                 e.preventDefault();

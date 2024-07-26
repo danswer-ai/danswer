@@ -324,7 +324,7 @@ export default function AddConnector({
               />
               {!createConnectorToggle && (
                 <div className="mt-8 w-full flex gap-x-2 items-center">
-                  <div className="w-full h-[1px] bg-neutral-300" />
+                  <div className="w-full h-[1px] bg-background-300" />
                   <button
                     className="text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded"
                     onClick={() =>
@@ -336,7 +336,7 @@ export default function AddConnector({
                     Create New
                   </button>
                   {/* <p className="text-sm flex-none">or create</p> */}
-                  <div className="w-full h-[1px] bg-neutral-300" />
+                  <div className="w-full h-[1px] bg-background-300" />
                 </div>
               )}
 
@@ -394,7 +394,7 @@ export default function AddConnector({
           <div className={`mt-4 w-full grid grid-cols-3`}>
             {!noCredentials ? (
               <button
-                className="border-neutral-600 mr-auto border flex gap-x-1 items-center text-text p-2.5 text-sm font-regular rounded-sm "
+                className="border-border-dark mr-auto border flex gap-x-1 items-center text-text p-2.5 text-sm font-regular rounded-sm "
                 onClick={() => prevFormStep()}
               >
                 <ArrowLeft />
@@ -416,7 +416,7 @@ export default function AddConnector({
 
             <div className="flex w-full justify-end">
               <button
-                className={`enabled:cursor-pointer enabled:hover:underline disabled:cursor-not-allowed mt-auto enabled:text-neutral-600 disabled:text-neutral-400 ml-auto flex gap-x-1 items-center py-2.5 px-3.5 text-sm font-regular rounded-sm`}
+                className={`enabled:cursor-pointer enabled:hover:underline disabled:cursor-not-allowed mt-auto enabled:text-text-600 disabled:text-text-400 ml-auto flex gap-x-1 items-center py-2.5 px-3.5 text-sm font-regular rounded-sm`}
                 disabled={!isFormValid}
                 onClick={() => {
                   nextFormStep();
@@ -454,7 +454,7 @@ export default function AddConnector({
           </Card>
           <div className={`mt-4 grid grid-cols-3 w-full `}>
             <button
-              className="border-neutral-600 border mr-auto flex gap-x-1 items-center text-text py-2.5 px-3.5 text-sm font-regular rounded-sm"
+              className="border-border-dark border mr-auto flex gap-x-1 items-center text-text py-2.5 px-3.5 text-sm font-regular rounded-sm"
               onClick={() => prevFormStep()}
             >
               <ArrowLeft />

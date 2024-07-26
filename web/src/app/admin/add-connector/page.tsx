@@ -83,7 +83,6 @@ export default function Page() {
         // You might need to adjust this based on your actual implementation
         if (firstSource) {
           // Handle the selection of the first source
-          console.log("Selected source:", firstSource.internalName);
           window.open(firstSource.adminUrl, "_self");
           // You might want to navigate to a new page or open a modal here
         }
@@ -111,7 +110,6 @@ export default function Page() {
       {Object.entries(categorizedSources)
         .filter(([_, sources]) => sources.length > 0)
         .map(([category, sources], categoryInd) => (
-          // sources.length > 0 &&
           <div key={category} className="mb-8">
             <div className="flex mt-8">
               <Title>{category}</Title>

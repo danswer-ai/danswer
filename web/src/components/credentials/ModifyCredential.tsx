@@ -174,14 +174,14 @@ export default function ModifyCredential({
             </p>
             <div className="mt-6 flex justify-between">
               <button
-                className="rounded py-1.5 px-2 bg-neutral-800 text-neutral-200"
+                className="rounded py-1.5 px-2 bg-background-800 text-text-200"
                 onClick={async () => {
                   await onDeleteCredential(confirmDeletionCredential);
                 }}
               >
                 Yes
               </button>
-              <button className="rounded py-1.5 px-2 bg-background-150 text-neutral-800">
+              <button className="rounded py-1.5 px-2 bg-background-150 text-text-800">
                 {" "}
                 No
               </button>

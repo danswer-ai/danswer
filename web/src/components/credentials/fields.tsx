@@ -67,12 +67,10 @@ export function AdminTextField({
         {!removeLabel && (
           <label
             htmlFor={name}
-            className="block text-sm font-medium text-neutral-700"
+            className="block text-sm font-medium text-text-700"
           >
             {label}
-            {optional && (
-              <span className="text-neutral-500 ml-1">(optional)</span>
-            )}
+            {optional && <span className="text-text-500 ml-1">(optional)</span>}
           </label>
         )}
         {tooltip && <ToolTipDetails>{tooltip}</ToolTipDetails>}
@@ -174,7 +172,7 @@ export default function CredentialSubText({
   children: JSX.Element | string;
 }) {
   return (
-    <p className="text-sm mb-2 whitespace-break-spaces text-neutral-500">
+    <p className="text-sm mb-2 whitespace-break-spaces text-text-500">
       {children}
     </p>
   );

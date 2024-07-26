@@ -83,7 +83,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
 
   return (
     <div className="py-4 rounded-lg max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4 text-neutral-800">
+      <h2 className="text-2xl font-bold mb-4 text-text-800">
         {config.description}
       </h2>
       {config.subtext && (
@@ -123,11 +123,11 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                         <>
                           <label
                             htmlFor={field.name}
-                            className="block text-sm font-medium text-neutral-700 mb-1"
+                            className="block text-sm font-medium text-text-700 mb-1"
                           >
                             {field.label}
                             {field.optional && (
-                              <span className="text-neutral-500 ml-1">
+                              <span className="text-text-500 ml-1">
                                 (optional)
                               </span>
                             )}
@@ -148,11 +148,11 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                             <div>
                               <label
                                 htmlFor={field.name}
-                                className="block text-sm font-medium text-neutral-700 mb-1"
+                                className="block text-sm font-medium text-text-700 mb-1"
                               >
                                 {field.label}
                                 {field.optional && (
-                                  <span className="text-neutral-500 ml-1">
+                                  <span className="text-text-500 ml-1">
                                     (optional)
                                   </span>
                                 )}
@@ -168,7 +168,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                                   <div key={index} className="w-full flex mb-4">
                                     <Field
                                       name={`${field.name}.${index}`}
-                                      className="w-full bg-input text-sm p-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2"
+                                      className="w-full bg-input text-sm p-2 border border-border-medium rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2"
                                       onChange={(
                                         e: React.ChangeEvent<HTMLInputElement>
                                       ) => {
@@ -221,11 +221,11 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                         <>
                           <label
                             htmlFor={field.name}
-                            className="block text-sm font-medium text-neutral-700 mb-1"
+                            className="block text-sm font-medium text-text-700 mb-1"
                           >
                             {field.label}
                             {field.optional && (
-                              <span className="text-neutral-500 ml-1">
+                              <span className="text-text-500 ml-1">
                                 (optional)
                               </span>
                             )}
@@ -238,7 +238,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                           <Field
                             as="select"
                             name={field.name}
-                            className="w-full p-2 border bg-input border-neutral-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full p-2 border bg-input border-border-medium rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           >
                             <option value="">Select an option</option>
                             {field.options?.map((option) => (

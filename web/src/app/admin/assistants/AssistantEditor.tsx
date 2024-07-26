@@ -441,7 +441,7 @@ export function AssistantEditor({
                           <FiInfo size={12} />
                         </TooltipTrigger>
                         <TooltipContent side="top" align="center">
-                          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
                             Choose an icon to visually represent your Assistant
                             (optional)
                           </p>
@@ -521,7 +521,7 @@ export function AssistantEditor({
                           <FiInfo size={12} />
                         </TooltipTrigger>
                         <TooltipContent side="top" align="center">
-                          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
                             Select a Large Language Model (Generative AI model)
                             to power this Assistant
                           </p>
@@ -583,7 +583,7 @@ export function AssistantEditor({
                           <FiInfo size={12} />
                         </TooltipTrigger>
                         <TooltipContent side="top" align="center">
-                          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
                             You can give your assistant advanced capabilities
                             like image generation
                           </p>

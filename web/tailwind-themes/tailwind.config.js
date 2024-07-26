@@ -115,6 +115,7 @@ module.exports = {
         "border-light": "#f3f4f6", // gray-100
         "border-medium": "#d1d5db", // gray-300
         "border-strong": "#9ca3af", // gray-400
+        "border-dark": "#525252", // neutral-600
 
         // hover
         "hover-light": "#f3f4f6", // gray-100

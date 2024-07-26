@@ -20,7 +20,7 @@ const AdvancedFormPage = ({
 }) => {
   return (
     <div className="py-4 rounded-lg max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4 text-neutral-800">
+      <h2 className="text-2xl font-bold mb-4 text-text-800">
         Advanced Configuration
       </h2>
       <Formik

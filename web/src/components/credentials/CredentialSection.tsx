@@ -129,14 +129,14 @@ export default function CredentialSection({
       <div className="flex text-sm justify-start mr-auto gap-x-2">
         <button
           onClick={() => setShowModifyCredential(true)}
-          className="flex items-center gap-x-2 cursor-pointer bg-neutral-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-neutral-700"
+          className="flex items-center gap-x-2 cursor-pointer bg-background-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-text-700"
         >
           <FaSwatchbook />
           Swap credential
         </button>
         <button
           onClick={() => setShowCreateCredential(true)}
-          className="flex items-center gap-x-2 cursor-pointer bg-neutral-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-neutral-700"
+          className="flex items-center gap-x-2 cursor-pointer bg-background-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-text-700"
         >
           <NewChatIcon />
           New Credential

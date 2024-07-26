@@ -372,7 +372,7 @@ function Main() {
               onClick={() => setOpenToggle(true)}
               className={` mx-2 p-2 font-bold  ${
                 openToggle
-                  ? "rounded bg-neutral-900 text-neutral-100 underline"
+                  ? "rounded bg-background-900 text-text-100 underline"
                   : "hover:underline"
               }`}
             >
@@ -383,7 +383,7 @@ function Main() {
                 onClick={() => setOpenToggle(false)}
                 className={`mx-2 p-2 font-bold  ${
                   !openToggle
-                    ? "rounded bg-neutral-900   text-neutral-100 underline"
+                    ? "rounded bg-background-900   text-text-100 underline"
                     : " hover:underline"
                 }`}
               >
