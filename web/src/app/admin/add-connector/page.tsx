@@ -79,12 +79,8 @@ export default function Page() {
         filteredCategories[0][1].length > 0
       ) {
         const firstSource = filteredCategories[0][1][0];
-        // Assuming SourceTile has an onSelect prop or similar to handle selection
-        // You might need to adjust this based on your actual implementation
         if (firstSource) {
-          // Handle the selection of the first source
           window.open(firstSource.adminUrl, "_self");
-          // You might want to navigate to a new page or open a modal here
         }
       }
     }

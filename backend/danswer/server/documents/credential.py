@@ -85,7 +85,7 @@ def delete_credential_by_id_admin(
     )
 
 
-@router.post("/admin/swap-credentials")
+@router.put("/admin/credentials/swap")
 def swap_credentials_for_connector(
     credentail_swap_req: CredentialSwapRequest,
     _: User | None = Depends(current_user),
@@ -150,7 +150,7 @@ def get_credential_by_id(
     return CredentialSnapshot.from_credential_db_model(credential)
 
 
-@router.patch("/admin/alter-credential/{credential_id}")
+@router.put("/admin/credentials/{credential_id}")
 def update_credential_data(
     credential_id: int,
     credential_update: CredentialDataUpdateRequest,

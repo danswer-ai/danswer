@@ -488,8 +488,8 @@ def create_connector_from_model(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/admin/connector-with-fake-credential")
-def create_connector_from_model_fake(
+@router.post("/admin/connector-with-mock-credential")
+def create_connector_with_mock_credential(
     connector_data: ConnectorBase,
     user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -497,11 +497,11 @@ def create_connector_from_model_fake(
     try:
         _validate_connector_allowed(connector_data.source)
         connector_response = create_connector(connector_data, db_session)
-        fake_credential = CredentialBase(
+        mock_credential = CredentialBase(
             credential_json={}, admin_public=True, source=connector_data.source
         )
         credential = create_credential(
-            fake_credential, user=user, db_session=db_session
+            mock_credential, user=user, db_session=db_session
         )
         response = add_credential_to_connector(
             connector_id=cast(int, connector_response.id),  # will aways be an int

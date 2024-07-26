@@ -30,7 +30,7 @@ export async function submitConnector<T>(
   try {
     if (fake_credential) {
       const response = await fetch(
-        "/api/manage/admin/connector-with-fake-credential",
+        "/api/manage/admin/connector-with-mock-credential",
         {
           method: isUpdate ? "PATCH" : "POST",
           headers: {

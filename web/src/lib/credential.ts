@@ -71,8 +71,8 @@ export function updateCredential(credentialId: number, newDetails: any) {
       ([key, value]) => key !== "name" && value !== ""
     )
   );
-  return fetch(`/api/manage/admin/alter-credential/${credentialId}`, {
-    method: "PATCH",
+  return fetch(`/api/manage/admin/credentials/${credentialId}`, {
+    method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
@@ -84,8 +84,8 @@ export function updateCredential(credentialId: number, newDetails: any) {
 }
 
 export function swapCredential(newCredentialId: number, connectorId: number) {
-  return fetch(`/api/manage/admin/swap-credentials`, {
-    method: "POST",
+  return fetch(`/api/manage/admin/credentials/swap`, {
+    method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
