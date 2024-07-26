@@ -90,6 +90,7 @@ export async function fetchChatData(searchParams: {
 
   const tagsResponse = results[6] as Response | null;
   const llmProviders = (results[7] || []) as LLMProviderDescriptor[];
+
   const foldersResponse = results[8] as Response | null; // Handle folders result
 
   const authDisabled = authTypeMetadata?.authType === "disabled";

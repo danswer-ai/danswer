@@ -2,7 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { FiPlusCircle, FiPlus, FiInfo, FiX } from "react-icons/fi";
 import { ChatInputOption } from "./ChatInputOption";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
+import {
+  FilterManager,
+  getDisplayNameForModel,
+  LlmOverrideManager,
+} from "@/lib/hooks";
 import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
 import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
@@ -428,8 +432,16 @@ export function ChatInputBar({
               </Popup>
 
               <Popup
+                tab
                 content={(close, ref) => (
                   <LlmTab
+                    currentLlm={
+                      llmOverrideManager.llmOverride.modelName ||
+                      (selectedAssistant
+                        ? selectedAssistant.llm_model_version_override ||
+                          llmName
+                        : llmName)
+                    }
                     close={close}
                     ref={ref}
                     llmOverrideManager={llmOverrideManager}
@@ -441,12 +453,13 @@ export function ChatInputBar({
               >
                 <ChatInputOption
                   flexPriority="second"
-                  name={
+                  name={getDisplayNameForModel(
                     llmOverrideManager.llmOverride.modelName ||
-                    (selectedAssistant
-                      ? selectedAssistant.llm_model_version_override || llmName
-                      : llmName)
-                  }
+                      (selectedAssistant
+                        ? selectedAssistant.llm_model_version_override ||
+                          llmName
+                        : llmName)
+                  )}
                   Icon={CpuIconSkeleton}
                 />
               </Popup>

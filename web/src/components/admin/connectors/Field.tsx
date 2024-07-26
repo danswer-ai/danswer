@@ -191,6 +191,77 @@ export function TextFormField({
   );
 }
 
+export function MultiSelectField({
+  name,
+  label,
+  subtext,
+  options,
+  onChange,
+  error,
+  hideError,
+  small,
+  selectedInitially,
+}: {
+  selectedInitially: string[];
+  name: string;
+  label: string;
+  subtext?: string | JSX.Element;
+  options: { value: string; label: string }[];
+  onChange?: (selected: string[]) => void;
+  error?: string;
+  hideError?: boolean;
+  small?: boolean;
+}) {
+  const [selectedOptions, setSelectedOptions] =
+    useState<string[]>(selectedInitially);
+
+  const handleCheckboxChange = (value: string) => {
+    const newSelectedOptions = selectedOptions.includes(value)
+      ? selectedOptions.filter((option) => option !== value)
+      : [...selectedOptions, value];
+
+    setSelectedOptions(newSelectedOptions);
+    if (onChange) {
+      onChange(newSelectedOptions);
+    }
+  };
+
+  return (
+    <div className="mb-6">
+      <div className="flex gap-x-2 items-center">
+        <Label small={small}>{label}</Label>
+        {error ? (
+          <ManualErrorMessage>{error}</ManualErrorMessage>
+        ) : (
+          !hideError && (
+            <ErrorMessage
+              name={name}
+              component="div"
+              className="text-error my-auto text-sm"
+            />
+          )
+        )}
+      </div>
+
+      {subtext && <SubLabel>{subtext}</SubLabel>}
+      <div className="mt-2">
+        {options.map((option) => (
+          <label key={option.value} className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              name={name}
+              value={option.value}
+              checked={selectedOptions.includes(option.value)}
+              onChange={() => handleCheckboxChange(option.value)}
+              className="mr-2"
+            />
+            {option.label}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
 interface MarkdownPreviewProps {
   name: string;
   label: string;

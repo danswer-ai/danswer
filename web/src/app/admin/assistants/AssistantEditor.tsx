@@ -20,6 +20,7 @@ import {
   TextFormField,
 } from "@/components/admin/connectors/Field";
 import { usePopup } from "@/components/admin/connectors/Popup";
+import { getDisplayNameForModel } from "@/lib/hooks";
 import { Bubble } from "@/components/Bubble";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
@@ -152,7 +153,7 @@ export function AssistantEditor({
   llmProviders.forEach((llmProvider) => {
     const providerOptions = llmProvider.model_names.map((modelName) => {
       return {
-        name: modelName,
+        name: getDisplayNameForModel(modelName),
         value: modelName,
       };
     });
