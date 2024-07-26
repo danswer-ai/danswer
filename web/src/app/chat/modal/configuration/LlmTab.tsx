@@ -16,7 +16,7 @@ interface LlmTabProps {
   currentAssistant: Persona;
   currentLlm: string;
   chatSessionId?: number;
-  close?: () => void;
+  close: () => void;
 }
 
 export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
@@ -85,6 +85,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
                       value as string
                     );
                   }
+                  close();
                 }}
               >
                 {getDisplayNameForModel(name)}
