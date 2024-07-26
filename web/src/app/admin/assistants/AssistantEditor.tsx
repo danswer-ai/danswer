@@ -314,8 +314,8 @@ export function AssistantEditor({
                 providerDisplayNameToProviderName.get(
                   values.llm_model_provider_override || ""
                 ) ||
-                defaultProviderName ||
-                "",
+                  defaultProviderName ||
+                  "",
                 values.llm_model_version_override || defaultModelName || ""
               )
             ) {
@@ -463,7 +463,10 @@ export function AssistantEditor({
                         onClick={() => {
                           const newShape = generateRandomIconShape();
                           setFieldValue("icon_shape", newShape.encodedGrid);
-                          const randomColor = colorOptions[Math.floor(Math.random() * colorOptions.length)];
+                          const randomColor =
+                            colorOptions[
+                              Math.floor(Math.random() * colorOptions.length)
+                            ];
                           setFieldValue("icon_color", randomColor);
                         }}
                         color="blue"
@@ -597,11 +600,11 @@ export function AssistantEditor({
                         providerDisplayNameToProviderName.get(
                           values.llm_model_provider_override || ""
                         ) ||
-                        defaultProviderName ||
-                        "",
+                          defaultProviderName ||
+                          "",
                         values.llm_model_version_override ||
-                        defaultModelName ||
-                        ""
+                          defaultModelName ||
+                          ""
                       ) && (
                         <BooleanFormField
                           noPadding
