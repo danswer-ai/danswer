@@ -37,7 +37,8 @@ personas:
     #   - "Engineer Onboarding"
     #   - "Benefits"
     document_sets: []
-
+    icon_shape: 23013
+    icon_color: "#FF6F6F"
 
   - id: 1
     name: "GPT"
