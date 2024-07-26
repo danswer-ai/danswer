@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Table,
-  TableHead,
   TableRow,
   TableHeaderCell,
   TableBody,
@@ -29,8 +28,6 @@ import { SourceIcon } from "@/components/SourceIcon";
 import { getSourceDisplayName } from "@/lib/sources";
 import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
 import { Warning } from "@phosphor-icons/react";
-
-const NUM_IN_PAGE = 20;
 
 const columnWidths = {
   first: "20%",
@@ -204,7 +201,6 @@ export function CCPairIndexingStatusTable({
   ccPairsIndexingStatuses: ConnectorIndexingStatus<any, any>[];
 }) {
   const [allToggleTracker, setAllToggleTracker] = useState(true);
-  const [page, setPage] = useState(1);
   const [openSources, setOpenSources] = useState<Record<ValidSources, boolean>>(
     {} as Record<ValidSources, boolean>
   );
@@ -280,8 +276,6 @@ export function CCPairIndexingStatusTable({
     };
   }, [router, allToggleTracker]);
 
-  // const totalPages = Math.ceil(ccPairsIndexingStatuses.length / NUM_IN_PAGE);
-
   return (
     <div className="-mt-20">
       <Table>
@@ -353,33 +347,6 @@ export function CCPairIndexingStatusTable({
         {/* Padding between table and bottom of page */}
         <div className="invisible w-full pb-40" />
       </Table>
-
-      {/* {totalPages > 1 && (
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing page <span className="font-medium">{page}</span> of{" "}
-                <span className="font-medium">{totalPages}</span>
-              </p>
-            </div>
-            <div>
-              <PageSelector
-                totalPages={totalPages}
-                currentPage={page}
-                onPageChange={(newPage) => {
-                  setPage(newPage);
-                  window.scrollTo({
-                    top: 0,
-                    left: 0,
-                    behavior: "smooth",
-                  });
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )} */}
     </div>
   );
 }

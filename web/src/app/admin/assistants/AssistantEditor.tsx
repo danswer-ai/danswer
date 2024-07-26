@@ -450,7 +450,7 @@ export function AssistantEditor({
                     </TooltipProvider>
                   </div>
 
-                  <div className="flex -mb-2 mt-2  items-center space-x-2">
+                  <div className="flex -mb-2 mt-2 items-center space-x-2">
                     {createSVG(
                       {
                         encodedGrid: values.icon_shape,

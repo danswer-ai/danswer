@@ -1,12 +1,4 @@
-import { Button } from "@tremor/react";
-import {
-  ArrayHelpers,
-  ErrorMessage,
-  Field,
-  FieldArray,
-  useField,
-  useFormikContext,
-} from "formik";
+import { ErrorMessage, Field } from "formik";
 import * as Yup from "yup";
 
 import {
@@ -16,7 +8,6 @@ import {
   SubLabel,
   ToolTipDetails,
 } from "../admin/connectors/Field";
-import CredentialSubText from "./CredentialSubText";
 
 export function AdminTextField({
   name,
@@ -176,3 +167,15 @@ export const AdminBooleanFormField = ({
     </div>
   );
 };
+
+export default function CredentialSubText({
+  children,
+}: {
+  children: JSX.Element | string;
+}) {
+  return (
+    <p className="text-sm mb-2 whitespace-break-spaces text-neutral-500">
+      {children}
+    </p>
+  );
+}

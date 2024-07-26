@@ -13,11 +13,11 @@ import {
 } from "@/lib/ccs/credentials";
 
 export const useGmailCredentials = (active: boolean) => {
-  if (!active) {
-    return {
-      liveGmailCredential: undefined,
-    };
-  }
+  // if (!active) {
+  //   return {
+  //     liveGmailCredential: undefined,
+  //   };
+  // }
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
@@ -46,11 +46,12 @@ export const useGmailCredentials = (active: boolean) => {
 };
 
 export const useGoogleDriveCredentials = (active: boolean) => {
-  if (!active) {
-    return {
-      liveGDriveCredential: undefined,
-    };
-  }
+  // if (!active) {
+  //   return {
+  //     liveGDriveCredential: undefined,
+  //   };
+  // }
+  // TODO fix that
   const { data: credentialsData } = usePublicCredentials();
 
   const googleDrivePublicCredential:

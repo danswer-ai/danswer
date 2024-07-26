@@ -5,7 +5,7 @@ import { FaPlus } from "react-icons/fa";
 import { EditingValue } from "@/components/credentials/EditingValue";
 
 import { Button, Divider } from "@tremor/react";
-import CredentialSubText from "@/components/credentials/CredentialSubText";
+import CredentialSubText from "@/components/credentials/fields";
 import { TrashIcon } from "@/components/icons/icons";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
 import { ConnectionConfiguration } from "@/lib/ccs/connectors";

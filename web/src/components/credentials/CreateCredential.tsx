@@ -103,16 +103,11 @@ export default function CreateCredential({
       if (close) {
         onClose();
       }
-      // console.log("CREATING CREDENTIAL")
-      // console.log(response?.credential?.id)
       await refresh();
-      // setTimeout(() => {
+
       if (onSwitch) {
         onSwitch(response?.credential!);
       }
-      // updateCredential(response?.credential?.id)
-
-      // }, 10)
     } catch (error) {
       console.error("Error submitting credential:", error);
       setPopup({ message: "Error submitting credential", type: "error" });
@@ -122,8 +117,6 @@ export default function CreateCredential({
   };
 
   const types = credentialTemplates[sourceType];
-
-  // const input_values = Object.keys(types);
 
   interface JsonValues {
     [key: string]: string;

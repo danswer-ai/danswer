@@ -1,6 +1,5 @@
 import { ValidInputTypes, ValidSources } from "../types";
 
-// Type definitions
 export type InputType =
   | "list"
   | "text"

@@ -136,24 +136,6 @@ export const EditingValue: React.FC<{
               />
             </>
           ) : (
-            // <AdminTextField
-            //   optional={optional}
-            //   noPadding
-            //   description={description}
-            //   onChange={(e) => {
-            //     updateValue(e.target.value);
-            //     if (onChange) {
-            //       onChange(e.target.value!);
-            //     }
-            //     if (onChangeNumber) {
-            //       onChangeNumber(parseInt(e.target.value)!);
-            //     }
-            //   }}
-            //   type={type}
-            //   name={name}
-            //   placeholder={currentValue}
-            //   label={label}
-            // />
             <AdminTextField
               optional={optional}
               noPadding

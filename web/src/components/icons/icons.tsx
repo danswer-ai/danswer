@@ -548,8 +548,6 @@ export const XIcon = ({
     </svg>
   );
 };
-// 325975216eb3
-// type to credneitals, , earliest indexing to connector, index attemps with ccpair
 
 export const UndoIcon = ({
   size = 16,
