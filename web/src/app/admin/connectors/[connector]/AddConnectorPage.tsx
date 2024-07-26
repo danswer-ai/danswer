@@ -384,23 +384,27 @@ export default function AddConnector({
               <div />
             )}
             <button
-              className="bg-indigo-500 rounded-full p-1.5 m-auto hover:bg-indigo-500/80 flex gap-x-1 items-center text-text text-sm font-regular text-white flex-none"
+              className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
               onClick={async () => {
                 await createConnector();
               }}
             >
+              Create Connector
               <FiPlus className="text-white h-4 w-4" />
             </button>
 
             <div className="flex w-full justify-end">
-              <button
-                className="enabled:cursor-pointer ml-auto disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm "
-                disabled={currentCredential == null}
-                onClick={() => nextFormStep()}
+              <div
+                className={`${currentCredential !== null ? "cursor-pointer hover:underline" : "cursor-not-allowed"} mt-auto text-neutral-600 ml-auto flex gap-x-1 items-center py-2.5 px-3.5 text-sm font-regular rounded-sm`}
+                onClick={() => {
+                  if (currentCredential !== null) {
+                    nextFormStep();
+                  }
+                }}
               >
                 Advanced
                 <ArrowRight />
-              </button>
+              </div>
             </div>
           </div>
         </>
@@ -438,11 +442,12 @@ export default function AddConnector({
               Previous
             </button>
             <button
-              className="bg-indigo-500 rounded-full p-1.5 m-auto hover:bg-indigo-500/80 flex gap-x-1 items-center text-text text-sm font-regular text-white flex-none"
+              className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
               onClick={async () => {
                 await createConnector();
               }}
             >
+              Create Connector
               <FiPlus className="text-white h-4 w-4" />
             </button>
           </div>

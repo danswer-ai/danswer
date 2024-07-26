@@ -1,7 +1,7 @@
 """Add type to credentials
 
 Revision ID: 4ea2c93919c1
-Revises: 05c07bf07c00
+Revises: 325975216eb3
 Create Date: 2024-07-18 13:07:13.655895
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "4ea2c93919c1"
-down_revision = "05c07bf07c00"
+down_revision = "325975216eb3"
 branch_labels = None
 depends_on = None
 
