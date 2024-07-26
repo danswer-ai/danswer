@@ -9,6 +9,7 @@ from sqlalchemy import not_
 from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy import update
+from sqlalchemy.orm import selectinload
 from sqlalchemy.orm import Session
 
 from danswer.auth.schemas import UserRole
@@ -24,6 +25,7 @@ from danswer.db.models import StarterMessage
 from danswer.db.models import Tool
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
+from danswer.db.models import UserGroup
 from danswer.search.enums import RecencyBiasSetting
 from danswer.server.features.persona.models import CreatePersonaRequest
 from danswer.server.features.persona.models import PersonaSnapshot
@@ -568,13 +570,28 @@ def get_persona_by_id(
     include_deleted: bool = False,
     is_for_edit: bool = True,  # NOTE: assume true for safety
 ) -> Persona:
-    stmt = select(Persona).where(Persona.id == persona_id)
+    stmt = (
+        select(Persona)
+        .options(selectinload(Persona.users), selectinload(Persona.groups))
+        .where(Persona.id == persona_id)
+    )
 
     or_conditions = []
 
     # if user is an admin, they should have access to all Personas
     if user is not None and user.role != UserRole.ADMIN:
-        or_conditions.extend([Persona.user_id == user.id, Persona.user_id.is_(None)])
+        or_conditions.append(
+            Persona.user_id.is_(None)
+        )  # allow access if persona user id is None
+        or_conditions.append(
+            Persona.user_id == user.id
+        )  # allow access if user created the persona
+        or_conditions.append(
+            Persona.users.any(id=user.id)
+        )  # allow access if user is in allowed users
+        or_conditions.append(
+            Persona.groups.any(UserGroup.users.any(id=user.id))
+        )  # allow access if user is in any allowed group
 
         # if we aren't editing, also give access to all public personas
         if not is_for_edit:
