@@ -5,7 +5,7 @@ import {
   PlusCircleIcon,
   TrashIcon,
 } from "@/components/icons/icons";
-import { errorHandlingFetcher } from "@/lib/fetcher";
+import { errorHandlingFetcher, FetchError } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 
@@ -25,8 +25,13 @@ import AdvancedFormPage from "./pages/AdvancedFormPage";
 import DynamicConnectionForm from "./pages/CreateConnector";
 import CreateCredential from "@/components/credentials/CreateCredential";
 import ModifyCredential from "@/components/credentials/ModifyCredential";
-import { ValidSources } from "@/lib/types";
-import { Credential, credentialTemplates } from "@/lib/ccs/credentials";
+import { ConnectorIndexingStatus, ValidSources } from "@/lib/types";
+import {
+  Credential,
+  credentialTemplates,
+  GoogleDriveCredentialJson,
+  GoogleDriveServiceAccountCredentialJson,
+} from "@/lib/ccs/credentials";
 import {
   ConnectionConfiguration,
   connectorConfigs,
@@ -37,6 +42,13 @@ import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { FaPlus } from "react-icons/fa";
 import { FiPlus } from "react-icons/fi";
 import { getDisplayName } from "next/dist/shared/lib/utils";
+import GDriveMain from "./pages/GoogleDrivePage";
+import { usePublicCredentials } from "@/lib/hooks";
+import { GmailMain } from "./pages/temporary_gmail/gmail/GmailPage";
+import {
+  useGmailCredentials,
+  useGoogleDriveCredentials,
+} from "./pages/temporary_gmail/gmail/utils";
 
 export type AdvancedConfig = {
   pruneFreq: number | null;
@@ -84,14 +96,6 @@ export default function AddConnector({
   const [values, setValues] = useState<{ [record: string]: any } | null>(
     Object.keys(initialValues).length > 0 ? initialValues : null
   );
-  console.log(values);
-
-  const noCredentials = credentialTemplate == null;
-  if (noCredentials) {
-    setFormStep(Math.max(1, formStep));
-  } else if (!currentCredential) {
-    setFormStep(Math.min(formStep, 0));
-  }
 
   // Default to 10 minutes unless otherwise specified
   const defaultRefresh = configuration.overrideDefaultFreq || 10 * 60;
@@ -101,13 +105,21 @@ export default function AddConnector({
   const [isPublic, setIsPublic] = useState(false);
   const [createConnectorToggle, setCreateConnectorToggle] = useState(false);
 
-  const resetAdvancedSettings = () => {
-    setPruneFreq(0);
-    setRefreshFreq(defaultRefresh);
-    setIndexingStart(null);
-    prevFormStep();
-  };
+  const { liveGDriveCredential } = useGoogleDriveCredentials(
+    connector == "google_drive"
+  );
 
+  const { liveGmailCredential } = useGmailCredentials(connector == "gmail");
+
+  const credentialActivated =
+    liveGDriveCredential || liveGmailCredential || currentCredential;
+
+  const noCredentials = credentialTemplate == null;
+  if (noCredentials) {
+    setFormStep(Math.max(1, formStep));
+  } else if (!credentialActivated) {
+    setFormStep(Math.min(formStep, 0));
+  }
   const createConnector = async () => {
     const AdvancedConfig: AdvancedConfig = {
       pruneFreq: pruneFreq || defaultRefresh,
@@ -153,10 +165,7 @@ export default function AddConnector({
       return;
     }
 
-    if (!currentCredential && credentialTemplate != "wiki") {
-      return;
-    }
-    if (!currentCredential) {
+    if (!credentialActivated) {
       const { message, isSuccess, response } = await submitConnector<any>(
         {
           connector_specific_config: values,
@@ -195,10 +204,12 @@ export default function AddConnector({
       disabled: false,
     });
 
-    if (isSuccess && response && currentCredential) {
+    if (isSuccess && response && credentialActivated) {
+      const credential =
+        currentCredential || liveGDriveCredential || liveGmailCredential;
       const linkCredentialResponse = await linkCredential(
         response.id,
-        currentCredential.id,
+        credential?.id!,
         name,
         isPublic
       );
@@ -241,19 +252,6 @@ export default function AddConnector({
     }
   };
 
-  const updateCredential = (id?: number) => {
-    // console.log("UPDATINGGGG")
-    // console.log(id)
-    // console.log(credentials)
-    // setTimeout(() => {
-    //   if (id) {
-    //     const newCredential = credentials.find(cred => cred.id === id);
-    //     if (newCredential) {
-    //       setCurrentCredential(newCredential);
-    //     }
-    //   }
-    // }, 400)
-  };
   const onSwap = async (selectedCredential: Credential<any>) => {
     setCurrentCredential(selectedCredential);
     setPopup({
@@ -289,72 +287,113 @@ export default function AddConnector({
         title={displayName}
       />
 
-      {formStep == 0 && (
-        <>
-          <Card>
-            <Title className="mb-2 text-lg">Select a credential</Title>
-            <ModifyCredential
-              showIfEmpty
-              display
-              source={connector}
-              defaultedCredential={currentCredential!}
-              credentials={credentials}
-              setPopup={setPopup}
-              onDeleteCredential={onDeleteCredential}
-              onSwitch={onSwap}
-            />
-            {!createConnectorToggle && (
-              <div className="mt-8 w-full flex gap-x-2 items-center">
-                <div className="w-full h-[1px] bg-neutral-300" />
-                <button
-                  className="text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded"
-                  onClick={() =>
-                    setCreateConnectorToggle(
-                      (createConnectorToggle) => !createConnectorToggle
-                    )
-                  }
-                >
-                  Create New
-                </button>
-                {/* <p className="text-sm flex-none">or create</p> */}
-                <div className="w-full h-[1px] bg-neutral-300" />
-              </div>
-            )}
+      {formStep == 0 &&
+        (connector == "google_drive" ? (
+          <>
+            <Card>
+              <Title className="mb-2 text-lg">Select a credential</Title>
 
-            {!(connector == "google_drive") && createConnectorToggle && (
-              <Modal
-                className="max-w-3xl rounded-lg"
-                onOutsideClick={() => setCreateConnectorToggle(false)}
+              <GDriveMain
+                updateCredential={(credential: Credential<any>) =>
+                  setCurrentCredential(credential)
+                }
+              />
+            </Card>
+            <div className="mt-4 flex w-full justify-end">
+              <button
+                className="enabled:cursor-pointer disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+                disabled={!credentialActivated}
+                onClick={() => nextFormStep()}
               >
-                <>
-                  {/* < */}
-                  <Title className="mb-2 text-lg">
-                    Create a {getSourceDisplayName(connector)} credential
-                  </Title>
-                  <CreateCredential
-                    close
-                    onSwitch={onSwap}
-                    refresh={refresh}
-                    onClose={() => setCreateConnectorToggle(false)}
-                    sourceType={connector}
-                    setPopup={setPopup}
-                  />
-                </>
-              </Modal>
-            )}
-          </Card>
-          <div className="mt-4 flex w-full justify-end">
-            <button
-              className="enabled:cursor-pointer disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-              disabled={currentCredential == null}
-              onClick={() => nextFormStep()}
-            >
-              Continue
-              <ArrowRight />
-            </button>
-          </div>
-        </>
-      )}
+                Continue
+                <ArrowRight />
+              </button>
+            </div>
+          </>
+        ) : connector == "gmail" ? (
+          <>
+            <Card>
+              <Title className="mb-2 text-lg">Select a credential</Title>
+
+              <GmailMain />
+            </Card>
+            <div className="mt-4 flex w-full justify-end">
+              <button
+                className="enabled:cursor-pointer disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+                disabled={!credentialActivated}
+                onClick={() => nextFormStep()}
+              >
+                Continue
+                <ArrowRight />
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <Card>
+              <Title className="mb-2 text-lg">Select a credential</Title>
+              <ModifyCredential
+                showIfEmpty
+                display
+                source={connector}
+                defaultedCredential={currentCredential!}
+                credentials={credentials}
+                setPopup={setPopup}
+                onDeleteCredential={onDeleteCredential}
+                onSwitch={onSwap}
+              />
+              {!createConnectorToggle && (
+                <div className="mt-8 w-full flex gap-x-2 items-center">
+                  <div className="w-full h-[1px] bg-neutral-300" />
+                  <button
+                    className="text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded"
+                    onClick={() =>
+                      setCreateConnectorToggle(
+                        (createConnectorToggle) => !createConnectorToggle
+                      )
+                    }
+                  >
+                    Create New
+                  </button>
+                  {/* <p className="text-sm flex-none">or create</p> */}
+                  <div className="w-full h-[1px] bg-neutral-300" />
+                </div>
+              )}
+
+              {!(connector == "google_drive") && createConnectorToggle && (
+                <Modal
+                  className="max-w-3xl rounded-lg"
+                  onOutsideClick={() => setCreateConnectorToggle(false)}
+                >
+                  <>
+                    {/* < */}
+                    <Title className="mb-2 text-lg">
+                      Create a {getSourceDisplayName(connector)} credential
+                    </Title>
+                    <CreateCredential
+                      close
+                      onSwitch={onSwap}
+                      refresh={refresh}
+                      onClose={() => setCreateConnectorToggle(false)}
+                      sourceType={connector}
+                      setPopup={setPopup}
+                    />
+                  </>
+                </Modal>
+              )}
+            </Card>
+            <div className="mt-4 flex w-full justify-end">
+              <button
+                className="enabled:cursor-pointer disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+                disabled={currentCredential == null}
+                onClick={() => nextFormStep()}
+              >
+                Continue
+                <ArrowRight />
+              </button>
+            </div>
+          </>
+        ))}
 
       {formStep == 1 && (
         <>
@@ -374,7 +413,6 @@ export default function AddConnector({
             {!noCredentials ? (
               <button
                 className="border-neutral-600 mr-auto border flex gap-x-1 items-center text-text p-2.5 text-sm font-regular rounded-sm "
-                disabled={currentCredential == null}
                 onClick={() => prevFormStep()}
               >
                 <ArrowLeft />
@@ -395,9 +433,9 @@ export default function AddConnector({
 
             <div className="flex w-full justify-end">
               <div
-                className={`${currentCredential !== null ? "cursor-pointer hover:underline" : "cursor-not-allowed"} mt-auto text-neutral-600 ml-auto flex gap-x-1 items-center py-2.5 px-3.5 text-sm font-regular rounded-sm`}
+                className={`${credentialActivated ? "cursor-pointer hover:underline" : "cursor-not-allowed"} mt-auto text-neutral-600 ml-auto flex gap-x-1 items-center py-2.5 px-3.5 text-sm font-regular rounded-sm`}
                 onClick={() => {
-                  if (currentCredential !== null) {
+                  if (credentialActivated) {
                     nextFormStep();
                   }
                 }}
@@ -435,7 +473,6 @@ export default function AddConnector({
           <div className={`mt-4 grid grid-cols-3 w-full `}>
             <button
               className="border-neutral-600 border mr-auto flex gap-x-1 items-center text-text py-2.5 px-3.5 text-sm font-regular rounded-sm"
-              disabled={currentCredential == null}
               onClick={() => prevFormStep()}
             >
               <ArrowLeft />

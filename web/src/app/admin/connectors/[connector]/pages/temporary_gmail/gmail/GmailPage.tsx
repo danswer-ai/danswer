@@ -244,18 +244,6 @@ export const GmailMain = () => {
         serviceAccountKeyData={serviceAccountKeyData}
         connectorExists={gmailConnectorIndexingStatuses.length > 0}
       />
-
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
-        Step 3: Start Indexing!
-      </Title>
-      <GmailConnectorManagement
-        gmailPublicCredential={gmailPublicCredential}
-        gmailServiceAccountCredential={gmailServiceAccountCredential}
-        gmailConnectorIndexingStatus={gmailConnectorIndexingStatus}
-        gmailConnectorIndexingStatuses={gmailConnectorIndexingStatuses}
-        credentialIsLinked={credentialIsLinked}
-        setPopup={setPopup}
-      />
     </>
   );
 };

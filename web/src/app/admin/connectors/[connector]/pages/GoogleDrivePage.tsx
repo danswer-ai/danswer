@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 
 import * as Yup from "yup";
 import useSWR from "swr";
@@ -173,7 +173,11 @@ const GoogleDriveConnectorManagement = ({
   );
 };
 
-const GDriveMain = () => {
+const GDriveMain = ({
+  updateCredential,
+}: {
+  updateCredential: (credential: Credential<any>) => void;
+}) => {
   const {
     data: appCredentialData,
     isLoading: isAppCredentialLoading,
