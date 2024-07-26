@@ -49,16 +49,21 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
       null
     );
 
-    const llmOptions: { name: string; value: string }[] = [];
-    const uniqueModelNames = new Set();
+    const llmOptionsByProvider: {
+      [provider: string]: { name: string; value: string }[];
+    } = {};
+    const uniqueModelNames = new Set<string>();
 
-    // Unique based on "name"
     llmProviders.forEach((llmProvider) => {
+      if (!llmOptionsByProvider[llmProvider.provider]) {
+        llmOptionsByProvider[llmProvider.provider] = [];
+      }
+
       (llmProvider.display_model_names || llmProvider.model_names).forEach(
         (modelName) => {
           if (!uniqueModelNames.has(modelName)) {
             uniqueModelNames.add(modelName);
-            llmOptions.push({
+            llmOptionsByProvider[llmProvider.provider].push({
               name: modelName,
               value: structureValue(
                 llmProvider.name,
@@ -71,6 +76,9 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
       );
     });
 
+    const llmOptions = Object.entries(llmOptionsByProvider).flatMap(
+      ([provider, options]) => [...options]
+    );
     return (
       <div className="w-full">
         <div className="flex w-full content-center gap-x-2">
