@@ -317,10 +317,12 @@ export function LLMProviderUpdateForm({
 
           <Divider />
 
-          <AdvancedOptionsToggle
-            showAdvancedOptions={showAdvancedOptions}
-            setShowAdvancedOptions={setShowAdvancedOptions}
-          />
+          {llmProviderDescriptor.name != "azure" && (
+            <AdvancedOptionsToggle
+              showAdvancedOptions={showAdvancedOptions}
+              setShowAdvancedOptions={setShowAdvancedOptions}
+            />
+          )}
 
           {showAdvancedOptions && (
             <>

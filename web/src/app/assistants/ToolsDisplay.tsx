@@ -49,7 +49,7 @@ export function AssistantTools({
   return (
     <div className="relative text-xs flex text-subtle">
       <span
-        className={`${assistant.tools.length > 0 && "py-1"} ${!list ? "font-medium" : "text-subtle text-sm"}`}
+        className={`${assistant.tools.length > 0 && "py-1"}  ${!list ? "font-semibold" : "text-subtle text-sm"}`}
       >
         Tools:
       </span>{" "}

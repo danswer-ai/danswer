@@ -46,9 +46,11 @@ OPEN_AI_MODEL_NAMES = [
 BEDROCK_PROVIDER_NAME = "bedrock"
 # need to remove all the weird "bedrock/eu-central-1/anthropic.claude-v1" named
 # models
-BEDROCK_MODEL_NAMES = [model for model in litellm.bedrock_models if "/" not in model][
-    ::-1
-]
+BEDROCK_MODEL_NAMES = [
+    model
+    for model in litellm.bedrock_models
+    if "/" not in model and "embed" not in model
+][::-1]
 
 IGNORABLE_ANTHROPIC_MODELS = [
     "claude-2",
