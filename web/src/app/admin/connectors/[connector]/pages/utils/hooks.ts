@@ -12,12 +12,7 @@ import {
   GoogleDriveServiceAccountCredentialJson,
 } from "@/lib/connectors/credentials";
 
-export const useGmailCredentials = (active: boolean) => {
-  // if (!active) {
-  //   return {
-  //     liveGmailCredential: undefined,
-  //   };
-  // }
+export const useGmailCredentials = () => {
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
@@ -45,13 +40,7 @@ export const useGmailCredentials = (active: boolean) => {
   };
 };
 
-export const useGoogleDriveCredentials = (active: boolean) => {
-  // if (!active) {
-  //   return {
-  //     liveGDriveCredential: undefined,
-  //   };
-  // }
-  // TODO fix that
+export const useGoogleDriveCredentials = () => {
   const { data: credentialsData } = usePublicCredentials();
 
   const googleDrivePublicCredential:

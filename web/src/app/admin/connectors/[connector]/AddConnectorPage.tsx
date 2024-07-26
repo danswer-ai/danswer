@@ -99,11 +99,9 @@ export default function AddConnector({
     setIsFormValid(isValid || connector == "file");
   };
 
-  const { liveGDriveCredential } = useGoogleDriveCredentials(
-    connector == "google_drive"
-  );
+  const { liveGDriveCredential } = useGoogleDriveCredentials();
 
-  const { liveGmailCredential } = useGmailCredentials(connector == "gmail");
+  const { liveGmailCredential } = useGmailCredentials();
 
   const credentialActivated =
     liveGDriveCredential || liveGmailCredential || currentCredential;
