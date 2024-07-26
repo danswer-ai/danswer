@@ -390,6 +390,7 @@ export default function AddConnector({
               config={configuration}
               isPublic={isPublic}
               defaultValues={values}
+              initialName={name}
             />
           </Card>
           <div className={`mt-4 w-full grid grid-cols-3`}>

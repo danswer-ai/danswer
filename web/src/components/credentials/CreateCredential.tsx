@@ -180,7 +180,6 @@ export default function CreateCredential({
               placeholder="(Optional) credential name.."
               label="Name:"
             />
-
             {Object.entries(json_values).map(([key, val]) => (
               <TextFormField
                 key={key}
@@ -195,14 +194,12 @@ export default function CreateCredential({
                 }
               />
             ))}
-
             <div className="flex justify-between w-full">
               {hideConnector && (
                 <Button size="xs" onClick={hideConnector} color="slate">
                   Hide
                 </Button>
               )}
-
               <Button
                 className="bg-indigo-500 hover:bg-indigo-400"
                 onClick={() =>
@@ -218,8 +215,8 @@ export default function CreateCredential({
               </Button>
             </div>
           </Card>
-          <div className="flex gap-x-4 w-full mt-8 justify-end">
-            {connector && (
+          {connector && (
+            <div className="flex gap-x-4 w-full mt-8 justify-end">
               <Button
                 className="bg-rose-500 hover:bg-rose-400 border-rose-800"
                 onClick={() =>
@@ -233,8 +230,8 @@ export default function CreateCredential({
                   <p>Create + Swap</p>
                 </div>
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </Form>
       )}
     </Formik>

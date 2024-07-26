@@ -13,6 +13,7 @@ import { ConnectionConfiguration } from "@/lib/connectors/connectors";
 export interface DynamicConnectionFormProps {
   config: ConnectionConfiguration;
   selectedFiles: File[];
+  initialName?: string;
   setSelectedFiles: Dispatch<SetStateAction<File[]>>;
   setIsPublic: Dispatch<SetStateAction<boolean>>;
   defaultValues: any;
@@ -30,25 +31,27 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   setSelectedFiles,
   isPublic,
   setIsPublic,
+  initialName,
 }) => {
-  const initialValues =
-    defaultValues ||
-    config.values.reduce(
-      (acc, field, ind) => {
-        acc[field.name] = defaultValues
-          ? defaultValues[field.name]
-          : config.values[ind].hidden
-            ? config.values[ind].default
-            : field.type === "list"
-              ? [""]
-              : field.type === "checkbox"
-                ? false
-                : "";
-        return acc;
-      },
-      {} as Record<string, any>
-    );
-
+  const initialValues = {
+    name: initialName || "",
+    ...(defaultValues ||
+      config.values.reduce(
+        (acc, field, ind) => {
+          acc[field.name] = defaultValues
+            ? defaultValues[field.name]
+            : config.values[ind].hidden
+              ? config.values[ind].default
+              : field.type === "list"
+                ? [""]
+                : field.type === "checkbox"
+                  ? false
+                  : "";
+          return acc;
+        },
+        {} as Record<string, any>
+      )),
+  };
   const validationSchema = Yup.object().shape({
     name: Yup.string().required("Connector Name is required"),
     ...config.values.reduce(
@@ -70,13 +73,15 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
     ),
   });
 
+  console.log(initialValues);
+
   const updateValue =
     (setFieldValue: Function) => (field: string, value: any) => {
       setFieldValue(field, value);
       updateValues(field, value);
-      console.log("updating");
-      console.log(value);
-      console.log(typeof value);
+      // console.log("updating");
+      // console.log(value);
+      // console.log(typeof value);
     };
 
   return (
@@ -105,7 +110,6 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
               currentValue=""
               onChange={(value: string) => setName(value)}
             />
-
             {config.values.map((field) => {
               if (!field.hidden) {
                 return (
@@ -238,30 +242,16 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                           ))}
                         </Field>
                       </>
-                    ) : field.type == "number" ? (
-                      <>
-                        <EditingValue
-                          description={field.description}
-                          optional={field.optional}
-                          setFieldValue={updateValue(setFieldValue)}
-                          type={field.type}
-                          label={field.label}
-                          name={field.name}
-                          currentValue={field.query}
-                        />
-                      </>
                     ) : (
-                      <>
-                        <EditingValue
-                          description={field.description}
-                          optional={field.optional}
-                          setFieldValue={updateValue(setFieldValue)}
-                          type={field.type}
-                          label={field.label}
-                          name={field.name}
-                          currentValue={field.query}
-                        />
-                      </>
+                      <EditingValue
+                        description={field.description}
+                        optional={field.optional}
+                        setFieldValue={updateValue(setFieldValue)}
+                        type={field.type}
+                        label={field.label}
+                        name={field.name}
+                        currentValue={values[field.name]}
+                      />
                     )}
                   </div>
                 );
