@@ -32,10 +32,11 @@ export default function CreateCredential({
   refresh = () => null,
   hideSource,
   onSwitch,
+  // onSwitch= () => null,
   close,
 }: {
   hideConnector?: () => void;
-  onSwitch: (selectedCredential: Credential<any>) => Promise<void>;
+  onSwitch?: (selectedCredential: Credential<any>) => Promise<void>;
   refresh?: () => void;
   hideSource?: boolean;
   close?: boolean;
@@ -105,7 +106,9 @@ export default function CreateCredential({
       // console.log(response?.credential?.id)
       await refresh();
       // setTimeout(() => {
-      onSwitch(response?.credential!);
+      if (onSwitch) {
+        onSwitch(response?.credential!);
+      }
       // updateCredential(response?.credential?.id)
 
       // }, 10)
