@@ -1,7 +1,7 @@
 """Add display_model_names to llm_provider
 
 Revision ID: 473a1a7ca408
-Revises: 91ffac7e65b3
+Revises: 325975216eb3
 Create Date: 2024-07-25 14:31:02.002917
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "473a1a7ca408"
-down_revision = "91ffac7e65b3"
+down_revision = "325975216eb3"
 branch_labels = None
 depends_on = None
 
