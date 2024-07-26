@@ -21,10 +21,10 @@ RUN apt-get remove -y --allow-remove-essential perl-base && \
 RUN python -c "from transformers import AutoModel, AutoTokenizer, TFDistilBertForSequenceClassification; \
 from huggingface_hub import snapshot_download; \
 AutoTokenizer.from_pretrained('danswer/intent-model'); \
-AutoTokenizer.from_pretrained('intfloat/e5-base-v2'); \
+AutoTokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1'); \
 AutoTokenizer.from_pretrained('mixedbread-ai/mxbai-rerank-xsmall-v1'); \
 snapshot_download('danswer/intent-model'); \
-snapshot_download('intfloat/e5-base-v2'); \
+snapshot_download('nomic-ai/nomic-embed-text-v1'); \
 snapshot_download('mixedbread-ai/mxbai-rerank-xsmall-v1')"
 
 WORKDIR /app

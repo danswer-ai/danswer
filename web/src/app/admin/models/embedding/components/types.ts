@@ -67,12 +67,22 @@ export interface CloudEmbeddingProviderFull extends CloudEmbeddingProvider {
 
 export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
   {
-    model_name: "intfloat/e5-base-v2",
+    model_name: "nomic-ai/nomic-embed-text-v1",
     model_dim: 768,
     normalize: true,
     description:
       "The recommended default for most situations. If you aren't sure which model to use, this is probably the one.",
     isDefault: true,
+    link: "https://huggingface.co/nomic-ai/nomic-embed-text-v1",
+    query_prefix: "search_query: ",
+    passage_prefix: "search_document: ",
+  },
+  {
+    model_name: "intfloat/e5-base-v2",
+    model_dim: 768,
+    normalize: true,
+    description:
+      "A smaller / faster model than the default model. This is around 2x faster than the default model but will result in slightly worse accuracy.",
     link: "https://huggingface.co/intfloat/e5-base-v2",
     query_prefix: "query: ",
     passage_prefix: "passage: ",
@@ -82,7 +92,7 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     model_dim: 384,
     normalize: true,
     description:
-      "A smaller / faster version of the default model. If you're running Danswer on a resource constrained system, then this is a good choice.",
+      "An even smaller / faster version of the e5-base-v2 model. If you're running Danswer on a resource constrained system, then this is a good choice.",
     link: "https://huggingface.co/intfloat/e5-small-v2",
     query_prefix: "query: ",
     passage_prefix: "passage: ",
