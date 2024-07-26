@@ -4,7 +4,6 @@ import { Button, Text, Badge } from "@tremor/react";
 import { ValidSources } from "@/lib/types";
 import { FaCreativeCommons } from "react-icons/fa";
 import { EditIcon, SwapIcon, TrashIcon } from "@/components/icons/icons";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDisplayName } from "@/lib/sources";
 import {
   ConfluenceCredentialJson,
@@ -12,20 +11,18 @@ import {
 } from "@/lib/connectors/credentials";
 import { Connector } from "@/lib/connectors/connectors";
 
-interface CredentialSelectionTableProps {
-  credentials: Credential<any>[];
-  onSelectCredential: (credential: Credential<any> | null) => void;
-  currentCredentialId?: number;
-  onDeleteCredential: (credential: Credential<any>) => void;
-  onEditCredential?: (credential: Credential<any>) => void;
-}
-
-const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
+const CredentialSelectionTable = ({
   credentials,
   onEditCredential,
   onSelectCredential,
   currentCredentialId,
   onDeleteCredential,
+}: {
+  credentials: Credential<any>[];
+  onSelectCredential: (credential: Credential<any> | null) => void;
+  currentCredentialId?: number;
+  onDeleteCredential: (credential: Credential<any>) => void;
+  onEditCredential?: (credential: Credential<any>) => void;
 }) => {
   const [selectedCredentialId, setSelectedCredentialId] = useState<
     number | null
@@ -121,36 +118,34 @@ const CredentialSelectionTable: React.FC<CredentialSelectionTableProps> = ({
 };
 
 export default function ModifyCredential({
-  onClose = () => null,
   showIfEmpty,
   attachedConnector,
-  onSwap,
-  onCreateNew = () => null,
   display,
-  onEditCredential,
-  onDeleteCredential,
-  setPopup,
   credentials,
   source,
   defaultedCredential,
+
+  onSwap,
   onSwitch,
+  onCreateNew = () => null,
+  onEditCredential,
+  onDeleteCredential,
 }: {
+  display?: boolean;
   showIfEmpty?: boolean;
   attachedConnector?: Connector<any>;
   defaultedCredential?: Credential<any>;
-  display?: boolean;
   credentials: Credential<any>[];
   source: ValidSources;
-  setPopup: (popupSpec: PopupSpec | null) => void;
-  onDeleteCredential: (credential: Credential<any | null>) => void;
-  onEditCredential?: (credential: Credential<ConfluenceCredentialJson>) => void;
-  onClose?: () => void;
+
   onSwitch?: (newCredential: Credential<any>) => void;
   onSwap?: (newCredential: Credential<any>, connectorId: number) => void;
   onCreateNew?: () => void;
+  onDeleteCredential: (credential: Credential<any | null>) => void;
+  onEditCredential?: (credential: Credential<ConfluenceCredentialJson>) => void;
 }) {
   const [selectedCredential, setSelectedCredential] =
-    React.useState<Credential<any> | null>(null);
+    useState<Credential<any> | null>(null);
   const [confirmDeletionCredential, setConfirmDeletionCredential] =
     useState<null | Credential<any>>(null);
 
@@ -169,8 +164,8 @@ export default function ModifyCredential({
         >
           <>
             <p className="text-lg mb-2">
-              Are you sure you want to delete this? All historical data will be
-              deleted as well.
+              Are you sure you want to delete this credential? You cannot delete
+              credentials that are linked to live connectors.
             </p>
             <div className="mt-6 flex justify-between">
               <button

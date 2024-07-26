@@ -3,9 +3,8 @@ import { Formik, Form, Field, FieldArray } from "formik";
 import * as Yup from "yup";
 import { FaPlus } from "react-icons/fa";
 import { EditingValue } from "@/components/credentials/EditingValue";
-
-import { Button, Divider } from "@tremor/react";
-import CredentialSubText from "@/components/credentials/fields";
+import { Divider } from "@tremor/react";
+import CredentialSubText from "@/components/credentials/CredentialFields";
 import { TrashIcon } from "@/components/icons/icons";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
 import { ConnectionConfiguration } from "@/lib/connectors/connectors";

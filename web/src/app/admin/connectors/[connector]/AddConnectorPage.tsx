@@ -19,8 +19,8 @@ import { submitFiles } from "./pages/utils/files";
 import { submitGoogleSite } from "./pages/utils/google_site";
 import AdvancedFormPage from "./pages/Advanced";
 import DynamicConnectionForm from "./pages/Create";
-import CreateCredential from "@/components/credentials/CreateCredential";
-import ModifyCredential from "@/components/credentials/ModifyCredential";
+import CreateCredential from "@/components/credentials/actions/CreateCredential";
+import ModifyCredential from "@/components/credentials/actions/ModifyCredential";
 import { ValidSources } from "@/lib/types";
 import { Credential, credentialTemplates } from "@/lib/connectors/credentials";
 import {
@@ -134,8 +134,6 @@ export default function AddConnector({
         setTimeout(() => {
           window.open("/admin/indexing/status", "_self");
         }, 1000);
-      } else {
-        console.log("No repsonse");
       }
       return;
     }
@@ -222,7 +220,6 @@ export default function AddConnector({
   };
   const onDeleteCredential = async (credential: Credential<any | null>) => {
     const response = await deleteCredential(credential.id, true);
-    console.log(response);
     if (response.ok) {
       setPopup({
         message: "Credential deleted successfully!",
@@ -318,7 +315,6 @@ export default function AddConnector({
                 source={connector}
                 defaultedCredential={currentCredential!}
                 credentials={credentials}
-                setPopup={setPopup}
                 onDeleteCredential={onDeleteCredential}
                 onSwitch={onSwap}
               />
@@ -335,7 +331,6 @@ export default function AddConnector({
                   >
                     Create New
                   </button>
-                  {/* <p className="text-sm flex-none">or create</p> */}
                   <div className="w-full h-[1px] bg-background-300" />
                 </div>
               )}
@@ -346,17 +341,16 @@ export default function AddConnector({
                   onOutsideClick={() => setCreateConnectorToggle(false)}
                 >
                   <>
-                    {/* < */}
                     <Title className="mb-2 text-lg">
                       Create a {getSourceDisplayName(connector)} credential
                     </Title>
                     <CreateCredential
                       close
-                      onSwitch={onSwap}
                       refresh={refresh}
-                      onClose={() => setCreateConnectorToggle(false)}
                       sourceType={connector}
                       setPopup={setPopup}
+                      onSwitch={onSwap}
+                      onClose={() => setCreateConnectorToggle(false)}
                     />
                   </>
                 </Modal>

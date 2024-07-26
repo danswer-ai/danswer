@@ -25,12 +25,10 @@ export async function submitConnector<T>(
   const isUpdate = connectorId !== undefined;
   if (!connector.connector_specific_config) {
     connector.connector_specific_config = {} as T;
-    // connector.connector_specific_config={}
   }
 
   try {
     if (fake_credential) {
-      console.log("Looknig for fake cred");
       const response = await fetch(
         "/api/manage/admin/connector-with-fake-credential",
         {

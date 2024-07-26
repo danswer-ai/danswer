@@ -1,29 +1,25 @@
-import * as Yup from "yup";
-import React, { useState } from "react";
-import { Modal } from "@/components/Modal";
+import React from "react";
 import { Button, Text, Card } from "@tremor/react";
 
 import { FaNewspaper } from "react-icons/fa";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik, FormikHelpers } from "formik";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { EditIcon } from "@/components/icons/icons";
-import { EditingValue } from "./EditingValue";
+import { EditingValue } from "../EditingValue";
 import {
   Credential,
   getDisplayNameForCredentialKey,
 } from "@/lib/connectors/credentials";
+import { createEditingValidationSchema, createInitialValues } from "../lib";
+import { dictionaryType, formType } from "../types";
 
-interface JsonValues {
-  [key: string]: string;
-}
-
-interface FormValues extends JsonValues {
-  name: string;
-}
-
-interface EditCredentialProps {
-  credential: Credential<JsonValues>;
+const EditCredential = ({
+  credential,
+  onClose,
+  setPopup,
+  onUpdate,
+}: {
+  credential: Credential<dictionaryType>;
   onClose: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
   onUpdate: (
@@ -31,45 +27,15 @@ interface EditCredentialProps {
     details: any,
     onSuccess: () => void
   ) => Promise<void>;
-}
-
-function createValidationSchema(json_values: JsonValues) {
-  const schemaFields: { [key: string]: Yup.StringSchema } = {};
-
-  for (const key in json_values) {
-    if (Object.prototype.hasOwnProperty.call(json_values, key)) {
-      schemaFields[key] = Yup.string().optional();
-    }
-  }
-
-  schemaFields["name"] = Yup.string().optional();
-
-  return Yup.object().shape(schemaFields);
-}
-
-function createInitialValues(credential: Credential<JsonValues>): FormValues {
-  const initialValues: FormValues = {
-    name: credential.name || "",
-  };
-
-  for (const key in credential.credential_json) {
-    initialValues[key] = "";
-  }
-
-  return initialValues;
-}
-const EditCredential: React.FC<EditCredentialProps> = ({
-  credential,
-  onClose,
-  setPopup,
-  onUpdate,
 }) => {
-  const validationSchema = createValidationSchema(credential.credential_json);
+  const validationSchema = createEditingValidationSchema(
+    credential.credential_json
+  );
   const initialValues = createInitialValues(credential);
 
   const handleSubmit = async (
-    values: FormValues,
-    formikHelpers: FormikHelpers<FormValues>
+    values: formType,
+    formikHelpers: FormikHelpers<formType>
   ) => {
     formikHelpers.setSubmitting(true);
     try {

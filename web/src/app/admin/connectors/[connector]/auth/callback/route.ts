@@ -9,8 +9,6 @@ import {
 import { processCookies } from "@/lib/userSS";
 
 export const GET = async (request: NextRequest) => {
-  console.log(request);
-
   const connector = request.url.includes("gmail") ? "gmail" : "google-drive";
   const callbackEndpoint = `/manage/connector/${connector}/callback`;
   const url = new URL(buildUrl(callbackEndpoint));

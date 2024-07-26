@@ -1,5 +1,4 @@
 import { ErrorMessage, Field } from "formik";
-import * as Yup from "yup";
 
 import {
   ExplanationText,
@@ -9,6 +8,7 @@ import {
   ToolTipDetails,
 } from "../admin/connectors/Field";
 
+// Specifically for text
 export function AdminTextField({
   name,
   label,

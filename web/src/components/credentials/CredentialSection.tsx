@@ -12,16 +12,16 @@ import {
   updateCredential,
 } from "@/lib/credential";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import CreateCredential from "./CreateCredential";
+import CreateCredential from "./actions/CreateCredential";
 import { CCPairFullInfo } from "@/app/admin/connector/[ccPairId]/types";
-import ModifyCredential from "./ModifyCredential";
+import ModifyCredential from "./actions/ModifyCredential";
 import { Text } from "@tremor/react";
 import {
   buildCCPairInfoUrl,
   buildSimilarCredentialInfoURL,
 } from "@/app/admin/connector/[ccPairId]/lib";
 import { Modal } from "../Modal";
-import EditCredential from "./EditCredential";
+import EditCredential from "./actions/EditCredential";
 import { getSourceDisplayName } from "@/lib/sources";
 import {
   ConfluenceCredentialJson,
@@ -153,14 +153,12 @@ export default function CredentialSection({
             attachedConnector={ccPair.connector}
             defaultedCredential={defaultedCredential}
             credentials={credentials}
-            setPopup={setPopup}
             onDeleteCredential={onDeleteCredential}
             onEditCredential={(credential: Credential<any>) =>
               onEditCredential(credential)
             }
             onSwap={onSwap}
             onCreateNew={() => makeShowCreateCredential()}
-            onClose={() => closeModifyCredential()}
           />
         </Modal>
       )}
@@ -188,7 +186,7 @@ export default function CredentialSection({
         >
           <CreateCredential
             sourceType={sourceType}
-            connector={ccPair.connector}
+            swapConnector={ccPair.connector}
             setPopup={setPopup}
             onSwap={onSwap}
             onClose={closeCreateCredential}

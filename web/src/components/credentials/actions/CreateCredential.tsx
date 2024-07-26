@@ -1,78 +1,73 @@
-import * as Yup from "yup";
 import React from "react";
 import { Button, Card } from "@tremor/react";
 import { ValidSources } from "@/lib/types";
-import { FaAccusoft, FaSwatchbook } from "react-icons/fa";
-
+import { FaAccusoft } from "react-icons/fa";
 import { submitCredential } from "@/components/admin/connectors/CredentialForm";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik, FormikHelpers } from "formik";
-
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDocLink } from "@/lib/sources";
 import GDriveMain from "@/app/admin/connectors/[connector]/pages/gdrive/GoogleDrivePage";
-
 import { Connector } from "@/lib/connectors/connectors";
 import {
   Credential,
   credentialTemplates,
   getDisplayNameForCredentialKey,
 } from "@/lib/connectors/credentials";
-import { PlusCircleIcon } from "../icons/icons";
+import { PlusCircleIcon } from "../../icons/icons";
 import { GmailMain } from "@/app/admin/connectors/[connector]/pages/gmail/GmailPage";
-
-type ActionType = "create" | "createAndSwap";
+import { ActionType, dictionaryType, formType } from "../types";
+import { createValidationSchema } from "../lib";
 
 export default function CreateCredential({
-  onClose = () => null,
-  connector,
-  onSwap = async () => null,
-  setPopup,
-  sourceType,
-  hideConnector,
-  refresh = () => null,
   hideSource,
-  onSwitch,
-  // onSwitch= () => null,
+  sourceType,
+  setPopup,
   close,
+  onClose = () => null,
+  onSwitch,
+  onSwap = async () => null,
+  swapConnector,
+  refresh = () => null,
 }: {
-  hideConnector?: () => void;
-  onSwitch?: (selectedCredential: Credential<any>) => Promise<void>;
-  refresh?: () => void;
-  hideSource?: boolean;
-  close?: boolean;
+  // Source information
+  hideSource?: boolean; // hides docs link
   sourceType: ValidSources;
-  connector?: Connector<any>;
+
   setPopup: (popupSpec: PopupSpec | null) => void;
+
+  // Optional toggle- close section after selection?
+  close?: boolean;
+
+  // Special handlers
   onClose?: () => void;
+  // Switch currently selected credential
+  onSwitch?: (selectedCredential: Credential<any>) => Promise<void>;
+  // Switch currently selected credential + link with connector
   onSwap?: (selectedCredential: Credential<any>, connectorId: number) => void;
+
+  // For swapping credentials on selection
+  swapConnector?: Connector<any>;
+
+  // Mutating parent state
+  refresh?: () => void;
 }) {
   const handleSubmit = async (
-    values: JsonValues & { name?: string },
-    formikHelpers: FormikHelpers<FormValues>,
+    values: formType,
+    formikHelpers: FormikHelpers<formType>,
     action: ActionType
   ) => {
     const { setSubmitting, validateForm } = formikHelpers;
 
-    // Validate the form
     const errors = await validateForm(values);
-
     if (Object.keys(errors).length > 0) {
-      // If there are validation errors, set them and return
       formikHelpers.setErrors(errors);
       return;
     }
 
     setSubmitting(true);
-
-    // Validate the form
-
-    if (Object.keys(errors).length > 0) {
-      // If there are validation errors, set them and return
-      formikHelpers.setErrors(errors);
-      return;
-    }
     formikHelpers.setSubmitting(true);
+
     const { name, ...credentialValues } = values;
 
     try {
@@ -89,9 +84,9 @@ export default function CreateCredential({
         throw new Error("No credential returned");
       }
 
-      if (isSuccess && connector) {
+      if (isSuccess && swapConnector) {
         if (action === "createAndSwap") {
-          onSwap(credential, connector.id);
+          onSwap(credential, swapConnector.id);
         } else {
           setPopup({ type: "success", message: "Created new credneital!!" });
           setTimeout(() => setPopup(null), 4000);
@@ -100,6 +95,7 @@ export default function CreateCredential({
       } else {
         setPopup({ message, type: isSuccess ? "success" : "error" });
       }
+
       if (close) {
         onClose();
       }
@@ -116,31 +112,6 @@ export default function CreateCredential({
     }
   };
 
-  const types = credentialTemplates[sourceType];
-
-  interface JsonValues {
-    [key: string]: string;
-  }
-  interface FormValues extends JsonValues {
-    name: string;
-  }
-
-  const json_values: JsonValues = types;
-
-  function createValidationSchema(json_values: JsonValues) {
-    const schemaFields: { [key: string]: Yup.StringSchema } = {};
-
-    for (const key in json_values) {
-      if (Object.prototype.hasOwnProperty.call(json_values, key)) {
-        schemaFields[key] = Yup.string().required(
-          `Please enter your ${getDisplayNameForCredentialKey(key)}`
-        );
-      }
-    }
-
-    schemaFields["name"] = Yup.string().optional();
-    return Yup.object().shape(schemaFields);
-  }
   if (sourceType == "gmail") {
     return <GmailMain />;
   }
@@ -148,7 +119,9 @@ export default function CreateCredential({
   if (sourceType == "google_drive") {
     return <GDriveMain />;
   }
-  const validationSchema = createValidationSchema(json_values);
+
+  const credentialTemplate: dictionaryType = credentialTemplates[sourceType];
+  const validationSchema = createValidationSchema(credentialTemplate);
 
   return (
     <Formik
@@ -156,7 +129,7 @@ export default function CreateCredential({
         name: "",
       }}
       validationSchema={validationSchema}
-      onSubmit={(values, formikHelpers) => {}} // This will be overridden by our custom submit handlers
+      onSubmit={() => {}} // This will be overridden by our custom submit handlers
     >
       {(formikProps) => (
         <Form>
@@ -180,7 +153,7 @@ export default function CreateCredential({
               placeholder="(Optional) credential name.."
               label="Name:"
             />
-            {Object.entries(json_values).map(([key, val]) => (
+            {Object.entries(credentialTemplate).map(([key, val]) => (
               <TextFormField
                 key={key}
                 name={key}
@@ -195,11 +168,6 @@ export default function CreateCredential({
               />
             ))}
             <div className="flex justify-between w-full">
-              {hideConnector && (
-                <Button size="xs" onClick={hideConnector} color="slate">
-                  Hide
-                </Button>
-              )}
               <Button
                 className="bg-indigo-500 hover:bg-indigo-400"
                 onClick={() =>
@@ -215,7 +183,7 @@ export default function CreateCredential({
               </Button>
             </div>
           </Card>
-          {connector && (
+          {swapConnector && (
             <div className="flex gap-x-4 w-full mt-8 justify-end">
               <Button
                 className="bg-rose-500 hover:bg-rose-400 border-rose-800"

@@ -1,17 +1,10 @@
 import { useState } from "react";
-import {
-  BooleanFormField,
-  Label,
-  SubLabel,
-  TextFormField,
-} from "../admin/connectors/Field";
+import { SubLabel } from "../admin/connectors/Field";
 import { EditIcon } from "../icons/icons";
-import { CustomCheckbox } from "../CustomCheckbox";
-import { AdminBooleanFormField, AdminTextField } from "./fields";
-import { ErrorMessage, Field } from "formik";
+import { AdminBooleanFormField, AdminTextField } from "./CredentialFields";
 
+// Our own input component, to be used across forms
 export const EditingValue: React.FC<{
-  setFieldValue: (field: string, value: any) => void;
   name: string;
   currentValue?: any;
   label: string;
@@ -20,13 +13,15 @@ export const EditingValue: React.FC<{
   className?: string;
   optional?: boolean;
   description?: string;
+  setFieldValue: (field: string, value: any) => void;
+
+  // These are escape hatches from the overall
+  // value editing component (when need to modify)
   onChange?: (value: string) => void;
   onChangeBool?: (value: boolean) => void;
   onChangeNumber?: (value: number) => void;
   onChangeDate?: (value: Date | null) => void;
 }> = ({
-  setFieldValue,
-  onChangeNumber,
   name,
   currentValue,
   label,
@@ -35,15 +30,17 @@ export const EditingValue: React.FC<{
   className,
   description,
   optional,
+  setFieldValue,
+
   onChange,
   onChangeBool,
+  onChangeNumber,
   onChangeDate,
 }) => {
   const [value, setValue] = useState<boolean | string | number | Date>();
 
   const updateValue = (newValue: string | boolean | number | Date) => {
     setValue(newValue);
-    console.log(`Updateing ${name} to ${newValue} from ${currentValue}`);
     setFieldValue(name, newValue);
   };
 
@@ -68,6 +65,7 @@ export const EditingValue: React.FC<{
               />
             </div>
           ) : type === "date" ? (
+            // Date handling
             <div>
               <label className="block text-sm font-medium text-text-700 mb-1">
                 {label}
@@ -122,19 +120,21 @@ export const EditingValue: React.FC<{
                 onChange={(e) => {
                   const value = parseInt(e.target.value);
                   updateValue(value);
-                  console.log(value);
                   if (onChangeNumber) {
                     onChangeNumber(value);
                   }
                 }}
-                className="mt-2 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
+                className={`mt-2 block w-full px-3 py-2 
+                    bg-white border border-gray-300 rounded-md 
+                    text-sm shadow-sm placeholder-gray-400
                     focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500
                     disabled:bg-gray-50 disabled:text-gray-500 disabled:border-gray-200 disabled:shadow-none
                     invalid:border-pink-500 invalid:text-pink-600
-                    focus:invalid:border-pink-500 focus:invalid:ring-pink-500"
+                    focus:invalid:border-pink-500 focus:invalid:ring-pink-500`}
               />
             </>
           ) : (
+            // Default
             <AdminTextField
               optional={optional}
               noPadding
@@ -143,9 +143,6 @@ export const EditingValue: React.FC<{
                 updateValue(e.target.value);
                 if (onChange) {
                   onChange(e.target.value!);
-                }
-                if (onChangeNumber) {
-                  onChangeNumber(parseInt(e.target.value)!);
                 }
               }}
               type={type}
