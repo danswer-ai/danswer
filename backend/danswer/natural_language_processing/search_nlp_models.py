@@ -5,6 +5,7 @@ from httpx import HTTPError
 
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
+from danswer.natural_language_processing.utils import get_default_llm_tokenizer
 from danswer.natural_language_processing.utils import get_default_tokenizer
 from danswer.natural_language_processing.utils import tokenizer_trim_content
 from danswer.utils.batching import batch_list
@@ -85,9 +86,7 @@ class EmbeddingModel:
                 tokenizer_trim_content(
                     content=text,
                     desired_length=self.max_seq_length,
-                    tokenizer=get_default_tokenizer(
-                        provider_type=self.provider_type,
-                    ),
+                    tokenizer=get_default_llm_tokenizer(),
                 )
                 for text in texts
             ]

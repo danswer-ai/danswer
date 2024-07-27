@@ -92,16 +92,15 @@ class CloudEmbedding:
         try:
             response = self.client.embeddings.create(input=texts, model=model)
             return [embedding.embedding for embedding in response.data]
-        except Exception as e:
+        except BaseException as e:
             error_string = (
                 f"Error embedding text with OpenAI: {str(e)} \n"
                 f"Model: {model} \n"
                 f"Provider: {self.provider} \n"
-                f"API Key: {self.api_key}"
-                f"Texts: {texts} \n"
+                f"Texts: {texts}"
             )
             logger.error(error_string)
-            raise error_string
+            raise RuntimeError(error_string)
 
     def _embed_cohere(
         self, texts: list[str], model: str | None, embedding_type: str
