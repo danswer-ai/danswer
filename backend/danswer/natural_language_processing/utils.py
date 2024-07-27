@@ -24,8 +24,6 @@ def _set_encoder_from_provider(provider_type: str) -> Any:
     if provider_type.lower() == "OpenAI".lower():
         return tiktoken.get_encoding("cl100k_base")
 
-    from tokenizers import Tokenizer  # type:ignore
-
     if provider_type.lower() == "Cohere".lower():
         return Tokenizer.from_pretrained("Cohere/command-nightly")
 
@@ -35,15 +33,6 @@ def _set_encoder_from_provider(provider_type: str) -> Any:
         "Defaulting to OpenAI..."
     )
     return tiktoken.get_encoding("cl100k_base")
-
-
-def _set_encoder_from_model_name(model_name: str) -> Any:
-    from tokenizers import Tokenizer  # type:ignore
-
-    encoder = Tokenizer.from_pretrained(model_name)
-    if hasattr(encoder, "is_fast") and encoder.is_fast:
-        os.environ["TOKENIZERS_PARALLELISM"] = "false"
-    return encoder
 
 
 class UnifiedTokenizer:
@@ -71,7 +60,7 @@ class UnifiedTokenizer:
         if self.provider_type:
             self.encoder = _set_encoder_from_provider(self.provider_type)
         elif self.model_name:
-            self.encoder = _set_encoder_from_model_name(self.model_name)
+            self.encoder = Tokenizer.from_pretrained(model_name)
         else:
             raise ValueError("Need to provide a model_name or provider_type")
 
