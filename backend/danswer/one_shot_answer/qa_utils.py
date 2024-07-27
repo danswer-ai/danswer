@@ -2,7 +2,7 @@ from collections.abc import Callable
 from collections.abc import Generator
 
 from danswer.configs.constants import MessageType
-from danswer.natural_language_processing.utils import get_default_llm_token_encode
+from danswer.natural_language_processing.utils import get_default_llm_tokenizer
 from danswer.one_shot_answer.models import ThreadMessage
 from danswer.utils.logger import setup_logger
 
@@ -27,7 +27,7 @@ def combine_message_thread(
     message_strs: list[str] = []
     total_token_count = 0
     if llm_tokenizer is None:
-        llm_tokenizer = get_default_llm_token_encode()
+        llm_tokenizer = get_default_llm_tokenizer().encode
 
     for message in reversed(messages):
         if message.role == MessageType.USER:

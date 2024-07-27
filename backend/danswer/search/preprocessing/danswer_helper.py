@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 def count_unk_tokens(text: str, tokenizer: "AutoTokenizer") -> int:
     """Unclear if the wordpiece/sentencepiece tokenizer used is actually tokenizing anything as the [UNK] token
     It splits up even foreign characters and unicode emojis without using UNK"""
-    tokenized_text = tokenizer.tokenize(text)
+    tokenized_text = tokenizer.encode(text)
     num_unk_tokens = len(
         [token for token in tokenized_text if token == tokenizer.unk_token]
     )

@@ -34,7 +34,7 @@ from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.models import QuotesConfig
 from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
-from danswer.natural_language_processing.utils import get_default_llm_token_encode
+from danswer.natural_language_processing.utils import get_default_llm_tokenizer
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.one_shot_answer.models import QueryRephrase
@@ -118,7 +118,7 @@ def stream_answer_objects(
         danswerbot_flow=danswerbot_flow,
     )
 
-    llm_tokenizer = get_default_llm_token_encode()
+    llm_tokenizer = get_default_llm_tokenizer().encode
 
     # Create a chat session which will just store the root message, the query, and the AI response
     root_message = get_or_create_root_message(

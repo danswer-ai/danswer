@@ -85,7 +85,9 @@ class EmbeddingModel:
                 tokenizer_trim_content(
                     content=text,
                     desired_length=self.max_seq_length,
-                    tokenizer=get_default_tokenizer(),
+                    tokenizer=get_default_tokenizer(
+                        provider_type=self.provider_type,
+                    ),
                 )
                 for text in texts
             ]
@@ -203,7 +205,8 @@ def warm_up_encoders(
     )
 
     # May not be the exact same tokenizer used for the indexing flow
-    get_default_tokenizer(model_name=model_name)(warm_up_str)
+    logger.info(f"Warming up encoder model: {model_name}")
+    get_default_tokenizer(model_name=model_name).encode(warm_up_str)
 
     embed_model = EmbeddingModel(
         model_name=model_name,
