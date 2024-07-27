@@ -2,9 +2,6 @@ import os
 from copy import copy
 from typing import Any
 
-import tiktoken
-from tiktoken.core import Encoding
-from tokenizers import Tokenizer  # type:ignore
 from transformers import logging as transformer_logging  # type:ignore
 
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
@@ -20,8 +17,11 @@ os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 
 
 def _set_encoder_from_provider(provider_type: str) -> Any:
+    import tiktoken
+
     if provider_type.lower() == "OpenAI".lower():
         return tiktoken.get_encoding("cl100k_base")
+    from tokenizers import Tokenizer  # type:ignore
 
     if provider_type.lower() == "Cohere".lower():
         return Tokenizer.from_pretrained("Cohere/command-nightly")
@@ -44,7 +44,8 @@ class UnifiedTokenizer:
     If no provider_type is specified, it will use the
     tokenizer for the specified model_name.
 
-    NOTE: local importing may be neccesary to prevent using too much memory
+    NOTE: local importing is used to prevent using too much memory
+    on import.
     """
 
     def __init__(
@@ -57,13 +58,19 @@ class UnifiedTokenizer:
         if provider_type:
             self.encoder = _set_encoder_from_provider(provider_type)
         elif model_name:
+            from tokenizers import Tokenizer  # type:ignore
+
             self.encoder = Tokenizer.from_pretrained(model_name)
         else:
             raise ValueError("Need to provide a model_name or provider_type")
 
     def encode(self, string: str) -> list[int]:
+        from tiktoken.core import Encoding
+
         if isinstance(self.encoder, Encoding):
             return self.encoder.encode(string)
+
+        from tokenizers import Tokenizer  # type:ignore
 
         if isinstance(self.encoder, Tokenizer):
             return self.encoder.encode(string).ids
@@ -71,8 +78,12 @@ class UnifiedTokenizer:
         raise ValueError(f"Unsupported encoder type: {type(self.encoder)}\n")
 
     def decode(self, string: list[int]) -> str:
+        from tiktoken.core import Encoding
+
         if isinstance(self.encoder, Encoding):
             return self.encoder.decode(string)
+
+        from tokenizers import Tokenizer
 
         if isinstance(self.encoder, Tokenizer):
             return self.encoder.decode(string)
