@@ -21,6 +21,15 @@ os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 
 
 class Tokenizer:
+    """
+    This class provides a wrapper for the different tokenizers
+    provided by different libraries to give a unified interface
+    for tokenization.
+    Right now, it supports the tiktoken and transformers libraries.
+    If no provider_type is specified, it will use the
+    tokenizer for the specified model_name.
+    """
+
     def __init__(
         self,
         model_name: str | None = None,
