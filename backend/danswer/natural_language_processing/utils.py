@@ -1,4 +1,3 @@
-import gc
 import os
 from copy import copy
 from typing import Any
@@ -40,12 +39,12 @@ class UnifiedTokenizer:
     This class provides a wrapper for the different tokenizers
     provided by different libraries to give a unified interface
     for tokenization.
-    Right now, it supports the openai and cohere libraries.
+    Right now, it supports the OpenAI and Cohere libraries.
     It also supports transformers models.
     If no provider_type is specified, it will use the
     tokenizer for the specified model_name.
 
-    NOTE: local importing may be neccesary to using too much memory
+    NOTE: local importing may be neccesary to prevent using too much memory
     """
 
     def __init__(
@@ -54,12 +53,10 @@ class UnifiedTokenizer:
         provider_type: str | None = None,
     ):
         self.encoder: Any
-        self.model_name: str | None = model_name
-        self.provider_type: str | None = provider_type
 
-        if self.provider_type:
-            self.encoder = _set_encoder_from_provider(self.provider_type)
-        elif self.model_name:
+        if provider_type:
+            self.encoder = _set_encoder_from_provider(provider_type)
+        elif model_name:
             self.encoder = Tokenizer.from_pretrained(model_name)
         else:
             raise ValueError("Need to provide a model_name or provider_type")
@@ -71,11 +68,7 @@ class UnifiedTokenizer:
         if isinstance(self.encoder, Tokenizer):
             return self.encoder.encode(string)
 
-        raise ValueError(
-            f"Unsupported encoder type: {type(self.encoder)}\n"
-            f"with provider type: {self.provider_type}\n"
-            f"and model name: {self.model_name}"
-        )
+        raise ValueError(f"Unsupported encoder type: {type(self.encoder)}\n")
 
     def decode(self, string: list[int]) -> str:
         if isinstance(self.encoder, Encoding):
@@ -86,13 +79,10 @@ class UnifiedTokenizer:
 
         raise ValueError(
             f"Unsupported decoder call on encoder type: {type(self.encoder)}\n"
-            f"with provider type: {self.provider_type}\n"
-            f"and model name: {self.model_name}"
         )
 
 
-_TOKENIZER: UnifiedTokenizer | None = None
-_LLM_TOKENIZER: UnifiedTokenizer | None = None
+_TOKENIZER_CACHE: dict[tuple[str | None, str | None], UnifiedTokenizer] = {}
 
 
 # NOTE: If no model_name is specified, it may not be using the "correct" tokenizer
@@ -101,30 +91,23 @@ _LLM_TOKENIZER: UnifiedTokenizer | None = None
 # they're basically all using the sentencepiece tokenizer and whether it's cased or
 # uncased does not really matter, they'll all generally end up with the same chunk lengths.
 def get_default_tokenizer(
-    model_name: str = DOCUMENT_ENCODER_MODEL, provider_type: str | None = None
+    model_name: str | None = None, provider_type: str | None = None
 ) -> UnifiedTokenizer:
-    global _TOKENIZER
+    if provider_type is None and model_name is None:
+        # Default to tokenizing with DOCUMENT_ENCODER_MODEL
+        model_name = DOCUMENT_ENCODER_MODEL
 
-    if _TOKENIZER is None:
-        _TOKENIZER = UnifiedTokenizer(model_name, provider_type)
-        return _TOKENIZER
-
-    model_is_diff = _TOKENIZER.model_name != model_name
-    provider_is_diff = _TOKENIZER.provider_type != provider_type
-    if model_is_diff or provider_is_diff:
-        del _TOKENIZER
-        gc.collect()
-        _TOKENIZER = UnifiedTokenizer(model_name, provider_type)
-
-    return _TOKENIZER
+    global _TOKENIZER_CACHE
+    if not _TOKENIZER_CACHE.get((model_name, provider_type)):
+        _TOKENIZER_CACHE[(model_name, provider_type)] = UnifiedTokenizer(
+            model_name, provider_type
+        )
+    return _TOKENIZER_CACHE[(model_name, provider_type)]
 
 
 def get_default_llm_tokenizer(provider_type: str = "OpenAI") -> UnifiedTokenizer:
-    """Currently only supports the OpenAI default tokenizer: tiktoken"""
-    global _LLM_TOKENIZER
-    if _LLM_TOKENIZER is None:
-        _LLM_TOKENIZER = UnifiedTokenizer(provider_type=provider_type)
-    return _LLM_TOKENIZER
+    """Currently supports the OpenAI tokenizer: tiktoken by default"""
+    return get_default_tokenizer(model_name=None, provider_type=provider_type)
 
 
 def tokenizer_trim_content(
