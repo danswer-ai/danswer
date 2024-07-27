@@ -3,7 +3,13 @@ import { Modal } from "@/components/Modal";
 import { Button, Text, Badge } from "@tremor/react";
 import { ValidSources } from "@/lib/types";
 import { FaCreativeCommons } from "react-icons/fa";
-import { EditIcon, SwapIcon, TrashIcon } from "@/components/icons/icons";
+import {
+  EditIcon,
+  NewChatIcon,
+  NewIconTest,
+  SwapIcon,
+  TrashIcon,
+} from "@/components/icons/icons";
 import { getSourceDisplayName } from "@/lib/sources";
 import {
   ConfluenceCredentialJson,
@@ -71,7 +77,7 @@ const CredentialSelectionTable = ({
                         className="form-radio ml-4 h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
                       />
                     ) : (
-                      <Badge>current</Badge>
+                      <Badge>selected</Badge>
                     )}
                   </td>
                   <td className="p-2">{credential.id}</td>
@@ -130,6 +136,7 @@ export default function ModifyCredential({
   onCreateNew = () => null,
   onEditCredential,
   onDeleteCredential,
+  showCreate,
 }: {
   display?: boolean;
   showIfEmpty?: boolean;
@@ -143,6 +150,7 @@ export default function ModifyCredential({
   onCreateNew?: () => void;
   onDeleteCredential: (credential: Credential<any | null>) => void;
   onEditCredential?: (credential: Credential<ConfluenceCredentialJson>) => void;
+  showCreate?: () => void;
 }) {
   const [selectedCredential, setSelectedCredential] =
     useState<Credential<any> | null>(null);
@@ -187,9 +195,8 @@ export default function ModifyCredential({
 
       <div className="mb-0">
         <Text className="mb-4 ">
-          {showIfEmpty ? "Select" : "Swap"} credentials as needed! Ensure that
-          you have selected a credential with the proper permissions for this
-          connector!
+          Select a credential as needed! Ensure that you have selected a
+          credential with the proper permissions for this connector!
         </Text>
 
         {showIfEmpty ||
@@ -224,38 +231,44 @@ export default function ModifyCredential({
         )}
 
         {!showIfEmpty && (
-          <div className="flex mt-8 justify-end">
-            {credentials.length > 1 || (display && credentials.length == 1) ? (
+          <div className="flex mt-8 justify-between">
+            {showCreate ? (
               <Button
-                disabled={selectedCredential == null}
                 onClick={() => {
-                  if (onSwap && attachedConnector) {
-                    onSwap(selectedCredential!, attachedConnector.id);
-                  }
-                  if (onSwitch) {
-                    onSwitch(selectedCredential!);
-                  }
+                  showCreate();
                 }}
-                className="bg-indigo-500 disabled:border-transparent 
-              transition-colors duration-150 ease-in disabled:bg-indigo-300 
-              disabled:hover:bg-indigo-300 hover:bg-indigo-600 cursor-pointer"
+                className="bg-neutral-500 disabled:border-transparent 
+              transition-colors duration-150 ease-in disabled:bg-neutral-300 
+              disabled:hover:bg-neutral-300 hover:bg-neutral-600 cursor-pointer"
               >
                 <div className="flex gap-x-2 items-center w-full border-none">
-                  <SwapIcon className="text-white" />
-                  <p>Swap</p>
+                  <NewChatIcon className="text-white" />
+                  <p>Create</p>
                 </div>
               </Button>
             ) : (
-              <Button
-                onClick={onCreateNew}
-                className="bg-indigo-500 disabled:bg-indigo-300 hover:bg-indigo-400"
-              >
-                <div className="flex gap-x-2 items-center w-full border-none">
-                  <FaCreativeCommons />
-                  <p>Create New</p>
-                </div>
-              </Button>
+              <div />
             )}
+
+            <Button
+              disabled={selectedCredential == null}
+              onClick={() => {
+                if (onSwap && attachedConnector) {
+                  onSwap(selectedCredential!, attachedConnector.id);
+                }
+                if (onSwitch) {
+                  onSwitch(selectedCredential!);
+                }
+              }}
+              className="bg-indigo-500 disabled:border-transparent 
+              transition-colors duration-150 ease-in disabled:bg-indigo-300 
+              disabled:hover:bg-indigo-300 hover:bg-indigo-600 cursor-pointer"
+            >
+              <div className="flex gap-x-2 items-center w-full border-none">
+                <SwapIcon className="text-white" />
+                <p>Select</p>
+              </div>
+            </Button>
           </div>
         )}
       </div>

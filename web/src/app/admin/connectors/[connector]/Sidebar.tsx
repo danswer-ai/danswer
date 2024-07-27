@@ -3,34 +3,37 @@ import { HeaderTitle } from "@/components/header/Header";
 import { BackIcon, SettingsIcon } from "@/components/icons/icons";
 import { Logo } from "@/components/Logo";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { credentialTemplates } from "@/lib/connectors/credentials";
 import Link from "next/link";
 import { useContext } from "react";
 
 export default function Sidebar() {
-  const { formStep, setFormStep } = useFormContext();
+  const { formStep, setFormStep, connector } = useFormContext();
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
   }
   const enterpriseSettings = combinedSettings.enterpriseSettings;
+  const noCredential = credentialTemplates[connector] == null;
+
   const settingSteps = [
-    "Credential",
+    ...(!noCredential ? ["Credential"] : []),
     "Connector",
-    "Advanced (optional)",
-    "Finalize",
+    ...(connector == "file" ? [] : ["Advanced (optional)"]),
   ];
 
   return (
     <div className="flex bg-background text-default ">
       <div
         className={`flex-none
-                bg-background-100
-                h-screen
-                transition-all
-                bg-opacity-80
-                duration-300
-                ease-in-out
-                w-[250px]`}
+                  bg-background-100
+                  h-screen
+                  transition-all
+                  bg-opacity-80
+                  duration-300
+                  ease-in-out
+                  w-[250px]
+                  `}
       >
         <div className="fixed h-full left-0 top-0 w-[250px]">
           <div className="ml-4 mr-3 flex flex gap-x-1 items-center mt-2 my-auto text-text-700 text-xl">
@@ -47,16 +50,7 @@ export default function Sidebar() {
             </div>
           </div>
 
-          <div className="mx-3 mt-4 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
-            <Link
-              href="/chat"
-              className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
-            >
-              <BackIcon className="flex-none " />
-              <p className="my-auto flex items-center text-sm">
-                Back to Danswer
-              </p>
-            </Link>
+          <div className="mx-3 mt-6 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
             <Link
               href={"/admin/add-connector"}
               className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
@@ -69,7 +63,9 @@ export default function Sidebar() {
           <div className="h-full flex">
             <div className="mx-auto w-full max-w-2xl px-4 py-8">
               <div className="relative">
-                <div className="absolute h-[90%] left-[6px] top-[8px] bottom-0 w-0.5 bg-gray-300"></div>
+                {connector != "file" && (
+                  <div className="absolute h-[85%] left-[6px] top-[8px] bottom-0 w-0.5 bg-gray-300"></div>
+                )}
                 {settingSteps.map((step, index) => (
                   <div
                     key={index}

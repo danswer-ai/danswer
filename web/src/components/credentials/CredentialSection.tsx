@@ -128,27 +128,29 @@ export default function CredentialSection({
       </div>
       <div className="flex text-sm justify-start mr-auto gap-x-2">
         <button
-          onClick={() => setShowModifyCredential(true)}
+          onClick={() => {
+            if (credentials.length < 2) {
+              setShowCreateCredential(true);
+            } else {
+              setShowModifyCredential(true);
+            }
+          }}
           className="flex items-center gap-x-2 cursor-pointer bg-background-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-text-700"
         >
           <FaSwatchbook />
-          Swap credential
-        </button>
-        <button
-          onClick={() => setShowCreateCredential(true)}
-          className="flex items-center gap-x-2 cursor-pointer bg-background-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-text-700"
-        >
-          <NewChatIcon />
-          New Credential
+          Manage Credentials
         </button>
       </div>
       {showModifyCredential && (
         <Modal
           onOutsideClick={closeModifyCredential}
           className="max-w-3xl rounded-lg"
-          title="Modify Credential"
+          title="Manage Credentials"
         >
           <ModifyCredential
+            showCreate={() => {
+              setShowCreateCredential(true);
+            }}
             source={sourceType}
             attachedConnector={ccPair.connector}
             defaultedCredential={defaultedCredential}

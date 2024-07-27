@@ -49,10 +49,13 @@ export default function Page() {
       searchInputRef.current.focus();
     }
   }, []);
-
   const filterSources = (sources: SourceMetadata[]) => {
-    return sources.filter((source) =>
-      source.displayName.toLowerCase().includes(searchTerm.toLowerCase())
+    if (!searchTerm) return sources;
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return sources.filter(
+      (source) =>
+        source.displayName.toLowerCase().includes(lowerSearchTerm) ||
+        source.category.toLowerCase().includes(lowerSearchTerm)
     );
   };
 
@@ -60,15 +63,17 @@ export default function Page() {
     const filtered = filterSources(sources);
     return Object.values(SourceCategory).reduce(
       (acc, category) => {
-        acc[category] = filtered.filter(
-          (source) => source.category === category
+        acc[category] = sources.filter(
+          (source) =>
+            source.category === category &&
+            (filtered.includes(source) ||
+              category.toLowerCase().includes(searchTerm.toLowerCase()))
         );
         return acc;
       },
       {} as Record<SourceCategory, SourceMetadata[]>
     );
-  }, [sources, searchTerm, filterSources]);
-
+  }, [sources, searchTerm]);
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       const filteredCategories = Object.entries(categorizedSources).filter(

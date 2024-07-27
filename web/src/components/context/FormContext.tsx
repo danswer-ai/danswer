@@ -6,6 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ValidSources } from "@/lib/types";
 
 interface FormContextType {
   formStep: number;
@@ -14,14 +15,16 @@ interface FormContextType {
   nextFormStep: (contract?: string) => void;
   prevFormStep: () => void;
   formStepToLast: () => void;
+  connector: ValidSources;
   setFormStep: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const FormContext = createContext<FormContextType | undefined>(undefined);
 
-export const FormProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const FormProvider: React.FC<{
+  children: ReactNode;
+  connector: ValidSources;
+}> = ({ children, connector }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -69,6 +72,7 @@ export const FormProvider: React.FC<{ children: ReactNode }> = ({
     prevFormStep,
     formStepToLast,
     setFormStep,
+    connector,
   };
 
   return (

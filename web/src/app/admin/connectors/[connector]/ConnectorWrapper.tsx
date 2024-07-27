@@ -10,7 +10,7 @@ import { isValidSource } from "@/lib/sources";
 
 export default function ConnectorWrapper({ connector }: { connector: string }) {
   return (
-    <FormProvider>
+    <FormProvider connector={connector}>
       <div className="flex justify-center w-full h-full">
         <Sidebar />
         <div className="mt-12 w-full max-w-3xl mx-auto">

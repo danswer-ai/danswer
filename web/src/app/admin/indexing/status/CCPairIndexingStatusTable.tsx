@@ -116,9 +116,8 @@ function SummaryRow({
             wrap
             content="Some connectors did not index properly"
           >
-            <button className="flex gap-x-1.5 rounded p-2 cursor-pointer bg-error/80 text-white items-center border-error border border">
-              <Warning className="h-4 w-4" />
-              Errors ({summary.errors})
+            <button className="flex gap-x-1.5 rounded p-1.5 cursor-pointer bg-error/60 text-white items-center border-error border border">
+              <Warning className="h-4 w-4" />({summary.errors})
             </button>
           </CustomTooltip>
         )}
@@ -231,7 +230,7 @@ export function CCPairIndexingStatusTable({
           0
         ),
         errors: statuses.filter((status) => status.last_status === "failed")
-          .length, // New error count
+          .length,
       };
     });
 

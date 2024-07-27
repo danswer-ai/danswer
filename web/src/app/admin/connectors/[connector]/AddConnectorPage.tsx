@@ -317,20 +317,16 @@ export default function AddConnector({
                 onSwitch={onSwap}
               />
               {!createConnectorToggle && (
-                <div className="mt-8 w-full flex gap-x-2 items-center">
-                  <div className="w-full h-[1px] bg-background-300" />
-                  <button
-                    className="text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded"
-                    onClick={() =>
-                      setCreateConnectorToggle(
-                        (createConnectorToggle) => !createConnectorToggle
-                      )
-                    }
-                  >
-                    Create New
-                  </button>
-                  <div className="w-full h-[1px] bg-background-300" />
-                </div>
+                <button
+                  className="mt-6 text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded"
+                  onClick={() =>
+                    setCreateConnectorToggle(
+                      (createConnectorToggle) => !createConnectorToggle
+                    )
+                  }
+                >
+                  Create New
+                </button>
               )}
 
               {!(connector == "google_drive") && createConnectorToggle && (
@@ -406,18 +402,20 @@ export default function AddConnector({
               <FiPlus className="text-white h-4 w-4" />
             </button>
 
-            <div className="flex w-full justify-end">
-              <button
-                className={`enabled:cursor-pointer enabled:hover:underline disabled:cursor-not-allowed mt-auto enabled:text-text-600 disabled:text-text-400 ml-auto flex gap-x-1 items-center py-2.5 px-3.5 text-sm font-regular rounded-sm`}
-                disabled={!isFormValid}
-                onClick={() => {
-                  nextFormStep();
-                }}
-              >
-                Advanced
-                <ArrowRight />
-              </button>
-            </div>
+            {!(connector == "file") && (
+              <div className="flex w-full justify-end">
+                <button
+                  className={`enabled:cursor-pointer enabled:hover:underline disabled:cursor-not-allowed mt-auto enabled:text-text-600 disabled:text-text-400 ml-auto flex gap-x-1 items-center py-2.5 px-3.5 text-sm font-regular rounded-sm`}
+                  disabled={!isFormValid}
+                  onClick={() => {
+                    nextFormStep();
+                  }}
+                >
+                  Advanced
+                  <ArrowRight />
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}

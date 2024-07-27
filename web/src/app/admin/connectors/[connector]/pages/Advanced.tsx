@@ -51,7 +51,7 @@ const AdvancedFormPage = ({
             </div>
             <div key="refresh_freq">
               <EditingValue
-                description="This is how frequently we pull new documents from the source (in minutes)"
+                description="This is how frequently we pull new documents from the source (in seconds)"
                 optional
                 currentValue={
                   currentRefreshFreq == 0 ? undefined : currentRefreshFreq

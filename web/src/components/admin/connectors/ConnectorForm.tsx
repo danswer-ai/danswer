@@ -267,7 +267,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
                 name="cc_pair_name"
                 label="Connector Name"
                 autoCompleteDisabled={true}
-                subtext={`A descriptive name for the connector. This will just be used to identify the connector in the Admin UI.`}
+                subtext={`A descriptive name for the connector. This will be used to identify the connector in the Admin UI.`}
               />
             )}
             {formBody && formBody}

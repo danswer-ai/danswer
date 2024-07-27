@@ -101,7 +101,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
           return (
             <Form className="space-y-6">
               <EditingValue
-                description="A descriptive name for the connector. This will just be used to identify the connector in the Admin UI."
+                description="A descriptive name for the connector. This will be used to identify the connector in the Admin UI."
                 setFieldValue={updateValue(setFieldValue)}
                 type={"text"}
                 label={"Connector Name"}
