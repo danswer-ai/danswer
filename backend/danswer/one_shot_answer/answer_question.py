@@ -129,7 +129,7 @@ def stream_answer_objects(
         messages=history, max_tokens=max_history_tokens
     )
 
-    rephrased_query = thread_based_query_rephrase(
+    rephrased_query = query_req.query_override or thread_based_query_rephrase(
         user_query=query_msg.message,
         history_str=history_str,
     )
