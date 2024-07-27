@@ -25,6 +25,7 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, Divider, Text, Title } from "@tremor/react";
+import React, { useState } from 'react';
 
 // Copied from the `extract_jira_project` function
 const extractJiraProject = (url: string): string | null => {
@@ -42,6 +43,8 @@ const Main = () => {
   const { popup, setPopup } = usePopup();
 
   const { mutate } = useSWRConfig();
+  const [isServer813OrUnder, setisServer813OrUnder] = useState(false);
+
   const {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
@@ -196,15 +199,40 @@ const Main = () => {
                     label="Personal Access Token:"
                     type="password"
                   />
+                  <label className="mt-4">
+                    <input
+                      type="checkbox"
+                      name="is_server_8_13_or_under"
+                      checked={isServer813OrUnder}
+                      onChange={(e) => setisServer813OrUnder(e.target.checked)}
+                    />
+                    &nbsp;Jira Server version 8.13 or under
+                  </label>
+                  {isServer813OrUnder && (
+                    <div className="information-message mt-2">
+                      <p>To create a Jira token follow these steps:</p>
+                      <ol className="list-decimal list-inside">
+                        <li>Go to this {" "}<a className="text-link" href="https://www.base64encode.org/" target="_blank">website</a>.</li>
+                        <li>Enter your username and password : <code>username:password</code>.<br />
+                            On macOS, open the terminal and enter <code>echo -n username:password | base64</code>. (e.g. jsmith:mySuperPassword123)</li>
+                        <li>Use this encoded string as your token.</li>
+                      </ol>
+                      Password need to be set on Jira if you use SSO.
+                    </div>
+                  )}
                 </>
               }
               validationSchema={Yup.object().shape({
                 jira_api_token: Yup.string().required(
                   "Please enter your Jira personal access token"
                 ),
+                is_server_8_13_or_under: Yup.boolean().required(
+                  "Please specify the server version"
+                ),
               })}
               initialValues={{
                 jira_api_token: "",
+                is_server_8_13_or_under: false,
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {

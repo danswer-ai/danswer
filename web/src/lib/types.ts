@@ -343,6 +343,7 @@ export interface JiraCredentialJson {
 
 export interface JiraServerCredentialJson {
   jira_api_token: string;
+  is_server_8_13_or_under: boolean;
 }
 
 export interface ProductboardCredentialJson {

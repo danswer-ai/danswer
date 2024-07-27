@@ -219,6 +219,13 @@ class JiraConnector(LoadConnector, PollConnector):
                 server=self.jira_base,
                 options={"rest_api_version": JIRA_API_VERSION},
             )
+        # If the server version is 8.13 or under
+        elif "is_server_8_13_or_under" in credentials:
+            self.jira_client = JIRA(
+                server=self.jira_base,
+                options={"rest_api_version": JIRA_API_VERSION,"headers": {"Authorization": f"Basic {api_token}"}}
+            )
+        # Default case for server version 8.14 or above
         else:
             self.jira_client = JIRA(
                 token_auth=api_token,
