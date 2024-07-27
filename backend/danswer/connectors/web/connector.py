@@ -1,10 +1,15 @@
+import os
 import io
 import ipaddress
 import socket
+from pathlib import Path
+
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 from typing import cast
 from typing import Tuple
+
+from sqlalchemy.orm import Session
 from urllib.parse import urljoin
 from urllib.parse import urlparse
 
@@ -29,6 +34,8 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import pdf_to_text
 from danswer.file_processing.html_utils import web_html_cleanup
+from danswer.db.engine import get_sqlalchemy_engine
+from danswer.file_store.file_store import get_default_file_store
 from danswer.utils.logger import setup_logger
 from danswer.utils.sitemap import list_pages_for_site
 
@@ -81,7 +88,11 @@ def protected_url_check(url: str) -> None:
 
 
 def check_internet_connection(url: str) -> None:
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36'
+    }
     try:
+        # First attempt without user agent
         response = requests.get(url, timeout=3)
         response.raise_for_status()
     except requests.exceptions.SSLError as e:
@@ -92,7 +103,12 @@ def check_internet_connection(url: str) -> None:
         )
         raise Exception(f"SSL error {str(cause)}")
     except (requests.RequestException, ValueError):
-        raise Exception(f"Unable to reach {url} - check your internet connection")
+        try:
+            # Second attempt with user agent
+            response = requests.get(url, headers=headers, timeout=3)
+            response.raise_for_status()
+        except (requests.RequestException, ValueError):
+            raise Exception(f"Unable to reach {url} - check your internet connection")
 
 
 def is_valid_url(url: str) -> bool:
@@ -150,8 +166,20 @@ def start_playwright() -> Tuple[Playwright, BrowserContext]:
 
 
 def extract_urls_from_sitemap(sitemap_url: str) -> list[str]:
-    response = requests.get(sitemap_url)
-    response.raise_for_status()
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36'
+    }
+    try:
+        # First attempt without user agent
+        response = requests.get(sitemap_url, timeout=3)
+        response.raise_for_status()
+    except (requests.RequestException, ValueError):
+        try:
+            # Second attempt with user agent
+            response = requests.get(sitemap_url, headers=headers, timeout=3)
+            response.raise_for_status()
+        except (requests.RequestException, ValueError):
+            raise Exception(f"Unable to reach {sitemap_url}")
 
     soup = BeautifulSoup(response.content, "html.parser")
     urls = [
@@ -183,9 +211,8 @@ def _ensure_valid_url(url: str) -> str:
     return url
 
 
-def _read_urls_file(location: str) -> list[str]:
-    with open(location, "r") as f:
-        urls = [_ensure_valid_url(line.strip()) for line in f if line.strip()]
+def _read_urls_file(file_content: str) -> list[str]:
+    urls = [_ensure_valid_url(line.strip()) for line in file_content.splitlines() if line.strip()]
     return urls
 
 
@@ -196,10 +223,13 @@ class WebConnector(LoadConnector):
         web_connector_type: str = WEB_CONNECTOR_VALID_SETTINGS.RECURSIVE.value,
         mintlify_cleanup: bool = True,  # Mostly ok to apply to other websites as well
         batch_size: int = INDEX_BATCH_SIZE,
+        file_locations: Optional[list [Path | str]] = None,
     ) -> None:
+        self.file_locations = [Path(file_location) for file_location in file_locations]
         self.mintlify_cleanup = mintlify_cleanup
         self.batch_size = batch_size
         self.recursive = False
+        self.to_visit_list = []
 
         if web_connector_type == WEB_CONNECTOR_VALID_SETTINGS.RECURSIVE.value:
             self.recursive = True
@@ -217,8 +247,18 @@ class WebConnector(LoadConnector):
                 "This is not a UI supported Web Connector flow, "
                 "are you sure you want to do this?"
             )
-            self.to_visit_list = _read_urls_file(base_url)
-
+            if file_locations:
+                with Session(get_sqlalchemy_engine()) as db_session:
+                    for file_path in self.file_locations:
+                        file_content_io = get_default_file_store(db_session).read_file(
+                            str(file_path), mode="b"
+                        )
+                        file_content_bytes = file_content_io.read()  # Read the content as bytes
+                        file_content_str = file_content_bytes.decode('utf-8') # Decode bytes to string
+                        urls_from_file = _read_urls_file(file_content_str)
+                        self.to_visit_list.extend(urls_from_file)
+            else:
+                raise ValueError("No file provided for upload")
         else:
             raise ValueError(
                 "Invalid Web Connector Config, must choose a valid type between: " ""
@@ -285,7 +325,10 @@ class WebConnector(LoadConnector):
                     continue
 
                 page = context.new_page()
-                page_response = page.goto(current_url)
+                try:
+                    page_response = page.goto(current_url)
+                except Exception as e:
+                    logger.error(f"Failed to load page {current_url}: {e}")
                 final_page = page.url
                 if final_page != current_url:
                     logger.info(f"Redirected to {final_page}")
@@ -352,5 +395,6 @@ class WebConnector(LoadConnector):
 
 if __name__ == "__main__":
     connector = WebConnector("https://docs.danswer.dev/")
+    connector = WebConnector("https://docs.danswer.dev/", "upload", file_locations=[os.environ["TEST_FILE"]])
     document_batches = connector.load_from_state()
     print(next(document_batches))

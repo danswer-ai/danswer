@@ -34,6 +34,12 @@ function buildConfigEntries(
     return {
       base_url: obj.base_url,
     };
+  } else if (sourceType === "web"){
+    return {
+      base_url: obj.base_url,
+      ...(obj.file_locations ? { file_names: obj.file_locations.map(getNameFromPath) } : {}),
+      web_connector_type: obj.web_connector_type,
+    };
   }
   return obj;
 }

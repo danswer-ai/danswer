@@ -106,7 +106,8 @@ export interface Connector<T> extends ConnectorBase<T> {
 
 export interface WebConfig {
   base_url: string;
-  web_connector_type?: "recursive" | "single" | "sitemap";
+  web_connector_type?: "recursive" | "single" | "sitemap" | "upload";
+  file_locations: string[];
 }
 
 export interface GithubConfig {
