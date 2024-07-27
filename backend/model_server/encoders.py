@@ -89,8 +89,19 @@ class CloudEmbedding:
         # OpenAI does not seem to provide truncation option, however
         # the context lengths used by Danswer currently are smaller than the max token length
         # for OpenAI embeddings so it's not a big deal
-        response = self.client.embeddings.create(input=texts, model=model)
-        return [embedding.embedding for embedding in response.data]
+        try:
+            response = self.client.embeddings.create(input=texts, model=model)
+            return [embedding.embedding for embedding in response.data]
+        except Exception as e:
+            error_string = (
+                f"Error embedding text with OpenAI: {str(e)} \n"
+                f"Model: {model} \n"
+                f"Provider: {self.provider} \n"
+                f"API Key: {self.api_key}"
+                f"Texts: {texts} \n"
+            )
+            logger.error(error_string)
+            raise error_string
 
     def _embed_cohere(
         self, texts: list[str], model: str | None, embedding_type: str
