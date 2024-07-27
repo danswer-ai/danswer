@@ -97,7 +97,6 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
       >
         {({ setFieldValue, values, dirty, isValid }) => {
           onFormStatusChange(isValid && dirty);
-
           return (
             <Form className="space-y-6">
               <EditingValue

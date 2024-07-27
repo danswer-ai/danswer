@@ -5,6 +5,7 @@ import {
   TableHeaderCell,
   TableBody,
   TableCell,
+  Badge,
 } from "@tremor/react";
 import { IndexAttemptStatus } from "@/components/Status";
 import { PageSelector } from "@/components/PageSelector";
@@ -110,16 +111,12 @@ function SummaryRow({
       </TableCell>
 
       <TableCell className={`w-[${columnWidths.sixth}]`}>
+        <div className="text-sm text-gray-500">Errors</div>
         {summary.errors > 0 && (
-          <CustomTooltip
-            delay={200}
-            wrap
-            content="Some connectors did not index properly"
-          >
-            <button className="flex gap-x-1.5 rounded p-1.5 cursor-pointer bg-error/60 text-white items-center border-error border border">
-              <Warning className="h-4 w-4" />({summary.errors})
-            </button>
-          </CustomTooltip>
+          <div className="flex items-center text-lg gap-x-1">
+            <Warning className="text-error h-6 w-6" />
+            {summary.errors}
+          </div>
         )}
       </TableCell>
 
@@ -154,23 +151,22 @@ function ConnectorRow({
           {ccPairsIndexingStatus.name}
         </p>
       </TableCell>
-      <TableCell className={`w-[${columnWidths.second}]`}>
-        <IndexAttemptStatus
-          status={ccPairsIndexingStatus.last_status || "not_started"}
-          errorMsg={ccPairsIndexingStatus?.latest_index_attempt?.error_msg}
-          size="xs"
-        />
+
+      <TableCell className={`w-[${columnWidths.fifth}]`}>
+        {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
       </TableCell>
       <TableCell className={`w-[${columnWidths.third}]`}>
-        <Tooltip
-          content={
-            ccPairsIndexingStatus.connector.disabled ? "Inactive" : "Active"
-          }
+        <Badge
+          color={ccPairsIndexingStatus.connector.disabled ? "red" : "green"}
+          className={`w-fit px-2 py-1 rounded-full border ${ccPairsIndexingStatus.connector.disabled ? "border-red-500" : "border-green-500"}`}
         >
-          <div
-            className={`w-3 h-3 rounded-full ${ccPairsIndexingStatus.connector.disabled ? "bg-red-500" : "bg-green-500"}`}
-          />
-        </Tooltip>
+          <div className="flex text-xs items-center gap-x-1">
+            <div
+              className={`w-3 h-3 rounded-full ${ccPairsIndexingStatus.connector.disabled ? "bg-red-500" : "bg-green-500"}`}
+            ></div>
+            {ccPairsIndexingStatus.connector.disabled ? "Disabled" : "Active"}
+          </div>
+        </Badge>
       </TableCell>
       <TableCell className={`w-[${columnWidths.fourth}]`}>
         {ccPairsIndexingStatus.public_doc ? (
@@ -182,8 +178,12 @@ function ConnectorRow({
       <TableCell className={`w-[${columnWidths.sixth}]`}>
         {ccPairsIndexingStatus.docs_indexed}
       </TableCell>
-      <TableCell className={`w-[${columnWidths.fifth}]`}>
-        {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
+      <TableCell className={`w-[${columnWidths.second}]`}>
+        <IndexAttemptStatus
+          status={ccPairsIndexingStatus.last_status || "not_started"}
+          errorMsg={ccPairsIndexingStatus?.latest_index_attempt?.error_msg}
+          size="xs"
+        />
       </TableCell>
       <TableCell className={`w-[${columnWidths.seventh}]`}>
         <CustomTooltip content="Manage Connector">
@@ -262,7 +262,7 @@ export function CCPairIndexingStatusTable({
       if (event.metaKey || event.ctrlKey) {
         switch (event.key.toLowerCase()) {
           case "e":
-            toggleSources(allToggleTracker);
+            toggleSources(false);
             event.preventDefault();
             break;
         }
@@ -312,11 +312,11 @@ export function CCPairIndexingStatusTable({
                     <TableHeaderCell className={`w-[${columnWidths.first}]`}>
                       Name
                     </TableHeaderCell>
-                    <TableHeaderCell className={`w-[${columnWidths.second}]`}>
-                      Status
+                    <TableHeaderCell className={`w-[${columnWidths.fifth}]`}>
+                      Last Indexed
                     </TableHeaderCell>
-                    <TableHeaderCell className={`w-[${columnWidths.third}]`}>
-                      Active
+                    <TableHeaderCell className={`w-[${columnWidths.second}]`}>
+                      Activity
                     </TableHeaderCell>
                     <TableHeaderCell className={`w-[${columnWidths.fourth}]`}>
                       Public
@@ -324,8 +324,8 @@ export function CCPairIndexingStatusTable({
                     <TableHeaderCell className={`w-[${columnWidths.sixth}]`}>
                       Total Docs
                     </TableHeaderCell>
-                    <TableHeaderCell className={`w-[${columnWidths.fifth}]`}>
-                      Last Indexed
+                    <TableHeaderCell className={`w-[${columnWidths.third}]`}>
+                      Last Status
                     </TableHeaderCell>
                     <TableHeaderCell
                       className={`w-[${columnWidths.seventh}]`}
