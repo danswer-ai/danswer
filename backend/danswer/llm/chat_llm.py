@@ -266,7 +266,7 @@ class DefaultMultiLLM(LLM):
                 stream=stream,
                 # model params
                 temperature=self._temperature,
-                max_tokens=self._max_output_tokens,
+                max_tokens=self._max_output_tokens if self._max_output_tokens > 0 else None,
                 timeout=self._timeout,
                 **self._model_kwargs,
             )
