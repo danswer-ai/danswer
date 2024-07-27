@@ -39,6 +39,7 @@ function CCPairIndexingStatusDisplay({
   const docsPerMinute = getDocsProcessedPerMinute(
     ccPairsIndexingStatus.latest_index_attempt
   )?.toFixed(2);
+  const docsPerHour = (parseFloat(docsPerMinute ?? '0') * 60)?.toFixed(2);
   return (
     <>
       <IndexAttemptStatus
@@ -57,7 +58,8 @@ function CCPairIndexingStatusDisplay({
           <div>
             <i>Speed:</i>{" "}
             {docsPerMinute ? (
-              <>{docsPerMinute} docs / min</>
+              <>{docsPerMinute} docs / min <br />
+                {docsPerHour} docs / hour</>
             ) : (
               "calculating rate..."
             )}
