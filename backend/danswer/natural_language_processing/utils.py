@@ -66,7 +66,7 @@ class UnifiedTokenizer:
             return self.encoder.encode(string)
 
         if isinstance(self.encoder, Tokenizer):
-            return self.encoder.encode(string)
+            return self.encoder.encode(string).ids
 
         raise ValueError(f"Unsupported encoder type: {type(self.encoder)}\n")
 
