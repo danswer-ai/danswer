@@ -88,15 +88,21 @@ def delete_credential_by_id_admin(
 @router.put("/admin/credentials/swap")
 def swap_credentials_for_connector(
     credentail_swap_req: CredentialSwapRequest,
-    _: User | None = Depends(current_user),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> bool:
-    swap_credentials_connector(
+) -> StatusResponse:
+    connector_credential_pair = swap_credentials_connector(
         new_credential_id=credentail_swap_req.new_credential_id,
         connector_id=credentail_swap_req.connector_id,
         db_session=db_session,
+        user=user,
     )
-    return True  # TODO fix
+
+    return StatusResponse(
+        success=True,
+        message="Credential swapped successfully",
+        data=connector_credential_pair.id,
+    )
 
 
 """Endpoints for all"""

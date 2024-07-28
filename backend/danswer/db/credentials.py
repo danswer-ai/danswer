@@ -85,13 +85,21 @@ def fetch_credentials_by_source(
     document_source: DocumentSource | None = None,
 ) -> list[Credential]:
     base_query = select(Credential).where(Credential.source == document_source)
+    base_query = _attach_user_filters(base_query, user)
     credentials = db_session.execute(base_query).scalars().all()
     return list(credentials)
 
 
 def swap_credentials_connector(
-    new_credential_id: int, connector_id: int, db_session: Session
+    new_credential_id: int, connector_id: int, user: User | None, db_session: Session
 ) -> ConnectorCredentialPair:
+    # Check if the user has permission to use the new credential
+    new_credential = fetch_credential_by_id(new_credential_id, user, db_session)
+    if not new_credential:
+        raise ValueError(
+            f"No Credential found with id {new_credential_id} or user doesn't have permission to use it"
+        )
+
     # Existing pair
     existing_pair = db_session.execute(
         select(ConnectorCredentialPair).where(
@@ -104,14 +112,6 @@ def swap_credentials_connector(
             f"No ConnectorCredentialPair found for connector_id {connector_id}"
         )
 
-    # Find the new Credential
-    new_credential = db_session.execute(
-        select(Credential).where(Credential.id == new_credential_id)
-    ).scalar_one_or_none()
-
-    if not new_credential:
-        raise ValueError(f"No Credential found with id {new_credential_id}")
-
     # Check if the new credential is compatible with the connector
     if new_credential.source != existing_pair.connector.source:
         raise ValueError(
@@ -123,7 +123,8 @@ def swap_credentials_connector(
         .where(
             and_(
                 DocumentByConnectorCredentialPair.connector_id == connector_id,
-                DocumentByConnectorCredentialPair.credential_id == existing_pair.id,
+                DocumentByConnectorCredentialPair.credential_id
+                == existing_pair.credential_id,
             )
         )
         .values(credential_id=new_credential_id)
