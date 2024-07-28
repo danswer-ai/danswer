@@ -536,7 +536,7 @@ export const SearchSection = ({
 
             {
               <div className="desktop:px-24 w-full pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
-                <div className="absolute z-10 mobile:px-4 mobile:max-w-searchbar-max mobile:w-[90%] top-12 desktop:left-0 desktop:hidden 2xl:block mobile:left-1/2 mobile:transform mobile:-translate-x-1/2 desktop:w-52 3xl:w-64">
+                <div className="absolute z-10 mobile:px-4 mobile:max-w-searchbar-max mobile:w-[90%] top-12 desktop:left-0  2xl:block mobile:left-1/2 mobile:transform mobile:-translate-x-1/2 desktop:w-52 3xl:w-64">
                   {!(settings?.isMobile && !firstSearch) &&
                     (ccPairs.length > 0 || documentSets.length > 0) && (
                       <SourceSelector
@@ -570,7 +570,7 @@ export const SearchSection = ({
                     </div>
                   )}
                   <div
-                    className={`${settings?.isMobile && "fixed left-1/2 transform -translate-x-1/2 max-w-search-bar-max w-[90%] z-[1000] bottom-12"}`}
+                    className={`mobile:fixed mobile:left-1/2 mobile:transform mobile:-translate-x-1/2 mobile:max-w-search-bar-max mobile:w-[90%] mobile:z-100 mobile:bottom-12`}
                   >
                     <div
                       className={`transition-all duration-500 ease-in-out overflow-hidden 

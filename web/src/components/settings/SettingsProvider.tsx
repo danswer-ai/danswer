@@ -12,7 +12,7 @@ export function SettingsProvider({
   children: React.ReactNode | JSX.Element;
   settings: CombinedSettings;
 }) {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean | undefined>();
 
   useEffect(() => {
     const checkMobile = () => {
