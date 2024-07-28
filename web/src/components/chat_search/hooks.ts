@@ -5,6 +5,7 @@ interface UseSidebarVisibilityProps {
   sidebarElementRef: React.RefObject<HTMLElement>;
   showDocSidebar: boolean;
   setShowDocSidebar: Dispatch<SetStateAction<boolean>>;
+  mobile?: boolean;
 }
 
 export const useSidebarVisibility = ({
@@ -12,6 +13,7 @@ export const useSidebarVisibility = ({
   sidebarElementRef,
   setShowDocSidebar,
   showDocSidebar,
+  mobile,
 }: UseSidebarVisibilityProps) => {
   const xPosition = useRef(0);
 
@@ -31,7 +33,9 @@ export const useSidebarVisibility = ({
         const sidebarStyle = window.getComputedStyle(sidebarElementRef.current);
         const isVisible = sidebarStyle.opacity !== "0";
         if (isWithinSidebar && isVisible) {
-          setShowDocSidebar(true);
+          if (!mobile) {
+            setShowDocSidebar(true);
+          }
         }
         if (
           currentXPosition > 100 &&
@@ -41,7 +45,9 @@ export const useSidebarVisibility = ({
         ) {
           setShowDocSidebar(false);
         } else if (currentXPosition < 100 && !showDocSidebar) {
-          setShowDocSidebar(true);
+          if (!mobile) {
+            setShowDocSidebar(true);
+          }
         }
       }
     };

@@ -1067,6 +1067,7 @@ export function ChatPage({
     sidebarElementRef,
     showDocSidebar,
     setShowDocSidebar,
+    mobile: settings?.isMobile,
   });
 
   useEffect(() => {
@@ -1200,6 +1201,7 @@ export function ChatPage({
                     ? setSharingModalVisible
                     : undefined
                 }
+                toggleSidebar={toggleSidebar}
                 showSidebar={showDocSidebar}
                 user={user}
                 currentChatSession={selectedChatSession}

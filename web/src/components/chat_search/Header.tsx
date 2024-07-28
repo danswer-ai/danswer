@@ -18,17 +18,17 @@ import { SettingsContext } from "../settings/SettingsProvider";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 
 export default function FunctionalHeader({
-  showSidebar,
   user,
   page,
   currentChatSession,
   setSharingModalVisible,
+  toggleSidebar,
 }: {
   page: pageType;
-  showSidebar: boolean;
   user: User | null;
   currentChatSession?: ChatSession | null | undefined;
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
+  toggleSidebar: () => void;
 }) {
   const combinedSettings = useContext(SettingsContext);
   const settings = combinedSettings?.settings;

@@ -7,12 +7,13 @@ import { Folder } from "@/app/chat/folders/interfaces";
 import { User } from "@/lib/types";
 import Cookies from "js-cookie";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useRouter } from "next/navigation";
 import { pageType } from "../chat/sessionSidebar/types";
 import FixedLogo from "../chat/shared_chat_search/FixedLogo";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 interface SidebarWrapperProps<T extends object> {
   chatSessions?: ChatSession[];
@@ -55,11 +56,13 @@ export default function SidebarWrapper<T extends object>({
 
   const sidebarElementRef = useRef<HTMLDivElement>(null);
 
+  const settings = useContext(SettingsContext);
   useSidebarVisibility({
     toggledSidebar,
     sidebarElementRef,
     showDocSidebar,
     setShowDocSidebar,
+    mobile: settings?.isMobile,
   });
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
@@ -121,6 +124,7 @@ export default function SidebarWrapper<T extends object>({
 
       <div className="absolute left-0 w-full top-0">
         <FunctionalHeader
+          toggleSidebar={toggleSidebar}
           page="assistants"
           showSidebar={showDocSidebar}
           user={headerProps.user}

@@ -339,7 +339,6 @@ export const SearchSection = ({
     if ((overrideMessage || query) == "") {
       return;
     }
-    setSearchResponse;
     setAgenticResults(agentic!);
     resetInput();
     setContentEnriched(false);
@@ -474,6 +473,7 @@ export const SearchSection = ({
     sidebarElementRef,
     showDocSidebar,
     setShowDocSidebar,
+    mobile: settings?.isMobile,
   });
 
   return (
@@ -514,7 +514,7 @@ export const SearchSection = ({
 
         <div className="absolute left-0 w-full top-0">
           <FunctionalHeader
-            showSidebar={showDocSidebar}
+            toggleSidebar={toggleSidebar}
             page="search"
             user={user}
           />
@@ -535,69 +535,96 @@ export const SearchSection = ({
             />
 
             {
-              <div className="px-24 w-full pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
-                <div className="absolute z-10 top-12 left-0 hidden 2xl:block w-52 3xl:w-64">
-                  {(ccPairs.length > 0 || documentSets.length > 0) && (
-                    <SourceSelector
-                      {...filterManager}
-                      showDocSidebar={showDocSidebar || toggledSidebar}
-                      availableDocumentSets={finalAvailableDocumentSets}
-                      existingSources={finalAvailableSources}
-                      availableTags={tags}
-                    />
-                  )}
+              <div className="desktop:px-24 w-full pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
+                <div className="absolute z-10 mobile:px-4 mobile:max-w-searchbar-max mobile:w-[90%] top-12 desktop:left-0 desktop:hidden 2xl:block mobile:left-1/2 mobile:transform mobile:-translate-x-1/2 desktop:w-52 3xl:w-64">
+                  {!(settings?.isMobile && !firstSearch) &&
+                    (ccPairs.length > 0 || documentSets.length > 0) && (
+                      <SourceSelector
+                        {...filterManager}
+                        showDocSidebar={showDocSidebar || toggledSidebar}
+                        availableDocumentSets={finalAvailableDocumentSets}
+                        existingSources={finalAvailableSources}
+                        availableTags={tags}
+                      />
+                    )}
                 </div>
                 <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64"></div>
                 <div className="max-w-searchbar-max w-[90%] mx-auto">
+                  {settings?.isMobile && (
+                    <div className="mt-6">
+                      {!(agenticResults && isFetching) || disabledAgentic ? (
+                        <SearchResultsDisplay
+                          disabledAgentic={disabledAgentic}
+                          contentEnriched={contentEnriched}
+                          comments={comments}
+                          sweep={sweep}
+                          agenticResults={agenticResults && !disabledAgentic}
+                          performSweep={performSweep}
+                          searchResponse={searchResponse}
+                          isFetching={isFetching}
+                          defaultOverrides={defaultOverrides}
+                        />
+                      ) : (
+                        <></>
+                      )}
+                    </div>
+                  )}
                   <div
-                    className={`transition-all duration-500 ease-in-out overflow-hidden 
+                    className={`${settings?.isMobile && "fixed left-1/2 transform -translate-x-1/2 max-w-search-bar-max w-[90%] z-[1000] bottom-12"}`}
+                  >
+                    <div
+                      className={`transition-all duration-500 ease-in-out overflow-hidden 
                       ${
                         firstSearch
                           ? "opacity-100 max-h-[500px]"
                           : "opacity-0 max-h-0"
                       }`}
-                    onTransitionEnd={handleTransitionEnd}
-                  >
-                    <div className="mt-48 mb-8 flex justify-center items-center">
-                      <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
-                        <div className="flex">
-                          <div className="text-3xl font-bold font-strong text-strong mx-auto">
-                            Unlock Knowledge
+                      onTransitionEnd={handleTransitionEnd}
+                    >
+                      <div className="mt-48 mb-8 flex justify-center items-center">
+                        <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
+                          <div className="flex">
+                            <div className="text-3xl font-bold font-strong text-strong mx-auto">
+                              Unlock Knowledge
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                    <FullSearchBar
+                      toggleAgentic={
+                        disabledAgentic ? undefined : toggleAgentic
+                      }
+                      agentic={agentic}
+                      searchState={searchState}
+                      query={query}
+                      setQuery={setQuery}
+                      onSearch={async (agentic?: boolean) => {
+                        setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
+                        await onSearch({ agentic, offset: 0 });
+                      }}
+                    />
                   </div>
 
-                  <FullSearchBar
-                    toggleAgentic={disabledAgentic ? undefined : toggleAgentic}
-                    agentic={agentic}
-                    searchState={searchState}
-                    query={query}
-                    setQuery={setQuery}
-                    onSearch={async (agentic?: boolean) => {
-                      setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
-                      await onSearch({ agentic, offset: 0 });
-                    }}
-                  />
-
-                  <div className="mt-6">
-                    {!(agenticResults && isFetching) || disabledAgentic ? (
-                      <SearchResultsDisplay
-                        disabledAgentic={disabledAgentic}
-                        contentEnriched={contentEnriched}
-                        comments={comments}
-                        sweep={sweep}
-                        agenticResults={agenticResults && !disabledAgentic}
-                        performSweep={performSweep}
-                        searchResponse={searchResponse}
-                        isFetching={isFetching}
-                        defaultOverrides={defaultOverrides}
-                      />
-                    ) : (
-                      <></>
-                    )}
-                  </div>
+                  {!settings?.isMobile && (
+                    <div className="mobile:hidden mt-6">
+                      {!(agenticResults && isFetching) || disabledAgentic ? (
+                        <SearchResultsDisplay
+                          disabledAgentic={disabledAgentic}
+                          contentEnriched={contentEnriched}
+                          comments={comments}
+                          sweep={sweep}
+                          agenticResults={agenticResults && !disabledAgentic}
+                          performSweep={performSweep}
+                          searchResponse={searchResponse}
+                          isFetching={isFetching}
+                          defaultOverrides={defaultOverrides}
+                        />
+                      ) : (
+                        <></>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             }

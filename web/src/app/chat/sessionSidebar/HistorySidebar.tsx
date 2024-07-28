@@ -119,6 +119,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 <HeaderTitle>Danswer</HeaderTitle>
               )}
             </div>
+
             {toggleSidebar && (
               <Tooltip
                 delayDuration={0}
