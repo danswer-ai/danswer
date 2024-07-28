@@ -581,25 +581,29 @@ def get_persona_by_id(
     or_conditions = []
 
     # if user is an admin, they should have access to all Personas
+    # and will skip the following clause
     if user is not None and user.role != UserRole.ADMIN:
+        # the user is not an admin
         isPersonaUnowned = Persona.user_id.is_(
             None
         )  # allow access if persona user id is None
         isUserCreator = (
             Persona.user_id == user.id
         )  # allow access if user created the persona
-        isUserAllowed = Persona.users.any(
-            id=user.id
-        )  # allow access if user is in allowed users
-        isGroupAllowed = Persona.groups.any(
-            UserGroup.users.any(id=user.id)
-        )  # allow access if user is in any allowed group
-        or_conditions.extend(
-            [isPersonaUnowned, isUserCreator, isUserAllowed, isGroupAllowed]
-        )
+        or_conditions.extend([isPersonaUnowned, isUserCreator])
 
-        # if we aren't editing, also give access to all public personas
+        # if we aren't editing, also give access if:
+        # 1. the user is authorized for this persona
+        # 2. the user is in an authorized group for this persona
+        # 3. if the persona is public
         if not is_for_edit:
+            isUserAllowed = Persona.users.any(
+                id=user.id
+            )  # allow access if user is in allowed users
+            isGroupAllowed = Persona.groups.any(
+                UserGroup.users.any(id=user.id)
+            )  # allow access if user is in any allowed group
+            or_conditions.extend([isUserAllowed, isGroupAllowed])
             or_conditions.append(Persona.is_public.is_(True))
 
     if or_conditions:
