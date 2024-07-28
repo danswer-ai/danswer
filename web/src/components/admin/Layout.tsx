@@ -6,6 +6,7 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { ClientLayout } from "./ClientLayout";
+import { SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED } from "@/lib/constants";
 
 export async function Layout({ children }: { children: React.ReactNode }) {
   const tasks = [getAuthTypeMetadataSS(), getCurrentUserSS()];
@@ -38,5 +39,12 @@ export async function Layout({ children }: { children: React.ReactNode }) {
     }
   }
 
-  return <ClientLayout user={user}>{children}</ClientLayout>;
+  return (
+    <ClientLayout
+      enableEnterprise={SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED}
+      user={user}
+    >
+      {children}
+    </ClientLayout>
+  );
 }

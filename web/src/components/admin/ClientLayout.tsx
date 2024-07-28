@@ -22,7 +22,6 @@ import {
   AssistantsIconSkeleton,
 } from "@/components/icons/icons";
 
-import { SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED } from "@/lib/constants";
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
 import { UserDropdown } from "../UserDropdown";
 import { User } from "@/lib/types";
@@ -31,9 +30,11 @@ import { usePathname } from "next/navigation";
 export function ClientLayout({
   user,
   children,
+  enableEnterprise,
 }: {
   user: User | null;
   children: React.ReactNode;
+  enableEnterprise: boolean;
 }) {
   const pathname = usePathname();
 
@@ -181,7 +182,7 @@ export function ClientLayout({
                     ),
                     link: "/admin/users",
                   },
-                  ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
+                  ...(enableEnterprise
                     ? [
                         {
                           name: (
@@ -214,7 +215,7 @@ export function ClientLayout({
                   },
                 ],
               },
-              ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
+              ...(enableEnterprise
                 ? [
                     {
                       name: "Performance",
@@ -262,7 +263,7 @@ export function ClientLayout({
                     ),
                     link: "/admin/settings",
                   },
-                  ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
+                  ...(enableEnterprise
                     ? [
                         {
                           name: (
