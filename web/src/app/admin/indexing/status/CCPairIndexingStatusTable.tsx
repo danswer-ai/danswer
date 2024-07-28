@@ -97,7 +97,7 @@ function SummaryRow({
 
       <TableCell className={`py-4 w-[${columnWidths.fourth}]`}>
         <div className="text-sm text-gray-500">Public Connectors</div>
-        <p className="flex text-xl mx-auto font-semibolditems-center text-lg mt-1">
+        <p className="flex text-xl mx-auto font-semibold items-center text-lg mt-1">
           {summary.public}/{summary.count}
         </p>
       </TableCell>
@@ -112,7 +112,7 @@ function SummaryRow({
       <TableCell className={`w-[${columnWidths.sixth}]`}>
         <div className="text-sm text-gray-500">Errors</div>
         {summary.errors > 0 && (
-          <div className="flex items-center text-lg gap-x-1">
+          <div className="flex items-center text-lg gap-x-1 font-semibold">
             <Warning className="text-error h-6 w-6" />
             {summary.errors}
           </div>
