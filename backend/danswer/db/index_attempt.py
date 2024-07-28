@@ -245,6 +245,24 @@ def get_index_attempts_for_connector(
     return db_session.execute(stmt).scalars().all()
 
 
+def get_latest_finished_index_attempt_for_cc_pair(
+    connector_credential_pair_id: int,
+    db_session: Session,
+) -> IndexAttempt | None:
+    stmt = (
+        select(IndexAttempt)
+        .where(
+            IndexAttempt.connector_credential_pair_id == connector_credential_pair_id,
+            IndexAttempt.status.not_in(
+                [IndexingStatus.NOT_STARTED, IndexingStatus.IN_PROGRESS]
+            ),
+        )
+        .order_by(desc(IndexAttempt.time_created))
+        .limit(1)
+    )
+    return db_session.execute(stmt).scalar_one_or_none()
+
+
 def get_index_attempts_for_cc_pair(
     db_session: Session,
     cc_pair_identifier: ConnectorCredentialPairIdentifier,

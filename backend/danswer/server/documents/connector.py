@@ -66,6 +66,7 @@ from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
+from danswer.db.index_attempt import get_latest_finished_index_attempt_for_cc_pair
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -391,6 +392,7 @@ def get_connector_indexing_status(
         secondary_index=secondary_index,
         db_session=db_session,
     )
+
     cc_pair_to_latest_index_attempt = {
         (
             index_attempt.connector_credential_pair.connector_id,
@@ -418,6 +420,11 @@ def get_connector_indexing_status(
         latest_index_attempt = cc_pair_to_latest_index_attempt.get(
             (connector.id, credential.id)
         )
+
+        latest_finished_attempt = get_latest_finished_index_attempt_for_cc_pair(
+            connector_credential_pair_id=cc_pair.id, db_session=db_session
+        )
+
         indexing_statuses.append(
             ConnectorIndexingStatus(
                 cc_pair_id=cc_pair.id,
@@ -426,8 +433,8 @@ def get_connector_indexing_status(
                 credential=CredentialSnapshot.from_credential_db_model(credential),
                 public_doc=cc_pair.is_public,
                 owner=credential.user.email if credential.user else "",
-                last_status=latest_index_attempt.status
-                if latest_index_attempt
+                last_status=latest_finished_attempt.status
+                if latest_finished_attempt
                 else None,
                 last_success=cc_pair.last_successful_index_time,
                 docs_indexed=cc_pair_to_document_cnt.get(

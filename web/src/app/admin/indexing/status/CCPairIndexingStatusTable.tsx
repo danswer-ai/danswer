@@ -8,7 +8,6 @@ import {
   Badge,
 } from "@tremor/react";
 import { IndexAttemptStatus } from "@/components/Status";
-import { PageSelector } from "@/components/PageSelector";
 import { timeAgo } from "@/lib/time";
 import {
   ConnectorIndexingStatus,
@@ -139,6 +138,60 @@ function ConnectorRow({
     router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`);
   };
 
+  const getActivityBadge = () => {
+    if (ccPairsIndexingStatus.connector.disabled) {
+      return (
+        <Badge
+          color="red"
+          className="w-fit px-2 py-1 rounded-full border border-red-500"
+        >
+          <div className="flex text-xs items-center gap-x-1">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            Paused
+          </div>
+        </Badge>
+      );
+    }
+    switch (ccPairsIndexingStatus.last_status) {
+      case "in_progress":
+        return (
+          <Badge
+            color="yellow"
+            className="w-fit px-2 py-1 rounded-full border border-yellow-500"
+          >
+            <div className="flex text-xs items-center gap-x-1">
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              Indexing
+            </div>
+          </Badge>
+        );
+      case "not_started":
+        return (
+          <Badge
+            color="purple"
+            className="w-fit px-2 py-1 rounded-full border border-purple-500"
+          >
+            <div className="flex text-xs items-center gap-x-1">
+              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+              Scheduled
+            </div>
+          </Badge>
+        );
+      default:
+        return (
+          <Badge
+            color="green"
+            className="w-fit px-2 py-1 rounded-full border border-green-500"
+          >
+            <div className="flex text-xs items-center gap-x-1">
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              Active
+            </div>
+          </Badge>
+        );
+    }
+  };
+
   return (
     <TableRow
       className={`hover:bg-hover-light ${invisible ? "invisible h-0 !-mb-10" : "border border-border !border-b"}  w-full cursor-pointer relative`}
@@ -151,22 +204,11 @@ function ConnectorRow({
           {ccPairsIndexingStatus.name}
         </p>
       </TableCell>
-
       <TableCell className={`w-[${columnWidths.fifth}]`}>
         {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
       </TableCell>
       <TableCell className={`w-[${columnWidths.third}]`}>
-        <Badge
-          color={ccPairsIndexingStatus.connector.disabled ? "red" : "green"}
-          className={`w-fit px-2 py-1 rounded-full border ${ccPairsIndexingStatus.connector.disabled ? "border-red-500" : "border-green-500"}`}
-        >
-          <div className="flex text-xs items-center gap-x-1">
-            <div
-              className={`w-3 h-3 rounded-full ${ccPairsIndexingStatus.connector.disabled ? "bg-red-500" : "bg-green-500"}`}
-            ></div>
-            {ccPairsIndexingStatus.connector.disabled ? "Disabled" : "Active"}
-          </div>
-        </Badge>
+        {getActivityBadge()}
       </TableCell>
       <TableCell className={`w-[${columnWidths.fourth}]`}>
         {ccPairsIndexingStatus.public_doc ? (
@@ -180,7 +222,7 @@ function ConnectorRow({
       </TableCell>
       <TableCell className={`w-[${columnWidths.second}]`}>
         <IndexAttemptStatus
-          status={ccPairsIndexingStatus.last_status || "not_started"}
+          status={ccPairsIndexingStatus.last_status || null}
           errorMsg={ccPairsIndexingStatus?.latest_index_attempt?.error_msg}
           size="xs"
         />
