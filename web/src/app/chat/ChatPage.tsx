@@ -1202,7 +1202,6 @@ export function ChatPage({
                     : undefined
                 }
                 toggleSidebar={toggleSidebar}
-                showSidebar={showDocSidebar}
                 user={user}
                 currentChatSession={selectedChatSession}
               />

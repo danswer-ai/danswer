@@ -16,7 +16,7 @@ export function SettingsProvider({
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768); // Adjust this value based on your mobile breakpoint
+      setIsMobile(window.innerWidth < 768);
     };
 
     checkMobile();

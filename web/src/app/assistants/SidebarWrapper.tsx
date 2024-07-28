@@ -126,7 +126,6 @@ export default function SidebarWrapper<T extends object>({
         <FunctionalHeader
           toggleSidebar={toggleSidebar}
           page="assistants"
-          showSidebar={showDocSidebar}
           user={headerProps.user}
         />
         <div className="w-full flex">
