@@ -118,10 +118,20 @@ export const EditingValue: React.FC<{
                 value={value as number}
                 placeholder={currentValue}
                 onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  updateValue(value);
-                  if (onChangeNumber) {
-                    onChangeNumber(value);
+                  const inputValue = e.target.value;
+                  if (inputValue === "") {
+                    updateValue("");
+                    if (onChangeNumber) {
+                      onChangeNumber(0);
+                    }
+                  } else {
+                    const value = parseInt(inputValue);
+                    if (!isNaN(value)) {
+                      updateValue(value);
+                      if (onChangeNumber) {
+                        onChangeNumber(value);
+                      }
+                    }
                   }
                 }}
                 className={`mt-2 block w-full px-3 py-2 

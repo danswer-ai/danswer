@@ -12,7 +12,7 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { useFormContext } from "@/components/context/FormContext";
 import { getSourceDisplayName } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { submitConnector } from "@/components/admin/connectors/ConnectorForm";
 import { deleteCredential, linkCredential } from "@/lib/credential";
 import { submitFiles } from "./pages/utils/files";
@@ -37,6 +37,7 @@ import {
   useGmailCredentials,
   useGoogleDriveCredentials,
 } from "./pages/utils/hooks";
+import { FormikProps } from "formik";
 
 export type AdvancedConfig = {
   pruneFreq: number | null;
@@ -87,11 +88,15 @@ export default function AddConnector({
 
   // Default to 10 minutes unless otherwise specified
   const defaultRefresh = configuration.overrideDefaultFreq || 10 * 60;
+
+  const defaultPrune = 86400; // default is 1 day
   const [refreshFreq, setRefreshFreq] = useState<number>(defaultRefresh || 0);
-  const [pruneFreq, setPruneFreq] = useState<number>(0);
+  const [pruneFreq, setPruneFreq] = useState<number>(defaultPrune);
   const [indexingStart, setIndexingStart] = useState<Date | null>(null);
   const [isPublic, setIsPublic] = useState(false);
   const [createConnectorToggle, setCreateConnectorToggle] = useState(false);
+  const formRef = useRef<FormikProps<any>>(null);
+  const [advancedFormPageState, setAdvancedFormPageState] = useState(true);
 
   const [isFormValid, setIsFormValid] = useState(false);
 
@@ -112,6 +117,28 @@ export default function AddConnector({
   } else if (!credentialActivated) {
     setFormStep(Math.min(formStep, 0));
   }
+
+  const resetAdvancedConfigs = () => {
+    console.log("reset");
+    console.log(refreshFreq);
+    const resetRefreshFreq = defaultRefresh || 0;
+    const resetPruneFreq = defaultPrune;
+    const resetIndexingStart = null;
+
+    setRefreshFreq(resetRefreshFreq);
+    setPruneFreq(resetPruneFreq);
+    setIndexingStart(resetIndexingStart);
+    setAdvancedFormPageState((advancedFormPageState) => !advancedFormPageState);
+    // Update the form values
+    if (formRef.current) {
+      formRef.current.setFieldValue("refreshFreq", resetRefreshFreq);
+      formRef.current.setFieldValue("pruneFreq", resetPruneFreq);
+      formRef.current.setFieldValue("indexingStart", resetIndexingStart);
+    } else {
+      console.log("NOpe");
+    }
+  };
+
   const createConnector = async () => {
     const AdvancedConfig: AdvancedConfig = {
       pruneFreq: pruneFreq || defaultRefresh,
@@ -424,18 +451,21 @@ export default function AddConnector({
         <>
           <Card>
             <AdvancedFormPage
+              key={advancedFormPageState ? 0 : 1}
               setIndexingStart={setIndexingStart}
               indexingStart={indexingStart}
               currentPruneFreq={pruneFreq}
               currentRefreshFreq={refreshFreq}
               setPruneFreq={setPruneFreq}
               setRefreshFreq={setRefreshFreq}
+              ref={formRef}
             />
+
             <div className="mt-4 flex w-full mx-auto max-w-2xl justify-start">
               <button
                 className="flex gap-x-1 bg-red-500 hover:bg-red-500/80 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded "
                 disabled={currentCredential == null}
-                onClick={() => prevFormStep()}
+                onClick={() => resetAdvancedConfigs()}
               >
                 <TrashIcon size={20} className="text-white" />
                 <div className="w-full items-center gap-x-2 flex">Reset</div>

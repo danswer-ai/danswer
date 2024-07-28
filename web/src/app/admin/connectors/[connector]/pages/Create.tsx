@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction } from "react";
+import React, { Dispatch, SetStateAction, useEffect } from "react";
 import { Formik, Form, Field, FieldArray } from "formik";
 import * as Yup from "yup";
 import { FaPlus } from "react-icons/fa";
@@ -80,6 +80,16 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
       updateValues(field, value);
     };
 
+  const isFormSubmittable = (values: any) => {
+    return (
+      values.name.trim() !== "" &&
+      Object.keys(values).every((key) => {
+        const field = config.values.find((f) => f.name === key);
+        return field?.optional || values[key] !== "";
+      })
+    );
+  };
+
   return (
     <div className="py-4 rounded-lg max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold mb-4 text-text-800">
@@ -91,12 +101,14 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
-        onSubmit={(values, formikHelpers) => {
+        onSubmit={() => {
           // Can be used for logging
         }}
       >
-        {({ setFieldValue, values, dirty, isValid }) => {
-          onFormStatusChange(isValid && dirty);
+        {({ setFieldValue, values, isValid }) => {
+          useEffect(() => {
+            onFormStatusChange(isValid && isFormSubmittable(values));
+          }, [isValid, values]);
           return (
             <Form className="space-y-6">
               <EditingValue
