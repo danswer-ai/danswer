@@ -30,7 +30,7 @@ export const FormProvider: React.FC<{
   const pathname = usePathname();
 
   // Initialize formStep based on the URL parameter
-  const initialStep = parseInt(searchParams.get("step") || "1", 10);
+  const initialStep = parseInt(searchParams.get("step") || "0", 10);
   const [formStep, setFormStep] = useState(initialStep);
   const [formValues, setFormValues] = useState<Record<string, any>>({});
 
@@ -57,7 +57,7 @@ export const FormProvider: React.FC<{
 
   // Update formStep when URL changes
   useEffect(() => {
-    const stepFromUrl = parseInt(searchParams.get("step") || "1", 10);
+    const stepFromUrl = parseInt(searchParams.get("step") || "0", 10);
     if (stepFromUrl !== formStep) {
       setFormStep(stepFromUrl);
     }
