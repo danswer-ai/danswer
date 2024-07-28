@@ -112,5 +112,9 @@
 }
 
 body {
+  /* height: 100vd; */
+  max-height: 100dvh;
+  overscroll-behavior-y: none;
+  height: 100dvh;
   overscroll-behavior-y: none;
 }

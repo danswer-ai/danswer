@@ -1125,7 +1125,7 @@ export function ChatPage({
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      <div className="flex relative bg-background text-default ">
+      <div className="flex h-full relative text-default ">
         <div
           ref={sidebarElementRef}
           className={`
@@ -1159,7 +1159,7 @@ export function ChatPage({
             />
           </div>
         </div>
-        <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
+        <div ref={masterFlexboxRef} className="flex w-full  overflow-x-hidden">
           {popup}
           {currentFeedback && (
             <FeedbackModal

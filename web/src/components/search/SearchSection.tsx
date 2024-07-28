@@ -607,7 +607,7 @@ export const SearchSection = ({
                   </div>
 
                   {!settings?.isMobile && (
-                    <div className="mobile:hidden mt-6">
+                    <div className="mt-6">
                       {!(agenticResults && isFetching) || disabledAgentic ? (
                         <SearchResultsDisplay
                           disabledAgentic={disabledAgentic}
