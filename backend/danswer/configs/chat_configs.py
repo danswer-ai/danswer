@@ -51,13 +51,13 @@ if os.environ.get("EDIT_KEYWORD_QUERY"):
 else:
     EDIT_KEYWORD_QUERY = not os.environ.get("DOCUMENT_ENCODER_MODEL")
 # Weighting factor between Vector and Keyword Search, 1 for completely vector search
-HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.62)))
+HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.5)))
 # Weighting factor between Title and Content of documents during search, 1 for completely
 # Title based. Default heavily favors Content because Title is also included at the top of
 # Content. This is to avoid cases where the Content is very relevant but it may not be clear
 # if the title is separated out. Title is most of a "boost" than a separate field.
 TITLE_CONTENT_RATIO = max(
-    0, min(1, float(os.environ.get("TITLE_CONTENT_RATIO") or 0.20))
+    0, min(1, float(os.environ.get("TITLE_CONTENT_RATIO") or 0.10))
 )
 
 # A list of languages passed to the LLM to rephase the query
