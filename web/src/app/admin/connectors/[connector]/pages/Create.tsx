@@ -106,9 +106,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
         }}
       >
         {({ setFieldValue, values, isValid }) => {
-          useEffect(() => {
-            onFormStatusChange(isValid && isFormSubmittable(values));
-          }, [isValid, values]);
+          onFormStatusChange(isValid && isFormSubmittable(values));
           return (
             <Form className="space-y-6">
               <EditingValue

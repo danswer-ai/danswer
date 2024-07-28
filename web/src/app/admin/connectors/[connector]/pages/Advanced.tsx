@@ -107,4 +107,5 @@ const AdvancedFormPage = forwardRef<FormikProps<any>, AdvancedFormPageProps>(
   }
 );
 
+AdvancedFormPage.displayName = "AdvancedFormPage";
 export default AdvancedFormPage;
