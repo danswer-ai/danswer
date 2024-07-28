@@ -7,6 +7,7 @@ import {
   Document360Icon,
   DropboxIcon,
   FileIcon,
+  GitIcon,
   GithubIcon,
   GitlabIcon,
   GlobeIcon,
@@ -81,6 +82,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
     icon: GoogleDriveIcon,
     displayName: "Google Drive",
     category: SourceCategory.AppConnection,
+  },
+  git: {
+    icon: GitIcon,
+    displayName: "Git",
+    category: SourceCategory.ImportedKnowledge,
   },
   github: {
     icon: GithubIcon,
