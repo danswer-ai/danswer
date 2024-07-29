@@ -87,9 +87,10 @@ export default function AddConnector({
   );
 
   // Default to 10 minutes unless otherwise specified
-  const defaultRefresh = (configuration.overrideDefaultFreq || 10) / 60;
+  const defaultRefresh = configuration.overrideDefaultFreq || 10;
+  // default is 1 day (in minutes)
+  const defaultPrune = 24 * 60;
 
-  const defaultPrune = 86400 / 60; // default is 1 day
   const [refreshFreq, setRefreshFreq] = useState<number>(defaultRefresh || 0);
   const [pruneFreq, setPruneFreq] = useState<number>(defaultPrune);
   const [indexingStart, setIndexingStart] = useState<Date | null>(null);
@@ -186,7 +187,7 @@ export default function AddConnector({
         name: name,
         source: connector,
         refresh_freq: (refreshFreq || defaultRefresh) * 60,
-        prune_freq: pruneFreq * 60 || null,
+        prune_freq: (pruneFreq || defaultPrune) * 60,
         indexing_start: indexingStart,
         disabled: false,
       },
