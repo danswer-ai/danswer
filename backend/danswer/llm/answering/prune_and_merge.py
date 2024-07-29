@@ -165,14 +165,15 @@ def _apply_pruning(
             )
         )
 
-        section_tokens = len(llm_tokenizer.encode(section_str))
+        section_token_count = len(llm_tokenizer.encode(section_str))
         # if not using sections (specifically, using Sections where each section maps exactly to the one center chunk),
         # truncate chunks that are way too long. This can happen if the embedding model tokenizer is different
         # than the LLM tokenizer
         if (
             not is_manually_selected_docs
             and not use_sections
-            and section_tokens > DOC_EMBEDDING_CONTEXT_SIZE + _METADATA_TOKEN_ESTIMATE
+            and section_token_count
+            > DOC_EMBEDDING_CONTEXT_SIZE + _METADATA_TOKEN_ESTIMATE
         ):
             logger.warning(
                 "Found more tokens in Section than expected, "
@@ -183,9 +184,9 @@ def _apply_pruning(
                 desired_length=DOC_EMBEDDING_CONTEXT_SIZE,
                 tokenizer=llm_tokenizer,
             )
-            section_tokens = DOC_EMBEDDING_CONTEXT_SIZE
+            section_token_count = DOC_EMBEDDING_CONTEXT_SIZE
 
-        total_tokens += section_tokens
+        total_tokens += section_token_count
         if total_tokens > token_limit:
             final_section_ind = ind
             break
