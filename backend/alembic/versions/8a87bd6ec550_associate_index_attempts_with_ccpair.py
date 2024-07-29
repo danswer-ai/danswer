@@ -87,11 +87,6 @@ def downgrade() -> None:
     )
     op.drop_column("index_attempt", "connector_credential_pair_id")
 
-    # Recreate the old index
-    op.drop_index(
-        "ix_index_attempt_latest_for_connector_credential_pair",
-        table_name="index_attempt",
-    )
     op.create_index(
         "ix_index_attempt_latest_for_connector_credential_pair",
         "index_attempt",
