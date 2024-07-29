@@ -1120,12 +1120,39 @@ export function ChatPage({
     <>
       <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
       <InstantSSRAutoRefresh />
-
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
       <ChatPopup />
-
-      <div className="fixed inset-0 flex flex-col text-default">
+      {currentFeedback && (
+        <FeedbackModal
+          feedbackType={currentFeedback[0]}
+          onClose={() => setCurrentFeedback(null)}
+          onSubmit={({ message, predefinedFeedback }) => {
+            onFeedback(
+              currentFeedback[1],
+              currentFeedback[0],
+              message,
+              predefinedFeedback
+            );
+            setCurrentFeedback(null);
+          }}
+        />
+      )}
+      {sharingModalVisible && chatSessionIdRef.current !== null && (
+        <ShareChatSessionModal
+          chatSessionId={chatSessionIdRef.current}
+          existingSharedStatus={chatSessionSharedStatus}
+          onClose={() => setSharingModalVisible(false)}
+          onShare={(shared) =>
+            setChatSessionSharedStatus(
+              shared
+                ? ChatSessionSharedStatus.Public
+                : ChatSessionSharedStatus.Private
+            )
+          }
+        />
+      )}
+      <div className="fixed  inset-0 flex flex-col text-default">
         <div className="h-[100dvh] overflow-y-hidden">
           <div className="w-full">
             <div
@@ -1167,36 +1194,6 @@ export function ChatPage({
             className="flex h-full w-full overflow-x-hidden"
           >
             {popup}
-            {currentFeedback && (
-              <FeedbackModal
-                feedbackType={currentFeedback[0]}
-                onClose={() => setCurrentFeedback(null)}
-                onSubmit={({ message, predefinedFeedback }) => {
-                  onFeedback(
-                    currentFeedback[1],
-                    currentFeedback[0],
-                    message,
-                    predefinedFeedback
-                  );
-                  setCurrentFeedback(null);
-                }}
-              />
-            )}
-
-            {sharingModalVisible && chatSessionIdRef.current !== null && (
-              <ShareChatSessionModal
-                chatSessionId={chatSessionIdRef.current}
-                existingSharedStatus={chatSessionSharedStatus}
-                onClose={() => setSharingModalVisible(false)}
-                onShare={(shared) =>
-                  setChatSessionSharedStatus(
-                    shared
-                      ? ChatSessionSharedStatus.Public
-                      : ChatSessionSharedStatus.Private
-                  )
-                }
-              />
-            )}
 
             <div className="flex h-full flex-col w-full">
               {liveAssistant && (
@@ -1640,24 +1637,24 @@ export function ChatPage({
                 </div>
               )}
             </div>
-
-            <DocumentSidebar
-              initialWidth={350}
-              ref={innerSidebarElementRef}
-              closeSidebar={() => setDocumentSelection(false)}
-              selectedMessage={aiMessage}
-              selectedDocuments={selectedDocuments}
-              toggleDocumentSelection={toggleDocumentSelection}
-              clearSelectedDocuments={clearSelectedDocuments}
-              selectedDocumentTokens={selectedDocumentTokens}
-              maxTokens={maxTokens}
-              isLoading={isFetchingChatMessages}
-              isOpen={documentSelection}
-            />
           </div>
           <FixedLogo />
         </div>
       </div>
+      <DocumentSidebar
+        initialWidth={350}
+        ref={innerSidebarElementRef}
+        closeSidebar={() => setDocumentSelection(false)}
+        selectedMessage={aiMessage}
+        selectedDocuments={selectedDocuments}
+        toggleDocumentSelection={toggleDocumentSelection}
+        clearSelectedDocuments={clearSelectedDocuments}
+        selectedDocumentTokens={selectedDocumentTokens}
+        maxTokens={maxTokens}
+        isLoading={isFetchingChatMessages}
+        isOpen={documentSelection}
+      />
+      s
     </>
   );
 }

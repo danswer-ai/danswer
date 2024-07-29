@@ -52,7 +52,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
 
     return (
       <div
-        className={`fixed inset-0 transition-opacity duration-300 z-[100] bg-black/80 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 transition-opacity duration-300 z-50 bg-black/80 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             closeSidebar();
