@@ -597,13 +597,13 @@ def get_persona_by_id(
         # 2. the user is in an authorized group for this persona
         # 3. if the persona is public
         if not is_for_edit:
-            isUserAllowed = Persona.users.any(
+            isSharedWithUser = Persona.users.any(
                 id=user.id
             )  # allow access if user is in allowed users
-            isGroupAllowed = Persona.groups.any(
+            isSharedWithGroup = Persona.groups.any(
                 UserGroup.users.any(id=user.id)
             )  # allow access if user is in any allowed group
-            or_conditions.extend([isUserAllowed, isGroupAllowed])
+            or_conditions.extend([isSharedWithUser, isSharedWithGroup])
             or_conditions.append(Persona.is_public.is_(True))
 
     if or_conditions:
