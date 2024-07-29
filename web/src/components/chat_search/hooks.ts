@@ -42,7 +42,6 @@ export const useSidebarVisibility = ({
         }
 
         if (mobile && !isWithinSidebar && setToggled) {
-          console.log("SHOULD TOGGLe");
           setToggled();
           return;
         }
@@ -63,11 +62,9 @@ export const useSidebarVisibility = ({
     };
 
     document.addEventListener("mousemove", handleEvent);
-    // document.addEventListener("click", handleEvent);
 
     return () => {
       document.removeEventListener("mousemove", handleEvent);
-      // document.removeEventListener("click", handleEvent);
     };
   }, [showDocSidebar, toggledSidebar, sidebarElementRef, mobile]);
 
