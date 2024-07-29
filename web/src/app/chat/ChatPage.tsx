@@ -1125,8 +1125,7 @@ export function ChatPage({
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      {/* <div className="fixed h-screen top-0 left-0 w-full bg-black text-default "> */}
-      <div className="fixed inset-0 flex flex-col  text-default">
+      <div className="fixed inset-0 flex flex-col text-default">
         <div className="h-[100dvh] overflow-y-hidden">
           <div className="w-full">
             <div
