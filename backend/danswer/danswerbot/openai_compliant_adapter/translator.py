@@ -1,12 +1,20 @@
+import hashlib
 import time
 import uuid
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+
 import tiktoken
-import hashlib
-from typing import Dict, Any, Tuple,Optional, List
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
+from pydantic import HttpUrl
 
 
-class Document(BaseModel): # can do from prompt_toolkit.document import Document instead
+class Document(
+    BaseModel
+):  # can do from prompt_toolkit.document import Document instead
     document_id: str
     chunk_ind: int
     semantic_identifier: str
@@ -23,8 +31,10 @@ class Document(BaseModel): # can do from prompt_toolkit.document import Document
     secondary_owners: Optional[str] = None
     db_doc_id: int
 
+
 class ContextDocs(BaseModel):
     top_documents: List[Document] = []
+
 
 class Message(BaseModel):
     message_id: int
@@ -33,7 +43,7 @@ class Message(BaseModel):
     message: str
     rephrased_query: Optional[str] = None
     context_docs: Optional[ContextDocs] = None
-    citations : Optional[dict[str, int]] = None
+    citations: Optional[dict[str, int]] = None
 
 
 def extract_last_user_query(
@@ -50,8 +60,7 @@ def extract_last_user_query(
     """
     # Find the last user message
     user_messages = [
-        msg['content']
-        for msg in openai_request['messages'] if msg['role'] == 'user'
+        msg["content"] for msg in openai_request["messages"] if msg["role"] == "user"
     ]
     if not user_messages:
         raise ValueError("No user messages found in the OpenAI request.")
@@ -61,9 +70,11 @@ def extract_last_user_query(
 
     return prompt, prompt_tokens_count
 
+
 def generate_system_fingerprint() -> str:
     """Generate unique system_fingerprint."""
     # Generate a unique ID
+    # print(uuid.uuid4())
     unique_id = uuid.uuid4().hex
 
     # Create a SHA-256 hash
@@ -75,7 +86,7 @@ def generate_system_fingerprint() -> str:
     return f"fp_{system_fingerprint}"
 
 
-def count_tokens(text: str, tokenizer: str = 'cl100k_base') -> int:
+def count_tokens(text: str, tokenizer: str = "cl100k_base") -> int:
     """Count the number of tokens in the text based on the tokenizer."""
     # Availble tokenizers
     # https://github.com/openai/tiktoken/blob/main/tiktoken_ext/openai_public.py
@@ -85,9 +96,7 @@ def count_tokens(text: str, tokenizer: str = 'cl100k_base') -> int:
 
 
 def translate_danswer_to_openai(
-    danswer_resp: Message,
-    model: str = 'gpt-3.5-turbo',
-    prormpt_token_count: int = 0
+    danswer_resp: Message, model: str = "gpt-3.5-turbo", prormpt_token_count: int = 0
 ) -> dict:
     """Translate danswer API response to openai API response."""
 
@@ -95,8 +104,12 @@ def translate_danswer_to_openai(
     response_id = f"chatcmpl-{uuid.uuid4()}"
     created_timestamp = int(time.time())
     full_answer = danswer_resp.message
-    if danswer_resp.citations and danswer_resp.context_docs and danswer_resp.context_docs.top_documents:
-        db_id_to_citation_str_rep = {v:k for k,v in danswer_resp.citations.items()}
+    if (
+        danswer_resp.citations
+        and danswer_resp.context_docs
+        and danswer_resp.context_docs.top_documents
+    ):
+        db_id_to_citation_str_rep = {v: k for k, v in danswer_resp.citations.items()}
         for document in danswer_resp.context_docs.top_documents:
             if document.db_doc_id in db_id_to_citation_str_rep:
                 citation_str_rep = db_id_to_citation_str_rep.pop(document.db_doc_id)
@@ -114,19 +127,21 @@ def translate_danswer_to_openai(
         "created": created_timestamp,
         "model": model,
         "system_fingerprint": system_fingerprint,
-        "choices": [{
-            "index": 0,
-            "message": {
-                "role": "assistant",
-                "content": full_answer,
-            },
-            "logprobs": None,
-            "finish_reason": "stop"
-        }],
+        "choices": [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": full_answer,
+                },
+                "logprobs": None,
+                "finish_reason": "stop",
+            }
+        ],
         "usage": {
             "prompt_tokens": prormpt_token_count,
             "completion_tokens": completion_tokens,
             "total_tokens": total_tokens,
-        }
+        },
     }
     return openai_response
