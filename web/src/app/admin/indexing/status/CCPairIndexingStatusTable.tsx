@@ -169,7 +169,7 @@ function ConnectorRow({
         return (
           <Badge
             color="green"
-            className="w-fit px-2 py-1 rounded-full border border-yellow-500"
+            className="w-fit px-2 py-1 rounded-full border border-green-500"
           >
             <div className="flex text-xs items-center gap-x-1">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
