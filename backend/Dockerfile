@@ -68,11 +68,10 @@ RUN apt-get update && \
     rm -f /usr/local/lib/python3.11/site-packages/tornado/test/test.key
 
 # Pre-downloading models for setups with limited egress
-RUN python -c "from transformers import AutoTokenizer; \
-AutoTokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1'); \
-AutoTokenizer.from_pretrained('nomic-ai/nomic-bert-2048'); \
-AutoTokenizer.from_pretrained('intfloat/e5-base-v2'); # This is to support transferring from this as the default model \
-"
+RUN python -c "from tokenizers import Tokenizer; \
+Tokenizer.from_pretrained('intfloat/e5-base-v2'); \
+Tokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1');"
+
 
 # Pre-downloading NLTK for setups with limited egress
 RUN python -c "import nltk; \
