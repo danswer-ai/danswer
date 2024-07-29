@@ -215,9 +215,8 @@ export function ChatInputBar({
           className="
             w-[90%]
             shrink
-            bg-background
             relative
-            px-4
+            desktop:px-4
             max-w-searchbar-max
             mx-auto
           "

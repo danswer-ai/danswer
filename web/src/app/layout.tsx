@@ -6,6 +6,7 @@ import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { Metadata } from "next";
 import { buildClientUrl } from "@/lib/utilsSS";
 import { Inter } from "next/font/google";
+import Head from "next/head";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -41,10 +42,12 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"
-      />
+      <Head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, interactive-widget=resizes-content"
+        />
+      </Head>
 
       {CUSTOM_ANALYTICS_ENABLED && combinedSettings.customAnalyticsScript && (
         <head>
@@ -67,6 +70,7 @@ export default async function RootLayout({
             {children}
           </SettingsProvider>
         </div>
+        <div className="fixed bottom-0 left-0 w-full h-[30px]  z-[1000] bg-black"></div>
       </body>
     </html>
   );
