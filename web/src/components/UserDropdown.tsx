@@ -12,13 +12,14 @@ import { LOGOUT_DISABLED } from "@/lib/constants";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { SettingsContext } from "./settings/SettingsProvider";
 import { LightSettingsIcon } from "./icons/icons";
+import { pageType } from "@/app/chat/sessionSidebar/types";
 
 export function UserDropdown({
   user,
   page,
 }: {
   user: User | null;
-  page?: "search" | "chat" | "assistants";
+  page?: pageType;
 }) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
   const userInfoRef = useRef<HTMLDivElement>(null);
