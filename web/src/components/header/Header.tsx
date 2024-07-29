@@ -9,6 +9,7 @@ import { SettingsContext } from "../settings/SettingsProvider";
 import { UserDropdown } from "../UserDropdown";
 import { Logo } from "../Logo";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
+import { pageType } from "@/app/chat/sessionSidebar/types";
 
 export function HeaderTitle({ children }: { children: JSX.Element | string }) {
   return (
@@ -20,7 +21,7 @@ export function HeaderTitle({ children }: { children: JSX.Element | string }) {
 
 interface HeaderProps {
   user: User | null;
-  page?: "search" | "chat" | "assistants";
+  page?: pageType;
 }
 
 export function Header({ user, page }: HeaderProps) {

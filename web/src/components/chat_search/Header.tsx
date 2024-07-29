@@ -12,6 +12,7 @@ import { Tooltip } from "../tooltip/Tooltip";
 import KeyboardSymbol from "@/lib/browserUtilities";
 import Link from "next/link";
 import { SettingsContext } from "../settings/SettingsProvider";
+import { pageType } from "@/app/chat/sessionSidebar/types";
 
 export default function FunctionalHeader({
   showSidebar,
@@ -20,7 +21,7 @@ export default function FunctionalHeader({
   currentChatSession,
   setSharingModalVisible,
 }: {
-  page: "search" | "chat" | "assistants";
+  page: pageType;
   showSidebar: boolean;
   user: User | null;
   currentChatSession?: ChatSession | null | undefined;

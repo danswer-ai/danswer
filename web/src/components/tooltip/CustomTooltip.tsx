@@ -40,6 +40,7 @@ export const CustomTooltip = ({
   light,
   citation,
   line,
+  wrap,
   showTick = false,
   delay = 500,
   position = "bottom",
@@ -51,6 +52,8 @@ export const CustomTooltip = ({
   light?: boolean;
   showTick?: boolean;
   delay?: number;
+
+  wrap?: boolean;
   citation?: boolean;
   position?: "top" | "bottom";
 }) => {
@@ -93,7 +96,7 @@ export const CustomTooltip = ({
   return (
     <span className="relative inline-block">
       <span
-        className="underline h-full leading-none"
+        className="h-full leading-none"
         onMouseEnter={showTooltip}
         onMouseLeave={hideTooltip}
       >
@@ -117,11 +120,11 @@ export const CustomTooltip = ({
             />
           )}
           <div
-            className={` relative ${line ? "" : "flex"} p-2`}
+            className={`flex-wrap ${wrap && "w-full"} relative ${line ? "" : "flex"} p-2`}
             style={
-              line
+              line || wrap
                 ? {
-                    whiteSpace: "nowrap",
+                    whiteSpace: wrap ? "normal" : "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                   }
