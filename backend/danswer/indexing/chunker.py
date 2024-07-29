@@ -263,7 +263,7 @@ def split_chunk_text_into_mini_chunks(
     """
     from llama_index.text_splitter import SentenceSplitter
 
-    token_count_func = get_default_tokenizer().encode
+    token_count_func = get_default_tokenizer().tokenize
     sentence_aware_splitter = SentenceSplitter(
         tokenizer=token_count_func, chunk_size=mini_chunk_size, chunk_overlap=0
     )
