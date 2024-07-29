@@ -27,6 +27,7 @@ from danswer.indexing.chunker import extract_chunk_texts_from_doc_aware_chunk
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
+from danswer.indexing.models import TextChunk
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -174,7 +175,7 @@ def index_doc_batch(
         )
     )
 
-    chunks_with_texts = extract_chunk_texts_from_doc_aware_chunk(
+    chunks_with_texts: list[TextChunk] = extract_chunk_texts_from_doc_aware_chunk(
         chunks=chunks, embedder=embedder
     )
 
