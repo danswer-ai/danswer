@@ -10,14 +10,12 @@ env:
 
 jobs:
   build:
-    runs-on:
-      group: ${{ matrix.platform == 'linux/amd64' && 'amd64-image-builders' || 'arm64-image-builders' }}
+    runs-on: ${{ matrix.platform == 'linux/amd64' && 'ubuntu-latest' || 'arm64-stock-runners-when???' }}
     strategy:
       fail-fast: false
       matrix:
         platform:
           - linux/amd64
-          - linux/arm64
 
     steps:
       - name: Prepare
