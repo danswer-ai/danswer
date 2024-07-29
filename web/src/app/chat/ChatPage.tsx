@@ -1067,7 +1067,6 @@ export function ChatPage({
     sidebarElementRef,
     showDocSidebar,
     setShowDocSidebar,
-    mobile: settings?.isMobile,
   });
 
   useEffect(() => {
@@ -1125,7 +1124,7 @@ export function ChatPage({
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      <div className="flex h-full relative text-default ">
+      <div className="flex relative bg-background text-default ">
         <div
           ref={sidebarElementRef}
           className={`
@@ -1159,7 +1158,7 @@ export function ChatPage({
             />
           </div>
         </div>
-        <div ref={masterFlexboxRef} className="flex w-full  overflow-x-hidden">
+        <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
           {popup}
           {currentFeedback && (
             <FeedbackModal
@@ -1201,7 +1200,7 @@ export function ChatPage({
                     ? setSharingModalVisible
                     : undefined
                 }
-                toggleSidebar={toggleSidebar}
+                showSidebar={showDocSidebar}
                 user={user}
                 currentChatSession={selectedChatSession}
               />
@@ -1264,7 +1263,7 @@ export function ChatPage({
                         <div
                           className={
                             "mt-4 -ml-4 w-full mx-auto " +
-                            "absolute top-12 left-0  " +
+                            "absolute mobile:top-0 desktop:top-12 left-0  " +
                             (hasPerformedInitialScroll ? "" : "invisible")
                           }
                         >
