@@ -87,7 +87,7 @@ export function UserDropdown({
                   className="flex py-3 px-4 cursor-pointer !
                    rounded hover:bg-hover-light"
                 >
-                  <LightSettingsIcon className="h-5 w-5  my-auto mr-2" />
+                  <LightSettingsIcon className="h-5 w-5 my-auto mr-2" />
                   Admin Panel
                 </Link>
               </>

@@ -59,7 +59,7 @@ export default function FunctionalHeader({
     };
   }, []);
   return (
-    <div className="pb-6  left-0 sticky top-0 z-20 w-full relative flex">
+    <div className="pb-6 left-0 sticky top-0 z-20 w-full relative flex">
       <div className="mt-2 mx-4 text-text-700 flex w-full">
         <div className="absolute z-[100] my-auto flex items-center text-xl font-bold">
           <div className="pt-[2px] invisible mb-auto">

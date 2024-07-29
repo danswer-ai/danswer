@@ -1254,7 +1254,7 @@ export function ChatPage({
                       )}
 
                       <div
-                        className={`h-full w-full relative flex-auto transition-margin duration-300  overflow-x-auto mobile:pb-12 desktop:pb-[140px]`}
+                        className={`h-full w-full relative flex-auto transition-margin duration-300 overflow-x-auto mobile:pb-12 desktop:pb-[140px]`}
                         {...getRootProps()}
                       >
                         {/* <input {...getInputProps()} /> */}
@@ -1276,7 +1276,7 @@ export function ChatPage({
                           <div
                             className={
                               "mt-4 -ml-4 w-full mx-auto " +
-                              "absolute mobile:top-0 desktop:top-12 left-0  " +
+                              "absolute mobile:top-0 desktop:top-12 left-0" +
                               (hasPerformedInitialScroll ? "" : "invisible")
                             }
                           >

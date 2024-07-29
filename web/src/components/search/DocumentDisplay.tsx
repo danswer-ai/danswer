@@ -247,7 +247,7 @@ export const DocumentDisplay = ({
                   }
                 >
                   <LightBulbIcon
-                    className={`${settings?.isMobile && alternativeToggled ? "text-green-600" : "text-blue-600"}  h-4 w-4 cursor-pointer`}
+                    className={`${settings?.isMobile && alternativeToggled ? "text-green-600" : "text-blue-600"} h-4 w-4 cursor-pointer`}
                   />
                 </button>
               )}
@@ -292,7 +292,7 @@ export const AgenticDocumentDisplay = ({
   return (
     <div
       key={document.semantic_identifier}
-      className={`text-sm mobile:ml-4  border-b border-border transition-all duration-500
+      className={`text-sm mobile:ml-4 border-b border-border transition-all duration-500
       ${!hide ? "transform translate-x-full opacity-0" : ""} 
       ${hide ? "py-3" : "border-transparent"} relative`}
       onMouseEnter={() => setIsHovered(true)}
