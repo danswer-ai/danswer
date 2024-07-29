@@ -533,7 +533,7 @@ export const AIMessage = ({
                       <div
                         ref={hoverElementRef}
                         className={`
-                        absolute -bottom-2
+                        absolute -bottom-4
                         invisible ${(isHovering || settings?.isMobile) && "!visible"}
                         opacity-0 ${(isHovering || settings?.isMobile) && "!opacity-100"}
                         translate-y-2 ${(isHovering || settings?.isMobile) && "!translate-y-0"}

@@ -1530,10 +1530,6 @@ export function ChatPage({
                               </div>
                             )}
 
-                          {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-                          <div ref={endPaddingRef} className="h-[95px]" />
-                          <div ref={endDivRef}></div>
-
                           {currentPersona &&
                             currentPersona.starter_messages &&
                             currentPersona.starter_messages.length > 0 &&
@@ -1572,6 +1568,10 @@ export function ChatPage({
                                 )}
                               </div>
                             )}
+                          {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
+                          <div ref={endPaddingRef} className="h-[95px]" />
+                          <div ref={endDivRef}></div>
+
                           <div ref={endDivRef} />
                         </div>
                       </div>
