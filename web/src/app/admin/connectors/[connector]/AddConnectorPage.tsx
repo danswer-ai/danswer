@@ -87,7 +87,7 @@ export default function AddConnector({
   );
 
   // Default to 10 minutes unless otherwise specified
-  const defaultRefresh = (configuration.overrideDefaultFreq || 10) / 60;
+  const defaultRefresh = (configuration.overrideDefaultFreq || 10);
 
   const defaultPrune = 86400 / 60; // default is 1 day
   const [refreshFreq, setRefreshFreq] = useState<number>(defaultRefresh || 0);
