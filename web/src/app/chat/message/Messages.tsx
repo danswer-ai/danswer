@@ -534,9 +534,9 @@ export const AIMessage = ({
                         ref={hoverElementRef}
                         className={`
                         absolute -bottom-2
-                        invisible ${isHovering && "!visible"}
-                        opacity-0 ${isHovering && "!opacity-100"}
-                        translate-y-2 ${isHovering && "!translate-y-0"}
+                        invisible ${(isHovering || settings?.isMobile) && "!visible"}
+                        opacity-0 ${(isHovering || settings?.isMobile) && "!opacity-100"}
+                        translate-y-2 ${(isHovering || settings?.isMobile) && "!translate-y-0"}
                         transition-transform duration-300 ease-in-out 
                         flex md:flex-row gap-x-0.5 bg-background-125/40 p-1.5 rounded-lg
                         `}

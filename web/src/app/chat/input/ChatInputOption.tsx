@@ -61,7 +61,7 @@ export const ChatInputOption: React.FC<ChatInputOptionProps> = ({
         rounded-md
         ${
           flexPriority === "shrink" &&
-          "flex-shrink-[100] flex-grow-0 flex-basis-auto min-w-[30px] whitespace-nowrap overflow-hidden"
+          "flex-shrink-100 flex-grow-0 flex-basis-auto min-w-[30px] whitespace-nowrap overflow-hidden"
         }
         ${
           flexPriority === "second" &&

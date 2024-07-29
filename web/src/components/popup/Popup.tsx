@@ -112,7 +112,7 @@ const Popup: React.FC<PopupProps> = ({
       className={`relative inline-block
       ${
         flexPriority === "shrink" &&
-        "flex-shrink-[100] flex-grow-0 flex-basis-auto min-w-[30px] whitespace-nowrap "
+        "flex-shrink-100 flex-grow-0 flex-basis-auto min-w-[30px] whitespace-nowrap "
       }
       ${
         flexPriority === "second" &&
