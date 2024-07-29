@@ -485,7 +485,7 @@ export const SearchSection = ({
             flex-none 
             absolute
             left-0 
-            z-[50]
+            z-30
             overflow-y-hidden 
             sidebar 
             bg-background-100 

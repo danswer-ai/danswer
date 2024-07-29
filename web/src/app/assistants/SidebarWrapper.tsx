@@ -93,11 +93,11 @@ export default function SidebarWrapper<T extends object>({
             flex-none
             fixed
             left-0
-            z-20
+            z-30
             overflow-y-hidden
             sidebar
             bg-background-100
-            h-screen
+            h-svh
             transition-all
             bg-opacity-80
             duration-300
@@ -122,7 +122,7 @@ export default function SidebarWrapper<T extends object>({
         </div>
       </div>
 
-      <div className="absolute left-0 w-full top-0">
+      <div className="absolute h-svh left-0 w-full top-0">
         <FunctionalHeader
           toggleSidebar={toggleSidebar}
           page="assistants"
@@ -141,6 +141,7 @@ export default function SidebarWrapper<T extends object>({
                       ease-in-out
                       ${toggledSidebar ? "w-[250px]" : "w-[0px]"}`}
           />
+
           <div className="mt-4 w-full max-w-3xl mx-auto">
             {content(contentProps)}
           </div>

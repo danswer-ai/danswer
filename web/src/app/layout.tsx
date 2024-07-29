@@ -43,8 +43,9 @@ export default async function RootLayout({
     <html lang="en">
       <meta
         name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"
       />
+
       {CUSTOM_ANALYTICS_ENABLED && combinedSettings.customAnalyticsScript && (
         <head>
           <script
