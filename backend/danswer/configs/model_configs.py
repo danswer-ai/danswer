@@ -16,9 +16,6 @@ DEFAULT_DOCUMENT_ENCODER_MODEL = "intfloat/e5-base-v2"
 DOCUMENT_ENCODER_MODEL = (
     os.environ.get("DOCUMENT_ENCODER_MODEL") or DEFAULT_DOCUMENT_ENCODER_MODEL
 )
-DEFAULT_LLM_ENCODER_PROVIDER = (
-    os.environ.get("DEFAULT_LLM_ENCODER_PROVIDER") or "OpenAI"
-)
 # If the below is changed, Vespa deployment must also be changed
 DOC_EMBEDDING_DIM = int(os.environ.get("DOC_EMBEDDING_DIM") or 768)
 # Model should be chosen with 512 context size, ideally don't change this

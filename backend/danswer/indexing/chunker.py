@@ -281,32 +281,6 @@ def _split_chunk_text_into_mini_chunks(
     return sentence_aware_splitter.split_text(chunk_text)
 
 
-# def extract_chunk_texts_from_doc_aware_chunk(
-#     chunks: list[DocAwareChunk],
-#     embedder: IndexingEmbedder,
-#     enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
-# ) -> tuple[list[str], dict[int, int]]:
-#     # Create Mini Chunks for more precise matching of details
-#     # Off by default with unedited settings
-#     chunk_texts: list[str] = []
-#     chunk_mini_chunks_count = {}
-#     for chunk_ind, chunk in enumerate(chunks):
-#         # The whole chunk including the prefix/suffix is included in the overall vector representation
-#         chunk_texts.append(
-#             f"{chunk.title_prefix}{chunk.content}{chunk.metadata_suffix_semantic}"
-#         )
-#         mini_chunk_texts = (
-#             _split_chunk_text_into_mini_chunks(
-#                 chunk.content,
-#                 embedder=embedder,
-#             )
-#             if enable_mini_chunk
-#             else []
-#         )
-#         chunk_texts.extend(mini_chunk_texts)
-#         chunk_mini_chunks_count[chunk_ind] = 1 + len(mini_chunk_texts)
-
-
 def extract_chunk_texts_from_doc_aware_chunk(
     chunks: list[DocAwareChunk],
     embedder: IndexingEmbedder,
