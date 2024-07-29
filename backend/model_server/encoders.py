@@ -92,7 +92,7 @@ class CloudEmbedding:
         try:
             response = self.client.embeddings.create(input=texts, model=model)
             return [embedding.embedding for embedding in response.data]
-        except BaseException as e:
+        except Exception as e:
             error_string = (
                 f"Error embedding text with OpenAI: {str(e)} \n"
                 f"Model: {model} \n"

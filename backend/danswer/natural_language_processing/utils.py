@@ -16,14 +16,15 @@ os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 
 
-def _set_encoder_from_provider(provider_type: str) -> Any:
+def _get_encoder_from_provider(provider_type: str) -> Any:
     import tiktoken
 
     if provider_type.lower() == "OpenAI".lower():
         return tiktoken.get_encoding("cl100k_base")
-    from tokenizers import Tokenizer  # type:ignore
 
     if provider_type.lower() == "Cohere".lower():
+        from tokenizers import Tokenizer  # type:ignore
+
         return Tokenizer.from_pretrained("Cohere/command-nightly")
 
     logger.warning(
@@ -56,7 +57,7 @@ class UnifiedTokenizer:
         self.encoder: Any
 
         if provider_type:
-            self.encoder = _set_encoder_from_provider(provider_type)
+            self.encoder = _get_encoder_from_provider(provider_type)
         elif model_name:
             from tokenizers import Tokenizer  # type:ignore
 

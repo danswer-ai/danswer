@@ -120,11 +120,11 @@ class EmbeddingModel:
         # Batching for local embedding
         text_batches = batch_list(texts, batch_size)
         embeddings: list[list[float] | None] = []
-        logger.info(
+        logger.debug(
             f"Encoding {len(texts)} texts in {len(text_batches)} batches for local model"
         )
         for idx, text_batch in enumerate(text_batches, start=1):
-            logger.info(f"Encoding batch {idx} of {len(text_batches)}")
+            logger.debug(f"Encoding batch {idx} of {len(text_batches)}")
             embed_request = EmbedRequest(
                 model_name=self.model_name,
                 texts=text_batch,
