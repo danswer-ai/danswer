@@ -483,9 +483,9 @@ export const SearchSection = ({
           ref={sidebarElementRef}
           className={`
             flex-none 
-            fixed -8
+            absolute
             left-0 
-            z-20
+            z-[50]
             overflow-y-hidden 
             sidebar 
             bg-background-100 

@@ -1126,16 +1126,14 @@ export function ChatPage({
       <ChatPopup />
 
       <div className="fixed top-0 left-0 w-full bg-background text-default ">
-        <div className="relative">
+        <div className="w-full">
           <div
             ref={sidebarElementRef}
             className={`
             flex-none
-
             absolute
             left-0
-            z-20
-            sidebar
+            z-[60]
             bg-background-100
             h-screen
             transition-all
@@ -1143,7 +1141,7 @@ export function ChatPage({
             duration-300
             ease-in-out
             ${
-              showDocSidebar || (toggledSidebar && !settings?.isMobile)
+              showDocSidebar || toggledSidebar
                 ? "opacity-100 w-[250px] translate-x-0"
                 : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
             }`}
@@ -1152,7 +1150,7 @@ export function ChatPage({
               <HistorySidebar
                 page="chat"
                 ref={innerSidebarElementRef}
-                toggleSidebar={() => toggleDocumentSelectionAspects()}
+                toggleSidebar={toggleSidebar}
                 toggled={toggledSidebar && !settings?.isMobile}
                 existingChats={chatSessions}
                 currentChatSession={selectedChatSession}
@@ -1231,9 +1229,10 @@ export function ChatPage({
               <Dropzone onDrop={handleImageUpload} noClick>
                 {({ getRootProps }) => (
                   <div className="flex h-full w-full">
-                    <div
-                      style={{ transition: "width 0.30s ease-out" }}
-                      className={`
+                    {!settings?.isMobile && (
+                      <div
+                        style={{ transition: "width 0.30s ease-out" }}
+                        className={`
                         flex-none 
                         overflow-y-hidden 
                         bg-background-100 
@@ -1244,7 +1243,8 @@ export function ChatPage({
                         h-full
                         ${toggledSidebar ? "w-[250px]" : "w-[0px]"}
                       `}
-                    ></div>
+                      ></div>
+                    )}
 
                     <div
                       className={`h-full w-full relative flex-auto transition-margin duration-300  overflow-x-auto mobile:pb-12 desktop:pb-[140px]`}
