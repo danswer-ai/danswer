@@ -70,7 +70,6 @@ export default async function RootLayout({
             {children}
           </SettingsProvider>
         </div>
-        <div className="fixed bottom-0 left-0 w-full h-[30px]  z-[1000] bg-black"></div>
       </body>
     </html>
   );
