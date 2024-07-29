@@ -64,7 +64,7 @@ const CredentialSelectionTable = ({
           <tbody>
             {credentials.map((credential, ind) => {
               const selected = currentCredentialId
-                ? credential.id == currentCredentialId
+                ? credential.id == (selectedCredentialId || currentCredentialId)
                 : false;
               return (
                 <tr key={credential.id} className="border-b hover:bg-gray-50">
@@ -124,9 +124,9 @@ const CredentialSelectionTable = ({
 };
 
 export default function ModifyCredential({
+  close,
   showIfEmpty,
   attachedConnector,
-  display,
   credentials,
   source,
   defaultedCredential,
@@ -138,7 +138,7 @@ export default function ModifyCredential({
   onDeleteCredential,
   showCreate,
 }: {
-  display?: boolean;
+  close?: () => void;
   showIfEmpty?: boolean;
   attachedConnector?: Connector<any>;
   defaultedCredential?: Credential<any>;
@@ -160,8 +160,6 @@ export default function ModifyCredential({
   if (!credentials) {
     return <></>;
   }
-
-  const sourceName = getSourceDisplayName(source);
 
   return (
     <>
@@ -251,6 +249,9 @@ export default function ModifyCredential({
               onClick={() => {
                 if (onSwap && attachedConnector) {
                   onSwap(selectedCredential!, attachedConnector.id);
+                  if (close) {
+                    close();
+                  }
                 }
                 if (onSwitch) {
                   onSwitch(selectedCredential!);

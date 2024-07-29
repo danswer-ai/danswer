@@ -147,6 +147,7 @@ export default function CredentialSection({
             showCreate={() => {
               setShowCreateCredential(true);
             }}
+            close={closeModifyCredential}
             source={sourceType}
             attachedConnector={ccPair.connector}
             defaultedCredential={defaultedCredential}

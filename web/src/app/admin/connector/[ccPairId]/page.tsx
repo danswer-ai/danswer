@@ -89,7 +89,8 @@ function Main({ ccPairId }: { ccPairId: number }) {
               ccPairId={ccPair.id}
               connectorId={ccPair.connector.id}
               credentialId={ccPair.credential.id}
-              isDisabled={ccPair.connector.disabled || deleting}
+              isDisabled={ccPair.connector.disabled}
+              isDeleting={isDeleting}
             />
           )}
           {!deleting && <ModifyStatusButtonCluster ccPair={ccPair} />}

@@ -94,11 +94,13 @@ export function ReIndexButton({
   connectorId,
   credentialId,
   isDisabled,
+  isDeleting,
 }: {
   ccPairId: number;
   connectorId: number;
   credentialId: number;
   isDisabled: boolean;
+  isDeleting: boolean;
 }) {
   const { popup, setPopup } = usePopup();
   const [reIndexPopupVisible, setReIndexPopupVisible] = useState(false);
@@ -122,11 +124,13 @@ export function ReIndexButton({
         onClick={() => {
           setReIndexPopupVisible(true);
         }}
-        disabled={isDisabled}
+        disabled={isDisabled || isDeleting}
         tooltip={
-          isDisabled
-            ? "Connector must be active in order to run indexing"
-            : undefined
+          isDeleting
+            ? "Connector is deleting and thus you cannot run indexing"
+            : isDisabled
+              ? "Connector must be active in order to run indexing"
+              : undefined
         }
       >
         Index
