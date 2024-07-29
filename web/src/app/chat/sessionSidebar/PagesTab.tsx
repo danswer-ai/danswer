@@ -23,7 +23,7 @@ export function PagesTab({
   currentChatId?: number;
   folders?: Folder[];
   openedFolders?: { [key: number]: boolean };
-  closeSidebar: () => void;
+  closeSidebar?: () => void;
 }) {
   const groupedChatSessions = existingChats
     ? groupSessionsByDateRange(existingChats)

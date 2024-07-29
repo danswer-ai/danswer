@@ -48,7 +48,7 @@ interface HistorySidebarProps {
   openedFolders?: { [key: number]: boolean };
   toggleSidebar?: () => void;
   toggled?: boolean;
-  removeToggle: () => void;
+  removeToggle?: () => void;
 }
 
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(

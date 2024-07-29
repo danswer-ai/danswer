@@ -34,7 +34,7 @@ export function ChatSessionDisplay({
   // needed when the parent is trying to apply some background effect
   // if not set, the gradient will still be applied and cause weirdness
   skipGradient?: boolean;
-  closeSidebar: () => void;
+  closeSidebar?: () => void;
 }) {
   const router = useRouter();
   const [isDeletionModalVisible, setIsDeletionModalVisible] = useState(false);
@@ -97,7 +97,7 @@ export function ChatSessionDisplay({
         className="flex my-1 group relative"
         key={chatSession.id}
         onClick={() => {
-          if (settings?.isMobile) {
+          if (settings?.isMobile && closeSidebar) {
             closeSidebar();
           }
         }}
