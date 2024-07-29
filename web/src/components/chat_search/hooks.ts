@@ -6,19 +6,21 @@ interface UseSidebarVisibilityProps {
   showDocSidebar: boolean;
   setShowDocSidebar: Dispatch<SetStateAction<boolean>>;
   mobile?: boolean;
+  setToggled?: () => void;
 }
 
 export const useSidebarVisibility = ({
   toggledSidebar,
   sidebarElementRef,
   setShowDocSidebar,
+  setToggled,
   showDocSidebar,
   mobile,
 }: UseSidebarVisibilityProps) => {
   const xPosition = useRef(0);
 
   useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
+    const handleEvent = (event: MouseEvent) => {
       const currentXPosition = event.clientX;
       xPosition.current = currentXPosition;
 
@@ -30,12 +32,19 @@ export const useSidebarVisibility = ({
           currentXPosition <= sidebarRect.right &&
           event.clientY >= sidebarRect.top &&
           event.clientY <= sidebarRect.bottom;
+
         const sidebarStyle = window.getComputedStyle(sidebarElementRef.current);
         const isVisible = sidebarStyle.opacity !== "0";
         if (isWithinSidebar && isVisible) {
           if (!mobile) {
             setShowDocSidebar(true);
           }
+        }
+
+        if (mobile && !isWithinSidebar && setToggled) {
+          console.log("SHOULD TOGGLe");
+          setToggled();
+          return;
         }
 
         if (
@@ -53,10 +62,12 @@ export const useSidebarVisibility = ({
       }
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mousemove", handleEvent);
+    // document.addEventListener("click", handleEvent);
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mousemove", handleEvent);
+      // document.removeEventListener("click", handleEvent);
     };
   }, [showDocSidebar, toggledSidebar, sidebarElementRef, mobile]);
 

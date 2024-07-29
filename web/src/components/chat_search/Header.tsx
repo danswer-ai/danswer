@@ -102,7 +102,7 @@ export default function FunctionalHeader({
           )}
         </div>
 
-        <div className="ml-auto my-auto flex gap-x-2">
+        <div className="mobile:hidden ml-auto my-auto flex gap-x-2">
           {setSharingModalVisible && (
             <div
               onClick={() => setSharingModalVisible(true)}

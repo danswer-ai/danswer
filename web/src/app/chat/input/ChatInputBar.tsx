@@ -492,7 +492,7 @@ export function ChatInputBar({
                 }}
               />
             </div>
-            <div className="absolute bottom-2.5 right-10">
+            <div className="absolute bottom-2.5 mobile:right-4 desktop:right-10">
               <div
                 className="cursor-pointer"
                 onClick={() => {

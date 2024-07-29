@@ -85,7 +85,7 @@ export function ChatPage({
   defaultSelectedAssistantId,
   toggledSidebar,
 }: {
-  toggle: () => void;
+  toggle: (toggled?: boolean) => void;
   documentSidebarInitialWidth?: number;
   defaultSelectedAssistantId?: number;
   toggledSidebar: boolean;
@@ -1059,6 +1059,10 @@ export function ChatPage({
 
     toggle();
   };
+  const removeToggle = () => {
+    setShowDocSidebar(false);
+    toggle(false);
+  };
 
   const sidebarElementRef = useRef<HTMLDivElement>(null);
 
@@ -1067,6 +1071,7 @@ export function ChatPage({
     sidebarElementRef,
     showDocSidebar,
     setShowDocSidebar,
+    setToggled: removeToggle,
     mobile: settings?.isMobile,
   });
 
