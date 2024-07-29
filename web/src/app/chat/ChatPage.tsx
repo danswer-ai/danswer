@@ -524,15 +524,6 @@ export function ChatPage({
   const distance = 500; // distance that should "engage" the scroll
   const debounce = 100; // time for debouncing
 
-  useScrollonStream({
-    isStreaming,
-    scrollableDivRef,
-    scrollDist,
-    endDivRef,
-    distance,
-    debounce,
-  });
-
   const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(
     existingChatSessionId === null
   );
@@ -1073,6 +1064,16 @@ export function ChatPage({
     showDocSidebar,
     setShowDocSidebar,
     setToggled: removeToggle,
+    mobile: settings?.isMobile,
+  });
+
+  useScrollonStream({
+    isStreaming,
+    scrollableDivRef,
+    scrollDist,
+    endDivRef,
+    distance,
+    debounce,
     mobile: settings?.isMobile,
   });
 
