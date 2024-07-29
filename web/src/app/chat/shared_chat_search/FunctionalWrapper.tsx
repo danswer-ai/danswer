@@ -141,7 +141,7 @@ export default function FunctionalWrapper({
         </div>
       )}
 
-      <div className="absolute left-0 top-0 w-full h-full">
+      <div className="absolute overscroll-y-contain left-0 top-0 w-full bg-black border-b-4 border-b-black h-full">
         {content(toggledSidebar, toggle)}
       </div>
     </>

@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  height: 100svh;
+}
+
 @layer utilities {
   /* Hide scrollbar for Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {
@@ -111,10 +115,10 @@
   overflow: hidden;
 }
 
-body {
-  /* height: 100vd; */
-  max-height: 100dvh;
+.prevent-scroll {
   overscroll-behavior-y: none;
-  height: 100dvh;
+}
+
+body {
   overscroll-behavior-y: none;
 }
