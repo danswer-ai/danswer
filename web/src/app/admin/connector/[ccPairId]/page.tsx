@@ -68,6 +68,10 @@ function Main({ ccPairId }: { ccPairId: number }) {
     mutate(buildCCPairInfoUrl(ccPairId));
   };
 
+  const deleting =
+    ccPair.latest_deletion_attempt?.status == "PENDING" ||
+    ccPair.latest_deletion_attempt?.status == "STARTED";
+
   return (
     <>
       <BackButton />
@@ -85,10 +89,10 @@ function Main({ ccPairId }: { ccPairId: number }) {
               ccPairId={ccPair.id}
               connectorId={ccPair.connector.id}
               credentialId={ccPair.credential.id}
-              isDisabled={ccPair.connector.disabled}
+              isDisabled={ccPair.connector.disabled || deleting}
             />
           )}
-          <ModifyStatusButtonCluster ccPair={ccPair} />
+          {!deleting && <ModifyStatusButtonCluster ccPair={ccPair} />}
         </div>
       </div>
       <CCPairStatus
