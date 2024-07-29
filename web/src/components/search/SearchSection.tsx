@@ -23,7 +23,7 @@ import { useFilters, useObjectState } from "@/lib/hooks";
 import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { computeAvailableFilters } from "@/lib/filters";
-import { useRouter, useSearchParams } from "next/navigation";
+import { redirect, useRouter, useSearchParams } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
 import { ChatSession, SearchSession } from "@/app/chat/interfaces";
@@ -454,6 +454,12 @@ export const SearchSection = ({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [router]);
+
+  useEffect(() => {
+    if (settings?.isMobile) {
+      redirect("/chat");
+    }
+  }, [settings?.isMobile]);
 
   const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
     if (e.propertyName === "opacity" && !firstSearch) {
