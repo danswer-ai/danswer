@@ -335,7 +335,6 @@ export default function AddConnector({
               <Title className="mb-2 text-lg">Select a credential</Title>
               <ModifyCredential
                 showIfEmpty
-                display
                 source={connector}
                 defaultedCredential={currentCredential!}
                 credentials={credentials}
