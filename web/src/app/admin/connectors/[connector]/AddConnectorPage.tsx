@@ -140,9 +140,9 @@ export default function AddConnector({
 
   const createConnector = async () => {
     const AdvancedConfig: AdvancedConfig = {
-      pruneFreq: pruneFreq || defaultRefresh * 60,
+      pruneFreq: (pruneFreq || defaultPrune) * 60,
       indexingStart,
-      refreshFreq: refreshFreq * 60,
+      refreshFreq: (refreshFreq || defaultRefresh) * 60,
     };
 
     // google sites-specific handling
