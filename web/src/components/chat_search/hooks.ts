@@ -37,6 +37,7 @@ export const useSidebarVisibility = ({
             setShowDocSidebar(true);
           }
         }
+
         if (
           currentXPosition > 100 &&
           showDocSidebar &&
@@ -57,7 +58,7 @@ export const useSidebarVisibility = ({
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [showDocSidebar, toggledSidebar, sidebarElementRef]);
+  }, [showDocSidebar, toggledSidebar, sidebarElementRef, mobile]);
 
   return { showDocSidebar };
 };

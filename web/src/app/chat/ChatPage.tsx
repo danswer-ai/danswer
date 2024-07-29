@@ -1141,7 +1141,7 @@ export function ChatPage({
             duration-300
             ease-in-out
             ${
-              showDocSidebar || toggledSidebar
+              showDocSidebar || (toggledSidebar && !settings?.isMobile)
                 ? "opacity-100 w-[250px] translate-x-0"
                 : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
             }`}
@@ -1150,8 +1150,8 @@ export function ChatPage({
             <HistorySidebar
               page="chat"
               ref={innerSidebarElementRef}
-              toggleSidebar={toggleSidebar}
-              toggled={toggledSidebar}
+              toggleSidebar={() => toggleDocumentSelectionAspects()}
+              toggled={toggledSidebar && !settings?.isMobile}
               existingChats={chatSessions}
               currentChatSession={selectedChatSession}
               folders={folders}
