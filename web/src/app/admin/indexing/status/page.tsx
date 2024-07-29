@@ -56,7 +56,6 @@ function Main() {
       return 0;
     }
   });
-  console.log(indexAttemptData);
 
   return (
     <CCPairIndexingStatusTable ccPairsIndexingStatuses={indexAttemptData} />

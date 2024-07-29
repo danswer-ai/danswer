@@ -188,6 +188,7 @@ class ConnectorIndexingStatus(BaseModel):
     credential: CredentialSnapshot
     owner: str
     public_doc: bool
+    last_finished_status: IndexingStatus | None
     last_status: IndexingStatus | None
     last_success: datetime | None
     docs_indexed: int

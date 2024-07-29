@@ -112,15 +112,15 @@ export default function AddConnector({
     liveGDriveCredential || liveGmailCredential || currentCredential;
 
   const noCredentials = credentialTemplate == null;
-  if (noCredentials) {
+  if (noCredentials && 1 != formStep) {
     setFormStep(Math.max(1, formStep));
-  } else if (!credentialActivated) {
+  }
+
+  if (!credentialActivated && formStep != 0) {
     setFormStep(Math.min(formStep, 0));
   }
 
   const resetAdvancedConfigs = () => {
-    console.log("reset");
-    console.log(refreshFreq);
     const resetRefreshFreq = defaultRefresh || 0;
     const resetPruneFreq = defaultPrune;
     const resetIndexingStart = null;
@@ -134,8 +134,6 @@ export default function AddConnector({
       formRef.current.setFieldValue("refreshFreq", resetRefreshFreq);
       formRef.current.setFieldValue("pruneFreq", resetPruneFreq);
       formRef.current.setFieldValue("indexingStart", resetIndexingStart);
-    } else {
-      console.log("NOpe");
     }
   };
 

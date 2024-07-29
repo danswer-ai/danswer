@@ -125,7 +125,7 @@ export const EditingValue: React.FC<{
                       onChangeNumber(0);
                     }
                   } else {
-                    const value = parseInt(inputValue);
+                    let value = Math.max(0, parseInt(inputValue));
                     if (!isNaN(value)) {
                       updateValue(value);
                       if (onChangeNumber) {

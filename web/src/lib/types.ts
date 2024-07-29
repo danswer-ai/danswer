@@ -70,6 +70,7 @@ export interface ConnectorIndexingStatus<
   credential: Credential<ConnectorCredentialType>;
   public_doc: boolean;
   owner: string;
+  last_finished_status: ValidStatuses | null;
   last_status: ValidStatuses | null;
   last_success: string | null;
   docs_indexed: number;

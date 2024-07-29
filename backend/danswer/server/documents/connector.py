@@ -433,8 +433,11 @@ def get_connector_indexing_status(
                 credential=CredentialSnapshot.from_credential_db_model(credential),
                 public_doc=cc_pair.is_public,
                 owner=credential.user.email if credential.user else "",
-                last_status=latest_finished_attempt.status
+                last_finished_status=latest_finished_attempt.status
                 if latest_finished_attempt
+                else None,
+                last_status=latest_index_attempt.status
+                if latest_index_attempt
                 else None,
                 last_success=cc_pair.last_successful_index_time,
                 docs_indexed=cc_pair_to_document_cnt.get(

@@ -138,14 +138,14 @@ export default function CredentialSection({
           className="flex items-center gap-x-2 cursor-pointer bg-background-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-text-700"
         >
           <FaSwatchbook />
-          Manage Credentials
+          Update Credentials
         </button>
       </div>
       {showModifyCredential && (
         <Modal
           onOutsideClick={closeModifyCredential}
           className="max-w-3xl rounded-lg"
-          title="Manage Credentials"
+          title="Update Credentials"
         >
           <ModifyCredential
             showCreate={() => {

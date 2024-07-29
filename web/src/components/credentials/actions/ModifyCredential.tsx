@@ -180,11 +180,15 @@ export default function ModifyCredential({
                 className="rounded py-1.5 px-2 bg-background-800 text-text-200"
                 onClick={async () => {
                   await onDeleteCredential(confirmDeletionCredential);
+                  setConfirmDeletionCredential(null);
                 }}
               >
                 Yes
               </button>
-              <button className="rounded py-1.5 px-2 bg-background-150 text-text-800">
+              <button
+                onClick={() => setConfirmDeletionCredential(null)}
+                className="rounded py-1.5 px-2 bg-background-150 text-text-800"
+              >
                 {" "}
                 No
               </button>
@@ -199,36 +203,28 @@ export default function ModifyCredential({
           credential with the proper permissions for this connector!
         </Text>
 
-        {showIfEmpty ||
-        credentials.length > 1 ||
-        (display && credentials.length == 1) ? (
-          <CredentialSelectionTable
-            onDeleteCredential={async (credential: Credential<any | null>) => {
-              setConfirmDeletionCredential(credential);
-            }}
-            onEditCredential={
-              onEditCredential
-                ? (credential: Credential<ConfluenceCredentialJson>) =>
-                    onEditCredential(credential)
-                : undefined
+        <CredentialSelectionTable
+          onDeleteCredential={async (credential: Credential<any | null>) => {
+            setConfirmDeletionCredential(credential);
+          }}
+          onEditCredential={
+            onEditCredential
+              ? (credential: Credential<ConfluenceCredentialJson>) =>
+                  onEditCredential(credential)
+              : undefined
+          }
+          currentCredentialId={
+            defaultedCredential ? defaultedCredential.id : undefined
+          }
+          credentials={credentials}
+          onSelectCredential={(credential: Credential<any> | null) => {
+            if (credential && onSwitch) {
+              onSwitch(credential);
+            } else {
+              setSelectedCredential(credential);
             }
-            currentCredentialId={
-              defaultedCredential ? defaultedCredential.id : undefined
-            }
-            credentials={credentials}
-            onSelectCredential={(credential: Credential<any> | null) => {
-              if (credential && onSwitch) {
-                onSwitch(credential);
-              } else {
-                setSelectedCredential(credential);
-              }
-            }}
-          />
-        ) : (
-          <p className="text-lg">
-            You have no additional {sourceName} credentials. Create a new one?
-          </p>
-        )}
+          }}
+        />
 
         {!showIfEmpty && (
           <div className="flex mt-8 justify-between">

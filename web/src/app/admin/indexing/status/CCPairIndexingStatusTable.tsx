@@ -111,12 +111,11 @@ function SummaryRow({
 
       <TableCell className={`w-[${columnWidths.sixth}]`}>
         <div className="text-sm text-gray-500">Errors</div>
-        {summary.errors > 0 && (
-          <div className="flex items-center text-lg gap-x-1 font-semibold">
-            <Warning className="text-error h-6 w-6" />
-            {summary.errors}
-          </div>
-        )}
+
+        <div className="flex items-center text-lg gap-x-1 font-semibold">
+          {summary.errors > 0 && <Warning className="text-error h-6 w-6" />}
+          {summary.errors}
+        </div>
       </TableCell>
 
       <TableCell className={`w-[${columnWidths.seventh}]`}></TableCell>
@@ -140,13 +139,26 @@ function ConnectorRow({
 
   const getActivityBadge = () => {
     if (ccPairsIndexingStatus.connector.disabled) {
+      if (ccPairsIndexingStatus.deletion_attempt) {
+        return (
+          <Badge
+            color="red"
+            className="w-fit px-2 py-1 rounded-full border border-red-500"
+          >
+            <div className="flex text-xs items-center gap-x-1">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              Deleting
+            </div>
+          </Badge>
+        );
+      }
       return (
         <Badge
-          color="red"
+          color="yellow"
           className="w-fit px-2 py-1 rounded-full border border-red-500"
         >
           <div className="flex text-xs items-center gap-x-1">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
             Paused
           </div>
         </Badge>
@@ -156,11 +168,11 @@ function ConnectorRow({
       case "in_progress":
         return (
           <Badge
-            color="yellow"
+            color="green"
             className="w-fit px-2 py-1 rounded-full border border-yellow-500"
           >
             <div className="flex text-xs items-center gap-x-1">
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
               Indexing
             </div>
           </Badge>
@@ -199,12 +211,12 @@ function ConnectorRow({
         router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`)
       }
     >
-      <TableCell className={`w-[${columnWidths.first}]`}>
-        <p className="w-[200px] ellipsis truncate">
+      <TableCell className={`!pr-0 w-[${columnWidths.first}]`}>
+        <p className="w-[200px] inline-block ellipsis truncate">
           {ccPairsIndexingStatus.name}
         </p>
       </TableCell>
-      <TableCell className={`w-[${columnWidths.fifth}]`}>
+      <TableCell className={` w-[${columnWidths.fifth}]`}>
         {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
       </TableCell>
       <TableCell className={`w-[${columnWidths.third}]`}>
@@ -222,7 +234,7 @@ function ConnectorRow({
       </TableCell>
       <TableCell className={`w-[${columnWidths.second}]`}>
         <IndexAttemptStatus
-          status={ccPairsIndexingStatus.last_status || null}
+          status={ccPairsIndexingStatus.last_finished_status || null}
           errorMsg={ccPairsIndexingStatus?.latest_index_attempt?.error_msg}
           size="xs"
         />
