@@ -129,11 +129,7 @@ export default function CredentialSection({
       <div className="flex text-sm justify-start mr-auto gap-x-2">
         <button
           onClick={() => {
-            if (credentials.length < 2) {
-              setShowCreateCredential(true);
-            } else {
-              setShowModifyCredential(true);
-            }
+            setShowModifyCredential(true);
           }}
           className="flex items-center gap-x-2 cursor-pointer bg-background-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-text-700"
         >
