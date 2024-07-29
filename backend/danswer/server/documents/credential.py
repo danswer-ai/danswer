@@ -3,6 +3,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
@@ -31,7 +32,7 @@ router = APIRouter(prefix="/manage")
 """Admin-only endpoints"""
 
 
-@router.get("/admin/credential")
+@router.get("/admin/credential", tags=[Tags.manage])
 def list_credentials_admin(
     user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -44,7 +45,7 @@ def list_credentials_admin(
     ]
 
 
-@router.get("/admin/similar-credentials/{source_type}")
+@router.get("/admin/similar-credentials/{source_type}", tags=[Tags.manage])
 def get_cc_source_full_info(
     source_type: DocumentSource,
     user: User | None = Depends(current_admin_user),
@@ -60,7 +61,7 @@ def get_cc_source_full_info(
     ]
 
 
-@router.get("/credentials/{id}")
+@router.get("/credentials/{id}", tags=[Tags.manage])
 def list_credentials_by_id(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -72,7 +73,7 @@ def list_credentials_by_id(
     ]
 
 
-@router.delete("/admin/credential/{credential_id}")
+@router.delete("/admin/credential/{credential_id}", tags=[Tags.manage])
 def delete_credential_by_id_admin(
     credential_id: int,
     _: User = Depends(current_admin_user),
@@ -85,7 +86,7 @@ def delete_credential_by_id_admin(
     )
 
 
-@router.put("/admin/credentials/swap")
+@router.put("/admin/credentials/swap", tags=[Tags.manage])
 def swap_credentials_for_connector(
     credentail_swap_req: CredentialSwapRequest,
     user: User | None = Depends(current_user),
@@ -108,7 +109,7 @@ def swap_credentials_for_connector(
 """Endpoints for all"""
 
 
-@router.get("/credential")
+@router.get("/credential", tags=[Tags.manage])
 def list_credentials(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -120,7 +121,7 @@ def list_credentials(
     ]
 
 
-@router.post("/credential")
+@router.post("/credential", tags=[Tags.manage])
 def create_credential_from_model(
     credential_info: CredentialBase,
     user: User | None = Depends(current_user),
@@ -140,7 +141,7 @@ def create_credential_from_model(
     )
 
 
-@router.get("/credential/{credential_id}")
+@router.get("/credential/{credential_id}", tags=[Tags.manage])
 def get_credential_by_id(
     credential_id: int,
     user: User = Depends(current_user),
@@ -156,7 +157,7 @@ def get_credential_by_id(
     return CredentialSnapshot.from_credential_db_model(credential)
 
 
-@router.put("/admin/credentials/{credential_id}")
+@router.put("/admin/credentials/{credential_id}", tags=[Tags.manage])
 def update_credential_data(
     credential_id: int,
     credential_update: CredentialDataUpdateRequest,
@@ -174,7 +175,7 @@ def update_credential_data(
     return CredentialSnapshot.from_credential_db_model(credential)
 
 
-@router.patch("/credential/{credential_id}")
+@router.patch("/credential/{credential_id}", tags=[Tags.manage])
 def update_credential_from_model(
     credential_id: int,
     credential_data: CredentialBase,
@@ -201,7 +202,7 @@ def update_credential_from_model(
     )
 
 
-@router.delete("/credential/{credential_id}")
+@router.delete("/credential/{credential_id}", tags=[Tags.manage])
 def delete_credential_by_id(
     credential_id: int,
     user: User = Depends(current_user),
@@ -218,7 +219,7 @@ def delete_credential_by_id(
     )
 
 
-@router.delete("/credential/force/{credential_id}")
+@router.delete("/credential/force/{credential_id}", tags=[Tags.manage])
 def force_delete_credential_by_id(
     credential_id: int,
     user: User = Depends(current_user),

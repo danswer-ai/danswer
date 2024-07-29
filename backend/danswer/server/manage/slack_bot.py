@@ -3,6 +3,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_admin_user
 from danswer.danswerbot.slack.config import validate_channel_names
 from danswer.danswerbot.slack.tokens import fetch_tokens
@@ -83,7 +84,7 @@ def _form_channel_config(
     return channel_config
 
 
-@router.post("/admin/slack-bot/config")
+@router.post("/admin/slack-bot/config", tags=[Tags.manage])
 def create_slack_bot_config(
     slack_bot_config_creation_request: SlackBotConfigCreationRequest,
     db_session: Session = Depends(get_session),
@@ -115,7 +116,7 @@ def create_slack_bot_config(
     return SlackBotConfig.from_model(slack_bot_config_model)
 
 
-@router.patch("/admin/slack-bot/config/{slack_bot_config_id}")
+@router.patch("/admin/slack-bot/config/{slack_bot_config_id}", tags=[Tags.manage])
 def patch_slack_bot_config(
     slack_bot_config_id: int,
     slack_bot_config_creation_request: SlackBotConfigCreationRequest,
@@ -175,7 +176,7 @@ def patch_slack_bot_config(
     return SlackBotConfig.from_model(slack_bot_config_model)
 
 
-@router.delete("/admin/slack-bot/config/{slack_bot_config_id}")
+@router.delete("/admin/slack-bot/config/{slack_bot_config_id}", tags=[Tags.manage])
 def delete_slack_bot_config(
     slack_bot_config_id: int,
     db_session: Session = Depends(get_session),
@@ -186,7 +187,7 @@ def delete_slack_bot_config(
     )
 
 
-@router.get("/admin/slack-bot/config")
+@router.get("/admin/slack-bot/config", tags=[Tags.manage])
 def list_slack_bot_configs(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
@@ -198,7 +199,7 @@ def list_slack_bot_configs(
     ]
 
 
-@router.put("/admin/slack-bot/tokens")
+@router.put("/admin/slack-bot/tokens", tags=[Tags.manage])
 def put_tokens(
     tokens: SlackBotTokens,
     _: User | None = Depends(current_admin_user),
@@ -206,7 +207,7 @@ def put_tokens(
     save_tokens(tokens=tokens)
 
 
-@router.get("/admin/slack-bot/tokens")
+@router.get("/admin/slack-bot/tokens", tags=[Tags.manage])
 def get_tokens(_: User | None = Depends(current_admin_user)) -> SlackBotTokens:
     try:
         return fetch_tokens()

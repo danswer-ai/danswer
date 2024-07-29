@@ -11,6 +11,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_user
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.process_message import stream_chat_message
@@ -72,7 +73,7 @@ logger = setup_logger()
 router = APIRouter(prefix="/chat")
 
 
-@router.get("/get-user-chat-sessions")
+@router.get("/get-user-chat-sessions", tags=[Tags.chat])
 def get_user_chat_sessions(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -103,7 +104,7 @@ def get_user_chat_sessions(
     )
 
 
-@router.put("/update-chat-session-model")
+@router.put("/update-chat-session-model", tags=[Tags.chat])
 def update_chat_session_model(
     update_thread_req: UpdateChatSessionThreadRequest,
     user: User | None = Depends(current_user),
@@ -120,7 +121,7 @@ def update_chat_session_model(
     db_session.commit()
 
 
-@router.get("/get-chat-session/{session_id}")
+@router.get("/get-chat-session/{session_id}", tags=[Tags.chat])
 def get_chat_session(
     session_id: int,
     is_shared: bool = False,
@@ -174,7 +175,7 @@ def get_chat_session(
     )
 
 
-@router.post("/create-chat-session")
+@router.post("/create-chat-session", tags=[Tags.chat])
 def create_new_chat_session(
     chat_session_creation_request: ChatSessionCreationRequest,
     user: User | None = Depends(current_user),
@@ -196,7 +197,7 @@ def create_new_chat_session(
     return CreateChatSessionID(chat_session_id=new_chat_session.id)
 
 
-@router.put("/rename-chat-session")
+@router.put("/rename-chat-session", tags=[Tags.chat])
 def rename_chat_session(
     rename_req: ChatRenameRequest,
     request: Request,
@@ -244,7 +245,7 @@ def rename_chat_session(
     return RenameChatSessionResponse(new_name=new_name)
 
 
-@router.patch("/chat-session/{session_id}")
+@router.patch("/chat-session/{session_id}", tags=[Tags.chat])
 def patch_chat_session(
     session_id: int,
     chat_session_update_req: ChatSessionUpdateRequest,
@@ -261,7 +262,7 @@ def patch_chat_session(
     return None
 
 
-@router.delete("/delete-chat-session/{session_id}")
+@router.delete("/delete-chat-session/{session_id}", tags=[Tags.chat])
 def delete_chat_session_by_id(
     session_id: int,
     user: User | None = Depends(current_user),
@@ -271,7 +272,7 @@ def delete_chat_session_by_id(
     delete_chat_session(user_id, session_id, db_session)
 
 
-@router.post("/send-message")
+@router.post("/send-message", tags=[Tags.chat])
 def handle_new_chat_message(
     chat_message_req: CreateChatMessageRequest,
     request: Request,
@@ -306,7 +307,7 @@ def handle_new_chat_message(
     return StreamingResponse(packets, media_type="application/json")
 
 
-@router.put("/set-message-as-latest")
+@router.put("/set-message-as-latest", tags=[Tags.chat])
 def set_message_as_latest(
     message_identifier: ChatMessageIdentifier,
     user: User | None = Depends(current_user),
@@ -327,7 +328,7 @@ def set_message_as_latest(
     )
 
 
-@router.post("/create-chat-message-feedback")
+@router.post("/create-chat-message-feedback", tags=[Tags.chat])
 def create_chat_feedback(
     feedback: ChatFeedbackRequest,
     user: User | None = Depends(current_user),
@@ -345,7 +346,7 @@ def create_chat_feedback(
     )
 
 
-@router.post("/document-search-feedback")
+@router.post("/document-search-feedback", tags=[Tags.chat])
 def create_search_feedback(
     feedback: SearchFeedbackRequest,
     _: User | None = Depends(current_user),
@@ -375,7 +376,7 @@ class MaxSelectedDocumentTokens(BaseModel):
     max_tokens: int
 
 
-@router.get("/max-selected-document-tokens")
+@router.get("/max-selected-document-tokens", tags=[Tags.chat])
 def get_max_document_tokens(
     persona_id: int,
     user: User | None = Depends(current_user),
@@ -418,7 +419,7 @@ class ChatSeedResponse(BaseModel):
     redirect_url: str
 
 
-@router.post("/seed-chat-session")
+@router.post("/seed-chat-session", tags=[Tags.chat])
 def seed_chat(
     chat_seed_request: ChatSeedRequest,
     # NOTE: realistically, this will be an API key not an actual user
@@ -467,7 +468,7 @@ def seed_chat(
 """File upload"""
 
 
-@router.post("/file")
+@router.post("/file", tags=[Tags.chat])
 def upload_files_for_chat(
     files: list[UploadFile],
     db_session: Session = Depends(get_session),
@@ -571,7 +572,7 @@ def upload_files_for_chat(
     }
 
 
-@router.get("/file/{file_id}")
+@router.get("/file/{file_id}", tags=[Tags.chat])
 def fetch_chat_file(
     file_id: str,
     db_session: Session = Depends(get_session),

@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from fastapi import Path
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_user
 from danswer.db.chat import get_chat_session_by_id
 from danswer.db.engine import get_session
@@ -27,7 +28,7 @@ from danswer.server.query_and_chat.models import ChatSessionDetails
 router = APIRouter(prefix="/folder")
 
 
-@router.get("")
+@router.get("", tags=[Tags.folder])
 def get_folders(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -61,7 +62,7 @@ def get_folders(
     )
 
 
-@router.put("/reorder")
+@router.put("/reorder", tags=[Tags.folder])
 def put_folder_display_priority(
     display_priority_request: DisplayPriorityRequest,
     user: User | None = Depends(current_user),
@@ -74,7 +75,7 @@ def put_folder_display_priority(
     )
 
 
-@router.post("")
+@router.post("", tags=[Tags.folder])
 def create_folder_endpoint(
     request: FolderCreationRequest,
     user: User = Depends(current_user),
@@ -87,7 +88,7 @@ def create_folder_endpoint(
     )
 
 
-@router.patch("/{folder_id}")
+@router.patch("/{folder_id}", tags=[Tags.folder])
 def patch_folder_endpoint(
     request: FolderUpdateRequest,
     folder_id: int = Path(..., description="The ID of the folder to rename"),
@@ -105,7 +106,7 @@ def patch_folder_endpoint(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.delete("/{folder_id}")
+@router.delete("/{folder_id}", tags=[Tags.folder])
 def delete_folder_endpoint(
     request: DeleteFolderOptions,
     folder_id: int = Path(..., description="The ID of the folder to delete"),
@@ -124,7 +125,7 @@ def delete_folder_endpoint(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/{folder_id}/add-chat-session")
+@router.post("/{folder_id}/add-chat-session", tags=[Tags.folder])
 def add_chat_to_folder_endpoint(
     request: FolderChatSessionRequest,
     folder_id: int = Path(
@@ -150,7 +151,7 @@ def add_chat_to_folder_endpoint(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/{folder_id}/remove-chat-session/")
+@router.post("/{folder_id}/remove-chat-session/", tags=[Tags.folder])
 def remove_chat_from_folder_endpoint(
     request: FolderChatSessionRequest,
     folder_id: int = Path(

@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from fastapi import Query
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_user
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
@@ -21,7 +22,7 @@ router = APIRouter(prefix="/document")
 
 # Have to use a query parameter as FastAPI is interpreting the URL type document_ids
 # as a different path
-@router.get("/document-size-info")
+@router.get("/document-size-info", tags=[Tags.document])
 def get_document_info(
     document_id: str = Query(...),
     user: User | None = Depends(current_user),
@@ -66,7 +67,7 @@ def get_document_info(
     )
 
 
-@router.get("/chunk-info")
+@router.get("/chunk-info", tags=[Tags.document])
 def get_chunk_info(
     document_id: str = Query(...),
     chunk_id: int = Query(...),

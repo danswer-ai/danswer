@@ -5,6 +5,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
@@ -32,14 +33,14 @@ admin_router = APIRouter(prefix="/admin/llm")
 basic_router = APIRouter(prefix="/llm")
 
 
-@admin_router.get("/built-in/options")
+@admin_router.get("/built-in/options", tags=[Tags.admin])
 def fetch_llm_options(
     _: User | None = Depends(current_admin_user),
 ) -> list[WellKnownLLMProviderDescriptor]:
     return fetch_available_well_known_llms()
 
 
-@admin_router.post("/test")
+@admin_router.post("/test", tags=[Tags.admin])
 def test_llm_configuration(
     test_llm_request: TestLLMRequest,
     _: User | None = Depends(current_admin_user),
@@ -80,7 +81,7 @@ def test_llm_configuration(
         raise HTTPException(status_code=400, detail=error)
 
 
-@admin_router.post("/test/default")
+@admin_router.post("/test/default", tags=[Tags.admin])
 def test_default_provider(
     _: User | None = Depends(current_admin_user),
 ) -> None:
@@ -104,7 +105,7 @@ def test_default_provider(
         raise HTTPException(status_code=400, detail=error)
 
 
-@admin_router.get("/provider")
+@admin_router.get("/provider", tags=[Tags.admin])
 def list_llm_providers(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -115,7 +116,7 @@ def list_llm_providers(
     ]
 
 
-@admin_router.put("/provider")
+@admin_router.put("/provider", tags=[Tags.admin])
 def put_llm_provider(
     llm_provider: LLMProviderUpsertRequest,
     _: User | None = Depends(current_admin_user),
@@ -124,7 +125,7 @@ def put_llm_provider(
     return upsert_llm_provider(db_session, llm_provider)
 
 
-@admin_router.delete("/provider/{provider_id}")
+@admin_router.delete("/provider/{provider_id}", tags=[Tags.admin])
 def delete_llm_provider(
     provider_id: int,
     _: User | None = Depends(current_admin_user),
@@ -133,7 +134,7 @@ def delete_llm_provider(
     remove_llm_provider(db_session, provider_id)
 
 
-@admin_router.post("/provider/{provider_id}/default")
+@admin_router.post("/provider/{provider_id}/default", tags=[Tags.admin])
 def set_provider_as_default(
     provider_id: int,
     _: User | None = Depends(current_admin_user),

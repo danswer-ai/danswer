@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_admin_user
 from danswer.db.engine import get_session
 from danswer.db.models import User
@@ -21,7 +22,7 @@ Global Token Limit Settings
 """
 
 
-@router.get("/global")
+@router.get("/global", tags=[Tags.admin])
 def get_global_token_limit_settings(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -32,7 +33,7 @@ def get_global_token_limit_settings(
     ]
 
 
-@router.post("/global")
+@router.post("/global", tags=[Tags.admin])
 def create_global_token_limit_settings(
     token_limit_settings: TokenRateLimitArgs,
     _: User | None = Depends(current_admin_user),
@@ -51,7 +52,7 @@ General Token Limit Settings
 """
 
 
-@router.put("/rate-limit/{token_rate_limit_id}")
+@router.put("/rate-limit/{token_rate_limit_id}", tags=[Tags.admin])
 def update_token_limit_settings(
     token_rate_limit_id: int,
     token_limit_settings: TokenRateLimitArgs,
@@ -67,7 +68,7 @@ def update_token_limit_settings(
     )
 
 
-@router.delete("/rate-limit/{token_rate_limit_id}")
+@router.delete("/rate-limit/{token_rate_limit_id}", tags=[Tags.admin])
 def delete_token_limit_settings(
     token_rate_limit_id: int,
     _: User | None = Depends(current_admin_user),

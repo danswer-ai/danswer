@@ -3,6 +3,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_admin_user
 from danswer.db.engine import get_session
 from danswer.db.models import User
@@ -23,7 +24,7 @@ from danswer.server.manage.models import StandardAnswerCreationRequest
 router = APIRouter(prefix="/manage")
 
 
-@router.post("/admin/standard-answer")
+@router.post("/admin/standard-answer", tags=[Tags.manage])
 def create_standard_answer(
     standard_answer_creation_request: StandardAnswerCreationRequest,
     db_session: Session = Depends(get_session),
@@ -38,7 +39,7 @@ def create_standard_answer(
     return StandardAnswer.from_model(standard_answer_model)
 
 
-@router.get("/admin/standard-answer")
+@router.get("/admin/standard-answer", tags=[Tags.manage])
 def list_standard_answers(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
@@ -50,7 +51,7 @@ def list_standard_answers(
     ]
 
 
-@router.patch("/admin/standard-answer/{standard_answer_id}")
+@router.patch("/admin/standard-answer/{standard_answer_id}", tags=[Tags.manage])
 def patch_standard_answer(
     standard_answer_id: int,
     standard_answer_creation_request: StandardAnswerCreationRequest,
@@ -75,7 +76,7 @@ def patch_standard_answer(
     return StandardAnswer.from_model(standard_answer_model)
 
 
-@router.delete("/admin/standard-answer/{standard_answer_id}")
+@router.delete("/admin/standard-answer/{standard_answer_id}", tags=[Tags.manage])
 def delete_standard_answer(
     standard_answer_id: int,
     db_session: Session = Depends(get_session),
@@ -87,7 +88,7 @@ def delete_standard_answer(
     )
 
 
-@router.post("/admin/standard-answer/category")
+@router.post("/admin/standard-answer/category", tags=[Tags.manage])
 def create_standard_answer_category(
     standard_answer_category_creation_request: StandardAnswerCategoryCreationRequest,
     db_session: Session = Depends(get_session),
@@ -100,7 +101,7 @@ def create_standard_answer_category(
     return StandardAnswerCategory.from_model(standard_answer_category_model)
 
 
-@router.get("/admin/standard-answer/category")
+@router.get("/admin/standard-answer/category", tags=[Tags.manage])
 def list_standard_answer_categories(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
@@ -114,7 +115,9 @@ def list_standard_answer_categories(
     ]
 
 
-@router.patch("/admin/standard-answer/category/{standard_answer_category_id}")
+@router.patch(
+    "/admin/standard-answer/category/{standard_answer_category_id}", tags=[Tags.manage]
+)
 def patch_standard_answer_category(
     standard_answer_category_id: int,
     standard_answer_category_creation_request: StandardAnswerCategoryCreationRequest,

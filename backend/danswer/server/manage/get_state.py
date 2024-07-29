@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from danswer import __version__
+from danswer import Tags
 from danswer.auth.users import user_needs_to_be_verified
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.server.manage.models import AuthTypeResponse
@@ -10,7 +11,7 @@ from danswer.server.models import StatusResponse
 router = APIRouter()
 
 
-@router.get("/health")
+@router.get("/health", tags=[Tags.utility])
 def healthcheck() -> StatusResponse:
     return StatusResponse(success=True, message="ok")
 
@@ -22,6 +23,6 @@ def get_auth_type() -> AuthTypeResponse:
     )
 
 
-@router.get("/version")
+@router.get("/version", tags=[Tags.utility])
 def get_version() -> VersionResponse:
     return VersionResponse(backend_version=__version__)
