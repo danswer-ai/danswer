@@ -1189,6 +1189,7 @@ export function ChatPage({
                   currentChatSession={selectedChatSession}
                   folders={folders}
                   openedFolders={openedFolders}
+                  removeToggle={removeToggle}
                 />
               </div>
             </div>

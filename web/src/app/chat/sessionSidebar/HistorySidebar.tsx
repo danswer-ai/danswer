@@ -48,6 +48,7 @@ interface HistorySidebarProps {
   openedFolders?: { [key: number]: boolean };
   toggleSidebar?: () => void;
   toggled?: boolean;
+  removeToggle: () => void;
 }
 
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
@@ -60,6 +61,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
       folders,
       openedFolders,
       toggleSidebar,
+      removeToggle,
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
@@ -183,6 +185,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
           <div className="border-b border-border pb-4 mx-3" />
 
           <PagesTab
+            closeSidebar={removeToggle}
             page={page}
             existingChats={existingChats}
             currentChatId={currentChatId}
