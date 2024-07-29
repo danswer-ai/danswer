@@ -644,8 +644,9 @@ export function ChatPage({
     alternativeAssistantOverride?: Persona | null;
   } = {}) => {
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
-
-    clientScrollToBottom();
+    if (!settings?.isMobile) {
+      clientScrollToBottom();
+    }
     let currChatSessionId: number;
     let isNewSession = chatSessionIdRef.current === null;
     const searchParamBasedChatSessionName =
@@ -1580,8 +1581,6 @@ export function ChatPage({
                               )}
                             {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                             <div ref={endPaddingRef} className="h-[95px]" />
-                            <div ref={endDivRef}></div>
-
                             <div ref={endDivRef} />
                           </div>
                         </div>
