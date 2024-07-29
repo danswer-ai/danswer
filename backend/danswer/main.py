@@ -251,8 +251,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     logger.info(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
     if db_embedding_model.cloud_provider_id is None:
         warm_up_encoders(
-            model_name=db_embedding_model.model_name,
-            normalize=db_embedding_model.normalize,
+            embedding_model=db_embedding_model,
             model_server_host=MODEL_SERVER_HOST,
             model_server_port=MODEL_SERVER_PORT,
         )

@@ -355,8 +355,7 @@ def update_loop(
     if db_embedding_model.cloud_provider_id is None:
         logger.info("Running a first inference to warm up embedding model")
         warm_up_encoders(
-            model_name=db_embedding_model.model_name,
-            normalize=db_embedding_model.normalize,
+            embedding_model=db_embedding_model,
             model_server_host=INDEXING_MODEL_SERVER_HOST,
             model_server_port=MODEL_SERVER_PORT,
         )

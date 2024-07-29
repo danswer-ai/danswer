@@ -2,9 +2,12 @@ from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.indexing.chunker import chunk_document
+from danswer.indexing.embedder import IndexingEmbedder
 
 
-def test_chunk_document() -> None:
+def test_chunk_document(
+    embedder: IndexingEmbedder,
+) -> None:
     short_section_1 = "This is a short section."
     long_section = (
         "This is a long section that should be split into multiple chunks. " * 100
@@ -29,7 +32,7 @@ def test_chunk_document() -> None:
         ],
     )
 
-    chunks = chunk_document(document)
+    chunks = chunk_document(document, embedder=embedder)
     assert len(chunks) == 5
     assert short_section_1 in chunks[0].content
     assert short_section_3 in chunks[-1].content

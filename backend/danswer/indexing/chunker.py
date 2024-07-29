@@ -3,6 +3,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from danswer.configs.app_configs import BLURB_SIZE
+from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.app_configs import SKIP_METADATA_IN_CHUNK
 from danswer.configs.constants import DocumentSource
@@ -13,8 +14,10 @@ from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_metadata_keys_to_ignore,
 )
 from danswer.connectors.models import Document
+from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
-from danswer.natural_language_processing.search_nlp_models import get_default_tokenizer
+from danswer.indexing.models import TextChunk
+from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import shared_precompare_cleanup
 
@@ -114,6 +117,7 @@ def _get_metadata_suffix_for_document_index(
 
 def chunk_document(
     document: Document,
+    embedder: IndexingEmbedder,
     chunk_tok_size: int = DOC_EMBEDDING_CONTEXT_SIZE,
     subsection_overlap: int = CHUNK_OVERLAP,
     blurb_size: int = BLURB_SIZE,  # Used for both title and content
@@ -121,7 +125,10 @@ def chunk_document(
 ) -> list[DocAwareChunk]:
     from llama_index.text_splitter import SentenceSplitter
 
-    tokenizer = get_default_tokenizer()
+    tokenizer = get_tokenizer(
+        model_name=embedder.model_name,
+        provider_type=embedder.provider_type,
+    )
 
     blurb_splitter = SentenceSplitter(
         tokenizer=tokenizer.tokenize, chunk_size=blurb_size, chunk_overlap=0
@@ -255,15 +262,18 @@ def chunk_document(
     return chunks
 
 
-def split_chunk_text_into_mini_chunks(
-    chunk_text: str, mini_chunk_size: int = MINI_CHUNK_SIZE
+def _split_chunk_text_into_mini_chunks(
+    chunk_text: str, embedder: IndexingEmbedder, mini_chunk_size: int = MINI_CHUNK_SIZE
 ) -> list[str]:
     """The minichunks won't all have the title prefix or metadata suffix
     It could be a significant percentage of every minichunk so better to not include it
     """
     from llama_index.text_splitter import SentenceSplitter
 
-    token_count_func = get_default_tokenizer().tokenize
+    token_count_func = get_tokenizer(
+        model_name=embedder.model_name,
+        provider_type=embedder.provider_type,
+    ).tokenize
     sentence_aware_splitter = SentenceSplitter(
         tokenizer=token_count_func, chunk_size=mini_chunk_size, chunk_overlap=0
     )
@@ -271,15 +281,78 @@ def split_chunk_text_into_mini_chunks(
     return sentence_aware_splitter.split_text(chunk_text)
 
 
+# def extract_chunk_texts_from_doc_aware_chunk(
+#     chunks: list[DocAwareChunk],
+#     embedder: IndexingEmbedder,
+#     enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
+# ) -> tuple[list[str], dict[int, int]]:
+#     # Create Mini Chunks for more precise matching of details
+#     # Off by default with unedited settings
+#     chunk_texts: list[str] = []
+#     chunk_mini_chunks_count = {}
+#     for chunk_ind, chunk in enumerate(chunks):
+#         # The whole chunk including the prefix/suffix is included in the overall vector representation
+#         chunk_texts.append(
+#             f"{chunk.title_prefix}{chunk.content}{chunk.metadata_suffix_semantic}"
+#         )
+#         mini_chunk_texts = (
+#             _split_chunk_text_into_mini_chunks(
+#                 chunk.content,
+#                 embedder=embedder,
+#             )
+#             if enable_mini_chunk
+#             else []
+#         )
+#         chunk_texts.extend(mini_chunk_texts)
+#         chunk_mini_chunks_count[chunk_ind] = 1 + len(mini_chunk_texts)
+
+
+def extract_chunk_texts_from_doc_aware_chunk(
+    chunks: list[DocAwareChunk],
+    embedder: IndexingEmbedder,
+    enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
+) -> list[TextChunk]:
+    # Create Mini Chunks for more precise matching of details
+    # Off by default with unedited settings
+    chunks_with_texts: list[TextChunk] = []
+    for chunk in chunks:
+        # The whole chunk including the prefix/suffix is included in the overall vector representation
+        mini_chunk_texts = (
+            _split_chunk_text_into_mini_chunks(
+                chunk.content,
+                embedder=embedder,
+            )
+            if enable_mini_chunk
+            else []
+        )
+        chunks_with_texts.append(
+            TextChunk(
+                **chunk.dict(),
+                chunk_text=f"{chunk.title_prefix}{chunk.content}{chunk.metadata_suffix_semantic}",
+                mini_chunk_texts=mini_chunk_texts,
+            )
+        )
+
+    return chunks_with_texts
+
+
 class Chunker:
     @abc.abstractmethod
-    def chunk(self, document: Document) -> list[DocAwareChunk]:
+    def chunk(
+        self,
+        document: Document,
+        embedder: IndexingEmbedder,
+    ) -> list[DocAwareChunk]:
         raise NotImplementedError
 
 
 class DefaultChunker(Chunker):
-    def chunk(self, document: Document) -> list[DocAwareChunk]:
+    def chunk(
+        self,
+        document: Document,
+        embedder: IndexingEmbedder,
+    ) -> list[DocAwareChunk]:
         # Specifically for reproducing an issue with gmail
         if document.source == DocumentSource.GMAIL:
             logger.debug(f"Chunking {document.semantic_identifier}")
-        return chunk_document(document)
+        return chunk_document(document, embedder=embedder)

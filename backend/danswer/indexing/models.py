@@ -51,7 +51,12 @@ class DocAwareChunk(BaseChunk):
         )
 
 
-class IndexChunk(DocAwareChunk):
+class TextChunk(DocAwareChunk):
+    chunk_text: str
+    mini_chunk_texts: list[str] = []
+
+
+class IndexChunk(TextChunk):
     embeddings: ChunkEmbedding
     title_embedding: Embedding | None
 

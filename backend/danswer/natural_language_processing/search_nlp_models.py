@@ -5,8 +5,8 @@ from httpx import HTTPError
 
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
-from danswer.natural_language_processing.utils import get_default_llm_tokenizer
-from danswer.natural_language_processing.utils import get_default_tokenizer
+from danswer.db.models import EmbeddingModel as DBEmbeddingModel
+from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.natural_language_processing.utils import tokenizer_trim_content
 from danswer.utils.batching import batch_list
 from danswer.utils.logger import setup_logger
@@ -86,7 +86,10 @@ class EmbeddingModel:
                 tokenizer_trim_content(
                     content=text,
                     desired_length=self.max_seq_length,
-                    tokenizer=get_default_llm_tokenizer(),
+                    tokenizer=get_tokenizer(
+                        model_name=self.model_name,
+                        provider_type=self.provider_type,
+                    ),
                 )
                 for text in texts
             ]
@@ -197,11 +200,13 @@ class IntentModel:
 
 
 def warm_up_encoders(
-    model_name: str,
-    normalize: bool,
+    embedding_model: DBEmbeddingModel,
     model_server_host: str = MODEL_SERVER_HOST,
     model_server_port: int = MODEL_SERVER_PORT,
 ) -> None:
+    model_name = embedding_model.model_name
+    normalize = embedding_model.normalize
+    provider_type = embedding_model.provider_type
     warm_up_str = (
         "Danswer is amazing! Check out our easy deployment guide at "
         "https://docs.danswer.dev/quickstart"
@@ -209,18 +214,20 @@ def warm_up_encoders(
 
     # May not be the exact same tokenizer used for the indexing flow
     logger.info(f"Warming up encoder model: {model_name}")
-    get_default_tokenizer(model_name=model_name).encode(warm_up_str)
+    get_tokenizer(model_name=model_name, provider_type=provider_type).encode(
+        warm_up_str
+    )
 
     embed_model = EmbeddingModel(
         model_name=model_name,
         normalize=normalize,
+        provider_type=provider_type,
         # Not a big deal if prefix is incorrect
         query_prefix=None,
         passage_prefix=None,
         server_host=model_server_host,
         server_port=model_server_port,
         api_key=None,
-        provider_type=None,
     )
 
     # First time downloading the models it may take even longer, but just in case,

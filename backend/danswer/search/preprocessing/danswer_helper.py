@@ -1,6 +1,6 @@
-from danswer.natural_language_processing.search_nlp_models import get_default_tokenizer
 from danswer.natural_language_processing.search_nlp_models import IntentModel
 from danswer.natural_language_processing.utils import BaseTokenizer
+from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.search.enums import QueryFlow
 from danswer.search.models import SearchType
 from danswer.search.retrieval.search_runner import remove_stop_words_and_punctuation
@@ -68,7 +68,12 @@ def recommend_search_flow(
 
     # UNK tokens -> suggest Keyword (still may be valid QA)
     # TODO do a better job with the classifier model and retire the heuristics
-    if count_unk_tokens(query, get_default_tokenizer(model_name=model_name)) > 0:
+    if (
+        count_unk_tokens(
+            query, get_tokenizer(model_name=model_name, provider_type=None)
+        )
+        > 0
+    ):
         if not keyword:
             heuristic_search_type = SearchType.KEYWORD
             message = "Unknown tokens in query."

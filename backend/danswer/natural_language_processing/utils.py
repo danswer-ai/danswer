@@ -65,43 +65,43 @@ class HuggingFaceTokenizer(BaseTokenizer):
         return self.encoder.decode(tokens)
 
 
-def _build_tokenizer(
+_TOKENIZER_CACHE: dict[str, BaseTokenizer] = {}
+
+
+def _get_cached_tokenizer(
     model_name: str | None = None, provider_type: str | None = None
 ) -> BaseTokenizer:
+    global _TOKENIZER_CACHE
+
     if provider_type:
-        if provider_type.lower() == "openai":
-            return TiktokenTokenizer()
-        elif provider_type.lower() == "cohere":
-            return HuggingFaceTokenizer("Cohere/command-nightly")
-        else:
-            # Default to OpenAI tokenizer if a provider is given
-            return TiktokenTokenizer()
-    elif model_name:
-        return HuggingFaceTokenizer(model_name)
-    else:
-        raise ValueError("Need to provide a model_name or provider_type")
+        if not _TOKENIZER_CACHE.get(provider_type):
+            if provider_type.lower() == "openai":
+                _TOKENIZER_CACHE[provider_type] = TiktokenTokenizer()
+            elif provider_type.lower() == "cohere":
+                _TOKENIZER_CACHE[provider_type] = HuggingFaceTokenizer(
+                    "Cohere/command-nightly"
+                )
+            else:
+                _TOKENIZER_CACHE[
+                    provider_type
+                ] = TiktokenTokenizer()  # Default to OpenAI tokenizer
+        return _TOKENIZER_CACHE[provider_type]
+
+    if model_name:
+        if not _TOKENIZER_CACHE.get(model_name):
+            _TOKENIZER_CACHE[model_name] = HuggingFaceTokenizer(model_name)
+        return _TOKENIZER_CACHE[model_name]
+
+    raise ValueError("Need to provide a model_name or provider_type")
 
 
-_TOKENIZER_CACHE: dict[tuple[str | None, str | None], BaseTokenizer] = {}
-
-
-def get_default_tokenizer(
-    model_name: str | None = None, provider_type: str | None = None
-) -> BaseTokenizer:
+def get_tokenizer(model_name: str | None, provider_type: str | None) -> BaseTokenizer:
     if provider_type is None and model_name is None:
         model_name = DOCUMENT_ENCODER_MODEL
-
-    global _TOKENIZER_CACHE
-    if not _TOKENIZER_CACHE.get((model_name, provider_type)):
-        _TOKENIZER_CACHE[(model_name, provider_type)] = _build_tokenizer(
-            model_name, provider_type
-        )
-    return _TOKENIZER_CACHE[(model_name, provider_type)]
-
-
-def get_default_llm_tokenizer(provider_type: str = "OpenAI") -> BaseTokenizer:
-    """Currently supports the OpenAI tokenizer: tiktoken by default"""
-    return get_default_tokenizer(model_name=None, provider_type=provider_type)
+    return _get_cached_tokenizer(
+        model_name=model_name,
+        provider_type=provider_type,
+    )
 
 
 def tokenizer_trim_content(
@@ -114,9 +114,10 @@ def tokenizer_trim_content(
 
 
 def tokenizer_trim_chunks(
-    chunks: list[InferenceChunk], max_chunk_toks: int = DOC_EMBEDDING_CONTEXT_SIZE
+    chunks: list[InferenceChunk],
+    tokenizer: BaseTokenizer,
+    max_chunk_toks: int = DOC_EMBEDDING_CONTEXT_SIZE,
 ) -> list[InferenceChunk]:
-    tokenizer = get_default_llm_tokenizer()
     new_chunks = copy(chunks)
     for ind, chunk in enumerate(new_chunks):
         new_content = tokenizer_trim_content(chunk.content, max_chunk_toks, tokenizer)

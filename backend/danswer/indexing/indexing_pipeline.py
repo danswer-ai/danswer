@@ -23,6 +23,7 @@ from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.indexing.chunker import Chunker
 from danswer.indexing.chunker import DefaultChunker
+from danswer.indexing.chunker import extract_chunk_texts_from_doc_aware_chunk
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
@@ -165,11 +166,22 @@ def index_doc_batch(
 
     # The first chunk additionally contains the Title of the Document
     chunks: list[DocAwareChunk] = list(
-        chain(*[chunker.chunk(document=document) for document in updatable_docs])
+        chain(
+            *[
+                chunker.chunk(document=document, embedder=embedder)
+                for document in updatable_docs
+            ]
+        )
+    )
+
+    chunks_with_texts = extract_chunk_texts_from_doc_aware_chunk(
+        chunks=chunks, embedder=embedder
     )
 
     logger.debug("Starting embedding")
-    chunks_with_embeddings = embedder.embed_chunks(chunks=chunks)
+    chunks_with_embeddings = embedder.embed_chunks(
+        chunks_with_texts=chunks_with_texts,
+    )
 
     # Acquires a lock on the documents so that no other process can modify them
     # NOTE: don't need to acquire till here, since this is when the actual race condition
@@ -204,7 +216,7 @@ def index_doc_batch(
         ]
 
         logger.debug(
-            f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
+            f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in access_aware_chunks]}"
         )
         # A document will not be spread across different batches, so all the
         # documents with chunks in this set, are fully represented by the chunks
@@ -228,7 +240,7 @@ def index_doc_batch(
         )
 
     return len([r for r in insertion_records if r.already_existed is False]), len(
-        chunks
+        access_aware_chunks
     )
 
 
