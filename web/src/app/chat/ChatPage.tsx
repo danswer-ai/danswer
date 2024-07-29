@@ -1133,7 +1133,7 @@ export function ChatPage({
             flex-none
             absolute
             left-0
-            z-[60]
+            z-50
             bg-background-100
             h-screen
             transition-all

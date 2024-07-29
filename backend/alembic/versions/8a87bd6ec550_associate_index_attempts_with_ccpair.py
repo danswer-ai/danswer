@@ -96,6 +96,21 @@ def downgrade() -> None:
     )
     op.drop_column("index_attempt", "connector_credential_pair_id")
 
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM pg_indexes
+                WHERE indexname = 'ix_index_attempt_latest_for_connector_credential_pair'
+            ) THEN
+                DROP INDEX ix_index_attempt_latest_for_connector_credential_pair;
+            END IF;
+        END $$;
+        """
+    )
+
     op.create_index(
         "ix_index_attempt_latest_for_connector_credential_pair",
         "index_attempt",
