@@ -1125,11 +1125,13 @@ export function ChatPage({
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      <div className="flex relative bg-background text-default ">
-        <div
-          ref={sidebarElementRef}
-          className={`
+      <div className="fixed top-0 left-0 w-full bg-background text-default ">
+        <div className="relative">
+          <div
+            ref={sidebarElementRef}
+            className={`
             flex-none
+
             absolute
             left-0
             z-20
@@ -1145,20 +1147,22 @@ export function ChatPage({
                 ? "opacity-100 w-[250px] translate-x-0"
                 : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
             }`}
-        >
-          <div className="w-full relative">
-            <HistorySidebar
-              page="chat"
-              ref={innerSidebarElementRef}
-              toggleSidebar={() => toggleDocumentSelectionAspects()}
-              toggled={toggledSidebar && !settings?.isMobile}
-              existingChats={chatSessions}
-              currentChatSession={selectedChatSession}
-              folders={folders}
-              openedFolders={openedFolders}
-            />
+          >
+            <div className="w-full relative">
+              <HistorySidebar
+                page="chat"
+                ref={innerSidebarElementRef}
+                toggleSidebar={() => toggleDocumentSelectionAspects()}
+                toggled={toggledSidebar && !settings?.isMobile}
+                existingChats={chatSessions}
+                currentChatSession={selectedChatSession}
+                folders={folders}
+                openedFolders={openedFolders}
+              />
+            </div>
           </div>
         </div>
+
         <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
           {popup}
           {currentFeedback && (
@@ -1192,7 +1196,7 @@ export function ChatPage({
             />
           )}
 
-          <div className="flex h-[calc(100dvh)] flex-col w-full">
+          <div className="flex h-svh flex-col w-full">
             {liveAssistant && (
               <FunctionalHeader
                 page="chat"
