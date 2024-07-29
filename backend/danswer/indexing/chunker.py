@@ -124,18 +124,18 @@ def chunk_document(
     tokenizer = get_default_tokenizer()
 
     blurb_splitter = SentenceSplitter(
-        tokenizer=tokenizer.encode, chunk_size=blurb_size, chunk_overlap=0
+        tokenizer=tokenizer.tokenize, chunk_size=blurb_size, chunk_overlap=0
     )
 
     chunk_splitter = SentenceSplitter(
-        tokenizer=tokenizer.encode,
+        tokenizer=tokenizer.tokenize,
         chunk_size=chunk_tok_size,
         chunk_overlap=subsection_overlap,
     )
 
     title = extract_blurb(document.get_title_for_document_index() or "", blurb_splitter)
     title_prefix = title + RETURN_SEPARATOR if title else ""
-    title_tokens = len(tokenizer.encode(title_prefix))
+    title_tokens = len(tokenizer.tokenize(title_prefix))
 
     metadata_suffix_semantic = ""
     metadata_suffix_keyword = ""
@@ -147,7 +147,7 @@ def chunk_document(
         ) = _get_metadata_suffix_for_document_index(
             document.metadata, include_separator=True
         )
-        metadata_tokens = len(tokenizer.encode(metadata_suffix_semantic))
+        metadata_tokens = len(tokenizer.tokenize(metadata_suffix_semantic))
 
     if metadata_tokens >= chunk_tok_size * MAX_METADATA_PERCENTAGE:
         # Note: we can keep the keyword suffix even if the semantic suffix is too long to fit in the model
@@ -170,8 +170,8 @@ def chunk_document(
         section_text = section.text
         section_link_text = section.link or ""
 
-        section_tok_length = len(tokenizer.encode(section_text))
-        current_tok_length = len(tokenizer.encode(chunk_text))
+        section_tok_length = len(tokenizer.tokenize(section_text))
+        current_tok_length = len(tokenizer.tokenize(chunk_text))
         curr_offset_len = len(shared_precompare_cleanup(chunk_text))
 
         # Large sections are considered self-contained/unique therefore they start a new chunk and are not concatenated
@@ -211,7 +211,7 @@ def chunk_document(
         # In the case where the whole section is shorter than a chunk, either adding to chunk or start a new one
         if (
             current_tok_length
-            + len(tokenizer.encode(SECTION_SEPARATOR))
+            + len(tokenizer.tokenize(SECTION_SEPARATOR))
             + section_tok_length
             <= content_token_limit
         ):

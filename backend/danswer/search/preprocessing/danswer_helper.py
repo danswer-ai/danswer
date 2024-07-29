@@ -1,7 +1,6 @@
-from typing import TYPE_CHECKING
-
 from danswer.natural_language_processing.search_nlp_models import get_default_tokenizer
 from danswer.natural_language_processing.search_nlp_models import IntentModel
+from danswer.natural_language_processing.utils import BaseTokenizer
 from danswer.search.enums import QueryFlow
 from danswer.search.models import SearchType
 from danswer.search.retrieval.search_runner import remove_stop_words_and_punctuation
@@ -10,17 +9,12 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-if TYPE_CHECKING:
-    from transformers import AutoTokenizer  # type:ignore
 
-
-def count_unk_tokens(text: str, tokenizer: "AutoTokenizer") -> int:
+def count_unk_tokens(text: str, tokenizer: BaseTokenizer) -> int:
     """Unclear if the wordpiece/sentencepiece tokenizer used is actually tokenizing anything as the [UNK] token
     It splits up even foreign characters and unicode emojis without using UNK"""
-    tokenized_text = tokenizer.encode(text)
-    num_unk_tokens = len(
-        [token for token in tokenized_text if token == tokenizer.unk_token]
-    )
+    tokenized_text = tokenizer.tokenize(text)
+    num_unk_tokens = len([token for token in tokenized_text if token == "[UNK]"])
     logger.debug(f"Total of {num_unk_tokens} UNKNOWN tokens found")
     return num_unk_tokens
 
