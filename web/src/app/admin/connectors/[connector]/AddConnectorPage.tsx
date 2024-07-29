@@ -63,7 +63,7 @@ export default function AddConnector({
 
   const credentialTemplate = credentialTemplates[connector];
 
-  const { setFormStep, formStep, nextFormStep, prevFormStep } =
+  const { setFormStep, setAlowCreate, formStep, nextFormStep, prevFormStep } =
     useFormContext();
 
   const { popup, setPopup } = usePopup();
@@ -87,9 +87,9 @@ export default function AddConnector({
   );
 
   // Default to 10 minutes unless otherwise specified
-  const defaultRefresh = configuration.overrideDefaultFreq || 10 * 60;
+  const defaultRefresh = (configuration.overrideDefaultFreq || 10) / 60;
 
-  const defaultPrune = 86400; // default is 1 day
+  const defaultPrune = 86400 / 60; // default is 1 day
   const [refreshFreq, setRefreshFreq] = useState<number>(defaultRefresh || 0);
   const [pruneFreq, setPruneFreq] = useState<number>(defaultPrune);
   const [indexingStart, setIndexingStart] = useState<Date | null>(null);
@@ -116,7 +116,7 @@ export default function AddConnector({
     setFormStep(Math.max(1, formStep));
   }
 
-  if (!credentialActivated && formStep != 0) {
+  if (!noCredentials && !credentialActivated && formStep != 0) {
     setFormStep(Math.min(formStep, 0));
   }
 
@@ -139,9 +139,9 @@ export default function AddConnector({
 
   const createConnector = async () => {
     const AdvancedConfig: AdvancedConfig = {
-      pruneFreq: pruneFreq || defaultRefresh,
+      pruneFreq: pruneFreq || defaultRefresh * 60,
       indexingStart,
-      refreshFreq,
+      refreshFreq: refreshFreq * 60,
     };
 
     // google sites-specific handling
@@ -185,8 +185,8 @@ export default function AddConnector({
         input_type: "poll",
         name: name,
         source: connector,
-        refresh_freq: refreshFreq || defaultRefresh,
-        prune_freq: pruneFreq || null,
+        refresh_freq: (refreshFreq || defaultRefresh) * 60,
+        prune_freq: pruneFreq * 60 || null,
         indexing_start: indexingStart,
         disabled: false,
       },
@@ -259,6 +259,7 @@ export default function AddConnector({
 
   const onSwap = async (selectedCredential: Credential<any>) => {
     setCurrentCredential(selectedCredential);
+    setAlowCreate(true);
     setPopup({
       message: "Swapped credential successfully!",
       type: "success",
@@ -462,7 +463,6 @@ export default function AddConnector({
             <div className="mt-4 flex w-full mx-auto max-w-2xl justify-start">
               <button
                 className="flex gap-x-1 bg-red-500 hover:bg-red-500/80 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded "
-                disabled={currentCredential == null}
                 onClick={() => resetAdvancedConfigs()}
               >
                 <TrashIcon size={20} className="text-white" />

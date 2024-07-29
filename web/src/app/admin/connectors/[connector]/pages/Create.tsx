@@ -8,6 +8,7 @@ import CredentialSubText from "@/components/credentials/CredentialFields";
 import { TrashIcon } from "@/components/icons/icons";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
 import { ConnectionConfiguration } from "@/lib/connectors/connectors";
+import { useFormContext } from "@/components/context/FormContext";
 
 export interface DynamicConnectionFormProps {
   config: ConnectionConfiguration;
@@ -53,6 +54,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
         {} as Record<string, any>
       )),
   };
+  const { setAllowAdvanced } = useFormContext();
   const validationSchema = Yup.object().shape({
     name: Yup.string().required("Connector Name is required"),
     ...config.values.reduce(
@@ -107,6 +109,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
       >
         {({ setFieldValue, values, isValid }) => {
           onFormStatusChange(isValid && isFormSubmittable(values));
+          setAllowAdvanced(isValid && isFormSubmittable(values));
           return (
             <Form className="space-y-6">
               <EditingValue

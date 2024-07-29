@@ -8,7 +8,8 @@ import Link from "next/link";
 import { useContext } from "react";
 
 export default function Sidebar() {
-  const { formStep, setFormStep, connector } = useFormContext();
+  const { formStep, setFormStep, connector, allowAdvanced, allowCreate } =
+    useFormContext();
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -66,36 +67,45 @@ export default function Sidebar() {
                 {connector != "file" && (
                   <div className="absolute h-[85%] left-[6px] top-[8px] bottom-0 w-0.5 bg-gray-300"></div>
                 )}
-                {settingSteps.map((step, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center mb-6 relative ${
-                      index >= formStep
-                        ? "cursor-not-allowed"
-                        : "cursor-pointer"
-                    }`}
-                    onClick={() => index < formStep && setFormStep(index)}
-                  >
-                    <div className="flex-shrink-0 mr-4 z-10">
+                {settingSteps.map((step, index) => {
+                  const allowed =
+                    (step == "Connector" && allowCreate) ||
+                    (step == "Advanced (optional)" && allowAdvanced) ||
+                    index <= formStep;
+
+                  return (
+                    <div
+                      key={index}
+                      className={`flex items-center mb-6 relative ${
+                        !allowed ? "cursor-not-allowed" : "cursor-pointer"
+                      }`}
+                      onClick={() => {
+                        if (allowed) {
+                          setFormStep(index - (noCredential ? 1 : 0));
+                        }
+                      }}
+                    >
+                      <div className="flex-shrink-0 mr-4 z-10">
+                        <div
+                          className={`rounded-full h-3.5 w-3.5 flex items-center justify-center ${
+                            allowed ? "bg-blue-500" : "bg-gray-300"
+                          }`}
+                        >
+                          {formStep === index && (
+                            <div className="h-2 w-2 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                      </div>
                       <div
-                        className={`rounded-full h-3.5 w-3.5 flex items-center justify-center ${
-                          index <= formStep ? "bg-blue-500" : "bg-gray-300"
+                        className={`${
+                          index <= formStep ? "text-gray-800" : "text-gray-500"
                         }`}
                       >
-                        {formStep === index && (
-                          <div className="h-2 w-2 rounded-full bg-white"></div>
-                        )}
+                        {step}
                       </div>
                     </div>
-                    <div
-                      className={`${
-                        index <= formStep ? "text-gray-800" : "text-gray-500"
-                      }`}
-                    >
-                      {step}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
