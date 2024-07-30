@@ -16,6 +16,7 @@ from danswer.utils.logger import setup_logger
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
 from shared_configs.enums import EmbedTextType
+from shared_configs.model_server_models import Embedding
 
 
 logger = setup_logger()
@@ -78,13 +79,22 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         self,
         chunks: list[DocAwareChunk],
     ) -> list[IndexChunk]:
+        # All chunks at this point must have some non-empty content
         flat_chunk_texts: list[str] = []
         for chunk in chunks:
             chunk_text = (
                 f"{chunk.title_prefix}{chunk.content}{chunk.metadata_suffix_semantic}"
-            )
+            ) or chunk.source_document.get_title_for_document_index()
+
+            if not chunk_text:
+                # This should never happen, the document would have been dropped
+                # before getting to this point
+                raise ValueError(f"Chunk has no content: {chunk.to_short_descriptor()}")
+
             flat_chunk_texts.append(chunk_text)
-            flat_chunk_texts.extend(chunk.mini_chunk_texts)
+
+            if chunk.mini_chunk_texts:
+                flat_chunk_texts.extend(chunk.mini_chunk_texts)
 
         embeddings = self.embedding_model.encode(
             flat_chunk_texts, text_type=EmbedTextType.PASSAGE
@@ -95,10 +105,12 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         }
 
         # Drop any None or empty strings
+        # If there is no title or the title is empty, the title embedding field will be null
+        # which is ok, it just won't contribute at all to the scoring.
         chunk_titles_list = [title for title in chunk_titles if title]
 
         # Cache the Title embeddings to only have to do it once
-        title_embed_dict: dict[str, list[float] | None] = {}
+        title_embed_dict: dict[str, Embedding] = {}
         if chunk_titles_list:
             title_embeddings = self.embedding_model.encode(
                 chunk_titles_list, text_type=EmbedTextType.PASSAGE
@@ -114,7 +126,9 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         embedded_chunks: list[IndexChunk] = []
         embedding_ind_start = 0
         for chunk in chunks:
-            num_embeddings = 1 + len(chunk.mini_chunk_texts)
+            num_embeddings = 1 + (
+                len(chunk.mini_chunk_texts) if chunk.mini_chunk_texts else 0
+            )
             chunk_embeddings = embeddings[
                 embedding_ind_start : embedding_ind_start + num_embeddings
             ]

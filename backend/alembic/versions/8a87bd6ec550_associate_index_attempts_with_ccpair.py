@@ -11,8 +11,8 @@ import sqlalchemy as sa
 # revision identifiers, used by Alembic.
 revision = "8a87bd6ec550"
 down_revision = "4ea2c93919c1"
-branch_labels = None
-depends_on = None
+branch_labels: None = None
+depends_on: None = None
 
 
 def upgrade() -> None:
@@ -35,18 +35,9 @@ def upgrade() -> None:
     op.execute(
         """
         UPDATE index_attempt ia
-        SET connector_credential_pair_id =
-            CASE
-                WHEN ia.credential_id IS NULL THEN
-                    (SELECT id FROM connector_credential_pair
-                     WHERE connector_id = ia.connector_id
-                     LIMIT 1)
-                ELSE
-                    (SELECT id FROM connector_credential_pair
-                     WHERE connector_id = ia.connector_id
-                     AND credential_id = ia.credential_id)
-            END
-        WHERE ia.connector_id IS NOT NULL
+        SET connector_credential_pair_id = ccp.id
+        FROM connector_credential_pair ccp
+        WHERE ia.connector_id = ccp.connector_id AND ia.credential_id = ccp.credential_id
         """
     )
 
