@@ -20,7 +20,6 @@ import { searchRequestStreamed } from "@/lib/search/streamingQa";
 
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
 import { useFilters, useObjectState } from "@/lib/hooks";
-import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { computeAvailableFilters } from "@/lib/filters";
 import { redirect, useRouter, useSearchParams } from "next/navigation";
