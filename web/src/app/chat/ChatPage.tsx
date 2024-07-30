@@ -635,9 +635,7 @@ export function ChatPage({
     alternativeAssistantOverride?: Persona | null;
   } = {}) => {
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
-    if (!settings?.isMobile) {
-      clientScrollToBottom();
-    }
+    clientScrollToBottom();
     let currChatSessionId: number;
     let isNewSession = chatSessionIdRef.current === null;
     const searchParamBasedChatSessionName =
@@ -1074,7 +1072,6 @@ export function ChatPage({
     endDivRef,
     distance,
     debounce,
-    mobile: settings?.isMobile,
   });
 
   useEffect(() => {

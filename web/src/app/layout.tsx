@@ -59,6 +59,7 @@ export default async function RootLayout({
           />
         </head>
       )}
+
       <body className="relative">
         <div
           className={`${inter.variable} font-sans text-default bg-background ${

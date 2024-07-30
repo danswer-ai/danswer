@@ -603,7 +603,6 @@ export async function useScrollonStream({
   endDivRef,
   distance,
   debounce,
-  mobile,
 }: {
   isStreaming: boolean;
   scrollableDivRef: RefObject<HTMLDivElement>;
@@ -619,12 +618,7 @@ export async function useScrollonStream({
   const previousScroll = useRef<number>(0);
 
   useEffect(() => {
-    if (
-      isStreaming &&
-      scrollableDivRef &&
-      scrollableDivRef.current &&
-      !mobile
-    ) {
+    if (isStreaming && scrollableDivRef && scrollableDivRef.current) {
       let newHeight: number = scrollableDivRef.current?.scrollTop!;
       const heightDifference = newHeight - previousScroll.current;
       previousScroll.current = newHeight;
@@ -680,7 +674,7 @@ export async function useScrollonStream({
 
   // scroll on end of stream if within distance
   useEffect(() => {
-    if (scrollableDivRef?.current && !isStreaming && !mobile) {
+    if (scrollableDivRef?.current && !isStreaming) {
       if (scrollDist.current < distance) {
         scrollableDivRef?.current?.scrollBy({
           left: 0,
@@ -689,5 +683,5 @@ export async function useScrollonStream({
         });
       }
     }
-  }, [isStreaming, mobile]);
+  }, [isStreaming]);
 }
