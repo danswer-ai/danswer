@@ -69,7 +69,7 @@ def chunk_large_section(
             metadata_suffix_semantic=metadata_suffix_semantic,
             metadata_suffix_keyword=metadata_suffix_keyword,
             mini_chunk_texts=mini_chunk_splitter.split_text(chunk_text)
-            if mini_chunk_splitter and chunk_text
+            if mini_chunk_splitter and chunk_text.strip()
             else None,
         )
         for chunk_ind, chunk_text in enumerate(split_texts)
@@ -208,7 +208,7 @@ def chunk_document(
                         metadata_suffix_semantic=metadata_suffix_semantic,
                         metadata_suffix_keyword=metadata_suffix_keyword,
                         mini_chunk_texts=mini_chunk_splitter.split_text(chunk_text)
-                        if enable_mini_chunk and chunk_text
+                        if enable_mini_chunk and chunk_text.strip()
                         else None,
                     )
                 )
@@ -222,7 +222,7 @@ def chunk_document(
                 start_chunk_id=len(chunks),
                 chunk_splitter=chunk_splitter,
                 mini_chunk_splitter=mini_chunk_splitter
-                if enable_mini_chunk and chunk_text
+                if enable_mini_chunk and chunk_text.strip()
                 else None,
                 blurb=extract_blurb(section_text, blurb_splitter),
                 title_prefix=title_prefix,
@@ -256,7 +256,7 @@ def chunk_document(
                     metadata_suffix_semantic=metadata_suffix_semantic,
                     metadata_suffix_keyword=metadata_suffix_keyword,
                     mini_chunk_texts=mini_chunk_splitter.split_text(chunk_text)
-                    if enable_mini_chunk and chunk_text
+                    if enable_mini_chunk and chunk_text.strip()
                     else None,
                 )
             )
@@ -278,11 +278,12 @@ def chunk_document(
                 metadata_suffix_semantic=metadata_suffix_semantic,
                 metadata_suffix_keyword=metadata_suffix_keyword,
                 mini_chunk_texts=mini_chunk_splitter.split_text(chunk_text)
-                if enable_mini_chunk and chunk_text
+                if enable_mini_chunk and chunk_text.strip()
                 else None,
             )
         )
 
+    # If the chunk does not have any useable content, it will not be indexed
     return chunks
 
 

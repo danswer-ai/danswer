@@ -75,7 +75,7 @@ class EmbeddingModel:
         text_type: EmbedTextType,
         batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
     ) -> list[Embedding]:
-        if not texts or any(not text.strip() for text in texts):
+        if not texts or not all(texts):
             raise ValueError(f"Empty or missing text for embedding: {texts}")
 
         if self.retrim_content:

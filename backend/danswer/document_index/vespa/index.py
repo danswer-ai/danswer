@@ -335,12 +335,10 @@ def _index_vespa_chunk(
     vespa_chunk_id = str(get_uuid_from_chunk(chunk))
     embeddings = chunk.embeddings
 
-    # TODO check how this could be None
     embeddings_name_vector_map = {"full_chunk": embeddings.full_embedding}
 
     if embeddings.mini_chunk_embeddings:
         for ind, m_c_embed in enumerate(embeddings.mini_chunk_embeddings):
-            # TODO check how this could be none
             embeddings_name_vector_map[f"mini_chunk_{ind}"] = m_c_embed
 
     title = document.get_title_for_document_index()
