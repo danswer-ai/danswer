@@ -1,3 +1,20 @@
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 import { AssistantTools } from "@/app/assistants/ToolsDisplay";
@@ -7,39 +24,7 @@ import { getDisplayNameForModel } from "@/lib/hooks";
 import { getFinalLLM } from "@/lib/llm/utils";
 import React, { useState } from "react";
 import { FiBookmark, FiPlus } from "react-icons/fi";
-
-interface AssistantsTabProps {
-  selectedAssistant: Persona;
-  availableAssistants: Persona[];
-  llmProviders: LLMProviderDescriptor[];
-  onSelect: (assistant: Persona) => void;
-}
-
-export function AssistantsTab({
-  selectedAssistant,
-  availableAssistants,
-  llmProviders,
-  onSelect,
-}: AssistantsTabProps) {
-  const [_, llmName] = getFinalLLM(llmProviders, null, null);
-
-  return (
-    <div className="py-4">
-      <h3 className="px-4 text-lg font-semibold">Change Assistant</h3>
-      <div className="px-2 pb-2 mx-2 max-h-[500px] overflow-y-scroll my-3 grid grid-cols-1 gap-4">
-        {availableAssistants.map((assistant) => (
-          <AssistantCard
-            key={assistant.id}
-            assistant={assistant}
-            isSelected={selectedAssistant.id === assistant.id}
-            onSelect={onSelect}
-            llmName={llmName}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
+import { updateUserAssistantList } from "@/lib/assistants/updateAssistantPreferences";
 
 const AssistantCard = ({
   assistant,
@@ -56,7 +41,6 @@ const AssistantCard = ({
   return (
     <div
       onClick={() => onSelect(assistant)}
-      key={assistant.id}
       className={`
       p-4 
       cursor-pointer
@@ -105,3 +89,99 @@ const AssistantCard = ({
     </div>
   );
 };
+
+function DraggableAssistantCard(props: {
+  assistant: Persona;
+  isSelected: boolean;
+  onSelect: (assistant: Persona) => void;
+  llmName: string;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: props.assistant.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <AssistantCard {...props} />
+    </div>
+  );
+}
+
+interface AssistantsTabProps {
+  selectedAssistant: Persona;
+  availableAssistants: Persona[];
+  llmProviders: LLMProviderDescriptor[];
+  onSelect: (assistant: Persona) => void;
+}
+
+export function AssistantsTab({
+  selectedAssistant,
+  availableAssistants,
+  llmProviders,
+  onSelect,
+}: AssistantsTabProps) {
+  const [_, llmName] = getFinalLLM(llmProviders, null, null);
+  const [assistants, setAssistants] = useState(availableAssistants);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setAssistants((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        const updatedAssistants = arrayMove(items, oldIndex, newIndex);
+
+        updateUserAssistantList(updatedAssistants.map((a) => a.id));
+
+        return updatedAssistants;
+      });
+    }
+  }
+
+  return (
+    <div className="py-4">
+      <h3 className="px-4 text-lg font-semibold">Change Assistant</h3>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={assistants.map((a) => a.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="px-2 pb-2 mx-2 max-h-[500px] miniscroll overflow-y-scroll my-3 grid grid-cols-1 gap-4">
+            {assistants.map((assistant) => (
+              <DraggableAssistantCard
+                key={assistant.id}
+                assistant={assistant}
+                isSelected={selectedAssistant.id === assistant.id}
+                onSelect={onSelect}
+                llmName={llmName}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
+}
