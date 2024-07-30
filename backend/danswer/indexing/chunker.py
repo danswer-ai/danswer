@@ -16,7 +16,6 @@ from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
 from danswer.connectors.models import Document
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
-from danswer.indexing.models import TextChunk
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import shared_precompare_cleanup
@@ -113,6 +112,49 @@ def _get_metadata_suffix_for_document_index(
     if include_separator:
         return RETURN_SEPARATOR + metadata_semantic, RETURN_SEPARATOR + metadata_keyword
     return metadata_semantic, metadata_keyword
+
+
+def _split_chunk_text_into_mini_chunks(
+    chunk_text: str, embedder: IndexingEmbedder, mini_chunk_size: int = MINI_CHUNK_SIZE
+) -> list[str]:
+    """The minichunks won't all have the title prefix or metadata suffix
+    It could be a significant percentage of every minichunk so better to not include it
+    """
+    from llama_index.text_splitter import SentenceSplitter
+
+    token_count_func = get_tokenizer(
+        model_name=embedder.model_name,
+        provider_type=embedder.provider_type,
+    ).tokenize
+    sentence_aware_splitter = SentenceSplitter(
+        tokenizer=token_count_func, chunk_size=mini_chunk_size, chunk_overlap=0
+    )
+
+    return sentence_aware_splitter.split_text(chunk_text)
+
+
+def _extract_chunk_texts_from_doc_aware_chunk(
+    chunks: list[DocAwareChunk],
+    embedder: IndexingEmbedder,
+    enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
+) -> list[DocAwareChunk]:
+    # Create Mini Chunks for more precise matching of details
+    # Off by default with unedited settings
+    chunks_with_texts: list[DocAwareChunk] = []
+    for chunk in chunks:
+        # The whole chunk including the prefix/suffix is included in the overall vector representation
+        mini_chunk_texts = (
+            _split_chunk_text_into_mini_chunks(
+                chunk.content,
+                embedder=embedder,
+            )
+            if enable_mini_chunk
+            else []
+        )
+        chunk.mini_chunk_texts = mini_chunk_texts
+        chunks_with_texts.append(chunk)
+
+    return chunks_with_texts
 
 
 def chunk_document(
@@ -259,54 +301,10 @@ def chunk_document(
                 metadata_suffix_keyword=metadata_suffix_keyword,
             )
         )
-    return chunks
 
-
-def _split_chunk_text_into_mini_chunks(
-    chunk_text: str, embedder: IndexingEmbedder, mini_chunk_size: int = MINI_CHUNK_SIZE
-) -> list[str]:
-    """The minichunks won't all have the title prefix or metadata suffix
-    It could be a significant percentage of every minichunk so better to not include it
-    """
-    from llama_index.text_splitter import SentenceSplitter
-
-    token_count_func = get_tokenizer(
-        model_name=embedder.model_name,
-        provider_type=embedder.provider_type,
-    ).tokenize
-    sentence_aware_splitter = SentenceSplitter(
-        tokenizer=token_count_func, chunk_size=mini_chunk_size, chunk_overlap=0
+    chunks_with_texts: list[DocAwareChunk] = _extract_chunk_texts_from_doc_aware_chunk(
+        chunks=chunks, embedder=embedder
     )
-
-    return sentence_aware_splitter.split_text(chunk_text)
-
-
-def extract_chunk_texts_from_doc_aware_chunk(
-    chunks: list[DocAwareChunk],
-    embedder: IndexingEmbedder,
-    enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
-) -> list[TextChunk]:
-    # Create Mini Chunks for more precise matching of details
-    # Off by default with unedited settings
-    chunks_with_texts: list[TextChunk] = []
-    for chunk in chunks:
-        # The whole chunk including the prefix/suffix is included in the overall vector representation
-        mini_chunk_texts = (
-            _split_chunk_text_into_mini_chunks(
-                chunk.content,
-                embedder=embedder,
-            )
-            if enable_mini_chunk
-            else []
-        )
-        chunks_with_texts.append(
-            TextChunk(
-                **chunk.dict(),
-                chunk_text=f"{chunk.title_prefix}{chunk.content}{chunk.metadata_suffix_semantic}",
-                mini_chunk_texts=mini_chunk_texts,
-            )
-        )
-
     return chunks_with_texts
 
 

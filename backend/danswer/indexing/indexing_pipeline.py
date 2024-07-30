@@ -1,5 +1,4 @@
 from functools import partial
-from itertools import chain
 from typing import Protocol
 
 from sqlalchemy.orm import Session
@@ -23,11 +22,9 @@ from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.indexing.chunker import Chunker
 from danswer.indexing.chunker import DefaultChunker
-from danswer.indexing.chunker import extract_chunk_texts_from_doc_aware_chunk
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
-from danswer.indexing.models import TextChunk
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -164,24 +161,16 @@ def index_doc_batch(
     )
 
     logger.debug("Starting chunking")
-
     # The first chunk additionally contains the Title of the Document
-    chunks: list[DocAwareChunk] = list(
-        chain(
-            *[
-                chunker.chunk(document=document, embedder=embedder)
-                for document in updatable_docs
-            ]
-        )
-    )
-
-    chunks_with_texts: list[TextChunk] = extract_chunk_texts_from_doc_aware_chunk(
-        chunks=chunks, embedder=embedder
-    )
+    chunks: list[DocAwareChunk] = [
+        chunk
+        for document in updatable_docs
+        for chunk in chunker.chunk(document=document, embedder=embedder)
+    ]
 
     logger.debug("Starting embedding")
     chunks_with_embeddings = embedder.embed_chunks(
-        chunks_with_texts=chunks_with_texts,
+        chunks=chunks,
     )
 
     # Acquires a lock on the documents so that no other process can modify them

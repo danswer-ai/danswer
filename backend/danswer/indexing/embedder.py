@@ -9,8 +9,8 @@ from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.models import EmbeddingModel as DbEmbeddingModel
 from danswer.db.models import IndexModelStatus
 from danswer.indexing.models import ChunkEmbedding
+from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
-from danswer.indexing.models import TextChunk
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
@@ -41,7 +41,7 @@ class IndexingEmbedder(ABC):
     @abstractmethod
     def embed_chunks(
         self,
-        chunks_with_texts: list[TextChunk],
+        chunks: list[DocAwareChunk],
     ) -> list[IndexChunk]:
         raise NotImplementedError
 
@@ -76,20 +76,22 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
 
     def embed_chunks(
         self,
-        chunks_with_texts: list[TextChunk],
+        chunks: list[DocAwareChunk],
     ) -> list[IndexChunk]:
         flat_chunk_texts: list[str] = []
-        for chunk_with_texts in chunks_with_texts:
-            flat_chunk_texts.append(chunk_with_texts.chunk_text)
-            flat_chunk_texts.extend(chunk_with_texts.mini_chunk_texts)
+        for chunk in chunks:
+            chunk_text = (
+                f"{chunk.title_prefix}{chunk.content}{chunk.metadata_suffix_semantic}"
+            )
+            flat_chunk_texts.append(chunk_text)
+            flat_chunk_texts.extend(chunk.mini_chunk_texts)
 
         embeddings = self.embedding_model.encode(
             flat_chunk_texts, text_type=EmbedTextType.PASSAGE
         )
 
         chunk_titles = {
-            chunk.source_document.get_title_for_document_index()
-            for chunk in chunks_with_texts
+            chunk.source_document.get_title_for_document_index() for chunk in chunks
         }
 
         # Drop any None or empty strings
@@ -111,13 +113,13 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         # Mapping embeddings to chunks
         embedded_chunks: list[IndexChunk] = []
         embedding_ind_start = 0
-        for chunk_with_texts in chunks_with_texts:
-            num_embeddings = 1 + len(chunk_with_texts.mini_chunk_texts)
+        for chunk in chunks:
+            num_embeddings = 1 + len(chunk.mini_chunk_texts)
             chunk_embeddings = embeddings[
                 embedding_ind_start : embedding_ind_start + num_embeddings
             ]
 
-            title = chunk_with_texts.source_document.get_title_for_document_index()
+            title = chunk.source_document.get_title_for_document_index()
 
             title_embedding = None
             if title:
@@ -134,7 +136,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
                     title_embed_dict[title] = title_embedding
 
             new_embedded_chunk = IndexChunk(
-                **chunk_with_texts.dict(),
+                **chunk.dict(),
                 embeddings=ChunkEmbedding(
                     full_embedding=chunk_embeddings[0],
                     mini_chunk_embeddings=chunk_embeddings[1:],

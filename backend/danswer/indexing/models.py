@@ -44,6 +44,9 @@ class DocAwareChunk(BaseChunk):
     metadata_suffix_semantic: str
     metadata_suffix_keyword: str
 
+    # give these default values so they can be set after the rest of the chunk is created
+    mini_chunk_texts: list[str] = []
+
     def to_short_descriptor(self) -> str:
         """Used when logging the identity of a chunk"""
         return (
@@ -51,12 +54,7 @@ class DocAwareChunk(BaseChunk):
         )
 
 
-class TextChunk(DocAwareChunk):
-    chunk_text: str
-    mini_chunk_texts: list[str] = []
-
-
-class IndexChunk(TextChunk):
+class IndexChunk(DocAwareChunk):
     embeddings: ChunkEmbedding
     title_embedding: Embedding | None
 
