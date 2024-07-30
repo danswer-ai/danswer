@@ -79,6 +79,7 @@ export const SearchSection = ({
   toggledSidebar,
   defaultSearchType,
 }: SearchSectionProps) => {
+
   // Search Bar
   const [query, setQuery] = useState<string>("");
   const [comments, setComments] = useState<any>(null);
@@ -110,9 +111,9 @@ export const SearchSection = ({
       SIDEBAR_TOGGLED_COOKIE_NAME,
       String(!toggledSidebar).toLocaleLowerCase()
     ),
-      {
-        path: "/",
-      };
+    {
+      path: "/",
+    };
     toggle();
   };
 
@@ -457,9 +458,9 @@ export const SearchSection = ({
 
   useEffect(() => {
     if (settings?.isMobile) {
-      redirect("/chat");
+      router.push("/chat");
     }
-  }, [settings?.isMobile]);
+  }, [settings?.isMobile, router]);
 
   const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
     if (e.propertyName === "opacity" && !firstSearch) {
@@ -500,10 +501,9 @@ export const SearchSection = ({
             bg-opacity-80
             duration-300 
             ease-in-out
-            ${
-              showDocSidebar || toggledSidebar
-                ? "opacity-100 w-[250px] translate-x-0"
-                : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
+            ${showDocSidebar || toggledSidebar
+              ? "opacity-100 w-[250px] translate-x-0"
+              : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
             }
           `}
         >
@@ -580,11 +580,10 @@ export const SearchSection = ({
                   >
                     <div
                       className={`transition-all duration-500 ease-in-out overflow-hidden 
-                      ${
-                        firstSearch
+                      ${firstSearch
                           ? "opacity-100 max-h-[500px]"
                           : "opacity-0 max-h-0"
-                      }`}
+                        }`}
                       onTransitionEnd={handleTransitionEnd}
                     >
                       <div className="mt-48 mb-8 flex justify-center items-center">
