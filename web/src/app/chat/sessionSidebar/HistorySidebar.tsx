@@ -120,7 +120,10 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
               )}
             </div>
             {toggleSidebar && (
-              <Tooltip delayDuration={0} content={toggled ? `Unpin sidebar` : "Pin sidebar"}>
+              <Tooltip
+                delayDuration={0}
+                content={toggled ? `Unpin sidebar` : "Pin sidebar"}
+              >
                 <button className="my-auto ml-auto" onClick={toggleSidebar}>
                   {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
                 </button>
@@ -134,7 +137,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 href={
                   "/chat" +
                   (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                    currentChatSession
+                  currentChatSession
                     ? `?assistantId=${currentChatSession.persona_id}`
                     : "")
                 }

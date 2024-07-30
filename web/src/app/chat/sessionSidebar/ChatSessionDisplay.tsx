@@ -129,10 +129,11 @@ export function ChatSessionDisplay({
                 <p className="break-all overflow-hidden whitespace-nowrap w-full mr-3 relative">
                   {chatName || `Chat ${chatSession.id}`}
 
-                  <span className={`absolute right-0 top-0 h-full w-8 bg-gradient-to-r from-transparent ${isSelected ? "to-background-200" : " to-background-100 group-hover:to-background-200"} `} ></span>
+                  <span
+                    className={`absolute right-0 top-0 h-full w-8 bg-gradient-to-r from-transparent ${isSelected ? "to-background-200" : " to-background-100 group-hover:to-background-200"} `}
+                  ></span>
                 </p>
               )}
-
 
               {isSelected &&
                 (isRenamingChat ? (

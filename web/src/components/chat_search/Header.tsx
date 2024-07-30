@@ -5,7 +5,10 @@ import { FiShare2, FiSidebar } from "react-icons/fi";
 import { SetStateAction, useContext, useEffect } from "react";
 import { Logo } from "../Logo";
 import { ChatIcon, NewChatIcon, PlusCircleIcon } from "../icons/icons";
-import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED, NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
+import {
+  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
+  NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
+} from "@/lib/constants";
 import { ChatSession } from "@/app/chat/interfaces";
 import { HeaderTitle } from "../header/Header";
 import { Tooltip } from "../tooltip/Tooltip";
@@ -41,10 +44,10 @@ export default function FunctionalHeader({
             event.preventDefault();
             window.open(
               `/${page}` +
-              (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
+                (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
                 currentChatSession
-                ? `?assistantId=${currentChatSession.persona_id}`
-                : ""),
+                  ? `?assistantId=${currentChatSession.persona_id}`
+                  : ""),
               "_self"
             );
             break;
@@ -67,7 +70,9 @@ export default function FunctionalHeader({
             <div className="max-w-[200px]">
               {enterpriseSettings && enterpriseSettings.application_name ? (
                 <div>
-                  <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
+                  <HeaderTitle>
+                    {enterpriseSettings.application_name}
+                  </HeaderTitle>
                   {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
                     <p className="text-xs text-subtle">Powered by Danswer</p>
                   )}
@@ -85,7 +90,7 @@ export default function FunctionalHeader({
                 href={
                   `/${page}` +
                   (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                    currentChatSession
+                  currentChatSession
                     ? `?assistantId=${currentChatSession.persona_id}`
                     : "")
                 }
