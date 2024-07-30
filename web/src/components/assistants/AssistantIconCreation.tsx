@@ -41,6 +41,7 @@ export const IconImageSelection = ({
     </div>
   );
 };
+
 export function IconImageUpload({
   selectedFile,
   updateFile,

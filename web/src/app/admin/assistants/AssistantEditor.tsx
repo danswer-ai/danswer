@@ -571,7 +571,6 @@ export function AssistantEditor({
                     )}
                   </div>
                 </div>
-
                 <div className="mb-6">
                   <div className="flex gap-x-2 items-center">
                     <div className="block font-medium text-base">

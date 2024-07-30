@@ -105,7 +105,7 @@ function updatePrompt({
 function buildPersonaAPIBody(
   creationRequest: PersonaCreationRequest | PersonaUpdateRequest,
   promptId: number,
-  uploaded_image_id?: string //
+  uploaded_image_id: string | null
 ) {
   const {
     name,
@@ -190,7 +190,7 @@ export async function createPersona(
             "Content-Type": "application/json",
           },
           body: JSON.stringify(
-            buildPersonaAPIBody(personaCreationRequest, promptId, fileId!)
+            buildPersonaAPIBody(personaCreationRequest, promptId, fileId)
           ),
         })
       : null;
@@ -225,6 +225,14 @@ export async function updatePersona(
     promptId = promptResponse.ok ? (await promptResponse.json()).id : null;
   }
 
+  let fileId = null;
+  if (personaUpdateRequest.uploaded_image) {
+    fileId = await uploadFile(personaUpdateRequest.uploaded_image);
+    if (!fileId) {
+      return [promptResponse, null];
+    }
+  }
+
   const updatePersonaResponse =
     promptResponse.ok && promptId
       ? await fetch(`/api/persona/${id}`, {
@@ -233,7 +241,7 @@ export async function updatePersona(
             "Content-Type": "application/json",
           },
           body: JSON.stringify(
-            buildPersonaAPIBody(personaUpdateRequest, promptId)
+            buildPersonaAPIBody(personaUpdateRequest, promptId, fileId)
           ),
         })
       : null;

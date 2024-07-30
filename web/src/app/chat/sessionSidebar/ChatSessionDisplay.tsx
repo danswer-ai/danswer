@@ -90,7 +90,7 @@ export function ChatSessionDisplay({
         />
       )}
       <Link
-        className="flex my-1 relative"
+        className="flex my-1 group relative"
         key={chatSession.id}
         href={
           search
@@ -126,10 +126,15 @@ export function ChatSessionDisplay({
                   className="-my-px px-1 mr-2 w-full rounded"
                 />
               ) : (
-                <p className="break-all overflow-hidden whitespace-nowrap mr-3 text-emphasis">
+                <p className="break-all overflow-hidden whitespace-nowrap w-full mr-3 relative">
                   {chatName || `Chat ${chatSession.id}`}
+                  <span
+                    className={`absolute right-0 top-0 h-full w-8 bg-gradient-to-r from-transparent 
+                    ${isSelected ? "to-background-200" : " to-background-100 group-hover:to-background-200"} `}
+                  />
                 </p>
               )}
+
               {isSelected &&
                 (isRenamingChat ? (
                   <div className="ml-auto my-auto flex">
@@ -199,12 +204,6 @@ export function ChatSessionDisplay({
                   </div>
                 ))}
             </div>
-            {isSelected && !isRenamingChat && !delayedSkipGradient && (
-              <div className="absolute bottom-0 right-0 top-0 bg-gradient-to-l to-transparent from-hover w-20 from-60% rounded" />
-            )}
-            {!isSelected && !delayedSkipGradient && (
-              <div className="absolute bottom-0 right-0 top-0 bg-gradient-to-l to-transparent from-background-100 w-8 from-0% rounded" />
-            )}
           </>
         </BasicSelectable>
       </Link>

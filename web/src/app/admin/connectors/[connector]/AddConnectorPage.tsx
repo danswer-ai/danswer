@@ -183,7 +183,7 @@ export default function AddConnector({
     const { message, isSuccess, response } = await submitConnector<any>(
       {
         connector_specific_config: values,
-        input_type: "poll",
+        input_type: connector == "web" ? "load_state" : "poll", // single case
         name: name,
         source: connector,
         refresh_freq: (refreshFreq || defaultRefresh) * 60,
