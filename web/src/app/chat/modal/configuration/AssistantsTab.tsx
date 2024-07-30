@@ -59,7 +59,7 @@ const AssistantCard = ({
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
     >
-      <MdDragIndicator className="hover:cursor-grabbing mx-2 h-4 w-4 flex-none" />
+      <MdDragIndicator className="mx-2 h-4 w-4 flex-none" />
       <div>
         <div className="flex items-center mb-2">
           <AssistantIcon assistant={assistant} />
