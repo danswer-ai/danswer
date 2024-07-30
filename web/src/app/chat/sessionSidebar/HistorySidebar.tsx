@@ -96,7 +96,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             border-r 
             border-border 
             flex 
-            flex-col relativ
+            flex-col relative
             h-screen
             transition-transform`}
         >
