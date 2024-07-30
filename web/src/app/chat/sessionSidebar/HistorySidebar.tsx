@@ -96,12 +96,12 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             border-r 
             border-border 
             flex 
-            flex-col relative
+            flex-col relativ
             h-screen
             transition-transform`}
         >
           <div className="max-w-full ml-3 mr-3 mt-2 flex flex gap-x-1 items-center my-auto text-text-700 text-xl">
-            <div className="mr-1 mb-auto h-6 w-6">
+            <div className="mr-1 invisible mb-auto h-6 w-6">
               <Logo height={24} width={24} />
             </div>
 
@@ -120,8 +120,8 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
               )}
             </div>
             {toggleSidebar && (
-              <Tooltip delayDuration={1000} content={`${commandSymbol}E show`}>
-                <button className="mb-auto ml-auto" onClick={toggleSidebar}>
+              <Tooltip delayDuration={0} content={toggled ? `Unpin sidebar` : "Pin sidebar"}>
+                <button className="my-auto ml-auto" onClick={toggleSidebar}>
                   {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
                 </button>
               </Tooltip>
@@ -134,7 +134,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 href={
                   "/chat" +
                   (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                  currentChatSession
+                    currentChatSession
                     ? `?assistantId=${currentChatSession.persona_id}`
                     : "")
                 }

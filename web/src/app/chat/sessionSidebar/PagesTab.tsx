@@ -62,7 +62,7 @@ export function PagesTab({
       {folders && folders.length > 0 && (
         <div className="py-2 border-b border-border">
           <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-bold">
-            Folders
+            Chat Folders
           </div>
           <FolderList
             folders={folders}

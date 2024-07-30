@@ -225,6 +225,14 @@ export async function updatePersona(
     promptId = promptResponse.ok ? (await promptResponse.json()).id : null;
   }
 
+  let fileId = null;
+  if (personaUpdateRequest.uploaded_image) {
+    fileId = await uploadFile(personaUpdateRequest.uploaded_image);
+    if (!fileId) {
+      return [promptResponse, null];
+    }
+  }
+
   const updatePersonaResponse =
     promptResponse.ok && promptId
       ? await fetch(`/api/persona/${id}`, {
@@ -233,7 +241,7 @@ export async function updatePersona(
             "Content-Type": "application/json",
           },
           body: JSON.stringify(
-            buildPersonaAPIBody(personaUpdateRequest, promptId)
+            buildPersonaAPIBody(personaUpdateRequest, promptId, fileId!)
           ),
         })
       : null;

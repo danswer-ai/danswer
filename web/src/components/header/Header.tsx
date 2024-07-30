@@ -12,13 +12,15 @@ import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constan
 import { pageType } from "@/app/chat/sessionSidebar/types";
 
 export function HeaderTitle({ children }: { children: JSX.Element | string }) {
+  const isString = typeof children === 'string';
+  const textSize = isString && children.length > 10 ? 'text-xl' : 'text-2xl';
+
   return (
-    <h1 className="flex text-2xl text-strong leading-none font-bold">
+    <h1 className={`flex ${textSize} text-strong leading-none font-bold`}>
       {children}
     </h1>
   );
 }
-
 interface HeaderProps {
   user: User | null;
   page?: pageType;
