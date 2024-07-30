@@ -484,7 +484,7 @@ export const SearchSection = ({
 
   return (
     <>
-      <div className="flex relative w-full pr-[8px] h-full text-default overflow-x-hidden">
+      <div className="flex relative w-full pr-[8px] h-full text-default">
         <div
           ref={sidebarElementRef}
           className={`
@@ -492,8 +492,6 @@ export const SearchSection = ({
             fixed
             left-0 
             z-30
-            overflow-y-hidden 
-            sidebar 
             bg-background-100 
             h-screen
             transition-all 
@@ -528,16 +526,16 @@ export const SearchSection = ({
             <div
               style={{ transition: "width 0.30s ease-out" }}
               className={`
-                    flex-none
-                    overflow-y-hidden
-                    bg-background-100
-                    h-full
-                    transition-all
-                    bg-opacity-80
-                    duration-300 
-                    ease-in-out
-                    ${toggledSidebar ? "w-[250px]" : "w-[0px]"}
-                  `}
+                  flex-none
+                  overflow-y-hidden
+                  bg-background-100
+                  h-full
+                  transition-all
+                  bg-opacity-80
+                  duration-300 
+                  ease-in-out
+                  ${toggledSidebar ? "w-[250px]" : "w-[0px]"}
+                `}
             />
 
             {

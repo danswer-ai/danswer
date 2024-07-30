@@ -94,10 +94,8 @@ export default function SidebarWrapper<T extends object>({
             fixed
             left-0
             z-30
-            overflow-y-hidden
-            sidebar
             bg-background-100
-            h-svh
+            h-screen
             transition-all
             bg-opacity-80
             duration-300

@@ -1156,27 +1156,27 @@ export function ChatPage({
           }
         />
       )}
-      <div className="fixed  inset-0 flex flex-col text-default">
+      <div className="fixed inset-0 flex flex-col text-default">
         <div className="h-[100dvh] overflow-y-hidden">
           <div className="w-full">
             <div
               ref={sidebarElementRef}
               className={`
-            flex-none
-            absolute
-            left-0
-            z-30
-            bg-background-100
-            h-screen
-            transition-all
-            bg-opacity-80
-            duration-300
-            ease-in-out
-            ${
-              showDocSidebar || toggledSidebar
-                ? "opacity-100 w-[250px] translate-x-0"
-                : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
-            }`}
+                flex-none
+                fixed
+                left-0
+                z-30
+                bg-background-100
+                h-screen
+                transition-all
+                bg-opacity-80
+                duration-300
+                ease-in-out
+                ${
+                  showDocSidebar || toggledSidebar
+                    ? "opacity-100 w-[250px] translate-x-0"
+                    : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
+                }`}
             >
               <div className="w-full relative">
                 <HistorySidebar
