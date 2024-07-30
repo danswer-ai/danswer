@@ -18,7 +18,6 @@ export const IconImageSelection = ({
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
 
   const updateFile = (image: File | null) => {
-    console.log("UPDATING FILE")
     setUploadedImage(image);
     setFieldValue("uploaded_image", image);
   };
