@@ -96,7 +96,7 @@ export default function FunctionalHeader({
                 }
               >
                 <div className="cursor-pointer ml-2 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
-                  <NewChatIcon size={20} className="" />
+                  <NewChatIcon size={20} />
                 </div>
               </Link>
             </Tooltip>

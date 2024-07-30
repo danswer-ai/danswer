@@ -105,7 +105,7 @@ function updatePrompt({
 function buildPersonaAPIBody(
   creationRequest: PersonaCreationRequest | PersonaUpdateRequest,
   promptId: number,
-  uploaded_image_id?: string //
+  uploaded_image_id: string | null
 ) {
   const {
     name,
@@ -190,7 +190,7 @@ export async function createPersona(
             "Content-Type": "application/json",
           },
           body: JSON.stringify(
-            buildPersonaAPIBody(personaCreationRequest, promptId, fileId!)
+            buildPersonaAPIBody(personaCreationRequest, promptId, fileId)
           ),
         })
       : null;
@@ -241,7 +241,7 @@ export async function updatePersona(
             "Content-Type": "application/json",
           },
           body: JSON.stringify(
-            buildPersonaAPIBody(personaUpdateRequest, promptId, fileId!)
+            buildPersonaAPIBody(personaUpdateRequest, promptId, fileId)
           ),
         })
       : null;
