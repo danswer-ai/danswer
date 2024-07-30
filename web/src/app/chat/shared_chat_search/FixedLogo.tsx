@@ -33,7 +33,7 @@ export default function FixedLogo() {
           </div>
         </div>
       </div>
-      <div className="absolute left-2.5 bottom-10">
+      <div className="absolute left-2.5 bottom-4">
         <FiSidebar />
       </div>
     </>
