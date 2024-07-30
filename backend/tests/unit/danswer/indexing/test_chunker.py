@@ -2,12 +2,10 @@ from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.indexing.chunker import chunk_document
-from danswer.indexing.embedder import IndexingEmbedder
+from danswer.indexing.embedder import DefaultIndexingEmbedder
 
 
-def test_chunk_document(
-    embedder: IndexingEmbedder,
-) -> None:
+def test_chunk_document() -> None:
     short_section_1 = "This is a short section."
     long_section = (
         "This is a long section that should be split into multiple chunks. " * 100
@@ -30,6 +28,13 @@ def test_chunk_document(
             Section(text=short_section_3, link="link4"),
             Section(text=short_section_4, link="link5"),
         ],
+    )
+
+    embedder = DefaultIndexingEmbedder(
+        model_name="intfloat/e5-base-v2",
+        normalize=True,
+        query_prefix=None,
+        passage_prefix=None,
     )
 
     chunks = chunk_document(document, embedder=embedder)
