@@ -103,11 +103,11 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             transition-transform`}
         >
           <div className="max-w-full ml-3 mr-3 mt-2 flex flex gap-x-1 items-center my-auto text-text-700 text-xl">
-            <div className="mr-1 invisible mb-auto h-6 w-6">
+            <div className="mr-1 desktop:invisible mb-auto h-6 w-6">
               <Logo height={24} width={24} />
             </div>
 
-            <div className="invisible">
+            <div className="desktop:invisible">
               {enterpriseSettings && enterpriseSettings.application_name ? (
                 <div>
                   <HeaderTitle>
@@ -128,7 +128,11 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 content={toggled ? `Unpin sidebar` : "Pin sidebar"}
               >
                 <button className="my-auto ml-auto" onClick={toggleSidebar}>
-                  {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
+                  {!toggled && !combinedSettings.isMobile ? (
+                    <RightToLineIcon />
+                  ) : (
+                    <LefToLineIcon />
+                  )}
                 </button>
               </Tooltip>
             )}

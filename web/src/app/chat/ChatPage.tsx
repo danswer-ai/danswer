@@ -1641,7 +1641,7 @@ export function ChatPage({
               )}
             </div>
           </div>
-          <FixedLogo />
+          <FixedLogo openSidebar={toggleSidebar} />
         </div>
       </div>
       <DocumentSidebar
@@ -1657,7 +1657,6 @@ export function ChatPage({
         isLoading={isFetchingChatMessages}
         isOpen={documentSelection}
       />
-      s
     </>
   );
 }

@@ -7,7 +7,11 @@ import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constan
 import { useContext } from "react";
 import { FiSidebar } from "react-icons/fi";
 
-export default function FixedLogo() {
+export default function FixedLogo({
+  openSidebar,
+}: {
+  openSidebar: () => void;
+}) {
   const combinedSettings = useContext(SettingsContext);
   const settings = combinedSettings?.settings;
   const enterpriseSettings = combinedSettings?.enterpriseSettings;
@@ -15,7 +19,7 @@ export default function FixedLogo() {
   return (
     <>
       <div className="absolute pointer-events-none flex z-40 left-2.5 top-2">
-        <div className="max-w-[200px] flex items-center gap-x-1 my-auto">
+        <div className="max-w-[200px]  mobile:hidden flex items-center gap-x-1 my-auto">
           <div className="flex-none my-auto">
             <Logo height={24} width={24} />
           </div>
@@ -33,7 +37,7 @@ export default function FixedLogo() {
           </div>
         </div>
       </div>
-      <div className="absolute left-2.5 bottom-4">
+      <div className="mobile:hidden fixed left-2.5 bottom-4">
         <FiSidebar />
       </div>
     </>
