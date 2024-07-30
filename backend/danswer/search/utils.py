@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from typing import TypeVar
 
+from danswer.chat.models import DocumentRelevance
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceSection
@@ -35,6 +36,46 @@ def dedupe_documents(items: list[T]) -> tuple[list[T], list[int]]:
         else:
             dropped_indices.append(index)
     return deduped_items, dropped_indices
+
+
+# TODO make more efficient woefull not for now
+def relevant_sections_to_indices(
+    relevance_chunks: list[DocumentRelevance],
+    inference_sections: list[InferenceSection],
+) -> list[int]:
+    relevant_indices = []
+    for index, section in enumerate(inference_sections):
+        for relevance_chunk in relevance_chunks:
+            if (
+                section.center_chunk.document_id == relevance_chunk.document_id
+                and section.center_chunk.chunk_id == relevance_chunk.chunk_id
+                and relevance_chunk.relevance.relevant
+            ):
+                relevant_indices.append(index)
+                break
+    return relevant_indices
+
+
+def relevant_documents_to_indices(
+    relevance_chunks: list[DocumentRelevance], inference_sections: list[DBSearchDoc]
+) -> list[int]:
+    relevant_indices = []
+    for index, section in enumerate(inference_sections):
+        for relevance_chunk in relevance_chunks:
+            if (
+                section.document_id == relevance_chunk.document_id
+                and section.chunk_ind == relevance_chunk.chunk_id
+                and relevance_chunk.relevance.relevant
+            ):
+                relevant_indices.append(index)
+                break
+
+    return relevant_indices
+
+
+# danswer/search/utils.py:57: error: "object" has no attribute "document_id"  [attr-defined]
+# danswer/search/utils.py:58: error: "object" has no attribute "chunk_ind"  [attr-defined]
+# Found 2 errors in 1 file (checked 525 source files)
 
 
 def drop_llm_indices(

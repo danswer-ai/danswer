@@ -27,6 +27,7 @@ from danswer.search.models import SearchRequest
 from danswer.search.pipeline import SearchPipeline
 from danswer.search.utils import dedupe_documents
 from danswer.search.utils import drop_llm_indices
+from danswer.search.utils import relevant_documents_to_indices
 from danswer.utils.logger import setup_logger
 from ee.danswer.server.query_and_chat.models import DocumentSearchRequest
 from ee.danswer.server.query_and_chat.models import StandardAnswerRequest
@@ -63,7 +64,7 @@ def handle_search_request(
             offset=search_request.retrieval_options.offset,
             limit=search_request.retrieval_options.limit,
             skip_rerank=search_request.skip_rerank,
-            skip_llm_chunk_filter=search_request.skip_llm_chunk_filter,
+            evaluation_type=search_request.evaluation_type,
             chunks_above=search_request.chunks_above,
             chunks_below=search_request.chunks_below,
             full_doc=search_request.full_doc,
@@ -76,7 +77,7 @@ def handle_search_request(
     )
     top_sections = search_pipeline.reranked_sections
     # If using surrounding context or full doc, this will be empty
-    relevant_section_indices = search_pipeline.relevant_section_indices
+    relevant_chunks = search_pipeline.relevant_section_indices
     top_docs = [
         SavedSearchDocWithContent(
             document_id=section.center_chunk.document_id,
@@ -105,19 +106,22 @@ def handle_search_request(
     # Deduping happens at the last step to avoid harming quality by dropping content early on
     deduped_docs = top_docs
     dropped_inds = None
+
     if search_request.retrieval_options.dedupe_docs:
         deduped_docs, dropped_inds = dedupe_documents(top_docs)
 
+    llm_indices = relevant_documents_to_indices(
+        relevance_chunks=relevant_chunks, inference_sections=deduped_docs
+    )
+
     if dropped_inds:
-        relevant_section_indices = drop_llm_indices(
-            llm_indices=relevant_section_indices,
+        llm_indices = drop_llm_indices(
+            llm_indices=llm_indices,
             search_docs=deduped_docs,
             dropped_indices=dropped_inds,
         )
 
-    return DocumentSearchResponse(
-        top_documents=deduped_docs, llm_indices=relevant_section_indices
-    )
+    return DocumentSearchResponse(top_documents=deduped_docs, llm_indices=llm_indices)
 
 
 @basic_router.post("/answer-with-quote")

@@ -38,7 +38,7 @@ def evaluate_inference_section(
     document_id = document.center_chunk.document_id
     semantic_id = document.center_chunk.semantic_identifier
     contents = document.combined_content
-    chunk_id = document.center_chunk.chunk_id
+    document.center_chunk.chunk_id
 
     messages = _get_agent_eval_messages(
         title=semantic_id, content=contents, query=query
@@ -64,7 +64,5 @@ def evaluate_inference_section(
     )
     relevant = last_line.strip().lower().startswith("true")
 
-    results[f"{document_id}-{chunk_id}"] = RelevanceChunk(
-        relevant=relevant, content=analysis
-    )
+    results[document_id] = RelevanceChunk(relevant=relevant, content=analysis)
     return results

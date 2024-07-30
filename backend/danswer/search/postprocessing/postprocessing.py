@@ -4,6 +4,8 @@ from typing import cast
 
 import numpy
 
+from danswer.chat.models import DocumentRelevance
+from danswer.chat.models import RelevanceChunk
 from danswer.configs.app_configs import BLURB_SIZE
 from danswer.configs.constants import RETURN_SEPARATOR
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
@@ -15,6 +17,7 @@ from danswer.llm.interfaces import LLM
 from danswer.natural_language_processing.search_nlp_models import (
     CrossEncoderEnsembleModel,
 )
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.models import ChunkMetric
 from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceChunkUncleaned
@@ -49,7 +52,7 @@ def should_rerank(query: SearchQuery) -> bool:
 
 
 def should_apply_llm_based_relevance_filter(query: SearchQuery) -> bool:
-    return not query.skip_llm_chunk_filter
+    return query.evaluation_type == LLMEvaluationType.BASIC
 
 
 def cleanup_chunks(chunks: list[InferenceChunkUncleaned]) -> list[InferenceChunk]:
@@ -229,7 +232,7 @@ def search_postprocessing(
     retrieved_sections: list[InferenceSection],
     llm: LLM,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> Iterator[list[InferenceSection] | list[int]]:
+) -> Iterator[list[InferenceSection] | list[DocumentRelevance]]:
     post_processing_tasks: list[FunctionCall] = []
 
     rerank_task_id = None
@@ -294,9 +297,15 @@ def search_postprocessing(
         if llm_filter_task_id
         else []
     )
+    print(llm_selected_section_ids)
+    print("I AM HEREEEE")
 
     yield [
-        index
-        for index, section in enumerate(reranked_sections or retrieved_sections)
+        DocumentRelevance(
+            document_id=section.center_chunk.document_id,
+            chunk_id=section.center_chunk.chunk_id,
+            relevance=RelevanceChunk(relevant=True, content=""),
+        )
+        for section in (reranked_sections or retrieved_sections)
         if section.center_chunk.unique_id in llm_selected_section_ids
     ]

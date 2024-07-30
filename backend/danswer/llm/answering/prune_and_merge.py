@@ -256,9 +256,10 @@ def prune_sections(
     llm_config: LLMConfig,
     question: str,
     document_pruning_config: DocumentPruningConfig,
+    override: bool = False,  # TODO fix
 ) -> list[InferenceSection]:
     # Assumes the sections are score ordered with highest first
-    if section_relevance_list is not None:
+    if section_relevance_list is not None and not override:
         assert len(sections) == len(section_relevance_list)
 
     token_limit = _compute_limit(
