@@ -479,6 +479,7 @@ export function AssistantEditor({
                       </Button>
                     </div>
                   </div>
+
                   <IconImageSelection
                     setFieldValue={setFieldValue}
                     existingPersona={existingPersona!}

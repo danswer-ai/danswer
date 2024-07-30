@@ -63,7 +63,6 @@ def create_update_persona(
     db_session: Session,
 ) -> PersonaSnapshot:
     """Higher level function than upsert_persona, although either is valid to use."""
-
     # Permission to actually use these is checked later
     try:
         persona = upsert_persona(
