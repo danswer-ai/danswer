@@ -48,7 +48,6 @@ const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
 
 const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
   reasoning: null,
-  answerable: null,
   error: null,
 };
 
@@ -414,15 +413,7 @@ export const SearchSection = ({
       offset: offset ?? defaultOverrides.offset,
     };
 
-    const questionValidationArgs = {
-      query,
-      update: setValidQuestionResponse,
-    };
-
-    await Promise.all([
-      searchRequestStreamed(searchFnArgs),
-      questionValidationStreamed(questionValidationArgs),
-    ]);
+    await Promise.all([searchRequestStreamed(searchFnArgs)]);
   };
 
   // handle redirect if search page is disabled

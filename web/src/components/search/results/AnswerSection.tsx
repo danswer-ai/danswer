@@ -26,7 +26,6 @@ interface AnswerSectionProps {
   answer: string | null;
   quotes: Quote[] | null;
   error: string | null;
-  nonAnswerableReason: string | null;
   isFetching: boolean;
 }
 
@@ -74,10 +73,6 @@ export const AnswerSection = (props: AnswerSectionProps) => {
       </ReactMarkdown>
     );
   }
-  if (props.nonAnswerableReason) {
-    status = "warning";
-    header = <>Building best effort AI answer...</>;
-  }
 
   return (
     <ResponseSection
@@ -87,20 +82,7 @@ export const AnswerSection = (props: AnswerSectionProps) => {
           <div className="ml-2 text-strong">{header}</div>
         </div>
       }
-      body={
-        <div className="">
-          {body}
-          {props.nonAnswerableReason && !props.isFetching && (
-            <div className="mt-4 text-sm">
-              <b className="font-medium">Warning:</b> the AI did not think this
-              question was answerable.{" "}
-              <div className="italic mt-1 ml-2">
-                {props.nonAnswerableReason}
-              </div>
-            </div>
-          )}
-        </div>
-      }
+      body={<div className="">{body}</div>}
       desiredOpenStatus={true}
       isNotControllable={true}
     />
