@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
 
 from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
@@ -89,6 +90,7 @@ def get_current_db_embedding_model(db_session: Session) -> EmbeddingModel:
         select(EmbeddingModel)
         .where(EmbeddingModel.status == IndexModelStatus.PRESENT)
         .order_by(EmbeddingModel.id.desc())
+        .options(joinedload(EmbeddingModel.cloud_provider))
     )
     result = db_session.execute(query)
     latest_model = result.scalars().first()
