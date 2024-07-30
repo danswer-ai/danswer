@@ -7,11 +7,7 @@ import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constan
 import { useContext } from "react";
 import { FiSidebar } from "react-icons/fi";
 
-export default function FixedLogo({
-  openSidebar,
-}: {
-  openSidebar: () => void;
-}) {
+export default function FixedLogo() {
   const combinedSettings = useContext(SettingsContext);
   const settings = combinedSettings?.settings;
   const enterpriseSettings = combinedSettings?.enterpriseSettings;

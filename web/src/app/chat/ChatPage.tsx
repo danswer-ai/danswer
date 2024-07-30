@@ -1641,7 +1641,7 @@ export function ChatPage({
               )}
             </div>
           </div>
-          <FixedLogo openSidebar={toggleSidebar} />
+          <FixedLogo />
         </div>
       </div>
       <DocumentSidebar
