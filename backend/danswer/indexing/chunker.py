@@ -1,5 +1,6 @@
 import abc
 from collections.abc import Callable
+from typing import Optional
 from typing import TYPE_CHECKING
 
 from danswer.configs.app_configs import BLURB_SIZE
@@ -50,7 +51,7 @@ def chunk_large_section(
     start_chunk_id: int,
     blurb: str,
     chunk_splitter: "SentenceSplitter",
-    mini_chunk_splitter: "SentenceSplitter" | None,
+    mini_chunk_splitter: Optional["SentenceSplitter"],
     title_prefix: str,
     metadata_suffix_semantic: str,
     metadata_suffix_keyword: str,
