@@ -20,8 +20,8 @@ import CredentialSection from "@/components/credentials/CredentialSection";
 import { buildCCPairInfoUrl } from "./lib";
 import { SourceIcon } from "@/components/SourceIcon";
 import { credentialTemplates } from "@/lib/connectors/credentials";
-import { useState } from "react";
-import { EditIcon } from "@/components/icons/icons";
+import { useEffect, useRef, useState } from "react";
+import { CheckmarkIcon, EditIcon, XIcon } from "@/components/icons/icons";
 import { updateConnectorName } from "@/lib/connector";
 
 // since the uploaded files are cleaned up after some period of time
@@ -42,7 +42,13 @@ function Main({ ccPairId }: { ccPairId: number }) {
 
   const [editableName, setEditableName] = useState(ccPair?.name || "");
   const [isEditing, setIsEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>();
 
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isEditing]);
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditableName(e.target.value);
   };
@@ -90,10 +96,18 @@ function Main({ ccPairId }: { ccPairId: number }) {
     mutate(buildCCPairInfoUrl(ccPairId));
   };
 
+  const startEditing = () => {
+    setEditableName(ccPair.connector.name);
+    setIsEditing(true);
+  };
   const deleting =
     ccPair.latest_deletion_attempt?.status == "PENDING" ||
     ccPair.latest_deletion_attempt?.status == "STARTED";
 
+  const resetEditing = () => {
+    setIsEditing(false);
+    setEditableName(ccPair.connector.name);
+  };
   return (
     <>
       <BackButton />
@@ -105,27 +119,25 @@ function Main({ ccPairId }: { ccPairId: number }) {
         {isEditing ? (
           <div className="flex items-center">
             <input
+              ref={inputRef}
               type="text"
               value={editableName}
               onChange={handleNameChange}
-              className="text-2xl text-emphasis font-bold"
+              className="text-3xl ring ring-1 ring-neutral-800 w-[100px] text-emphasis font-bold"
             />
             <Button onClick={handleUpdateName} className="ml-2">
-              Update
+              <CheckmarkIcon className="text-neutral-200" />
             </Button>
-            <Button onClick={() => setIsEditing(false)} className="ml-2">
-              Cancel
+            <Button onClick={() => resetEditing()} className="ml-2">
+              <XIcon className="text-neutral-200" />
             </Button>
           </div>
         ) : (
-          <h1 className="group text-3xl text-emphasis font-bold">
+          <h1
+            onClick={() => startEditing()}
+            className="group text-3xl text-emphasis  font-bold"
+          >
             {ccPair.name}
-            <button
-              className="ml-2 group-hover:visible invisible "
-              onClick={() => setIsEditing(true)}
-            >
-              <EditIcon />
-            </button>
           </h1>
         )}
         {/* <h1 className="text-3xl text-emphasis font-bold">{ccPair.name} </h1> */}
