@@ -264,9 +264,9 @@ def chunk_document(
             link_offsets = {0: section_link_text}
             chunk_text = section_text
 
-    # Once we hit the end, if we're still in the process of building a chunk, add what we have
-    # NOTE: if it's just whitespace, ignore it.
-    if chunk_text.strip():
+    # Once we hit the end, if we're still in the process of building a chunk, add what we have. If the is only whitespace left
+    # then don't include it. If there are no chunks at all from the doc, we can just create a single chunk with the title.
+    if chunk_text.strip() or not chunks:
         chunks.append(
             DocAwareChunk(
                 source_document=document,
