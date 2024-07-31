@@ -2,6 +2,7 @@ import json
 from collections.abc import Generator
 from typing import Any
 from typing import cast
+from collections.abc import Callable
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pydantic import BaseModel
@@ -12,8 +13,9 @@ from danswer.dynamic_configs.interface import JSON_ro
 from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.answering.prompts.build import AnswerPromptBuilder, default_build_system_message, \
     default_build_user_message
-from danswer.llm.utils import message_to_string, _build_content, get_max_input_tokens
+from danswer.llm.utils import message_to_string, _build_content, get_max_input_tokens, get_default_llm_tokenizer
 from danswer.prompts.constants import GENERAL_SEP_PAT
+from danswer.tools.summary.split_by_sentence_tokens import split_section_by_tokens
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
 from danswer.utils.logger import setup_logger
@@ -159,16 +161,30 @@ class SummaryGenerationTool(Tool):
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
         query = cast(str, kwargs["query"])
         llm_config = self.llm_config
+        max_tokens = get_max_input_tokens(
+            model_name=self.llm.config.model_name,
+            model_provider=self.llm.config.model_provider,
+        )
+        llm_tokenizer = get_default_llm_tokenizer()
+        encode_fn = cast(
+            Callable[[str], list[int]], llm_tokenizer.encode
+        )
+
+        decode_fn = cast(
+            Callable[[list], [str]], llm_tokenizer.decode
+        )
         history = []
         prompt_builder = AnswerPromptBuilder(history, llm_config)
+
         prompt_builder.update_system_prompt(
             default_build_system_message(self.prompt_config)
         )
         summaries = []
         message_content = _build_content(query, self.files)
 
-        sections = self.split_text_by_paragraphs(message_content)
+        #sections = self.split_text_by_paragraphs(message_content)
         #sections = message_content.split('\n\n')
+        sections = split_section_by_tokens(message_content, max_tokens, buffer_percent=0.3, encode_fn=encode_fn, decode_fn = decode_fn)
 
         for section in sections:
             prompt_builder.update_user_prompt(
@@ -201,7 +217,7 @@ class SummaryGenerationTool(Tool):
             return [text]
 
         #calculate effective max tokens
-        buffer_percent=0.1
+        buffer_percent=0.4
         buffer_tokens = int(max_tokens * buffer_percent)
         effective_max_tokens = max_tokens - buffer_tokens
 
@@ -228,13 +244,13 @@ class SummaryGenerationTool(Tool):
             chunks = text_splitter.split_text(text)
             return chunks
         else:
-            paragraphs = text.split('\n\n')
+            paragraphs = text.split('\n')
             current_length = 0
             for paragraph in paragraphs:
                 paragraph_length = len(paragraph.split())
                 if current_length + paragraph_length > effective_max_tokens:
                     if current_chunk:
-                        chunks.append("\n\n".join(current_chunk))
+                        chunks.append("\n".join(current_chunk))
                     current_chunk = []
                     current_length = 0
                 current_chunk.append(paragraph)
