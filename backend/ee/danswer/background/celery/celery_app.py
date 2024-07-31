@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from danswer.background.celery.celery_app import celery_app
 from danswer.background.task_utils import build_celery_task_wrapper
 from danswer.configs.app_configs import JOB_TIMEOUT
+from danswer.configs.constants import POSTGRES_CELERY_BEAT_APP_NAME
+from danswer.configs.constants import POSTGRES_CELERY_WORKER_APP_NAME
 from danswer.db.chat import delete_chat_sessions_older_than
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import init_sqlalchemy_engine
@@ -100,12 +102,12 @@ def autogenerate_usage_report_task() -> None:
 
 @beat_init.connect
 def on_beat_init(sender, **kwargs):
-    init_sqlalchemy_engine("danswer_celery_beat")
+    init_sqlalchemy_engine(POSTGRES_CELERY_BEAT_APP_NAME)
 
 
 @worker_init.connect
 def on_worker_init(sender, **kwargs):
-    init_sqlalchemy_engine("danswer_celery_worker")
+    init_sqlalchemy_engine(POSTGRES_CELERY_WORKER_APP_NAME)
 
 
 #####
