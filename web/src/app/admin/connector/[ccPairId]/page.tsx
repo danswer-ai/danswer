@@ -4,7 +4,7 @@ import { CCPairFullInfo } from "./types";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
-import { Divider, Title } from "@tremor/react";
+import { Button, Divider, Title } from "@tremor/react";
 import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
 import { ConfigDisplay } from "./ConfigDisplay";
 import { ModifyStatusButtonCluster } from "./ModifyStatusButtonCluster";
@@ -19,8 +19,10 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import CredentialSection from "@/components/credentials/CredentialSection";
 import { buildCCPairInfoUrl } from "./lib";
 import { SourceIcon } from "@/components/SourceIcon";
-import { connectorConfigs } from "@/lib/connectors/connectors";
 import { credentialTemplates } from "@/lib/connectors/credentials";
+import { useState } from "react";
+import { EditIcon } from "@/components/icons/icons";
+import { updateConnectorName } from "@/lib/connector";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -37,6 +39,26 @@ function Main({ ccPairId }: { ccPairId: number }) {
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
+
+  const [editableName, setEditableName] = useState(ccPair?.name || "");
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditableName(e.target.value);
+  };
+
+  const handleUpdateName = async () => {
+    // Add your update logic here, e.g., make an API call to update the name
+    // After updating, you might want to refresh the data
+    // await updateConnectorName(ccPairId, editableName);
+    const d = await updateConnectorName(
+      ccPair?.connector.id!,
+      ccPair?.connector!,
+      editableName
+    );
+    mutate(buildCCPairInfoUrl(ccPairId));
+    setIsEditing(false);
+  };
 
   if (isLoading) {
     return <ThreeDotsLoader />;
@@ -79,7 +101,34 @@ function Main({ ccPairId }: { ccPairId: number }) {
         <div className="mr-2 my-auto ">
           <SourceIcon iconSize={24} sourceType={ccPair.connector.source} />
         </div>
-        <h1 className="text-3xl text-emphasis font-bold">{ccPair.name} </h1>
+
+        {isEditing ? (
+          <div className="flex items-center">
+            <input
+              type="text"
+              value={editableName}
+              onChange={handleNameChange}
+              className="text-2xl text-emphasis font-bold"
+            />
+            <Button onClick={handleUpdateName} className="ml-2">
+              Update
+            </Button>
+            <Button onClick={() => setIsEditing(false)} className="ml-2">
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <h1 className="group text-3xl text-emphasis font-bold">
+            {ccPair.name}
+            <button
+              className="ml-2 group-hover:visible invisible "
+              onClick={() => setIsEditing(true)}
+            >
+              <EditIcon />
+            </button>
+          </h1>
+        )}
+        {/* <h1 className="text-3xl text-emphasis font-bold">{ccPair.name} </h1> */}
 
         <div className="ml-auto flex gap-x-2">
           {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(

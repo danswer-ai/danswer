@@ -103,6 +103,9 @@ def update_connector(
     connector_data: ConnectorBase,
     db_session: Session,
 ) -> Connector | None:
+    print(connector_id)
+    print("CONNECTOR DATS")
+    print(connector_data)
     connector = fetch_connector_by_id(connector_id, db_session)
     if connector is None:
         return None
@@ -125,6 +128,7 @@ def update_connector(
         else DEFAULT_PRUNING_FREQ
     )
     connector.disabled = connector_data.disabled
+    print(connector.__dict__)
 
     db_session.commit()
     return connector
