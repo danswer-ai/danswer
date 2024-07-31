@@ -256,8 +256,6 @@ export function CCPairIndexingStatusTable({
 }: {
   ccPairsIndexingStatuses: ConnectorIndexingStatus<any, any>[];
 }) {
-  const [allToggleTracker, setAllToggleTracker] = useState(true);
-
   const [searchTerm, setSearchTerm] = useState("");
 
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -326,12 +324,14 @@ export function CCPairIndexingStatusTable({
       JSON.stringify(newConnectorsToggled)
     );
   };
-
   const toggleSources = () => {
-    setAllToggleTracker((allToggleTracker) => !allToggleTracker);
+    const currentToggledCount =
+      Object.values(connectorsToggled).filter(Boolean).length;
+    const shouldToggleOn = currentToggledCount < sortedSources.length / 2;
+
     const connectors = sortedSources.reduce(
       (acc, source) => {
-        acc[source] = allToggleTracker;
+        acc[source] = shouldToggleOn;
         return acc;
       },
       {} as Record<ValidSources, boolean>
@@ -369,7 +369,7 @@ export function CCPairIndexingStatusTable({
               placeholder="Search connectors..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex ml-2  max-w-sm h-9 w-full rounded-md border-2 border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className=" ml-2 w-96 h-9 flex-none rounded-md border-2 border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
 
             <Button className="h-9" onClick={() => toggleSources()}>
@@ -377,6 +377,81 @@ export function CCPairIndexingStatusTable({
             </Button>
           </div>
           {sortedSources.map((source, ind) => {
+            const sourceMatches = source
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase());
+            const matchingConnectors = groupedStatuses[source].filter(
+              (status) =>
+                (status.name || "")
+                  .toLowerCase()
+                  .includes(searchTerm.toLowerCase())
+            );
+            if (sourceMatches || matchingConnectors.length > 0) {
+              return (
+                <React.Fragment key={ind}>
+                  <div className="mt-4" />
+
+                  <SummaryRow
+                    source={source}
+                    summary={groupSummaries[source]}
+                    isOpen={connectorsToggled[source] || false}
+                    onToggle={() => toggleSource(source)}
+                  />
+
+                  {connectorsToggled[source] && (
+                    <>
+                      <TableRow className="border border-border">
+                        <TableHeaderCell
+                          className={`w-[${columnWidths.first}]`}
+                        >
+                          Name
+                        </TableHeaderCell>
+                        <TableHeaderCell
+                          className={`w-[${columnWidths.fifth}]`}
+                        >
+                          Last Indexed
+                        </TableHeaderCell>
+                        <TableHeaderCell
+                          className={`w-[${columnWidths.second}]`}
+                        >
+                          Activity
+                        </TableHeaderCell>
+                        <TableHeaderCell
+                          className={`w-[${columnWidths.fourth}]`}
+                        >
+                          Public
+                        </TableHeaderCell>
+                        <TableHeaderCell
+                          className={`w-[${columnWidths.sixth}]`}
+                        >
+                          Total Docs
+                        </TableHeaderCell>
+                        <TableHeaderCell
+                          className={`w-[${columnWidths.third}]`}
+                        >
+                          Last Status
+                        </TableHeaderCell>
+                        <TableHeaderCell
+                          className={`w-[${columnWidths.seventh}]`}
+                        ></TableHeaderCell>
+                      </TableRow>
+                      {(sourceMatches
+                        ? groupedStatuses[source]
+                        : matchingConnectors
+                      ).map((ccPairsIndexingStatus) => (
+                        <ConnectorRow
+                          key={ccPairsIndexingStatus.cc_pair_id}
+                          ccPairsIndexingStatus={ccPairsIndexingStatus}
+                        />
+                      ))}
+                    </>
+                  )}
+                </React.Fragment>
+              );
+            }
+            return null;
+          })}
+          {/* {sortedSources.map((source, ind) => {
             if (source.toLowerCase().includes(searchTerm.toLowerCase())) {
               return (
                 <React.Fragment key={ind}>
@@ -437,7 +512,7 @@ export function CCPairIndexingStatusTable({
                 </React.Fragment>
               );
             }
-          })}
+          })} */}
         </TableBody>
 
         {/* Padding between table and bottom of page */}
