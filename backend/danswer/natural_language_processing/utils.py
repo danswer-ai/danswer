@@ -80,6 +80,9 @@ def _check_tokenizer_cache(tokenizer_name: str) -> BaseTokenizer:
     global _TOKENIZER_CACHE
 
     if tokenizer_name not in _TOKENIZER_CACHE:
+        if tokenizer_name == "openai":
+            _TOKENIZER_CACHE[tokenizer_name] = TiktokenTokenizer("cl100k_base")
+            return _TOKENIZER_CACHE[tokenizer_name]
         try:
             logger.debug(f"Initializing HuggingFaceTokenizer for: {tokenizer_name}")
             _TOKENIZER_CACHE[tokenizer_name] = HuggingFaceTokenizer(tokenizer_name)
@@ -112,12 +115,9 @@ def get_tokenizer(model_name: str | None, provider_type: str | None) -> BaseToke
     if provider_type:
         if provider_type.lower() == "openai":
             # Used across ada and text-embedding-3 models
-            return TiktokenTokenizer("cl100k_base")
-        if provider_type.lower() == "cohere":
-            # Both the base and light version use this same tokenizer
-            return _check_tokenizer_cache("cohere/cohere-embed-english-v3.0")
+            return _check_tokenizer_cache("openai")
 
-    # If we are given a cloud provider_type that isn't OpenAI or Cohere, we default to trying to use the model_name
+    # If we are given a cloud provider_type that isn't OpenAI, we default to trying to use the model_name
     if not model_name:
         raise ValueError("Need to provide a model_name or provider_type")
 

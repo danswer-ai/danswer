@@ -1,3 +1,4 @@
+import csv
 import os
 import tempfile
 import time
@@ -22,7 +23,7 @@ def unzip_and_get_file_paths(zip_file_path: str) -> list[str]:
 
     file_paths = []
     for root, _, files in os.walk(persistent_dir):
-        for file in files:
+        for file in sorted(files):
             file_paths.append(os.path.join(root, file))
 
     return file_paths
@@ -82,6 +83,13 @@ def manage_file_upload(zip_file_path: str, env_name: str) -> None:
             break
 
         time.sleep(10)
+
+    problem_file_csv_path = os.path.join(current_dir, "problem_files.csv")
+    with open(problem_file_csv_path, "w", newline="") as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(["Problematic File Paths"])
+        for problem_file in problem_file_list:
+            csvwriter.writerow([problem_file])
 
     for file in unzipped_file_paths:
         os.unlink(file)
