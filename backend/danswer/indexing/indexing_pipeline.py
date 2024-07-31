@@ -165,6 +165,11 @@ def index_doc_batch(
         if not ignore_time_skip
         else documents
     )
+
+    # No docs to update either because the batch is empty or every doc was already indexed
+    if not updatable_docs:
+        return 0, 0
+
     updatable_ids = [doc.id for doc in updatable_docs]
 
     # Create records in the source of truth about these documents,
@@ -184,8 +189,12 @@ def index_doc_batch(
     ]
 
     logger.debug("Starting embedding")
-    chunks_with_embeddings = embedder.embed_chunks(
-        chunks=chunks,
+    chunks_with_embeddings = (
+        embedder.embed_chunks(
+            chunks=chunks,
+        )
+        if chunks
+        else []
     )
 
     # Acquires a lock on the documents so that no other process can modify them
