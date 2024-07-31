@@ -54,7 +54,7 @@ def upload_test_files(zip_file_path: str, env_name: str) -> None:
 def manage_file_upload(zip_file_path: str, env_name: str) -> None:
     unzipped_file_paths = unzip_and_get_file_paths(zip_file_path)
     total_file_count = len(unzipped_file_paths)
-    problem_file_list = []
+    problem_file_list: list[str] = []
 
     while True:
         doc_count, ongoing_index_attempts = check_indexing_status(env_name)
