@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Any
 
 from celery.signals import beat_init
 from celery.signals import worker_init
@@ -101,12 +102,12 @@ def autogenerate_usage_report_task() -> None:
 
 
 @beat_init.connect
-def on_beat_init(sender, **kwargs):
+def on_beat_init(sender: Any, **kwargs: Any) -> None:
     init_sqlalchemy_engine(POSTGRES_CELERY_BEAT_APP_NAME)
 
 
 @worker_init.connect
-def on_worker_init(sender, **kwargs):
+def on_worker_init(sender: Any, **kwargs: Any) -> None:
     init_sqlalchemy_engine(POSTGRES_CELERY_WORKER_APP_NAME)
 
 

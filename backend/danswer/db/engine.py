@@ -58,7 +58,7 @@ def build_connection_string(
     host: str = POSTGRES_HOST,
     port: str = POSTGRES_PORT,
     db: str = POSTGRES_DB,
-    app_name: str = None,
+    app_name: str | None = None,
 ) -> str:
     if app_name:
         return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}?application_name={app_name}"
@@ -66,7 +66,7 @@ def build_connection_string(
     return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}"
 
 
-def init_sqlalchemy_engine(app_name: str):
+def init_sqlalchemy_engine(app_name: str) -> None:
     global POSTGRES_APP_NAME
     POSTGRES_APP_NAME = app_name
 
@@ -140,7 +140,7 @@ async def warm_up_connections(
         await async_conn.close()
 
 
-def get_session_factory():
+def get_session_factory() -> sessionmaker[Session]:
     global SessionFactory
     if SessionFactory is None:
         SessionFactory = sessionmaker(bind=get_sqlalchemy_engine())
