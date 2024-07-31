@@ -425,7 +425,7 @@ export function AssistantEditor({
               <div className="pb-6">
                 <TextFormField
                   name="name"
-                  value={values.name}
+                  value={values["name"]}
                   tooltip="Used to identify the Assistant in the UI."
                   label="Name"
                   disabled={isUpdate}
