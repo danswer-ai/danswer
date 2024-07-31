@@ -129,10 +129,8 @@ def index_doc_batch(
     # already be no documents that are empty.
     documents_to_process = []
     for document in documents:
-        if (
-            not document.title
-            or not document.title.strip()
-            and not any(section.text.strip() for section in document.sections)
+        if (not document.title or not document.title.strip()) and not any(
+            section.text.strip() for section in document.sections
         ):
             logger.warning(
                 f"Skipping document with ID {document.id} as it has neither title nor content"
