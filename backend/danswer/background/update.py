@@ -17,6 +17,7 @@ from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.app_configs import NUM_SECONDARY_INDEXING_WORKERS
+from danswer.configs.constants import POSTGRES_INDEXER_APP_NAME
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
 from danswer.db.embedding_model import get_current_db_embedding_model
@@ -419,7 +420,7 @@ def update_loop(
 
 def update__main() -> None:
     set_is_ee_based_on_env_variable()
-    init_sqlalchemy_engine("danswer_indexing")
+    init_sqlalchemy_engine(POSTGRES_INDEXER_APP_NAME)
 
     logger.info("Starting Indexing Loop")
     update_loop()
