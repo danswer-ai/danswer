@@ -537,10 +537,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         )
         files_attachment_content: list = []
 
+        max_size = os.environ.get("CONFLUENCE_MAX_ATTACHMENT_SIZE", 1 * 1024 * 1024)
         try:
-            attachments_container = get_attachments_from_content(
-                page_id, start=0, limit=500
-            )
+            attachments_container = get_attachments_from_content(page_id, start=0, limit=500)
             for attachment in attachments_container["results"]:
                 if attachment["metadata"]["mediaType"] in [
                     "image/jpeg",
@@ -551,17 +550,17 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     "video/quicktime",
                 ]:
                     continue
-
                 if attachment["title"] not in files_in_used:
                     continue
-
                 download_link = confluence_client.url + attachment["_links"]["download"]
+                response = confluence_client._session.head(download_link)  # Use HEAD to get headers only
+                file_size = int(response.headers.get("Content-Length", 0))
+                if file_size > max_size:
+                    logger.info(f"Skipping attachment {attachment['title']} as it exceeds the size limit of {max_size} bytes")
+                    continue
                 response = confluence_client._session.get(download_link)
-
                 if response.status_code == 200:
-                    extract = extract_file_text(
-                        attachment["title"], io.BytesIO(response.content), False
-                    )
+                    extract = extract_file_text(attachment["title"], io.BytesIO(response.content), False)
                     files_attachment_content.append(extract)
 
         except Exception as e:
