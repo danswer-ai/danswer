@@ -637,7 +637,10 @@ def stream_chat_message_objects(
                     if reference_db_search_docs is not None:
                         llm_indices = relevant_documents_to_indices(
                             relevance_chunks=relevant_chunks,
-                            inference_sections=reference_db_search_docs,
+                            inference_sections=[
+                                translate_db_search_doc_to_server_search_doc(doc)
+                                for doc in reference_db_search_docs
+                            ],
                         )
 
                         if dropped_indices:
@@ -646,7 +649,9 @@ def stream_chat_message_objects(
                                 search_docs=reference_db_search_docs,
                                 dropped_indices=dropped_indices,
                             )
-
+                        print("RELEVANT INDICES")
+                        print(relevant_chunks)
+                        print(llm_indices)
                         yield LLMRelevanceFilterResponse(
                             relevant_chunk_indices=llm_indices
                         )

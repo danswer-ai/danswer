@@ -42,18 +42,14 @@ from danswer.one_shot_answer.qa_utils import combine_message_thread
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
-from danswer.search.models import SearchDoc
 from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.search.utils import dedupe_documents
-from danswer.search.utils import drop_llm_indices
-from danswer.search.utils import relevant_documents_to_indices
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephrase
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.utils import get_json_line
 from danswer.tools.force import ForceUseTool
 from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
-from danswer.tools.search.search_tool import SEARCH_EVALUATION_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
 from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
@@ -271,45 +267,18 @@ def stream_answer_objects(
                 yield packet.response
 
             elif packet.id == SECTION_RELEVANCE_LIST_ID:
-                relevant_chunks = packet.response
-                print("CHUNKS ARE")
-                print(relevant_chunks)
+                document_based_response = {}
+                print("gathering evlaution from serach")
 
-                if (
-                    reference_db_search_docs is not None
-                    and isinstance(reference_db_search_docs, list)
-                    and all(
-                        isinstance(doc, SearchDoc) for doc in reference_db_search_docs
-                    )
-                ):
-                    llm_indices = relevant_documents_to_indices(
-                        relevance_chunks=relevant_chunks,
-                        inference_sections=reference_db_search_docs,
-                    )
+                for evaluation in packet.response:
+                    document_based_response[
+                        evaluation.document_id
+                    ] = evaluation.relevance
 
-                    if dropped_inds:
-                        llm_indices = drop_llm_indices(
-                            llm_indices=llm_indices,
-                            search_docs=reference_db_search_docs,
-                            dropped_indices=dropped_inds,
-                        )
-                    yield LLMRelevanceFilterResponse(relevant_chunk_indices=llm_indices)
-
-            # elif packet.id == SECTION_RELEVANCE_LIST_ID:
-            #     chunk_indices = packet.response
-
-            #     if reference_db_search_docs is not None and dropped_inds:
-            #         chunk_indices = drop_llm_indices(
-            #             llm_indices=chunk_indices,
-            #             search_docs=reference_db_search_docs,
-            #             dropped_indices=dropped_inds,
-            #         )
-
-            #     yield LLMRelevanceFilterResponse(relevant_chunk_indices=packet.response)
-
-            elif packet.id == SEARCH_EVALUATION_ID:
+                print("DOC RESPONSE")
+                print(document_based_response)
                 evaluation_response = LLMRelevanceSummaryResponse(
-                    relevance_summaries=packet.response
+                    relevance_summaries=document_based_response
                 )
                 if reference_db_search_docs is not None:
                     update_search_docs_table_with_relevance(

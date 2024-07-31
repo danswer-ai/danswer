@@ -1,3 +1,5 @@
+from typing import cast
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -9,7 +11,9 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTA
 from danswer.danswerbot.slack.handlers.handle_standard_answers import (
     oneoff_standard_answers,
 )
+from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.engine import get_session
+from danswer.db.models import SearchDoc
 from danswer.db.models import User
 from danswer.db.persona import get_persona_by_id
 from danswer.llm.answering.prompts.citations_prompt import (
@@ -111,7 +115,11 @@ def handle_search_request(
         deduped_docs, dropped_inds = dedupe_documents(top_docs)
 
     llm_indices = relevant_documents_to_indices(
-        relevance_chunks=relevant_chunks, inference_sections=deduped_docs
+        relevance_chunks=relevant_chunks,
+        inference_sections=[
+            translate_db_search_doc_to_server_search_doc(cast(SearchDoc, doc))
+            for doc in deduped_docs
+        ],
     )
 
     if dropped_inds:

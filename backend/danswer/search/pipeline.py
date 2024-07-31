@@ -6,7 +6,6 @@ from typing import cast
 from sqlalchemy.orm import Session
 
 from danswer.chat.models import DocumentRelevance
-from danswer.chat.models import RelevanceChunk
 from danswer.configs.chat_configs import DISABLE_AGENTIC_SEARCH
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
@@ -347,48 +346,38 @@ class SearchPipeline:
 
     @property
     def relevant_section_indices(self) -> list[DocumentRelevance]:
+        if self._relevant_section_indices is not None:
+            return self._relevant_section_indices
+
         if self.search_query.evaluation_type == LLMEvaluationType.SKIP:
             raise ValueError(
                 "You disabled llm evaluation and thus should not be asking ofr relevant section indices!"
             )
 
-        if self._relevant_section_indices is not None:
-            return self._relevant_section_indices
+        if self.search_query.evaluation_type == LLMEvaluationType.AGENTIC:
+            if DISABLE_AGENTIC_SEARCH:
+                raise ValueError(
+                    "Agentic search operation called while DISABLE_AGENTIC_SEARCH is toggled"
+                )
+
+            sections = self.final_context_sections
+            functions = [
+                FunctionCall(
+                    evaluate_inference_section,
+                    (section, self.search_query.query, self.llm),
+                )
+                for section in sections
+            ]
+
+            results = run_functions_in_parallel(function_calls=functions)
+
+            response = [value for value in results.values()]
+            return response
 
         self._relevant_section_indices = next(
             cast(Iterator[list[DocumentRelevance]], self._postprocessing_generator)
         )
-
-        print(self._relevant_section_indices)
-
         return self._relevant_section_indices
-
-    @property
-    def relevance_summaries(self) -> dict[str, RelevanceChunk]:
-        if DISABLE_AGENTIC_SEARCH:
-            raise ValueError(
-                "Agentic saerch operation called while DISABLE_AGENTIC_SEARCH is toggled"
-            )
-        if len(self.reranked_sections) == 0:
-            logger.warning(
-                "No sections found in agentic search evalution. Returning empty dict."
-            )
-            return {}
-
-        sections = self.final_context_sections
-        functions = [
-            FunctionCall(
-                evaluate_inference_section, (section, self.search_query.query, self.llm)
-            )
-            for section in sections
-        ]
-
-        results = run_functions_in_parallel(function_calls=functions)
-
-        response = {
-            next(iter(value)): value[next(iter(value))] for value in results.values()
-        }
-        return response
 
     @property
     def section_relevance_list(self) -> list[bool]:

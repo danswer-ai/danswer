@@ -279,11 +279,16 @@ class SearchTool(Tool):
             ),
         )
 
-        yield ToolResponse(
-            id=SECTION_RELEVANCE_LIST_ID,
-            response=search_pipeline.relevant_section_indices,
-        )
-
+        if self.llm_doc_eval and not DISABLE_AGENTIC_SEARCH:
+            yield ToolResponse(
+                id=SECTION_RELEVANCE_LIST_ID,
+                response=search_pipeline.relevant_section_indices,
+            )
+        else:
+            yield ToolResponse(
+                id=SECTION_RELEVANCE_LIST_ID,
+                response=search_pipeline.relevant_section_indices,
+            )
         final_context_sections = prune_sections(
             sections=search_pipeline.final_context_sections,
             section_relevance_list=search_pipeline.section_relevance_list,
@@ -300,11 +305,6 @@ class SearchTool(Tool):
         ]
 
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
-
-        if self.llm_doc_eval and not DISABLE_AGENTIC_SEARCH:
-            yield ToolResponse(
-                id=SEARCH_EVALUATION_ID, response=search_pipeline.relevance_summaries
-            )
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         final_docs = cast(

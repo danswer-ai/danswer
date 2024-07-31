@@ -5,7 +5,6 @@ from typing import cast
 import numpy
 
 from danswer.chat.models import DocumentRelevance
-from danswer.chat.models import RelevanceChunk
 from danswer.configs.app_configs import BLURB_SIZE
 from danswer.configs.constants import RETURN_SEPARATOR
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
@@ -297,14 +296,14 @@ def search_postprocessing(
         if llm_filter_task_id
         else []
     )
-    print(llm_selected_section_ids)
-    print("I AM HEREEEE")
+    print("evaluation")
 
     yield [
         DocumentRelevance(
             document_id=section.center_chunk.document_id,
             chunk_id=section.center_chunk.chunk_id,
-            relevance=RelevanceChunk(relevant=True, content=""),
+            relevant=True,
+            content="",
         )
         for section in (reranked_sections or retrieved_sections)
         if section.center_chunk.unique_id in llm_selected_section_ids

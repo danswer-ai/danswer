@@ -49,7 +49,7 @@ def relevant_sections_to_indices(
             if (
                 section.center_chunk.document_id == relevance_chunk.document_id
                 and section.center_chunk.chunk_id == relevance_chunk.chunk_id
-                and relevance_chunk.relevance.relevant
+                and relevance_chunk.relevant
             ):
                 relevant_indices.append(index)
                 break
@@ -57,7 +57,7 @@ def relevant_sections_to_indices(
 
 
 def relevant_documents_to_indices(
-    relevance_chunks: list[DocumentRelevance], inference_sections: list[DBSearchDoc]
+    relevance_chunks: list[DocumentRelevance], inference_sections: list[SearchDoc]
 ) -> list[int]:
     relevant_indices = []
     for index, section in enumerate(inference_sections):
@@ -65,17 +65,12 @@ def relevant_documents_to_indices(
             if (
                 section.document_id == relevance_chunk.document_id
                 and section.chunk_ind == relevance_chunk.chunk_id
-                and relevance_chunk.relevance.relevant
+                and relevance_chunk.relevant
             ):
                 relevant_indices.append(index)
                 break
 
     return relevant_indices
-
-
-# danswer/search/utils.py:57: error: "object" has no attribute "document_id"  [attr-defined]
-# danswer/search/utils.py:58: error: "object" has no attribute "chunk_ind"  [attr-defined]
-# Found 2 errors in 1 file (checked 525 source files)
 
 
 def drop_llm_indices(
