@@ -13,6 +13,7 @@ from danswer.utils.logger import setup_logger
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.enums import EmbedTextType
+from shared_configs.model_server_models import Embedding
 from shared_configs.model_server_models import EmbedRequest
 from shared_configs.model_server_models import EmbedResponse
 from shared_configs.model_server_models import IntentRequest
@@ -73,10 +74,9 @@ class EmbeddingModel:
         texts: list[str],
         text_type: EmbedTextType,
         batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
-    ) -> list[list[float] | None]:
-        if not texts:
-            logger.warning("No texts to be embedded")
-            return []
+    ) -> list[Embedding]:
+        if not texts or not all(texts):
+            raise ValueError(f"Empty or missing text for embedding: {texts}")
 
         if self.retrim_content:
             # This is applied during indexing as a catchall for overly long titles (or other uncapped fields)
@@ -116,13 +116,12 @@ class EmbeddingModel:
                 raise HTTPError(f"HTTP error occurred: {error_detail}") from e
             except requests.RequestException as e:
                 raise HTTPError(f"Request failed: {str(e)}") from e
-            EmbedResponse(**response.json()).embeddings
 
             return EmbedResponse(**response.json()).embeddings
 
         # Batching for local embedding
         text_batches = batch_list(texts, batch_size)
-        embeddings: list[list[float] | None] = []
+        embeddings: list[Embedding] = []
         logger.debug(
             f"Encoding {len(texts)} texts in {len(text_batches)} batches for local model"
         )

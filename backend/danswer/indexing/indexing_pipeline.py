@@ -124,10 +124,15 @@ def index_doc_batch(
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
     # Skip documents that have neither title nor content
+    # If the document doesn't have either, then there is no useful information in it
+    # This is again verified later in the pipeline after chunking but at that point there should
+    # already be no documents that are empty.
     documents_to_process = []
     for document in documents:
-        if not document.title and not any(
-            section.text.strip() for section in document.sections
+        if (
+            not document.title
+            or not document.title.strip()
+            and not any(section.text.strip() for section in document.sections)
         ):
             logger.warning(
                 f"Skipping document with ID {document.id} as it has neither title nor content"
