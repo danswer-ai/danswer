@@ -26,6 +26,7 @@ import { FiActivity, FiBarChart2 } from "react-icons/fi";
 import { UserDropdown } from "../UserDropdown";
 import { User } from "@/lib/types";
 import { usePathname } from "next/navigation";
+import { PencilCircle } from "@phosphor-icons/react";
 
 export function ClientLayout({
   user,
@@ -143,6 +144,15 @@ export function ClientLayout({
                       </div>
                     ),
                     link: "/admin/standard-answer",
+                  },
+                  {
+                    name: (
+                      <div className="flex">
+                        <PencilCircle size={18} />
+                        <div className="ml-1">Prompt Library</div>
+                      </div>
+                    ),
+                    link: "/admin/prompt-library",
                   },
                 ],
               },
