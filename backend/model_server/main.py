@@ -1,6 +1,9 @@
+import asyncio
 import os
+import shutil
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import torch
 import uvicorn
@@ -14,9 +17,6 @@ from model_server.custom_models import warm_up_intent_model
 from model_server.encoders import router as encoders_router
 from model_server.encoders import warm_up_cross_encoders
 from model_server.management_endpoints import router as management_router
-from shared_configs.configs import ENABLE_RERANKING_ASYNC_FLOW
-from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
-from shared_configs.configs import INDEXING_ONLY
 from shared_configs.configs import MIN_THREADS_ML_MODELS
 from shared_configs.configs import MODEL_SERVER_ALLOWED_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
@@ -29,6 +29,24 @@ transformer_logging.set_verbosity_error()
 logger = setup_logger()
 
 
+async def manage_huggingface_cache():
+    temp_hf_cache = Path("/root/.cache/temp_huggingface")
+    hf_cache = Path("/root/.cache/huggingface")
+    if temp_hf_cache.is_dir() and any(temp_hf_cache.iterdir()):
+        hf_cache.mkdir(parents=True, exist_ok=True)
+        for item in temp_hf_cache.iterdir():
+            if item.is_dir():
+                await asyncio.to_thread(
+                    shutil.copytree, item, hf_cache / item.name, dirs_exist_ok=True
+                )
+            else:
+                await asyncio.to_thread(shutil.copy2, item, hf_cache)
+        await asyncio.to_thread(shutil.rmtree, temp_hf_cache)
+        logger.info("Copied contents of temp_huggingface and deleted the directory.")
+    else:
+        logger.info("Source directory is empty or does not exist. Skipping copy.")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     if torch.cuda.is_available():
@@ -36,15 +54,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     else:
         logger.info("GPU is not available")
 
+    await manage_huggingface_cache()
+
     torch.set_num_threads(max(MIN_THREADS_ML_MODELS, torch.get_num_threads()))
     logger.info(f"Torch Threads: {torch.get_num_threads()}")
-
-    if not INDEXING_ONLY:
-        warm_up_intent_model()
-        if ENABLE_RERANKING_REAL_TIME_FLOW or ENABLE_RERANKING_ASYNC_FLOW:
-            warm_up_cross_encoders()
-    else:
-        logger.info("This model server should only run document indexing.")
+    warm_up_intent_model()
+    warm_up_cross_encoders()
 
     yield
 
