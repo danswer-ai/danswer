@@ -33,7 +33,9 @@ logger = setup_logger()
 
 class IndexingPipelineProtocol(Protocol):
     def __call__(
-        self, documents: list[Document], index_attempt_metadata: IndexAttemptMetadata
+        self,
+        document_batch: list[Document],
+        index_attempt_metadata: IndexAttemptMetadata,
     ) -> tuple[int, int]:
         ...
 
