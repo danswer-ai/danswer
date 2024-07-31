@@ -108,7 +108,7 @@ def upsert_ingestion_doc(
     )
 
     new_doc, chunks = indexing_pipeline(
-        documents=[document],
+        document_batch=[document],
         index_attempt_metadata=IndexAttemptMetadata(
             connector_id=cc_pair.connector_id,
             credential_id=cc_pair.credential_id,
@@ -146,7 +146,7 @@ def upsert_ingestion_doc(
         )
 
         sec_ind_pipeline(
-            documents=[document],
+            document_batch=[document],
             index_attempt_metadata=IndexAttemptMetadata(
                 connector_id=cc_pair.connector_id,
                 credential_id=cc_pair.credential_id,
