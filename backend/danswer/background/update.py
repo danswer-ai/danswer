@@ -23,6 +23,7 @@ from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
@@ -419,6 +420,7 @@ def update_loop(
 
 def update__main() -> None:
     set_is_ee_based_on_env_variable()
+    init_sqlalchemy_engine("danswer_indexing")
 
     logger.info("Starting Indexing Loop")
     update_loop()

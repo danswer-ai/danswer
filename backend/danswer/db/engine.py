@@ -25,6 +25,8 @@ logger = setup_logger()
 SYNC_DB_API = "psycopg2"
 ASYNC_DB_API = "asyncpg"
 
+POSTGRES_APP_NAME = "danswer_unknown"  # helps to diagnose open connections in postgres
+
 # global so we don't create more than one engine per process
 # outside of being best practice, this is needed so we can properly pool
 # connections and not create a new pool on every request
@@ -51,14 +53,22 @@ def build_connection_string(
     host: str = POSTGRES_HOST,
     port: str = POSTGRES_PORT,
     db: str = POSTGRES_DB,
+    app_name: str = POSTGRES_APP_NAME,
 ) -> str:
-    return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}"
+    return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}?application_name={app_name}"
+
+
+def init_sqlalchemy_engine(app_name: str):
+    global POSTGRES_APP_NAME
+    POSTGRES_APP_NAME = app_name
 
 
 def get_sqlalchemy_engine() -> Engine:
     global _SYNC_ENGINE
     if _SYNC_ENGINE is None:
-        connection_string = build_connection_string(db_api=SYNC_DB_API)
+        connection_string = build_connection_string(
+            db_api=SYNC_DB_API, app_name=POSTGRES_APP_NAME + "_sync"
+        )
         _SYNC_ENGINE = create_engine(connection_string, pool_size=40, max_overflow=10)
     return _SYNC_ENGINE
 
@@ -66,7 +76,9 @@ def get_sqlalchemy_engine() -> Engine:
 def get_sqlalchemy_async_engine() -> AsyncEngine:
     global _ASYNC_ENGINE
     if _ASYNC_ENGINE is None:
-        connection_string = build_connection_string()
+        connection_string = build_connection_string(
+            app_name=POSTGRES_APP_NAME + "_async"
+        )
         _ASYNC_ENGINE = create_async_engine(
             connection_string, pool_size=40, max_overflow=10
         )

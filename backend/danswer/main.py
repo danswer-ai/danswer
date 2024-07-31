@@ -42,6 +42,7 @@ from danswer.db.credentials import create_initial_public_credential
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
@@ -154,6 +155,7 @@ def include_router_with_global_prefix_prepended(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
+    init_sqlalchemy_engine("danswer_web")
     engine = get_sqlalchemy_engine()
 
     verify_auth = fetch_versioned_implementation(
