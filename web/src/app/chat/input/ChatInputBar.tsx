@@ -131,19 +131,11 @@ export function ChatInputBar({
     setTabbingIconIndex(0);
   };
 
-  // Update selected persona
-  const updateCurrentPersona = (persona: Persona) => {
-    // onSetSelectedAssistant(persona.id == selectedAssistant.id ? null : persona);
-    hideSuggestions();
-    setMessage("");
-  };
-
   const updateInputPrompt = (prompt: InputPrompt) => {
     hidePrompts();
-    setMessage(prompt.content);
+    setMessage(prompt.content.trim());
   };
 
-  // Click out of assistant suggestions
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -161,10 +153,6 @@ export function ChatInputBar({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-
-
-
 
   // Update selected persona
   const updatedTaggedAssistant = (assistant: Persona) => {
@@ -231,43 +219,38 @@ export function ChatInputBar({
   const [tabbingIconIndex, setTabbingIconIndex] = useState(0);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    console.log("HIII");
+    console.log(showSuggestions || showPrompts);
     if (
-      showSuggestions &&
-      assistantTagOptions.length > 0 &&
       ((showSuggestions && assistantTagOptions.length > 0) || showPrompts) &&
       (e.key === "Tab" || e.key == "Enter")
     ) {
       e.preventDefault();
-      if (tabbingIconIndex == assistantTagOptions.length) {
-        window.open("/assistants/new", "_blank");
-        if (
-          (tabbingIconIndex == assistantTagOptions.length && showSuggestions) ||
-          (tabbingIconIndex == filteredPrompts.length && showPrompts)
-        ) {
-          if (showSuggestions) {
-            window.open("/assistants/new", "_blank");
-          } else {
-            window.open("/admin/prompt-library");
-          }
-          hideSuggestions();
-          hidePrompts();
-          setMessage("");
-        } else {
-          if (showPrompts) {
-            const uppity =
-              filteredPrompts[tabbingIconIndex >= 0 ? tabbingIconIndex : 0];
-            updateInputPrompt(uppity);
-          } else {
-            const option =
-              assistantTagOptions[tabbingIconIndex >= 0 ? tabbingIconIndex : 0];
 
-            updateCurrentPersona(option);
-          }
+      if (
+        (tabbingIconIndex == assistantTagOptions.length && showSuggestions) ||
+        (tabbingIconIndex == filteredPrompts.length && showPrompts)
+      ) {
+        if (showPrompts) {
+          window.open("/admin/prompt-library", "_blank");
+        } else {
+          window.open("/assistants/new", "_blank");
         }
+      } else {
+        if (showPrompts) {
+          const uppity =
+            filteredPrompts[tabbingIconIndex >= 0 ? tabbingIconIndex : 0];
+          updateInputPrompt(uppity);
+        } else {
+          const option =
+            assistantTagOptions[tabbingIconIndex >= 0 ? tabbingIconIndex : 0];
+
+          setAlternativeAssistant(option);
+          setMessage("");
+        }
+        hideSuggestions();
+        hidePrompts();
       }
-    }
-    if (!showSuggestions) {
-      return;
     }
 
     if (e.key === "ArrowDown") {
@@ -309,8 +292,9 @@ export function ChatInputBar({
                 {assistantTagOptions.map((currentAssistant, index) => (
                   <button
                     key={index}
-                    className={`px-2 ${tabbingIconIndex == index && "bg-hover-lightish"
-                      } rounded  rounded-lg content-start flex gap-x-1 py-2 w-full  hover:bg-hover-lightish cursor-pointer`}
+                    className={`px-2 ${
+                      tabbingIconIndex == index && "bg-hover-lightish"
+                    } rounded  rounded-lg content-start flex gap-x-1 py-2 w-full  hover:bg-hover-lightish cursor-pointer`}
                     onClick={() => {
                       updatedTaggedAssistant(currentAssistant);
                     }}
@@ -327,9 +311,9 @@ export function ChatInputBar({
                 <a
                   key={assistantTagOptions.length}
                   target="_blank"
-                  className={`${tabbingIconIndex == assistantTagOptions.length &&
-                    "bg-hover"
-                    } rounded rounded-lg px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-lightish cursor-pointer"`}
+                  className={`${
+                    tabbingIconIndex == assistantTagOptions.length && "bg-hover"
+                  } rounded rounded-lg px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-lightish cursor-pointer"`}
                   href="/assistants/new"
                 >
                   <FiPlus size={17} />
@@ -484,10 +468,11 @@ export function ChatInputBar({
                 rounded-lg
                 border-0
                 bg-background-100
-                ${textAreaRef.current &&
+                ${
+                  textAreaRef.current &&
                   textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT
-                  ? "overflow-y-auto mt-2"
-                  : ""
+                    ? "overflow-y-auto mt-2"
+                    : ""
                 }
                 whitespace-normal
                 break-word
@@ -557,7 +542,7 @@ export function ChatInputBar({
                       llmOverrideManager.llmOverride.modelName ||
                       (selectedAssistant
                         ? selectedAssistant.llm_model_version_override ||
-                        llmName
+                          llmName
                         : llmName)
                     }
                     close={close}
@@ -568,7 +553,6 @@ export function ChatInputBar({
                   />
                 )}
                 position="top"
-              // flexPriority="second"
               >
                 <ChatInputOption
                   flexPriority="second"
@@ -576,12 +560,12 @@ export function ChatInputBar({
                     settings?.isMobile
                       ? undefined
                       : getDisplayNameForModel(
-                        llmOverrideManager.llmOverride.modelName ||
-                        (selectedAssistant
-                          ? selectedAssistant.llm_model_version_override ||
-                          llmName
-                          : llmName)
-                      )
+                          llmOverrideManager.llmOverride.modelName ||
+                            (selectedAssistant
+                              ? selectedAssistant.llm_model_version_override ||
+                                llmName
+                              : llmName)
+                        )
                   }
                   Icon={CpuIconSkeleton}
                 />
@@ -622,8 +606,9 @@ export function ChatInputBar({
               >
                 <SendIcon
                   size={28}
-                  className={`text-emphasis text-white p-1 rounded-full ${message ? "bg-background-800" : "bg-[#D7D7D7]"
-                    }`}
+                  className={`text-emphasis text-white p-1 rounded-full ${
+                    message ? "bg-background-800" : "bg-[#D7D7D7]"
+                  }`}
                 />
               </div>
             </div>
