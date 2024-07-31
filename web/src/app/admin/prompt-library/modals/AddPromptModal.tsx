@@ -13,6 +13,26 @@ const AddPromptSchema = Yup.object().shape({
 });
 
 const AddPromptModal = ({ onClose, onSubmit }: AddPromptModalProps) => {
+  const defaultPrompts = [
+    {
+      title: "Email help",
+      prompt: "Write a professional email addressing the following points:",
+    },
+    {
+      title: "Code explanation",
+      prompt: "Explain the following code snippet in simple terms:",
+    },
+    {
+      title: "Product description",
+      prompt: "Write a compelling product description for the following item:",
+    },
+    {
+      title: "Troubleshooting steps",
+      prompt:
+        "Provide step-by-step troubleshooting instructions for the following issue:",
+    },
+  ];
+
   return (
     <ModalWrapper onClose={onClose} modalClassName="max-w-xl">
       <Formik
@@ -30,13 +50,13 @@ const AddPromptModal = ({ onClose, onSubmit }: AddPromptModalProps) => {
           onClose();
         }}
       >
-        {({ isSubmitting }) => (
+        {({ isSubmitting, setFieldValue }) => (
           <Form>
             <h2 className="text-2xl gap-x-2 text-emphasis font-bold mb-3 flex items-center">
               <BookstackIcon size={20} />
               Add prompt
             </h2>
-            <p className="hover:underline text-sm mb-2 cursor-pointer">
+            <p className="underline text-sm mb-2 cursor-pointer">
               Read docs for more info
             </p>
 
@@ -81,8 +101,29 @@ const AddPromptModal = ({ onClose, onSubmit }: AddPromptModalProps) => {
                   className="text-red-500 text-sm mt-1"
                 />
               </div>
+              <div className="text-xs">
+                <label
+                  htmlFor="default"
+                  className="block text-sm font-medium mb-1"
+                >
+                  Select a Default
+                </label>
+                <div className="w-full flex flex-wrap gap-2">
+                  {defaultPrompts.map((defaultPrompt, index) => (
+                    <Button
+                      key={index}
+                      type="button"
+                      onClick={() => {
+                        setFieldValue("title", defaultPrompt.title);
+                        setFieldValue("prompt", defaultPrompt.prompt);
+                      }}
+                    >
+                      {defaultPrompt.title}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
-
             <div className="mt-6">
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 Add prompt

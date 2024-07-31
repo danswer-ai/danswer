@@ -79,7 +79,6 @@ export function ChatInputBar({
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
   chatSessionId?: number;
 }) {
-  // handle re-sizing of the text area
   useEffect(() => {
     const textarea = textAreaRef.current;
     if (textarea) {
@@ -133,7 +132,7 @@ export function ChatInputBar({
 
   const updateInputPrompt = (prompt: InputPrompt) => {
     hidePrompts();
-    setMessage(prompt.content.trim());
+    setMessage(`${prompt.content.trim()} `);
   };
 
   useEffect(() => {
@@ -154,7 +153,6 @@ export function ChatInputBar({
     };
   }, []);
 
-  // Update selected persona
   const updatedTaggedAssistant = (assistant: Persona) => {
     setAlternativeAssistant(
       assistant.id == selectedAssistant.id ? null : assistant
@@ -219,8 +217,6 @@ export function ChatInputBar({
   const [tabbingIconIndex, setTabbingIconIndex] = useState(0);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    console.log("HIII");
-    console.log(showSuggestions || showPrompts);
     if (
       ((showSuggestions && assistantTagOptions.length > 0) || showPrompts) &&
       (e.key === "Tab" || e.key == "Enter")
@@ -245,11 +241,8 @@ export function ChatInputBar({
           const option =
             assistantTagOptions[tabbingIconIndex >= 0 ? tabbingIconIndex : 0];
 
-          setAlternativeAssistant(option);
-          setMessage("");
+          updatedTaggedAssistant(option);
         }
-        hideSuggestions();
-        hidePrompts();
       }
     }
 

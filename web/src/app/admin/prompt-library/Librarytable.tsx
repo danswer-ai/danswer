@@ -178,7 +178,10 @@ export const PromptLibraryTable = ({
                   <TableCell>{item.content}</TableCell>
                   <TableCell>{item.active ? "Active" : "Inactive"}</TableCell>
                   <TableCell>
-                    <button onClick={() => handleDelete(item.id)}>
+                    <button
+                      className="cursor-pointer"
+                      onClick={() => handleDelete(item.id)}
+                    >
                       <TrashIcon size={20} />
                     </button>
                   </TableCell>

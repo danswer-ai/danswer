@@ -82,11 +82,12 @@ export function FilterDropdown({
         py-1.5 
         rounded-lg 
         border 
+        gap-x-2
         border-border
         cursor-pointer 
         hover:bg-hover-light`}
         >
-          {icon}
+          <div className="flex-none my-auto">{icon}</div>
           {selected.length === 0 ? (
             defaultDisplay
           ) : (
