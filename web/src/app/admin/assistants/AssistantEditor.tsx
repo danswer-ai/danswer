@@ -537,10 +537,7 @@ export function AssistantEditor({
                   <div className="mb-2 flex items-starts">
                     <div className="w-96">
                       <SelectorFormField
-                        defaultValue={
-                          values["llm_model_provider_override"] ||
-                          `Default (${defaultModelName})`
-                        }
+                        defaultValue={`Default (${defaultModelName})`}
                         name="llm_model_provider_override"
                         options={llmProviders.map((llmProvider) => ({
                           name: llmProvider.name,
@@ -563,9 +560,6 @@ export function AssistantEditor({
                     {values.llm_model_provider_override && (
                       <div className="w-96 ml-4">
                         <SelectorFormField
-                          defaultValue={
-                            values["llm_model_version_override"] || ""
-                          }
                           name="llm_model_version_override"
                           options={
                             modelOptionsByProvider.get(
