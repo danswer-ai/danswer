@@ -54,6 +54,9 @@ def upgrade() -> None:
         """
     )
 
+    # Delete attempts with null connector_credential_pair_id
+    op.execute("DELETE FROM index_attempt WHERE connector_credential_pair_id IS NULL")
+
     # Make the new connector_credential_pair_id column non-nullable
     op.alter_column("index_attempt", "connector_credential_pair_id", nullable=False)
 
