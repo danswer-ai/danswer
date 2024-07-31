@@ -321,10 +321,8 @@ async def process_embed_request(
 ) -> EmbedResponse:
     if not embed_request.texts:
         raise HTTPException(status_code=400, detail="No texts to be embedded")
-    elif any(not text.strip() for text in embed_request.texts):
-        raise ValueError(
-            "Empty strings or whitespace-only strings are not allowed for embedding."
-        )
+    elif not all(embed_request.texts):
+        raise ValueError("Empty strings are not allowed for embedding.")
 
     try:
         if embed_request.text_type == EmbedTextType.QUERY:
@@ -361,10 +359,8 @@ async def process_rerank_request(embed_request: RerankRequest) -> RerankResponse
         raise HTTPException(
             status_code=400, detail="Missing documents or query for reranking"
         )
-    if any(not doc.strip() for doc in embed_request.documents):
-        raise ValueError(
-            "Empty strings or whitespace-only strings are not allowed for reranking."
-        )
+    if not all(embed_request.documents):
+        raise ValueError("Empty documents cannot be reranked.")
 
     try:
         sim_scores = calc_sim_scores(
