@@ -47,7 +47,7 @@ export function AssistantTools({
   hovered?: boolean;
 }) {
   return (
-    <div className="relative text-xs flex text-subtle">
+    <div className="relative text-xs overflow-x-hidden flex text-subtle">
       <span
         className={`${assistant.tools.length > 0 && "py-1"}  ${!list ? "font-semibold" : "text-subtle text-sm"}`}
       >

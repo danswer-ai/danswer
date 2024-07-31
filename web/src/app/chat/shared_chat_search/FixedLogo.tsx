@@ -14,8 +14,8 @@ export default function FixedLogo() {
 
   return (
     <>
-      <div className="absolute flex z-40 left-2.5 top-2">
-        <div className="max-w-[200px] flex items-center gap-x-1 my-auto">
+      <div className="fixed pointer-events-none flex z-40 left-2.5 top-2">
+        <div className="max-w-[200px]  mobile:hidden flex items-center gap-x-1 my-auto">
           <div className="flex-none my-auto">
             <Logo height={24} width={24} />
           </div>
@@ -33,7 +33,7 @@ export default function FixedLogo() {
           </div>
         </div>
       </div>
-      <div className="absolute left-2.5 bottom-4">
+      <div className="mobile:hidden fixed left-2.5 bottom-4">
         <FiSidebar />
       </div>
     </>

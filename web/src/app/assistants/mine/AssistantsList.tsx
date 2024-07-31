@@ -287,7 +287,7 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
   return (
     <>
       {popup}
-      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
+      <div className="mx-auto mobile:w-[90%] desktop:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <AssistantsPageTitle>My Assistants</AssistantsPageTitle>
 
         <div className="grid grid-cols-2 gap-4 mt-3">

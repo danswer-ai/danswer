@@ -3,7 +3,6 @@
 import { User } from "@/lib/types";
 import Link from "next/link";
 import React, { useContext } from "react";
-import { FiMessageSquare, FiSearch } from "react-icons/fi";
 import { HeaderWrapper } from "./HeaderWrapper";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { UserDropdown } from "../UserDropdown";

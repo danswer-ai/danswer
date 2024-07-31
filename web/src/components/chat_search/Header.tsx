@@ -18,20 +18,19 @@ import { SettingsContext } from "../settings/SettingsProvider";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 
 export default function FunctionalHeader({
-  showSidebar,
   user,
   page,
   currentChatSession,
   setSharingModalVisible,
+  toggleSidebar,
 }: {
   page: pageType;
-  showSidebar: boolean;
   user: User | null;
   currentChatSession?: ChatSession | null | undefined;
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
+  toggleSidebar: () => void;
 }) {
   const combinedSettings = useContext(SettingsContext);
-  const settings = combinedSettings?.settings;
   const enterpriseSettings = combinedSettings?.enterpriseSettings;
 
   const commandSymbol = KeyboardSymbol();
@@ -60,12 +59,15 @@ export default function FunctionalHeader({
     };
   }, []);
   return (
-    <div className="pb-6 left-0 sticky top-0 z-10 w-full relative flex">
+    <div className="pb-6 left-0 sticky top-0 z-20 w-full relative flex">
       <div className="mt-2 mx-4 text-text-700 flex w-full">
-        <div className="absolute z-[100] my-auto flex items-center text-xl font-bold">
-          <div className="pt-[2px] invisible mb-auto">
+        <div className="absolute  z-[100] my-auto flex items-center text-xl font-bold">
+          <button
+            onClick={() => toggleSidebar()}
+            className="pt-[2px] desktop:invisible mb-auto"
+          >
             <FiSidebar size={20} />
-          </div>
+          </button>
           <div className="invisible break-words inline-block w-fit ml-2 text-text-700 text-xl">
             <div className="max-w-[200px]">
               {enterpriseSettings && enterpriseSettings.application_name ? (
@@ -86,7 +88,7 @@ export default function FunctionalHeader({
           {page == "chat" && (
             <Tooltip delayDuration={1000} content={`${commandSymbol}U`}>
               <Link
-                className="my-auto"
+                className="mobile:hidden my-auto"
                 href={
                   `/${page}` +
                   (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
@@ -107,15 +109,29 @@ export default function FunctionalHeader({
           {setSharingModalVisible && (
             <div
               onClick={() => setSharingModalVisible(true)}
-              className="my-auto rounded cursor-pointer hover:bg-hover-light"
+              className="mobile:hidden my-auto rounded cursor-pointer hover:bg-hover-light"
             >
               <FiShare2 size="18" />
             </div>
           )}
 
-          <div className="flex my-auto">
+          <div className="mobile:hidden flex my-auto">
             <UserDropdown user={user} />
           </div>
+          <Link
+            className="desktop:hidden my-auto"
+            href={
+              `/${page}` +
+              (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
+              currentChatSession
+                ? `?assistantId=${currentChatSession.persona_id}`
+                : "")
+            }
+          >
+            <div className="cursor-pointer ml-2 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
+              <NewChatIcon size={20} />
+            </div>
+          </Link>
         </div>
       </div>
 

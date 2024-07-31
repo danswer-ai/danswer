@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { deleteChatSession, renameChatSession } from "../lib";
 import { DeleteChatModal } from "../modal/DeleteChatModal";
 import { BasicSelectable } from "@/components/BasicClickable";
@@ -19,12 +19,14 @@ import { DefaultDropdownElement } from "@/components/Dropdown";
 import { Popover } from "@/components/popover/Popover";
 import { ShareChatSessionModal } from "../modal/ShareChatSessionModal";
 import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 export function ChatSessionDisplay({
   chatSession,
   search,
   isSelected,
   skipGradient,
+  closeSidebar,
 }: {
   chatSession: ChatSession;
   isSelected: boolean;
@@ -32,6 +34,7 @@ export function ChatSessionDisplay({
   // needed when the parent is trying to apply some background effect
   // if not set, the gradient will still be applied and cause weirdness
   skipGradient?: boolean;
+  closeSidebar?: () => void;
 }) {
   const router = useRouter();
   const [isDeletionModalVisible, setIsDeletionModalVisible] = useState(false);
@@ -62,6 +65,7 @@ export function ChatSessionDisplay({
       alert("Failed to rename chat session");
     }
   };
+  const settings = useContext(SettingsContext);
 
   return (
     <>
@@ -92,6 +96,11 @@ export function ChatSessionDisplay({
       <Link
         className="flex my-1 group relative"
         key={chatSession.id}
+        onClick={() => {
+          if (settings?.isMobile && closeSidebar) {
+            closeSidebar();
+          }
+        }}
         href={
           search
             ? `/search?searchId=${chatSession.id}`
