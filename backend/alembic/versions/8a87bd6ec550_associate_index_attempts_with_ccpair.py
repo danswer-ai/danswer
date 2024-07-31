@@ -34,19 +34,23 @@ def upgrade() -> None:
     # Populate the new connector_credential_pair_id column using existing connector_id and credential_id
     op.execute(
         """
-        UPDATE index_attempt ia
+        UPDATE index_attempt
         SET connector_credential_pair_id =
             CASE
-                WHEN ia.credential_id IS NULL THEN
+                WHEN connector_id IS NULL THEN
                     (SELECT id FROM connector_credential_pair
-                     WHERE connector_id = ia.connector_id
+                     WHERE credential_id = index_attempt.credential_id
+                     LIMIT 1)
+                WHEN credential_id IS NULL THEN
+                    (SELECT id FROM connector_credential_pair
+                     WHERE connector_id = index_attempt.connector_id
                      LIMIT 1)
                 ELSE
                     (SELECT id FROM connector_credential_pair
-                     WHERE connector_id = ia.connector_id
-                     AND credential_id = ia.credential_id)
+                     WHERE connector_id = index_attempt.connector_id
+                     AND credential_id = index_attempt.credential_id)
             END
-        WHERE ia.connector_id IS NOT NULL
+        WHERE connector_id IS NOT NULL OR credential_id IS NOT NULL
         """
     )
 
