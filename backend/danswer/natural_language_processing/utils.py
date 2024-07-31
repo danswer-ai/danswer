@@ -116,8 +116,9 @@ def get_tokenizer(model_name: str | None, provider_type: str | None) -> BaseToke
         if provider_type.lower() == "openai":
             # Used across ada and text-embedding-3 models
             return _check_tokenizer_cache("openai")
+        # If we are given a cloud provider_type that isn't OpenAI, we default to trying to use the model_name
+        # this means we are approximating the token count which may leave some performance on the table
 
-    # If we are given a cloud provider_type that isn't OpenAI, we default to trying to use the model_name
     if not model_name:
         raise ValueError("Need to provide a model_name or provider_type")
 

@@ -19,18 +19,14 @@ RUN apt-get remove -y --allow-remove-essential perl-base && \
 
 # Pre-downloading models for setups with limited egress
 RUN python -c "from transformers import AutoTokenizer; \
-from huggingface_hub import snapshot_download; \
 AutoTokenizer.from_pretrained('danswer/intent-model'); \
-AutoTokenizer.from_pretrained('mixedbread-ai/mxbai-rerank-xsmall-v1'); \
-snapshot_download('danswer/intent-model'); \
-snapshot_download('mixedbread-ai/mxbai-rerank-xsmall-v1')"
+AutoTokenizer.from_pretrained('mixedbread-ai/mxbai-rerank-xsmall-v1')"
 
 RUN python -c "from transformers import TFDistilBertForSequenceClassification; \
 TFDistilBertForSequenceClassification.from_pretrained('danswer/intent-model');"
 
 RUN python -c "from sentence_transformers import SentenceTransformer; \
-SentenceTransformer('nomic-ai/nomic-embed-text-v1', trust_remote_code=True); \
-SentenceTransformer('intfloat/e5-base-v2', trust_remote_code=True);"
+SentenceTransformer('nomic-ai/nomic-embed-text-v1', trust_remote_code=True)"
 
 WORKDIR /app
 

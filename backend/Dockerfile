@@ -69,7 +69,6 @@ RUN apt-get update && \
 
 # Pre-downloading models for setups with limited egress
 RUN python -c "from tokenizers import Tokenizer; \
-Tokenizer.from_pretrained('intfloat/e5-base-v2'); \
 Tokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1');"
 
 
