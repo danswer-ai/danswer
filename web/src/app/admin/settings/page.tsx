@@ -4,7 +4,6 @@ import { SettingsForm } from "./SettingsForm";
 import { Text } from "@tremor/react";
 import { SettingsIcon } from "@/components/icons/icons";
 
-
 export default async function Page() {
   return (
     <div className="mx-auto container">

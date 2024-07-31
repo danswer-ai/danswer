@@ -24,7 +24,7 @@ interface ChatContextProps {
   llmProviders: LLMProviderDescriptor[];
   folders: Folder[];
   openedFolders: Record<string, boolean>;
-  userInputPrompts: InputPrompt[]
+  userInputPrompts: InputPrompt[];
 }
 
 const ChatContext = createContext<ChatContextProps | undefined>(undefined);

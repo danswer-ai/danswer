@@ -34,5 +34,4 @@ export default function ConnectorWrapper({ connector }: { connector: string }) {
       </div>
     </FormProvider>
   );
-
 }
