@@ -3,13 +3,11 @@ from abc import abstractmethod
 
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.models import EmbeddingModel as DbEmbeddingModel
 from danswer.db.models import IndexModelStatus
-from danswer.indexing.chunker import split_chunk_text_into_mini_chunks
 from danswer.indexing.models import ChunkEmbedding
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
@@ -30,14 +28,21 @@ class IndexingEmbedder(ABC):
         normalize: bool,
         query_prefix: str | None,
         passage_prefix: str | None,
+        provider_type: str | None,
+        api_key: str | None,
     ):
         self.model_name = model_name
         self.normalize = normalize
         self.query_prefix = query_prefix
         self.passage_prefix = passage_prefix
+        self.provider_type = provider_type
+        self.api_key = api_key
 
     @abstractmethod
-    def embed_chunks(self, chunks: list[DocAwareChunk]) -> list[IndexChunk]:
+    def embed_chunks(
+        self,
+        chunks: list[DocAwareChunk],
+    ) -> list[IndexChunk]:
         raise NotImplementedError
 
 
@@ -48,10 +53,12 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         normalize: bool,
         query_prefix: str | None,
         passage_prefix: str | None,
-        api_key: str | None = None,
         provider_type: str | None = None,
+        api_key: str | None = None,
     ):
-        super().__init__(model_name, normalize, query_prefix, passage_prefix)
+        super().__init__(
+            model_name, normalize, query_prefix, passage_prefix, provider_type, api_key
+        )
         self.max_seq_length = DOC_EMBEDDING_CONTEXT_SIZE  # Currently not customizable
 
         self.embedding_model = EmbeddingModel(
@@ -70,31 +77,17 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
     def embed_chunks(
         self,
         chunks: list[DocAwareChunk],
-        enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
     ) -> list[IndexChunk]:
-        # Cache the Title embeddings to only have to do it once
-        title_embed_dict: dict[str, list[float] | None] = {}
-        embedded_chunks: list[IndexChunk] = []
-
-        # Create Mini Chunks for more precise matching of details
-        # Off by default with unedited settings
-        chunk_texts: list[str] = []
-        chunk_mini_chunks_count = {}
-        for chunk_ind, chunk in enumerate(chunks):
-            # The whole chunk including the prefix/suffix is included in the overall vector representation
-            chunk_texts.append(
+        flat_chunk_texts: list[str] = []
+        for chunk in chunks:
+            chunk_text = (
                 f"{chunk.title_prefix}{chunk.content}{chunk.metadata_suffix_semantic}"
             )
-            mini_chunk_texts = (
-                split_chunk_text_into_mini_chunks(chunk.content)
-                if enable_mini_chunk
-                else []
-            )
-            chunk_texts.extend(mini_chunk_texts)
-            chunk_mini_chunks_count[chunk_ind] = 1 + len(mini_chunk_texts)
+            flat_chunk_texts.append(chunk_text)
+            flat_chunk_texts.extend(chunk.mini_chunk_texts)
 
         embeddings = self.embedding_model.encode(
-            chunk_texts, text_type=EmbedTextType.PASSAGE
+            flat_chunk_texts, text_type=EmbedTextType.PASSAGE
         )
 
         chunk_titles = {
@@ -104,6 +97,8 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         # Drop any None or empty strings
         chunk_titles_list = [title for title in chunk_titles if title]
 
+        # Cache the Title embeddings to only have to do it once
+        title_embed_dict: dict[str, list[float] | None] = {}
         if chunk_titles_list:
             title_embeddings = self.embedding_model.encode(
                 chunk_titles_list, text_type=EmbedTextType.PASSAGE
@@ -116,9 +111,10 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
             )
 
         # Mapping embeddings to chunks
+        embedded_chunks: list[IndexChunk] = []
         embedding_ind_start = 0
-        for chunk_ind, chunk in enumerate(chunks):
-            num_embeddings = chunk_mini_chunks_count[chunk_ind]
+        for chunk in chunks:
+            num_embeddings = 1 + len(chunk.mini_chunk_texts)
             chunk_embeddings = embeddings[
                 embedding_ind_start : embedding_ind_start + num_embeddings
             ]

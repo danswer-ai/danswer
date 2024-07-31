@@ -1,5 +1,4 @@
 from functools import partial
-from itertools import chain
 from typing import Protocol
 
 from sqlalchemy.orm import Session
@@ -162,14 +161,17 @@ def index_doc_batch(
     )
 
     logger.debug("Starting chunking")
-
     # The first chunk additionally contains the Title of the Document
-    chunks: list[DocAwareChunk] = list(
-        chain(*[chunker.chunk(document=document) for document in updatable_docs])
-    )
+    chunks: list[DocAwareChunk] = [
+        chunk
+        for document in updatable_docs
+        for chunk in chunker.chunk(document=document, embedder=embedder)
+    ]
 
     logger.debug("Starting embedding")
-    chunks_with_embeddings = embedder.embed_chunks(chunks=chunks)
+    chunks_with_embeddings = embedder.embed_chunks(
+        chunks=chunks,
+    )
 
     # Acquires a lock on the documents so that no other process can modify them
     # NOTE: don't need to acquire till here, since this is when the actual race condition
@@ -204,7 +206,7 @@ def index_doc_batch(
         ]
 
         logger.debug(
-            f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
+            f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in access_aware_chunks]}"
         )
         # A document will not be spread across different batches, so all the
         # documents with chunks in this set, are fully represented by the chunks
@@ -228,7 +230,7 @@ def index_doc_batch(
         )
 
     return len([r for r in insertion_records if r.already_existed is False]), len(
-        chunks
+        access_aware_chunks
     )
 
 

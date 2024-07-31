@@ -7,12 +7,13 @@ import { Folder } from "@/app/chat/folders/interfaces";
 import { User } from "@/lib/types";
 import Cookies from "js-cookie";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useRouter } from "next/navigation";
 import { pageType } from "../chat/sessionSidebar/types";
 import FixedLogo from "../chat/shared_chat_search/FixedLogo";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 interface SidebarWrapperProps<T extends object> {
   chatSessions?: ChatSession[];
@@ -55,11 +56,13 @@ export default function SidebarWrapper<T extends object>({
 
   const sidebarElementRef = useRef<HTMLDivElement>(null);
 
+  const settings = useContext(SettingsContext);
   useSidebarVisibility({
     toggledSidebar,
     sidebarElementRef,
     showDocSidebar,
     setShowDocSidebar,
+    mobile: settings?.isMobile,
   });
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
@@ -90,9 +93,7 @@ export default function SidebarWrapper<T extends object>({
             flex-none
             fixed
             left-0
-            z-20
-            overflow-y-hidden
-            sidebar
+            z-30
             bg-background-100
             h-screen
             transition-all
@@ -119,10 +120,10 @@ export default function SidebarWrapper<T extends object>({
         </div>
       </div>
 
-      <div className="absolute left-0 w-full top-0">
+      <div className="absolute h-svh left-0 w-full top-0">
         <FunctionalHeader
+          toggleSidebar={toggleSidebar}
           page="assistants"
-          showSidebar={showDocSidebar}
           user={headerProps.user}
         />
         <div className="w-full flex">
@@ -138,6 +139,7 @@ export default function SidebarWrapper<T extends object>({
                       ease-in-out
                       ${toggledSidebar ? "w-[250px]" : "w-[0px]"}`}
           />
+
           <div className="mt-4 w-full max-w-3xl mx-auto">
             {content(contentProps)}
           </div>
