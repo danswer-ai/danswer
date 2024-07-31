@@ -247,10 +247,8 @@ def embed_text(
     provider_type: str | None,
     prefix: str | None,
 ) -> list[Embedding]:
-    if any(not text.strip() for text in texts):
-        raise ValueError(
-            "Empty strings or whitespace-only strings are not allowed for embedding."
-        )
+    if not all(texts):
+        raise ValueError("Empty strings are not allowed for embedding.")
 
     # Third party API based embedding model
     if not texts:
