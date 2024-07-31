@@ -32,10 +32,18 @@ class BaseTokenizer(ABC):
 
 
 class TiktokenTokenizer(BaseTokenizer):
-    def __init__(self, encoding_name: str = "cl100k_base"):
-        import tiktoken
+    _instance: "TiktokenTokenizer | None" = None
 
-        self.encoder = tiktoken.get_encoding(encoding_name)
+    def __new__(cls, encoding_name: str = "cl100k_base") -> "TiktokenTokenizer":
+        if cls._instance is None:
+            cls._instance = super(TiktokenTokenizer, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self, encoding_name: str = "cl100k_base"):
+        if not hasattr(self, "encoder"):
+            import tiktoken
+
+            self.encoder = tiktoken.get_encoding(encoding_name)
 
     def encode(self, string: str) -> list[int]:
         # this returns no special tokens
@@ -71,28 +79,34 @@ _TOKENIZER_CACHE: dict[str, BaseTokenizer] = {}
 def _check_tokenizer_cache(tokenizer_name: str) -> BaseTokenizer:
     global _TOKENIZER_CACHE
 
-    if not _TOKENIZER_CACHE.get(tokenizer_name):
+    if tokenizer_name not in _TOKENIZER_CACHE:
         try:
-            logger.debug(
-                f"Initializing HuggingFaceTokenizer for model or provider: {tokenizer_name} and adding to cache"
-            )
+            logger.debug(f"Initializing HuggingFaceTokenizer for: {tokenizer_name}")
             _TOKENIZER_CACHE[tokenizer_name] = HuggingFaceTokenizer(tokenizer_name)
-        except Exception as e:
+        except Exception as primary_error:
             logger.error(
-                f"Error initializing HuggingFaceTokenizer for model or provider {tokenizer_name}: {e}"
+                f"Error initializing HuggingFaceTokenizer for {tokenizer_name}: {primary_error}"
             )
-            logger.error(f"Defaulting to embedding model {DOCUMENT_ENCODER_MODEL}...")
-            try:
-                _TOKENIZER_CACHE[tokenizer_name] = HuggingFaceTokenizer(
+            logger.warning(
+                f"Falling back to default embedding model: {DOCUMENT_ENCODER_MODEL}"
+            )
+
+            if DOCUMENT_ENCODER_MODEL in _TOKENIZER_CACHE:
+                _TOKENIZER_CACHE[tokenizer_name] = _TOKENIZER_CACHE[
                     DOCUMENT_ENCODER_MODEL
-                )
-            except Exception as e2:
-                logger.error(
-                    f"Error initializing HuggingFaceTokenizer for model {DOCUMENT_ENCODER_MODEL}: {e2}"
-                )
-                raise ValueError(
-                    f"Error initializing HuggingFaceTokenizer for model {DOCUMENT_ENCODER_MODEL}: {e2}"
-                )
+                ]
+            else:
+                try:
+                    _TOKENIZER_CACHE[tokenizer_name] = HuggingFaceTokenizer(
+                        DOCUMENT_ENCODER_MODEL
+                    )
+                except Exception as fallback_error:
+                    logger.error(
+                        f"Error initializing fallback HuggingFaceTokenizer: {fallback_error}"
+                    )
+                    raise ValueError(
+                        f"Failed to initialize tokenizer for {tokenizer_name} and fallback model"
+                    ) from fallback_error
 
     return _TOKENIZER_CACHE[tokenizer_name]
 
@@ -100,11 +114,13 @@ def _check_tokenizer_cache(tokenizer_name: str) -> BaseTokenizer:
 def get_tokenizer(model_name: str | None, provider_type: str | None) -> BaseTokenizer:
     if provider_type:
         if provider_type.lower() == "openai":
+            # Used across ada and text-embedding-3 models
             return TiktokenTokenizer("cl100k_base")
         if provider_type.lower() == "cohere":
+            # Both the base and light version use this same tokenizer
             return _check_tokenizer_cache("cohere/cohere-embed-english-v3.0")
 
-    # If we are given a cloud provider_type that isn't openai or cohere, we default to trying to use the model_name
+    # If we are given a cloud provider_type that isn't OpenAI or Cohere, we default to trying to use the model_name
     if not model_name:
         raise ValueError("Need to provide a model_name or provider_type")
 
