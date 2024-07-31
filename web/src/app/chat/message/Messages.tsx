@@ -228,7 +228,7 @@ export const AIMessage = ({
   return (
     <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
       <div className="mx-auto w-[90%] max-w-message-max">
-        <div className=" mobile:ml-4 xl:ml-8">
+        <div className="mobile:ml-4 xl:ml-8">
           <div className="flex">
             <AssistantIcon
               size="small"

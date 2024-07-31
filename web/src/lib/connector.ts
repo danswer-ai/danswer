@@ -24,27 +24,19 @@ export async function createConnector<T>(
   return handleResponse(response);
 }
 
-export async function updateConnectorName(
-  connectorId: number,
-  connector: Connector<any>,
+export async function updateConnectorCredentialPairName(
+  ccPairId: number,
   newName: string
-) {
-  let connect = connector;
-  connect.name = newName;
-  console.log(connect);
-  const response = await fetch(`/api/manage/admin/connector/${connectorId}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(connect),
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to update connector name");
-  }
-
-  return response.json();
+): Promise<Response> {
+  return fetch(
+    `/api/manage/admin/cc-pair/${ccPairId}/name?new_name=${encodeURIComponent(newName)}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 }
 
 export async function updateConnector<T>(

@@ -22,7 +22,8 @@ import { SourceIcon } from "@/components/SourceIcon";
 import { credentialTemplates } from "@/lib/connectors/credentials";
 import { useEffect, useRef, useState } from "react";
 import { CheckmarkIcon, EditIcon, XIcon } from "@/components/icons/icons";
-import { updateConnectorName } from "@/lib/connector";
+import { usePopup } from "@/components/admin/connectors/Popup";
+import { updateConnectorCredentialPairName } from "@/lib/connector";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -42,8 +43,9 @@ function Main({ ccPairId }: { ccPairId: number }) {
 
   const [editableName, setEditableName] = useState(ccPair?.name || "");
   const [isEditing, setIsEditing] = useState(false);
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  const { popup, setPopup } = usePopup();
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
@@ -54,16 +56,26 @@ function Main({ ccPairId }: { ccPairId: number }) {
   };
 
   const handleUpdateName = async () => {
-    // Add your update logic here, e.g., make an API call to update the name
-    // After updating, you might want to refresh the data
-    // await updateConnectorName(ccPairId, editableName);
-    const d = await updateConnectorName(
-      ccPair?.connector.id!,
-      ccPair?.connector!,
-      editableName
-    );
-    mutate(buildCCPairInfoUrl(ccPairId));
-    setIsEditing(false);
+    try {
+      const response = await updateConnectorCredentialPairName(
+        ccPair?.id!,
+        editableName
+      );
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      mutate(buildCCPairInfoUrl(ccPairId));
+      setIsEditing(false);
+      setPopup({
+        message: "Connector name updated successfully",
+        type: "success",
+      });
+    } catch (error) {
+      setPopup({
+        message: `Failed to update connector name`,
+        type: "error",
+      });
+    }
   };
 
   if (isLoading) {
@@ -97,7 +109,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
   };
 
   const startEditing = () => {
-    setEditableName(ccPair.connector.name);
+    setEditableName(ccPair.name);
     setIsEditing(true);
   };
   const deleting =
@@ -106,10 +118,11 @@ function Main({ ccPairId }: { ccPairId: number }) {
 
   const resetEditing = () => {
     setIsEditing(false);
-    setEditableName(ccPair.connector.name);
+    setEditableName(ccPair.name);
   };
   return (
     <>
+      {popup}
       <BackButton />
       <div className="pb-1 flex mt-1">
         <div className="mr-2 my-auto ">
@@ -123,7 +136,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
               type="text"
               value={editableName}
               onChange={handleNameChange}
-              className="text-3xl ring ring-1 ring-neutral-800 w-[100px] text-emphasis font-bold"
+              className="text-3xl w-full ring ring-1 ring-neutral-800 text-emphasis font-bold"
             />
             <Button onClick={handleUpdateName} className="ml-2">
               <CheckmarkIcon className="text-neutral-200" />
@@ -135,12 +148,11 @@ function Main({ ccPairId }: { ccPairId: number }) {
         ) : (
           <h1
             onClick={() => startEditing()}
-            className="group text-3xl text-emphasis  font-bold"
+            className="group text-3xl text-emphasis font-bold"
           >
             {ccPair.name}
           </h1>
         )}
-        {/* <h1 className="text-3xl text-emphasis font-bold">{ccPair.name} </h1> */}
 
         <div className="ml-auto flex gap-x-2">
           {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(
