@@ -157,7 +157,7 @@ export function SettingsForm() {
       setSettings(settings);
       console.error("Error updating settings:", error);
       setPopup({
-        message: `Failed to update settings: ${error.message}`,
+        message: `Failed to update settings`,
         type: "error",
       });
     }
