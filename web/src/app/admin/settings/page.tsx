@@ -1,8 +1,9 @@
 import { AdminPageTitle } from "@/components/admin/Title";
-import { FiSettings } from "react-icons/fi";
+
 import { SettingsForm } from "./SettingsForm";
 import { Text } from "@tremor/react";
 import { SettingsIcon } from "@/components/icons/icons";
+
 
 export default async function Page() {
   return (

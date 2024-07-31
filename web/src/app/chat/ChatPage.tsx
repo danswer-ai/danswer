@@ -102,6 +102,7 @@ export function ChatPage({
     llmProviders,
     folders,
     openedFolders,
+    userInputPrompts,
   } = useChatContext();
 
   // chat session
@@ -129,12 +130,12 @@ export function ChatPage({
     // going back to an old chat session
     existingChatSessionAssistantId !== undefined
       ? availableAssistants.find(
-          (assistant) => assistant.id === existingChatSessionAssistantId
-        )
+        (assistant) => assistant.id === existingChatSessionAssistantId
+      )
       : defaultSelectedAssistantId !== undefined
         ? availableAssistants.find(
-            (assistant) => assistant.id === defaultSelectedAssistantId
-          )
+          (assistant) => assistant.id === defaultSelectedAssistantId
+        )
         : undefined
   );
   const setSelectedAssistantFromId = (assistantId: number) => {
@@ -392,9 +393,9 @@ export function ChatPage({
     useState<number | null>(null);
   const { aiMessage } = selectedMessageForDocDisplay
     ? getHumanAndAIMessageFromMessageNumber(
-        messageHistory,
-        selectedMessageForDocDisplay
-      )
+      messageHistory,
+      selectedMessageForDocDisplay
+    )
     : { aiMessage: null };
 
   const [chatSessionSharedStatus, setChatSessionSharedStatus] =
@@ -658,7 +659,7 @@ export function ChatPage({
     const messageMap = completeMessageDetail.messageMap;
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
-      messageToResend?.parentMessageId !== undefined
+        messageToResend?.parentMessageId !== undefined
         ? messageMap.get(messageToResend.parentMessageId)
         : null;
     const messageToResendIndex = messageToResend
@@ -784,9 +785,9 @@ export function ChatPage({
       const updateFn = (messages: Message[]) => {
         const replacementsMap = finalMessage
           ? new Map([
-              [messages[0].messageId, TEMP_USER_MESSAGE_ID],
-              [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
-            ] as [number, number][])
+            [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+            [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+          ] as [number, number][])
           : null;
         upsertToCompleteMessageMap({
           messages: messages,
@@ -1043,9 +1044,9 @@ export function ChatPage({
       SIDEBAR_TOGGLED_COOKIE_NAME,
       String(!toggledSidebar).toLocaleLowerCase()
     ),
-      {
-        path: "/",
-      };
+    {
+      path: "/",
+    };
 
     toggle();
   };
@@ -1172,10 +1173,9 @@ export function ChatPage({
                 bg-opacity-80
                 duration-300
                 ease-in-out
-                ${
-                  showDocSidebar || toggledSidebar
-                    ? "opacity-100 w-[250px] translate-x-0"
-                    : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
+                ${showDocSidebar || toggledSidebar
+                  ? "opacity-100 w-[250px] translate-x-0"
+                  : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
                 }`}
             >
               <div className="w-full relative">
@@ -1341,7 +1341,7 @@ export function ChatPage({
                                 const isShowingRetrieved =
                                   (selectedMessageForDocDisplay !== null &&
                                     selectedMessageForDocDisplay ===
-                                      message.messageId) ||
+                                    message.messageId) ||
                                   (selectedMessageForDocDisplay ===
                                     TEMP_USER_MESSAGE_ID &&
                                     i === messageHistory.length - 1);
@@ -1351,10 +1351,10 @@ export function ChatPage({
                                 const currentAlternativeAssistant =
                                   message.alternateAssistantID != null
                                     ? availableAssistants.find(
-                                        (persona) =>
-                                          persona.id ==
-                                          message.alternateAssistantID
-                                      )
+                                      (persona) =>
+                                        persona.id ==
+                                        message.alternateAssistantID
+                                    )
                                     : null;
 
                                 return (
@@ -1401,46 +1401,46 @@ export function ChatPage({
                                       }
                                       handleFeedback={
                                         i === messageHistory.length - 1 &&
-                                        isStreaming
+                                          isStreaming
                                           ? undefined
                                           : (feedbackType) =>
-                                              setCurrentFeedback([
-                                                feedbackType,
-                                                message.messageId as number,
-                                              ])
+                                            setCurrentFeedback([
+                                              feedbackType,
+                                              message.messageId as number,
+                                            ])
                                       }
                                       handleSearchQueryEdit={
                                         i === messageHistory.length - 1 &&
-                                        !isStreaming
+                                          !isStreaming
                                           ? (newQuery) => {
-                                              if (!previousMessage) {
-                                                setPopup({
-                                                  type: "error",
-                                                  message:
-                                                    "Cannot edit query of first message - please refresh the page and try again.",
-                                                });
-                                                return;
-                                              }
-
-                                              if (
-                                                previousMessage.messageId ===
-                                                null
-                                              ) {
-                                                setPopup({
-                                                  type: "error",
-                                                  message:
-                                                    "Cannot edit query of a pending message - please wait a few seconds and try again.",
-                                                });
-                                                return;
-                                              }
-                                              onSubmit({
-                                                messageIdToResend:
-                                                  previousMessage.messageId,
-                                                queryOverride: newQuery,
-                                                alternativeAssistantOverride:
-                                                  currentAlternativeAssistant,
+                                            if (!previousMessage) {
+                                              setPopup({
+                                                type: "error",
+                                                message:
+                                                  "Cannot edit query of first message - please refresh the page and try again.",
                                               });
+                                              return;
                                             }
+
+                                            if (
+                                              previousMessage.messageId ===
+                                              null
+                                            ) {
+                                              setPopup({
+                                                type: "error",
+                                                message:
+                                                  "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                              });
+                                              return;
+                                            }
+                                            onSubmit({
+                                              messageIdToResend:
+                                                previousMessage.messageId,
+                                              queryOverride: newQuery,
+                                              alternativeAssistantOverride:
+                                                currentAlternativeAssistant,
+                                            });
+                                          }
                                           : undefined
                                       }
                                       isCurrentlyShowingRetrieved={
@@ -1482,8 +1482,8 @@ export function ChatPage({
                                       retrievalDisabled={
                                         currentAlternativeAssistant
                                           ? !personaIncludesRetrieval(
-                                              currentAlternativeAssistant!
-                                            )
+                                            currentAlternativeAssistant!
+                                          )
                                           : !retrievalEnabled
                                       }
                                     />
@@ -1509,7 +1509,7 @@ export function ChatPage({
                             {isStreaming &&
                               messageHistory.length > 0 &&
                               messageHistory[messageHistory.length - 1].type ===
-                                "user" && (
+                              "user" && (
                                 <div
                                   key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                                 >
@@ -1599,6 +1599,7 @@ export function ChatPage({
                             )}
 
                             <ChatInputBar
+                              inputPrompts={userInputPrompts}
                               showDocs={() => setDocumentSelection(true)}
                               selectedDocuments={selectedDocuments}
                               // assistant stuff

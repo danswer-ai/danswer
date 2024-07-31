@@ -137,10 +137,37 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
 
     prompts: Mapped[list["Prompt"]] = relationship("Prompt", back_populates="user")
+    input_prompts: Mapped[list["InputPrompt"]] = relationship(
+        "InputPrompt", back_populates="user"
+    )
+
     # Personas owned by this user
     personas: Mapped[list["Persona"]] = relationship("Persona", back_populates="user")
     # Custom tools created by this user
     custom_tools: Mapped[list["Tool"]] = relationship("Tool", back_populates="user")
+
+
+class InputPrompt(Base):
+    __tablename__ = "inputprompt"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    prompt: Mapped[str] = mapped_column(String)
+    content: Mapped[str] = mapped_column(String)
+    active: Mapped[bool] = mapped_column(Boolean)
+    user: Mapped[User | None] = relationship("User", back_populates="input_prompts")
+
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+
+
+class InputPrompt__User(Base):
+    __tablename__ = "inputprompt__user"
+
+    persona_id: Mapped[int] = mapped_column(
+        ForeignKey("inputprompt.id"), primary_key=True
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("inputprompt.id"), primary_key=True
+    )
 
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
