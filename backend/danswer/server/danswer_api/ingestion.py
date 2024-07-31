@@ -107,7 +107,7 @@ def upsert_ingestion_doc(
         db_session=db_session,
     )
 
-    new_doc, __chunks = indexing_pipeline(
+    new_doc, __chunk_count = indexing_pipeline(
         document_batch=[document],
         index_attempt_metadata=IndexAttemptMetadata(
             connector_id=cc_pair.connector_id,
