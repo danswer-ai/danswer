@@ -68,40 +68,47 @@ class HuggingFaceTokenizer(BaseTokenizer):
 _TOKENIZER_CACHE: dict[str, BaseTokenizer] = {}
 
 
-def _get_cached_tokenizer(
-    model_name: str | None = None, provider_type: str | None = None
-) -> BaseTokenizer:
+def _check_tokenizer_cache(tokenizer_name: str) -> BaseTokenizer:
     global _TOKENIZER_CACHE
 
-    if provider_type:
-        if not _TOKENIZER_CACHE.get(provider_type):
-            if provider_type.lower() == "openai":
-                _TOKENIZER_CACHE[provider_type] = TiktokenTokenizer()
-            elif provider_type.lower() == "cohere":
-                _TOKENIZER_CACHE[provider_type] = HuggingFaceTokenizer(
-                    "Cohere/command-nightly"
+    if not _TOKENIZER_CACHE.get(tokenizer_name):
+        try:
+            logger.debug(
+                f"Initializing HuggingFaceTokenizer for model or provider: {tokenizer_name} and adding to cache"
+            )
+            _TOKENIZER_CACHE[tokenizer_name] = HuggingFaceTokenizer(tokenizer_name)
+        except Exception as e:
+            logger.error(
+                f"Error initializing HuggingFaceTokenizer for model or provider {tokenizer_name}: {e}"
+            )
+            logger.error(f"Defaulting to embedding model {DOCUMENT_ENCODER_MODEL}...")
+            try:
+                _TOKENIZER_CACHE[tokenizer_name] = HuggingFaceTokenizer(
+                    DOCUMENT_ENCODER_MODEL
                 )
-            else:
-                _TOKENIZER_CACHE[
-                    provider_type
-                ] = TiktokenTokenizer()  # Default to OpenAI tokenizer
-        return _TOKENIZER_CACHE[provider_type]
+            except Exception as e2:
+                logger.error(
+                    f"Error initializing HuggingFaceTokenizer for model {DOCUMENT_ENCODER_MODEL}: {e2}"
+                )
+                raise ValueError(
+                    f"Error initializing HuggingFaceTokenizer for model {DOCUMENT_ENCODER_MODEL}: {e2}"
+                )
 
-    if model_name:
-        if not _TOKENIZER_CACHE.get(model_name):
-            _TOKENIZER_CACHE[model_name] = HuggingFaceTokenizer(model_name)
-        return _TOKENIZER_CACHE[model_name]
-
-    raise ValueError("Need to provide a model_name or provider_type")
+    return _TOKENIZER_CACHE[tokenizer_name]
 
 
 def get_tokenizer(model_name: str | None, provider_type: str | None) -> BaseTokenizer:
-    if provider_type is None and model_name is None:
-        model_name = DOCUMENT_ENCODER_MODEL
-    return _get_cached_tokenizer(
-        model_name=model_name,
-        provider_type=provider_type,
-    )
+    if provider_type:
+        if provider_type.lower() == "openai":
+            return TiktokenTokenizer("cl100k_base")
+        if provider_type.lower() == "cohere":
+            return _check_tokenizer_cache("cohere/cohere-embed-english-v3.0")
+
+    # If we are given a cloud provider_type that isn't openai or cohere, we default to trying to use the model_name
+    if not model_name:
+        raise ValueError("Need to provide a model_name or provider_type")
+
+    return _check_tokenizer_cache(model_name)
 
 
 def tokenizer_trim_content(
