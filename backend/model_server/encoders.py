@@ -277,6 +277,13 @@ def embed_text(
             text_type=text_type,
         )
 
+    # Check for None values in embeddings
+    if any(embedding is None for embedding in embeddings):
+        error_message = "Embeddings contain None values\n"
+        error_message += "Corresponding texts:\n"
+        error_message += "\n".join(texts)
+        raise ValueError(error_message)
+
     elif model_name is not None:
         prefixed_texts = [f"{prefix}{text}" for text in texts] if prefix else texts
         local_model = get_embedding_model(
