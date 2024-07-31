@@ -166,6 +166,7 @@ def index_doc_batch(
         else documents
     )
 
+    # No docs to update either because the batch is empty or every doc was already indexed
     if not updatable_docs:
         return 0, 0
 
