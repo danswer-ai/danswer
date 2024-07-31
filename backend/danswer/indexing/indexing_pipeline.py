@@ -115,7 +115,7 @@ def index_doc_batch(
     chunker: Chunker,
     embedder: IndexingEmbedder,
     document_index: DocumentIndex,
-    documents: list[Document],
+    document_batch: list[Document],
     index_attempt_metadata: IndexAttemptMetadata,
     db_session: Session,
     ignore_time_skip: bool = False,
@@ -123,21 +123,22 @@ def index_doc_batch(
     """Takes different pieces of the indexing pipeline and applies it to a batch of documents
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
-    # Skip documents that have neither title nor content
-    # If the document doesn't have either, then there is no useful information in it
-    # This is again verified later in the pipeline after chunking but at that point there should
-    # already be no documents that are empty.
-    documents_to_process = []
-    for document in documents:
-        if (not document.title or not document.title.strip()) and not any(
-            section.text.strip() for section in document.sections
+    documents = []
+    for document in document_batch:
+        if (
+            (not document.title or not document.title.strip())
+            and not document.semantic_identifier.strip()
+            and not any(section.text.strip() for section in document.sections)
         ):
+            # Skip documents that have neither title nor content
+            # If the document doesn't have either, then there is no useful information in it
+            # This is again verified later in the pipeline after chunking but at that point there should
+            # already be no documents that are empty.
             logger.warning(
                 f"Skipping document with ID {document.id} as it has neither title nor content"
             )
         else:
-            documents_to_process.append(document)
-    documents = documents_to_process
+            documents.append(document)
 
     document_ids = [document.id for document in documents]
     db_docs = get_documents_by_ids(
