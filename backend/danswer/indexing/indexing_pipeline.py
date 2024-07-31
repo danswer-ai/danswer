@@ -127,17 +127,26 @@ def index_doc_batch(
     memory requirements"""
     documents = []
     for document in document_batch:
+        empty_contents = not any(section.text.strip() for section in document.sections)
         if (
             (not document.title or not document.title.strip())
             and not document.semantic_identifier.strip()
-            and not any(section.text.strip() for section in document.sections)
+            and empty_contents
         ):
             # Skip documents that have neither title nor content
             # If the document doesn't have either, then there is no useful information in it
             # This is again verified later in the pipeline after chunking but at that point there should
             # already be no documents that are empty.
             logger.warning(
-                f"Skipping document with ID {document.id} as it has neither title nor content"
+                f"Skipping document with ID {document.id} as it has neither title nor content."
+            )
+        elif (
+            document.title is not None and not document.title.strip() and empty_contents
+        ):
+            # The title is explicitly empty ("" and not None) and the document is empty
+            # so when building the chunk text representation, it will be empty and unuseable
+            logger.warning(
+                f"Skipping document with ID {document.id} as the chunks will be empty."
             )
         else:
             documents.append(document)
