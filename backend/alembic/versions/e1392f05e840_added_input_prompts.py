@@ -1,7 +1,7 @@
 """Added input prompts
 
 Revision ID: e1392f05e840
-Revises: d716b0791ddd
+Revises: 08a1eda20fe1
 Create Date: 2024-07-13 19:09:22.556224
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "e1392f05e840"
-down_revision = "44f856ae2a4a"
+down_revision = "08a1eda20fe1"
 branch_labels = None
 depends_on = None
 
