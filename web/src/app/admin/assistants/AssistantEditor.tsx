@@ -425,6 +425,7 @@ export function AssistantEditor({
               <div className="pb-6">
                 <TextFormField
                   name="name"
+                  value={values.name}
                   tooltip="Used to identify the Assistant in the UI."
                   label="Name"
                   disabled={isUpdate}
@@ -487,12 +488,14 @@ export function AssistantEditor({
                 </div>
 
                 <TextFormField
+                  value={values["description"]}
                   tooltip="Used for identifying assistants and their use cases."
                   name="description"
                   label="Description"
                   placeholder="e.g. 'Use this Assistant to help draft professional emails'"
                 />
                 <TextFormField
+                  value={values["system_prompt"]}
                   tooltip="Gives your assistant a prime directive"
                   name="system_prompt"
                   label="System Prompt"
@@ -536,7 +539,10 @@ export function AssistantEditor({
                   <div className="mb-2 flex items-starts">
                     <div className="w-96">
                       <SelectorFormField
-                        defaultValue={`Default (${defaultModelName})`}
+                        defaultValue={
+                          values["llm_model_provider_override"] ||
+                          `Default (${defaultModelName})`
+                        }
                         name="llm_model_provider_override"
                         options={llmProviders.map((llmProvider) => ({
                           name: llmProvider.name,
@@ -559,6 +565,9 @@ export function AssistantEditor({
                     {values.llm_model_provider_override && (
                       <div className="w-96 ml-4">
                         <SelectorFormField
+                          defaultValue={
+                            values["llm_model_version_override"] || ""
+                          }
                           name="llm_model_version_override"
                           options={
                             modelOptionsByProvider.get(
@@ -790,6 +799,7 @@ export function AssistantEditor({
 
                       <TextFormField
                         name="task_prompt"
+                        value={values["task_prompt"]}
                         label="Additional instructions (Optional)"
                         isTextArea={true}
                         placeholder="e.g. 'Remember to reference all of the points mentioned in my message to you and focus on identifying action items that can move things forward'"
@@ -899,14 +909,14 @@ export function AssistantEditor({
                                         <Field
                                           name={`starter_messages[${index}].message`}
                                           className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
+                                          border 
+                                          border-border 
+                                          bg-background 
+                                          rounded 
+                                          w-full 
+                                          py-2 
+                                          px-3 
+                                          mr-4
                                       `}
                                           as="textarea"
                                           autoComplete="off"
