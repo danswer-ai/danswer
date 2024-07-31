@@ -425,7 +425,6 @@ export function AssistantEditor({
               <div className="pb-6">
                 <TextFormField
                   name="name"
-                  value={values["name"]}
                   tooltip="Used to identify the Assistant in the UI."
                   label="Name"
                   disabled={isUpdate}
@@ -488,14 +487,13 @@ export function AssistantEditor({
                 </div>
 
                 <TextFormField
-                  value={values["description"]}
                   tooltip="Used for identifying assistants and their use cases."
                   name="description"
                   label="Description"
                   placeholder="e.g. 'Use this Assistant to help draft professional emails'"
                 />
+
                 <TextFormField
-                  value={values["system_prompt"]}
                   tooltip="Gives your assistant a prime directive"
                   name="system_prompt"
                   label="System Prompt"
@@ -799,7 +797,6 @@ export function AssistantEditor({
 
                       <TextFormField
                         name="task_prompt"
-                        value={values["task_prompt"]}
                         label="Additional instructions (Optional)"
                         isTextArea={true}
                         placeholder="e.g. 'Remember to reference all of the points mentioned in my message to you and focus on identifying action items that can move things forward'"
