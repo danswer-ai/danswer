@@ -2,7 +2,6 @@
 
 import { AdminPageTitle } from "@/components/admin/Title";
 import {
-  Button,
   Tab,
   TabGroup,
   TabList,
@@ -23,6 +22,7 @@ import { mutate } from "swr";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { CreateRateLimitModal } from "./CreateRateLimitModal";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { Button } from "@/components/ui/button";
 
 const BASE_URL = "/api/admin/token-rate-limits";
 const GLOBAL_TOKEN_FETCH_URL = `${BASE_URL}/global`;
@@ -143,12 +143,7 @@ function Main() {
         </li>
       </ul>
 
-      <Button
-        color="green"
-        size="xs"
-        className="mt-3"
-        onClick={() => setModalIsOpen(true)}
-      >
+      <Button className="mt-3" onClick={() => setModalIsOpen(true)}>
         Create a Token Rate Limit
       </Button>
 

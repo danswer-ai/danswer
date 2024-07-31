@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FeedbackType } from "../types";
 import { FiThumbsDown, FiThumbsUp } from "react-icons/fi";
 import { ModalWrapper } from "./ModalWrapper";
+import { Button } from "@tremor/react";
 
 const predefinedPositiveFeedbackOptions =
   process.env.NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS?.split(",") ||
@@ -51,17 +52,17 @@ export const FeedbackModal = ({
   return (
     <ModalWrapper onClose={onClose} modalClassName="max-w-5xl">
       <>
-        <h2 className="text-2xl text-emphasis font-bold mb-4 flex">
-          <div className="mr-1 my-auto">
+        <h2 className="flex mb-4 text-2xl font-bold text-emphasis">
+          <div className="my-auto mr-1">
             {feedbackType === "like" ? (
-              <FiThumbsUp className="text-green-500 my-auto mr-2" />
+              <FiThumbsUp className="my-auto mr-2 text-green-500" />
             ) : (
-              <FiThumbsDown className="text-red-600 my-auto mr-2" />
+              <FiThumbsDown className="my-auto mr-2 text-red-600" />
             )}
           </div>
           Provide additional feedback
         </h2>
-        <div className="mb-4 flex flex-wrap justify-start">
+        <div className="flex flex-wrap justify-start mb-4">
           {predefinedFeedbackOptions.map((feedback, index) => (
             <button
               key={index}
@@ -95,12 +96,9 @@ export const FeedbackModal = ({
           onChange={(e) => setMessage(e.target.value)}
         />
         <div className="flex mt-2">
-          <button
-            className="bg-accent text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none mx-auto"
-            onClick={handleSubmit}
-          >
+          <Button className="mx-auto mt-4" onClick={handleSubmit}>
             Submit feedback
-          </button>
+          </Button>
         </div>
       </>
     </ModalWrapper>

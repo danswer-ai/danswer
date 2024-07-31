@@ -32,7 +32,6 @@ const ChatInputOption = ({
     <div
       className={`
         border 
-        border 
         rounded-lg 
         flex 
         flex-col 

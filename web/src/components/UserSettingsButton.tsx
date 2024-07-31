@@ -46,9 +46,10 @@ export function UserSettingsButton({ user }: { user: User | null }) {
           <BasicClickable fullWidth>
             <div
               onClick={() => setUserInfoVisible(!userInfoVisible)}
-              className="flex min-w-full items-center gap-3 cursor-pointer px-3 py-2 bg-white"
+              /* className="flex min-w-full items-center gap-3 cursor-pointer px-3 py-2" */
+              className="flex min-w-full items-center gap-3 cursor-pointer py-2"
             >
-              <div className="flex items-center justify-center bg-white rounded-full min-h-10 min-w-10 aspect-square text-base font-normal border-2 border-gray-900 shadow-md">
+              <div className="flex items-center justify-center bg-white rounded-full min-h-10 min-w-10 aspect-square text-base font-normal border-2 border-gray-900 shadow-md text-default">
                 {user && user.email ? user.email[0].toUpperCase() : "A"}
               </div>
               <div className="w-full h-full flex flex-col items-start justify-center truncate">

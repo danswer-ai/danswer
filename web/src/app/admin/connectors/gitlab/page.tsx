@@ -19,7 +19,7 @@ import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePublicCredentials } from "@/lib/hooks";
-import { Card, Divider, Text, Title } from "@tremor/react";
+import { Card, Divider, Text, Title, Button } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 
 const Main = () => {
@@ -79,7 +79,7 @@ const Main = () => {
 
   return (
     <>
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 1: Provide your access token
       </Title>
       {gitlabCredential ? (
@@ -87,18 +87,19 @@ const Main = () => {
           {" "}
           <div className="flex mb-1 text-sm">
             <p className="my-auto">Existing Access Token: </p>
-            <p className="ml-1 italic my-auto">
+            <p className="my-auto ml-1 italic">
               {gitlabCredential.credential_json.gitlab_access_token}
             </p>{" "}
-            <button
-              className="ml-1 hover:bg-hover rounded p-1"
+            <Button
+              className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 await adminDeleteCredential(gitlabCredential.id);
                 refreshCredentials();
               }}
+              variant="light"
             >
               <TrashIcon />
-            </button>
+            </Button>
           </div>
         </>
       ) : (
@@ -155,7 +156,7 @@ const Main = () => {
         </>
       )}
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 2: Which repositories do you want to make searchable?
       </Title>
 
@@ -200,7 +201,7 @@ const Main = () => {
 
       {gitlabCredential ? (
         <Card className="mt-4">
-          <h2 className="font-bold mb-3">Connect to a New Project</h2>
+          <h2 className="mb-3 font-bold">Connect to a New Project</h2>
           <ConnectorForm<GitlabConfig>
             nameBuilder={(values) =>
               `GitlabConnector-${values.project_owner}/${values.project_name}`

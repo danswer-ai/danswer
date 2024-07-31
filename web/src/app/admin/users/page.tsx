@@ -6,7 +6,7 @@ import { useState } from "react";
 import { FiPlusSquare } from "react-icons/fi";
 import { Modal } from "@/components/Modal";
 
-import { Button, Text } from "@tremor/react";
+import { Text } from "@tremor/react";
 import { LoadingAnimation } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { usePopup, PopupSpec } from "@/components/admin/connectors/Popup";
@@ -18,6 +18,7 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { HidableSection } from "@/app/admin/assistants/HidableSection";
 import BulkAdd from "@/components/admin/users/BulkAdd";
 import { UsersResponse } from "@/lib/users/interfaces";
+import { Button } from "@/components/ui/button";
 
 const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
   if (!validDomains.length) {
@@ -188,11 +189,9 @@ const AddUserButton = ({
   };
   return (
     <>
-      <Button className="w-fit" onClick={() => setModal(true)}>
-        <div className="flex">
-          <FiPlusSquare className="my-auto mr-2" />
-          Invite Users
-        </div>
+      <Button variant="outline" onClick={() => setModal(true)}>
+        <FiPlusSquare className="mr-2" />
+        Invite Users
       </Button>
       {modal && (
         <Modal title="Bulk Add Users" onOutsideClick={() => setModal(false)}>

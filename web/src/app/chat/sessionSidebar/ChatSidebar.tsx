@@ -34,6 +34,7 @@ import Logo from "../../../../public/logo-brand.png";
 import { HeaderTitle } from "@/components/header/Header";
 import { UserSettingsButton } from "@/components/UserSettingsButton";
 import { useChatContext } from "@/components/context/ChatContext";
+import { Button } from "@/components/ui/button";
 
 export const ChatSidebar = ({
   existingChats,
@@ -168,14 +169,12 @@ export const ChatSidebar = ({
             }
             className="w-full"
           >
-            <BasicClickable fullWidth>
-              <div className="flex items-center px-2 py-1 text-base">
-                <FiEdit className="ml-1 mr-2" /> New Chat
-              </div>
-            </BasicClickable>
+            <Button className="w-full">
+              <FiEdit className="ml-1 mr-2" /> New Chat
+            </Button>
           </Link>
           <div className="h-full ">
-            <BasicClickable
+            <Button
               onClick={() =>
                 createFolder("New Folder")
                   .then((folderId) => {
@@ -191,10 +190,8 @@ export const ChatSidebar = ({
                   })
               }
             >
-              <div className="flex items-center h-full px-2 text-base aspect-square">
-                <FiFolderPlus className="mx-auto my-auto" />
-              </div>
-            </BasicClickable>
+              <FiFolderPlus className="mx-auto my-auto" />
+            </Button>
           </div>
         </div>
         <UserSettingsButton user={user} />

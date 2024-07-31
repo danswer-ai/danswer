@@ -12,8 +12,8 @@ import {
   TableHeaderCell,
   TableBody,
   TableCell,
-  Button,
 } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   users: Array<User>;
@@ -41,10 +41,9 @@ const PromoterButton = ({
   );
   return (
     <Button
-      className="bg-green-600 border-none w-min"
+      /* className="bg-green-600 border-none w-min" */
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
-      size="xs"
     >
       {promote ? "Promote" : "Demote"} to {promote ? "Admin" : "Basic"} User
     </Button>
@@ -80,10 +79,9 @@ const DeactivaterButton = ({
   );
   return (
     <Button
-      className="bg-red-500 border-none w-min"
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
-      size="xs"
+      variant="destructive"
     >
       {deactivate ? "Deactivate" : "Activate"}
     </Button>
