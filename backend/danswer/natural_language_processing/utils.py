@@ -32,12 +32,12 @@ class BaseTokenizer(ABC):
 
 
 class TiktokenTokenizer(BaseTokenizer):
-    _instance: "TiktokenTokenizer | None" = None
+    _instances: dict[str, "TiktokenTokenizer"] = {}
 
     def __new__(cls, encoding_name: str = "cl100k_base") -> "TiktokenTokenizer":
-        if cls._instance is None:
-            cls._instance = super(TiktokenTokenizer, cls).__new__(cls)
-        return cls._instance
+        if encoding_name not in cls._instances:
+            cls._instances[encoding_name] = super(TiktokenTokenizer, cls).__new__(cls)
+        return cls._instances[encoding_name]
 
     def __init__(self, encoding_name: str = "cl100k_base"):
         if not hasattr(self, "encoder"):
@@ -91,22 +91,19 @@ def _check_tokenizer_cache(tokenizer_name: str) -> BaseTokenizer:
                 f"Falling back to default embedding model: {DOCUMENT_ENCODER_MODEL}"
             )
 
-            if DOCUMENT_ENCODER_MODEL in _TOKENIZER_CACHE:
-                _TOKENIZER_CACHE[tokenizer_name] = _TOKENIZER_CACHE[
+            try:
+                # Cache this tokenizer name to the default so we don't have to try to load it again
+                # and fail again
+                _TOKENIZER_CACHE[tokenizer_name] = HuggingFaceTokenizer(
                     DOCUMENT_ENCODER_MODEL
-                ]
-            else:
-                try:
-                    _TOKENIZER_CACHE[tokenizer_name] = HuggingFaceTokenizer(
-                        DOCUMENT_ENCODER_MODEL
-                    )
-                except Exception as fallback_error:
-                    logger.error(
-                        f"Error initializing fallback HuggingFaceTokenizer: {fallback_error}"
-                    )
-                    raise ValueError(
-                        f"Failed to initialize tokenizer for {tokenizer_name} and fallback model"
-                    ) from fallback_error
+                )
+            except Exception as fallback_error:
+                logger.error(
+                    f"Error initializing fallback HuggingFaceTokenizer: {fallback_error}"
+                )
+                raise ValueError(
+                    f"Failed to initialize tokenizer for {tokenizer_name} and fallback model"
+                ) from fallback_error
 
     return _TOKENIZER_CACHE[tokenizer_name]
 
