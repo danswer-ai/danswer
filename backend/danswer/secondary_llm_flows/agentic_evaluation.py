@@ -1,6 +1,6 @@
 import re
 
-from danswer.chat.models import RelevanceChunk
+from danswer.chat.models import DocumentRelevance
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import message_to_string
@@ -32,13 +32,11 @@ def _get_agent_eval_messages(
 
 def evaluate_inference_section(
     document: InferenceSection, query: str, llm: LLM
-) -> dict[str, RelevanceChunk]:
-    results = {}
-
+) -> DocumentRelevance:
     document_id = document.center_chunk.document_id
     semantic_id = document.center_chunk.semantic_identifier
     contents = document.combined_content
-    chunk_id = document.center_chunk.chunk_id
+    document.center_chunk.chunk_id
 
     messages = _get_agent_eval_messages(
         title=semantic_id, content=contents, query=query
@@ -64,7 +62,9 @@ def evaluate_inference_section(
     )
     relevant = last_line.strip().lower().startswith("true")
 
-    results[f"{document_id}-{chunk_id}"] = RelevanceChunk(
-        relevant=relevant, content=analysis
+    return DocumentRelevance(
+        document_id=document_id,
+        chunk_id=document.center_chunk.chunk_id,
+        relevant=relevant,
+        content=analysis,
     )
-    return results

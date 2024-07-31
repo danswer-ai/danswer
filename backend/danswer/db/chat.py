@@ -545,7 +545,7 @@ def update_search_docs_table_with_relevance(
 ) -> None:
     for search_doc in reference_db_search_docs:
         relevance_data = relevance_summary.relevance_summaries.get(
-            f"{search_doc.document_id}-{search_doc.chunk_ind}"
+            search_doc.document_id
         )
         if relevance_data is not None:
             db_session.execute(

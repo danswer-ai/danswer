@@ -52,6 +52,7 @@ from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
 from danswer.llm.interfaces import LLMConfig
 from danswer.natural_language_processing.utils import get_tokenizer
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
@@ -60,6 +61,7 @@ from danswer.search.retrieval.search_runner import inference_sections_from_ids
 from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.search.utils import dedupe_documents
 from danswer.search.utils import drop_llm_indices
+from danswer.search.utils import relevant_documents_to_indices
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.utils import get_json_line
@@ -501,6 +503,7 @@ def stream_chat_message_objects(
                         chunks_above=new_msg_req.chunks_above,
                         chunks_below=new_msg_req.chunks_below,
                         full_doc=new_msg_req.full_doc,
+                        evaluation_type=LLMEvaluationType.BASIC,
                     )
                     tool_dict[db_tool_model.id] = [search_tool]
                 elif tool_cls.__name__ == ImageGenerationTool.__name__:
@@ -629,18 +632,29 @@ def stream_chat_message_objects(
                     )
                     yield qa_docs_response
                 elif packet.id == SECTION_RELEVANCE_LIST_ID:
-                    chunk_indices = packet.response
+                    relevant_chunks = packet.response
 
-                    if reference_db_search_docs is not None and dropped_indices:
-                        chunk_indices = drop_llm_indices(
-                            llm_indices=chunk_indices,
-                            search_docs=reference_db_search_docs,
-                            dropped_indices=dropped_indices,
+                    if reference_db_search_docs is not None:
+                        llm_indices = relevant_documents_to_indices(
+                            relevance_chunks=relevant_chunks,
+                            inference_sections=[
+                                translate_db_search_doc_to_server_search_doc(doc)
+                                for doc in reference_db_search_docs
+                            ],
                         )
 
-                    yield LLMRelevanceFilterResponse(
-                        relevant_chunk_indices=chunk_indices
-                    )
+                        if dropped_indices:
+                            llm_indices = drop_llm_indices(
+                                llm_indices=llm_indices,
+                                search_docs=reference_db_search_docs,
+                                dropped_indices=dropped_indices,
+                            )
+                        print("RELEVANT INDICES")
+                        print(relevant_chunks)
+                        print(llm_indices)
+                        yield LLMRelevanceFilterResponse(
+                            relevant_chunk_indices=llm_indices
+                        )
                 elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
                     img_generation_response = cast(
                         list[ImageGenerationResponse], packet.response

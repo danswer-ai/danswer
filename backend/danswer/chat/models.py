@@ -53,6 +53,11 @@ class RelevanceChunk(BaseModel):
     content: str | None = None
 
 
+class DocumentRelevance(RelevanceChunk):
+    document_id: str
+    chunk_id: int
+
+
 class LLMRelevanceSummaryResponse(BaseModel):
     relevance_summaries: dict[str, RelevanceChunk]
 

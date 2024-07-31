@@ -18,7 +18,9 @@ from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prune_and_merge import prune_and_merge_sections
+from danswer.llm.answering.prune_and_merge import prune_sections
 from danswer.llm.interfaces import LLM
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import IndexFilters
@@ -78,6 +80,7 @@ class SearchTool(Tool):
         llm: LLM,
         fast_llm: LLM,
         pruning_config: DocumentPruningConfig,
+        evaluation_type: LLMEvaluationType,
         # if specified, will not actually run a search and will instead return these
         # sections. Used when the user selects specific docs to talk to
         selected_sections: list[InferenceSection] | None = None,
@@ -94,6 +97,7 @@ class SearchTool(Tool):
         self.llm = llm
         self.fast_llm = fast_llm
         self.pruning_config = pruning_config
+        self.evaluation_type = evaluation_type
 
         self.selected_sections = selected_sections
 
@@ -221,6 +225,7 @@ class SearchTool(Tool):
         search_pipeline = SearchPipeline(
             search_request=SearchRequest(
                 query=query,
+                evaluation_type=self.evaluation_type,
                 human_selected_filters=(
                     self.retrieval_options.filters if self.retrieval_options else None
                 ),
@@ -251,7 +256,7 @@ class SearchTool(Tool):
             id=SEARCH_RESPONSE_SUMMARY_ID,
             response=SearchResponseSummary(
                 rephrased_query=query,
-                top_sections=search_pipeline.reranked_sections,
+                top_sections=search_pipeline.final_context_sections,
                 predicted_flow=search_pipeline.predicted_flow,
                 predicted_search=search_pipeline.predicted_search_type,
                 final_filters=search_pipeline.search_query.filters,
@@ -274,13 +279,20 @@ class SearchTool(Tool):
             ),
         )
 
-        yield ToolResponse(
-            id=SECTION_RELEVANCE_LIST_ID,
-            response=search_pipeline.relevant_section_indices,
-        )
-
-        final_context_sections = prune_and_merge_sections(
-            sections=search_pipeline.reranked_sections,
+        if self.llm_doc_eval and not DISABLE_AGENTIC_SEARCH:
+            yield ToolResponse(
+                id=SECTION_RELEVANCE_LIST_ID,
+                response=search_pipeline.relevant_section_indices,
+            )
+        else:
+            yield ToolResponse(
+                id=SECTION_RELEVANCE_LIST_ID,
+                response=search_pipeline.relevant_section_indices,
+            )
+        print(len(search_pipeline.section_relevance_list))
+        print(len(search_pipeline.final_context_sections))
+        final_context_sections = prune_sections(
+            sections=search_pipeline.final_context_sections,
             section_relevance_list=search_pipeline.section_relevance_list,
             prompt_config=self.prompt_config,
             llm_config=self.llm.config,
@@ -294,11 +306,6 @@ class SearchTool(Tool):
         ]
 
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
-
-        if self.llm_doc_eval and not DISABLE_AGENTIC_SEARCH:
-            yield ToolResponse(
-                id=SEARCH_EVALUATION_ID, response=search_pipeline.relevance_summaries
-            )
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         final_docs = cast(

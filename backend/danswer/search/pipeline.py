@@ -5,7 +5,7 @@ from typing import cast
 
 from sqlalchemy.orm import Session
 
-from danswer.chat.models import RelevanceChunk
+from danswer.chat.models import DocumentRelevance
 from danswer.configs.chat_configs import DISABLE_AGENTIC_SEARCH
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
@@ -13,9 +13,11 @@ from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PromptConfig
+from danswer.llm.answering.prune_and_merge import _merge_sections
 from danswer.llm.answering.prune_and_merge import ChunkRange
 from danswer.llm.answering.prune_and_merge import merge_chunk_intervals
 from danswer.llm.interfaces import LLM
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import IndexFilters
@@ -29,6 +31,7 @@ from danswer.search.postprocessing.postprocessing import search_postprocessing
 from danswer.search.preprocessing.preprocessing import retrieval_preprocessing
 from danswer.search.retrieval.search_runner import retrieve_chunks
 from danswer.search.utils import inference_section_from_chunks
+from danswer.search.utils import relevant_sections_to_indices
 from danswer.secondary_llm_flows.agentic_evaluation import evaluate_inference_section
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
@@ -84,11 +87,13 @@ class SearchPipeline:
         # Reranking and LLM section selection can be run together
         # If only LLM selection is on, the reranked chunks are yielded immediatly
         self._reranked_sections: list[InferenceSection] | None = None
-        self._relevant_section_indices: list[int] | None = None
+        self._final_context_sections: list[InferenceSection] | None = None
+
+        self._relevant_section_indices: list[DocumentRelevance] | None = None
 
         # Generates reranked chunks and LLM selections
         self._postprocessing_generator: (
-            Iterator[list[InferenceSection] | list[int]] | None
+            Iterator[list[InferenceSection] | list[DocumentRelevance]] | None
         ) = None
 
     """Pre-processing"""
@@ -332,44 +337,56 @@ class SearchPipeline:
         return self._reranked_sections
 
     @property
-    def relevant_section_indices(self) -> list[int]:
+    def final_context_sections(self) -> list[InferenceSection]:
+        if self._final_context_sections is not None:
+            return self._final_context_sections
+
+        self._final_context_sections = _merge_sections(sections=self.reranked_sections)
+
+        return self._final_context_sections
+
+    @property
+    def relevant_section_indices(self) -> list[DocumentRelevance]:
         if self._relevant_section_indices is not None:
             return self._relevant_section_indices
 
+        if self.search_query.evaluation_type == LLMEvaluationType.SKIP:
+            raise ValueError(
+                "You disabled llm evaluation and thus should not be asking ofr relevant section indices!"
+            )
+
+        if self.search_query.evaluation_type == LLMEvaluationType.AGENTIC:
+            if DISABLE_AGENTIC_SEARCH:
+                raise ValueError(
+                    "Agentic search operation called while DISABLE_AGENTIC_SEARCH is toggled"
+                )
+
+            sections = self.final_context_sections
+            functions = [
+                FunctionCall(
+                    evaluate_inference_section,
+                    (section, self.search_query.query, self.llm),
+                )
+                for section in sections
+            ]
+
+            results = run_functions_in_parallel(function_calls=functions)
+
+            response = [value for value in results.values()]
+            return response
+
         self._relevant_section_indices = next(
-            cast(Iterator[list[int]], self._postprocessing_generator)
+            cast(Iterator[list[DocumentRelevance]], self._postprocessing_generator)
         )
         return self._relevant_section_indices
 
     @property
-    def relevance_summaries(self) -> dict[str, RelevanceChunk]:
-        if DISABLE_AGENTIC_SEARCH:
-            raise ValueError(
-                "Agentic saerch operation called while DISABLE_AGENTIC_SEARCH is toggled"
-            )
-        if len(self.reranked_sections) == 0:
-            logger.warning(
-                "No sections found in agentic search evalution. Returning empty dict."
-            )
-            return {}
-
-        sections = self.reranked_sections
-        functions = [
-            FunctionCall(
-                evaluate_inference_section, (section, self.search_query.query, self.llm)
-            )
-            for section in sections
-        ]
-
-        results = run_functions_in_parallel(function_calls=functions)
-
-        return {
-            next(iter(value)): value[next(iter(value))] for value in results.values()
-        }
-
-    @property
     def section_relevance_list(self) -> list[bool]:
+        llm_indices = relevant_sections_to_indices(
+            relevance_chunks=self.relevant_section_indices,
+            inference_sections=self.final_context_sections,
+        )
         return [
-            True if ind in self.relevant_section_indices else False
-            for ind in range(len(self.reranked_sections))
+            True if ind in llm_indices else False
+            for ind in range(len(self.final_context_sections))
         ]
