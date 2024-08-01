@@ -102,6 +102,7 @@ export function ChatPage({
     llmProviders,
     folders,
     openedFolders,
+    userInputPrompts,
   } = useChatContext();
 
   // chat session
@@ -1599,6 +1600,7 @@ export function ChatPage({
                             )}
 
                             <ChatInputBar
+                              inputPrompts={userInputPrompts}
                               showDocs={() => setDocumentSelection(true)}
                               selectedDocuments={selectedDocuments}
                               // assistant stuff

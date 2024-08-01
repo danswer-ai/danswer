@@ -27,6 +27,7 @@ interface SidebarWrapperProps<T extends object> {
   };
   contentProps: T;
   page: pageType;
+  size?: "sm" | "lg";
 }
 
 export default function SidebarWrapper<T extends object>({
@@ -38,6 +39,7 @@ export default function SidebarWrapper<T extends object>({
   headerProps,
   contentProps,
   content,
+  size = "sm",
 }: SidebarWrapperProps<T>) {
   const [toggledSidebar, setToggledSidebar] = useState(initiallyToggled);
 
@@ -140,7 +142,9 @@ export default function SidebarWrapper<T extends object>({
                       ${toggledSidebar ? "w-[250px]" : "w-[0px]"}`}
           />
 
-          <div className="mt-4 w-full max-w-3xl mx-auto">
+          <div
+            className={`mt-4 w-full ${size == "lg" ? "max-w-4xl" : "max-w-3xl"} mx-auto`}
+          >
             {content(contentProps)}
           </div>
         </div>

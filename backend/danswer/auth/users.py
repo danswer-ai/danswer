@@ -371,4 +371,5 @@ async def current_admin_user(user: User | None = Depends(current_user)) -> User 
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. User is not an admin.",
         )
+
     return user

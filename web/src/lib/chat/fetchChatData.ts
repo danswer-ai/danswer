@@ -13,6 +13,7 @@ import {
 } from "@/lib/types";
 import { ChatSession } from "@/app/chat/interfaces";
 import { Persona } from "@/app/admin/assistants/interfaces";
+import { InputPrompt } from "@/app/admin/prompt-library/interfaces";
 import { FullEmbeddingModelResponse } from "@/app/admin/models/embedding/components/types";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
@@ -44,6 +45,7 @@ interface FetchChatDataResult {
   finalDocumentSidebarInitialWidth?: number;
   shouldShowWelcomeModal: boolean;
   shouldDisplaySourcesIncompleteModal: boolean;
+  userInputPrompts: InputPrompt[];
 }
 
 export async function fetchChatData(searchParams: {
@@ -59,6 +61,7 @@ export async function fetchChatData(searchParams: {
     fetchSS("/query/valid-tags"),
     fetchLLMProvidersSS(),
     fetchSS("/folder"),
+    fetchSS("/input_prompt?include_public=true"),
   ];
 
   let results: (
@@ -90,8 +93,8 @@ export async function fetchChatData(searchParams: {
 
   const tagsResponse = results[6] as Response | null;
   const llmProviders = (results[7] || []) as LLMProviderDescriptor[];
-
-  const foldersResponse = results[8] as Response | null; // Handle folders result
+  const foldersResponse = results[8] as Response | null;
+  const userInputPromptsResponse = results[9] as Response | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -132,6 +135,15 @@ export async function fetchChatData(searchParams: {
   } else {
     console.log(
       `Failed to fetch document sets - ${documentSetsResponse?.status}`
+    );
+  }
+
+  let userInputPrompts: InputPrompt[] = [];
+  if (userInputPromptsResponse?.ok) {
+    userInputPrompts = await userInputPromptsResponse.json();
+  } else {
+    console.log(
+      `Failed to fetch user input prompts - ${userInputPromptsResponse?.status}`
     );
   }
 
@@ -218,5 +230,6 @@ export async function fetchChatData(searchParams: {
     toggleSidebar,
     shouldShowWelcomeModal,
     shouldDisplaySourcesIncompleteModal,
+    userInputPrompts,
   };
 }

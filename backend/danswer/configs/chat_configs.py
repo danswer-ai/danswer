@@ -3,6 +3,7 @@ import os
 
 PROMPTS_YAML = "./danswer/chat/prompts.yaml"
 PERSONAS_YAML = "./danswer/chat/personas.yaml"
+INPUT_PROMPT_YAML = "./danswer/chat/input_prompts.yaml"
 
 NUM_RETURNED_HITS = 50
 # Used for LLM filtering and reranking

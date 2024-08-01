@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { FiPlusCircle, FiPlus, FiInfo, FiX } from "react-icons/fi";
 import { ChatInputOption } from "./ChatInputOption";
 import { Persona } from "@/app/admin/assistants/interfaces";
+import { InputPrompt } from "@/app/admin/prompt-library/interfaces";
 import {
   FilterManager,
   getDisplayNameForModel,
@@ -55,12 +56,14 @@ export function ChatInputBar({
   textAreaRef,
   alternativeAssistant,
   chatSessionId,
+  inputPrompts,
 }: {
   showDocs: () => void;
   selectedDocuments: DanswerDocument[];
   assistantOptions: Persona[];
   setAlternativeAssistant: (alternativeAssistant: Persona | null) => void;
   setSelectedAssistant: (assistant: Persona) => void;
+  inputPrompts: InputPrompt[];
   message: string;
   setMessage: (message: string) => void;
   onSubmit: () => void;
@@ -76,7 +79,6 @@ export function ChatInputBar({
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
   chatSessionId?: number;
 }) {
-  // handle re-sizing of the text area
   useEffect(() => {
     const textarea = textAreaRef.current;
     if (textarea) {
@@ -111,9 +113,28 @@ export function ChatInputBar({
 
   const suggestionsRef = useRef<HTMLDivElement | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showPrompts, setShowPrompts] = useState(false);
 
   const interactionsRef = useRef<HTMLDivElement | null>(null);
-  // Click out of assistant suggestions
+
+  const hideSuggestions = () => {
+    setShowSuggestions(false);
+    setTabbingIconIndex(0);
+  };
+
+  const hidePrompts = () => {
+    setTimeout(() => {
+      setShowPrompts(false);
+    }, 50);
+
+    setTabbingIconIndex(0);
+  };
+
+  const updateInputPrompt = (prompt: InputPrompt) => {
+    hidePrompts();
+    setMessage(`${prompt.content}`);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -123,6 +144,7 @@ export function ChatInputBar({
           !interactionsRef.current.contains(event.target as Node))
       ) {
         hideSuggestions();
+        hidePrompts();
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -131,12 +153,6 @@ export function ChatInputBar({
     };
   }, []);
 
-  const hideSuggestions = () => {
-    setShowSuggestions(false);
-    setAssistantIconIndex(0);
-  };
-
-  // Update selected persona
   const updatedTaggedAssistant = (assistant: Persona) => {
     setAlternativeAssistant(
       assistant.id == selectedAssistant.id ? null : assistant
@@ -145,22 +161,37 @@ export function ChatInputBar({
     setMessage("");
   };
 
-  // Complete user input handling
+  const handleAssistantInput = (text: string) => {
+    if (!text.startsWith("@")) {
+      hideSuggestions();
+    } else {
+      const match = text.match(/(?:\s|^)@(\w*)$/);
+      if (match) {
+        setShowSuggestions(true);
+      } else {
+        hideSuggestions();
+      }
+    }
+  };
+
+  const handlePromptInput = (text: string) => {
+    if (!text.startsWith("/")) {
+      hidePrompts();
+    } else {
+      const promptMatch = text.match(/(?:\s|^)\/(\w*)$/);
+      if (promptMatch) {
+        setShowPrompts(true);
+      } else {
+        hidePrompts();
+      }
+    }
+  };
+
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = event.target.value;
     setMessage(text);
-
-    if (!text.startsWith("@")) {
-      hideSuggestions();
-      return;
-    }
-
-    const match = text.match(/(?:\s|^)@(\w*)$/);
-    if (match) {
-      setShowSuggestions(true);
-    } else {
-      hideSuggestions();
-    }
+    handleAssistantInput(text);
+    handlePromptInput(text);
   };
 
   const assistantTagOptions = assistantOptions.filter((assistant) =>
@@ -172,38 +203,65 @@ export function ChatInputBar({
     )
   );
 
-  const [assistantIconIndex, setAssistantIconIndex] = useState(0);
+  const filteredPrompts = inputPrompts.filter(
+    (prompt) =>
+      prompt.active &&
+      prompt.prompt.toLowerCase().startsWith(
+        message
+          .slice(message.lastIndexOf("/") + 1)
+          .split(/\s/)[0]
+          .toLowerCase()
+      )
+  );
+
+  const [tabbingIconIndex, setTabbingIconIndex] = useState(0);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (
-      showSuggestions &&
-      assistantTagOptions.length > 0 &&
+      ((showSuggestions && assistantTagOptions.length > 0) || showPrompts) &&
       (e.key === "Tab" || e.key == "Enter")
     ) {
       e.preventDefault();
-      if (assistantIconIndex == assistantTagOptions.length) {
-        window.open("/assistants/new", "_blank");
-        hideSuggestions();
-        setMessage("");
+
+      if (
+        (tabbingIconIndex == assistantTagOptions.length && showSuggestions) ||
+        (tabbingIconIndex == filteredPrompts.length && showPrompts)
+      ) {
+        if (showPrompts) {
+          window.open("/prompts", "_self");
+        } else {
+          window.open("/assistants/new", "_self");
+        }
       } else {
-        const option =
-          assistantTagOptions[assistantIconIndex >= 0 ? assistantIconIndex : 0];
-        updatedTaggedAssistant(option);
+        if (showPrompts) {
+          const uppity =
+            filteredPrompts[tabbingIconIndex >= 0 ? tabbingIconIndex : 0];
+          updateInputPrompt(uppity);
+        } else {
+          const option =
+            assistantTagOptions[tabbingIconIndex >= 0 ? tabbingIconIndex : 0];
+
+          updatedTaggedAssistant(option);
+        }
       }
     }
-    if (!showSuggestions) {
+    if (!showPrompts && !showSuggestions) {
       return;
     }
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setAssistantIconIndex((assistantIconIndex) =>
-        Math.min(assistantIconIndex + 1, assistantTagOptions.length)
+
+      setTabbingIconIndex((tabbingIconIndex) =>
+        Math.min(
+          tabbingIconIndex + 1,
+          showPrompts ? filteredPrompts.length : assistantTagOptions.length
+        )
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setAssistantIconIndex((assistantIconIndex) =>
-        Math.max(assistantIconIndex - 1, 0)
+      setTabbingIconIndex((tabbingIconIndex) =>
+        Math.max(tabbingIconIndex - 1, 0)
       );
     }
   };
@@ -231,7 +289,7 @@ export function ChatInputBar({
                   <button
                     key={index}
                     className={`px-2 ${
-                      assistantIconIndex == index && "bg-hover-lightish"
+                      tabbingIconIndex == index && "bg-hover-lightish"
                     } rounded  rounded-lg content-start flex gap-x-1 py-2 w-full  hover:bg-hover-lightish cursor-pointer`}
                     onClick={() => {
                       updatedTaggedAssistant(currentAssistant);
@@ -245,12 +303,12 @@ export function ChatInputBar({
                     </p>
                   </button>
                 ))}
+
                 <a
                   key={assistantTagOptions.length}
-                  target="_blank"
+                  target="_self"
                   className={`${
-                    assistantIconIndex == assistantTagOptions.length &&
-                    "bg-hover"
+                    tabbingIconIndex == assistantTagOptions.length && "bg-hover"
                   } rounded rounded-lg px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-lightish cursor-pointer"`}
                   href="/assistants/new"
                 >
@@ -260,6 +318,42 @@ export function ChatInputBar({
               </div>
             </div>
           )}
+
+          {showPrompts && (
+            <div
+              ref={suggestionsRef}
+              className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full"
+            >
+              <div className="rounded-lg py-1.5 bg-white border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
+                {filteredPrompts.map((currentPrompt, index) => (
+                  <button
+                    key={index}
+                    className={`px-2 ${tabbingIconIndex == index && "bg-hover"} rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
+                    onClick={() => {
+                      updateInputPrompt(currentPrompt);
+                    }}
+                  >
+                    <p className="font-bold ">{currentPrompt.prompt}</p>
+                    <p className="line-clamp-1">
+                      {currentPrompt.id == selectedAssistant.id && "(default) "}
+                      {currentPrompt.content}
+                    </p>
+                  </button>
+                ))}
+
+                <a
+                  key={filteredPrompts.length}
+                  target="_self"
+                  className={`${tabbingIconIndex == filteredPrompts.length && "bg-hover"} px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
+                  href="/prompts"
+                >
+                  <FiPlus size={17} />
+                  <p>Create a new prompt</p>
+                </a>
+              </div>
+            </div>
+          )}
+
           <div>
             <SelectedFilterDisplay filterManager={filterManager} />
           </div>
@@ -391,11 +485,13 @@ export function ChatInputBar({
               style={{ scrollbarWidth: "thin" }}
               role="textarea"
               aria-multiline
-              placeholder={`Send a message ${!settings?.isMobile ? "or @ to tag an assistant..." : ""}`}
+              placeholder={`Send a message ${!settings?.isMobile ? "or try using @ or /" : ""}`}
               value={message}
               onKeyDown={(event) => {
                 if (
                   event.key === "Enter" &&
+                  !showPrompts &&
+                  !showSuggestions &&
                   !event.shiftKey &&
                   message &&
                   !isStreaming
@@ -453,7 +549,6 @@ export function ChatInputBar({
                   />
                 )}
                 position="top"
-                // flexPriority="second"
               >
                 <ChatInputOption
                   flexPriority="second"
