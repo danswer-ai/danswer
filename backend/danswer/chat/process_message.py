@@ -653,6 +653,7 @@ def stream_chat_message_objects(
                         yield LLMRelevanceFilterResponse(
                             relevant_chunk_indices=llm_indices
                         )
+
                 elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
                     img_generation_response = cast(
                         list[ImageGenerationResponse], packet.response
