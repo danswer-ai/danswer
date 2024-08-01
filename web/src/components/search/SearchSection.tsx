@@ -20,7 +20,6 @@ import { searchRequestStreamed } from "@/lib/search/streamingQa";
 
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
 import { useFilters, useObjectState } from "@/lib/hooks";
-import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { computeAvailableFilters } from "@/lib/filters";
 import { redirect, useRouter, useSearchParams } from "next/navigation";
@@ -48,7 +47,6 @@ const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
 
 const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
   reasoning: null,
-  answerable: null,
   error: null,
 };
 
@@ -414,15 +412,7 @@ export const SearchSection = ({
       offset: offset ?? defaultOverrides.offset,
     };
 
-    const questionValidationArgs = {
-      query,
-      update: setValidQuestionResponse,
-    };
-
-    await Promise.all([
-      searchRequestStreamed(searchFnArgs),
-      questionValidationStreamed(questionValidationArgs),
-    ]);
+    await Promise.all([searchRequestStreamed(searchFnArgs)]);
   };
 
   // handle redirect if search page is disabled

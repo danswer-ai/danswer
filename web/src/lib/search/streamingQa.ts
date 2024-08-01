@@ -62,7 +62,6 @@ export const searchRequestStreamed = async ({
           enable_auto_detect_filters: false,
         },
         llm_doc_eval: true,
-        skip_gen_ai_answer_generation: true,
       }),
       headers: {
         "Content-Type": "application/json",
