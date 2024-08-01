@@ -17,6 +17,9 @@ from model_server.custom_models import warm_up_intent_model
 from model_server.encoders import router as encoders_router
 from model_server.encoders import warm_up_cross_encoders
 from model_server.management_endpoints import router as management_router
+from shared_configs.configs import ENABLE_RERANKING_ASYNC_FLOW
+from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
+from shared_configs.configs import INDEXING_ONLY
 from shared_configs.configs import MIN_THREADS_ML_MODELS
 from shared_configs.configs import MODEL_SERVER_ALLOWED_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
@@ -58,8 +61,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     torch.set_num_threads(max(MIN_THREADS_ML_MODELS, torch.get_num_threads()))
     logger.info(f"Torch Threads: {torch.get_num_threads()}")
-    warm_up_intent_model()
-    warm_up_cross_encoders()
+
+    if not INDEXING_ONLY:
+        warm_up_intent_model()
+        if ENABLE_RERANKING_REAL_TIME_FLOW or ENABLE_RERANKING_ASYNC_FLOW:
+            warm_up_cross_encoders()
+    else:
+        logger.info("This model server should only run document indexing.")
 
     yield
 
