@@ -29,7 +29,7 @@ transformer_logging.set_verbosity_error()
 logger = setup_logger()
 
 
-async def manage_huggingface_cache():
+async def manage_huggingface_cache() -> None:
     temp_hf_cache = Path("/root/.cache/temp_huggingface")
     hf_cache = Path("/root/.cache/huggingface")
     if temp_hf_cache.is_dir() and any(temp_hf_cache.iterdir()):
