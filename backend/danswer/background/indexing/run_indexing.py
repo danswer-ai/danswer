@@ -328,17 +328,19 @@ def run_indexing_entrypoint(index_attempt_id: int, is_ee: bool = False) -> None:
             attempt = _prepare_index_attempt(db_session, index_attempt_id)
 
             logger.info(
-                f"Running indexing attempt for connector: '{attempt.connector_credential_pair.connector.name}', "
-                f"with config: '{attempt.connector_credential_pair.connector.connector_specific_config}', and "
-                f"with credentials: '{attempt.connector_credential_pair.connector_id}'"
+                f"Indexing starting: "
+                f"connector='{attempt.connector_credential_pair.connector.name}' "
+                f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
+                f"credentials='{attempt.connector_credential_pair.connector_id}'"
             )
 
             _run_indexing(db_session, attempt)
 
             logger.info(
-                f"Completed indexing attempt for connector: '{attempt.connector_credential_pair.connector.name}', "
-                f"with config: '{attempt.connector_credential_pair.connector.connector_specific_config}', and "
-                f"with credentials: '{attempt.connector_credential_pair.connector_id}'"
+                f"Indexing finished: "
+                f"connector='{attempt.connector_credential_pair.connector.name}' "
+                f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
+                f"credentials='{attempt.connector_credential_pair.connector_id}'"
             )
     except Exception as e:
         logger.exception(f"Indexing job with ID '{index_attempt_id}' failed due to {e}")
