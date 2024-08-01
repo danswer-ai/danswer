@@ -27,7 +27,7 @@ def _article_to_document(article: Article, content_tags: dict[str, str]) -> Docu
     update_time = time_str_to_utc(article.updated_at)
 
     # build metadata
-    metadata = {
+    metadata: dict[str, str | list[str]] = {
         "labels": [str(label) for label in article.label_names if label],
         "content_tag_names": [
             content_tags[tag_id]
@@ -63,7 +63,7 @@ class ZendeskConnector(LoadConnector, PollConnector):
         self.zendesk_client: Zenpy | None = None
         self.content_tags: dict[str, str] = {}
 
-    def _set_content_tags(self, subdomain: str, email: str, token: str):
+    def _set_content_tags(self, subdomain: str, email: str, token: str) -> None:
         # Construct the URL
         url = f"https://{subdomain}.zendesk.com/api/v2/guide/content_tags"
 
