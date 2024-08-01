@@ -1,6 +1,7 @@
 from typing import Any
 
 import requests
+from retry import retry
 from zenpy import Zenpy  # type: ignore
 from zenpy.lib.api_objects.help_centre_objects import Article  # type: ignore
 
@@ -29,7 +30,7 @@ def _article_to_document(article: Article, content_tags: dict[str, str]) -> Docu
     # build metadata
     metadata: dict[str, str | list[str]] = {
         "labels": [str(label) for label in article.label_names if label],
-        "content_tag_names": [
+        "content_tags": [
             content_tags[tag_id]
             for tag_id in article.content_tag_ids
             if tag_id in content_tags
@@ -63,24 +64,38 @@ class ZendeskConnector(LoadConnector, PollConnector):
         self.zendesk_client: Zenpy | None = None
         self.content_tags: dict[str, str] = {}
 
-    def _set_content_tags(self, subdomain: str, email: str, token: str) -> None:
-        # Construct the URL
-        url = f"https://{subdomain}.zendesk.com/api/v2/guide/content_tags"
+    @retry(tries=3, delay=2, backoff=2)
+    def _set_content_tags(
+        self, subdomain: str, email: str, token: str, page_size: int = 30
+    ):
+        # Construct the base URL
+        base_url = f"https://{subdomain}.zendesk.com/api/v2/guide/content_tags"
 
         # Set up authentication
         auth = (f"{email}/token", token)
 
-        try:
-            # Make the GET request
-            response = requests.get(url, auth=auth)
+        # Set up pagination parameters
+        params = {"page[size]": page_size}
 
-            # Check if the request was successful
-            if response.status_code == 200:
-                content_tag_list = response.json().get("records", [])
-                for tag in content_tag_list:
-                    self.content_tags[tag["id"]] = tag["name"]
-            else:
-                raise Exception(f"Error: {response.status_code}\n{response.text}")
+        try:
+            while True:
+                # Make the GET request
+                response = requests.get(base_url, auth=auth, params=params)
+
+                # Check if the request was successful
+                if response.status_code == 200:
+                    data = response.json()
+                    content_tag_list = data.get("records", [])
+                    for tag in content_tag_list:
+                        self.content_tags[tag["id"]] = tag["name"]
+
+                    # Check if there are more pages
+                    if data.get("meta", {}).get("has_more", False):
+                        params["page[after]"] = data["meta"]["after_cursor"]
+                    else:
+                        break
+                else:
+                    raise Exception(f"Error: {response.status_code}\n{response.text}")
         except Exception as e:
             print(f"Error fetching content tags: {str(e)}")
 
