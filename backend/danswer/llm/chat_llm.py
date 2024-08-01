@@ -270,6 +270,8 @@ class DefaultMultiLLM(LLM):
                 if self._max_output_tokens > 0
                 else None,
                 timeout=self._timeout,
+                # For now, we don't support parallel tool calls
+                parallel_tool_calls=False,
                 **self._model_kwargs,
             )
         except Exception as e:
