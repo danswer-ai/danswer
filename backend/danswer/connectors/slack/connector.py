@@ -182,17 +182,31 @@ def thread_to_doc(
 
     doc_sem_id = f"{initial_sender_name} in #{channel['name']}: {snippet}"
 
-    return Document(
-        id=f"{channel_id}__{thread[0]['ts']}",
-        sections=[
+    sections = []
+    for m in thread:
+        try:
+            user = m["user"]
+        except KeyError:
+            user = "Unknown"
+        sender_expert_info = expert_info_from_slack_id(
+            user_id=user, client=client, user_cache=user_cache
+        )
+        if sender_expert_info and initial_sender_expert_info:
+            sender_name = sender_expert_info.get_semantic_name()
+        else:
+            sender_name = "Unknown"
+        content = sender_name + ": " + m["text"]
+        sections.append(
             Section(
                 link=get_message_link(
                     event=m, workspace=workspace, channel_id=channel_id
                 ),
-                text=slack_cleaner.index_clean(cast(str, m["text"])),
+                text=slack_cleaner.index_clean(cast(str, content)),
             )
-            for m in thread
-        ],
+        )
+    return Document(
+        id=f"{channel_id}__{thread[0]['ts']}",
+        sections=sections,
         source=DocumentSource.SLACK,
         semantic_identifier=doc_sem_id,
         doc_updated_at=get_latest_message_time(thread),
@@ -390,4 +404,7 @@ if __name__ == "__main__":
     one_day_ago = current - 24 * 60 * 60  # 1 day
     document_batches = connector.poll_source(one_day_ago, current)
 
-    print(next(document_batches))
+    for db in document_batches:
+        for doc in db:
+            print("====")
+            print(doc)
