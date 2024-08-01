@@ -277,11 +277,9 @@ def _run_indexing(
             run_dt=run_end_dt,
         )
 
+    elapsed_time = time.time() - start_time
     logger.info(
-        f"Indexed or refreshed {document_count} total documents for a total of {chunk_count} indexed chunks"
-    )
-    logger.info(
-        f"Connector successfully finished, elapsed time: {time.time() - start_time} seconds"
+        f"Connector succeeded: docs={document_count} chunks={chunk_count} elapsed={elapsed_time:.2f}s"
     )
 
 

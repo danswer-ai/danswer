@@ -212,7 +212,7 @@ def warm_up_encoders(
     )
 
     # May not be the exact same tokenizer used for the indexing flow
-    logger.info(f"Warming up encoder model: {model_name}")
+    logger.debug(f"Warming up encoder model: {model_name}")
     get_tokenizer(model_name=model_name, provider_type=provider_type).encode(
         warm_up_str
     )
