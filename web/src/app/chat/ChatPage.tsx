@@ -1180,7 +1180,7 @@ export function ChatPage({
                       <ChatBanner />
 
                       {livePersona && (
-                        <div className="sticky top-0 z-10 flex w-full left-80 bg-background">
+                        <div className="sticky top-0 z-10 flex w-full lg:left-80 bg-background">
                           <div className="flex w-full mt-2">
                             <div className="flex items-center w-full gap-3 p-1 ml-2 rounded">
                               <FiMenu
@@ -1240,7 +1240,7 @@ export function ChatPage({
 
                       <div
                         className={
-                          "mt-4 pt-12 sm:pt-0 mx-8" +
+                          "mt-4 pt-12 sm:pt-0 mx-6 sm:mx-8" +
                           (hasPerformedInitialScroll ? "" : " invisible")
                         }
                       >
