@@ -67,7 +67,7 @@ class ZendeskConnector(LoadConnector, PollConnector):
     @retry(tries=3, delay=2, backoff=2)
     def _set_content_tags(
         self, subdomain: str, email: str, token: str, page_size: int = 30
-    ):
+    ) -> None:
         # Construct the base URL
         base_url = f"https://{subdomain}.zendesk.com/api/v2/guide/content_tags"
 
