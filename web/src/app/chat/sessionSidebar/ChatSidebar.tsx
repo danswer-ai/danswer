@@ -29,12 +29,12 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import React from "react";
 import { FaBrain, FaHeadset } from "react-icons/fa";
-/* import { Logo } from "@/components/Logo"; */
 import Logo from "../../../../public/logo-brand.png";
 import { HeaderTitle } from "@/components/header/Header";
 import { UserSettingsButton } from "@/components/UserSettingsButton";
 import { useChatContext } from "@/components/context/ChatContext";
-import { Button } from "@/components/ui/button";
+import { Button } from "@tremor/react";
+/* import { Button } from "@/components/ui/button"; */
 
 export const ChatSidebar = ({
   existingChats,
@@ -87,12 +87,7 @@ export const ChatSidebar = ({
         id="chat-sidebar"
       >
         <div className="flex">
-          <div
-            className="w-full"
-            /*  href={
-              settings && settings.default_page === "chat" ? "/chat" : "/search"
-            } */
-          >
+          <div className="w-full">
             <div className="flex items-center w-full px-4">
               <div className="flex items-center justify-between w-full">
                 <Image src={Logo} alt="enmedd-logo" width={112} />
@@ -150,14 +145,12 @@ export const ChatSidebar = ({
           </div>
         }
         <div className="pb-4 mx-3 border-b border-border" />
-
         <ChatTab
           existingChats={existingChats}
           currentChatId={currentChatId}
           folders={folders}
           openedFolders={openedFolders}
         />
-
         <div className="flex items-center gap-3 px-3 pb-1">
           <Link
             href={
@@ -169,12 +162,38 @@ export const ChatSidebar = ({
             }
             className="w-full"
           >
-            <Button className="w-full">
-              <FiEdit className="ml-1 mr-2" /> New Chat
+            <Button
+              className="w-full border
+        border-gray-300
+        shadow-md
+        rounded-lg
+        font-medium 
+        text-emphasis 
+        text-sm
+        h-full
+        bg-background
+        select-none
+        hover:bg-hover-light"
+            >
+              <span className="flex p-1 items-center">
+                <FiEdit className="ml-1 mr-2" /> New Chat
+              </span>
             </Button>
           </Link>
           <div className="h-full ">
             <Button
+              className="border
+        border-gray-300
+        shadow-md
+        rounded-lg
+        font-medium 
+        text-emphasis 
+        text-sm
+        p-1
+        h-full
+        bg-background
+        select-none
+        hover:bg-hover-light px-3.5"
               onClick={() =>
                 createFolder("New Folder")
                   .then((folderId) => {

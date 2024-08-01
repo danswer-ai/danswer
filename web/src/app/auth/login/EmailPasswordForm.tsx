@@ -117,7 +117,7 @@ export function EmailPasswordForm({
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { basicLogin, basicSignup } from "@/lib/user";
-import { Button } from "@tremor/react";
+/* import { Button } from "@tremor/react"; */
 import { Form, Formik } from "formik";
 import { redirect, useRouter } from "next/navigation";
 import * as Yup from "yup";
@@ -125,6 +125,7 @@ import { requestEmailVerification } from "../lib";
 import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
 import { fetchSettingsSS } from "@/components/settings/lib";
+import { Button } from "@/components/ui/button";
 
 export function EmailPasswordForm({
   isSignup = false,
@@ -212,11 +213,7 @@ export function EmailPasswordForm({
             />
 
             <div className="flex">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full mx-auto bg-blue-700"
-              >
+              <Button type="submit" disabled={isSubmitting}>
                 {isSignup ? "Sign Up" : "Log In"}
               </Button>
             </div>

@@ -1,4 +1,4 @@
-/* export function BasicClickable({
+export function BasicClickable({
   children,
   onClick,
   fullWidth = false,
@@ -22,7 +22,7 @@
         h-full
         bg-background
         select-none
-        hover:bg-hover-light
+        hover:bg-hover-light px-4
         ${fullWidth ? "w-full" : ""}`}
     >
       {children}
@@ -90,8 +90,8 @@ export function BasicSelectable({
       {children}
     </div>
   );
-} */
-import { Button } from "@/components/ui/button";
+}
+/* import { Button } from "@/components/ui/button";
 
 export function BasicClickable({
   children,
@@ -103,7 +103,7 @@ export function BasicClickable({
   fullWidth?: boolean;
 }) {
   return (
-    <Button onClick={onClick} className="h-full" variant="secondary">
+    <Button onClick={onClick} className="h-full w-full">
       {children}
     </Button>
   );
@@ -170,3 +170,4 @@ export function BasicSelectable({
     </div>
   );
 }
+ */
