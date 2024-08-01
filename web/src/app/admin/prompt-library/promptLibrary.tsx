@@ -110,9 +110,6 @@ export const PromptLibraryTable = ({
   };
 
   const handleDelete = async (id: number) => {
-    console.log("FETCHIN");
-
-    console.log(`/api${isPublic && "/admin"}/input_prompt/${id}`);
     const response = await fetch(
       `/api${isPublic ? "/admin" : ""}/input_prompt/${id}`,
       {
