@@ -115,6 +115,7 @@ def load_input_prompts_from_yaml(input_prompts_yaml: str = INPUT_PROMPT_YAML) ->
                 input_prompt_id=input_prompt.get("id"),
                 prompt=input_prompt["prompt"],
                 content=input_prompt["content"],
+                is_public=input_prompt["is_public"],
                 active=input_prompt.get("active", True),
                 db_session=db_session,
                 commit=True,

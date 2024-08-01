@@ -3,9 +3,23 @@ import { InputPrompt } from "./interfaces";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export const useInputPrompts = () => {
+export const useAdminInputPrompts = () => {
   const { data, error, mutate } = useSWR<InputPrompt[]>(
-    "/api/input_prompt",
+    `/api/admin/input_prompt`,
+    fetcher
+  );
+
+  return {
+    data,
+    error,
+    isLoading: !error && !data,
+    refreshInputPrompts: mutate,
+  };
+};
+
+export const useInputPrompts = (includePublic: boolean = false) => {
+  const { data, error, mutate } = useSWR<InputPrompt[]>(
+    `/api/input_prompt${includePublic ? "?include_public=true" : ""}`,
     fetcher
   );
 

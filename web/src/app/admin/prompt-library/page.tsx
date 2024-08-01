@@ -1,7 +1,7 @@
 "use client";
 
 import { AdminPageTitle } from "@/components/admin/Title";
-import { BookstackIcon } from "@/components/icons/icons";
+import { ClosedBookIcon } from "@/components/icons/icons";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
@@ -13,17 +13,24 @@ import { useInputPrompts } from "./hooks";
 import { PromptLibraryTable } from "./promptLibrary";
 import { CreateInputPromptRequest, InputPromptSnapshot } from "./interfaces";
 
-const Main = () => {
+export const PromptPage = ({
+  promptLibrary,
+  isLoading,
+  error,
+  refreshPrompts,
+  centering = false,
+  isPublic,
+}: {
+  promptLibrary: InputPromptSnapshot[];
+  isLoading: boolean;
+  error: any;
+  refreshPrompts: () => void;
+  centering?: boolean;
+  isPublic: boolean;
+}) => {
   const { popup, setPopup } = usePopup();
   const [newPrompt, setNewPrompt] = useState(false);
   const [newPromptId, setNewPromptId] = useState<number | null>(null);
-
-  const {
-    data: promptLibrary,
-    error: promptLibraryError,
-    isLoading: promptLibraryIsLoading,
-    refreshInputPrompts: refreshPrompts,
-  } = useInputPrompts();
 
   const createInputPrompt = async (
     promptData: CreateInputPromptRequest
@@ -33,7 +40,7 @@ const Main = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(promptData),
+      body: JSON.stringify({ ...promptData, is_public: isPublic }),
     });
 
     if (!response.ok) {
@@ -69,18 +76,15 @@ const Main = () => {
     }
   };
 
-  if (promptLibraryIsLoading) {
+  if (isLoading) {
     return <ThreeDotsLoader />;
   }
 
-  if (promptLibraryError || !promptLibrary) {
+  if (error || !promptLibrary) {
     return (
       <ErrorCallout
         errorTitle="Error loading standard answers"
-        errorMsg={
-          promptLibraryError.info?.message ||
-          promptLibraryError.message.info?.detail
-        }
+        errorMsg={error?.info?.message || error?.message?.info?.detail}
       />
     );
   }
@@ -90,7 +94,9 @@ const Main = () => {
   };
 
   return (
-    <div className="mb-8">
+    <div
+      className={`w-full ${centering ? "flex-col flex justify-center" : ""} mb-8`}
+    >
       {popup}
 
       {newPrompt && (
@@ -107,20 +113,18 @@ const Main = () => {
           onClose={() => setNewPromptId(null)}
         />
       )}
+      <div className={centering ? "max-w-sm mx-auto" : ""}>
+        <Text className="mb-2 my-auto">
+          Create prompts that can be accessed with the <i>`/`</i> shortcut in
+          Danswer Chat.
+        </Text>
+      </div>
 
-      <Text className="mb-2">
-        Create prompts that can be accessed with the <i>`/`</i> shortcut in
-        Danswer Chat.
-      </Text>
-
-      {promptLibrary.length == 0 && (
-        <Text className="mb-2">Add your first prompt below!</Text>
-      )}
       <div className="mb-2"></div>
 
       <Button
         onClick={() => setNewPrompt(true)}
-        className="my-auto"
+        className={centering ? "mx-auto" : ""}
         color="green"
         size="xs"
       >
@@ -140,17 +144,28 @@ const Main = () => {
     </div>
   );
 };
-
 const Page = () => {
+  const {
+    data: promptLibrary,
+    error: promptLibraryError,
+    isLoading: promptLibraryIsLoading,
+    refreshInputPrompts: refreshPrompts,
+  } = useInputPrompts(false);
+
   return (
     <div className="container mx-auto">
       <AdminPageTitle
-        icon={<BookstackIcon size={32} />}
+        icon={<ClosedBookIcon size={32} />}
         title="Prompt Library"
       />
-      <Main />
+      <PromptPage
+        promptLibrary={promptLibrary || []}
+        isLoading={promptLibraryIsLoading}
+        error={promptLibraryError}
+        refreshPrompts={refreshPrompts}
+        isPublic={true}
+      />
     </div>
   );
 };
-
 export default Page;

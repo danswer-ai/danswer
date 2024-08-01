@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from danswer.auth.schemas import UserRole
 from danswer.db.models import InputPrompt
 from danswer.db.models import User
 from danswer.server.features.input_prompt.models import InputPromptSnapshot
@@ -19,6 +20,7 @@ def upsert_input_prompt(
     prompt: str,
     content: str,
     active: bool,
+    is_public: bool,
     db_session: Session,
     commit: bool = True,
 ) -> InputPrompt:
@@ -37,12 +39,14 @@ def upsert_input_prompt(
     if input_prompt:
         input_prompt.content = content
         input_prompt.active = active
+        input_prompt.is_public = is_public
     else:
         input_prompt = InputPrompt(
             id=input_prompt_id,
             prompt=prompt,
             content=content,
             active=active,
+            is_public=is_public,
             user_id=user.id if user else None,
         )
         db_session.add(input_prompt)
@@ -54,12 +58,17 @@ def upsert_input_prompt(
 
 
 def insert_input_prompt(
-    prompt: str, content: str, user: User | None, db_session: Session
+    prompt: str,
+    content: str,
+    is_public: bool,
+    user: User | None,
+    db_session: Session,
 ) -> InputPrompt:
     input_prompt = InputPrompt(
         prompt=prompt,
         content=content,
         active=True,
+        is_public=is_public,
         user_id=user.id if user is not None else None,
     )
     db_session.add(input_prompt)
@@ -90,7 +99,6 @@ def update_input_prompt(
     input_prompt.active = active
 
     db_session.commit()
-
     return input_prompt
 
 
@@ -98,15 +106,37 @@ def validate_user_prompt_authorization(
     user: User | None, input_prompt: InputPrompt
 ) -> bool:
     prompt = InputPromptSnapshot.from_model(input_prompt=input_prompt)
+
     if prompt.user_id is not None:
         if user is None:
             return False
 
         user_details = UserInfo.from_model(user)
-        if user_details.id != prompt.user_id:
+        if str(user_details.id) != str(prompt.user_id):
             return False
-
     return True
+
+
+def remove_public_input_prompt(
+    user: User | None, input_prompt_id: int, db_session: Session
+) -> None:
+    input_prompt = db_session.scalar(
+        select(InputPrompt).where(InputPrompt.id == input_prompt_id)
+    )
+
+    if input_prompt is None:
+        raise ValueError(f"No input prompt with id {input_prompt_id}")
+
+    if not input_prompt.is_public:
+        raise HTTPException(status_code=400, detail="This prompt is not public")
+
+    if user is None or user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=403, detail="Only admins can delete public prompts"
+        )
+
+    db_session.delete(input_prompt)
+    db_session.commit()
 
 
 def remove_input_prompt(
@@ -117,6 +147,11 @@ def remove_input_prompt(
     )
     if input_prompt is None:
         raise ValueError(f"No input prompt with id {input_prompt_id}")
+
+    if input_prompt.is_public:
+        raise HTTPException(
+            status_code=400, detail="Cannot delete public prompts with this method"
+        )
 
     if not validate_user_prompt_authorization(user, input_prompt):
         raise HTTPException(status_code=401, detail="You do not own this prompt")
@@ -146,17 +181,34 @@ def fetch_input_prompt_by_id(
     return result
 
 
+def fetch_public_input_prompts(
+    db_session: Session,
+) -> list[InputPrompt]:
+    query = select(InputPrompt).where(InputPrompt.is_public)
+    return list(db_session.scalars(query).all())
+
+
 def fetch_input_prompts_by_user(
     db_session: Session,
     user_id: UUID | None,
     active: bool | None = None,
+    include_public: bool = False,
 ) -> list[InputPrompt]:
     query = select(InputPrompt)
 
     if user_id is not None:
-        query = query.where(InputPrompt.user_id == user_id)
+        if include_public:
+            query = query.where(
+                (InputPrompt.user_id == user_id) | InputPrompt.is_public
+            )
+        else:
+            query = query.where(InputPrompt.user_id == user_id)
+
+    elif include_public:
+        query = query.where(InputPrompt.is_public)
 
     if active is not None:
         query = query.where(InputPrompt.active == active)
-
+    print("My query is the following ")
+    print(query)
     return list(db_session.scalars(query).all())

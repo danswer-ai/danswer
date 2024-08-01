@@ -20,6 +20,7 @@ import {
   DocumentSetIconSkeleton,
   EmbeddingIconSkeleton,
   AssistantsIconSkeleton,
+  ClosedBookIcon,
 } from "@/components/icons/icons";
 
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
@@ -148,7 +149,7 @@ export function ClientLayout({
                   {
                     name: (
                       <div className="flex">
-                        <PencilCircle size={18} />
+                        <ClosedBookIcon size={18} />
                         <div className="ml-1">Prompt Library</div>
                       </div>
                     ),

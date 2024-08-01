@@ -17,7 +17,11 @@ const EditPromptModal = ({
   promptId,
   editInputPrompt,
 }: EditPromptModalProps) => {
-  const { data: promptData, error } = useInputPrompt(promptId);
+  const {
+    data: promptData,
+    error,
+    refreshInputPrompt,
+  } = useInputPrompt(promptId);
 
   if (error)
     return (
@@ -42,7 +46,10 @@ const EditPromptModal = ({
           active: promptData.active,
         }}
         validationSchema={EditPromptSchema}
-        onSubmit={(values) => editInputPrompt(promptId, values)}
+        onSubmit={(values) => {
+          editInputPrompt(promptId, values);
+          refreshInputPrompt();
+        }}
       >
         {({ isSubmitting, values }) => (
           <Form>

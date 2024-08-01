@@ -155,14 +155,14 @@ class InputPrompt(Base):
     content: Mapped[str] = mapped_column(String)
     active: Mapped[bool] = mapped_column(Boolean)
     user: Mapped[User | None] = relationship("User", back_populates="input_prompts")
-
+    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
 
 
 class InputPrompt__User(Base):
     __tablename__ = "inputprompt__user"
 
-    persona_id: Mapped[int] = mapped_column(
+    input_prompt_id: Mapped[int] = mapped_column(
         ForeignKey("inputprompt.id"), primary_key=True
     )
     user_id: Mapped[UUID] = mapped_column(

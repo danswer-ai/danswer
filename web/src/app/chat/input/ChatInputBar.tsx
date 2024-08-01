@@ -132,7 +132,7 @@ export function ChatInputBar({
 
   const updateInputPrompt = (prompt: InputPrompt) => {
     hidePrompts();
-    setMessage(`${prompt.content} `);
+    setMessage(`${prompt.content}`);
   };
 
   useEffect(() => {
@@ -228,7 +228,7 @@ export function ChatInputBar({
         (tabbingIconIndex == filteredPrompts.length && showPrompts)
       ) {
         if (showPrompts) {
-          window.open("/admin/prompt-library", "_self");
+          window.open("/prompts", "_self");
         } else {
           window.open("/assistants/new", "_self");
         }
@@ -343,9 +343,9 @@ export function ChatInputBar({
 
                 <a
                   key={filteredPrompts.length}
-                  target="_blank"
+                  target="_self"
                   className={`${tabbingIconIndex == filteredPrompts.length && "bg-hover"} px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
-                  href="/admin/prompt-library"
+                  href="/prompts"
                 >
                   <FiPlus size={17} />
                   <p>Create a new prompt</p>

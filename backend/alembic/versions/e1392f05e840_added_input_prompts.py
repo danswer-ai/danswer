@@ -25,6 +25,7 @@ def upgrade() -> None:
         sa.Column("prompt", sa.String(), nullable=False),
         sa.Column("content", sa.String(), nullable=False),
         sa.Column("active", sa.Boolean(), nullable=False),
+        sa.Column("is_public", sa.Boolean(), nullable=False),
         sa.Column(
             "user_id",
             fastapi_users_db_sqlalchemy.generics.GUID(),
@@ -38,17 +39,17 @@ def upgrade() -> None:
     )
     op.create_table(
         "inputprompt__user",
-        sa.Column("persona_id", sa.Integer(), nullable=False),
+        sa.Column("input_prompt_id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["persona_id"],
+            ["input_prompt_id"],
             ["inputprompt.id"],
         ),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["inputprompt.id"],
         ),
-        sa.PrimaryKeyConstraint("persona_id", "user_id"),
+        sa.PrimaryKeyConstraint("input_prompt_id", "user_id"),
     )
 
 

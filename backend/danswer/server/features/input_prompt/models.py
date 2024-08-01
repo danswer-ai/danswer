@@ -11,6 +11,7 @@ logger = setup_logger()
 class CreateInputPromptRequest(BaseModel):
     prompt: str
     content: str
+    is_public: bool
 
 
 class UpdateInputPromptRequest(BaseModel):
@@ -32,6 +33,7 @@ class InputPromptSnapshot(BaseModel):
     content: str
     active: bool
     user_id: UUID | None
+    is_public: bool
 
     @classmethod
     def from_model(cls, input_prompt: InputPrompt) -> "InputPromptSnapshot":
@@ -41,4 +43,5 @@ class InputPromptSnapshot(BaseModel):
             content=input_prompt.content,
             active=input_prompt.active,
             user_id=input_prompt.user_id,
+            is_public=input_prompt.is_public,
         )
