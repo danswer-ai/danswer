@@ -56,9 +56,6 @@ const EditPromptModal = ({
               </svg>
               Edit prompt
             </h2>
-            <p className="hover:underline text-sm mb-2 cursor-pointer">
-              Read docs for more info
-            </p>
 
             <div className="space-y-4">
               <div>

@@ -150,7 +150,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 class InputPrompt(Base):
     __tablename__ = "inputprompt"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     prompt: Mapped[str] = mapped_column(String)
     content: Mapped[str] = mapped_column(String)
     active: Mapped[bool] = mapped_column(Boolean)

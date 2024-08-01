@@ -10,7 +10,7 @@ import { useState } from "react";
 import AddPromptModal from "./modals/AddPromptModal";
 import EditPromptModal from "./modals/EditPromptModal";
 import { useInputPrompts } from "./hooks";
-import { PromptLibraryTable } from "./Librarytable";
+import { PromptLibraryTable } from "./promptLibrary";
 import { CreateInputPromptRequest, InputPromptSnapshot } from "./interfaces";
 
 const Main = () => {

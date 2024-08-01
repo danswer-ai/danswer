@@ -132,7 +132,7 @@ export function ChatInputBar({
 
   const updateInputPrompt = (prompt: InputPrompt) => {
     hidePrompts();
-    setMessage(`${prompt.content.trim()} `);
+    setMessage(`${prompt.content} `);
   };
 
   useEffect(() => {
@@ -145,6 +145,8 @@ export function ChatInputBar({
       ) {
         hideSuggestions();
         hidePrompts();
+      } else {
+        event.preventDefault();
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -228,9 +230,9 @@ export function ChatInputBar({
         (tabbingIconIndex == filteredPrompts.length && showPrompts)
       ) {
         if (showPrompts) {
-          window.open("/admin/prompt-library", "_blank");
+          window.open("/admin/prompt-library", "_self");
         } else {
-          window.open("/assistants/new", "_blank");
+          window.open("/assistants/new", "_self");
         }
       } else {
         if (showPrompts) {
@@ -244,6 +246,9 @@ export function ChatInputBar({
           updatedTaggedAssistant(option);
         }
       }
+    }
+    if (!showPrompts && !showSuggestions) {
+      return;
     }
 
     if (e.key === "ArrowDown") {
@@ -303,7 +308,7 @@ export function ChatInputBar({
 
                 <a
                   key={assistantTagOptions.length}
-                  target="_blank"
+                  target="_self"
                   className={`${
                     tabbingIconIndex == assistantTagOptions.length && "bg-hover"
                   } rounded rounded-lg px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-lightish cursor-pointer"`}
@@ -342,7 +347,7 @@ export function ChatInputBar({
                   key={filteredPrompts.length}
                   target="_blank"
                   className={`${tabbingIconIndex == filteredPrompts.length && "bg-hover"} px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
-                  href="/assistants/new"
+                  href="/admin/prompt-library"
                 >
                   <FiPlus size={17} />
                   <p>Create a new prompt</p>
@@ -482,7 +487,7 @@ export function ChatInputBar({
               style={{ scrollbarWidth: "thin" }}
               role="textarea"
               aria-multiline
-              placeholder={`Send a message ${!settings?.isMobile ? "or @ to tag an assistant..." : ""}`}
+              placeholder={`Send a message ${!settings?.isMobile ? "or try @ or /" : ""}`}
               value={message}
               onKeyDown={(event) => {
                 if (

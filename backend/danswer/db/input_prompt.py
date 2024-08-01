@@ -13,6 +13,48 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
+def upsert_input_prompt(
+    user: User | None,
+    input_prompt_id: int | None,
+    prompt: str,
+    content: str,
+    active: bool,
+    db_session: Session,
+    commit: bool = True,
+) -> InputPrompt:
+    if input_prompt_id is not None:
+        input_prompt = (
+            db_session.query(InputPrompt).filter_by(id=input_prompt_id).first()
+        )
+    else:
+        input_prompt = (
+            db_session.query(InputPrompt)
+            .filter(
+                InputPrompt.prompt == prompt,
+                InputPrompt.user_id == user.id if user else None,
+            )
+            .first()
+        )
+
+    if input_prompt:
+        input_prompt.content = content
+        input_prompt.active = active
+    else:
+        input_prompt = InputPrompt(
+            id=input_prompt_id,
+            prompt=prompt,
+            content=content,
+            active=active,
+            user_id=user.id if user else None,
+        )
+        db_session.add(input_prompt)
+
+    if commit:
+        db_session.commit()
+
+    return input_prompt
+
+
 def insert_input_prompt(
     prompt: str, content: str, user: User | None, db_session: Session
 ) -> InputPrompt:
