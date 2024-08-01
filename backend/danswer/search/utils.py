@@ -57,7 +57,7 @@ def relevant_sections_to_indices(
 
 
 def relevant_documents_to_indices(
-    relevance_chunks: list[SectionRelevancePiece], inference_sections: list[SearchDoc]
+    relevance_chunks: list[SectionRelevancePiece], search_doc: list[SearchDoc]
 ) -> list[int]:
     relevant_set = {
         (chunk.document_id, chunk.chunk_id)
@@ -67,7 +67,7 @@ def relevant_documents_to_indices(
 
     return [
         index
-        for index, section in enumerate(inference_sections)
+        for index, section in enumerate(search_doc)
         if (section.document_id, section.chunk_ind) in relevant_set
     ]
 
