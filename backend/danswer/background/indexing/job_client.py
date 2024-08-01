@@ -38,12 +38,12 @@ def _initializer(
         kwargs = {}
 
     get_sqlalchemy_engine().dispose(close=False)
-    func(*args, **kwargs)
+    return func(*args, **kwargs)
 
 
 def _run_in_process(
     func: Callable, args: list | tuple, kwargs: dict[str, Any] | None = None
-):
+) -> None:
     _initializer(func, args, kwargs)
 
 
