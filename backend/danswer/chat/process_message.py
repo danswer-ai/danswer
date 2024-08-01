@@ -649,9 +649,7 @@ def stream_chat_message_objects(
                                 search_docs=reference_db_search_docs,
                                 dropped_indices=dropped_indices,
                             )
-                        print("RELEVANT INDICES")
-                        print(relevant_chunks)
-                        print(llm_indices)
+
                         yield LLMRelevanceFilterResponse(
                             relevant_chunk_indices=llm_indices
                         )
