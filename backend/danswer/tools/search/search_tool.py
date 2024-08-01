@@ -282,11 +282,20 @@ class SearchTool(Tool):
             ),
         )
 
+        yield ToolResponse(
+            id=FINAL_CONTEXT_DOCUMENTS,
+            response=[
+                llm_doc_from_inference_section(section)
+                for section in search_pipeline.final_context_sections
+            ],
+        )
+
         # if self.llm_doc_eval and not DISABLE_AGENTIC_SEARCH:
         yield ToolResponse(
             id=SECTION_RELEVANCE_LIST_ID,
             response=search_pipeline.section_relevance,
         )
+
         final_context_sections = search_pipeline.final_context_sections
 
         if search_pipeline.search_query.evaluation_type == LLMEvaluationType.AGENTIC:
