@@ -356,8 +356,8 @@ class SearchPipeline:
 
         elif self.search_query.evaluation_type == LLMEvaluationType.AGENTIC:
             if DISABLE_AGENTIC_SEARCH:
-                logger.warning(
-                    "Agentic search operation called while DISABLE_AGENTIC_SEARCH is toggled. This should not occur."
+                raise ValueError(
+                    "Agentic search operation called while DISABLE_AGENTIC_SEARCH is enabled."
                 )
                 self._section_relevance = []
 
