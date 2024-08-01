@@ -240,7 +240,7 @@ We pull the latest pages and comments from each space every 10 minutes`,
         label:
           "Index Recursively (if this is set and the Wiki Page URL leads to a page, we will index the page and all of its children instead of just the page)",
         name: "index_recursively",
-        optional: true,
+        optional: false,
       },
     ],
   },
