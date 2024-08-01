@@ -281,7 +281,7 @@ class SearchTool(Tool):
         # if self.llm_doc_eval and not DISABLE_AGENTIC_SEARCH:
         yield ToolResponse(
             id=SECTION_RELEVANCE_LIST_ID,
-            response=search_pipeline.relevant_section_indices,
+            response=search_pipeline.section_relevance,
         )
 
         final_context_sections = prune_sections(

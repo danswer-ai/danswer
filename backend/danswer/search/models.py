@@ -78,7 +78,7 @@ class SearchRequest(ChunkContext):
     hybrid_alpha: float = HYBRID_ALPHA
     # This is to forcibly skip (or run) the step, if None it uses the system defaults
     skip_rerank: bool | None = None
-    evaluation_type: LLMEvaluationType = LLMEvaluationType.BASIC
+    evaluation_type: LLMEvaluationType = LLMEvaluationType.SKIP
 
     class Config:
         arbitrary_types_allowed = True

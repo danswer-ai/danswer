@@ -81,7 +81,7 @@ def handle_search_request(
     )
     top_sections = search_pipeline.reranked_sections
     # If using surrounding context or full doc, this will be empty
-    relevant_chunks = search_pipeline.relevant_section_indices
+    relevant_chunks = search_pipeline.section_relevance
     top_docs = [
         SavedSearchDocWithContent(
             document_id=section.center_chunk.document_id,

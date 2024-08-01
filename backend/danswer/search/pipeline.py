@@ -89,7 +89,7 @@ class SearchPipeline:
         self._reranked_sections: list[InferenceSection] | None = None
         self._final_context_sections: list[InferenceSection] | None = None
 
-        self._relevant_section_indices: list[SectionRelevancePiece] | None = None
+        self._section_relevance: list[SectionRelevancePiece] | None = None
 
         # Generates reranked chunks and LLM selections
         self._postprocessing_generator: (
@@ -342,50 +342,51 @@ class SearchPipeline:
             return self._final_context_sections
 
         self._final_context_sections = _merge_sections(sections=self.reranked_sections)
-
         return self._final_context_sections
 
     @property
-    def relevant_section_indices(self) -> list[SectionRelevancePiece]:
-        if self._relevant_section_indices is not None:
-            return self._relevant_section_indices
+    def section_relevance(self) -> list[SectionRelevancePiece]:
+        if self._section_relevance is not None:
+            return self._section_relevance
 
         if self.search_query.evaluation_type == LLMEvaluationType.SKIP:
             raise ValueError(
-                "You disabled llm evaluation and thus should not be asking ofr relevant section indices!"
+                "Attempted to access section relevance scores on search query with evaluation type `SKIP`."
             )
 
-        if self.search_query.evaluation_type == LLMEvaluationType.AGENTIC:
+        elif self.search_query.evaluation_type == LLMEvaluationType.AGENTIC:
             if DISABLE_AGENTIC_SEARCH:
-                raise ValueError(
-                    "Agentic search operation called while DISABLE_AGENTIC_SEARCH is toggled"
+                logger.warning(
+                    "Agentic search operation called while DISABLE_AGENTIC_SEARCH is toggled. This should not occur."
                 )
+                self._section_relevance = []
 
-            sections = self.final_context_sections
-            functions = [
-                FunctionCall(
-                    evaluate_inference_section,
-                    (section, self.search_query.query, self.llm),
+            else:
+                sections = self.final_context_sections
+                functions = [
+                    FunctionCall(
+                        evaluate_inference_section,
+                        (section, self.search_query.query, self.llm),
+                    )
+                    for section in sections
+                ]
+                results = run_functions_in_parallel(function_calls=functions)
+                self._section_relevance = list(results.values())
+
+        else:  # evaluation type is BASIC
+            self._section_relevance = next(
+                cast(
+                    Iterator[list[SectionRelevancePiece]],
+                    self._postprocessing_generator,
                 )
-                for section in sections
-            ]
+            )
 
-            results = run_functions_in_parallel(function_calls=functions)
-
-            response = [value for value in results.values()]
-            self._relevant_section_indices = response
-
-            return self._relevant_section_indices
-
-        self._relevant_section_indices = next(
-            cast(Iterator[list[SectionRelevancePiece]], self._postprocessing_generator)
-        )
-        return self._relevant_section_indices
+        return self._section_relevance
 
     @property
     def section_relevance_list(self) -> list[bool]:
         llm_indices = relevant_sections_to_indices(
-            relevance_chunks=self.relevant_section_indices,
+            relevance_chunks=self.section_relevance,
             inference_sections=self.final_context_sections,
         )
         return [
