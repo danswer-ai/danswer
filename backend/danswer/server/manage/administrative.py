@@ -8,6 +8,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import DocumentSource
@@ -40,7 +41,7 @@ GEN_AI_KEY_CHECK_TIME = "genai_api_key_last_check_time"
 """Admin only API endpoints"""
 
 
-@router.get("/admin/doc-boosts")
+@router.get("/admin/doc-boosts", tags=[Tags.manage])
 def get_most_boosted_docs(
     ascending: bool,
     limit: int,
@@ -63,7 +64,7 @@ def get_most_boosted_docs(
     ]
 
 
-@router.post("/admin/doc-boosts")
+@router.post("/admin/doc-boosts", tags=[Tags.manage])
 def document_boost_update(
     boost_update: BoostUpdateRequest,
     _: User | None = Depends(current_admin_user),
@@ -85,7 +86,7 @@ def document_boost_update(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/admin/doc-hidden")
+@router.post("/admin/doc-hidden", tags=[Tags.manage])
 def document_hidden_update(
     hidden_update: HiddenUpdateRequest,
     _: User | None = Depends(current_admin_user),
@@ -107,7 +108,7 @@ def document_hidden_update(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/admin/genai-api-key/validate")
+@router.get("/admin/genai-api-key/validate", tags=[Tags.manage])
 def validate_existing_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
@@ -139,7 +140,7 @@ def validate_existing_genai_api_key(
     kv_store.store(GEN_AI_KEY_CHECK_TIME, curr_time.timestamp())
 
 
-@router.post("/admin/deletion-attempt")
+@router.post("/admin/deletion-attempt", tags=[Tags.manage])
 def create_deletion_attempt_for_connector_id(
     connector_credential_pair_identifier: ConnectorCredentialPairIdentifier,
     _: User = Depends(current_admin_user),

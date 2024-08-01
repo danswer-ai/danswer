@@ -3,6 +3,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_admin_user
 from danswer.db.embedding_model import get_current_db_embedding_provider
 from danswer.db.engine import get_session
@@ -26,7 +27,7 @@ admin_router = APIRouter(prefix="/admin/embedding")
 basic_router = APIRouter(prefix="/embedding")
 
 
-@admin_router.post("/test-embedding")
+@admin_router.post("/test-embedding", tags=[Tags.admin])
 def test_embedding_configuration(
     test_llm_request: TestEmbeddingRequest,
     _: User | None = Depends(current_admin_user),
@@ -55,7 +56,7 @@ def test_embedding_configuration(
         raise HTTPException(status_code=400, detail=error_msg)
 
 
-@admin_router.get("/embedding-provider")
+@admin_router.get("/embedding-provider", tags=[Tags.admin])
 def list_embedding_providers(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -66,7 +67,7 @@ def list_embedding_providers(
     ]
 
 
-@admin_router.delete("/embedding-provider/{embedding_provider_name}")
+@admin_router.delete("/embedding-provider/{embedding_provider_name}", tags=[Tags.admin])
 def delete_embedding_provider(
     embedding_provider_name: str,
     _: User | None = Depends(current_admin_user),
@@ -84,7 +85,7 @@ def delete_embedding_provider(
     remove_embedding_provider(db_session, embedding_provider_name)
 
 
-@admin_router.put("/embedding-provider")
+@admin_router.put("/embedding-provider", tags=[Tags.admin])
 def put_cloud_embedding_provider(
     provider: CloudEmbeddingProviderCreationRequest,
     _: User = Depends(current_admin_user),

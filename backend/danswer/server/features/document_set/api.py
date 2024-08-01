@@ -3,6 +3,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.document_set import check_document_sets_are_public
@@ -26,7 +27,7 @@ from danswer.server.features.document_set.models import DocumentSetUpdateRequest
 router = APIRouter(prefix="/manage")
 
 
-@router.post("/admin/document-set")
+@router.post("/admin/document-set", tags=[Tags.manage])
 def create_document_set(
     document_set_creation_request: DocumentSetCreationRequest,
     user: User = Depends(current_admin_user),
@@ -43,7 +44,7 @@ def create_document_set(
     return document_set_db_model.id
 
 
-@router.patch("/admin/document-set")
+@router.patch("/admin/document-set", tags=[Tags.manage])
 def patch_document_set(
     document_set_update_request: DocumentSetUpdateRequest,
     _: User = Depends(current_admin_user),
@@ -58,7 +59,7 @@ def patch_document_set(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.delete("/admin/document-set/{document_set_id}")
+@router.delete("/admin/document-set/{document_set_id}", tags=[Tags.manage])
 def delete_document_set(
     document_set_id: int,
     _: User = Depends(current_admin_user),
@@ -72,7 +73,7 @@ def delete_document_set(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/admin/document-set")
+@router.get("/admin/document-set", tags=[Tags.manage])
 def list_document_sets_admin(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -86,7 +87,7 @@ def list_document_sets_admin(
 """Endpoints for non-admins"""
 
 
-@router.get("/document-set")
+@router.get("/document-set", tags=[Tags.manage])
 def list_document_sets(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -122,7 +123,7 @@ def list_document_sets(
     ]
 
 
-@router.get("/document-set-public")
+@router.get("/document-set-public", tags=[Tags.manage])
 def document_set_public(
     check_public_request: CheckDocSetPublicRequest,
     _: User = Depends(current_user),

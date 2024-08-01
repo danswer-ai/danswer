@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.invited_users import get_invited_users
 from danswer.auth.invited_users import write_invited_users
 from danswer.auth.noauth_user import fetch_no_auth_user
@@ -51,7 +52,7 @@ router = APIRouter()
 USERS_PAGE_SIZE = 10
 
 
-@router.patch("/manage/promote-user-to-admin")
+@router.patch("/manage/promote-user-to-admin", tags=[Tags.manage])
 def promote_admin(
     user_email: UserByEmail,
     _: User = Depends(current_admin_user),
@@ -68,7 +69,7 @@ def promote_admin(
     db_session.commit()
 
 
-@router.patch("/manage/demote-admin-to-basic")
+@router.patch("/manage/demote-admin-to-basic", tags=[Tags.manage])
 async def demote_admin(
     user_email: UserByEmail,
     user: User = Depends(current_admin_user),
@@ -90,7 +91,7 @@ async def demote_admin(
     db_session.commit()
 
 
-@router.get("/manage/users")
+@router.get("/manage/users", tags=[Tags.manage])
 def list_all_users(
     q: str | None = None,
     accepted_page: int | None = None,
@@ -154,7 +155,7 @@ def list_all_users(
     )
 
 
-@router.put("/manage/admin/users")
+@router.put("/manage/admin/users", tags=[Tags.manage])
 def bulk_invite_users(
     emails: list[str] = Body(..., embed=True),
     current_user: User | None = Depends(current_admin_user),
@@ -168,7 +169,7 @@ def bulk_invite_users(
     return write_invited_users(all_emails)
 
 
-@router.patch("/manage/admin/remove-invited-user")
+@router.patch("/manage/admin/remove-invited-user", tags=[Tags.manage])
 def remove_invited_user(
     user_email: UserByEmail,
     _: User | None = Depends(current_admin_user),
@@ -178,7 +179,7 @@ def remove_invited_user(
     return write_invited_users(remaining_users)
 
 
-@router.patch("/manage/admin/deactivate-user")
+@router.patch("/manage/admin/deactivate-user", tags=[Tags.manage])
 def deactivate_user(
     user_email: UserByEmail,
     current_user: User | None = Depends(current_admin_user),
@@ -207,7 +208,7 @@ def deactivate_user(
     db_session.commit()
 
 
-@router.patch("/manage/admin/activate-user")
+@router.patch("/manage/admin/activate-user", tags=[Tags.manage])
 def activate_user(
     user_email: UserByEmail,
     _: User | None = Depends(current_admin_user),
@@ -227,7 +228,7 @@ def activate_user(
     db_session.commit()
 
 
-@router.get("/manage/admin/valid-domains")
+@router.get("/manage/admin/valid-domains", tags=[Tags.manage])
 def get_valid_domains(
     _: User | None = Depends(current_admin_user),
 ) -> list[str]:

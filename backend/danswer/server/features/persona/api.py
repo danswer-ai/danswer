@@ -7,6 +7,7 @@ from fastapi import UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import FileOrigin
@@ -41,7 +42,7 @@ class IsVisibleRequest(BaseModel):
     is_visible: bool
 
 
-@admin_router.patch("/{persona_id}/visible")
+@admin_router.patch("/{persona_id}/visible", tags=[Tags.admin])
 def patch_persona_visibility(
     persona_id: int,
     is_visible_request: IsVisibleRequest,
@@ -55,7 +56,7 @@ def patch_persona_visibility(
     )
 
 
-@admin_router.put("/display-priority")
+@admin_router.put("/display-priority", tags=[Tags.admin])
 def patch_persona_display_priority(
     display_priority_request: DisplayPriorityRequest,
     _: User | None = Depends(current_admin_user),
@@ -67,7 +68,7 @@ def patch_persona_display_priority(
     )
 
 
-@admin_router.get("")
+@admin_router.get("", tags=[Tags.admin])
 def list_personas_admin(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -83,7 +84,7 @@ def list_personas_admin(
     ]
 
 
-@admin_router.patch("/{persona_id}/undelete")
+@admin_router.patch("/{persona_id}/undelete", tags=[Tags.admin])
 def undelete_persona(
     persona_id: int,
     user: User | None = Depends(current_admin_user),
@@ -97,7 +98,7 @@ def undelete_persona(
 
 
 # used for assistnat profile pictures
-@admin_router.post("/upload-image")
+@admin_router.post("/upload-image", tags=[Tags.admin])
 def upload_file(
     file: UploadFile,
     db_session: Session = Depends(get_session),
@@ -119,7 +120,7 @@ def upload_file(
 """Endpoints for all"""
 
 
-@basic_router.post("")
+@basic_router.post("", tags=[Tags.persona])
 def create_persona(
     create_persona_request: CreatePersonaRequest,
     user: User | None = Depends(current_user),
@@ -133,7 +134,7 @@ def create_persona(
     )
 
 
-@basic_router.patch("/{persona_id}")
+@basic_router.patch("/{persona_id}", tags=[Tags.persona])
 def update_persona(
     persona_id: int,
     update_persona_request: CreatePersonaRequest,
@@ -152,7 +153,7 @@ class PersonaShareRequest(BaseModel):
     user_ids: list[UUID]
 
 
-@basic_router.patch("/{persona_id}/share")
+@basic_router.patch("/{persona_id}/share", tags=[Tags.persona])
 def share_persona(
     persona_id: int,
     persona_share_request: PersonaShareRequest,
@@ -167,7 +168,7 @@ def share_persona(
     )
 
 
-@basic_router.delete("/{persona_id}")
+@basic_router.delete("/{persona_id}", tags=[Tags.persona])
 def delete_persona(
     persona_id: int,
     user: User | None = Depends(current_user),
@@ -180,7 +181,7 @@ def delete_persona(
     )
 
 
-@basic_router.get("")
+@basic_router.get("", tags=[Tags.persona])
 def list_personas(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -195,7 +196,7 @@ def list_personas(
     ]
 
 
-@basic_router.get("/{persona_id}")
+@basic_router.get("/{persona_id}", tags=[Tags.persona])
 def get_persona(
     persona_id: int,
     user: User | None = Depends(current_user),
@@ -211,7 +212,7 @@ def get_persona(
     )
 
 
-@basic_router.get("/utils/prompt-explorer")
+@basic_router.get("/utils/prompt-explorer", tags=[Tags.persona])
 def build_final_template_prompt(
     system_prompt: str,
     task_prompt: str,

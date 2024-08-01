@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
@@ -43,7 +44,7 @@ def _validate_tool_definition(definition: dict[str, Any]) -> None:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@admin_router.post("/custom")
+@admin_router.post("/custom", tags=[Tags.admin])
 def create_custom_tool(
     tool_data: CustomToolCreate,
     db_session: Session = Depends(get_session),
@@ -60,7 +61,7 @@ def create_custom_tool(
     return ToolSnapshot.from_model(tool)
 
 
-@admin_router.put("/custom/{tool_id}")
+@admin_router.put("/custom/{tool_id}", tags=[Tags.admin])
 def update_custom_tool(
     tool_id: int,
     tool_data: CustomToolUpdate,
@@ -80,7 +81,7 @@ def update_custom_tool(
     return ToolSnapshot.from_model(updated_tool)
 
 
-@admin_router.delete("/custom/{tool_id}")
+@admin_router.delete("/custom/{tool_id}", tags=[Tags.admin])
 def delete_custom_tool(
     tool_id: int,
     db_session: Session = Depends(get_session),
@@ -103,7 +104,7 @@ class ValidateToolResponse(BaseModel):
     methods: list[MethodSpec]
 
 
-@admin_router.post("/custom/validate")
+@admin_router.post("/custom/validate", tags=[Tags.admin])
 def validate_tool(
     tool_data: ValidateToolRequest,
     _: User | None = Depends(current_admin_user),
@@ -116,7 +117,7 @@ def validate_tool(
 """Endpoints for all"""
 
 
-@router.get("/{tool_id}")
+@router.get("/{tool_id}", tags=[Tags.tool])
 def get_custom_tool(
     tool_id: int,
     db_session: Session = Depends(get_session),
@@ -129,7 +130,7 @@ def get_custom_tool(
     return ToolSnapshot.from_model(tool)
 
 
-@router.get("")
+@router.get("", tags=[Tags.tool])
 def list_tools(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_user),

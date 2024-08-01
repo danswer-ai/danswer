@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_status
@@ -22,7 +23,7 @@ from danswer.server.models import StatusResponse
 router = APIRouter(prefix="/manage")
 
 
-@router.get("/admin/cc-pair/{cc_pair_id}")
+@router.get("/admin/cc-pair/{cc_pair_id}", tags=[Tags.manage])
 def get_cc_pair_full_info(
     cc_pair_id: int,
     _: User | None = Depends(current_admin_user),
@@ -72,7 +73,7 @@ def get_cc_pair_full_info(
     )
 
 
-@router.put("/connector/{connector_id}/credential/{credential_id}")
+@router.put("/connector/{connector_id}/credential/{credential_id}", tags=[Tags.manage])
 def associate_credential_to_connector(
     connector_id: int,
     credential_id: int,
@@ -93,7 +94,9 @@ def associate_credential_to_connector(
         raise HTTPException(status_code=400, detail="Name must be unique")
 
 
-@router.delete("/connector/{connector_id}/credential/{credential_id}")
+@router.delete(
+    "/connector/{connector_id}/credential/{credential_id}", tags=[Tags.manage]
+)
 def dissociate_credential_from_connector(
     connector_id: int,
     credential_id: int,

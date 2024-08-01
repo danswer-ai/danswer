@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
+from danswer import Tags
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
 from danswer.db.models import User
@@ -57,7 +58,7 @@ def create_update_prompt(
     return PromptSnapshot.from_model(prompt)
 
 
-@basic_router.post("")
+@basic_router.post("", tags=[Tags.prompt])
 def create_prompt(
     create_prompt_request: CreatePromptRequest,
     user: User | None = Depends(current_user),
@@ -84,7 +85,7 @@ def create_prompt(
         )
 
 
-@basic_router.patch("/{prompt_id}")
+@basic_router.patch("/{prompt_id}", tags=[Tags.prompt])
 def update_prompt(
     prompt_id: int,
     update_prompt_request: CreatePromptRequest,
@@ -112,7 +113,7 @@ def update_prompt(
         )
 
 
-@basic_router.delete("/{prompt_id}")
+@basic_router.delete("/{prompt_id}", tags=[Tags.prompt])
 def delete_prompt(
     prompt_id: int,
     user: User | None = Depends(current_user),
@@ -125,7 +126,7 @@ def delete_prompt(
     )
 
 
-@basic_router.get("")
+@basic_router.get("", tags=[Tags.prompt])
 def list_prompts(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -137,7 +138,7 @@ def list_prompts(
     ]
 
 
-@basic_router.get("/{prompt_id}")
+@basic_router.get("/{prompt_id}", tags=[Tags.prompt])
 def get_prompt(
     prompt_id: int,
     user: User | None = Depends(current_user),

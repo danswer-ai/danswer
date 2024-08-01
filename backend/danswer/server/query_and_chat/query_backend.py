@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import DocumentSource
@@ -49,7 +50,7 @@ admin_router = APIRouter(prefix="/admin")
 basic_router = APIRouter(prefix="/query")
 
 
-@admin_router.post("/search")
+@admin_router.post("/search", tags=[Tags.admin])
 def admin_search(
     question: AdminSearchRequest,
     user: User | None = Depends(current_admin_user),
@@ -88,7 +89,7 @@ def admin_search(
     return AdminSearchResponse(documents=deduplicated_documents)
 
 
-@basic_router.get("/valid-tags")
+@basic_router.get("/valid-tags", tags=[Tags.query])
 def get_tags(
     match_pattern: str | None = None,
     # If this is empty or None, then tags for all sources are considered
@@ -117,7 +118,7 @@ def get_tags(
     return TagResponse(tags=server_tags)
 
 
-@basic_router.post("/search-intent")
+@basic_router.post("/search-intent", tags=[Tags.query])
 def get_search_type(
     simple_query: SimpleQueryRequest,
     _: User = Depends(current_user),
@@ -130,7 +131,7 @@ def get_search_type(
     )
 
 
-@basic_router.post("/query-validation")
+@basic_router.post("/query-validation", tags=[Tags.query])
 def query_validation(
     simple_query: SimpleQueryRequest, _: User = Depends(current_user)
 ) -> QueryValidationResponse:
@@ -142,7 +143,7 @@ def query_validation(
     return QueryValidationResponse(reasoning=reasoning, answerable=answerable)
 
 
-@basic_router.get("/user-searches")
+@basic_router.get("/user-searches", tags=[Tags.query])
 def get_user_search_sessions(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -181,7 +182,7 @@ def get_user_search_sessions(
     return response
 
 
-@basic_router.get("/search-session/{session_id}")
+@basic_router.get("/search-session/{session_id}", tags=[Tags.query])
 def get_search_session(
     session_id: int,
     is_shared: bool = False,
@@ -239,7 +240,7 @@ def get_search_session(
 
 # NOTE No longer used, after search/chat redesign.
 # No search responses are answered with a conversational generative AI response
-@basic_router.post("/stream-query-validation")
+@basic_router.post("/stream-query-validation", tags=[Tags.query])
 def stream_query_validation(
     simple_query: SimpleQueryRequest, _: User = Depends(current_user)
 ) -> StreamingResponse:
@@ -252,7 +253,7 @@ def stream_query_validation(
     )
 
 
-@basic_router.post("/stream-answer-with-quote")
+@basic_router.post("/stream-answer-with-quote", tags=[Tags.query])
 def get_answer_with_quote(
     query_request: DirectQARequest,
     user: User = Depends(current_user),

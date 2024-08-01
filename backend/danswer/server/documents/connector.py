@@ -11,6 +11,7 @@ from fastapi import UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from danswer import Tags
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_status
@@ -100,7 +101,7 @@ router = APIRouter(prefix="/manage")
 """Admin only API endpoints"""
 
 
-@router.get("/admin/connector/gmail/app-credential")
+@router.get("/admin/connector/gmail/app-credential", tags=[Tags.manage])
 def check_google_app_gmail_credentials_exist(
     _: User = Depends(current_admin_user),
 ) -> dict[str, str]:
@@ -110,7 +111,7 @@ def check_google_app_gmail_credentials_exist(
         raise HTTPException(status_code=404, detail="Google App Credentials not found")
 
 
-@router.put("/admin/connector/gmail/app-credential")
+@router.put("/admin/connector/gmail/app-credential", tags=[Tags.manage])
 def upsert_google_app_gmail_credentials(
     app_credentials: GoogleAppCredentials, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
@@ -124,7 +125,7 @@ def upsert_google_app_gmail_credentials(
     )
 
 
-@router.delete("/admin/connector/gmail/app-credential")
+@router.delete("/admin/connector/gmail/app-credential", tags=[Tags.manage])
 def delete_google_app_gmail_credentials(
     _: User = Depends(current_admin_user),
 ) -> StatusResponse:
@@ -138,7 +139,7 @@ def delete_google_app_gmail_credentials(
     )
 
 
-@router.get("/admin/connector/google-drive/app-credential")
+@router.get("/admin/connector/google-drive/app-credential", tags=[Tags.manage])
 def check_google_app_credentials_exist(
     _: User = Depends(current_admin_user),
 ) -> dict[str, str]:
@@ -148,7 +149,7 @@ def check_google_app_credentials_exist(
         raise HTTPException(status_code=404, detail="Google App Credentials not found")
 
 
-@router.put("/admin/connector/google-drive/app-credential")
+@router.put("/admin/connector/google-drive/app-credential", tags=[Tags.manage])
 def upsert_google_app_credentials(
     app_credentials: GoogleAppCredentials, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
@@ -162,7 +163,7 @@ def upsert_google_app_credentials(
     )
 
 
-@router.delete("/admin/connector/google-drive/app-credential")
+@router.delete("/admin/connector/google-drive/app-credential", tags=[Tags.manage])
 def delete_google_app_credentials(
     _: User = Depends(current_admin_user),
 ) -> StatusResponse:
@@ -176,7 +177,7 @@ def delete_google_app_credentials(
     )
 
 
-@router.get("/admin/connector/gmail/service-account-key")
+@router.get("/admin/connector/gmail/service-account-key", tags=[Tags.manage])
 def check_google_service_gmail_account_key_exist(
     _: User = Depends(current_admin_user),
 ) -> dict[str, str]:
@@ -188,7 +189,7 @@ def check_google_service_gmail_account_key_exist(
         )
 
 
-@router.put("/admin/connector/gmail/service-account-key")
+@router.put("/admin/connector/gmail/service-account-key", tags=[Tags.manage])
 def upsert_google_service_gmail_account_key(
     service_account_key: GoogleServiceAccountKey, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
@@ -202,7 +203,7 @@ def upsert_google_service_gmail_account_key(
     )
 
 
-@router.delete("/admin/connector/gmail/service-account-key")
+@router.delete("/admin/connector/gmail/service-account-key", tags=[Tags.manage])
 def delete_google_service_gmail_account_key(
     _: User = Depends(current_admin_user),
 ) -> StatusResponse:
@@ -216,7 +217,7 @@ def delete_google_service_gmail_account_key(
     )
 
 
-@router.get("/admin/connector/google-drive/service-account-key")
+@router.get("/admin/connector/google-drive/service-account-key", tags=[Tags.manage])
 def check_google_service_account_key_exist(
     _: User = Depends(current_admin_user),
 ) -> dict[str, str]:
@@ -228,7 +229,7 @@ def check_google_service_account_key_exist(
         )
 
 
-@router.put("/admin/connector/google-drive/service-account-key")
+@router.put("/admin/connector/google-drive/service-account-key", tags=[Tags.manage])
 def upsert_google_service_account_key(
     service_account_key: GoogleServiceAccountKey, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
@@ -242,7 +243,7 @@ def upsert_google_service_account_key(
     )
 
 
-@router.delete("/admin/connector/google-drive/service-account-key")
+@router.delete("/admin/connector/google-drive/service-account-key", tags=[Tags.manage])
 def delete_google_service_account_key(
     _: User = Depends(current_admin_user),
 ) -> StatusResponse:
@@ -256,7 +257,9 @@ def delete_google_service_account_key(
     )
 
 
-@router.put("/admin/connector/google-drive/service-account-credential")
+@router.put(
+    "/admin/connector/google-drive/service-account-credential", tags=[Tags.manage]
+)
 def upsert_service_account_credential(
     service_account_credential_request: GoogleServiceAccountCredentialRequest,
     user: User | None = Depends(current_admin_user),
@@ -282,7 +285,7 @@ def upsert_service_account_credential(
     return ObjectCreationIdResponse(id=credential.id)
 
 
-@router.put("/admin/connector/gmail/service-account-credential")
+@router.put("/admin/connector/gmail/service-account-credential", tags=[Tags.manage])
 def upsert_gmail_service_account_credential(
     service_account_credential_request: GoogleServiceAccountCredentialRequest,
     user: User | None = Depends(current_admin_user),
@@ -308,7 +311,9 @@ def upsert_gmail_service_account_credential(
     return ObjectCreationIdResponse(id=credential.id)
 
 
-@router.get("/admin/connector/google-drive/check-auth/{credential_id}")
+@router.get(
+    "/admin/connector/google-drive/check-auth/{credential_id}", tags=[Tags.manage]
+)
 def check_drive_tokens(
     credential_id: int,
     user: User = Depends(current_admin_user),
@@ -329,7 +334,9 @@ def check_drive_tokens(
     return AuthStatus(authenticated=True)
 
 
-@router.get("/admin/connector/google-drive/authorize/{credential_id}")
+@router.get(
+    "/admin/connector/google-drive/authorize/{credential_id}", tags=[Tags.manage]
+)
 def admin_google_drive_auth(
     response: Response, credential_id: str, _: User = Depends(current_admin_user)
 ) -> AuthUrl:
@@ -343,7 +350,7 @@ def admin_google_drive_auth(
     return AuthUrl(auth_url=get_auth_url(credential_id=int(credential_id)))
 
 
-@router.post("/admin/connector/file/upload")
+@router.post("/admin/connector/file/upload", tags=[Tags.manage])
 def upload_files(
     files: list[UploadFile],
     _: User = Depends(current_admin_user),
@@ -370,7 +377,7 @@ def upload_files(
     return FileUploadResponse(file_paths=deduped_file_paths)
 
 
-@router.get("/admin/connector/indexing-status")
+@router.get("/admin/connector/indexing-status", tags=[Tags.manage])
 def get_connector_indexing_status(
     secondary_index: bool = False,
     _: User = Depends(current_admin_user),
@@ -485,7 +492,7 @@ def _validate_connector_allowed(source: DocumentSource) -> None:
     )
 
 
-@router.post("/admin/connector")
+@router.post("/admin/connector", tags=[Tags.manage])
 def create_connector_from_model(
     connector_data: ConnectorBase,
     _: User = Depends(current_admin_user),
@@ -498,7 +505,7 @@ def create_connector_from_model(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/admin/connector-with-mock-credential")
+@router.post("/admin/connector-with-mock-credential", tags=[Tags.manage])
 def create_connector_with_mock_credential(
     connector_data: ConnectorBase,
     user: User = Depends(current_admin_user),
@@ -527,7 +534,7 @@ def create_connector_with_mock_credential(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.patch("/admin/connector/{connector_id}")
+@router.patch("/admin/connector/{connector_id}", tags=[Tags.manage])
 def update_connector_from_model(
     connector_id: int,
     connector_data: ConnectorBase,
@@ -569,7 +576,11 @@ def update_connector_from_model(
     )
 
 
-@router.delete("/admin/connector/{connector_id}", response_model=StatusResponse[int])
+@router.delete(
+    "/admin/connector/{connector_id}",
+    response_model=StatusResponse[int],
+    tags=[Tags.manage],
+)
 def delete_connector_by_id(
     connector_id: int,
     _: User = Depends(current_admin_user),
@@ -582,7 +593,7 @@ def delete_connector_by_id(
         raise HTTPException(status_code=400, detail="Connector is not deletable")
 
 
-@router.post("/admin/connector/run-once")
+@router.post("/admin/connector/run-once", tags=[Tags.manage])
 def connector_run_once(
     run_info: RunConnectorRequest,
     _: User = Depends(current_admin_user),
@@ -667,7 +678,7 @@ def connector_run_once(
 """Endpoints for basic users"""
 
 
-@router.get("/connector/gmail/authorize/{credential_id}")
+@router.get("/connector/gmail/authorize/{credential_id}", tags=[Tags.manage])
 def gmail_auth(
     response: Response, credential_id: str, _: User = Depends(current_user)
 ) -> AuthUrl:
@@ -681,7 +692,7 @@ def gmail_auth(
     return AuthUrl(auth_url=get_gmail_auth_url(int(credential_id)))
 
 
-@router.get("/connector/google-drive/authorize/{credential_id}")
+@router.get("/connector/google-drive/authorize/{credential_id}", tags=[Tags.manage])
 def google_drive_auth(
     response: Response, credential_id: str, _: User = Depends(current_user)
 ) -> AuthUrl:
@@ -695,7 +706,7 @@ def google_drive_auth(
     return AuthUrl(auth_url=get_auth_url(int(credential_id)))
 
 
-@router.get("/connector/gmail/callback")
+@router.get("/connector/gmail/callback", tags=[Tags.manage])
 def gmail_callback(
     request: Request,
     callback: GmailCallback = Depends(),
@@ -722,7 +733,7 @@ def gmail_callback(
     return StatusResponse(success=True, message="Updated Gmail access tokens")
 
 
-@router.get("/connector/google-drive/callback")
+@router.get("/connector/google-drive/callback", tags=[Tags.manage])
 def google_drive_callback(
     request: Request,
     callback: GDriveCallback = Depends(),
@@ -747,7 +758,7 @@ def google_drive_callback(
     return StatusResponse(success=True, message="Updated Google Drive access tokens")
 
 
-@router.get("/connector")
+@router.get("/connector", tags=[Tags.manage])
 def get_connectors(
     _: User = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -762,7 +773,7 @@ def get_connectors(
     ]
 
 
-@router.get("/connector/{connector_id}")
+@router.get("/connector/{connector_id}", tags=[Tags.manage])
 def get_connector_by_id(
     connector_id: int,
     _: User = Depends(current_user),
@@ -798,7 +809,7 @@ class BasicCCPairInfo(BaseModel):
     source: DocumentSource
 
 
-@router.get("/indexing-status")
+@router.get("/indexing-status", tags=[Tags.manage])
 def get_basic_connector_indexing_status(
     _: User = Depends(current_user),
     db_session: Session = Depends(get_session),
