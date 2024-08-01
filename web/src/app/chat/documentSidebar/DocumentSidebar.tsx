@@ -11,6 +11,7 @@ import { SIDEBAR_WIDTH } from "@/lib/constants";
 import { HoverPopup } from "@/components/HoverPopup";
 import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
 import { ForwardedRef, forwardRef } from "react";
+import { Button } from "@/components/ui/button";
 
 function SectionHeader({
   name,
@@ -23,17 +24,17 @@ function SectionHeader({
 }) {
   return (
     <div
-      className={`w-full mt-3 flex text-lg text-emphasis font-medium flex mb-3.5 font-bold flex items-end`}
+      className={`w-full mt-3 flex text-lg text-emphasis font-medium mb-3.5 items-end`}
     >
-      <div className="flex mt-auto justify-between w-full">
+      <div className="flex justify-between w-full mt-auto items-center">
         <p className="flex">
           {icon({ className: "my-auto mr-1" })}
           {name}
         </p>
         {closeHeader && (
-          <button onClick={() => closeHeader()}>
+          <Button onClick={() => closeHeader()} variant="ghost" className="p-3">
             <TbLayoutSidebarLeftExpand size={24} />
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -90,16 +91,11 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
         ref={ref}
         className={`sidebar absolute right-0 h-screen border-l border-l-border`}
       >
-        <div
-          className="w-full flex-initial 
-          overflow-y-hidden
-          flex
-          flex-col h-screen"
-        >
+        <div className="flex flex-col flex-initial w-full h-screen overflow-y-hidden">
           {popup}
 
-          <div className="h-4/6 flex flex-col">
-            <div className="pl-3 pr-6 mb-3 flex border-b border-border">
+          <div className="flex flex-col h-4/6">
+            <div className="flex pl-3 pr-6 mb-3 border-b border-border">
               <SectionHeader
                 name={
                   selectedMessageRetrievalType === RetrievalType.SelectedDocs
@@ -112,7 +108,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             </div>
 
             {currentDocuments ? (
-              <div className="overflow-y-auto dark-scrollbar flex flex-col">
+              <div className="flex flex-col overflow-y-auto dark-scrollbar">
                 <div>
                   {dedupedDocuments.length > 0 ? (
                     dedupedDocuments.map((document, ind) => (
@@ -163,17 +159,17 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             )}
           </div>
 
-          <div className="text-sm mb-4 border-t border-border pt-4 overflow-y-hidden flex flex-col">
-            <div className="flex border-b border-border px-3">
+          <div className="flex flex-col pt-4 mb-4 overflow-y-hidden text-sm border-t border-border">
+            <div className="flex px-3 border-b border-border">
               <div className="flex">
                 <SectionHeader name="Selected Documents" icon={FiFileText} />
                 {tokenLimitReached && (
-                  <div className="ml-2 my-auto">
+                  <div className="my-auto ml-2">
                     <div className="mb-2">
                       <HoverPopup
                         mainContent={
                           <FiAlertTriangle
-                            className="text-alert my-auto"
+                            className="my-auto text-alert"
                             size="16"
                           />
                         }
@@ -207,7 +203,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
               </div>
               {selectedDocuments && selectedDocuments.length > 0 && (
                 <div
-                  className="ml-auto my-auto"
+                  className="my-auto ml-auto"
                   onClick={clearSelectedDocuments}
                 >
                   <BasicSelectable selected={false}>
@@ -218,7 +214,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             </div>
 
             {selectedDocuments && selectedDocuments.length > 0 ? (
-              <div className="flex flex-col gap-y-2 py-3 px-3 overflow-y-auto dark-scrollbar max-h-full">
+              <div className="flex flex-col max-h-full px-3 py-3 overflow-y-auto gap-y-2 dark-scrollbar">
                 {selectedDocuments.map((document) => (
                   <SelectedDocumentDisplay
                     key={document.document_id}
@@ -235,7 +231,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
               </div>
             ) : (
               !isLoading && (
-                <Text className="mx-3 py-3">
+                <Text className="py-3 mx-3">
                   Select documents from the retrieved documents section to chat
                   specifically with them!
                 </Text>

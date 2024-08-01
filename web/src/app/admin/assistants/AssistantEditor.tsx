@@ -1,7 +1,7 @@
 "use client";
 
 import { CCPairBasicInfo, DocumentSet, User, UserGroup } from "@/lib/types";
-import { Button, Divider, Italic, Text } from "@tremor/react";
+import { Divider, Italic, Text } from "@tremor/react";
 import {
   ArrayHelpers,
   ErrorMessage,
@@ -38,6 +38,7 @@ import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences"
 import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { Button } from "@/components/ui/button";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -856,12 +857,9 @@ export function AssistantEditor({
                               });
                             }}
                             className="mt-3"
-                            color="green"
-                            size="xs"
                             type="button"
-                            icon={FiPlus}
                           >
-                            Add New
+                            <FiPlus className="mr-1.5" /> Add New
                           </Button>
                         </div>
                       )}
@@ -937,12 +935,10 @@ export function AssistantEditor({
                 <div className="flex">
                   <Button
                     className="mx-auto"
-                    color="green"
-                    size="md"
                     type="submit"
                     disabled={isSubmitting}
                   >
-                    {isUpdate ? "Update!" : "Create!"}
+                    {isUpdate ? "Update" : "Create"}
                   </Button>
                 </div>
               </div>

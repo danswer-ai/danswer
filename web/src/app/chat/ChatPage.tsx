@@ -72,6 +72,7 @@ import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 
 import ResizableSection from "@/components/resizable/ResizableSection";
 import { UserDropdown } from "@/components/UserDropdown";
+import { Button } from "@/components/ui/button";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1200,28 +1201,24 @@ export function ChatPage({
 
                             <div className="flex ml-auto">
                               {chatSessionIdRef.current !== null && (
-                                <div
+                                <Button
                                   onClick={() => setSharingModalVisible(true)}
-                                  className={`
-                                    my-auto
-                                    p-2
-                                    rounded
-                                    cursor-pointer
-                                    hover:bg-hover-light
-                                  `}
+                                  className="px-3"
+                                  variant="ghost"
                                 >
-                                  <FiShare size="18" />
-                                </div>
+                                  <FiShare size={20} />
+                                </Button>
                               )}
 
                               <div className="flex my-auto ml-4">
                                 {retrievalEnabled && !showDocSidebar && (
-                                  <button
+                                  <Button
                                     className="mt-auto ml-4"
                                     onClick={() => toggleSidebar()}
+                                    variant="ghost"
                                   >
                                     <TbLayoutSidebarRightExpand size={24} />
-                                  </button>
+                                  </Button>
                                 )}
                               </div>
                             </div>
@@ -1543,12 +1540,13 @@ export function ChatPage({
                       <div className="relative w-full pb-4">
                         {aboveHorizon && (
                           <div className="sticky flex justify-center w-full bg-transparent pointer-events-none">
-                            <button
+                            <Button
                               onClick={() => clientScrollToBottom(true)}
-                              className="p-1 mx-auto mb-2 border pointer-events-auto rounded-2xl bg-background-strong border-border "
+                              className="px-2.5 mx-auto mb-2 pointer-events-auto !rounded-full"
+                              variant="ghost"
                             >
                               <FiArrowDown size={18} />
-                            </button>
+                            </Button>
                           </div>
                         )}
 

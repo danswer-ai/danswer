@@ -18,7 +18,7 @@ export function EditButton({ onClick }: { onClick: () => void }) {
         text-sm`}
       onClick={onClick}
     >
-      <FiEdit2 className="mr-1 my-auto" />
+      <FiEdit2 className="my-auto mr-1" />
       Edit
     </div>
   );

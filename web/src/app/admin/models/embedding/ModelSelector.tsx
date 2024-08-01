@@ -6,6 +6,7 @@ import {
 } from "./embeddingModels";
 import { FiStar } from "react-icons/fi";
 import { CustomModelForm } from "./CustomModelForm";
+import { Button } from "@/components/ui/button";
 
 export function ModelOption({
   model,
@@ -39,26 +40,9 @@ export function ModelOption({
         </a>
       )}
       {onSelect && (
-        <div
-          className={`
-            m-auto 
-            flex 
-            mt-3
-            mb-1 
-            w-fit 
-            p-2 
-            rounded-lg
-            bg-background
-            border
-            border-border
-            cursor-pointer
-            hover:bg-hover
-            text-sm
-            mt-auto`}
-          onClick={() => onSelect(model)}
-        >
+        <Button onClick={() => onSelect(model)} className="m-auto mb-1">
           Select Model
-        </div>
+        </Button>
       )}
     </div>
   );

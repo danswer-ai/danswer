@@ -22,10 +22,11 @@ import {
 } from "@/components/admin/connectors/Field";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
 import { getNameFromPath } from "@/lib/fileUtils";
-import { Button, Card, Divider, Text } from "@tremor/react";
+import { Card, Divider, Text } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import IsPublicField from "@/components/admin/connectors/IsPublicField";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { Button } from "@/components/ui/button";
 
 const Main = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -239,8 +240,6 @@ const Main = () => {
                   <div className="flex">
                     <Button
                       className="mt-4 w-64 mx-auto"
-                      color="green"
-                      size="xs"
                       type="submit"
                       disabled={
                         selectedFiles.length === 0 ||
@@ -248,7 +247,7 @@ const Main = () => {
                         isSubmitting
                       }
                     >
-                      Upload!
+                      Upload
                     </Button>
                   </div>
                 </Form>

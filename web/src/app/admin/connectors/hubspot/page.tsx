@@ -21,7 +21,7 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Card, Text, Title } from "@tremor/react";
+import { Card, Text, Title, Button } from "@tremor/react";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -90,7 +90,7 @@ const Main = () => {
         CHP.
       </Text>
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 1: Provide your Credentials
       </Title>
 
@@ -98,11 +98,11 @@ const Main = () => {
         <>
           <div className="flex mb-1 text-sm">
             <Text className="my-auto">Existing Access Token: </Text>
-            <Text className="ml-1 italic my-auto max-w-md truncate">
+            <Text className="max-w-md my-auto ml-1 italic truncate">
               {hubSpotCredential.credential_json?.hubspot_access_token}
             </Text>
-            <button
-              className="ml-1 hover:bg-hover rounded p-1"
+            <Button
+              className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 if (hubSpotConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -115,9 +115,10 @@ const Main = () => {
                 await adminDeleteCredential(hubSpotCredential.id);
                 refreshCredentials();
               }}
+              variant="light"
             >
               <TrashIcon />
-            </button>
+            </Button>
           </div>
         </>
       ) : (
@@ -154,7 +155,7 @@ const Main = () => {
         </>
       )}
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 2: Start indexing!
       </Title>
       {hubSpotCredential ? (
@@ -220,7 +221,7 @@ const Main = () => {
 
 export default function Page() {
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto">
       <div className="mb-4">
         <HealthCheckBanner />
       </div>

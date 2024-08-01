@@ -6,6 +6,7 @@ import { Divider, Text, Title } from "@tremor/react";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { AdminPageTitle } from "@/components/admin/Title";
+import { Button } from "@/components/ui/button";
 
 export default async function Page() {
   const toolResponse = await fetchSS("/tool");
@@ -36,26 +37,11 @@ export default async function Page() {
         <Divider />
 
         <Title>Create a Tool</Title>
-        <Link
-          href="/admin/tools/new"
-          className="
-            flex
-            py-2
-            px-4
-            mt-2
-            border
-            border-border
-            h-fit
-            cursor-pointer
-            hover:bg-hover
-            text-sm
-            w-40
-          "
-        >
-          <div className="mx-auto flex">
+        <Link href="/admin/tools/new">
+          <Button className="mt-2">
             <FiPlusSquare className="my-auto mr-2" />
             New Tool
-          </div>
+          </Button>
         </Link>
 
         <Divider />

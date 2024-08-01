@@ -17,7 +17,7 @@ import { ConnectorIndexingStatus, Credential } from "@/lib/types";
 
 import { GCSConfig, GCSCredentialJson } from "@/lib/types";
 
-import { Card, Select, SelectItem, Text, Title } from "@tremor/react";
+import { Card, Select, SelectItem, Text, Title, Button } from "@tremor/react";
 import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { useState } from "react";
@@ -81,23 +81,23 @@ const GCSMain = () => {
   return (
     <>
       {popup}
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 1: Provide your GCS access info
       </Title>
       {gcsCredential ? (
         <>
           <div className="flex mb-1 text-sm">
             <p className="my-auto">Existing GCS Access Key ID: </p>
-            <p className="ml-1 italic my-auto">
+            <p className="my-auto ml-1 italic">
               {gcsCredential.credential_json.access_key_id}
             </p>
             {", "}
-            <p className="ml-1 my-auto">Secret Access Key: </p>
-            <p className="ml-1 italic my-auto">
+            <p className="my-auto ml-1">Secret Access Key: </p>
+            <p className="my-auto ml-1 italic">
               {gcsCredential.credential_json.secret_access_key}
             </p>{" "}
-            <button
-              className="ml-1 hover:bg-hover rounded p-1"
+            <Button
+              className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 if (gcsConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -110,15 +110,16 @@ const GCSMain = () => {
                 await adminDeleteCredential(gcsCredential.id);
                 refreshCredentials();
               }}
+              variant="light"
             >
               <TrashIcon />
-            </button>
+            </Button>
           </div>
         </>
       ) : (
         <>
           <Text>
-            <ul className="list-disc mt-2 ml-4">
+            <ul className="mt-2 ml-4 list-disc">
               <li>
                 Provide your GCS Project ID, Client Email, and Private Key for
                 authentication.
@@ -160,13 +161,13 @@ const GCSMain = () => {
         </>
       )}
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 2: Which GCS bucket do you want to make searchable?
       </Title>
 
       {gcsConnectorIndexingStatuses.length > 0 && (
         <>
-          <Title className="mb-2 mt-6 ml-auto mr-auto">
+          <Title className="mt-6 mb-2 ml-auto mr-auto">
             GCS indexing status
           </Title>
           <Text className="mb-2">
@@ -197,7 +198,7 @@ const GCSMain = () => {
       {gcsCredential && (
         <>
           <Card className="mt-4">
-            <h2 className="font-bold mb-3">Create Connection</h2>
+            <h2 className="mb-3 font-bold">Create Connection</h2>
             <Text className="mb-4">
               Press connect below to start the connection to your GCS bucket.
             </Text>
@@ -243,7 +244,7 @@ const GCSMain = () => {
 
 export default function Page() {
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto">
       <div className="mb-4">
         <HealthCheckBanner />
       </div>

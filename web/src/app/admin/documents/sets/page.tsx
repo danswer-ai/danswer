@@ -22,7 +22,7 @@ import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { deleteDocumentSet } from "./lib";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Button, Text } from "@tremor/react";
+import { Text } from "@tremor/react";
 import {
   FiAlertTriangle,
   FiCheckCircle,
@@ -32,6 +32,7 @@ import {
 import { DeleteButton } from "@/components/DeleteButton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 const numToDisplay = 50;
 
@@ -247,9 +248,7 @@ const Main = () => {
 
       <div className="flex mb-6">
         <Link href="/admin/documents/sets/new">
-          <Button size="xs" color="green" className="my-auto md:ml-2">
-            New Document Set
-          </Button>
+          <Button className="my-auto md:ml-2">New Document Set</Button>
         </Link>
       </div>
 

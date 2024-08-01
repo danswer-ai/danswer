@@ -20,7 +20,7 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
-import { Card, Divider, Text, Title } from "@tremor/react";
+import { Card, Divider, Text, Title, Button } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 
 const extractSpaceFromCloudUrl = (wikiUrl: string): string => {
@@ -116,7 +116,7 @@ const Main = () => {
   return (
     <>
       {popup}
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 1: Provide your access token
       </Title>
 
@@ -125,16 +125,16 @@ const Main = () => {
           <div className="flex mb-1 text-sm">
             {/* <div className="flex">
                 <p className="my-auto">Existing Username: </p>
-                <p className="ml-1 italic my-auto max-w-md truncate">
+                <p className="max-w-md my-auto ml-1 italic truncate">
                   {confluenceCredential.credential_json?.confluence_username}
                 </p>{" "}
               </div> */}
             <p className="my-auto">Existing Access Token: </p>
-            <p className="ml-1 italic my-auto max-w-md truncate">
+            <p className="max-w-md my-auto ml-1 italic truncate">
               {confluenceCredential.credential_json?.confluence_access_token}
             </p>
-            <button
-              className="ml-1 hover:bg-hover rounded p-1"
+            <Button
+              className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 if (confluenceConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -147,9 +147,10 @@ const Main = () => {
                 await adminDeleteCredential(confluenceCredential.id);
                 refreshCredentials();
               }}
+              variant="light"
             >
               <TrashIcon />
-            </button>
+            </Button>
           </div>
         </>
       ) : (
@@ -199,12 +200,12 @@ const Main = () => {
         </>
       )}
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <h2 className="mt-6 mb-2 ml-auto mr-auto font-bold">
         Step 2: Which spaces do you want to make searchable?
       </h2>
       {confluenceCredential ? (
         <>
-          <p className="text-sm mb-4">
+          <p className="mb-4 text-sm">
             Specify any link to a Confluence page below and click
             &quot;Index&quot; to Index. Based on the provided link, we will
             index the ENTIRE SPACE, not just the specified page. For example,
@@ -218,7 +219,7 @@ const Main = () => {
 
           {confluenceConnectorIndexingStatuses.length > 0 && (
             <>
-              <p className="text-sm mb-2">
+              <p className="mb-2 text-sm">
                 We pull the latest pages and comments from each space listed
                 below every <b>10</b> minutes.
               </p>
@@ -276,7 +277,7 @@ const Main = () => {
           )}
 
           <Card className="mt-4">
-            <h2 className="font-bold mb-3">Add a New Space</h2>
+            <h2 className="mb-3 font-bold">Add a New Space</h2>
             <ConnectorForm<ConfluenceConfig>
               nameBuilder={(values) =>
                 `ConfluenceConnector-${values.wiki_page_url}`
@@ -317,7 +318,7 @@ const Main = () => {
 
 export default function Page() {
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto">
       <div className="mb-4">
         <HealthCheckBanner />
       </div>

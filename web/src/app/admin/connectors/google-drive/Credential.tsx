@@ -1,4 +1,3 @@
-import { Button } from "@/components/Button";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
@@ -16,6 +15,7 @@ import Cookies from "js-cookie";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik } from "formik";
 import { Card } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 
 type GoogleDriveCredentialJsonTypes = "authorized_user" | "service_account";
 

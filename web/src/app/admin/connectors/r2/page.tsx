@@ -19,7 +19,7 @@ import {
   R2Config,
   R2CredentialJson,
 } from "@/lib/types";
-import { Card, Select, SelectItem, Text, Title } from "@tremor/react";
+import { Card, Select, SelectItem, Text, Title, Button } from "@tremor/react";
 import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { useState } from "react";
@@ -84,7 +84,7 @@ const R2Main = () => {
   return (
     <>
       {popup}
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 1: Provide your access info
       </Title>
       {r2Credential ? (
@@ -92,16 +92,16 @@ const R2Main = () => {
           {" "}
           <div className="flex mb-1 text-sm">
             <p className="my-auto">Existing R2 Access Key ID: </p>
-            <p className="ml-1 italic my-auto">
+            <p className="my-auto ml-1 italic">
               {r2Credential.credential_json.r2_access_key_id}
             </p>
             {", "}
-            <p className="ml-1 my-auto">Account ID: </p>
-            <p className="ml-1 italic my-auto">
+            <p className="my-auto ml-1">Account ID: </p>
+            <p className="my-auto ml-1 italic">
               {r2Credential.credential_json.account_id}
             </p>{" "}
-            <button
-              className="ml-1 hover:bg-hover rounded p-1"
+            <Button
+              className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 if (r2ConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -114,15 +114,16 @@ const R2Main = () => {
                 await adminDeleteCredential(r2Credential.id);
                 refreshCredentials();
               }}
+              variant="light"
             >
               <TrashIcon />
-            </button>
+            </Button>
           </div>
         </>
       ) : (
         <>
           <Text>
-            <ul className="list-disc mt-2 ml-4">
+            <ul className="mt-2 ml-4 list-disc">
               <li>
                 Provide your R2 Access Key ID, Secret Access Key, and Account ID
                 for authentication.
@@ -169,13 +170,13 @@ const R2Main = () => {
         </>
       )}
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 2: Which R2 bucket do you want to make searchable?
       </Title>
 
       {r2ConnectorIndexingStatuses.length > 0 && (
         <>
-          <Title className="mb-2 mt-6 ml-auto mr-auto">
+          <Title className="mt-6 mb-2 ml-auto mr-auto">
             R2 indexing status
           </Title>
           <Text className="mb-2">
@@ -206,7 +207,7 @@ const R2Main = () => {
       {r2Credential && (
         <>
           <Card className="mt-4">
-            <h2 className="font-bold mb-3">Create Connection</h2>
+            <h2 className="mb-3 font-bold">Create Connection</h2>
             <Text className="mb-4">
               Press connect below to start the connection to your R2 bucket.
             </Text>
@@ -254,7 +255,7 @@ export default function Page() {
   const [selectedStorage, setSelectedStorage] = useState<string>("s3");
 
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto">
       <div className="mb-4">
         <HealthCheckBanner />
       </div>

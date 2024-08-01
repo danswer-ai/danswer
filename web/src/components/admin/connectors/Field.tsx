@@ -1,4 +1,3 @@
-import { Button } from "@tremor/react";
 import {
   ArrayHelpers,
   ErrorMessage,
@@ -11,6 +10,7 @@ import * as Yup from "yup";
 import { FormBodyBuilder } from "./types";
 import { DefaultDropdown, StringOrNumberOption } from "@/components/Dropdown";
 import { FiPlus, FiX } from "react-icons/fi";
+import { Button } from "@/components/ui/button";
 
 export function SectionHeader({
   children,
@@ -213,12 +213,9 @@ export function TextArrayField<T extends Yup.AnyObject>({
                 arrayHelpers.push("");
               }}
               className="mt-3"
-              color="green"
-              size="xs"
               type="button"
-              icon={FiPlus}
             >
-              Add New
+              <FiPlus className="mr-1.5" /> Add New
             </Button>
           </div>
         )}
