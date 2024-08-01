@@ -7,11 +7,8 @@ import { User } from "@/lib/types";
 
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { AssistantsPageTitle } from "../AssistantsPageTitle";
-import { PromptPage } from "@/app/admin/prompt-library/page";
-import {
-  useAdminInputPrompts,
-  useInputPrompts,
-} from "@/app/admin/prompt-library/hooks";
+import { useInputPrompts } from "@/app/admin/prompt-library/hooks";
+import { PromptSection } from "@/app/admin/prompt-library/promptsection";
 
 export default function WrappedPrompts({
   chatSessions,
@@ -52,7 +49,7 @@ export default function WrappedPrompts({
         <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
           <AssistantsPageTitle>Prompt Gallery</AssistantsPageTitle>
           <InstantSSRAutoRefresh />
-          <PromptPage
+          <PromptSection
             promptLibrary={promptLibrary || []}
             isLoading={promptLibraryIsLoading}
             error={promptLibraryError}
