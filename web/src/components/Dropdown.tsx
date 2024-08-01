@@ -326,7 +326,6 @@ export function DefaultDropdown({
     <div
       className={`
         border 
-        border 
         rounded-lg 
         flex 
         flex-col 

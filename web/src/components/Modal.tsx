@@ -66,3 +66,47 @@ export function Modal({
     </div>
   );
 }
+
+/* import { Divider } from "@tremor/react";
+import { FiX } from "react-icons/fi";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+interface ModalProps {
+  children: JSX.Element | string;
+  title?: JSX.Element | string;
+  triggerText?: JSX.Element | string;
+  onOutsideClick?: () => void;
+  className?: string;
+  width?: string;
+  titleSize?: string;
+  hideDividerForTitle?: boolean;
+  noPadding?: boolean;
+}
+
+export function Modal({
+  children,
+  title,
+  onOutsideClick,
+  className,
+  width,
+  titleSize,
+  hideDividerForTitle,
+  noPadding,
+  triggerText,
+}: ModalProps) {
+  return (
+    <Dialog>
+      <DialogTrigger>{triggerText}</DialogTrigger>
+      <DialogContent>{children}</DialogContent>
+    </Dialog>
+  );
+}
+ */
