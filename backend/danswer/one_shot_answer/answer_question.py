@@ -224,7 +224,6 @@ def stream_answer_objects(
     )
 
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
-    dropped_inds: list[int] = []
 
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
         # for one-shot flow, don't currently do anything with these
@@ -367,7 +366,6 @@ def get_search_answer(
             answer += packet.answer_piece
         elif isinstance(packet, QADocsResponse):
             qa_response.docs = packet
-
         elif isinstance(packet, LLMRelevanceFilterResponse):
             qa_response.llm_chunks_indices = packet.relevant_chunk_indices
         elif isinstance(packet, DanswerQuotes):
