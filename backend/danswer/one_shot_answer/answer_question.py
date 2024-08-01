@@ -187,7 +187,9 @@ def stream_answer_objects(
         user=user,
         evaluation_type=LLMEvaluationType.SKIP
         if DISABLE_AGENTIC_SEARCH
-        else LLMEvaluationType.AGENTIC,
+        else LLMEvaluationType.AGENTIC
+        if query_req.agentic
+        else LLMEvaluationType.BASIC,
         persona=chat_session.persona,
         retrieval_options=query_req.retrieval_options,
         prompt_config=prompt_config,

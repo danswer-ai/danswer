@@ -153,6 +153,8 @@ export const SearchResultsDisplay = ({
     documents || [],
     searchResponse.selectedDocIndices || []
   );
+  console.log(searchResponse);
+  console.log(searchResponse.additional_relevance);
 
   const relevantDocs = documents
     ? documents.filter((doc) => {

@@ -32,6 +32,7 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "../resizable/constants";
 import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
+import { cornersOfRectangle } from "@dnd-kit/core/dist/utilities/algorithms/helpers";
 
 export type searchState =
   | "input"
