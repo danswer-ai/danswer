@@ -3,6 +3,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
 from danswer.db.input_prompt import fetch_input_prompt_by_id
@@ -34,17 +35,6 @@ def list_input_prompts(
         user_id=user.id if user is not None else None,
         db_session=db_session,
         include_public=include_public,
-    )
-    return [InputPromptSnapshot.from_model(prompt) for prompt in user_prompts]
-
-
-@admin_router.get("")
-def list_public_input_prompts(
-    _: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> list[InputPromptSnapshot]:
-    user_prompts = fetch_public_input_prompts(
-        db_session=db_session,
     )
     return [InputPromptSnapshot.from_model(prompt) for prompt in user_prompts]
 
@@ -103,21 +93,6 @@ def patch_input_prompt(
     return InputPromptSnapshot.from_model(updated_input_prompt)
 
 
-@admin_router.delete("/{input_prompt_id}")
-def delete_public_input_prompt(
-    input_prompt_id: int,
-    user: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> None:
-    try:
-        remove_public_input_prompt(user, input_prompt_id, db_session)
-
-    except ValueError as e:
-        error_msg = "Error occurred while deleting input prompt"
-        logger.warn(f"{error_msg}. Stack trace: {e}")
-        raise HTTPException(status_code=404, detail=error_msg)
-
-
 @basic_router.delete("/{input_prompt_id}")
 def delete_input_prompt(
     input_prompt_id: int,
@@ -131,3 +106,29 @@ def delete_input_prompt(
         error_msg = "Error occurred while deleting input prompt"
         logger.warn(f"{error_msg}. Stack trace: {e}")
         raise HTTPException(status_code=404, detail=error_msg)
+
+
+@admin_router.delete("/{input_prompt_id}")
+def delete_public_input_prompt(
+    input_prompt_id: int,
+    user: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    try:
+        remove_public_input_prompt(user, input_prompt_id, db_session)
+
+    except ValueError as e:
+        error_msg = "Error occurred while deleting input prompt"
+        logger.warn(f"{error_msg}. Stack trace: {e}")
+        raise HTTPException(status_code=404, detail=error_msg)
+
+
+@admin_router.get("")
+def list_public_input_prompts(
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> list[InputPromptSnapshot]:
+    user_prompts = fetch_public_input_prompts(
+        db_session=db_session,
+    )
+    return [InputPromptSnapshot.from_model(prompt) for prompt in user_prompts]

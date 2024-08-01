@@ -115,7 +115,10 @@ export const PromptPage = ({
       <div className={centering ? "max-w-sm mx-auto" : ""}>
         <Text className="mb-2 my-auto">
           Create prompts that can be accessed with the <i>`/`</i> shortcut in
-          Danswer Chat.
+          Danswer Chat.{" "}
+          {isPublic
+            ? "Prompts created here will be accessible to all users."
+            : "Prompts created here will be available only to you."}
         </Text>
       </div>
 

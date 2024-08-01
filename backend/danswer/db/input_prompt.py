@@ -4,7 +4,6 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from danswer.auth.schemas import UserRole
 from danswer.db.models import InputPrompt
 from danswer.db.models import User
 from danswer.server.features.input_prompt.models import InputPromptSnapshot
@@ -129,11 +128,6 @@ def remove_public_input_prompt(
 
     if not input_prompt.is_public:
         raise HTTPException(status_code=400, detail="This prompt is not public")
-
-    if user is None or user.role != UserRole.ADMIN:
-        raise HTTPException(
-            status_code=403, detail="Only admins can delete public prompts"
-        )
 
     db_session.delete(input_prompt)
     db_session.commit()
