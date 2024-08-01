@@ -16,12 +16,13 @@ import { usePopup } from "../admin/connectors/Popup";
 import { AlertIcon, BroomIcon, UndoIcon } from "../icons/icons";
 import { AgenticDocumentDisplay, DocumentDisplay } from "./DocumentDisplay";
 import { searchState } from "./SearchSection";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Tooltip } from "../tooltip/Tooltip";
 import KeyboardSymbol from "@/lib/browserUtilities";
 import { AnswerSection } from "./results/AnswerSection";
 import { QuotesSection } from "./results/QuotesSection";
 import { QAFeedbackBlock } from "./QAFeedback";
+import { SettingsContext } from "../settings/SettingsProvider";
 
 const getSelectedDocumentIds = (
   documents: SearchDanswerDocument[],
@@ -41,9 +42,11 @@ export const SearchResultsDisplay = ({
   disabledAgentic,
   isFetching,
   defaultOverrides,
+  searchState,
   performSweep,
   sweep,
 }: {
+  searchState: searchState;
   disabledAgentic?: boolean;
   contentEnriched?: boolean;
   agenticResults?: boolean | null;
@@ -138,17 +141,6 @@ export const SearchResultsDisplay = ({
     );
   }
 
-  const dedupedQuotes: Quote[] = [];
-  const seen = new Set<string>();
-  if (quotes) {
-    quotes.forEach((quote) => {
-      if (!seen.has(quote.document_id)) {
-        dedupedQuotes.push(quote);
-        seen.add(quote.document_id);
-      }
-    });
-  }
-
   const selectedDocumentIds = getSelectedDocumentIds(
     documents || [],
     searchResponse.selectedDocIndices || []
@@ -180,47 +172,13 @@ export const SearchResultsDisplay = ({
       return false;
     });
   };
+  const settings = useContext(SettingsContext);
 
   const uniqueDocuments = getUniqueDocuments(documents || []);
 
   return (
     <>
       {popup}
-      {
-        <div className="min-h-[16rem] p-4 border-2 border-border rounded-lg relative">
-          <div>
-            <div className="flex mb-1">
-              <h2 className="text-emphasis font-bold my-auto mb-1 w-full">
-                AI Answer
-              </h2>
-            </div>
-
-            <div className="mb-2 pt-1 border-t border-border w-full">
-              <AnswerSection
-                answer={answer}
-                quotes={quotes}
-                error={error}
-                isFetching={isFetching}
-              />
-            </div>
-
-            {quotes !== null && answer && (
-              <div className="pt-1 border-t border-border w-full">
-                <QuotesSection quotes={dedupedQuotes} isFetching={isFetching} />
-
-                {searchResponse.messageId !== null && (
-                  <div className="absolute right-3 bottom-3">
-                    <QAFeedbackBlock
-                      messageId={searchResponse.messageId}
-                      setPopup={setPopup}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      }
 
       {documents && documents.length == 0 && (
         <p className="flex text-lg font-bold">

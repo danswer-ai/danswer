@@ -346,9 +346,6 @@ class SearchPipeline:
 
     @property
     def section_relevance(self) -> list[SectionRelevancePiece]:
-        print("I AM GATHERING RESULTS")
-        print(self._section_relevance)
-        print(self.search_query.evaluation_type)
         if self._section_relevance is not None:
             return self._section_relevance
 
