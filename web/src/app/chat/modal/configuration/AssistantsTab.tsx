@@ -94,6 +94,7 @@ const AssistantCard = ({
             ))}
           </div>
         )}
+
         <div className="text-xs text-subtle">
           <span className="font-semibold">Default model:</span>{" "}
           {getDisplayNameForModel(

@@ -9,9 +9,10 @@ from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
+from danswer.chat.models import DocumentRelevance
 from danswer.chat.models import LLMRelevanceFilterResponse
-from danswer.chat.models import LLMRelevanceSummaryResponse
 from danswer.chat.models import QADocsResponse
+from danswer.chat.models import RelevanceAnalysis
 from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import QA_TIMEOUT
@@ -39,18 +40,17 @@ from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.one_shot_answer.models import QueryRephrase
 from danswer.one_shot_answer.qa_utils import combine_message_thread
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.search.utils import dedupe_documents
-from danswer.search.utils import drop_llm_indices
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephrase
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.utils import get_json_line
 from danswer.tools.force import ForceUseTool
 from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
-from danswer.tools.search.search_tool import SEARCH_EVALUATION_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
 from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
@@ -74,7 +74,7 @@ AnswerObjectIterator = Iterator[
     | ChatMessageDetail
     | CitationInfo
     | ToolCallKickoff
-    | LLMRelevanceSummaryResponse
+    | DocumentRelevance
 ]
 
 
@@ -184,6 +184,7 @@ def stream_answer_objects(
     search_tool = SearchTool(
         db_session=db_session,
         user=user,
+        evaluation_type=LLMEvaluationType.AGENTIC,
         persona=chat_session.persona,
         retrieval_options=query_req.retrieval_options,
         prompt_config=prompt_config,
@@ -250,6 +251,7 @@ def stream_answer_objects(
                     translate_db_search_doc_to_server_search_doc(db_search_doc)
                     for db_search_doc in reference_db_search_docs
                 ]
+                print(len(response_docs))
 
                 initial_response = QADocsResponse(
                     rephrased_query=rephrased_query,
@@ -266,20 +268,16 @@ def stream_answer_objects(
                 yield packet.response
 
             elif packet.id == SECTION_RELEVANCE_LIST_ID:
-                chunk_indices = packet.response
+                document_based_response = {}
 
-                if reference_db_search_docs is not None and dropped_inds:
-                    chunk_indices = drop_llm_indices(
-                        llm_indices=chunk_indices,
-                        search_docs=reference_db_search_docs,
-                        dropped_indices=dropped_inds,
+                for evaluation in packet.response:
+                    print(evaluation)
+                    document_based_response[evaluation.document_id] = RelevanceAnalysis(
+                        relevant=evaluation.relevant, content=evaluation.content
                     )
 
-                yield LLMRelevanceFilterResponse(relevant_chunk_indices=packet.response)
-
-            elif packet.id == SEARCH_EVALUATION_ID:
-                evaluation_response = LLMRelevanceSummaryResponse(
-                    relevance_summaries=packet.response
+                evaluation_response = DocumentRelevance(
+                    relevance_summaries=document_based_response
                 )
                 if reference_db_search_docs is not None:
                     update_search_docs_table_with_relevance(
@@ -371,8 +369,8 @@ def get_search_answer(
             answer += packet.answer_piece
         elif isinstance(packet, QADocsResponse):
             qa_response.docs = packet
-        elif isinstance(packet, LLMRelevanceFilterResponse):
-            qa_response.llm_chunks_indices = packet.relevant_chunk_indices
+        # elif isinstance(packet, LLMRelevanceFilterResponse):
+        #     qa_response.llm_chunks_indices = packet.relevant_chunks #TODO put back
         elif isinstance(packet, DanswerQuotes):
             qa_response.quotes = packet
         elif isinstance(packet, CitationInfo):

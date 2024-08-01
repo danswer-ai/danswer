@@ -46,15 +46,20 @@ class LLMRelevanceFilterResponse(BaseModel):
     relevant_chunk_indices: list[int]
 
 
-class RelevanceChunk(BaseModel):
+class RelevanceAnalysis(BaseModel):
     # TODO make this document level. Also slight misnomer here as this is actually
     # done at the section level currently rather than the chunk
     relevant: bool | None = None
     content: str | None = None
 
 
-class LLMRelevanceSummaryResponse(BaseModel):
-    relevance_summaries: dict[str, RelevanceChunk]
+class SectionRelevancePiece(RelevanceAnalysis):
+    document_id: str
+    chunk_id: int
+
+
+class DocumentRelevance(BaseModel):
+    relevance_summaries: dict[str, RelevanceAnalysis]
 
 
 class DanswerAnswerPiece(BaseModel):
