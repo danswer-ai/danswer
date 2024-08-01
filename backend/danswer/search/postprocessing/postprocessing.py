@@ -306,15 +306,13 @@ def search_postprocessing(
         if llm_filter_task_id
         else []
     )
-    print("evaluation")
 
     yield [
         SectionRelevancePiece(
             document_id=section.center_chunk.document_id,
             chunk_id=section.center_chunk.chunk_id,
-            relevant=True,
+            relevant=section.center_chunk.unique_id in llm_selected_section_ids,
             content="",
         )
         for section in (reranked_sections or retrieved_sections)
-        if section.center_chunk.unique_id in llm_selected_section_ids
     ]
