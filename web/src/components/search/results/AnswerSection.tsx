@@ -31,13 +31,13 @@ interface AnswerSectionProps {
 
 export const AnswerSection = (props: AnswerSectionProps) => {
   let status = "in-progress" as StatusOptions;
-  let header = <>Building answer...</>;
+  let header = <></>;
   let body = null;
 
   // finished answer
   if (props.quotes !== null || !props.isFetching) {
     status = "success";
-    header = <>AI answer</>;
+    header = <></>;
 
     body = (
       <ReactMarkdown
@@ -61,7 +61,7 @@ export const AnswerSection = (props: AnswerSectionProps) => {
     // answer is streaming
   } else if (props.answer) {
     status = "success";
-    header = <>AI answer</>;
+    header = <></>;
     body = (
       <ReactMarkdown
         className="prose text-sm max-w-full"

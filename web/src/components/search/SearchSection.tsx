@@ -17,12 +17,11 @@ import {
   SearchDanswerDocument,
 } from "@/lib/search/interfaces";
 import { searchRequestStreamed } from "@/lib/search/streamingQa";
-
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
 import { useFilters, useObjectState } from "@/lib/hooks";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { computeAvailableFilters } from "@/lib/filters";
-import { redirect, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
 import { ChatSession, SearchSession } from "@/app/chat/interfaces";
@@ -32,14 +31,19 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "../resizable/constants";
 import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
-import { cornersOfRectangle } from "@dnd-kit/core/dist/utilities/algorithms/helpers";
+import { AnswerSection } from "./results/AnswerSection";
+import { QuotesSection } from "./results/QuotesSection";
+import { QAFeedbackBlock } from "./QAFeedback";
+import { usePopup } from "../admin/connectors/Popup";
 
 export type searchState =
   | "input"
   | "searching"
   | "reading"
   | "analyzing"
-  | "summarizing";
+  | "summarizing"
+  | "generating"
+  | "citing";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -222,35 +226,48 @@ export const SearchSection = ({
     additional_relevance: undefined,
   };
   // Streaming updates
-  const updateCurrentAnswer = (answer: string) =>
+  const updateCurrentAnswer = (answer: string) => {
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       answer,
     }));
-  const updateQuotes = (quotes: Quote[]) =>
+
+    setSearchState((searchState) => {
+      if (searchState != "input") {
+        return "generating";
+      }
+      return "input";
+    });
+  };
+
+  const updateQuotes = (quotes: Quote[]) => {
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       quotes,
     }));
+    setSearchState((searchState) => "input");
+  };
 
   const updateDocs = (documents: SearchDanswerDocument[]) => {
-    setTimeout(() => {
-      setSearchState((searchState) => {
-        if (searchState != "input") {
-          return "reading";
-        }
-        return "input";
-      });
-    }, 1500);
+    if (agentic) {
+      setTimeout(() => {
+        setSearchState((searchState) => {
+          if (searchState != "input") {
+            return "reading";
+          }
+          return "input";
+        });
+      }, 1500);
 
-    setTimeout(() => {
-      setSearchState((searchState) => {
-        if (searchState != "input") {
-          return "analyzing";
-        }
-        return "input";
-      });
-    }, 4500);
+      setTimeout(() => {
+        setSearchState((searchState) => {
+          if (searchState != "input") {
+            return "analyzing";
+          }
+          return "input";
+        });
+      }, 4500);
+    }
 
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
@@ -293,8 +310,9 @@ export const SearchSection = ({
       messageId,
     }));
     router.refresh();
-    setSearchState("input");
+    // setSearchState("input");
     setIsFetching(false);
+    setSearchState((searchState) => "input");
 
     // router.replace(`/search?searchId=${chat_session_id}`);
   };
@@ -308,7 +326,11 @@ export const SearchSection = ({
     setContentEnriched(true);
 
     setIsFetching(false);
-    setSearchState("input");
+    if (disabledAgentic) {
+      setSearchState("input");
+    } else {
+      setSearchState("analyzing");
+    }
   };
 
   const updateComments = (comments: any) => {
@@ -316,7 +338,9 @@ export const SearchSection = ({
   };
 
   const finishedSearching = () => {
-    setSearchState("input");
+    if (disabledAgentic) {
+      setSearchState("input");
+    }
   };
 
   const resetInput = () => {
@@ -472,6 +496,20 @@ export const SearchSection = ({
     setShowDocSidebar,
     mobile: settings?.isMobile,
   });
+  const { answer, quotes, documents, error, messageId } = searchResponse;
+
+  const dedupedQuotes: Quote[] = [];
+  const seen = new Set<string>();
+  if (quotes) {
+    quotes.forEach((quote) => {
+      if (!seen.has(quote.document_id)) {
+        dedupedQuotes.push(quote);
+        seen.add(quote.document_id);
+      }
+    });
+  }
+
+  const { popup, setPopup } = usePopup();
 
   return (
     <>
@@ -549,6 +587,7 @@ export const SearchSection = ({
                     <div className="mt-6">
                       {!(agenticResults && isFetching) || disabledAgentic ? (
                         <SearchResultsDisplay
+                          searchState={searchState}
                           disabledAgentic={disabledAgentic}
                           contentEnriched={contentEnriched}
                           comments={comments}
@@ -591,20 +630,119 @@ export const SearchSection = ({
                         disabledAgentic ? undefined : toggleAgentic
                       }
                       agentic={agentic}
-                      searchState={searchState}
                       query={query}
                       setQuery={setQuery}
                       onSearch={async (agentic?: boolean) => {
                         setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
                         await onSearch({ agentic, offset: 0 });
                       }}
+                      finalAvailableDocumentSets={finalAvailableDocumentSets}
+                      finalAvailableSources={finalAvailableSources}
+                      filterManager={filterManager}
+                      documentSets={documentSets}
+                      ccPairs={ccPairs}
+                      tags={tags}
                     />
                   </div>
+                  {!firstSearch && (
+                    <div className="my-4 min-h-[16rem] p-4 border-2 border-border rounded-lg relative">
+                      <div>
+                        <div className="flex gap-x-2 mb-1">
+                          <h2 className="text-emphasis font-bold my-auto mb-1 ">
+                            AI Answer
+                          </h2>
+
+                          {searchState == "generating" && (
+                            <div
+                              key={"generating"}
+                              className="relative inline-block"
+                            >
+                              <span className="loading-text">
+                                Generating response...
+                              </span>
+                            </div>
+                          )}
+
+                          {searchState == "citing" && (
+                            <div
+                              key={"citing"}
+                              className="relative inline-block"
+                            >
+                              <span className="loading-text">
+                                Generating citations...
+                              </span>
+                            </div>
+                          )}
+
+                          {searchState == "searching" && (
+                            <div
+                              key={"Reading"}
+                              className="relative inline-block"
+                            >
+                              <span className="loading-text">Searching...</span>
+                            </div>
+                          )}
+
+                          {searchState == "reading" && (
+                            <div
+                              key={"Reading"}
+                              className="relative inline-block"
+                            >
+                              <span className="loading-text">
+                                Reading{settings?.isMobile ? "" : " Documents"}
+                                ...
+                              </span>
+                            </div>
+                          )}
+
+                          {searchState == "analyzing" && (
+                            <div
+                              key={"Generating"}
+                              className="relative inline-block"
+                            >
+                              <span className="loading-text">
+                                Generating
+                                {settings?.isMobile ? "" : " Analysis"}...
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mb-2 pt-1 border-t border-border w-full">
+                          <AnswerSection
+                            answer={answer}
+                            quotes={quotes}
+                            error={error}
+                            isFetching={isFetching}
+                          />
+                        </div>
+
+                        {quotes !== null && answer && (
+                          <div className="pt-1 border-t border-border w-full">
+                            <QuotesSection
+                              quotes={dedupedQuotes}
+                              isFetching={isFetching}
+                            />
+
+                            {searchResponse.messageId !== null && (
+                              <div className="absolute right-3 bottom-3">
+                                <QAFeedbackBlock
+                                  messageId={searchResponse.messageId}
+                                  setPopup={setPopup}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {!settings?.isMobile && (
                     <div className="mt-6">
                       {!(agenticResults && isFetching) || disabledAgentic ? (
                         <SearchResultsDisplay
+                          searchState={searchState}
                           disabledAgentic={disabledAgentic}
                           contentEnriched={contentEnriched}
                           comments={comments}

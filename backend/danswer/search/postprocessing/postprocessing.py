@@ -306,8 +306,6 @@ def search_postprocessing(
         if llm_filter_task_id
         else []
     )
-    print("llm_selected_section_ids")
-    print(llm_selected_section_ids)
 
     yield [
         SectionRelevancePiece(

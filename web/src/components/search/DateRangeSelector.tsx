@@ -38,9 +38,11 @@ export const TODAY = "Today";
 export function DateRangeSelector({
   value,
   onValueChange,
+  isHoritontal,
 }: {
   value: DateRangePickerValue | null;
   onValueChange: (value: DateRangePickerValue | null) => void;
+  isHoritontal?: boolean;
 }) {
   return (
     <div>
@@ -106,6 +108,7 @@ export function DateRangeSelector({
               flex 
               text-sm  
               px-3
+              line-clamp-1
               py-1.5 
               rounded-lg 
               border 
@@ -113,12 +116,16 @@ export function DateRangeSelector({
               cursor-pointer 
               hover:bg-hover`}
         >
-          <FiCalendar className="my-auto mr-2" />{" "}
-          {value?.selectValue ? (
-            <div className="text-emphasis">{value.selectValue}</div>
-          ) : (
-            "Any time..."
-          )}
+          <FiCalendar className="flex-none my-auto mr-2" />{" "}
+          <p className="line-clamp-1">
+            {value?.selectValue ? (
+              <div className="text-emphasis">{value.selectValue}</div>
+            ) : isHoritontal ? (
+              "Date"
+            ) : (
+              "Any time..."
+            )}
+          </p>
           {value?.selectValue ? (
             <div
               className="my-auto ml-auto p-0.5 rounded-full w-fit"
