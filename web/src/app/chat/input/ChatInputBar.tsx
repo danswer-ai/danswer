@@ -145,8 +145,6 @@ export function ChatInputBar({
       ) {
         hideSuggestions();
         hidePrompts();
-      } else {
-        event.preventDefault();
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
