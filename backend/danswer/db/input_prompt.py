@@ -27,14 +27,12 @@ def upsert_input_prompt(
             db_session.query(InputPrompt).filter_by(id=input_prompt_id).first()
         )
     else:
-        input_prompt = (
-            db_session.query(InputPrompt)
-            .filter(
-                InputPrompt.prompt == prompt,
-                InputPrompt.user_id == user.id if user else None,
-            )
-            .first()
-        )
+        query = db_session.query(InputPrompt).filter(InputPrompt.prompt == prompt)
+        if user:
+            query = query.filter(InputPrompt.user_id == user.id)
+        else:
+            query = query.filter(InputPrompt.user_id.is_(None))
+        input_prompt = query.first()
 
     if input_prompt:
         input_prompt.content = content
