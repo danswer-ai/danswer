@@ -1,16 +1,10 @@
 "use client";
 
-import { removeDuplicateDocs } from "@/lib/documentUtils";
 import {
-  DanswerDocument,
   DocumentRelevance,
-  FlowType,
-  Quote,
-  Relevance,
   SearchDanswerDocument,
   SearchDefaultOverrides,
   SearchResponse,
-  ValidQuestionResponse,
 } from "@/lib/search/interfaces";
 import { usePopup } from "../admin/connectors/Popup";
 import { AlertIcon, BroomIcon, UndoIcon } from "../icons/icons";
@@ -19,9 +13,6 @@ import { searchState } from "./SearchSection";
 import { useContext, useEffect, useState } from "react";
 import { Tooltip } from "../tooltip/Tooltip";
 import KeyboardSymbol from "@/lib/browserUtilities";
-import { AnswerSection } from "./results/AnswerSection";
-import { QuotesSection } from "./results/QuotesSection";
-import { QAFeedbackBlock } from "./QAFeedback";
 import { SettingsContext } from "../settings/SettingsProvider";
 
 const getSelectedDocumentIds = (
@@ -42,11 +33,9 @@ export const SearchResultsDisplay = ({
   disabledAgentic,
   isFetching,
   defaultOverrides,
-  searchState,
   performSweep,
   sweep,
 }: {
-  searchState: searchState;
   disabledAgentic?: boolean;
   contentEnriched?: boolean;
   agenticResults?: boolean | null;
@@ -172,7 +161,6 @@ export const SearchResultsDisplay = ({
       return false;
     });
   };
-  const settings = useContext(SettingsContext);
 
   const uniqueDocuments = getUniqueDocuments(documents || []);
 
