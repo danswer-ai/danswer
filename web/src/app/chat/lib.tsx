@@ -535,6 +535,13 @@ export function personaIncludesRetrieval(selectedPersona: Persona) {
   );
 }
 
+export function personaIncludesImage(selectedPersona: Persona) {
+  return selectedPersona.tools.some(
+    (tool) =>
+      tool.in_code_tool_id && tool.in_code_tool_id == "ImageGenerationTool"
+  );
+}
+
 const PARAMS_TO_SKIP = [
   SEARCH_PARAM_NAMES.SUBMIT_ON_LOAD,
   SEARCH_PARAM_NAMES.USER_MESSAGE,

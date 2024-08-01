@@ -41,7 +41,7 @@ personas:
     icon_color: "#6FB1FF"
 
   - id: 1
-    name: "GPT"
+    name: "LLM"
     description: >
       Assistant with no access to documents. Chat with just the Language Model.
     prompts:
@@ -69,3 +69,17 @@ personas:
     icon_shape: 45519
     icon_color: "#6FFF8D"
 
+  - id: 3
+    name: "Image Generator"
+    description: >
+      Assistant capable of generating images based on text descriptions.
+    prompts:
+      - "ImageGeneration"
+    num_chunks: 0
+    llm_relevance_filter: false
+    llm_filter_extraction: false
+    recency_bias: "no_decay"
+    document_sets: []
+    icon_shape: 234124 
+    icon_color: "#9B59B6"
+    image_generation: true 

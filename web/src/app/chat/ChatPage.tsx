@@ -1114,6 +1114,7 @@ export function ChatPage({
     };
   }, [router]);
 
+  console.log(availableAssistants);
   const [documentSelection, setDocumentSelection] = useState(false);
   const toggleDocumentSelectionAspects = () => {
     setDocumentSelection((documentSelection) => !documentSelection);
