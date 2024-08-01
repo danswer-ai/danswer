@@ -227,7 +227,7 @@ class RecursiveIndexer:
         self.origin_page_id = origin_page_id
         self.pages = self.recurse_children_pages(0, self.origin_page_id)
 
-    def get_origin_page(self) -> dict:
+    def get_origin_page(self) -> list[dict[str, Any]]:
         return [self._fetch_origin_page()]
 
     def get_pages(self, ind: int, size: int) -> list[dict]:
