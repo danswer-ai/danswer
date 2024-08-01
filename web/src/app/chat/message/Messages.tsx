@@ -159,7 +159,14 @@ export const AIMessage = ({
     }
     return rawText;
   };
+  const markdownContainerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (markdownContainerRef.current) {
+      console.log();
+      markdownContainerRef.current.focus();
+    }
+  }, [content]);
   const processContent = (content: string) => {
     const openCodeBlockRegex = /```[\s\S]*?$/;
     if (openCodeBlockRegex.test(content)) {
@@ -377,7 +384,11 @@ export const AIMessage = ({
                         <FileDisplay files={files || []} />
 
                         {typeof content === "string" ? (
-                          <div className="overflow-x-auto w-full pr-2 max-w-[675px]">
+                          <div
+                            ref={markdownContainerRef}
+                            tabIndex={-1}
+                            className="overflow-x-auto w-full pr-2 max-w-[675px]"
+                          >
                             <ReactMarkdown
                               key={messageId}
                               className="prose max-w-full"
@@ -421,9 +432,6 @@ export const AIMessage = ({
                                     );
                                   }
                                 },
-                                pre: (props) => (
-                                  <pre {...props}>{props.children}</pre>
-                                ),
                                 code: (props) => (
                                   <CodeBlock
                                     className="w-full"
