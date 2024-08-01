@@ -82,7 +82,7 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     model_dim: 768,
     normalize: true,
     description:
-      "A smaller / faster model than the default model. This is around 2x faster than the default model at the cost of slightly lower search quality.",
+      "A smaller and faster model than the default. It is around 2x faster than the default model at the cost of lower search quality.",
     link: "https://huggingface.co/intfloat/e5-base-v2",
     query_prefix: "query: ",
     passage_prefix: "passage: ",
@@ -92,7 +92,7 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     model_dim: 384,
     normalize: true,
     description:
-      "An even smaller / faster version of the e5-base-v2 model. If you're running Danswer on a resource constrained system, then this is a good choice.",
+      "The smallest and fastest version of the E5 line of models. If you're running Danswer on a resource constrained system, then this may be a good choice.",
     link: "https://huggingface.co/intfloat/e5-small-v2",
     query_prefix: "query: ",
     passage_prefix: "passage: ",
@@ -102,7 +102,7 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     model_dim: 768,
     normalize: true,
     description:
-      "If you have many documents in other languages besides English, this is the one to go for.",
+      "For corpora in other languages besides English, this is the one to choose.",
     link: "https://huggingface.co/intfloat/multilingual-e5-base",
     query_prefix: "query: ",
     passage_prefix: "passage: ",
@@ -112,7 +112,7 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     model_dim: 384,
     normalize: true,
     description:
-      "If you have many documents in other languages besides English, and you're running on a resource constrained system, then this is the one to go for.",
+      "For corpora in other languages besides English, as well as being on a resource constrained system, this is the one to choose.",
     link: "https://huggingface.co/intfloat/multilingual-e5-base",
     query_prefix: "query: ",
     passage_prefix: "passage: ",
