@@ -271,7 +271,9 @@ class DefaultMultiLLM(LLM):
                 else None,
                 timeout=self._timeout,
                 # For now, we don't support parallel tool calls
-                parallel_tool_calls=False,
+                # NOTE: we can't pass this in if tools are not specified
+                # or else OpenAI throws an error
+                **({"parallel_tool_calls": False} if tools else {}),
                 **self._model_kwargs,
             )
         except Exception as e:
