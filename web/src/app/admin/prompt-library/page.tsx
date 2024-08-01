@@ -109,8 +109,8 @@ const Main = () => {
       )}
 
       <Text className="mb-2">
-        Here you can manage the prompts that you can access with the <i>`/`</i>{" "}
-        shortcut!
+        Create prompts that can be accessed with the <i>`/`</i> shortcut in
+        Danswer Chat.
       </Text>
 
       {promptLibrary.length == 0 && (

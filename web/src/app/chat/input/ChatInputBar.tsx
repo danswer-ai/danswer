@@ -485,7 +485,7 @@ export function ChatInputBar({
               style={{ scrollbarWidth: "thin" }}
               role="textarea"
               aria-multiline
-              placeholder={`Send a message ${!settings?.isMobile ? "or try @ or /" : ""}`}
+              placeholder={`Send a message ${!settings?.isMobile ? "or try using @ or /" : ""}`}
               value={message}
               onKeyDown={(event) => {
                 if (
