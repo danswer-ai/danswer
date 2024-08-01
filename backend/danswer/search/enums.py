@@ -25,6 +25,12 @@ class SearchType(str, Enum):
     HYBRID = "hybrid"
 
 
+class LLMEvaluationType(str, Enum):
+    AGENTIC = "agentic"  # applies agentic evaluation
+    BASIC = "basic"  # applies boolean evaluation
+    SKIP = "skip"  # skips evaluation
+
+
 class QueryFlow(str, Enum):
     SEARCH = "search"
     QUESTION_ANSWER = "question-answer"

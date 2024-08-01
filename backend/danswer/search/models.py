@@ -6,13 +6,13 @@ from pydantic import validator
 
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
-from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import NUM_RERANKED_RESULTS
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import Persona
 from danswer.indexing.models import BaseChunk
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import SearchType
 from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
@@ -78,7 +78,7 @@ class SearchRequest(ChunkContext):
     hybrid_alpha: float = HYBRID_ALPHA
     # This is to forcibly skip (or run) the step, if None it uses the system defaults
     skip_rerank: bool | None = None
-    skip_llm_chunk_filter: bool | None = None
+    evaluation_type: LLMEvaluationType = LLMEvaluationType.BASIC
 
     class Config:
         arbitrary_types_allowed = True
@@ -92,7 +92,7 @@ class SearchQuery(ChunkContext):
     offset: int = 0
     search_type: SearchType = SearchType.HYBRID
     skip_rerank: bool = not ENABLE_RERANKING_REAL_TIME_FLOW
-    skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER
+    evaluation_type: LLMEvaluationType
     # Only used if not skip_rerank
     num_rerank: int | None = NUM_RERANKED_RESULTS
     # Only used if not skip_llm_chunk_filter

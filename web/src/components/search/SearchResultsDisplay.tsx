@@ -157,9 +157,7 @@ export const SearchResultsDisplay = ({
           showAll ||
           (searchResponse &&
             searchResponse.additional_relevance &&
-            searchResponse.additional_relevance[
-              `${doc.document_id}-${doc.chunk_ind}`
-            ].relevant) ||
+            searchResponse.additional_relevance[doc.document_id].relevant) ||
           doc.is_relevant
         );
       })
@@ -248,9 +246,7 @@ export const SearchResultsDisplay = ({
           {uniqueDocuments.map((document, ind) => {
             const relevance: DocumentRelevance | null =
               searchResponse.additional_relevance
-                ? searchResponse.additional_relevance[
-                    `${document.document_id}-${document.chunk_ind}`
-                  ]
+                ? searchResponse.additional_relevance[document.document_id]
                 : null;
 
             return agenticResults ? (
