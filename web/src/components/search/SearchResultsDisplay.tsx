@@ -19,6 +19,9 @@ import { searchState } from "./SearchSection";
 import { useEffect, useState } from "react";
 import { Tooltip } from "../tooltip/Tooltip";
 import KeyboardSymbol from "@/lib/browserUtilities";
+import { AnswerSection } from "./results/AnswerSection";
+import { QuotesSection } from "./results/QuotesSection";
+import { QAFeedbackBlock } from "./QAFeedback";
 
 const getSelectedDocumentIds = (
   documents: SearchDanswerDocument[],
@@ -181,6 +184,42 @@ export const SearchResultsDisplay = ({
   return (
     <>
       {popup}
+      {
+        <div className="min-h-[16rem] p-4 border-2 border-border rounded-lg relative">
+          <div>
+            <div className="flex mb-1">
+              <h2 className="text-emphasis font-bold my-auto mb-1 w-full">
+                AI Answer
+              </h2>
+            </div>
+
+            <div className="mb-2 pt-1 border-t border-border w-full">
+              <AnswerSection
+                answer={answer}
+                quotes={quotes}
+                error={error}
+                isFetching={isFetching}
+              />
+            </div>
+
+            {quotes !== null && answer && (
+              <div className="pt-1 border-t border-border w-full">
+                <QuotesSection quotes={dedupedQuotes} isFetching={isFetching} />
+
+                {searchResponse.messageId !== null && (
+                  <div className="absolute right-3 bottom-3">
+                    <QAFeedbackBlock
+                      messageId={searchResponse.messageId}
+                      setPopup={setPopup}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      }
+
       {documents && documents.length == 0 && (
         <p className="flex text-lg font-bold">
           No docs found! Ensure that you have enabled at least one connector
