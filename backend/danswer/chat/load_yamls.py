@@ -7,7 +7,7 @@ from danswer.configs.chat_configs import PERSONAS_YAML
 from danswer.configs.chat_configs import PROMPTS_YAML
 from danswer.db.document_set import get_or_create_document_set_by_name
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.input_prompt import upsert_input_prompt
+from danswer.db.input_prompt import insert_input_prompt_if_not_exists
 from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import Prompt as PromptDBModel
 from danswer.db.persona import get_prompt_by_name
@@ -110,7 +110,9 @@ def load_input_prompts_from_yaml(input_prompts_yaml: str = INPUT_PROMPT_YAML) ->
     all_input_prompts = data.get("input_prompts", [])
     with Session(get_sqlalchemy_engine()) as db_session:
         for input_prompt in all_input_prompts:
-            upsert_input_prompt(
+            # If these prompts are deleted (which is a hard delete in the DB), on server startup
+            # they will be recreated, but the user can always just deactivate them, just a light inconvenience
+            insert_input_prompt_if_not_exists(
                 user=None,
                 input_prompt_id=input_prompt.get("id"),
                 prompt=input_prompt["prompt"],

@@ -111,11 +111,11 @@ def delete_input_prompt(
 @admin_router.delete("/{input_prompt_id}")
 def delete_public_input_prompt(
     input_prompt_id: int,
-    user: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     try:
-        remove_public_input_prompt(user, input_prompt_id, db_session)
+        remove_public_input_prompt(input_prompt_id, db_session)
 
     except ValueError as e:
         error_msg = "Error occurred while deleting input prompt"

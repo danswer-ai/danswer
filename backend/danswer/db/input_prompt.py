@@ -10,10 +10,11 @@ from danswer.server.features.input_prompt.models import InputPromptSnapshot
 from danswer.server.manage.models import UserInfo
 from danswer.utils.logger import setup_logger
 
+
 logger = setup_logger()
 
 
-def upsert_input_prompt(
+def insert_input_prompt_if_not_exists(
     user: User | None,
     input_prompt_id: int | None,
     prompt: str,
@@ -35,17 +36,13 @@ def upsert_input_prompt(
             query = query.filter(InputPrompt.user_id.is_(None))
         input_prompt = query.first()
 
-    if input_prompt:
-        input_prompt.content = content
-        input_prompt.active = active
-        input_prompt.is_public = is_public
-    else:
+    if input_prompt is None:
         input_prompt = InputPrompt(
             id=input_prompt_id,
             prompt=prompt,
             content=content,
             active=active,
-            is_public=is_public,
+            is_public=is_public or user is None,
             user_id=user.id if user else None,
         )
         db_session.add(input_prompt)
@@ -67,7 +64,7 @@ def insert_input_prompt(
         prompt=prompt,
         content=content,
         active=True,
-        is_public=is_public,
+        is_public=is_public or user is None,
         user_id=user.id if user is not None else None,
     )
     db_session.add(input_prompt)
@@ -116,9 +113,7 @@ def validate_user_prompt_authorization(
     return True
 
 
-def remove_public_input_prompt(
-    user: User | None, input_prompt_id: int, db_session: Session
-) -> None:
+def remove_public_input_prompt(input_prompt_id: int, db_session: Session) -> None:
     input_prompt = db_session.scalar(
         select(InputPrompt).where(InputPrompt.id == input_prompt_id)
     )
