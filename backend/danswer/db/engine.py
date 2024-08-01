@@ -36,7 +36,7 @@ POSTGRES_APP_NAME = (
 _SYNC_ENGINE: Engine | None = None
 _ASYNC_ENGINE: AsyncEngine | None = None
 
-SessionFactory = None
+SessionFactory: sessionmaker[Session] | None = None
 
 
 def get_db_current_time(db_session: Session) -> datetime:
