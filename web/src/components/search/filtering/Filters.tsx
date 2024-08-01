@@ -602,7 +602,11 @@ export function HorizontalFilters({
           </SelectTrigger>
           <SelectContent>
             {availableSources.map((source) => (
-              <SelectItem key={source.displayName} value={source.displayName}>
+              <SelectItem
+                key={source.displayName}
+                value={source.displayName}
+                className="hover:!bg-[#2039f3] hover:!text-white"
+              >
                 <div className="flex items-center">
                   <SourceIcon sourceType={source.internalName} iconSize={16} />
                   <span className="ml-2 text-sm">{source.displayName}</span>
@@ -651,7 +655,7 @@ export function HorizontalFilters({
               <SelectItem
                 key={documentSet.name}
                 value={documentSet.name}
-                className="flex items-center"
+                className="flex items-center hover:!bg-[#2039f3] hover:!text-white"
               >
                 <div className="my-auto">
                   <FiBookmark />

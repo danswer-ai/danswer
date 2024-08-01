@@ -189,7 +189,7 @@ export function DateRangeSelector({
     <SelectItem
       key={key}
       value={label}
-      className="flex items-center"
+      className="flex items-center hover:!bg-[#2039f3] hover:!text-white"
       onClick={() =>
         onValueChange({ to: new Date(), from: fromDate, selectValue: key })
       }

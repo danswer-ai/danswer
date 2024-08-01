@@ -353,7 +353,11 @@ function Selector({
           </SelectTrigger>
           <SelectContent>
             {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
+              <SelectItem
+                key={option.value}
+                value={option.value}
+                className="hover:!bg-[#2039f3] hover:!text-white"
+              >
                 {option.name}
               </SelectItem>
             ))}
