@@ -9,9 +9,9 @@ import { Button, Divider, Text } from "@tremor/react";
 import { useState } from "react";
 import AddPromptModal from "./modals/AddPromptModal";
 import EditPromptModal from "./modals/EditPromptModal";
-import { useInputPrompts } from "./hooks";
+import { useAdminInputPrompts, useInputPrompts } from "./hooks";
 import { PromptLibraryTable } from "./promptLibrary";
-import { CreateInputPromptRequest, InputPromptSnapshot } from "./interfaces";
+import { CreateInputPromptRequest, InputPrompt } from "./interfaces";
 
 export const PromptPage = ({
   promptLibrary,
@@ -21,7 +21,7 @@ export const PromptPage = ({
   centering = false,
   isPublic,
 }: {
-  promptLibrary: InputPromptSnapshot[];
+  promptLibrary: InputPrompt[];
   isLoading: boolean;
   error: any;
   refreshPrompts: () => void;
@@ -34,7 +34,7 @@ export const PromptPage = ({
 
   const createInputPrompt = async (
     promptData: CreateInputPromptRequest
-  ): Promise<InputPromptSnapshot> => {
+  ): Promise<InputPrompt> => {
     const response = await fetch("/api/input_prompt", {
       method: "POST",
       headers: {
@@ -44,8 +44,7 @@ export const PromptPage = ({
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || "Failed to create input prompt");
+      setPopup({ message: "Failed to create input prompt", type: "error" });
     }
 
     refreshPrompts();
@@ -66,13 +65,13 @@ export const PromptPage = ({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update prompt");
+        setPopup({ message: "Failed to update prompt!", type: "error" });
       }
 
       setNewPromptId(null);
       refreshPrompts();
     } catch (err) {
-      console.error("Failed to update prompt", err);
+      setPopup({ message: `Failed to update prompt: ${err}`, type: "error" });
     }
   };
 
@@ -135,6 +134,7 @@ export const PromptPage = ({
 
       <div>
         <PromptLibraryTable
+          isPublic={isPublic}
           promptLibrary={promptLibrary}
           setPopup={setPopup}
           refresh={refreshPrompts}
@@ -150,7 +150,7 @@ const Page = () => {
     error: promptLibraryError,
     isLoading: promptLibraryIsLoading,
     refreshInputPrompts: refreshPrompts,
-  } = useInputPrompts(false);
+  } = useAdminInputPrompts();
 
   return (
     <div className="container mx-auto">

@@ -1,4 +1,10 @@
 input_prompts:
+  - id: -5
+    prompt: "Elaborate"
+    content: "Elaborate on the above, give me a more in depth explanation."
+    active: true
+    is_public: true
+
   - id: -4
     prompt: "Reword"
     content: "Help me rewrite the following politely and concisely for professional communication: "
@@ -17,8 +23,3 @@ input_prompts:
     active: true
     is_public: true
 
-  - id: -1
-    prompt: "Elaborate"
-    content: "Elaborate on the above, give me a more in depth explanation."
-    active: true
-    is_public: true

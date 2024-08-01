@@ -124,7 +124,6 @@ def delete_input_prompt(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    print("RESPOSNE has been processed doe")
     try:
         remove_input_prompt(user, input_prompt_id, db_session)
 

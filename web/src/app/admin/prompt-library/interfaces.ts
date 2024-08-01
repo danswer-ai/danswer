@@ -3,6 +3,7 @@ export interface InputPrompt {
   prompt: string;
   content: string;
   active: boolean;
+  is_public: string;
 }
 
 export interface EditPromptModalProps {
@@ -27,11 +28,4 @@ export interface PromptData {
   id: number;
   prompt: string;
   content: string;
-}
-
-export interface InputPromptSnapshot {
-  id: number;
-  prompt: string;
-  content: string;
-  active: boolean;
 }

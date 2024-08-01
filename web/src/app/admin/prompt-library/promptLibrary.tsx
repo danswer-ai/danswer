@@ -62,11 +62,13 @@ export const PromptLibraryTable = ({
   refresh,
   setPopup,
   handleEdit,
+  isPublic,
 }: {
   promptLibrary: InputPrompt[];
   refresh: () => void;
   setPopup: (popup: PopupSpec | null) => void;
   handleEdit: (promptId: number) => void;
+  isPublic: boolean;
 }) => {
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -108,9 +110,18 @@ export const PromptLibraryTable = ({
   };
 
   const handleDelete = async (id: number) => {
-    await fetch(`/api/input_prompt/${id}`, {
-      method: "DELETE",
-    });
+    console.log("FETCHIN");
+
+    console.log(`/api${isPublic && "/admin"}/input_prompt/${id}`);
+    const response = await fetch(
+      `/api${isPublic ? "/admin" : ""}/input_prompt/${id}`,
+      {
+        method: "DELETE",
+      }
+    );
+    if (!response.ok) {
+      setPopup({ message: "Failed to delete input prompt", type: "error" });
+    }
     refresh();
   };
 
@@ -207,26 +218,28 @@ export const PromptLibraryTable = ({
           </TableHead>
           <TableBody>
             {paginatedPromptLibrary.length > 0 ? (
-              paginatedPromptLibrary.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.prompt}</TableCell>
-                  <TableCell>{item.content}</TableCell>
-                  <TableCell>{item.active ? "Active" : "Inactive"}</TableCell>
-                  <TableCell>
-                    <button
-                      className="cursor-pointer"
-                      onClick={() => setConfirmDeletionId(item.id)}
-                    >
-                      <TrashIcon size={20} />
-                    </button>
-                  </TableCell>
-                  <TableCell>
-                    <button onClick={() => handleEdit(item.id)}>
-                      <EditIcon size={12} />
-                    </button>
-                  </TableCell>
-                </TableRow>
-              ))
+              paginatedPromptLibrary
+                .filter((prompt) => !(!isPublic && prompt.is_public))
+                .map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.prompt}</TableCell>
+                    <TableCell>{item.content}</TableCell>
+                    <TableCell>{item.active ? "Active" : "Inactive"}</TableCell>
+                    <TableCell>
+                      <button
+                        className="cursor-pointer"
+                        onClick={() => setConfirmDeletionId(item.id)}
+                      >
+                        <TrashIcon size={20} />
+                      </button>
+                    </TableCell>
+                    <TableCell>
+                      <button onClick={() => handleEdit(item.id)}>
+                        <EditIcon size={12} />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))
             ) : (
               <TableRow>
                 <TableCell colSpan={6}>No matching prompts found...</TableCell>

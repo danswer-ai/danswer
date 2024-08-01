@@ -209,6 +209,5 @@ def fetch_input_prompts_by_user(
 
     if active is not None:
         query = query.where(InputPrompt.active == active)
-    print("My query is the following ")
-    print(query)
+
     return list(db_session.scalars(query).all())
