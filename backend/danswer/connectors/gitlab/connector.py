@@ -31,6 +31,7 @@ exclude_patterns = [
     ".gitlab/",
     ".pre-commit-config.yaml",
 ]
+branch_names = ["master", "main"]
 logger = setup_logger()
 
 
@@ -84,30 +85,50 @@ def _convert_issue_to_document(issue: Any) -> Document:
 
 
 def _convert_code_to_document(
-    project: Project, file: Any, url: str, projectName: str, projectOwner: str
-) -> Document:
-    file_content_obj = project.files.get(
-        file_path=file["path"], ref="master"
-    )  # Replace 'master' with your branch name if needed
-    try:
-        file_content = file_content_obj.decode().decode("utf-8")
-    except UnicodeDecodeError:
-        file_content = file_content_obj.decode().decode("latin-1")
+    project: Project, start: datetime | None, end: datetime | None, file: Any, url: str, projectName: str, projectOwner: str
+) -> Document | None:
+    real_branch_name = None
+    for branch_name in branch_names:
+        try:
+            file_content_obj = project.files.get(
+                file_path=file["path"], ref=branch_name
+            )
+            real_branch_name = branch_name
+            latest_commit_date = _get_commit_date(project, projectName, file, branch_name)
+            start_ok = start is not None and latest_commit_date > start.replace(tzinfo=pytz.UTC)
+            end_ok = end is not None and latest_commit_date < end.replace(tzinfo=pytz.UTC)
+            if start_ok and end_ok:
+                pass
+            else:
+                logger.info(f"Skipping file {file['path']} ({latest_commit_date}) as it was updated outside start/end range ({start}-{end})")
+                return None
+            try:
+                file_content = file_content_obj.decode().decode("utf-8")
+            except UnicodeDecodeError:
+                file_content = file_content_obj.decode().decode("latin-1")
+        except gitlab.exceptions.GitlabGetError:
+            logger.info(f"GitLab: File {file['path']} not found in branch {branch_name}. Trying {branch_names}")
 
-    file_url = f"{url}/{projectOwner}/{projectName}/-/blob/master/{file['path']}"  # Construct the file URL
+    file_url = f"{url}/{projectOwner}/{projectName}/-/blob/{real_branch_name}/{file['path']}"  # Construct the file URL
     doc = Document(
         id=file["id"],
         sections=[Section(link=file_url, text=file_content)],
         source=DocumentSource.GITLAB,
         semantic_identifier=file["name"],
-        doc_updated_at=datetime.now().replace(
-            tzinfo=timezone.utc
-        ),  # Use current time as updated_at
+        doc_updated_at=latest_commit_date,
         primary_owners=[],  # Fill this as needed
         metadata={"type": "CodeFile"},
     )
     return doc
 
+def _get_commit_date(project: Project, project_name: str, file: Any, branch_name: str) -> datetime:
+    commits = project.commits.list(ref_name=branch_name, query_parameters={"path": file['path']})
+    if commits and isinstance(commits, list):
+        return datetime.strptime(commits[0].created_at, "%Y-%m-%dT%H:%M:%S.%f%z").replace(tzinfo=timezone.utc)
+    else:
+        # It seems this can happen if a new file comes in via a merge:
+        logger.info(f"No commits found for {file['path']} (branch {branch_name}, project {project_name}), using current time as latest commit date")
+        return datetime.now().replace(tzinfo=timezone.utc)
 
 def _should_exclude(path: str) -> bool:
     """Check if a path matches any of the exclude patterns."""
@@ -160,29 +181,37 @@ class GitlabConnector(LoadConnector, PollConnector):
                     code_doc_batch: list[Document] = []
                     for file in file_batch:
                         if _should_exclude(file["path"]):
+                            logger.info("GitLab: Excluding file: " + file["path"])
                             continue
 
                         if file["type"] == "blob":
-                            code_doc_batch.append(
-                                _convert_code_to_document(
+                            doc = _convert_code_to_document(
                                     project,
+                                    start,
+                                    end,
                                     file,
                                     self.gitlab_client.url,
                                     self.project_name,
                                     self.project_owner,
                                 )
-                            )
+                            if doc:
+                                code_doc_batch.append(doc)
                         elif file["type"] == "tree":
                             queue.append(file["path"])
+                        else:
+                            logger.info(f"GitLab: Ignoring non-code file type {file['type']}, file {file['path']}")
 
                     if code_doc_batch:
                         yield code_doc_batch
+        else:
+            logger.info("GitLab: Not fetching code files, self.include_code_files is false")
 
         if self.include_mrs:
             merge_requests = project.mergerequests.list(
-                state=self.state_filter, order_by="updated_at", sort="desc"
+                state=self.state_filter, order_by="updated_at", sort="desc", iterator=True
             )
 
+            mrs_done = False
             for mr_batch in _batch_gitlab_objects(merge_requests, self.batch_size):
                 mr_doc_batch: list[Document] = []
                 for mr in mr_batch:
@@ -192,33 +221,38 @@ class GitlabConnector(LoadConnector, PollConnector):
                     if start is not None and mr.updated_at < start.replace(
                         tzinfo=pytz.UTC
                     ):
-                        yield mr_doc_batch
-                        return
+                        mrs_done = True
+                        break
                     if end is not None and mr.updated_at > end.replace(tzinfo=pytz.UTC):
                         continue
                     mr_doc_batch.append(_convert_merge_request_to_document(mr))
                 yield mr_doc_batch
+                if mrs_done:
+                    break
 
         if self.include_issues:
-            issues = project.issues.list(state=self.state_filter)
+            issues = project.issues.list(
+                state=self.state_filter, order_by="updated_at", sort="desc", iterator=True
+            )
 
+            issues_done = False
             for issue_batch in _batch_gitlab_objects(issues, self.batch_size):
                 issue_doc_batch: list[Document] = []
                 for issue in issue_batch:
                     issue.updated_at = datetime.strptime(
                         issue.updated_at, "%Y-%m-%dT%H:%M:%S.%f%z"
                     )
-                    if start is not None:
-                        start = start.replace(tzinfo=pytz.UTC)
-                        if issue.updated_at < start:
-                            yield issue_doc_batch
-                            return
-                    if end is not None:
-                        end = end.replace(tzinfo=pytz.UTC)
-                        if issue.updated_at > end:
-                            continue
+                    if start is not None and issue.updated_at < start.replace(
+                        tzinfo=pytz.UTC
+                    ):
+                        issues_done = True
+                        break
+                    if end is not None and issue.updated_at > end.replace(tzinfo=pytz.UTC):
+                        continue
                     issue_doc_batch.append(_convert_issue_to_document(issue))
                 yield issue_doc_batch
+                if issues_done:
+                    break
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         return self._fetch_from_gitlab()
@@ -251,5 +285,11 @@ if __name__ == "__main__":
             "gitlab_url": os.environ["GITLAB_URL"],
         }
     )
-    document_batches = connector.load_from_state()
-    print(next(document_batches))
+    #document_batches = connector.load_from_state()
+    import time
+    current = time.time()
+    days_ago = current - 1 * 24 * 60 * 60
+    document_batches = connector.poll_source(days_ago, current)
+    for doc_batch in document_batches:        
+        for doc in doc_batch:
+            print(doc)
