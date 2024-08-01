@@ -113,7 +113,7 @@ def _convert_code_to_document(
                 pass
             else:
                 logger.info(
-                    f"Skipping file {file['path']} ({latest_commit_date}) as it was updated outside start/end range ({start}-{end})"
+                    f"Skipping {file['path']} ({latest_commit_date}) as it was updated outside start/end range ({start}-{end})"
                 )
                 return None
             try:
@@ -138,13 +138,13 @@ def _convert_code_to_document(
     return doc
 
 def _get_commit_date(
-        project: Project,
-        project_name: str,
-        file: Any,
-        branch_name: str,
+    project: Project,
+    project_name: str,
+    file: Any,
+    branch_name: str,
 ) -> datetime:
     commits = project.commits.list(
-        ref_name=branch_name, query_parameters={"path": file['path']}
+        ref_name=branch_name, query_parameters={"path": file["path"]}
     )
     if commits and isinstance(commits, list):
         return datetime.strptime(
@@ -153,7 +153,8 @@ def _get_commit_date(
     else:
         # It seems this can happen if a new file comes in via a merge:
         logger.info(
-            f"No commits found for {file['path']} (branch {branch_name}, project {project_name}), using current time as latest commit date"
+            f"No commits found for {file['path']} (branch {branch_name}, project {project_name}), " +
+            "using current time as latest commit date"
         )
         return datetime.now().replace(tzinfo=timezone.utc)
 
@@ -234,7 +235,9 @@ class GitlabConnector(LoadConnector, PollConnector):
                     if code_doc_batch:
                         yield code_doc_batch
         else:
-            logger.info("GitLab: Not fetching code files, self.include_code_files is false")
+            logger.info(
+                "GitLab: Not fetching code files, self.include_code_files is false"
+            )
 
         if self.include_mrs:
             merge_requests = project.mergerequests.list(
