@@ -153,7 +153,22 @@ export const AIMessage = ({
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
 }) => {
-  const finalContent = content + (!isComplete ? "[*](test)" : "");
+  const removeDot = (rawText: string): string => {
+    if (rawText.endsWith("[*]()")) {
+      return rawText.slice(0, -5);
+    }
+    return rawText;
+  };
+
+  const processContent = (content: string) => {
+    const openCodeBlockRegex = /```[\s\S]*?$/;
+    if (openCodeBlockRegex.test(content)) {
+      return removeDot(content);
+    }
+    return content;
+  };
+
+  const finalContent = processContent(content + (!isComplete ? "[*]()" : ""));
 
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {
@@ -362,64 +377,72 @@ export const AIMessage = ({
                         <FileDisplay files={files || []} />
 
                         {typeof content === "string" ? (
-                          <ReactMarkdown
-                            key={messageId}
-                            className="prose max-w-full"
-                            components={{
-                              a: (props) => {
-                                const { node, ...rest } = props;
-                                const value = rest.children;
+                          <div className="overflow-x-auto w-full pr-2 max-w-[675px]">
+                            <ReactMarkdown
+                              key={messageId}
+                              className="prose max-w-full"
+                              components={{
+                                a: (props) => {
+                                  const { node, ...rest } = props;
+                                  const value = rest.children;
 
-                                if (value?.toString().startsWith("*")) {
-                                  return (
-                                    <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
-                                  );
-                                } else if (value?.toString().startsWith("[")) {
-                                  // for some reason <a> tags cause the onClick to not apply
-                                  // and the links are unclickable
-                                  // TODO: fix the fact that you have to double click to follow link
-                                  // for the first link
-                                  return (
-                                    <Citation
-                                      link={rest?.href}
-                                      key={node?.position?.start?.offset}
-                                    >
-                                      {rest.children}
-                                    </Citation>
-                                  );
-                                } else {
-                                  return (
-                                    <a
-                                      key={node?.position?.start?.offset}
-                                      onClick={() =>
-                                        rest.href
-                                          ? window.open(rest.href, "_blank")
-                                          : undefined
-                                      }
-                                      className="cursor-pointer text-link hover:text-link-hover"
-                                    >
-                                      {rest.children}
-                                    </a>
-                                  );
-                                }
-                              },
-                              code: (props) => (
-                                <CodeBlock
-                                  {...props}
-                                  content={content as string}
-                                />
-                              ),
-                              p: ({ node, ...props }) => (
-                                <p {...props} className="text-default" />
-                              ),
-                            }}
-                            remarkPlugins={[remarkGfm]}
-                            rehypePlugins={[
-                              [rehypePrism, { ignoreMissing: true }],
-                            ]}
-                          >
-                            {finalContent}
-                          </ReactMarkdown>
+                                  if (value?.toString().startsWith("*")) {
+                                    return (
+                                      <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
+                                    );
+                                  } else if (
+                                    value?.toString().startsWith("[")
+                                  ) {
+                                    // for some reason <a> tags cause the onClick to not apply
+                                    // and the links are unclickable
+                                    // TODO: fix the fact that you have to double click to follow link
+                                    // for the first link
+                                    return (
+                                      <Citation
+                                        link={rest?.href}
+                                        key={node?.position?.start?.offset}
+                                      >
+                                        {rest.children}
+                                      </Citation>
+                                    );
+                                  } else {
+                                    return (
+                                      <a
+                                        key={node?.position?.start?.offset}
+                                        onClick={() =>
+                                          rest.href
+                                            ? window.open(rest.href, "_blank")
+                                            : undefined
+                                        }
+                                        className="cursor-pointer text-link hover:text-link-hover"
+                                      >
+                                        {rest.children}
+                                      </a>
+                                    );
+                                  }
+                                },
+                                pre: (props) => (
+                                  <pre {...props}>{props.children}</pre>
+                                ),
+                                code: (props) => (
+                                  <CodeBlock
+                                    className="w-full"
+                                    {...props}
+                                    content={removeDot(content as string)}
+                                  />
+                                ),
+                                p: ({ node, ...props }) => (
+                                  <p {...props} className="text-default" />
+                                ),
+                              }}
+                              remarkPlugins={[remarkGfm]}
+                              rehypePlugins={[
+                                [rehypePrism, { ignoreMissing: true }],
+                              ]}
+                            >
+                              {finalContent}
+                            </ReactMarkdown>
+                          </div>
                         ) : (
                           content
                         )}
@@ -772,11 +795,11 @@ export const HumanMessage = ({
                   </div>
                 ) : typeof content === "string" ? (
                   <>
-                    {onEdit &&
-                    isHovered &&
-                    !isEditing &&
-                    (!files || files.length === 0) ? (
-                      <div className="ml-auto mr-1 my-auto">
+                    <div className="ml-auto mr-1 my-auto">
+                      {onEdit &&
+                      isHovered &&
+                      !isEditing &&
+                      (!files || files.length === 0) ? (
                         <Tooltip delayDuration={1000} content={"Edit message"}>
                           <button
                             className="hover:bg-hover p-1.5 rounded"
@@ -785,13 +808,13 @@ export const HumanMessage = ({
                               setIsHovered(false);
                             }}
                           >
-                            <FiEdit2 />
+                            <FiEdit2 className="!h-4 !w-4" />
                           </button>
                         </Tooltip>
-                      </div>
-                    ) : (
-                      <div className="h-[27px]" />
-                    )}
+                      ) : (
+                        <div className="w-7" />
+                      )}
+                    </div>
 
                     <div
                       className={`${
@@ -801,11 +824,10 @@ export const HumanMessage = ({
                           !isEditing &&
                           (!files || files.length === 0)
                         ) && "ml-auto"
-                      } relative max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
+                      } relative   flex-none max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
                     >
                       {content}
                     </div>
-                    {/* </div> */}
                   </>
                 ) : (
                   <>

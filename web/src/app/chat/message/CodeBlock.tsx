@@ -21,7 +21,7 @@ export function CodeBlock({
     .split(" ")
     .filter((cls) => cls.startsWith("language-"))
     .map((cls) => cls.replace("language-", ""))
-    .join(" ");
+    .join("\n");
   const [copied, setCopied] = useState(false);
 
   if (!language) {
