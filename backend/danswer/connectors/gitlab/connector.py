@@ -137,6 +137,7 @@ def _convert_code_to_document(
     )
     return doc
 
+
 def _get_commit_date(
     project: Project,
     project_name: str,
@@ -153,8 +154,8 @@ def _get_commit_date(
     else:
         # It seems this can happen if a new file comes in via a merge:
         logger.info(
-            f"No commits found for {file['path']} (branch {branch_name}, project {project_name}), " +
-            "using current time as latest commit date"
+            f"No commits found for {file['path']} (branch {branch_name}, project {project_name}), "
+            + "using current time as latest commit date"
         )
         return datetime.now().replace(tzinfo=timezone.utc)
 
@@ -328,6 +329,7 @@ if __name__ == "__main__":
     )
     # document_batches = connector.load_from_state()
     import time
+
     current = time.time()
     days_ago = current - 1 * 24 * 60 * 60
     document_batches = connector.poll_source(days_ago, current)
