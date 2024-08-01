@@ -47,8 +47,6 @@ class LLMRelevanceFilterResponse(BaseModel):
 
 
 class RelevanceAnalysis(BaseModel):
-    # TODO make this document level. Also slight misnomer here as this is actually
-    # done at the section level currently rather than the chunk
     relevant: bool | None = None
     content: str | None = None
 

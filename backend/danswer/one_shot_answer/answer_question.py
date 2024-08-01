@@ -251,7 +251,6 @@ def stream_answer_objects(
                     translate_db_search_doc_to_server_search_doc(db_search_doc)
                     for db_search_doc in reference_db_search_docs
                 ]
-                print(len(response_docs))
 
                 initial_response = QADocsResponse(
                     rephrased_query=rephrased_query,
@@ -271,7 +270,6 @@ def stream_answer_objects(
                 document_based_response = {}
 
                 for evaluation in packet.response:
-                    print(evaluation)
                     document_based_response[evaluation.document_id] = RelevanceAnalysis(
                         relevant=evaluation.relevant, content=evaluation.content
                     )
@@ -369,8 +367,9 @@ def get_search_answer(
             answer += packet.answer_piece
         elif isinstance(packet, QADocsResponse):
             qa_response.docs = packet
-        # elif isinstance(packet, LLMRelevanceFilterResponse):
-        #     qa_response.llm_chunks_indices = packet.relevant_chunks #TODO put back
+
+        elif isinstance(packet, LLMRelevanceFilterResponse):
+            qa_response.llm_chunks_indices = packet.relevant_chunks  # TODO ensure balid
         elif isinstance(packet, DanswerQuotes):
             qa_response.quotes = packet
         elif isinstance(packet, CitationInfo):
