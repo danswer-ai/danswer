@@ -6,6 +6,7 @@ import { Button, Textarea, TextInput } from "@tremor/react";
 
 import { BookstackIcon } from "@/components/icons/icons";
 import { AddPromptModalProps } from "../interfaces";
+import { TextFormField } from "@/components/admin/connectors/Field";
 
 const AddPromptSchema = Yup.object().shape({
   title: Yup.string().required("Title is required"),
@@ -58,52 +59,28 @@ const AddPromptModal = ({ onClose, onSubmit }: AddPromptModalProps) => {
             </h2>
 
             <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium mb-1"
-                >
-                  Title
-                </label>
-                <Field
-                  className="placeholder:text-subtle bg-background-50 border-border"
-                  as={TextInput}
-                  id="title"
-                  name="title"
-                  placeholder="Title (e.g. 'Reword')"
-                />
-                <ErrorMessage
-                  name="title"
-                  component="div"
-                  className="text-red-500 text-sm mt-1"
-                />
-              </div>
+              <TextFormField
+                label="Title"
+                name="title"
+                placeholder="Title (e.g. 'Reword')"
+              />
 
-              <div>
-                <label
-                  htmlFor="prompt"
-                  className="block text-sm font-medium mb-1"
+              <TextFormField
+                isTextArea
+                label="Prompt"
+                name="prompt"
+                placeholder="Enter a prompt (e.g. 'help me rewrite the following politely and concisely for professional communication')"
+              />
+
+              <div className="mt-6">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
                 >
-                  Prompt
-                </label>
-                <Field
-                  as={Textarea}
-                  id="prompt"
-                  name="prompt"
-                  placeholder="Enter a prompt (e.g. 'help me rewrite the following politely and concisely for professional communication')"
-                  rows={4}
-                />
-                <ErrorMessage
-                  name="prompt"
-                  component="div"
-                  className="text-red-500 text-sm mt-1"
-                />
+                  Add prompt
+                </Button>
               </div>
-            </div>
-            <div className="mt-6">
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                Add prompt
-              </Button>
             </div>
           </Form>
         )}
