@@ -25,7 +25,7 @@ from ee.danswer.auth.users import api_key_dep
 logger = setup_logger()
 
 # not using /api to avoid confusion with nginx api path routing
-router = APIRouter(prefix="/danswer-api")
+router = APIRouter(prefix="/enmedd-api")
 
 
 @router.get("/connector-docs/{cc_pair_id}")
