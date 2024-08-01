@@ -3,7 +3,7 @@
 import { AdminPageTitle } from "@/components/admin/Title";
 import { ClosedBookIcon } from "@/components/icons/icons";
 import { useAdminInputPrompts } from "./hooks";
-import { PromptSection } from "./promptsection";
+import { PromptSection } from "./promptSection";
 
 const Page = () => {
   const {

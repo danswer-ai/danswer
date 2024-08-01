@@ -8,7 +8,7 @@ import { User } from "@/lib/types";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { AssistantsPageTitle } from "../AssistantsPageTitle";
 import { useInputPrompts } from "@/app/admin/prompt-library/hooks";
-import { PromptSection } from "@/app/admin/prompt-library/promptsection";
+import { PromptSection } from "@/app/admin/prompt-library/promptSection";
 
 export default function WrappedPrompts({
   chatSessions,
