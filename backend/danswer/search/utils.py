@@ -42,34 +42,34 @@ def relevant_sections_to_indices(
     relevance_chunks: list[SectionRelevancePiece],
     inference_sections: list[InferenceSection],
 ) -> list[int]:
-    relevant_indices = []
-    for index, section in enumerate(inference_sections):
-        for relevance_chunk in relevance_chunks:
-            if (
-                section.center_chunk.document_id == relevance_chunk.document_id
-                and section.center_chunk.chunk_id == relevance_chunk.chunk_id
-                and relevance_chunk.relevant
-            ):
-                relevant_indices.append(index)
-                break
+    relevant_set = {
+        (chunk.document_id, chunk.chunk_id)
+        for chunk in relevance_chunks
+        if chunk.relevant
+    }
+    relevant_indices = [
+        index
+        for index, section in enumerate(inference_sections)
+        if (section.center_chunk.document_id, section.center_chunk.chunk_id)
+        in relevant_set
+    ]
     return relevant_indices
 
 
 def relevant_documents_to_indices(
     relevance_chunks: list[SectionRelevancePiece], inference_sections: list[SearchDoc]
 ) -> list[int]:
-    relevant_indices = []
-    for index, section in enumerate(inference_sections):
-        for relevance_chunk in relevance_chunks:
-            if (
-                section.document_id == relevance_chunk.document_id
-                and section.chunk_ind == relevance_chunk.chunk_id
-                and relevance_chunk.relevant
-            ):
-                relevant_indices.append(index)
-                break
+    relevant_set = {
+        (chunk.document_id, chunk.chunk_id)
+        for chunk in relevance_chunks
+        if chunk.relevant
+    }
 
-    return relevant_indices
+    return [
+        index
+        for index, section in enumerate(inference_sections)
+        if (section.document_id, section.chunk_ind) in relevant_set
+    ]
 
 
 def drop_llm_indices(
