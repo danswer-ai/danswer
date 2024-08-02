@@ -2402,4 +2402,3 @@ export const ClosedBookIcon = ({
     </svg>
   );
 };
-
