@@ -547,6 +547,7 @@ export const SearchSection = ({
 
         <div className="absolute left-0 w-full top-0">
           <FunctionalHeader
+            reset={() => setQuery("")}
             toggleSidebar={toggleSidebar}
             page="search"
             user={user}
