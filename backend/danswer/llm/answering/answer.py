@@ -190,6 +190,13 @@ class Answer:
         self,
     ) -> Iterator[str | ToolCallKickoff | ToolResponse | ToolCallFinalResult]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
+        # special things we need to keep track of for the SearchTool
+        # search_results: list[
+        #     LlmDoc
+        # ] | None = None  # raw results that will be displayed to the user
+        # final_context_docs: list[
+        #     LlmDoc
+        # ] | None = None  # processed docs to feed into the LLM
 
         tool_call_chunk: AIMessageChunk | None = None
         if self.force_use_tool.force_use and self.force_use_tool.args is not None:
@@ -292,21 +299,19 @@ class Answer:
                     )
                 )
             yield tool_runner.tool_final_result()
-
+            # Streaming response
             prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
+            process_answer_stream_fn = _get_answer_stream_processor(
+                context_docs=[],
+                # if doc selection is enabled, then search_results will be None,
+                # so we need to use the final_context_docs
+                doc_id_to_rank_map=map_document_id_order([]),
+                answer_style_configs=self.answer_style_config,
+            )
 
-            print("prompt")
-            print(prompt)
-            for val in message_generator_to_string_generator(
-                self.llm.stream(
-                    prompt=prompt,
-                    tools=[tool.tool_definition() for tool in self.tools],
-                )
-            ):
-                print(val)
-                yield val
-
-            return
+            yield from process_answer_stream_fn(
+                message_generator_to_string_generator(self.llm.stream(prompt=prompt))
+            )
 
     def _raw_output_for_non_explicit_tool_calling_llms(
         self,
@@ -440,12 +445,19 @@ class Answer:
         final = tool_runner.tool_final_result()
         yield final
 
+        # Streaming response
         prompt = prompt_builder.build()
-        for val in message_generator_to_string_generator(
-            self.llm.stream(prompt=prompt)
-        ):
-            print(val)
-            yield val
+        process_answer_stream_fn = _get_answer_stream_processor(
+            context_docs=final_context_documents,
+            # if doc selection is enabled, then search_results will be None,
+            # so we need to use the final_context_docs
+            doc_id_to_rank_map=map_document_id_order([]),
+            answer_style_configs=self.answer_style_config,
+        )
+
+        yield from process_answer_stream_fn(
+            message_generator_to_string_generator(self.llm.stream(prompt=prompt))
+        )
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
@@ -467,14 +479,6 @@ class Answer:
         ) -> AnswerStream:
             message = None
 
-            # special things we need to keep track of for the SearchTool
-            search_results: list[
-                LlmDoc
-            ] | None = None  # raw results that will be displayed to the user
-            final_context_docs: list[
-                LlmDoc
-            ] | None = None  # processed docs to feed into the LLM
-
             for message in stream:
                 if isinstance(message, ToolCallKickoff) or isinstance(
                     message, ToolCallFinalResult
@@ -492,37 +496,20 @@ class Answer:
                                 SearchResponseSummary, message.response
                             ).top_sections
                         ]
+                        print(search_results)
+
                     elif message.id == FINAL_CONTEXT_DOCUMENTS:
-                        final_context_docs = cast(list[LlmDoc], message.response)
+                        cast(list[LlmDoc], message.response)
 
                     elif (
                         message.id == SEARCH_DOC_CONTENT_ID
                         and not self._return_contexts
                     ):
                         continue
-
                     yield message
                 else:
-                    # assumes all tool responses will come first, then the final answer
-                    break
-
-            if not self.skip_gen_ai_answer_generation:
-                process_answer_stream_fn = _get_answer_stream_processor(
-                    context_docs=final_context_docs or [],
-                    # if doc selection is enabled, then search_results will be None,
-                    # so we need to use the final_context_docs
-                    doc_id_to_rank_map=map_document_id_order(
-                        search_results or final_context_docs or []
-                    ),
-                    answer_style_configs=self.answer_style_config,
-                )
-
-                def _stream() -> Iterator[str]:
-                    if message:
-                        yield cast(str, message)
-                    yield from cast(Iterator[str], stream)
-
-                yield from process_answer_stream_fn(_stream())
+                    # streaming response
+                    yield DanswerAnswerPiece(answer_piece=str(message))
 
         processed_stream = []
         for processed_packet in _process_stream(output_generator):
