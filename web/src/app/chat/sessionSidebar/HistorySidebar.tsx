@@ -32,6 +32,9 @@ import {
   AssistantsIcon,
   AssistantsIconSkeleton,
   BackIcon,
+  BookIcon,
+  BookmarkIconSkeleton,
+  ClosedBookIcon,
   LefToLineIcon,
   RightToLineIcon,
 } from "@/components/icons/icons";
@@ -182,6 +185,15 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 <AssistantsIconSkeleton className="h-4 w-4 my-auto" />
                 <p className="my-auto flex items-center text-sm">
                   Manage Assistants
+                </p>
+              </Link>
+              <Link
+                href="/prompts"
+                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+              >
+                <ClosedBookIcon className="h-4 w-4 my-auto" />
+                <p className="my-auto flex items-center text-sm">
+                  Manage Prompts
                 </p>
               </Link>
             </div>
