@@ -383,7 +383,8 @@ def count_unique_cc_pairs_with_successful_index_attempts(
     Then do distinct by connector_id and credential_id which is equivalent to the cc-pair. Finally,
     do a count to get the total number of unique cc-pairs with successful attempts"""
     unique_pairs_count = (
-        db_session.query(IndexAttempt.connector_credential_pair)
+        db_session.query(IndexAttempt.connector_credential_pair_id)
+        .join(ConnectorCredentialPair)
         .filter(
             IndexAttempt.embedding_model_id == embedding_model_id,
             IndexAttempt.status == IndexingStatus.SUCCESS,

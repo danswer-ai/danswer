@@ -41,7 +41,10 @@ ChunkFunc = Callable[[Document], list[DocAwareChunk]]
 
 
 def extract_blurb(text: str, blurb_splitter: "SentenceSplitter") -> str:
-    return blurb_splitter.split_text(text)[0]
+    texts = blurb_splitter.split_text(text)
+    if not texts:
+        return ""
+    return texts[0]
 
 
 def chunk_large_section(

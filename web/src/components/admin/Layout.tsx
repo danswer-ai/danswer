@@ -1,3 +1,19 @@
+import { Header } from "@/components/header/Header";
+import { AdminSidebar } from "@/components/admin/connectors/AdminSidebar";
+import {
+  NotebookIcon,
+  UsersIcon,
+  ThumbsUpIcon,
+  BookmarkIcon,
+  ZoomInIcon,
+  RobotIcon,
+  ConnectorIcon,
+  GroupsIcon,
+  DatabaseIcon,
+  KeyIcon,
+  ClipboardIcon,
+  BookstackIcon,
+} from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import {
   AuthTypeMetadata,

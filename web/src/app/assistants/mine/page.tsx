@@ -38,6 +38,7 @@ export default async function GalleryPage({
     openedFolders,
     shouldShowWelcomeModal,
     toggleSidebar,
+    userInputPrompts,
   } = data;
 
   return (
@@ -57,6 +58,7 @@ export default async function GalleryPage({
           llmProviders,
           folders,
           openedFolders,
+          userInputPrompts,
         }}
       >
         <WrappedAssistantsMine

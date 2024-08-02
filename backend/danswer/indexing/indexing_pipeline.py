@@ -181,7 +181,7 @@ def index_doc_batch(
     )
 
     logger.debug("Starting chunking")
-    # The first chunk additionally contains the Title of the Document
+    # The embedder is needed here to get the correct tokenizer
     chunks: list[DocAwareChunk] = [
         chunk
         for document in updatable_docs

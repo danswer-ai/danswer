@@ -217,15 +217,18 @@ class RecursiveIndexer:
         self,
         batch_size: int,
         confluence_client: Confluence,
-        index_origin: bool,
+        index_recursively: bool,
         origin_page_id: str,
     ) -> None:
         self.batch_size = 1
         # batch_size
         self.confluence_client = confluence_client
-        self.index_origin = index_origin
+        self.index_recursively = index_recursively
         self.origin_page_id = origin_page_id
         self.pages = self.recurse_children_pages(0, self.origin_page_id)
+
+    def get_origin_page(self) -> list[dict[str, Any]]:
+        return [self._fetch_origin_page()]
 
     def get_pages(self, ind: int, size: int) -> list[dict]:
         if ind * size > len(self.pages):
@@ -282,12 +285,11 @@ class RecursiveIndexer:
             current_level_pages = next_level_pages
             next_level_pages = []
 
-        if self.index_origin:
-            try:
-                origin_page = self._fetch_origin_page()
-                pages.append(origin_page)
-            except Exception as e:
-                logger.warning(f"Appending origin page with id {page_id} failed: {e}")
+        try:
+            origin_page = self._fetch_origin_page()
+            pages.append(origin_page)
+        except Exception as e:
+            logger.warning(f"Appending origin page with id {page_id} failed: {e}")
 
         return pages
 
@@ -340,7 +342,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         wiki_page_url: str,
-        index_origin: bool = True,
+        index_recursively: bool = True,
         batch_size: int = INDEX_BATCH_SIZE,
         continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
         # if a page has one of the labels specified in this list, we will just
@@ -352,7 +354,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self.continue_on_failure = continue_on_failure
         self.labels_to_skip = set(labels_to_skip)
         self.recursive_indexer: RecursiveIndexer | None = None
-        self.index_origin = index_origin
+        self.index_recursively = index_recursively
         (
             self.wiki_base,
             self.space,
@@ -369,7 +371,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
         logger.info(
             f"wiki_base: {self.wiki_base}, space: {self.space}, page_id: {self.page_id},"
-            + f" space_level_scan: {self.space_level_scan}, origin: {self.index_origin}"
+            + f" space_level_scan: {self.space_level_scan}, index_recursively: {self.index_recursively}"
         )
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
@@ -453,10 +455,13 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     origin_page_id=self.page_id,
                     batch_size=self.batch_size,
                     confluence_client=self.confluence_client,
-                    index_origin=self.index_origin,
+                    index_recursively=self.index_recursively,
                 )
 
-            return self.recursive_indexer.get_pages(start_ind, batch_size)
+            if self.index_recursively:
+                return self.recursive_indexer.get_pages(start_ind, batch_size)
+            else:
+                return self.recursive_indexer.get_origin_page()
 
         pages: list[dict[str, Any]] = []
 
