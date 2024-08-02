@@ -637,7 +637,7 @@ def stream_chat_message_objects(
                     if reference_db_search_docs is not None:
                         llm_indices = relevant_documents_to_indices(
                             relevance_chunks=relevant_chunks,
-                            inference_sections=[
+                            search_docs=[
                                 translate_db_search_doc_to_server_search_doc(doc)
                                 for doc in reference_db_search_docs
                             ],
