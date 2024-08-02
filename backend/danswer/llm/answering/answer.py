@@ -292,12 +292,17 @@ class Answer:
             yield tool_runner.tool_final_result()
 
             prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
-            yield from message_generator_to_string_generator(
+
+            print("prompt")
+            print(prompt)
+            for val in message_generator_to_string_generator(
                 self.llm.stream(
                     prompt=prompt,
                     tools=[tool.tool_definition() for tool in self.tools],
                 )
-            )
+            ):
+                print(val)
+                yield val
 
             return
 
@@ -430,11 +435,14 @@ class Answer:
                 )
             )
         final = tool_runner.tool_final_result()
-
         yield final
 
         prompt = prompt_builder.build()
-        yield from message_generator_to_string_generator(self.llm.stream(prompt=prompt))
+        for val in message_generator_to_string_generator(
+            self.llm.stream(prompt=prompt)
+        ):
+            print(val)
+            yield val
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
