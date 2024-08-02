@@ -247,7 +247,6 @@ def fetch_unique_document_sources(db_session: Session) -> list[DocumentSource]:
 def create_initial_default_connector(db_session: Session) -> None:
     default_connector_id = 0
     default_connector = fetch_connector_by_id(default_connector_id, db_session)
-
     if default_connector is not None:
         # Check if the existing connector has the correct values
         if (
@@ -257,7 +256,7 @@ def create_initial_default_connector(db_session: Session) -> None:
             or default_connector.disabled
             or default_connector.name != "Ingestion API"
             or default_connector.connector_specific_config != {}
-            or default_connector.prune_freq != DEFAULT_PRUNING_FREQ
+            or default_connector.prune_freq is not None
         ):
             logger.warning(
                 "Default connector does not have expected values. Updating to proper state."
@@ -269,7 +268,7 @@ def create_initial_default_connector(db_session: Session) -> None:
             default_connector.disabled = False
             default_connector.name = "Ingestion API"
             default_connector.connector_specific_config = {}
-            default_connector.prune_freq = DEFAULT_PRUNING_FREQ
+            default_connector.prune_freq = None
             db_session.commit()
         return
 
@@ -281,7 +280,7 @@ def create_initial_default_connector(db_session: Session) -> None:
         input_type=InputType.LOAD_STATE,
         connector_specific_config={},
         refresh_freq=None,
-        prune_freq=DEFAULT_PRUNING_FREQ,
+        prune_freq=None,
         disabled=False,
     )
     db_session.add(connector)
