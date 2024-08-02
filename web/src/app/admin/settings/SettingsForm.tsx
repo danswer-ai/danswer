@@ -127,10 +127,15 @@ export function SettingsForm() {
     updateRequests: { fieldName: keyof Settings; newValue: any }[]
   ) {
     // Optimistically update the local state
-    const newSettings = { ...settings };
-    updateRequests.forEach(({ fieldName, newValue }) => {
-      newSettings[fieldName] = newValue;
-    });
+    const newSettings: Settings | null = settings
+      ? {
+          ...settings,
+          ...updateRequests.reduce((acc, { fieldName, newValue }) => {
+            acc[fieldName] = newValue ?? settings[fieldName];
+            return acc;
+          }, {} as Partial<Settings>),
+        }
+      : null;
     setSettings(newSettings);
 
     try {
