@@ -111,6 +111,8 @@ function FileDisplay({
 export const AIMessage = ({
   isActive,
   toggleDocumentSelection,
+  hasParentAI,
+  hasChildAI,
   alternativeAssistant,
   docs,
   messageId,
@@ -131,6 +133,8 @@ export const AIMessage = ({
   retrievalDisabled,
   currentPersona,
 }: {
+  hasChildAI?: boolean;
+  hasParentAI?: boolean;
   isActive?: boolean;
   selectedDocuments?: DanswerDocument[] | null;
   toggleDocumentSelection?: () => void;
@@ -244,14 +248,21 @@ export const AIMessage = ({
   ).slice(0, 3);
 
   return (
-    <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
+    <div
+      ref={trackedElementRef}
+      className={`${hasParentAI ? "pb-5" : "py-5"} px-2 lg:px-5 relative flex `}
+    >
       <div className="mx-auto w-[90%] max-w-message-max">
         <div className="mobile:ml-4 xl:ml-8">
           <div className="flex">
-            <AssistantIcon
-              size="small"
-              assistant={alternativeAssistant || currentPersona}
-            />
+            {!hasParentAI ? (
+              <AssistantIcon
+                size="small"
+                assistant={alternativeAssistant || currentPersona}
+              />
+            ) : (
+              <div className="w-6" />
+            )}
 
             <div className="w-full">
               <div className="max-w-message-max break-words">
@@ -520,7 +531,8 @@ export const AIMessage = ({
                       </div>
                     )}
                   </div>
-                  {handleFeedback &&
+                  {!hasChildAI &&
+                    handleFeedback &&
                     (isActive ? (
                       <div
                         className={`
