@@ -1,8 +1,11 @@
-from typing import Dict, Iterator
-import asana  # type: ignore
-from datetime import datetime
 import time
 import traceback
+from collections.abc import Iterator
+from datetime import datetime
+from typing import Dict
+
+import asana  # type: ignore
+
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()

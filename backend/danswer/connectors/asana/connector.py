@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 import datetime
-from danswer.connectors.asana import asana_api
-from danswer.configs.app_configs import INDEX_BATCH_SIZE, CONTINUE_ON_CONNECTOR_FAILURE
+from typing import Any
+
+from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
+from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.asana import asana_api
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from typing import Any
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
