@@ -355,14 +355,15 @@ vespa:
   tolerations: []
   affinity: {}
 
-persistence:
-  vespa:
-    enabled: true
-    existingClaim: ""
-    storageClassName: ""
-    accessModes:
-      - ReadWriteOnce
-    size: 5Gi
+  volumeClaimTemplates:
+   - metadata:
+       name: vespa-storage
+     spec:
+       accessModes:
+         - ReadWriteOnce
+       resources:
+         requests:
+           storage: 5Gi    
 
 auth:
   # for storing smtp, oauth, slack, and other secrets
