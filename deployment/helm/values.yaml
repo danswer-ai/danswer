@@ -324,7 +324,7 @@ vespa:
   podAnnotations: {}
   podLabels:
     app: vespa
-    app.kubernetes.io/instance: danswer
+    app.kubernetes.io/instance: danswer-stack
     app.kubernetes.io/name: vespa
   enabled: true
 
