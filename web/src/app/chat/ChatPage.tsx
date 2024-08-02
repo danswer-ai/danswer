@@ -806,7 +806,6 @@ export function ChatPage({
 
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();
-
           if (packet) {
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
@@ -1527,7 +1526,7 @@ export function ChatPage({
                                         key={"Generating"}
                                         className="mr-auto relative inline-block"
                                       >
-                                        <span className="loading-text">
+                                        <span className="text-sm loading-text">
                                           Thinking...
                                         </span>
                                       </div>

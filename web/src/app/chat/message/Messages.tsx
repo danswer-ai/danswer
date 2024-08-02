@@ -329,50 +329,44 @@ export const AIMessage = ({
                       !TOOLS_WITH_CUSTOM_HANDLING.includes(
                         toolCall.tool_name
                       ) && (
-                        <div className="my-2">
-                          <ToolRunDisplay
-                            toolName={
-                              toolCall.tool_result && content
-                                ? `Used "${toolCall.tool_name}"`
-                                : `Using "${toolCall.tool_name}"`
-                            }
-                            toolLogo={
-                              <FiTool size={15} className="my-auto mr-1" />
-                            }
-                            isRunning={!toolCall.tool_result || !content}
-                          />
-                        </div>
+                        <ToolRunDisplay
+                          toolName={
+                            toolCall.tool_result && content
+                              ? `Used "${toolCall.tool_name}"`
+                              : `Using "${toolCall.tool_name}"`
+                          }
+                          toolLogo={
+                            <FiTool size={15} className="my-auto mr-1" />
+                          }
+                          isRunning={!toolCall.tool_result || !content}
+                        />
                       )}
 
                     {toolCall &&
                       toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
                       !toolCall.tool_result && (
-                        <div className="my-2">
-                          <ToolRunDisplay
-                            toolName={`Generating images`}
-                            toolLogo={
-                              <FiImage size={15} className="my-auto mr-1" />
-                            }
-                            isRunning={!toolCall.tool_result}
-                          />
-                        </div>
+                        <ToolRunDisplay
+                          toolName={`Generating images`}
+                          toolLogo={
+                            <FiImage size={15} className="my-auto mr-1" />
+                          }
+                          isRunning={!toolCall.tool_result}
+                        />
                       )}
 
                     {toolCall &&
                       toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
-                        <div className="my-2">
-                          <ToolRunDisplay
-                            toolName={
-                              toolCall.tool_result
-                                ? `Searched the internet`
-                                : `Searching the internet`
-                            }
-                            toolLogo={
-                              <FiGlobe size={15} className="my-auto mr-1" />
-                            }
-                            isRunning={!toolCall.tool_result}
-                          />
-                        </div>
+                        <ToolRunDisplay
+                          toolName={
+                            toolCall.tool_result
+                              ? `Searched the internet`
+                              : `Searching the internet`
+                          }
+                          toolLogo={
+                            <FiGlobe size={15} className="my-auto mr-1" />
+                          }
+                          isRunning={!toolCall.tool_result}
+                        />
                       )}
 
                     {content ? (
