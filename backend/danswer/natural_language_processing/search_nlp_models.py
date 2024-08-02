@@ -4,11 +4,13 @@ import requests
 from httpx import HTTPError
 
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
+from danswer.configs.model_configs import (
+    BATCH_SIZE_ENCODE_CHUNKS_FOR_API_EMBEDDING_SERVICES,
+)
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.db.models import EmbeddingModel as DBEmbeddingModel
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.natural_language_processing.utils import tokenizer_trim_content
-from danswer.utils.batching import batch_list
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
@@ -20,6 +22,7 @@ from shared_configs.model_server_models import IntentRequest
 from shared_configs.model_server_models import IntentResponse
 from shared_configs.model_server_models import RerankRequest
 from shared_configs.model_server_models import RerankResponse
+from shared_configs.utils import batch_list
 
 logger = setup_logger()
 
@@ -73,7 +76,8 @@ class EmbeddingModel:
         self,
         texts: list[str],
         text_type: EmbedTextType,
-        batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
+        local_embedding_batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
+        api_embedding_batch_size: int = BATCH_SIZE_ENCODE_CHUNKS_FOR_API_EMBEDDING_SERVICES,
     ) -> list[Embedding]:
         if not texts or not all(texts):
             raise ValueError(f"Empty or missing text for embedding: {texts}")
@@ -95,6 +99,7 @@ class EmbeddingModel:
             ]
 
         if self.provider_type:
+            text_batches = batch_list(texts, api_embedding_batch_size)
             embed_request = EmbedRequest(
                 model_name=self.model_name,
                 texts=texts,
@@ -120,7 +125,7 @@ class EmbeddingModel:
             return EmbedResponse(**response.json()).embeddings
 
         # Batching for local embedding
-        text_batches = batch_list(texts, batch_size)
+        text_batches = batch_list(texts, local_embedding_batch_size)
         embeddings: list[Embedding] = []
         logger.debug(
             f"Encoding {len(texts)} texts in {len(text_batches)} batches for local model"
