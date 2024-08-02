@@ -4,6 +4,7 @@ from typing import Type
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.asana.connector import AsanaConnector
 from danswer.connectors.axero.connector import AxeroConnector
 from danswer.connectors.blob.connector import BlobStorageConnector
 from danswer.connectors.bookstack.connector import BookstackConnector
@@ -41,7 +42,6 @@ from danswer.connectors.slack.load_connector import SlackLoadConnector
 from danswer.connectors.teams.connector import TeamsConnector
 from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.wikipedia.connector import WikipediaConnector
-from danswer.connectors.asana.connector import AsanaConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
 from danswer.db.credentials import backend_update_credential_json
