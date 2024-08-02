@@ -116,7 +116,7 @@ def handle_search_request(
 
     llm_indices = relevant_documents_to_indices(
         relevance_chunks=relevant_chunks,
-        inference_sections=[
+        search_docs=[
             translate_db_search_doc_to_server_search_doc(cast(SearchDoc, doc))
             for doc in deduped_docs
         ],
