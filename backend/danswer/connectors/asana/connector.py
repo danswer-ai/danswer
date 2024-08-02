@@ -14,15 +14,16 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-class AsanaConnector(LoadConnector, PollConnector):
 
-    def __init__(self,
-                 asana_workspace_id: str,
-                 asana_project_ids: str | None = None,
-                 asana_team_id: str | None = None,
-                 batch_size: int = INDEX_BATCH_SIZE,
-                 continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
-        ) -> None:
+class AsanaConnector(LoadConnector, PollConnector):
+    def __init__(
+        self,
+        asana_workspace_id: str,
+        asana_project_ids: str | None = None,
+        asana_team_id: str | None = None,
+        batch_size: int = INDEX_BATCH_SIZE,
+        continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
+    ) -> None:
         self.workspace_id = asana_workspace_id
         self.project_ids_to_index: list[str] | None = None
         self.team_id: str | None = None
@@ -40,19 +41,26 @@ class AsanaConnector(LoadConnector, PollConnector):
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch | None
     ) -> GenerateDocumentsOutput:
         start_time = datetime.datetime.fromtimestamp(start).isoformat()
-        asana = asana_api.AsanaAPI(api_token=self.api_token, workspace_gid=self.workspace_id, \
-                                   team_gid=self.team_id)
-        docs_batch : list[Document] = []
+        asana = asana_api.AsanaAPI(
+            api_token=self.api_token,
+            workspace_gid=self.workspace_id,
+            team_gid=self.team_id,
+        )
+        docs_batch: list[Document] = []
         tasks = asana.get_tasks(self.project_ids_to_index, start_time)
         for task in tasks:
             doc = self._message_to_doc(task)
             docs_batch.append(doc)
             if len(docs_batch) >= self.batch_size:
-                logger.info("Yielding batch of " + str(len(docs_batch)) + " documents...")
+                logger.info(
+                    "Yielding batch of " + str(len(docs_batch)) + " documents..."
+                )
                 yield docs_batch
                 docs_batch = []
         if docs_batch:
-            logger.info("Yielding final batch of " + str(len(docs_batch)) + " documents...")
+            logger.info(
+                "Yielding final batch of " + str(len(docs_batch)) + " documents..."
+            )
             yield docs_batch
 
     def load_from_state(self) -> GenerateDocumentsOutput:
@@ -82,9 +90,11 @@ if __name__ == "__main__":
         os.environ["PROJECT_IDS"],
         os.environ["TEAM_ID"],
     )
-    connector.load_credentials({
-        "asana_api_token_secret": os.environ["API_TOKEN"],
-    })
+    connector.load_credentials(
+        {
+            "asana_api_token_secret": os.environ["API_TOKEN"],
+        }
+    )
     all_docs = connector.load_from_state()
     current = time.time()
     one_day_ago = current - 24 * 60 * 60  # 1 day
