@@ -733,6 +733,7 @@ export function ChatPage({
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
     let toolCalls: ToolCallMetadata[] = [];
+    let newUserId = null;
 
     try {
       const lastSuccessfulMessageId =
@@ -800,6 +801,11 @@ export function ChatPage({
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();
           if (packet) {
+            console.log(packet);
+            if (Object.hasOwn(packet, "delimiter")) {
+              console.log("MESSAGE DELIMITER");
+            }
+
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {
@@ -832,39 +838,81 @@ export function ChatPage({
               error = (packet as StreamingError).error;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
-            }
 
-            const newUserMessageId =
-              finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
-            const newAssistantMessageId =
-              finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
-            updateFn([
-              {
-                messageId: newUserMessageId,
-                message: currMessage,
-                type: "user",
-                files: currentMessageFiles,
-                toolCalls: [],
-                parentMessageId: parentMessage?.messageId || null,
-                childrenMessageIds: [newAssistantMessageId],
-                latestChildMessageId: newAssistantMessageId,
-              },
-              {
-                messageId: newAssistantMessageId,
-                message: error || answer,
-                type: error ? "error" : "assistant",
-                retrievalType,
-                query: finalMessage?.rephrased_query || query,
-                documents:
-                  finalMessage?.context_docs?.top_documents || documents,
-                citations: finalMessage?.citations || {},
-                files: finalMessage?.files || aiMessageImages || [],
-                toolCalls: finalMessage?.tool_calls || toolCalls,
-                parentMessageId: newUserMessageId,
-                alternateAssistantID: alternativeAssistant?.id,
-              },
-            ]);
+              if (!newUserId) {
+                const newUserMessageId =
+                  finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
+                const newAssistantMessageId =
+                  finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+
+                updateFn([
+                  {
+                    messageId: newUserMessageId,
+                    message: currMessage,
+                    type: "user",
+                    files: currentMessageFiles,
+                    toolCalls: [],
+                    parentMessageId: parentMessage?.messageId || null,
+                    childrenMessageIds: [newAssistantMessageId],
+                    latestChildMessageId: newAssistantMessageId,
+                  },
+                  {
+                    messageId: newAssistantMessageId,
+                    message: error || answer,
+                    type: error ? "error" : "assistant",
+                    retrievalType,
+                    query: finalMessage?.rephrased_query || query,
+                    documents:
+                      finalMessage?.context_docs?.top_documents || documents,
+                    citations: finalMessage?.citations || {},
+                    files: finalMessage?.files || aiMessageImages || [],
+                    toolCalls: finalMessage?.tool_calls || toolCalls,
+                    parentMessageId: newUserMessageId,
+                    alternateAssistantID: alternativeAssistant?.id,
+                  },
+                ]);
+              }
+              setIsStreaming(false);
+
+              newUserId = finalMessage.message_id;
+            }
+            if (!newUserId) {
+              const newUserMessageId =
+                newUserId ||
+                finalMessage?.parent_message ||
+                TEMP_USER_MESSAGE_ID;
+              const newAssistantMessageId =
+                finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+
+              updateFn([
+                {
+                  messageId: newUserMessageId,
+                  message: currMessage,
+                  type: "user",
+                  files: currentMessageFiles,
+                  toolCalls: [],
+                  parentMessageId: parentMessage?.messageId || null,
+                  childrenMessageIds: [newAssistantMessageId],
+                  latestChildMessageId: newAssistantMessageId,
+                },
+                {
+                  messageId: newAssistantMessageId,
+                  message: error || answer,
+                  type: error ? "error" : "assistant",
+                  retrievalType,
+                  query: finalMessage?.rephrased_query || query,
+                  documents:
+                    finalMessage?.context_docs?.top_documents || documents,
+                  citations: finalMessage?.citations || {},
+                  files: finalMessage?.files || aiMessageImages || [],
+                  toolCalls: finalMessage?.tool_calls || toolCalls,
+                  parentMessageId: newUserMessageId,
+                  alternateAssistantID: alternativeAssistant?.id,
+                },
+              ]);
+            }
           }
+
         }
       }
     } catch (e: any) {
@@ -1346,6 +1394,28 @@ export function ChatPage({
                                       )
                                     : null;
 
+                                const hasParentMessage =
+                                  message.parentMessageId !== null &&
+                                  message.parentMessageId !== undefined;
+                                const parentMessage = hasParentMessage
+                                  ? messageMap.get(message.parentMessageId!)
+                                  : null;
+                                const parentMessageType = parentMessage
+                                  ? parentMessage.type
+                                  : null;
+
+                                const hasChildMessage =
+                                  message.latestChildMessageId !== null &&
+                                  message.latestChildMessageId !== undefined;
+                                const childMessage = hasChildMessage
+                                  ? messageMap.get(
+                                      message.latestChildMessageId!
+                                    )
+                                  : null;
+                                const childMessageType = childMessage
+                                  ? childMessage.type
+                                  : null;
+
                                 return (
                                   <div
                                     key={messageReactComponentKey}
@@ -1356,6 +1426,12 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      hasParentAI={
+                                        parentMessageType == "assistant"
+                                      }
+                                      hasChildAI={
+                                        childMessageType == "assistant"
+                                      }
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
                                       toggleDocumentSelection={

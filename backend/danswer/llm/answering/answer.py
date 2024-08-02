@@ -9,6 +9,7 @@ from langchain_core.messages import HumanMessage
 from danswer.chat.models import AnswerQuestionPossibleReturn
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import Delimiter
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
 from danswer.configs.constants import MessageType
@@ -175,6 +176,7 @@ class Answer:
                     ),
                 )
             )
+
         elif self.answer_style_config.quotes_config:
             prompt_builder.update_user_prompt(
                 build_quotes_user_message(
@@ -189,8 +191,12 @@ class Answer:
         self,
     ) -> Iterator[str | ToolCallKickoff | ToolResponse | ToolCallFinalResult]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
-        tool_call_chunk: AIMessageChunk | None = None
-        while True:
+        count = 1
+        while count <= 2:
+            print(f"COUNT IS {count}")
+            count += 1
+            tool_call_chunk: AIMessageChunk | None = None
+
             if self.force_use_tool.force_use and self.force_use_tool.args is not None:
                 tool_call_chunk = AIMessageChunk(content="")
                 tool_call_chunk.tool_calls = [
@@ -237,6 +243,8 @@ class Answer:
 
             tool_call_requests = tool_call_chunk.tool_calls
             for tool_call_request in tool_call_requests:
+                print("\n--------------\n\nITERATING ONCE AGIN!")
+                print(len(tool_call_requests))
                 known_tools_by_name = [
                     tool
                     for tool in self.tools
@@ -332,7 +340,10 @@ class Answer:
                         if hasattr(chunk, "answer_piece")
                         else str(chunk)
                     )
+                    print(f"yielding a chunk {chunk}")
                     yield chunk
+                print("NOW YIELDING FINAL TOKEN")
+                yield "FINAL TOKEN"
 
                 # Update message history with LLM response
                 self.message_history.append(
@@ -466,12 +477,12 @@ class Answer:
                 doc_id_to_rank_map=map_document_id_order([]),
                 answer_style_configs=self.answer_style_config,
             )
-            print("STREAMING FOM the  explicit")
+            # print("STREAMING FOM the  explicit")
 
             yield from process_answer_stream_fn(
                 message_generator_to_string_generator(self.llm.stream(prompt=prompt))
             )
-            print("DID THE exp")
+            # print("DID TH/E exp")
 
     def _raw_output_for_non_explicit_tool_calling_llms(
         self,
@@ -618,7 +629,6 @@ class Answer:
         yield from process_answer_stream_fn(
             message_generator_to_string_generator(self.llm.stream(prompt=prompt))
         )
-        print("DID THE NON")
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
@@ -658,7 +668,6 @@ class Answer:
                         #         SearchResponseSummary, message.response
                         #     ).top_sections
                         # ]
-                        # print(search_results)
 
                     elif message.id == FINAL_CONTEXT_DOCUMENTS:
                         cast(list[LlmDoc], message.response)
@@ -670,7 +679,16 @@ class Answer:
                         continue
                     yield message
                 else:
-                    if isinstance(message, str):
+                    if message == "FINAL TOKEN":
+                        processed_stream = []
+                        for processed_packet in _process_stream(output_generator):
+                            processed_stream.append(processed_packet)
+                            yield processed_packet
+
+                        self.current_streamed_output = processed_stream
+                        yield Delimiter(delimiter=True)
+
+                    elif isinstance(message, str):
                         yield DanswerAnswerPiece(answer_piece=str(message))
                     else:
                         yield message
@@ -685,7 +703,7 @@ class Answer:
     @property
     def llm_answer(self) -> str:
         answer = ""
-        for packet in self.processed_streamed_output:
+        for packet in self.current_streamed_output:
             if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
                 answer += packet.answer_piece
 

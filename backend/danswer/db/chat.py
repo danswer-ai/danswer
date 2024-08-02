@@ -411,6 +411,8 @@ def create_new_chat_message(
     tool_calls: list[ToolCall] | None = None,
     commit: bool = True,
 ) -> ChatMessage:
+    print("nOW WITHIN THE CHAT MESSAGE CREATION FUNCTION")
+
     new_chat_message = ChatMessage(
         chat_session_id=chat_session_id,
         parent_message=parent_message.id,
@@ -439,6 +441,7 @@ def create_new_chat_message(
     parent_message.latest_child_message = new_chat_message.id
     if commit:
         db_session.commit()
+    print("nOW LeAVING THE CHAT MESSAGE FUNCTION")
 
     return new_chat_message
 
