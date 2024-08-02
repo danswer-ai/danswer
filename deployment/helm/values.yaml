@@ -20,8 +20,7 @@ inferenceCapability:
   deployment:
     replicas: 1
     labels:
-      - key: app
-        value: inference-model-server
+      app: inference-model-server
     image:
       repository: danswer/danswer-model-server
       tag: latest
@@ -36,8 +35,7 @@ inferenceCapability:
         persistentVolumeClaim:
           claimName: inference-model-pvc
   podLabels:
-    - key: app
-      value: inference-model-server
+    app: inference-model-server
 
 indexCapability:
   name: indexing-model-server
@@ -53,8 +51,7 @@ indexCapability:
   deployment:
     replicas: 1
     labels:
-      - key: app
-        value: indexing-model-server
+      app: indexing-model-server
     image:
       repository: danswer/danswer-model-server
       pullPolicy: IfNotPresent
@@ -69,8 +66,7 @@ indexCapability:
         persistentVolumeClaim:
           claimName: indexing-model-pvc
   podLabels:
-    - key: app
-      value: indexing-model-server
+    app: indexing-model-server
   indexingOnly: "True"
   podAnnotations: {}
 
