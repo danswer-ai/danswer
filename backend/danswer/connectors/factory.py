@@ -41,6 +41,7 @@ from danswer.connectors.slack.load_connector import SlackLoadConnector
 from danswer.connectors.teams.connector import TeamsConnector
 from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.wikipedia.connector import WikipediaConnector
+from danswer.connectors.asana.connector import AsanaConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
 from danswer.db.credentials import backend_update_credential_json
@@ -91,6 +92,7 @@ def identify_connector_class(
         DocumentSource.CLICKUP: ClickupConnector,
         DocumentSource.MEDIAWIKI: MediaWikiConnector,
         DocumentSource.WIKIPEDIA: WikipediaConnector,
+        DocumentSource.ASANA: AsanaConnector,
         DocumentSource.S3: BlobStorageConnector,
         DocumentSource.R2: BlobStorageConnector,
         DocumentSource.GOOGLE_CLOUD_STORAGE: BlobStorageConnector,

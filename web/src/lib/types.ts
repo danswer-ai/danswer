@@ -243,6 +243,7 @@ const validSources = [
   "clickup",
   "wikipedia",
   "mediawiki",
+  "asana",
   "s3",
   "r2",
   "google_cloud_storage",
