@@ -494,7 +494,8 @@ export function ChatInputBar({
                   !showSuggestions &&
                   !event.shiftKey &&
                   message &&
-                  !isStreaming
+                  !isStreaming &&
+                  !(event.nativeEvent as any).isComposing
                 ) {
                   onSubmit();
                   event.preventDefault();
