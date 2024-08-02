@@ -56,12 +56,14 @@ class AnswerPromptBuilder:
     def __init__(
         self, message_history: list[PreviousMessage], llm_config: LLMConfig
     ) -> None:
+        print("creating answer prmpt builder")
         self.max_tokens = compute_max_llm_input_tokens(llm_config)
 
         (
             self.message_history,
             self.history_token_cnts,
         ) = translate_history_to_basemessages(message_history)
+        print(message_history)
 
         self.system_message_and_token_cnt: tuple[SystemMessage, int] | None = None
         self.user_message_and_token_cnt: tuple[HumanMessage, int] | None = None
