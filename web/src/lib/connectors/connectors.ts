@@ -711,6 +711,38 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
       },
     ],
   },
+  asana: {
+    description: "Configure Asana connector",
+    values: [
+      {
+        type: "text",
+        query: "Your Asana workspace ID:",
+        label: "Workspace ID",
+        name: "asana_workspace_id",
+        optional: false,
+        description:
+          "The Asana workspace ID to index. Format looks like 1234567890123.",
+      },
+      {
+        type: "text",
+        query: "Comma-separated IDs of projects to index:",
+        label: "Project IDs",
+        name: "asana_project_ids",
+        description:
+          "Comma-separated IDs of the Asana projects to index. Leave empty to index all projects.",
+        optional: true,
+      },
+      {
+        type: "text",
+        query: "Team ID of the team everyone is in:",
+        label: "'Everyone' Team ID",
+        name: "asana_team_id",
+        optional: true,
+        description:
+          "Only tasks that are non-private are indexed. Set this to a team to also index tasks that this team has access to. Typically used for an 'everyone' team that everyone is a member of. Leave empty if you don't have such a team.",
+      },
+    ],
+  },
   mediawiki: {
     description: "Configure MediaWiki connector",
     values: [
@@ -933,6 +965,12 @@ export interface MediaWikiBaseConfig {
   categories?: string[];
   pages?: string[];
   recurse_depth?: number;
+}
+
+export interface AsanaConfig {
+  asana_workspace_id: string;
+  asana_project_ids?: string;
+  asana_team_id?: string;
 }
 
 export interface MediaWikiConfig extends MediaWikiBaseConfig {

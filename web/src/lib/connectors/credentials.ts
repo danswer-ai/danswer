@@ -165,6 +165,13 @@ export interface SharepointCredentialJson {
   sp_directory_id: string;
 }
 
+export interface AsanaCredentialJson {
+  asana_api_token_secret: string;
+  asana_workspace_id: string;
+  asana_project_ids: string;
+  asana_team_id: string;
+}
+
 export interface TeamsCredentialJson {
   teams_client_id: string;
   teams_client_secret: string;
@@ -240,6 +247,12 @@ export const credentialTemplates: Record<ValidSources, any> = {
     sp_client_secret: "",
     sp_directory_id: "",
   } as SharepointCredentialJson,
+  asana: {
+    asana_api_token_secret: "",
+    asana_workspace_id: "",
+    asana_project_ids: "",
+    asana_team_id: "",
+  } as AsanaCredentialJson,
   teams: {
     teams_client_id: "",
     teams_client_secret: "",
