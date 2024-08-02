@@ -230,7 +230,7 @@ export default function AddConnector({
         }, 1000);
       }
     } else {
-      setPopup({ message: message, type: "error" });
+      setPopup({ message: message, type: isSuccess ? "success" : "error" });
     }
   };
 

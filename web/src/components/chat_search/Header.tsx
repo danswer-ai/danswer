@@ -16,6 +16,7 @@ import KeyboardSymbol from "@/lib/browserUtilities";
 import Link from "next/link";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { pageType } from "@/app/chat/sessionSidebar/types";
+import { useRouter } from "next/navigation";
 
 export default function FunctionalHeader({
   user,
@@ -23,7 +24,9 @@ export default function FunctionalHeader({
   currentChatSession,
   setSharingModalVisible,
   toggleSidebar,
+  reset = () => null,
 }: {
+  reset?: () => void;
   page: pageType;
   user: User | null;
   currentChatSession?: ChatSession | null | undefined;
@@ -58,6 +61,17 @@ export default function FunctionalHeader({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+  const router = useRouter();
+
+  const handleNewChat = () => {
+    reset();
+    const newChatUrl =
+      `/${page}` +
+      (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA && currentChatSession
+        ? `?assistantId=${currentChatSession.persona_id}`
+        : "");
+    router.push(newChatUrl);
+  };
   return (
     <div className="pb-6 left-0 sticky top-0 z-20 w-full relative flex">
       <div className="mt-2 mx-4 text-text-700 flex w-full">
@@ -86,21 +100,12 @@ export default function FunctionalHeader({
           </div>
 
           {page == "chat" && (
-            <Tooltip delayDuration={1000} content={`${commandSymbol}U`}>
-              <Link
-                className="mobile:hidden my-auto"
-                href={
-                  `/${page}` +
-                  (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                  currentChatSession
-                    ? `?assistantId=${currentChatSession.persona_id}`
-                    : "")
-                }
-              >
+            <Tooltip delayDuration={1000} content="New Chat">
+              <button className="mobile:hidden my-auto" onClick={handleNewChat}>
                 <div className="cursor-pointer ml-2 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
                   <NewChatIcon size={20} />
                 </div>
-              </Link>
+              </button>
             </Tooltip>
           )}
         </div>

@@ -1203,6 +1203,7 @@ export function ChatPage({
             <div className="flex h-full flex-col w-full">
               {liveAssistant && (
                 <FunctionalHeader
+                  reset={() => setMessage("")}
                   page="chat"
                   setSharingModalVisible={
                     chatSessionIdRef.current !== null

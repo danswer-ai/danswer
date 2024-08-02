@@ -251,6 +251,8 @@ def create_initial_default_connector(db_session: Session) -> None:
     default_connector = fetch_connector_by_id(default_connector_id, db_session)
 
     if default_connector is not None:
+        print(default_connector)
+        print(default_connector.__dict__)
         if (
             default_connector.source != DocumentSource.INGESTION_API
             or default_connector.input_type != InputType.LOAD_STATE

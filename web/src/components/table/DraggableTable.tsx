@@ -4,9 +4,7 @@ import {
   TableRow,
   TableHeaderCell,
   TableBody,
-  TableCell,
 } from "@tremor/react";
-import { DraggableTableBody } from "./DraggableTableBody";
 import React, { useMemo, useState } from "react";
 import {
   closestCenter,
