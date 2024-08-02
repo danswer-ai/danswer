@@ -772,7 +772,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         name: "asana_workspace_id",
         optional: false,
         description:
-          "The Asana workspace ID to index. Format looks like 1234567890123.",
+          "The Asana workspace ID to index. Format looks like 1234567890123. Get it at https://app.asana.com/api/1.0/workspaces.",
       },
       {
         type: "text",
