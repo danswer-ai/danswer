@@ -97,7 +97,7 @@ class ZendeskConnector(LoadConnector, PollConnector):
                 else:
                     raise Exception(f"Error: {response.status_code}\n{response.text}")
         except Exception as e:
-            print(f"Error fetching content tags: {str(e)}")
+            raise Exception(f"Error fetching content tags: {str(e)}")
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         # Subdomain is actually the whole URL
