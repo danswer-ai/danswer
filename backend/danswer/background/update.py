@@ -81,10 +81,10 @@ def _should_create_new_indexing(
                 return False
         return True
 
-    # If the connector is disabled, don't index
+    # If the connector is disabled or is the ingestion API, don't index
     # NOTE: during an embedding model switch over, the following logic
     # is bypassed by the above check for a future model
-    if connector.disabled:
+    if connector.disabled or connector.id == 0:
         return False
 
     if not last_index:
