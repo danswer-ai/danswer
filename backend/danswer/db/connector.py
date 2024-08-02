@@ -87,9 +87,7 @@ def create_connector(
         connector_specific_config=connector_data.connector_specific_config,
         refresh_freq=connector_data.refresh_freq,
         indexing_start=connector_data.indexing_start,
-        prune_freq=connector_data.prune_freq
-        if connector_data.prune_freq is not None
-        else DEFAULT_PRUNING_FREQ,
+        prune_freq=connector_data.prune_freq,
         disabled=connector_data.disabled,
     )
     db_session.add(connector)
@@ -103,9 +101,6 @@ def update_connector(
     connector_data: ConnectorBase,
     db_session: Session,
 ) -> Connector | None:
-    print(connector_id)
-    print("CONNECTOR DATS")
-    print(connector_data)
     connector = fetch_connector_by_id(connector_id, db_session)
     if connector is None:
         return None
@@ -128,7 +123,6 @@ def update_connector(
         else DEFAULT_PRUNING_FREQ
     )
     connector.disabled = connector_data.disabled
-    print(connector.__dict__)
 
     db_session.commit()
     return connector
@@ -274,7 +268,7 @@ def create_initial_default_connector(db_session: Session) -> None:
         input_type=InputType.LOAD_STATE,
         connector_specific_config={},
         refresh_freq=None,
-        prune_freq=None,
+        prune_freq=DEFAULT_PRUNING_FREQ,
     )
     db_session.add(connector)
     db_session.commit()

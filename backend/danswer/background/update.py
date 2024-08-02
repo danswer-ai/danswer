@@ -63,15 +63,21 @@ def _should_create_new_indexing(
     secondary_index_building: bool,
     db_session: Session,
 ) -> bool:
+    print("CEHCKING")
+    print(connector)
     # User can still manually create single indexing attempts via the UI for the
     # currently in use index
     if DISABLE_INDEX_UPDATE_ON_SWAP:
         if model.status == IndexModelStatus.PRESENT and secondary_index_building:
             return False
 
+    print("eee 1")
+
     # When switching over models, always index at least once
     if model.status == IndexModelStatus.FUTURE:
         if last_index:
+            print("eee 12")
+
             # secondary indexes should not index again after success
             # or else the model will never be able to swap
             if last_index.status == IndexingStatus.SUCCESS:
@@ -80,18 +86,22 @@ def _should_create_new_indexing(
             if connector.id == 0:  # Ingestion API
                 return False
         return True
+    print("eee 3")
 
     # If the connector is disabled, don't index
     # NOTE: during an embedding model switch over, the following logic
     # is bypassed by the above check for a future model
     if connector.disabled:
         return False
-
-    if connector.refresh_freq is None:
-        return False
+    print("eee 4")
 
     if not last_index:
         return True
+    print("eee 5")
+
+    if connector.refresh_freq is None:
+        return False
+    print("eee 7")
 
     # Only one scheduled job per connector at a time
     # Can schedule another one if the current one is already running however
