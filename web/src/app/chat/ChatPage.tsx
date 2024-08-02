@@ -1523,17 +1523,13 @@ export function ChatPage({
                                     messageId={null}
                                     personaName={liveAssistant.name}
                                     content={
-                                      <div className="text-sm my-auto">
-                                        <ThreeDots
-                                          height="30"
-                                          width="50"
-                                          color="#3b82f6"
-                                          ariaLabel="grid-loading"
-                                          radius="12.5"
-                                          wrapperStyle={{}}
-                                          wrapperClass=""
-                                          visible={true}
-                                        />
+                                      <div
+                                        key={"Generating"}
+                                        className="mr-auto relative inline-block"
+                                      >
+                                        <span className="loading-text">
+                                          Thinking...
+                                        </span>
                                       </div>
                                     }
                                   />

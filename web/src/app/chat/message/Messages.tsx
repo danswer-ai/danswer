@@ -153,22 +153,25 @@ export const AIMessage = ({
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
 }) => {
-  const removeDot = (rawText: string): string => {
-    if (rawText.endsWith("[*]()")) {
-      return rawText.slice(0, -5);
+  const processContent = (content: string | JSX.Element) => {
+    if (typeof content !== "string") {
+      return content;
     }
-    return rawText;
+
+    const codeBlockRegex = /```[\s\S]*?```|```[\s\S]*?$/g;
+    const matches = content.match(codeBlockRegex);
+
+    if (matches) {
+      const lastMatch = matches[matches.length - 1];
+      if (!lastMatch.endsWith("```")) {
+        return content;
+      }
+    }
+
+    return content + (!isComplete ? " [*]() " : "");
   };
 
-  const processContent = (content: string) => {
-    const openCodeBlockRegex = /```[\s\S]*?$/;
-    if (openCodeBlockRegex.test(content)) {
-      return removeDot(content);
-    }
-    return content;
-  };
-
-  const finalContent = processContent(content + (!isComplete ? "[*]()" : ""));
+  const finalContent = processContent(content as string);
 
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {
@@ -421,11 +424,12 @@ export const AIMessage = ({
                                     );
                                   }
                                 },
+
                                 code: (props) => (
                                   <CodeBlock
                                     className="w-full"
                                     {...props}
-                                    content={removeDot(content as string)}
+                                    content={content as string}
                                   />
                                 ),
                                 p: ({ node, ...props }) => (
@@ -437,7 +441,7 @@ export const AIMessage = ({
                                 [rehypePrism, { ignoreMissing: true }],
                               ]}
                             >
-                              {finalContent}
+                              {finalContent as string}
                             </ReactMarkdown>
                           </div>
                         ) : (
