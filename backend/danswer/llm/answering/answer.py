@@ -115,6 +115,7 @@ class Answer:
         # Returns the full document sections text from the search tool
         return_contexts: bool = False,
         skip_gen_ai_answer_generation: bool = False,
+        tool_uses: dict | None = None,
     ) -> None:
         if single_message_history and message_history:
             raise ValueError(
@@ -132,6 +133,7 @@ class Answer:
         self.skip_explicit_tool_calling = skip_explicit_tool_calling
 
         self.message_history = message_history or []
+        self.tool_uses = tool_uses or {}
         # used for QA flow where we only want to send a single message
         self.single_message_history = single_message_history
 
@@ -383,6 +385,7 @@ class Answer:
                 )
             )
             prompt = prompt_builder.build()
+
             yield from message_generator_to_string_generator(
                 self.llm.stream(prompt=prompt)
             )
