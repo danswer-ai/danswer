@@ -6,12 +6,12 @@ from langchain.schema.messages import BaseMessage
 from langchain_core.messages import AIMessageChunk
 from langchain_core.messages import HumanMessage
 
-from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import AnswerQuestionPossibleReturn
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
+from danswer.configs.constants import MessageType
 from danswer.file_store.utils import InMemoryChatFile
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import PreviousMessage
@@ -51,7 +51,6 @@ from danswer.tools.message import ToolCallSummary
 from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS
 from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
-from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
@@ -186,6 +185,166 @@ class Answer:
                 )
             )
 
+    def _raw_output_for_explicit_tool_calling_llms_loop(
+        self,
+    ) -> Iterator[str | ToolCallKickoff | ToolResponse | ToolCallFinalResult]:
+        prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
+        tool_call_chunk: AIMessageChunk | None = None
+        while True:
+            if self.force_use_tool.force_use and self.force_use_tool.args is not None:
+                tool_call_chunk = AIMessageChunk(content="")
+                tool_call_chunk.tool_calls = [
+                    {
+                        "name": self.force_use_tool.tool_name,
+                        "args": self.force_use_tool.args,
+                        "id": str(uuid4()),
+                    }
+                ]
+            else:
+                prompt_builder.update_system_prompt(
+                    default_build_system_message(self.prompt_config)
+                )
+                prompt_builder.update_user_prompt(
+                    default_build_user_message(
+                        self.question, self.prompt_config, self.latest_query_files
+                    )
+                )
+                prompt = prompt_builder.build()
+                final_tool_definitions = [
+                    tool.tool_definition()
+                    for tool in filter_tools_for_force_tool_use(
+                        self.tools, self.force_use_tool
+                    )
+                ]
+                for message in self.llm.stream(
+                    prompt=prompt,
+                    tools=final_tool_definitions if final_tool_definitions else None,
+                    tool_choice="required" if self.force_use_tool.force_use else None,
+                ):
+                    if isinstance(message, AIMessageChunk) and (
+                        message.tool_call_chunks or message.tool_calls
+                    ):
+                        if tool_call_chunk is None:
+                            tool_call_chunk = message
+                        else:
+                            tool_call_chunk += message  # type: ignore
+                    else:
+                        if message.content:
+                            yield cast(str, message.content)
+
+                if not tool_call_chunk:
+                    return  # no tool call needed
+
+            tool_call_requests = tool_call_chunk.tool_calls
+            for tool_call_request in tool_call_requests:
+                known_tools_by_name = [
+                    tool
+                    for tool in self.tools
+                    if tool.name == tool_call_request["name"]
+                ]
+
+                if not known_tools_by_name:
+                    logger.error(
+                        "Tool call requested with unknown name field. \n"
+                        f"self.tools: {self.tools}"
+                        f"tool_call_request: {tool_call_request}"
+                    )
+                    if self.tools:
+                        tool = self.tools[0]
+                    else:
+                        continue
+                else:
+                    tool = known_tools_by_name[0]
+
+                tool_args = (
+                    self.force_use_tool.args
+                    if self.force_use_tool.tool_name == tool.name
+                    and self.force_use_tool.args
+                    else tool_call_request["args"]
+                )
+
+                tool_runner = ToolRunner(tool, tool_args)
+                yield tool_runner.kickoff()
+
+                tool_responses = list(tool_runner.tool_responses())
+                yield from tool_responses
+
+                tool_call_summary = ToolCallSummary(
+                    tool_call_request=tool_call_chunk,
+                    tool_call_result=build_tool_message(
+                        tool_call_request, tool_runner.tool_message_content()
+                    ),
+                )
+
+                if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
+                    self._update_prompt_builder_for_search_tool(prompt_builder, [])
+                elif tool.name == ImageGenerationTool._NAME:
+                    img_urls = [
+                        img_generation_result["url"]
+                        for img_generation_result in tool_runner.tool_final_result().tool_result
+                    ]
+                    prompt_builder.update_user_prompt(
+                        build_image_generation_user_prompt(
+                            query=self.question, img_urls=img_urls
+                        )
+                    )
+
+                yield tool_runner.tool_final_result()
+
+                # Update message history with tool call and response
+                self.message_history.append(
+                    PreviousMessage(
+                        message=str(tool_call_request),
+                        message_type=MessageType.ASSISTANT,
+                        token_count=0,  # You may want to implement a token counting method
+                        tool_calls=[],
+                        files=[],
+                    )
+                )
+                self.message_history.append(
+                    PreviousMessage(
+                        message="\n".join(str(response) for response in tool_responses),
+                        message_type=MessageType.SYSTEM,
+                        token_count=0,
+                        tool_calls=[],
+                        files=[],
+                    )
+                )
+
+                # Generate response based on updated message history
+                prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
+                process_answer_stream_fn = _get_answer_stream_processor(
+                    context_docs=[],
+                    doc_id_to_rank_map=map_document_id_order([]),
+                    answer_style_configs=self.answer_style_config,
+                )
+
+                response_stream = process_answer_stream_fn(
+                    message_generator_to_string_generator(
+                        self.llm.stream(prompt=prompt)
+                    )
+                )
+
+                response_content = ""
+                for chunk in response_stream:
+                    response_content += (
+                        chunk.answer_piece
+                        if hasattr(chunk, "answer_piece")
+                        else str(chunk)
+                    )
+                    yield chunk
+
+                # Update message history with LLM response
+                self.message_history.append(
+                    PreviousMessage(
+                        message=response_content,
+                        message_type=MessageType.ASSISTANT,
+                        token_count=0,
+                        tool_calls=[],
+                        files=[],  # You may want to implement a token counting method
+                    )
+                )
+
     def _raw_output_for_explicit_tool_calling_llms(
         self,
     ) -> Iterator[str | ToolCallKickoff | ToolResponse | ToolCallFinalResult]:
@@ -197,7 +356,6 @@ class Answer:
         # final_context_docs: list[
         #     LlmDoc
         # ] | None = None  # processed docs to feed into the LLM
-
         tool_call_chunk: AIMessageChunk | None = None
         if self.force_use_tool.force_use and self.force_use_tool.args is not None:
             # if we are forcing a tool WITH args specified, we don't need to check which tools to run
@@ -308,10 +466,12 @@ class Answer:
                 doc_id_to_rank_map=map_document_id_order([]),
                 answer_style_configs=self.answer_style_config,
             )
+            print("STREAMING FOM the  explicit")
 
             yield from process_answer_stream_fn(
                 message_generator_to_string_generator(self.llm.stream(prompt=prompt))
             )
+            print("DID THE exp")
 
     def _raw_output_for_non_explicit_tool_calling_llms(
         self,
@@ -458,6 +618,7 @@ class Answer:
         yield from process_answer_stream_fn(
             message_generator_to_string_generator(self.llm.stream(prompt=prompt))
         )
+        print("DID THE NON")
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
@@ -466,7 +627,7 @@ class Answer:
             return
 
         output_generator = (
-            self._raw_output_for_explicit_tool_calling_llms()
+            self._raw_output_for_explicit_tool_calling_llms_loop()
             if explicit_tool_calling_supported(
                 self.llm.config.model_provider, self.llm.config.model_name
             )
@@ -486,17 +647,18 @@ class Answer:
                     yield message
                 elif isinstance(message, ToolResponse):
                     if message.id == SEARCH_RESPONSE_SUMMARY_ID:
+                        pass
                         # We don't need to run section merging in this flow, this variable is only used
                         # below to specify the ordering of the documents for the purpose of matching
                         # citations to the right search documents. The deduplication logic is more lightweight
                         # there and we don't need to do it twice
-                        search_results = [
-                            llm_doc_from_inference_section(section)
-                            for section in cast(
-                                SearchResponseSummary, message.response
-                            ).top_sections
-                        ]
-                        print(search_results)
+                        # search_results = [
+                        #     llm_doc_from_inference_section(section)
+                        #     for section in cast(
+                        #         SearchResponseSummary, message.response
+                        #     ).top_sections
+                        # ]
+                        # print(search_results)
 
                     elif message.id == FINAL_CONTEXT_DOCUMENTS:
                         cast(list[LlmDoc], message.response)
@@ -508,8 +670,10 @@ class Answer:
                         continue
                     yield message
                 else:
-                    # streaming response
-                    yield DanswerAnswerPiece(answer_piece=str(message))
+                    if isinstance(message, str):
+                        yield DanswerAnswerPiece(answer_piece=str(message))
+                    else:
+                        yield message
 
         processed_stream = []
         for processed_packet in _process_stream(output_generator):
