@@ -412,7 +412,7 @@ export const AIMessage = ({
                                     return (
                                       <a
                                         key={node?.position?.start?.offset}
-                                        onClick={() =>
+                                        onMouseDown={() =>
                                           rest.href
                                             ? window.open(rest.href, "_blank")
                                             : undefined
