@@ -84,12 +84,13 @@ def manage_file_upload(zip_file_path: str, env_name: str) -> None:
 
         time.sleep(10)
 
-    problem_file_csv_path = os.path.join(current_dir, "problem_files.csv")
-    with open(problem_file_csv_path, "w", newline="") as csvfile:
-        csvwriter = csv.writer(csvfile)
-        csvwriter.writerow(["Problematic File Paths"])
-        for problem_file in problem_file_list:
-            csvwriter.writerow([problem_file])
+    if problem_file_list:
+        problem_file_csv_path = os.path.join(current_dir, "problem_files.csv")
+        with open(problem_file_csv_path, "w", newline="") as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow(["Problematic File Paths"])
+            for problem_file in problem_file_list:
+                csvwriter.writerow([problem_file])
 
     for file in unzipped_file_paths:
         os.unlink(file)

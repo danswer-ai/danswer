@@ -302,6 +302,7 @@ _MEGA_CHUNKER: Chunker | None = None
 def get_default_chunker(embedder: IndexingEmbedder) -> Chunker:
     global _DEFAULT_CHUNKER
     if _DEFAULT_CHUNKER is None:
+        logger.debug("Creating default chunker")
         _DEFAULT_CHUNKER = Chunker(embedder)
     return _DEFAULT_CHUNKER
 
@@ -309,6 +310,7 @@ def get_default_chunker(embedder: IndexingEmbedder) -> Chunker:
 def get_mega_chunker(embedder: IndexingEmbedder) -> Chunker:
     global _MEGA_CHUNKER
     if _MEGA_CHUNKER is None:
+        logger.debug("Creating mega chunker")
         _MEGA_CHUNKER = Chunker(
             embedder,
             chunk_token_limit=MEGA_CHUNK_SIZE,

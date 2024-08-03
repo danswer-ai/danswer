@@ -184,21 +184,14 @@ def index_doc_batch(
     logger.debug("Starting chunking")
     # The embedder is needed here to get the correct tokenizer
     chunker: Chunker = get_default_chunker(embedder)
-    chunks: list[DocAwareChunk] = [
-        chunk
-        for document in updatable_docs
-        for chunk in chunker.chunk(document=document)
-    ]
+    chunks: list[DocAwareChunk] = []
+    for document in updatable_docs:
+        chunks.extend(chunker.chunk(document=document))
 
     if ENABLE_MEGA_CHUNK:
         mega_chunker: Chunker = get_mega_chunker(embedder)
-        chunks.extend(
-            [
-                chunk
-                for document in updatable_docs
-                for chunk in mega_chunker.chunk(document=document)
-            ]
-        )
+        for document in updatable_docs:
+            chunks.extend(mega_chunker.chunk(document=document))
 
     logger.debug("Starting embedding")
     chunks_with_embeddings = (
