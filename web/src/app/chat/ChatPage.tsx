@@ -672,6 +672,7 @@ export function ChatPage({
     if (messageOverride) {
       currMessage = messageOverride;
     }
+
     const currMessageHistory =
       messageToResendIndex !== null
         ? messageHistory.slice(0, messageToResendIndex)
@@ -704,7 +705,7 @@ export function ChatPage({
         latestChildMessageId: TEMP_USER_MESSAGE_ID,
       });
     }
-    const { messageMap: frozenMessageMap, sessionId: frozenSessionId } =
+    let { messageMap: frozenMessageMap, sessionId: frozenSessionId } =
       upsertToCompleteMessageMap({
         messages: messageUpdates,
         chatSessionId: currChatSessionId,
@@ -777,14 +778,14 @@ export function ChatPage({
         useExistingUserMessage: isSeededChat,
       });
 
-      const updateFn = (messages: Message[]) => {
+      let updateFn = (messages: Message[]) => {
         const replacementsMap = finalMessage
           ? new Map([
               [messages[0].messageId, TEMP_USER_MESSAGE_ID],
               [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
             ] as [number, number][])
           : null;
-        upsertToCompleteMessageMap({
+        return upsertToCompleteMessageMap({
           messages: messages,
           replacementsMap: replacementsMap,
           completeMessageMapOverride: frozenMessageMap,
@@ -839,20 +840,19 @@ export function ChatPage({
               error = (packet as StreamingError).error;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
-              console.log("MESSAGE INFO");
-              console.log(finalMessage);
-              console.log(TEMP_USER_MESSAGE_ID);
-              console.log(TEMP_ASSISTANT_MESSAGE_ID);
-              console.log(parentMessage);
-              // parentMessage = (packet as unknown as  Message)
 
-              if (!newUserId) {
-                const newUserMessageId =
-                  finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
-                const newAssistantMessageId =
-                  finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+              const newUserMessageId = finalMessage.parent_message!;
+              const newAssistantMessageId = finalMessage.message_id;
 
-                updateFn([
+              if (
+                newUserMessageId !== undefined &&
+                newAssistantMessageId !== undefined
+              ) {
+                // Update the messages with final IDs
+                console.log(
+                  `Settinguser ${newUserMessageId} + assistant ${newAssistantMessageId}`
+                );
+                console.log([
                   {
                     messageId: newUserMessageId,
                     message: currMessage,
@@ -865,23 +865,89 @@ export function ChatPage({
                   },
                   {
                     messageId: newAssistantMessageId,
-                    message: error || answer,
-                    type: error ? "error" : "assistant",
+                    message: answer,
+                    type: "assistant",
                     retrievalType,
-                    query: finalMessage?.rephrased_query || query,
+                    query: finalMessage.rephrased_query || query,
                     documents:
-                      finalMessage?.context_docs?.top_documents || documents,
-                    citations: finalMessage?.citations || {},
-                    files: finalMessage?.files || aiMessageImages || [],
-                    toolCalls: finalMessage?.tool_calls || toolCalls,
+                      finalMessage.context_docs?.top_documents || documents,
+                    citations: finalMessage.citations || {},
+                    files: finalMessage.files || aiMessageImages || [],
+                    toolCalls: finalMessage.tool_calls || toolCalls,
                     parentMessageId: newUserMessageId,
                     alternateAssistantID: alternativeAssistant?.id,
                   },
                 ]);
-              }
-              setIsStreaming(false);
 
-              newUserId = finalMessage.message_id;
+                let {
+                  messageMap: newFrozenMessageMap,
+                  sessionId: newFrozenSessionId,
+                } = updateFn([
+                  {
+                    messageId: newUserMessageId,
+                    message: currMessage,
+                    type: "user",
+                    files: currentMessageFiles,
+                    toolCalls: [],
+                    parentMessageId: parentMessage?.messageId || null,
+                    childrenMessageIds: [newAssistantMessageId],
+                    latestChildMessageId: newAssistantMessageId,
+                  },
+                  {
+                    messageId: newAssistantMessageId,
+                    message: answer,
+                    type: "assistant",
+                    retrievalType,
+                    query: finalMessage.rephrased_query || query,
+                    documents:
+                      finalMessage.context_docs?.top_documents || documents,
+                    citations: finalMessage.citations || {},
+                    files: finalMessage.files || aiMessageImages || [],
+                    toolCalls: finalMessage.tool_calls || toolCalls,
+                    parentMessageId: newUserMessageId,
+                    alternateAssistantID: alternativeAssistant?.id,
+                  },
+                ]);
+
+                // let { messageMap: newFrozenMessageMap, sessionId: newFrozenSessionId } =
+                //   upsertToCompleteMessageMap({
+                //     messages: messageUpdates,
+                //     chatSessionId: currChatSessionId,
+                //   });
+                console.log("new frozen message map");
+                console.log(frozenMessageMap);
+
+                updateFn = (messages: Message[]) => {
+                  const replacementsMap = finalMessage
+                    ? new Map([
+                        [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+                        [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+                      ] as [number, number][])
+                    : null;
+                  return upsertToCompleteMessageMap({
+                    messages: messages,
+                    replacementsMap: replacementsMap,
+                    completeMessageMapOverride: newFrozenMessageMap,
+                    chatSessionId: newFrozenSessionId!,
+                  });
+                };
+
+                // Reset updateFn for future updates
+                // updateFn = (messages: Message[]) => {
+                //   upsertToCompleteMessageMap({
+                //     messages: messages,
+                //     chatSessionId: frozenSessionId!,
+                //   });
+                // };
+
+                setIsStreaming(false);
+                // return
+              } else {
+                console.error(
+                  "Invalid message_id or parent_message in finalMessage"
+                );
+              }
+              finalMessage = null as BackendMessage | null;
             }
 
             if (!Object.hasOwn(packet, "message_id")) {
@@ -890,11 +956,15 @@ export function ChatPage({
               const newAssistantMessageId =
                 finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
 
+              console.log(
+                `Updating user ${newUserMessageId} + assistant ${newAssistantMessageId}`
+              );
+
               updateFn([
                 {
                   messageId: newUserMessageId,
                   message: currMessage,
-                  type: "user",
+                  type: newUserId ? "assistant" : "user",
                   files: currentMessageFiles,
                   toolCalls: [],
                   parentMessageId: parentMessage?.messageId || null,
