@@ -49,6 +49,7 @@ import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 import {
   DislikeFeedbackIcon,
   LikeFeedbackIcon,
+  ToolCallIcon,
 } from "@/components/icons/icons";
 import {
   CustomTooltip,
@@ -59,6 +60,7 @@ import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useMouseTracking } from "./hooks";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import GeneratingImage from "../tools/ImageGeneratingAnimation";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -264,8 +266,6 @@ export const AIMessage = ({
               <div className="w-6" />
             )}
 
-            <p className="text-4xl">{messageId}</p>
-
             <div className="w-full">
               <div className="max-w-message-max break-words">
                 {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
@@ -357,15 +357,7 @@ export const AIMessage = ({
 
                     {toolCall &&
                       toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
-                      !toolCall.tool_result && (
-                        <ToolRunDisplay
-                          toolName={`Generating images`}
-                          toolLogo={
-                            <FiImage size={15} className="my-auto mr-1" />
-                          }
-                          isRunning={!toolCall.tool_result}
-                        />
-                      )}
+                      !toolCall.tool_result && <GeneratingImage />}
 
                     {toolCall &&
                       toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
@@ -396,62 +388,70 @@ export const AIMessage = ({
                                   const { node, ...rest } = props;
                                   const value = rest.children;
 
-                                  if (value?.toString().startsWith("*")) {
-                                    return (
-                                      <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
-                                    );
-                                  } else if (
-                                    value?.toString().startsWith("[")
-                                  ) {
-                                    // for some reason <a> tags cause the onClick to not apply
-                                    // and the links are unclickable
-                                    // TODO: fix the fact that you have to double click to follow link
-                                    // for the first link
-                                    return (
-                                      <Citation
-                                        link={rest?.href}
-                                        key={node?.position?.start?.offset}
-                                      >
-                                        {rest.children}
-                                      </Citation>
-                                    );
-                                  } else {
-                                    return (
-                                      <a
-                                        key={node?.position?.start?.offset}
-                                        onMouseDown={() =>
-                                          rest.href
-                                            ? window.open(rest.href, "_blank")
-                                            : undefined
-                                        }
-                                        className="cursor-pointer text-link hover:text-link-hover"
-                                      >
-                                        {rest.children}
-                                      </a>
-                                    );
-                                  }
-                                },
-
-                                code: (props) => (
-                                  <CodeBlock
-                                    className="w-full"
-                                    {...props}
-                                    content={content as string}
-                                  />
-                                ),
-                                p: ({ node, ...props }) => (
-                                  <p {...props} className="text-default" />
-                                ),
-                              }}
-                              remarkPlugins={[remarkGfm]}
-                              rehypePlugins={[
-                                [rehypePrism, { ignoreMissing: true }],
-                              ]}
-                            >
-                              {finalContent as string}
-                            </ReactMarkdown>
+                                if (value?.toString() == "[tool_call_id]") {
+                                  return (
+                                    <CustomTooltip
+                                      wrap
+                                      content={`Prompt was "fancy cat"`}
+                                    >
+                                      <ToolCallIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
+                                    </CustomTooltip>
+                                  );
+                                } else if (value?.toString().startsWith("*")) {
+                                  return (
+                                    <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
+                                  );
+                                } else if (value?.toString().startsWith("[")) {
+                                  // for some reason <a> tags cause the onClick to not apply
+                                  // and the links are unclickable
+                                  // TODO: fix the fact that you have to double click to follow link
+                                  // for the first link
+                                  return (
+                                    <Citation
+                                      link={rest?.href}
+                                      key={node?.position?.start?.offset}
+                                    >
+                                      {rest.children}
+                                    </Citation>
+                                  );
+                                } else {
+                                  return (
+                                    <a
+                                      key={node?.position?.start?.offset}
+                                      onClick={() =>
+                                        rest.href
+                                          ? window.open(rest.href, "_blank")
+                                          : undefined
+                                      }
+                                      className="cursor-pointer text-link hover:text-link-hover"
+                                    >
+                                      {rest.children}
+                                    </a>
+                                  );
+                                }
+                              },
+                              code: (props) => (
+                                <CodeBlock
+                                  {...props}
+                                  content={content as string}
+                                />
+                              ),
+                              p: ({ node, ...props }) => (
+                                <p {...props} className="text-default" />
+                              ),
+                            }}
+                            remarkPlugins={[remarkGfm]}
+                            rehypePlugins={[
+                              [rehypePrism, { ignoreMissing: true }],
+                            ]}
+                          >
+                            {finalContent +
+                              (toolCall ? " [[tool_call_id]]()" : "")}
+                          </ReactMarkdown>
                           </div>
-                        ) : (
+
+                        )
+                         : (
                           content
                         )}
                       </>
@@ -692,7 +692,6 @@ export const HumanMessage = ({
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />
-            <p className="text-4xl">{messageId}</p>
             <div className="flex justify-end">
               <div className="w-full ml-8 flex w-full max-w-message-max break-words">
                 {isEditing ? (

@@ -195,6 +195,8 @@ class Answer:
         print("HI go")
         maximum_count = 5
         while count <= maximum_count:
+            print(self.message_history)
+            print("HISTORY IS this")
             prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
 
             count += 1
