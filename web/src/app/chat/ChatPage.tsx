@@ -619,6 +619,15 @@ export function ChatPage({
     isSeededChat?: boolean;
     alternativeAssistantOverride?: Persona | null;
   } = {}) => {
+    if (isStreaming) {
+      setPopup({
+        message: "Please wait for the response to complete",
+        type: "error",
+      });
+
+      return;
+    }
+
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
     clientScrollToBottom();
     let currChatSessionId: number;
