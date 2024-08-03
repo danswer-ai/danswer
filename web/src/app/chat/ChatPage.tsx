@@ -376,6 +376,7 @@ export function ChatPage({
   const messageHistory = buildLatestMessageChain(
     completeMessageDetail.messageMap
   );
+  console.log(completeMessageDetail);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -711,6 +712,8 @@ export function ChatPage({
         chatSessionId: currChatSessionId,
       });
 
+    console.log("INITIAL map MESSAGE");
+    console.log(frozenMessageMap);
     // on initial message send, we insert a dummy system message
     // set this as the parent here if no parent is set
     if (!parentMessage && frozenMessageMap.size === 2) {
@@ -785,6 +788,13 @@ export function ChatPage({
               [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
             ] as [number, number][])
           : null;
+
+        console.log("\n\n----Updating previously-----");
+        console.log(messages);
+        console.log(replacementsMap);
+        console.log(frozenMessageMap);
+        console.log("---------");
+
         return upsertToCompleteMessageMap({
           messages: messages,
           replacementsMap: replacementsMap,
@@ -924,6 +934,11 @@ export function ChatPage({
                         [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
                       ] as [number, number][])
                     : null;
+                  console.log("Updating NOW");
+                  console.log(messages);
+                  console.log(replacementsMap);
+                  console.log(newFrozenMessageMap);
+
                   return upsertToCompleteMessageMap({
                     messages: messages,
                     replacementsMap: replacementsMap,
@@ -932,15 +947,8 @@ export function ChatPage({
                   });
                 };
 
-                // Reset updateFn for future updates
-                // updateFn = (messages: Message[]) => {
-                //   upsertToCompleteMessageMap({
-                //     messages: messages,
-                //     chatSessionId: frozenSessionId!,
-                //   });
-                // };
-
                 setIsStreaming(false);
+                // setIsGenerating(false)
                 // return
               } else {
                 console.error(
