@@ -172,7 +172,50 @@ export function SettingsForm() {
     fieldName: keyof Settings,
     checked: boolean
   ) {
-    updateSettingField([{ fieldName, newValue: checked }]);
+    const updates: { fieldName: keyof Settings; newValue: any }[] = [
+      { fieldName, newValue: checked },
+    ];
+
+    // If we're disabling a page, check if we need to update the default page
+    if (
+      !checked &&
+      (fieldName === "search_page_enabled" || fieldName === "chat_page_enabled")
+    ) {
+      const otherPageField =
+        fieldName === "search_page_enabled"
+          ? "chat_page_enabled"
+          : "search_page_enabled";
+      const otherPageEnabled = settings && settings[otherPageField];
+
+      if (
+        otherPageEnabled &&
+        settings?.default_page ===
+          (fieldName === "search_page_enabled" ? "search" : "chat")
+      ) {
+        updates.push({
+          fieldName: "default_page",
+          newValue: fieldName === "search_page_enabled" ? "chat" : "search",
+        });
+      }
+    }
+
+    updateSettingField(updates);
+  }
+
+  function handleDefaultPageChange(value: string) {
+    if (value === "search" && !settings?.search_page_enabled) {
+      updateSettingField([
+        { fieldName: "search_page_enabled", newValue: true },
+        { fieldName: "default_page", newValue: "search" },
+      ]);
+    } else if (value === "chat" && !settings?.chat_page_enabled) {
+      updateSettingField([
+        { fieldName: "chat_page_enabled", newValue: true },
+        { fieldName: "default_page", newValue: "chat" },
+      ]);
+    } else {
+      updateSettingField([{ fieldName: "default_page", newValue: value }]);
+    }
   }
 
   function handleSetChatRetention() {
