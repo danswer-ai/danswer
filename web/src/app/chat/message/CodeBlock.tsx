@@ -56,17 +56,23 @@ export function CodeBlock({
       codeLines.length > 1 &&
       (codeLines[0].startsWith("```") || codeLines[0].trim().startsWith("```"))
     ) {
-      codeLines.shift(); // Remove the first line with the language declaration
+      codeLines.shift();
       if (
         codeLines[codeLines.length - 1] === "```" ||
         codeLines[codeLines.length - 1]?.trim() === "```"
       ) {
-        codeLines.pop(); // Remove the last line with the trailing backticks
+        codeLines.pop();
       }
 
-      // remove leading whitespace from each line for nicer copy/paste experience
-      const trimmedCodeLines = codeLines.map((line) => line.trimStart());
-      codeText = trimmedCodeLines.join("\n");
+      const minIndent = codeLines
+        .filter((line) => line.trim().length > 0)
+        .reduce((min, line) => {
+          const match = line.match(/^\s*/);
+          return Math.min(min, match ? match[0].length : 0);
+        }, Infinity);
+
+      const formattedCodeLines = codeLines.map((line) => line.slice(minIndent));
+      codeText = formattedCodeLines.join("\n");
     }
   }
 
