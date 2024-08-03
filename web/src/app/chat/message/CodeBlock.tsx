@@ -56,12 +56,12 @@ export function CodeBlock({
       codeLines.length > 1 &&
       (codeLines[0].startsWith("```") || codeLines[0].trim().startsWith("```"))
     ) {
-      codeLines.shift();
+      codeLines.shift(); // Remove the first line with the language declaration
       if (
         codeLines[codeLines.length - 1] === "```" ||
         codeLines[codeLines.length - 1]?.trim() === "```"
       ) {
-        codeLines.pop();
+        codeLines.pop(); // Remove the last line with the trailing backticks
       }
 
       const minIndent = codeLines
