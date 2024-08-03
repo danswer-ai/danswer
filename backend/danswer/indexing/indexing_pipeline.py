@@ -270,7 +270,7 @@ def build_indexing_pipeline(
     db_session: Session,
     ignore_time_skip: bool = False,
 ) -> IndexingPipelineProtocol:
-    """Builds a pipline which takes in a list (batch) of docs and indexes them."""
+    """Builds a pipeline which takes in a list (batch) of docs and indexes them."""
 
     return partial(
         index_doc_batch,

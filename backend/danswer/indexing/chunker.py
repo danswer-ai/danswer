@@ -73,6 +73,10 @@ def _get_metadata_suffix_for_document_index(
 
 
 class Chunker:
+    """
+    Chunks documents into smaller chunks for indexing.
+    """
+
     def __init__(
         self,
         embedder: IndexingEmbedder,
@@ -161,7 +165,11 @@ class Chunker:
         title_prefix: str,
         metadata_suffix_semantic: str,
         metadata_suffix_keyword: str,
+        content_token_limit: int,
     ) -> list[DocAwareChunk]:
+        """
+        Loops through sections of the document, adds metadata and converts them into chunks.
+        """
         chunks: list[DocAwareChunk] = []
         link_offsets: dict[int, str] = {}
         chunk_text = ""
@@ -173,9 +181,10 @@ class Chunker:
             current_token_length = len(self.tokenizer.tokenize(chunk_text))
             curr_offset_len = len(shared_precompare_cleanup(chunk_text))
 
-            # Large sections are considered self-contained/unique therefore they start a new chunk and are not concatenated
+            # Large sections are considered self-contained/unique
+            # Therefore, they start a new chunk and are not concatenated
             # at the end by other sections
-            if section_token_length > self.chunk_token_limit:
+            if section_token_length > content_token_limit:
                 if chunk_text:
                     chunks.append(
                         DocAwareChunk(
@@ -207,12 +216,13 @@ class Chunker:
                 chunks.extend(large_section_chunks)
                 continue
 
-            # In the case where the whole section is shorter than a chunk, either adding to chunk or start a new one
+            # In the case where the whole section is shorter than a chunk, either add
+            # to chunk or start a new one
             if (
                 current_token_length
                 + len(self.tokenizer.tokenize(SECTION_SEPARATOR))
                 + section_token_length
-                <= self.chunk_token_limit
+                <= content_token_limit
             ):
                 chunk_text += SECTION_SEPARATOR * bool(chunk_text) + section_text
                 link_offsets[curr_offset_len] = section_link_text
@@ -291,7 +301,11 @@ class Chunker:
             metadata_suffix_semantic = ""
 
         return self._chunk_document(
-            document, title_prefix, metadata_suffix_semantic, metadata_suffix_keyword
+            document,
+            title_prefix,
+            metadata_suffix_semantic,
+            metadata_suffix_keyword,
+            content_token_limit,
         )
 
 
