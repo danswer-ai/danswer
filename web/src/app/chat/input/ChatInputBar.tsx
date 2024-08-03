@@ -496,7 +496,8 @@ export function ChatInputBar({
                   event.key === "Enter" &&
                   !showPrompts &&
                   !showSuggestions &&
-                  !event.shiftKey
+                  !event.shiftKey &&
+                  !(event.nativeEvent as any).isComposing
                 ) {
                   event.preventDefault();
                   if (message) {

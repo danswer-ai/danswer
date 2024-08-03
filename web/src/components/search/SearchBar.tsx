@@ -134,7 +134,11 @@ export const FullSearchBar = ({
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      !(event.nativeEvent as any).isComposing
+    ) {
       onSearch(agentic);
       event.preventDefault();
     }
@@ -258,7 +262,11 @@ export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      !(event.nativeEvent as any).isComposing
+    ) {
       onSearch();
       event.preventDefault();
     }
