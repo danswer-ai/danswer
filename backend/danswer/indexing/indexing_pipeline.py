@@ -191,7 +191,7 @@ def index_doc_batch(
     ]
 
     if ENABLE_MEGA_CHUNK:
-        mega_chunker = get_mega_chunker(embedder)
+        mega_chunker: Chunker = get_mega_chunker(embedder)
         chunks.extend(
             [
                 chunk
