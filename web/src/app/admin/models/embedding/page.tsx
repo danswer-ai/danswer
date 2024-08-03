@@ -347,9 +347,7 @@ function Main() {
       {currentModel ? (
         <>
           <Title className="mt-8 mb-2">Current Embedding Model</Title>
-          <Text>
-            <ModelPreview model={currentModel} />
-          </Text>
+          <ModelPreview model={currentModel} />
         </>
       ) : (
         <Title className="mt-8 mb-4">Choose your Embedding Model</Title>
