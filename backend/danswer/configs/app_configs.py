@@ -269,6 +269,12 @@ ENABLE_MINI_CHUNK = os.environ.get("ENABLE_MINI_CHUNK", "").lower() == "true"
 # Slightly larger since the sentence aware split is a max cutoff so most minichunks will be under MINI_CHUNK_SIZE
 # tokens. But we need it to be at least as big as 1/4th chunk size to avoid having a tiny mini-chunk at the end
 MINI_CHUNK_SIZE = 150
+
+# Adding larger chunks for models that support it
+ENABLE_MEGA_CHUNK = os.environ.get("ENABLE_MEGA_CHUNK", "").lower() == "true"
+# 4x the size of the regular chunk
+MEGA_CHUNK_SIZE = 2048
+
 # Include the document level metadata in each chunk. If the metadata is too long, then it is thrown out
 # We don't want the metadata to overwhelm the actual contents of the chunk
 SKIP_METADATA_IN_CHUNK = os.environ.get("SKIP_METADATA_IN_CHUNK", "").lower() == "true"

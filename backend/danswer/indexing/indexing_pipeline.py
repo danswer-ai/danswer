@@ -4,6 +4,7 @@ from typing import Protocol
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
+from danswer.configs.app_configs import ENABLE_MEGA_CHUNK
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
@@ -21,7 +22,8 @@ from danswer.db.tag import create_or_add_document_tag_list
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.indexing.chunker import Chunker
-from danswer.indexing.chunker import DefaultChunker
+from danswer.indexing.chunker import get_default_chunker
+from danswer.indexing.chunker import get_mega_chunker
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
@@ -114,7 +116,6 @@ def get_doc_ids_to_update(
 @log_function_time()
 def index_doc_batch(
     *,
-    chunker: Chunker,
     embedder: IndexingEmbedder,
     document_index: DocumentIndex,
     document_batch: list[Document],
@@ -182,11 +183,22 @@ def index_doc_batch(
 
     logger.debug("Starting chunking")
     # The embedder is needed here to get the correct tokenizer
+    chunker: Chunker = get_default_chunker(embedder)
     chunks: list[DocAwareChunk] = [
         chunk
         for document in updatable_docs
-        for chunk in chunker.chunk(document=document, embedder=embedder)
+        for chunk in chunker.chunk(document=document)
     ]
+
+    if ENABLE_MEGA_CHUNK:
+        mega_chunker = get_mega_chunker(embedder)
+        chunks.extend(
+            [
+                chunk
+                for document in updatable_docs
+                for chunk in mega_chunker.chunk(document=document)
+            ]
+        )
 
     logger.debug("Starting embedding")
     chunks_with_embeddings = (
@@ -263,15 +275,12 @@ def build_indexing_pipeline(
     embedder: IndexingEmbedder,
     document_index: DocumentIndex,
     db_session: Session,
-    chunker: Chunker | None = None,
     ignore_time_skip: bool = False,
 ) -> IndexingPipelineProtocol:
     """Builds a pipline which takes in a list (batch) of docs and indexes them."""
-    chunker = chunker or DefaultChunker()
 
     return partial(
         index_doc_batch,
-        chunker=chunker,
         embedder=embedder,
         document_index=document_index,
         ignore_time_skip=ignore_time_skip,
