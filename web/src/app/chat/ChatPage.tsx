@@ -207,10 +207,6 @@ export function ChatPage({
       if (chatSessionIdRef.current !== null) {
         setHasPerformedInitialScroll(false);
       }
-
-      if (isStreaming) {
-        setIsCancelled(true);
-      }
     }
 
     async function initialSessionFetch() {
@@ -451,8 +447,6 @@ export function ChatPage({
   const [sharingModalVisible, setSharingModalVisible] =
     useState<boolean>(false);
 
-  // state for cancelling streaming
-  const [isCancelled, setIsCancelled] = useState(false);
   const [aboveHorizon, setAboveHorizon] = useState(false);
 
   const scrollableDivRef = useRef<HTMLDivElement>(null);
@@ -516,11 +510,6 @@ export function ChatPage({
       setHasPerformedInitialScroll(true);
     }, 50);
   };
-
-  const isCancelledRef = useRef<boolean>(isCancelled); // scroll is cancelled
-  useEffect(() => {
-    isCancelledRef.current = isCancelled;
-  }, [isCancelled]);
 
   const distance = 500; // distance that should "engage" the scroll
   const debounce = 100; // time for debouncing
@@ -599,11 +588,6 @@ export function ChatPage({
         for (const packet of packetBunch) {
           stack.push(packet);
         }
-
-        if (isCancelledRef.current) {
-          setIsCancelled(false);
-          break;
-        }
       }
     } catch (error) {
       stack.error = String(error);
@@ -635,6 +619,15 @@ export function ChatPage({
     isSeededChat?: boolean;
     alternativeAssistantOverride?: Persona | null;
   } = {}) => {
+    if (isStreaming) {
+      setPopup({
+        message: "Please wait for the response to complete",
+        type: "error",
+      });
+
+      return;
+    }
+
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
     clientScrollToBottom();
     let currChatSessionId: number;
@@ -872,10 +865,6 @@ export function ChatPage({
                 alternateAssistantID: alternativeAssistant?.id,
               },
             ]);
-          }
-          if (isCancelledRef.current) {
-            setIsCancelled(false);
-            break;
           }
         }
       }
@@ -1614,7 +1603,6 @@ export function ChatPage({
                               setMessage={setMessage}
                               onSubmit={onSubmit}
                               isStreaming={isStreaming}
-                              setIsCancelled={setIsCancelled}
                               filterManager={filterManager}
                               llmOverrideManager={llmOverrideManager}
                               files={currentMessageFiles}

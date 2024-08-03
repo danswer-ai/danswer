@@ -40,7 +40,6 @@ export function ChatInputBar({
   setMessage,
   onSubmit,
   isStreaming,
-  setIsCancelled,
   filterManager,
   llmOverrideManager,
 
@@ -68,7 +67,6 @@ export function ChatInputBar({
   setMessage: (message: string) => void;
   onSubmit: () => void;
   isStreaming: boolean;
-  setIsCancelled: (value: boolean) => void;
   filterManager: FilterManager;
   llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
@@ -328,7 +326,9 @@ export function ChatInputBar({
                 {filteredPrompts.map((currentPrompt, index) => (
                   <button
                     key={index}
-                    className={`px-2 ${tabbingIconIndex == index && "bg-hover"} rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
+                    className={`px-2 ${
+                      tabbingIconIndex == index && "bg-hover"
+                    } rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
                     onClick={() => {
                       updateInputPrompt(currentPrompt);
                     }}
@@ -344,7 +344,9 @@ export function ChatInputBar({
                 <a
                   key={filteredPrompts.length}
                   target="_self"
-                  className={`${tabbingIconIndex == filteredPrompts.length && "bg-hover"} px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
+                  className={`${
+                    tabbingIconIndex == filteredPrompts.length && "bg-hover"
+                  } px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
                   href="/prompts"
                 >
                   <FiPlus size={17} />
@@ -485,7 +487,9 @@ export function ChatInputBar({
               style={{ scrollbarWidth: "thin" }}
               role="textarea"
               aria-multiline
-              placeholder={`Send a message ${!settings?.isMobile ? "or try using @ or /" : ""}`}
+              placeholder={`Send a message ${
+                !settings?.isMobile ? "or try using @ or /" : ""
+              }`}
               value={message}
               onKeyDown={(event) => {
                 if (
@@ -493,12 +497,12 @@ export function ChatInputBar({
                   !showPrompts &&
                   !showSuggestions &&
                   !event.shiftKey &&
-                  message &&
-                  !isStreaming &&
                   !(event.nativeEvent as any).isComposing
                 ) {
-                  onSubmit();
                   event.preventDefault();
+                  if (message) {
+                    onSubmit();
+                  }
                 }
               }}
               suppressContentEditableWarning={true}
@@ -592,19 +596,17 @@ export function ChatInputBar({
               <div
                 className="cursor-pointer"
                 onClick={() => {
-                  if (!isStreaming) {
-                    if (message) {
-                      onSubmit();
-                    }
-                  } else {
-                    setIsCancelled(true);
+                  if (message) {
+                    onSubmit();
                   }
                 }}
               >
                 <SendIcon
                   size={28}
                   className={`text-emphasis text-white p-1 rounded-full ${
-                    message ? "bg-background-800" : "bg-[#D7D7D7]"
+                    message && !isStreaming
+                      ? "bg-background-800"
+                      : "bg-[#D7D7D7]"
                   }`}
                 />
               </div>
