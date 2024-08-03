@@ -340,6 +340,9 @@ export function CCPairIndexingStatusTable({
     setConnectorsToggled(connectors);
     Cookies.set(TOGGLED_CONNECTORS_COOKIE_NAME, JSON.stringify(connectors));
   };
+  const shouldExpand =
+    Object.values(connectorsToggled).filter(Boolean).length <
+    sortedSources.length / 2;
 
   return (
     <div className="-mt-20">
@@ -373,7 +376,7 @@ export function CCPairIndexingStatusTable({
             />
 
             <Button className="h-9" onClick={() => toggleSources()}>
-              Toggle
+              {!shouldExpand ? "Collapse All" : "Expand All"}
             </Button>
           </div>
           {sortedSources.map((source, ind) => {
@@ -451,71 +454,8 @@ export function CCPairIndexingStatusTable({
             }
             return null;
           })}
-          {/* {sortedSources.map((source, ind) => {
-            if (source.toLowerCase().includes(searchTerm.toLowerCase())) {
-              return (
-                <React.Fragment key={ind}>
-                  <div className="mt-4" />
-
-                  <SummaryRow
-                    source={source}
-                    summary={groupSummaries[source]}
-                    isOpen={connectorsToggled[source] || false}
-                    onToggle={() => toggleSource(source)}
-                  />
-
-                  {connectorsToggled[source] && (
-                    <>
-                      <TableRow className="border border-border">
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.first}]`}
-                        >
-                          Name
-                        </TableHeaderCell>
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.fifth}]`}
-                        >
-                          Last Indexed
-                        </TableHeaderCell>
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.second}]`}
-                        >
-                          Activity
-                        </TableHeaderCell>
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.fourth}]`}
-                        >
-                          Public
-                        </TableHeaderCell>
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.sixth}]`}
-                        >
-                          Total Docs
-                        </TableHeaderCell>
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.third}]`}
-                        >
-                          Last Status
-                        </TableHeaderCell>
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.seventh}]`}
-                        ></TableHeaderCell>
-                      </TableRow>
-                      {groupedStatuses[source].map((ccPairsIndexingStatus) => (
-                        <ConnectorRow
-                          key={ccPairsIndexingStatus.cc_pair_id}
-                          ccPairsIndexingStatus={ccPairsIndexingStatus}
-                        />
-                      ))}
-                    </>
-                  )}
-                </React.Fragment>
-              );
-            }
-          })} */}
         </TableBody>
 
-        {/* Padding between table and bottom of page */}
         <div className="invisible w-full pb-40" />
       </Table>
     </div>

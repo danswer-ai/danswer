@@ -148,9 +148,10 @@ function Main({ ccPairId }: { ccPairId: number }) {
         ) : (
           <h1
             onClick={() => startEditing()}
-            className="group text-3xl text-emphasis font-bold"
+            className="group flex cursor-pointer text-3xl text-emphasis gap-x-2 items-center font-bold"
           >
             {ccPair.name}
+            <EditIcon className="group-hover:visible invisible" />
           </h1>
         )}
 
