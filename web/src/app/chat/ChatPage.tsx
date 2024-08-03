@@ -377,6 +377,7 @@ export function ChatPage({
     completeMessageDetail.messageMap
   );
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // uploaded files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
@@ -720,7 +721,7 @@ export function ChatPage({
       : alternativeAssistant?.id || liveAssistant.id;
 
     resetInputBar();
-
+    setIsGenerating(true);
     setIsStreaming(true);
     let answer = "";
     let query: string | null = null;
@@ -838,6 +839,12 @@ export function ChatPage({
               error = (packet as StreamingError).error;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
+              console.log("MESSAGE INFO");
+              console.log(finalMessage);
+              console.log(TEMP_USER_MESSAGE_ID);
+              console.log(TEMP_ASSISTANT_MESSAGE_ID);
+              console.log(parentMessage);
+              // parentMessage = (packet as unknown as  Message)
 
               if (!newUserId) {
                 const newUserMessageId =
@@ -876,11 +883,10 @@ export function ChatPage({
 
               newUserId = finalMessage.message_id;
             }
-            if (!newUserId) {
+
+            if (!Object.hasOwn(packet, "message_id")) {
               const newUserMessageId =
-                newUserId ||
-                finalMessage?.parent_message ||
-                TEMP_USER_MESSAGE_ID;
+                finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
               const newAssistantMessageId =
                 finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
 
@@ -939,6 +945,8 @@ export function ChatPage({
         completeMessageMapOverride: frozenMessageMap,
       });
     }
+    setIsGenerating(false);
+
     setIsStreaming(false);
     if (isNewSession) {
       if (finalMessage) {
@@ -1430,7 +1438,8 @@ export function ChatPage({
                                         parentMessageType == "assistant"
                                       }
                                       hasChildAI={
-                                        childMessageType == "assistant"
+                                        childMessageType == "assistant" ||
+                                        isGenerating
                                       }
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}

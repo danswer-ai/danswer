@@ -74,7 +74,6 @@ class AnswerPromptBuilder:
         self.llm_tokenizer_encode_func = cast(
             Callable[[str], list[int]], llm_tokenizer.encode
         )
-        print("CREATED")
 
     def update_system_prompt(self, system_message: SystemMessage | None) -> None:
         if not system_message:

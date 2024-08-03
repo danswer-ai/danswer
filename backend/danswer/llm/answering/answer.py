@@ -139,6 +139,7 @@ class Answer:
 
         self.answer_style_config = answer_style_config
         self.prompt_config = prompt_config
+        self.current_streamed_output: list = []
 
         self.llm = llm
         self.llm_tokenizer = get_tokenizer(
@@ -190,10 +191,12 @@ class Answer:
     def _raw_output_for_explicit_tool_calling_llms_loop(
         self,
     ) -> Iterator[str | ToolCallKickoff | ToolResponse | ToolCallFinalResult]:
-        prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
         count = 1
-        while count <= 2:
-            print(f"COUNT IS {count}")
+        print("HI go")
+        maximum_count = 5
+        while count <= maximum_count:
+            prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
+
             count += 1
             tool_call_chunk: AIMessageChunk | None = None
 
@@ -207,6 +210,12 @@ class Answer:
                     }
                 ]
             else:
+                logger.critical("---------prompt configs are---------")
+
+                logger.critical("---------Prompt conifg--------")
+                logger.critical(self.prompt_config)
+                logger.critical(self.latest_query_files)
+
                 prompt_builder.update_system_prompt(
                     default_build_system_message(self.prompt_config)
                 )
@@ -222,6 +231,10 @@ class Answer:
                         self.tools, self.force_use_tool
                     )
                 ]
+
+                logger.critical("---------prompt is---------")
+                logger.critical(prompt)
+
                 for message in self.llm.stream(
                     prompt=prompt,
                     tools=final_tool_definitions if final_tool_definitions else None,
@@ -239,12 +252,14 @@ class Answer:
                             yield cast(str, message.content)
 
                 if not tool_call_chunk:
-                    return  # no tool call needed
+                    logger.critical("Skipping the tool calls!")
+                    return
 
             tool_call_requests = tool_call_chunk.tool_calls
+            logger.critical(
+                f"-------------------TOOL CALL REQUESTS ({len(tool_call_requests)})-------------------"
+            )
             for tool_call_request in tool_call_requests:
-                print("\n--------------\n\nITERATING ONCE AGIN!")
-                print(len(tool_call_requests))
                 known_tools_by_name = [
                     tool
                     for tool in self.tools
@@ -304,7 +319,7 @@ class Answer:
                     PreviousMessage(
                         message=str(tool_call_request),
                         message_type=MessageType.ASSISTANT,
-                        token_count=0,  # You may want to implement a token counting method
+                        token_count=10,  # You may want to implement a token counting method
                         tool_calls=[],
                         files=[],
                     )
@@ -313,7 +328,7 @@ class Answer:
                     PreviousMessage(
                         message="\n".join(str(response) for response in tool_responses),
                         message_type=MessageType.SYSTEM,
-                        token_count=0,
+                        token_count=10,
                         tool_calls=[],
                         files=[],
                     )
@@ -340,9 +355,7 @@ class Answer:
                         if hasattr(chunk, "answer_piece")
                         else str(chunk)
                     )
-                    print(f"yielding a chunk {chunk}")
                     yield chunk
-                print("NOW YIELDING FINAL TOKEN")
                 yield "FINAL TOKEN"
 
                 # Update message history with LLM response
@@ -350,7 +363,7 @@ class Answer:
                     PreviousMessage(
                         message=response_content,
                         message_type=MessageType.ASSISTANT,
-                        token_count=0,
+                        token_count=10,
                         tool_calls=[],
                         files=[],  # You may want to implement a token counting method
                     )
@@ -477,12 +490,10 @@ class Answer:
                 doc_id_to_rank_map=map_document_id_order([]),
                 answer_style_configs=self.answer_style_config,
             )
-            # print("STREAMING FOM the  explicit")
 
             yield from process_answer_stream_fn(
                 message_generator_to_string_generator(self.llm.stream(prompt=prompt))
             )
-            # print("DID TH/E exp")
 
     def _raw_output_for_non_explicit_tool_calling_llms(
         self,
@@ -645,6 +656,9 @@ class Answer:
             else self._raw_output_for_non_explicit_tool_calling_llms()
         )
 
+        print(output_generator)
+        self.processing_stream = []
+
         def _process_stream(
             stream: Iterator[ToolCallKickoff | ToolResponse | str],
         ) -> AnswerStream:
@@ -680,12 +694,14 @@ class Answer:
                     yield message
                 else:
                     if message == "FINAL TOKEN":
-                        processed_stream = []
-                        for processed_packet in _process_stream(output_generator):
-                            processed_stream.append(processed_packet)
-                            yield processed_packet
+                        # processed_stream = []
+                        # for processed_packet in _process_stream(output_generator):
+                        #     processed_stream.append(processed_packet)
+                        #     yield processed_packet
+                        # print("DELETIMRING")
 
-                        self.current_streamed_output = processed_stream
+                        self.current_streamed_output = self.processing_stream
+                        self.processing_stream = []
                         yield Delimiter(delimiter=True)
 
                     elif isinstance(message, str):
@@ -693,26 +709,43 @@ class Answer:
                     else:
                         yield message
 
-        processed_stream = []
         for processed_packet in _process_stream(output_generator):
-            processed_stream.append(processed_packet)
+            self.processing_stream.append(processed_packet)
             yield processed_packet
 
-        self._processed_stream = processed_stream
+        self._processed_stream = self.processing_stream
+
+    # @property
+    # def llm_answer(self) -> str:
+    #     answer = ""
+    #     for packet in self.processed_streamed_output:
+    #         if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
+    #             answer += packet.answer_piece
+
+    #     return answer
 
     @property
     def llm_answer(self) -> str:
         answer = ""
-        for packet in self.current_streamed_output:
+        for packet in self.current_streamed_output or self._processed_stream:
             if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
                 answer += packet.answer_piece
 
         return answer
 
+    # @property
+    # def llm_answer(self) -> str:
+    #     answer = ""
+    #     for packet in self.current_streamed_output:
+    #         if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
+    #             answer += packet.answer_piece
+
+    #     return answer
+
     @property
     def citations(self) -> list[CitationInfo]:
         citations: list[CitationInfo] = []
-        for packet in self.processed_streamed_output:
+        for packet in self.current_streamed_output:
             if isinstance(packet, CitationInfo):
                 citations.append(packet)
 
