@@ -202,22 +202,6 @@ export function SettingsForm() {
     updateSettingField(updates);
   }
 
-  function handleDefaultPageChange(value: string) {
-    if (value === "search" && !settings?.search_page_enabled) {
-      updateSettingField([
-        { fieldName: "search_page_enabled", newValue: true },
-        { fieldName: "default_page", newValue: "search" },
-      ]);
-    } else if (value === "chat" && !settings?.chat_page_enabled) {
-      updateSettingField([
-        { fieldName: "chat_page_enabled", newValue: true },
-        { fieldName: "default_page", newValue: "chat" },
-      ]);
-    } else {
-      updateSettingField([{ fieldName: "default_page", newValue: value }]);
-    }
-  }
-
   function handleSetChatRetention() {
     const newValue = chatRetention === "" ? null : parseInt(chatRetention, 10);
     updateSettingField([

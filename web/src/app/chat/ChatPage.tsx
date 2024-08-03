@@ -1226,7 +1226,7 @@ export function ChatPage({
                   duration-300 
                   ease-in-out
                   h-full
-                  ${toggledSidebar || showDocSidebar ? "w-[250px]" : "w-[0px]"}
+                  ${toggledSidebar ? "w-[250px]" : "w-[0px]"}
                   `}
                 />
                 <ChatBanner />
