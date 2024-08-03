@@ -40,7 +40,6 @@ export function ChatInputBar({
   setMessage,
   onSubmit,
   isStreaming,
-  setIsCancelled,
   filterManager,
   llmOverrideManager,
 
@@ -68,7 +67,6 @@ export function ChatInputBar({
   setMessage: (message: string) => void;
   onSubmit: () => void;
   isStreaming: boolean;
-  setIsCancelled: (value: boolean) => void;
   filterManager: FilterManager;
   llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
@@ -492,12 +490,12 @@ export function ChatInputBar({
                   event.key === "Enter" &&
                   !showPrompts &&
                   !showSuggestions &&
-                  !event.shiftKey &&
-                  message &&
-                  !isStreaming
+                  !event.shiftKey
                 ) {
-                  onSubmit();
                   event.preventDefault();
+                  if (message && !isStreaming) {
+                    onSubmit();
+                  }
                 }
               }}
               suppressContentEditableWarning={true}
@@ -591,12 +589,8 @@ export function ChatInputBar({
               <div
                 className="cursor-pointer"
                 onClick={() => {
-                  if (!isStreaming) {
-                    if (message) {
-                      onSubmit();
-                    }
-                  } else {
-                    setIsCancelled(true);
+                  if (!isStreaming && message) {
+                    onSubmit();
                   }
                 }}
               >
