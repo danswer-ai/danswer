@@ -580,6 +580,7 @@ def stream_chat_message_objects(
         document_pruning_config.using_tool_message = explicit_tool_calling_supported(
             llm_provider, llm_model_name
         )
+        tool_has_been_called = False  # TODO remove
 
         # LLM prompt building, response capturing, etc.
         answer = Answer(
@@ -618,6 +619,8 @@ def stream_chat_message_objects(
         tool_result = None
         for packet in answer.processed_streamed_output:
             if isinstance(packet, ToolResponse):
+                tool_has_been_called = True
+
                 if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                     (
                         qa_docs_response,
@@ -689,7 +692,6 @@ def stream_chat_message_objects(
 
             else:
                 if isinstance(packet, Delimiter):
-                    print("IN THE DELIMIING THING")
                     db_citations = None
 
                     if reference_db_search_docs:
@@ -703,33 +705,20 @@ def stream_chat_message_objects(
                     for tool_id, tool_list in tool_dict.items():
                         for tool in tool_list:
                             tool_name_to_tool_id[tool.name] = tool_id
-                    print("GOT THE TOOLS")
 
-                    rephrased_query = (
-                        qa_docs_response.rephrased_query if qa_docs_response else None
-                    )
-                    print("Defined rephrased_query")
-
-                    reference_docs = reference_db_search_docs
-                    print("Defined reference_docs")
-
-                    files = ai_message_files
-                    print("Defined files")
-
-                    token_count = len(llm_tokenizer_encode_func(answer.llm_answer))
-                    print("Defined token_count")
-
-                    citations = db_citations
-                    print("Defined citations")
-
-                    message = answer.llm_answer
-                    print("Defined message")
-
-                    error = None
-                    print("Defined error")
-
-                    tool_calls = (
-                        [
+                    gen_ai_response_message = partial_response(
+                        message=answer.llm_answer,
+                        rephrased_query=(
+                            qa_docs_response.rephrased_query
+                            if qa_docs_response
+                            else None
+                        ),
+                        reference_docs=reference_db_search_docs,
+                        files=ai_message_files,
+                        token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
+                        citations=db_citations,
+                        error=None,
+                        tool_calls=[
                             ToolCall(
                                 tool_id=tool_name_to_tool_id[tool_result.tool_name],
                                 tool_name=tool_result.tool_name,
@@ -738,55 +727,17 @@ def stream_chat_message_objects(
                             )
                         ]
                         if tool_result
-                        else []
+                        else [],
                     )
-                    print("Defined tool_calls")
-
-                    gen_ai_response_message = partial_response(
-                        message=message,
-                        rephrased_query=rephrased_query,
-                        reference_docs=reference_docs,
-                        files=files,
-                        token_count=token_count,
-                        citations=citations,
-                        error=error,
-                        tool_calls=tool_calls,
-                    )
-                    print("Created gen_ai_response_message")
-                    # gen_ai_response_message = partial_response(
-                    #     message=answer.llm_answer,
-                    #     rephrased_query=(
-                    #         qa_docs_response.rephrased_query if qa_docs_response else None
-                    #     ),
-                    #     reference_docs=reference_db_search_docs,
-                    #     files=ai_message_files,
-                    #     token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
-                    #     citations=db_citations,
-                    #     error=None,
-                    #     tool_calls=[
-                    #         ToolCall(
-                    #             tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                    #             tool_name=tool_result.tool_name,
-                    #             tool_arguments=tool_result.tool_args,
-                    #             tool_result=tool_result.tool_result,
-                    #         )
-                    #     ]
-                    #     if tool_result
-                    #     else [],
-                    # )
-                    print("saving message")
 
                     db_session.commit()  # actually save user / assistant message
-                    print("mssag commited")
 
                     msg_detail_response = translate_db_message_to_chat_message_detail(
                         gen_ai_response_message
                     )
-                    print("message response")
 
                     yield msg_detail_response
                     yield Delimiter(delimiter=True)
-                    print("YIELDED NOW")
                     partial_response = partial(
                         create_new_chat_message,
                         chat_session_id=chat_session_id,
@@ -824,54 +775,54 @@ def stream_chat_message_objects(
         db_session.rollback()
         return
 
-    # Post-LLM answer processing
-    # try:
-    #     db_citations = None
-    #     if reference_db_search_docs:
-    #         db_citations = translate_citations(
-    #             citations_list=answer.citations,
-    #             db_docs=reference_db_search_docs,
-    #         )
+    if not tool_has_been_called:
+        try:
+            db_citations = None
+            if reference_db_search_docs:
+                db_citations = translate_citations(
+                    citations_list=answer.citations,
+                    db_docs=reference_db_search_docs,
+                )
 
-    #     # Saving Gen AI answer and responding with message info
-    #     tool_name_to_tool_id: dict[str, int] = {}
-    #     for tool_id, tool_list in tool_dict.items():
-    #         for tool in tool_list:
-    #             tool_name_to_tool_id[tool.name] = tool_id
+            # Saving Gen AI answer and responding with message info
+            tool_name_to_tool_id: dict[str, int] = {}
+            for tool_id, tool_list in tool_dict.items():
+                for tool in tool_list:
+                    tool_name_to_tool_id[tool.name] = tool_id
 
-    #     gen_ai_response_message = partial_response(
-    #         message=answer.llm_answer,
-    #         rephrased_query=(
-    #             qa_docs_response.rephrased_query if qa_docs_response else None
-    #         ),
-    #         reference_docs=reference_db_search_docs,
-    #         files=ai_message_files,
-    #         token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
-    #         citations=db_citations,
-    #         error=None,
-    #         tool_calls=[
-    #             ToolCall(
-    #                 tool_id=tool_name_to_tool_id[tool_result.tool_name],
-    #                 tool_name=tool_result.tool_name,
-    #                 tool_arguments=tool_result.tool_args,
-    #                 tool_result=tool_result.tool_result,
-    #             )
-    #         ]
-    #         if tool_result
-    #         else [],
-    #     )
-    #     db_session.commit()  # actually save user / assistant message
+            gen_ai_response_message = partial_response(
+                message=answer.llm_answer,
+                rephrased_query=(
+                    qa_docs_response.rephrased_query if qa_docs_response else None
+                ),
+                reference_docs=reference_db_search_docs,
+                files=ai_message_files,
+                token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
+                citations=db_citations,
+                error=None,
+                tool_calls=[
+                    ToolCall(
+                        tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                        tool_name=tool_result.tool_name,
+                        tool_arguments=tool_result.tool_args,
+                        tool_result=tool_result.tool_result,
+                    )
+                ]
+                if tool_result
+                else [],
+            )
+            db_session.commit()  # actually save user / assistant message
 
-    #     msg_detail_response = translate_db_message_to_chat_message_detail(
-    #         gen_ai_response_message
-    #     )
+            msg_detail_response = translate_db_message_to_chat_message_detail(
+                gen_ai_response_message
+            )
 
-    #     yield msg_detail_response
-    except Exception as e:
-        logger.exception(e)
+            yield msg_detail_response
+        except Exception as e:
+            logger.exception(e)
 
-        # Frontend will erase whatever answer and show this instead
-        yield StreamingError(error="Failed to parse LLM output")
+            # Frontend will erase whatever answer and show this instead
+            yield StreamingError(error="Failed to parse LLM output")
 
 
 @log_generator_function_time()
