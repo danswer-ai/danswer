@@ -45,7 +45,7 @@ personas:
   - id: 1
     name: "General"
     description: >
-      Assistant with no access to documents. Chat with just the Language Model.
+      Assistant with no access to documents. Chat with just the Large Language Model.
     prompts:
       - "OnlyLLM"
     num_chunks: 0
@@ -78,7 +78,7 @@ personas:
   - id: 3
     name: "Art"
     description: >
-      Assistant capable of generating images based on text descriptions.
+      Assistant for generating images based on descriptions.
     prompts:
       - "ImageGeneration"
     num_chunks: 0
