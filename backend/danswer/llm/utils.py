@@ -1,20 +1,23 @@
+import base64
 import json
 from collections.abc import Callable
 from collections.abc import Iterator
 from typing import Any
 from typing import cast
+from typing import List
 from typing import TYPE_CHECKING
 from typing import Union
 
 import litellm  # type: ignore
+import requests
 import tiktoken
 from langchain.prompts.base import StringPromptValue
 from langchain.prompts.chat import ChatPromptValue
+from langchain.schema import AIMessage
+from langchain.schema import BaseMessage
+from langchain.schema import HumanMessage
 from langchain.schema import PromptValue
 from langchain.schema.language_model import LanguageModelInput
-from langchain.schema.messages import AIMessage
-from langchain.schema.messages import BaseMessage
-from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
 from danswer.configs.constants import MessageType
@@ -79,6 +82,71 @@ def translate_danswer_msg_to_langchain(
         return HumanMessage(content=content)
 
     raise ValueError(f"New message type {msg.message_type} not handled")
+
+
+def translate_history_to_basemessages_with_images(
+    history: Union[List[ChatMessage], List["PreviousMessage"]]
+) -> tuple[List[BaseMessage], List[int]]:
+    history_basemessages = []
+    history_token_counts = []
+    image_generation_count = 0
+    print("IIIII")
+
+    def url_to_base64(url: str) -> str:
+        response = requests.get(url)
+        if response.status_code == 200:
+            image_data = response.content
+            base64_data = base64.b64encode(image_data).decode("utf-8")
+            mime_type = response.headers.get("Content-Type", "image/png")
+            return f"data:{mime_type};base64,{base64_data}"
+        else:
+            raise ValueError(f"Failed to fetch image from URL: {url}")
+
+    for msg in history:
+        if msg.token_count != 0:
+            translated_msg = translate_danswer_msg_to_langchain(
+                msg, image_generation_count
+            )
+
+            if isinstance(translated_msg.content, list):
+                print("TEH CONTENT IS THIS (list)")
+                print(translated_msg.content)
+                print(type(translated_msg.content))
+
+                print()
+                new_content = []
+                for item in translated_msg.content:
+                    if isinstance(item, dict) and "image_url" in item:
+                        print("TRANSLATING IMAGE")
+                        item["image_url"]["url"] = url_to_base64(
+                            item["image_url"]["url"]
+                        )
+                    new_content.append(item)
+                translated_msg.content = new_content
+
+            if (
+                isinstance(translated_msg.content, str)
+                and "[ImageGenerationRe" in translated_msg.content
+            ):
+                image_generation_count += 1
+
+            history_basemessages.append(translated_msg)
+            history_token_counts.append(msg.token_count)
+
+    # Add a generic summary message at the end
+    summary = "[CONVERSATION SUMMARY]\n"
+    summary += "The most recent user request may involve generating additional images. "
+    summary += "I should carefully review the conversation history and the latest user request "
+    summary += (
+        "to determine if any new images need to be generated, ensuring I don't repeat "
+    )
+    summary += "any image generations that have already been completed.\n"
+    summary += f"I already generated {image_generation_count} images thus far."
+    summary += "[/CONVERSATION SUMMARY]"
+    history_basemessages.append(AIMessage(content=summary))
+    history_token_counts.append(100)
+
+    return history_basemessages, history_token_counts
 
 
 def translate_history_to_basemessages(
