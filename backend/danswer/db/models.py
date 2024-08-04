@@ -1153,7 +1153,9 @@ class Persona(Base):
     # controls the ordering of personas in the UI
     # higher priority personas are displayed first, ties are resolved by the ID,
     # where lower value IDs (e.g. created earlier) are displayed first
-    display_priority: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
+    display_priority: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, default=None
+    )
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
 
     uploaded_image_id: Mapped[str | None] = mapped_column(String, nullable=True)
