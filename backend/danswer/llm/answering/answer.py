@@ -338,6 +338,10 @@ class Answer:
 
                 # Generate response based on updated message history
                 prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
+                print("GETTIN GHTE ANSWER???")
+
+                print(prompt)
+                prompt[-1]["content"] = [prompt[-1].content[0]]
                 process_answer_stream_fn = _get_answer_stream_processor(
                     context_docs=[],
                     doc_id_to_rank_map=map_document_id_order([]),

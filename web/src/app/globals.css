@@ -97,6 +97,28 @@
   }
 }
 
+@keyframes custom-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(180deg);
+  }
+  50% {
+    transform: rotate(270deg);
+  }
+  75% {
+    transform: rotate(315deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.generating-spin {
+  animation: custom-spin 2s cubic-bezier(0.4, 0.2, 0.6, 0.8) infinite;
+}
+
 .collapsible {
   max-height: 300px;
   transition:

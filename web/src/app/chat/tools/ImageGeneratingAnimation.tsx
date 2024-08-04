@@ -1,10 +1,8 @@
-import React from "react";
-
 export default function GeneratingImage() {
   return (
     <div className="object-cover object-center border border-neutral-200 bg-neutral-100 items-center justify-center overflow-hidden flex rounded-lg w-96 h-96 transition-opacity duration-300 opacity-100">
       <div className="m-auto relative flex">
-        <div className="w-16 h-16 border-4 border-gray-200 rounded-full animate-spin border-t-gray-800"></div>
+        <div className="w-16 h-16 border-4 border-gray-200 rounded-full generating-spin border-t-gray-800"></div>
         <div className="absolute inset-0 flex items-center justify-center">
           <svg
             className="w-6 h-6 text-neutral-500 animate-pulse"
