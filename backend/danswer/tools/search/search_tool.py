@@ -279,10 +279,11 @@ class SearchTool(Tool):
                 ]
             ),
         )
+        vals = search_pipeline.section_relevance
 
         yield ToolResponse(
             id=SECTION_RELEVANCE_LIST_ID,
-            response=search_pipeline.section_relevance,
+            response=vals,
         )
 
         final_context_sections = search_pipeline.final_context_sections

@@ -134,9 +134,6 @@ export const SearchResultsDisplay = ({
     documents || [],
     searchResponse.selectedDocIndices || []
   );
-  console.log(searchResponse);
-  console.log(searchResponse.additional_relevance);
-
   const relevantDocs = documents
     ? documents.filter((doc) => {
         return (
@@ -235,9 +232,6 @@ export const SearchResultsDisplay = ({
               searchResponse.additional_relevance
                 ? searchResponse.additional_relevance[document.document_id]
                 : null;
-            console.log(relevance?.relevant);
-            console.log(searchResponse.additional_relevance);
-            console.log(document.document_id);
 
             return agenticResults ? (
               <AgenticDocumentDisplay
