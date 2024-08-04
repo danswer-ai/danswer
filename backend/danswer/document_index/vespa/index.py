@@ -39,6 +39,7 @@ from danswer.configs.constants import DOCUMENT_SETS
 from danswer.configs.constants import EMBEDDINGS
 from danswer.configs.constants import HIDDEN
 from danswer.configs.constants import INDEX_SEPARATOR
+from danswer.configs.constants import MEGA_CHUNK_REFERENCE_IDS
 from danswer.configs.constants import METADATA
 from danswer.configs.constants import METADATA_LIST
 from danswer.configs.constants import METADATA_SUFFIX
@@ -362,6 +363,7 @@ def _index_vespa_chunk(
         SOURCE_LINKS: json.dumps(chunk.source_links),
         SEMANTIC_IDENTIFIER: remove_invalid_unicode_chars(document.semantic_identifier),
         SECTION_CONTINUATION: chunk.section_continuation,
+        MEGA_CHUNK_REFERENCE_IDS: chunk.mega_chunk_reference_ids,
         METADATA: json.dumps(document.metadata),
         # Save as a list for efficient extraction as an Attribute
         METADATA_LIST: chunk.source_document.get_metadata_str_attributes(),
@@ -620,6 +622,7 @@ def _vespa_hit_to_inference_chunk(
         hidden=fields.get(HIDDEN, False),
         primary_owners=fields.get(PRIMARY_OWNERS),
         secondary_owners=fields.get(SECONDARY_OWNERS),
+        mega_chunk_reference_ids=fields.get(MEGA_CHUNK_REFERENCE_IDS, []),
         metadata=metadata,
         metadata_suffix=fields.get(METADATA_SUFFIX),
         match_highlights=match_highlights,
@@ -736,6 +739,7 @@ class VespaIndex(DocumentIndex):
         f"{DOC_UPDATED_AT}, "
         f"{PRIMARY_OWNERS}, "
         f"{SECONDARY_OWNERS}, "
+        f"{MEGA_CHUNK_REFERENCE_IDS}, "
         f"{METADATA}, "
         f"{METADATA_SUFFIX}, "
         f"{CONTENT_SUMMARY} "

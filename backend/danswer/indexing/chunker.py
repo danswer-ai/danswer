@@ -89,17 +89,20 @@ class Chunker:
     ) -> None:
         from llama_index.text_splitter import SentenceSplitter
 
+        self.include_metadata = include_metadata
+        self.chunk_token_limit = chunk_token_limit
+
         self.tokenizer = get_tokenizer(
             model_name=embedder.model_name,
             provider_type=embedder.provider_type,
         )
+
         self.blurb_splitter = SentenceSplitter(
             tokenizer=self.tokenizer.tokenize,
             chunk_size=blurb_size,
             chunk_overlap=0,
         )
 
-        self.chunk_token_limit = chunk_token_limit
         self.chunk_splitter = SentenceSplitter(
             tokenizer=self.tokenizer.tokenize,
             chunk_size=chunk_token_limit,
@@ -116,8 +119,6 @@ class Chunker:
             else None
         )
 
-        self.include_metadata = include_metadata
-
     def _extract_blurb(self, text: str) -> str:
         texts = self.blurb_splitter.split_text(text)
         if not texts:
@@ -128,36 +129,6 @@ class Chunker:
         if self.mini_chunk_splitter and chunk_text.strip():
             return self.mini_chunk_splitter.split_text(chunk_text)
         return None
-
-    def _chunk_large_section(
-        self,
-        section_text: str,
-        section_link_text: str,
-        document: Document,
-        start_chunk_id: int,
-        blurb: str,
-        title_prefix: str,
-        metadata_suffix_semantic: str,
-        metadata_suffix_keyword: str,
-    ) -> list[DocAwareChunk]:
-        split_texts = self.chunk_splitter.split_text(section_text)
-
-        chunks = [
-            DocAwareChunk(
-                source_document=document,
-                chunk_id=start_chunk_id + chunk_ind,
-                blurb=blurb,
-                content=chunk_text,
-                source_links={0: section_link_text},
-                section_continuation=(chunk_ind != 0),
-                title_prefix=title_prefix,
-                metadata_suffix_semantic=metadata_suffix_semantic,
-                metadata_suffix_keyword=metadata_suffix_keyword,
-                mini_chunk_texts=self._get_mini_chunk_texts(chunk_text),
-            )
-            for chunk_ind, chunk_text in enumerate(split_texts)
-        ]
-        return chunks
 
     def _chunk_document(
         self,
@@ -173,74 +144,65 @@ class Chunker:
         chunks: list[DocAwareChunk] = []
         link_offsets: dict[int, str] = {}
         chunk_text = ""
+
+        def _create_chunk(
+            text: str,
+            links: dict[int, str],
+            is_continuation: bool = False,
+        ) -> DocAwareChunk:
+            return DocAwareChunk(
+                source_document=document,
+                chunk_id=len(chunks),
+                blurb=self._extract_blurb(text),
+                content=text,
+                source_links=links or {0: ""},
+                section_continuation=is_continuation,
+                title_prefix=title_prefix,
+                metadata_suffix_semantic=metadata_suffix_semantic,
+                metadata_suffix_keyword=metadata_suffix_keyword,
+                mini_chunk_texts=self._get_mini_chunk_texts(text),
+            )
+
         for section in document.sections:
             section_text = section.text
             section_link_text = section.link or ""
 
-            section_token_length = len(self.tokenizer.tokenize(section_text))
-            current_token_length = len(self.tokenizer.tokenize(chunk_text))
-            curr_offset_len = len(shared_precompare_cleanup(chunk_text))
+            section_token_count = len(self.tokenizer.tokenize(section_text))
 
             # Large sections are considered self-contained/unique
             # Therefore, they start a new chunk and are not concatenated
             # at the end by other sections
-            if section_token_length > content_token_limit:
+            if section_token_count > content_token_limit:
                 if chunk_text:
-                    chunks.append(
-                        DocAwareChunk(
-                            source_document=document,
-                            chunk_id=len(chunks),
-                            blurb=self._extract_blurb(chunk_text),
-                            content=chunk_text,
-                            source_links=link_offsets,
-                            section_continuation=False,
-                            title_prefix=title_prefix,
-                            metadata_suffix_semantic=metadata_suffix_semantic,
-                            metadata_suffix_keyword=metadata_suffix_keyword,
-                            mini_chunk_texts=self._get_mini_chunk_texts(chunk_text),
-                        )
-                    )
+                    chunks.append(_create_chunk(chunk_text, link_offsets))
                     link_offsets = {}
                     chunk_text = ""
 
-                large_section_chunks = self._chunk_large_section(
-                    section_text=section_text,
-                    section_link_text=section_link_text,
-                    document=document,
-                    start_chunk_id=len(chunks),
-                    blurb=self._extract_blurb(section_text),
-                    title_prefix=title_prefix,
-                    metadata_suffix_semantic=metadata_suffix_semantic,
-                    metadata_suffix_keyword=metadata_suffix_keyword,
-                )
-                chunks.extend(large_section_chunks)
+                split_texts = self.chunk_splitter.split_text(section_text)
+                for i, split_text in enumerate(split_texts):
+                    chunks.append(
+                        _create_chunk(
+                            text=split_text,
+                            links={0: section_link_text},
+                            is_continuation=(i != 0),
+                        )
+                    )
                 continue
 
+            current_token_count = len(self.tokenizer.tokenize(chunk_text))
+            current_offset = len(shared_precompare_cleanup(chunk_text))
             # In the case where the whole section is shorter than a chunk, either add
             # to chunk or start a new one
-            if (
-                current_token_length
-                + len(self.tokenizer.tokenize(SECTION_SEPARATOR))
-                + section_token_length
-                <= content_token_limit
-            ):
-                chunk_text += SECTION_SEPARATOR * bool(chunk_text) + section_text
-                link_offsets[curr_offset_len] = section_link_text
+            next_section_tokens = (
+                len(self.tokenizer.tokenize(SECTION_SEPARATOR)) + section_token_count
+            )
+            if next_section_tokens + current_token_count <= content_token_limit:
+                if chunk_text:
+                    chunk_text += SECTION_SEPARATOR
+                chunk_text += section_text
+                link_offsets[current_offset] = section_link_text
             else:
-                chunks.append(
-                    DocAwareChunk(
-                        source_document=document,
-                        chunk_id=len(chunks),
-                        blurb=self._extract_blurb(chunk_text),
-                        content=chunk_text,
-                        source_links=link_offsets,
-                        section_continuation=False,
-                        title_prefix=title_prefix,
-                        metadata_suffix_semantic=metadata_suffix_semantic,
-                        metadata_suffix_keyword=metadata_suffix_keyword,
-                        mini_chunk_texts=self._get_mini_chunk_texts(chunk_text),
-                    )
-                )
+                chunks.append(_create_chunk(chunk_text, link_offsets))
                 link_offsets = {0: section_link_text}
                 chunk_text = section_text
 
@@ -248,20 +210,7 @@ class Chunker:
         # If there is only whitespace left then don't include it. If there are no chunks at all
         # from the doc, we can just create a single chunk with the title.
         if chunk_text.strip() or not chunks:
-            chunks.append(
-                DocAwareChunk(
-                    source_document=document,
-                    chunk_id=len(chunks),
-                    blurb=self._extract_blurb(chunk_text),
-                    content=chunk_text,
-                    source_links=link_offsets,
-                    section_continuation=False,
-                    title_prefix=title_prefix,
-                    metadata_suffix_semantic=metadata_suffix_semantic,
-                    metadata_suffix_keyword=metadata_suffix_keyword,
-                    mini_chunk_texts=self._get_mini_chunk_texts(chunk_text),
-                )
-            )
+            chunks.append(_create_chunk(chunk_text, link_offsets))
 
         # If the chunk does not have any useable content, it will not be indexed
         return chunks
@@ -332,3 +281,52 @@ def get_mega_chunker(embedder: IndexingEmbedder) -> Chunker:
             chunk_overlap=0,
         )
     return _MEGA_CHUNKER
+
+
+def connect_mega_chunks(
+    chunks: list[DocAwareChunk], mega_chunks: list[DocAwareChunk]
+) -> list[DocAwareChunk]:
+    """
+    this takes a list of chunks and a list of mega chunks that are from the same source docuement,
+    compares the doc_text_ranges of each chunk and mega chunk,
+    and points the mega chunk to the chunk that it is a part of the same document and text range.
+    Assumptions:
+    - The chunks are in order
+    - The mega chunks are in order
+    - The mega chunks are not overlapping
+    - The chunks and mega chunks are from the same document
+    """
+    chunk_text_length = 0
+    mega_chunk_text_length = 0
+    chunk_index = 0
+
+    for i, mega_chunk in enumerate(mega_chunks):
+        mega_chunk.mega_chunk_reference_ids = []
+        if chunk_text_length != mega_chunk_text_length:
+            mega_chunk.mega_chunk_reference_ids.append(chunk_index - 1)
+
+        # Add one to put a gap between the chunks from the default chunker
+        # so combining chunks doesn't include the mega chunks
+        mega_chunk.chunk_id = len(chunks) + i + 1
+
+        # Add the length of the mega chunk content
+        mega_chunk_text_length += len(mega_chunk.content)
+        # Subtract the length of the section seperators
+        if mega_chunk.source_links:
+            mega_chunk_text_length -= (len(mega_chunk.source_links) - 1) * len(
+                SECTION_SEPARATOR
+            )
+
+        while chunk_text_length < mega_chunk_text_length:
+            if chunk_index >= len(chunks):
+                break
+            chunk_text_length += len(chunks[chunk_index].content)
+            if chunks[chunk_index].source_links:
+                chunk_text_length -= (len(chunks[chunk_index].source_links) - 1) * len(
+                    SECTION_SEPARATOR
+                )
+            chunk_text_length -= CHUNK_OVERLAP
+            mega_chunk.mega_chunk_reference_ids.append(chunk_index)
+            chunk_index += 1
+
+    return mega_chunks

@@ -195,6 +195,7 @@ class InferenceChunk(BaseChunk):
 
 class InferenceChunkUncleaned(InferenceChunk):
     metadata_suffix: str | None
+    mega_chunk_reference_ids: list[int] | None
 
     def to_inference_chunk(self) -> InferenceChunk:
         # Create a dict of all fields except 'metadata_suffix'

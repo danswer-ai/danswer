@@ -46,6 +46,8 @@ class DocAwareChunk(BaseChunk):
 
     mini_chunk_texts: list[str] | None
 
+    mega_chunk_reference_ids: list[int] | None
+
     def to_short_descriptor(self) -> str:
         """Used when logging the identity of a chunk"""
         return (
