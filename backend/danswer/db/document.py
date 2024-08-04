@@ -311,7 +311,7 @@ def acquire_document_locks(db_session: Session, document_ids: list[str]) -> bool
 
 
 _NUM_LOCK_ATTEMPTS = 10
-_LOCK_RETRY_DELAY = 30
+_LOCK_RETRY_DELAY = 10
 
 
 @contextlib.contextmanager
