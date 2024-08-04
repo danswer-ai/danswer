@@ -202,6 +202,19 @@ export async function fetchChatData(searchParams: {
     assistants = assistants.filter((assistant) => assistant.num_chunks === 0);
   }
 
+  const hasOpenAIProvider = llmProviders.some(
+    (provider) => provider.provider === "openai"
+  );
+  if (!hasOpenAIProvider) {
+    assistants = assistants.filter(
+      (assistant) =>
+        !assistant.tools.some(
+          (tool) => tool.in_code_tool_id === "ImageGenerationTool"
+        )
+    );
+  }
+  // // TODO check for image capabilities and enable if so
+
   let folders: Folder[] = [];
   if (foldersResponse?.ok) {
     folders = (await foldersResponse.json()).folders as Folder[];

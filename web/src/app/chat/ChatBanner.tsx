@@ -16,10 +16,12 @@ export function ChatBanner() {
       className={`
         mt-8
         mb-2
+        p-1
         mx-2
         z-[39] 
-        w-full
-        h-[30px]
+        text-wrap
+        w-[500px]
+        mx-auto
         bg-background-100
         shadow-sm
         rounded
@@ -30,7 +32,7 @@ export function ChatBanner() {
       <div className="mx-auto text-emphasis text-sm flex flex-col">
         <div className="my-auto">
           <ReactMarkdown
-            className="prose max-w-full"
+            className="prose flex text-wrap break-all text-wrap max-w-full"
             components={{
               a: ({ node, ...props }) => (
                 <a
@@ -40,7 +42,12 @@ export function ChatBanner() {
                   rel="noopener noreferrer"
                 />
               ),
-              p: ({ node, ...props }) => <p {...props} className="text-sm" />,
+              p: ({ node, ...props }) => (
+                <p
+                  {...props}
+                  className="text-wrap break-all line-clamp-3 text-sm"
+                />
+              ),
             }}
             remarkPlugins={[remarkGfm]}
           >

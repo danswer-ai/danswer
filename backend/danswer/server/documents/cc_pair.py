@@ -72,6 +72,28 @@ def get_cc_pair_full_info(
     )
 
 
+@router.put("/admin/cc-pair/{cc_pair_id}/name")
+def update_cc_pair_name(
+    cc_pair_id: int,
+    new_name: str,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse[int]:
+    cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
+    if not cc_pair:
+        raise HTTPException(status_code=404, detail="CC Pair not found")
+
+    try:
+        cc_pair.name = new_name
+        db_session.commit()
+        return StatusResponse(
+            success=True, message="Name updated successfully", data=cc_pair_id
+        )
+    except IntegrityError:
+        db_session.rollback()
+        raise HTTPException(status_code=400, detail="Name must be unique")
+
+
 @router.put("/connector/{connector_id}/credential/{credential_id}")
 def associate_credential_to_connector(
     connector_id: int,

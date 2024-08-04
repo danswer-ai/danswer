@@ -170,10 +170,8 @@ def create_connector(env_name: str, file_paths: list[str]) -> int:
     )
 
     body = connector.dict()
-    print("body:", body)
     response = requests.post(url, headers=GENERAL_HEADERS, json=body)
     if response.status_code == 200:
-        print("Connector created successfully:", response.json())
         return response.json()["id"]
     else:
         raise RuntimeError(response.__dict__)

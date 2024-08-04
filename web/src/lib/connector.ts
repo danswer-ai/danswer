@@ -24,6 +24,21 @@ export async function createConnector<T>(
   return handleResponse(response);
 }
 
+export async function updateConnectorCredentialPairName(
+  ccPairId: number,
+  newName: string
+): Promise<Response> {
+  return fetch(
+    `/api/manage/admin/cc-pair/${ccPairId}/name?new_name=${encodeURIComponent(newName)}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+}
+
 export async function updateConnector<T>(
   connector: Connector<T>
 ): Promise<Connector<T>> {

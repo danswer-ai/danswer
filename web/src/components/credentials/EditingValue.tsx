@@ -14,6 +14,7 @@ export const EditingValue: React.FC<{
   optional?: boolean;
   description?: string;
   setFieldValue: (field: string, value: any) => void;
+  showNever?: boolean;
 
   // These are escape hatches from the overall
   // value editing component (when need to modify)
@@ -31,7 +32,7 @@ export const EditingValue: React.FC<{
   description,
   optional,
   setFieldValue,
-
+  showNever,
   onChange,
   onChangeBool,
   onChangeNumber,
@@ -116,7 +117,11 @@ export const EditingValue: React.FC<{
                 type="number"
                 name={name}
                 value={value as number}
-                placeholder={currentValue}
+                placeholder={
+                  currentValue === 0 && showNever
+                    ? "Never"
+                    : currentValue?.toString()
+                }
                 onChange={(e) => {
                   const inputValue = e.target.value;
                   if (inputValue === "") {

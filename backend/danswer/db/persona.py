@@ -336,6 +336,8 @@ def upsert_persona(
     icon_color: str | None = None,
     icon_shape: int | None = None,
     uploaded_image_id: str | None = None,
+    display_priority: int | None = None,
+    is_visible: bool = True,
 ) -> Persona:
     if persona_id is not None:
         persona = db_session.query(Persona).filter_by(id=persona_id).first()
@@ -394,6 +396,8 @@ def upsert_persona(
         persona.icon_color = icon_color
         persona.icon_shape = icon_shape
         persona.uploaded_image_id = uploaded_image_id
+        persona.display_priority = display_priority
+        persona.is_visible = is_visible
 
         # Do not delete any associations manually added unless
         # a new updated list is provided
@@ -429,6 +433,8 @@ def upsert_persona(
             icon_shape=icon_shape,
             icon_color=icon_color,
             uploaded_image_id=uploaded_image_id,
+            display_priority=display_priority,
+            is_visible=is_visible,
         )
         db_session.add(persona)
 

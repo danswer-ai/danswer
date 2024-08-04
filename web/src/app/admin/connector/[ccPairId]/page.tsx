@@ -4,7 +4,7 @@ import { CCPairFullInfo } from "./types";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
-import { Divider, Title } from "@tremor/react";
+import { Button, Divider, Title } from "@tremor/react";
 import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
 import { ConfigDisplay } from "./ConfigDisplay";
 import { ModifyStatusButtonCluster } from "./ModifyStatusButtonCluster";
@@ -19,8 +19,11 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import CredentialSection from "@/components/credentials/CredentialSection";
 import { buildCCPairInfoUrl } from "./lib";
 import { SourceIcon } from "@/components/SourceIcon";
-import { connectorConfigs } from "@/lib/connectors/connectors";
 import { credentialTemplates } from "@/lib/connectors/credentials";
+import { useEffect, useRef, useState } from "react";
+import { CheckmarkIcon, EditIcon, XIcon } from "@/components/icons/icons";
+import { usePopup } from "@/components/admin/connectors/Popup";
+import { updateConnectorCredentialPairName } from "@/lib/connector";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -37,6 +40,43 @@ function Main({ ccPairId }: { ccPairId: number }) {
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
+
+  const [editableName, setEditableName] = useState(ccPair?.name || "");
+  const [isEditing, setIsEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const { popup, setPopup } = usePopup();
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isEditing]);
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditableName(e.target.value);
+  };
+
+  const handleUpdateName = async () => {
+    try {
+      const response = await updateConnectorCredentialPairName(
+        ccPair?.id!,
+        editableName
+      );
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      mutate(buildCCPairInfoUrl(ccPairId));
+      setIsEditing(false);
+      setPopup({
+        message: "Connector name updated successfully",
+        type: "success",
+      });
+    } catch (error) {
+      setPopup({
+        message: `Failed to update connector name`,
+        type: "error",
+      });
+    }
+  };
 
   if (isLoading) {
     return <ThreeDotsLoader />;
@@ -68,18 +108,52 @@ function Main({ ccPairId }: { ccPairId: number }) {
     mutate(buildCCPairInfoUrl(ccPairId));
   };
 
+  const startEditing = () => {
+    setEditableName(ccPair.name);
+    setIsEditing(true);
+  };
   const deleting =
     ccPair.latest_deletion_attempt?.status == "PENDING" ||
     ccPair.latest_deletion_attempt?.status == "STARTED";
 
+  const resetEditing = () => {
+    setIsEditing(false);
+    setEditableName(ccPair.name);
+  };
   return (
     <>
+      {popup}
       <BackButton />
       <div className="pb-1 flex mt-1">
         <div className="mr-2 my-auto ">
           <SourceIcon iconSize={24} sourceType={ccPair.connector.source} />
         </div>
-        <h1 className="text-3xl text-emphasis font-bold">{ccPair.name} </h1>
+
+        {isEditing ? (
+          <div className="flex items-center">
+            <input
+              ref={inputRef}
+              type="text"
+              value={editableName}
+              onChange={handleNameChange}
+              className="text-3xl w-full ring ring-1 ring-neutral-800 text-emphasis font-bold"
+            />
+            <Button onClick={handleUpdateName} className="ml-2">
+              <CheckmarkIcon className="text-neutral-200" />
+            </Button>
+            <Button onClick={() => resetEditing()} className="ml-2">
+              <XIcon className="text-neutral-200" />
+            </Button>
+          </div>
+        ) : (
+          <h1
+            onClick={() => startEditing()}
+            className="group flex cursor-pointer text-3xl text-emphasis gap-x-2 items-center font-bold"
+          >
+            {ccPair.name}
+            <EditIcon className="group-hover:visible invisible" />
+          </h1>
+        )}
 
         <div className="ml-auto flex gap-x-2">
           {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(

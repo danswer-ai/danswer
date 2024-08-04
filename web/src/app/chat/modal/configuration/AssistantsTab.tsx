@@ -77,7 +77,7 @@ const AssistantCard = ({
         </div>
       </div>
 
-      <div className="text-xs text-subtle mb-2 mt-2 line-clamp-3 py-1">
+      <div className="text-xs text-subtle mb-2 text-wrap mt-2 line-clamp-3 py-1">
         {assistant.description}
       </div>
       <div className="mt-2 flex flex-col gap-y-1">
