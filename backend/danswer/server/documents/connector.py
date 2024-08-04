@@ -422,7 +422,9 @@ def get_connector_indexing_status(
         )
 
         latest_finished_attempt = get_latest_finished_index_attempt_for_cc_pair(
-            connector_credential_pair_id=cc_pair.id, db_session=db_session
+            connector_credential_pair_id=cc_pair.id,
+            secondary_index=secondary_index,
+            db_session=db_session,
         )
 
         indexing_statuses.append(
@@ -433,24 +435,26 @@ def get_connector_indexing_status(
                 credential=CredentialSnapshot.from_credential_db_model(credential),
                 public_doc=cc_pair.is_public,
                 owner=credential.user.email if credential.user else "",
-                last_finished_status=latest_finished_attempt.status
-                if latest_finished_attempt
-                else None,
-                last_status=latest_index_attempt.status
-                if latest_index_attempt
-                else None,
+                last_finished_status=(
+                    latest_finished_attempt.status if latest_finished_attempt else None
+                ),
+                last_status=(
+                    latest_index_attempt.status if latest_index_attempt else None
+                ),
                 last_success=cc_pair.last_successful_index_time,
                 docs_indexed=cc_pair_to_document_cnt.get(
                     (connector.id, credential.id), 0
                 ),
-                error_msg=latest_index_attempt.error_msg
-                if latest_index_attempt
-                else None,
-                latest_index_attempt=IndexAttemptSnapshot.from_index_attempt_db_model(
-                    latest_index_attempt
-                )
-                if latest_index_attempt
-                else None,
+                error_msg=(
+                    latest_index_attempt.error_msg if latest_index_attempt else None
+                ),
+                latest_index_attempt=(
+                    IndexAttemptSnapshot.from_index_attempt_db_model(
+                        latest_index_attempt
+                    )
+                    if latest_index_attempt
+                    else None
+                ),
                 deletion_attempt=get_deletion_status(
                     connector_id=connector.id,
                     credential_id=credential.id,
