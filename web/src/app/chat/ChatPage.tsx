@@ -799,7 +799,6 @@ export function ChatPage({
 
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();
-
           if (packet) {
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
@@ -1216,7 +1215,7 @@ export function ChatPage({
                   duration-300 
                   ease-in-out
                   h-full
-                  ${toggledSidebar || showDocSidebar ? "w-[250px]" : "w-[0px]"}
+                  ${toggledSidebar ? "w-[250px]" : "w-[0px]"}
                   `}
                 />
                 <ChatBanner />
@@ -1512,17 +1511,13 @@ export function ChatPage({
                                     messageId={null}
                                     personaName={liveAssistant.name}
                                     content={
-                                      <div className="text-sm my-auto">
-                                        <ThreeDots
-                                          height="30"
-                                          width="50"
-                                          color="#3b82f6"
-                                          ariaLabel="grid-loading"
-                                          radius="12.5"
-                                          wrapperStyle={{}}
-                                          wrapperClass=""
-                                          visible={true}
-                                        />
+                                      <div
+                                        key={"Generating"}
+                                        className="mr-auto relative inline-block"
+                                      >
+                                        <span className="text-sm loading-text">
+                                          Thinking...
+                                        </span>
                                       </div>
                                     }
                                   />

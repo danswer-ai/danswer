@@ -140,9 +140,9 @@ export default function AddConnector({
 
   const createConnector = async () => {
     const AdvancedConfig: AdvancedConfig = {
-      pruneFreq: (pruneFreq || defaultPrune) * 60,
+      pruneFreq: pruneFreq * 60,
       indexingStart,
-      refreshFreq: (refreshFreq || defaultRefresh) * 60,
+      refreshFreq: refreshFreq * 60,
     };
 
     // google sites-specific handling
@@ -186,8 +186,8 @@ export default function AddConnector({
         input_type: connector == "web" ? "load_state" : "poll", // single case
         name: name,
         source: connector,
-        refresh_freq: (refreshFreq || defaultRefresh) * 60,
-        prune_freq: (pruneFreq || defaultPrune) * 60,
+        refresh_freq: refreshFreq * 60 || null,
+        prune_freq: pruneFreq * 60 || null,
         indexing_start: indexingStart,
         disabled: false,
       },

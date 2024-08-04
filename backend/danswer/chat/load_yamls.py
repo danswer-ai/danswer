@@ -9,7 +9,9 @@ from danswer.db.document_set import get_or_create_document_set_by_name
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.input_prompt import insert_input_prompt_if_not_exists
 from danswer.db.models import DocumentSet as DocumentSetDBModel
+from danswer.db.models import Persona
 from danswer.db.models import Prompt as PromptDBModel
+from danswer.db.models import Tool as ToolDBModel
 from danswer.db.persona import get_prompt_by_name
 from danswer.db.persona import upsert_persona
 from danswer.db.persona import upsert_prompt
@@ -78,9 +80,31 @@ def load_personas_from_yaml(
                     prompt_ids = [prompt.id for prompt in prompts if prompt is not None]
 
             p_id = persona.get("id")
+            tool_ids = []
+            if persona.get("image_generation"):
+                image_gen_tool = (
+                    db_session.query(ToolDBModel)
+                    .filter(ToolDBModel.name == "ImageGenerationTool")
+                    .first()
+                )
+                if image_gen_tool:
+                    tool_ids.append(image_gen_tool.id)
+
+            llm_model_provider_override = persona.get("llm_model_provider_override")
+            llm_model_version_override = persona.get("llm_model_version_override")
+
+            # Set specific overrides for image generation persona
+            if persona.get("image_generation"):
+                llm_model_version_override = "gpt-4o"
+
+            existing_persona = (
+                db_session.query(Persona)
+                .filter(Persona.name == persona["name"])
+                .first()
+            )
+
             upsert_persona(
                 user=None,
-                # Negative to not conflict with existing personas
                 persona_id=(-1 * p_id) if p_id is not None else None,
                 name=persona["name"],
                 description=persona["description"],
@@ -92,13 +116,20 @@ def load_personas_from_yaml(
                 llm_filter_extraction=persona.get("llm_filter_extraction"),
                 icon_shape=persona.get("icon_shape"),
                 icon_color=persona.get("icon_color"),
-                llm_model_provider_override=None,
-                llm_model_version_override=None,
+                llm_model_provider_override=llm_model_provider_override,
+                llm_model_version_override=llm_model_version_override,
                 recency_bias=RecencyBiasSetting(persona["recency_bias"]),
                 prompt_ids=prompt_ids,
                 document_set_ids=doc_set_ids,
+                tool_ids=tool_ids,
                 default_persona=True,
                 is_public=True,
+                display_priority=existing_persona.display_priority
+                if existing_persona is not None
+                else persona.get("display_priority"),
+                is_visible=existing_persona.is_visible
+                if existing_persona is not None
+                else persona.get("is_visible"),
                 db_session=db_session,
             )
 

@@ -153,7 +153,25 @@ export const AIMessage = ({
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
 }) => {
-  const finalContent = content + (!isComplete ? "[*](test)" : "");
+  const processContent = (content: string | JSX.Element) => {
+    if (typeof content !== "string") {
+      return content;
+    }
+
+    const codeBlockRegex = /```[\s\S]*?```|```[\s\S]*?$/g;
+    const matches = content.match(codeBlockRegex);
+
+    if (matches) {
+      const lastMatch = matches[matches.length - 1];
+      if (!lastMatch.endsWith("```")) {
+        return content;
+      }
+    }
+
+    return content + (!isComplete ? " [*]() " : "");
+  };
+
+  const finalContent = processContent(content as string);
 
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {
@@ -228,7 +246,7 @@ export const AIMessage = ({
   return (
     <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
       <div className="mx-auto w-[90%] max-w-message-max">
-        <div className=" mobile:ml-4 xl:ml-8">
+        <div className="mobile:ml-4 xl:ml-8">
           <div className="flex">
             <AssistantIcon
               size="small"
@@ -311,50 +329,44 @@ export const AIMessage = ({
                       !TOOLS_WITH_CUSTOM_HANDLING.includes(
                         toolCall.tool_name
                       ) && (
-                        <div className="my-2">
-                          <ToolRunDisplay
-                            toolName={
-                              toolCall.tool_result && content
-                                ? `Used "${toolCall.tool_name}"`
-                                : `Using "${toolCall.tool_name}"`
-                            }
-                            toolLogo={
-                              <FiTool size={15} className="my-auto mr-1" />
-                            }
-                            isRunning={!toolCall.tool_result || !content}
-                          />
-                        </div>
+                        <ToolRunDisplay
+                          toolName={
+                            toolCall.tool_result && content
+                              ? `Used "${toolCall.tool_name}"`
+                              : `Using "${toolCall.tool_name}"`
+                          }
+                          toolLogo={
+                            <FiTool size={15} className="my-auto mr-1" />
+                          }
+                          isRunning={!toolCall.tool_result || !content}
+                        />
                       )}
 
                     {toolCall &&
                       toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
                       !toolCall.tool_result && (
-                        <div className="my-2">
-                          <ToolRunDisplay
-                            toolName={`Generating images`}
-                            toolLogo={
-                              <FiImage size={15} className="my-auto mr-1" />
-                            }
-                            isRunning={!toolCall.tool_result}
-                          />
-                        </div>
+                        <ToolRunDisplay
+                          toolName={`Generating images`}
+                          toolLogo={
+                            <FiImage size={15} className="my-auto mr-1" />
+                          }
+                          isRunning={!toolCall.tool_result}
+                        />
                       )}
 
                     {toolCall &&
                       toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
-                        <div className="my-2">
-                          <ToolRunDisplay
-                            toolName={
-                              toolCall.tool_result
-                                ? `Searched the internet`
-                                : `Searching the internet`
-                            }
-                            toolLogo={
-                              <FiGlobe size={15} className="my-auto mr-1" />
-                            }
-                            isRunning={!toolCall.tool_result}
-                          />
-                        </div>
+                        <ToolRunDisplay
+                          toolName={
+                            toolCall.tool_result
+                              ? `Searched the internet`
+                              : `Searching the internet`
+                          }
+                          toolLogo={
+                            <FiGlobe size={15} className="my-auto mr-1" />
+                          }
+                          isRunning={!toolCall.tool_result}
+                        />
                       )}
 
                     {content ? (
@@ -362,64 +374,70 @@ export const AIMessage = ({
                         <FileDisplay files={files || []} />
 
                         {typeof content === "string" ? (
-                          <ReactMarkdown
-                            key={messageId}
-                            className="prose max-w-full"
-                            components={{
-                              a: (props) => {
-                                const { node, ...rest } = props;
-                                const value = rest.children;
+                          <div className="overflow-x-auto w-full pr-2 max-w-[675px]">
+                            <ReactMarkdown
+                              key={messageId}
+                              className="prose max-w-full"
+                              components={{
+                                a: (props) => {
+                                  const { node, ...rest } = props;
+                                  const value = rest.children;
 
-                                if (value?.toString().startsWith("*")) {
-                                  return (
-                                    <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
-                                  );
-                                } else if (value?.toString().startsWith("[")) {
-                                  // for some reason <a> tags cause the onClick to not apply
-                                  // and the links are unclickable
-                                  // TODO: fix the fact that you have to double click to follow link
-                                  // for the first link
-                                  return (
-                                    <Citation
-                                      link={rest?.href}
-                                      key={node?.position?.start?.offset}
-                                    >
-                                      {rest.children}
-                                    </Citation>
-                                  );
-                                } else {
-                                  return (
-                                    <a
-                                      key={node?.position?.start?.offset}
-                                      onClick={() =>
-                                        rest.href
-                                          ? window.open(rest.href, "_blank")
-                                          : undefined
-                                      }
-                                      className="cursor-pointer text-link hover:text-link-hover"
-                                    >
-                                      {rest.children}
-                                    </a>
-                                  );
-                                }
-                              },
-                              code: (props) => (
-                                <CodeBlock
-                                  {...props}
-                                  content={content as string}
-                                />
-                              ),
-                              p: ({ node, ...props }) => (
-                                <p {...props} className="text-default" />
-                              ),
-                            }}
-                            remarkPlugins={[remarkGfm]}
-                            rehypePlugins={[
-                              [rehypePrism, { ignoreMissing: true }],
-                            ]}
-                          >
-                            {finalContent}
-                          </ReactMarkdown>
+                                  if (value?.toString().startsWith("*")) {
+                                    return (
+                                      <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
+                                    );
+                                  } else if (
+                                    value?.toString().startsWith("[")
+                                  ) {
+                                    // for some reason <a> tags cause the onClick to not apply
+                                    // and the links are unclickable
+                                    // TODO: fix the fact that you have to double click to follow link
+                                    // for the first link
+                                    return (
+                                      <Citation
+                                        link={rest?.href}
+                                        key={node?.position?.start?.offset}
+                                      >
+                                        {rest.children}
+                                      </Citation>
+                                    );
+                                  } else {
+                                    return (
+                                      <a
+                                        key={node?.position?.start?.offset}
+                                        onMouseDown={() =>
+                                          rest.href
+                                            ? window.open(rest.href, "_blank")
+                                            : undefined
+                                        }
+                                        className="cursor-pointer text-link hover:text-link-hover"
+                                      >
+                                        {rest.children}
+                                      </a>
+                                    );
+                                  }
+                                },
+
+                                code: (props) => (
+                                  <CodeBlock
+                                    className="w-full"
+                                    {...props}
+                                    content={content as string}
+                                  />
+                                ),
+                                p: ({ node, ...props }) => (
+                                  <p {...props} className="text-default" />
+                                ),
+                              }}
+                              remarkPlugins={[remarkGfm]}
+                              rehypePlugins={[
+                                [rehypePrism, { ignoreMissing: true }],
+                              ]}
+                            >
+                              {finalContent as string}
+                            </ReactMarkdown>
+                          </div>
                         ) : (
                           content
                         )}
@@ -772,11 +790,11 @@ export const HumanMessage = ({
                   </div>
                 ) : typeof content === "string" ? (
                   <>
-                    {onEdit &&
-                    isHovered &&
-                    !isEditing &&
-                    (!files || files.length === 0) ? (
-                      <div className="ml-auto mr-1 my-auto">
+                    <div className="ml-auto mr-1 my-auto">
+                      {onEdit &&
+                      isHovered &&
+                      !isEditing &&
+                      (!files || files.length === 0) ? (
                         <Tooltip delayDuration={1000} content={"Edit message"}>
                           <button
                             className="hover:bg-hover p-1.5 rounded"
@@ -785,13 +803,13 @@ export const HumanMessage = ({
                               setIsHovered(false);
                             }}
                           >
-                            <FiEdit2 />
+                            <FiEdit2 className="!h-4 !w-4" />
                           </button>
                         </Tooltip>
-                      </div>
-                    ) : (
-                      <div className="h-[27px]" />
-                    )}
+                      ) : (
+                        <div className="w-7" />
+                      )}
+                    </div>
 
                     <div
                       className={`${
@@ -801,11 +819,10 @@ export const HumanMessage = ({
                           !isEditing &&
                           (!files || files.length === 0)
                         ) && "ml-auto"
-                      } relative max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
+                      } relative   flex-none max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
                     >
                       {content}
                     </div>
-                    {/* </div> */}
                   </>
                 ) : (
                   <>

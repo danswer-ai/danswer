@@ -91,7 +91,8 @@ export function CodeBlock({
     codeText = findTextNode(props.node);
   }
 
-  const handleCopy = () => {
+  const handleCopy = (event: React.MouseEvent) => {
+    event.preventDefault();
     if (!codeText) {
       return;
     }
@@ -109,7 +110,7 @@ export function CodeBlock({
         {codeText && (
           <div
             className="ml-auto cursor-pointer select-none"
-            onClick={handleCopy}
+            onMouseDown={handleCopy}
           >
             {copied ? (
               <div className="flex items-center space-x-2">
