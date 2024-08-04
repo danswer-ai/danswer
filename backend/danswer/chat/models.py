@@ -54,7 +54,7 @@ class RelevanceAnalysis(BaseModel):
 # All relevance information for a specific setion
 class SectionRelevancePiece(RelevanceAnalysis):
     document_id: str
-    chunk_id: int
+    chunk_id: int  # ID of the center chunk for a given inference section
 
 
 # Dictionary with relevance information (key is `document_id`)

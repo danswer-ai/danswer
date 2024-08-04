@@ -87,7 +87,6 @@ class SearchTool(Tool):
         chunks_below: int = 0,
         full_doc: bool = False,
         bypass_acl: bool = False,
-        llm_doc_eval: bool = False,
     ) -> None:
         self.user = user
         self.persona = persona
@@ -105,7 +104,6 @@ class SearchTool(Tool):
         self.full_doc = full_doc
         self.bypass_acl = bypass_acl
         self.db_session = db_session
-        self.llm_doc_eval = llm_doc_eval
 
     @property
     def name(self) -> str:
@@ -282,7 +280,6 @@ class SearchTool(Tool):
             ),
         )
 
-        # if self.llm_doc_eval and not DISABLE_AGENTIC_SEARCH:
         yield ToolResponse(
             id=SECTION_RELEVANCE_LIST_ID,
             response=search_pipeline.section_relevance,
@@ -291,13 +288,13 @@ class SearchTool(Tool):
         final_context_sections = search_pipeline.final_context_sections
 
         if search_pipeline.search_query.evaluation_type == LLMEvaluationType.AGENTIC:
-            final_context_sections = [
+            pruned_sections = [
                 doc
                 for idx, doc in enumerate(search_pipeline.final_context_sections)
                 if search_pipeline.section_relevance_list[idx]
             ]
         else:
-            final_context_sections = prune_sections(
+            pruned_sections = prune_sections(
                 sections=final_context_sections,
                 section_relevance_list=search_pipeline.section_relevance_list,
                 prompt_config=self.prompt_config,
@@ -307,8 +304,7 @@ class SearchTool(Tool):
             )
 
         llm_docs = [
-            llm_doc_from_inference_section(section)
-            for section in final_context_sections
+            llm_doc_from_inference_section(section) for section in pruned_sections
         ]
 
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)

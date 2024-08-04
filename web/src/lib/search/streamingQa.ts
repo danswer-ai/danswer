@@ -61,7 +61,7 @@ export const searchRequestStreamed = async ({
           filters: filters,
           enable_auto_detect_filters: false,
         },
-        llm_doc_eval: true,
+        evaluation_type: agentic ? "agentic" : "basic",
       }),
       headers: {
         "Content-Type": "application/json",

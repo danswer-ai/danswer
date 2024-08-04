@@ -6,7 +6,7 @@ from typing import cast
 from sqlalchemy.orm import Session
 
 from danswer.chat.models import SectionRelevancePiece
-from danswer.configs.chat_configs import DISABLE_AGENTIC_SEARCH
+from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import User
@@ -349,31 +349,38 @@ class SearchPipeline:
         if self._section_relevance is not None:
             return self._section_relevance
 
-        if self.search_query.evaluation_type == LLMEvaluationType.SKIP:
+        if self.search_query.evaluation_type == LLMEvaluationType.UNSPECIFIED:
+            raise ValueError(
+                "Attempted to access section relevance scores on search query with evaluation type `UNSPECIFIED`."
+                + "The search query evaluation type should have been specified."
+            )
+
+        elif self.search_query.evaluation_type == LLMEvaluationType.SKIP:
             raise ValueError(
                 "Attempted to access section relevance scores on search query with evaluation type `SKIP`."
             )
 
         elif self.search_query.evaluation_type == LLMEvaluationType.AGENTIC:
-            if DISABLE_AGENTIC_SEARCH:
+            if DISABLE_LLM_DOC_RELEVANCE:
                 raise ValueError(
-                    "Agentic search operation called while DISABLE_AGENTIC_SEARCH is enabled."
+                    "Agentic evaluation operation called while DISABLE_LLM_DOC_RELEVANCE is enabled."
                 )
-                # self._section_relevance = []
-
-            else:
-                sections = self.final_context_sections
-                functions = [
-                    FunctionCall(
-                        evaluate_inference_section,
-                        (section, self.search_query.query, self.llm),
-                    )
-                    for section in sections
-                ]
-                results = run_functions_in_parallel(function_calls=functions)
-                self._section_relevance = list(results.values())
+            sections = self.final_context_sections
+            functions = [
+                FunctionCall(
+                    evaluate_inference_section,
+                    (section, self.search_query.query, self.llm),
+                )
+                for section in sections
+            ]
+            results = run_functions_in_parallel(function_calls=functions)
+            self._section_relevance = list(results.values())
 
         else:  # evaluation type is BASIC
+            if DISABLE_LLM_DOC_RELEVANCE:
+                raise ValueError(
+                    "Basic search evaluation operation called while DISABLE_LLM_DOC_RELEVANCE is enabled."
+                )
             self._section_relevance = next(
                 cast(
                     Iterator[list[SectionRelevancePiece]],
@@ -389,7 +396,4 @@ class SearchPipeline:
             relevance_sections=self.section_relevance,
             inference_sections=self.final_context_sections,
         )
-        return [
-            True if ind in llm_indices else False
-            for ind in range(len(self.final_context_sections))
-        ]
+        return [ind in llm_indices for ind in range(len(self.final_context_sections))]

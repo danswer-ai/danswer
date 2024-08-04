@@ -16,7 +16,7 @@ import { BookIcon, CheckmarkIcon, LightBulbIcon, XIcon } from "../icons/icons";
 
 import { FaStar } from "react-icons/fa";
 import { FiTag } from "react-icons/fi";
-import { DISABLE_AGENTIC_SEARCH } from "@/lib/constants";
+import { DISABLE_LLM_DOC_RELEVANCE } from "@/lib/constants";
 import { SettingsContext } from "../settings/SettingsProvider";
 
 export const buildDocumentSummaryDisplay = (

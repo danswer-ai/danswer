@@ -13,7 +13,7 @@ logger = setup_logger()
 
 
 def _get_agent_eval_messages(
-    title: str, content: str, query: str
+    title: str, content: str, query: str, center_metadata: str
 ) -> list[dict[str, str]]:
     messages = [
         {
@@ -23,7 +23,7 @@ def _get_agent_eval_messages(
         {
             "role": "user",
             "content": AGENTIC_SEARCH_USER_PROMPT.format(
-                title=title, content=content, query=query
+                title=title, content=content, query=query, metadata=center_metadata
             ),
         },
     ]
@@ -36,10 +36,14 @@ def evaluate_inference_section(
     document_id = document.center_chunk.document_id
     semantic_id = document.center_chunk.semantic_identifier
     contents = document.combined_content
-    document.center_chunk.chunk_id
+    center_metadata = document.center_chunk.metadata
+    center_metadata_str = "\n" + "\n".join([f"- {item}" for item in center_metadata])
 
     messages = _get_agent_eval_messages(
-        title=semantic_id, content=contents, query=query
+        title=semantic_id,
+        content=contents,
+        query=query,
+        center_metadata=center_metadata_str,
     )
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
     model_output = message_to_string(llm.invoke(filled_llm_prompt))

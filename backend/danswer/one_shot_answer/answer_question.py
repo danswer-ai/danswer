@@ -14,7 +14,7 @@ from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import RelevanceAnalysis
 from danswer.chat.models import StreamingError
-from danswer.configs.chat_configs import DISABLE_AGENTIC_SEARCH
+from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.constants import MessageType
@@ -181,13 +181,15 @@ def stream_answer_objects(
         max_tokens=max_document_tokens,
         use_sections=query_req.chunks_above > 0 or query_req.chunks_below > 0,
     )
+    print("EVALLLUATINO")
+    print(query_req.evaluation_type)
 
     search_tool = SearchTool(
         db_session=db_session,
         user=user,
         evaluation_type=LLMEvaluationType.SKIP
-        if DISABLE_AGENTIC_SEARCH
-        else LLMEvaluationType.AGENTIC,
+        if DISABLE_LLM_DOC_RELEVANCE
+        else query_req.evaluation_type,
         persona=chat_session.persona,
         retrieval_options=query_req.retrieval_options,
         prompt_config=prompt_config,

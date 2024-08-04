@@ -33,11 +33,6 @@ DISABLE_LLM_QUERY_ANSWERABILITY = QA_PROMPT_OVERRIDE == "weak"
 # Note this is not in any of the deployment configs yet
 CONTEXT_CHUNKS_ABOVE = int(os.environ.get("CONTEXT_CHUNKS_ABOVE") or 0)
 CONTEXT_CHUNKS_BELOW = int(os.environ.get("CONTEXT_CHUNKS_BELOW") or 0)
-# Whether the LLM should evaluate all of the document chunks passed in for usefulness
-# in relation to the user query
-DISABLE_LLM_CHUNK_FILTER = (
-    os.environ.get("DISABLE_LLM_CHUNK_FILTER", "").lower() == "true"
-)
 # Whether the LLM should be used to decide if a search would help given the chat history
 DISABLE_LLM_CHOOSE_SEARCH = (
     os.environ.get("DISABLE_LLM_CHOOSE_SEARCH", "").lower() == "true"
@@ -64,6 +59,7 @@ HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.62)))
 TITLE_CONTENT_RATIO = max(
     0, min(1, float(os.environ.get("TITLE_CONTENT_RATIO") or 0.20))
 )
+
 # A list of languages passed to the LLM to rephase the query
 # For example "English,French,Spanish", be sure to use the "," separator
 MULTILINGUAL_QUERY_EXPANSION = os.environ.get("MULTILINGUAL_QUERY_EXPANSION") or None
@@ -76,16 +72,16 @@ LANGUAGE_CHAT_NAMING_HINT = (
     or "The name of the conversation must be in the same language as the user query."
 )
 
-
 # Agentic search takes significantly more tokens and therefore has much higher cost.
 # This configuration allows users to get a search-only experience with instant results
 # and no involvement from the LLM.
 # Additionally, some LLM providers have strict rate limits which may prohibit
 # sending many API requests at once (as is done in agentic search).
-DISABLE_AGENTIC_SEARCH = (
-    os.environ.get("DISABLE_AGENTIC_SEARCH") or "false"
-).lower() == "true"
-
+# Whether the LLM should evaluate all of the document chunks passed in for usefulness
+# in relation to the user query
+DISABLE_LLM_DOC_RELEVANCE = (
+    os.environ.get("DISABLE_LLM_DOC_RELEVANCE", "").lower() == "true"
+)
 
 # Stops streaming answers back to the UI if this pattern is seen:
 STOP_STREAM_PAT = os.environ.get("STOP_STREAM_PAT") or None

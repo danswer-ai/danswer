@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import BASE_RECENCY_DECAY
-from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
+from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
 from danswer.configs.chat_configs import FAVOR_RECENT_DECAY_MULTIPLIER
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.db.models import User
@@ -36,7 +36,6 @@ def retrieval_preprocessing(
     db_session: Session,
     bypass_acl: bool = False,
     include_query_intent: bool = True,
-    disable_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
     base_recency_decay: float = BASE_RECENCY_DECAY,
     favor_recent_decay_multiplier: float = FAVOR_RECENT_DECAY_MULTIPLIER,
 ) -> tuple[SearchQuery, SearchType | None, QueryFlow | None]:
@@ -139,16 +138,17 @@ def retrieval_preprocessing(
     )
 
     llm_evaluation_type = LLMEvaluationType.BASIC
-    if search_request.evaluation_type is not None:
+    if search_request.evaluation_type is not LLMEvaluationType.UNSPECIFIED:
         llm_evaluation_type = search_request.evaluation_type
+
     elif persona:
         llm_evaluation_type = (
-            LLMEvaluationType.Basic
+            LLMEvaluationType.BASIC
             if persona.llm_relevance_filter
             else LLMEvaluationType.SKIP
         )
 
-    if disable_llm_chunk_filter:
+    if DISABLE_LLM_DOC_RELEVANCE:
         if llm_evaluation_type:
             logger.info(
                 "LLM chunk filtering would have run but has been globally disabled"

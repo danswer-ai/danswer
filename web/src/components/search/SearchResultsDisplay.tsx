@@ -235,6 +235,9 @@ export const SearchResultsDisplay = ({
               searchResponse.additional_relevance
                 ? searchResponse.additional_relevance[document.document_id]
                 : null;
+            console.log(relevance?.relevant);
+            console.log(searchResponse.additional_relevance);
+            console.log(document.document_id);
 
             return agenticResults ? (
               <AgenticDocumentDisplay
