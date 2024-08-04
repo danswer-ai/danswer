@@ -93,7 +93,11 @@ def _should_create_new_indexing(
     if connector.refresh_freq is None:
         return False
 
-    # Only one scheduled/obngoing job per connector at a time
+    # Only one scheduled/ongoing job per connector at a time
+    # this prevents cases where
+    # (1) the "latest" index_attempt is scheduled so we show
+    #     that in the UI despite another index_attempt being in-progress
+    # (2) multiple scheduled index_attempts at a time
     if (
         last_index.status == IndexingStatus.NOT_STARTED
         or last_index.status == IndexingStatus.IN_PROGRESS
