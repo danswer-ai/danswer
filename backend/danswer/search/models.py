@@ -78,7 +78,7 @@ class SearchRequest(ChunkContext):
     hybrid_alpha: float = HYBRID_ALPHA
     # This is to forcibly skip (or run) the step, if None it uses the system defaults
     skip_rerank: bool | None = None
-    evaluation_type: LLMEvaluationType = LLMEvaluationType.SKIP
+    evaluation_type: LLMEvaluationType = LLMEvaluationType.UNSPECIFIED
 
     class Config:
         arbitrary_types_allowed = True
@@ -88,11 +88,11 @@ class SearchQuery(ChunkContext):
     query: str
     filters: IndexFilters
     recency_bias_multiplier: float
+    evaluation_type: LLMEvaluationType
     num_hits: int = NUM_RETURNED_HITS
     offset: int = 0
     search_type: SearchType = SearchType.HYBRID
     skip_rerank: bool = not ENABLE_RERANKING_REAL_TIME_FLOW
-    evaluation_type: LLMEvaluationType
     # Only used if not skip_rerank
     num_rerank: int | None = NUM_RERANKED_RESULTS
     # Only used if not skip_llm_chunk_filter

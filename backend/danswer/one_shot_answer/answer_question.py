@@ -187,9 +187,7 @@ def stream_answer_objects(
         user=user,
         evaluation_type=LLMEvaluationType.SKIP
         if DISABLE_AGENTIC_SEARCH
-        else LLMEvaluationType.AGENTIC
-        if query_req.agentic
-        else LLMEvaluationType.BASIC,
+        else LLMEvaluationType.AGENTIC,
         persona=chat_session.persona,
         retrieval_options=query_req.retrieval_options,
         prompt_config=prompt_config,
@@ -200,7 +198,6 @@ def stream_answer_objects(
         chunks_below=query_req.chunks_below,
         full_doc=query_req.full_doc,
         bypass_acl=bypass_acl,
-        llm_doc_eval=query_req.llm_doc_eval,
     )
 
     answer_config = AnswerStyleConfig(

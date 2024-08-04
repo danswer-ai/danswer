@@ -386,7 +386,7 @@ class SearchPipeline:
     @property
     def section_relevance_list(self) -> list[bool]:
         llm_indices = relevant_sections_to_indices(
-            relevance_chunks=self.section_relevance,
+            relevance_sections=self.section_relevance,
             inference_sections=self.final_context_sections,
         )
         return [

@@ -80,8 +80,7 @@ def handle_search_request(
         bypass_acl=False,
     )
     top_sections = search_pipeline.reranked_sections
-    # If using surrounding context or full doc, this will be empty
-    relevant_chunks = search_pipeline.section_relevance
+    relevance_sections = search_pipeline.section_relevance
     top_docs = [
         SavedSearchDocWithContent(
             document_id=section.center_chunk.document_id,
@@ -115,7 +114,7 @@ def handle_search_request(
         deduped_docs, dropped_inds = dedupe_documents(top_docs)
 
     llm_indices = relevant_documents_to_indices(
-        relevance_chunks=relevant_chunks,
+        relevance_sections=relevance_sections,
         search_docs=[
             translate_db_search_doc_to_server_search_doc(cast(SearchDoc, doc))
             for doc in deduped_docs

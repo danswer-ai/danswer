@@ -39,12 +39,12 @@ def dedupe_documents(items: list[T]) -> tuple[list[T], list[int]]:
 
 
 def relevant_sections_to_indices(
-    relevance_chunks: list[SectionRelevancePiece],
+    relevance_sections: list[SectionRelevancePiece],
     inference_sections: list[InferenceSection],
 ) -> list[int]:
     relevant_set = {
         (chunk.document_id, chunk.chunk_id)
-        for chunk in relevance_chunks
+        for chunk in relevance_sections
         if chunk.relevant
     }
     relevant_indices = [
@@ -57,11 +57,11 @@ def relevant_sections_to_indices(
 
 
 def relevant_documents_to_indices(
-    relevance_chunks: list[SectionRelevancePiece], search_docs: list[SearchDoc]
+    relevance_sections: list[SectionRelevancePiece], search_docs: list[SearchDoc]
 ) -> list[int]:
     relevant_set = {
         (chunk.document_id, chunk.chunk_id)
-        for chunk in relevance_chunks
+        for chunk in relevance_sections
         if chunk.relevant
     }
 

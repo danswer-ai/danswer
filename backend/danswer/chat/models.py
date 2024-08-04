@@ -51,11 +51,13 @@ class RelevanceAnalysis(BaseModel):
     content: str | None = None
 
 
+# All relevance information for a specific setion
 class SectionRelevancePiece(RelevanceAnalysis):
     document_id: str
     chunk_id: int
 
 
+# Dictionary with relevance information (key is `document_id`)
 class DocumentRelevance(BaseModel):
     relevance_summaries: dict[str, RelevanceAnalysis]
 

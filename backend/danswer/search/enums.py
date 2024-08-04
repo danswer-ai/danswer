@@ -29,6 +29,7 @@ class LLMEvaluationType(str, Enum):
     AGENTIC = "agentic"  # applies agentic evaluation
     BASIC = "basic"  # applies boolean evaluation
     SKIP = "skip"  # skips evaluation
+    UNSPECIFIED = "unspecified"
 
 
 class QueryFlow(str, Enum):

@@ -50,10 +50,6 @@ def should_rerank(query: SearchQuery) -> bool:
     return query.search_type != SearchType.KEYWORD and not query.skip_rerank
 
 
-def should_apply_llm_based_relevance_filter(query: SearchQuery) -> bool:
-    return query.evaluation_type == LLMEvaluationType.BASIC
-
-
 def cleanup_chunks(chunks: list[InferenceChunkUncleaned]) -> list[InferenceChunk]:
     def _remove_title(chunk: InferenceChunkUncleaned) -> str:
         if not chunk.title or not chunk.content:
@@ -267,7 +263,8 @@ def search_postprocessing(
         sections_yielded = True
 
     llm_filter_task_id = None
-    if should_apply_llm_based_relevance_filter(search_query):
+
+    if search_query.evaluation_type == LLMEvaluationType.BASIC:
         post_processing_tasks.append(
             FunctionCall(
                 filter_sections,
