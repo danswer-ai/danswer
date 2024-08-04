@@ -93,11 +93,11 @@ def _should_create_new_indexing(
     if connector.refresh_freq is None:
         return False
 
-    # Only one scheduled job per connector at a time
-    # Can schedule another one if the current one is already running however
-    # Because the currently running one will not be until the latest time
-    # Note, this last index is for the given embedding model
-    if last_index.status == IndexingStatus.NOT_STARTED:
+    # Only one scheduled/obngoing job per connector at a time
+    if (
+        last_index.status == IndexingStatus.NOT_STARTED
+        or last_index.status == IndexingStatus.IN_PROGRESS
+    ):
         return False
 
     current_db_time = get_db_current_time(db_session)
