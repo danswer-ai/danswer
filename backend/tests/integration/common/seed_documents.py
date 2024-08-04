@@ -26,7 +26,7 @@ class TestDocumentClient:
             "input_type": "load_state",
             "connector_specific_config": {},
             "refresh_freq": 60,
-            "disabled": False,
+            "disabled": True,
         }
         response = requests.post(
             f"{API_SERVER_URL}/manage/admin/connector",

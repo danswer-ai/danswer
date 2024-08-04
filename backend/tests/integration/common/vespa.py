@@ -8,14 +8,19 @@ class TestVespaClient:
         self.index_name = index_name
         self.vespa_document_url = DOCUMENT_ID_ENDPOINT.format(index_name=index_name)
 
-    def get_documents_by_id(self, document_ids: list[str]) -> dict | None:
+    def get_documents_by_id(
+        self, document_ids: list[str], wanted_doc_count: int = 1_000
+    ) -> dict | None:
         selection = " or ".join(
             f"{self.index_name}.document_id=='{document_id}'"
             for document_id in document_ids
         )
         response = requests.get(
             self.vespa_document_url,
-            params={"selection": selection},
+            params={
+                "selection": selection,
+                "wantedDocumentCount": wanted_doc_count,
+            },
         )
         response.raise_for_status()
         return response.json()

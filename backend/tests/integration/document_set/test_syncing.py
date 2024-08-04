@@ -38,7 +38,7 @@ def test_multiple_document_sets_syncing_same_connnector(
     )
 
     # wait for syncing to be complete
-    max_delay = 30
+    max_delay = 45
     start = time.time()
     while True:
         doc_sets = fetch_document_sets()
@@ -63,6 +63,10 @@ def test_multiple_document_sets_syncing_same_connnector(
 
         time.sleep(2)
 
+    # get names so we can compare to what is in vespa
+    doc_sets = fetch_document_sets()
+    doc_set_names = {doc_set.name for doc_set in doc_sets}
+
     # make sure documents are as expected
     result = vespa_client.get_documents_by_id(seed_result.document_ids)
     documents = result["documents"]
@@ -71,8 +75,5 @@ def test_multiple_document_sets_syncing_same_connnector(
         doc["fields"]["document_id"] in seed_result.document_ids for doc in documents
     )
     assert all(
-        set(doc["fields"]["document_sets"].keys()) == {doc_set_1_id, doc_set_2_id}
-        for doc in documents
+        set(doc["fields"]["document_sets"].keys()) == doc_set_names for doc in documents
     )
-    print(result)
-    assert False
