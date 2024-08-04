@@ -286,23 +286,14 @@ class SearchTool(Tool):
             response=vals,
         )
 
-        final_context_sections = search_pipeline.final_context_sections
-
-        if search_pipeline.search_query.evaluation_type == LLMEvaluationType.AGENTIC:
-            pruned_sections = [
-                doc
-                for idx, doc in enumerate(search_pipeline.final_context_sections)
-                if search_pipeline.section_relevance_list[idx]
-            ]
-        else:
-            pruned_sections = prune_sections(
-                sections=final_context_sections,
-                section_relevance_list=search_pipeline.section_relevance_list,
-                prompt_config=self.prompt_config,
-                llm_config=self.llm.config,
-                question=query,
-                document_pruning_config=self.pruning_config,
-            )
+        pruned_sections = prune_sections(
+            sections=search_pipeline.final_context_sections,
+            section_relevance_list=search_pipeline.section_relevance_list,
+            prompt_config=self.prompt_config,
+            llm_config=self.llm.config,
+            question=query,
+            document_pruning_config=self.pruning_config,
+        )
 
         llm_docs = [
             llm_doc_from_inference_section(section) for section in pruned_sections
