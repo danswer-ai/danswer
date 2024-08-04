@@ -247,19 +247,25 @@ def get_index_attempts_for_connector(
 
 def get_latest_finished_index_attempt_for_cc_pair(
     connector_credential_pair_id: int,
+    secondary_index: bool,
     db_session: Session,
 ) -> IndexAttempt | None:
-    stmt = (
-        select(IndexAttempt)
-        .where(
-            IndexAttempt.connector_credential_pair_id == connector_credential_pair_id,
-            IndexAttempt.status.not_in(
-                [IndexingStatus.NOT_STARTED, IndexingStatus.IN_PROGRESS]
-            ),
-        )
-        .order_by(desc(IndexAttempt.time_created))
-        .limit(1)
+    stmt = select(IndexAttempt).where(
+        IndexAttempt.connector_credential_pair_id == connector_credential_pair_id,
+        IndexAttempt.status.not_in(
+            [IndexingStatus.NOT_STARTED, IndexingStatus.IN_PROGRESS]
+        ),
     )
+    if secondary_index:
+        stmt = stmt.join(EmbeddingModel).where(
+            EmbeddingModel.status == IndexModelStatus.FUTURE
+        )
+    else:
+        stmt = stmt.join(EmbeddingModel).where(
+            EmbeddingModel.status == IndexModelStatus.PRESENT
+        )
+    stmt = stmt.order_by(desc(IndexAttempt.time_created))
+    stmt = stmt.limit(1)
     return db_session.execute(stmt).scalar_one_or_none()
 
 

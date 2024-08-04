@@ -130,7 +130,7 @@ function ConnectorRow({
   ccPairsIndexingStatus,
   invisible,
 }: {
-  ccPairsIndexingStatus: any;
+  ccPairsIndexingStatus: ConnectorIndexingStatus<any, any>;
   invisible?: boolean;
 }) {
   const router = useRouter();
@@ -209,7 +209,9 @@ function ConnectorRow({
 
   return (
     <TableRow
-      className={`hover:bg-hover-light ${invisible ? "invisible h-0 !-mb-10" : "border border-border !border-b"}  w-full cursor-pointer relative`}
+      className={`hover:bg-hover-light ${
+        invisible ? "invisible h-0 !-mb-10" : "border border-border !border-b"
+      }  w-full cursor-pointer relative`}
       onClick={() =>
         router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`)
       }
@@ -354,12 +356,40 @@ export function CCPairIndexingStatusTable({
             name: "Sample File Connector",
             last_status: "success",
             connector: {
+              name: "Sample File Connector",
               source: "file",
+              input_type: "poll",
+              connector_specific_config: {
+                file_locations: ["/path/to/sample/file.txt"],
+              },
+              refresh_freq: 86400,
+              prune_freq: null,
+              indexing_start: new Date("2023-07-01T12:00:00Z"),
               disabled: false,
+              id: 1,
+              credential_ids: [],
+              time_created: "2023-07-01T12:00:00Z",
+              time_updated: "2023-07-01T12:00:00Z",
+            },
+            credential: {
+              id: 1,
+              name: "Sample Credential",
+              source: "file",
+              user_id: "1",
+              time_created: "2023-07-01T12:00:00Z",
+              time_updated: "2023-07-01T12:00:00Z",
+              credential_json: {},
+              admin_public: false,
             },
             public_doc: true,
             docs_indexed: 1000,
             last_success: "2023-07-01T12:00:00Z",
+            last_finished_status: "success",
+            latest_index_attempt: null,
+            owner: "1",
+            error_msg: "",
+            deletion_attempt: null,
+            is_deletable: true,
           }}
         />
         <div className="-mb-10" />
