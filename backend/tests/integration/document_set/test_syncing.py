@@ -2,9 +2,9 @@ import time
 
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from tests.integration.common.seed_documents import TestDocumentClient
+from tests.integration.common.utils import create_document_set
+from tests.integration.common.utils import fetch_document_sets
 from tests.integration.common.vespa import TestVespaClient
-from tests.integration.document_set.utils import create_document_set
-from tests.integration.document_set.utils import fetch_document_sets
 
 
 def test_multiple_document_sets_syncing_same_connnector(
