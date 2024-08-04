@@ -39,9 +39,11 @@ personas:
     document_sets: []
     icon_shape: 23013
     icon_color: "#6FB1FF"
+    display_priority: 1
+    is_visible: true
 
   - id: 1
-    name: "LLM"
+    name: "General Knowledge"
     description: >
       Assistant with no access to documents. Chat with just the Language Model.
     prompts:
@@ -53,7 +55,8 @@ personas:
     document_sets: []
     icon_shape: 50910
     icon_color: "#FF6F6F"
-
+    display_priority: 0
+    is_visible: true
 
   - id: 2
     name: "Paraphrase"
@@ -68,9 +71,12 @@ personas:
     document_sets: []
     icon_shape: 45519
     icon_color: "#6FFF8D"
+    display_priority: 2
+    is_visible: false
+
 
   - id: 3
-    name: "Image Generator"
+    name: "Artist"
     description: >
       Assistant capable of generating images based on text descriptions.
     prompts:
@@ -83,3 +89,5 @@ personas:
     icon_shape: 234124 
     icon_color: "#9B59B6"
     image_generation: true 
+    display_priority: 3
+    is_visible: true

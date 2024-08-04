@@ -9,6 +9,7 @@ from danswer.db.document_set import get_or_create_document_set_by_name
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.input_prompt import insert_input_prompt_if_not_exists
 from danswer.db.models import DocumentSet as DocumentSetDBModel
+from danswer.db.models import Persona
 from danswer.db.models import Prompt as PromptDBModel
 from danswer.db.models import Tool as ToolDBModel
 from danswer.db.persona import get_prompt_by_name
@@ -96,6 +97,12 @@ def load_personas_from_yaml(
             if persona.get("image_generation"):
                 llm_model_version_override = "gpt-4o"
 
+            existing_persona = (
+                db_session.query(Persona)
+                .filter(Persona.name == persona["name"])
+                .first()
+            )
+
             upsert_persona(
                 user=None,
                 persona_id=(-1 * p_id) if p_id is not None else None,
@@ -117,6 +124,12 @@ def load_personas_from_yaml(
                 tool_ids=tool_ids,
                 default_persona=True,
                 is_public=True,
+                display_priority=existing_persona.display_priority
+                if existing_persona is not None
+                else persona.get("display_priority"),
+                is_visible=existing_persona.is_visible
+                if existing_persona is not None
+                else persona.get("is_visible"),
                 db_session=db_session,
             )
 
