@@ -276,7 +276,7 @@ def chunk_document(
                 chunk_id=len(chunks),
                 blurb=extract_blurb(chunk_text, blurb_splitter),
                 content=chunk_text,
-                source_links=link_offsets,
+                source_links=link_offsets or None,
                 section_continuation=False,
                 title_prefix=title_prefix,
                 metadata_suffix_semantic=metadata_suffix_semantic,
