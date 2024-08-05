@@ -7,11 +7,11 @@ from danswer.db.models import User
 
 
 @pytest.fixture
-def db_session():
+def db_session() -> Session:
     yield next(get_session())
 
 
-def test_create_chat_session_and_send_messages(db_session: Session):
+def test_create_chat_session_and_send_messages(db_session: Session) -> None:
     # Create a test user
     test_user = User(email="test@example.com", hashed_password="dummy_hash")
     db_session.add(test_user)

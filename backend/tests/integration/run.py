@@ -4,7 +4,7 @@ import subprocess
 import time
 
 
-def run_services():
+def run_services() -> None:
     processes = {}
 
     # Docker commands for services that will run in containers

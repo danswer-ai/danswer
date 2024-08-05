@@ -70,7 +70,7 @@ def create_connector(
     print(
         f"Created connector with connector_id: {connector_id}, credential_id: {credential_id}, cc_pair_id: {cc_pair_id}"
     )
-    return connector_id, credential_id, cc_pair_id
+    return int(connector_id), int(credential_id), int(cc_pair_id)
 
 
 def delete_connector(connector_id: int, credential_id: int) -> None:
