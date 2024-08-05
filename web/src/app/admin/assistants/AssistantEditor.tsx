@@ -100,6 +100,14 @@ export function AssistantEditor({
     "#6FFFFF",
   ];
 
+  // state to persist across formik reformatting
+  const [defautIconColor, _setDeafultIconColor] = useState(
+    colorOptions[Math.floor(Math.random() * colorOptions.length)]
+  );
+  const [defaultIconShape, _setDeafultIconShape] = useState(
+    generateRandomIconShape().encodedGrid
+  );
+
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   // EE only
@@ -207,8 +215,8 @@ export function AssistantEditor({
       existingPersona?.llm_model_version_override ?? null,
     starter_messages: existingPersona?.starter_messages ?? [],
     enabled_tools_map: enabledToolsMap,
-    icon_color: existingPersona?.icon_color ?? "#FF6FBF",
-    icon_shape: existingPersona?.icon_shape ?? 123242312,
+    icon_color: existingPersona?.icon_color ?? defautIconColor,
+    icon_shape: existingPersona?.icon_shape ?? defaultIconShape,
     uploaded_image: null,
 
     //   search_tool_enabled: existingPersona

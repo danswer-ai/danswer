@@ -77,11 +77,9 @@ const ToggleSwitch = () => {
 };
 
 export default function FunctionalWrapper({
-  // children,
   initiallyToggled,
   content,
 }: {
-  // children: React.ReactNode;
   content: (toggledSidebar: boolean, toggle: () => void) => ReactNode;
   initiallyToggled: boolean;
 }) {
