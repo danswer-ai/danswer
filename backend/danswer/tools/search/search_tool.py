@@ -279,11 +279,10 @@ class SearchTool(Tool):
                 ]
             ),
         )
-        vals = search_pipeline.section_relevance
 
         yield ToolResponse(
             id=SECTION_RELEVANCE_LIST_ID,
-            response=vals,
+            response=search_pipeline.section_relevance,
         )
 
         pruned_sections = prune_sections(
