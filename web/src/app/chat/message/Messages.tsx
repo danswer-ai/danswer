@@ -373,11 +373,12 @@ export const AIMessage = ({
                           isRunning={!toolCall.tool_result}
                         />
                       )}
-
-                    {content ? (
+                    <button onClick={() => console.log(toolCall)}>
+                      CLIK ME
+                    </button>
+                    {content || files ? (
                       <>
                         <FileDisplay files={files || []} />
-
                         {typeof content === "string" ? (
                           <div className="overflow-x-auto w-full pr-2 max-w-[675px]">
                             <ReactMarkdown
@@ -388,70 +389,72 @@ export const AIMessage = ({
                                   const { node, ...rest } = props;
                                   const value = rest.children;
 
-                                if (value?.toString() == "[tool_call_id]") {
-                                  return (
-                                    <CustomTooltip
-                                      wrap
-                                      content={`Prompt was "fancy cat"`}
-                                    >
-                                      <ToolCallIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
-                                    </CustomTooltip>
-                                  );
-                                } else if (value?.toString().startsWith("*")) {
-                                  return (
-                                    <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
-                                  );
-                                } else if (value?.toString().startsWith("[")) {
-                                  // for some reason <a> tags cause the onClick to not apply
-                                  // and the links are unclickable
-                                  // TODO: fix the fact that you have to double click to follow link
-                                  // for the first link
-                                  return (
-                                    <Citation
-                                      link={rest?.href}
-                                      key={node?.position?.start?.offset}
-                                    >
-                                      {rest.children}
-                                    </Citation>
-                                  );
-                                } else {
-                                  return (
-                                    <a
-                                      key={node?.position?.start?.offset}
-                                      onClick={() =>
-                                        rest.href
-                                          ? window.open(rest.href, "_blank")
-                                          : undefined
-                                      }
-                                      className="cursor-pointer text-link hover:text-link-hover"
-                                    >
-                                      {rest.children}
-                                    </a>
-                                  );
-                                }
-                              },
-                              code: (props) => (
-                                <CodeBlock
-                                  {...props}
-                                  content={content as string}
-                                />
-                              ),
-                              p: ({ node, ...props }) => (
-                                <p {...props} className="text-default" />
-                              ),
-                            }}
-                            remarkPlugins={[remarkGfm]}
-                            rehypePlugins={[
-                              [rehypePrism, { ignoreMissing: true }],
-                            ]}
-                          >
-                            {finalContent +
-                              (toolCall ? " [[tool_call_id]]()" : "")}
-                          </ReactMarkdown>
+                                  if (value?.toString() == "[tool_call_id]") {
+                                    return (
+                                      <CustomTooltip
+                                        wrap
+                                        content={`Prompt was "fancy cat"`}
+                                      >
+                                        <ToolCallIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
+                                      </CustomTooltip>
+                                    );
+                                  } else if (
+                                    value?.toString().startsWith("*")
+                                  ) {
+                                    return (
+                                      <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
+                                    );
+                                  } else if (
+                                    value?.toString().startsWith("[")
+                                  ) {
+                                    // for some reason <a> tags cause the onClick to not apply
+                                    // and the links are unclickable
+                                    // TODO: fix the fact that you have to double click to follow link
+                                    // for the first link
+                                    return (
+                                      <Citation
+                                        link={rest?.href}
+                                        key={node?.position?.start?.offset}
+                                      >
+                                        {rest.children}
+                                      </Citation>
+                                    );
+                                  } else {
+                                    return (
+                                      <a
+                                        key={node?.position?.start?.offset}
+                                        onClick={() =>
+                                          rest.href
+                                            ? window.open(rest.href, "_blank")
+                                            : undefined
+                                        }
+                                        className="cursor-pointer text-link hover:text-link-hover"
+                                      >
+                                        {rest.children}
+                                      </a>
+                                    );
+                                  }
+                                },
+                                code: (props) => (
+                                  <CodeBlock
+                                    {...props}
+                                    content={content as string}
+                                  />
+                                ),
+                                p: ({ node, ...props }) => (
+                                  <p {...props} className="text-default" />
+                                ),
+                              }}
+                              remarkPlugins={[remarkGfm]}
+                              rehypePlugins={[
+                                [rehypePrism, { ignoreMissing: true }],
+                              ]}
+                            >
+                              {finalContent +
+                                (toolCall ? " [[tool_call_id]]()" : "")}
+                            </ReactMarkdown>
                           </div>
-
-                        )
-                         : (
+                        ) : (
                           content
                         )}
                       </>
