@@ -28,6 +28,9 @@ logger = setup_logger()
 T = TypeVar("T", bound=LlmDoc | InferenceChunk | InferenceSection)
 
 _METADATA_TOKEN_ESTIMATE = 75
+# Title and additional tokens as part of the tool message json
+# this is only used to log a warning so we can be more forgiving with the buffer
+_OVERCOUNT_ESTIMATE = 256
 
 
 class PruningError(Exception):
@@ -179,10 +182,18 @@ def _apply_pruning(
             and section_token_count
             > DOC_EMBEDDING_CONTEXT_SIZE + _METADATA_TOKEN_ESTIMATE
         ):
-            logger.warning(
-                "Found more tokens in Section than expected, "
-                "likely mismatch between embedding and LLM tokenizers. Trimming content..."
-            )
+            if (
+                section_token_count
+                > DOC_EMBEDDING_CONTEXT_SIZE
+                + _METADATA_TOKEN_ESTIMATE
+                + _OVERCOUNT_ESTIMATE
+            ):
+                # If the section is just a little bit over, it is likely due to the additional tool message tokens
+                # no need to record this, the content will be trimmed just in case
+                logger.info(
+                    "Found more tokens in Section than expected, "
+                    "likely mismatch between embedding and LLM tokenizers. Trimming content..."
+                )
             section.combined_content = tokenizer_trim_content(
                 content=section.combined_content,
                 desired_length=DOC_EMBEDDING_CONTEXT_SIZE,

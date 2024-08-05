@@ -214,8 +214,6 @@ class SearchTool(Tool):
 
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
 
-        # yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
-
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
         query = cast(str, kwargs["query"])
 

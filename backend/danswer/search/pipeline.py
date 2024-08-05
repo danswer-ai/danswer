@@ -345,9 +345,15 @@ class SearchPipeline:
         return self._final_context_sections
 
     @property
-    def section_relevance(self) -> list[SectionRelevancePiece]:
+    def section_relevance(self) -> list[SectionRelevancePiece] | None:
         if self._section_relevance is not None:
             return self._section_relevance
+
+        if (
+            self.search_query.evaluation_type == LLMEvaluationType.SKIP
+            or DISABLE_LLM_DOC_RELEVANCE
+        ):
+            return None
 
         if self.search_query.evaluation_type == LLMEvaluationType.UNSPECIFIED:
             raise ValueError(
@@ -355,16 +361,7 @@ class SearchPipeline:
                 + "The search query evaluation type should have been specified."
             )
 
-        elif self.search_query.evaluation_type == LLMEvaluationType.SKIP:
-            raise ValueError(
-                "Attempted to access section relevance scores on search query with evaluation type `SKIP`."
-            )
-
-        elif self.search_query.evaluation_type == LLMEvaluationType.AGENTIC:
-            if DISABLE_LLM_DOC_RELEVANCE:
-                raise ValueError(
-                    "Agentic evaluation operation called while DISABLE_LLM_DOC_RELEVANCE is enabled."
-                )
+        if self.search_query.evaluation_type == LLMEvaluationType.AGENTIC:
             sections = self.final_context_sections
             functions = [
                 FunctionCall(
@@ -376,7 +373,7 @@ class SearchPipeline:
             results = run_functions_in_parallel(function_calls=functions)
             self._section_relevance = list(results.values())
 
-        else:  # evaluation type is BASIC
+        elif self.search_query.evaluation_type == LLMEvaluationType.BASIC:
             if DISABLE_LLM_DOC_RELEVANCE:
                 raise ValueError(
                     "Basic search evaluation operation called while DISABLE_LLM_DOC_RELEVANCE is enabled."
@@ -386,6 +383,12 @@ class SearchPipeline:
                     Iterator[list[SectionRelevancePiece]],
                     self._postprocessing_generator,
                 )
+            )
+
+        else:
+            # All other cases should have been handled above
+            raise ValueError(
+                f"Unexpected evaluation type: {self.search_query.evaluation_type}"
             )
 
         return self._section_relevance

@@ -51,14 +51,16 @@ class RelevanceAnalysis(BaseModel):
     content: str | None = None
 
 
-# All relevance information for a specific setion
 class SectionRelevancePiece(RelevanceAnalysis):
+    """LLM analysis mapped to an Inference Section"""
+
     document_id: str
     chunk_id: int  # ID of the center chunk for a given inference section
 
 
-# Dictionary with relevance information (key is `document_id`)
 class DocumentRelevance(BaseModel):
+    """Contains all relevance information for a given search"""
+
     relevance_summaries: dict[str, RelevanceAnalysis]
 
 

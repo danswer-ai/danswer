@@ -263,8 +263,10 @@ def search_postprocessing(
         sections_yielded = True
 
     llm_filter_task_id = None
-
-    if search_query.evaluation_type == LLMEvaluationType.BASIC:
+    if search_query.evaluation_type in [
+        LLMEvaluationType.BASIC,
+        LLMEvaluationType.UNSPECIFIED,
+    ]:
         post_processing_tasks.append(
             FunctionCall(
                 filter_sections,

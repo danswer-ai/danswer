@@ -503,7 +503,9 @@ def stream_chat_message_objects(
                         chunks_above=new_msg_req.chunks_above,
                         chunks_below=new_msg_req.chunks_below,
                         full_doc=new_msg_req.full_doc,
-                        evaluation_type=LLMEvaluationType.BASIC,
+                        evaluation_type=LLMEvaluationType.BASIC
+                        if persona.llm_relevance_filter
+                        else LLMEvaluationType.SKIP,
                     )
                     tool_dict[db_tool_model.id] = [search_tool]
                 elif tool_cls.__name__ == ImageGenerationTool.__name__:
