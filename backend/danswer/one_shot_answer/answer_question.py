@@ -272,10 +272,13 @@ def stream_answer_objects(
             elif packet.id == SECTION_RELEVANCE_LIST_ID:
                 document_based_response = {}
 
-                for evaluation in packet.response:
-                    document_based_response[evaluation.document_id] = RelevanceAnalysis(
-                        relevant=evaluation.relevant, content=evaluation.content
-                    )
+                if packet.response is not None:
+                    for evaluation in packet.response:
+                        document_based_response[
+                            evaluation.document_id
+                        ] = RelevanceAnalysis(
+                            relevant=evaluation.relevant, content=evaluation.content
+                        )
 
                 evaluation_response = DocumentRelevance(
                     relevance_summaries=document_based_response
