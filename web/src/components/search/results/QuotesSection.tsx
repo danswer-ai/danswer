@@ -73,10 +73,6 @@ const QuotesHeader = ({ quotes, isFetching }: QuotesSectionProps) => {
     return <>Extracting quotes...</>;
   }
 
-  if (!quotes || quotes.length === 0) {
-    return <>No quotes found</>;
-  }
-
   return <>Quotes</>;
 };
 
@@ -84,16 +80,6 @@ const QuotesBody = ({ quotes, isFetching }: QuotesSectionProps) => {
   if (!quotes && isFetching) {
     // height of quotes section to avoid extra "jumps" from the quotes loading
     return <div className="h-[42px]"></div>;
-  }
-
-  if (!isFetching && (!quotes || !quotes.length)) {
-    return (
-      <div className="flex">
-        <div className="text-error text-sm my-auto">
-          Did not find any exact quotes to support the above answer.
-        </div>
-      </div>
-    );
   }
 
   return (

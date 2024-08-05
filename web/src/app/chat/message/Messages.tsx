@@ -520,6 +520,7 @@ export const AIMessage = ({
                       </div>
                     )}
                   </div>
+
                   {handleFeedback &&
                     (isActive ? (
                       <div
