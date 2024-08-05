@@ -739,6 +739,8 @@ def stream_chat_message_objects(
 
                     yield msg_detail_response
                     yield Delimiter(delimiter=True)
+                    print("Partial Response")
+                    print("Delimiter update")
                     partial_response = partial(
                         create_new_chat_message,
                         chat_session_id=chat_session_id,
