@@ -21,13 +21,18 @@ def upgrade() -> None:
     op.add_column(
         "chat_message", sa.Column("tool_call_id", sa.Integer(), nullable=True)
     )
-    op.create_foreign_key(None, "chat_message", "tool_call", ["tool_call_id"], ["id"])
+    op.create_foreign_key(
+        "fk_chat_message_tool_call",
+        "chat_message",
+        "tool_call",
+        ["tool_call_id"],
+        ["id"],
+    )
 
-    # If you want to migrate existing data, you'll need to write custom SQL here
-    # For example:
-    # op.execute(
-    #     "UPDATE chat_message SET tool_call_id = (SELECT id FROM tool_call WHERE tool_call.message_id = chat_message.id LIMIT 1)"
-    # )
+    # Migrate existing data
+    op.execute(
+        "UPDATE chat_message SET tool_call_id = (SELECT id FROM tool_call WHERE tool_call.message_id = chat_message.id LIMIT 1)"
+    )
 
     # Drop the old relationship
     op.drop_constraint("tool_call_message_id_fkey", "tool_call", type_="foreignkey")
@@ -44,12 +49,11 @@ def downgrade() -> None:
         "tool_call_message_id_fkey", "tool_call", "chat_message", ["message_id"], ["id"]
     )
 
-    # If you migrated data in the upgrade, you'll need to reverse it here
-    # For example:
-    # op.execute(
-    #     "UPDATE tool_call SET message_id = (SELECT id FROM chat_message WHERE chat_message.tool_call_id = tool_call.id)"
-    # )
+    # Migrate data back
+    op.execute(
+        "UPDATE tool_call SET message_id = (SELECT id FROM chat_message WHERE chat_message.tool_call_id = tool_call.id)"
+    )
 
     # Drop the new column
-    op.drop_constraint(None, "chat_message", type_="foreignkey")
+    op.drop_constraint("fk_chat_message_tool_call", "chat_message", type_="foreignkey")
     op.drop_column("chat_message", "tool_call_id")

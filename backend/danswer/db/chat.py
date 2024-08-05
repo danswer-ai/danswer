@@ -147,8 +147,14 @@ def delete_search_doc_message_relationship(
 
 
 def delete_tool_call_for_message_id(message_id: int, db_session: Session) -> None:
-    stmt = delete(ToolCall).where(ToolCall.message_id == message_id)
-    db_session.execute(stmt)
+    chat_message = (
+        db_session.query(ChatMessage).filter(ChatMessage.id == message_id).first()
+    )
+    if chat_message and chat_message.tool_call_id:
+        stmt = delete(ToolCall).where(ToolCall.id == chat_message.tool_call_id)
+        db_session.execute(stmt)
+        chat_message.tool_call_id = None
+
     db_session.commit()
 
 

@@ -8,10 +8,16 @@ from langchain_core.messages import AIMessageChunk
 from langchain_core.messages import HumanMessage
 
 from danswer.chat.models import AnswerQuestionPossibleReturn
+from danswer.chat.models import AnswerQuestionStreamReturn
 from danswer.chat.models import CitationInfo
+from danswer.chat.models import CustomToolResponse
 from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import DanswerContexts
+from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import Delimiter
+from danswer.chat.models import ImageGenerationDisplay
 from danswer.chat.models import LlmDoc
+from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
 from danswer.configs.constants import MessageType
 from danswer.file_store.utils import InMemoryChatFile
@@ -65,6 +71,8 @@ from danswer.tools.tool_runner import ToolRunner
 from danswer.tools.tool_selection import select_single_tool_for_non_tool_calling_llm
 from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
+
+# DanswerQuotes | CitationInfo | DanswerContexts | ImageGenerationDisplay | CustomToolResponse | StreamingError
 
 
 logger = setup_logger()
@@ -143,7 +151,9 @@ class Answer:
 
         self.answer_style_config = answer_style_config
         self.prompt_config = prompt_config
+
         self.current_streamed_output: list = []
+        self.processing_stream: list = []
 
         self.llm = llm
         self.llm_tokenizer = get_tokenizer(
@@ -360,9 +370,11 @@ class Answer:
                     response_content += (
                         chunk.answer_piece
                         if hasattr(chunk, "answer_piece")
+                        and chunk.answer_piece is not None
                         else str(chunk)
                     )
                     yield chunk
+
                 yield "FINAL TOKEN"
 
                 # Update message history with LLM response
@@ -378,7 +390,14 @@ class Answer:
 
     def _raw_output_for_explicit_tool_calling_llms(
         self,
-    ) -> Iterator[str | ToolCallKickoff | ToolResponse | ToolCallFinalResult]:
+    ) -> Iterator[
+        str
+        | ToolCallKickoff
+        | ToolResponse
+        | ToolCallFinalResult
+        | AnswerQuestionPossibleReturn
+        | str
+    ]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
         # special things we need to keep track of for the SearchTool
         # search_results: list[
@@ -504,7 +523,21 @@ class Answer:
 
     def _raw_output_for_non_explicit_tool_calling_llms(
         self,
-    ) -> Iterator[str | ToolCallKickoff | ToolResponse | ToolCallFinalResult]:
+    ) -> Iterator[
+        str
+        | ToolCallKickoff
+        | ToolResponse
+        | ToolCallFinalResult
+        | AnswerQuestionStreamReturn
+        | DanswerAnswerPiece
+        | DanswerQuotes
+        | CitationInfo
+        | DanswerContexts
+        | ImageGenerationDisplay
+        | CustomToolResponse
+        | StreamingError
+        | Delimiter
+    ]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
         chosen_tool_and_args: tuple[Tool, dict] | None = None
 
@@ -637,7 +670,7 @@ class Answer:
         # Streaming response
         prompt = prompt_builder.build()
         process_answer_stream_fn = _get_answer_stream_processor(
-            context_docs=final_context_documents,
+            context_docs=final_context_documents or [],
             # if doc selection is enabled, then search_results will be None,
             # so we need to use the final_context_docs
             doc_id_to_rank_map=map_document_id_order([]),
@@ -667,7 +700,14 @@ class Answer:
         self.processing_stream = []
 
         def _process_stream(
-            stream: Iterator[ToolCallKickoff | ToolResponse | str],
+            stream: Iterator[
+                str
+                | ToolCallKickoff
+                | ToolResponse
+                | ToolCallFinalResult
+                | Delimiter
+                | Any
+            ],
         ) -> AnswerStream:
             message = None
 
@@ -734,6 +774,8 @@ class Answer:
     @property
     def llm_answer(self) -> str:
         answer = ""
+        if not self._processed_stream:
+            return ""
         for packet in self.current_streamed_output or self._processed_stream:
             if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
                 answer += packet.answer_piece

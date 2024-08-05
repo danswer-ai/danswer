@@ -706,6 +706,16 @@ def stream_chat_message_objects(
                         for tool in tool_list:
                             tool_name_to_tool_id[tool.name] = tool_id
 
+                    if tool_result is None:
+                        tool_call = None
+                    else:
+                        tool_call = ToolCall(
+                            tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                            tool_name=tool_result.tool_name,
+                            tool_arguments=tool_result.tool_args,
+                            tool_result=tool_result.tool_result,
+                        )
+
                     gen_ai_response_message = partial_response(
                         message=answer.llm_answer,
                         rephrased_query=(
@@ -718,14 +728,7 @@ def stream_chat_message_objects(
                         token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
                         citations=db_citations,
                         error=None,
-                        tool_call=ToolCall(
-                            tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                            tool_name=tool_result.tool_name,
-                            tool_arguments=tool_result.tool_args,
-                            tool_result=tool_result.tool_result,
-                        )
-                        if tool_result is not None
-                        else None,
+                        tool_call=tool_call,
                     )
 
                     db_session.commit()  # actually save user / assistant message
@@ -783,7 +786,7 @@ def stream_chat_message_objects(
                 )
 
             # Saving Gen AI answer and responding with message info
-            tool_name_to_tool_id: dict[str, int] = {}
+            tool_name_to_tool_id = {}
             for tool_id, tool_list in tool_dict.items():
                 for tool in tool_list:
                     tool_name_to_tool_id[tool.name] = tool_id
