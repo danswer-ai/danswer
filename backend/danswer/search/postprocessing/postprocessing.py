@@ -212,11 +212,17 @@ def filter_sections(
         section.center_chunk.content if use_chunk else section.combined_content
         for section in sections_to_filter
     ]
+    metadata_list = [section.center_chunk.metadata for section in sections_to_filter]
+    titles = [
+        section.center_chunk.semantic_identifier for section in sections_to_filter
+    ]
 
     llm_chunk_selection = llm_batch_eval_sections(
         query=query.query,
         section_contents=contents,
         llm=llm,
+        titles=titles,
+        metadata_list=metadata_list,
     )
 
     return [

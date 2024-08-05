@@ -11,7 +11,13 @@ it must contain information that is USEFUL for answering the query.
 If the section contains ANY useful information, that is good enough, \
 it does not need to fully answer the every part of the user query.
 
+
+Title: {{title}}
+
+{{optional_metadata}}
+
 Reference Section:
+
 ```
 {{chunk_text}}
 ```
