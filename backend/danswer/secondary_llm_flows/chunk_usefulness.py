@@ -20,11 +20,11 @@ def llm_eval_section(
     metadata: dict[str, str | list[str]],
 ) -> bool:
     def _get_metadata_str(metadata: dict[str, str | list[str]]) -> str:
-        metadata_str = "\n\nMetadata:\n"
+        metadata_str = "\nMetadata:\n"
         for key, value in metadata.items():
             value_str = ", ".join(value) if isinstance(value, list) else value
             metadata_str += f"{key} - {value_str}\n"
-        return metadata_str + "\nContent:"
+        return metadata_str
 
     def _get_usefulness_messages() -> list[dict[str, str]]:
         metadata_str = _get_metadata_str(metadata) if metadata else ""
@@ -32,7 +32,7 @@ def llm_eval_section(
             {
                 "role": "user",
                 "content": SECTION_FILTER_PROMPT.format(
-                    title=title,
+                    title=title.replace("\n", " "),
                     chunk_text=section_content,
                     user_query=query,
                     optional_metadata=metadata_str,
