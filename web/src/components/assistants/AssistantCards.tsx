@@ -94,7 +94,9 @@ export function DraggableAssistantCard(props: {
   } = useSortable({ id: props.assistant.id.toString() });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: transform
+      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+      : undefined,
     transition,
     opacity: isDragging ? 0.9 : 1,
   };
