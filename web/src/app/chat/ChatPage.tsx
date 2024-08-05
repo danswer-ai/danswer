@@ -10,6 +10,7 @@ import {
   FileDescriptor,
   ImageGenerationDisplay,
   Message,
+  PreviousAIMessage,
   RetrievalType,
   StreamingError,
   ToolCallFinalResult,
@@ -628,6 +629,7 @@ export function ChatPage({
 
       return;
     }
+    let previousMessage: PreviousAIMessage | null = null;
 
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
     clientScrollToBottom();
@@ -801,6 +803,7 @@ export function ChatPage({
       const delay = (ms: number) => {
         return new Promise((resolve) => setTimeout(resolve, ms));
       };
+
       let parentId: number | null = null;
       let generatedAssistantId: number | null = null;
       await delay(50);
@@ -914,6 +917,22 @@ export function ChatPage({
                 currMessage = answer;
                 generatedAssistantId = newUserMessageId;
 
+                previousMessage = {
+                  parentMessageId: parentId,
+                  toolCall: finalMessage.tool_call,
+                  documents:
+                    finalMessage.context_docs?.top_documents || documents,
+                };
+
+                //                   messageId: newUserMessageId,
+                // message: currMessage,
+                // type: generatedAssistantId ? "assistant" : "user",
+                // files: files,
+                // toolCall: null,
+                // parentMessageId: parentId || parentMessage?.messageId || null,
+                // childrenMessageIds: [newAssistantMessageId],
+                // latestChildMessageId: newAssistantMessageId,
+
                 // let { messageMap: newFrozenMessageMap, sessionId: newFrozenSessionId } =
                 //   upsertToCompleteMessageMap({
                 //     messages: messageUpdates,
@@ -941,6 +960,7 @@ export function ChatPage({
                 files = finalMessage.files;
                 // setCurrentMessageFsetiles(finalMessage.files)
                 finalMessage = null;
+                aiMessageImages = null;
 
                 setIsStreaming(false);
                 // setIsGenerating(false)
@@ -953,47 +973,28 @@ export function ChatPage({
               finalMessage = null as BackendMessage | null;
             }
 
-            if (!Object.hasOwn(packet, "message_id")) {
+            if (
+              !Object.hasOwn(packet, "message_id") &&
+              !Object.hasOwn(packet, "delimiter")
+            ) {
+              console.log(packet);
+              console.log("UPDATING THE MESSAGES PAST");
               const newUserMessageId =
                 finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
               const newAssistantMessageId =
                 finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
-              // console.log([
-              //   {
-              //     messageId: newUserMessageId,
-              //     message: currMessage,
-              //     type: newUserId ? "assistant" : "user",
-              //     files: currentMessageFiles,
-              //     toolCall: null,
-              //     parentMessageId: parentMessage?.messageId || null,
-              //     childrenMessageIds: [newAssistantMessageId],
-              //     latestChildMessageId: newAssistantMessageId,
-              //   },
-              //   {
-              //     messageId: newAssistantMessageId,
-              //     message: error || answer,
-              //     type: error ? "error" : "assistant",
-              //     retrievalType,
-              //     query: finalMessage?.rephrased_query || query,
-              //     documents:
-              //       finalMessage?.context_docs?.top_documents || documents,
-              //     citations: finalMessage?.citations || {},
-              //     files: finalMessage?.files || aiMessageImages || [],
-              //     toolCall: finalMessage?.tool_call || toolCall,
-              //     parentMessageId: newUserMessageId,
-              //     alternateAssistantID: alternativeAssistant?.id,
-              //   },
-
-              // ])
 
               updateFn([
                 {
                   messageId: newUserMessageId,
                   message: currMessage,
                   type: generatedAssistantId ? "assistant" : "user",
-                  files: files,
-                  toolCall: null,
-                  parentMessageId: parentId || parentMessage?.messageId || null,
+                  files: previousMessage?.files || files,
+                  toolCall: previousMessage?.toolCall || null,
+                  parentMessageId:
+                    previousMessage?.parentMessageId ||
+                    parentMessage?.messageId ||
+                    null,
                   childrenMessageIds: [newAssistantMessageId],
                   latestChildMessageId: newAssistantMessageId,
                 },
