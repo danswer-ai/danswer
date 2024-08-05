@@ -89,14 +89,24 @@ export function SearchSummary({
 
   const searchingForDisplay = (
     <div className={`flex p-1 rounded ${isOverflowed && "cursor-default"}`}>
-      <FiSearch className="flex-none mr-2 my-auto" size={14} />
-      <div
-        className={`${!finished && "loading-text"} 
-        !text-sm !line-clamp-1 !break-all px-0.5`}
-        ref={searchingForRef}
-      >
-        {finished ? "Searched" : "Searching"} for: <i> {finalQuery}</i>
-      </div>
+      {finished ? (
+        <>
+          <FiSearch className="flex-none mr-2 my-auto" size={14} />
+          <div
+            className={`!text-sm !line-clamp-1 !break-all px-0.5`}
+            ref={searchingForRef}
+          >
+            Searched for: <i> {finalQuery}</i>
+          </div>
+        </>
+      ) : (
+        <div
+          className={`loading-text !text-sm !line-clamp-1 !break-all px-0.5`}
+          ref={searchingForRef}
+        >
+          Searching for: <i> {finalQuery}</i>
+        </div>
+      )}
     </div>
   );
 

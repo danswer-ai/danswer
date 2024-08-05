@@ -109,7 +109,7 @@ def translate_history_to_basemessages(
         "to determine if any new images need to be generated, ensuring I don't repeat "
     )
     summary += "any image generations that have already been completed.\n"
-    summary += f"I already generated {image_generation_count} images thus far."
+    summary += f"I already generated {image_generation_count} images thus far. I should keep my responses EXTREMELY SHORT"
     summary += "[/CONVERSATION SUMMARY]"
     history_basemessages.append(AIMessage(content=summary))
     history_token_counts.append(100)

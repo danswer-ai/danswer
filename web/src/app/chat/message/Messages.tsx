@@ -126,6 +126,7 @@ export const AIMessage = ({
   citedDocuments,
   toolCall,
   isComplete,
+  generatingTool,
   hasDocs,
   handleFeedback,
   isCurrentlyShowingRetrieved,
@@ -151,6 +152,7 @@ export const AIMessage = ({
   citedDocuments?: [string, DanswerDocument][] | null;
   toolCall?: ToolCallMetadata;
   isComplete?: boolean;
+  generatingTool?: boolean;
   hasDocs?: boolean;
   handleFeedback?: (feedbackType: FeedbackType) => void;
   isCurrentlyShowingRetrieved?: boolean;
@@ -174,7 +176,7 @@ export const AIMessage = ({
       }
     }
 
-    return content + (!isComplete ? " [*]() " : "");
+    return content + (!isComplete && !generatingTool ? " [*]() " : "");
   };
 
   const finalContent = processContent(content as string);
@@ -266,6 +268,7 @@ export const AIMessage = ({
               <div className="w-6" />
             )}
 
+            <p className="text-6xl">{messageId}</p>
             <div className="w-full">
               <div className="max-w-message-max break-words">
                 {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
@@ -280,7 +283,10 @@ export const AIMessage = ({
                               query={query}
                               hasDocs={hasDocs || false}
                               messageId={messageId}
-                              finished={toolCall?.tool_result != undefined}
+                              finished={
+                                toolCall?.tool_result != undefined ||
+                                isComplete!
+                              }
                               isCurrentlyShowingRetrieved={
                                 isCurrentlyShowingRetrieved
                               }
@@ -314,7 +320,10 @@ export const AIMessage = ({
                             <div className="mb-1">
                               <SearchSummary
                                 query={query}
-                                finished={toolCall?.tool_result != undefined}
+                                finished={
+                                  toolCall?.tool_result != undefined ||
+                                  isComplete!
+                                }
                                 hasDocs={hasDocs || false}
                                 messageId={messageId}
                                 isCurrentlyShowingRetrieved={
@@ -373,9 +382,7 @@ export const AIMessage = ({
                           isRunning={!toolCall.tool_result}
                         />
                       )}
-                    <button onClick={() => console.log(toolCall)}>
-                      CLIK ME
-                    </button>
+
                     {content || files ? (
                       <>
                         <FileDisplay files={files || []} />
@@ -451,7 +458,9 @@ export const AIMessage = ({
                               ]}
                             >
                               {finalContent +
-                                (toolCall ? " [[tool_call_id]]()" : "")}
+                                (toolCall?.tool_result
+                                  ? " [[tool_call_id]]()"
+                                  : "")}
                             </ReactMarkdown>
                           </div>
                         ) : (
@@ -695,6 +704,8 @@ export const HumanMessage = ({
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />
+
+            <p className="text-6xl">{messageId}</p>
             <div className="flex justify-end">
               <div className="w-full ml-8 flex w-full max-w-message-max break-words">
                 {isEditing ? (

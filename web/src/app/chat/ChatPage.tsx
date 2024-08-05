@@ -12,6 +12,7 @@ import {
   Message,
   RetrievalType,
   StreamingError,
+  ToolCallFinalResult,
   ToolCallMetadata,
 } from "./interfaces";
 
@@ -55,7 +56,6 @@ import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { FiArrowDown } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
-import { ThreeDots } from "react-loader-spinner";
 import { StarterMessage } from "./StarterMessage";
 import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
@@ -326,7 +326,7 @@ export function ChatPage({
         message: "",
         type: "system",
         files: [],
-        toolCalls: [],
+        toolCall: null,
         parentMessageId: null,
         childrenMessageIds: [firstMessageId],
         latestChildMessageId: firstMessageId,
@@ -376,7 +376,6 @@ export function ChatPage({
   const messageHistory = buildLatestMessageChain(
     completeMessageDetail.messageMap
   );
-  console.log(completeMessageDetail);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -693,7 +692,7 @@ export function ChatPage({
         message: currMessage,
         type: "user",
         files: currentMessageFiles,
-        toolCalls: [],
+        toolCall: null,
         parentMessageId: parentMessage?.messageId || null,
       },
     ];
@@ -712,8 +711,6 @@ export function ChatPage({
         chatSessionId: currChatSessionId,
       });
 
-    console.log("INITIAL map MESSAGE");
-    console.log(frozenMessageMap);
     // on initial message send, we insert a dummy system message
     // set this as the parent here if no parent is set
     if (!parentMessage && frozenMessageMap.size === 2) {
@@ -737,7 +734,7 @@ export function ChatPage({
     let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
-    let toolCalls: ToolCallMetadata[] = [];
+    let toolCall: ToolCallMetadata | null = null;
     let newUserId = null;
 
     try {
@@ -781,6 +778,10 @@ export function ChatPage({
         useExistingUserMessage: isSeededChat,
       });
 
+      let updateFn2 = null;
+      console.log("CREATING update function");
+      console.log(frozenMessageMap);
+
       let updateFn = (messages: Message[]) => {
         const replacementsMap = finalMessage
           ? new Map([
@@ -789,12 +790,6 @@ export function ChatPage({
             ] as [number, number][])
           : null;
 
-        console.log("\n\n----Updating previously-----");
-        console.log(messages);
-        console.log(replacementsMap);
-        console.log(frozenMessageMap);
-        console.log("---------");
-
         return upsertToCompleteMessageMap({
           messages: messages,
           replacementsMap: replacementsMap,
@@ -802,10 +797,12 @@ export function ChatPage({
           chatSessionId: frozenSessionId!,
         });
       };
+      let files = currentMessageFiles;
       const delay = (ms: number) => {
         return new Promise((resolve) => setTimeout(resolve, ms));
       };
-
+      let parentId: number | null = null;
+      let generatedAssistantId: number | null = null;
       await delay(50);
       while (!stack.isComplete || !stack.isEmpty()) {
         await delay(2);
@@ -813,9 +810,8 @@ export function ChatPage({
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();
           if (packet) {
-            console.log(packet);
             if (Object.hasOwn(packet, "delimiter")) {
-              console.log("MESSAGE DELIMITER");
+              // console.log("MESSAGE DELIMITER");
             }
 
             if (Object.hasOwn(packet, "answer_piece")) {
@@ -830,13 +826,11 @@ export function ChatPage({
                 setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
               }
             } else if (Object.hasOwn(packet, "tool_name")) {
-              toolCalls = [
-                {
-                  tool_name: (packet as ToolCallMetadata).tool_name,
-                  tool_args: (packet as ToolCallMetadata).tool_args,
-                  tool_result: (packet as ToolCallMetadata).tool_result,
-                },
-              ];
+              toolCall = {
+                tool_name: (packet as ToolCallMetadata).tool_name,
+                tool_args: (packet as ToolCallMetadata).tool_args,
+                tool_result: (packet as ToolCallMetadata).tool_result,
+              };
             } else if (Object.hasOwn(packet, "file_ids")) {
               aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
                 (fileId) => {
@@ -859,16 +853,14 @@ export function ChatPage({
                 newAssistantMessageId !== undefined
               ) {
                 // Update the messages with final IDs
-                console.log(
-                  `Settinguser ${newUserMessageId} + assistant ${newAssistantMessageId}`
-                );
+
                 console.log([
                   {
                     messageId: newUserMessageId,
                     message: currMessage,
                     type: "user",
                     files: currentMessageFiles,
-                    toolCalls: [],
+                    toolCall: null,
                     parentMessageId: parentMessage?.messageId || null,
                     childrenMessageIds: [newAssistantMessageId],
                     latestChildMessageId: newAssistantMessageId,
@@ -883,7 +875,7 @@ export function ChatPage({
                       finalMessage.context_docs?.top_documents || documents,
                     citations: finalMessage.citations || {},
                     files: finalMessage.files || aiMessageImages || [],
-                    toolCalls: finalMessage.tool_calls || toolCalls,
+                    toolCall: finalMessage.tool_call,
                     parentMessageId: newUserMessageId,
                     alternateAssistantID: alternativeAssistant?.id,
                   },
@@ -897,8 +889,8 @@ export function ChatPage({
                     messageId: newUserMessageId,
                     message: currMessage,
                     type: "user",
-                    files: currentMessageFiles,
-                    toolCalls: [],
+                    files: files,
+                    toolCall: null,
                     parentMessageId: parentMessage?.messageId || null,
                     childrenMessageIds: [newAssistantMessageId],
                     latestChildMessageId: newAssistantMessageId,
@@ -913,20 +905,24 @@ export function ChatPage({
                       finalMessage.context_docs?.top_documents || documents,
                     citations: finalMessage.citations || {},
                     files: finalMessage.files || aiMessageImages || [],
-                    toolCalls: finalMessage.tool_calls || toolCalls,
+                    toolCall: finalMessage.tool_call || toolCall,
                     parentMessageId: newUserMessageId,
                     alternateAssistantID: alternativeAssistant?.id,
                   },
                 ]);
+                parentId = newUserMessageId;
+                currMessage = answer;
+                generatedAssistantId = newUserMessageId;
 
                 // let { messageMap: newFrozenMessageMap, sessionId: newFrozenSessionId } =
                 //   upsertToCompleteMessageMap({
                 //     messages: messageUpdates,
                 //     chatSessionId: currChatSessionId,
                 //   });
-                console.log("new frozen message map");
-                console.log(frozenMessageMap);
 
+                console.log(`PARNE ID ${newUserMessageId}`);
+                console.log("CREATING update function #2");
+                console.log(newFrozenMessageMap);
                 updateFn = (messages: Message[]) => {
                   const replacementsMap = finalMessage
                     ? new Map([
@@ -934,18 +930,17 @@ export function ChatPage({
                         [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
                       ] as [number, number][])
                     : null;
-                  console.log("Updating NOW");
-                  console.log(messages);
-                  console.log(replacementsMap);
-                  console.log(newFrozenMessageMap);
 
                   return upsertToCompleteMessageMap({
                     messages: messages,
                     replacementsMap: replacementsMap,
                     completeMessageMapOverride: newFrozenMessageMap,
-                    chatSessionId: newFrozenSessionId!,
+                    chatSessionId: frozenSessionId!,
                   });
                 };
+                files = finalMessage.files;
+                // setCurrentMessageFsetiles(finalMessage.files)
+                finalMessage = null;
 
                 setIsStreaming(false);
                 // setIsGenerating(false)
@@ -963,19 +958,42 @@ export function ChatPage({
                 finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
               const newAssistantMessageId =
                 finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+              // console.log([
+              //   {
+              //     messageId: newUserMessageId,
+              //     message: currMessage,
+              //     type: newUserId ? "assistant" : "user",
+              //     files: currentMessageFiles,
+              //     toolCall: null,
+              //     parentMessageId: parentMessage?.messageId || null,
+              //     childrenMessageIds: [newAssistantMessageId],
+              //     latestChildMessageId: newAssistantMessageId,
+              //   },
+              //   {
+              //     messageId: newAssistantMessageId,
+              //     message: error || answer,
+              //     type: error ? "error" : "assistant",
+              //     retrievalType,
+              //     query: finalMessage?.rephrased_query || query,
+              //     documents:
+              //       finalMessage?.context_docs?.top_documents || documents,
+              //     citations: finalMessage?.citations || {},
+              //     files: finalMessage?.files || aiMessageImages || [],
+              //     toolCall: finalMessage?.tool_call || toolCall,
+              //     parentMessageId: newUserMessageId,
+              //     alternateAssistantID: alternativeAssistant?.id,
+              //   },
 
-              console.log(
-                `Updating user ${newUserMessageId} + assistant ${newAssistantMessageId}`
-              );
+              // ])
 
               updateFn([
                 {
                   messageId: newUserMessageId,
                   message: currMessage,
-                  type: newUserId ? "assistant" : "user",
-                  files: currentMessageFiles,
-                  toolCalls: [],
-                  parentMessageId: parentMessage?.messageId || null,
+                  type: generatedAssistantId ? "assistant" : "user",
+                  files: files,
+                  toolCall: null,
+                  parentMessageId: parentId || parentMessage?.messageId || null,
                   childrenMessageIds: [newAssistantMessageId],
                   latestChildMessageId: newAssistantMessageId,
                 },
@@ -989,14 +1007,13 @@ export function ChatPage({
                     finalMessage?.context_docs?.top_documents || documents,
                   citations: finalMessage?.citations || {},
                   files: finalMessage?.files || aiMessageImages || [],
-                  toolCalls: finalMessage?.tool_calls || toolCalls,
+                  toolCall: finalMessage?.tool_call || toolCall,
                   parentMessageId: newUserMessageId,
                   alternateAssistantID: alternativeAssistant?.id,
                 },
               ]);
             }
           }
-
         }
       }
     } catch (e: any) {
@@ -1008,7 +1025,7 @@ export function ChatPage({
             message: currMessage,
             type: "user",
             files: currentMessageFiles,
-            toolCalls: [],
+            toolCall: null,
             parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
           },
           {
@@ -1016,7 +1033,7 @@ export function ChatPage({
             message: errorMsg,
             type: "error",
             files: aiMessageImages || [],
-            toolCalls: [],
+            toolCall: null,
             parentMessageId: TEMP_USER_MESSAGE_ID,
           },
         ],
@@ -1519,6 +1536,10 @@ export function ChatPage({
                                         childMessageType == "assistant" ||
                                         isGenerating
                                       }
+                                      generatingTool={
+                                        message.toolCall != null &&
+                                        message.toolCall.tool_result == null
+                                      }
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
                                       toggleDocumentSelection={
@@ -1539,10 +1560,7 @@ export function ChatPage({
                                       citedDocuments={getCitedDocumentsFromMessage(
                                         message
                                       )}
-                                      toolCall={
-                                        message.toolCalls &&
-                                        message.toolCalls[0]
-                                      }
+                                      toolCall={message.toolCall}
                                       isComplete={
                                         i !== messageHistory.length - 1 ||
                                         !isStreaming
@@ -1645,14 +1663,14 @@ export function ChatPage({
                                 return (
                                   <div key={messageReactComponentKey}>
                                     <AIMessage
+                                      // toolCall &&
+                                      // toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
+                                      // !toolCall.tool_result
                                       currentPersona={liveAssistant}
                                       messageId={message.messageId}
                                       personaName={liveAssistant.name}
-                                      content={
-                                        <p className="text-red-700 text-sm my-auto">
-                                          {message.message}
-                                        </p>
-                                      }
+                                      files={message.files}
+                                      content={message.message}
                                     />
                                   </div>
                                 );
