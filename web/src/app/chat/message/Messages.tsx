@@ -56,6 +56,9 @@ import { useMouseTracking } from "./hooks";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import GeneratingImage from "../tools/ImageGeneratingAnimation";
+import DualPromptDisplay from "../tools/ImagePromptCitation";
+import { Popover } from "@/components/popover/Popover";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -130,6 +133,7 @@ export const AIMessage = ({
   handleForceSearch,
   retrievalDisabled,
   currentPersona,
+  setPopup,
 }: {
   hasChildAI?: boolean;
   hasParentAI?: boolean;
@@ -155,6 +159,7 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
+  setPopup: (popupSpec: PopupSpec | null) => void;
 }) => {
   const processContent = (content: string | JSX.Element) => {
     if (typeof content !== "string") {
@@ -176,6 +181,7 @@ export const AIMessage = ({
 
   const finalContent = processContent(content as string);
 
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {
     Prism.highlightAll();
@@ -389,14 +395,39 @@ export const AIMessage = ({
                                   const { node, ...rest } = props;
                                   const value = rest.children;
 
-                                  if (value?.toString() == "[tool_call_id]") {
+                                  if (
+                                    value?.toString() ==
+                                    "[run_image_generation]"
+                                  ) {
                                     return (
-                                      <CustomTooltip
-                                        wrap
-                                        content={`Prompt was "fancy cat"`}
-                                      >
-                                        <ToolCallIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
-                                      </CustomTooltip>
+                                      <Popover
+                                        open={isPopoverOpen}
+                                        onOpenChange={() => null} // only allow closing from the icon
+                                        content={
+                                          <button
+                                            onMouseDown={() => {
+                                              setIsPopoverOpen(!isPopoverOpen);
+                                            }}
+                                          >
+                                            <ToolCallIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
+                                          </button>
+                                        }
+                                        popover={
+                                          <DualPromptDisplay
+                                            setPopup={setPopup}
+                                            prompt1={
+                                              toolCall?.tool_result?.[0]
+                                                ?.revised_prompt
+                                            }
+                                            prompt2={
+                                              toolCall?.tool_result?.[1]
+                                                ?.revised_prompt
+                                            }
+                                          />
+                                        }
+                                        side="top"
+                                        align="center"
+                                      />
                                     );
                                   } else if (
                                     value?.toString().startsWith("*")
@@ -452,7 +483,7 @@ export const AIMessage = ({
                             >
                               {finalContent +
                                 (toolCall?.tool_result
-                                  ? " [[tool_call_id]]()"
+                                  ? ` [[${toolCall.tool_name}]]()`
                                   : "")}
                             </ReactMarkdown>
                           </div>

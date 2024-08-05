@@ -205,7 +205,6 @@ class Answer:
         str | ToolCallKickoff | ToolResponse | ToolCallMetadata | Delimiter | Any
     ]:
         count = 1
-        print("HI go")
         maximum_count = 5
         while count <= maximum_count:
             prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
@@ -223,12 +222,6 @@ class Answer:
                     }
                 ]
             else:
-                logger.critical("---------prompt configs are---------")
-
-                logger.critical("---------Prompt conifg--------")
-                logger.critical(self.prompt_config)
-                logger.critical(self.latest_query_files)
-
                 prompt_builder.update_system_prompt(
                     default_build_system_message(self.prompt_config)
                 )
@@ -245,9 +238,6 @@ class Answer:
                     )
                 ]
 
-                logger.critical("---------prompt is---------")
-                logger.critical(prompt)
-
                 for message in self.llm.stream(
                     prompt=prompt,
                     tools=final_tool_definitions if final_tool_definitions else None,
@@ -262,13 +252,15 @@ class Answer:
                             tool_call_chunk += message  # type: ignore
                     else:
                         if tool_call_chunk is None and count != 2:
-                            logger.critical("Skipping the tool calls! int eh first ")
+                            logger.debug("Skipping the tool call + message compeltely")
                             return
                         elif message.content:
                             yield cast(str, message.content)
 
                 if not tool_call_chunk:
-                    logger.critical("Skipping the tool calls!")
+                    logger.ebug(
+                        "Skipping the tool call but generated message due to lack of existing tool call messages"
+                    )
                     return
 
             tool_call_requests = tool_call_chunk.tool_calls
@@ -696,7 +688,6 @@ class Answer:
             else self._raw_output_for_non_explicit_tool_calling_llms()
         )
 
-        print(output_generator)
         self.processing_stream = []
 
         def _process_stream(

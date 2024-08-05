@@ -1482,6 +1482,7 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      setPopup={setPopup}
                                       hasParentAI={
                                         parentMessageType == "assistant"
                                       }
@@ -1616,6 +1617,7 @@ export function ChatPage({
                                 return (
                                   <div key={messageReactComponentKey}>
                                     <AIMessage
+                                      setPopup={setPopup}
                                       currentPersona={liveAssistant}
                                       messageId={message.messageId}
                                       personaName={liveAssistant.name}
@@ -1634,6 +1636,7 @@ export function ChatPage({
                                   key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                                 >
                                   <AIMessage
+                                    setPopup={setPopup}
                                     currentPersona={liveAssistant}
                                     alternativeAssistant={
                                       alternativeGeneratingAssistant ??
