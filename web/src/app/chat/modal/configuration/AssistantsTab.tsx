@@ -78,10 +78,8 @@ export function AssistantsTab({
             {assistants.map((assistant) => (
               <DraggableAssistantCard
                 key={assistant.id.toString()}
-                assistant={{ ...assistant, id: assistant.id.toString() }}
-                isSelected={
-                  selectedAssistant.id.toString() === assistant.id.toString()
-                }
+                assistant={assistant}
+                isSelected={selectedAssistant.id === assistant.id}
                 onSelect={onSelect}
                 llmName={llmName}
               />
