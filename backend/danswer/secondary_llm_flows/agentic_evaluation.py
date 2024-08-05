@@ -23,7 +23,10 @@ def _get_agent_eval_messages(
         {
             "role": "user",
             "content": AGENTIC_SEARCH_USER_PROMPT.format(
-                title=title, content=content, query=query, metadata=center_metadata
+                title=title,
+                content=content,
+                query=query,
+                optional_metadata=center_metadata,
             ),
         },
     ]
@@ -33,11 +36,20 @@ def _get_agent_eval_messages(
 def evaluate_inference_section(
     document: InferenceSection, query: str, llm: LLM
 ) -> SectionRelevancePiece:
+    def _get_metadata_str(metadata: dict[str, str | list[str]]) -> str:
+        metadata_str = "\n\nMetadata:\n"
+        for key, value in metadata.items():
+            value_str = ", ".join(value) if isinstance(value, list) else value
+            metadata_str += f"{key} - {value_str}\n"
+
+        # Since there is now multiple sections, add this prefix for clarity
+        return metadata_str + "\nContent:"
+
     document_id = document.center_chunk.document_id
     semantic_id = document.center_chunk.semantic_identifier
     contents = document.combined_content
     center_metadata = document.center_chunk.metadata
-    center_metadata_str = "\n" + "\n".join([f"- {item}" for item in center_metadata])
+    center_metadata_str = _get_metadata_str(center_metadata) if center_metadata else ""
 
     messages = _get_agent_eval_messages(
         title=semantic_id,
