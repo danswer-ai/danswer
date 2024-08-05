@@ -536,6 +536,7 @@ export const SearchSection = ({
         >
           <div className="w-full relative">
             <HistorySidebar
+              reset={() => setQuery("")}
               page="search"
               ref={innerSidebarElementRef}
               toggleSidebar={toggleSidebar}

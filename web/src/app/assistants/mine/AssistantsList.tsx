@@ -4,16 +4,7 @@ import { useState } from "react";
 import { MinimalUserSnapshot, User } from "@/lib/types";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { Divider, Text } from "@tremor/react";
-import {
-  FiArrowDown,
-  FiArrowUp,
-  FiEdit2,
-  FiMoreHorizontal,
-  FiPlus,
-  FiSearch,
-  FiX,
-  FiShare2,
-} from "react-icons/fi";
+import { FiEdit2, FiPlus, FiSearch, FiShare2 } from "react-icons/fi";
 import Link from "next/link";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { updateUserAssistantList } from "@/lib/assistants/updateAssistantPreferences";
@@ -58,7 +49,7 @@ function DraggableAssistantListItem(props: any) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: props.assistant.id });
+  } = useSortable({ id: props.assistant.id.toString() });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -92,7 +83,7 @@ function AssistantListItem({
   assistant: Persona;
   user: User | null;
   allUsers: MinimalUserSnapshot[];
-  allAssistantIds: number[];
+  allAssistantIds: string[];
   isFirst: boolean;
   isLast: boolean;
   isVisible: boolean;
@@ -189,7 +180,9 @@ export function AssistantsList({
       user?.preferences?.chosen_assistants &&
       !user?.preferences?.chosen_assistants?.includes(assistant.id)
   );
-  const allAssistantIds = assistants.map((assistant) => assistant.id);
+  const allAssistantIds = assistants.map((assistant) =>
+    assistant.id.toString()
+  );
 
   const { popup, setPopup } = usePopup();
 
@@ -210,8 +203,12 @@ export function AssistantsList({
 
     if (over && active.id !== over.id) {
       setFilteredAssistants((assistants) => {
-        const oldIndex = assistants.findIndex((a) => a.id === active.id);
-        const newIndex = assistants.findIndex((a) => a.id === over.id);
+        const oldIndex = assistants.findIndex(
+          (a) => a.id.toString() === active.id
+        );
+        const newIndex = assistants.findIndex(
+          (a) => a.id.toString() === over.id
+        );
         const newAssistants = arrayMove(assistants, oldIndex, newIndex);
 
         updateUserAssistantList(newAssistants.map((a) => a.id));
@@ -268,7 +265,7 @@ export function AssistantsList({
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={filteredAssistants.map((a) => a.id)}
+            items={filteredAssistants.map((a) => a.id.toString())}
             strategy={verticalListSortingStrategy}
           >
             <div className="w-full p-4 mt-3">

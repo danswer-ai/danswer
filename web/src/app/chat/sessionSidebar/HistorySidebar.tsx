@@ -52,11 +52,13 @@ interface HistorySidebarProps {
   toggleSidebar?: () => void;
   toggled?: boolean;
   removeToggle?: () => void;
+  reset?: () => void;
 }
 
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
   (
     {
+      reset = () => null,
       toggled,
       page,
       existingChats,
@@ -68,7 +70,6 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
-    const commandSymbol = KeyboardSymbol();
     const router = useRouter();
     const { popup, setPopup } = usePopup();
 
@@ -84,8 +85,18 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
     if (!combinedSettings) {
       return null;
     }
-    const settings = combinedSettings.settings;
+
     const enterpriseSettings = combinedSettings.enterpriseSettings;
+
+    const handleNewChat = () => {
+      reset();
+      const newChatUrl =
+        `/${page}` +
+        (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA && currentChatSession
+          ? `?assistantId=${currentChatSession.persona_id}`
+          : "");
+      router.push(newChatUrl);
+    };
 
     return (
       <>
@@ -143,19 +154,13 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
 
           {page == "chat" && (
             <div className="mx-3 mt-4 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
-              <Link
-                href={
-                  "/chat" +
-                  (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                  currentChatSession
-                    ? `?assistantId=${currentChatSession.persona_id}`
-                    : "")
-                }
+              <button
+                onClick={handleNewChat}
                 className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
               >
                 <FiEdit className="flex-none " />
                 <p className="my-auto flex items-center text-sm">New Chat</p>
-              </Link>
+              </button>
 
               <button
                 onClick={() =>

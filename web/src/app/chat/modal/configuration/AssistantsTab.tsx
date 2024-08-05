@@ -12,7 +12,6 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Persona } from "@/app/admin/assistants/interfaces";
@@ -20,10 +19,7 @@ import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 import { getFinalLLM } from "@/lib/llm/utils";
 import React, { useState } from "react";
 import { updateUserAssistantList } from "@/lib/assistants/updateAssistantPreferences";
-import {
-  AssistantCard,
-  DraggableAssistantCard,
-} from "@/components/assistants/AssistantCards";
+import { DraggableAssistantCard } from "@/components/assistants/AssistantCards";
 
 export function AssistantsTab({
   selectedAssistant,
@@ -51,11 +47,15 @@ export function AssistantsTab({
 
     if (over && active.id !== over.id) {
       setAssistants((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
+        const oldIndex = items.findIndex(
+          (item) => item.id.toString() === active.id
+        );
+        const newIndex = items.findIndex(
+          (item) => item.id.toString() === over.id
+        );
         const updatedAssistants = arrayMove(items, oldIndex, newIndex);
 
-        updateUserAssistantList(updatedAssistants.map((a) => a.id));
+        updateUserAssistantList(updatedAssistants.map((a) => a.id.toString()));
 
         return updatedAssistants;
       });
@@ -71,15 +71,17 @@ export function AssistantsTab({
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={assistants.map((a) => a.id)}
+          items={assistants.map((a) => a.id.toString())}
           strategy={verticalListSortingStrategy}
         >
           <div className="px-2 pb-2 mx-2 max-h-[500px] miniscroll overflow-y-scroll my-3 grid grid-cols-1 gap-4">
             {assistants.map((assistant) => (
               <DraggableAssistantCard
-                key={assistant.id}
-                assistant={assistant}
-                isSelected={selectedAssistant.id === assistant.id}
+                key={assistant.id.toString()}
+                assistant={{ ...assistant, id: assistant.id.toString() }}
+                isSelected={
+                  selectedAssistant.id.toString() === assistant.id.toString()
+                }
                 onSelect={onSelect}
                 llmName={llmName}
               />
