@@ -65,7 +65,6 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
 
 interface QuotesSectionProps {
   quotes: Quote[] | null;
-  isAnswerable: boolean | null;
   isFetching: boolean;
 }
 
@@ -110,11 +109,7 @@ export const QuotesSection = (props: QuotesSectionProps) => {
   let status: StatusOptions = "in-progress";
   if (!props.isFetching) {
     if (props.quotes && props.quotes.length > 0) {
-      if (props.isAnswerable === false) {
-        status = "warning";
-      } else {
-        status = "success";
-      }
+      status = "success";
     } else {
       status = "failed";
     }

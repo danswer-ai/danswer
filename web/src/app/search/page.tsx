@@ -36,7 +36,7 @@ import ToggleSearch from "./WrappedSearch";
 import {
   AGENTIC_SEARCH_TYPE_COOKIE_NAME,
   NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN,
-  DISABLE_AGENTIC_SEARCH,
+  DISABLE_LLM_DOC_RELEVANCE,
 } from "@/lib/constants";
 import WrappedSearch from "./WrappedSearch";
 
@@ -206,7 +206,7 @@ export default async function Home() {
 
       <InstantSSRAutoRefresh />
       <WrappedSearch
-        disabledAgentic={DISABLE_AGENTIC_SEARCH}
+        disabledAgentic={DISABLE_LLM_DOC_RELEVANCE}
         initiallyToggled={toggleSidebar}
         querySessions={querySessions}
         user={user}

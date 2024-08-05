@@ -4,6 +4,7 @@ from typing import cast
 
 import numpy
 
+from danswer.chat.models import SectionRelevancePiece
 from danswer.configs.app_configs import BLURB_SIZE
 from danswer.configs.constants import RETURN_SEPARATOR
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
@@ -15,6 +16,7 @@ from danswer.llm.interfaces import LLM
 from danswer.natural_language_processing.search_nlp_models import (
     CrossEncoderEnsembleModel,
 )
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.models import ChunkMetric
 from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceChunkUncleaned
@@ -46,10 +48,6 @@ def _log_top_section_links(search_flow: str, sections: list[InferenceSection]) -
 def should_rerank(query: SearchQuery) -> bool:
     # Don't re-rank for keyword search
     return query.search_type != SearchType.KEYWORD and not query.skip_rerank
-
-
-def should_apply_llm_based_relevance_filter(query: SearchQuery) -> bool:
-    return not query.skip_llm_chunk_filter
 
 
 def cleanup_chunks(chunks: list[InferenceChunkUncleaned]) -> list[InferenceChunk]:
@@ -233,7 +231,7 @@ def search_postprocessing(
     retrieved_sections: list[InferenceSection],
     llm: LLM,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> Iterator[list[InferenceSection] | list[int]]:
+) -> Iterator[list[InferenceSection] | list[SectionRelevancePiece]]:
     post_processing_tasks: list[FunctionCall] = []
 
     if not retrieved_sections:
@@ -265,7 +263,10 @@ def search_postprocessing(
         sections_yielded = True
 
     llm_filter_task_id = None
-    if should_apply_llm_based_relevance_filter(search_query):
+    if search_query.evaluation_type in [
+        LLMEvaluationType.BASIC,
+        LLMEvaluationType.UNSPECIFIED,
+    ]:
         post_processing_tasks.append(
             FunctionCall(
                 filter_sections,
@@ -306,7 +307,11 @@ def search_postprocessing(
     )
 
     yield [
-        index
-        for index, section in enumerate(reranked_sections or retrieved_sections)
-        if section.center_chunk.unique_id in llm_selected_section_ids
+        SectionRelevancePiece(
+            document_id=section.center_chunk.document_id,
+            chunk_id=section.center_chunk.chunk_id,
+            relevant=section.center_chunk.unique_id in llm_selected_section_ids,
+            content="",
+        )
+        for section in (reranked_sections or retrieved_sections)
     ]

@@ -17,7 +17,7 @@ personas:
     num_chunks: 10
     # Enable/Disable usage of the LLM chunk filter feature whereby each chunk is passed to the LLM to determine
     # if the chunk is useful or not towards the latest user query
-    # This feature can be overriden for all personas via DISABLE_LLM_CHUNK_FILTER env variable
+    # This feature can be overriden for all personas via DISABLE_LLM_DOC_RELEVANCE env variable
     llm_relevance_filter: true
     # Enable/Disable usage of the LLM to extract query time filters including source type and time range filters
     llm_filter_extraction: true

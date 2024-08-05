@@ -162,20 +162,43 @@ class ImageGenerationTool(Tool):
         )
 
     def _generate_image(self, prompt: str) -> ImageGenerationResponse:
-        response = image_generation(
-            prompt=prompt,
-            model=self.model,
-            api_key=self.api_key,
-            # need to pass in None rather than empty str
-            api_base=self.api_base or None,
-            api_version=self.api_version or None,
-            n=1,
-            extra_headers=build_llm_extra_headers(self.additional_headers),
-        )
-        return ImageGenerationResponse(
-            revised_prompt=response.data[0]["revised_prompt"],
-            url=response.data[0]["url"],
-        )
+        try:
+            response = image_generation(
+                prompt=prompt,
+                model=self.model,
+                api_key=self.api_key,
+                # need to pass in None rather than empty str
+                api_base=self.api_base or None,
+                api_version=self.api_version or None,
+                n=1,
+                extra_headers=build_llm_extra_headers(self.additional_headers),
+            )
+            return ImageGenerationResponse(
+                revised_prompt=response.data[0]["revised_prompt"],
+                url=response.data[0]["url"],
+            )
+        except Exception as e:
+            logger.debug(f"Error occured during image generation: {e}")
+
+            error_message = str(e)
+            if "OpenAIException" in str(type(e)):
+                if (
+                    "Your request was rejected as a result of our safety system"
+                    in error_message
+                ):
+                    raise ValueError(
+                        "The image generation request was rejected due to OpenAI's content policy. Please try a different prompt."
+                    )
+                elif "Invalid image URL" in error_message:
+                    raise ValueError("Invalid image URL provided for image generation.")
+                elif "invalid_request_error" in error_message:
+                    raise ValueError(
+                        "Invalid request for image generation. Please check your input."
+                    )
+
+            raise ValueError(
+                "An error occurred during image generation. Please try again later."
+            )
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
         prompt = cast(str, kwargs["prompt"])

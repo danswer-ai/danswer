@@ -10,7 +10,6 @@ from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import DanswerContext
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import LlmDoc
-from danswer.configs.chat_configs import DISABLE_AGENTIC_SEARCH
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import JSON_ro
@@ -18,7 +17,9 @@ from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prune_and_merge import prune_and_merge_sections
+from danswer.llm.answering.prune_and_merge import prune_sections
 from danswer.llm.interfaces import LLM
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import IndexFilters
@@ -78,6 +79,7 @@ class SearchTool(Tool):
         llm: LLM,
         fast_llm: LLM,
         pruning_config: DocumentPruningConfig,
+        evaluation_type: LLMEvaluationType,
         # if specified, will not actually run a search and will instead return these
         # sections. Used when the user selects specific docs to talk to
         selected_sections: list[InferenceSection] | None = None,
@@ -85,7 +87,6 @@ class SearchTool(Tool):
         chunks_below: int = 0,
         full_doc: bool = False,
         bypass_acl: bool = False,
-        llm_doc_eval: bool = False,
     ) -> None:
         self.user = user
         self.persona = persona
@@ -94,6 +95,7 @@ class SearchTool(Tool):
         self.llm = llm
         self.fast_llm = fast_llm
         self.pruning_config = pruning_config
+        self.evaluation_type = evaluation_type
 
         self.selected_sections = selected_sections
 
@@ -102,7 +104,6 @@ class SearchTool(Tool):
         self.full_doc = full_doc
         self.bypass_acl = bypass_acl
         self.db_session = db_session
-        self.llm_doc_eval = llm_doc_eval
 
     @property
     def name(self) -> str:
@@ -205,10 +206,12 @@ class SearchTool(Tool):
             question=query,
             document_pruning_config=self.pruning_config,
         )
+
         llm_docs = [
             llm_doc_from_inference_section(section)
             for section in final_context_sections
         ]
+
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
@@ -221,6 +224,7 @@ class SearchTool(Tool):
         search_pipeline = SearchPipeline(
             search_request=SearchRequest(
                 query=query,
+                evaluation_type=self.evaluation_type,
                 human_selected_filters=(
                     self.retrieval_options.filters if self.retrieval_options else None
                 ),
@@ -251,7 +255,7 @@ class SearchTool(Tool):
             id=SEARCH_RESPONSE_SUMMARY_ID,
             response=SearchResponseSummary(
                 rephrased_query=query,
-                top_sections=search_pipeline.reranked_sections,
+                top_sections=search_pipeline.final_context_sections,
                 predicted_flow=search_pipeline.predicted_flow,
                 predicted_search=search_pipeline.predicted_search_type,
                 final_filters=search_pipeline.search_query.filters,
@@ -276,11 +280,11 @@ class SearchTool(Tool):
 
         yield ToolResponse(
             id=SECTION_RELEVANCE_LIST_ID,
-            response=search_pipeline.relevant_section_indices,
+            response=search_pipeline.section_relevance,
         )
 
-        final_context_sections = prune_and_merge_sections(
-            sections=search_pipeline.reranked_sections,
+        pruned_sections = prune_sections(
+            sections=search_pipeline.final_context_sections,
             section_relevance_list=search_pipeline.section_relevance_list,
             prompt_config=self.prompt_config,
             llm_config=self.llm.config,
@@ -289,16 +293,10 @@ class SearchTool(Tool):
         )
 
         llm_docs = [
-            llm_doc_from_inference_section(section)
-            for section in final_context_sections
+            llm_doc_from_inference_section(section) for section in pruned_sections
         ]
 
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
-
-        if self.llm_doc_eval and not DISABLE_AGENTIC_SEARCH:
-            yield ToolResponse(
-                id=SEARCH_EVALUATION_ID, response=search_pipeline.relevance_summaries
-            )
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         final_docs = cast(

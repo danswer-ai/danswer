@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import BASE_RECENCY_DECAY
-from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
+from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
 from danswer.configs.chat_configs import FAVOR_RECENT_DECAY_MULTIPLIER
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.db.models import User
 from danswer.llm.interfaces import LLM
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import RecencyBiasSetting
 from danswer.search.models import BaseFilters
@@ -35,7 +36,6 @@ def retrieval_preprocessing(
     db_session: Session,
     bypass_acl: bool = False,
     include_query_intent: bool = True,
-    disable_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
     base_recency_decay: float = BASE_RECENCY_DECAY,
     favor_recent_decay_multiplier: float = FAVOR_RECENT_DECAY_MULTIPLIER,
 ) -> tuple[SearchQuery, SearchType | None, QueryFlow | None]:
@@ -137,18 +137,23 @@ def retrieval_preprocessing(
         access_control_list=user_acl_filters,
     )
 
-    llm_chunk_filter = False
-    if search_request.skip_llm_chunk_filter is not None:
-        llm_chunk_filter = not search_request.skip_llm_chunk_filter
-    elif persona:
-        llm_chunk_filter = persona.llm_relevance_filter
+    llm_evaluation_type = LLMEvaluationType.BASIC
+    if search_request.evaluation_type is not LLMEvaluationType.UNSPECIFIED:
+        llm_evaluation_type = search_request.evaluation_type
 
-    if disable_llm_chunk_filter:
-        if llm_chunk_filter:
+    elif persona:
+        llm_evaluation_type = (
+            LLMEvaluationType.BASIC
+            if persona.llm_relevance_filter
+            else LLMEvaluationType.SKIP
+        )
+
+    if DISABLE_LLM_DOC_RELEVANCE:
+        if llm_evaluation_type:
             logger.info(
                 "LLM chunk filtering would have run but has been globally disabled"
             )
-        llm_chunk_filter = False
+        llm_evaluation_type = LLMEvaluationType.SKIP
 
     skip_rerank = search_request.skip_rerank
     if skip_rerank is None:
@@ -176,7 +181,7 @@ def retrieval_preprocessing(
             num_hits=limit if limit is not None else NUM_RETURNED_HITS,
             offset=offset or 0,
             skip_rerank=skip_rerank,
-            skip_llm_chunk_filter=not llm_chunk_filter,
+            evaluation_type=llm_evaluation_type,
             chunks_above=search_request.chunks_above,
             chunks_below=search_request.chunks_below,
             full_doc=search_request.full_doc,

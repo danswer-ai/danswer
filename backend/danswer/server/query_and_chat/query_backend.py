@@ -261,6 +261,7 @@ def get_answer_with_quote(
     query = query_request.messages[0].message
 
     logger.info(f"Received query for one shot answer with quotes: {query}")
+
     packets = stream_search_answer(
         query_req=query_request,
         user=user,

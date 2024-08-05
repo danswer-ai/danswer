@@ -483,6 +483,7 @@ class Answer:
                         ]
                     elif message.id == FINAL_CONTEXT_DOCUMENTS:
                         final_context_docs = cast(list[LlmDoc], message.response)
+
                     elif (
                         message.id == SEARCH_DOC_CONTENT_ID
                         and not self._return_contexts

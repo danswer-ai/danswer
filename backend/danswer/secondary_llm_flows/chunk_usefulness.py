@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import message_to_string
@@ -45,6 +46,12 @@ def llm_eval_section(query: str, section_content: str, llm: LLM) -> bool:
 def llm_batch_eval_sections(
     query: str, section_contents: list[str], llm: LLM, use_threads: bool = True
 ) -> list[bool]:
+    if DISABLE_LLM_DOC_RELEVANCE:
+        raise RuntimeError(
+            "LLM Doc Relevance is globally disabled, "
+            "this should have been caught upstream."
+        )
+
     if use_threads:
         functions_with_args: list[tuple[Callable, tuple]] = [
             (llm_eval_section, (query, section_content, llm))
