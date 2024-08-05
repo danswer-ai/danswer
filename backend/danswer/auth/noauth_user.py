@@ -23,7 +23,7 @@ def load_no_auth_user_preferences(store: DynamicConfigStore) -> UserPreferences:
         )
         return UserPreferences(**preferences_data)
     except ConfigNotFoundError:
-        return UserPreferences(chosen_assistants=None)
+        return UserPreferences(chosen_assistants=None, default_model=None)
 
 
 def fetch_no_auth_user(store: DynamicConfigStore) -> UserInfo:

@@ -143,7 +143,7 @@ export interface LlmOverrideManager {
 }
 
 export function useLlmOverride(
-  globalModel: string | null,
+  globalModel?: string | null,
   currentChatSession?: ChatSession,
   defaultTemperature?: number
 ): LlmOverrideManager {

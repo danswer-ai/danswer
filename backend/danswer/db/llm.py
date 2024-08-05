@@ -100,13 +100,6 @@ def fetch_existing_embedding_providers(
     return list(db_session.scalars(select(CloudEmbeddingProviderModel)).all())
 
 
-def set_user_default_model(db_session: Session, user: User, structured_model_name: str):
-    user.default_model = structured_model_name
-    db_session.commit()
-    db_session.refresh(user)
-    return True
-
-
 def fetch_existing_llm_providers(
     db_session: Session,
     user: User | None = None,

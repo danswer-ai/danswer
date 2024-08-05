@@ -1,31 +1,33 @@
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { ModalWrapper } from "./ModalWrapper";
-import { Badge, Button, Text } from "@tremor/react";
-import { SelectorFormField } from "@/components/admin/connectors/Field";
-import { FiX } from "react-icons/fi";
-import { getDisplayNameForModel, LlmOverride } from "@/lib/hooks";
+import { Badge, Text } from "@tremor/react";
 import {
-  FullLLMProvider,
-  LLMProviderDescriptor,
-} from "@/app/admin/models/llm/interfaces";
-import { Formik, Form } from "formik";
-import * as Yup from "yup";
-import { destructureValue, getFinalLLM, structureValue } from "@/lib/llm/utils";
+  getDisplayNameForModel,
+  LlmOverride,
+  LlmOverrideManager,
+  useLlmOverride,
+} from "@/lib/hooks";
+import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
+import { destructureValue, structureValue } from "@/lib/llm/utils";
 import { setUserDefaultModel } from "@/lib/users/UserSettings";
-import { mutate } from "swr";
 import { useRouter } from "next/navigation";
+import { usePopup } from "@/components/admin/connectors/Popup";
 
 export function SetDefaultModelModal({
   llmProviders,
   onClose,
-  globalModel,
+  setLlmOverride,
+  defaultModel,
 }: {
   llmProviders: LLMProviderDescriptor[];
+  setLlmOverride: Dispatch<SetStateAction<LlmOverride>>;
   onClose: () => void;
-  globalModel: string | null;
+  defaultModel: string | null;
 }) {
-  const globalModelDestructured = globalModel
-    ? destructureValue(globalModel)
+  const { popup, setPopup } = usePopup();
+
+  const defaultModelDestructured = defaultModel
+    ? destructureValue(defaultModel)
     : null;
   const modelOptionsByProvider = new Map<
     string,
@@ -73,9 +75,28 @@ export function SetDefaultModelModal({
   );
 
   const router = useRouter();
-  const handleChangeGlobalModel = async (globalModel: string | null) => {
-    await setUserDefaultModel(globalModel);
-    router.refresh();
+  const handleChangedefaultModel = async (defaultModel: string | null) => {
+    try {
+      const response = await setUserDefaultModel(defaultModel);
+
+      if (response.ok) {
+        if (defaultModel) {
+          setLlmOverride(destructureValue(defaultModel));
+        }
+        setPopup({
+          message: "Default model updated successfully",
+          type: "success",
+        });
+        router.refresh();
+      } else {
+        throw new Error("Failed to update default model");
+      }
+    } catch (error) {
+      setPopup({
+        message: "Failed to update default model",
+        type: "error",
+      });
+    }
   };
 
   return (
@@ -84,6 +105,7 @@ export function SetDefaultModelModal({
       modalClassName="rounded-lg bg-white max-w-xl"
     >
       <>
+        {popup}
         <div className="flex mb-4">
           <h2 className="text-2xl text-emphasis font-bold flex my-auto">
             Set Default Model
@@ -93,12 +115,12 @@ export function SetDefaultModelModal({
         <Text className="mb-4">
           Select a default Large Language Model (Generative AI model) to power
           this Assistant.
-          {globalModel == null && "  No default model has been selected!"}
+          {defaultModel == null && "  No default model has been selected!"}
         </Text>
         <div className="w-full flex text-sm flex-col">
           <div key={-1} className="w-full border-b hover:bg-gray-50">
             <td className="min-w-[80px]">
-              {globalModel == null ? (
+              {defaultModel == null ? (
                 <Badge>selected</Badge>
               ) : (
                 <input
@@ -106,7 +128,7 @@ export function SetDefaultModelModal({
                   name="credentialSelection"
                   onChange={(e) => {
                     e.preventDefault();
-                    handleChangeGlobalModel(null);
+                    handleChangedefaultModel(null);
                   }}
                   className="form-radio ml-4 h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
                 />
@@ -119,13 +141,13 @@ export function SetDefaultModelModal({
             return (
               <div key={index} className="w-full border-b hover:bg-gray-50">
                 <td className="min-w-[80px]">
-                  {globalModelDestructured?.modelName != name ? (
+                  {defaultModelDestructured?.modelName != name ? (
                     <input
                       type="radio"
                       name="credentialSelection"
                       onChange={(e) => {
                         e.preventDefault();
-                        handleChangeGlobalModel(value);
+                        handleChangedefaultModel(value);
                       }}
                       className="form-radio ml-4 h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
                     />
@@ -135,8 +157,8 @@ export function SetDefaultModelModal({
                 </td>
                 <td className="p-2">
                   {getDisplayNameForModel(name)}{" "}
-                  {globalModelDestructured &&
-                    globalModelDestructured.name == name &&
+                  {defaultModelDestructured &&
+                    defaultModelDestructured.name == name &&
                     "(selected)"}
                 </td>
               </div>

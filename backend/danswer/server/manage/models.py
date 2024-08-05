@@ -67,7 +67,6 @@ class UserInfo(BaseModel):
             is_active=user.is_active,
             is_superuser=user.is_superuser,
             is_verified=user.is_verified,
-            default_model=user.default_model,
             role=user.role,
             preferences=(
                 UserPreferences(

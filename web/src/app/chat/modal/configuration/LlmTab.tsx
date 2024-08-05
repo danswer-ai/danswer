@@ -96,11 +96,6 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
               close();
               openModelSettings();
             }}
-
-            // onClick={() => {
-            //   close()
-            //   openModelSettings()
-            // }
           >
             <GearIcon />
           </button>
