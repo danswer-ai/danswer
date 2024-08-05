@@ -306,10 +306,6 @@ def connect_mega_chunks(
         if chunk_text_length != mega_chunk_text_length:
             mega_chunk.mega_chunk_reference_ids.append(chunk_index - 1)
 
-        # Add one to put a gap between the chunks from the default chunker
-        # so combining chunks doesn't include the mega chunks
-        mega_chunk.chunk_id = len(chunks) + i + 1
-
         # Add the length of the mega chunk content
         mega_chunk_text_length += len(mega_chunk.content)
         # Subtract the length of the section seperators
@@ -322,10 +318,9 @@ def connect_mega_chunks(
             if chunk_index >= len(chunks):
                 break
             chunk_text_length += len(chunks[chunk_index].content)
-            if chunks[chunk_index].source_links:
-                chunk_text_length -= (len(chunks[chunk_index].source_links) - 1) * len(
-                    SECTION_SEPARATOR
-                )
+            links = chunks[chunk_index].source_links
+            if links:
+                chunk_text_length -= (len(links) - 1) * len(SECTION_SEPARATOR)
             chunk_text_length -= CHUNK_OVERLAP
             mega_chunk.mega_chunk_reference_ids.append(chunk_index)
             chunk_index += 1

@@ -19,8 +19,8 @@ class DocumentInsertionRecord:
 @dataclass(frozen=True)
 class VespaChunkRequest:
     document_id: str
-    min_chunk_ind: int | None
-    max_chunk_ind: int | None
+    min_chunk_ind: int | None = None
+    max_chunk_ind: int | None = None
 
 
 @dataclass
@@ -190,8 +190,8 @@ class IdRetrievalCapable(abc.ABC):
     @abc.abstractmethod
     def id_based_retrieval(
         self,
-        requests: list[VespaChunkRequest],
-        user_access_control_list: list[str] | None = None,
+        chunk_requests: list[VespaChunkRequest],
+        filters: IndexFilters,
         batch_retrieval: bool = False,
     ) -> list[InferenceChunkUncleaned]:
         """

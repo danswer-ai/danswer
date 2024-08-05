@@ -1,5 +1,4 @@
 import string
-import time
 from collections.abc import Callable
 
 import nltk  # type:ignore
@@ -167,48 +166,29 @@ def doc_index_retrieval(
         else:
             raise RuntimeError("Invalid Search Flow")
 
-    referential_chunks: list[InferenceChunkUncleaned] = []
+    retrieval_requests: list[VespaChunkRequest] = []
     normal_chunks: list[InferenceChunkUncleaned] = []
-    unique_referential_chunks = set()
     for chunk in top_chunks:
         if chunk.mega_chunk_reference_ids:
-            referential_chunks.append(chunk)
-            for id in chunk.mega_chunk_reference_ids:
-                unique_referential_chunks.add((chunk.document_id, id))
+            retrieval_requests.append(
+                VespaChunkRequest(
+                    document_id=replace_invalid_doc_id_characters(chunk.document_id),
+                    min_chunk_ind=chunk.mega_chunk_reference_ids[0],
+                    max_chunk_ind=chunk.mega_chunk_reference_ids[-1],
+                )
+            )
         else:
             normal_chunks.append(chunk)
 
-    retrieval_requests = [
-        VespaChunkRequest(
-            document_id=replace_invalid_doc_id_characters(chunk.document_id),
-            min_chunk_ind=chunk.mega_chunk_reference_ids[0],
-            max_chunk_ind=chunk.mega_chunk_reference_ids[-1],
-        )
-        for chunk in referential_chunks
-    ]
-
-    logger.info(
-        f"Number of unique referential chunks: {len(unique_referential_chunks)}"
-    )
-
-    start = time.time()
-    document_index.id_based_retrieval(
-        retrieval_requests,
-        query.filters.access_control_list,
-    )
-
-    end = time.time()
-    print(f"Time taken for id based retrieval: {end - start}")
-    start = time.time()
-
     retrieved_inference_chunks = document_index.id_based_retrieval(
-        retrieval_requests, query.filters.access_control_list, batch_retrieval=True
+        chunk_requests=retrieval_requests,
+        filters=query.filters,
+        batch_retrieval=True,
     )
 
-    end = time.time()
-    print(f"Time taken for fast id based retrieval: {end - start}")
     normal_chunks.extend(retrieved_inference_chunks)
-    return cleanup_chunks(normal_chunks)
+    deduped_chunks = list(set(normal_chunks))
+    return cleanup_chunks(deduped_chunks)
 
 
 def _simplify_text(text: str) -> str:
@@ -294,34 +274,42 @@ def inference_sections_from_ids(
     document_index: DocumentIndex,
 ) -> list[InferenceSection]:
     # Currently only fetches whole docs
-    doc_ids_set = set(doc_id for doc_id, chunk_id in doc_identifiers)
+    doc_ids_set = set(doc_id for doc_id, _ in doc_identifiers)
+
+    chunk_requests: list[VespaChunkRequest] = [
+        VespaChunkRequest(document_id=doc_id) for doc_id in doc_ids_set
+    ]
 
     # No need for ACL here because the doc ids were validated beforehand
     filters = IndexFilters(access_control_list=None)
 
-    functions_with_args: list[tuple[Callable, tuple]] = [
-        (document_index.id_based_retrieval, (doc_id, None, None, filters))
-        for doc_id in doc_ids_set
-    ]
-
-    parallel_results = run_functions_tuples_in_parallel(
-        functions_with_args, allow_failures=True
+    retrieved_chunks = document_index.id_based_retrieval(
+        chunk_requests=chunk_requests,
+        filters=filters,
     )
 
-    # Any failures to retrieve would give a None, drop the Nones and empty lists
-    inference_chunks_sets = [res for res in parallel_results if res]
+    cleaned_chunks = cleanup_chunks(retrieved_chunks)
+    if not cleaned_chunks:
+        return []
 
-    return [
-        inference_section
-        for inference_section in [
-            inference_section_from_chunks(
+    # Group chunks by document ID
+    chunks_by_doc_id: dict[str, list[InferenceChunk]] = {}
+    for chunk in cleaned_chunks:
+        chunks_by_doc_id.setdefault(chunk.document_id, []).append(chunk)
+
+    inference_sections = [
+        section
+        for chunks in chunks_by_doc_id.values()
+        if chunks
+        and (
+            section := inference_section_from_chunks(
                 # The scores will always be 0 because the fetching by id gives back
                 # no search scores. This is not needed though if the user is explicitly
                 # selecting a document.
-                center_chunk=chunk_set[0],
-                chunks=chunk_set,
+                center_chunk=chunks[0],
+                chunks=chunks,
             )
-            for chunk_set in inference_chunks_sets
-        ]
-        if inference_section is not None
+        )
     ]
+
+    return inference_sections
