@@ -55,7 +55,7 @@ export function AssistantsTab({
         );
         const updatedAssistants = arrayMove(items, oldIndex, newIndex);
 
-        updateUserAssistantList(updatedAssistants.map((a) => a.id.toString()));
+        updateUserAssistantList(updatedAssistants.map((a) => a.id));
 
         return updatedAssistants;
       });
