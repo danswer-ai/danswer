@@ -469,46 +469,6 @@ export function HorizontalSourceSelector({
           />
         )}
       </div>
-
-      {/* <div className="flex flex-wrap gap-2">
-        {timeRange && timeRange.selectValue && (
-          <SelectedBubble onClick={() => setTimeRange(null)}>
-            <div className="text-sm flex">{timeRange.selectValue}</div>
-          </SelectedBubble>
-        )}
-        {selectedSources.map((source) => (
-          <SelectedBubble
-            key={source.internalName}
-            onClick={() => handleSourceSelect(source)}
-          >
-            <>
-              <SourceIcon sourceType={source.internalName} iconSize={16} />
-              <span className="ml-2 text-sm">{source.displayName}</span>
-            </>
-          </SelectedBubble>
-        ))}
-        {selectedDocumentSets.map((documentSetName) => (
-          <SelectedBubble
-            key={documentSetName}
-            onClick={() => handleDocumentSetSelect(documentSetName)}
-          >
-            <>
-              <FiBookmark />
-              <span className="ml-2 text-sm">{documentSetName}</span>
-            </>
-          </SelectedBubble>
-        ))}
-        {selectedTags.map((tag) => (
-          <SelectedBubble
-            key={`${tag.tag_key}=${tag.tag_value}`}
-            onClick={() => handleTagSelect(tag)}
-          >
-            <span className="text-sm">
-              {tag.tag_key}<b>=</b>{tag.tag_value}
-            </span>
-          </SelectedBubble>
-        ))}
-      </div> */}
     </div>
   );
 }

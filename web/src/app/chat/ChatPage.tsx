@@ -372,7 +372,6 @@ export function ChatPage({
     setCompleteMessageDetail(newCompleteMessageDetail);
     return newCompleteMessageDetail;
   };
-  console.log(completeMessageDetail);
 
   const messageHistory = buildLatestMessageChain(
     completeMessageDetail.messageMap
@@ -810,6 +809,7 @@ export function ChatPage({
           if (packet) {
             if (Object.hasOwn(packet, "delimiter")) {
               // console.log("MESSAGE DELIMITER");
+              // TODO: Remove or put to good use!
             }
 
             if (Object.hasOwn(packet, "answer_piece")) {
@@ -1211,7 +1211,6 @@ export function ChatPage({
   };
   const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
-  console.log(messageHistory);
   return (
     <>
       <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
@@ -1615,9 +1614,6 @@ export function ChatPage({
                                 return (
                                   <div key={messageReactComponentKey}>
                                     <AIMessage
-                                      // toolCall &&
-                                      // toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
-                                      // !toolCall.tool_result
                                       currentPersona={liveAssistant}
                                       messageId={message.messageId}
                                       personaName={liveAssistant.name}

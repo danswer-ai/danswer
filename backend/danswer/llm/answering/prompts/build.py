@@ -57,16 +57,11 @@ class AnswerPromptBuilder:
         self, message_history: list[PreviousMessage], llm_config: LLMConfig
     ) -> None:
         self.max_tokens = compute_max_llm_input_tokens(llm_config)
-        print(message_history)
 
         (
             self.message_history,
             self.history_token_cnts,
         ) = translate_history_to_basemessages(message_history)
-        print("raw history is ")
-        print(message_history)
-        print("-------------")
-        print(message_history)
 
         self.system_message_and_token_cnt: tuple[SystemMessage, int] | None = None
         self.user_message_and_token_cnt: tuple[HumanMessage, int] | None = None
@@ -137,10 +132,9 @@ class AnswerPromptBuilder:
                     ),
                 )
             )
-        print("final message is ")
+
         response = drop_messages_history_overflow(
             final_messages_with_tokens, self.max_tokens
         )
-        print(response)
 
         return response
