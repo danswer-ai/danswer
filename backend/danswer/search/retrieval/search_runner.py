@@ -1,4 +1,5 @@
 import string
+import time
 from collections.abc import Callable
 
 import nltk  # type:ignore
@@ -11,10 +12,13 @@ from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.document_index.interfaces import DocumentIndex
+from danswer.document_index.interfaces import VespaChunkRequest
+from danswer.document_index.vespa.utils import replace_invalid_doc_id_characters
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.search.models import ChunkMetric
 from danswer.search.models import IndexFilters
 from danswer.search.models import InferenceChunk
+from danswer.search.models import InferenceChunkUncleaned
 from danswer.search.models import InferenceSection
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RetrievalMetricsContainer
@@ -163,7 +167,48 @@ def doc_index_retrieval(
         else:
             raise RuntimeError("Invalid Search Flow")
 
-    return cleanup_chunks(top_chunks)
+    referential_chunks: list[InferenceChunkUncleaned] = []
+    normal_chunks: list[InferenceChunkUncleaned] = []
+    unique_referential_chunks = set()
+    for chunk in top_chunks:
+        if chunk.mega_chunk_reference_ids:
+            referential_chunks.append(chunk)
+            for id in chunk.mega_chunk_reference_ids:
+                unique_referential_chunks.add((chunk.document_id, id))
+        else:
+            normal_chunks.append(chunk)
+
+    retrieval_requests = [
+        VespaChunkRequest(
+            document_id=replace_invalid_doc_id_characters(chunk.document_id),
+            min_chunk_ind=chunk.mega_chunk_reference_ids[0],
+            max_chunk_ind=chunk.mega_chunk_reference_ids[-1],
+        )
+        for chunk in referential_chunks
+    ]
+
+    logger.info(
+        f"Number of unique referential chunks: {len(unique_referential_chunks)}"
+    )
+
+    start = time.time()
+    document_index.id_based_retrieval(
+        retrieval_requests,
+        query.filters.access_control_list,
+    )
+
+    end = time.time()
+    print(f"Time taken for id based retrieval: {end - start}")
+    start = time.time()
+
+    retrieved_inference_chunks = document_index.id_based_retrieval(
+        retrieval_requests, query.filters.access_control_list, batch_retrieval=True
+    )
+
+    end = time.time()
+    print(f"Time taken for fast id based retrieval: {end - start}")
+    normal_chunks.extend(retrieved_inference_chunks)
+    return cleanup_chunks(normal_chunks)
 
 
 def _simplify_text(text: str) -> str:

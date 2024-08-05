@@ -5,6 +5,7 @@ import os
 import string
 import time
 import zipfile
+from collections.abc import Callable
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
@@ -70,6 +71,7 @@ from danswer.search.retrieval.search_runner import query_processing
 from danswer.search.retrieval.search_runner import remove_stop_words_and_punctuation
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
+from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 from shared_configs.model_server_models import Embedding
 
 logger = setup_logger()
@@ -91,6 +93,7 @@ DOCUMENT_ID_ENDPOINT = (
 )
 SEARCH_ENDPOINT = f"{VESPA_APP_CONTAINER_URL}/search/"
 
+_MAX_ID_SEARCH_QUERY_SIZE = 400
 _BATCH_SIZE = 128  # Specific to Vespa
 _NUM_THREADS = (
     32  # since Vespa doesn't allow batching of inserts / updates, we use threads
@@ -108,6 +111,12 @@ class _VespaUpdateRequest:
     document_id: str
     url: str
     update_request: dict[str, dict]
+
+
+class VespaChunkRequest:
+    document_id: str
+    min_chunk_ind: int | None
+    max_chunk_ind: int | None
 
 
 @retry(tries=3, delay=1, backoff=2)
@@ -145,11 +154,10 @@ def _vespa_get_updated_at_attribute(t: datetime | None) -> int | None:
 
 
 def _get_vespa_chunks_by_document_id(
-    document_id: str,
+    chunk_request: VespaChunkRequest,
     index_name: str,
+    get_mega_chunks: bool = False,
     user_access_control_list: list[str] | None = None,
-    min_chunk_ind: int | None = None,
-    max_chunk_ind: int | None = None,
     field_names: list[str] | None = None,
 ) -> list[dict]:
     # Constructing the URL for the Visit API
@@ -172,11 +180,13 @@ def _get_vespa_chunks_by_document_id(
     field_set = ",".join(field_set_list) if field_set_list else None
 
     # build filters
-    selection = f"{index_name}.document_id=='{document_id}'"
-    if min_chunk_ind is not None:
-        selection += f" and {index_name}.chunk_id>={min_chunk_ind}"
-    if max_chunk_ind is not None:
-        selection += f" and {index_name}.chunk_id<={max_chunk_ind}"
+    selection = f"{index_name}.document_id=='{chunk_request.document_id}'"
+    if chunk_request.min_chunk_ind is not None:
+        selection += f" and {index_name}.chunk_id>={chunk_request.min_chunk_ind}"
+    if chunk_request.max_chunk_ind is not None:
+        selection += f" and {index_name}.chunk_id<={chunk_request.max_chunk_ind}"
+    if not get_mega_chunks:
+        selection += f" and {index_name}.mega_chunk_reference_ids is empty"
 
     # Setting up the selection criteria in the query parameters
     params = {
@@ -196,7 +206,7 @@ def _get_vespa_chunks_by_document_id(
         except requests.HTTPError as e:
             request_info = f"Headers: {response.request.headers}\nPayload: {params}"
             response_info = f"Status Code: {response.status_code}\nResponse Content: {response.text}"
-            error_base = f"Error occurred getting chunk by Document ID {document_id}"
+            error_base = f"Error occurred getting chunk by Document ID {chunk_request.document_id}"
             logger.error(
                 f"{error_base}:\n"
                 f"{request_info}\n"
@@ -217,7 +227,6 @@ def _get_vespa_chunks_by_document_id(
                     ):
                         continue
                 document_chunks.append(document)
-            document_chunks.extend(response_data["documents"])
 
         # Check for continuation token to handle pagination
         if "continuation" in response_data and response_data["continuation"]:
@@ -228,11 +237,16 @@ def _get_vespa_chunks_by_document_id(
     return document_chunks
 
 
-def _get_vespa_chunk_ids_by_document_id(
+def _get_all_vespa_chunk_ids_for_document_id(
     document_id: str, index_name: str, user_access_control_list: list[str] | None = None
 ) -> list[str]:
-    document_chunks = _get_vespa_chunks_by_document_id(
+    request = VespaChunkRequest(
         document_id=document_id,
+        min_chunk_ind=None,
+        max_chunk_ind=None,
+    )
+    document_chunks = _get_vespa_chunks_by_document_id(
+        chunk_request=request,
         index_name=index_name,
         user_access_control_list=user_access_control_list,
         field_names=[DOCUMENT_ID],
@@ -240,11 +254,127 @@ def _get_vespa_chunk_ids_by_document_id(
     return [chunk["id"].split("::", 1)[-1] for chunk in document_chunks]
 
 
+def _parallelize_visit_api_retrieval(
+    index_name: str,
+    chunk_requests: list[VespaChunkRequest],
+    user_access_control_list: list[str] | None = None,
+) -> list[InferenceChunkUncleaned]:
+    functions_with_args: list[tuple[Callable, tuple]] = [
+        (
+            _get_vespa_chunks_by_document_id,
+            (chunk_request, index_name, user_access_control_list),
+        )
+        for chunk_request in chunk_requests
+    ]
+
+    parallel_results = run_functions_tuples_in_parallel(
+        functions_with_args, allow_failures=True
+    )
+
+    vespa_chunk_sets = [res for res in parallel_results if res]
+
+    flattened_vespa_chunks = [
+        chunk for chunk_set in vespa_chunk_sets for chunk in chunk_set
+    ]
+
+    inference_chunks = [
+        _vespa_hit_to_inference_chunk(chunk, null_score=True)
+        for chunk in flattened_vespa_chunks
+    ]
+
+    inference_chunks.sort(key=lambda chunk: chunk.chunk_id)
+
+    return inference_chunks
+
+
+def _build_vespa_id_based_retrieval_yql(request: VespaChunkRequest) -> str:
+    id_based_retrieval_yql_section = f"({DOCUMENT_ID} contains '{request.document_id}'"
+    if request.min_chunk_ind is not None:
+        id_based_retrieval_yql_section += f" and {request.min_chunk_ind} <= {CHUNK_ID}"
+    if request.max_chunk_ind is not None:
+        id_based_retrieval_yql_section += f" and {request.max_chunk_ind} >= {CHUNK_ID}"
+    id_based_retrieval_yql_section += ")"
+    return id_based_retrieval_yql_section
+
+
+def _batch_specified_chunk_retrieval(
+    index_name: str,
+    chunk_requests: list[VespaChunkRequest],
+    user_access_control_list: list[str] | None = None,
+) -> list[InferenceChunkUncleaned]:
+    filters = IndexFilters(access_control_list=None)
+    filters_str = _build_vespa_filters(filters=filters, include_hidden=True)
+
+    yql = (
+        VespaIndex.yql_base.format(index_name=index_name)
+        + filters_str
+        + _build_vespa_id_based_retrieval_yql(chunk_requests[0])
+    )
+    chunk_requests.pop(0)
+
+    for request in chunk_requests:
+        yql += " or " + _build_vespa_id_based_retrieval_yql(request)
+    params: dict[str, str | int | float] = {
+        "yql": yql,
+        "hits": _MAX_ID_SEARCH_QUERY_SIZE,
+    }
+
+    inference_chunks = _query_vespa(params)
+    inference_chunks.sort(key=lambda chunk: chunk.chunk_id)
+    return inference_chunks
+
+
+def _manage_batch_retrieval(
+    index_name: str,
+    chunk_requests: list[VespaChunkRequest],
+    user_access_control_list: list[str] | None = None,
+) -> list[InferenceChunkUncleaned]:
+    retrieved_chunks = []
+    capped_requests = []
+    uncapped_requests = []
+    chunk_count = 0
+    for request in chunk_requests:
+        # All requests without a chunk range are uncapped
+        # Uncapped requests are retrieved using the Visit API
+        if request.max_chunk_ind is None or request.min_chunk_ind is None:
+            uncapped_requests.append(request)
+            continue
+
+        # If the new addition to the chunk count is greater than the max query size,
+        # we need to perform a retrieval to avoid hitting the limit
+        new_addition = request.max_chunk_ind - request.min_chunk_ind + 1
+        if chunk_count + new_addition > _MAX_ID_SEARCH_QUERY_SIZE:
+            retrieved_chunks.extend(
+                _batch_specified_chunk_retrieval(
+                    index_name, capped_requests, user_access_control_list
+                )
+            )
+            capped_requests = []
+            chunk_count = 0
+        capped_requests.append(request)
+        chunk_count += new_addition
+
+    if capped_requests:
+        retrieved_chunks.extend(
+            _batch_specified_chunk_retrieval(
+                index_name, capped_requests, user_access_control_list
+            )
+        )
+
+    if uncapped_requests:
+        retrieved_chunks.extend(
+            _parallelize_visit_api_retrieval(
+                index_name, uncapped_requests, user_access_control_list
+            )
+        )
+    return retrieved_chunks
+
+
 @retry(tries=3, delay=1, backoff=2)
 def _delete_vespa_doc_chunks(
     document_id: str, index_name: str, http_client: httpx.Client
 ) -> None:
-    doc_chunk_ids = _get_vespa_chunk_ids_by_document_id(
+    doc_chunk_ids = _get_all_vespa_chunk_ids_for_document_id(
         document_id=document_id, index_name=index_name
     )
 
@@ -891,7 +1021,7 @@ class VespaIndex(DocumentIndex):
         ) as executor:
             future_to_doc_chunk_ids = {
                 executor.submit(
-                    _get_vespa_chunk_ids_by_document_id,
+                    _get_all_vespa_chunk_ids_for_document_id,
                     document_id=document_id,
                     index_name=index_name,
                 ): (document_id, index_name)
@@ -973,30 +1103,21 @@ class VespaIndex(DocumentIndex):
 
     def id_based_retrieval(
         self,
-        document_id: str,
-        min_chunk_ind: int | None,
-        max_chunk_ind: int | None,
+        chunk_requests: list[VespaChunkRequest],
         user_access_control_list: list[str] | None = None,
+        batch_retrieval: bool = False,
     ) -> list[InferenceChunkUncleaned]:
-        document_id = replace_invalid_doc_id_characters(document_id)
-
-        vespa_chunks = _get_vespa_chunks_by_document_id(
-            document_id=document_id,
-            index_name=self.index_name,
-            user_access_control_list=user_access_control_list,
-            min_chunk_ind=min_chunk_ind,
-            max_chunk_ind=max_chunk_ind,
+        if batch_retrieval:
+            return _manage_batch_retrieval(
+                self.index_name,
+                chunk_requests,
+                user_access_control_list,
+            )
+        return _parallelize_visit_api_retrieval(
+            self.index_name,
+            chunk_requests,
+            user_access_control_list,
         )
-
-        if not vespa_chunks:
-            return []
-
-        inference_chunks = [
-            _vespa_hit_to_inference_chunk(chunk, null_score=True)
-            for chunk in vespa_chunks
-        ]
-        inference_chunks.sort(key=lambda chunk: chunk.chunk_id)
-        return inference_chunks
 
     def keyword_retrieval(
         self,

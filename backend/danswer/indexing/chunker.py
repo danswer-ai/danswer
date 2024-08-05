@@ -293,6 +293,7 @@ def connect_mega_chunks(
     Assumptions:
     - The chunks are in order
     - The mega chunks are in order
+    - The total text length of the chunks is the same as the total text length of the mega chunks
     - The mega chunks are not overlapping
     - The chunks and mega chunks are from the same document
     """

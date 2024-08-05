@@ -16,6 +16,13 @@ class DocumentInsertionRecord:
     already_existed: bool
 
 
+@dataclass(frozen=True)
+class VespaChunkRequest:
+    document_id: str
+    min_chunk_ind: int | None
+    max_chunk_ind: int | None
+
+
 @dataclass
 class DocumentMetadata:
     """
@@ -183,10 +190,9 @@ class IdRetrievalCapable(abc.ABC):
     @abc.abstractmethod
     def id_based_retrieval(
         self,
-        document_id: str,
-        min_chunk_ind: int | None,
-        max_chunk_ind: int | None,
+        requests: list[VespaChunkRequest],
         user_access_control_list: list[str] | None = None,
+        batch_retrieval: bool = False,
     ) -> list[InferenceChunkUncleaned]:
         """
         Fetch chunk(s) based on document id
