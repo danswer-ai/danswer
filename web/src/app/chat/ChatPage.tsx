@@ -61,7 +61,11 @@ import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
-import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
+import {
+  checkLLMSupportsImageInput,
+  destructureValue,
+  getFinalLLM,
+} from "@/lib/llm/utils";
 import { ChatInputBar } from "./input/ChatInputBar";
 import { useChatContext } from "@/components/context/ChatContext";
 import { v4 as uuidv4 } from "uuid";
@@ -74,6 +78,7 @@ import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
+import { SetDefaultModelModal } from "./modal/UserSettingsModal";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -116,7 +121,10 @@ export function ChatPage({
   const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
 
   // LLM
-  const llmOverrideManager = useLlmOverride(selectedChatSession);
+  const llmOverrideManager = useLlmOverride(
+    user?.preferences.default_model!,
+    selectedChatSession
+  );
 
   // Assistants
   const filteredAssistants = orderAssistantsForUser(availableAssistants, user);
@@ -891,6 +899,7 @@ export function ChatPage({
         completeMessageMapOverride: frozenMessageMap,
       });
     }
+
     setIsStreaming(false);
     if (isNewSession) {
       if (finalMessage) {
@@ -1081,6 +1090,7 @@ export function ChatPage({
   });
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
+  const [settingsToggled, setSettingsToggled] = useState(false);
 
   const currentPersona = alternativeAssistant || liveAssistant;
 
@@ -1129,6 +1139,14 @@ export function ChatPage({
             );
             setCurrentFeedback(null);
           }}
+        />
+      )}
+
+      {settingsToggled && (
+        <SetDefaultModelModal
+          globalModel={user?.preferences.default_model!}
+          llmProviders={llmProviders}
+          onClose={() => setSettingsToggled(false)}
         />
       )}
       {sharingModalVisible && chatSessionIdRef.current !== null && (
@@ -1584,6 +1602,7 @@ export function ChatPage({
                             )}
 
                             <ChatInputBar
+                              openModelSettings={() => setSettingsToggled(true)}
                               inputPrompts={userInputPrompts}
                               showDocs={() => setDocumentSelection(true)}
                               selectedDocuments={selectedDocuments}

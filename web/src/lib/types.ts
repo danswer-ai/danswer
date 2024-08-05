@@ -4,6 +4,7 @@ import { Connector } from "./connectors/connectors";
 
 export interface UserPreferences {
   chosen_assistants: number[] | null;
+  default_model: string | null;
 }
 
 export enum UserStatus {

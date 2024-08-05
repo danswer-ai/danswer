@@ -316,6 +316,34 @@ def verify_user_logged_in(
 """APIs to adjust user preferences"""
 
 
+class ChosenDefaultModelRequest(BaseModel):
+    default_model: str | None
+
+
+@router.patch("/user/default-model")
+def update_user_default_model(
+    request: ChosenDefaultModelRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    if user is None:
+        if AUTH_TYPE == AuthType.DISABLED:
+            store = get_dynamic_config_store()
+            no_auth_user = fetch_no_auth_user(store)
+            no_auth_user.preferences.default_model = request.default_model
+            set_no_auth_user_preferences(store, no_auth_user.preferences)
+            return
+        else:
+            raise RuntimeError("This should never happen")
+
+    db_session.execute(
+        update(User)
+        .where(User.id == user.id)  # type: ignore
+        .values(default_model=request.default_model)
+    )
+    db_session.commit()
+
+
 class ChosenAssistantsRequest(BaseModel):
     chosen_assistants: list[int]
 

@@ -213,7 +213,6 @@ export async function fetchChatData(searchParams: {
         )
     );
   }
-  // // TODO check for image capabilities and enable if so
 
   let folders: Folder[] = [];
   if (foldersResponse?.ok) {
