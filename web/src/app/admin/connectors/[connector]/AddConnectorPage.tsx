@@ -211,7 +211,7 @@ export default function AddConnector({
     }
 
     // Without credential
-    if (isSuccess && response && credentialActivated) {
+    if (credentialActivated && isSuccess && response) {
       const credential =
         currentCredential || liveGDriveCredential || liveGmailCredential;
       const linkCredentialResponse = await linkCredential(
@@ -228,9 +228,21 @@ export default function AddConnector({
         setTimeout(() => {
           window.open("/admin/indexing/status", "_self");
         }, 1000);
+      } else {
+        const errorData = await linkCredentialResponse.json();
+        setPopup({
+          message: errorData.message,
+          type: "error",
+        });
       }
+    } else if (isSuccess) {
+      setPopup({
+        message:
+          "Credential created succsfully! Redirecting to connector home page",
+        type: "success",
+      });
     } else {
-      setPopup({ message: message, type: isSuccess ? "success" : "error" });
+      setPopup({ message: message, type: "error" });
     }
   };
 

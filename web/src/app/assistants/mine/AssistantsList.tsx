@@ -16,13 +16,7 @@ import {
 } from "react-icons/fi";
 import Link from "next/link";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
-import {
-  addAssistantToList,
-  moveAssistantDown,
-  moveAssistantUp,
-  removeAssistantFromList,
-  updateUserAssistantList,
-} from "@/lib/assistants/updateAssistantPreferences";
+import { updateUserAssistantList } from "@/lib/assistants/updateAssistantPreferences";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { DefaultPopover } from "@/components/popover/DefaultPopover";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
@@ -69,7 +63,7 @@ function DraggableAssistantListItem(props: any) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.8 : 1,
+    opacity: isDragging ? 0.9 : 1,
     zIndex: isDragging ? 1000 : "auto",
   };
 

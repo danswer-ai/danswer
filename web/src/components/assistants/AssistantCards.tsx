@@ -96,7 +96,7 @@ export function DraggableAssistantCard(props: {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.8 : 1,
+    opacity: isDragging ? 0.9 : 1,
   };
 
   return (
