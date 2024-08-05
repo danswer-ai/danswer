@@ -250,10 +250,21 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                               {field.description}
                             </CredentialSubText>
                           )}
+
                           <Field
+                            onChange={(
+                              e: React.ChangeEvent<HTMLSelectElement>
+                            ) =>
+                              updateValue(setFieldValue)(
+                                field.name,
+                                e.target.value
+                              )
+                            }
                             as="select"
+                            value={values[field.name]}
                             name={field.name}
-                            className="w-full p-2 border bg-input border-border-medium rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full p-2 border bg-input border-border-medium rounded-md bg-black 
+                              focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           >
                             <option value="">Select an option</option>
                             {field.options?.map((option) => (

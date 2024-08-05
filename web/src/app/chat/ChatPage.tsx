@@ -55,7 +55,6 @@ import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { FiArrowDown } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
-import { ThreeDots } from "react-loader-spinner";
 import { StarterMessage } from "./StarterMessage";
 import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
@@ -1169,6 +1168,7 @@ export function ChatPage({
             >
               <div className="w-full relative">
                 <HistorySidebar
+                  reset={() => setMessage("")}
                   page="chat"
                   ref={innerSidebarElementRef}
                   toggleSidebar={toggleSidebar}
@@ -1192,6 +1192,7 @@ export function ChatPage({
             <div className="flex h-full flex-col w-full">
               {liveAssistant && (
                 <FunctionalHeader
+                  reset={() => setMessage("")}
                   page="chat"
                   setSharingModalVisible={
                     chatSessionIdRef.current !== null

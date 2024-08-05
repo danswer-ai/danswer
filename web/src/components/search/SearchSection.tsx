@@ -541,6 +541,7 @@ export const SearchSection = ({
         >
           <div className="w-full relative">
             <HistorySidebar
+              reset={() => setQuery("")}
               page="search"
               ref={innerSidebarElementRef}
               toggleSidebar={toggleSidebar}
@@ -552,6 +553,7 @@ export const SearchSection = ({
 
         <div className="absolute left-0 w-full top-0">
           <FunctionalHeader
+            reset={() => setQuery("")}
             toggleSidebar={toggleSidebar}
             page="search"
             user={user}
