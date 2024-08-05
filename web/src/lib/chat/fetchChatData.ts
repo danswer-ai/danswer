@@ -157,8 +157,6 @@ export async function fetchChatData(searchParams: {
   // sort them in priority order
   assistants.sort(personaComparator);
 
-  console.log(assistants);
-
   let tags: Tag[] = [];
   if (tagsResponse?.ok) {
     tags = (await tagsResponse.json()).tags;
@@ -203,7 +201,6 @@ export async function fetchChatData(searchParams: {
   if (!hasAnyConnectors) {
     assistants = assistants.filter((assistant) => assistant.num_chunks === 0);
   }
-  console.log(assistants);
 
   const hasOpenAIProvider = llmProviders.some(
     (provider) => provider.provider === "openai"
@@ -216,7 +213,6 @@ export async function fetchChatData(searchParams: {
         )
     );
   }
-  // // TODO check for image capabilities and enable if so
 
   let folders: Folder[] = [];
   if (foldersResponse?.ok) {
