@@ -741,12 +741,6 @@ class Answer:
                     yield message
                 else:
                     if message == "FINAL TOKEN":
-                        # processed_stream = []
-                        # for processed_packet in _process_stream(output_generator):
-                        #     processed_stream.append(processed_packet)
-                        #     yield processed_packet
-                        # print("DELETIMRING")
-
                         self.current_streamed_output = self.processing_stream
                         self.processing_stream = []
                         yield Delimiter(delimiter=True)
@@ -765,12 +759,11 @@ class Answer:
     @property
     def llm_answer(self) -> str:
         answer = ""
-        if not self._processed_stream and not self.current_streamed_output:
+        if not (self._processed_stream or self.current_streamed_output):
             return ""
         for packet in self.current_streamed_output or self._processed_stream:
             if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
                 answer += packet.answer_piece
-
         return answer
 
     @property
