@@ -1,9 +1,9 @@
 import time
 
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
+from tests.integration.common.document_sets import create_document_set
+from tests.integration.common.document_sets import fetch_document_sets
 from tests.integration.common.seed_documents import TestDocumentClient
-from tests.integration.common.utils import create_document_set
-from tests.integration.common.utils import fetch_document_sets
 from tests.integration.common.vespa import TestVespaClient
 
 
