@@ -807,6 +807,7 @@ export function ChatPage({
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();
           if (packet) {
+            console.log(packet);
             if (Object.hasOwn(packet, "delimiter")) {
               // console.log("MESSAGE DELIMITER");
               // TODO: Remove or put to good use!
@@ -910,6 +911,7 @@ export function ChatPage({
                 // setCurrentMessageFsetiles(finalMessage.files)
                 finalMessage = null;
                 aiMessageImages = null;
+                answer = "";
 
                 setIsStreaming(false);
                 // setIsGenerating(false)

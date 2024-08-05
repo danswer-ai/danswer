@@ -44,7 +44,7 @@ import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 import {
   DislikeFeedbackIcon,
   LikeFeedbackIcon,
-  ToolIcon,
+  ToolCallIcon,
 } from "@/components/icons/icons";
 import {
   CustomTooltip,
@@ -395,7 +395,7 @@ export const AIMessage = ({
                                         wrap
                                         content={`Prompt was "fancy cat"`}
                                       >
-                                        <ToolIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
+                                        <ToolCallIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
                                       </CustomTooltip>
                                     );
                                   } else if (

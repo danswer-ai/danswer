@@ -140,9 +140,6 @@ class Answer:
         self.force_use_tool = force_use_tool
 
         self.skip_explicit_tool_calling = skip_explicit_tool_calling
-        print("ZA")
-
-        print(message_history)
 
         self.message_history = message_history or []
         self.tool_uses = tool_uses or {}
@@ -264,7 +261,10 @@ class Answer:
                         else:
                             tool_call_chunk += message  # type: ignore
                     else:
-                        if message.content:
+                        if tool_call_chunk is None and count != 2:
+                            logger.critical("Skipping the tool calls! int eh first ")
+                            return
+                        elif message.content:
                             yield cast(str, message.content)
 
                 if not tool_call_chunk:
