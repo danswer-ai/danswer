@@ -723,7 +723,7 @@ export const SearchSection = ({
                           />
                         </div>
 
-                        {quotes !== null && answer && (
+                        {quotes !== null && quotes.length > 0 && answer && (
                           <div className="pt-1 border-t border-border w-full">
                             <QuotesSection
                               quotes={dedupedQuotes}
