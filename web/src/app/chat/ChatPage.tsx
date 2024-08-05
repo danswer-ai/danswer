@@ -1125,6 +1125,8 @@ export function ChatPage({
       <InstantSSRAutoRefresh />
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
+      {popup}
+
       <ChatPopup />
       {currentFeedback && (
         <FeedbackModal
@@ -1144,7 +1146,8 @@ export function ChatPage({
 
       {settingsToggled && (
         <SetDefaultModelModal
-          globalModel={user?.preferences.default_model!}
+          setLlmOverride={llmOverrideManager.setLlmOverride}
+          defaultModel={user?.preferences.default_model!}
           llmProviders={llmProviders}
           onClose={() => setSettingsToggled(false)}
         />
@@ -1205,8 +1208,6 @@ export function ChatPage({
             ref={masterFlexboxRef}
             className="flex h-full w-full overflow-x-hidden"
           >
-            {popup}
-
             <div className="flex h-full flex-col w-full">
               {liveAssistant && (
                 <FunctionalHeader

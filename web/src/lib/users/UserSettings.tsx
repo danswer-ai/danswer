@@ -2,7 +2,7 @@ import { LlmOverride } from "../hooks";
 
 export async function setUserDefaultModel(
   model: string | null
-): Promise<boolean> {
+): Promise<Response> {
   const response = await fetch(`/api/user/default-model`, {
     method: "PATCH",
     headers: {
@@ -11,5 +11,5 @@ export async function setUserDefaultModel(
     body: JSON.stringify({ default_model: model }),
   });
 
-  return response.ok;
+  return response;
 }
