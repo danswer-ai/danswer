@@ -9,6 +9,7 @@ import { TrashIcon } from "@/components/icons/icons";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
 import { ConnectionConfiguration } from "@/lib/connectors/connectors";
 import { useFormContext } from "@/components/context/FormContext";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 export interface DynamicConnectionFormProps {
   config: ConnectionConfiguration;
@@ -54,7 +55,10 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
         {} as Record<string, any>
       )),
   };
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
+
   const { setAllowAdvanced } = useFormContext();
+
   const validationSchema = Yup.object().shape({
     name: Yup.string().required("Connector Name is required"),
     ...config.values.reduce(
@@ -274,20 +278,23 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                   );
                 }
               })}
+              {isPaidEnterpriseFeaturesEnabled && (
+                <>
+                  <Divider />
 
-              <Divider />
-
-              <EditingValue
-                description={`If set, then documents indexed by this connector will be visible to all users. If turned off, then only users who explicitly have been given access to the documents (e.g. through a User Group) will have access`}
-                optional
-                setFieldValue={(field: string, value: boolean) =>
-                  setIsPublic(value)
-                }
-                type={"checkbox"}
-                label={"Documents are Public?"}
-                name={"public"}
-                currentValue={isPublic}
-              />
+                  <EditingValue
+                    description={`If set, then documents indexed by this connector will be visible to all users. If turned off, then only users who explicitly have been given access to the documents (e.g. through a User Group) will have access`}
+                    optional
+                    setFieldValue={(field: string, value: boolean) =>
+                      setIsPublic(value)
+                    }
+                    type={"checkbox"}
+                    label={"Documents are Public?"}
+                    name={"public"}
+                    currentValue={isPublic}
+                  />
+                </>
+              )}
             </Form>
           );
         }}

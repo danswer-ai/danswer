@@ -31,6 +31,7 @@ import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
 import { Warning } from "@phosphor-icons/react";
 import Cookies from "js-cookie";
 import { TOGGLED_CONNECTORS_COOKIE_NAME } from "@/lib/constants";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 const columnWidths = {
   first: "20%",
@@ -54,6 +55,7 @@ function SummaryRow({
   onToggle: () => void;
 }) {
   const activePercentage = (summary.active / summary.count) * 100;
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   return (
     <TableRow
@@ -98,12 +100,14 @@ function SummaryRow({
         </Tooltip>
       </TableCell>
 
-      <TableCell className={`py-4 w-[${columnWidths.fourth}]`}>
-        <div className="text-sm text-gray-500">Public Connectors</div>
-        <p className="flex text-xl mx-auto font-semibold items-center text-lg mt-1">
-          {summary.public}/{summary.count}
-        </p>
-      </TableCell>
+      {isPaidEnterpriseFeaturesEnabled && (
+        <TableCell className={`py-4 w-[${columnWidths.fourth}]`}>
+          <div className="text-sm text-gray-500">Public Connectors</div>
+          <p className="flex text-xl mx-auto font-semibold items-center text-lg mt-1">
+            {summary.public}/{summary.count}
+          </p>
+        </TableCell>
+      )}
 
       <TableCell className={`py-4 w-[${columnWidths.fifth}]`}>
         <div className="text-sm text-gray-500">Total Docs Indexed</div>
@@ -134,6 +138,7 @@ function ConnectorRow({
   invisible?: boolean;
 }) {
   const router = useRouter();
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   const handleManageClick = (e: any) => {
     e.stopPropagation();
@@ -227,13 +232,15 @@ function ConnectorRow({
       <TableCell className={`w-[${columnWidths.third}]`}>
         {getActivityBadge()}
       </TableCell>
-      <TableCell className={`w-[${columnWidths.fourth}]`}>
-        {ccPairsIndexingStatus.public_doc ? (
-          <FiCheck className="my-auto text-emerald-600" size="18" />
-        ) : (
-          <FiXCircle className="my-auto text-red-600" />
-        )}
-      </TableCell>
+      {isPaidEnterpriseFeaturesEnabled && (
+        <TableCell className={`w-[${columnWidths.fourth}]`}>
+          {ccPairsIndexingStatus.public_doc ? (
+            <FiCheck className="my-auto text-emerald-600" size="18" />
+          ) : (
+            <FiXCircle className="my-auto text-red-600" />
+          )}
+        </TableCell>
+      )}
       <TableCell className={`w-[${columnWidths.sixth}]`}>
         {ccPairsIndexingStatus.docs_indexed}
       </TableCell>
@@ -261,6 +268,7 @@ export function CCPairIndexingStatusTable({
   const [searchTerm, setSearchTerm] = useState("");
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   useEffect(() => {
     if (searchInputRef.current) {
@@ -449,11 +457,13 @@ export function CCPairIndexingStatusTable({
                         >
                           Activity
                         </TableHeaderCell>
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.fourth}]`}
-                        >
-                          Public
-                        </TableHeaderCell>
+                        {isPaidEnterpriseFeaturesEnabled && (
+                          <TableHeaderCell
+                            className={`w-[${columnWidths.fourth}]`}
+                          >
+                            Public
+                          </TableHeaderCell>
+                        )}
                         <TableHeaderCell
                           className={`w-[${columnWidths.sixth}]`}
                         >

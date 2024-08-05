@@ -42,6 +42,7 @@ import { PagesTab } from "./PagesTab";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import KeyboardSymbol from "@/lib/browserUtilities";
 import { pageType } from "./types";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 interface HistorySidebarProps {
   page: pageType;
@@ -199,7 +200,6 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             </div>
           )}
           <div className="border-b border-border pb-4 mx-3" />
-
           <PagesTab
             closeSidebar={removeToggle}
             page={page}
