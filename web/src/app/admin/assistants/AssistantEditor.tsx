@@ -539,13 +539,13 @@ export function AssistantEditor({
                     </TooltipProvider>
                   </div>
                   <p className="my-1 text-text-600">
-                    You assistant will use your system default (currently{" "}
-                    {defaultModelName}) unless otherwise specified below.
+                    Your assistant will use your user's set default unless
+                    otherwise specified below.
                   </p>
                   <div className="mb-2 flex items-starts">
                     <div className="w-96">
                       <SelectorFormField
-                        defaultValue={`Default (${defaultModelName})`}
+                        defaultValue={`User default`}
                         name="llm_model_provider_override"
                         options={llmProviders.map((llmProvider) => ({
                           name: llmProvider.name,

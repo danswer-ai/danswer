@@ -125,6 +125,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         TIMESTAMPAware(timezone=True), nullable=True
     )
 
+    default_model: Mapped[str] = mapped_column(Text, nullable=True)
+    # organized in {provider__name} format as elsewhere in the code #TODO make this clearer
+
     # relationships
     credentials: Mapped[list["Credential"]] = relationship(
         "Credential", back_populates="user", lazy="joined"

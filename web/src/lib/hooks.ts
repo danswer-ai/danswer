@@ -143,17 +143,20 @@ export interface LlmOverrideManager {
 }
 
 export function useLlmOverride(
+  globalModel: string | null,
   currentChatSession?: ChatSession,
   defaultTemperature?: number
 ): LlmOverrideManager {
   const [llmOverride, setLlmOverride] = useState<LlmOverride>(
     currentChatSession && currentChatSession.current_alternate_model
       ? destructureValue(currentChatSession.current_alternate_model)
-      : {
-          name: "",
-          provider: "",
-          modelName: "",
-        }
+      : globalModel
+        ? destructureValue(globalModel)
+        : {
+            name: "",
+            provider: "",
+            modelName: "",
+          }
   );
 
   const updateModelOverrideForChatSession = (chatSession?: ChatSession) => {

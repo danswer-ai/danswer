@@ -34,6 +34,7 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
+  openModelSettings,
   showDocs,
   selectedDocuments,
   message,
@@ -57,6 +58,7 @@ export function ChatInputBar({
   chatSessionId,
   inputPrompts,
 }: {
+  openModelSettings: () => void;
   showDocs: () => void;
   selectedDocuments: DanswerDocument[];
   assistantOptions: Persona[];
@@ -507,7 +509,6 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-
             <div className="flex items-center space-x-3 mr-12 px-4 pb-2 ">
               <Popup
                 removePadding
@@ -534,11 +535,11 @@ export function ChatInputBar({
                   Icon={AssistantsIconSkeleton as IconType}
                 />
               </Popup>
-
               <Popup
                 tab
                 content={(close, ref) => (
                   <LlmTab
+                    openModelSettings={openModelSettings}
                     currentLlm={
                       llmOverrideManager.llmOverride.modelName ||
                       (selectedAssistant
