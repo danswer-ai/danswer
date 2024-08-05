@@ -43,7 +43,6 @@ SESSION_KEY = "session"
 QUERY_EVENT_ID = "query_event_id"
 LLM_CHUNKS = "llm_chunks"
 
-
 # For tool calling
 MAXIMUM_TOOL_CALL_SEQUENCE = 5
 

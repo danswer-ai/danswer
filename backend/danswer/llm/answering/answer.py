@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from typing import Any
 from typing import cast
 from uuid import uuid4
 
@@ -131,6 +132,9 @@ class Answer:
         self.force_use_tool = force_use_tool
 
         self.skip_explicit_tool_calling = skip_explicit_tool_calling
+        print("ZA")
+
+        print(message_history)
 
         self.message_history = message_history or []
         self.tool_uses = tool_uses or {}
@@ -190,13 +194,13 @@ class Answer:
 
     def _raw_output_for_explicit_tool_calling_llms_loop(
         self,
-    ) -> Iterator[str | ToolCallKickoff | ToolResponse | ToolCallFinalResult]:
+    ) -> Iterator[
+        str | ToolCallKickoff | ToolResponse | ToolCallFinalResult | Delimiter | Any
+    ]:
         count = 1
         print("HI go")
         maximum_count = 5
         while count <= maximum_count:
-            print(self.message_history)
-            print("HISTORY IS this")
             prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
 
             count += 1
@@ -322,7 +326,7 @@ class Answer:
                         message=str(tool_call_request),
                         message_type=MessageType.ASSISTANT,
                         token_count=10,  # You may want to implement a token counting method
-                        tool_calls=[],
+                        tool_call=None,
                         files=[],
                     )
                 )
@@ -331,17 +335,14 @@ class Answer:
                         message="\n".join(str(response) for response in tool_responses),
                         message_type=MessageType.SYSTEM,
                         token_count=10,
-                        tool_calls=[],
+                        tool_call=None,
                         files=[],
                     )
                 )
 
                 # Generate response based on updated message history
                 prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
-                print("GETTIN GHTE ANSWER???")
 
-                print(prompt)
-                prompt[-1]["content"] = [prompt[-1].content[0]]
                 process_answer_stream_fn = _get_answer_stream_processor(
                     context_docs=[],
                     doc_id_to_rank_map=map_document_id_order([]),
@@ -370,7 +371,7 @@ class Answer:
                         message=response_content,
                         message_type=MessageType.ASSISTANT,
                         token_count=10,
-                        tool_calls=[],
+                        tool_call=None,
                         files=[],  # You may want to implement a token counting method
                     )
                 )

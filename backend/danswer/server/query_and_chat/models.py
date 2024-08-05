@@ -188,7 +188,7 @@ class ChatMessageDetail(BaseModel):
     chat_session_id: int | None = None
     citations: dict[int, int] | None
     files: list[FileDescriptor]
-    tool_calls: list[ToolCallFinalResult]
+    tool_call: ToolCallFinalResult | None
 
     def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
         initial_dict = super().dict(*args, **kwargs)  # type: ignore

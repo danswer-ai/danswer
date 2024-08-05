@@ -718,16 +718,14 @@ def stream_chat_message_objects(
                         token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
                         citations=db_citations,
                         error=None,
-                        tool_calls=[
-                            ToolCall(
-                                tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                                tool_name=tool_result.tool_name,
-                                tool_arguments=tool_result.tool_args,
-                                tool_result=tool_result.tool_result,
-                            )
-                        ]
-                        if tool_result
-                        else [],
+                        tool_call=ToolCall(
+                            tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                            tool_name=tool_result.tool_name,
+                            tool_arguments=tool_result.tool_args,
+                            tool_result=tool_result.tool_result,
+                        )
+                        if tool_result is not None
+                        else None,
                     )
 
                     db_session.commit()  # actually save user / assistant message
@@ -800,16 +798,14 @@ def stream_chat_message_objects(
                 token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
                 citations=db_citations,
                 error=None,
-                tool_calls=[
-                    ToolCall(
-                        tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                        tool_name=tool_result.tool_name,
-                        tool_arguments=tool_result.tool_args,
-                        tool_result=tool_result.tool_result,
-                    )
-                ]
+                tool_call=ToolCall(
+                    tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                    tool_name=tool_result.tool_name,
+                    tool_arguments=tool_result.tool_args,
+                    tool_result=tool_result.tool_result,
+                )
                 if tool_result
-                else [],
+                else None,
             )
             db_session.commit()  # actually save user / assistant message
 
