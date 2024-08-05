@@ -544,6 +544,7 @@ export function ChatInputBar({
                       llmOverrideManager.llmOverride.modelName ||
                       (selectedAssistant
                         ? selectedAssistant.llm_model_version_override ||
+                          llmOverrideManager.globalDefault.modelName ||
                           llmName
                         : llmName)
                     }
@@ -565,6 +566,7 @@ export function ChatInputBar({
                           llmOverrideManager.llmOverride.modelName ||
                             (selectedAssistant
                               ? selectedAssistant.llm_model_version_override ||
+                                llmOverrideManager.globalDefault.modelName ||
                                 llmName
                               : llmName)
                         )

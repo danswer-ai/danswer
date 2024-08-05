@@ -51,12 +51,6 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
       debouncedSetTemperature(value);
     };
 
-    const [_, defaultLlmName] = getFinalLLM(
-      llmProviders,
-      currentAssistant,
-      null
-    );
-
     const llmOptionsByProvider: {
       [provider: string]: { name: string; value: string }[];
     } = {};
