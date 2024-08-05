@@ -10,8 +10,6 @@ are multiple connector / credential pairs that have indexed it
 connector / credential pair from the access list
 (6) delete all relevant entries from postgres
 """
-import time
-
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
@@ -24,10 +22,9 @@ from danswer.db.document import delete_documents_complete__no_commit
 from danswer.db.document import get_document_connector_cnts
 from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.document import prepare_to_modify_documents
-from danswer.db.document_set import get_document_sets_by_ids
-from danswer.db.document_set import (
-    mark_cc_pair__document_set_relationships_to_be_deleted__no_commit,
-)
+from danswer.db.document_set import delete_document_set_cc_pair_relationship__no_commit
+from danswer.db.document_set import fetch_document_sets
+from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import delete_index_attempts
 from danswer.db.models import ConnectorCredentialPair
@@ -78,6 +75,31 @@ def delete_connector_credential_pair_batch(
             document_ids_to_update = [
                 document_id for document_id, cnt in document_connector_cnts if cnt > 1
             ]
+
+            # determine future document sets for documents in batch
+            existing_doc_2_doc_sets: dict[str, list[str]] = {
+                t[0]: t[1]
+                for t in fetch_document_sets_for_documents(
+                    db_session=db_session,
+                    document_ids=document_ids_to_update,
+                )
+            }
+
+            existing_doc_set_2_cc: dict[str, list[str]] = {
+                t[0]: t[1]
+                for t in fetch_document_sets(user_id=None, db_session=db_session)
+            }
+
+            future_doc_sets: dict[str, list[str]] = dict()
+
+            for doc_id in document_ids_to_update:
+                future_doc_sets[doc_id] = []
+                for doc_set in existing_doc_2_doc_sets[doc_id]:
+                    # keep the doc set if it's only associated credential is not about to be deleted
+                    if existing_doc_set_2_cc[doc_set] != [credential_id]:
+                        future_doc_sets[doc_id].append(doc_set)
+
+            # determine future ACLs for documents in batch
             access_for_documents = get_access_for_documents(
                 document_ids=document_ids_to_update,
                 db_session=db_session,
@@ -86,10 +108,13 @@ def delete_connector_credential_pair_batch(
                     credential_id=credential_id,
                 ),
             )
+
+            # update Vespa
             update_requests = [
                 UpdateRequest(
                     document_ids=[document_id],
                     access=access,
+                    document_sets=future_doc_sets[document_id],
                 )
                 for document_id, access in access_for_documents.items()
             ]
@@ -106,48 +131,6 @@ def delete_connector_credential_pair_batch(
                 ),
             )
             db_session.commit()
-
-
-def cleanup_synced_entities(
-    cc_pair: ConnectorCredentialPair, db_session: Session
-) -> None:
-    """Updates the document sets associated with the connector / credential pair,
-    then relies on the document set sync script to kick off Celery jobs which will
-    sync these updates to Vespa.
-
-    Waits until the document sets are synced before returning."""
-    logger.info(f"Cleaning up Document Sets for CC Pair with ID: '{cc_pair.id}'")
-    document_sets_ids_to_sync = list(
-        mark_cc_pair__document_set_relationships_to_be_deleted__no_commit(
-            cc_pair_id=cc_pair.id,
-            db_session=db_session,
-        )
-    )
-    db_session.commit()
-
-    # wait till all document sets are synced before continuing
-    while True:
-        all_synced = True
-        document_sets = get_document_sets_by_ids(
-            db_session=db_session, document_set_ids=document_sets_ids_to_sync
-        )
-        for document_set in document_sets:
-            if not document_set.is_up_to_date:
-                all_synced = False
-
-        if all_synced:
-            break
-
-        # wait for 30 seconds before checking again
-        db_session.commit()  # end transaction
-        logger.info(
-            f"Document sets '{document_sets_ids_to_sync}' not synced yet, waiting 30s"
-        )
-        time.sleep(30)
-
-    logger.info(
-        f"Finished cleaning up Document Sets for CC Pair with ID: '{cc_pair.id}'"
-    )
 
 
 def delete_connector_credential_pair(
@@ -177,13 +160,13 @@ def delete_connector_credential_pair(
         )
         num_docs_deleted += len(documents)
 
-    # Clean up document sets / access information from Postgres
-    # and sync these updates to Vespa
-    # TODO: add user group cleanup with `fetch_versioned_implementation`
-    cleanup_synced_entities(cc_pair, db_session)
-
     # clean up the rest of the related Postgres entities
     delete_index_attempts(
+        db_session=db_session,
+        connector_id=connector_id,
+        credential_id=credential_id,
+    )
+    delete_document_set_cc_pair_relationship__no_commit(
         db_session=db_session,
         connector_id=connector_id,
         credential_id=credential_id,

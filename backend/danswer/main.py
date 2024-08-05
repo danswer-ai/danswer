@@ -47,10 +47,12 @@ from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
+from danswer.db.models import EmbeddingModel
 from danswer.db.persona import delete_old_default_personas
 from danswer.db.standard_answer import create_initial_default_standard_answer_category
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
+from danswer.document_index.interfaces import DocumentIndex
 from danswer.llm.llm_initialization import load_llm_providers
 from danswer.natural_language_processing.search_nlp_models import warm_up_encoders
 from danswer.search.retrieval.search_runner import download_nltk_data
@@ -158,6 +160,49 @@ def include_router_with_global_prefix_prepended(
     application.include_router(router, **final_kwargs)
 
 
+def setup_postgres(db_session: Session) -> None:
+    logger.info("Verifying default connector/credential exist.")
+    create_initial_public_credential(db_session)
+    create_initial_default_connector(db_session)
+    associate_default_cc_pair(db_session)
+
+    logger.info("Verifying default standard answer category exists.")
+    create_initial_default_standard_answer_category(db_session)
+
+    logger.info("Loading LLM providers from env variables")
+    load_llm_providers(db_session)
+
+    logger.info("Loading default Prompts and Personas")
+    delete_old_default_personas(db_session)
+    load_chat_yamls()
+
+    logger.info("Loading built-in tools")
+    load_builtin_tools(db_session)
+    refresh_built_in_tools_cache(db_session)
+    auto_add_search_tool_to_personas(db_session)
+
+
+def setup_vespa(
+    document_index: DocumentIndex,
+    db_embedding_model: EmbeddingModel,
+    secondary_db_embedding_model: EmbeddingModel | None,
+) -> None:
+    # Vespa startup is a bit slow, so give it a few seconds
+    wait_time = 5
+    for _ in range(5):
+        try:
+            document_index.ensure_indices_exist(
+                index_embedding_dim=db_embedding_model.model_dim,
+                secondary_index_embedding_dim=secondary_db_embedding_model.model_dim
+                if secondary_db_embedding_model
+                else None,
+            )
+            break
+        except Exception:
+            logger.info(f"Waiting on Vespa, retrying in {wait_time} seconds...")
+            time.sleep(wait_time)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     init_sqlalchemy_engine(POSTGRES_WEB_APP_NAME)
@@ -213,26 +258,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")
         download_nltk_data()
 
-        logger.info("Verifying default connector/credential exist.")
-        create_initial_public_credential(db_session)
-        create_initial_default_connector(db_session)
-        associate_default_cc_pair(db_session)
+        # setup Postgres with default credential, llm providers, etc.
+        setup_postgres(db_session)
 
-        logger.info("Verifying default standard answer category exists.")
-        create_initial_default_standard_answer_category(db_session)
-
-        logger.info("Loading LLM providers from env variables")
-        load_llm_providers(db_session)
-
-        logger.info("Loading default Prompts and Personas")
-        delete_old_default_personas(db_session)
-        load_chat_yamls()
-
-        logger.info("Loading built-in tools")
-        load_builtin_tools(db_session)
-        refresh_built_in_tools_cache(db_session)
-        auto_add_search_tool_to_personas(db_session)
-
+        # ensure Vespa is setup correctly
         logger.info("Verifying Document Index(s) is/are available.")
         document_index = get_default_document_index(
             primary_index_name=db_embedding_model.index_name,
@@ -240,20 +269,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
             if secondary_db_embedding_model
             else None,
         )
-        # Vespa startup is a bit slow, so give it a few seconds
-        wait_time = 5
-        for attempt in range(5):
-            try:
-                document_index.ensure_indices_exist(
-                    index_embedding_dim=db_embedding_model.model_dim,
-                    secondary_index_embedding_dim=secondary_db_embedding_model.model_dim
-                    if secondary_db_embedding_model
-                    else None,
-                )
-                break
-            except Exception:
-                logger.info(f"Waiting on Vespa, retrying in {wait_time} seconds...")
-                time.sleep(wait_time)
+        setup_vespa(document_index, db_embedding_model, secondary_db_embedding_model)
 
         logger.info(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
         if db_embedding_model.cloud_provider_id is None:
