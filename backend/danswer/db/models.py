@@ -126,7 +126,8 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
 
     default_model: Mapped[str] = mapped_column(Text, nullable=True)
-    # organized in {provider__name} format as elsewhere in the code #TODO make this clearer
+    # organized in typical structured fashion
+    # formatted as `displayName__provider__modelName`
 
     # relationships
     credentials: Mapped[list["Credential"]] = relationship(

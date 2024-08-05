@@ -78,7 +78,7 @@ import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
-import { SetDefaultModelModal } from "./modal/UserSettingsModal";
+import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -836,10 +836,14 @@ export function ChatPage({
         queryOverride,
         forceSearch,
 
-        modelProvider: llmOverrideManager.llmOverride.name || undefined,
+        modelProvider:
+          llmOverrideManager.llmOverride.name ||
+          llmOverrideManager.globalDefault.name ||
+          undefined,
         modelVersion:
           llmOverrideManager.llmOverride.modelName ||
           searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
+          llmOverrideManager.globalDefault.modelName ||
           undefined,
         temperature: llmOverrideManager.temperature || undefined,
         systemPromptOverride:
@@ -1213,7 +1217,7 @@ export function ChatPage({
 
       {settingsToggled && (
         <SetDefaultModelModal
-          setLlmOverride={llmOverrideManager.setLlmOverride}
+          setLlmOverride={llmOverrideManager.setGlobalDefault}
           defaultModel={user?.preferences.default_model!}
           llmProviders={llmProviders}
           onClose={() => setSettingsToggled(false)}

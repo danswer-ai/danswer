@@ -137,37 +137,42 @@ export interface LlmOverride {
 export interface LlmOverrideManager {
   llmOverride: LlmOverride;
   setLlmOverride: React.Dispatch<React.SetStateAction<LlmOverride>>;
+  globalDefault: LlmOverride;
+  setGlobalDefault: React.Dispatch<React.SetStateAction<LlmOverride>>;
   temperature: number | null;
   setTemperature: React.Dispatch<React.SetStateAction<number | null>>;
   updateModelOverrideForChatSession: (chatSession?: ChatSession) => void;
 }
-
 export function useLlmOverride(
   globalModel?: string | null,
   currentChatSession?: ChatSession,
   defaultTemperature?: number
 ): LlmOverrideManager {
+  const [globalDefault, setGlobalDefault] = useState<LlmOverride>(
+    globalModel
+      ? destructureValue(globalModel)
+      : {
+          name: "",
+          provider: "",
+          modelName: "",
+        }
+  );
+
   const [llmOverride, setLlmOverride] = useState<LlmOverride>(
     currentChatSession && currentChatSession.current_alternate_model
       ? destructureValue(currentChatSession.current_alternate_model)
-      : globalModel
-        ? destructureValue(globalModel)
-        : {
-            name: "",
-            provider: "",
-            modelName: "",
-          }
+      : {
+          name: "",
+          provider: "",
+          modelName: "",
+        }
   );
 
   const updateModelOverrideForChatSession = (chatSession?: ChatSession) => {
     setLlmOverride(
       chatSession && chatSession.current_alternate_model
         ? destructureValue(chatSession.current_alternate_model)
-        : {
-            name: "",
-            provider: "",
-            modelName: "",
-          }
+        : globalDefault
     );
   };
 
@@ -183,11 +188,12 @@ export function useLlmOverride(
     updateModelOverrideForChatSession,
     llmOverride,
     setLlmOverride,
+    globalDefault,
+    setGlobalDefault,
     temperature,
     setTemperature,
   };
 }
-
 /* 
 EE Only APIs
 */
