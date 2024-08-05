@@ -65,8 +65,8 @@ from danswer.tools.tool import ToolResponse
 from danswer.tools.tool_runner import (
     check_which_tools_should_run_for_non_tool_calling_llm,
 )
-from danswer.tools.tool_runner import ToolCallFinalResult
 from danswer.tools.tool_runner import ToolCallKickoff
+from danswer.tools.tool_runner import ToolCallMetadata
 from danswer.tools.tool_runner import ToolRunner
 from danswer.tools.tool_selection import select_single_tool_for_non_tool_calling_llm
 from danswer.tools.utils import explicit_tool_calling_supported
@@ -205,7 +205,7 @@ class Answer:
     def _raw_output_for_explicit_tool_calling_llms_loop(
         self,
     ) -> Iterator[
-        str | ToolCallKickoff | ToolResponse | ToolCallFinalResult | Delimiter | Any
+        str | ToolCallKickoff | ToolResponse | ToolCallMetadata | Delimiter | Any
     ]:
         count = 1
         print("HI go")
@@ -394,7 +394,7 @@ class Answer:
         str
         | ToolCallKickoff
         | ToolResponse
-        | ToolCallFinalResult
+        | ToolCallMetadata
         | AnswerQuestionPossibleReturn
         | str
     ]:
@@ -527,7 +527,7 @@ class Answer:
         str
         | ToolCallKickoff
         | ToolResponse
-        | ToolCallFinalResult
+        | ToolCallMetadata
         | AnswerQuestionStreamReturn
         | DanswerAnswerPiece
         | DanswerQuotes
@@ -704,7 +704,7 @@ class Answer:
                 str
                 | ToolCallKickoff
                 | ToolResponse
-                | ToolCallFinalResult
+                | ToolCallMetadata
                 | Delimiter
                 | Any
             ],
@@ -713,7 +713,7 @@ class Answer:
 
             for message in stream:
                 if isinstance(message, ToolCallKickoff) or isinstance(
-                    message, ToolCallFinalResult
+                    message, ToolCallMetadata
                 ):
                     yield message
                 elif isinstance(message, ToolResponse):

@@ -49,12 +49,6 @@ export interface ToolCallMetadata {
   tool_result?: Record<string, any>;
 }
 
-export interface ToolCallFinalResult {
-  tool_name: string;
-  tool_args: Record<string, any>;
-  tool_result: Record<string, any>;
-}
-
 export interface ChatSession {
   id: number;
   name: string;
@@ -81,7 +75,7 @@ export interface PreviousAIMessage {
   documents?: DanswerDocument[] | null;
   citations?: CitationMap;
   files?: FileDescriptor[];
-  toolCall?: ToolCallFinalResult | null;
+  toolCall?: ToolCallMetadata | null;
 
   // for rebuilding the message tree
   parentMessageId?: number | null;
@@ -99,7 +93,7 @@ export interface Message {
   documents?: DanswerDocument[] | null;
   citations?: CitationMap;
   files: FileDescriptor[];
-  toolCall: ToolCallFinalResult | null;
+  toolCall: ToolCallMetadata | null;
 
   // for rebuilding the message tree
   parentMessageId: number | null;
@@ -132,7 +126,7 @@ export interface BackendMessage {
   time_sent: string;
   citations: CitationMap;
   files: FileDescriptor[];
-  tool_call: ToolCallFinalResult | null;
+  tool_call: ToolCallMetadata | null;
   alternate_assistant_id?: number | null;
 }
 

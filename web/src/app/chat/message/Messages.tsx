@@ -1,11 +1,6 @@
 "use client";
 
 import {
-  FiCpu,
-  FiImage,
-  FiThumbsDown,
-  FiThumbsUp,
-  FiUser,
   FiEdit2,
   FiChevronRight,
   FiChevronLeft,
@@ -49,7 +44,7 @@ import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 import {
   DislikeFeedbackIcon,
   LikeFeedbackIcon,
-  ToolCallIcon,
+  ToolIcon,
 } from "@/components/icons/icons";
 import {
   CustomTooltip,
@@ -400,7 +395,7 @@ export const AIMessage = ({
                                         wrap
                                         content={`Prompt was "fancy cat"`}
                                       >
-                                        <ToolCallIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
+                                        <ToolIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
                                       </CustomTooltip>
                                     );
                                   } else if (

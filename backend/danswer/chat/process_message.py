@@ -88,7 +88,7 @@ from danswer.tools.search.search_tool import SearchTool
 from danswer.tools.search.search_tool import SECTION_RELEVANCE_LIST_ID
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
-from danswer.tools.tool_runner import ToolCallFinalResult
+from danswer.tools.tool_runner import ToolCallMetadata
 from danswer.tools.utils import compute_all_tool_tokens
 from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
@@ -758,7 +758,7 @@ def stream_chat_message_objects(
                     )
 
                 else:
-                    if isinstance(packet, ToolCallFinalResult):
+                    if isinstance(packet, ToolCallMetadata):
                         tool_result = packet
                     yield cast(ChatPacket, packet)
 

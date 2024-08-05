@@ -36,7 +36,7 @@ from danswer.search.models import RetrievalDocs
 from danswer.search.models import SavedSearchDoc
 from danswer.search.models import SearchDoc as ServerSearchDoc
 from danswer.server.query_and_chat.models import ChatMessageDetail
-from danswer.tools.tool_runner import ToolCallFinalResult
+from danswer.tools.tool_runner import ToolCallMetadata
 from danswer.utils.logger import setup_logger
 
 
@@ -651,6 +651,8 @@ def translate_db_message_to_chat_message_detail(
     chat_message: ChatMessage,
     remove_doc_content: bool = False,
 ) -> ChatMessageDetail:
+    print("TENSLATING")
+
     chat_msg_detail = ChatMessageDetail(
         chat_session_id=chat_message.chat_session_id,
         message_id=chat_message.id,
@@ -665,7 +667,7 @@ def translate_db_message_to_chat_message_detail(
         time_sent=chat_message.time_sent,
         citations=chat_message.citations,
         files=chat_message.files or [],
-        tool_call=ToolCallFinalResult(
+        tool_call=ToolCallMetadata(
             tool_name=chat_message.tool_call.tool_name,
             tool_args=chat_message.tool_call.tool_arguments,
             tool_result=chat_message.tool_call.tool_result,

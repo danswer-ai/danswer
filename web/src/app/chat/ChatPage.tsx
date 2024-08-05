@@ -13,7 +13,6 @@ import {
   PreviousAIMessage,
   RetrievalType,
   StreamingError,
-  ToolCallFinalResult,
   ToolCallMetadata,
 } from "./interfaces";
 
@@ -373,6 +372,7 @@ export function ChatPage({
     setCompleteMessageDetail(newCompleteMessageDetail);
     return newCompleteMessageDetail;
   };
+  console.log(completeMessageDetail);
 
   const messageHistory = buildLatestMessageChain(
     completeMessageDetail.messageMap
@@ -737,7 +737,6 @@ export function ChatPage({
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
     let toolCall: ToolCallMetadata | null = null;
-    let newUserId = null;
 
     try {
       const lastSuccessfulMessageId =
@@ -779,10 +778,6 @@ export function ChatPage({
           searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
         useExistingUserMessage: isSeededChat,
       });
-
-      let updateFn2 = null;
-      console.log("CREATING update function");
-      console.log(frozenMessageMap);
 
       let updateFn = (messages: Message[]) => {
         const replacementsMap = finalMessage
@@ -855,35 +850,6 @@ export function ChatPage({
                 newUserMessageId !== undefined &&
                 newAssistantMessageId !== undefined
               ) {
-                // Update the messages with final IDs
-
-                console.log([
-                  {
-                    messageId: newUserMessageId,
-                    message: currMessage,
-                    type: "user",
-                    files: currentMessageFiles,
-                    toolCall: null,
-                    parentMessageId: parentMessage?.messageId || null,
-                    childrenMessageIds: [newAssistantMessageId],
-                    latestChildMessageId: newAssistantMessageId,
-                  },
-                  {
-                    messageId: newAssistantMessageId,
-                    message: answer,
-                    type: "assistant",
-                    retrievalType,
-                    query: finalMessage.rephrased_query || query,
-                    documents:
-                      finalMessage.context_docs?.top_documents || documents,
-                    citations: finalMessage.citations || {},
-                    files: finalMessage.files || aiMessageImages || [],
-                    toolCall: finalMessage.tool_call,
-                    parentMessageId: newUserMessageId,
-                    alternateAssistantID: alternativeAssistant?.id,
-                  },
-                ]);
-
                 let {
                   messageMap: newFrozenMessageMap,
                   sessionId: newFrozenSessionId,
@@ -891,7 +857,7 @@ export function ChatPage({
                   {
                     messageId: newUserMessageId,
                     message: currMessage,
-                    type: "user",
+                    type: parentId ? "assistant" : "user",
                     files: files,
                     toolCall: null,
                     parentMessageId: parentMessage?.messageId || null,
@@ -922,26 +888,9 @@ export function ChatPage({
                   toolCall: finalMessage.tool_call,
                   documents:
                     finalMessage.context_docs?.top_documents || documents,
+                  type: "assistant",
                 };
 
-                //                   messageId: newUserMessageId,
-                // message: currMessage,
-                // type: generatedAssistantId ? "assistant" : "user",
-                // files: files,
-                // toolCall: null,
-                // parentMessageId: parentId || parentMessage?.messageId || null,
-                // childrenMessageIds: [newAssistantMessageId],
-                // latestChildMessageId: newAssistantMessageId,
-
-                // let { messageMap: newFrozenMessageMap, sessionId: newFrozenSessionId } =
-                //   upsertToCompleteMessageMap({
-                //     messages: messageUpdates,
-                //     chatSessionId: currChatSessionId,
-                //   });
-
-                console.log(`PARNE ID ${newUserMessageId}`);
-                console.log("CREATING update function #2");
-                console.log(newFrozenMessageMap);
                 updateFn = (messages: Message[]) => {
                   const replacementsMap = finalMessage
                     ? new Map([
@@ -977,8 +926,6 @@ export function ChatPage({
               !Object.hasOwn(packet, "message_id") &&
               !Object.hasOwn(packet, "delimiter")
             ) {
-              console.log(packet);
-              console.log("UPDATING THE MESSAGES PAST");
               const newUserMessageId =
                 finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
               const newAssistantMessageId =
@@ -988,7 +935,10 @@ export function ChatPage({
                 {
                   messageId: newUserMessageId,
                   message: currMessage,
-                  type: generatedAssistantId ? "assistant" : "user",
+                  type:
+                    previousMessage?.type || generatedAssistantId
+                      ? "assistant"
+                      : "user",
                   files: previousMessage?.files || files,
                   toolCall: previousMessage?.toolCall || null,
                   parentMessageId:
@@ -1261,6 +1211,7 @@ export function ChatPage({
   };
   const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
+  console.log(messageHistory);
   return (
     <>
       <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
@@ -1561,7 +1512,7 @@ export function ChatPage({
                                       citedDocuments={getCitedDocumentsFromMessage(
                                         message
                                       )}
-                                      toolCall={message.toolCall}
+                                      toolCall={message.toolCall!}
                                       isComplete={
                                         i !== messageHistory.length - 1 ||
                                         !isStreaming
