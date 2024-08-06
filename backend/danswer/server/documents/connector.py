@@ -496,7 +496,6 @@ def create_connector_from_model(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
-    print(connector_data)
     try:
         _validate_connector_allowed(connector_data.source)
         return create_connector(connector_data, db_session)
