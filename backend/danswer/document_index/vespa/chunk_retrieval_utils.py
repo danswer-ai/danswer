@@ -367,9 +367,6 @@ def parallel_visit_api_retrieval(
         for chunk in flattened_vespa_chunks
     ]
 
-    # Group by document_id, then sort by chunk_id within each group
-    inference_chunks.sort(key=lambda chunk: (chunk.document_id, chunk.chunk_id))
-
     return inference_chunks
 
 
@@ -417,6 +414,5 @@ def manage_batch_retrieval(
                 index_name, uncapped_requests, filters, get_mega_chunks
             )
         )
-    # Group by document_id, then sort by chunk_id within each group
-    retrieved_chunks.sort(key=lambda chunk: (chunk.document_id, chunk.chunk_id))
+
     return retrieved_chunks

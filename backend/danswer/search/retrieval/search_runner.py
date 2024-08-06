@@ -119,6 +119,12 @@ def doc_index_retrieval(
     db_session: Session,
     hybrid_alpha: float = HYBRID_ALPHA,
 ) -> list[InferenceChunk]:
+    """
+    This function performs the search to retrieve the chunks,
+    extracts chunks from the mega chunks, persists the scores
+    from the mega chunks to the referenced chunks,
+    dedupes the chunks, and cleans the chunks.
+    """
     if query.search_type == SearchType.KEYWORD:
         top_chunks = document_index.keyword_retrieval(
             query=query.query,
@@ -168,6 +174,7 @@ def doc_index_retrieval(
 
     retrieval_requests: list[VespaChunkRequest] = []
     normal_chunks: list[InferenceChunkUncleaned] = []
+    referenced_chunk_scores: dict[tuple[str, int], float] = {}
     for chunk in top_chunks:
         if chunk.mega_chunk_reference_ids:
             retrieval_requests.append(
@@ -177,18 +184,49 @@ def doc_index_retrieval(
                     max_chunk_ind=chunk.mega_chunk_reference_ids[-1],
                 )
             )
+            # for each referenced chunk, persist the
+            # highest score to the referenced chunk
+            for chunk_id in chunk.mega_chunk_reference_ids:
+                key = (chunk.document_id, chunk_id)
+                referenced_chunk_scores[key] = max(
+                    referenced_chunk_scores.get(key, 0), chunk.score or 0
+                )
         else:
             normal_chunks.append(chunk)
 
-    retrieved_inference_chunks = document_index.id_based_retrieval(
-        chunk_requests=retrieval_requests,
-        filters=query.filters,
-        batch_retrieval=True,
-    )
+    # Retrieve the chunks from the mega chunks
+    if retrieval_requests:
+        retrieved_inference_chunks = document_index.id_based_retrieval(
+            chunk_requests=retrieval_requests,
+            filters=query.filters,
+            batch_retrieval=True,
+        )
+        for chunk in retrieved_inference_chunks:
+            if (chunk.document_id, chunk.chunk_id) in referenced_chunk_scores:
+                chunk.score = referenced_chunk_scores[
+                    (chunk.document_id, chunk.chunk_id)
+                ]
+            else:
+                logger.error(
+                    f"Chunk {chunk.document_id} {chunk.chunk_id} not found in referenced chunk scores"
+                )
 
-    normal_chunks.extend(retrieved_inference_chunks)
-    deduped_chunks = list(set(normal_chunks))
-    return cleanup_chunks(deduped_chunks)
+        unique_chunks: dict[tuple[str, int], InferenceChunkUncleaned] = {
+            (chunk.document_id, chunk.chunk_id): chunk for chunk in normal_chunks
+        }
+
+        for chunk in retrieved_inference_chunks:
+            key = (chunk.document_id, chunk.chunk_id)
+            if key not in unique_chunks or (chunk.score or 0) > (
+                unique_chunks[key].score or 0
+            ):
+                unique_chunks[key] = chunk
+
+        deduped_chunks = list(unique_chunks.values())
+        deduped_chunks.sort(key=lambda chunk: chunk.score or 0, reverse=True)
+        return cleanup_chunks(deduped_chunks)
+
+    return cleanup_chunks(normal_chunks)
 
 
 def _simplify_text(text: str) -> str:

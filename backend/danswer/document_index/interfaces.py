@@ -203,11 +203,9 @@ class IdRetrievalCapable(abc.ABC):
         or extended section will have duplicate segments.
 
         Parameters:
-        - document_id: document id for which to retrieve the chunk(s)
-        - min_chunk_ind: if None then fetch from the start of doc
-        - max_chunk_ind:
-        - filters: standard filters object, in this case only the access filter is applied as a
-                permission check
+        - chunk_requests: requests containing the document id and the chunk range to retrieve
+        - filters: Filters to apply to retrieval
+        - batch_retrieval: If True, perform a batch retrieval
 
         Returns:
             list of chunks for the document id or the specific chunk by the specified chunk index
