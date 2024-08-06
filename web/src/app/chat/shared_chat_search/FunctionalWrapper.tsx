@@ -115,7 +115,10 @@ export default function FunctionalWrapper({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [router]);
-  const settings = useContext(SettingsContext)?.settings;
+  const combinedSettings = useContext(SettingsContext);
+  const settings = combinedSettings?.settings;
+  const chatBannerPresent =
+    combinedSettings?.enterpriseSettings?.custom_header_content;
 
   const [toggledSidebar, setToggledSidebar] = useState(initiallyToggled);
 
@@ -131,7 +134,9 @@ export default function FunctionalWrapper({
     <>
       {(!settings ||
         (settings.search_page_enabled && settings.chat_page_enabled)) && (
-        <div className="mobile:hidden z-30 flex fixed top-4 left-1/2 transform -translate-x-1/2">
+        <div
+          className={`mobile:hidden z-30 flex fixed ${chatBannerPresent ? "top-20" : "top-4"} left-1/2 transform -translate-x-1/2`}
+        >
           <div
             style={{ transition: "width 0.30s ease-out" }}
             className={`flex-none overflow-y-hidden bg-background-100 transition-all bg-opacity-80 duration-300 ease-in-out h-full

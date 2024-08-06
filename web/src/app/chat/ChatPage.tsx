@@ -66,7 +66,6 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";
-import { ChatBanner } from "./ChatBanner";
 
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
@@ -1192,6 +1191,7 @@ export function ChatPage({
             <div className="flex h-full flex-col w-full">
               {liveAssistant && (
                 <FunctionalHeader
+                  sidebarToggled={toggledSidebar}
                   reset={() => setMessage("")}
                   page="chat"
                   setSharingModalVisible={
@@ -1204,23 +1204,7 @@ export function ChatPage({
                   currentChatSession={selectedChatSession}
                 />
               )}
-              <div className="w-full flex">
-                <div
-                  style={{ transition: "width 0.30s ease-out" }}
-                  className={`
-                  flex-none 
-                  overflow-y-hidden 
-                  bg-background-100 
-                  transition-all 
-                  bg-opacity-80
-                  duration-300 
-                  ease-in-out
-                  h-full
-                  ${toggledSidebar ? "w-[250px]" : "w-[0px]"}
-                  `}
-                />
-                <ChatBanner />
-              </div>
+
               {documentSidebarInitialWidth !== undefined ? (
                 <Dropzone onDrop={handleImageUpload} noClick>
                   {({ getRootProps }) => (

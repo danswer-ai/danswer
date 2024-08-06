@@ -11,13 +11,9 @@ import {
 } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BasicClickable } from "@/components/BasicClickable";
 import { ChatSession } from "../interfaces";
 
-import {
-  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
-  NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
-} from "@/lib/constants";
+import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
 
 import { Folder } from "../folders/interfaces";
 import { createFolder } from "../folders/FolderManagement";
@@ -25,24 +21,16 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import React from "react";
-import { Logo } from "@/components/Logo";
-import { HeaderTitle } from "@/components/header/Header";
-import { TbLayoutSidebarRightExpand } from "react-icons/tb";
 import {
-  AssistantsIcon,
   AssistantsIconSkeleton,
-  BackIcon,
-  BookIcon,
-  BookmarkIconSkeleton,
   ClosedBookIcon,
-  LefToLineIcon,
-  RightToLineIcon,
 } from "@/components/icons/icons";
 import { PagesTab } from "./PagesTab";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import KeyboardSymbol from "@/lib/browserUtilities";
 import { pageType } from "./types";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import LogoType from "@/components/header/LogoType";
 
 interface HistorySidebarProps {
   page: pageType;
@@ -115,43 +103,15 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             flex 
             flex-col relative
             h-screen
-            transition-transform`}
+            transition-transform 
+            mt-2`}
         >
-          <div className="max-w-full ml-3 mr-3 mt-2 flex flex gap-x-1 items-center my-auto text-text-700 text-xl">
-            <div className="mr-1 desktop:invisible mb-auto h-6 w-6">
-              <Logo height={24} width={24} />
-            </div>
-
-            <div className="desktop:invisible">
-              {enterpriseSettings && enterpriseSettings.application_name ? (
-                <div>
-                  <HeaderTitle>
-                    {enterpriseSettings.application_name}
-                  </HeaderTitle>
-                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                    <p className="text-xs text-subtle">Powered by Danswer</p>
-                  )}
-                </div>
-              ) : (
-                <HeaderTitle>Danswer</HeaderTitle>
-              )}
-            </div>
-
-            {toggleSidebar && (
-              <Tooltip
-                delayDuration={0}
-                content={toggled ? `Unpin sidebar` : "Pin sidebar"}
-              >
-                <button className="my-auto ml-auto" onClick={toggleSidebar}>
-                  {!toggled && !combinedSettings.isMobile ? (
-                    <RightToLineIcon />
-                  ) : (
-                    <LefToLineIcon />
-                  )}
-                </button>
-              </Tooltip>
-            )}
-          </div>
+          <LogoType
+            showArrow={true}
+            toggled={toggled}
+            page={page}
+            toggleSidebar={toggleSidebar}
+          />
 
           {page == "chat" && (
             <div className="mx-3 mt-4 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">

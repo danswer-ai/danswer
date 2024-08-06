@@ -1,5 +1,3 @@
-import { SearchSection } from "@/components/search/SearchSection";
-import { Header } from "@/components/header/Header";
 import {
   AuthTypeMetadata,
   getAuthTypeMetadataSS,

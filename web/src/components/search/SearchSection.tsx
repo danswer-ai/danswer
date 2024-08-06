@@ -514,6 +514,8 @@ export const SearchSection = ({
     });
   }
 
+  const chatBannerPresent = settings?.enterpriseSettings?.custom_header_content;
+
   const { popup, setPopup } = usePopup();
 
   return (
@@ -553,6 +555,7 @@ export const SearchSection = ({
 
         <div className="absolute left-0 w-full top-0">
           <FunctionalHeader
+            sidebarToggled={toggledSidebar}
             reset={() => setQuery("")}
             toggleSidebar={toggleSidebar}
             page="search"
@@ -575,7 +578,9 @@ export const SearchSection = ({
             />
 
             {
-              <div className="desktop:px-24 w-full pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
+              <div
+                className={`desktop:px-24 w-full  ${chatBannerPresent && "mt-10"} pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto`}
+              >
                 <div className="absolute z-10 mobile:px-4 mobile:max-w-searchbar-max mobile:w-[90%] top-12 desktop:left-0 hidden 2xl:block mobile:left-1/2 mobile:transform mobile:-translate-x-1/2 desktop:w-52 3xl:w-64">
                   {!settings?.isMobile &&
                     (ccPairs.length > 0 || documentSets.length > 0) && (
