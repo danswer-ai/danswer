@@ -59,7 +59,7 @@ import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useMouseTracking } from "./hooks";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import GeneratingImage from "../tools/ImageGeneratingAnimation";
+import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -346,16 +346,7 @@ export const AIMessage = ({
 
                     {toolCall &&
                       toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
-                      !toolCall.tool_result && (
-                        <GeneratingImage />
-                        // <ToolRunDisplay
-                        //   toolName={`Generating images`}
-                        //   toolLogo={
-                        //     <FiImage size={15} className="my-auto mr-1" />
-                        //   }
-                        //   isRunning={!toolCall.tool_result}
-                        // />
-                      )}
+                      !toolCall.tool_result && <GeneratingImageDisplay />}
 
                     {toolCall &&
                       toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
