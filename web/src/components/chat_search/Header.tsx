@@ -1,3 +1,4 @@
+"use client";
 import { User } from "@/lib/types";
 import { UserDropdown } from "../UserDropdown";
 import { FiShare2 } from "react-icons/fi";

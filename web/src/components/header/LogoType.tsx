@@ -2,12 +2,12 @@
 import { useContext } from "react";
 import { FiSidebar } from "react-icons/fi";
 import { SettingsContext } from "../settings/SettingsProvider";
-import { HeaderTitle } from "./HeaderTItle";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
 import { LefToLineIcon, NewChatIcon, RightToLineIcon } from "../icons/icons";
 import { Tooltip } from "../tooltip/Tooltip";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 import { Logo } from "../Logo";
+import { HeaderTitle } from "./HeaderTitle";
 
 export default function LogoType({
   toggleSidebar,
