@@ -114,7 +114,7 @@ export function ChatPage({
 
   const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
 
-  // Only updates on message load (ie. rename / switching chat session)
+  // Only updates on session load (ie. rename / switching chat session)
   // Useful for determining which session has been loaded (i.e. still on `new, empty session` or `previous session`)
   const loadedIdSessionRef = useRef<number | null>(existingChatSessionId);
 
