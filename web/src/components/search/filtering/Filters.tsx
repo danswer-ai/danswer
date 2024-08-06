@@ -81,7 +81,7 @@ export function SourceSelector({
         showDocSidebar ? "4xl:block" : "!block"
       } duration-1000 flex  ease-out transition-all transform origin-top-right`}
     >
-      <div className=" mb-4 pb-2 border-b border-border text-emphasis">
+      <div className=" mb-4 pb-2 flex border-b border-border text-emphasis">
         <h2 className="font-bold my-auto">Filters</h2>
         <FiFilter className="my-auto ml-2" size="16" />
       </div>
@@ -469,46 +469,6 @@ export function HorizontalSourceSelector({
           />
         )}
       </div>
-
-      {/* <div className="flex flex-wrap gap-2">
-        {timeRange && timeRange.selectValue && (
-          <SelectedBubble onClick={() => setTimeRange(null)}>
-            <div className="text-sm flex">{timeRange.selectValue}</div>
-          </SelectedBubble>
-        )}
-        {selectedSources.map((source) => (
-          <SelectedBubble
-            key={source.internalName}
-            onClick={() => handleSourceSelect(source)}
-          >
-            <>
-              <SourceIcon sourceType={source.internalName} iconSize={16} />
-              <span className="ml-2 text-sm">{source.displayName}</span>
-            </>
-          </SelectedBubble>
-        ))}
-        {selectedDocumentSets.map((documentSetName) => (
-          <SelectedBubble
-            key={documentSetName}
-            onClick={() => handleDocumentSetSelect(documentSetName)}
-          >
-            <>
-              <FiBookmark />
-              <span className="ml-2 text-sm">{documentSetName}</span>
-            </>
-          </SelectedBubble>
-        ))}
-        {selectedTags.map((tag) => (
-          <SelectedBubble
-            key={`${tag.tag_key}=${tag.tag_value}`}
-            onClick={() => handleTagSelect(tag)}
-          >
-            <span className="text-sm">
-              {tag.tag_key}<b>=</b>{tag.tag_value}
-            </span>
-          </SelectedBubble>
-        ))}
-      </div> */}
     </div>
   );
 }

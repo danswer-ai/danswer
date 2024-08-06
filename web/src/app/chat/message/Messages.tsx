@@ -59,6 +59,7 @@ import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useMouseTracking } from "./hooks";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -153,6 +154,7 @@ export const AIMessage = ({
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
 }) => {
+  const toolCallGenerating = toolCall && !toolCall.tool_result;
   const processContent = (content: string | JSX.Element) => {
     if (typeof content !== "string") {
       return content;
@@ -168,7 +170,7 @@ export const AIMessage = ({
       }
     }
 
-    return content + (!isComplete ? " [*]() " : "");
+    return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
   };
 
   const finalContent = processContent(content as string);
@@ -344,15 +346,7 @@ export const AIMessage = ({
 
                     {toolCall &&
                       toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
-                      !toolCall.tool_result && (
-                        <ToolRunDisplay
-                          toolName={`Generating images`}
-                          toolLogo={
-                            <FiImage size={15} className="my-auto mr-1" />
-                          }
-                          isRunning={!toolCall.tool_result}
-                        />
-                      )}
+                      !toolCall.tool_result && <GeneratingImageDisplay />}
 
                     {toolCall &&
                       toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
@@ -369,7 +363,7 @@ export const AIMessage = ({
                         />
                       )}
 
-                    {content ? (
+                    {content || files ? (
                       <>
                         <FileDisplay files={files || []} />
 
