@@ -79,6 +79,7 @@ export default function FunctionalHeader({
         <div
           style={{ transition: "width 0.30s ease-out" }}
           className={`
+            mobile:hidden
                   flex-none 
                   mx-auto
                   overflow-y-hidden 
@@ -89,7 +90,7 @@ export default function FunctionalHeader({
                   ${sidebarToggled ? "w-[250px]" : "w-[0px]"}
                   `}
         />
-        <div className="w-full px-4">
+        <div className="w-full mobile:-mx-20 desktop:px-4">
           <ChatBanner />
         </div>
 
@@ -124,7 +125,7 @@ export default function FunctionalHeader({
                 : "")
             }
           >
-            <div className="cursor-pointer ml-2 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
+            <div className="cursor-pointer mr-4 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
               <NewChatIcon size={20} />
             </div>
           </Link>

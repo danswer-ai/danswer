@@ -11,11 +11,13 @@ import { HeaderTitle } from "./HeaderTitle";
 
 export default function LogoType({
   toggleSidebar,
+  hideOnMobile,
   handleNewChat,
   page,
   toggled,
   showArrow,
 }: {
+  hideOnMobile?: boolean;
   toggleSidebar?: () => void;
   handleNewChat?: () => void;
   page: pageType;
@@ -26,11 +28,13 @@ export default function LogoType({
   const enterpriseSettings = combinedSettings?.enterpriseSettings;
 
   return (
-    <div className="z-[100] mb-auto shrink-0 flex items-center text-xl font-bold">
+    <div
+      className={`${hideOnMobile && "mobile:hidden"} z-[100] mb-auto shrink-0 flex items-center text-xl font-bold`}
+    >
       {toggleSidebar && page == "chat" ? (
         <button
           onClick={() => toggleSidebar()}
-          className="pt-[2px] desktop:invisible mb-auto"
+          className="pt-[2px] ml-4 desktop:invisible mb-auto"
         >
           <FiSidebar size={20} />
         </button>
@@ -39,7 +43,9 @@ export default function LogoType({
           <Logo height={24} width={24} />
         </div>
       )}
-      <div className="invisible break-words inline-block w-fit ml-2 text-text-700 text-xl">
+      <div
+        className={` ${showArrow ? "desktop:invisible" : "invisible"} break-words inline-block w-fit ml-2 text-text-700 text-xl`}
+      >
         <div className="max-w-[175px]">
           {enterpriseSettings && enterpriseSettings.application_name ? (
             <div>

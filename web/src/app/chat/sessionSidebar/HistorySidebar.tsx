@@ -11,13 +11,9 @@ import {
 } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BasicClickable } from "@/components/BasicClickable";
 import { ChatSession } from "../interfaces";
 
-import {
-  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
-  NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
-} from "@/lib/constants";
+import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
 
 import { Folder } from "../folders/interfaces";
 import { createFolder } from "../folders/FolderManagement";
