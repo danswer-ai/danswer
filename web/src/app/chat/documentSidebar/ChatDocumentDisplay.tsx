@@ -39,7 +39,7 @@ export function ChatDocumentDisplay({
   return (
     <div
       key={document.semantic_identifier}
-      className={`p-2 w-[350px] justify-start rounded-md ${
+      className={`p-2 w-[325px] justify-start rounded-md ${
         isSelected ? "bg-background-200" : "bg-background-125"
       } text-sm mx-3`}
     >
