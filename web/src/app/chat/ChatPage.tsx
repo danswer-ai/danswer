@@ -406,6 +406,8 @@ export function ChatPage({
     }
   }, [defaultSelectedAssistantId]);
 
+  console.log(messageHistory);
+
   const [
     selectedDocuments,
     toggleDocumentSelection,
@@ -798,6 +800,7 @@ export function ChatPage({
 
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();
+          console.log(packet);
           if (packet) {
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
@@ -831,6 +834,9 @@ export function ChatPage({
               error = (packet as StreamingError).error;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
+            }
+            if (aiMessageImages) {
+              console.log("AI IMAGE IMAGES");
             }
 
             const newUserMessageId =

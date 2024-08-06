@@ -154,6 +154,7 @@ export const AIMessage = ({
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
 }) => {
+  const toolCallGenerating = toolCall && !toolCall.tool_result;
   const processContent = (content: string | JSX.Element) => {
     if (typeof content !== "string") {
       return content;
@@ -169,7 +170,7 @@ export const AIMessage = ({
       }
     }
 
-    return content + (!isComplete ? " [*]() " : "");
+    return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
   };
 
   const finalContent = processContent(content as string);
@@ -371,7 +372,7 @@ export const AIMessage = ({
                         />
                       )}
 
-                    {content ? (
+                    {content || files ? (
                       <>
                         <FileDisplay files={files || []} />
 
