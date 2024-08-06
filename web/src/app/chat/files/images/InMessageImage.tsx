@@ -23,10 +23,7 @@ export function InMessageImage({ fileId }: { fileId: string }) {
           width={1200}
           height={1200}
           alt="Chat Message Image"
-          onLoad={(event) => {
-            event.currentTarget.setAttribute("data-loaded", "true");
-            setImageLoaded(true);
-          }}
+          onLoad={() => setImageLoaded(true)}
           className={`object-cover object-center overflow-hidden rounded-lg w-full h-full max-w-96 max-h-96 transition-opacity duration-300
              ${imageLoaded ? "opacity-100" : "opacity-0"}`}
           onClick={() => setFullImageShowing(true)}
