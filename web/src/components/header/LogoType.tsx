@@ -26,7 +26,7 @@ export default function LogoType({
   const enterpriseSettings = combinedSettings?.enterpriseSettings;
 
   return (
-    <div className="z-[100] mb-auto flex items-center text-xl font-bold">
+    <div className="z-[100] mb-auto shrink-0 flex items-center text-xl font-bold">
       {toggleSidebar && page == "chat" ? (
         <button
           onClick={() => toggleSidebar()}
@@ -40,7 +40,7 @@ export default function LogoType({
         </div>
       )}
       <div className="invisible break-words inline-block w-fit ml-2 text-text-700 text-xl">
-        <div className="max-w-[200px]">
+        <div className="max-w-[175px]">
           {enterpriseSettings && enterpriseSettings.application_name ? (
             <div>
               <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
@@ -56,7 +56,7 @@ export default function LogoType({
 
       {page == "chat" && !showArrow && (
         <Tooltip delayDuration={1000} content="New Chat">
-          <button className="mt-auto mobile:hidden" onClick={handleNewChat}>
+          <button className="my-auto mobile:hidden" onClick={handleNewChat}>
             <div className="cursor-pointer ml-2 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
               <NewChatIcon size={20} />
             </div>
