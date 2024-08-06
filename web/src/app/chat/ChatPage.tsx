@@ -1531,18 +1531,18 @@ export function ChatPage({
                               !isFetchingChatMessages && (
                                 <div
                                   className={`
-                            mx-auto 
-                            px-4 
-                            w-searchbar-xs 
-                            2xl:w-searchbar-sm 
-                            3xl:w-searchbar 
-                            grid 
-                            gap-4 
-                            grid-cols-1 
-                            grid-rows-1 
-                            mt-4 
-                            md:grid-cols-2 
-                            mb-6`}
+                                      mx-auto 
+                                      px-4 
+                                      w-searchbar-xs 
+                                      2xl:w-searchbar-sm 
+                                      3xl:w-searchbar 
+                                      grid 
+                                      gap-4 
+                                      grid-cols-1 
+                                      grid-rows-1 
+                                      mt-4 
+                                      md:grid-cols-2 
+                                      mb-6`}
                                 >
                                   {currentPersona.starter_messages.map(
                                     (starterMessage, i) => (
