@@ -13,6 +13,7 @@ from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.utils.logger import setup_logger
+from danswer.utils.timing import log_function_time
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
 from shared_configs.enums import EmbedTextType
@@ -75,6 +76,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
             retrim_content=True,
         )
 
+    @log_function_time()
     def embed_chunks(
         self,
         chunks: list[DocAwareChunk],

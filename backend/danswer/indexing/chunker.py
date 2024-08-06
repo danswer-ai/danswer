@@ -16,6 +16,7 @@ from danswer.indexing.models import DocAwareChunk
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import shared_precompare_cleanup
+from danswer.utils.timing import log_function_time
 
 
 # Not supporting overlaps, we need a clean combination of chunks and it is unclear if overlaps
@@ -215,6 +216,7 @@ class Chunker:
         # If the chunk does not have any useable content, it will not be indexed
         return chunks
 
+    @log_function_time()
     def chunk(self, document: Document) -> list[DocAwareChunk]:
         # Specifically for reproducing an issue with gmail
         if document.source == DocumentSource.GMAIL:
