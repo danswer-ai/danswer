@@ -277,7 +277,7 @@ def mark_cc_pair__document_set_relationships_to_be_deleted__no_commit(
     `cc_pair_id` as not current and returns the list of all document set IDs
     affected.
 
-    NOTE: rases a `ValueError` if any of the document sets are currently syncing
+    NOTE: raises a `ValueError` if any of the document sets are currently syncing
     to avoid getting into a bad state."""
     document_set__cc_pair_relationships = db_session.scalars(
         select(DocumentSet__ConnectorCredentialPair).where(

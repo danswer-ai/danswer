@@ -103,7 +103,7 @@ def cleanup_connector_credential_pair_task(
 @build_celery_task_wrapper(name_cc_prune_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def prune_documents_task(connector_id: int, credential_id: int) -> None:
-    """connector pruning task. For a cc pair, this task pulls all docuement IDs from the source
+    """connector pruning task. For a cc pair, this task pulls all document IDs from the source
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
     from the most recently pulled document ID list"""
     with Session(get_sqlalchemy_engine()) as db_session:
