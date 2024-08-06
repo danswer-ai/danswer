@@ -115,6 +115,7 @@ export function ChatPage({
   const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
 
   // Only updates on message load (ie. rename / switching chat session)
+  // Useful for determining which session has been loaded (i.e. still on `new, empty session` or `previous session`)
   const loadedIdSessionRef = useRef<number | null>(existingChatSessionId);
 
   // Assistants
@@ -267,11 +268,13 @@ export function ChatPage({
       const newMessageHistory = buildLatestMessageChain(newMessageMap);
       // if the last message is an error, don't overwrite it
 
+      // Update message history except for edge where where
+      // last message is an error and we're on a new chat.
+      // This corresponds to a "renaming" of chat, which occurs after first message
+      // stream
       if (
-        !(
-          messageHistory[messageHistory.length - 1]?.type === "error" &&
-          loadedSessionId == null
-        )
+        messageHistory[messageHistory.length - 1]?.type !== "error" ||
+        loadedSessionId != null
       ) {
         setCompleteMessageDetail({
           sessionId: chatSession.chat_session_id,
