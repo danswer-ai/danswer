@@ -6,7 +6,7 @@ import {
 } from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { errorHandlingFetcher } from "./fetcher";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DateRangePickerValue } from "@tremor/react";
 import { SourceMetadata } from "./search/interfaces";
 import { destructureValue } from "./llm/utils";
@@ -143,7 +143,8 @@ export interface LlmOverrideManager {
 }
 
 export function useLlmOverride(
-  currentChatSession?: ChatSession
+  currentChatSession?: ChatSession,
+  defaultTemperature?: number
 ): LlmOverrideManager {
   const [llmOverride, setLlmOverride] = useState<LlmOverride>(
     currentChatSession && currentChatSession.current_alternate_model
@@ -167,7 +168,13 @@ export function useLlmOverride(
     );
   };
 
-  const [temperature, setTemperature] = useState<number | null>(null);
+  const [temperature, setTemperature] = useState<number | null>(
+    defaultTemperature != undefined ? defaultTemperature : 0
+  );
+
+  useEffect(() => {
+    setTemperature(defaultTemperature !== undefined ? defaultTemperature : 0);
+  }, [defaultTemperature]);
 
   return {
     updateModelOverrideForChatSession,

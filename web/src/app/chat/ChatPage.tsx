@@ -112,10 +112,8 @@ export function ChatPage({
   const selectedChatSession = chatSessions.find(
     (chatSession) => chatSession.id === existingChatSessionId
   );
-  const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
 
-  // LLM
-  const llmOverrideManager = useLlmOverride(selectedChatSession);
+  const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
 
   // Assistants
   const filteredAssistants = orderAssistantsForUser(availableAssistants, user);
@@ -137,6 +135,25 @@ export function ChatPage({
           )
         : undefined
   );
+
+  // LLM
+
+  // Gather default temperature settings
+  const search_param_temperature = searchParams.get(
+    SEARCH_PARAM_NAMES.TEMPERATURE
+  );
+  const defaultTemperature = search_param_temperature
+    ? parseFloat(search_param_temperature)
+    : selectedAssistant?.tools.some(
+          (tool) => tool.in_code_tool_id === "SearchTool"
+        )
+      ? 0.7
+      : 0;
+  const llmOverrideManager = useLlmOverride(
+    selectedChatSession,
+    defaultTemperature
+  );
+
   const setSelectedAssistantFromId = (assistantId: number) => {
     // NOTE: also intentionally look through available assistants here, so that
     // even if the user has hidden an assistant they can still go back to it
@@ -765,10 +782,7 @@ export function ChatPage({
           llmOverrideManager.llmOverride.modelName ||
           searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
           undefined,
-        temperature:
-          llmOverrideManager.temperature ||
-          parseFloat(searchParams.get(SEARCH_PARAM_NAMES.TEMPERATURE) || "") ||
-          undefined,
+        temperature: llmOverrideManager.temperature || undefined,
         systemPromptOverride:
           searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
         useExistingUserMessage: isSeededChat,
