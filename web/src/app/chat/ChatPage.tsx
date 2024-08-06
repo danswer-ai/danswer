@@ -114,6 +114,9 @@ export function ChatPage({
 
   const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
 
+  // Only updates on message load (ie. rename / switching chat session)
+  const loadedIdSessionRef = useRef<number | null>(existingChatSessionId);
+
   // Assistants
   const filteredAssistants = orderAssistantsForUser(availableAssistants, user);
 
@@ -192,8 +195,12 @@ export function ChatPage({
   // this is triggered every time the user switches which chat
   // session they are using
   useEffect(() => {
+    console.log("CALLLING");
     const priorChatSessionId = chatSessionIdRef.current;
+    const loadedSessionId = loadedIdSessionRef.current;
     chatSessionIdRef.current = existingChatSessionId;
+    loadedIdSessionRef.current = existingChatSessionId;
+
     textAreaRef.current?.focus();
 
     // only clear things if we're going from one chat session to another
@@ -260,16 +267,25 @@ export function ChatPage({
       const newMessageMap = processRawChatHistory(chatSession.messages);
       const newMessageHistory = buildLatestMessageChain(newMessageMap);
       // if the last message is an error, don't overwrite it
-      setCompleteMessageDetail({
-        sessionId: chatSession.chat_session_id,
-        messageMap: newMessageMap,
-      });
+      console.log(priorChatSessionId);
+      console.log(existingChatSessionId);
+      if (
+        !(
+          messageHistory[messageHistory.length - 1]?.type === "error" &&
+          loadedSessionId == null
+        )
+      ) {
+        setCompleteMessageDetail({
+          sessionId: chatSession.chat_session_id,
+          messageMap: newMessageMap,
+        });
 
-      const latestMessageId =
-        newMessageHistory[newMessageHistory.length - 1]?.messageId;
-      setSelectedMessageForDocDisplay(
-        latestMessageId !== undefined ? latestMessageId : null
-      );
+        const latestMessageId =
+          newMessageHistory[newMessageHistory.length - 1]?.messageId;
+        setSelectedMessageForDocDisplay(
+          latestMessageId !== undefined ? latestMessageId : null
+        );
+      }
 
       setChatSessionSharedStatus(chatSession.shared_status);
 
@@ -656,6 +672,8 @@ export function ChatPage({
     } else {
       currChatSessionId = chatSessionIdRef.current as number;
     }
+    console.log("UPDATING TO ");
+    console.log(currChatSessionId);
     chatSessionIdRef.current = currChatSessionId;
 
     const messageToResend = messageHistory.find(

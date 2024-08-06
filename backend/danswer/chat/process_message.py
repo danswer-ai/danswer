@@ -697,6 +697,8 @@ def stream_chat_message_objects(
 
         # Don't leak the API key
         error_msg = str(e)
+        logger.exception("error i")
+        logger.exception(e)
         if llm.config.api_key and llm.config.api_key.lower() in error_msg.lower():
             error_msg = (
                 f"LLM failed to respond. Invalid API "
