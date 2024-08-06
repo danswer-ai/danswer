@@ -11,15 +11,18 @@ import { AIMessage, HumanMessage } from "../../message/Messages";
 import { Button, Callout, Divider } from "@tremor/react";
 import { useRouter } from "next/navigation";
 import { Persona } from "@/app/admin/assistants/interfaces";
+import { useContext } from "react";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 function BackToDanswerButton() {
   const router = useRouter();
+  const enterpriseSettings = useContext(SettingsContext)?.enterpriseSettings;
 
   return (
     <div className="absolute bottom-4 w-full flex border-t border-border pt-4">
       <div className="mx-auto">
         <Button onClick={() => router.push("/chat")}>
-          Back to Danswer Chat
+          Back to {enterpriseSettings?.application_name || "Danswer Chat"}
         </Button>
       </div>
     </div>
