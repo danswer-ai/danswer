@@ -12,7 +12,9 @@ from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import VespaChunkRequest
-from danswer.document_index.vespa.utils import replace_invalid_doc_id_characters
+from danswer.document_index.vespa.shared_utils.utils import (
+    replace_invalid_doc_id_characters,
+)
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.search.models import ChunkMetric
 from danswer.search.models import IndexFilters
@@ -217,6 +219,7 @@ def doc_index_retrieval(
 
         for chunk in retrieved_inference_chunks:
             key = (chunk.document_id, chunk.chunk_id)
+            # For duplicates, keep the highest score
             if key not in unique_chunks or (chunk.score or 0) > (
                 unique_chunks[key].score or 0
             ):

@@ -10,8 +10,10 @@ from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
 )
 from danswer.document_index.document_index_utils import get_uuid_from_chunk
-from danswer.document_index.vespa.utils import remove_invalid_unicode_chars
-from danswer.document_index.vespa.utils import replace_invalid_doc_id_characters
+from danswer.document_index.vespa.shared_utils.utils import remove_invalid_unicode_chars
+from danswer.document_index.vespa.shared_utils.utils import (
+    replace_invalid_doc_id_characters,
+)
 from danswer.document_index.vespa_constants import ACCESS_CONTROL_LIST
 from danswer.document_index.vespa_constants import BLURB
 from danswer.document_index.vespa_constants import BOOST

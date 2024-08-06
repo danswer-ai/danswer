@@ -3,7 +3,7 @@ import concurrent.futures
 import httpx
 from retry import retry
 
-from danswer.document_index.vespa.chunk_retrieval_utils import (
+from danswer.document_index.vespa.chunk_retrieval import (
     get_all_vespa_ids_for_document_id,
 )
 from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT

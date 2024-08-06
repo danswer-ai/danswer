@@ -21,24 +21,26 @@ from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentInsertionRecord
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.document_index.interfaces import VespaChunkRequest
-from danswer.document_index.vespa.chunk_retrieval_utils import (
+from danswer.document_index.vespa.chunk_retrieval import (
     get_all_vespa_ids_for_document_id,
 )
-from danswer.document_index.vespa.chunk_retrieval_utils import manage_batch_retrieval
-from danswer.document_index.vespa.chunk_retrieval_utils import (
+from danswer.document_index.vespa.chunk_retrieval import manage_batch_retrieval
+from danswer.document_index.vespa.chunk_retrieval import (
     parallel_visit_api_retrieval,
 )
-from danswer.document_index.vespa.chunk_retrieval_utils import query_vespa
-from danswer.document_index.vespa.deletion_utils import delete_vespa_docs
+from danswer.document_index.vespa.chunk_retrieval import query_vespa
+from danswer.document_index.vespa.deletion import delete_vespa_docs
 from danswer.document_index.vespa.indexing_utils import batch_index_vespa_chunks
 from danswer.document_index.vespa.indexing_utils import clean_chunk_id_copy
 from danswer.document_index.vespa.indexing_utils import (
     get_existing_documents_from_chunks,
 )
+from danswer.document_index.vespa.shared_utils.utils import (
+    replace_invalid_doc_id_characters,
+)
 from danswer.document_index.vespa.shared_utils.vespa_request_builders import (
     build_vespa_filters,
 )
-from danswer.document_index.vespa.utils import replace_invalid_doc_id_characters
 from danswer.document_index.vespa_constants import ACCESS_CONTROL_LIST
 from danswer.document_index.vespa_constants import BATCH_SIZE
 from danswer.document_index.vespa_constants import BOOST
@@ -287,7 +289,7 @@ class VespaIndex(DocumentIndex):
                     document_id=document_id,
                     index_name=index_name,
                     filters=None,
-                    get_mega_chunks=False,
+                    get_mega_chunks=True,
                 ): (document_id, index_name)
                 for index_name in index_names
                 for update_request in update_requests
