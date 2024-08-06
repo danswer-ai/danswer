@@ -1119,7 +1119,7 @@ class Persona(Base):
     description: Mapped[str] = mapped_column(String)
     # Currently stored but unused, all flows use hybrid
     search_type: Mapped[SearchType] = mapped_column(
-        Enum(SearchType, native_enum=False), default=SearchType.HYBRID
+        Enum(SearchType, native_enum=False), default=SearchType.SEMANTIC
     )
     # Number of chunks to pass to the LLM for generation.
     num_chunks: Mapped[float | None] = mapped_column(Float, nullable=True)

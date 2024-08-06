@@ -26,7 +26,6 @@ from danswer.one_shot_answer.models import DirectQARequest
 from danswer.search.models import IndexFilters
 from danswer.search.models import SearchDoc
 from danswer.search.preprocessing.access_filters import build_access_filters_for_user
-from danswer.search.preprocessing.danswer_helper import recommend_search_flow
 from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
@@ -34,7 +33,6 @@ from danswer.server.query_and_chat.models import AdminSearchRequest
 from danswer.server.query_and_chat.models import AdminSearchResponse
 from danswer.server.query_and_chat.models import ChatSessionDetails
 from danswer.server.query_and_chat.models import ChatSessionsResponse
-from danswer.server.query_and_chat.models import HelperResponse
 from danswer.server.query_and_chat.models import QueryValidationResponse
 from danswer.server.query_and_chat.models import SearchSessionDetailResponse
 from danswer.server.query_and_chat.models import SimpleQueryRequest
@@ -115,19 +113,6 @@ def get_tags(
         for db_tag in db_tags
     ]
     return TagResponse(tags=server_tags)
-
-
-@basic_router.post("/search-intent")
-def get_search_type(
-    simple_query: SimpleQueryRequest,
-    _: User = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> HelperResponse:
-    logger.info(f"Calculating intent for {simple_query.query}")
-    embedding_model = get_current_db_embedding_model(db_session)
-    return recommend_search_flow(
-        simple_query.query, model_name=embedding_model.model_name
-    )
 
 
 @basic_router.post("/query-validation")

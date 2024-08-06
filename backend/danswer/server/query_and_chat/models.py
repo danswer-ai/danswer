@@ -44,11 +44,6 @@ class ChatSessionCreationRequest(BaseModel):
     description: str | None = None
 
 
-class HelperResponse(BaseModel):
-    values: dict[str, str]
-    details: list[str] | None = None
-
-
 class CreateChatSessionID(BaseModel):
     chat_session_id: int
 

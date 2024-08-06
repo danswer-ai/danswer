@@ -6,7 +6,6 @@ from pydantic import validator
 
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
-from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import NUM_RERANKED_RESULTS
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
@@ -64,7 +63,8 @@ class SearchRequest(ChunkContext):
     """Input to the SearchPipeline."""
 
     query: str
-    search_type: SearchType = SearchType.HYBRID
+
+    search_type: SearchType = SearchType.SEMANTIC
 
     human_selected_filters: BaseFilters | None = None
     enable_auto_detect_filters: bool | None = None
@@ -75,7 +75,7 @@ class SearchRequest(ChunkContext):
     limit: int | None = None
 
     recency_bias_multiplier: float = 1.0
-    hybrid_alpha: float = HYBRID_ALPHA
+    hybrid_alpha: float | None = None
     # This is to forcibly skip (or run) the step, if None it uses the system defaults
     skip_rerank: bool | None = None
     evaluation_type: LLMEvaluationType = LLMEvaluationType.UNSPECIFIED
@@ -86,12 +86,17 @@ class SearchRequest(ChunkContext):
 
 class SearchQuery(ChunkContext):
     query: str
-    filters: IndexFilters
-    recency_bias_multiplier: float
+    extracted_keywords: list[str] | None
+    search_type: SearchType
     evaluation_type: LLMEvaluationType
+    filters: IndexFilters
+
+    hybrid_alpha: float
+    recency_bias_multiplier: float
+
     num_hits: int = NUM_RETURNED_HITS
     offset: int = 0
-    search_type: SearchType = SearchType.HYBRID
+
     skip_rerank: bool = not ENABLE_RERANKING_REAL_TIME_FLOW
     # Only used if not skip_rerank
     num_rerank: int | None = NUM_RERANKED_RESULTS

@@ -78,7 +78,6 @@ class SearchPipeline:
         # Preprocessing steps generate this
         self._search_query: SearchQuery | None = None
         self._predicted_search_type: SearchType | None = None
-        self._predicted_flow: QueryFlow | None = None
 
         # Initial document index retrieval chunks
         self._retrieved_chunks: list[InferenceChunk] | None = None
@@ -96,14 +95,13 @@ class SearchPipeline:
             Iterator[list[InferenceSection] | list[SectionRelevancePiece]] | None
         ) = None
 
+        # No longer computed but keeping around in case it's reintroduced later
+        self._predicted_flow: QueryFlow | None = QueryFlow.QUESTION_ANSWER
+
     """Pre-processing"""
 
     def _run_preprocessing(self) -> None:
-        (
-            final_search_query,
-            predicted_search_type,
-            predicted_flow,
-        ) = retrieval_preprocessing(
+        final_search_query = retrieval_preprocessing(
             search_request=self.search_request,
             user=self.user,
             llm=self.llm,
@@ -111,8 +109,7 @@ class SearchPipeline:
             bypass_acl=self.bypass_acl,
         )
         self._search_query = final_search_query
-        self._predicted_search_type = predicted_search_type
-        self._predicted_flow = predicted_flow
+        self._predicted_search_type = final_search_query.search_type
 
     @property
     def search_query(self) -> SearchQuery:
@@ -153,7 +150,6 @@ class SearchPipeline:
             query=self.search_query,
             document_index=self.document_index,
             db_session=self.db_session,
-            hybrid_alpha=self.search_request.hybrid_alpha,
             multilingual_expansion_str=MULTILINGUAL_QUERY_EXPANSION,
             retrieval_metrics_callback=self.retrieval_metrics_callback,
         )

@@ -2,12 +2,15 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import BASE_RECENCY_DECAY
 from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
+from danswer.configs.chat_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.chat_configs import FAVOR_RECENT_DECAY_MULTIPLIER
+from danswer.configs.chat_configs import HYBRID_ALPHA
+from danswer.configs.chat_configs import HYBRID_ALPHA_KEYWORD
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.db.models import User
 from danswer.llm.interfaces import LLM
+from danswer.natural_language_processing.search_nlp_models import QueryAnalysisModel
 from danswer.search.enums import LLMEvaluationType
-from danswer.search.enums import QueryFlow
 from danswer.search.enums import RecencyBiasSetting
 from danswer.search.models import BaseFilters
 from danswer.search.models import IndexFilters
@@ -15,7 +18,7 @@ from danswer.search.models import SearchQuery
 from danswer.search.models import SearchRequest
 from danswer.search.models import SearchType
 from danswer.search.preprocessing.access_filters import build_access_filters_for_user
-from danswer.search.preprocessing.danswer_helper import query_intent
+from danswer.search.retrieval.search_runner import remove_stop_words_and_punctuation
 from danswer.secondary_llm_flows.source_filter import extract_source_filter
 from danswer.secondary_llm_flows.time_filter import extract_time_filter
 from danswer.utils.logger import setup_logger
@@ -28,6 +31,11 @@ from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
 logger = setup_logger()
 
 
+def query_analysis(query: str) -> tuple[bool, list[str]]:
+    analysis_model = QueryAnalysisModel()
+    return analysis_model.predict(query)
+
+
 @log_function_time(print_only=True)
 def retrieval_preprocessing(
     search_request: SearchRequest,
@@ -35,10 +43,10 @@ def retrieval_preprocessing(
     llm: LLM,
     db_session: Session,
     bypass_acl: bool = False,
-    include_query_intent: bool = True,
+    skip_query_analysis: bool = False,
     base_recency_decay: float = BASE_RECENCY_DECAY,
     favor_recent_decay_multiplier: float = FAVOR_RECENT_DECAY_MULTIPLIER,
-) -> tuple[SearchQuery, SearchType | None, QueryFlow | None]:
+) -> SearchQuery:
     """Logic is as follows:
     Any global disables apply first
     Then any filters or settings as part of the query are used
@@ -95,10 +103,8 @@ def retrieval_preprocessing(
         else None
     )
 
-    # NOTE: this isn't really part of building the retrieval request, but is done here
-    # so it can be simply done in parallel with the filters without multi-level multithreading
-    run_query_intent = (
-        FunctionCall(query_intent, (query,), {}) if include_query_intent else None
+    run_query_analysis = (
+        None if skip_query_analysis else FunctionCall(query_analysis, (query,), {})
     )
 
     functions_to_run = [
@@ -106,7 +112,7 @@ def retrieval_preprocessing(
         for filter_fn in [
             run_time_filters,
             run_source_filters,
-            run_query_intent,
+            run_query_analysis,
         ]
         if filter_fn
     ]
@@ -120,10 +126,17 @@ def retrieval_preprocessing(
     predicted_source_filters = (
         parallel_results[run_source_filters.result_id] if run_source_filters else None
     )
-    predicted_search_type, predicted_flow = (
-        parallel_results[run_query_intent.result_id]
-        if run_query_intent
+    is_keyword, extracted_keywords = (
+        parallel_results[run_query_analysis.result_id]
+        if run_query_analysis
         else (None, None)
+    )
+
+    # Second pass at removing stopwords, the model should have already taken care of it but this is fast
+    processed_keywords = (
+        remove_stop_words_and_punctuation(extracted_keywords)
+        if EDIT_KEYWORD_QUERY
+        else None
     )
 
     user_acl_filters = (
@@ -172,20 +185,18 @@ def retrieval_preprocessing(
         else:
             recency_bias_multiplier = base_recency_decay
 
-    return (
-        SearchQuery(
-            query=query,
-            search_type=persona.search_type if persona else SearchType.HYBRID,
-            filters=final_filters,
-            recency_bias_multiplier=recency_bias_multiplier,
-            num_hits=limit if limit is not None else NUM_RETURNED_HITS,
-            offset=offset or 0,
-            skip_rerank=skip_rerank,
-            evaluation_type=llm_evaluation_type,
-            chunks_above=search_request.chunks_above,
-            chunks_below=search_request.chunks_below,
-            full_doc=search_request.full_doc,
-        ),
-        predicted_search_type,
-        predicted_flow,
+    return SearchQuery(
+        query=query,
+        extracted_keywords=processed_keywords,
+        search_type=SearchType.KEYWORD if is_keyword else SearchType.SEMANTIC,
+        evaluation_type=llm_evaluation_type,
+        filters=final_filters,
+        hybrid_alpha=HYBRID_ALPHA_KEYWORD if is_keyword else HYBRID_ALPHA,
+        recency_bias_multiplier=recency_bias_multiplier,
+        num_hits=limit if limit is not None else NUM_RETURNED_HITS,
+        offset=offset or 0,
+        skip_rerank=skip_rerank,
+        chunks_above=search_request.chunks_above,
+        chunks_below=search_request.chunks_below,
+        full_doc=search_request.full_doc,
     )
