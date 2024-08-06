@@ -114,6 +114,10 @@ export function ChatPage({
 
   const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
 
+  // Only updates on session load (ie. rename / switching chat session)
+  // Useful for determining which session has been loaded (i.e. still on `new, empty session` or `previous session`)
+  const loadedIdSessionRef = useRef<number | null>(existingChatSessionId);
+
   // Assistants
   const filteredAssistants = orderAssistantsForUser(availableAssistants, user);
 
@@ -193,7 +197,10 @@ export function ChatPage({
   // session they are using
   useEffect(() => {
     const priorChatSessionId = chatSessionIdRef.current;
+    const loadedSessionId = loadedIdSessionRef.current;
     chatSessionIdRef.current = existingChatSessionId;
+    loadedIdSessionRef.current = existingChatSessionId;
+
     textAreaRef.current?.focus();
 
     // only clear things if we're going from one chat session to another
@@ -259,8 +266,15 @@ export function ChatPage({
 
       const newMessageMap = processRawChatHistory(chatSession.messages);
       const newMessageHistory = buildLatestMessageChain(newMessageMap);
-      // if the last message is an error, don't overwrite it
-      if (messageHistory[messageHistory.length - 1]?.type !== "error") {
+
+      // Update message history except for edge where where
+      // last message is an error and we're on a new chat.
+      // This corresponds to a "renaming" of chat, which occurs after first message
+      // stream
+      if (
+        messageHistory[messageHistory.length - 1]?.type !== "error" ||
+        loadedSessionId != null
+      ) {
         setCompleteMessageDetail({
           sessionId: chatSession.chat_session_id,
           messageMap: newMessageMap,
