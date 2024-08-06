@@ -266,7 +266,6 @@ export function ChatPage({
 
       const newMessageMap = processRawChatHistory(chatSession.messages);
       const newMessageHistory = buildLatestMessageChain(newMessageMap);
-      // if the last message is an error, don't overwrite it
 
       // Update message history except for edge where where
       // last message is an error and we're on a new chat.
