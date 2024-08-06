@@ -143,10 +143,12 @@ export function ChatPage({
   const defaultTemperature = search_param_temperature
     ? parseFloat(search_param_temperature)
     : selectedAssistant?.tools.some(
-          (tool) => tool.in_code_tool_id === "SearchTool"
+          (tool) =>
+            tool.in_code_tool_id === "SearchTool" ||
+            tool.in_code_tool_id === "InternetSearchTool"
         )
-      ? 0.7
-      : 0;
+      ? 0
+      : 0.7;
   const llmOverrideManager = useLlmOverride(
     selectedChatSession,
     defaultTemperature
