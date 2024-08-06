@@ -260,18 +260,16 @@ export function ChatPage({
       const newMessageMap = processRawChatHistory(chatSession.messages);
       const newMessageHistory = buildLatestMessageChain(newMessageMap);
       // if the last message is an error, don't overwrite it
-      if (messageHistory[messageHistory.length - 1]?.type !== "error") {
-        setCompleteMessageDetail({
-          sessionId: chatSession.chat_session_id,
-          messageMap: newMessageMap,
-        });
+      setCompleteMessageDetail({
+        sessionId: chatSession.chat_session_id,
+        messageMap: newMessageMap,
+      });
 
-        const latestMessageId =
-          newMessageHistory[newMessageHistory.length - 1]?.messageId;
-        setSelectedMessageForDocDisplay(
-          latestMessageId !== undefined ? latestMessageId : null
-        );
-      }
+      const latestMessageId =
+        newMessageHistory[newMessageHistory.length - 1]?.messageId;
+      setSelectedMessageForDocDisplay(
+        latestMessageId !== undefined ? latestMessageId : null
+      );
 
       setChatSessionSharedStatus(chatSession.shared_status);
 
