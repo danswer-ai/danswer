@@ -10,6 +10,7 @@ from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import DanswerContext
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import LlmDoc
+from danswer.chat.models import SectionRelevancePiece
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import JSON_ro
@@ -193,9 +194,20 @@ class SearchTool(Tool):
                 recency_bias_multiplier=1.0,
             ),
         )
+
+        # Build selected sections for specified documents
+        selected_sections = [
+            SectionRelevancePiece(
+                relevant=True,
+                document_id=section.center_chunk.document_id,
+                chunk_id=section.center_chunk.chunk_id,
+            )
+            for section in self.selected_sections
+        ]
+
         yield ToolResponse(
             id=SECTION_RELEVANCE_LIST_ID,
-            response=[i for i in range(len(self.selected_sections))],
+            response=selected_sections,
         )
 
         final_context_sections = prune_and_merge_sections(

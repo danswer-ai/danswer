@@ -62,6 +62,7 @@ def relevant_sections_to_indices(
 def relevant_documents_to_indices(
     relevance_sections: list[SectionRelevancePiece] | None, search_docs: list[SearchDoc]
 ) -> list[int]:
+    print(relevance_sections)
     if relevance_sections is None:
         return []
 
