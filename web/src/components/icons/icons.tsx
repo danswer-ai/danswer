@@ -599,6 +599,75 @@ export const BackIcon = ({
   );
 };
 
+export const MagnifyingIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <svg
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="200"
+      height="200"
+      viewBox="0 0 16 16"
+    >
+      <path
+        fill="currentColor"
+        fill-rule="evenodd"
+        d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06zM10.5 7a3.5 3.5 0 1 1-7 0a3.5 3.5 0 0 1 7 0"
+        clip-rule="evenodd"
+      />
+    </svg>
+  );
+};
+
+export const ToggleDown = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <svg
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="200"
+      height="200"
+      viewBox="0 0 16 16"
+    >
+      <path
+        fill="currentColor"
+        fill-rule="evenodd"
+        d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06"
+        clip-rule="evenodd"
+      />
+    </svg>
+  );
+};
+
+export const ToggleUp = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <svg
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="200"
+      height="200"
+      viewBox="0 0 16 16"
+    >
+      <path
+        fill="currentColor"
+        fill-rule="evenodd"
+        d="M11.78 9.78a.75.75 0 0 1-1.06 0L8 7.06L5.28 9.78a.75.75 0 0 1-1.06-1.06l3.25-3.25a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06"
+        clip-rule="evenodd"
+      />
+    </svg>
+  );
+};
+
 export const BroomIcon = ({
   size = 16,
   className = defaultTailwindCSS,

@@ -35,6 +35,8 @@ import { AnswerSection } from "./results/AnswerSection";
 import { QuotesSection } from "./results/QuotesSection";
 import { QAFeedbackBlock } from "./QAFeedback";
 import { usePopup } from "../admin/connectors/Popup";
+import { ToggleRight } from "@phosphor-icons/react";
+import { ToggleDown, ToggleUp } from "../icons/icons";
 
 export type searchState =
   | "input"
@@ -99,6 +101,7 @@ export const SearchSection = ({
   });
 
   const [agentic, setAgentic] = useState(agenticSearchEnabled);
+  const [searchAnswerExpanded, setSearchAnswerExpanded] = useState(false);
 
   const toggleAgentic = () => {
     Cookies.set(
@@ -521,6 +524,7 @@ export const SearchSection = ({
   return (
     <>
       <div className="flex relative w-full pr-[8px] h-full text-default">
+        {popup}
         <div
           ref={sidebarElementRef}
           className={`
@@ -656,9 +660,11 @@ export const SearchSection = ({
                     />
                   </div>
                   {!firstSearch && (
-                    <div className="my-4 min-h-[16rem] p-4 border-2 border-border rounded-lg relative">
+                    <div
+                      className={`my-4 ${searchAnswerExpanded ? "min-h-[16rem]" : "h-[16rem] "}  overflow-y-hidden p-4 border-2 border-border rounded-lg relative`}
+                    >
                       <div>
-                        <div className="flex gap-x-2 mb-1">
+                        <div className="flex gap-x-2">
                           <h2 className="text-emphasis font-bold my-auto mb-1 ">
                             AI Answer
                           </h2>
@@ -717,9 +723,14 @@ export const SearchSection = ({
                               </span>
                             </div>
                           )}
+                          {/* <button onClick={() => setSearchAnswerExpanded(searchAnswerExpanded => !searchAnswerExpanded)} className="ml-auto text-sm hover:underline cursor-pointer">
+                            {searchAnswerExpanded ? "De-expand" : "Expand"}
+                          </button> */}
                         </div>
 
-                        <div className="mb-2 pt-1 border-t border-border w-full">
+                        <div
+                          className={`pt-1 h-auto   border-t border-border w-full`}
+                        >
                           <AnswerSection
                             answer={answer}
                             quotes={quotes}
@@ -728,24 +739,45 @@ export const SearchSection = ({
                           />
                         </div>
 
-                        {quotes !== null && quotes.length > 0 && answer && (
-                          <div className="pt-1 border-t border-border w-full">
-                            <QuotesSection
-                              quotes={dedupedQuotes}
-                              isFetching={isFetching}
-                            />
+                        {searchAnswerExpanded &&
+                          (searchResponse.messageId || quotes != null) && (
+                            <div className={`  py-4-full `}>
+                              <div className={`w-full`}>
+                                {quotes !== null &&
+                                  quotes.length > 0 &&
+                                  answer && (
+                                    <QuotesSection
+                                      quotes={dedupedQuotes}
+                                      isFetching={isFetching}
+                                    />
+                                  )}
 
-                            {searchResponse.messageId !== null && (
-                              <div className="absolute right-3 bottom-3">
-                                <QAFeedbackBlock
-                                  messageId={searchResponse.messageId}
-                                  setPopup={setPopup}
-                                />
+                                {searchResponse.messageId !== null && (
+                                  <div className="absolute right-3 bottom-3">
+                                    <QAFeedbackBlock
+                                      messageId={searchResponse.messageId}
+                                      setPopup={setPopup}
+                                    />
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        )}
+                            </div>
+                          )}
                       </div>
+                      {!searchAnswerExpanded && (
+                        <div className="absolute bottom-0 left-0 w-full h-[100px] bg-gradient-to-b from-background/5 via-background/60 to-background/90"></div>
+                      )}
+                      {!searchAnswerExpanded && searchState == "input" && (
+                        <div className="w-full h-12 absolute items-center content-center flex left-0 px-4 bottom-0  ">
+                          <button
+                            onClick={() => setSearchAnswerExpanded(true)}
+                            className="flex gap-x-1 items-center  justify-center  hover:bg-background-100 cursor-pointer max-w-sm text-sm mx-auto w-full bg-background border py-2 rounded-full "
+                          >
+                            Show more
+                            <ToggleDown />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
