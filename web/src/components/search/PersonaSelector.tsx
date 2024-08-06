@@ -23,13 +23,12 @@ export function PersonaSelector({
             border 
             border-border 
             bg-background
-            rounded-lg 
+            rounded-regular 
             flex 
             flex-col 
             w-64 
             max-h-96 
             overflow-y-auto 
-            flex
             overscroll-contain`}
         >
           {personas.map((persona, ind) => {
@@ -53,3 +52,40 @@ export function PersonaSelector({
     </CustomDropdown>
   );
 }
+
+/* import { Persona } from "@/app/admin/assistants/interfaces";
+import { CustomDropdown, DefaultDropdownElement } from "../Dropdown";
+import { FiChevronDown } from "react-icons/fi";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CustomSelect } from "../Select";
+
+export function PersonaSelector({
+  personas,
+  selectedPersonaId,
+  onPersonaChange,
+}: {
+  personas: Persona[];
+  selectedPersonaId: number;
+  onPersonaChange: (persona: Persona) => void;
+}) {
+  const currentlySelectedPersona = personas.find(
+    (persona) => persona.id === selectedPersonaId
+  );
+
+  return (
+    <CustomSelect
+      items={personas}
+      selectedItem={currentlySelectedPersona || personas[0]}
+      onItemSelect={onPersonaChange}
+      getItemValue={(persona) => persona.id.toString()}
+      getItemLabel={(persona) => persona.name}
+      placeholder="Select a persona"
+    />
+  );
+} */

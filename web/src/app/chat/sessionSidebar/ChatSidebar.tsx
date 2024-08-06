@@ -1,19 +1,19 @@
 "use client";
 
+import React from "react";
 import {
-  FiBook,
-  FiEdit,
-  FiFolderPlus,
-  FiMessageSquare,
-  FiPlusSquare,
-  FiSearch,
-  FiX,
-} from "react-icons/fi";
-import { useContext, useEffect, useRef, useState } from "react";
+  Search,
+  MessageCircleMore,
+  Headset,
+  FolderPlus,
+  X,
+  Plus,
+  PanelLeftClose,
+} from "lucide-react";
+import { useContext, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { BasicClickable, BasicSelectable } from "@/components/BasicClickable";
 import { ChatSession } from "../interfaces";
 
 import {
@@ -27,14 +27,11 @@ import { createFolder } from "../folders/FolderManagement";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
-import React from "react";
-import { FaBrain, FaHeadset } from "react-icons/fa";
 import Logo from "../../../../public/logo-brand.png";
 import { HeaderTitle } from "@/components/header/Header";
 import { UserSettingsButton } from "@/components/UserSettingsButton";
 import { useChatContext } from "@/components/context/ChatContext";
-import { Button } from "@tremor/react";
-/* import { Button } from "@/components/ui/button"; */
+import { Button } from "@/components/ui/button";
 
 export const ChatSidebar = ({
   existingChats,
@@ -76,22 +73,24 @@ export const ChatSidebar = ({
       <div
         className={`py-4
         flex-none
-        bg-background-weak
+        bg-background
         border-r 
         border-border 
         flex-col 
         h-screen
+        w-[270px]
         transition-transform z-30 ${
           openSidebar ? "w-full md:w-80 left-0 absolute flex" : "hidden lg:flex"
         }`}
         id="chat-sidebar"
       >
-        <div className="flex">
+        <div className="flex px-4">
           <div className="w-full">
-            <div className="flex items-center w-full px-4">
+            <div className="flex items-center w-full">
               <div className="flex items-center justify-between w-full">
                 <Image src={Logo} alt="enmedd-logo" width={112} />
-                <FiX onClick={handleClose} className="lg:hidden" />
+                <X onClick={handleClose} className="lg:hidden" size={16} />
+                <PanelLeftClose size={24} />
               </div>
 
               {enterpriseSettings && enterpriseSettings.application_name ? (
@@ -114,13 +113,13 @@ export const ChatSidebar = ({
         </div>
         {/* <HeaderTitle>enMedD CHP</HeaderTitle> */}
         {
-          <div className="mt-5">
+          <div className="mt-5 text-sm text-emphasis font-medium px-4">
             {settings.search_page_enabled && (
               <Link
                 href="/search"
-                className="flex px-4 py-2 rounded cursor-pointer hover:bg-hover-light"
+                className="flex p-2 rounded cursor-pointer hover:bg-hover-light"
               >
-                <FiSearch className="my-auto mr-2 text-base" />
+                <Search className="my-auto mr-2" size={16} />
                 Search
               </Link>
             )}
@@ -128,30 +127,30 @@ export const ChatSidebar = ({
               <>
                 <Link
                   href="/chat"
-                  className="flex px-4 py-2 rounded cursor-pointer hover:bg-hover-light"
+                  className="flex p-2 rounded cursor-pointer hover:bg-hover-light"
                 >
-                  <FiMessageSquare className="my-auto mr-2 text-base" />
+                  <MessageCircleMore className="my-auto mr-2" size={16} />
                   Chat
                 </Link>
                 <Link
                   href="/assistants/mine"
-                  className="flex px-4 py-2 rounded cursor-pointer hover:bg-hover-light"
+                  className="flex p-2 rounded cursor-pointer hover:bg-hover-light"
                 >
-                  <FaHeadset className="my-auto mr-2 text-base" />
-                  My Assistants
+                  <Headset className="my-auto mr-2" size={16} />
+                  Explore Assistants
                 </Link>
               </>
             )}
           </div>
         }
-        <div className="pb-4 mx-3 border-b border-border" />
+        <div className="pb-4 border-b border-border" />
         <ChatTab
           existingChats={existingChats}
           currentChatId={currentChatId}
           folders={folders}
           openedFolders={openedFolders}
         />
-        <div className="flex items-center gap-3 px-3 pb-1">
+        <div className="flex items-center gap-3 pb-1 px-4">
           <Link
             href={
               "/chat" +
@@ -162,38 +161,12 @@ export const ChatSidebar = ({
             }
             className="w-full"
           >
-            <Button
-              className="w-full border
-        border-gray-300
-        shadow-md
-        rounded-lg
-        font-medium 
-        text-emphasis 
-        text-sm
-        h-full
-        bg-background
-        select-none
-        hover:bg-hover-light"
-            >
-              <span className="flex p-1 items-center">
-                <FiEdit className="ml-1 mr-2" /> New Chat
-              </span>
+            <Button className="w-full">
+              <Plus className="mr-1" size={16} /> Start new chat
             </Button>
           </Link>
           <div className="h-full ">
             <Button
-              className="border
-        border-gray-300
-        shadow-md
-        rounded-lg
-        font-medium 
-        text-emphasis 
-        text-sm
-        p-1
-        h-full
-        bg-background
-        select-none
-        hover:bg-hover-light px-3.5"
               onClick={() =>
                 createFolder("New Folder")
                   .then((folderId) => {
@@ -209,7 +182,7 @@ export const ChatSidebar = ({
                   })
               }
             >
-              <FiFolderPlus className="mx-auto my-auto" />
+              <FolderPlus size={16} />
             </Button>
           </div>
         </div>

@@ -12,6 +12,7 @@ import { HoverPopup } from "@/components/HoverPopup";
 import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
 import { ForwardedRef, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
+import { PanelRightClose } from "lucide-react";
 
 function SectionHeader({
   name,
@@ -33,7 +34,7 @@ function SectionHeader({
         </p>
         {closeHeader && (
           <Button onClick={() => closeHeader()} variant="ghost" className="p-3">
-            <TbLayoutSidebarLeftExpand size={24} />
+            <PanelRightClose size={24} />
           </Button>
         )}
       </div>
@@ -87,20 +88,19 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
 
     return (
       <div
-        style={{ width: initialWidth }}
         ref={ref}
-        className={`sidebar absolute right-0 h-screen border-l border-l-border`}
+        className={`sidebar absolute right-0 h-screen border-l border-l-border w-[270px]`}
       >
-        <div className="flex flex-col flex-initial w-full h-screen overflow-y-hidden">
+        <div className="flex flex-col flex-initial w-full h-screen overflow-y-hidden px-4">
           {popup}
 
           <div className="flex flex-col h-4/6">
-            <div className="flex pl-3 pr-6 mb-3 border-b border-border">
+            <div className="flex mb-3 border-b border-border">
               <SectionHeader
                 name={
                   selectedMessageRetrievalType === RetrievalType.SelectedDocs
                     ? "Referenced Documents"
-                    : "Retrieved Documents"
+                    : "Retrieved Sources"
                 }
                 icon={FiFileText}
                 closeHeader={closeSidebar}
@@ -141,7 +141,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                       </div>
                     ))
                   ) : (
-                    <div className="mx-3">
+                    <div>
                       <Text>No documents found for the query.</Text>
                     </div>
                   )}
@@ -159,8 +159,8 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             )}
           </div>
 
-          <div className="flex flex-col pt-4 mb-4 overflow-y-hidden text-sm border-t border-border">
-            <div className="flex px-3 border-b border-border">
+          {/* <div className="flex flex-col pt-4 mb-4 overflow-y-hidden text-sm border-t border-border">
+            <div className="flex border-b border-border">
               <div className="flex">
                 <SectionHeader name="Selected Documents" icon={FiFileText} />
                 {tokenLimitReached && (
@@ -231,13 +231,13 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
               </div>
             ) : (
               !isLoading && (
-                <Text className="py-3 mx-3">
+                <Text className="py-3">
                   Select documents from the retrieved documents section to chat
                   specifically with them!
                 </Text>
               )
             )}
-          </div>
+          </div> */}
         </div>
       </div>
     );

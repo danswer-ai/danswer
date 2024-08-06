@@ -108,12 +108,7 @@ export function ResizableSection({
           `}
         ></div>
       </div>
-      <div
-        style={{ width: `${width}px` }}
-        className={`resize-section h-full flex`}
-      >
-        {children}
-      </div>
+      <div className={`resize-section h-full flex w-[270px]`}>{children}</div>
     </div>
   );
 }

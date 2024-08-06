@@ -10,15 +10,17 @@ import Link from "next/link";
 import {
   FiCheck,
   FiEdit2,
+  FiMessageSquare,
   FiMoreHorizontal,
   FiShare2,
-  FiTrash,
   FiX,
 } from "react-icons/fi";
+import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import { DefaultDropdownElement } from "@/components/Dropdown";
 import { Popover } from "@/components/popover/Popover";
 import { ShareChatSessionModal } from "../modal/ShareChatSessionModal";
 import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
+import { Trash, Ellipsis, Share2, X, Check } from "lucide-react";
 
 export function ChatSessionDisplay({
   chatSession,
@@ -106,7 +108,8 @@ export function ChatSessionDisplay({
       >
         <BasicSelectable fullWidth selected={isSelected}>
           <>
-            <div className="flex relative">
+            <div className="flex relative items-center gap-2">
+              <IoChatbubbleEllipsesOutline className="min-w-4 min-h-4" />
               {isRenamingChat ? (
                 <input
                   value={chatName}
@@ -120,7 +123,7 @@ export function ChatSessionDisplay({
                   className="-my-px px-1 mr-2 w-full rounded"
                 />
               ) : (
-                <p className="break-all overflow-hidden whitespace-nowrap mr-3 text-emphasis">
+                <p className="break-all overflow-hidden whitespace-nowrap mr-3 text-emphasis text-ellipsis">
                   {chatName || `Chat ${chatSession.id}`}
                 </p>
               )}
@@ -131,7 +134,7 @@ export function ChatSessionDisplay({
                       onClick={onRename}
                       className={`hover:bg-black/10 p-1 -m-1 rounded`}
                     >
-                      <FiCheck size={16} />
+                      <Check size={16} />
                     </div>
                     <div
                       onClick={() => {
@@ -140,7 +143,7 @@ export function ChatSessionDisplay({
                       }}
                       className={`hover:bg-black/10 p-1 -m-1 rounded ml-2`}
                     >
-                      <FiX size={16} />
+                      <X size={16} />
                     </div>
                   </div>
                 ) : (
@@ -161,11 +164,11 @@ export function ChatSessionDisplay({
                           }
                           content={
                             <div className="hover:bg-black/10 p-1 rounded">
-                              <FiMoreHorizontal size={16} />
+                              <Ellipsis size={16} />
                             </div>
                           }
                           popover={
-                            <div className="border border-border rounded-lg bg-background z-50 w-32">
+                            <div className="border border-border rounded-regular bg-background z-50 w-32">
                               <DefaultDropdownElement
                                 name="Share"
                                 icon={FiShare2}
@@ -184,20 +187,18 @@ export function ChatSessionDisplay({
                         />
                       </div>
                     </div>
+
                     <div
                       onClick={() => setIsDeletionModalVisible(true)}
                       className={`hover:bg-black/10 p-1 -m-1 rounded ml-2`}
                     >
-                      <FiTrash size={16} />
+                      <Trash size={16} />
                     </div>
                   </div>
                 ))}
             </div>
             {isSelected && !isRenamingChat && !delayedSkipGradient && (
               <div className="absolute bottom-0 right-0 top-0 bg-gradient-to-l to-transparent from-hover w-20 from-60% rounded" />
-            )}
-            {!isSelected && !delayedSkipGradient && (
-              <div className="absolute bottom-0 right-0 top-0 bg-gradient-to-l to-transparent from-background-weak w-8 from-0% rounded" />
             )}
           </>
         </BasicSelectable>

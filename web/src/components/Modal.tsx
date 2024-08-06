@@ -40,73 +40,29 @@ export function Modal({
         `}
           onClick={(event) => event.stopPropagation()}
         >
-          {title && (
-            <>
-              <div className="flex mb-4">
+          {onOutsideClick && (
+            <div
+              onClick={onOutsideClick}
+              className="absolute top-6 right-6 cursor-pointer"
+            >
+              <FiX size={20} />
+            </div>
+          )}
+          <>
+            {title && (
+              <div className="mb-4">
                 <h2
                   className={"my-auto font-bold " + (titleSize || "text-2xl")}
                 >
                   {title}
                 </h2>
-                {onOutsideClick && (
-                  <div
-                    onClick={onOutsideClick}
-                    className="p-2 my-auto ml-auto rounded cursor-pointer hover:bg-hover"
-                  >
-                    <FiX size={20} />
-                  </div>
-                )}
+                {!hideDividerForTitle && <Divider />}
               </div>
-              {!hideDividerForTitle && <Divider />}
-            </>
-          )}
+            )}
+          </>
           {children}
         </div>
       </div>
     </div>
   );
 }
-
-/* import { Divider } from "@tremor/react";
-import { FiX } from "react-icons/fi";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
-interface ModalProps {
-  children: JSX.Element | string;
-  title?: JSX.Element | string;
-  triggerText?: JSX.Element | string;
-  onOutsideClick?: () => void;
-  className?: string;
-  width?: string;
-  titleSize?: string;
-  hideDividerForTitle?: boolean;
-  noPadding?: boolean;
-}
-
-export function Modal({
-  children,
-  title,
-  onOutsideClick,
-  className,
-  width,
-  titleSize,
-  hideDividerForTitle,
-  noPadding,
-  triggerText,
-}: ModalProps) {
-  return (
-    <Dialog>
-      <DialogTrigger>{triggerText}</DialogTrigger>
-      <DialogContent>{children}</DialogContent>
-    </Dialog>
-  );
-}
- */

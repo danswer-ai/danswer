@@ -13,7 +13,6 @@ export function CopyButton({
 
   return (
     <Hoverable
-      icon={copyClicked ? FiCheck : FiCopy}
       onClick={() => {
         if (content) {
           navigator.clipboard.writeText(content.toString());
@@ -23,6 +22,8 @@ export function CopyButton({
         setCopyClicked(true);
         setTimeout(() => setCopyClicked(false), 3000);
       }}
-    />
+    >
+      {copyClicked ? <FiCheck /> : <FiCopy />}
+    </Hoverable>
   );
 }

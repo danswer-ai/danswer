@@ -69,3 +69,11 @@
     @apply border-border;
   }
 }
+
+.h1-bg {
+  background: linear-gradient(90deg, #000000 0%, #2039f3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}

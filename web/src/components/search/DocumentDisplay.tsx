@@ -219,7 +219,7 @@ export const DocumentDisplay = ({
         )}
         <a
           className={
-            "rounded-lg flex font-bold text-link max-w-full " +
+            "rounded-regular flex font-bold text-link max-w-full " +
             (document.link ? "" : "pointer-events-none")
           }
           href={document.link}

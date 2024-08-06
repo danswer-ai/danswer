@@ -50,9 +50,9 @@ export function ChatTab({
   };
 
   return (
-    <div className="mb-1 ml-3 overflow-y-auto h-full">
+    <div className="mb-1 overflow-y-auto h-full px-4">
       {folders.length > 0 && (
-        <div className="py-2 mr-3 border-b border-border">
+        <div className="py-2 border-b border-border">
           <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-medium">
             Folders
           </div>
@@ -71,15 +71,20 @@ export function ChatTab({
         }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDropToRemoveFromFolder}
-        className={`pt-1 transition duration-300 ease-in-out mr-3 ${
+        className={`pt-1 transition duration-300 ease-in-out ${
           isDragOver ? "bg-hover" : ""
-        } rounded-md`}
+        } rounded-xs`}
       >
         {Object.entries(groupedChatSessions).map(
           ([dateRange, chatSessions]) => {
             if (chatSessions.length > 0) {
               return (
-                <div key={dateRange}>
+                <div
+                  key={dateRange}
+                  className={`pb-2 ${
+                    dateRange !== "Previous 30 Days" ? "border-b" : ""
+                  }`}
+                >
                   <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-5 font-medium">
                     {dateRange}
                   </div>

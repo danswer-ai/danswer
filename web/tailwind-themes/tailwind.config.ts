@@ -75,6 +75,7 @@ const config = {
       colors: {
         /* border: "hsl(var(--border))", */
         input: "hsl(var(--input))",
+        "input-colored": "#8DBAFF",
         ring: "hsl(var(--ring))",
         /* background: "hsl(var(--background))", */
         foreground: "hsl(var(--foreground))",
@@ -112,7 +113,7 @@ const config = {
         },
 
         // background
-        background: "#f9fafb", // gray-50
+        background: "#ffffff",
         "background-subtle": "#e5e7eb", // gray-200
         "background-emphasis": "#f6f7f8",
         "background-strong": "#eaecef",
@@ -174,9 +175,14 @@ const config = {
         // light mode
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        xs: "4px",
+        sm: "6px",
+        regular: "8px",
+        md: "10px",
+        lg: "12px",
+        xl: "16px",
+        pill: "999px",
+        circle: "50%",
       },
       keyframes: {
         "accordion-down": {
@@ -212,9 +218,26 @@ const config = {
       maxWidth: {
         "document-sidebar": "1000px",
       },
+      boxShadow: {
+        xs: "0px 0px 0px 0px #00000000",
+        sm: "0px 1px 3px 0px #00000033, 0px 2px 1px -1px #0000001f, 0px 1px 1px 0px #00000024",
+        shadow:
+          "0px 1px 5px 0px #00000033, 0px 3px 1px -2px #0000001f, 0px 2px 2px 0px #00000024",
+        md: "0px 2px 4px -1px #00000033, 0px 1px 10px 0px #0000001f, 0px 4px 5px 0px #00000024",
+        lg: "0px 3px 5px -1px #00000033, 0px 1px 18px 0px #0000001f, 0px 6px 10px 0px #00000024",
+        xl: "0px 5px 5px -3px #00000033, 0px 3px 14px 2px #0000001f, 0px 8px 10px 1px #00000024",
+        "2xl":
+          "0px 7px 8px -4px #00000033, 0px 5px 22px 4px #0000001f, 0px 12px 17px 2px #00000024",
+        "3xl":
+          "0px 8px 10px -5px #00000033, 0px 6px 30px 5px #0000001f, 0px 16px 24px 2px #00000024",
+        "4xl":
+          "0px 11px 15px -7px #00000033, 0px 9px 46px 8px #0000001f, 0px 24px 38px 3px #00000024",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
 
 export default config;
+/* box-shadow: 0px 2px 4px 0px #19213D14;
+ */

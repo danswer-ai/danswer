@@ -39,6 +39,15 @@ import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -668,6 +677,7 @@ export function AssistantEditor({
                         <div className="flex mt-6">
                           <div className="w-96">
                             <SubLabel>LLM Provider</SubLabel>
+
                             <SelectorFormField
                               name="llm_model_provider_override"
                               options={llmProviders.map((llmProvider) => ({
@@ -746,92 +756,51 @@ export function AssistantEditor({
                                   <div className="flex">
                                     <div className="w-full mr-6 border border-border p-3 rounded">
                                       <div>
-                                        <Label>Name</Label>
-                                        <SubLabel>
-                                          Shows up as the &quot;title&quot; for
-                                          this Starter Message. For example,
-                                          &quot;Write an email&quot;.
-                                        </SubLabel>
-                                        <Field
+                                        <TextFormField
+                                          label="Name"
+                                          subtext={
+                                            <>
+                                              Shows up as the &quot;title&quot;
+                                              for this Starter Message. For
+                                              example, &quot;Write an
+                                              email&quot;.
+                                            </>
+                                          }
                                           name={`starter_messages[${index}].name`}
-                                          className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
-                                      `}
-                                          autoComplete="off"
-                                        />
-                                        <ErrorMessage
-                                          name={`starter_messages[${index}].name`}
-                                          component="div"
-                                          className="text-error text-sm mt-1"
                                         />
                                       </div>
 
                                       <div className="mt-3">
-                                        <Label>Description</Label>
-                                        <SubLabel>
-                                          A description which tells the user
-                                          what they might want to use this
-                                          Starter Message for. For example
-                                          &quot;to a client about a new
-                                          feature&quot;
-                                        </SubLabel>
-                                        <Field
+                                        <TextFormField
+                                          label="Description"
+                                          subtext={
+                                            <>
+                                              A description which tells the user
+                                              what they might want to use this
+                                              Starter Message for. For example
+                                              &quot;to a client about a new
+                                              feature&quot;
+                                            </>
+                                          }
                                           name={`starter_messages.${index}.description`}
-                                          className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
-                                      `}
-                                          autoComplete="off"
-                                        />
-                                        <ErrorMessage
-                                          name={`starter_messages[${index}].description`}
-                                          component="div"
-                                          className="text-error text-sm mt-1"
                                         />
                                       </div>
 
                                       <div className="mt-3">
-                                        <Label>Message</Label>
-                                        <SubLabel>
-                                          The actual message to be sent as the
-                                          initial user message if a user selects
-                                          this starter prompt. For example,
-                                          &quot;Write me an email to a client
-                                          about a new billing feature we just
-                                          released.&quot;
-                                        </SubLabel>
-                                        <Field
+                                        <TextFormField
+                                          label="Message"
+                                          subtext={
+                                            <>
+                                              The actual message to be sent as
+                                              the initial user message if a user
+                                              selects this starter prompt. For
+                                              example, &quot;Write me an email
+                                              to a client about a new billing
+                                              feature we just released.&quot;
+                                            </>
+                                          }
                                           name={`starter_messages[${index}].message`}
-                                          className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
-                                      `}
-                                          as="textarea"
-                                          autoComplete="off"
-                                        />
-                                        <ErrorMessage
-                                          name={`starter_messages[${index}].message`}
-                                          component="div"
-                                          className="text-error text-sm mt-1"
+                                          isTextArea
                                         />
                                       </div>
                                     </div>

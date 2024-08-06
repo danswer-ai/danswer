@@ -50,7 +50,6 @@ import { InitializingLoader } from "@/components/InitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { ChatPersonaSelector } from "./ChatPersonaSelector";
-import { FiArrowDown, FiMenu, FiShare } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { ThreeDots } from "react-loader-spinner";
@@ -67,12 +66,12 @@ import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";
 import { ChatBanner } from "./ChatBanner";
-import { TbLayoutSidebarRightExpand } from "react-icons/tb";
 import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 
 import ResizableSection from "@/components/resizable/ResizableSection";
 import { UserDropdown } from "@/components/UserDropdown";
 import { Button } from "@/components/ui/button";
+import { PanelLeftClose, Share, CircleArrowDown } from "lucide-react";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -387,10 +386,10 @@ export function ChatPage({
           (persona) => persona.id === existingChatSessionPersonaId
         )
       : defaultSelectedPersonaId !== undefined
-        ? filteredAssistants.find(
-            (persona) => persona.id === defaultSelectedPersonaId
-          )
-        : undefined
+      ? filteredAssistants.find(
+          (persona) => persona.id === defaultSelectedPersonaId
+        )
+      : undefined
   );
   const livePersona =
     selectedPersona || filteredAssistants[0] || availablePersonas[0];
@@ -1182,8 +1181,8 @@ export function ChatPage({
 
                       {livePersona && (
                         <div className="sticky top-0 z-10 flex w-full lg:left-80 bg-background">
-                          <div className="flex w-full mt-2">
-                            <div className="flex items-center w-full gap-3 p-1 ml-2 rounded">
+                          <div className="flex w-full mt-3">
+                            {/* <div className="flex items-center w-full gap-3 p-1 ml-2 rounded">
                               <FiMenu
                                 size={18}
                                 className="lg:hidden"
@@ -1196,8 +1195,8 @@ export function ChatPage({
                                 userId={user?.id}
                               />
 
-                              {/* <UserDropdown user={user} hideChatAndSearch /> */}
-                            </div>
+                              
+                            </div> */}
 
                             <div className="flex ml-auto">
                               {chatSessionIdRef.current !== null && (
@@ -1206,18 +1205,18 @@ export function ChatPage({
                                   className="px-3"
                                   variant="ghost"
                                 >
-                                  <FiShare size={20} />
+                                  <Share size={20} />
                                 </Button>
                               )}
 
-                              <div className="flex my-auto ml-4">
+                              <div className="flex my-auto mr-3">
                                 {retrievalEnabled && !showDocSidebar && (
                                   <Button
-                                    className="mt-auto ml-4"
+                                    className="mt-auto p-3"
                                     onClick={() => toggleSidebar()}
                                     variant="ghost"
                                   >
-                                    <TbLayoutSidebarRightExpand size={24} />
+                                    <PanelLeftClose size={24} />
                                   </Button>
                                 )}
                               </div>
@@ -1488,7 +1487,7 @@ export function ChatPage({
                           )}
 
                         {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-                        <div ref={endPaddingRef} className=" h-[95px]" />
+                        <div ref={endPaddingRef} className=" h-[150px]" />
                         <div ref={endDivRef}></div>
 
                         {currentPersona &&
@@ -1540,13 +1539,11 @@ export function ChatPage({
                       <div className="relative w-full pb-4">
                         {aboveHorizon && (
                           <div className="sticky flex justify-center w-full bg-transparent pointer-events-none">
-                            <Button
+                            <CircleArrowDown
                               onClick={() => clientScrollToBottom(true)}
-                              className="px-2.5 mx-auto mb-2 pointer-events-auto !rounded-full"
-                              variant="ghost"
-                            >
-                              <FiArrowDown size={18} />
-                            </Button>
+                              size={24}
+                              className="mx-auto mb-2 pointer-events-auto !rounded-full cursor-pointer"
+                            />
                           </div>
                         )}
 
@@ -1582,13 +1579,13 @@ export function ChatPage({
                   {retrievalEnabled || editingRetrievalEnabled ? (
                     <div
                       ref={sidebarElementRef}
-                      className={`relative flex-none  overflow-y-hidden sidebar bg-background-weak h-screen`}
-                      style={{ width: showDocSidebar ? usedSidebarWidth : 0 }}
+                      className={`relative flex-none  overflow-y-hidden sidebar bg-background h-screen w-[270px]`}
+                      /* style={{ width: showDocSidebar ? usedSidebarWidth : 0 }} */
                     >
                       <ResizableSection
                         updateSidebarWidth={updateSidebarWidth}
                         intialWidth={usedSidebarWidth}
-                        minWidth={300}
+                        minWidth={270}
                         maxWidth={maxDocumentSidebarWidth || undefined}
                       >
                         <DocumentSidebar

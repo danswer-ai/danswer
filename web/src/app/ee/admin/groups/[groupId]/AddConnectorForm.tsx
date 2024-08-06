@@ -44,7 +44,7 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
                 }}
                 className={`
                   flex 
-                  rounded-lg 
+                  rounded-regular 
                   px-2 
                   py-1
                   my-1 

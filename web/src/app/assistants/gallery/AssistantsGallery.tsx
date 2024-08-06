@@ -88,7 +88,7 @@ export function AssistantsGallery({
               key={assistant.id}
               className="
               bg-background-emphasis
-              rounded-lg
+              rounded-regular
               shadow-md
               p-4
             "

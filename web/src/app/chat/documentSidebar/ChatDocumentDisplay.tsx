@@ -40,7 +40,7 @@ export function ChatDocumentDisplay({
       <div className="flex relative w-full overflow-y-visible">
         <a
           className={
-            "rounded-lg flex font-bold flex-shrink truncate " +
+            "rounded-regular flex font-bold flex-shrink truncate " +
             (document.link ? "" : "pointer-events-none")
           }
           href={document.link}

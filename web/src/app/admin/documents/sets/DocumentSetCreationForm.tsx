@@ -138,7 +138,7 @@ export const DocumentSetCreationForm = ({
                           `
                               px-3 
                               py-1
-                              rounded-lg 
+                              rounded-regular 
                               border
                               border-border 
                               w-fit 
@@ -216,7 +216,7 @@ export const DocumentSetCreationForm = ({
                                     `
                               px-3 
                               py-1
-                              rounded-lg 
+                              rounded-regular 
                               border
                               border-border 
                               w-fit 

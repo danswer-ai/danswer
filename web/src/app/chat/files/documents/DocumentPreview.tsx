@@ -29,7 +29,7 @@ export function DocumentPreview({
         bg-hover
         border
         border-border
-        rounded-md
+        rounded-xs
         box-border
         h-16
       "
@@ -43,7 +43,7 @@ export function DocumentPreview({
             flex
             items-center
             justify-center
-            rounded-md
+            rounded-xs
           "
         >
           <FiFileText className="w-6 h-6 text-white" />

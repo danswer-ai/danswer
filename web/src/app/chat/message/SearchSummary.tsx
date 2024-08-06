@@ -4,8 +4,10 @@ import {
 } from "@/components/BasicClickable";
 import { HoverPopup } from "@/components/HoverPopup";
 import { Hoverable } from "@/components/Hoverable";
+import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { FiCheck, FiEdit2, FiSearch, FiX } from "react-icons/fi";
+import { Input } from "@/components/ui/input";
 
 export function ShowHideDocsButton({
   messageId,
@@ -85,8 +87,8 @@ export function SearchSummary({
   }, [query]);
 
   const searchingForDisplay = (
-    <div className={`flex p-1 rounded ${isOverflowed && "cursor-default"}`}>
-      <FiSearch className="mr-2 my-auto" size={14} />
+    <div className={`flex py-1 rounded ${isOverflowed && "cursor-default"}`}>
+      <Search className="mr-2 my-auto" size={14} />
       <div className="line-clamp-1 break-all px-0.5" ref={searchingForRef}>
         Searching for: <i>{finalQuery}</i>
       </div>
@@ -96,7 +98,7 @@ export function SearchSummary({
   const editInput = handleSearchQueryEdit ? (
     <div className="flex w-full mr-3">
       <div className="my-2 w-full">
-        <input
+        <Input
           ref={editQueryRef}
           value={finalQuery}
           onChange={(e) => setFinalQuery(e.target.value)}
@@ -115,12 +117,11 @@ export function SearchSummary({
               event.preventDefault();
             }
           }}
-          className="px-1 py-0.5 h-[28px] text-sm mr-2 w-full rounded-sm border border-border-strong"
+          /*  className="px-1 py-0.5 h-[28px] text-sm mr-2 w-full rounded-xs border border-border-strong" */
         />
       </div>
       <div className="ml-2 my-auto flex">
         <Hoverable
-          icon={FiCheck}
           onClick={() => {
             if (!finalQuery) {
               setFinalQuery(query);
@@ -129,14 +130,17 @@ export function SearchSummary({
             }
             setIsEditing(false);
           }}
-        />
+        >
+          <FiCheck />
+        </Hoverable>
         <Hoverable
-          icon={FiX}
           onClick={() => {
             setFinalQuery(query);
             setIsEditing(false);
           }}
-        />
+        >
+          <FiX />
+        </Hoverable>
       </div>
     </div>
   ) : null;
@@ -165,7 +169,9 @@ export function SearchSummary({
           </div>
           {handleSearchQueryEdit && (
             <div className="my-auto">
-              <Hoverable icon={FiEdit2} onClick={() => setIsEditing(true)} />
+              <Hoverable onClick={() => setIsEditing(true)}>
+                <FiEdit2 />
+              </Hoverable>
             </div>
           )}
         </>

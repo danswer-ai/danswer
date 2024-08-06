@@ -39,8 +39,10 @@ import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { Button } from "@tremor/react";
+
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -168,11 +170,11 @@ export const AIMessage = ({
 
   return (
     <div className={"py-5 px-5 flex -mr-6 w-full"}>
-      <div className="relative mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-        <div className="ml-8">
+      <div className="relative mx-auto w-full 2xl:w-searchbar-sm 3xl:w-searchbar">
+        <div className="">
           <div className="flex">
             <AssistantIcon
-              size="small"
+              size="large"
               assistant={alternativeAssistant || currentPersona}
             />
 
@@ -197,7 +199,7 @@ export const AIMessage = ({
               )}
           </div>
 
-          <div className="mt-1 ml-8 break-words w-message-xs 2xl:w-message-sm 3xl:w-message-default">
+          <div className="mt-2 ml-12 break-words w-message-xs 2xl:w-message-sm 3xl:w-message-default">
             {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
               <>
                 {query !== undefined &&
@@ -352,16 +354,14 @@ export const AIMessage = ({
             )}
           </div>
           {handleFeedback && (
-            <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1.5">
+            <div className="flex flex-col md:flex-row gap-x-0.5 ml-12 mt-1.5">
               <CopyButton content={content.toString()} />
-              <Hoverable
-                icon={FiThumbsUp}
-                onClick={() => handleFeedback("like")}
-              />
-              <Hoverable
-                icon={FiThumbsDown}
-                onClick={() => handleFeedback("dislike")}
-              />
+              <Hoverable onClick={() => handleFeedback("like")}>
+                <FiThumbsUp />
+              </Hoverable>
+              <Hoverable onClick={() => handleFeedback("dislike")}>
+                <FiThumbsDown />
+              </Hoverable>
             </div>
           )}
         </div>
@@ -383,20 +383,21 @@ function MessageSwitcher({
 }) {
   return (
     <div className="flex items-center text-sm space-x-0.5">
-      <Hoverable
-        icon={FiChevronLeft}
-        onClick={currentPage === 1 ? undefined : handlePrevious}
-      />
+      <Hoverable onClick={currentPage === 1 ? undefined : handlePrevious}>
+        <FiChevronLeft />
+      </Hoverable>
       <span className="select-none text-emphasis text-medium">
         {currentPage} / {totalPages}
       </span>
-      <Hoverable
-        icon={FiChevronRight}
-        onClick={currentPage === totalPages ? undefined : handleNext}
-      />
+      <Hoverable onClick={currentPage === totalPages ? undefined : handleNext}>
+        <FiChevronRight />
+      </Hoverable>
     </div>
   );
 }
+
+import logo from "../../../public/logo.png";
+import Image from "next/image";
 
 export const HumanMessage = ({
   content,
@@ -452,21 +453,21 @@ export const HumanMessage = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="w-full mx-auto 2xl:w-searchbar-sm 3xl:w-searchbar">
-        <div className="lg:ml-8">
+      <div className="w-full mx-auto 2xl:w-searchbar-sm 3xl:w-searchbar relative">
+        <div className="">
           <div className="flex">
-            <div className="p-1 bg-blue-400 rounded-lg h-fit">
+            <div className="p-1 mx-1 bg-blue-400 rounded-regular h-fit">
               <div className="text-inverted">
-                <FiUser size={16} className="mx-auto my-auto" />
+                <FiUser size={25} className="mx-auto my-auto" />
               </div>
             </div>
 
             <div className="my-auto ml-2 font-bold text-emphasis">You</div>
           </div>
-          <div className="flex flex-wrap mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default">
-            <div className="break-words w-message-xs 2xl:w-message-sm 3xl:w-message-default">
+          <div className="flex flex-wrap mx-auto mt-2 ml-12 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default">
+            {/*   <div className="break-words w-message-xs 2xl:w-message-sm 3xl:w-message-default"> */}
+            <div className={`break-words ${isEditing ? "w-full" : "w-auto"}`}>
               <FileDisplay files={files || []} />
-
               {isEditing ? (
                 <div>
                   <div
@@ -477,24 +478,23 @@ export const HumanMessage = ({
                       flex-col
                       border 
                       border-border 
-                      rounded-lg 
-                      bg-background-emphasis 
+                      rounded-regular 
                       pb-2
                       [&:has(textarea:focus)]::ring-1
                       [&:has(textarea:focus)]::ring-black
                     `}
                   >
-                    <textarea
+                    <Textarea
                       ref={textareaRef}
                       className={`
                       m-0 
+                      focus-visible:!ring-0
+                      focus-visible:!ring-offset-0
                       w-full 
                       h-auto
                       shrink
                       border-0
-                      rounded-lg 
-                      overflow-y-hidden
-                      bg-background-emphasis 
+                      !rounded-regular 
                       whitespace-normal 
                       break-word
                       overscroll-contain
@@ -526,50 +526,46 @@ export const HumanMessage = ({
                       }}
                     />
                     <div className="flex justify-end gap-2 pr-4 mt-2">
-                      <button
-                        className={`
-                          w-fit 
-                          p-1 
-                          bg-accent 
-                          text-inverted 
-                          text-sm
-                          rounded-lg 
-                          hover:bg-accent-hover
-                        `}
-                        onClick={handleEditSubmit}
-                      >
-                        Submit
-                      </button>
-                      <button
-                        className={`
-                          w-fit 
-                          p-1 
-                          bg-hover
-                          bg-background-strong 
-                          text-sm
-                          rounded-lg
-                          hover:bg-hover-emphasis
-                        `}
+                      <Button onClick={handleEditSubmit}>Submit</Button>
+                      <Button
                         onClick={() => {
                           setEditedContent(content);
                           setIsEditing(false);
                         }}
+                        variant="destructive"
                       >
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
               ) : typeof content === "string" ? (
-                <div className="flex flex-col max-w-full prose preserve-lines">
-                  {content}
+                <div className="relative">
+                  <div className="flex flex-col max-w-full prose preserve-lines">
+                    {content}
+                  </div>
+                  {onEdit &&
+                    isHovered &&
+                    !isEditing &&
+                    (!files || files.length === 0) && (
+                      <div className="bg-hover absolute left-[calc(100%_+_10px)] top-0 rounded">
+                        <Hoverable
+                          onClick={() => {
+                            setIsEditing(true);
+                            setIsHovered(false);
+                          }}
+                        >
+                          <FiEdit2 />
+                        </Hoverable>
+                      </div>
+                    )}
                 </div>
               ) : (
                 content
               )}
             </div>
           </div>
-          <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1">
+          <div className="flex flex-col md:flex-row gap-x-0.5 ml-12 mt-1">
             {currentMessageInd !== undefined &&
               onMessageSelection &&
               otherMessagesCanSwitchTo &&
@@ -591,20 +587,22 @@ export const HumanMessage = ({
                   />
                 </div>
               )}
-            {onEdit &&
+            {/* {onEdit &&
             isHovered &&
             !isEditing &&
             (!files || files.length === 0) ? (
-              <Hoverable
-                icon={FiEdit2}
-                onClick={() => {
-                  setIsEditing(true);
-                  setIsHovered(false);
-                }}
-              />
+              <div className="bg-red-500 absolute">
+                <Hoverable
+                  icon={FiEdit2}
+                  onClick={() => {
+                    setIsEditing(true);
+                    setIsHovered(false);
+                  }}
+                />
+              </div>
             ) : (
               <div className="h-[27px]" />
-            )}
+            )} */}
           </div>
         </div>
       </div>

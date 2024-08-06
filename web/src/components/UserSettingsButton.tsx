@@ -12,6 +12,7 @@ import { FaBrain } from "react-icons/fa";
 import { LOGOUT_DISABLED } from "@/lib/constants";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { SettingsContext } from "./settings/SettingsProvider";
+import { ChevronsUpDown } from "lucide-react";
 
 export function UserSettingsButton({ user }: { user: User | null }) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
@@ -36,7 +37,7 @@ export function UserSettingsButton({ user }: { user: User | null }) {
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
 
   return (
-    <div className="relative w-full px-3 py-2" ref={userInfoRef}>
+    <div className="relative w-full py-2 px-4" ref={userInfoRef}>
       <Popover
         triggerMaxWidth={true}
         matchWidth={true}
@@ -46,7 +47,6 @@ export function UserSettingsButton({ user }: { user: User | null }) {
           <BasicClickable fullWidth>
             <div
               onClick={() => setUserInfoVisible(!userInfoVisible)}
-              /* className="flex min-w-full items-center gap-3 cursor-pointer px-3 py-2" */
               className="flex min-w-full items-center gap-3 cursor-pointer py-2"
             >
               <div className="flex items-center justify-center bg-white rounded-full min-h-10 min-w-10 aspect-square text-base font-normal border-2 border-gray-900 shadow-md text-default">
@@ -54,13 +54,18 @@ export function UserSettingsButton({ user }: { user: User | null }) {
               </div>
               <div className="w-full h-full flex flex-col items-start justify-center truncate">
                 {/* TODO: Set this as a user.name - which will be added to the schema of the user and the database schema user table */}
-                <p className="text-base font-semibold">
-                  {user && user.email
-                    ? `${toPascalCase(user.email.split(".")[0])} ${toPascalCase(
-                        user.email.split(".")[1].split("@")[0]
-                      )}`
-                    : "Admin"}
-                </p>
+                <div className="flex items-center justify-between gap-1 w-full">
+                  <p className="text-base font-semibold overflow-hidden text-ellipsis">
+                    {user && user.email
+                      ? `${toPascalCase(
+                          user.email.split(".")[0]
+                        )} ${toPascalCase(
+                          user.email.split(".")[1].split("@")[0]
+                        )}`
+                      : "Admin"}
+                  </p>
+                  <ChevronsUpDown className="text-black" size={20} />
+                </div>
                 <p className="text-xs">
                   {user && user.email ? user.email : "admin@enmedd-chp.com"}
                 </p>
@@ -77,7 +82,7 @@ export function UserSettingsButton({ user }: { user: User | null }) {
                 border 
                 border-border 
                 bg-background 
-                rounded-lg 
+                rounded-regular 
                 shadow-lg  
                 flex 
                 flex-col 

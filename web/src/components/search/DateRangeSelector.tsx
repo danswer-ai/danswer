@@ -51,7 +51,7 @@ export function DateRangeSelector({
               border 
               border-border 
               bg-background
-              rounded-lg 
+              rounded-regular 
               flex-col 
               w-64 
               max-h-96 
@@ -106,7 +106,7 @@ export function DateRangeSelector({
               text-sm  
               px-3
               py-1.5 
-              rounded-lg 
+              rounded-regular 
               border 
               border-border 
               cursor-pointer 
@@ -189,7 +189,7 @@ export function DateRangeSelector({
     <SelectItem
       key={key}
       value={label}
-      className="flex items-center hover:!bg-[#2039f3] hover:!text-white"
+      className="flex items-center"
       onClick={() =>
         onValueChange({ to: new Date(), from: fromDate, selectValue: key })
       }
@@ -238,7 +238,7 @@ export function DateRangeSelector({
           </div>
         </SelectTrigger>
 
-        <SelectContent className="border border-border bg-background rounded-lg flex-col w-64 max-h-96 overflow-y-auto flex overscroll-contain">
+        <SelectContent className="border border-border bg-background rounded-regular flex-col w-64 max-h-96 overflow-y-auto flex overscroll-contain">
           {formatSelectItem("LAST_30_DAYS", "Last 30 Days", getXDaysAgo(30))}
           {formatSelectItem("LAST_7_DAYS", "Last 7 Days", getXDaysAgo(7))}
           {formatSelectItem("TODAY", "Today", getXDaysAgo(1))}

@@ -36,7 +36,7 @@ const DocumentDisplay = ({
       <div className="relative flex">
         <a
           className={
-            "rounded-lg flex font-bold " +
+            "rounded-regular flex font-bold " +
             (document.link ? "" : "pointer-events-none")
           }
           href={document.link}
@@ -161,7 +161,7 @@ export function Explorer({
     <div>
       {popup}
       <div className="justify-center py-2">
-        {/* <div className="flex items-center w-full px-4 py-2 border-2 rounded-lg border-border focus-within:border-accent bg-background-search">
+        {/* <div className="flex items-center w-full px-4 py-2 border-2 rounded-regular border-border focus-within:border-accent bg-background-search">
           <MagnifyingGlass />
           <textarea
             autoFocus

@@ -164,6 +164,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Modal } from "@/components/Modal";
+import { ModelSelectionConfirmaionModal } from "./ModelSelectionConfirmation";
 
 export function ModelOption({
   model,
@@ -202,6 +203,14 @@ export function ModelOption({
       {onSelect && (
         <CardFooter>
           <Button onClick={() => onSelect(model)}>Select Model</Button>
+          {/* <Modal trigger={<Button>Select Model</Button>}>
+            <ModelSelectionConfirmaionModal
+              selectedModel={selectedModel}
+              isCustom={isCustom}
+              onConfirm={onConfirm}
+              onCancel={onCancel}
+            />
+          </Modal> */}
         </CardFooter>
       )}
     </Card>
