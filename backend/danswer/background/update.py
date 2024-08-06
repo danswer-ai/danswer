@@ -76,7 +76,7 @@ def _should_create_new_indexing(
             # Once is enough. The model will never be able to swap otherwise.
             if last_index.status == IndexingStatus.SUCCESS:
                 return False
-            
+
             # No new index if the last index attempt is waiting to start
             if last_index.status == IndexingStatus.NOT_STARTED:
                 return False
