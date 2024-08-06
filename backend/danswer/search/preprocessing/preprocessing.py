@@ -133,6 +133,7 @@ def retrieval_preprocessing(
     )
 
     # Second pass at removing stopwords, the model should have already taken care of it but this is fast
+    # Also if the query is too long, the model just returns back everything
     processed_keywords = (
         remove_stop_words_and_punctuation(extracted_keywords)
         if EDIT_KEYWORD_QUERY
