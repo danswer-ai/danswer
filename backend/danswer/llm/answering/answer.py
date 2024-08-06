@@ -258,7 +258,7 @@ class Answer:
                             yield cast(str, message.content)
 
                 if not tool_call_chunk:
-                    logger.ebug(
+                    logger.debug(
                         "Skipping the tool call but generated message due to lack of existing tool call messages"
                     )
                     return
