@@ -1,6 +1,6 @@
 "use client";
 
-import { HeaderTitle } from "@/components/header/Header";
+import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { Logo } from "@/components/Logo";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";

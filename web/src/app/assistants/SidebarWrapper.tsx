@@ -124,6 +124,7 @@ export default function SidebarWrapper<T extends object>({
 
       <div className="absolute h-svh left-0 w-full top-0">
         <FunctionalHeader
+          sidebarToggled={toggledSidebar}
           toggleSidebar={toggleSidebar}
           page="assistants"
           user={headerProps.user}

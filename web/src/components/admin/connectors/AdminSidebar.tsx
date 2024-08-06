@@ -4,7 +4,7 @@ import React, { useContext } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
-import { HeaderTitle } from "@/components/header/Header";
+import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { BackIcon } from "@/components/icons/icons";
 
