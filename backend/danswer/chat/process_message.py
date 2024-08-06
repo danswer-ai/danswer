@@ -635,7 +635,6 @@ def stream_chat_message_objects(
                     yield qa_docs_response
                 elif packet.id == SECTION_RELEVANCE_LIST_ID:
                     relevance_sections = packet.response
-                    print(packet.response)
 
                     if reference_db_search_docs is not None:
                         llm_indices = relevant_documents_to_indices(
