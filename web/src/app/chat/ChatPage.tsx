@@ -267,8 +267,7 @@ export function ChatPage({
       const newMessageMap = processRawChatHistory(chatSession.messages);
       const newMessageHistory = buildLatestMessageChain(newMessageMap);
       // if the last message is an error, don't overwrite it
-      console.log(priorChatSessionId);
-      console.log(existingChatSessionId);
+
       if (
         !(
           messageHistory[messageHistory.length - 1]?.type === "error" &&
@@ -672,8 +671,6 @@ export function ChatPage({
     } else {
       currChatSessionId = chatSessionIdRef.current as number;
     }
-    console.log("UPDATING TO ");
-    console.log(currChatSessionId);
     chatSessionIdRef.current = currChatSessionId;
 
     const messageToResend = messageHistory.find(
