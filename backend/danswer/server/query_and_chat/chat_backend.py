@@ -129,6 +129,7 @@ def get_chat_session(
     db_session: Session = Depends(get_session),
 ) -> ChatSessionDetailResponse:
     user_id = user.id if user is not None else None
+    print(session_id)
 
     try:
         chat_session = get_chat_session_by_id(

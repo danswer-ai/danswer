@@ -110,6 +110,7 @@ function FileDisplay({
 }
 
 export const AIMessage = ({
+  shared,
   isActive,
   toggleDocumentSelection,
   alternativeAssistant,
@@ -132,6 +133,7 @@ export const AIMessage = ({
   retrievalDisabled,
   currentPersona,
 }: {
+  shared?: boolean;
   isActive?: boolean;
   selectedDocuments?: DanswerDocument[] | null;
   toggleDocumentSelection?: () => void;
@@ -247,8 +249,10 @@ export const AIMessage = ({
 
   return (
     <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
-      <div className="mx-auto w-[90%] max-w-message-max">
-        <div className="mobile:ml-4 xl:ml-8">
+      <div
+        className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-message-max`}
+      >
+        <div className={`${!shared && "mobile:ml-4 xl:ml-8"}`}>
           <div className="flex">
             <AssistantIcon
               size="small"
@@ -622,7 +626,9 @@ export const HumanMessage = ({
   otherMessagesCanSwitchTo,
   onEdit,
   onMessageSelection,
+  shared,
 }: {
+  shared?: boolean;
   content: string;
   files?: FileDescriptor[];
   messageId?: number | null;
@@ -669,7 +675,9 @@ export const HumanMessage = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="mx-auto w-[90%] max-w-searchbar-max">
+      <div
+        className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-searchbar-max`}
+      >
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />

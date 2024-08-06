@@ -80,6 +80,7 @@ export function SharedChatDisplay({
                 if (message.type === "user") {
                   return (
                     <HumanMessage
+                      shared
                       key={message.messageId}
                       content={message.message}
                       files={message.files}
@@ -88,10 +89,12 @@ export function SharedChatDisplay({
                 } else {
                   return (
                     <AIMessage
+                      shared
                       currentPersona={currentPersona!}
                       key={message.messageId}
                       messageId={message.messageId}
                       content={message.message}
+                      files={message.files || []}
                       personaName={chatSession.persona_name}
                       citedDocuments={getCitedDocumentsFromMessage(message)}
                       isComplete
