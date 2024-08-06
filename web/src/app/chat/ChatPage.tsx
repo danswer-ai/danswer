@@ -136,8 +136,6 @@ export function ChatPage({
         : undefined
   );
 
-  // LLM
-
   // Gather default temperature settings
   const search_param_temperature = searchParams.get(
     SEARCH_PARAM_NAMES.TEMPERATURE
