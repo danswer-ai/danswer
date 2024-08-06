@@ -195,7 +195,6 @@ export function ChatPage({
   // this is triggered every time the user switches which chat
   // session they are using
   useEffect(() => {
-    console.log("CALLLING");
     const priorChatSessionId = chatSessionIdRef.current;
     const loadedSessionId = loadedIdSessionRef.current;
     chatSessionIdRef.current = existingChatSessionId;
