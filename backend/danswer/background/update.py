@@ -72,9 +72,17 @@ def _should_create_new_indexing(
     # When switching over models, always index at least once
     if model.status == IndexModelStatus.FUTURE:
         if last_index:
-            # secondary indexes should not index again after success
-            # or else the model will never be able to swap
+            # No new index if the last index attempt succeeded
+            # Once is enough. The model will never be able to swap otherwise.
             if last_index.status == IndexingStatus.SUCCESS:
+                return False
+
+            # No new index if the last index attempt is waiting to start
+            if last_index.status == IndexingStatus.NOT_STARTED:
+                return False
+
+            # No new index if the last index attempt is running
+            if last_index.status == IndexingStatus.IN_PROGRESS:
                 return False
         else:
             if connector.id == 0:  # Ingestion API
