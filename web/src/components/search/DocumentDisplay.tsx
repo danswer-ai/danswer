@@ -18,6 +18,7 @@ import { FaStar } from "react-icons/fa";
 import { FiTag } from "react-icons/fi";
 import { DISABLE_LLM_DOC_RELEVANCE } from "@/lib/constants";
 import { SettingsContext } from "../settings/SettingsProvider";
+import { CustomTooltip, TooltipGroup } from "../tooltip/CustomTooltip";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -227,30 +228,33 @@ export const DocumentDisplay = ({
             </p>
           </a>
           <div className="ml-auto flex gap-x-2">
-            {isHovered && messageId && (
-              <DocumentFeedbackBlock
-                documentId={document.document_id}
-                messageId={messageId}
-                documentRank={documentRank}
-                setPopup={setPopup}
-              />
-            )}
-
-            {(contentEnriched || additional_relevance) &&
-              relevance_explanation &&
-              (isHovered || alternativeToggled || settings?.isMobile) && (
-                <button
-                  onClick={() =>
-                    setAlternativeToggled(
-                      (alternativeToggled) => !alternativeToggled
-                    )
-                  }
-                >
-                  <LightBulbIcon
-                    className={`${settings?.isMobile && alternativeToggled ? "text-green-600" : "text-blue-600"} h-4 w-4 cursor-pointer`}
-                  />
-                </button>
+            <TooltipGroup>
+              {isHovered && messageId && (
+                <DocumentFeedbackBlock
+                  documentId={document.document_id}
+                  messageId={messageId}
+                  documentRank={documentRank}
+                  setPopup={setPopup}
+                />
               )}
+              {(contentEnriched || additional_relevance) &&
+                relevance_explanation &&
+                (isHovered || alternativeToggled || settings?.isMobile) && (
+                  <button
+                    onClick={() =>
+                      setAlternativeToggled(
+                        (alternativeToggled) => !alternativeToggled
+                      )
+                    }
+                  >
+                    <CustomTooltip showTick line content="Toggle content">
+                      <LightBulbIcon
+                        className={`${settings?.isMobile && alternativeToggled ? "text-green-600" : "text-blue-600"} h-4 w-4 cursor-pointer`}
+                      />
+                    </CustomTooltip>
+                  </button>
+                )}
+            </TooltipGroup>
           </div>
         </div>
         <div className="mt-1">
@@ -339,7 +343,9 @@ export const AgenticDocumentDisplay = ({
                     )
                   }
                 >
-                  <BookIcon className="text-blue-400" />
+                  <CustomTooltip showTick line content="Toggle content">
+                    <BookIcon className="text-blue-400" />
+                  </CustomTooltip>
                 </button>
               )}
           </div>

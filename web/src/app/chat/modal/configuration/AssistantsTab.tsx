@@ -74,7 +74,7 @@ export function AssistantsTab({
           items={assistants.map((a) => a.id.toString())}
           strategy={verticalListSortingStrategy}
         >
-          <div className="px-2 pb-2 mx-2 max-h-[500px] miniscroll overflow-y-scroll my-3 grid grid-cols-1 gap-4">
+          <div className="px-4 pb-2  max-h-[500px] include-scrollbar overflow-y-scroll my-3 grid grid-cols-1 gap-4">
             {assistants.map((assistant) => (
               <DraggableAssistantCard
                 key={assistant.id.toString()}

@@ -43,6 +43,10 @@ class ConnectorBase(BaseModel):
     indexing_start: datetime | None
 
 
+class ConnectorCredentialBase(ConnectorBase):
+    is_public: bool
+
+
 class ConnectorSnapshot(ConnectorBase):
     id: int
     credential_ids: list[int]
