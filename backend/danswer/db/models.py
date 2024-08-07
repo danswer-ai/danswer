@@ -44,6 +44,9 @@ from danswer.db.enums import ChatSessionSharedStatus
 from danswer.db.enums import IndexingStatus
 from danswer.db.enums import IndexModelStatus
 from danswer.db.enums import TaskStatus
+from danswer.db.enums import WorkspaceSubscriptionPlan
+from danswer.db.enums import InstanceSubscriptionPlan
+from danswer.db.enums import DefaultPage
 from danswer.db.pydantic_type import PydanticType
 from danswer.dynamic_configs.interface import JSON_ro
 from danswer.file_store.models import FileDescriptor
@@ -1373,3 +1376,53 @@ class UsageReport(Base):
 
     requestor = relationship("User")
     file = relationship("PGFileStore")
+
+
+"""
+Workspace Tables
+"""
+
+class Workspace(Base):
+    __tablename__ = "workspace"
+
+    workspace_id: Mapped[int] = mapped_column(primary_key=True)
+    instance_id: Mapped[int | None] = mapped_column(ForeignKey("instance.instance_id"), nullable=True)
+    Workspace_name: Mapped[str] = mapped_column(Text)
+    custom_logo: Mapped[str] = mapped_column(Text)
+    custom_header_logo: Mapped[str] = mapped_column(Text)
+
+
+class WorkspaceSettings(Base):
+    __tablename__ = "workspace_settings"
+
+    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspace.workspace_id"), primary_key=True)
+    chat_page_enabled: Mapped[bool] = mapped_column(Boolean, default=True) 
+    search_page_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    default_page: Mapped[DefaultPage] = mapped_column(
+        Enum(DefaultPage, native_enum=False)
+    )
+    maximum_chat_retention_days: Mapped[int] = mapped_column(Integer)
+    subscription_plan:  Mapped[WorkspaceSubscriptionPlan] = mapped_column(
+        Enum(WorkspaceSubscriptionPlan, native_enum=False)
+    )
+    number_of_users: Mapped[int] = mapped_column(Integer)
+    storage_limit: Mapped[int] = mapped_column(Integer)
+
+
+class Instance(Base):
+    __tablename__ = "instance"
+
+    instance_id: Mapped[int] = mapped_column(primary_key=True)
+    instance_name: Mapped[str] = mapped_column(Text)
+    subscription_plan:  Mapped[InstanceSubscriptionPlan] = mapped_column(
+        Enum(InstanceSubscriptionPlan, native_enum=False)
+    )
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+
+
+class WorkspaceUsers(Base):
+    __tablename__ = "workspace__users"
+
+    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspace.workspace_id"), primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+
