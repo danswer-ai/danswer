@@ -1,3 +1,4 @@
+import base64
 import json
 from collections.abc import Callable
 from collections.abc import Iterator
@@ -6,6 +7,7 @@ from typing import cast
 from typing import TYPE_CHECKING
 from typing import Union
 
+import httpx
 import litellm  # type: ignore
 import tiktoken
 from langchain.prompts.base import StringPromptValue
@@ -28,6 +30,7 @@ from danswer.llm.interfaces import LLM
 from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import LOG_LEVEL
+
 
 if TYPE_CHECKING:
     from danswer.llm.answering.models import PreviousMessage
@@ -129,7 +132,7 @@ def build_content_with_imgs(
             {
                 "type": "image_url",
                 "image_url": {
-                    "url": url,
+                    "url": f"data:image/jpeg;base64,{base64.b64encode(httpx.get(url).content).decode('utf-8')}"
                 },
             }
             for url in img_urls
