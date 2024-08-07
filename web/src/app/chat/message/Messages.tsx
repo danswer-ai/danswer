@@ -177,19 +177,10 @@ export const AIMessage = ({
 
   const finalContent = processContent(content as string);
 
-  const [isReady, setIsReady] = useState(false);
-  useEffect(() => {
-    Prism.highlightAll();
-    setIsReady(true);
-  }, []);
-
   const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
 
   const settings = useContext(SettingsContext);
   // this is needed to give Prism a chance to load
-  if (!isReady) {
-    return <div />;
-  }
 
   const selectedDocumentIds =
     selectedDocuments?.map((document) => document.document_id) || [];

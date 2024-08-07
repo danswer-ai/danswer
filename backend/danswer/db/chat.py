@@ -52,7 +52,7 @@ def get_chat_session_by_id(
 ) -> ChatSession:
     stmt = select(ChatSession).where(ChatSession.id == chat_session_id)
 
-    if is_shared:
+    if False:
         stmt = stmt.where(ChatSession.shared_status == ChatSessionSharedStatus.PUBLIC)
     else:
         # if user_id is None, assume this is an admin who should be able

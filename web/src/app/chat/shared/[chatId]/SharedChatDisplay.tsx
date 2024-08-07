@@ -1,4 +1,5 @@
 "use client";
+import Prism from "prismjs";
 
 import { humanReadableFormat } from "@/lib/time";
 import { BackendChatSession } from "../../interfaces";
@@ -11,8 +12,9 @@ import { AIMessage, HumanMessage } from "../../message/Messages";
 import { Button, Callout, Divider } from "@tremor/react";
 import { useRouter } from "next/navigation";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 
 function BackToDanswerButton() {
   const router = useRouter();
@@ -25,6 +27,7 @@ function BackToDanswerButton() {
           Back to {enterpriseSettings?.application_name || "Danswer Chat"}
         </Button>
       </div>
+      pr
     </div>
   );
 }
@@ -57,6 +60,11 @@ export function SharedChatDisplay({
   const messages = buildLatestMessageChain(
     processRawChatHistory(chatSession.messages)
   );
+  const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    Prism.highlightAll();
+    setIsReady(true);
+  }, []);
 
   return (
     <div className="w-full overflow-hidden">
@@ -74,35 +82,40 @@ export function SharedChatDisplay({
 
               <Divider />
             </div>
-
-            <div className="w-full pb-16">
-              {messages.map((message) => {
-                if (message.type === "user") {
-                  return (
-                    <HumanMessage
-                      shared
-                      key={message.messageId}
-                      content={message.message}
-                      files={message.files}
-                    />
-                  );
-                } else {
-                  return (
-                    <AIMessage
-                      shared
-                      currentPersona={currentPersona!}
-                      key={message.messageId}
-                      messageId={message.messageId}
-                      content={message.message}
-                      files={message.files || []}
-                      personaName={chatSession.persona_name}
-                      citedDocuments={getCitedDocumentsFromMessage(message)}
-                      isComplete
-                    />
-                  );
-                }
-              })}
-            </div>
+            {isReady ? (
+              <div className="w-full pb-16">
+                {messages.map((message) => {
+                  if (message.type === "user") {
+                    return (
+                      <HumanMessage
+                        shared
+                        key={message.messageId}
+                        content={message.message}
+                        files={message.files}
+                      />
+                    );
+                  } else {
+                    return (
+                      <AIMessage
+                        shared
+                        currentPersona={currentPersona!}
+                        key={message.messageId}
+                        messageId={message.messageId}
+                        content={message.message}
+                        files={message.files || []}
+                        personaName={chatSession.persona_name}
+                        citedDocuments={getCitedDocumentsFromMessage(message)}
+                        isComplete
+                      />
+                    );
+                  }
+                })}
+              </div>
+            ) : (
+              <div className="flex w-full">
+                <DanswerInitializingLoader />
+              </div>
+            )}
           </div>
         </div>
       </div>
