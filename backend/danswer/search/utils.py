@@ -19,6 +19,14 @@ T = TypeVar(
     SavedSearchDocWithContent,
 )
 
+TSection = TypeVar(
+    "TSection",
+    InferenceSection,
+    SearchDoc,
+    SavedSearchDoc,
+    SavedSearchDocWithContent,
+)
+
 
 def dedupe_documents(items: list[T]) -> tuple[list[T], list[int]]:
     seen_ids = set()
@@ -39,7 +47,7 @@ def dedupe_documents(items: list[T]) -> tuple[list[T], list[int]]:
 
 
 def relevant_sections_to_indices(
-    relevance_sections: list[SectionRelevancePiece] | None, items: list[T]
+    relevance_sections: list[SectionRelevancePiece] | None, items: list[TSection]
 ) -> list[int]:
     if not relevance_sections:
         return []
@@ -60,7 +68,7 @@ def relevant_sections_to_indices(
                 in relevant_set
             )
             or (
-                not isinstance(item, (InferenceSection, InferenceChunk))
+                not isinstance(item, (InferenceSection))
                 and (item.document_id, item.chunk_ind) in relevant_set
             )
         )
