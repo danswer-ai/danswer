@@ -129,6 +129,17 @@ POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 
+# defaults to False
+POSTGRES_POOL_PRE_PING = os.environ.get("POSTGRES_POOL_PRE_PING", "").lower() == "true"
+
+# recycle timeout in seconds
+POSTGRES_POOL_RECYCLE_DEFAULT = 60 * 20  # 20 minutes
+try:
+    POSTGRES_POOL_RECYCLE = int(
+        os.environ.get("POSTGRES_POOL_RECYCLE", POSTGRES_POOL_RECYCLE_DEFAULT)
+    )
+except ValueError:
+    POSTGRES_POOL_RECYCLE = POSTGRES_POOL_RECYCLE_DEFAULT
 
 #####
 # Connector Configs
