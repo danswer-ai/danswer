@@ -47,7 +47,7 @@ def _run_migrations(
     logging.getLogger("alembic").setLevel(logging.INFO)
 
 
-def reset_postgres(database: str = "postgres"):
+def reset_postgres(database: str = "postgres") -> None:
     """Reset the Postgres database."""
 
     # NOTE: need to delete all rows to allow migrations to be rolled back
@@ -116,7 +116,7 @@ def reset_postgres(database: str = "postgres"):
         setup_postgres(db_session)
 
 
-def reset_vespa():
+def reset_vespa() -> None:
     """Wipe all data from the Vespa index."""
     with get_session_context_manager() as db_session:
         # swap to the correct default model
@@ -155,7 +155,7 @@ def reset_vespa():
             time.sleep(5)
 
 
-def reset_all():
+def reset_all() -> None:
     """Reset both Postgres and Vespa."""
     print("Resetting Postgres...")
     reset_postgres()

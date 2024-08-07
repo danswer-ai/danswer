@@ -1,3 +1,5 @@
+from collections.abc import Generator
+
 import pytest
 from sqlalchemy.orm import Session
 
@@ -8,7 +10,7 @@ from tests.integration.common.vespa import TestVespaClient
 
 
 @pytest.fixture
-def db_session() -> Session:
+def db_session() -> Generator[Session, None, None]:
     with get_session_context_manager() as session:
         yield session
 
