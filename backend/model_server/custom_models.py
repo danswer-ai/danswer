@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from fastapi import APIRouter
+from huggingface_hub import snapshot_download  # type: ignore
 from transformers import AutoTokenizer  # type: ignore
 from transformers import BatchEncoding
 
@@ -9,6 +10,7 @@ from model_server.constants import MODEL_WARM_UP_STRING
 from model_server.danswer_torch_model import HybridClassifier
 from model_server.utils import simple_log_function_time
 from shared_configs.configs import INDEXING_ONLY
+from shared_configs.configs import INTENT_MODEL_TAG
 from shared_configs.configs import INTENT_MODEL_VERSION
 from shared_configs.model_server_models import IntentRequest
 from shared_configs.model_server_models import IntentResponse
@@ -32,27 +34,48 @@ def get_intent_model_tokenizer() -> AutoTokenizer:
 
 def get_local_intent_model(
     model_name_or_path: str = INTENT_MODEL_VERSION,
+    tag: str = INTENT_MODEL_TAG,
 ) -> HybridClassifier:
     global _INTENT_MODEL
     if _INTENT_MODEL is None:
-        _INTENT_MODEL = HybridClassifier.from_pretrained(model_name_or_path)
+        try:
+            # Calculate where the cache should be, then load from local if available
+            local_path = snapshot_download(
+                repo_id=model_name_or_path, revision=tag, local_files_only=True
+            )
+            _INTENT_MODEL = HybridClassifier.from_pretrained(local_path)
+        except Exception as e:
+            logger.warning(f"Failed to load model directly: {e}")
+            try:
+                # Attempt to download the model snapshot
+                logger.info(f"Downloading model snapshot for {model_name_or_path}")
+                local_path = snapshot_download(repo_id=model_name_or_path, revision=tag)
+                _INTENT_MODEL = HybridClassifier.from_pretrained(local_path)
+            except Exception as e:
+                logger.error(
+                    f"Failed to load model even after attempted snapshot download: {e}"
+                )
+                raise
     return _INTENT_MODEL
 
 
 def warm_up_intent_model() -> None:
     logger.info(f"Warming up Intent Model: {INTENT_MODEL_VERSION}")
     intent_tokenizer = get_intent_model_tokenizer()
-    inputs = intent_tokenizer(
+    tokens = intent_tokenizer(
         MODEL_WARM_UP_STRING, return_tensors="pt", truncation=True, padding=True
     )
-    get_local_intent_model()(inputs)
+    intent_model = get_local_intent_model()
+    intent_model(query_ids=tokens["input_ids"], query_mask=tokens["attention_mask"])
 
 
 @simple_log_function_time()
-def run_inference(model_inputs: BatchEncoding) -> tuple[list[float], list[list[float]]]:
+def run_inference(tokens: BatchEncoding) -> tuple[list[float], list[float]]:
     intent_model = get_local_intent_model()
 
-    outputs = intent_model(model_inputs)[0]
+    outputs = intent_model(
+        query_ids=tokens["input_ids"], query_mask=tokens["attention_mask"]
+    )
 
     token_logits = outputs["token_logits"]
     intent_logits = outputs["intent_logits"]
@@ -73,6 +96,14 @@ def map_keywords(
     if not len(tokens) == len(is_keyword):
         raise ValueError("Length of tokens and keyword predictions must match")
 
+    if input_ids[0] == tokenizer.cls_token_id:
+        tokens = tokens[1:]
+        is_keyword = is_keyword[1:]
+
+    if input_ids[-1] == tokenizer.sep_token_id:
+        tokens = tokens[:-1]
+        is_keyword = is_keyword[:-1]
+
     unk_token = tokenizer.unk_token
     if unk_token in tokens:
         raise ValueError("Unknown token detected in the input")
@@ -80,8 +111,8 @@ def map_keywords(
     keywords = []
     current_keyword = ""
 
-    for token in tokens:
-        if is_keyword[token]:
+    for ind, token in enumerate(tokens):
+        if is_keyword[ind]:
             if token.startswith("##"):
                 current_keyword += token[2:]
             else:
@@ -127,11 +158,10 @@ def run_analysis(intent_req: IntentRequest) -> tuple[bool, list[str]]:
 
     intent_probs, token_probs = run_inference(model_input)
 
-    is_keyword = intent_probs[0] >= intent_req.keyword_percent_threshold
+    is_keyword_sequence = intent_probs[0] >= intent_req.keyword_percent_threshold
 
     keyword_preds = [
-        token_prob[-1] >= intent_req.keyword_percent_threshold
-        for token_prob in token_probs
+        token_prob >= intent_req.keyword_percent_threshold for token_prob in token_probs
     ]
 
     try:
@@ -145,7 +175,7 @@ def run_analysis(intent_req: IntentRequest) -> tuple[bool, list[str]]:
 
     cleaned_keywords = clean_keywords(keywords)
 
-    return is_keyword, cleaned_keywords
+    return is_keyword_sequence, cleaned_keywords
 
 
 @router.post("/query-analysis")
