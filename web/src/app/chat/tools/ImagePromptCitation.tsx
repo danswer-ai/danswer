@@ -6,18 +6,13 @@ import { FiCheck } from "react-icons/fi";
 
 interface PromptDisplayProps {
   prompt1: string;
-  prompt2: string;
-  setPopup: (popupSpec: PopupSpec | null) => void;
-}
-
-interface PromptDisplayProps {
-  prompt1: string;
-  prompt2: string;
+  prompt2?: string;
+  arg: string;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 const DualPromptDisplay = forwardRef<HTMLDivElement, PromptDisplayProps>(
-  ({ prompt1, prompt2, setPopup }, ref) => {
+  ({ prompt1, prompt2, setPopup, arg }, ref) => {
     const [copied, setCopied] = useState<number | null>(null);
 
     const copyToClipboard = (text: string, index: number) => {
@@ -43,7 +38,9 @@ const DualPromptDisplay = forwardRef<HTMLDivElement, PromptDisplayProps>(
       index: number;
     }) => (
       <div className="w-full p-2 rounded-lg">
-        <h2 className="text-lg font-semibold mb-2">Prompt {index + 1}</h2>
+        <h2 className="text-lg font-semibold mb-2">
+          {arg} {index + 1}
+        </h2>
 
         <p className="line-clamp-6 text-sm text-gray-800">{prompt}</p>
 
@@ -70,8 +67,12 @@ const DualPromptDisplay = forwardRef<HTMLDivElement, PromptDisplayProps>(
       <div className="w-[400px] bg-inverted mx-auto p-6 rounded-lg shadow-lg">
         <div className="flex flex-col gap-x-4">
           <PromptSection copied={copied} prompt={prompt1} index={0} />
-          <Divider />
-          <PromptSection copied={copied} prompt={prompt2} index={1} />
+          {prompt2 && (
+            <>
+              <Divider />
+              <PromptSection copied={copied} prompt={prompt2} index={1} />
+            </>
+          )}
         </div>
       </div>
     );
