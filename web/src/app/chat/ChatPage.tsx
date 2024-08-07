@@ -412,6 +412,8 @@ export function ChatPage({
     completeMessageDetail.messageMap
   );
   const [isStreaming, setIsStreaming] = useState(false);
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
 
   // uploaded files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
@@ -614,18 +616,30 @@ export function ChatPage({
       return this.stack.length === 0;
     }
   }
+
   async function updateCurrentMessageFIFO(
     stack: CurrentMessageFIFO,
     params: any
   ) {
     try {
       for await (const packetBunch of sendMessage(params)) {
+        if (params.signal?.aborted) {
+          throw new Error("AbortError");
+        }
         for (const packet of packetBunch) {
           stack.push(packet);
         }
       }
-    } catch (error) {
-      stack.error = String(error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          console.debug("Stream aborted");
+        } else {
+          stack.error = error.message;
+        }
+      } else {
+        stack.error = String(error);
+      }
     } finally {
       stack.isComplete = true;
     }
@@ -662,6 +676,9 @@ export function ChatPage({
 
       return;
     }
+
+    const controller = new AbortController();
+    setAbortController(controller);
 
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
     clientScrollToBottom();
@@ -775,6 +792,8 @@ export function ChatPage({
 
       const stack = new CurrentMessageFIFO();
       updateCurrentMessageFIFO(stack, {
+        signal: controller.signal, // Add this line
+
         message: currMessage,
         alternateAssistantId: currentAssistantId,
         fileDescriptors: currentMessageFiles,
@@ -987,9 +1006,12 @@ export function ChatPage({
 
   const onAssistantChange = (assistant: Persona | null) => {
     if (assistant && assistant.id !== liveAssistant.id) {
-      // remove uploaded files
-      setCurrentMessageFiles([]);
-      setSelectedAssistant(assistant);
+      // Abort the ongoing stream if it exists
+      if (abortController && isStreaming) {
+        abortController.abort();
+        resetInputBar();
+      }
+
       textAreaRef.current?.focus();
       router.push(buildChatUrl(searchParams, null, assistant.id));
     }
