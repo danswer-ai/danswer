@@ -1,4 +1,3 @@
-import base64
 import json
 from collections.abc import Callable
 from collections.abc import Iterator
@@ -7,7 +6,6 @@ from typing import cast
 from typing import TYPE_CHECKING
 from typing import Union
 
-import httpx
 import litellm  # type: ignore
 import tiktoken
 from langchain.prompts.base import StringPromptValue
@@ -132,7 +130,7 @@ def build_content_with_imgs(
             {
                 "type": "image_url",
                 "image_url": {
-                    "url": f"data:image/jpeg;base64,{base64.b64encode(httpx.get(url).content).decode('utf-8')}"
+                    "url": url,
                 },
             }
             for url in img_urls
