@@ -115,7 +115,7 @@ def handle_search_request(
 
     llm_indices = relevant_saved_search_doc_to_indices(
         relevance_sections=relevance_sections,
-        search_docs=deduped_docs
+        saved_search_doc=deduped_docs
     )
 
     if dropped_inds:
