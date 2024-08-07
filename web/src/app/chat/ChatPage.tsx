@@ -10,6 +10,7 @@ import {
   FileDescriptor,
   ImageGenerationDisplay,
   Message,
+  PreviousAIMessage,
   RetrievalType,
   StreamingError,
   ToolCallMetadata,
@@ -386,7 +387,7 @@ export function ChatPage({
         message: "",
         type: "system",
         files: [],
-        toolCalls: [],
+        toolCall: null,
         parentMessageId: null,
         childrenMessageIds: [firstMessageId],
         latestChildMessageId: firstMessageId,
@@ -439,6 +440,7 @@ export function ChatPage({
   const [isStreaming, setIsStreaming] = useState(false);
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // uploaded files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
@@ -701,6 +703,7 @@ export function ChatPage({
 
       return;
     }
+    let previousMessage: PreviousAIMessage | null = null;
 
     const controller = new AbortController();
     setAbortController(controller);
@@ -748,6 +751,7 @@ export function ChatPage({
     if (messageOverride) {
       currMessage = messageOverride;
     }
+
     const currMessageHistory =
       messageToResendIndex !== null
         ? messageHistory.slice(0, messageToResendIndex)
@@ -767,7 +771,7 @@ export function ChatPage({
         message: currMessage,
         type: "user",
         files: currentMessageFiles,
-        toolCalls: [],
+        toolCall: null,
         parentMessageId: parentMessage?.messageId || null,
       },
     ];
@@ -780,7 +784,7 @@ export function ChatPage({
         latestChildMessageId: TEMP_USER_MESSAGE_ID,
       });
     }
-    const { messageMap: frozenMessageMap, sessionId: frozenSessionId } =
+    let { messageMap: frozenMessageMap, sessionId: frozenSessionId } =
       upsertToCompleteMessageMap({
         messages: messageUpdates,
         chatSessionId: currChatSessionId,
@@ -799,7 +803,7 @@ export function ChatPage({
         : liveAssistant.id;
 
     resetInputBar();
-
+    setIsGenerating(true);
     setIsStreaming(true);
     let answer = "";
     let query: string | null = null;
@@ -811,7 +815,7 @@ export function ChatPage({
     let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
-    let toolCalls: ToolCallMetadata[] = [];
+    let toolCall: ToolCallMetadata | null = null;
 
     try {
       const lastSuccessfulMessageId =
@@ -857,24 +861,28 @@ export function ChatPage({
         useExistingUserMessage: isSeededChat,
       });
 
-      const updateFn = (messages: Message[]) => {
+      let updateFn = (messages: Message[]) => {
         const replacementsMap = finalMessage
           ? new Map([
               [messages[0].messageId, TEMP_USER_MESSAGE_ID],
               [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
             ] as [number, number][])
           : null;
-        upsertToCompleteMessageMap({
+
+        return upsertToCompleteMessageMap({
           messages: messages,
           replacementsMap: replacementsMap,
           completeMessageMapOverride: frozenMessageMap,
           chatSessionId: frozenSessionId!,
         });
       };
+      let files = currentMessageFiles;
       const delay = (ms: number) => {
         return new Promise((resolve) => setTimeout(resolve, ms));
       };
 
+      let parentId: number | null = null;
+      let generatedAssistantId: number | null = null;
       await delay(50);
       while (!stack.isComplete || !stack.isEmpty()) {
         await delay(2);
@@ -882,6 +890,12 @@ export function ChatPage({
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();
           if (packet) {
+            console.log(packet);
+            if (Object.hasOwn(packet, "delimiter")) {
+              // console.log("MESSAGE DELIMITER");
+              // TODO: Remove or put to good use!
+            }
+
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {
@@ -894,13 +908,11 @@ export function ChatPage({
                 setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
               }
             } else if (Object.hasOwn(packet, "tool_name")) {
-              toolCalls = [
-                {
-                  tool_name: (packet as ToolCallMetadata).tool_name,
-                  tool_args: (packet as ToolCallMetadata).tool_args,
-                  tool_result: (packet as ToolCallMetadata).tool_result,
-                },
-              ];
+              toolCall = {
+                tool_name: (packet as ToolCallMetadata).tool_name,
+                tool_args: (packet as ToolCallMetadata).tool_args,
+                tool_result: (packet as ToolCallMetadata).tool_result,
+              };
             } else if (Object.hasOwn(packet, "file_ids")) {
               aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
                 (fileId) => {
@@ -914,38 +926,129 @@ export function ChatPage({
               error = (packet as StreamingError).error;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
+
+              const newUserMessageId = finalMessage.parent_message!;
+              const newAssistantMessageId = finalMessage.message_id;
+
+              if (
+                newUserMessageId !== undefined &&
+                newAssistantMessageId !== undefined
+              ) {
+                let {
+                  messageMap: newFrozenMessageMap,
+                  sessionId: newFrozenSessionId,
+                } = updateFn([
+                  {
+                    messageId: newUserMessageId,
+                    message: currMessage,
+                    type: parentId ? "assistant" : "user",
+                    files: files,
+                    toolCall: null,
+                    parentMessageId: parentMessage?.messageId || null,
+                    childrenMessageIds: [newAssistantMessageId],
+                    latestChildMessageId: newAssistantMessageId,
+                  },
+                  {
+                    messageId: newAssistantMessageId,
+                    message: answer,
+                    type: "assistant",
+                    retrievalType,
+                    query: finalMessage.rephrased_query || query,
+                    documents:
+                      finalMessage.context_docs?.top_documents || documents,
+                    citations: finalMessage.citations || {},
+                    files: finalMessage.files || aiMessageImages || [],
+                    toolCall: finalMessage.tool_call || toolCall,
+                    parentMessageId: newUserMessageId,
+                    alternateAssistantID: alternativeAssistant?.id,
+                  },
+                ]);
+                parentId = newUserMessageId;
+                currMessage = answer;
+                generatedAssistantId = newUserMessageId;
+
+                previousMessage = {
+                  parentMessageId: parentId,
+                  toolCall: finalMessage.tool_call,
+                  documents:
+                    finalMessage.context_docs?.top_documents || documents,
+                  type: "assistant",
+                };
+
+                updateFn = (messages: Message[]) => {
+                  const replacementsMap = finalMessage
+                    ? new Map([
+                        [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+                        [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+                      ] as [number, number][])
+                    : null;
+
+                  return upsertToCompleteMessageMap({
+                    messages: messages,
+                    replacementsMap: replacementsMap,
+                    completeMessageMapOverride: newFrozenMessageMap,
+                    chatSessionId: frozenSessionId!,
+                  });
+                };
+                files = finalMessage.files;
+                // setCurrentMessageFsetiles(finalMessage.files)
+                finalMessage = null;
+                aiMessageImages = null;
+                answer = "";
+
+                setIsStreaming(false);
+                // setIsGenerating(false)
+                // return
+              } else {
+                console.error(
+                  "Invalid message_id or parent_message in finalMessage"
+                );
+              }
+              finalMessage = null as BackendMessage | null;
             }
 
-            const newUserMessageId =
-              finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
-            const newAssistantMessageId =
-              finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
-            updateFn([
-              {
-                messageId: newUserMessageId,
-                message: currMessage,
-                type: "user",
-                files: currentMessageFiles,
-                toolCalls: [],
-                parentMessageId: parentMessage?.messageId || null,
-                childrenMessageIds: [newAssistantMessageId],
-                latestChildMessageId: newAssistantMessageId,
-              },
-              {
-                messageId: newAssistantMessageId,
-                message: error || answer,
-                type: error ? "error" : "assistant",
-                retrievalType,
-                query: finalMessage?.rephrased_query || query,
-                documents:
-                  finalMessage?.context_docs?.top_documents || documents,
-                citations: finalMessage?.citations || {},
-                files: finalMessage?.files || aiMessageImages || [],
-                toolCalls: finalMessage?.tool_calls || toolCalls,
-                parentMessageId: newUserMessageId,
-                alternateAssistantID: alternativeAssistant?.id,
-              },
-            ]);
+            if (
+              !Object.hasOwn(packet, "message_id") &&
+              !Object.hasOwn(packet, "delimiter")
+            ) {
+              const newUserMessageId =
+                finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
+              const newAssistantMessageId =
+                finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+
+              updateFn([
+                {
+                  messageId: newUserMessageId,
+                  message: currMessage,
+                  type:
+                    previousMessage?.type || generatedAssistantId
+                      ? "assistant"
+                      : "user",
+                  files: previousMessage?.files || files,
+                  toolCall: previousMessage?.toolCall || null,
+                  parentMessageId:
+                    previousMessage?.parentMessageId ||
+                    parentMessage?.messageId ||
+                    null,
+                  childrenMessageIds: [newAssistantMessageId],
+                  latestChildMessageId: newAssistantMessageId,
+                },
+                {
+                  messageId: newAssistantMessageId,
+                  message: error || answer,
+                  type: error ? "error" : "assistant",
+                  retrievalType,
+                  query: finalMessage?.rephrased_query || query,
+                  documents:
+                    finalMessage?.context_docs?.top_documents || documents,
+                  citations: finalMessage?.citations || {},
+                  files: finalMessage?.files || aiMessageImages || [],
+                  toolCall: finalMessage?.tool_call || toolCall,
+                  parentMessageId: newUserMessageId,
+                  alternateAssistantID: alternativeAssistant?.id,
+                },
+              ]);
+            }
           }
         }
       }
@@ -958,7 +1061,7 @@ export function ChatPage({
             message: currMessage,
             type: "user",
             files: currentMessageFiles,
-            toolCalls: [],
+            toolCall: null,
             parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
           },
           {
@@ -966,13 +1069,14 @@ export function ChatPage({
             message: errorMsg,
             type: "error",
             files: aiMessageImages || [],
-            toolCalls: [],
+            toolCall: null,
             parentMessageId: TEMP_USER_MESSAGE_ID,
           },
         ],
         completeMessageMapOverride: frozenMessageMap,
       });
     }
+    setIsGenerating(false);
 
     setIsStreaming(false);
     if (isNewSession) {
@@ -1429,6 +1533,28 @@ export function ChatPage({
                                       )
                                     : null;
 
+                                const hasParentMessage =
+                                  message.parentMessageId !== null &&
+                                  message.parentMessageId !== undefined;
+                                const parentMessage = hasParentMessage
+                                  ? messageMap.get(message.parentMessageId!)
+                                  : null;
+                                const parentMessageType = parentMessage
+                                  ? parentMessage.type
+                                  : null;
+
+                                const hasChildMessage =
+                                  message.latestChildMessageId !== null &&
+                                  message.latestChildMessageId !== undefined;
+                                const childMessage = hasChildMessage
+                                  ? messageMap.get(
+                                      message.latestChildMessageId!
+                                    )
+                                  : null;
+                                const childMessageType = childMessage
+                                  ? childMessage.type
+                                  : null;
+
                                 return (
                                   <div
                                     key={messageReactComponentKey}
@@ -1439,6 +1565,18 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      setPopup={setPopup}
+                                      hasParentAI={
+                                        parentMessageType == "assistant"
+                                      }
+                                      hasChildAI={
+                                        childMessageType == "assistant" ||
+                                        isGenerating
+                                      }
+                                      generatingTool={
+                                        message.toolCall != null &&
+                                        message.toolCall.tool_result == null
+                                      }
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
                                       toggleDocumentSelection={
@@ -1459,10 +1597,7 @@ export function ChatPage({
                                       citedDocuments={getCitedDocumentsFromMessage(
                                         message
                                       )}
-                                      toolCall={
-                                        message.toolCalls &&
-                                        message.toolCalls[0]
-                                      }
+                                      toolCall={message.toolCall!}
                                       isComplete={
                                         i !== messageHistory.length - 1 ||
                                         !isStreaming
@@ -1565,14 +1700,12 @@ export function ChatPage({
                                 return (
                                   <div key={messageReactComponentKey}>
                                     <AIMessage
+                                      setPopup={setPopup}
                                       currentPersona={liveAssistant}
                                       messageId={message.messageId}
                                       personaName={liveAssistant.name}
-                                      content={
-                                        <p className="text-red-700 text-sm my-auto">
-                                          {message.message}
-                                        </p>
-                                      }
+                                      files={message.files}
+                                      content={message.message}
                                     />
                                   </div>
                                 );
@@ -1586,6 +1719,7 @@ export function ChatPage({
                                   key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                                 >
                                   <AIMessage
+                                    setPopup={setPopup}
                                     currentPersona={liveAssistant}
                                     alternativeAssistant={
                                       alternativeGeneratingAssistant ??

@@ -41,6 +41,7 @@ import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 import {
   DislikeFeedbackIcon,
   LikeFeedbackIcon,
+  ToolCallIcon,
 } from "@/components/icons/icons";
 import {
   CustomTooltip,
@@ -51,7 +52,10 @@ import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useMouseTracking } from "./hooks";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
+import GeneratingImage from "../tools/ImageGeneratingAnimation";
+import DualPromptDisplay from "../tools/ImagePromptCitation";
+import { Popover } from "@/components/popover/Popover";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -105,6 +109,8 @@ export const AIMessage = ({
   shared,
   isActive,
   toggleDocumentSelection,
+  hasParentAI,
+  hasChildAI,
   alternativeAssistant,
   docs,
   messageId,
@@ -116,6 +122,7 @@ export const AIMessage = ({
   citedDocuments,
   toolCall,
   isComplete,
+  generatingTool,
   hasDocs,
   handleFeedback,
   isCurrentlyShowingRetrieved,
@@ -124,8 +131,11 @@ export const AIMessage = ({
   handleForceSearch,
   retrievalDisabled,
   currentPersona,
+  setPopup,
 }: {
   shared?: boolean;
+  hasChildAI?: boolean;
+  hasParentAI?: boolean;
   isActive?: boolean;
   selectedDocuments?: DanswerDocument[] | null;
   toggleDocumentSelection?: () => void;
@@ -140,6 +150,7 @@ export const AIMessage = ({
   citedDocuments?: [string, DanswerDocument][] | null;
   toolCall?: ToolCallMetadata;
   isComplete?: boolean;
+  generatingTool?: boolean;
   hasDocs?: boolean;
   handleFeedback?: (feedbackType: FeedbackType) => void;
   isCurrentlyShowingRetrieved?: boolean;
@@ -147,6 +158,7 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
+  setPopup: (popupSpec: PopupSpec | null) => void;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
   const processContent = (content: string | JSX.Element) => {
@@ -168,6 +180,13 @@ export const AIMessage = ({
   };
 
   const finalContent = processContent(content as string);
+
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    Prism.highlightAll();
+    setIsReady(true);
+  }, []);
 
   const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
 
@@ -231,17 +250,24 @@ export const AIMessage = ({
   ).slice(0, 3);
 
   return (
-    <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
+    <div
+      ref={trackedElementRef}
+      className={`${hasParentAI ? "pb-5" : "py-5"} px-2 lg:px-5 relative flex `}
+    >
       <div
         className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-message-max`}
       >
         <div className={`${!shared && "mobile:ml-4 xl:ml-8"}`}>
-          <div className="flex">
-            <AssistantIcon
-              size="small"
-              assistant={alternativeAssistant || currentPersona}
-            />
 
+          <div className="flex">
+            {!hasParentAI ? (
+              <AssistantIcon
+                size="small"
+                assistant={alternativeAssistant || currentPersona}
+              />
+            ) : (
+              <div className="w-6" />
+            )}
             <div className="w-full">
               <div className="max-w-message-max break-words">
                 {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
@@ -256,7 +282,10 @@ export const AIMessage = ({
                               query={query}
                               hasDocs={hasDocs || false}
                               messageId={messageId}
-                              finished={toolCall?.tool_result != undefined}
+                              finished={
+                                toolCall?.tool_result != undefined ||
+                                isComplete!
+                              }
                               isCurrentlyShowingRetrieved={
                                 isCurrentlyShowingRetrieved
                               }
@@ -290,7 +319,10 @@ export const AIMessage = ({
                             <div className="mb-1">
                               <SearchSummary
                                 query={query}
-                                finished={toolCall?.tool_result != undefined}
+                                finished={
+                                  toolCall?.tool_result != undefined ||
+                                  isComplete!
+                                }
                                 hasDocs={hasDocs || false}
                                 messageId={messageId}
                                 isCurrentlyShowingRetrieved={
@@ -354,7 +386,6 @@ export const AIMessage = ({
                     {content || files ? (
                       <>
                         <FileDisplay files={files || []} />
-
                         {typeof content === "string" ? (
                           <div className="overflow-x-auto w-full pr-2 max-w-[675px]">
                             <ReactMarkdown
@@ -365,7 +396,43 @@ export const AIMessage = ({
                                   const { node, ...rest } = props;
                                   const value = rest.children;
 
-                                  if (value?.toString().startsWith("*")) {
+                                  if (
+                                    value?.toString() ==
+                                    "[run_image_generation]"
+                                  ) {
+                                    return (
+                                      <Popover
+                                        open={isPopoverOpen}
+                                        onOpenChange={() => null} // only allow closing from the icon
+                                        content={
+                                          <button
+                                            onMouseDown={() => {
+                                              setIsPopoverOpen(!isPopoverOpen);
+                                            }}
+                                          >
+                                            <ToolCallIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
+                                          </button>
+                                        }
+                                        popover={
+                                          <DualPromptDisplay
+                                            setPopup={setPopup}
+                                            prompt1={
+                                              toolCall?.tool_result?.[0]
+                                                ?.revised_prompt
+                                            }
+                                            prompt2={
+                                              toolCall?.tool_result?.[1]
+                                                ?.revised_prompt
+                                            }
+                                          />
+                                        }
+                                        side="top"
+                                        align="center"
+                                      />
+                                    );
+                                  } else if (
+                                    value?.toString().startsWith("*")
+                                  ) {
                                     return (
                                       <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
                                     );
@@ -388,7 +455,7 @@ export const AIMessage = ({
                                     return (
                                       <a
                                         key={node?.position?.start?.offset}
-                                        onMouseDown={() =>
+                                        onClick={() =>
                                           rest.href
                                             ? window.open(rest.href, "_blank")
                                             : undefined
@@ -400,10 +467,8 @@ export const AIMessage = ({
                                     );
                                   }
                                 },
-
                                 code: (props) => (
                                   <CodeBlock
-                                    className="w-full"
                                     {...props}
                                     content={content as string}
                                   />
@@ -417,7 +482,10 @@ export const AIMessage = ({
                                 [rehypePrism, { ignoreMissing: true }],
                               ]}
                             >
-                              {finalContent as string}
+                              {finalContent +
+                                (toolCall?.tool_result
+                                  ? ` [[${toolCall.tool_name}]]()`
+                                  : "")}
                             </ReactMarkdown>
                           </div>
                         ) : (
@@ -502,8 +570,8 @@ export const AIMessage = ({
                       </div>
                     )}
                   </div>
-
-                  {handleFeedback &&
+                  {!hasChildAI &&
+                    handleFeedback &&
                     (isActive ? (
                       <div
                         className={`
