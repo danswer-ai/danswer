@@ -1,14 +1,7 @@
 "use client";
 
-import { FiArrowDown, FiEdit, FiFolderPlus } from "react-icons/fi";
-import {
-  Dispatch,
-  ForwardedRef,
-  forwardRef,
-  SetStateAction,
-  useContext,
-  useEffect,
-} from "react";
+import { FiEdit, FiFolderPlus } from "react-icons/fi";
+import { ForwardedRef, forwardRef, useContext, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
@@ -26,10 +19,7 @@ import {
   ClosedBookIcon,
 } from "@/components/icons/icons";
 import { PagesTab } from "./PagesTab";
-import { Tooltip } from "@/components/tooltip/Tooltip";
-import KeyboardSymbol from "@/lib/browserUtilities";
 import { pageType } from "./types";
-import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import LogoType from "@/components/header/LogoType";
 
 interface HistorySidebarProps {

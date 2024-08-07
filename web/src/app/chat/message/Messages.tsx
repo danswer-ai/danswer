@@ -1,11 +1,6 @@
 "use client";
 
 import {
-  FiCpu,
-  FiImage,
-  FiThumbsDown,
-  FiThumbsUp,
-  FiUser,
   FiEdit2,
   FiChevronRight,
   FiChevronLeft,
@@ -36,9 +31,6 @@ import { DocumentPreview } from "../files/documents/DocumentPreview";
 import { InMessageImage } from "../files/images/InMessageImage";
 import { CodeBlock } from "./CodeBlock";
 import rehypePrism from "rehype-prism-plus";
-
-// Prism stuff
-import Prism from "prismjs";
 
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
@@ -110,6 +102,7 @@ function FileDisplay({
 }
 
 export const AIMessage = ({
+  shared,
   isActive,
   toggleDocumentSelection,
   alternativeAssistant,
@@ -132,6 +125,7 @@ export const AIMessage = ({
   retrievalDisabled,
   currentPersona,
 }: {
+  shared?: boolean;
   isActive?: boolean;
   selectedDocuments?: DanswerDocument[] | null;
   toggleDocumentSelection?: () => void;
@@ -175,19 +169,10 @@ export const AIMessage = ({
 
   const finalContent = processContent(content as string);
 
-  const [isReady, setIsReady] = useState(false);
-  useEffect(() => {
-    Prism.highlightAll();
-    setIsReady(true);
-  }, []);
-
   const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
 
   const settings = useContext(SettingsContext);
   // this is needed to give Prism a chance to load
-  if (!isReady) {
-    return <div />;
-  }
 
   const selectedDocumentIds =
     selectedDocuments?.map((document) => document.document_id) || [];
@@ -247,8 +232,10 @@ export const AIMessage = ({
 
   return (
     <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
-      <div className="mx-auto w-[90%] max-w-message-max">
-        <div className="mobile:ml-4 xl:ml-8">
+      <div
+        className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-message-max`}
+      >
+        <div className={`${!shared && "mobile:ml-4 xl:ml-8"}`}>
           <div className="flex">
             <AssistantIcon
               size="small"
@@ -622,7 +609,9 @@ export const HumanMessage = ({
   otherMessagesCanSwitchTo,
   onEdit,
   onMessageSelection,
+  shared,
 }: {
+  shared?: boolean;
   content: string;
   files?: FileDescriptor[];
   messageId?: number | null;
@@ -669,7 +658,9 @@ export const HumanMessage = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="mx-auto w-[90%] max-w-searchbar-max">
+      <div
+        className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-searchbar-max`}
+      >
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />

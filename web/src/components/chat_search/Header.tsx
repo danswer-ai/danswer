@@ -18,7 +18,7 @@ export default function FunctionalHeader({
   page,
   currentChatSession,
   setSharingModalVisible,
-  toggleSidebar,
+  toggleSidebar = () => null,
   reset = () => null,
   sidebarToggled,
 }: {
@@ -28,7 +28,7 @@ export default function FunctionalHeader({
   sidebarToggled?: boolean;
   currentChatSession?: ChatSession | null | undefined;
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
-  toggleSidebar: () => void;
+  toggleSidebar?: () => void;
 }) {
   const combinedSettings = useContext(SettingsContext);
   const enterpriseSettings = combinedSettings?.enterpriseSettings;

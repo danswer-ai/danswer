@@ -57,7 +57,7 @@ export default async function Page({ params }: { params: { chatId: string } }) {
   return (
     <div>
       <div className="absolute top-0 z-40 w-full">
-        <FunctionalHeader page="chat" toggleSidebar={() => null} user={user} />
+        <FunctionalHeader page="shared" user={user} />
       </div>
 
       <div className="flex relative bg-background text-default overflow-hidden pt-16 h-screen">

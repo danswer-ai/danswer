@@ -15,8 +15,8 @@ import {
   ToolCallMetadata,
 } from "./interfaces";
 
+import Prism from "prismjs";
 import Cookies from "js-cookie";
-
 import { HistorySidebar } from "./sessionSidebar/HistorySidebar";
 import { Persona } from "../admin/assistants/interfaces";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -192,6 +192,12 @@ export function ChatPage({
   const [isFetchingChatMessages, setIsFetchingChatMessages] = useState(
     existingChatSessionId !== null
   );
+
+  const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    Prism.highlightAll();
+    setIsReady(true);
+  }, []);
 
   // this is triggered every time the user switches which chat
   // session they are using
@@ -1233,7 +1239,7 @@ export function ChatPage({
                 />
               )}
 
-              {documentSidebarInitialWidth !== undefined ? (
+              {documentSidebarInitialWidth !== undefined && isReady ? (
                 <Dropzone onDrop={handleImageUpload} noClick>
                   {({ getRootProps }) => (
                     <div className="flex h-full w-full">
@@ -1241,15 +1247,15 @@ export function ChatPage({
                         <div
                           style={{ transition: "width 0.30s ease-out" }}
                           className={`
-                        flex-none 
-                        overflow-y-hidden 
-                        bg-background-100 
-                        transition-all 
-                        bg-opacity-80
-                        duration-300 
-                        ease-in-out
-                        h-full
-                        ${toggledSidebar ? "w-[250px]" : "w-[0px]"}
+                          flex-none 
+                          overflow-y-hidden 
+                          bg-background-100 
+                          transition-all 
+                          bg-opacity-80
+                          duration-300 
+                          ease-in-out
+                          h-full
+                          ${toggledSidebar ? "w-[250px]" : "w-[0px]"}
                       `}
                         ></div>
                       )}
