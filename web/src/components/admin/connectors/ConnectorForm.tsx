@@ -20,7 +20,8 @@ const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 export async function submitConnector<T>(
   connector: ConnectorBase<T>,
   connectorId?: number,
-  fake_credential?: boolean
+  fakeCredential?: boolean,
+  isPublicCcpair?: boolean // exclusively for mock credentials, when also need to specify ccpair details
 ): Promise<{ message: string; isSuccess: boolean; response?: Connector<T> }> {
   const isUpdate = connectorId !== undefined;
   if (!connector.connector_specific_config) {
@@ -28,7 +29,7 @@ export async function submitConnector<T>(
   }
 
   try {
-    if (fake_credential) {
+    if (fakeCredential) {
       const response = await fetch(
         "/api/manage/admin/connector-with-mock-credential",
         {
@@ -36,7 +37,7 @@ export async function submitConnector<T>(
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(connector),
+          body: JSON.stringify({ ...connector, is_public: isPublicCcpair }),
         }
       );
       if (response.ok) {

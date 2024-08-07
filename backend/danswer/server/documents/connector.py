@@ -74,6 +74,7 @@ from danswer.file_store.file_store import get_default_file_store
 from danswer.server.documents.models import AuthStatus
 from danswer.server.documents.models import AuthUrl
 from danswer.server.documents.models import ConnectorBase
+from danswer.server.documents.models import ConnectorCredentialBase
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorIndexingStatus
 from danswer.server.documents.models import ConnectorSnapshot
@@ -504,7 +505,7 @@ def create_connector_from_model(
 
 @router.post("/admin/connector-with-mock-credential")
 def create_connector_with_mock_credential(
-    connector_data: ConnectorBase,
+    connector_data: ConnectorCredentialBase,
     user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
@@ -520,7 +521,7 @@ def create_connector_with_mock_credential(
         response = add_credential_to_connector(
             connector_id=cast(int, connector_response.id),  # will aways be an int
             credential_id=credential.id,
-            is_public=True,
+            is_public=connector_data.is_public,
             user=user,
             db_session=db_session,
             cc_pair_name=connector_data.name,

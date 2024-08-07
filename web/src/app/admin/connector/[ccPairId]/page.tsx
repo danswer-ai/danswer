@@ -6,7 +6,7 @@ import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
 import { Button, Divider, Title } from "@tremor/react";
 import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
-import { ConfigDisplay } from "./ConfigDisplay";
+import { AdvancedConfigDisplay, ConfigDisplay } from "./ConfigDisplay";
 import { ModifyStatusButtonCluster } from "./ModifyStatusButtonCluster";
 import { DeletionButton } from "./DeletionButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
@@ -120,6 +120,12 @@ function Main({ ccPairId }: { ccPairId: number }) {
     setIsEditing(false);
     setEditableName(ccPair.name);
   };
+
+  const {
+    prune_freq: pruneFreq,
+    refresh_freq: refreshFreq,
+    indexing_start: indexingStart,
+  } = ccPair.connector;
   return (
     <>
       {popup}
@@ -197,6 +203,15 @@ function Main({ ccPairId }: { ccPairId: number }) {
         connectorSpecificConfig={ccPair.connector.connector_specific_config}
         sourceType={ccPair.connector.source}
       />
+
+      {(pruneFreq || indexingStart || refreshFreq) && (
+        <AdvancedConfigDisplay
+          pruneFreq={pruneFreq}
+          indexingStart={indexingStart}
+          refreshFreq={refreshFreq}
+        />
+      )}
+
       {/* NOTE: no divider / title here for `ConfigDisplay` since it is optional and we need
         to render these conditionally.*/}
       <div className="mt-6">

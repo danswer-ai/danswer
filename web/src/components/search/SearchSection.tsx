@@ -35,6 +35,18 @@ import { AnswerSection } from "./results/AnswerSection";
 import { QuotesSection } from "./results/QuotesSection";
 import { QAFeedbackBlock } from "./QAFeedback";
 import { usePopup } from "../admin/connectors/Popup";
+import { ToggleRight } from "@phosphor-icons/react";
+import {
+  DislikeFeedbackIcon,
+  LikeFeedbackIcon,
+  ToggleDown,
+  ToggleUp,
+} from "../icons/icons";
+import { CustomTooltip, TooltipGroup } from "../tooltip/CustomTooltip";
+import { HoverableIcon } from "../Hoverable";
+import { FeedbackType } from "@/app/chat/types";
+import { FeedbackModal } from "@/app/chat/modal/FeedbackModal";
+import { handleChatFeedback } from "@/app/chat/lib";
 
 export type searchState =
   | "input"
@@ -99,6 +111,7 @@ export const SearchSection = ({
   });
 
   const [agentic, setAgentic] = useState(agenticSearchEnabled);
+  const [searchAnswerExpanded, setSearchAnswerExpanded] = useState(false);
 
   const toggleAgentic = () => {
     Cookies.set(
@@ -147,6 +160,9 @@ export const SearchSection = ({
   const [selectedPersona, setSelectedPersona] = useState<number>(
     personas[0]?.id || 0
   );
+
+  // Used for search state display
+  const [analyzeStartTime, setAnalyzeStartTime] = useState<number>(0);
 
   // Filters
   const filterManager = useFilters();
@@ -218,6 +234,16 @@ export const SearchSection = ({
   const [defaultOverrides, setDefaultOverrides] =
     useState<SearchDefaultOverrides>(SEARCH_DEFAULT_OVERRIDES_START);
 
+  const newSearchState = (
+    currentSearchState: searchState,
+    newSearchState: searchState
+  ) => {
+    if (currentSearchState != "input") {
+      return newSearchState;
+    }
+    return "input";
+  };
+
   // Helpers
   const initialSearchResponse: SearchResponse = {
     answer: null,
@@ -237,12 +263,15 @@ export const SearchSection = ({
       answer,
     }));
 
-    setSearchState((searchState) => {
-      if (searchState != "input") {
-        return "generating";
-      }
-      return "input";
-    });
+    if (analyzeStartTime) {
+      const elapsedTime = Date.now() - analyzeStartTime;
+      const nextInterval = Math.ceil(elapsedTime / 1500) * 1500;
+      setTimeout(() => {
+        setSearchState((searchState) =>
+          newSearchState(searchState, "generating")
+        );
+      }, nextInterval - elapsedTime);
+    }
   };
 
   const updateQuotes = (quotes: Quote[]) => {
@@ -256,20 +285,17 @@ export const SearchSection = ({
   const updateDocs = (documents: SearchDanswerDocument[]) => {
     if (agentic) {
       setTimeout(() => {
-        setSearchState((searchState) => {
-          if (searchState != "input") {
-            return "reading";
-          }
-          return "input";
-        });
+        setSearchState((searchState) => newSearchState(searchState, "reading"));
       }, 1500);
 
       setTimeout(() => {
+        setAnalyzeStartTime(Date.now());
         setSearchState((searchState) => {
-          if (searchState != "input") {
-            return "analyzing";
+          const newState = newSearchState(searchState, "analyzing");
+          if (newState === "analyzing") {
+            setAnalyzeStartTime(Date.now());
           }
-          return "input";
+          return newState;
         });
       }, 4500);
     }
@@ -301,11 +327,14 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       selectedDocIndices: docIndices,
     }));
-  const updateError = (error: FlowType) =>
+  const updateError = (error: FlowType) => {
+    resetInput(true);
+
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       error,
     }));
+  };
   const updateMessageAndThreadId = (
     messageId: number,
     chat_session_id: number
@@ -348,11 +377,12 @@ export const SearchSection = ({
     }
   };
 
-  const resetInput = () => {
+  const resetInput = (finalized?: boolean) => {
     setSweep(false);
     setFirstSearch(false);
     setComments(null);
-    setSearchState("searching");
+    setSearchState(finalized ? "input" : "searching");
+    setSearchAnswerExpanded(false);
   };
 
   const [agenticResults, setAgenticResults] = useState<boolean | null>(null);
@@ -429,7 +459,6 @@ export const SearchSection = ({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateDocumentRelevance,
       }),
-
       updateComments: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateComments,
@@ -513,6 +542,63 @@ export const SearchSection = ({
       }
     });
   }
+  const [currentFeedback, setCurrentFeedback] = useState<
+    [FeedbackType, number] | null
+  >(null);
+
+  //
+  const [searchAnswerOverflowing, setSearchAnswerOverflowing] = useState(false);
+  const answerContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleFeedback = (feedbackType: FeedbackType, messageId: number) => {
+    setCurrentFeedback([feedbackType, messageId]);
+  };
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (answerContainerRef.current) {
+        const isOverflowing =
+          answerContainerRef.current.scrollHeight >
+          answerContainerRef.current.clientHeight;
+        setSearchAnswerOverflowing(isOverflowing);
+      }
+    };
+
+    checkOverflow();
+    window.addEventListener("resize", checkOverflow);
+
+    return () => {
+      window.removeEventListener("resize", checkOverflow);
+    };
+  }, [answer]);
+
+  const onFeedback = async (
+    messageId: number,
+    feedbackType: FeedbackType,
+    feedbackDetails: string,
+    predefinedFeedback: string | undefined
+  ) => {
+    const response = await handleChatFeedback(
+      messageId,
+      feedbackType,
+      feedbackDetails,
+      predefinedFeedback
+    );
+
+    if (response.ok) {
+      setPopup({
+        message: "Thanks for your feedback!",
+        type: "success",
+      });
+    } else {
+      const responseJson = await response.json();
+      const errorMsg = responseJson.detail || responseJson.message;
+      setPopup({
+        message: `Failed to submit feedback - ${errorMsg}`,
+        type: "error",
+      });
+    }
+  };
 
   const chatBannerPresent = settings?.enterpriseSettings?.custom_header_content;
 
@@ -521,6 +607,22 @@ export const SearchSection = ({
   return (
     <>
       <div className="flex relative w-full pr-[8px] h-full text-default">
+        {popup}
+        {currentFeedback && (
+          <FeedbackModal
+            feedbackType={currentFeedback[0]}
+            onClose={() => setCurrentFeedback(null)}
+            onSubmit={({ message, predefinedFeedback }) => {
+              onFeedback(
+                currentFeedback[1],
+                currentFeedback[0],
+                message,
+                predefinedFeedback
+              );
+              setCurrentFeedback(null);
+            }}
+          />
+        )}
         <div
           ref={sidebarElementRef}
           className={`
@@ -656,9 +758,12 @@ export const SearchSection = ({
                     />
                   </div>
                   {!firstSearch && (
-                    <div className="my-4 min-h-[16rem] p-4 border-2 border-border rounded-lg relative">
+                    <div
+                      ref={answerContainerRef}
+                      className={`my-4 ${searchAnswerExpanded ? "min-h-[16rem]" : "h-[16rem]"}  overflow-y-hidden p-4 border-2 border-border rounded-lg relative`}
+                    >
                       <div>
-                        <div className="flex gap-x-2 mb-1">
+                        <div className="flex gap-x-2">
                           <h2 className="text-emphasis font-bold my-auto mb-1 ">
                             AI Answer
                           </h2>
@@ -680,7 +785,7 @@ export const SearchSection = ({
                               className="relative inline-block"
                             >
                               <span className="loading-text">
-                                Generating citations...
+                                Creating citations...
                               </span>
                             </div>
                           )}
@@ -712,14 +817,16 @@ export const SearchSection = ({
                               className="relative inline-block"
                             >
                               <span className="loading-text">
-                                Generating
+                                Running
                                 {settings?.isMobile ? "" : " Analysis"}...
                               </span>
                             </div>
                           )}
                         </div>
 
-                        <div className="mb-2 pt-1 border-t border-border w-full">
+                        <div
+                          className={`pt-1 h-auto   border-t border-border w-full`}
+                        >
                           <AnswerSection
                             answer={answer}
                             quotes={quotes}
@@ -728,24 +835,58 @@ export const SearchSection = ({
                           />
                         </div>
 
-                        {quotes !== null && quotes.length > 0 && answer && (
-                          <div className="pt-1 border-t border-border w-full">
-                            <QuotesSection
-                              quotes={dedupedQuotes}
-                              isFetching={isFetching}
-                            />
+                        {searchAnswerExpanded ||
+                          (!searchAnswerOverflowing && (
+                            <div className="w-full">
+                              {quotes !== null &&
+                                quotes.length > 0 &&
+                                answer && (
+                                  <QuotesSection
+                                    quotes={dedupedQuotes}
+                                    isFetching={isFetching}
+                                  />
+                                )}
 
-                            {searchResponse.messageId !== null && (
-                              <div className="absolute right-3 bottom-3">
-                                <QAFeedbackBlock
-                                  messageId={searchResponse.messageId}
-                                  setPopup={setPopup}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        )}
+                              {searchResponse.messageId !== null && (
+                                <div className="absolute right-3 flex bottom-3">
+                                  <HoverableIcon
+                                    icon={<LikeFeedbackIcon />}
+                                    onClick={() =>
+                                      handleFeedback(
+                                        "like",
+                                        searchResponse?.messageId as number
+                                      )
+                                    }
+                                  />
+                                  <HoverableIcon
+                                    icon={<DislikeFeedbackIcon />}
+                                    onClick={() =>
+                                      handleFeedback(
+                                        "dislike",
+                                        searchResponse?.messageId as number
+                                      )
+                                    }
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          ))}
                       </div>
+                      {!searchAnswerExpanded && searchAnswerOverflowing && (
+                        <div className="absolute bottom-0 left-0 w-full h-[100px] bg-gradient-to-b from-background/5 via-background/60 to-background/90"></div>
+                      )}
+
+                      {!searchAnswerExpanded && searchAnswerOverflowing && (
+                        <div className="w-full h-12 absolute items-center content-center flex left-0 px-4 bottom-0">
+                          <button
+                            onClick={() => setSearchAnswerExpanded(true)}
+                            className="flex gap-x-1 items-center justify-center hover:bg-background-100 cursor-pointer max-w-sm text-sm mx-auto w-full bg-background border py-2 rounded-full"
+                          >
+                            Show more
+                            <ToggleDown />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 

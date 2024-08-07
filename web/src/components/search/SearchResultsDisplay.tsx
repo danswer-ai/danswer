@@ -7,7 +7,7 @@ import {
   SearchResponse,
 } from "@/lib/search/interfaces";
 import { usePopup } from "../admin/connectors/Popup";
-import { AlertIcon, BroomIcon, UndoIcon } from "../icons/icons";
+import { AlertIcon, BroomIcon, MagnifyingIcon, UndoIcon } from "../icons/icons";
 import { AgenticDocumentDisplay, DocumentDisplay } from "./DocumentDisplay";
 import { searchState } from "./SearchSection";
 import { useContext, useEffect, useState } from "react";
@@ -210,7 +210,7 @@ export const SearchResultsDisplay = ({
 
                       <span className="ml-1">
                         {!sweep ? (
-                          <BroomIcon className="h-4 w-4" />
+                          <MagnifyingIcon className="h-4 w-4" />
                         ) : (
                           <UndoIcon className="h-4 w-4" />
                         )}

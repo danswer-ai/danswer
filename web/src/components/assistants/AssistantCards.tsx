@@ -33,17 +33,17 @@ export const AssistantCard = ({
         shadow-md 
         rounded-lg
         border-border
-        max-w-full
+        grow
         flex items-center
-        overflow-x-hidden
+        overflow-hidden 
       `}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
     >
-      <div className="flex-grow">
+      <div className="w-full">
         <div className="flex items-center mb-2">
           <AssistantIcon assistant={assistant} />
-          <div className="ml-2 ellipsis font-bold text-sm text-emphasis">
+          <div className="ml-2 ellipsis truncate font-bold text-sm text-emphasis">
             {assistant.name}
           </div>
         </div>
@@ -102,13 +102,16 @@ export function DraggableAssistantCard(props: {
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="overlow-y-scroll inputscroll flex items-center"
+    >
       <div {...attributes} {...listeners} className="mr-1 cursor-grab">
         <MdDragIndicator className="h-3 w-3 flex-none" />
       </div>
-      <div className="flex-grow">
-        <AssistantCard {...props} />
-      </div>
+
+      <AssistantCard {...props} />
     </div>
   );
 }
