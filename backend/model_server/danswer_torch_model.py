@@ -3,7 +3,7 @@ import os
 
 import torch
 import torch.nn as nn
-from transformers import DistilBertConfig
+from transformers import DistilBertConfig  # type: ignore
 from transformers import DistilBertModel
 
 
