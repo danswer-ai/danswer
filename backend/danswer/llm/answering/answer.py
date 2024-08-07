@@ -750,9 +750,9 @@ class Answer:
     @property
     def llm_answer(self) -> str:
         answer = ""
-        if not (self._processed_stream or self.current_streamed_output):
+        if not self._processed_stream and not self.current_streamed_output:
             return ""
-        for packet in self.current_streamed_output or self._processed_stream:
+        for packet in self.current_streamed_output or self._processed_stream or []:
             if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
                 answer += packet.answer_piece
         return answer
