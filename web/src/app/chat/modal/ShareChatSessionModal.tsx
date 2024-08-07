@@ -63,13 +63,6 @@ export function ShareChatSessionModal({
           <h2 className="text-2xl text-emphasis font-bold flex my-auto">
             Share link to Chat
           </h2>
-
-          <div
-            onClick={onClose}
-            className="my-auto ml-auto p-2 hover:bg-hover rounded cursor-pointer"
-          >
-            <FiX size={20} />
-          </div>
         </div>
 
         {linkGenerating && <Spinner />}

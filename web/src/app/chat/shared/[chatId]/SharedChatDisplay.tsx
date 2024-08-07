@@ -62,7 +62,7 @@ export function SharedChatDisplay({
     <div className="w-full overflow-hidden">
       <div className="flex max-h-full overflow-hidden pb-[72px]">
         <div className="flex w-full overflow-hidden overflow-y-scroll">
-          <div className="mx-auto">
+          <div className="w-full max-w-message-max mx-auto">
             <div className="px-5 pt-8">
               <h1 className="text-3xl text-strong font-bold">
                 {chatSession.description ||
@@ -75,7 +75,7 @@ export function SharedChatDisplay({
               <Divider />
             </div>
 
-            <div className="pb-16">
+            <div className="w-full pb-16">
               {messages.map((message) => {
                 if (message.type === "user") {
                   return (
