@@ -1,14 +1,7 @@
 "use client";
 
-import { FiArrowDown, FiEdit, FiFolderPlus } from "react-icons/fi";
-import {
-  Dispatch,
-  ForwardedRef,
-  forwardRef,
-  SetStateAction,
-  useContext,
-  useEffect,
-} from "react";
+import { FiEdit, FiFolderPlus } from "react-icons/fi";
+import { ForwardedRef, forwardRef, useContext, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
@@ -112,17 +105,29 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             page={page}
             toggleSidebar={toggleSidebar}
           />
-
           {page == "chat" && (
             <div className="mx-3 mt-4 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
-              <button
-                onClick={handleNewChat}
+              <Link
                 className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+                href={
+                  `/${page}` +
+                  (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
+                  currentChatSession?.persona_id
+                    ? `?assistantId=${currentChatSession?.persona_id}`
+                    : "")
+                }
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey) {
+                    return;
+                  }
+                  if (handleNewChat) {
+                    handleNewChat();
+                  }
+                }}
               >
                 <FiEdit className="flex-none " />
                 <p className="my-auto flex items-center text-sm">New Chat</p>
-              </button>
-
+              </Link>
               <button
                 onClick={() =>
                   createFolder("New Folder")
