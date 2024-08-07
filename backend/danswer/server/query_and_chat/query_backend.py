@@ -160,3 +160,46 @@ def get_answer_with_quote(
         max_history_tokens=0,
     )
     return StreamingResponse(packets, media_type="application/json")
+
+
+@basic_router.post(
+    "/simple-search"
+)  # TODO: This is a custom endpoint for simple search without llms, currently copy admin search
+def simple_search(
+    question: AdminSearchRequest,
+    db_session: Session = Depends(get_session),
+) -> AdminSearchResponse:
+    query = question.query
+    logger.info(f"Received admin search query: {query}")
+
+    final_filters = IndexFilters(
+        source_type=question.filters.source_type,
+        document_set=question.filters.document_set,
+        time_cutoff=question.filters.time_cutoff,
+        access_control_list=None,
+    )
+
+    embedding_model = get_current_db_embedding_model(db_session)
+
+    document_index = get_default_document_index(
+        primary_index_name=embedding_model.index_name, secondary_index_name=None
+    )
+
+    if not isinstance(document_index, VespaIndex):
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot use admin-search when using a non-Vespa document index",
+        )
+
+    matching_chunks = document_index.admin_retrieval(query=query, filters=final_filters)
+
+    documents = chunks_or_sections_to_search_docs(matching_chunks)
+
+    # Deduplicate documents by id
+    deduplicated_documents: list[SearchDoc] = []
+    seen_documents: set[str] = set()
+    for document in documents:
+        if document.document_id not in seen_documents:
+            deduplicated_documents.append(document)
+            seen_documents.add(document.document_id)
+    return AdminSearchResponse(documents=deduplicated_documents)

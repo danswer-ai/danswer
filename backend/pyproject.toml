@@ -129,9 +129,10 @@ packages = ["danswer"] # path here
 model_server = { cmd = "uvicorn model_server.main:app --reload --port 9000" }
 background_tasks = { cmd = "python ./scripts/dev_run_background_jobs.py" }
 main_server = { cmd = " uvicorn danswer.main:app --reload --port 8080", env = { AUTH_TYPE = "disabled" } }
+main_server_with_auth = { cmd = "uvicorn danswer.main:app --reload --port 8080", env = { AUTH_TYPE = "google_oauth" } }
 run_migrations = { cmd = "alembic upgrade head" }
-solidaire_tests = {cmd = "python tests/regression/answer_quality/eval_direct_qa.py tests/regression/answer_quality/exil_solidaire.yaml --output tests/regression/answer_quality/exil_solidaire_output.yaml"}
-chattest = {cmd = "python chattest.py"}
+solidaire_tests = { cmd = "python tests/regression/answer_quality/eval_direct_qa.py tests/regression/answer_quality/exil_solidaire.yaml --output tests/regression/answer_quality/exil_solidaire_output.yaml" }
+chattest = { cmd = "python chattest.py" }
 
 [tool.mypy]
 plugins = "sqlalchemy.ext.mypy.plugin"
