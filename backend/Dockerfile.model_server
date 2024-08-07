@@ -25,7 +25,7 @@ RUN python -c "from transformers import AutoTokenizer; \
 AutoTokenizer.from_pretrained('distilbert-base-uncased', cache_folder='/root/.cache/temp_huggingface/hub/'); \
 AutoTokenizer.from_pretrained('mixedbread-ai/mxbai-rerank-xsmall-v1', cache_folder='/root/.cache/temp_huggingface/hub/'); \
 from huggingface_hub import snapshot_download; \
-snapshot_download(repo_id='danswer/hybrid-intent-token-classifier', revision='v1.0.0', cache_dir='/root/.cache/temp_huggingface/hub/'); \
+snapshot_download(repo_id='danswer/hybrid-intent-token-classifier', revision='v1.0.2', cache_dir='/root/.cache/temp_huggingface/hub/'); \
 snapshot_download('nomic-ai/nomic-embed-text-v1', cache_dir='/root/.cache/temp_huggingface/hub/'); \
 snapshot_download('mixedbread-ai/mxbai-rerank-xsmall-v1', cache_dir='/root/.cache/temp_huggingface/hub/'); \
 from sentence_transformers import SentenceTransformer; \
