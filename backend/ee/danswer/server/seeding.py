@@ -132,9 +132,7 @@ def get_seed_config() -> SeedConfiguration | None:
 
 
 def seed_db() -> None:
-    print("SEEEDING")
     seed_config = _parse_env()
-    logger.info("SEEINDG SOME TUFF")
 
     if seed_config is None:
         logger.info("No seeding configuration file passed")
