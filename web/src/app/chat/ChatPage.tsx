@@ -45,7 +45,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
-import { useFilters, useLlmOverride } from "@/lib/hooks";
+import { LlmOverride, useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { FeedbackType } from "./types";
 import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
@@ -60,7 +60,11 @@ import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
-import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
+import {
+  checkLLMSupportsImageInput,
+  getFinalLLM,
+  getLLMProviderForPersona,
+} from "@/lib/llm/utils";
 import { ChatInputBar } from "./input/ChatInputBar";
 import { useChatContext } from "@/components/context/ChatContext";
 import { v4 as uuidv4 } from "uuid";
@@ -72,6 +76,10 @@ import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
+import {
+  FullLLMProvider,
+  LLMProviderDescriptor,
+} from "../admin/models/llm/interfaces";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -152,10 +160,6 @@ export function ChatPage({
         )
       ? 0
       : 0.7;
-  const llmOverrideManager = useLlmOverride(
-    selectedChatSession,
-    defaultTemperature
-  );
 
   const setSelectedAssistantFromId = (assistantId: number) => {
     // NOTE: also intentionally look through available assistants here, so that
@@ -167,6 +171,22 @@ export function ChatPage({
   };
   const liveAssistant =
     selectedAssistant || filteredAssistants[0] || availableAssistants[0];
+
+  const llmOverrideManager = useLlmOverride(
+    selectedChatSession,
+    defaultTemperature
+  );
+
+  useEffect(() => {
+    const personaDefault = getLLMProviderForPersona(
+      liveAssistant,
+      llmProviders
+    );
+
+    if (personaDefault) {
+      llmOverrideManager.setLlmOverride(personaDefault);
+    }
+  }, [liveAssistant]);
 
   // this is for "@"ing assistants
   const [alternativeAssistant, setAlternativeAssistant] =
