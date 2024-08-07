@@ -43,8 +43,10 @@ export const CustomTooltip = ({
   wrap,
   showTick = false,
   delay = 500,
+  maxWidth,
   position = "bottom",
 }: {
+  maxWidth?: boolean;
   content: string | ReactNode;
   children: JSX.Element;
   large?: boolean;
@@ -56,6 +58,7 @@ export const CustomTooltip = ({
   wrap?: boolean;
   citation?: boolean;
   position?: "top" | "bottom";
+  className?: string;
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -104,7 +107,7 @@ export const CustomTooltip = ({
       </span>
       {isVisible && (
         <div
-          className={`absolute z-[1000] ${citation ? "max-w-[350px]" : "w-40"} ${large ? "w-96" : line && "max-w-64 w-auto"} 
+          className={`absolute z-[1000]  ${citation ? "max-w-[350px]" : maxWidth ? "w-auto " : "w-40"} ${large ? "w-96" : line && !maxWidth && "max-w-64 w-auto"} 
               left-1/2 transform -translate-x-1/2 ${position === "top" ? "bottom-full mb-2" : "mt-2"} text-sm 
               ${
                 light
