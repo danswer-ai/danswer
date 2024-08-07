@@ -50,7 +50,7 @@ class IndexingEmbedder(ABC):
 class DefaultIndexingEmbedder(IndexingEmbedder):
     def __init__(
         self,
-        model_name: str,
+        model_name: str | None,
         normalize: bool,
         query_prefix: str | None,
         passage_prefix: str | None,
@@ -163,8 +163,8 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         return embedded_chunks
 
     @classmethod
-    def from_embedding_model(
-        cls, embedding_model: EmbeddingModel
+    def from_db_embedding_model(
+        cls, embedding_model: DbEmbeddingModel
     ) -> "DefaultIndexingEmbedder":
         return cls(
             model_name=embedding_model.model_name,

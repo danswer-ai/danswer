@@ -92,7 +92,7 @@ def upsert_ingestion_doc(
 
     db_embedding_model = get_current_db_embedding_model(db_session)
 
-    index_embedding_model = DefaultIndexingEmbedder.from_embedding_model(
+    index_embedding_model = DefaultIndexingEmbedder.from_db_embedding_model(
         db_embedding_model
     )
 
@@ -125,7 +125,7 @@ def upsert_ingestion_doc(
                 "Secondary index exists but no embedding model configured"
             )
 
-        new_index_embedding_model = DefaultIndexingEmbedder.from_embedding_model(
+        new_index_embedding_model = DefaultIndexingEmbedder.from_db_embedding_model(
             sec_db_embedding_model
         )
 

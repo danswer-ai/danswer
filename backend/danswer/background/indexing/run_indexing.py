@@ -113,7 +113,9 @@ def _run_indexing(
         primary_index_name=index_name, secondary_index_name=None
     )
 
-    embedding_model = DefaultIndexingEmbedder.from_embedding_model(db_embedding_model)
+    embedding_model = DefaultIndexingEmbedder.from_db_embedding_model(
+        db_embedding_model
+    )
 
     indexing_pipeline = build_indexing_pipeline(
         embedder=embedding_model,
