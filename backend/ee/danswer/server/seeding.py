@@ -32,7 +32,6 @@ _SEED_CONFIG_ENV_VAR_NAME = "ENV_SEED_CONFIGURATION"
 class SeedConfiguration(BaseModel):
     llms: list[LLMProviderUpsertRequest] | None = None
     admin_user_emails: list[str] | None = None
-    seeded_name: str | None = None
     seeded_logo_path: str | None = None
     personas: list[CreatePersonaRequest] | None = None
     settings: Settings | None = None
@@ -111,13 +110,6 @@ def _seed_enterprise_settings(seed_config: SeedConfiguration) -> None:
     if seed_config.enterprise_settings is not None:
         logger.info("Seeding enterprise settings")
         store_ee_settings(seed_config.enterprise_settings)
-    elif seed_config.seeded_name or seed_config.seeded_logo_path:
-        logger.info("Seeding enterprise settings from logo and name")
-        seeded_settings = EnterpriseSettings(
-            application_name=seed_config.seeded_name,
-            use_custom_logo=bool(seed_config.seeded_logo_path),
-        )
-        store_ee_settings(seeded_settings)
 
 
 def _seed_logo(db_session: Session, logo_path: str | None) -> None:
@@ -140,7 +132,9 @@ def get_seed_config() -> SeedConfiguration | None:
 
 
 def seed_db() -> None:
+    print("SEEEDING")
     seed_config = _parse_env()
+    logger.info("SEEINDG SOME TUFF")
 
     if seed_config is None:
         logger.info("No seeding configuration file passed")
