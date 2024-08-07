@@ -129,7 +129,7 @@ def doc_index_retrieval(
     top_chunks = document_index.hybrid_retrieval(
         query=query.query,
         query_embedding=query_embedding,
-        final_keywords=query.extracted_keywords,
+        final_keywords=query.processed_keywords,
         filters=query.filters,
         hybrid_alpha=query.hybrid_alpha,
         time_decay_multiplier=query.recency_bias_multiplier,

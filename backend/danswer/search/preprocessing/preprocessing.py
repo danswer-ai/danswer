@@ -137,7 +137,7 @@ def retrieval_preprocessing(
     processed_keywords = (
         remove_stop_words_and_punctuation(extracted_keywords)
         if EDIT_KEYWORD_QUERY
-        else None
+        else query.split()
     )
 
     user_acl_filters = (
@@ -188,7 +188,7 @@ def retrieval_preprocessing(
 
     return SearchQuery(
         query=query,
-        extracted_keywords=processed_keywords,
+        processed_keywords=processed_keywords,
         search_type=SearchType.KEYWORD if is_keyword else SearchType.SEMANTIC,
         evaluation_type=llm_evaluation_type,
         filters=final_filters,

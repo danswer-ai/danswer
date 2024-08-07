@@ -86,7 +86,7 @@ class SearchRequest(ChunkContext):
 
 class SearchQuery(ChunkContext):
     query: str
-    extracted_keywords: list[str] | None
+    processed_keywords: list[str]
     search_type: SearchType
     evaluation_type: LLMEvaluationType
     filters: IndexFilters
