@@ -1202,6 +1202,7 @@ class UserGroup(Base):
     is_up_for_deletion: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
+    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspace.workspace_id"))
 
     users: Mapped[list[User]] = relationship(
         "User",
@@ -1390,7 +1391,20 @@ class Workspace(Base):
     Workspace_name: Mapped[str] = mapped_column(Text)
     custom_logo: Mapped[str] = mapped_column(Text)
     custom_header_logo: Mapped[str] = mapped_column(Text)
+    
+    workspace: Mapped[User | None] = relationship("Workspaces", back_populates="workspaces")
 
+    users: Mapped[list[User]] = relationship(
+        "User",
+        secondary="workspace__users",
+        viewonly=True,
+    )
+    
+    teams: Mapped[list[UserGroup]] = relationship(
+        "UserGroup",
+        secondary="workspace__users",
+        viewonly=True,
+    )
 
 class WorkspaceSettings(Base):
     __tablename__ = "workspace_settings"
