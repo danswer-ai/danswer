@@ -397,6 +397,6 @@ class SearchPipeline:
     def section_relevance_list(self) -> list[bool]:
         llm_indices = relevant_sections_to_indices(
             relevance_sections=self.section_relevance,
-            inference_sections=self.final_context_sections,
+            items=self.final_context_sections,
         )
         return [ind in llm_indices for ind in range(len(self.final_context_sections))]

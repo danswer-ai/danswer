@@ -27,7 +27,7 @@ from danswer.search.models import SearchRequest
 from danswer.search.pipeline import SearchPipeline
 from danswer.search.utils import dedupe_documents
 from danswer.search.utils import drop_llm_indices
-from danswer.search.utils import relevant_documents_to_indices
+from danswer.search.utils import relevant_sections_to_indices
 from danswer.utils.logger import setup_logger
 from ee.danswer.server.query_and_chat.models import DocumentSearchRequest
 from ee.danswer.server.query_and_chat.models import StandardAnswerRequest
@@ -109,8 +109,8 @@ def handle_search_request(
     if search_request.retrieval_options.dedupe_docs:
         deduped_docs, dropped_inds = dedupe_documents(top_docs)
 
-    llm_indices = relevant_documents_to_indices(
-        relevance_sections=relevance_sections, search_docs=deduped_docs
+    llm_indices = relevant_sections_to_indices(
+        relevance_sections=relevance_sections, items=deduped_docs
     )
 
     if dropped_inds:
