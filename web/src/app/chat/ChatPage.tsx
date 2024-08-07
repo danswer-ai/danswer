@@ -627,7 +627,7 @@ export function ChatPage({
     } catch (error: unknown) {
       if (error instanceof Error) {
         if (error.name === "AbortError") {
-          console.log("Stream aborted");
+          console.debug("Stream aborted");
         } else {
           stack.error = error.message;
         }
@@ -1001,11 +1001,11 @@ export function ChatPage({
   const onAssistantChange = (assistant: Persona | null) => {
     if (assistant && assistant.id !== liveAssistant.id) {
       // Abort the ongoing stream if it exists
-      if (abortController) {
+      if (abortController && isStreaming) {
         abortController.abort();
+        resetInputBar();
       }
 
-      resetInputBar();
       textAreaRef.current?.focus();
       router.push(buildChatUrl(searchParams, null, assistant.id));
     }
