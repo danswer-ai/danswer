@@ -10,11 +10,11 @@ import litellm  # type: ignore
 import tiktoken
 from langchain.prompts.base import StringPromptValue
 from langchain.prompts.chat import ChatPromptValue
+from langchain.schema import AIMessage
+from langchain.schema import BaseMessage
+from langchain.schema import HumanMessage
 from langchain.schema import PromptValue
 from langchain.schema.language_model import LanguageModelInput
-from langchain.schema.messages import AIMessage
-from langchain.schema.messages import BaseMessage
-from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
 from danswer.configs.constants import MessageType
@@ -37,21 +37,45 @@ logger = setup_logger()
 
 
 def translate_danswer_msg_to_langchain(
-    msg: Union[ChatMessage, "PreviousMessage"],
+    msg: Union[ChatMessage, "PreviousMessage"], image_generation_count: int
 ) -> BaseMessage:
-    files: list[InMemoryChatFile] = []
-
-    # If the message is a `ChatMessage`, it doesn't have the downloaded files
-    # attached. Just ignore them for now. Also, OpenAI doesn't allow files to
-    # be attached to AI messages, so we must remove them
-    if not isinstance(msg, ChatMessage) and msg.message_type != MessageType.ASSISTANT:
-        files = msg.files
-    content = build_content_with_imgs(msg.message, files)
+    content = msg.message
 
     if msg.message_type == MessageType.SYSTEM:
-        raise ValueError("System messages are not currently part of history")
+        return SystemMessage(content=content)
+
     if msg.message_type == MessageType.ASSISTANT:
-        return AIMessage(content=content)
+        try:
+            parsed_content = json.loads(content)
+            if (
+                "name" in parsed_content
+                and parsed_content["name"] == "run_image_generation"
+            ):
+                image_generation_count += 1
+                wrapped_content = (
+                    f"[AI IMAGE GENERATION REQUEST {image_generation_count}]\n"
+                )
+                wrapped_content += f"I, the AI, am now generating an \
+                image based on the prompt: '{parsed_content['args']['prompt']}'\n"
+                wrapped_content += "[/AI IMAGE GENERATION REQUEST]"
+            elif (
+                "id" in parsed_content
+                and parsed_content["id"] == "image_generation_response"
+            ):
+                wrapped_content = (
+                    f"[AI IMAGE GENERATION RESPONSE {image_generation_count}]\n"
+                )
+                wrapped_content += "I, the AI, have generated the following image(s) based on the previous request:\n"
+                for img in parsed_content["response"]:
+                    wrapped_content += f"- Description: {img['revised_prompt']}\n"
+                    wrapped_content += f"  Image URL: {img['url']}\n\n"
+                wrapped_content += "[/AI IMAGE GENERATION RESPONSE]"
+            else:
+                wrapped_content = f"[AI MESSAGE]\n{content}\n[/AI MESSAGE]"
+        except json.JSONDecodeError:
+            wrapped_content = f"[AI MESSAGE]\n{content}\n[/AI MESSAGE]"
+        return AIMessage(content=wrapped_content)
+
     if msg.message_type == MessageType.USER:
         return HumanMessage(content=content)
 
@@ -59,14 +83,38 @@ def translate_danswer_msg_to_langchain(
 
 
 def translate_history_to_basemessages(
-    history: list[ChatMessage] | list["PreviousMessage"],
+    history: Union[list[ChatMessage], list["PreviousMessage"]]
 ) -> tuple[list[BaseMessage], list[int]]:
-    history_basemessages = [
-        translate_danswer_msg_to_langchain(msg)
-        for msg in history
-        if msg.token_count != 0
-    ]
-    history_token_counts = [msg.token_count for msg in history if msg.token_count != 0]
+    history_basemessages = []
+    history_token_counts = []
+    image_generation_count = 0
+
+    for msg in history:
+        if msg.token_count != 0:
+            translated_msg = translate_danswer_msg_to_langchain(
+                msg, image_generation_count
+            )
+            if (
+                isinstance(translated_msg.content, str)
+                and "[ImageGenerationRe" in translated_msg.content
+            ):
+                image_generation_count += 1
+            history_basemessages.append(translated_msg)
+            history_token_counts.append(msg.token_count)
+
+    # Add a generic summary message at the end
+    summary = "[CONVERSATION SUMMARY]\n"
+    summary += "The most recent user request may involve generating additional images. "
+    summary += "I should carefully review the conversation history and the latest user request "
+    summary += (
+        "to determine if any new images need to be generated, ensuring I don't repeat "
+    )
+    summary += "any image generations that have already been completed.\n"
+    summary += f"I already generated {image_generation_count} images thus far. I should keep my responses EXTREMELY SHORT"
+    summary += "[/CONVERSATION SUMMARY]"
+    history_basemessages.append(AIMessage(content=summary))
+    history_token_counts.append(100)
+
     return history_basemessages, history_token_counts
 
 
@@ -126,15 +174,15 @@ def build_content_with_imgs(
             for file in files
             if file.file_type == "image"
         ]
-        + [
-            {
-                "type": "image_url",
-                "image_url": {
-                    "url": url,
-                },
-            }
-            for url in img_urls
-        ],
+        # + [
+        #     {
+        #         "type": "image_url",
+        #         "image_url": {
+        #             "url": url,
+        #         },
+        #     }
+        #     for url in img_urls
+        # ],
     )
 
 

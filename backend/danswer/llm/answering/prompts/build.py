@@ -133,6 +133,8 @@ class AnswerPromptBuilder:
                 )
             )
 
-        return drop_messages_history_overflow(
+        response = drop_messages_history_overflow(
             final_messages_with_tokens, self.max_tokens
         )
+
+        return response

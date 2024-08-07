@@ -30,6 +30,12 @@ class Tool(abc.ABC):
     def tool_definition(self) -> dict:
         raise NotImplementedError
 
+    # @abc.abstractmethod
+    # def build_user_message_history(
+    #     self, *args: ToolResponse
+    # ) -> str | list[str | dict[str, Any]]:
+    #     raise NotImplementedError
+
     @abc.abstractmethod
     def build_tool_message_content(
         self, *args: ToolResponse

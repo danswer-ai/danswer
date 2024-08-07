@@ -29,7 +29,7 @@ YES_IMAGE_GENERATION = "Yes Image Generation"
 SKIP_IMAGE_GENERATION = "Skip Image Generation"
 
 IMAGE_GENERATION_TEMPLATE = f"""
-Given the conversation history and a follow up query, determine if the system should call \
+Given the conversation history and a follow up query, determine if the system should call
 an external image generation tool to better answer the latest user input.
 Your default response is {SKIP_IMAGE_GENERATION}.
 
@@ -187,7 +187,8 @@ class ImageGenerationTool(Tool):
                     in error_message
                 ):
                     raise ValueError(
-                        "The image generation request was rejected due to OpenAI's content policy. Please try a different prompt."
+                        "The image generation request was rejected due to OpenAI's content policy."
+                        + "Please try a different prompt."
                     )
                 elif "Invalid image URL" in error_message:
                     raise ValueError("Invalid image URL provided for image generation.")

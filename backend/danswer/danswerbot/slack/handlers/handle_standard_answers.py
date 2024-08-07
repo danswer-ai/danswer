@@ -143,7 +143,7 @@ def handle_standard_answers(
             parent_message=root_message,
             prompt_id=prompt.id if prompt else None,
             message=query_msg.message,
-            token_count=0,
+            token_count=10,
             message_type=MessageType.USER,
             db_session=db_session,
             commit=True,
