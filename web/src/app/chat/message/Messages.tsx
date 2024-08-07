@@ -10,6 +10,7 @@ import {
 import { FeedbackType } from "../types";
 import { useContext, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import Prism from "prismjs"
 import {
   DanswerDocument,
   FilteredDanswerDocument,
@@ -56,6 +57,7 @@ import GeneratingImage from "../tools/ImageGeneratingAnimation";
 import DualPromptDisplay from "../tools/ImagePromptCitation";
 import { Popover } from "@/components/popover/Popover";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
+import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
