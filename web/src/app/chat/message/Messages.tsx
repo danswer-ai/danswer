@@ -38,7 +38,6 @@ import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Citation } from "@/components/search/results/Citation";
-import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 import {
   DislikeFeedbackIcon,
   LikeFeedbackIcon,
@@ -48,12 +47,9 @@ import {
   CustomTooltip,
   TooltipGroup,
 } from "@/components/tooltip/CustomTooltip";
-import { ValidSources } from "@/lib/types";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useMouseTracking } from "./hooks";
-import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import GeneratingImage from "../tools/ImageGeneratingAnimation";
 import DualPromptDisplay from "../tools/ImagePromptCitation";
 import { Popover } from "@/components/popover/Popover";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
@@ -186,8 +182,25 @@ export const AIMessage = ({
   };
 
   const finalContent = buildFinalContentDisplay(content as string);
-
+  const citationRef = useRef<HTMLDivElement | null>(null);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        citationRef.current &&
+        !citationRef.current.contains(event.target as Node)
+      ) {
+        // setIsPopoverOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {
     Prism.highlightAll();
@@ -251,10 +264,6 @@ export const AIMessage = ({
       });
   }
 
-  const uniqueSources: ValidSources[] = Array.from(
-    new Set((docs || []).map((doc) => doc.source_type))
-  ).slice(0, 3);
-
   return (
     <div
       ref={trackedElementRef}
@@ -284,22 +293,21 @@ export const AIMessage = ({
                         !retrievalDisabled && (
                           <div className="my-1">
                             <SearchSummary
+                              filteredDocs={filteredDocs}
                               query={query}
-                              hasDocs={hasDocs || false}
-                              messageId={messageId}
                               finished={
                                 toolCall?.tool_result != undefined ||
                                 isComplete!
                               }
-                              isCurrentlyShowingRetrieved={
-                                isCurrentlyShowingRetrieved
-                              }
-                              handleShowRetrieved={handleShowRetrieved}
+                              toggleDocumentSelection={toggleDocumentSelection}
+                              docs={docs}
                               handleSearchQueryEdit={handleSearchQueryEdit}
                             />
                           </div>
                         )}
+
                       {handleForceSearch &&
+                        !hasChildAI &&
                         content &&
                         query === undefined &&
                         !hasDocs &&
@@ -323,22 +331,22 @@ export const AIMessage = ({
                           !retrievalDisabled && (
                             <div className="mb-1">
                               <SearchSummary
+                                docs={docs}
+                                filteredDocs={filteredDocs}
                                 query={query}
                                 finished={
                                   toolCall?.tool_result != undefined ||
                                   isComplete!
                                 }
-                                hasDocs={hasDocs || false}
-                                messageId={messageId}
-                                isCurrentlyShowingRetrieved={
-                                  isCurrentlyShowingRetrieved
+                                toggleDocumentSelection={
+                                  toggleDocumentSelection
                                 }
-                                handleShowRetrieved={handleShowRetrieved}
                                 handleSearchQueryEdit={handleSearchQueryEdit}
                               />
                             </div>
                           )}
                         {handleForceSearch &&
+                          !hasChildAI &&
                           content &&
                           query === undefined &&
                           !hasDocs &&
@@ -420,6 +428,7 @@ export const AIMessage = ({
                                         }
                                         popover={
                                           <DualPromptDisplay
+                                            // ref={citationRef}
                                             setPopup={setPopup}
                                             prompt1={
                                               toolCall?.tool_result?.[0]
@@ -434,6 +443,13 @@ export const AIMessage = ({
                                         side="top"
                                         align="center"
                                       />
+                                    );
+                                  }
+                                  if (value?.toString() == "[run_search]") {
+                                    return (
+                                      <span className="inline-block">
+                                        i ran a search
+                                      </span>
                                     );
                                   } else if (
                                     value?.toString().startsWith("*")
@@ -496,80 +512,6 @@ export const AIMessage = ({
                       </>
                     ) : isComplete ? null : (
                       <></>
-                    )}
-
-                    {isComplete && docs && docs.length > 0 && (
-                      <div className="mt-2 -mx-8 w-full mb-4 flex relative">
-                        <div className="w-full">
-                          <div className="px-8 flex gap-x-2">
-                            {!settings?.isMobile &&
-                              filteredDocs.length > 0 &&
-                              filteredDocs.slice(0, 2).map((doc, ind) => (
-                                <div
-                                  key={doc.document_id}
-                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 pb-2 pt-1 border-b
-                              `}
-                                >
-                                  <a
-                                    href={doc.link}
-                                    target="_blank"
-                                    className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
-                                  >
-                                    <Citation link={doc.link} index={ind + 1} />
-                                    <p className="shrink truncate ellipsis break-all ">
-                                      {doc.semantic_identifier ||
-                                        doc.document_id}
-                                    </p>
-                                    <div className="ml-auto flex-none">
-                                      {doc.is_internet ? (
-                                        <InternetSearchIcon url={doc.link} />
-                                      ) : (
-                                        <SourceIcon
-                                          sourceType={doc.source_type}
-                                          iconSize={18}
-                                        />
-                                      )}
-                                    </div>
-                                  </a>
-                                  <div className="flex overscroll-x-scroll mt-.5">
-                                    <DocumentMetadataBlock document={doc} />
-                                  </div>
-                                  <div className="line-clamp-3 text-xs break-words pt-1">
-                                    {doc.blurb}
-                                  </div>
-                                </div>
-                              ))}
-                            <div
-                              onClick={() => {
-                                if (toggleDocumentSelection) {
-                                  toggleDocumentSelection();
-                                }
-                              }}
-                              key={-1}
-                              className="cursor-pointer w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 py-2 border-b"
-                            >
-                              <div className="text-sm flex justify-between font-semibold text-text-700">
-                                <p className="line-clamp-1">See context</p>
-                                <div className="flex gap-x-1">
-                                  {uniqueSources.map((sourceType, ind) => {
-                                    return (
-                                      <div key={ind} className="flex-none">
-                                        <SourceIcon
-                                          sourceType={sourceType}
-                                          iconSize={18}
-                                        />
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                              <div className="line-clamp-3 text-xs break-words pt-1">
-                                See more
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                     )}
                   </div>
                   {!hasChildAI &&
