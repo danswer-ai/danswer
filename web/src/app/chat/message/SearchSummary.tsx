@@ -110,7 +110,7 @@ export function SearchSummary({
 
   const searchingForDisplay = (
     <div
-      className={`flex my-auto items-center rounded ${isOverflowed && "cursor-default"}`}
+      className={`flex my-auto items-center ${isOverflowed && "cursor-default"}`}
     >
       {finished ? (
         <>
@@ -122,7 +122,7 @@ export function SearchSummary({
             ref={searchingForRef}
           >
             Searched {filteredDocs.length > 0 && filteredDocs.length} document
-            {filteredDocs.length != 1 && "s"} for: "{finalQuery}"
+            {filteredDocs.length != 1 && "s"}
           </div>
         </>
       ) : (
@@ -192,7 +192,7 @@ export function SearchSummary({
           }
         }}
         key={doc.document_id}
-        className="flex items-start gap-3 px-4 py-3 text-token-text-secondary rounded-t-xl hover:bg-background-100 group relative text-sm"
+        className={`flex items-start gap-3 px-4 py-3 text-token-text-secondary ${ind == 0 && "rounded-t-xl"} hover:bg-background-100 group relative text-sm`}
         // className="w-full text-sm flex transition-all duration-500 hover:bg-background-125 bg-text-100 py-4 border-b"
       >
         <div className="mt-1 scale-[.9] flex-none">
@@ -292,7 +292,7 @@ export function SearchSummary({
                   }
                 }}
                 key={-1}
-                className="cursor-pointer w-full flex transition-all duration-500 hover:bg-background-100  py-4 border-b"
+                className="cursor-pointer w-full flex transition-all duration-500 hover:bg-background-100  py-3 border-b"
               >
                 <div key={0} className="px-3 invisible scale-[.9] flex-none">
                   <SourceIcon sourceType={"file"} iconSize={18} />

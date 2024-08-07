@@ -284,9 +284,10 @@ export const AIMessage = ({
             )}
             <div className="w-full">
               <div className="max-w-message-max break-words">
-                {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
+                {!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME ? (
                   danswerSearchToolEnabledForPersona && (
                     <>
+                      <p>HIIIIII</p>
                       {query !== undefined &&
                         handleShowRetrieved !== undefined &&
                         isCurrentlyShowingRetrieved !== undefined &&
@@ -319,7 +320,10 @@ export const AIMessage = ({
                           </div>
                         )}
                     </>
-                  )}
+                  )
+                ) : (
+                  <p>NOT ENABLED</p>
+                )}
 
                 <div className="w-full ml-4">
                   <div className="max-w-message-max break-words">
@@ -428,6 +432,7 @@ export const AIMessage = ({
                                         }
                                         popover={
                                           <DualPromptDisplay
+                                            arg="Prompt"
                                             // ref={citationRef}
                                             setPopup={setPopup}
                                             prompt1={
@@ -447,9 +452,33 @@ export const AIMessage = ({
                                   }
                                   if (value?.toString() == "[run_search]") {
                                     return (
-                                      <span className="inline-block">
-                                        i ran a search
-                                      </span>
+                                      <Popover
+                                        open={isPopoverOpen}
+                                        onOpenChange={() => null} // only allow closing from the icon
+                                        content={
+                                          <button
+                                            onMouseDown={() => {
+                                              setIsPopoverOpen(!isPopoverOpen);
+                                            }}
+                                          >
+                                            <ToolCallIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
+                                          </button>
+                                        }
+                                        popover={
+                                          <DualPromptDisplay
+                                            arg="Query"
+                                            // ref={citationRef}
+                                            setPopup={setPopup}
+                                            prompt1={toolCall?.tool_args?.query}
+                                          />
+                                        }
+                                        side="top"
+                                        align="center"
+                                      />
+
+                                      // <span className="inline-block">
+                                      //   i ran a search
+                                      // </span>
                                     );
                                   } else if (
                                     value?.toString().startsWith("*")
