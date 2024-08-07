@@ -113,14 +113,7 @@ def _run_indexing(
         primary_index_name=index_name, secondary_index_name=None
     )
 
-    embedding_model = DefaultIndexingEmbedder(
-        model_name=db_embedding_model.model_name,
-        normalize=db_embedding_model.normalize,
-        query_prefix=db_embedding_model.query_prefix,
-        passage_prefix=db_embedding_model.passage_prefix,
-        api_key=db_embedding_model.api_key,
-        provider_type=db_embedding_model.provider_type,
-    )
+    embedding_model = DefaultIndexingEmbedder.from_embedding_model(db_embedding_model)
 
     indexing_pipeline = build_indexing_pipeline(
         embedder=embedding_model,
