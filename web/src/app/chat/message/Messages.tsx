@@ -10,7 +10,7 @@ import {
 import { FeedbackType } from "../types";
 import { useContext, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import Prism from "prismjs"
+import Prism from "prismjs";
 import {
   DanswerDocument,
   FilteredDanswerDocument,
@@ -163,7 +163,7 @@ export const AIMessage = ({
   setPopup: (popupSpec: PopupSpec | null) => void;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
-  const processContent = (content: string | JSX.Element) => {
+  const buildFinalContentDisplay = (content: string | JSX.Element) => {
     if (typeof content !== "string") {
       return content;
     }
@@ -178,10 +178,14 @@ export const AIMessage = ({
       }
     }
 
-    return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
+    const indicator = !isComplete && !toolCallGenerating ? " [*]()" : "";
+    const tool_citation =
+      isComplete && toolCall?.tool_result ? ` [[${toolCall.tool_name}]]()` : "";
+
+    return content + indicator + tool_citation;
   };
 
-  const finalContent = processContent(content as string);
+  const finalContent = buildFinalContentDisplay(content as string);
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -260,7 +264,6 @@ export const AIMessage = ({
         className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-message-max`}
       >
         <div className={`${!shared && "mobile:ml-4 xl:ml-8"}`}>
-
           <div className="flex">
             {!hasParentAI ? (
               <AssistantIcon
@@ -484,10 +487,7 @@ export const AIMessage = ({
                                 [rehypePrism, { ignoreMissing: true }],
                               ]}
                             >
-                              {finalContent +
-                                (toolCall?.tool_result
-                                  ? ` [[${toolCall.tool_name}]]()`
-                                  : "")}
+                              {finalContent as string}
                             </ReactMarkdown>
                           </div>
                         ) : (
