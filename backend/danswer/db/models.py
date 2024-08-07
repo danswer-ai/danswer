@@ -139,6 +139,12 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     # Custom tools created by this user
     custom_tools: Mapped[list["Tool"]] = relationship("Tool", back_populates="user")
 
+    workspace: Mapped[list["Workspace"]] = relationship(
+        "Workspaces",
+        secondary="workspace__users",
+        viewonly=True,
+    )
+
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
     pass
@@ -1230,6 +1236,11 @@ class UserGroup(Base):
         viewonly=True,
     )
 
+    workspace: Mapped[list["Workspace"]] = relationship(
+        "Workspace",
+        secondary="workspace__users",
+        viewonly=True,
+    )
 
 """Tables related to Token Rate Limiting
 NOTE: `TokenRateLimit` is partially an MIT feature (global rate limit)
@@ -1391,8 +1402,6 @@ class Workspace(Base):
     Workspace_name: Mapped[str] = mapped_column(Text)
     custom_logo: Mapped[str] = mapped_column(Text)
     custom_header_logo: Mapped[str] = mapped_column(Text)
-    
-    workspace: Mapped[User | None] = relationship("Workspaces", back_populates="workspaces")
 
     users: Mapped[list[User]] = relationship(
         "User",
@@ -1400,11 +1409,13 @@ class Workspace(Base):
         viewonly=True,
     )
     
-    teams: Mapped[list[UserGroup]] = relationship(
+    groups: Mapped[list[UserGroup]] = relationship(
         "UserGroup",
         secondary="workspace__users",
         viewonly=True,
     )
+
+    workspace_settings: Mapped["WorkspaceSettings"] = relationship("WorkspaceSettings", back_populates="workspace_settings")
 
 class WorkspaceSettings(Base):
     __tablename__ = "workspace_settings"
@@ -1421,6 +1432,8 @@ class WorkspaceSettings(Base):
     )
     number_of_users: Mapped[int] = mapped_column(Integer)
     storage_limit: Mapped[int] = mapped_column(Integer)
+    
+    workspace: Mapped[Workspace] = relationship("Workspace", back_populates="workspace")
 
 
 class Instance(Base):
