@@ -2,12 +2,16 @@
 import { useContext } from "react";
 import { FiSidebar } from "react-icons/fi";
 import { SettingsContext } from "../settings/SettingsProvider";
-import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
+import {
+  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
+  NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
+} from "@/lib/constants";
 import { LefToLineIcon, NewChatIcon, RightToLineIcon } from "../icons/icons";
 import { Tooltip } from "../tooltip/Tooltip";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 import { Logo } from "../Logo";
 import { HeaderTitle } from "./HeaderTitle";
+import Link from "next/link";
 
 export default function LogoType({
   toggleSidebar,
@@ -16,6 +20,7 @@ export default function LogoType({
   page,
   toggled,
   showArrow,
+  assistantId,
 }: {
   hideOnMobile?: boolean;
   toggleSidebar?: () => void;
@@ -23,6 +28,7 @@ export default function LogoType({
   page: pageType;
   toggled?: boolean;
   showArrow?: boolean;
+  assistantId?: number;
 }) {
   const combinedSettings = useContext(SettingsContext);
   const enterpriseSettings = combinedSettings?.enterpriseSettings;
@@ -62,11 +68,27 @@ export default function LogoType({
 
       {page == "chat" && !showArrow && (
         <Tooltip delayDuration={1000} content="New Chat">
-          <button className="my-auto mobile:hidden" onClick={handleNewChat}>
+          <Link
+            className="my-auto mobile:hidden"
+            href={
+              `/${page}` +
+              (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA && assistantId
+                ? `?assistantId=${assistantId}`
+                : "")
+            }
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey) {
+                return;
+              }
+              if (handleNewChat) {
+                handleNewChat();
+              }
+            }}
+          >
             <div className="cursor-pointer ml-2 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
               <NewChatIcon size={20} />
             </div>
-          </button>
+          </Link>
         </Tooltip>
       )}
       {showArrow && (

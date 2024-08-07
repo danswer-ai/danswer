@@ -71,6 +71,7 @@ export default function FunctionalHeader({
     <div className="pb-6 left-0 sticky top-0 z-20 w-full relative flex">
       <div className="mt-2 mx-2.5 text-text-700 relative flex w-full">
         <LogoType
+          assistantId={currentChatSession?.persona_id}
           page={page}
           toggleSidebar={toggleSidebar}
           handleNewChat={handleNewChat}
