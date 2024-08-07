@@ -41,7 +41,7 @@ PUBLIC_ENDPOINT_SPECS = [
     # oauth
     ("/auth/oauth/authorize", {"GET"}),
     ("/auth/oauth/callback", {"GET"}),
-    # custom endpoint for simple search without llms, hence no auth needed (may change later)
+    # custom endpoint for simple search without llms, hence no auth needed
     ("/query/simple-search", {"POST"}),
 ]
 
