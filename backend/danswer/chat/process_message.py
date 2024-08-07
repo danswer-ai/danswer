@@ -61,7 +61,7 @@ from danswer.search.retrieval.search_runner import inference_sections_from_ids
 from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.search.utils import dedupe_documents
 from danswer.search.utils import drop_llm_indices
-from danswer.search.utils import relevant_documents_to_indices
+from danswer.search.utils import relevant_sections_to_indices
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.utils import get_json_line
@@ -637,9 +637,9 @@ def stream_chat_message_objects(
                     relevance_sections = packet.response
 
                     if reference_db_search_docs is not None:
-                        llm_indices = relevant_documents_to_indices(
+                        llm_indices = relevant_sections_to_indices(
                             relevance_sections=relevance_sections,
-                            search_docs=[
+                            items=[
                                 translate_db_search_doc_to_server_search_doc(doc)
                                 for doc in reference_db_search_docs
                             ],
