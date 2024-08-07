@@ -38,27 +38,6 @@ def dedupe_documents(items: list[T]) -> tuple[list[T], list[int]]:
     return deduped_items, dropped_indices
 
 
-
-
-
-def relevant_saved_search_doc_to_indices(
-    relevance_sections: list[SectionRelevancePiece] | None, saved_search_doc: list[SavedSearchDocWithContent]
-) -> list[int]:
-    if relevance_sections is None:
-        return []
-
-    relevant_set = {
-        (chunk.document_id, chunk.chunk_id)
-        for chunk in relevance_sections
-        if chunk.relevant
-    }
-
-    return [
-        index
-        for index, section in enumerate(saved_search_doc)
-        if (section.document_id, section.chunk_ind) in relevant_set
-    ]
-
 def relevant_sections_to_indices(
     relevance_sections: list[SectionRelevancePiece] | None,
     inference_sections: list[InferenceSection],
@@ -81,7 +60,8 @@ def relevant_sections_to_indices(
 
 
 def relevant_documents_to_indices(
-    relevance_sections: list[SectionRelevancePiece] | None, search_docs: list[SearchDoc]
+    relevance_sections: list[SectionRelevancePiece] | None,
+    search_docs: list[SearchDoc] | list[SavedSearchDocWithContent],
 ) -> list[int]:
     if relevance_sections is None:
         return []

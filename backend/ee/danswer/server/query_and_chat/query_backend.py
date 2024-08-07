@@ -1,5 +1,3 @@
-from typing import cast
-
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -11,9 +9,7 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTA
 from danswer.danswerbot.slack.handlers.handle_standard_answers import (
     oneoff_standard_answers,
 )
-from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.engine import get_session
-from danswer.db.models import SearchDoc
 from danswer.db.models import User
 from danswer.db.persona import get_persona_by_id
 from danswer.llm.answering.prompts.citations_prompt import (
@@ -31,7 +27,7 @@ from danswer.search.models import SearchRequest
 from danswer.search.pipeline import SearchPipeline
 from danswer.search.utils import dedupe_documents
 from danswer.search.utils import drop_llm_indices
-from danswer.search.utils import relevant_saved_search_doc_to_indices
+from danswer.search.utils import relevant_documents_to_indices
 from danswer.utils.logger import setup_logger
 from ee.danswer.server.query_and_chat.models import DocumentSearchRequest
 from ee.danswer.server.query_and_chat.models import StandardAnswerRequest
@@ -113,9 +109,8 @@ def handle_search_request(
     if search_request.retrieval_options.dedupe_docs:
         deduped_docs, dropped_inds = dedupe_documents(top_docs)
 
-    llm_indices = relevant_saved_search_doc_to_indices(
-        relevance_sections=relevance_sections,
-        saved_search_doc=deduped_docs
+    llm_indices = relevant_documents_to_indices(
+        relevance_sections=relevance_sections, search_docs=deduped_docs
     )
 
     if dropped_inds:
