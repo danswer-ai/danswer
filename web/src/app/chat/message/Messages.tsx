@@ -1,11 +1,6 @@
 "use client";
 
 import {
-  FiCpu,
-  FiImage,
-  FiThumbsDown,
-  FiThumbsUp,
-  FiUser,
   FiEdit2,
   FiChevronRight,
   FiChevronLeft,
@@ -36,9 +31,6 @@ import { DocumentPreview } from "../files/documents/DocumentPreview";
 import { InMessageImage } from "../files/images/InMessageImage";
 import { CodeBlock } from "./CodeBlock";
 import rehypePrism from "rehype-prism-plus";
-
-// Prism stuff
-import Prism from "prismjs";
 
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";

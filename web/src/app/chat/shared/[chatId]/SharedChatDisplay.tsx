@@ -21,7 +21,7 @@ function BackToDanswerButton() {
   const enterpriseSettings = useContext(SettingsContext)?.enterpriseSettings;
 
   return (
-    <div className="absolute bottom-4 w-full flex border-t border-border pt-4">
+    <div className="absolute bottom-0 bg-background w-full flex border-t border-border py-4">
       <div className="mx-auto">
         <Button onClick={() => router.push("/chat")}>
           Back to {enterpriseSettings?.application_name || "Danswer Chat"}
@@ -39,6 +39,11 @@ export function SharedChatDisplay({
   chatSession: BackendChatSession | null;
   availableAssistants: Persona[];
 }) {
+  const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    Prism.highlightAll();
+    setIsReady(true);
+  }, []);
   if (!chatSession) {
     return (
       <div className="min-h-full w-full">
@@ -47,12 +52,10 @@ export function SharedChatDisplay({
             Did not find a shared chat with the specified ID.
           </Callout>
         </div>
-
         <BackToDanswerButton />
       </div>
     );
   }
-
   const currentPersona = availableAssistants.find(
     (persona) => persona.id === chatSession.persona_id
   );
@@ -60,17 +63,12 @@ export function SharedChatDisplay({
   const messages = buildLatestMessageChain(
     processRawChatHistory(chatSession.messages)
   );
-  const [isReady, setIsReady] = useState(false);
-  useEffect(() => {
-    Prism.highlightAll();
-    setIsReady(true);
-  }, []);
 
   return (
-    <div className="w-full overflow-hidden">
+    <div className="w-full h-[100dvh] overflow-hidden">
       <div className="flex max-h-full overflow-hidden pb-[72px]">
         <div className="flex w-full overflow-hidden overflow-y-scroll">
-          <div className="w-full max-w-message-max mx-auto">
+          <div className="w-full h-full flex-col flex  max-w-message-max mx-auto">
             <div className="px-5 pt-8">
               <h1 className="text-3xl text-strong font-bold">
                 {chatSession.description ||
@@ -112,8 +110,10 @@ export function SharedChatDisplay({
                 })}
               </div>
             ) : (
-              <div className="flex w-full">
-                <DanswerInitializingLoader />
+              <div className="grow flex-0 h-screen w-full flex items-center justify-center">
+                <div className="mb-[33vh]">
+                  <DanswerInitializingLoader />
+                </div>
               </div>
             )}
           </div>
