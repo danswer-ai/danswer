@@ -84,6 +84,7 @@ def _get_answer_stream_processor(
     answer_style_configs: AnswerStyleConfig,
 ) -> StreamProcessor:
     if answer_style_configs.citation_config:
+        print("CITATINOS")
         return build_citation_processor(
             context_docs=context_docs, doc_id_to_rank_map=doc_id_to_rank_map
         )
@@ -346,8 +347,10 @@ class Answer:
                 prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
 
                 process_answer_stream_fn = _get_answer_stream_processor(
-                    context_docs=[],
-                    doc_id_to_rank_map=map_document_id_order([]),
+                    context_docs=self.final_context_docs or [],
+                    doc_id_to_rank_map=map_document_id_order(
+                        self.final_context_docs or []
+                    ),
                     answer_style_configs=self.answer_style_config,
                 )
 
@@ -665,7 +668,7 @@ class Answer:
             context_docs=final_context_documents or [],
             # if doc selection is enabled, then search_results will be None,
             # so we need to use the final_context_docs
-            doc_id_to_rank_map=map_document_id_order([]),
+            doc_id_to_rank_map=map_document_id_order(final_context_documents or []),
             answer_style_configs=self.answer_style_config,
         )
 
@@ -722,7 +725,8 @@ class Answer:
                         # ]
 
                     elif message.id == FINAL_CONTEXT_DOCUMENTS:
-                        cast(list[LlmDoc], message.response)
+                        final_context_docs = cast(list[LlmDoc], message.response)
+                        self.final_context_docs = final_context_docs
 
                     elif (
                         message.id == SEARCH_DOC_CONTENT_ID

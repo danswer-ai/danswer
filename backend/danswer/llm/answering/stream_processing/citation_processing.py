@@ -59,6 +59,8 @@ def extract_citations_from_stream(
     and provides both the processed text and citation information as output.
     """
     order_mapping = doc_id_to_rank_map.order_mapping
+    print("ORDER MAPPING")
+    print(order_mapping)
     llm_out = ""
     max_citation_num = len(context_docs)
     citation_order = []
@@ -204,6 +206,9 @@ def extract_citations_from_stream(
 def build_citation_processor(
     context_docs: list[LlmDoc], doc_id_to_rank_map: DocumentIdOrderMapping
 ) -> StreamProcessor:
+    print("DOC MAPPING")
+    print(doc_id_to_rank_map)
+
     def stream_processor(tokens: Iterator[str]) -> AnswerQuestionStreamReturn:
         yield from extract_citations_from_stream(
             tokens=tokens,
