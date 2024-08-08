@@ -20,7 +20,6 @@ export function InMessageImage({ fileId }: { fileId: string }) {
             imageLoaded ? "opacity-0" : "opacity-100"
           }`}
         />
-
         <img
           width={1200}
           height={1200}
