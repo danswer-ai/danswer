@@ -341,10 +341,6 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
     elif mime_type == GDriveMimeType.POWERPOINT.value:
         response = service.files().get_media(fileId=file["id"]).execute()
         return pptx_to_text(file=io.BytesIO(response))
-    elif mime_type == GDriveMimeType.PPT.value:
-        response = service.files().get_media(fileId=file["id"]).execute()
-        print(response)
-        return pptx_to_text(file=io.BytesIO(response))
 
     return UNSUPPORTED_FILE_TYPE_CONTENT
 
