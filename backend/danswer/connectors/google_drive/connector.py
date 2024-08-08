@@ -306,9 +306,6 @@ def get_all_files_batched(
 
 def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
     mime_type = file["mimeType"]
-    print("-------------------")
-    print("MIME TYPE")
-    print(mime_type)
 
     if mime_type not in set(item.value for item in GDriveMimeType):
         # Unsupported file types can still have a title, finding this way is still useful
