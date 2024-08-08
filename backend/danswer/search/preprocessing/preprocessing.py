@@ -28,6 +28,8 @@ from danswer.utils.timing import log_function_time
 from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
 
 
+_LONG_TERM_LEN = 5
+
 logger = setup_logger()
 
 
@@ -134,11 +136,23 @@ def retrieval_preprocessing(
 
     # Second pass at removing stopwords, the model should have already taken care of it but this is fast
     # Also if the query is too long, the model just returns back everything
+    all_query_terms = query.split()
+    # To be safe for now, don't drop any of the longer terms
+    longer_query_terms = [
+        term for term in all_query_terms if len(term) > _LONG_TERM_LEN
+    ]
     processed_keywords = (
-        remove_stop_words_and_punctuation(extracted_keywords)
+        remove_stop_words_and_punctuation(longer_query_terms)
         if EDIT_KEYWORD_QUERY
-        else query.split()
+        else all_query_terms
     )
+    # Safety net to not drop longer terms
+    additional_terms = [
+        term for term in longer_query_terms if term not in processed_keywords
+    ]
+    if additional_terms:
+        logger.debug(f"Added back {', '.join(additional_terms)} to the query")
+    processed_keywords.extend(additional_terms)
 
     user_acl_filters = (
         None if bypass_acl else build_access_filters_for_user(user, db_session)
