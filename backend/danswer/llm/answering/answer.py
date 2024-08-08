@@ -233,6 +233,10 @@ class Answer:
                     )
                 )
                 prompt = prompt_builder.build()
+                print("\n\n-------------")
+
+                print("Prompt")
+                print(prompt)
                 final_tool_definitions = [
                     tool.tool_definition()
                     for tool in filter_tools_for_force_tool_use(
@@ -297,6 +301,8 @@ class Answer:
                     and self.force_use_tool.args
                     else tool_call_request["args"]
                 )
+                print("my tool call request is htis")
+                print(tool_args)
 
                 tool_runner = ToolRunner(tool, tool_args)
                 yield tool_runner.kickoff()
@@ -348,6 +354,11 @@ class Answer:
 
                 # Generate response based on updated message history
                 prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
+                print("-------------")
+
+                print("NEW PROMPT")
+                print(prompt)
+                print("\n\n\n\n\n\n-------\n\n------")
 
                 process_answer_stream_fn = _get_answer_stream_processor(
                     context_docs=self.final_context_docs or [],
