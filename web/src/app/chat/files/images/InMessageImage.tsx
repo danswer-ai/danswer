@@ -20,7 +20,7 @@ export function InMessageImage({ fileId }: { fileId: string }) {
           <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-lg" />
         )}
 
-        <Image
+        <img
           width={1200}
           height={1200}
           alt="Chat Message Image"
