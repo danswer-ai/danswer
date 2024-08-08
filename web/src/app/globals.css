@@ -141,35 +141,12 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* font for code blocks */
-.code-line {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-    "Liberation Mono", monospace;
-}
-.pre {
-  background-color: black;
-}
-
+/* Base styles for code blocks */
 .prose :where(pre):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
   background-color: black;
   font-size: small;
 }
 
-.token.selector,
-.token.important,
-.token.atrule,
-.token.keyword,
-.token.builtin {
-  color: white;
-}
-
-:not(pre) > code[class*="language-"],
-pre[class*="language-"] {
-  background-color: white;
-}
-/* Base styles */
-
-/* Base styles for code blocks */
 pre[class*="language-"],
 code[class*="language-"] {
   color: #e0e0e0;
@@ -184,7 +161,12 @@ code[class*="language-"] {
   color: #608b4e;
 }
 
-.code-line .token.punctuation {
+.code-line .token.punctuation,
+.code-line .token.operator,
+.code-line .token.entity,
+.code-line .token.url,
+.code-line .language-css .token.string,
+.code-line .style .token.string {
   color: #d4d4d4;
 }
 
@@ -194,7 +176,8 @@ code[class*="language-"] {
 .code-line .token.number,
 .code-line .token.constant,
 .code-line .token.symbol,
-.code-line .token.deleted {
+.code-line .token.deleted,
+.code-line .token.tag .token.punctuation {
   color: #569cd6;
 }
 
@@ -203,20 +186,13 @@ code[class*="language-"] {
 .code-line .token.string,
 .code-line .token.char,
 .code-line .token.builtin,
-.code-line .token.inserted {
+.code-line .token.inserted,
+.code-line .token.attr-value,
+.code-line .token.attr-value .token.punctuation {
   color: #ce9178;
 }
 
-.code-line .token.operator,
-.code-line .token.entity,
-.code-line .token.url,
-.code-line .language-css .token.string,
-.code-line .style .token.string {
-  color: #d4d4d4;
-}
-
 .code-line .token.atrule,
-.code-line .token.attr-value,
 .code-line .token.keyword {
   color: #c586c0;
 }
@@ -245,20 +221,6 @@ code[class*="language-"] {
   cursor: help;
 }
 
-/* Specific overrides for the sample HTML structure */
-.code-line .token.tag {
-  color: #569cd6;
-}
-
-.code-line .token.tag .token.punctuation {
-  color: #808080;
-}
-
 .code-line .token.attr-name {
   color: #9cdcfe;
-}
-
-.code-line .token.attr-value,
-.code-line .token.attr-value .token.punctuation {
-  color: #ce9178;
 }
