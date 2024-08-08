@@ -63,7 +63,7 @@ import Dropzone from "react-dropzone";
 import {
   checkLLMSupportsImageInput,
   getFinalLLM,
-  getLLMProviderForPersona,
+  getLLMProviderOverrideForPersona,
 } from "@/lib/llm/utils";
 import { ChatInputBar } from "./input/ChatInputBar";
 import { useChatContext } from "@/components/context/ChatContext";
@@ -178,7 +178,7 @@ export function ChatPage({
   );
 
   useEffect(() => {
-    const personaDefault = getLLMProviderForPersona(
+    const personaDefault = getLLMProviderOverrideForPersona(
       liveAssistant,
       llmProviders
     );

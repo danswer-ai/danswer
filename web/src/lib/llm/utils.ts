@@ -34,7 +34,7 @@ export function getFinalLLM(
   return [provider, model];
 }
 
-export function getLLMProviderForPersona(
+export function getLLMProviderOverrideForPersona(
   liveAssistant: Persona,
   llmProviders: LLMProviderDescriptor[]
 ): LlmOverride | null {
