@@ -285,23 +285,6 @@ export const AIMessage = ({
             )}
             <div className="w-full">
               <div className="max-w-message-max break-words">
-                {/* 
-                {query !== undefined && (
-                  <div>Query is defined</div>
-                )}
-
-                {handleShowRetrieved !== undefined && (
-                  <div>HandleShowRetrieved is defined</div>
-                )}
-
-                {isCurrentlyShowingRetrieved !== undefined && (
-                  <div>IsCurrentlyShowingRetrieved is defined</div>
-                )}
-
-                {!retrievalDisabled && (
-                  <div>Retrieval is not disabled</div>
-                )} */}
-
                 <div className="w-full ml-4">
                   <div className="max-w-message-max break-words">
                     {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
