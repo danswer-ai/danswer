@@ -15,7 +15,7 @@ INDEXING_MODEL_SERVER_PORT = int(
 
 # Danswer custom Deep Learning Models
 INTENT_MODEL_VERSION = "danswer/hybrid-intent-token-classifier"
-INTENT_MODEL_TAG = "v1.0.2"
+INTENT_MODEL_TAG = "v1.0.3"
 
 # Bi-Encoder, other details
 DOC_EMBEDDING_CONTEXT_SIZE = 512
