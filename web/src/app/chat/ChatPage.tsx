@@ -83,6 +83,10 @@ import {
   getConsecutiveAIMessagesAtEnd,
   getUniqueDocumentsFromAIMessages,
 } from "@/lib/chat/aiMessageSequence";
+import {
+  IMAGE_GENERATION_TOOL_NAME,
+  SEARCH_TOOL_NAME,
+} from "./tools/constants";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 
 const TEMP_USER_MESSAGE_ID = -1;
@@ -917,6 +921,9 @@ export function ChatPage({
                 tool_args: (packet as ToolCallMetadata).tool_args,
                 tool_result: (packet as ToolCallMetadata).tool_result,
               };
+              if (toolCall.tool_name === SEARCH_TOOL_NAME) {
+                query = toolCall.tool_args.query;
+              }
             } else if (Object.hasOwn(packet, "file_ids")) {
               aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
                 (fileId) => {
@@ -1009,9 +1016,7 @@ export function ChatPage({
               }
               finalMessage = null as BackendMessage | null;
             }
-            console.log("HIII");
-            console.log(packet);
-            console.log;
+
             if (
               !Object.hasOwn(packet, "message_id") &&
               !Object.hasOwn(packet, "delimiter")
@@ -1112,7 +1117,6 @@ export function ChatPage({
     }
     setAlternativeGeneratingAssistant(null);
   };
-  console.log(messageHistory);
 
   const onFeedback = async (
     messageId: number,
@@ -1596,9 +1600,7 @@ export function ChatPage({
                                       messageId={message.messageId}
                                       content={message.message}
                                       files={message.files}
-                                      query={
-                                        messageHistory[i]?.query || undefined
-                                      }
+                                      query={message.query || undefined}
                                       personaName={liveAssistant.name}
                                       citedDocuments={getCitedDocumentsFromMessage(
                                         message
