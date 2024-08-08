@@ -166,9 +166,6 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
     def from_db_embedding_model(
         cls, embedding_model: DbEmbeddingModel
     ) -> "DefaultIndexingEmbedder":
-        if embedding_model.model_name is None:
-            raise ValueError("EmbeddingModel's model_name cannot be None")
-
         return cls(
             model_name=embedding_model.model_name,
             normalize=embedding_model.normalize,
