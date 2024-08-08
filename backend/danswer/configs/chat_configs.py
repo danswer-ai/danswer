@@ -51,7 +51,7 @@ else:
 # Weighting factor between Vector and Keyword Search, 1 for completely vector search
 HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.62)))
 HYBRID_ALPHA_KEYWORD = max(
-    0, min(1, float(os.environ.get("HYBRID_ALPHA_KEYWORD") or 0.62))
+    0, min(1, float(os.environ.get("HYBRID_ALPHA_KEYWORD") or 0.4))
 )
 # Weighting factor between Title and Content of documents during search, 1 for completely
 # Title based. Default heavily favors Content because Title is also included at the top of
