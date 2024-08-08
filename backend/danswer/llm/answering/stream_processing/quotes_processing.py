@@ -24,10 +24,7 @@ from danswer.utils.text_processing import clean_up_code_blocks
 from danswer.utils.text_processing import extract_embedded_json
 from danswer.utils.text_processing import shared_precompare_cleanup
 
-
 logger = setup_logger()
-
-answer_pattern = re.compile(r'{\s*"answer"\s*:\s*"')
 
 
 def _extract_answer_quotes_freeform(
@@ -188,6 +185,7 @@ def _stream_json_answer_end(answer_so_far: str, next_token: str) -> bool:
     # This does not work if it's an escaped escape sign before the " but this is rare, not worth handling
     if answer_so_far and answer_so_far[-1] == "\\":
         next_token = next_token[1:]
+    print(f"the next token is currently {next_token}")
     if '"' in next_token:
         return True
     return False
@@ -225,13 +223,56 @@ def process_model_tokens(
     found_answer_start = False if is_json_prompt else True
     found_answer_end = False
     hold_quote = ""
+    print(is_json_prompt)
+
+    answer_pattern = re.compile(
+        r'(?:```(?:json)?)?\s*{\s*"answer"\s*:\s*"', re.DOTALL | re.IGNORECASE
+    )
 
     for token in tokens:
         model_previous = model_output
         model_output += token
 
+        if found_answer_start and not found_answer_end:
+            print(token, model_previous)
+            if is_json_prompt and _stream_json_answer_end(model_previous, token):
+                found_answer_end = True
+
+                if token:
+                    try:
+                        answer_token_section = token.index('"')
+                        yield DanswerAnswerPiece(
+                            answer_piece=hold_quote + token[:answer_token_section]
+                        )
+                    except ValueError:
+                        logger.error("Quotation mark not found in token")
+                        yield DanswerAnswerPiece(answer_piece=hold_quote + token)
+
+                yield DanswerAnswerPiece(answer_piece=None)
+                continue
+            elif not is_json_prompt:
+                if quote_pat in hold_quote + token or quote_loose in hold_quote + token:
+                    found_answer_end = True
+
+                    yield DanswerAnswerPiece(answer_piece=None)
+                    continue
+                if hold_quote + token in quote_pat_full:
+                    hold_quote += token
+                    continue
+
+            yield DanswerAnswerPiece(answer_piece=hold_quote + token)
+            hold_quote = ""
+
         if not found_answer_start:
+            # m = answer_pattern.match(re.sub(r"\s", "", model_output))
             m = answer_pattern.match(model_output)
+            print("-----------")
+            print(answer_pattern)
+            print(model_output)
+            print(m)
+
+            # found_answer_start = '"answer":"' in re.sub(r"\s", "", model_output)
+
             if m:
                 found_answer_start = True
 
@@ -246,33 +287,7 @@ def process_model_tokens(
                     yield DanswerAnswerPiece(answer_piece=remaining)
                 continue
 
-        if found_answer_start and not found_answer_end:
-            if is_json_prompt and _stream_json_answer_end(model_previous, token):
-                found_answer_end = True
-
-                # return the remaining part of the answer e.g. token might be 'd.", ' and we should yield 'd.'
-                if token:
-                    try:
-                        answer_token_section = token.index('"')
-                        yield DanswerAnswerPiece(
-                            answer_piece=hold_quote + token[:answer_token_section]
-                        )
-                    except ValueError:
-                        logger.error("Quotation mark not found in token")
-                        yield DanswerAnswerPiece(answer_piece=hold_quote + token)
-                yield DanswerAnswerPiece(answer_piece=None)
-                continue
-            elif not is_json_prompt:
-                if quote_pat in hold_quote + token or quote_loose in hold_quote + token:
-                    found_answer_end = True
-                    yield DanswerAnswerPiece(answer_piece=None)
-                    continue
-                if hold_quote + token in quote_pat_full:
-                    hold_quote += token
-                    continue
-            yield DanswerAnswerPiece(answer_piece=hold_quote + token)
-            hold_quote = ""
-
+    print(f"Raw Model QnA Output: {model_output}")
     logger.debug(f"Raw Model QnA Output: {model_output}")
 
     yield _extract_quotes_from_completed_token_stream(

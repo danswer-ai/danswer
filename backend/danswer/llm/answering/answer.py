@@ -78,6 +78,7 @@ def _get_answer_stream_processor(
         return build_citation_processor(
             context_docs=context_docs, doc_id_to_rank_map=doc_id_to_rank_map
         )
+
     if answer_style_configs.quotes_config:
         return build_quotes_processor(
             context_docs=context_docs, is_json_prompt=not (QA_PROMPT_OVERRIDE == "weak")

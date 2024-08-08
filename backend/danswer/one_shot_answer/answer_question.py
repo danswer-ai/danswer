@@ -226,7 +226,7 @@ def stream_answer_objects(
     )
 
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
-
+    print("I AM HERE!")
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
         # for one-shot flow, don't currently do anything with these
         if isinstance(packet, ToolResponse):
@@ -268,6 +268,8 @@ def stream_answer_objects(
                 yield packet.response
 
             elif packet.id == SECTION_RELEVANCE_LIST_ID:
+                print("---------section relevance-------")
+
                 document_based_response = {}
 
                 if packet.response is not None:
@@ -287,10 +289,14 @@ def stream_answer_objects(
                         reference_db_search_docs=reference_db_search_docs,
                         relevance_summary=evaluation_response,
                     )
+
+                print("---------EVALUATION RESPONSE-------")
+                print(evaluation_response)
                 yield evaluation_response
         else:
             yield packet
-
+    print("---------SAVING RESPONSE-------")
+    print(answer.llm_answer)
     # Saving Gen AI answer and responding with message info
     gen_ai_response_message = create_new_chat_message(
         chat_session_id=chat_session.id,

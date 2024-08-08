@@ -179,6 +179,11 @@ def extract_citations_from_stream(
 def build_citation_processor(
     context_docs: list[LlmDoc], doc_id_to_rank_map: DocumentIdOrderMapping
 ) -> StreamProcessor:
+    print("\n\n\n---------------")
+    print("CONTEXT")
+    print(context_docs)
+    print(doc_id_to_rank_map)
+
     def stream_processor(tokens: Iterator[str]) -> AnswerQuestionStreamReturn:
         yield from extract_citations_from_stream(
             tokens=tokens,
