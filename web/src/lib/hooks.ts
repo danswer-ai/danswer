@@ -221,6 +221,7 @@ const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   // OpenAI models
   "gpt-4": "GPT 4",
   "gpt-4o": "GPT 4o",
+  "gpt-4o-2024-08-06": "GPT 4o (Structured Outputs)",
   "gpt-4o-mini": "GPT 4o Mini",
   "gpt-4-0314": "GPT 4 (March 2023)",
   "gpt-4-0613": "GPT 4 (June 2023)",
