@@ -87,6 +87,10 @@ import {
   IMAGE_GENERATION_TOOL_NAME,
   SEARCH_TOOL_NAME,
 } from "./tools/constants";
+import {
+  MOBILE_SIDEBAR_WIDTH_CONST,
+  SIDEBAR_WIDTH_CONST,
+} from "@/lib/constants";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 
 const TEMP_USER_MESSAGE_ID = -1;
@@ -1861,7 +1865,9 @@ export function ChatPage({
         </div>
       </div>
       <DocumentSidebar
-        initialWidth={425}
+        initialWidth={
+          settings?.isMobile ? MOBILE_SIDEBAR_WIDTH_CONST : SIDEBAR_WIDTH_CONST
+        }
         ref={innerSidebarElementRef}
         closeSidebar={() => setDocumentSelection(false)}
         currentDocuments={currentFullContext}
