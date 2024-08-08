@@ -107,7 +107,10 @@ module.exports = {
         "text-600": "#525252", // dark, neutral-600
         "text-700": "#404040", // solid, neutral-700
         "text-800": "#262626", // solidDark, neutral-800
-        "text-900": "#171717", // medium, neutral-400
+        "text-900": "#171717", // dark, neutral-900
+
+        "text-toolrun": "#a3a3a3", // darkMedium, neutral-500
+        "text-toolhover": "#171717", // dark, neutral-900
 
         subtle: "#6b7280", // gray-500
         default: "#4b5563", // gray-600

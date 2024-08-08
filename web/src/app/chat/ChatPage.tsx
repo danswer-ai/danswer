@@ -78,6 +78,10 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import {
+  getConsecutiveAIMessagesAtEnd,
+  getUniqueDocumentsFromAIMessages,
+} from "@/lib/chat/aiMessageSequence";
+import {
   FullLLMProvider,
   LLMProviderDescriptor,
 } from "../admin/models/llm/interfaces";
@@ -1291,6 +1295,10 @@ export function ChatPage({
   };
   const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
+  const currentAIMessages = getConsecutiveAIMessagesAtEnd(messageHistory);
+  const currentFullContext =
+    getUniqueDocumentsFromAIMessages(currentAIMessages);
+
   return (
     <>
       <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
@@ -1533,9 +1541,10 @@ export function ChatPage({
                                       message.latestChildMessageId!
                                     )
                                   : null;
-                                const childMessageType = childMessage
-                                  ? childMessage.type
-                                  : null;
+                                const hasParentAI =
+                                  parentMessage?.type == "assistant";
+                                const hasChildAI =
+                                  childMessage?.type == "assistant";
 
                                 return (
                                   <div
@@ -1548,13 +1557,8 @@ export function ChatPage({
                                   >
                                     <AIMessage
                                       setPopup={setPopup}
-                                      hasParentAI={
-                                        parentMessageType == "assistant"
-                                      }
-                                      hasChildAI={
-                                        childMessageType == "assistant" ||
-                                        isGenerating
-                                      }
+                                      hasParentAI={hasParentAI}
+                                      hasChildAI={hasChildAI}
                                       generatingTool={
                                         message.toolCall != null &&
                                         message.toolCall.tool_result == null
@@ -1600,6 +1604,7 @@ export function ChatPage({
                                       }
                                       handleSearchQueryEdit={
                                         i === messageHistory.length - 1 &&
+                                        !hasParentAI &&
                                         !isStreaming
                                           ? (newQuery) => {
                                               if (!previousMessage) {
@@ -1833,10 +1838,10 @@ export function ChatPage({
         </div>
       </div>
       <DocumentSidebar
-        initialWidth={350}
+        initialWidth={425}
         ref={innerSidebarElementRef}
         closeSidebar={() => setDocumentSelection(false)}
-        selectedMessage={aiMessage}
+        currentDocuments={currentFullContext}
         selectedDocuments={selectedDocuments}
         toggleDocumentSelection={toggleDocumentSelection}
         clearSelectedDocuments={clearSelectedDocuments}

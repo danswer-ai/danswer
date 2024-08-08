@@ -159,6 +159,7 @@ export const AIMessage = ({
   setPopup: (popupSpec: PopupSpec | null) => void;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
+
   const buildFinalContentDisplay = (content: string | JSX.Element) => {
     if (typeof content !== "string") {
       return content;
@@ -287,7 +288,6 @@ export const AIMessage = ({
                 {!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME ? (
                   danswerSearchToolEnabledForPersona && (
                     <>
-                      <p>HIIIIII</p>
                       {query !== undefined &&
                         handleShowRetrieved !== undefined &&
                         isCurrentlyShowingRetrieved !== undefined &&
@@ -414,8 +414,12 @@ export const AIMessage = ({
                                   const value = rest.children;
 
                                   if (
+                                    value?.toString() == `[${SEARCH_TOOL_NAME}]`
+                                  ) {
+                                    return <></>;
+                                  } else if (
                                     value?.toString() ==
-                                    "[run_image_generation]"
+                                    `[${IMAGE_GENERATION_TOOL_NAME}}]`
                                   ) {
                                     return (
                                       <Popover
