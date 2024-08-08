@@ -449,37 +449,6 @@ export const AIMessage = ({
                                         align="center"
                                       />
                                     );
-                                  }
-                                  if (value?.toString() == "[run_search]") {
-                                    return (
-                                      <Popover
-                                        open={isPopoverOpen}
-                                        onOpenChange={() => null} // only allow closing from the icon
-                                        content={
-                                          <button
-                                            onMouseDown={() => {
-                                              setIsPopoverOpen(!isPopoverOpen);
-                                            }}
-                                          >
-                                            <ToolCallIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
-                                          </button>
-                                        }
-                                        popover={
-                                          <DualPromptDisplay
-                                            arg="Query"
-                                            // ref={citationRef}
-                                            setPopup={setPopup}
-                                            prompt1={toolCall?.tool_args?.query}
-                                          />
-                                        }
-                                        side="top"
-                                        align="center"
-                                      />
-
-                                      // <span className="inline-block">
-                                      //   i ran a search
-                                      // </span>
-                                    );
                                   } else if (
                                     value?.toString().startsWith("*")
                                   ) {
@@ -735,7 +704,6 @@ export const HumanMessage = ({
                       shrink
                       border-0
                       rounded-lg 
-                      overflow-y-hidden
                       bg-background-emphasis 
                       whitespace-normal 
                       break-word

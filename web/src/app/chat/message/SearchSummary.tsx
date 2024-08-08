@@ -279,11 +279,9 @@ export function SearchSummary({
             <div className="mx-8 flex rounded overflow-hidden rounded-lg border-1.5 border  divide-y divider-y-1.5 divider-y-border border-border flex-col gap-x-4">
               {!settings?.isMobile &&
                 filteredDocs.length > 0 &&
-                filteredDocs
-                  .slice(0, 2)
-                  .map((doc, ind) => (
-                    <SearchBlock key={ind} doc={doc} ind={ind} />
-                  ))}
+                filteredDocs.map((doc, ind) => (
+                  <SearchBlock key={ind} doc={doc} ind={ind} />
+                ))}
 
               <div
                 onClick={() => {
