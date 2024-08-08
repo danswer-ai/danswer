@@ -81,15 +81,16 @@ def build_vespa_id_based_retrieval_yql(
     chunk_request: VespaChunkRequest,
 ) -> str:
     id_based_retrieval_yql_section = (
-        f"({DOCUMENT_ID} contains '{chunk_request.document_id}'"
+        f'({DOCUMENT_ID} contains "{chunk_request.document_id}"'
     )
-    if chunk_request.min_chunk_ind is not None:
+
+    if chunk_request.is_capped():
         id_based_retrieval_yql_section += (
-            f" and {chunk_request.min_chunk_ind} <= {CHUNK_ID}"
+            f" and {CHUNK_ID} >= {chunk_request.min_chunk_ind or 0}"
         )
-    if chunk_request.max_chunk_ind is not None:
         id_based_retrieval_yql_section += (
-            f" and {chunk_request.max_chunk_ind} >= {CHUNK_ID}"
+            f" and {CHUNK_ID} <= {chunk_request.max_chunk_ind}"
         )
+
     id_based_retrieval_yql_section += ")"
     return id_based_retrieval_yql_section

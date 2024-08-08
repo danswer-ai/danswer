@@ -22,6 +22,16 @@ class VespaChunkRequest:
     min_chunk_ind: int | None = None
     max_chunk_ind: int | None = None
 
+    def is_capped(self) -> bool:
+        # If the max chunk index is not None, then the chunk request is capped
+        # If the min chunk index is None, we can assume the min is 0
+        return self.max_chunk_ind is not None
+
+    def range(self) -> int | None:
+        if self.max_chunk_ind is not None:
+            return (self.max_chunk_ind - (self.min_chunk_ind or 0)) + 1
+        return None
+
 
 @dataclass
 class DocumentMetadata:

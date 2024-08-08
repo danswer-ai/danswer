@@ -145,6 +145,139 @@ def _vespa_hit_to_inference_chunk(
     )
 
 
+def _get_chunks_via_visit_api(
+    chunk_request: VespaChunkRequest,
+    index_name: str,
+    filters: IndexFilters,
+    field_names: list[str] | None = None,
+    get_mega_chunks: bool = False,
+) -> list[dict]:
+    # Constructing the URL for the Visit API
+    # NOTE: visit API uses the same URL as the document API, but with different params
+    url = DOCUMENT_ID_ENDPOINT.format(index_name=index_name)
+
+    # build the list of fields to retrieve
+    field_set_list = (
+        None
+        if not field_names
+        else [f"{index_name}:{field_name}" for field_name in field_names]
+    )
+    acl_fieldset_entry = f"{index_name}:{ACCESS_CONTROL_LIST}"
+    if (
+        field_set_list
+        and filters.access_control_list
+        and acl_fieldset_entry not in field_set_list
+    ):
+        field_set_list.append(acl_fieldset_entry)
+    field_set = ",".join(field_set_list) if field_set_list else None
+
+    # build filters
+    selection = f"{index_name}.document_id=='{chunk_request.document_id}'"
+
+    if chunk_request.is_capped():
+        selection += f" and {index_name}.chunk_id>={chunk_request.min_chunk_ind or 0}"
+        selection += f" and {index_name}.chunk_id<={chunk_request.max_chunk_ind}"
+    if not get_mega_chunks:
+        selection += f" and {index_name}.mega_chunk_reference_ids == null"
+
+    # Setting up the selection criteria in the query parameters
+    params = {
+        # NOTE: Document Selector Language doesn't allow `contains`, so we can't check
+        # for the ACL in the selection. Instead, we have to check as a postfilter
+        "selection": selection,
+        "continuation": None,
+        "wantedDocumentCount": 1_000,
+        "fieldSet": field_set,
+    }
+
+    document_chunks: list[dict] = []
+    while True:
+        response = requests.get(url, params=params)
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            request_info = f"Headers: {response.request.headers}\nPayload: {params}"
+            response_info = f"Status Code: {response.status_code}\nResponse Content: {response.text}"
+            error_base = f"Error occurred getting chunk by Document ID {chunk_request.document_id}"
+            logger.error(
+                f"{error_base}:\n"
+                f"{request_info}\n"
+                f"{response_info}\n"
+                f"Exception: {e}"
+            )
+            raise requests.HTTPError(error_base) from e
+
+        # Check if the response contains any documents
+        response_data = response.json()
+        if "documents" in response_data:
+            for document in response_data["documents"]:
+                if filters.access_control_list:
+                    document_acl = document["fields"].get(ACCESS_CONTROL_LIST)
+                    if not document_acl or not any(
+                        user_acl_entry in document_acl
+                        for user_acl_entry in filters.access_control_list
+                    ):
+                        continue
+                document_chunks.append(document)
+
+        # Check for continuation token to handle pagination
+        if "continuation" in response_data and response_data["continuation"]:
+            params["continuation"] = response_data["continuation"]
+        else:
+            break  # Exit loop if no continuation token
+
+    return document_chunks
+
+
+def get_all_vespa_ids_for_document_id(
+    document_id: str,
+    index_name: str,
+    filters: IndexFilters | None = None,
+    get_mega_chunks: bool = False,
+) -> list[str]:
+    document_chunks = _get_chunks_via_visit_api(
+        chunk_request=VespaChunkRequest(document_id=document_id),
+        index_name=index_name,
+        filters=filters or IndexFilters(access_control_list=None),
+        field_names=[DOCUMENT_ID],
+        get_mega_chunks=get_mega_chunks,
+    )
+    return [chunk["id"].split("::", 1)[-1] for chunk in document_chunks]
+
+
+def parallel_visit_api_retrieval(
+    index_name: str,
+    chunk_requests: list[VespaChunkRequest],
+    filters: IndexFilters,
+    get_mega_chunks: bool = False,
+) -> list[InferenceChunkUncleaned]:
+    functions_with_args: list[tuple[Callable, tuple]] = [
+        (
+            _get_chunks_via_visit_api,
+            (chunk_request, index_name, filters, get_mega_chunks),
+        )
+        for chunk_request in chunk_requests
+    ]
+
+    parallel_results = run_functions_tuples_in_parallel(
+        functions_with_args, allow_failures=True
+    )
+
+    # Any failures to retrieve would give a None, drop the Nones and empty lists
+    vespa_chunk_sets = [res for res in parallel_results if res]
+
+    flattened_vespa_chunks = []
+    for chunk_set in vespa_chunk_sets:
+        flattened_vespa_chunks.extend(chunk_set)
+
+    inference_chunks = [
+        _vespa_hit_to_inference_chunk(chunk, null_score=True)
+        for chunk in flattened_vespa_chunks
+    ]
+
+    return inference_chunks
+
+
 @retry(tries=3, delay=1, backoff=2)
 def query_vespa(
     query_params: Mapping[str, str | int | float]
@@ -203,90 +336,6 @@ def query_vespa(
     return inference_chunks
 
 
-def _get_chunks_via_visit_api(
-    chunk_request: VespaChunkRequest,
-    index_name: str,
-    filters: IndexFilters,
-    field_names: list[str] | None = None,
-    get_mega_chunks: bool = False,
-) -> list[dict]:
-    # Constructing the URL for the Visit API
-    # NOTE: visit API uses the same URL as the document API, but with different params
-    url = DOCUMENT_ID_ENDPOINT.format(index_name=index_name)
-
-    # build the list of fields to retrieve
-    field_set_list = (
-        None
-        if not field_names
-        else [f"{index_name}:{field_name}" for field_name in field_names]
-    )
-    acl_fieldset_entry = f"{index_name}:{ACCESS_CONTROL_LIST}"
-    if (
-        field_set_list
-        and filters.access_control_list
-        and acl_fieldset_entry not in field_set_list
-    ):
-        field_set_list.append(acl_fieldset_entry)
-    field_set = ",".join(field_set_list) if field_set_list else None
-
-    # build filters
-    selection = f"{index_name}.document_id=='{chunk_request.document_id}'"
-    if chunk_request.min_chunk_ind is not None:
-        selection += f" and {index_name}.chunk_id>={chunk_request.min_chunk_ind}"
-    if chunk_request.max_chunk_ind is not None:
-        selection += f" and {index_name}.chunk_id<={chunk_request.max_chunk_ind}"
-    if not get_mega_chunks:
-        selection += f" and {index_name}.mega_chunk_reference_ids is empty"
-
-    # Setting up the selection criteria in the query parameters
-    params = {
-        # NOTE: Document Selector Language doesn't allow `contains`, so we can't check
-        # for the ACL in the selection. Instead, we have to check as a postfilter
-        "selection": selection,
-        "continuation": None,
-        "wantedDocumentCount": 1_000,
-        "fieldSet": field_set,
-    }
-
-    document_chunks: list[dict] = []
-    while True:
-        response = requests.get(url, params=params)
-        try:
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            request_info = f"Headers: {response.request.headers}\nPayload: {params}"
-            response_info = f"Status Code: {response.status_code}\nResponse Content: {response.text}"
-            error_base = f"Error occurred getting chunk by Document ID {chunk_request.document_id}"
-            logger.error(
-                f"{error_base}:\n"
-                f"{request_info}\n"
-                f"{response_info}\n"
-                f"Exception: {e}"
-            )
-            raise requests.HTTPError(error_base) from e
-
-        # Check if the response contains any documents
-        response_data = response.json()
-        if "documents" in response_data:
-            for document in response_data["documents"]:
-                if filters.access_control_list:
-                    document_acl = document["fields"].get(ACCESS_CONTROL_LIST)
-                    if not document_acl or not any(
-                        user_acl_entry in document_acl
-                        for user_acl_entry in filters.access_control_list
-                    ):
-                        continue
-                document_chunks.append(document)
-
-        # Check for continuation token to handle pagination
-        if "continuation" in response_data and response_data["continuation"]:
-            params["continuation"] = response_data["continuation"]
-        else:
-            break  # Exit loop if no continuation token
-
-    return document_chunks
-
-
 def _get_chunks_via_batch_search(
     index_name: str,
     chunk_requests: list[VespaChunkRequest],
@@ -321,55 +370,6 @@ def _get_chunks_via_batch_search(
     return inference_chunks
 
 
-def get_all_vespa_ids_for_document_id(
-    document_id: str,
-    index_name: str,
-    filters: IndexFilters | None = None,
-    get_mega_chunks: bool = False,
-) -> list[str]:
-    document_chunks = _get_chunks_via_visit_api(
-        chunk_request=VespaChunkRequest(document_id=document_id),
-        index_name=index_name,
-        filters=filters or IndexFilters(access_control_list=None),
-        field_names=[DOCUMENT_ID],
-        get_mega_chunks=get_mega_chunks,
-    )
-    return [chunk["id"].split("::", 1)[-1] for chunk in document_chunks]
-
-
-def parallel_visit_api_retrieval(
-    index_name: str,
-    chunk_requests: list[VespaChunkRequest],
-    filters: IndexFilters,
-    get_mega_chunks: bool = False,
-) -> list[InferenceChunkUncleaned]:
-    functions_with_args: list[tuple[Callable, tuple]] = [
-        (
-            _get_chunks_via_visit_api,
-            (chunk_request, index_name, filters, get_mega_chunks),
-        )
-        for chunk_request in chunk_requests
-    ]
-
-    parallel_results = run_functions_tuples_in_parallel(
-        functions_with_args, allow_failures=True
-    )
-
-    # Any failures to retrieve would give a None, drop the Nones and empty lists
-    vespa_chunk_sets = [res for res in parallel_results if res]
-
-    flattened_vespa_chunks = []
-    for chunk_set in vespa_chunk_sets:
-        flattened_vespa_chunks.extend(chunk_set)
-
-    inference_chunks = [
-        _vespa_hit_to_inference_chunk(chunk, null_score=True)
-        for chunk in flattened_vespa_chunks
-    ]
-
-    return inference_chunks
-
-
 def manage_batch_retrieval(
     index_name: str,
     chunk_requests: list[VespaChunkRequest],
@@ -383,32 +383,39 @@ def manage_batch_retrieval(
     for request in chunk_requests:
         # All requests without a chunk range are uncapped
         # Uncapped requests are retrieved using the Visit API
-        if request.max_chunk_ind is None or request.min_chunk_ind is None:
+        range = request.range()
+        if range is None:
             uncapped_requests.append(request)
             continue
 
-        # If the new addition to the chunk count is greater than the max query size,
-        # we need to perform a retrieval to avoid hitting the limit
-        new_addition = request.max_chunk_ind - request.min_chunk_ind + 1
-        if chunk_count + new_addition > MAX_ID_SEARCH_QUERY_SIZE:
+        # If adding the range to the chunk count is greater than the
+        # max query size, we need to perform a retrieval to avoid hitting the limit
+        if chunk_count + range > MAX_ID_SEARCH_QUERY_SIZE:
             retrieved_chunks.extend(
                 _get_chunks_via_batch_search(
-                    index_name, capped_requests, filters, get_mega_chunks
+                    index_name=index_name,
+                    chunk_requests=capped_requests,
+                    filters=filters,
+                    get_mega_chunks=get_mega_chunks,
                 )
             )
             capped_requests = []
             chunk_count = 0
         capped_requests.append(request)
-        chunk_count += new_addition
+        chunk_count += range
 
     if capped_requests:
         retrieved_chunks.extend(
             _get_chunks_via_batch_search(
-                index_name, capped_requests, filters, get_mega_chunks
+                index_name=index_name,
+                chunk_requests=capped_requests,
+                filters=filters,
+                get_mega_chunks=get_mega_chunks,
             )
         )
 
     if uncapped_requests:
+        logger.debug(f"Retrieving {len(uncapped_requests)} uncapped requests")
         retrieved_chunks.extend(
             parallel_visit_api_retrieval(
                 index_name, uncapped_requests, filters, get_mega_chunks

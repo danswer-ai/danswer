@@ -303,7 +303,9 @@ def connect_mega_chunks(
     mega_chunk_text_length = 0
     chunk_index = 0
 
-    for i, mega_chunk in enumerate(mega_chunks):
+    result_mega_chunks: list[DocAwareChunk] = []
+
+    for mega_chunk in mega_chunks:
         mega_chunk.mega_chunk_reference_ids = []
         if chunk_text_length != mega_chunk_text_length:
             mega_chunk.mega_chunk_reference_ids.append(chunk_index - 1)
@@ -327,4 +329,7 @@ def connect_mega_chunks(
             mega_chunk.mega_chunk_reference_ids.append(chunk_index)
             chunk_index += 1
 
-    return mega_chunks
+        if len(mega_chunk.mega_chunk_reference_ids) > 1:
+            result_mega_chunks.append(mega_chunk)
+
+    return result_mega_chunks
