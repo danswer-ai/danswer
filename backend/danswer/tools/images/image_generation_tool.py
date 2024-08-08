@@ -203,7 +203,8 @@ class ImageGenerationTool(Tool):
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
         prompt = cast(str, kwargs["prompt"])
-
+        print("these are the pormtps")
+        print(prompt)
         # dalle3 only supports 1 image at a time, which is why we have to
         # parallelize this via threading
         results = cast(
