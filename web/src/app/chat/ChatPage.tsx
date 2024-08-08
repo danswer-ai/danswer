@@ -86,9 +86,9 @@ import {
   SEARCH_TOOL_NAME,
 } from "./tools/constants";
 import {
-  FullLLMProvider,
-  LLMProviderDescriptor,
-} from "../admin/models/llm/interfaces";
+  MOBILE_SIDEBAR_WIDTH_CONST,
+  SIDEBAR_WIDTH_CONST,
+} from "@/lib/constants";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1839,7 +1839,9 @@ export function ChatPage({
         </div>
       </div>
       <DocumentSidebar
-        initialWidth={425}
+        initialWidth={
+          settings?.isMobile ? MOBILE_SIDEBAR_WIDTH_CONST : SIDEBAR_WIDTH_CONST
+        }
         ref={innerSidebarElementRef}
         closeSidebar={() => setDocumentSelection(false)}
         currentDocuments={currentFullContext}
