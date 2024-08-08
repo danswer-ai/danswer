@@ -143,13 +143,13 @@ body {
 
 /* Base styles for code blocks */
 .prose :where(pre):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
-  background-color: black;
-  font-size: small;
+  background-color: theme("colors.code-bg");
+  font-size: theme("fontSize.code-sm");
 }
 
 pre[class*="language-"],
 code[class*="language-"] {
-  color: #e0e0e0;
+  color: theme("colors.code-text");
   background: white;
 }
 
@@ -158,7 +158,7 @@ code[class*="language-"] {
 .code-line .token.prolog,
 .code-line .token.doctype,
 .code-line .token.cdata {
-  color: #608b4e;
+  color: theme("colors.token-comment");
 }
 
 .code-line .token.punctuation,
@@ -167,7 +167,7 @@ code[class*="language-"] {
 .code-line .token.url,
 .code-line .language-css .token.string,
 .code-line .style .token.string {
-  color: #d4d4d4;
+  color: theme("colors.token-punctuation");
 }
 
 .code-line .token.property,
@@ -178,7 +178,7 @@ code[class*="language-"] {
 .code-line .token.symbol,
 .code-line .token.deleted,
 .code-line .token.tag .token.punctuation {
-  color: #569cd6;
+  color: theme("colors.token-property");
 }
 
 .code-line .token.selector,
@@ -189,32 +189,32 @@ code[class*="language-"] {
 .code-line .token.inserted,
 .code-line .token.attr-value,
 .code-line .token.attr-value .token.punctuation {
-  color: #ce9178;
+  color: theme("colors.token-selector");
 }
 
 .code-line .token.atrule,
 .code-line .token.keyword {
-  color: #c586c0;
+  color: theme("colors.token-atrule");
 }
 
 .code-line .token.function,
 .code-line .token.class-name {
-  color: #dcdcaa;
+  color: theme("colors.token-function");
 }
 
 .code-line .token.regex,
 .code-line .token.important,
 .code-line .token.variable {
-  color: #9cdcfe;
+  color: theme("colors.token-regex");
 }
 
 .code-line .token.important,
 .code-line .token.bold {
-  font-weight: bold;
+  font-weight: theme("fontWeight.token-bold");
 }
 
 .code-line .token.italic {
-  font-style: italic;
+  font-style: theme("fontStyle.token-italic");
 }
 
 .code-line .token.entity {
@@ -222,5 +222,5 @@ code[class*="language-"] {
 }
 
 .code-line .token.attr-name {
-  color: #9cdcfe;
+  color: theme("colors.token-attr-name");
 }

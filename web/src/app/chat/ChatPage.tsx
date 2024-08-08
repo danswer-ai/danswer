@@ -1283,7 +1283,7 @@ export function ChatPage({
                       )}
 
                       <div
-                        className={`h-full bg-white w-full relative flex-auto transition-margin duration-300 overflow-x-auto mobile:pb-12 desktop:pb-[100px]`}
+                        className={`h-full w-full relative flex-auto transition-margin duration-300 overflow-x-auto mobile:pb-12 desktop:pb-[100px]`}
                         {...getRootProps()}
                       >
                         {/* <input {...getInputProps()} /> */}
