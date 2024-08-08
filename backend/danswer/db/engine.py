@@ -137,8 +137,8 @@ def get_sqlalchemy_engine() -> Engine:
         )
         _SYNC_ENGINE = create_engine(
             connection_string,
-            pool_size=40,
-            max_overflow=10,
+            pool_size=5,
+            max_overflow=0,
             pool_pre_ping=POSTGRES_POOL_PRE_PING,
             pool_recycle=POSTGRES_POOL_RECYCLE,
         )
@@ -156,8 +156,8 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
             connect_args={
                 "server_settings": {"application_name": POSTGRES_APP_NAME + "_async"}
             },
-            pool_size=40,
-            max_overflow=10,
+            pool_size=5,
+            max_overflow=0,
             pool_pre_ping=POSTGRES_POOL_PRE_PING,
             pool_recycle=POSTGRES_POOL_RECYCLE,
         )

@@ -51,7 +51,6 @@ from danswer.db.credentials import create_initial_public_credential
 from danswer.db.document import check_docs_exist
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import init_sqlalchemy_engine
-from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
 from danswer.db.llm import fetch_default_provider
@@ -369,7 +368,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         logger.notice("Generative AI Q&A disabled")
 
     # fill up Postgres connection pools
-    await warm_up_connections()
+    # await warm_up_connections()
 
     # We cache this at the beginning so there is no delay in the first telemetry
     get_or_generate_uuid()
