@@ -332,6 +332,7 @@ export const AIMessage = ({
                       )}
 
                     {toolCall &&
+                      (!files || files.length == 0) &&
                       toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
                       !toolCall.tool_result && <GeneratingImageDisplay />}
 
