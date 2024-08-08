@@ -995,7 +995,9 @@ export function ChatPage({
               }
               finalMessage = null as BackendMessage | null;
             }
-
+            console.log("HIII");
+            console.log(packet);
+            console.log;
             if (
               !Object.hasOwn(packet, "message_id") &&
               !Object.hasOwn(packet, "delimiter")
@@ -1096,6 +1098,7 @@ export function ChatPage({
     }
     setAlternativeGeneratingAssistant(null);
   };
+  console.log(messageHistory);
 
   const onFeedback = async (
     messageId: number,
@@ -1684,7 +1687,11 @@ export function ChatPage({
                                       messageId={message.messageId}
                                       personaName={liveAssistant.name}
                                       files={message.files}
-                                      content={message.message}
+                                      content={
+                                        <p className="text-red-700 text-sm my-auto">
+                                          {message.message}
+                                        </p>
+                                      }
                                     />
                                   </div>
                                 );
