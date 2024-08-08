@@ -26,8 +26,9 @@ from danswer.utils.text_processing import shared_precompare_cleanup
 
 
 logger = setup_logger()
-
-answer_pattern = re.compile(r'{\s*"answer"\s*:\s*"')
+answer_pattern = re.compile(
+    r'(?:```(?:json)?)?\s*{\s*"answer"\s*:\s*"', re.DOTALL | re.IGNORECASE
+)
 
 
 def _extract_answer_quotes_freeform(

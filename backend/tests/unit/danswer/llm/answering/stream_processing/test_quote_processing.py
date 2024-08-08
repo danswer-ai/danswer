@@ -195,3 +195,86 @@ def test_process_model_tokens() -> None:
                 actual += o.answer_piece
 
     assert expected_answer == actual
+
+
+def test_simple_json_answer() -> None:
+    tokens = [
+        "```",
+        "json",
+        "\n",
+        "{",
+        '"answer": "This is a simple ',
+        "answer.",
+        '",\n"',
+        'quotes": []',
+        "\n}",
+        "\n",
+        "```",
+    ]
+    gen = process_model_tokens(tokens=iter(tokens), context_docs=mock_docs)
+
+    expected_answer = "This is a simple answer."
+    actual = "".join(
+        o.answer_piece
+        for o in gen
+        if isinstance(o, DanswerAnswerPiece) and o.answer_piece
+    )
+
+    assert expected_answer == actual
+
+
+def test_json_answer_with_quotes() -> None:
+    tokens = [
+        "```",
+        "json",
+        "\n",
+        "{",
+        '"answer": "This ',
+        "is a ",
+        "split ",
+        "answer.",
+        '",\n"',
+        'quotes": []',
+        "\n}",
+        "\n",
+        "```",
+    ]
+    gen = process_model_tokens(tokens=iter(tokens), context_docs=mock_docs)
+
+    expected_answer = "This is a split answer."
+    actual = "".join(
+        o.answer_piece
+        for o in gen
+        if isinstance(o, DanswerAnswerPiece) and o.answer_piece
+    )
+
+    assert expected_answer == actual
+
+
+def test_json_answer_split_tokens() -> None:
+    tokens = [
+        "```",
+        "json",
+        "\n",
+        "{",
+        '\n"',
+        'answer": "This ',
+        "is a ",
+        "split ",
+        "answer.",
+        '",\n"',
+        'quotes": []',
+        "\n}",
+        "\n",
+        "```",
+    ]
+    gen = process_model_tokens(tokens=iter(tokens), context_docs=mock_docs)
+
+    expected_answer = "This is a split answer."
+    actual = "".join(
+        o.answer_piece
+        for o in gen
+        if isinstance(o, DanswerAnswerPiece) and o.answer_piece
+    )
+
+    assert expected_answer == actual
