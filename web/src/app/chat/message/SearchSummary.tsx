@@ -118,11 +118,11 @@ export function SearchSummary({
             onClick={() => {
               toggleDropdown();
             }}
-            className={`!text-sm group-hover:text-text-900 text-text-500 !line-clamp-1 !break-all pr-0.5`}
+            className={` transition-colors duration-300 group-hover:text-text-toolhover cursor-pointer text-text-toolrun !line-clamp-1 !break-all pr-0.5`}
             ref={searchingForRef}
           >
             Searched {filteredDocs.length > 0 && filteredDocs.length} document
-            {filteredDocs.length != 1 && "s"}
+            {filteredDocs.length != 1 && "s"} for {query}
           </div>
         </>
       ) : (
@@ -260,7 +260,7 @@ export function SearchSummary({
               </Tooltip>
             )}
             <button
-              className="my-auto hover:bg-hover rounded"
+              className="my-auto invisible group-hover:visible transition-all duration-300 hover:bg-hover rounded"
               onClick={toggleDropdown}
             >
               <ChevronDownIcon
