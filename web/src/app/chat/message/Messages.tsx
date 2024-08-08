@@ -285,45 +285,22 @@ export const AIMessage = ({
             )}
             <div className="w-full">
               <div className="max-w-message-max break-words">
-                {!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME ? (
-                  danswerSearchToolEnabledForPersona && (
-                    <>
-                      {query !== undefined &&
-                        handleShowRetrieved !== undefined &&
-                        isCurrentlyShowingRetrieved !== undefined &&
-                        !retrievalDisabled && (
-                          <div className="my-1">
-                            <SearchSummary
-                              filteredDocs={filteredDocs}
-                              query={query}
-                              finished={
-                                toolCall?.tool_result != undefined ||
-                                isComplete!
-                              }
-                              toggleDocumentSelection={toggleDocumentSelection}
-                              docs={docs}
-                              handleSearchQueryEdit={handleSearchQueryEdit}
-                            />
-                          </div>
-                        )}
-
-                      {handleForceSearch &&
-                        !hasChildAI &&
-                        content &&
-                        query === undefined &&
-                        !hasDocs &&
-                        !retrievalDisabled && (
-                          <div className="my-1">
-                            <SkippedSearch
-                              handleForceSearch={handleForceSearch}
-                            />
-                          </div>
-                        )}
-                    </>
-                  )
-                ) : (
-                  <></>
+                {/* 
+                {query !== undefined && (
+                  <div>Query is defined</div>
                 )}
+
+                {handleShowRetrieved !== undefined && (
+                  <div>HandleShowRetrieved is defined</div>
+                )}
+
+                {isCurrentlyShowingRetrieved !== undefined && (
+                  <div>IsCurrentlyShowingRetrieved is defined</div>
+                )}
+
+                {!retrievalDisabled && (
+                  <div>Retrieval is not disabled</div>
+                )} */}
 
                 <div className="w-full ml-4">
                   <div className="max-w-message-max break-words">
@@ -404,7 +381,7 @@ export const AIMessage = ({
                       <>
                         <FileDisplay files={files || []} />
                         {typeof content === "string" ? (
-                          <div className="overflow-x-auto w-full pr-2 max-w-[675px]">
+                          <div className="overflow-visible w-full pr-2 max-w-[675px]">
                             <ReactMarkdown
                               key={messageId}
                               className="prose max-w-full"
@@ -703,23 +680,23 @@ export const HumanMessage = ({
                       <textarea
                         ref={textareaRef}
                         className={`
-                      m-0 
-                      w-full 
-                      h-auto
-                      shrink
-                      border-0
-                      rounded-lg 
-                      bg-background-emphasis 
-                      whitespace-normal 
-                      break-word
-                      overscroll-contain
-                      outline-none 
-                      placeholder-gray-400 
-                      resize-none
-                      pl-4
-                      overflow-y-auto
-                      pr-12 
-                      py-4`}
+                          m-0 
+                          w-full 
+                          h-auto
+                          shrink
+                          border-0
+                          rounded-lg 
+                          bg-background-emphasis 
+                          whitespace-normal 
+                          break-word
+                          overscroll-contain
+                          outline-none 
+                          placeholder-gray-400 
+                          resize-none
+                          pl-4
+                          overflow-y-auto
+                          pr-12 
+                          py-4`}
                         aria-multiline
                         role="textarea"
                         value={editedContent}
