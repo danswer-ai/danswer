@@ -283,7 +283,7 @@ def test_json_answer_split_tokens() -> None:
     assert expected_answer == actual
 
 
-def test_process_model_tokens_quotes() -> None:
+def test_prefixed_json_with_quotes() -> None:
     tokens = [
         "```",
         "json",
@@ -300,11 +300,18 @@ def test_process_model_tokens_quotes() -> None:
 
     gen = process_model_tokens(tokens=iter(tokens), context_docs=mock_docs)
 
+    actual_answer = ""
     actual_count = 0
     for o in gen:
+        if isinstance(o, DanswerAnswerPiece):
+            if o.answer_piece:
+                actual_answer += o.answer_piece
+            continue
+
         if isinstance(o, DanswerQuotes):
             for q in o.quotes:
                 assert q.quote == "Document"
                 actual_count += 1
 
+    assert "This is a simple answer." == actual_answer
     assert 1 == actual_count
