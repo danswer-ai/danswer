@@ -152,6 +152,7 @@ class Answer:
 
         self.current_streamed_output: list = []
         self.processing_stream: list = []
+        self.final_context_docs: list = []
 
         self.llm = llm
         self.llm_tokenizer = get_tokenizer(
@@ -265,9 +266,11 @@ class Answer:
                     return
 
             tool_call_requests = tool_call_chunk.tool_calls
+
             logger.critical(
                 f"-------------------TOOL CALL REQUESTS ({len(tool_call_requests)})-------------------"
             )
+
             for tool_call_request in tool_call_requests:
                 known_tools_by_name = [
                     tool

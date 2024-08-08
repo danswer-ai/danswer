@@ -322,7 +322,7 @@ export const AIMessage = ({
                     </>
                   )
                 ) : (
-                  <p>NOT ENABLED</p>
+                  <></>
                 )}
 
                 <div className="w-full ml-4">
@@ -419,7 +419,7 @@ export const AIMessage = ({
                                     return <></>;
                                   } else if (
                                     value?.toString() ==
-                                    `[${IMAGE_GENERATION_TOOL_NAME}}]`
+                                    `[${IMAGE_GENERATION_TOOL_NAME}]`
                                   ) {
                                     return (
                                       <Popover
@@ -518,6 +518,7 @@ export const AIMessage = ({
                   </div>
                   {!hasChildAI &&
                     handleFeedback &&
+                    isComplete &&
                     (isActive ? (
                       <div
                         className={`

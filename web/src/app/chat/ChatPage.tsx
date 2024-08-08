@@ -989,7 +989,6 @@ export function ChatPage({
                 aiMessageImages = null;
                 answer = "";
 
-                setIsStreaming(false);
                 // setIsGenerating(false)
                 // return
               } else {
