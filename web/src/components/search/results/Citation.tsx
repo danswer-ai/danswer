@@ -23,7 +23,7 @@ export function Citation({
       >
         <a
           onMouseDown={() => (link ? window.open(link, "_blank") : undefined)}
-          className="cursor-pointer inline ml-1 font-serif align-middle inline-block text-sm text-blue-500 cursor-help leading-none inline ml-1 align-middle"
+          className="cursor-pointer inline ml-1 font-sans align-middle inline-block text-sm text-blue-500 cursor-help leading-none inline ml-1 align-middle"
         >
           [{innerText}]
         </a>
@@ -32,7 +32,7 @@ export function Citation({
   } else {
     return (
       <CustomTooltip content={<div>This doc doesn&apos;t have a link!</div>}>
-        <div className="inline-block text-sm font-serif text-blue-500 cursor-help leading-none inline ml-1 align-middle">
+        <div className="inline-block text-sm font-sans text-blue-500 cursor-help leading-none inline ml-1 align-middle">
           [{innerText}]
         </div>
       </CustomTooltip>
