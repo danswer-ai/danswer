@@ -142,7 +142,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     workspace: Mapped[list["Workspace"]] = relationship(
         "Workspaces",
         secondary="workspace__users",
-        viewonly=True,
+        back_populates="user"
     )
 
 
@@ -1403,19 +1403,17 @@ class Workspace(Base):
     custom_logo: Mapped[str] = mapped_column(Text)
     custom_header_logo: Mapped[str] = mapped_column(Text)
 
-    users: Mapped[list[User]] = relationship(
+    user: Mapped[list[User]] = relationship(
         "User",
         secondary="workspace__users",
-        viewonly=True,
-    )
-    
-    groups: Mapped[list[UserGroup]] = relationship(
-        "UserGroup",
-        secondary="workspace__users",
-        viewonly=True,
+        back_populates="workspace"
     )
 
-    workspace_settings: Mapped["WorkspaceSettings"] = relationship("WorkspaceSettings", back_populates="workspace_settings")
+    groups: Mapped[list[UserGroup]] = relationship(
+        "UserGroup", back_populates="workspace"
+    )
+    
+    workspace_settings: Mapped["WorkspaceSettings"] = relationship("WorkspaceSettings", back_populates="workspace")
 
 class WorkspaceSettings(Base):
     __tablename__ = "workspace_settings"
@@ -1433,7 +1431,7 @@ class WorkspaceSettings(Base):
     number_of_users: Mapped[int] = mapped_column(Integer)
     storage_limit: Mapped[int] = mapped_column(Integer)
     
-    workspace: Mapped[Workspace] = relationship("Workspace", back_populates="workspace")
+    workspace: Mapped[Workspace] = relationship("Workspace", back_populates="workspace_settings")
 
 
 class Instance(Base):
