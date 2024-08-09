@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexAttempt
+from danswer.db.models import IndexAttemptError
 from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
 from danswer.server.documents.models import ConnectorCredentialPair
@@ -114,6 +115,15 @@ def mark_attempt_succeeded(
     db_session: Session,
 ) -> None:
     index_attempt.status = IndexingStatus.SUCCESS
+    db_session.add(index_attempt)
+    db_session.commit()
+
+
+def mark_attempt_partially_succeeded(
+    index_attempt: IndexAttempt,
+    db_session: Session,
+) -> None:
+    index_attempt.status = IndexingStatus.PARTIAL_SUCCESS
     db_session.add(index_attempt)
     db_session.commit()
 
@@ -400,3 +410,24 @@ def count_unique_cc_pairs_with_successful_index_attempts(
     )
 
     return unique_pairs_count
+
+
+def create_index_attempt_error(
+    index_attempt_id: int | None,
+    batch: int | None,
+    document_ids: list[str],
+    exception_msg: str,
+    exception_trace: str,
+    db_session: Session,
+) -> int:
+    new_error = IndexAttemptError(
+        index_attempt_id=index_attempt_id,
+        batch=batch,
+        errors=document_ids,
+        error_msg=exception_msg,
+        full_exception_trace=exception_trace,
+    )
+    db_session.add(new_error)
+    db_session.commit()
+
+    return new_error.id

@@ -117,16 +117,6 @@ def _should_create_new_indexing(
     return time_since_index.total_seconds() >= connector.refresh_freq
 
 
-def _is_indexing_job_marked_as_finished(index_attempt: IndexAttempt | None) -> bool:
-    if index_attempt is None:
-        return False
-
-    return (
-        index_attempt.status == IndexingStatus.FAILED
-        or index_attempt.status == IndexingStatus.SUCCESS
-    )
-
-
 def _mark_run_failed(
     db_session: Session, index_attempt: IndexAttempt, failure_reason: str
 ) -> None:
@@ -212,10 +202,12 @@ def cleanup_indexing_jobs(
             )
 
             # do nothing for ongoing jobs that haven't been stopped
-            if not job.done() and not _is_indexing_job_marked_as_finished(
-                index_attempt
-            ):
-                continue
+            if not job.done():
+                if not index_attempt:
+                    continue
+
+                if not index_attempt.is_finished():
+                    continue
 
             if job.status == "error":
                 logger.error(job.exception())

@@ -639,6 +639,50 @@ class IndexAttempt(Base):
             f"time_updated={self.time_updated!r}, "
         )
 
+    def is_finished(self) -> bool:
+        return self.status.is_terminal()
+
+
+class IndexAttemptError(Base):
+    """
+    Represents an error that was encountered during an IndexAttempt.
+    """
+
+    __tablename__ = "index_attempt_errors"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    index_attempt_id: Mapped[int] = mapped_column(
+        ForeignKey("index_attempt.id"),
+        nullable=True,
+    )
+
+    # The index of the batch where the error occurred (if looping thru batches)
+    # Just informational.
+    batch: Mapped[int | None] = mapped_column(Integer, default=None)
+    errors: Mapped[list[str]] = mapped_column(postgresql.ARRAY(String))
+    error_msg: Mapped[str | None] = mapped_column(Text, default=None)
+    full_exception_trace: Mapped[str | None] = mapped_column(Text, default=None)
+    time_created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+    __table_args__ = (
+        Index(
+            "index_attempt_id",
+            "time_created",
+        ),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<IndexAttempt(id={self.id!r}, "
+            f"index_attempt_id={self.index_attempt_id!r}, "
+            f"error_msg={self.error_msg!r})>"
+            f"time_created={self.time_created!r}, "
+        )
+
 
 class DocumentByConnectorCredentialPair(Base):
     """Represents an indexing of a document by a specific connector / credential pair"""

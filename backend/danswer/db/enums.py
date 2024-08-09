@@ -6,6 +6,15 @@ class IndexingStatus(str, PyEnum):
     IN_PROGRESS = "in_progress"
     SUCCESS = "success"
     FAILED = "failed"
+    PARTIAL_SUCCESS = "partial_success"
+
+    def is_terminal(self) -> bool:
+        terminal_states = {
+            IndexingStatus.SUCCESS,
+            IndexingStatus.PARTIAL_SUCCESS,
+            IndexingStatus.FAILED,
+        }
+        return self in terminal_states
 
 
 # these may differ in the future, which is why we're okay with this duplication

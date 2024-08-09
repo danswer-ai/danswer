@@ -167,5 +167,7 @@ class Document(DocumentBase):
 
 
 class IndexAttemptMetadata(BaseModel):
+    batch_num: int | None = None
+    num_exceptions: int = 0
     connector_id: int
     credential_id: int

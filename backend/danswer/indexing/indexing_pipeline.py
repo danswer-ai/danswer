@@ -1,3 +1,4 @@
+import traceback
 from functools import partial
 from typing import Protocol
 
@@ -15,6 +16,7 @@ from danswer.db.document import prepare_to_modify_documents
 from danswer.db.document import update_docs_updated_at
 from danswer.db.document import upsert_documents_complete
 from danswer.db.document_set import fetch_document_sets_for_documents
+from danswer.db.index_attempt import create_index_attempt_error
 from danswer.db.models import Document as DBDocument
 from danswer.db.tag import create_or_add_document_tag
 from danswer.db.tag import create_or_add_document_tag_list
@@ -29,6 +31,14 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
+
+
+class DocumentBatchPrepareContext:
+    def __init__(
+        self, updatable_docs: list[Document], id_to_db_doc_map: dict[str, DBDocument]
+    ):
+        self.updatable_docs: list[Document] = updatable_docs
+        self.id_to_db_doc_map: dict[str, DBDocument] = id_to_db_doc_map
 
 
 class IndexingPipelineProtocol(Protocol):
@@ -111,20 +121,61 @@ def get_doc_ids_to_update(
     return updatable_docs
 
 
-@log_function_time()
-def index_doc_batch(
+def index_doc_batch_with_handler(
     *,
     chunker: Chunker,
     embedder: IndexingEmbedder,
     document_index: DocumentIndex,
     document_batch: list[Document],
     index_attempt_metadata: IndexAttemptMetadata,
+    attempt_id: int | None,
     db_session: Session,
     ignore_time_skip: bool = False,
 ) -> tuple[int, int]:
-    """Takes different pieces of the indexing pipeline and applies it to a batch of documents
-    Note that the documents should already be batched at this point so that it does not inflate the
-    memory requirements"""
+    r = (0, 0)
+    try:
+        r = index_doc_batch(
+            chunker=chunker,
+            embedder=embedder,
+            document_index=document_index,
+            document_batch=document_batch,
+            index_attempt_metadata=index_attempt_metadata,
+            db_session=db_session,
+            ignore_time_skip=ignore_time_skip,
+        )
+    except Exception as e:
+        INDEX_ATTEMPT_EXCEPTION_LOG_LIMIT = 2
+
+        if index_attempt_metadata.num_exceptions < INDEX_ATTEMPT_EXCEPTION_LOG_LIMIT:
+            doc_ids = [doc.id for doc in document_batch]
+            trace = traceback.format_exc()
+            create_index_attempt_error(
+                attempt_id,
+                batch=index_attempt_metadata.batch_num,
+                document_ids=doc_ids,
+                exception_msg=str(e),
+                exception_trace=trace,
+                db_session=db_session,
+            )
+            logger.exception(
+                f"Indexing batch {index_attempt_metadata.batch_num} failed. msg='{e}' trace='{trace}'"
+            )
+
+        index_attempt_metadata.num_exceptions += 1
+        if index_attempt_metadata.num_exceptions >= INDEX_ATTEMPT_EXCEPTION_LOG_LIMIT:
+            logger.info(
+                f"Maximum number of exception logs for this index attempt ({INDEX_ATTEMPT_EXCEPTION_LOG_LIMIT}) has been reached."
+            )
+
+    return r
+
+
+def index_doc_batch_prepare(
+    document_batch: list[Document],
+    index_attempt_metadata: IndexAttemptMetadata,
+    db_session: Session,
+    ignore_time_skip: bool = False,
+) -> DocumentBatchPrepareContext | None:
     documents = []
     for document in document_batch:
         empty_contents = not any(section.text.strip() for section in document.sections)
@@ -152,11 +203,10 @@ def index_doc_batch(
             documents.append(document)
 
     document_ids = [document.id for document in documents]
-    db_docs = get_documents_by_ids(
+    db_docs: list[DBDocument] = get_documents_by_ids(
         document_ids=document_ids,
         db_session=db_session,
     )
-    id_to_db_doc_map = {doc.id: doc for doc in db_docs}
 
     # Skip indexing docs that don't have a newer updated at
     # Shortcuts the time-consuming flow on connector index retries
@@ -168,9 +218,7 @@ def index_doc_batch(
 
     # No docs to update either because the batch is empty or every doc was already indexed
     if not updatable_docs:
-        return 0, 0
-
-    updatable_ids = [doc.id for doc in updatable_docs]
+        return None
 
     # Create records in the source of truth about these documents,
     # does not include doc_updated_at which is also used to indicate a successful update
@@ -180,11 +228,41 @@ def index_doc_batch(
         db_session=db_session,
     )
 
+    id_to_db_doc_map = {doc.id: doc for doc in db_docs}
+    return DocumentBatchPrepareContext(
+        updatable_docs=updatable_docs, id_to_db_doc_map=id_to_db_doc_map
+    )
+
+
+@log_function_time()
+def index_doc_batch(
+    *,
+    chunker: Chunker,
+    embedder: IndexingEmbedder,
+    document_index: DocumentIndex,
+    document_batch: list[Document],
+    index_attempt_metadata: IndexAttemptMetadata,
+    db_session: Session,
+    ignore_time_skip: bool = False,
+) -> tuple[int, int]:
+    """Takes different pieces of the indexing pipeline and applies it to a batch of documents
+    Note that the documents should already be batched at this point so that it does not inflate the
+    memory requirements"""
+
+    ctx = index_doc_batch_prepare(
+        document_batch=document_batch,
+        index_attempt_metadata=index_attempt_metadata,
+        ignore_time_skip=ignore_time_skip,
+        db_session=db_session,
+    )
+    if not ctx:
+        return 0, 0
+
     logger.debug("Starting chunking")
     # The embedder is needed here to get the correct tokenizer
     chunks: list[DocAwareChunk] = [
         chunk
-        for document in updatable_docs
+        for document in ctx.updatable_docs
         for chunk in chunker.chunk(document=document, embedder=embedder)
     ]
 
@@ -196,6 +274,8 @@ def index_doc_batch(
         if chunks
         else []
     )
+
+    updatable_ids = [doc.id for doc in ctx.updatable_docs]
 
     # Acquires a lock on the documents so that no other process can modify them
     # NOTE: don't need to acquire till here, since this is when the actual race condition
@@ -221,8 +301,8 @@ def index_doc_batch(
                     document_id_to_document_set.get(chunk.source_document.id, [])
                 ),
                 boost=(
-                    id_to_db_doc_map[chunk.source_document.id].boost
-                    if chunk.source_document.id in id_to_db_doc_map
+                    ctx.id_to_db_doc_map[chunk.source_document.id].boost
+                    if chunk.source_document.id in ctx.id_to_db_doc_map
                     else DEFAULT_BOOST
                 ),
             )
@@ -239,7 +319,7 @@ def index_doc_batch(
 
         successful_doc_ids = [record.document_id for record in insertion_records]
         successful_docs = [
-            doc for doc in updatable_docs if doc.id in successful_doc_ids
+            doc for doc in ctx.updatable_docs if doc.id in successful_doc_ids
         ]
 
         # Update the time of latest version of the doc successfully indexed
@@ -265,15 +345,17 @@ def build_indexing_pipeline(
     db_session: Session,
     chunker: Chunker | None = None,
     ignore_time_skip: bool = False,
+    attempt_id: int | None = None,
 ) -> IndexingPipelineProtocol:
     """Builds a pipline which takes in a list (batch) of docs and indexes them."""
     chunker = chunker or DefaultChunker()
 
     return partial(
-        index_doc_batch,
+        index_doc_batch_with_handler,
         chunker=chunker,
         embedder=embedder,
         document_index=document_index,
         ignore_time_skip=ignore_time_skip,
+        attempt_id=attempt_id,
         db_session=db_session,
     )
