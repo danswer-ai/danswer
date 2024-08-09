@@ -186,7 +186,6 @@ def extract_citations_from_stream(
                             + curr_segment[end + length_to_add :]
                         )
                         length_to_add += len(curr_segment) - prev_length
-                    print(f"POST CITATION {curr_segment}")
 
                     last_citation_end = end + length_to_add
 

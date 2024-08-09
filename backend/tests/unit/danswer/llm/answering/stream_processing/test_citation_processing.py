@@ -276,6 +276,16 @@ def process_text(
             "[[1]](https://0.com) Citation at the beginning. [[2]]() In the middle. At the end [[3]](https://2.com).",
             ["doc_0", "doc_1", "doc_2"],
         ),
+        (
+            "Citations with extraneous citations, split up",
+            [
+                "[[1]](",
+                "https://0.com) Citation at ",
+                "the beginning. ",
+            ],
+            "[[1]](https://0.com) Citation at the beginning. ",
+            ["doc_0"],
+        ),
     ],
 )
 def test_citation_extraction(
