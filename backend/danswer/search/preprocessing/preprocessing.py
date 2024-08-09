@@ -27,10 +27,6 @@ from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.timing import log_function_time
 from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
 
-
-# Set extremely loosely, the model is still fairly unreliable
-_LONG_TERM_LEN = 4
-
 logger = setup_logger()
 
 
@@ -191,13 +187,17 @@ def retrieval_preprocessing(
         else:
             recency_bias_multiplier = base_recency_decay
 
+    hybrid_alpha = HYBRID_ALPHA_KEYWORD if is_keyword else HYBRID_ALPHA
+    if search_request.hybrid_alpha:
+        hybrid_alpha = search_request.hybrid_alpha
+
     return SearchQuery(
         query=query,
         processed_keywords=processed_keywords,
         search_type=SearchType.KEYWORD if is_keyword else SearchType.SEMANTIC,
         evaluation_type=llm_evaluation_type,
         filters=final_filters,
-        hybrid_alpha=HYBRID_ALPHA_KEYWORD if is_keyword else HYBRID_ALPHA,
+        hybrid_alpha=hybrid_alpha,
         recency_bias_multiplier=recency_bias_multiplier,
         num_hits=limit if limit is not None else NUM_RETURNED_HITS,
         offset=offset or 0,
