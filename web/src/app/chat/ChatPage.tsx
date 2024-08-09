@@ -801,7 +801,7 @@ export function ChatPage({
 
     const currentAssistantId = alternativeAssistantOverride
       ? alternativeAssistantOverride.id
-      : (alternativeAssistant?.id ?? liveAssistant.id);
+      : alternativeAssistant?.id ?? liveAssistant.id;
 
     resetInputBar();
     setIsGenerating(true);
