@@ -522,9 +522,6 @@ class Answer:
         processed_stream = []
         for processed_packet in _process_stream(output_generator):
             processed_stream.append(processed_packet)
-            # if self.is_connected is not None and not self.is_connected():
-            #     print("--------\nBREAKING")
-            #     break
             yield processed_packet
 
         self._processed_stream = processed_stream
