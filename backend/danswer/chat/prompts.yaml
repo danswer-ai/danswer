@@ -42,7 +42,8 @@ prompts:
     task: >
       Generate an image based on the user's description.
       
-      Provide a detailed description of the generated image, including key elements, colors, and composition. Take into account previously generated images and note you will be able to generate images after this.
+      Provide a detailed description of the generated image, including key elements, colors, and composition. 
+      
       
       If the request is not possible or appropriate, explain why and suggest alternatives.
     datetime_aware: true

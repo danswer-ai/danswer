@@ -32,6 +32,7 @@ from danswer.secondary_llm_flows.choose_search import check_if_need_search
 from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
 from danswer.tools.search.search_utils import llm_doc_to_dict
 from danswer.tools.tool import Tool
+from danswer.tools.tool import ToolRegistry
 from danswer.tools.tool import ToolResponse
 from danswer.utils.logger import setup_logger
 
@@ -65,6 +66,7 @@ HINT: if you are unfamiliar with the user input OR think the user input is a typ
 """
 
 
+@ToolRegistry.register(SEARCH_RESPONSE_SUMMARY_ID)
 class SearchTool(Tool):
     _NAME = "run_search"
     _DISPLAY_NAME = "Search Tool"
@@ -174,6 +176,12 @@ class SearchTool(Tool):
             query=query, history=history, llm=llm
         )
         return {"query": rephrased_query}
+
+    @classmethod
+    def create_prompt(cls, message: PreviousMessage) -> str:
+        # TODO improve / iterate
+
+        return f'I searched for some things! """thigns that I searched for!: {message.message}"""'
 
     """Actual tool execution"""
 

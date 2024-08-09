@@ -84,7 +84,6 @@ def _get_answer_stream_processor(
     answer_style_configs: AnswerStyleConfig,
 ) -> StreamProcessor:
     if answer_style_configs.citation_config:
-        print("CITATINOS")
         return build_citation_processor(
             context_docs=context_docs, doc_id_to_rank_map=doc_id_to_rank_map
         )
@@ -207,11 +206,12 @@ class Answer:
         str | ToolCallKickoff | ToolResponse | ToolCallMetadata | Delimiter | Any
     ]:
         count = 1
-        maximum_count = 5
+        maximum_count = 4
         while count <= maximum_count:
             prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
 
             count += 1
+            print(f"COUNT IS {count}")
             tool_call_chunk: AIMessageChunk | None = None
 
             if self.force_use_tool.force_use and self.force_use_tool.args is not None:
@@ -233,10 +233,8 @@ class Answer:
                     )
                 )
                 prompt = prompt_builder.build()
-                print("\n\n-------------")
+                print(f"-----------------------\nThe current prompt is: {prompt}")
 
-                print("Prompt")
-                print(prompt)
                 final_tool_definitions = [
                     tool.tool_definition()
                     for tool in filter_tools_for_force_tool_use(
@@ -258,13 +256,13 @@ class Answer:
                             tool_call_chunk += message  # type: ignore
                     else:
                         if tool_call_chunk is None and count != 2:
-                            logger.debug("Skipping the tool call + message compeltely")
+                            print("Skipping the tool call + message compeltely")
                             return
                         elif message.content:
                             yield cast(str, message.content)
 
                 if not tool_call_chunk:
-                    logger.debug(
+                    print(
                         "Skipping the tool call but generated message due to lack of existing tool call messages"
                     )
                     return
