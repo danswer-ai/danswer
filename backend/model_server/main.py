@@ -33,6 +33,7 @@ logger = setup_logger()
 
 
 async def manage_huggingface_cache() -> None:
+    logger.debug("Moving contents of temp_huggingface to huggingface cache.")
     temp_hf_cache = Path("/root/.cache/temp_huggingface")
     hf_cache = Path("/root/.cache/huggingface")
     if temp_hf_cache.is_dir() and any(temp_hf_cache.iterdir()):
@@ -40,9 +41,9 @@ async def manage_huggingface_cache() -> None:
         for item in temp_hf_cache.iterdir():
             destination = hf_cache / item.name
             await asyncio.to_thread(shutil.move, item, destination)
-        logger.info("Moved contents of temp_huggingface to huggingface cache.")
+        logger.debug("Moved contents of temp_huggingface to huggingface cache.")
     else:
-        logger.info("Source directory is empty or does not exist. Skipping move.")
+        logger.debug("Source directory is empty or does not exist. Skipping move.")
 
 
 @asynccontextmanager
