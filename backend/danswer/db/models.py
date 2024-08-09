@@ -140,7 +140,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     custom_tools: Mapped[list["Tool"]] = relationship("Tool", back_populates="user")
 
     workspace: Mapped[list["Workspace"]] = relationship(
-        "Workspaces",
+        "Workspace",
         secondary="workspace__users",
         back_populates="user"
     )
@@ -1238,7 +1238,7 @@ class UserGroup(Base):
 
     workspace: Mapped[list["Workspace"]] = relationship(
         "Workspace",
-        secondary="workspace__users",
+        secondary="workspace__user_group",
         viewonly=True,
     )
 
@@ -1409,8 +1409,10 @@ class Workspace(Base):
         back_populates="workspace"
     )
 
-    groups: Mapped[list[UserGroup]] = relationship(
-        "UserGroup", back_populates="workspace"
+    groups: Mapped[list["UserGroup"]] = relationship(
+        "UserGroup",
+        secondary="workspace__user_group", 
+        back_populates="workspace"
     )
     
     workspace_settings: Mapped["WorkspaceSettings"] = relationship("WorkspaceSettings", back_populates="workspace")
@@ -1449,5 +1451,12 @@ class WorkspaceUsers(Base):
     __tablename__ = "workspace__users"
 
     workspace_id: Mapped[int] = mapped_column(ForeignKey("workspace.workspace_id"), primary_key=True)
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
+
+
+class WorkspaceUserGroup(Base):
+    __tablename__ = "workspace__user_group"
+
+    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspace.workspace_id"), primary_key=True)
+    user_group_id: Mapped[int] = mapped_column(ForeignKey("user_group.id"), primary_key=True)
 
