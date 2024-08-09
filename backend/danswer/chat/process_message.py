@@ -454,7 +454,6 @@ def stream_chat_message_objects(
                 or new_msg_req.chunks_below > 0,
             )
         reserved_message_id = reserve_message_id(db_session=db_session)
-        # print(f"MESSAGE ID is {reserved_message_id}")
         yield MessageCreationInfo(
             user_message_id=user_message.id if user_message else None,
             reserved_assistant_message_id=reserved_message_id,
@@ -729,7 +728,6 @@ def stream_chat_message_objects(
         return
 
     # Post-LLM answer processing
-    print("FINITO")
     try:
         db_citations = None
         if reference_db_search_docs:
@@ -774,14 +772,10 @@ def stream_chat_message_objects(
 
         yield msg_detail_response
     except Exception as e:
-        print("ERROR")
-
         logger.exception(e)
 
         # Frontend will erase whatever answer and show this instead
         yield StreamingError(error="Failed to parse LLM output")
-
-    print("FINISHEd")
 
 
 @log_generator_function_time()
