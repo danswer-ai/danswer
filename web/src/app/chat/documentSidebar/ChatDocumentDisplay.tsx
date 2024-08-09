@@ -46,6 +46,7 @@ export function ChatDocumentDisplay({
       <div className="flex relative justify-start overflow-y-visible">
         <a
           href={document.link}
+          target="_blank"
           className={
             "rounded-lg flex font-bold flex-shrink truncate" +
             (document.link ? "" : "pointer-events-none")
