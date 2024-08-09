@@ -16,8 +16,10 @@ from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import DocumentSet__ConnectorCredentialPair
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from danswer.server.features.document_set.models import DocumentSetUpdateRequest
+from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 
+logger = setup_logger()
 
 def _delete_document_set_cc_pairs__no_commit(
     db_session: Session, document_set_id: int, is_current: bool | None = None
@@ -94,9 +96,6 @@ def insert_document_set(
         # It's cc-pairs in actuality but the UI displays this error
         raise ValueError("Cannot create a document set with no Connectors")
 
-    # start a transaction
-    db_session.begin()
-
     try:
         new_document_set_row = DocumentSetDBModel(
             name=document_set_creation_request.name,
@@ -105,7 +104,7 @@ def insert_document_set(
             is_public=document_set_creation_request.is_public,
         )
         db_session.add(new_document_set_row)
-        db_session.flush()  # ensure the new document set gets assigned an ID
+        db_session.flush()
 
         ds_cc_pairs = [
             DocumentSet__ConnectorCredentialPair(
@@ -121,7 +120,6 @@ def insert_document_set(
             "danswer.db.document_set", "make_doc_set_private"
         )
 
-        # Private Document Sets
         versioned_private_doc_set_fn(
             document_set_id=new_document_set_row.id,
             user_ids=document_set_creation_request.users,
@@ -130,8 +128,9 @@ def insert_document_set(
         )
 
         db_session.commit()
-    except:
+    except Exception as e:
         db_session.rollback()
+        logger.error(f"Error inserting document set: {e}")
         raise
 
     return new_document_set_row, ds_cc_pairs
@@ -144,11 +143,7 @@ def update_document_set(
         # It's cc-pairs in actuality but the UI displays this error
         raise ValueError("Cannot create a document set with no Connectors")
 
-    # start a transaction
-    db_session.begin()
-
     try:
-        # update the description
         document_set_row = get_document_set_by_id(
             db_session=db_session, document_set_id=document_set_update_request.id
         )
@@ -170,7 +165,6 @@ def update_document_set(
             "danswer.db.document_set", "make_doc_set_private"
         )
 
-        # Private Document Sets
         versioned_private_doc_set_fn(
             document_set_id=document_set_row.id,
             user_ids=document_set_update_request.users,
@@ -178,12 +172,10 @@ def update_document_set(
             db_session=db_session,
         )
 
-        # update the attached CC pairs
-        # first, mark all existing CC pairs as not current
         _mark_document_set_cc_pairs_as_outdated__no_commit(
             db_session=db_session, document_set_id=document_set_row.id
         )
-        # add in rows for the new CC pairs
+
         ds_cc_pairs = [
             DocumentSet__ConnectorCredentialPair(
                 document_set_id=document_set_update_request.id,
@@ -194,8 +186,9 @@ def update_document_set(
         ]
         db_session.add_all(ds_cc_pairs)
         db_session.commit()
-    except:
+    except Exception as e:
         db_session.rollback()
+        logger.error(f"Error updating document set: {e}")
         raise
 
     return document_set_row, ds_cc_pairs
