@@ -1,4 +1,3 @@
-import gc
 import json
 from typing import Any
 from typing import Optional
@@ -25,8 +24,7 @@ from model_server.constants import EmbeddingModelTextType
 from model_server.constants import EmbeddingProvider
 from model_server.constants import MODEL_WARM_UP_STRING
 from model_server.utils import simple_log_function_time
-from shared_configs.configs import CROSS_EMBED_CONTEXT_SIZE
-from shared_configs.configs import CROSS_ENCODER_MODEL_ENSEMBLE
+from shared_configs.configs import DEFAULT_CROSS_ENCODER_MODEL_NAME
 from shared_configs.configs import INDEXING_ONLY
 from shared_configs.enums import EmbedTextType
 from shared_configs.model_server_models import Embedding
@@ -42,7 +40,8 @@ logger = setup_logger()
 router = APIRouter(prefix="/encoder")
 
 _GLOBAL_MODELS_DICT: dict[str, "SentenceTransformer"] = {}
-_RERANK_MODELS: Optional[list["CrossEncoder"]] = None
+_RERANK_MODEL: Optional["CrossEncoder"] = None
+
 # If we are not only indexing, dont want retry very long
 _RETRY_DELAY = 10 if INDEXING_ONLY else 0.1
 _RETRY_TRIES = 10 if INDEXING_ONLY else 2
@@ -229,32 +228,22 @@ def get_embedding_model(
     return _GLOBAL_MODELS_DICT[model_name]
 
 
-def get_local_reranking_model_ensemble(
-    model_names: list[str] = CROSS_ENCODER_MODEL_ENSEMBLE,
-    max_context_length: int = CROSS_EMBED_CONTEXT_SIZE,
-) -> list[CrossEncoder]:
-    global _RERANK_MODELS
-    if _RERANK_MODELS is None or max_context_length != _RERANK_MODELS[0].max_length:
-        del _RERANK_MODELS
-        gc.collect()
-
-        _RERANK_MODELS = []
-        for model_name in model_names:
-            logger.info(f"Loading {model_name}")
-            model = CrossEncoder(model_name)
-            model.max_length = max_context_length
-            _RERANK_MODELS.append(model)
-    return _RERANK_MODELS
+def get_local_reranking_model(
+    model_name: str = DEFAULT_CROSS_ENCODER_MODEL_NAME,
+) -> CrossEncoder:
+    global _RERANK_MODEL
+    if _RERANK_MODEL is None:
+        logger.info(f"Loading {model_name}")
+        model = CrossEncoder(model_name)
+        _RERANK_MODEL = model
+    return _RERANK_MODEL
 
 
-def warm_up_cross_encoders() -> None:
-    logger.info(f"Warming up Cross-Encoders: {CROSS_ENCODER_MODEL_ENSEMBLE}")
+def warm_up_cross_encoder() -> None:
+    logger.info(f"Warming up Cross-Encoder: {DEFAULT_CROSS_ENCODER_MODEL_NAME}")
 
-    cross_encoders = get_local_reranking_model_ensemble()
-    [
-        cross_encoder.predict((MODEL_WARM_UP_STRING, MODEL_WARM_UP_STRING))
-        for cross_encoder in cross_encoders
-    ]
+    cross_encoder = get_local_reranking_model()
+    cross_encoder.predict((MODEL_WARM_UP_STRING, MODEL_WARM_UP_STRING))
 
 
 @simple_log_function_time()
@@ -325,13 +314,9 @@ def embed_text(
 
 
 @simple_log_function_time()
-def calc_sim_scores(query: str, docs: list[str]) -> list[list[float] | None]:
-    cross_encoders = get_local_reranking_model_ensemble()
-    sim_scores = [
-        encoder.predict([(query, doc) for doc in docs]).tolist()  # type: ignore
-        for encoder in cross_encoders
-    ]
-    return sim_scores
+def calc_sim_scores(query: str, docs: list[str]) -> list[float]:
+    cross_encoder = get_local_reranking_model()
+    return cross_encoder.predict([(query, doc) for doc in docs]).tolist()  # type: ignore
 
 
 @router.post("/bi-encoder-embed")

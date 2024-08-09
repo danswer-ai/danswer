@@ -13,9 +13,7 @@ from danswer.document_index.document_index_utils import (
     translate_boost_count_to_multiplier,
 )
 from danswer.llm.interfaces import LLM
-from danswer.natural_language_processing.search_nlp_models import (
-    CrossEncoderEnsembleModel,
-)
+from danswer.natural_language_processing.search_nlp_models import RerankingModel
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.models import ChunkMetric
 from danswer.search.models import InferenceChunk
@@ -30,6 +28,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.timing import log_function_time
+from shared_configs.configs import DEFAULT_CROSS_ENCODER_MODEL_NAME
 
 
 logger = setup_logger()
@@ -96,15 +95,20 @@ def semantic_reranking(
 
     Note: this updates the chunks in place, it updates the chunk scores which came from retrieval
     """
-    cross_encoders = CrossEncoderEnsembleModel()
+    # TODO update this
+    cross_encoder = RerankingModel(
+        model_name=DEFAULT_CROSS_ENCODER_MODEL_NAME,
+        api_key=None,
+    )
 
     passages = [
         f"{chunk.semantic_identifier or chunk.title or ''}\n{chunk.content}"
         for chunk in chunks
     ]
-    sim_scores_floats = cross_encoders.predict(query=query, passages=passages)
+    sim_scores_floats = cross_encoder.predict(query=query, passages=passages)
 
-    sim_scores = [numpy.array(scores) for scores in sim_scores_floats]
+    # Old logic to handle multiple cross-encoders preserved but not used
+    sim_scores = [numpy.array(sim_scores_floats)]
 
     raw_sim_scores = cast(numpy.ndarray, sum(sim_scores) / len(sim_scores))
 

@@ -190,17 +190,26 @@ class EmbeddingModel:
         )
 
 
-class CrossEncoderEnsembleModel:
+class RerankingModel:
     def __init__(
         self,
+        model_name: str,
+        api_key: str | None,
         model_server_host: str = MODEL_SERVER_HOST,
         model_server_port: int = MODEL_SERVER_PORT,
     ) -> None:
         model_server_url = build_model_server_url(model_server_host, model_server_port)
         self.rerank_server_endpoint = model_server_url + "/encoder/cross-encoder-scores"
+        self.model_name = model_name
+        self.api_key = api_key
 
-    def predict(self, query: str, passages: list[str]) -> list[list[float] | None]:
-        rerank_request = RerankRequest(query=query, documents=passages)
+    def predict(self, query: str, passages: list[str]) -> list[float]:
+        rerank_request = RerankRequest(
+            query=query,
+            documents=passages,
+            model_name=self.model_name,
+            api_key=self.api_key,
+        )
 
         response = requests.post(
             self.rerank_server_endpoint, json=rerank_request.dict()
