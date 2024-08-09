@@ -33,7 +33,12 @@ class RerankResponse(BaseModel):
 
 class IntentRequest(BaseModel):
     query: str
+    # Sequence classification threshold
+    semantic_percent_threshold: float
+    # Token classification threshold
+    keyword_percent_threshold: float
 
 
 class IntentResponse(BaseModel):
-    class_probs: list[float]
+    is_keyword: bool
+    keywords: list[str]

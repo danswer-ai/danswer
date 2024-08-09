@@ -44,9 +44,6 @@ BATCH_SIZE_ENCODE_CHUNKS_FOR_API_EMBEDDING_SERVICES = 512
 CROSS_ENCODER_RANGE_MAX = 1
 CROSS_ENCODER_RANGE_MIN = 0
 
-# Unused currently, can't be used with the current default encoder model due to its output range
-SEARCH_DISTANCE_CUTOFF = 0
-
 
 #####
 # Generative AI Model Configs

@@ -210,27 +210,39 @@ class CrossEncoderEnsembleModel:
         return RerankResponse(**response.json()).scores
 
 
-class IntentModel:
+class QueryAnalysisModel:
     def __init__(
         self,
         model_server_host: str = MODEL_SERVER_HOST,
         model_server_port: int = MODEL_SERVER_PORT,
+        # Lean heavily towards not throwing out keywords
+        keyword_percent_threshold: float = 0.1,
+        # Lean towards semantic which is the default
+        semantic_percent_threshold: float = 0.4,
     ) -> None:
         model_server_url = build_model_server_url(model_server_host, model_server_port)
-        self.intent_server_endpoint = model_server_url + "/custom/intent-model"
+        self.intent_server_endpoint = model_server_url + "/custom/query-analysis"
+        self.keyword_percent_threshold = keyword_percent_threshold
+        self.semantic_percent_threshold = semantic_percent_threshold
 
     def predict(
         self,
         query: str,
-    ) -> list[float]:
-        intent_request = IntentRequest(query=query)
+    ) -> tuple[bool, list[str]]:
+        intent_request = IntentRequest(
+            query=query,
+            keyword_percent_threshold=self.keyword_percent_threshold,
+            semantic_percent_threshold=self.semantic_percent_threshold,
+        )
 
         response = requests.post(
             self.intent_server_endpoint, json=intent_request.dict()
         )
         response.raise_for_status()
 
-        return IntentResponse(**response.json()).class_probs
+        response_model = IntentResponse(**response.json())
+
+        return response_model.is_keyword, response_model.keywords
 
 
 def warm_up_encoders(
