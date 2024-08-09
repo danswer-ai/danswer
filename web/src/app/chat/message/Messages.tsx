@@ -847,7 +847,7 @@ export const HumanMessage = ({
             </div>
           </div>
 
-          {/* <div className="flex flex-col md:flex-row gap-x-0.5 mt-1">
+          <div className="flex flex-col md:flex-row gap-x-0.5 mt-1">
             {currentMessageInd !== undefined &&
               onMessageSelection &&
               otherMessagesCanSwitchTo &&
@@ -869,7 +869,7 @@ export const HumanMessage = ({
                   />
                 </div>
               )}
-          </div> */}
+          </div>
         </div>
       </div>
     </div>
