@@ -40,6 +40,9 @@ async def manage_huggingface_cache() -> None:
         hf_cache.mkdir(parents=True, exist_ok=True)
         for item in temp_hf_cache.iterdir():
             destination = hf_cache / item.name
+            if destination.exists():
+                logger.debug(f"Skipping existing file/directory: {destination}")
+                continue
             await asyncio.to_thread(shutil.move, item, destination)
         logger.debug("Moved contents of temp_huggingface to huggingface cache.")
     else:
