@@ -6,6 +6,8 @@ metadata:
     {{- include "danswer-stack.labels" . | nindent 4 }}
 spec:
   replicas: 1
+  strategy:
+    {{- .Values.indexCapability.updateStrategy | toYaml | nindent 4 }}
   selector:
     matchLabels:
       {{- include "danswer-stack.selectorLabels" . | nindent 6 }}
@@ -29,6 +31,10 @@ spec:
         image: danswer/danswer-model-server:latest
         imagePullPolicy: IfNotPresent
         command: [ "uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000", "--limit-concurrency", "10" ]
+        {{- if .Values.indexCapability.resources }}
+        resources:
+            {{- toYaml .Values.indexCapability.resources | nindent 10 }}
+        {{- end }}
         ports:
         - containerPort: 9000
         envFrom:
