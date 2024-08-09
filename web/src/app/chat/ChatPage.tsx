@@ -394,7 +394,7 @@ export function ChatPage({
       )
     : { aiMessage: null };
 
-  const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
+  /*  const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
     existingChatSessionPersonaId !== undefined
       ? filteredAssistants.find(
           (persona) => persona.id === existingChatSessionPersonaId
@@ -404,6 +404,21 @@ export function ChatPage({
           (persona) => persona.id === defaultSelectedPersonaId
         )
       : undefined
+  ); */
+  const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
+    () => {
+      if (existingChatSessionPersonaId !== undefined) {
+        return filteredAssistants.find(
+          (persona) => persona.id === existingChatSessionPersonaId
+        );
+      } else if (defaultSelectedPersonaId !== undefined) {
+        return filteredAssistants.find(
+          (persona) => persona.id === defaultSelectedPersonaId
+        );
+      } else {
+        return undefined;
+      }
+    }
   );
   const livePersona =
     selectedPersona || filteredAssistants[0] || availablePersonas[0];
