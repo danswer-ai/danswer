@@ -3,7 +3,6 @@ from abc import abstractmethod
 
 from sqlalchemy.orm import Session
 
-from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.models import EmbeddingModel as DbEmbeddingModel
@@ -13,6 +12,7 @@ from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.utils.logger import setup_logger
+from danswer.utils.timing import log_function_time
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
 from shared_configs.enums import EmbedTextType
@@ -39,6 +39,19 @@ class IndexingEmbedder(ABC):
         self.provider_type = provider_type
         self.api_key = api_key
 
+        self.embedding_model = EmbeddingModel(
+            model_name=model_name,
+            query_prefix=query_prefix,
+            passage_prefix=passage_prefix,
+            normalize=normalize,
+            api_key=api_key,
+            provider_type=provider_type,
+            # The below are globally set, this flow always uses the indexing one
+            server_host=INDEXING_MODEL_SERVER_HOST,
+            server_port=INDEXING_MODEL_SERVER_PORT,
+            retrim_content=True,
+        )
+
     @abstractmethod
     def embed_chunks(
         self,
@@ -60,21 +73,8 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         super().__init__(
             model_name, normalize, query_prefix, passage_prefix, provider_type, api_key
         )
-        self.max_seq_length = DOC_EMBEDDING_CONTEXT_SIZE  # Currently not customizable
 
-        self.embedding_model = EmbeddingModel(
-            model_name=model_name,
-            query_prefix=query_prefix,
-            passage_prefix=passage_prefix,
-            normalize=normalize,
-            api_key=api_key,
-            provider_type=provider_type,
-            # The below are globally set, this flow always uses the indexing one
-            server_host=INDEXING_MODEL_SERVER_HOST,
-            server_port=INDEXING_MODEL_SERVER_PORT,
-            retrim_content=True,
-        )
-
+    @log_function_time()
     def embed_chunks(
         self,
         chunks: list[DocAwareChunk],
