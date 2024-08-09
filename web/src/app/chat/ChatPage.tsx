@@ -819,7 +819,6 @@ export function ChatPage({
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
     let toolCalls: ToolCallMetadata[] = [];
-    let reserved_id: number | null = null;
     let user_message_id: number | null = null;
     let assistant_message_id: number | null = null;
     try {
