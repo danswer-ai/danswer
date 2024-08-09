@@ -1,5 +1,7 @@
 import io
+import json
 import uuid
+from collections.abc import AsyncGenerator
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -7,9 +9,9 @@ from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sse_starlette.sse import EventSourceResponse
 
 from danswer.auth.users import current_user
 from danswer.chat.chat_utils import create_chat_chain
@@ -271,21 +273,21 @@ def delete_chat_session_by_id(
     delete_chat_session(user_id, session_id, db_session)
 
 
-@router.post("/send-message")
-def handle_new_chat_message(
-    chat_message_req: CreateChatMessageRequest,
+@router.api_route("/send-message", methods=["POST", "GET"])
+async def handle_new_chat_message(
     request: Request,
     user: User | None = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
-) -> StreamingResponse:
-    """This endpoint is both used for all the following purposes:
-    - Sending a new message in the session
-    - Regenerating a message in the session (just send the same one again)
-    - Editing a message (similar to regenerating but sending a different message)
-    - Kicking off a seeded chat session (set `use_existing_user_message`)
+) -> EventSourceResponse:
+    if request.method == "GET":
+        body = request.query_params.get("body")
+        if not body:
+            raise HTTPException(status_code=400, detail="Missing body parameter")
+        chat_message_req = CreateChatMessageRequest.parse_raw(body)
+    else:
+        chat_message_req = await request.json()
+        chat_message_req = CreateChatMessageRequest.parse_obj(chat_message_req)
 
-    To avoid extra overhead/latency, this assumes (and checks) that previous messages on the path
-    have already been set as latest"""
     logger.debug(f"Received new chat message: {chat_message_req.message}")
 
     if (
@@ -294,16 +296,35 @@ def handle_new_chat_message(
         and not chat_message_req.use_existing_user_message
     ):
         raise HTTPException(status_code=400, detail="Empty chat message is invalid")
+    connection_open = True
 
-    packets = stream_chat_message(
-        new_msg_req=chat_message_req,
-        user=user,
-        use_existing_user_message=chat_message_req.use_existing_user_message,
-        litellm_additional_headers=get_litellm_additional_request_headers(
-            request.headers
-        ),
-    )
-    return StreamingResponse(packets, media_type="application/json")
+    def is_connected() -> bool:
+        return connection_open
+
+    async def event_generator() -> AsyncGenerator[dict | str, None]:
+        nonlocal connection_open
+        try:
+            for packet in stream_chat_message(
+                new_msg_req=chat_message_req,
+                user=user,
+                use_existing_user_message=chat_message_req.use_existing_user_message,
+                litellm_additional_headers=get_litellm_additional_request_headers(
+                    request.headers
+                ),
+                is_connected=is_connected,
+            ):
+                if await request.is_disconnected():
+                    # logger.info("Client disconnected, stopping generation (within top)")
+                    # break
+                    connection_open = False
+
+                yield packet
+                # yield dict(data=json.dumps(packet))
+        except Exception as e:
+            logger.exception(f"Error in chat message streaming: {e}")
+            yield dict(data=json.dumps({"error": str(e)}))
+
+    return EventSourceResponse(event_generator())
 
 
 @router.put("/set-message-as-latest")

@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from datetime import datetime
 from datetime import timedelta
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy import and_
@@ -393,6 +394,16 @@ def get_or_create_root_message(
         return new_root_message
 
 
+def reserve_message_id(db_session: Session) -> int:
+    # Get the next available ID from the sequence
+    next_id = cast(
+        int, db_session.execute(func.nextval("chat_message_id_seq")).scalar()
+    )
+    db_session.flush()
+
+    return next_id
+
+
 def create_new_chat_message(
     chat_session_id: int,
     parent_message: ChatMessage,
@@ -410,8 +421,10 @@ def create_new_chat_message(
     citations: dict[int, int] | None = None,
     tool_calls: list[ToolCall] | None = None,
     commit: bool = True,
+    reserved_message_id: int | None = None,
 ) -> ChatMessage:
     new_chat_message = ChatMessage(
+        id=reserved_message_id,
         chat_session_id=chat_session_id,
         parent_message=parent_message.id,
         latest_child_message=None,

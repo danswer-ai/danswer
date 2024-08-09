@@ -677,7 +677,6 @@ export const HumanMessage = ({
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />
-
             <div className="flex justify-end">
               <div className="w-full ml-8 flex w-full max-w-message-max break-words">
                 {isEditing ? (
@@ -848,7 +847,7 @@ export const HumanMessage = ({
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-x-0.5 mt-1">
+          {/* <div className="flex flex-col md:flex-row gap-x-0.5 mt-1">
             {currentMessageInd !== undefined &&
               onMessageSelection &&
               otherMessagesCanSwitchTo &&
@@ -870,7 +869,7 @@ export const HumanMessage = ({
                   />
                 </div>
               )}
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
