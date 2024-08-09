@@ -1,5 +1,4 @@
 import io
-import json
 import uuid
 from collections.abc import AsyncGenerator
 
@@ -317,10 +316,10 @@ async def handle_new_chat_message(
                     connection_open = False
 
                 yield packet
-                # yield dict(data=json.dumps(packet))
+
         except Exception as e:
             logger.exception(f"Error in chat message streaming: {e}")
-            yield dict(data=json.dumps({"error": str(e)}))
+            yield {"error": str(e)}
 
     return EventSourceResponse(event_generator())
 
