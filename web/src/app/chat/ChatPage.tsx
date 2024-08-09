@@ -1206,18 +1206,18 @@ export function ChatPage({
               {({ getRootProps }) => (
                 <>
                   <div
-                    /* className={`w-full sm:relative h-screen ${
-                      !retrievalEnabled ? "xl:pb-[111px]" : "xl:pb-[140px]"
-                    }
-                      flex-auto transition-margin duration-300 
-                      overflow-x-auto
-                      `} */
                     className={`w-full sm:relative h-screen ${
                       !retrievalEnabled ? "xl:pb-[111px]" : "xl:pb-[140px]"
                     }
                       flex-auto transition-margin duration-300 
                       overflow-x-auto
                       `}
+                    /* className={`w-full sm:relative h-screen ${
+                      !retrievalEnabled ? "xl:pb-[111px]" : "xl:pb-[140px]"
+                    }
+                      flex-auto transition-margin duration-300 
+                      overflow-x-auto
+                      `} */
                     /*  className={`w-full sm:relative h-screen flex flex-col ${
                       !retrievalEnabled ? "" : ""
                     }
@@ -1559,8 +1559,8 @@ export function ChatPage({
 
                         {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                         <div
-                          ref={endPaddingRef}
-                          className="h-32 md:h-[250px] xl:h-[130px]"
+                          /*   ref={endPaddingRef} */
+                          className="h-32 md:h-[250px] xl:h-[160px]"
                         />
                         <div ref={endDivRef}></div>
 

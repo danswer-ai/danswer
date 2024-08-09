@@ -451,7 +451,7 @@ export const HumanMessage = ({
 
   return (
     <div
-      className="relative flex w-full pt-5 pb-5 -mr-6 lg:px-28"
+      className="relative flex w-full pb-5 -mr-6 lg:px-28"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
