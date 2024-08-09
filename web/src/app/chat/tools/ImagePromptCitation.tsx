@@ -79,4 +79,5 @@ const DualPromptDisplay = forwardRef<HTMLDivElement, PromptDisplayProps>(
   }
 );
 
+DualPromptDisplay.displayName = "DualPromptDisplay";
 export default DualPromptDisplay;
