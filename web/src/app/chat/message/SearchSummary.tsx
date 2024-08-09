@@ -1,13 +1,11 @@
-import {
-  BasicClickable,
-  EmphasizedClickable,
-} from "@/components/BasicClickable";
+import { EmphasizedClickable } from "@/components/BasicClickable";
 import { HoverPopup } from "@/components/HoverPopup";
 import { Hoverable } from "@/components/Hoverable";
 import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { FiCheck, FiEdit2, FiSearch, FiX } from "react-icons/fi";
 import { Input } from "@/components/ui/input";
+import { X, Check, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function ShowHideDocsButton({
   messageId,
@@ -24,13 +22,13 @@ export function ShowHideDocsButton({
       onClick={() => handleShowRetrieved(messageId)}
     >
       {isCurrentlyShowingRetrieved ? (
-        <EmphasizedClickable>
+        <Button size="xs" variant="outline">
           <div className="w-24 text-xs">Hide Docs</div>
-        </EmphasizedClickable>
+        </Button>
       ) : (
-        <BasicClickable>
+        <Button size="xs" variant="outline">
           <div className="w-24 text-xs">Show Docs</div>
-        </BasicClickable>
+        </Button>
       )}
     </div>
   );
@@ -131,7 +129,7 @@ export function SearchSummary({
             setIsEditing(false);
           }}
         >
-          <FiCheck />
+          <Check size={16} />
         </Hoverable>
         <Hoverable
           onClick={() => {
@@ -139,7 +137,7 @@ export function SearchSummary({
             setIsEditing(false);
           }}
         >
-          <FiX />
+          <X size={16} />
         </Hoverable>
       </div>
     </div>
@@ -168,9 +166,9 @@ export function SearchSummary({
             )}
           </div>
           {handleSearchQueryEdit && (
-            <div className="my-auto">
+            <div className="my-auto ml-2">
               <Hoverable onClick={() => setIsEditing(true)}>
-                <FiEdit2 />
+                <Pencil size={14} />
               </Hoverable>
             </div>
           )}

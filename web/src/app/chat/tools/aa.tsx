@@ -38,15 +38,7 @@ import {
   uploadFilesForChat,
   useScrollonStream,
 } from "./lib";
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
@@ -85,7 +77,6 @@ import { CircleArrowDown, Menu, PanelLeftClose, Share } from "lucide-react";
 import Image from "next/image";
 import Logo from "../../../public/logo-brand.png";
 import { Button } from "@/components/ui/button";
-import { useDebounce } from "use-debounce";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1053,25 +1044,13 @@ export function ChatPage({
     router.push("/search");
   }
 
-  const [showDocSidebar, setShowDocSidebar] = useState(true);
-  const [isWide, setIsWide] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsWide(window.innerWidth >= 1024);
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const [showDocSidebar, setShowDocSidebar] = useState(false);
 
   const toggleSidebar = () => {
     if (sidebarElementRef.current) {
       sidebarElementRef.current.style.transition = "width 0.3s ease-in-out";
 
-      sidebarElementRef.current.style.width = showDocSidebar ? "300px" : "0px";
+      sidebarElementRef.current.style.width = showDocSidebar ? "0px" : `300px`;
     }
 
     setShowDocSidebar((showDocSidebar) => !showDocSidebar);
@@ -1192,23 +1171,17 @@ export function ChatPage({
                 <>
                   <div
                     /* className={`w-full sm:relative h-screen ${
-                      !retrievalEnabled ? "xl:pb-[111px]" : "xl:pb-[140px]"
+                      !retrievalEnabled ? "pb-[111px]" : "pb-[140px]"
                     }
                       flex-auto transition-margin duration-300 
                       overflow-x-auto
                       `} */
-                    className={`w-full sm:relative h-screen ${
-                      !retrievalEnabled ? "xl:pb-[111px]" : "xl:pb-[140px]"
-                    }
-                      flex-auto transition-margin duration-300 
-                      overflow-x-auto
-                      `}
-                    /*  className={`w-full sm:relative h-screen flex flex-col ${
+                    className={`w-full sm:relative h-screen flex flex-col ${
                       !retrievalEnabled ? "" : ""
                     }
                       flex-auto transition-margin duration-300 
                       overflow-x-auto
-                      `} */
+                      `}
                     {...getRootProps()}
                   >
                     {/* <input {...getInputProps()} /> */}
@@ -1238,14 +1211,14 @@ export function ChatPage({
                               />
                             </div>*/}
 
-                            {/* <Button
+                            <Button
                               onClick={toggleWidth}
                               variant="ghost"
                               size="icon"
                               className="ml-20 hidden xl:flex"
                             >
                               <PanelLeftClose size={24} />
-                            </Button> */}
+                            </Button>
 
                             <div className="flex xl:hidden items-center gap-2">
                               <Hoverable onClick={toggleLeftSideBar}>
@@ -1292,7 +1265,7 @@ export function ChatPage({
 
                       <div
                         className={
-                          "mt-4 pt-12 px-5 sm:px-8 md:pt-16 md:px-12" +
+                          "mt-4 pt-12 mx-6 sm:mx-8" +
                           (hasPerformedInitialScroll ? "" : " invisible")
                         }
                       >
@@ -1545,7 +1518,7 @@ export function ChatPage({
                         {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                         <div
                           ref={endPaddingRef}
-                          className="h-32 md:h-[250px] xl:h-[130px]"
+                          className="h-10 md:h-20 lg:h-[100px]"
                         />
                         <div ref={endDivRef}></div>
 
@@ -1594,9 +1567,7 @@ export function ChatPage({
                     <div
                       ref={inputRef}
                       /* className="absolute bottom-0 left-0 z-10 w-full px-6" */
-                      /*   className="z-10 w-full relative" */
-                      className="fixed xl:absolute bottom-0 left-1/2 -translate-x-1/2 z-10 w-full"
-                      /* className="fixed bottom-0 z-10 w-full left-1/2 -translate-x-1/2" */
+                      className="z-10 w-full px-6 relative"
                     >
                       {aboveHorizon && (
                         <CircleArrowDown
@@ -1605,7 +1576,7 @@ export function ChatPage({
                           className="absolute bottom-[calc(100%_+_16px)] left-1/2 -translate-x-1/2 pointer-events-auto !rounded-full cursor-pointer bg-background"
                         />
                       )}
-                      <div className="w-full pb-4 bg-background">
+                      <div className="w-full pb-4">
                         <ChatInputBar
                           onSetSelectedAssistant={(
                             alternativeAssistant: Persona | null
@@ -1637,50 +1608,30 @@ export function ChatPage({
 
                   {retrievalEnabled || editingRetrievalEnabled ? (
                     <div
-                      className={`fixed top-0 right-0 xl:relative z-[501] h-screen transition-opacity ease-in-out duration-300 bg-black flex justify-end items-end ${
-                        showDocSidebar
-                          ? "w-0 xl:w-auto bg-black bg-opacity-0"
-                          : "w-screen xl:w-auto bg-black bg-opacity-20"
-                      }`}
+                      ref={sidebarElementRef}
+                      className={`fixed top-0 right-0 xl:relative flex-none  overflow-y-hidden sidebar bg-background z-[501] h-screen`}
+                      style={{ width: showDocSidebar ? 300 : 0 }}
                     >
-                      <div
-                        ref={sidebarElementRef}
-                        className={`flex-none overflow-y-hidden sidebar bg-background h-full relative`}
-                        style={{
-                          width: !showDocSidebar ? usedSidebarWidth : 0,
-                        }}
-                        /* style={{
-                          width: isWide
-                            ? showDocSidebar
-                              ? usedSidebarWidth
-                              : 0
-                            : !showDocSidebar
-                            ? usedSidebarWidth
-                            : 0,
-                        }} */
+                      <ResizableSection
+                        updateSidebarWidth={updateSidebarWidth}
+                        intialWidth={usedSidebarWidth}
+                        minWidth={300}
+                        maxWidth={maxDocumentSidebarWidth || undefined}
                       >
-                        <ResizableSection
-                          updateSidebarWidth={updateSidebarWidth}
-                          intialWidth={usedSidebarWidth}
-                          minWidth={300}
-                          maxWidth={maxDocumentSidebarWidth || undefined}
-                        >
-                          <DocumentSidebar
-                            initialWidth={showDocSidebar ? usedSidebarWidth : 0}
-                            ref={innerSidebarElementRef}
-                            closeSidebar={() => toggleSidebar()}
-                            selectedMessage={aiMessage}
-                            selectedDocuments={selectedDocuments}
-                            toggleDocumentSelection={toggleDocumentSelection}
-                            clearSelectedDocuments={clearSelectedDocuments}
-                            selectedDocumentTokens={selectedDocumentTokens}
-                            maxTokens={maxTokens}
-                            isLoading={isFetchingChatMessages}
-                            showDocSidebar={showDocSidebar}
-                            isWide={isWide}
-                          />
-                        </ResizableSection>
-                      </div>
+                        <DocumentSidebar
+                          initialWidth={showDocSidebar ? usedSidebarWidth : 0}
+                          ref={innerSidebarElementRef}
+                          closeSidebar={() => toggleSidebar()}
+                          selectedMessage={aiMessage}
+                          selectedDocuments={selectedDocuments}
+                          toggleDocumentSelection={toggleDocumentSelection}
+                          clearSelectedDocuments={clearSelectedDocuments}
+                          selectedDocumentTokens={selectedDocumentTokens}
+                          maxTokens={maxTokens}
+                          isLoading={isFetchingChatMessages}
+                          showDocSidebar={showDocSidebar}
+                        />
+                      </ResizableSection>
                     </div>
                   ) : // Another option is to use a div with the width set to the initial width, so that the
                   // chat section appears in the same place as before
@@ -1700,4 +1651,42 @@ export function ChatPage({
       </div>
     </>
   );
+}
+
+{
+  /* {retrievalEnabled || editingRetrievalEnabled ? (
+                    <div
+                      className={`fixed top-0 right-0 xl:relative flex-none overflow-y-hidden h-screen bg-black z-overlay bg-opacity-20`}
+                    >
+                      <div
+                        ref={sidebarElementRef}
+                        className={`sidebar bg-background z-[501] h-full`}
+                        style={{ width: showDocSidebar ? 300 : 0 }}
+                      >
+                        <ResizableSection
+                          updateSidebarWidth={updateSidebarWidth}
+                          intialWidth={300}
+                          minWidth={300}
+                          maxWidth={maxDocumentSidebarWidth || undefined}
+                        >
+                          <DocumentSidebar
+                            initialWidth={showDocSidebar ? 300 : 0}
+                            ref={innerSidebarElementRef}
+                            closeSidebar={() => toggleSidebar()}
+                            selectedMessage={aiMessage}
+                            selectedDocuments={selectedDocuments}
+                            toggleDocumentSelection={toggleDocumentSelection}
+                            clearSelectedDocuments={clearSelectedDocuments}
+                            selectedDocumentTokens={selectedDocumentTokens}
+                            maxTokens={maxTokens}
+                            isLoading={isFetchingChatMessages}
+                            showDocSidebar={showDocSidebar}
+                          />
+                        </ResizableSection>
+                      </div>
+                    </div>
+                  ) : // Another option is to use a div with the width set to the initial width, so that the
+                  // chat section appears in the same place as before
+                  // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
+                  null} */
 }

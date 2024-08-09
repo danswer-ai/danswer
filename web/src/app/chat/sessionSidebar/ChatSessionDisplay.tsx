@@ -17,21 +17,27 @@ import {
 } from "react-icons/fi";
 import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import { DefaultDropdownElement } from "@/components/Dropdown";
-import { Popover } from "@/components/popover/Popover";
 import { ShareChatSessionModal } from "../modal/ShareChatSessionModal";
 import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
 import { Trash, Ellipsis, Share2, X, Check } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export function ChatSessionDisplay({
   chatSession,
   isSelected,
   skipGradient,
+  toggleSideBar,
 }: {
   chatSession: ChatSession;
   isSelected: boolean;
   // needed when the parent is trying to apply some background effect
   // if not set, the gradient will still be applied and cause weirdness
   skipGradient?: boolean;
+  toggleSideBar?: () => void;
 }) {
   const router = useRouter();
   const [isDeletionModalVisible, setIsDeletionModalVisible] = useState(false);
@@ -105,6 +111,7 @@ export function ChatSessionDisplay({
             chatSession.folder_id?.toString() || ""
           );
         }}
+        onClick={toggleSideBar}
       >
         <BasicSelectable fullWidth selected={isSelected}>
           <>
@@ -120,7 +127,7 @@ export function ChatSessionDisplay({
                       event.preventDefault();
                     }
                   }}
-                  className="-my-px px-1 mr-2 w-full rounded"
+                  className="-my-px px-1 py-[1px] mr-2 w-full rounded"
                 />
               ) : (
                 <p className="break-all overflow-hidden whitespace-nowrap mr-3 text-emphasis text-ellipsis">
@@ -157,7 +164,7 @@ export function ChatSessionDisplay({
                         }}
                         className={"-m-1"}
                       >
-                        <Popover
+                        {/* <Popover
                           open={isMoreOptionsDropdownOpen}
                           onOpenChange={(open: boolean) =>
                             setIsMoreOptionsDropdownOpen(open)
@@ -184,7 +191,32 @@ export function ChatSessionDisplay({
                           requiresContentPadding
                           sideOffset={6}
                           triggerMaxWidth
-                        />
+                        /> */}
+
+                        <Popover
+                          open={isMoreOptionsDropdownOpen}
+                          onOpenChange={(open) =>
+                            setIsMoreOptionsDropdownOpen(open)
+                          }
+                        >
+                          <PopoverTrigger asChild>
+                            <div className="hover:bg-black/10 p-1 rounded">
+                              <Ellipsis size={16} />
+                            </div>
+                          </PopoverTrigger>
+                          <PopoverContent className="border border-border rounded-regular bg-background z-50 w-32">
+                            <DefaultDropdownElement
+                              name="Share"
+                              icon={FiShare2}
+                              onSelect={() => setIsShareModalVisible(true)}
+                            />
+                            <DefaultDropdownElement
+                              name="Rename"
+                              icon={FiEdit2}
+                              onSelect={() => setIsRenamingChat(true)}
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
 

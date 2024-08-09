@@ -1,4 +1,5 @@
 import { EmphasizedClickable } from "@/components/BasicClickable";
+import { Button } from "@/components/ui/button";
 import { FiArchive, FiBook, FiSearch } from "react-icons/fi";
 
 function ForceSearchButton({
@@ -14,9 +15,9 @@ function ForceSearchButton({
       className="ml-auto my-auto"
       onClick={() => handleShowRetrieved(messageId)}
     >
-      <EmphasizedClickable>
+      <Button size="xs" variant="outline">
         <div className="w-24 text-xs">Force Search</div>
-      </EmphasizedClickable>
+      </Button>
     </div>
   );
 }
@@ -34,9 +35,9 @@ export function SkippedSearch({
       </div>
 
       <div className="ml-auto my-auto" onClick={handleForceSearch}>
-        <EmphasizedClickable>
+        <Button size="xs" variant="outline">
           <div className="w-24 text-xs">Force Search</div>
-        </EmphasizedClickable>
+        </Button>
       </div>
     </div>
   );

@@ -37,6 +37,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "formik": "^2.2.9",
+    "framer-motion": "^11.3.24",
     "js-cookie": "^3.0.5",
     "lenis": "^1.0.45",
     "lodash": "^4.17.21",
@@ -62,6 +63,7 @@
     "tailwindcss": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "5.0.3",
+    "use-debounce": "^10.0.2",
     "uuid": "^9.0.1",
     "yup": "^1.1.1"
   },

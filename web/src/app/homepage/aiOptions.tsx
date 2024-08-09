@@ -22,7 +22,7 @@ export default function AIOptions() {
             key={category}
             className={`text-sm md:text-lg px-2 md:px-3 py-2 rounded-[5px] ease-out duration-500 transition-all ${
               category === activeCategory
-                ? "bg-[#D7EAFF] text-[#64A3FF] hover:opacity-50"
+                ? "bg-primary-300 text-[#64A3FF] hover:opacity-50"
                 : "hover:bg-[rgba(14,_14,_15,_0.1)]"
             }`}
             onClick={() => handleCategoryClick(category)}

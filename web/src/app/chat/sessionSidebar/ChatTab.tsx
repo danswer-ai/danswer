@@ -14,11 +14,15 @@ export function ChatTab({
   currentChatId,
   folders,
   openedFolders,
+  isExpanded,
+  toggleSideBar,
 }: {
   existingChats: ChatSession[];
   currentChatId?: number;
   folders: Folder[];
   openedFolders: { [key: number]: boolean };
+  isExpanded: boolean;
+  toggleSideBar?: () => void;
 }) {
   const groupedChatSessions = groupSessionsByDateRange(existingChats);
   const { setPopup } = usePopup();
@@ -50,7 +54,13 @@ export function ChatTab({
   };
 
   return (
-    <div className="mb-1 overflow-y-auto h-full px-4">
+    <div
+      className={`mb-1 overflow-y-auto h-full px-4 transition-all ease-in-out ${
+        isExpanded
+          ? "invisible opacity-0 duration-200"
+          : "visible opacity-100 duration-700 delay-300"
+      }`}
+    >
       {folders.length > 0 && (
         <div className="py-2 border-b border-border">
           <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-medium">
@@ -71,7 +81,7 @@ export function ChatTab({
         }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDropToRemoveFromFolder}
-        className={`pt-1 transition duration-300 ease-in-out ${
+        className={`transition duration-300 ease-in-out ${
           isDragOver ? "bg-hover" : ""
         } rounded-xs`}
       >
@@ -98,6 +108,7 @@ export function ChatTab({
                             chatSession={chat}
                             isSelected={isSelected}
                             skipGradient={isDragOver}
+                            toggleSideBar={toggleSideBar}
                           />
                         </div>
                       );

@@ -13,10 +13,10 @@
     /* --primary: 222.2 47.4% 11.2%; */
     --primary: #2039f3;
     --primary-foreground: #b8d7ff;
-    /* --secondary: 210 40% 96.1%; */
-    --secondary: #8e00c7;
-    /* --secondary-foreground: 222.2 47.4% 11.2%; */
-    --secondary-foreground: #be8bfc;
+    --secondary: 210 40% 96.1%;
+    /*  --secondary: #8e00c7; */
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    /*  --secondary-foreground: #be8bfc; */
     --success: #256533;
     --success-foreground: #a9deb4;
     --muted: 210 40% 96.1%;
@@ -70,10 +70,21 @@
   }
 }
 
-.h1-bg {
+/* .h1-bg {
   background: linear-gradient(90deg, #000000 0%, #2039f3 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-fill-color: transparent;
+} */
+.h1-bg {
+  background: linear-gradient(90deg, #000000 0%, #2039f3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
 }
+
+/* .h1-bg {
+  color: var(--primary);
+} */

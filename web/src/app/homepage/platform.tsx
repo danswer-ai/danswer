@@ -19,7 +19,7 @@ export default function Platform() {
 
           <div className="flex items-center gap-6 lg:mr-[8.5rem] flex-col lg:flex-row">
             <div className="flex gap-4 text-sm md:text-lg lg:flex-col">
-              <button className="bg-[#D7EAFF] text-[#64A3FF] hover:opacity-50 p-2 md:px-4 md:py-4 rounded-[5px]">
+              <button className="bg-primary-300 text-[#64A3FF] hover:opacity-50 p-2 md:px-4 md:py-4 rounded-[5px]">
                 Workflow
               </button>
               <button className="hover:bg-[rgba(14,_14,_15,_0.1)] px-2 md:px-4 md:py-4 rounded-[5px]">

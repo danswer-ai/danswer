@@ -169,7 +169,7 @@ export const AIMessage = ({
   ) : undefined;
 
   return (
-    <div className={"py-5 px-5 flex -mr-6 w-full"}>
+    <div className={"flex -mr-6 w-full pb-5 lg:px-28"}>
       <div className="relative mx-auto w-full 2xl:w-searchbar-sm 3xl:w-searchbar">
         <div className="">
           <div className="flex">
@@ -179,7 +179,7 @@ export const AIMessage = ({
             />
 
             <div className="my-auto ml-2 font-bold text-emphasis">
-              {personaName || "enMedD CHP"}
+              {personaName || "enMedD AI"}
             </div>
 
             {query === undefined &&
@@ -199,7 +199,8 @@ export const AIMessage = ({
               )}
           </div>
 
-          <div className="mt-2 ml-12 break-words w-message-xs 2xl:w-message-sm 3xl:w-message-default">
+          {/* <div className="pt-2 pl-12 break-words w-full sm:w-message-xs 2xl:w-message-sm 3xl:w-message-default"> */}
+          <div className="pl-12 break-words w-full">
             {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
               <>
                 {query !== undefined &&
@@ -281,7 +282,7 @@ export const AIMessage = ({
                                 ? window.open(rest.href, "_blank")
                                 : undefined
                             }
-                            className="cursor-pointer text-link hover:text-link-hover"
+                            className="cursor-pointer text-primary hover:text-primary-foreground"
                             // href={rest.href}
                             // target="_blank"
                             // rel="noopener noreferrer"
@@ -310,14 +311,14 @@ export const AIMessage = ({
               defaultLoader
             )}
             {citedDocuments && citedDocuments.length > 0 && (
-              <div className="mt-2">
+              <div className="mt-2 flex flex-col gap-1">
                 <b className="text-sm text-emphasis">Sources:</b>
                 <div className="flex flex-wrap gap-2">
                   {citedDocuments
                     .filter(([_, document]) => document.semantic_identifier)
                     .map(([citationKey, document], ind) => {
                       const display = (
-                        <div className="flex px-2 py-1 text-sm border rounded max-w-350 text-ellipsis border-border">
+                        <Badge variant="secondary">
                           <div className="my-auto mr-1">
                             <SourceIcon
                               sourceType={document.source_type}
@@ -325,7 +326,7 @@ export const AIMessage = ({
                             />
                           </div>
                           [{citationKey}] {document!.semantic_identifier}
-                        </div>
+                        </Badge>
                       );
                       if (document.link) {
                         return (
@@ -333,7 +334,7 @@ export const AIMessage = ({
                             key={document.document_id}
                             href={document.link}
                             target="_blank"
-                            className="cursor-pointer hover:bg-hover"
+                            className="cursor-pointer"
                           >
                             {display}
                           </a>
@@ -354,7 +355,7 @@ export const AIMessage = ({
             )}
           </div>
           {handleFeedback && (
-            <div className="flex flex-col md:flex-row gap-x-0.5 ml-12 mt-1.5">
+            <div className="flex flex-row gap-x-0.5 ml-12 mt-1.5">
               <CopyButton content={content.toString()} />
               <Hoverable onClick={() => handleFeedback("like")}>
                 <FiThumbsUp />
@@ -398,6 +399,7 @@ function MessageSwitcher({
 
 import logo from "../../../public/logo.png";
 import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
 
 export const HumanMessage = ({
   content,
@@ -449,7 +451,7 @@ export const HumanMessage = ({
 
   return (
     <div
-      className="relative flex w-full pt-5 pb-1 -mr-6 lg:px-5"
+      className="relative flex w-full pt-5 pb-5 -mr-6 lg:px-28"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -464,8 +466,8 @@ export const HumanMessage = ({
 
             <div className="my-auto ml-2 font-bold text-emphasis">You</div>
           </div>
-          <div className="flex flex-wrap mx-auto mt-2 ml-12 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default">
-            {/*   <div className="break-words w-message-xs 2xl:w-message-sm 3xl:w-message-default"> */}
+          {/*  <div className="flex flex-wrap pt-2 pl-12 w-full sm:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default"> */}
+          <div className="flex flex-wrap pt-2 pl-12 w-full">
             <div className={`break-words ${isEditing ? "w-full" : "w-auto"}`}>
               <FileDisplay files={files || []} />
               {isEditing ? (
@@ -548,7 +550,7 @@ export const HumanMessage = ({
                     isHovered &&
                     !isEditing &&
                     (!files || files.length === 0) && (
-                      <div className="bg-hover absolute left-[calc(100%_+_10px)] top-0 rounded">
+                      <div className="bg-hover absolute right-0 -top-[38px] xl:left-[calc(100%_+_10px)] xl:right-auto xl:top-0 rounded">
                         <Hoverable
                           onClick={() => {
                             setIsEditing(true);

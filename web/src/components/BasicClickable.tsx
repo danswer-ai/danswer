@@ -1,18 +1,22 @@
-/* import { Button } from "@/components/ui/button"; */
-
 export function BasicClickable({
   children,
   onClick,
   fullWidth = false,
+  isExpanded = false,
 }: {
   children: string | JSX.Element;
   onClick?: () => void;
   fullWidth?: boolean;
+  isExpanded?: boolean;
 }) {
   return (
     <div
       onClick={onClick}
-      className="h-full w-full shadow-sm rounded-regular p-3 bg-background"
+      className={`transition-all ease-in-out duration-300 ${
+        !isExpanded
+          ? "h-full w-full shadow-sm rounded-regular bg-background p-3"
+          : "py-3"
+      }`}
     >
       {children}
     </div>

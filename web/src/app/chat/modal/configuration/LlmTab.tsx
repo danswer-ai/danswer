@@ -76,7 +76,7 @@ export function LlmTab({
         Default Model: <i className="font-medium">{defaultLlmName}</i>.
       </Text>
 
-      <div className="w-96">
+      <div className="xl:w-96">
         <Select
           onValueChange={(value) => {
             setLlmOverride(destructureValue(value as string));
@@ -90,7 +90,7 @@ export function LlmTab({
               {llmOverride.modelName}
             </SelectValue>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-modal">
             {llmOptions.map((option, index) => (
               <SelectItem key={index} value={option.value}>
                 {option.name}

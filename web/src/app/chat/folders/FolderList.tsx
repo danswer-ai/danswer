@@ -160,7 +160,7 @@ const FolderItem = ({
                   className="text-sm px-1 flex-1 min-w-0 -my-px mr-2"
                 />
               ) : (
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 break-all overflow-hidden whitespace-nowrap text-ellipsis">
                   {editedFolderName || folder.folder_name}
                 </div>
               )}
