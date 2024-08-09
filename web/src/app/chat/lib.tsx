@@ -20,6 +20,7 @@ import {
   FileDescriptor,
   ImageGenerationDisplay,
   Message,
+  MessageCreationInfo,
   RetrievalType,
   StreamingError,
   ToolCallMetadata,
@@ -78,7 +79,8 @@ export type PacketType =
   | AnswerPiecePacket
   | DocumentsResponse
   | ImageGenerationDisplay
-  | StreamingError;
+  | StreamingError
+  | MessageCreationInfo;
 
 export async function* sendMessage({
   message,
@@ -96,6 +98,7 @@ export async function* sendMessage({
   systemPromptOverride,
   useExistingUserMessage,
   alternateAssistantId,
+  signal,
 }: {
   message: string;
   fileDescriptors: FileDescriptor[];
@@ -106,70 +109,92 @@ export async function* sendMessage({
   selectedDocumentIds: number[] | null;
   queryOverride?: string;
   forceSearch?: boolean;
-  // LLM overrides
   modelProvider?: string;
   modelVersion?: string;
   temperature?: number;
-  // prompt overrides
   systemPromptOverride?: string;
-  // if specified, will use the existing latest user message
-  // and will ignore the specified `message`
   useExistingUserMessage?: boolean;
   alternateAssistantId?: number;
-}) {
+  signal?: AbortSignal;
+}): AsyncGenerator<PacketType[], void, unknown> {
   const documentsAreSelected =
     selectedDocumentIds && selectedDocumentIds.length > 0;
 
-  const sendMessageResponse = await fetch("/api/chat/send-message", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      alternate_assistant_id: alternateAssistantId,
-      chat_session_id: chatSessionId,
-      parent_message_id: parentMessageId,
-      message: message,
-      prompt_id: promptId,
-      search_doc_ids: documentsAreSelected ? selectedDocumentIds : null,
-      file_descriptors: fileDescriptors,
-      retrieval_options: !documentsAreSelected
+  const body = JSON.stringify({
+    alternate_assistant_id: alternateAssistantId,
+    chat_session_id: chatSessionId,
+    parent_message_id: parentMessageId,
+    message: message,
+    prompt_id: promptId,
+    search_doc_ids: documentsAreSelected ? selectedDocumentIds : null,
+    file_descriptors: fileDescriptors,
+    retrieval_options: !documentsAreSelected
+      ? {
+          run_search:
+            promptId === null ||
+            promptId === undefined ||
+            queryOverride ||
+            forceSearch
+              ? "always"
+              : "auto",
+          real_time: true,
+          filters: filters,
+        }
+      : null,
+    query_override: queryOverride,
+    prompt_override: systemPromptOverride
+      ? {
+          system_prompt: systemPromptOverride,
+        }
+      : null,
+    llm_override:
+      temperature || modelVersion
         ? {
-            run_search:
-              promptId === null ||
-              promptId === undefined ||
-              queryOverride ||
-              forceSearch
-                ? "always"
-                : "auto",
-            real_time: true,
-            filters: filters,
+            temperature,
+            model_provider: modelProvider,
+            model_version: modelVersion,
           }
         : null,
-      query_override: queryOverride,
-      prompt_override: systemPromptOverride
-        ? {
-            system_prompt: systemPromptOverride,
-          }
-        : null,
-      llm_override:
-        temperature || modelVersion
-          ? {
-              temperature,
-              model_provider: modelProvider,
-              model_version: modelVersion,
-            }
-          : null,
-      use_existing_user_message: useExistingUserMessage,
-    }),
+    use_existing_user_message: useExistingUserMessage,
   });
-  if (!sendMessageResponse.ok) {
-    const errorJson = await sendMessageResponse.json();
-    const errorMsg = errorJson.message || errorJson.detail || "";
-    throw Error(`Failed to send message - ${errorMsg}`);
-  }
 
-  yield* handleStream<PacketType>(sendMessageResponse);
+  const eventSource = new EventSource(
+    `/api/chat/send-message?body=${encodeURIComponent(body)}`
+  );
+
+  try {
+    while (true) {
+      if (signal?.aborted) {
+        throw new Error("AbortError");
+      }
+
+      const event = await new Promise<MessageEvent | null>(
+        (resolve, reject) => {
+          eventSource.onmessage = (e) => resolve(e);
+          eventSource.onerror = (e) => reject(e);
+          signal?.addEventListener("abort", () =>
+            reject(new Error("AbortError"))
+          );
+        }
+      );
+
+      if (!event) break;
+
+      if (event.data === "[DONE]") {
+        break;
+      }
+
+      try {
+        const data = JSON.parse(event.data) as PacketType;
+        console.log(event.data);
+        yield [data];
+      } catch (error) {
+        console.error("Error parsing SSE data:", error);
+      }
+    }
+  } finally {
+    eventSource.close();
+  }
 }
 
 export async function nameChatSession(chatSessionId: number, message: string) {

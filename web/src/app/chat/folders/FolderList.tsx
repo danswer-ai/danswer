@@ -22,9 +22,6 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { CHAT_SESSION_ID_KEY } from "@/lib/drag/constants";
 import Cookies from "js-cookie";
-import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
-import { Tooltip } from "@/components/tooltip/Tooltip";
-import { Popover } from "@/components/popover/Popover";
 
 const FolderItem = ({
   folder,

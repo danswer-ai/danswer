@@ -10,6 +10,7 @@ import {
   FileDescriptor,
   ImageGenerationDisplay,
   Message,
+  MessageCreationInfo,
   RetrievalType,
   StreamingError,
   ToolCallMetadata,
@@ -192,6 +193,12 @@ export function ChatPage({
       );
     }
   }, [liveAssistant]);
+
+  const stopGeneration = () => {
+    if (abortController) {
+      abortController.abort();
+    }
+  };
 
   // this is for "@"ing assistants
   const [alternativeAssistant, setAlternativeAssistant] =
@@ -812,7 +819,9 @@ export function ChatPage({
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
     let toolCalls: ToolCallMetadata[] = [];
-
+    let reserved_id: number | null = null;
+    let user_message_id: number | null = null;
+    let assistant_message_id: number | null = null;
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
@@ -820,7 +829,6 @@ export function ChatPage({
       const stack = new CurrentMessageFIFO();
       updateCurrentMessageFIFO(stack, {
         signal: controller.signal, // Add this line
-
         message: currMessage,
         alternateAssistantId: currentAssistantId,
         fileDescriptors: currentMessageFiles,
@@ -914,12 +922,22 @@ export function ChatPage({
               error = (packet as StreamingError).error;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
+            } else if (Object.hasOwn(packet, "user_message_id")) {
+              const messageCreationInfo = packet as MessageCreationInfo;
+              user_message_id = messageCreationInfo.user_message_id;
+              assistant_message_id =
+                messageCreationInfo.reserved_assistant_message_id;
             }
 
             const newUserMessageId =
-              finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
+              user_message_id ||
+              finalMessage?.parent_message ||
+              TEMP_USER_MESSAGE_ID;
             const newAssistantMessageId =
-              finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+              assistant_message_id ||
+              finalMessage?.message_id ||
+              TEMP_ASSISTANT_MESSAGE_ID;
+
             updateFn([
               {
                 messageId: newUserMessageId,
@@ -932,7 +950,7 @@ export function ChatPage({
                 latestChildMessageId: newAssistantMessageId,
               },
               {
-                messageId: newAssistantMessageId,
+                messageId: assistant_message_id || newAssistantMessageId,
                 message: error || answer,
                 type: error ? "error" : "assistant",
                 retrievalType,
@@ -1267,6 +1285,7 @@ export function ChatPage({
             >
               <div className="w-full relative">
                 <HistorySidebar
+                  stopGenerating={stopGeneration}
                   reset={() => setMessage("")}
                   page="chat"
                   ref={innerSidebarElementRef}
@@ -1667,6 +1686,7 @@ export function ChatPage({
                             )}
 
                             <ChatInputBar
+                              stopGenerating={stopGeneration}
                               openModelSettings={() => setSettingsToggled(true)}
                               inputPrompts={userInputPrompts}
                               showDocs={() => setDocumentSelection(true)}

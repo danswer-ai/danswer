@@ -17,7 +17,9 @@ export function PagesTab({
   folders,
   openedFolders,
   closeSidebar,
+  stopGenerating,
 }: {
+  stopGenerating: () => void;
   page: pageType;
   existingChats?: ChatSession[];
   currentChatId?: number;
@@ -117,6 +119,7 @@ export function PagesTab({
                         return (
                           <div key={`${chat.id}-${chat.name}`}>
                             <ChatSessionDisplay
+                              stopGenerating={stopGenerating}
                               closeSidebar={closeSidebar}
                               search={page == "search"}
                               chatSession={chat}

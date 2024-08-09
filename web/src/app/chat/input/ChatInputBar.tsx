@@ -21,6 +21,7 @@ import {
   CpuIconSkeleton,
   FileIcon,
   SendIcon,
+  StopGeneratingIcon,
 } from "@/components/icons/icons";
 import { IconType } from "react-icons";
 import Popup from "../../../components/popup/Popup";
@@ -31,6 +32,8 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { Hoverable } from "@/components/Hoverable";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { StopCircle } from "@phosphor-icons/react/dist/ssr";
+import { Square } from "@phosphor-icons/react";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
@@ -39,6 +42,7 @@ export function ChatInputBar({
   selectedDocuments,
   message,
   setMessage,
+  stopGenerating,
   onSubmit,
   isStreaming,
   filterManager,
@@ -59,6 +63,7 @@ export function ChatInputBar({
   inputPrompts,
 }: {
   openModelSettings: () => void;
+  stopGenerating: () => void;
   showDocs: () => void;
   selectedDocuments: DanswerDocument[];
   assistantOptions: Persona[];
@@ -596,23 +601,38 @@ export function ChatInputBar({
               />
             </div>
             <div className="absolute bottom-2.5 mobile:right-4 desktop:right-10">
-              <div
-                className="cursor-pointer"
-                onClick={() => {
-                  if (message) {
-                    onSubmit();
-                  }
-                }}
-              >
-                <SendIcon
-                  size={28}
-                  className={`text-emphasis text-white p-1 rounded-full ${
-                    message && !isStreaming
-                      ? "bg-background-800"
-                      : "bg-[#D7D7D7]"
-                  }`}
-                />
-              </div>
+              {isStreaming ? (
+                <div
+                  className="cursor-pointer bg-black h-[28px] rounded-full flex  w-[28px] "
+                  onClick={() => {
+                    stopGenerating();
+                  }}
+                >
+                  <StopGeneratingIcon
+                    size={10}
+                    className={`text-emphasis  m-auto text-white   flex-none
+                      }`}
+                  />
+                </div>
+              ) : (
+                <div
+                  className="cursor-pointer"
+                  onClick={() => {
+                    if (message) {
+                      onSubmit();
+                    }
+                  }}
+                >
+                  <SendIcon
+                    size={28}
+                    className={`text-emphasis text-white p-1 rounded-full ${
+                      message && !isStreaming
+                        ? "bg-background-800"
+                        : "bg-[#D7D7D7]"
+                    }`}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

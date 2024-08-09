@@ -32,6 +32,7 @@ interface HistorySidebarProps {
   toggled?: boolean;
   removeToggle?: () => void;
   reset?: () => void;
+  stopGenerating?: () => void;
 }
 
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
@@ -46,6 +47,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
       openedFolders,
       toggleSidebar,
       removeToggle,
+      stopGenerating = () => null,
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
@@ -168,6 +170,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
           )}
           <div className="border-b border-border pb-4 mx-3" />
           <PagesTab
+            stopGenerating={stopGenerating}
             closeSidebar={removeToggle}
             page={page}
             existingChats={existingChats}

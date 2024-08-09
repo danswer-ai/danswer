@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
 from uuid import uuid4
@@ -115,6 +116,7 @@ class Answer:
         # Returns the full document sections text from the search tool
         return_contexts: bool = False,
         skip_gen_ai_answer_generation: bool = False,
+        is_connected: Callable[[], bool] | None = None,
     ) -> None:
         if single_message_history and message_history:
             raise ValueError(
@@ -122,6 +124,7 @@ class Answer:
             )
 
         self.question = question
+        self.is_connected: Callable[[], bool] | None = is_connected
 
         self.latest_query_files = latest_query_files or []
         self.file_id_to_file = {file.file_id: file for file in (files or [])}
@@ -226,6 +229,9 @@ class Answer:
                 tools=final_tool_definitions if final_tool_definitions else None,
                 tool_choice="required" if self.force_use_tool.force_use else None,
             ):
+                if self.is_connected is not None and not self.is_connected():
+                    return
+
                 if isinstance(message, AIMessageChunk) and (
                     message.tool_call_chunks or message.tool_calls
                 ):
@@ -516,6 +522,9 @@ class Answer:
         processed_stream = []
         for processed_packet in _process_stream(output_generator):
             processed_stream.append(processed_packet)
+            # if self.is_connected is not None and not self.is_connected():
+            #     print("--------\nBREAKING")
+            #     break
             yield processed_packet
 
         self._processed_stream = processed_stream

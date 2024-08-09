@@ -117,6 +117,11 @@ export interface BackendMessage {
   alternate_assistant_id?: number | null;
 }
 
+export interface MessageCreationInfo {
+  user_message_id: number | null;
+  reserved_assistant_message_id: number;
+}
+
 export interface DocumentsResponse {
   top_documents: DanswerDocument[];
   rephrased_query: string | null;
