@@ -215,8 +215,8 @@ class QueryAnalysisModel:
         self,
         model_server_host: str = MODEL_SERVER_HOST,
         model_server_port: int = MODEL_SERVER_PORT,
-        # Lean towards not throwing out keywords
-        keyword_percent_threshold: float = 0.3,
+        # Lean heavily towards not throwing out keywords
+        keyword_percent_threshold: float = 0.1,
         # Lean towards semantic which is the default
         semantic_percent_threshold: float = 0.4,
     ) -> None:

@@ -28,7 +28,8 @@ from danswer.utils.timing import log_function_time
 from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
 
 
-_LONG_TERM_LEN = 5
+# Set extremely loosely, the model is still fairly unreliable
+_LONG_TERM_LEN = 4
 
 logger = setup_logger()
 
@@ -128,31 +129,21 @@ def retrieval_preprocessing(
     predicted_source_filters = (
         parallel_results[run_source_filters.result_id] if run_source_filters else None
     )
+
+    # The extracted keywords right now are not very reliable, not using for now
+    # Can maybe use for highlighting
     is_keyword, extracted_keywords = (
         parallel_results[run_query_analysis.result_id]
         if run_query_analysis
         else (None, None)
     )
 
-    # Second pass at removing stopwords, the model should have already taken care of it but this is fast
-    # Also if the query is too long, the model just returns back everything
     all_query_terms = query.split()
-    # To be safe for now, don't drop any of the longer terms
-    longer_query_terms = [
-        term for term in all_query_terms if len(term) > _LONG_TERM_LEN
-    ]
     processed_keywords = (
-        remove_stop_words_and_punctuation(longer_query_terms)
+        remove_stop_words_and_punctuation(all_query_terms)
         if EDIT_KEYWORD_QUERY
         else all_query_terms
     )
-    # Safety net to not drop longer terms
-    additional_terms = [
-        term for term in longer_query_terms if term not in processed_keywords
-    ]
-    if additional_terms:
-        logger.debug(f"Added back {', '.join(additional_terms)} to the query")
-    processed_keywords.extend(additional_terms)
 
     user_acl_filters = (
         None if bypass_acl else build_access_filters_for_user(user, db_session)
