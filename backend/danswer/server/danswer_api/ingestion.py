@@ -92,13 +92,8 @@ def upsert_ingestion_doc(
 
     db_embedding_model = get_current_db_embedding_model(db_session)
 
-    index_embedding_model = DefaultIndexingEmbedder(
-        model_name=db_embedding_model.model_name,
-        normalize=db_embedding_model.normalize,
-        query_prefix=db_embedding_model.query_prefix,
-        passage_prefix=db_embedding_model.passage_prefix,
-        api_key=db_embedding_model.api_key,
-        provider_type=db_embedding_model.provider_type,
+    index_embedding_model = DefaultIndexingEmbedder.from_db_embedding_model(
+        db_embedding_model
     )
 
     indexing_pipeline = build_indexing_pipeline(
@@ -130,13 +125,8 @@ def upsert_ingestion_doc(
                 "Secondary index exists but no embedding model configured"
             )
 
-        new_index_embedding_model = DefaultIndexingEmbedder(
-            model_name=sec_db_embedding_model.model_name,
-            normalize=sec_db_embedding_model.normalize,
-            query_prefix=sec_db_embedding_model.query_prefix,
-            passage_prefix=sec_db_embedding_model.passage_prefix,
-            api_key=sec_db_embedding_model.api_key,
-            provider_type=sec_db_embedding_model.provider_type,
+        new_index_embedding_model = DefaultIndexingEmbedder.from_db_embedding_model(
+            sec_db_embedding_model
         )
 
         sec_ind_pipeline = build_indexing_pipeline(
