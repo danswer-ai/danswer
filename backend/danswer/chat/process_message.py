@@ -625,31 +625,8 @@ def stream_chat_message_objects(
         ai_message_files = None  # any files to associate with the AI message e.g. dall-e generated images
         dropped_indices = None
         tool_result = None
-        # from concurrent.futures import ThreadPoolExecutor
-
-        # from threading import Thread
-        # import threading
-        # import time
-
-        # def check_disconnection(is_disconnected, stop_event):
-        #     while not stop_event.is_set():
-        #         if is_disconnected():
-        #             stop_event.set()
-        #             break
-        #         time.sleep(0.1)  # Check every 100ms
-
-        # stop_event = threading.Event()
-        # if is_disconnected:
-        #     disconnection_thread = Thread(target=check_disconnection, args=(is_disconnected, stop_event))
-        #     disconnection_thread.start()
 
         for packet in answer.processed_streamed_output:
-            # if is_disconnected:
-            #     disconnected = await is_disconnected()
-            #     if disconnected:
-            #         logger.info("Client disconnected, stopping generation")
-            #         break
-
             if isinstance(packet, ToolResponse):
                 if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                     (

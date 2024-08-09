@@ -314,8 +314,6 @@ async def handle_new_chat_message(
                 is_connected=is_connected,
             ):
                 if await request.is_disconnected():
-                    # logger.info("Client disconnected, stopping generation (within top)")
-                    # break
                     connection_open = False
 
                 yield packet
