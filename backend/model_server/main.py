@@ -38,16 +38,11 @@ async def manage_huggingface_cache() -> None:
     if temp_hf_cache.is_dir() and any(temp_hf_cache.iterdir()):
         hf_cache.mkdir(parents=True, exist_ok=True)
         for item in temp_hf_cache.iterdir():
-            if item.is_dir():
-                await asyncio.to_thread(
-                    shutil.copytree, item, hf_cache / item.name, dirs_exist_ok=True
-                )
-            else:
-                await asyncio.to_thread(shutil.copy2, item, hf_cache)
-        await asyncio.to_thread(shutil.rmtree, temp_hf_cache)
-        logger.info("Copied contents of temp_huggingface and deleted the directory.")
+            destination = hf_cache / item.name
+            await asyncio.to_thread(shutil.move, item, destination)
+        logger.info("Moved contents of temp_huggingface to huggingface cache.")
     else:
-        logger.info("Source directory is empty or does not exist. Skipping copy.")
+        logger.info("Source directory is empty or does not exist. Skipping move.")
 
 
 @asynccontextmanager
