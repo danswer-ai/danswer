@@ -34,6 +34,7 @@ export interface MinimalUserSnapshot {
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
   | "success"
+  | "partial_success"
   | "failed"
   | "in_progress"
   | "not_started";

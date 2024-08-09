@@ -42,6 +42,12 @@ export function IndexAttemptStatus({
     } else {
       badge = icon;
     }
+  } else if (status === "partial_success") {
+    badge = (
+      <Badge size={size} color="yellow" icon={FiAlertTriangle}>
+        Partial Success
+      </Badge>
+    );
   } else if (status === "success") {
     badge = (
       <Badge size={size} color="green" icon={FiCheckCircle}>
