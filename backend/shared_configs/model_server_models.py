@@ -25,10 +25,12 @@ class EmbedResponse(BaseModel):
 class RerankRequest(BaseModel):
     query: str
     documents: list[str]
+    model_name: str
+    api_key: str | None
 
 
 class RerankResponse(BaseModel):
-    scores: list[list[float] | None]
+    scores: list[float]
 
 
 class IntentRequest(BaseModel):
