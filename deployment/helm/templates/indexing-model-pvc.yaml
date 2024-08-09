@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Values.indexCapability.indexingModelPVC.name }}
+  name: {{ .Values.indexCapability.pvc.name }}
 spec:
-  accessModes:
-    - {{ .Values.indexCapability.indexingModelPVC.accessMode | quote }}
+  accessModes: 
+    {{- toYaml .Values.indexCapability.pvc.accessModes | nindent 4 }}
   resources:
     requests:
-      storage: {{ .Values.indexCapability.indexingModelPVC.storage | quote }}
+      storage: {{ .Values.indexCapability.pvc.storage }}
