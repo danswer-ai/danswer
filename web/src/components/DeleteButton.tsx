@@ -16,7 +16,7 @@ export function DeleteButton({
         ${disabled ? "cursor-default" : "hover:bg-hover cursor-pointer"} 
         w-fit 
         p-2 
-        rounded-lg
+        rounded-regular
         border-border
         text-sm`}
       onClick={onClick}

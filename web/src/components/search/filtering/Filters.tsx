@@ -10,6 +10,14 @@ import { FilterDropdown } from "./FilterDropdown";
 import { listSourceMetadata } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
 import { TagFilter } from "./TagFilter";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CustomSelect } from "@/components/Select";
 
 const SectionTitle = ({ children }: { children: string }) => (
   <div className="flex mt-2 text-xs font-bold">{children}</div>
@@ -91,7 +99,7 @@ export function SourceSelector({
                   key={source.internalName}
                   className={
                     "flex cursor-pointer w-full items-center " +
-                    "py-1.5 my-1.5 rounded-lg px-2 select-none " +
+                    "py-1.5 my-1.5 rounded-regular px-2 select-none " +
                     (selectedSources
                       .map((source) => source.internalName)
                       .includes(source.internalName)
@@ -122,7 +130,7 @@ export function SourceSelector({
                   key={documentSet.name}
                   className={
                     "flex cursor-pointer w-full items-center " +
-                    "py-1.5 rounded-lg px-2 " +
+                    "py-1.5 rounded-regular px-2 " +
                     (selectedDocumentSets.includes(documentSet.name)
                       ? "bg-hover"
                       : "hover:bg-hover-light")
@@ -178,7 +186,7 @@ function SelectedBubble({
     <div
       className={
         "flex cursor-pointer items-center border border-border " +
-        "py-1 my-1.5 rounded-lg px-2 w-fit hover:bg-hover"
+        "py-1 my-1.5 rounded-regular px-2 w-fit hover:bg-hover"
       }
       onClick={onClick}
     >
@@ -231,55 +239,57 @@ export function HorizontalFilters({
           <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
         </div>
 
-        <FilterDropdown
-          options={availableSources.map((source) => {
-            return {
-              key: source.displayName,
-              display: (
-                <>
+        <Select
+          onValueChange={(value) => {
+            const selectedSource = allSources.find(
+              (source) => source.displayName === value
+            );
+            if (selectedSource) handleSourceSelect(selectedSource);
+          }}
+        >
+          <SelectTrigger className="w-64">
+            <div className="flex items-center gap-3">
+              <FiMap size={16} />
+              <SelectValue placeholder="All Sources" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {availableSources.map((source) => (
+              <SelectItem key={source.displayName} value={source.displayName}>
+                <div className="flex items-center">
                   <SourceIcon sourceType={source.internalName} iconSize={16} />
                   <span className="ml-2 text-sm">{source.displayName}</span>
-                </>
-              ),
-            };
-          })}
-          selected={selectedSources.map((source) => source.displayName)}
-          handleSelect={(option) =>
-            handleSourceSelect(
-              allSources.find((source) => source.displayName === option.key)!
-            )
-          }
-          icon={
-            <div className="my-auto mr-2 w-[16px] h-[16px]">
-              <FiMap size={16} />
-            </div>
-          }
-          defaultDisplay="All Sources"
-        />
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-        <FilterDropdown
-          options={availableDocumentSets.map((documentSet) => {
-            return {
-              key: documentSet.name,
-              display: (
-                <>
-                  <div className="my-auto">
-                    <FiBookmark />
-                  </div>
-                  <span className="ml-2 text-sm">{documentSet.name}</span>
-                </>
-              ),
-            };
-          })}
-          selected={selectedDocumentSets}
-          handleSelect={(option) => handleDocumentSetSelect(option.key)}
-          icon={
-            <div className="my-auto mr-2 w-[16px] h-[16px]">
+        <Select
+          onValueChange={(value) => handleDocumentSetSelect(value)}
+          defaultValue=""
+        >
+          <SelectTrigger className="w-64">
+            <div className="flex items-center gap-3">
               <FiBook size={16} />
+              <SelectValue placeholder="All Document Sets" />
             </div>
-          }
-          defaultDisplay="All Document Sets"
-        />
+          </SelectTrigger>
+          <SelectContent>
+            {availableDocumentSets.map((documentSet) => (
+              <SelectItem
+                key={documentSet.name}
+                value={documentSet.name}
+                className="flex items-center"
+              >
+                <div className="my-auto">
+                  <FiBookmark />
+                </div>
+                <span className="ml-2 text-sm">{documentSet.name}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex h-12 pb-4 mt-2">

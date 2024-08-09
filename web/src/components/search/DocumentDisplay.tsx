@@ -70,7 +70,7 @@ export const buildDocumentSummaryDisplay = (
             finalJSX[finalJSX.length - 1] = finalJSX[finalJSX.length - 1] + " ";
           }
           finalJSX.push(
-            <b key={index} className="text-default bg-highlight-text">
+            <b key={index} className="text-highlight-text">
               {currentText}
             </b>
           );
@@ -94,7 +94,7 @@ export const buildDocumentSummaryDisplay = (
         finalJSX[finalJSX.length - 1] = finalJSX[finalJSX.length - 1] + " ";
       }
       finalJSX.push(
-        <b key={sections.length} className="text-default bg-highlight-text">
+        <b key={sections.length} className="text-highlight-text">
           {currentText}
         </b>
       );
@@ -219,7 +219,7 @@ export const DocumentDisplay = ({
         )}
         <a
           className={
-            "rounded-lg flex font-bold text-link max-w-full " +
+            "rounded-regular flex font-bold text-link max-w-full " +
             (document.link ? "" : "pointer-events-none")
           }
           href={document.link}

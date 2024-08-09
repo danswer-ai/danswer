@@ -189,7 +189,7 @@ function Main() {
                   w-fit 
                   hover:bg-hover cursor-pointer
                   p-2 
-                  rounded-lg
+                  rounded-regular
                   border-border
                   text-sm`}
                   onClick={() => handleEdit(apiKey)}
@@ -210,7 +210,7 @@ function Main() {
                   w-fit 
                   hover:bg-hover cursor-pointer
                   p-2 
-                  rounded-lg
+                  rounded-regular
                   border-border
                   text-sm`}
                   onClick={async () => {

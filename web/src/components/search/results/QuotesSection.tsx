@@ -18,7 +18,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
     >
       {detailIsOpen && (
         <div className="absolute top-0 mt-9 pt-2 z-50">
-          <div className="flex flex-shrink-0 rounded-lg w-96 bg-background border border-border shadow p-3 text-sm leading-relaxed">
+          <div className="flex flex-shrink-0 rounded-regular w-96 bg-background border border-border shadow p-3 text-sm leading-relaxed">
             <div>
               <b>Quote:</b> <i>{quoteInfo.quote}</i>
             </div>
@@ -48,7 +48,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
       )}
       <button className="text-sm flex w-fit">
         <a
-          className="flex max-w-[300px] shrink box-border p-2 border border-border rounded-lg hover:bg-hover-light"
+          className="flex max-w-[300px] shrink box-border p-2 border border-border rounded-regular hover:bg-hover-light"
           href={quoteInfo.link || undefined}
           target="_blank"
           rel="noopener noreferrer"

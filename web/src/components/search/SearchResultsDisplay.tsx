@@ -116,7 +116,7 @@ export const SearchResultsDisplay = ({
     <>
       {popup}
       {shouldDisplayQA && (
-        <div className="min-h-[16rem] p-4 border-2 border-border rounded-lg relative">
+        <div className="min-h-[16rem] p-4 border-2 border-border rounded-regular relative">
           <div>
             <div className="flex mb-1">
               <h2 className="text-emphasis font-bold my-auto mb-1 w-full">

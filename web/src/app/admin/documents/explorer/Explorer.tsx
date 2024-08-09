@@ -17,6 +17,7 @@ import { buildFilters } from "@/lib/search/utils";
 import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
 import { Connector, DocumentSet } from "@/lib/types";
 import { SourceIcon } from "@/components/SourceIcon";
+import { Input } from "@/components/ui/input";
 
 const DocumentDisplay = ({
   document,
@@ -35,7 +36,7 @@ const DocumentDisplay = ({
       <div className="relative flex">
         <a
           className={
-            "rounded-lg flex font-bold " +
+            "rounded-regular flex font-bold " +
             (document.link ? "" : "pointer-events-none")
           }
           href={document.link}
@@ -160,11 +161,32 @@ export function Explorer({
     <div>
       {popup}
       <div className="justify-center py-2">
-        <div className="flex items-center w-full px-4 py-2 border-2 rounded-lg border-border focus-within:border-accent bg-background-search">
+        {/* <div className="flex items-center w-full px-4 py-2 border-2 rounded-regular border-border focus-within:border-accent bg-background-search">
           <MagnifyingGlass />
           <textarea
             autoFocus
             className="flex-grow h-6 ml-2 overflow-hidden whitespace-normal bg-transparent outline-none resize-none placeholder-subtle"
+            role="textarea"
+            aria-multiline
+            placeholder="Find documents based on title / content..."
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                onSearch(query);
+                event.preventDefault();
+              }
+            }}
+            suppressContentEditableWarning={true}
+          />
+        </div> */}
+        <div className="relative">
+          <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2" />
+          <Input
+            className="pl-9"
+            autoFocus
             role="textarea"
             aria-multiline
             placeholder="Find documents based on title / content..."

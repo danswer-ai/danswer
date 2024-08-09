@@ -23,7 +23,7 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Card, Text, Title } from "@tremor/react";
+import { Card, Text, Title, Button } from "@tremor/react";
 
 const MainSection = () => {
   const { mutate } = useSWRConfig();
@@ -90,25 +90,26 @@ const MainSection = () => {
         will be queryable within enMedD CHP.
       </Text>
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 1: Provide Sharepoint credentials
       </Title>
       {sharepointCredential ? (
         <>
           <div className="flex mb-1 text-sm">
             <Text className="my-auto">Existing Azure AD Client ID: </Text>
-            <Text className="ml-1 italic my-auto">
+            <Text className="my-auto ml-1 italic">
               {sharepointCredential.credential_json.sp_client_id}
             </Text>
-            <button
-              className="ml-1 hover:bg-hover rounded p-1"
+            <Button
+              className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 await adminDeleteCredential(sharepointCredential.id);
                 refreshCredentials();
               }}
+              variant="light"
             >
               <TrashIcon />
-            </button>
+            </Button>
           </div>
         </>
       ) : (
@@ -170,7 +171,7 @@ const MainSection = () => {
         </>
       )}
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 2: Manage Sharepoint Connector
       </Title>
 
@@ -271,7 +272,7 @@ const MainSection = () => {
 
 export default function Page() {
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto">
       <div className="mb-4">
         <HealthCheckBanner />
       </div>

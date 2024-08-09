@@ -37,7 +37,7 @@ function SelectedBubble({
     <div
       className={
         "flex text-xs cursor-pointer items-center border border-border " +
-        "py-1 rounded-lg px-2 w-fit select-none hover:bg-hover"
+        "py-1 rounded-regular px-2 w-fit select-none hover:bg-hover"
       }
       onClick={onClick}
     >

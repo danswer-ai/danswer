@@ -22,7 +22,7 @@ export function BackButton({
         p-1
         pr-2 
         cursor-pointer 
-        rounded-lg 
+        rounded-regular 
         text-sm`}
       onClick={() => {
         if (behaviorOverride) {

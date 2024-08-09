@@ -10,9 +10,10 @@ import {
   TextFormField,
 } from "@/components/admin/connectors/Field";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
-import { Button, Divider, Text } from "@tremor/react";
+import { Divider, Text } from "@tremor/react";
 import { FiUsers } from "react-icons/fi";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { Button } from "@/components/ui/button";
 
 interface SetCreationPopupProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
@@ -137,7 +138,7 @@ export const DocumentSetCreationForm = ({
                           `
                               px-3 
                               py-1
-                              rounded-lg 
+                              rounded-regular 
                               border
                               border-border 
                               w-fit 
@@ -215,7 +216,7 @@ export const DocumentSetCreationForm = ({
                                     `
                               px-3 
                               py-1
-                              rounded-lg 
+                              rounded-regular 
                               border
                               border-border 
                               w-fit 
@@ -259,7 +260,7 @@ export const DocumentSetCreationForm = ({
                 disabled={isSubmitting}
                 className="w-64 mx-auto"
               >
-                {isUpdate ? "Update!" : "Create!"}
+                {isUpdate ? "Update" : "Create"}
               </Button>
             </div>
           </Form>

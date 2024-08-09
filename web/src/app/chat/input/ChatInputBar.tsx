@@ -1,21 +1,6 @@
-import React, {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import {
-  FiSend,
-  FiFilter,
-  FiPlusCircle,
-  FiCpu,
-  FiX,
-  FiPlus,
-  FiInfo,
-} from "react-icons/fi";
-import ChatInputOption from "./ChatInputOption";
-import { FaBrain } from "react-icons/fa";
+import React, { useEffect, useRef, useState } from "react";
+import { FiCpu, FiX, FiPlus, FiInfo } from "react-icons/fi";
+import { BsFillSendFill } from "react-icons/bs";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
 import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
@@ -23,10 +8,22 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
 import { FileDescriptor } from "../interfaces";
 import { InputBarPreview } from "../files/InputBarPreview";
-import { RobotIcon } from "@/components/icons/icons";
 import { Hoverable } from "@/components/Hoverable";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Cpu,
+  Paperclip,
+  Mic,
+  ImagePlus,
+  Send,
+  Plus,
+  Info,
+  CirclePlus,
+} from "lucide-react";
+
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
@@ -67,14 +64,26 @@ export function ChatInputBar({
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
 }) {
   // handle re-sizing of the text area
+
   useEffect(() => {
     const textarea = textAreaRef.current;
     if (textarea) {
-      textarea.style.height = "0px";
-      textarea.style.height = `${Math.min(
-        textarea.scrollHeight,
-        MAX_INPUT_HEIGHT
-      )}px`;
+      const updateHeight = () => {
+        const isSmallDevice = window.innerWidth < 1024; // Adjust the breakpoint as needed
+
+        textarea.style.height = "0px";
+        textarea.style.height = `${Math.min(
+          isSmallDevice ? textarea.scrollHeight : 40 + textarea.scrollHeight,
+          MAX_INPUT_HEIGHT
+        )}px`;
+      };
+
+      updateHeight(); // Initial update
+      window.addEventListener("resize", updateHeight); // Update on resize
+
+      return () => {
+        window.removeEventListener("resize", updateHeight); // Clean up on unmount
+      };
     }
   }, [message]);
 
@@ -192,17 +201,56 @@ export function ChatInputBar({
     }
   };
 
+  const [isShowing, setIsShowing] = useState(false);
+
+  const handleShowTools = () => {
+    setIsShowing(!isShowing);
+  };
+
   return (
     <div>
-      <div className="flex justify-center max-w-screen-lg pb-2 mx-auto mb-2">
-        {/*  <div className="relative w-full px-4 mx-auto shrink w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar"> */}
-        <div className="relative w-full px-4 mx-auto shrink 2xl:w-searchbar-sm 3xl:w-searchbar">
+      <div className="flex justify-center items-center max-w-screen-lg pb-2 mx-auto mb-2 px-5">
+        <div
+          className={`flex md:hidden items-center trasition-[width] ease-in-out duration-500 ${
+            isShowing ? "w-full" : "w-10"
+          }`}
+        >
+          <CirclePlus
+            size={24}
+            className="mr-4 min-w-6"
+            onClick={handleShowTools}
+          />
+          <Cpu
+            size={24}
+            onClick={() => setConfigModalActiveTab("assistants")}
+            className="mr-4"
+          />
+          <Paperclip
+            size={24}
+            className="mr-4"
+            onClick={() => {
+              const input = document.createElement("input");
+              input.type = "file";
+              input.multiple = true; // Allow multiple files
+              input.onchange = (event: any) => {
+                const files = Array.from(event?.target?.files || []) as File[];
+                if (files.length > 0) {
+                  handleFileUpload(files);
+                }
+              };
+              input.click();
+            }}
+          />
+          <ImagePlus size={24} className="mr-4" />
+          <Mic size={24} className="mr-4" />
+        </div>
+        <div className="relative w-full mx-auto shrink 2xl:w-searchbar-sm 3xl:w-searchbar">
           {showSuggestions && filteredPersonas.length > 0 && (
             <div
               ref={suggestionsRef}
               className="absolute inset-x-0 top-0 w-full text-sm transform -translate-y-full"
             >
-              <div className="rounded-lg py-1.5 bg-white border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
+              <div className="py-1.5 bg-background border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
                 {filteredPersonas.map((currentPersona, index) => (
                   <button
                     key={index}
@@ -229,32 +277,30 @@ export function ChatInputBar({
                   } px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
                   href="/assistants/new"
                 >
-                  <FiPlus size={17} />
+                  <Plus size={17} />
                   <p>Create a new assistant</p>
                 </a>
               </div>
             </div>
           )}
 
-          <div>
-            <SelectedFilterDisplay filterManager={filterManager} />
-          </div>
-
           <div
             className="
-              opacity-100
-              w-full
-              h-fit
-              flex
-              flex-col
-              border
-              border-border-medium
-              rounded-lg
-              overflow-hidden
-              bg-background-weak
-              [&:has(textarea:focus)]::ring-1
-              [&:has(textarea:focus)]::ring-black
-            "
+                opacity-100
+                w-full
+                h-fit
+                flex
+                flex-col
+                border
+                border-input-colored
+                rounded-xl
+                overflow-hidden
+                bg-background
+                [&:has(textarea:focus)]::ring-1
+                [&:has(textarea:focus)]::ring-black
+                shadow-sm
+                px-6
+              "
           >
             {alternativeAssistant && (
               <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full">
@@ -275,14 +321,15 @@ export function ChatInputBar({
                       }
                     >
                       <button>
-                        <Hoverable icon={FiInfo} />
+                        <Hoverable>
+                          <FiInfo />
+                        </Hoverable>
                       </button>
                     </Tooltip>
 
-                    <Hoverable
-                      icon={FiX}
-                      onClick={() => onSetSelectedAssistant(null)}
-                    />
+                    <Hoverable onClick={() => onSetSelectedAssistant(null)}>
+                      <FiX />
+                    </Hoverable>
                   </div>
                 </div>
               </div>
@@ -308,41 +355,46 @@ export function ChatInputBar({
               </div>
             )}
 
-            <textarea
+            <Textarea
               onPaste={handlePaste}
               onKeyDownCapture={handleKeyDown}
               onChange={handleInputChange}
               ref={textAreaRef}
               className={`
-                m-0
-                w-full
-                shrink
-                resize-none
-                border-0
-                bg-background-weak
-                ${
-                  textAreaRef.current &&
-                  textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT
-                    ? "overflow-y-auto mt-2"
-                    : ""
-                }
-                overflow-hidden
-                whitespace-normal
-                break-word
-                overscroll-contain
-                outline-none
-                placeholder-subtle
-                resize-none
-                pl-4
-                pr-12
-                py-4
-                h-14
-              `}
-              autoFocus
+                  m-0
+                  p-0
+                  focus-visible:!ring-0
+                  focus-visible:!ring-offset-0
+                  text-base
+                  w-full
+                  shrink
+                  resize-none
+                  border-0
+                  h-12
+                  xl:h-28
+                  py-3
+                  xl:py-6
+                  ${
+                    textAreaRef.current &&
+                    textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT
+                      ? "!overflow-y-auto mt-2"
+                      : ""
+                  }
+                  overflow-hidden
+                  whitespace-normal
+                  break-word
+                  overscroll-contain
+                  outline-none
+                  placeholder-subtle
+                  resize-none
+                  placeholder:text-nowrap
+                  placeholder:text-ellipsis
+                  placeholder:whitespace-nowrap
+                `}
               style={{ scrollbarWidth: "thin" }}
               role="textarea"
               aria-multiline
-              placeholder="Send a message..."
+              placeholder="How can I help you?"
               value={message}
               onKeyDown={(event) => {
                 if (
@@ -357,41 +409,18 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-            <div className="flex items-center justify-between px-4 py-2 overflow-hidden">
-              <div className="flex w-auto gap-2">
-                <ChatInputOption
-                  flexPriority="shrink"
-                  name={
-                    selectedAssistant ? selectedAssistant.name : "Assistants"
-                  }
-                  icon={FaBrain}
+            <div className="hidden md:flex items-center justify-between py-5 overflow-hidden border-t border-border-light">
+              <div className="flex w-auto items-center">
+                <Button
                   onClick={() => setConfigModalActiveTab("assistants")}
-                />
+                  variant="outline"
+                  className="mr-2"
+                >
+                  <Cpu size={16} />
+                  My Assistants
+                </Button>
 
-                <ChatInputOption
-                  flexPriority="second"
-                  name={
-                    llmOverrideManager.llmOverride.modelName ||
-                    (selectedAssistant
-                      ? selectedAssistant.llm_model_version_override || llmName
-                      : llmName)
-                  }
-                  icon={FiCpu}
-                  onClick={() => setConfigModalActiveTab("llms")}
-                />
-
-                {!retrievalDisabled && (
-                  <ChatInputOption
-                    flexPriority="stiff"
-                    name="Filters"
-                    icon={FiFilter}
-                    onClick={() => setConfigModalActiveTab("filters")}
-                  />
-                )}
-                <ChatInputOption
-                  flexPriority="stiff"
-                  name="File"
-                  icon={FiPlusCircle}
+                <Button
                   onClick={() => {
                     const input = document.createElement("input");
                     input.type = "file";
@@ -406,11 +435,21 @@ export function ChatInputBar({
                     };
                     input.click();
                   }}
-                />
+                  variant="ghost"
+                >
+                  <Paperclip size={20} />
+                </Button>
+
+                <Button variant="ghost">
+                  <ImagePlus size={20} />
+                </Button>
+
+                <Button variant="ghost">
+                  <Mic size={20} />
+                </Button>
               </div>
               <div>
-                <div
-                  className="flex flex-row items-center content-center w-auto gap-2 px-2.5 py-2.5 text-white truncate bg-blue-700 border rounded-full cursor-pointer sm:px-4 sm:py-2 sm:rounded-xl"
+                <Button
                   onClick={() => {
                     if (!isStreaming) {
                       if (message) {
@@ -421,9 +460,8 @@ export function ChatInputBar({
                     }
                   }}
                 >
-                  <FiSend size={11} color="white" className="w-4 h-4" />
-                  <p className="hidden font-light sm:flex">Send message</p>
-                </div>
+                  <Send size={16} />
+                </Button>
               </div>
             </div>
           </div>

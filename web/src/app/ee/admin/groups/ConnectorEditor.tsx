@@ -27,7 +27,7 @@ export const ConnectorEditor = ({
                 `
           px-3 
           py-1
-          rounded-lg 
+          rounded-regular 
           border
           border-border 
           w-fit 

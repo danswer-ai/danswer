@@ -24,7 +24,7 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Card, Divider, Text, Title } from "@tremor/react";
+import { Card, Divider, Text, Title, Button } from "@tremor/react";
 
 // Copied from the `extract_jira_project` function
 const extractJiraProject = (url: string): string | null => {
@@ -98,7 +98,7 @@ const Main = () => {
   return (
     <>
       {popup}
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 1: Provide your Credentials
       </Title>
 
@@ -106,11 +106,11 @@ const Main = () => {
         <>
           <div className="flex mb-1 text-sm">
             <p className="my-auto">Existing Access Token: </p>
-            <p className="ml-1 italic my-auto max-w-md truncate">
+            <p className="max-w-md my-auto ml-1 italic truncate">
               {jiraCredential.credential_json?.jira_api_token}
             </p>
-            <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+            <Button
+              className="p-1 ml-1 rounded-full hover:bg-gray-700"
               onClick={async () => {
                 if (jiraConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -135,9 +135,10 @@ const Main = () => {
                 }
                 refreshCredentials();
               }}
+              variant="light"
             >
               <TrashIcon />
-            </button>
+            </Button>
           </div>
         </>
       ) : (
@@ -154,7 +155,7 @@ const Main = () => {
             to generate an Access Token (for cloud) or Personal Access Token
             (for server). Submit only one form.
           </Text>
-          <Title className="mb-2 mt-6 ml-auto mr-auto">Cloud</Title>
+          <Title className="mt-6 mb-2 ml-auto mr-auto">Cloud</Title>
           <Card className="mt-4">
             <CredentialForm<JiraCredentialJson>
               formBody={
@@ -186,7 +187,7 @@ const Main = () => {
               }}
             />
           </Card>
-          <Title className="mb-2 mt-6 ml-auto mr-auto">Server</Title>
+          <Title className="mt-6 mb-2 ml-auto mr-auto">Server</Title>
           <Card className="mt-4">
             <CredentialForm<JiraServerCredentialJson>
               formBody={
@@ -217,7 +218,7 @@ const Main = () => {
       )}
 
       {/* TODO: make this periodic */}
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 2: Which spaces do you want to make searchable?
       </Title>
       {jiraCredential ? (
@@ -298,7 +299,7 @@ const Main = () => {
             </>
           )}
           <Card className="mt-4">
-            <h2 className="font-bold mb-3">Add a New Project</h2>
+            <h2 className="mb-3 font-bold">Add a New Project</h2>
             <ConnectorForm<JiraConfig>
               nameBuilder={(values) =>
                 `JiraConnector-${values.jira_project_url}`
@@ -361,7 +362,7 @@ const Main = () => {
 
 export default function Page() {
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto">
       <div className="mb-4">
         <HealthCheckBanner />
       </div>

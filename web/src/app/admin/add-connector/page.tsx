@@ -6,37 +6,26 @@ import { listSourceMetadata } from "@/lib/sources";
 import { Title, Text } from "@tremor/react";
 import Link from "next/link";
 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 function SourceTile({ sourceMetadata }: { sourceMetadata: SourceMetadata }) {
   return (
-    <Link
-      className={`flex 
-        flex-col 
-        items-center 
-        justify-center 
-        p-4 
-        rounded-lg 
-        w-40
-        ${
-          sourceMetadata.category == "Coming Soon"
-            ? `bg-gray-200
-          cursor-not-allowed
-          grayscale
-          border-1
-          border-gray-400
-          `
-            : `
-          shadow-md 
-          cursor-pointer 
-         bg-hover-light
-         hover:bg-hover`
-        }
-      `}
-      href={sourceMetadata.adminUrl}
-    >
-      <SourceIcon sourceType={sourceMetadata.internalName} iconSize={24} />
-      <Text className="mt-2 text-sm font-medium">
-        {sourceMetadata.displayName}
-      </Text>
+    <Link href={sourceMetadata.adminUrl}>
+      <Card className="w-40 hover:bg-hover">
+        <CardContent className="p-4 flex items-center flex-col justify-center">
+          <SourceIcon sourceType={sourceMetadata.internalName} iconSize={24} />
+          <Text className="mt-2 text-sm font-medium">
+            {sourceMetadata.displayName}
+          </Text>
+        </CardContent>
+      </Card>
     </Link>
   );
 }

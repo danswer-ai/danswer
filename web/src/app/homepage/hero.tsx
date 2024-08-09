@@ -35,7 +35,7 @@ export default function Hero() {
               </button>
               <Link
                 href="/chat"
-                className="text-[#2039F3] py-3 px-6 hover:bg-[#D7EAFF] rounded-[5px] transition-all duration-500 ease-in-out"
+                className="text-[#2039F3] py-3 px-6 hover:bg-primary-300 rounded-[5px] transition-all duration-500 ease-in-out"
               >
                 Start for free
               </Link>

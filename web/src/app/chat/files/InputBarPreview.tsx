@@ -60,7 +60,7 @@ export function InputBarPreview({
             justify-center
             bg-black
             bg-opacity-50
-            rounded-lg
+            rounded-regular
             z-0
           "
         >

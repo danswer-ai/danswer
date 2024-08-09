@@ -38,7 +38,15 @@ import {
   uploadFilesForChat,
   useScrollonStream,
 } from "./lib";
-import { useContext, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
@@ -72,6 +80,12 @@ import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 
 import ResizableSection from "@/components/resizable/ResizableSection";
 import { UserDropdown } from "@/components/UserDropdown";
+import { Hoverable } from "@/components/Hoverable";
+import { CircleArrowDown, Menu, PanelLeftClose, Share } from "lucide-react";
+import Image from "next/image";
+import Logo from "../../../public/logo-brand.png";
+import { Button } from "@/components/ui/button";
+import { useDebounce } from "use-debounce";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -380,7 +394,7 @@ export function ChatPage({
       )
     : { aiMessage: null };
 
-  const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
+  /*  const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
     existingChatSessionPersonaId !== undefined
       ? filteredAssistants.find(
           (persona) => persona.id === existingChatSessionPersonaId
@@ -390,6 +404,21 @@ export function ChatPage({
           (persona) => persona.id === defaultSelectedPersonaId
         )
       : undefined
+  ); */
+  const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
+    () => {
+      if (existingChatSessionPersonaId !== undefined) {
+        return filteredAssistants.find(
+          (persona) => persona.id === existingChatSessionPersonaId
+        );
+      } else if (defaultSelectedPersonaId !== undefined) {
+        return filteredAssistants.find(
+          (persona) => persona.id === defaultSelectedPersonaId
+        );
+      } else {
+        return undefined;
+      }
+    }
   );
   const livePersona =
     selectedPersona || filteredAssistants[0] || availablePersonas[0];
@@ -553,11 +582,8 @@ export function ChatPage({
   >(null);
   const adjustDocumentSidebarWidth = () => {
     if (masterFlexboxRef.current && document.documentElement.clientWidth) {
-      // numbers below are based on the actual width the center section for different
-      // screen sizes. `1700` corresponds to the custom "3xl" tailwind breakpoint
-      // NOTE: some buffer is needed to account for scroll bars
       if (document.documentElement.clientWidth > 1700) {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 950);
+        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1100);
       } else if (document.documentElement.clientWidth > 1420) {
         setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 760);
       } else {
@@ -1039,18 +1065,28 @@ export function ChatPage({
     router.push("/search");
   }
 
-  const [showDocSidebar, setShowDocSidebar] = useState(true); // State to track if sidebar is open
+  const [showDocSidebar, setShowDocSidebar] = useState(true);
+  const [isWide, setIsWide] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsWide(window.innerWidth >= 1024);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const toggleSidebar = () => {
     if (sidebarElementRef.current) {
       sidebarElementRef.current.style.transition = "width 0.3s ease-in-out";
 
-      sidebarElementRef.current.style.width = showDocSidebar
-        ? "0px"
-        : `${usedSidebarWidth}px`;
+      sidebarElementRef.current.style.width = showDocSidebar ? "300px" : "0px";
     }
 
-    setShowDocSidebar((showDocSidebar) => !showDocSidebar); // Toggle the state which will in turn toggle the class
+    setShowDocSidebar((showDocSidebar) => !showDocSidebar);
   };
 
   useEffect(() => {
@@ -1086,9 +1122,13 @@ export function ChatPage({
   console.log(hasPerformedInitialScroll);
 
   const [openSidebar, setOpenSidebar] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const handleClose = () => {
-    setOpenSidebar(false);
+  const toggleLeftSideBar = () => {
+    setOpenSidebar((prevState) => !prevState);
+  };
+  const toggleWidth = () => {
+    setIsExpanded((prevState) => !prevState);
   };
 
   return (
@@ -1106,8 +1146,10 @@ export function ChatPage({
           currentChatSession={selectedChatSession}
           folders={folders}
           openedFolders={openedFolders}
-          handleClose={handleClose}
           openSidebar={openSidebar}
+          toggleSideBar={toggleLeftSideBar}
+          isExpanded={isExpanded}
+          toggleWidth={toggleWidth}
         />
 
         <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
@@ -1162,17 +1204,29 @@ export function ChatPage({
                 <>
                   <div
                     className={`w-full sm:relative h-screen ${
-                      !retrievalEnabled ? "pb-[111px]" : "pb-[140px]"
+                      !retrievalEnabled ? "xl:pb-[111px]" : "xl:pb-[140px]"
                     }
                       flex-auto transition-margin duration-300 
                       overflow-x-auto
                       `}
+                    /* className={`w-full sm:relative h-screen ${
+                      !retrievalEnabled ? "xl:pb-[111px]" : "xl:pb-[140px]"
+                    }
+                      flex-auto transition-margin duration-300 
+                      overflow-x-auto
+                      `} */
+                    /*  className={`w-full sm:relative h-screen flex flex-col ${
+                      !retrievalEnabled ? "" : ""
+                    }
+                      flex-auto transition-margin duration-300 
+                      overflow-x-auto
+                      `} */
                     {...getRootProps()}
                   >
                     {/* <input {...getInputProps()} /> */}
 
                     <div
-                      className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                      className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative scroll-smooth`}
                       ref={scrollableDivRef}
                     >
                       {/* ChatBanner is a custom banner that displays a admin-specified message at 
@@ -1180,50 +1234,60 @@ export function ChatPage({
                       <ChatBanner />
 
                       {livePersona && (
-                        <div className="sticky top-0 z-10 flex w-full lg:left-80 bg-background">
-                          <div className="flex w-full mt-2">
-                            <div className="flex items-center w-full gap-3 p-1 ml-2 rounded">
-                              <FiMenu
+                        <div className="fixed top-0 left-0 flex w-full z-top-bar bg-background">
+                          <div className="flex w-full items-start p-4 justify-between">
+                            {/* <div className="flex items-center gap-3 p-1 ml-2 rounded">
+                             <FiMenu
                                 size={18}
                                 className="lg:hidden"
                                 onClick={() => setOpenSidebar(true)}
-                              />
+                              /> 
                               <ChatPersonaSelector
                                 personas={filteredAssistants}
                                 selectedPersonaId={livePersona.id}
                                 onPersonaChange={onPersonaChange}
                                 userId={user?.id}
                               />
+                            </div>*/}
 
-                              {/* <UserDropdown user={user} hideChatAndSearch /> */}
+                            {/* <Button
+                              onClick={toggleWidth}
+                              variant="ghost"
+                              size="icon"
+                              className="ml-20 hidden xl:flex"
+                            >
+                              <PanelLeftClose size={24} />
+                            </Button> */}
+
+                            <div className="flex xl:hidden items-center gap-2">
+                              <Hoverable onClick={toggleLeftSideBar}>
+                                <Menu size={24} />
+                              </Hoverable>
+                              <Image src={Logo} alt="Logo" width={112} />
                             </div>
 
                             <div className="flex ml-auto">
                               {chatSessionIdRef.current !== null && (
-                                <div
+                                <Button
                                   onClick={() => setSharingModalVisible(true)}
-                                  className={`
-                                    my-auto
-                                    p-2
-                                    rounded
-                                    cursor-pointer
-                                    hover:bg-hover-light
-                                  `}
+                                  className="px-3"
+                                  variant="ghost"
                                 >
-                                  <FiShare size="18" />
-                                </div>
+                                  <Share size={20} />
+                                </Button>
                               )}
 
-                              <div className="flex my-auto ml-4">
-                                {retrievalEnabled && !showDocSidebar && (
-                                  <button
-                                    className="mt-auto ml-4"
-                                    onClick={() => toggleSidebar()}
-                                  >
-                                    <TbLayoutSidebarRightExpand size={24} />
-                                  </button>
-                                )}
-                              </div>
+                              {/* <div className="flex my-auto"> */}
+                              {/*  {retrievalEnabled && !showDocSidebar && ( */}
+                              <Button
+                                onClick={toggleSidebar}
+                                variant="ghost"
+                                size="icon"
+                              >
+                                <PanelLeftClose size={24} />
+                              </Button>
+                              {/*  )} */}
+                              {/* </div> */}
                             </div>
                           </div>
                         </div>
@@ -1240,7 +1304,7 @@ export function ChatPage({
 
                       <div
                         className={
-                          "mt-4 pt-12 sm:pt-0 mx-6 sm:mx-8" +
+                          "mt-4 pt-20 md:pt-16 px-5 sm:px-8 md:px-12" +
                           (hasPerformedInitialScroll ? "" : " invisible")
                         }
                       >
@@ -1491,7 +1555,10 @@ export function ChatPage({
                           )}
 
                         {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-                        <div ref={endPaddingRef} className=" h-[95px]" />
+                        <div
+                          /*   ref={endPaddingRef} */
+                          className="h-32 md:h-[250px] lg:h-[300px] xl:h-[160px]"
+                        />
                         <div ref={endDivRef}></div>
 
                         {currentPersona &&
@@ -1538,20 +1605,19 @@ export function ChatPage({
 
                     <div
                       ref={inputRef}
-                      className="absolute bottom-0 left-0 z-10 w-full"
+                      /* className="absolute bottom-0 left-0 z-10 w-full px-6" */
+                      /*   className="z-10 w-full relative" */
+                      className="fixed xl:absolute bottom-0 left-1/2 -translate-x-1/2 z-10 w-full"
+                      /* className="fixed bottom-0 z-10 w-full left-1/2 -translate-x-1/2" */
                     >
-                      <div className="relative w-full pb-4">
-                        {aboveHorizon && (
-                          <div className="sticky flex justify-center w-full bg-transparent pointer-events-none">
-                            <button
-                              onClick={() => clientScrollToBottom(true)}
-                              className="p-1 mx-auto mb-2 border pointer-events-auto rounded-2xl bg-background-strong border-border "
-                            >
-                              <FiArrowDown size={18} />
-                            </button>
-                          </div>
-                        )}
-
+                      {aboveHorizon && (
+                        <CircleArrowDown
+                          onClick={() => clientScrollToBottom(true)}
+                          size={24}
+                          className="absolute bottom-[calc(100%_+_16px)] left-1/2 -translate-x-1/2 pointer-events-auto !rounded-full cursor-pointer bg-background"
+                        />
+                      )}
+                      <div className="w-full pb-4 bg-background">
                         <ChatInputBar
                           onSetSelectedAssistant={(
                             alternativeAssistant: Persona | null
@@ -1583,29 +1649,50 @@ export function ChatPage({
 
                   {retrievalEnabled || editingRetrievalEnabled ? (
                     <div
-                      ref={sidebarElementRef}
-                      className={`relative flex-none  overflow-y-hidden sidebar bg-background-weak h-screen`}
-                      style={{ width: showDocSidebar ? usedSidebarWidth : 0 }}
+                      className={`fixed top-0 right-0 xl:relative z-[501] h-screen transition-opacity ease-in-out duration-300 bg-black flex justify-end items-end ${
+                        showDocSidebar
+                          ? "w-0 xl:w-auto bg-black bg-opacity-0"
+                          : "w-screen xl:w-auto bg-black bg-opacity-20"
+                      }`}
                     >
-                      <ResizableSection
-                        updateSidebarWidth={updateSidebarWidth}
-                        intialWidth={usedSidebarWidth}
-                        minWidth={300}
-                        maxWidth={maxDocumentSidebarWidth || undefined}
+                      <div
+                        ref={sidebarElementRef}
+                        className={`flex-none overflow-y-hidden sidebar bg-background h-full relative`}
+                        style={{
+                          width: !showDocSidebar ? usedSidebarWidth : 0,
+                        }}
+                        /* style={{
+                          width: isWide
+                            ? showDocSidebar
+                              ? usedSidebarWidth
+                              : 0
+                            : !showDocSidebar
+                            ? usedSidebarWidth
+                            : 0,
+                        }} */
                       >
-                        <DocumentSidebar
-                          initialWidth={showDocSidebar ? usedSidebarWidth : 0}
-                          ref={innerSidebarElementRef}
-                          closeSidebar={() => toggleSidebar()}
-                          selectedMessage={aiMessage}
-                          selectedDocuments={selectedDocuments}
-                          toggleDocumentSelection={toggleDocumentSelection}
-                          clearSelectedDocuments={clearSelectedDocuments}
-                          selectedDocumentTokens={selectedDocumentTokens}
-                          maxTokens={maxTokens}
-                          isLoading={isFetchingChatMessages}
-                        />
-                      </ResizableSection>
+                        <ResizableSection
+                          updateSidebarWidth={updateSidebarWidth}
+                          intialWidth={usedSidebarWidth}
+                          minWidth={300}
+                          maxWidth={maxDocumentSidebarWidth || undefined}
+                        >
+                          <DocumentSidebar
+                            initialWidth={showDocSidebar ? usedSidebarWidth : 0}
+                            ref={innerSidebarElementRef}
+                            closeSidebar={() => toggleSidebar()}
+                            selectedMessage={aiMessage}
+                            selectedDocuments={selectedDocuments}
+                            toggleDocumentSelection={toggleDocumentSelection}
+                            clearSelectedDocuments={clearSelectedDocuments}
+                            selectedDocumentTokens={selectedDocumentTokens}
+                            maxTokens={maxTokens}
+                            isLoading={isFetchingChatMessages}
+                            showDocSidebar={showDocSidebar}
+                            isWide={isWide}
+                          />
+                        </ResizableSection>
+                      </div>
                     </div>
                   ) : // Another option is to use a div with the width set to the initial width, so that the
                   // chat section appears in the same place as before

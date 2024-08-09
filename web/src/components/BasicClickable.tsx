@@ -2,31 +2,24 @@ export function BasicClickable({
   children,
   onClick,
   fullWidth = false,
+  isExpanded = false,
 }: {
   children: string | JSX.Element;
   onClick?: () => void;
   fullWidth?: boolean;
+  isExpanded?: boolean;
 }) {
   return (
-    <button
+    <div
       onClick={onClick}
-      className={`
-        border
-        border-gray-300
-        shadow-md
-        rounded-lg
-        font-medium 
-        text-emphasis 
-        text-sm
-        p-1
-        h-full
-        bg-background
-        select-none
-        hover:bg-hover-light
-        ${fullWidth ? "w-full" : ""}`}
+      className={`transition-all ease-in-out duration-300 ${
+        !isExpanded
+          ? "h-full w-full shadow-sm rounded-regular bg-background p-3"
+          : "py-3"
+      }`}
     >
       {children}
-    </button>
+    </div>
   );
 }
 
@@ -46,7 +39,7 @@ export function EmphasizedClickable({
         border 
         border-gray-400
         shadow-md
-        rounded-lg
+        rounded-regular
         font-medium 
         text-emphasis
         text-sm
@@ -77,14 +70,14 @@ export function BasicSelectable({
   return (
     <div
       className={`
-        rounded-lg
+        rounded-regular
         font-medium 
         text-emphasis 
         text-sm
-        ${padding && "p-1"}
+        ${padding && "p-2"}
         select-none
         ${hasBorder ? "border border-border" : ""}
-        ${selected ? "bg-hover" : "hover:bg-hover"}
+        ${selected ? "bg-hover" : "hover:bg-hover-light"}
         ${fullWidth ? "w-full" : ""}`}
     >
       {children}

@@ -6,7 +6,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { MethodSpec, ToolSnapshot } from "@/lib/tools/interfaces";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { Button, Divider } from "@tremor/react";
+import { Divider } from "@tremor/react";
 import {
   createCustomTool,
   updateCustomTool,
@@ -14,6 +14,7 @@ import {
 } from "@/lib/tools/edit";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import debounce from "lodash/debounce";
+import { Button } from "@/components/ui/button";
 
 function parseJsonWithTrailingCommas(jsonString: string) {
   // Regular expression to remove trailing commas before } or ]
@@ -45,11 +46,11 @@ function ToolForm({
   isSubmitting: boolean;
   definitionErrorState: [
     string | null,
-    React.Dispatch<React.SetStateAction<string | null>>
+    React.Dispatch<React.SetStateAction<string | null>>,
   ];
   methodSpecsState: [
     MethodSpec[] | null,
-    React.Dispatch<React.SetStateAction<MethodSpec[] | null>>
+    React.Dispatch<React.SetStateAction<MethodSpec[] | null>>,
   ];
 }) {
   const [definitionError, setDefinitionError] = definitionErrorState;
@@ -99,21 +100,9 @@ function ToolForm({
           isCode
           hideError
         />
-        <button
+        <Button
           type="button"
-          className="
-            absolute 
-            bottom-4 
-            right-4
-            border-border
-            border
-            bg-background
-            rounded
-            py-1 
-            px-3 
-            text-sm
-            hover:bg-hover-light
-          "
+          className="absolute bottom-4 right-4 "
           onClick={() => {
             const definition = values.definition;
             if (definition) {
@@ -127,22 +116,23 @@ function ToolForm({
               }
             }
           }}
+          variant="outline"
         >
           Format
-        </button>
+        </Button>
       </div>
       {definitionError && (
-        <div className="text-error text-sm">{definitionError}</div>
+        <div className="text-sm text-error">{definitionError}</div>
       )}
       <ErrorMessage
         name="definition"
         component="div"
-        className="text-error text-sm"
+        className="text-sm text-error"
       />
 
       {methodSpecs && methodSpecs.length > 0 && (
         <div className="mt-4">
-          <h3 className="text-base font-semibold mb-2">Available methods</h3>
+          <h3 className="mb-2 text-base font-semibold">Available methods</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200">
               <thead>
@@ -174,8 +164,6 @@ function ToolForm({
       <div className="flex">
         <Button
           className="mx-auto"
-          color="green"
-          size="md"
           type="submit"
           disabled={isSubmitting || !!definitionError}
         >

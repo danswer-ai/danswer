@@ -20,7 +20,7 @@ import {
   OCIConfig,
   OCICredentialJson,
 } from "@/lib/types";
-import { Card, Select, SelectItem, Text, Title } from "@tremor/react";
+import { Card, Select, SelectItem, Text, Title, Button } from "@tremor/react";
 import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { useState } from "react";
@@ -83,7 +83,7 @@ const OCIMain = () => {
   return (
     <>
       {popup}
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 1: Provide your access info
       </Title>
       {ociCredential ? (
@@ -91,16 +91,16 @@ const OCIMain = () => {
           {" "}
           <div className="flex mb-1 text-sm">
             <p className="my-auto">Existing OCI Access Key ID: </p>
-            <p className="ml-1 italic my-auto">
+            <p className="my-auto ml-1 italic">
               {ociCredential.credential_json.access_key_id}
             </p>
             {", "}
-            <p className="ml-1 my-auto">Namespace: </p>
-            <p className="ml-1 italic my-auto">
+            <p className="my-auto ml-1">Namespace: </p>
+            <p className="my-auto ml-1 italic">
               {ociCredential.credential_json.namespace}
             </p>{" "}
-            <button
-              className="ml-1 hover:bg-hover rounded p-1"
+            <Button
+              className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 if (ociConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -113,15 +113,16 @@ const OCIMain = () => {
                 await adminDeleteCredential(ociCredential.id);
                 refreshCredentials();
               }}
+              variant="light"
             >
               <TrashIcon />
-            </button>
+            </Button>
           </div>
         </>
       ) : (
         <>
           <Text>
-            <ul className="list-disc mt-2 ml-4">
+            <ul className="mt-2 ml-4 list-disc">
               <li>
                 Provide your OCI Access Key ID, Secret Access Key, Namespace,
                 and Region for authentication.
@@ -173,13 +174,13 @@ const OCIMain = () => {
         </>
       )}
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 2: Which OCI bucket do you want to make searchable?
       </Title>
 
       {ociConnectorIndexingStatuses.length > 0 && (
         <>
-          <Title className="mb-2 mt-6 ml-auto mr-auto">
+          <Title className="mt-6 mb-2 ml-auto mr-auto">
             OCI indexing status
           </Title>
           <Text className="mb-2">
@@ -210,7 +211,7 @@ const OCIMain = () => {
       {ociCredential && (
         <>
           <Card className="mt-4">
-            <h2 className="font-bold mb-3">Create Connection</h2>
+            <h2 className="mb-3 font-bold">Create Connection</h2>
             <Text className="mb-4">
               Press connect below to start the connection to your OCI bucket.
             </Text>
@@ -256,7 +257,7 @@ const OCIMain = () => {
 
 export default function Page() {
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto">
       <div className="mb-4">
         <HealthCheckBanner />
       </div>

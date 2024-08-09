@@ -18,7 +18,7 @@ export function InMessageImage({ fileId }: { fileId: string }) {
       <img
         className={`
           max-w-lg 
-          rounded-lg 
+          rounded-regular 
           bg-transparent 
           cursor-pointer 
           transition-opacity 

@@ -75,7 +75,7 @@ function AssistantListItem({
       <div
         className="
           bg-background-emphasis
-          rounded-lg
+          rounded-regular
           shadow-md
           p-4
           mb-4

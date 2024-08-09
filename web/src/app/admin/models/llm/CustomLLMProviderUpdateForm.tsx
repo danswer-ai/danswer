@@ -1,5 +1,5 @@
 import { LoadingAnimation } from "@/components/Loading";
-import { Button, Divider, Text } from "@tremor/react";
+import { Divider, Text } from "@tremor/react";
 import {
   ArrayHelpers,
   ErrorMessage,
@@ -22,6 +22,7 @@ import { FullLLMProvider } from "./interfaces";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import * as Yup from "yup";
 import isEqual from "lodash/isEqual";
+import { Button } from "@/components/ui/button";
 
 function customConfigProcessing(customConfigsList: [string, string][]) {
   const customConfig: { [key: string]: string } = {};
@@ -332,12 +333,9 @@ export function CustomLLMProviderUpdateForm({
                     arrayHelpers.push(["", ""]);
                   }}
                   className="mt-3"
-                  color="green"
-                  size="xs"
                   type="button"
-                  icon={FiPlus}
                 >
-                  Add New
+                  <FiPlus className="mr-1.5" /> Add New
                 </Button>
               </div>
             )}
@@ -382,7 +380,7 @@ export function CustomLLMProviderUpdateForm({
             {testError && <Text className="text-error mt-2">{testError}</Text>}
 
             <div className="flex w-full mt-4">
-              <Button type="submit" size="xs">
+              <Button type="submit">
                 {isTesting ? (
                   <LoadingAnimation text="Testing" />
                 ) : existingLlmProvider ? (
@@ -394,10 +392,8 @@ export function CustomLLMProviderUpdateForm({
               {existingLlmProvider && (
                 <Button
                   type="button"
-                  color="red"
+                  variant="destructive"
                   className="ml-3"
-                  size="xs"
-                  icon={FiTrash}
                   onClick={async () => {
                     const response = await fetch(
                       `${LLM_PROVIDERS_ADMIN_URL}/${existingLlmProvider.id}`,
@@ -415,7 +411,7 @@ export function CustomLLMProviderUpdateForm({
                     onClose();
                   }}
                 >
-                  Delete
+                  <FiPlus className="mr-1.5" /> Delete
                 </Button>
               )}
             </div>

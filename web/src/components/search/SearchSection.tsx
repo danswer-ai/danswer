@@ -260,7 +260,7 @@ export const SearchSection = ({
       </div>
       <div className="md:w-[720px] 3xl:w-[800px] mx-auto">
         {personas.length > 0 ? (
-          <div className="flex mb-2 w-fit">
+          <div className="flex mb-2 w-48">
             <PersonaSelector
               personas={personas}
               selectedPersonaId={selectedPersona}

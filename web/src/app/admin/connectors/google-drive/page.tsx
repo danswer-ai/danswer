@@ -73,7 +73,7 @@ const GoogleDriveConnectorManagement = ({
   //         Fill out the form below to create a connector. We will refresh the
   //         latest documents from Google Drive every <b>10</b> minutes.
   //       </p>
-  //       <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+  //       <div className="border-solid border-gray-600 border rounded-xs p-6 mt-4">
   //         <h2 className="font-bold mb-3">Add Connector</h2>
   //         <ConnectorForm<GoogleDriveConfig>
   //           nameBuilder={googleDriveConnectorNameBuilder}
