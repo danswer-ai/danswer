@@ -611,7 +611,7 @@ export const HumanMessage = ({
   onEdit,
   onMessageSelection,
   shared,
-  stopGenerating,
+  stopGenerating = () => null,
 }: {
   shared?: boolean;
   content: string;
@@ -620,7 +620,7 @@ export const HumanMessage = ({
   otherMessagesCanSwitchTo?: number[];
   onEdit?: (editedContent: string) => void;
   onMessageSelection?: (messageId: number) => void;
-  stopGenerating: () => void;
+  stopGenerating?: () => void;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 

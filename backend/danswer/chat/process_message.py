@@ -11,7 +11,7 @@ from danswer.chat.models import CustomToolResponse
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import ImageGenerationDisplay
 from danswer.chat.models import LLMRelevanceFilterResponse
-from danswer.chat.models import MessageCreationInfo
+from danswer.chat.models import MessageResponseIDInfo
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import BING_API_KEY
@@ -242,7 +242,7 @@ ChatPacket = (
     | CitationInfo
     | ImageGenerationDisplay
     | CustomToolResponse
-    | MessageCreationInfo
+    | MessageResponseIDInfo
 )
 ChatPacketStream = Iterator[ChatPacket]
 
@@ -454,7 +454,7 @@ def stream_chat_message_objects(
                 or new_msg_req.chunks_below > 0,
             )
         reserved_message_id = reserve_message_id(db_session=db_session)
-        yield MessageCreationInfo(
+        yield MessageResponseIDInfo(
             user_message_id=user_message.id if user_message else None,
             reserved_assistant_message_id=reserved_message_id,
         )

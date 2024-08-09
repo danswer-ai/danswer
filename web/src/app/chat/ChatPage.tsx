@@ -10,7 +10,7 @@ import {
   FileDescriptor,
   ImageGenerationDisplay,
   Message,
-  MessageCreationInfo,
+  MessageResponseIDInfo,
   RetrievalType,
   StreamingError,
   ToolCallMetadata,
@@ -789,9 +789,8 @@ export function ChatPage({
     let toolCalls: ToolCallMetadata[] = [];
     let user_message_id: number | null = null;
     let assistant_message_id: number | null = null;
-
-    let frozenMessageMap = null;
-    let frozenSessionId = null;
+    let frozenMessageMap: Map<number, Message> | null = null;
+    let frozenSessionId: number | null = null;
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
@@ -879,10 +878,10 @@ export function ChatPage({
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
             } else if (Object.hasOwn(packet, "user_message_id")) {
-              const messageCreationInfo = packet as MessageCreationInfo;
-              user_message_id = messageCreationInfo.user_message_id;
+              const MessageResponseIDInfo = packet as MessageResponseIDInfo;
+              user_message_id = MessageResponseIDInfo.user_message_id;
               assistant_message_id =
-                messageCreationInfo.reserved_assistant_message_id;
+                MessageResponseIDInfo.reserved_assistant_message_id;
             }
 
             if (!messageUpdates) {

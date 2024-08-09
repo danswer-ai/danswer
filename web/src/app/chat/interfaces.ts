@@ -117,7 +117,7 @@ export interface BackendMessage {
   alternate_assistant_id?: number | null;
 }
 
-export interface MessageCreationInfo {
+export interface MessageResponseIDInfo {
   user_message_id: number | null;
   reserved_assistant_message_id: number;
 }
