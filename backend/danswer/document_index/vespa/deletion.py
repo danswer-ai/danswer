@@ -23,7 +23,7 @@ def _delete_vespa_doc_chunks(
     doc_chunk_ids = get_all_vespa_ids_for_document_id(
         document_id=document_id,
         index_name=index_name,
-        get_mega_chunks=True,
+        get_large_chunks=True,
     )
 
     for chunk_id in doc_chunk_ids:

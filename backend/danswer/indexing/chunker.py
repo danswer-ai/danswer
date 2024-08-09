@@ -1,6 +1,6 @@
 from danswer.configs.app_configs import BLURB_SIZE
 from danswer.configs.app_configs import ENABLE_MINI_CHUNK
-from danswer.configs.app_configs import MEGA_CHUNK_RATIO
+from danswer.configs.app_configs import LARGE_CHUNK_RATIO
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.app_configs import SKIP_METADATA_IN_CHUNK
 from danswer.configs.constants import DocumentSource
@@ -278,14 +278,14 @@ def _combine_chunks(chunks: list[DocAwareChunk], index: int) -> DocAwareChunk:
         title_prefix=chunks[0].title_prefix,
         metadata_suffix_semantic=chunks[0].metadata_suffix_semantic,
         metadata_suffix_keyword=chunks[0].metadata_suffix_keyword,
-        mega_chunk_reference_ids=[chunks[0].chunk_id],
+        large_chunk_reference_ids=[chunks[0].chunk_id],
         mini_chunk_texts=None,
     )
 
     offset = 0
     for i in range(1, len(chunks)):
         merged_chunk.content += SECTION_SEPARATOR + chunks[i].content
-        merged_chunk.mega_chunk_reference_ids.append(chunks[i].chunk_id)
+        merged_chunk.large_chunk_reference_ids.append(chunks[i].chunk_id)
 
         offset += len(SECTION_SEPARATOR) + len(chunks[i - 1].content)
         for link_offset, link_text in (chunks[i].source_links or {}).items():
@@ -296,10 +296,10 @@ def _combine_chunks(chunks: list[DocAwareChunk], index: int) -> DocAwareChunk:
     return merged_chunk
 
 
-def generate_mega_chunks(chunks: list[DocAwareChunk]) -> list[DocAwareChunk]:
-    mega_chunks = [
-        _combine_chunks(chunks[i : i + MEGA_CHUNK_RATIO], idx)
-        for idx, i in enumerate(range(0, len(chunks), MEGA_CHUNK_RATIO))
-        if len(chunks[i : i + MEGA_CHUNK_RATIO]) > 1
+def generate_large_chunks(chunks: list[DocAwareChunk]) -> list[DocAwareChunk]:
+    large_chunks = [
+        _combine_chunks(chunks[i : i + LARGE_CHUNK_RATIO], idx)
+        for idx, i in enumerate(range(0, len(chunks), LARGE_CHUNK_RATIO))
+        if len(chunks[i : i + LARGE_CHUNK_RATIO]) > 1
     ]
-    return mega_chunks
+    return large_chunks

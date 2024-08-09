@@ -150,7 +150,7 @@ class SearchPipeline:
         if self._retrieved_chunks is not None:
             return self._retrieved_chunks
 
-        # These chunks do not include mega chunks and have been deduped
+        # These chunks do not include large chunks and have been deduped
         self._retrieved_chunks = retrieve_chunks(
             query=self.search_query,
             document_index=self.document_index,
@@ -173,7 +173,7 @@ class SearchPipeline:
         if self._retrieved_sections is not None:
             return self._retrieved_sections
 
-        # These chunks are ordered, deduped, and contain no mega chunks
+        # These chunks are ordered, deduped, and contain no large chunks
         retrieved_chunks = self._get_chunks()
 
         above = self.search_query.chunks_above

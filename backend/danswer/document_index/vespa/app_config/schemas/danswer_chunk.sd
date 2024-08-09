@@ -88,7 +88,7 @@ schema DANSWER_CHUNK_NAME {
             rank:filter
             attribute: fast-search
         }
-        field mega_chunk_reference_ids type array<int> {
+        field large_chunk_reference_ids type array<int> {
             indexing: summary | attribute
         }
         field metadata type string {

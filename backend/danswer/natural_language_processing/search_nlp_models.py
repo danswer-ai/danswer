@@ -4,8 +4,8 @@ import requests
 from httpx import HTTPError
 from retry import retry
 
-from danswer.configs.app_configs import ENABLE_MEGA_CHUNK
-from danswer.configs.app_configs import MEGA_CHUNK_RATIO
+from danswer.configs.app_configs import ENABLE_LARGE_CHUNK
+from danswer.configs.app_configs import LARGE_CHUNK_RATIO
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import (
     BATCH_SIZE_ENCODE_CHUNKS_FOR_API_EMBEDDING_SERVICES,
@@ -76,8 +76,8 @@ class EmbeddingModel:
 
         self.max_seq_length = (
             max_seq_length
-            if not ENABLE_MEGA_CHUNK
-            else max_seq_length * MEGA_CHUNK_RATIO
+            if not ENABLE_LARGE_CHUNK
+            else max_seq_length * LARGE_CHUNK_RATIO
         )
 
         model_server_url = build_model_server_url(server_host, server_port)

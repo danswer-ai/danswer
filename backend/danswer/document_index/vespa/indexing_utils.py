@@ -25,7 +25,7 @@ from danswer.document_index.vespa_constants import DOCUMENT_ID
 from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
 from danswer.document_index.vespa_constants import DOCUMENT_SETS
 from danswer.document_index.vespa_constants import EMBEDDINGS
-from danswer.document_index.vespa_constants import MEGA_CHUNK_REFERENCE_IDS
+from danswer.document_index.vespa_constants import LARGE_CHUNK_REFERENCE_IDS
 from danswer.document_index.vespa_constants import METADATA
 from danswer.document_index.vespa_constants import METADATA_LIST
 from danswer.document_index.vespa_constants import METADATA_SUFFIX
@@ -155,7 +155,7 @@ def _index_vespa_chunk(
         SOURCE_LINKS: json.dumps(chunk.source_links),
         SEMANTIC_IDENTIFIER: remove_invalid_unicode_chars(document.semantic_identifier),
         SECTION_CONTINUATION: chunk.section_continuation,
-        MEGA_CHUNK_REFERENCE_IDS: chunk.mega_chunk_reference_ids,
+        LARGE_CHUNK_REFERENCE_IDS: chunk.large_chunk_reference_ids,
         METADATA: json.dumps(document.metadata),
         # Save as a list for efficient extraction as an Attribute
         METADATA_LIST: chunk.source_document.get_metadata_str_attributes(),

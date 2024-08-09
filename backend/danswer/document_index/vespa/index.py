@@ -289,7 +289,7 @@ class VespaIndex(DocumentIndex):
                     document_id=document_id,
                     index_name=index_name,
                     filters=None,
-                    get_mega_chunks=True,
+                    get_large_chunks=True,
                 ): (document_id, index_name)
                 for index_name in index_names
                 for update_request in update_requests
@@ -372,20 +372,20 @@ class VespaIndex(DocumentIndex):
         chunk_requests: list[VespaChunkRequest],
         filters: IndexFilters,
         batch_retrieval: bool = False,
-        get_mega_chunks: bool = False,
+        get_large_chunks: bool = False,
     ) -> list[InferenceChunkUncleaned]:
         if batch_retrieval:
             return manage_batch_retrieval(
                 index_name=self.index_name,
                 chunk_requests=chunk_requests,
                 filters=filters,
-                get_mega_chunks=get_mega_chunks,
+                get_large_chunks=get_large_chunks,
             )
         return parallel_visit_api_retrieval(
             index_name=self.index_name,
             chunk_requests=chunk_requests,
             filters=filters,
-            get_mega_chunks=get_mega_chunks,
+            get_large_chunks=get_large_chunks,
         )
 
     def keyword_retrieval(

@@ -4,7 +4,7 @@ from typing import Protocol
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
-from danswer.configs.app_configs import ENABLE_MEGA_CHUNK
+from danswer.configs.app_configs import ENABLE_LARGE_CHUNK
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
@@ -22,7 +22,7 @@ from danswer.db.tag import create_or_add_document_tag_list
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.indexing.chunker import Chunker
-from danswer.indexing.chunker import generate_mega_chunks
+from danswer.indexing.chunker import generate_large_chunks
 from danswer.indexing.chunker import get_cached_chunker
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
@@ -188,11 +188,11 @@ def index_doc_batch(
     for document in updatable_docs:
         chunks_per_document = chunker.chunk(document=document)
         chunks.extend(chunks_per_document)
-        if ENABLE_MEGA_CHUNK:
-            mega_chunks = generate_mega_chunks(
+        if ENABLE_LARGE_CHUNK:
+            large_chunks = generate_large_chunks(
                 chunks=chunks_per_document,
             )
-            chunks.extend(mega_chunks)
+            chunks.extend(large_chunks)
 
     logger.debug("Starting embedding")
     chunks_with_embeddings = (

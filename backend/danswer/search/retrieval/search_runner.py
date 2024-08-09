@@ -123,8 +123,8 @@ def doc_index_retrieval(
 ) -> list[InferenceChunk]:
     """
     This function performs the search to retrieve the chunks,
-    extracts chunks from the mega chunks, persists the scores
-    from the mega chunks to the referenced chunks,
+    extracts chunks from the large chunks, persists the scores
+    from the large chunks to the referenced chunks,
     dedupes the chunks, and cleans the chunks.
     """
     if query.search_type == SearchType.KEYWORD:
@@ -178,17 +178,17 @@ def doc_index_retrieval(
     normal_chunks: list[InferenceChunkUncleaned] = []
     referenced_chunk_scores: dict[tuple[str, int], float] = {}
     for chunk in top_chunks:
-        if chunk.mega_chunk_reference_ids:
+        if chunk.large_chunk_reference_ids:
             retrieval_requests.append(
                 VespaChunkRequest(
                     document_id=replace_invalid_doc_id_characters(chunk.document_id),
-                    min_chunk_ind=chunk.mega_chunk_reference_ids[0],
-                    max_chunk_ind=chunk.mega_chunk_reference_ids[-1],
+                    min_chunk_ind=chunk.large_chunk_reference_ids[0],
+                    max_chunk_ind=chunk.large_chunk_reference_ids[-1],
                 )
             )
             # for each referenced chunk, persist the
             # highest score to the referenced chunk
-            for chunk_id in chunk.mega_chunk_reference_ids:
+            for chunk_id in chunk.large_chunk_reference_ids:
                 key = (chunk.document_id, chunk_id)
                 referenced_chunk_scores[key] = max(
                     referenced_chunk_scores.get(key, 0), chunk.score or 0
@@ -196,19 +196,19 @@ def doc_index_retrieval(
         else:
             normal_chunks.append(chunk)
 
-    # If there are no mega chunks, just return the normal chunks
+    # If there are no large chunks, just return the normal chunks
     if not retrieval_requests:
         return cleanup_chunks(normal_chunks)
 
-    # Retrieve and return the referenced normal chunks from the mega chunks
+    # Retrieve and return the referenced normal chunks from the large chunks
     retrieved_inference_chunks = document_index.id_based_retrieval(
         chunk_requests=retrieval_requests,
         filters=query.filters,
         batch_retrieval=True,
     )
 
-    # Apply the scores from the mega chunks to the chunks referenced
-    # by each mega chunk
+    # Apply the scores from the large chunks to the chunks referenced
+    # by each large chunk
     for chunk in retrieved_inference_chunks:
         if (chunk.document_id, chunk.chunk_id) in referenced_chunk_scores:
             chunk.score = referenced_chunk_scores[(chunk.document_id, chunk.chunk_id)]

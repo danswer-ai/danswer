@@ -28,8 +28,8 @@ from danswer.document_index.vespa_constants import DOC_UPDATED_AT
 from danswer.document_index.vespa_constants import DOCUMENT_ID
 from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
 from danswer.document_index.vespa_constants import HIDDEN
+from danswer.document_index.vespa_constants import LARGE_CHUNK_REFERENCE_IDS
 from danswer.document_index.vespa_constants import MAX_ID_SEARCH_QUERY_SIZE
-from danswer.document_index.vespa_constants import MEGA_CHUNK_REFERENCE_IDS
 from danswer.document_index.vespa_constants import METADATA
 from danswer.document_index.vespa_constants import METADATA_SUFFIX
 from danswer.document_index.vespa_constants import PRIMARY_OWNERS
@@ -137,7 +137,7 @@ def _vespa_hit_to_inference_chunk(
         hidden=fields.get(HIDDEN, False),
         primary_owners=fields.get(PRIMARY_OWNERS),
         secondary_owners=fields.get(SECONDARY_OWNERS),
-        mega_chunk_reference_ids=fields.get(MEGA_CHUNK_REFERENCE_IDS, []),
+        large_chunk_reference_ids=fields.get(LARGE_CHUNK_REFERENCE_IDS, []),
         metadata=metadata,
         metadata_suffix=fields.get(METADATA_SUFFIX),
         match_highlights=match_highlights,
@@ -150,7 +150,7 @@ def _get_chunks_via_visit_api(
     index_name: str,
     filters: IndexFilters,
     field_names: list[str] | None = None,
-    get_mega_chunks: bool = False,
+    get_large_chunks: bool = False,
 ) -> list[dict]:
     # Constructing the URL for the Visit API
     # NOTE: visit API uses the same URL as the document API, but with different params
@@ -177,8 +177,8 @@ def _get_chunks_via_visit_api(
     if chunk_request.is_capped():
         selection += f" and {index_name}.chunk_id>={chunk_request.min_chunk_ind or 0}"
         selection += f" and {index_name}.chunk_id<={chunk_request.max_chunk_ind}"
-    if not get_mega_chunks:
-        selection += f" and {index_name}.mega_chunk_reference_ids == null"
+    if not get_large_chunks:
+        selection += f" and {index_name}.large_chunk_reference_ids == null"
 
     # Setting up the selection criteria in the query parameters
     params = {
@@ -233,14 +233,14 @@ def get_all_vespa_ids_for_document_id(
     document_id: str,
     index_name: str,
     filters: IndexFilters | None = None,
-    get_mega_chunks: bool = False,
+    get_large_chunks: bool = False,
 ) -> list[str]:
     document_chunks = _get_chunks_via_visit_api(
         chunk_request=VespaChunkRequest(document_id=document_id),
         index_name=index_name,
         filters=filters or IndexFilters(access_control_list=None),
         field_names=[DOCUMENT_ID],
-        get_mega_chunks=get_mega_chunks,
+        get_large_chunks=get_large_chunks,
     )
     return [chunk["id"].split("::", 1)[-1] for chunk in document_chunks]
 
@@ -249,12 +249,12 @@ def parallel_visit_api_retrieval(
     index_name: str,
     chunk_requests: list[VespaChunkRequest],
     filters: IndexFilters,
-    get_mega_chunks: bool = False,
+    get_large_chunks: bool = False,
 ) -> list[InferenceChunkUncleaned]:
     functions_with_args: list[tuple[Callable, tuple]] = [
         (
             _get_chunks_via_visit_api,
-            (chunk_request, index_name, filters, get_mega_chunks),
+            (chunk_request, index_name, filters, get_large_chunks),
         )
         for chunk_request in chunk_requests
     ]
@@ -340,7 +340,7 @@ def _get_chunks_via_batch_search(
     index_name: str,
     chunk_requests: list[VespaChunkRequest],
     filters: IndexFilters,
-    get_mega_chunks: bool = False,
+    get_large_chunks: bool = False,
 ) -> list[InferenceChunkUncleaned]:
     if not chunk_requests:
         return []
@@ -362,9 +362,9 @@ def _get_chunks_via_batch_search(
     }
 
     inference_chunks = query_vespa(params)
-    if not get_mega_chunks:
+    if not get_large_chunks:
         inference_chunks = [
-            chunk for chunk in inference_chunks if not chunk.mega_chunk_reference_ids
+            chunk for chunk in inference_chunks if not chunk.large_chunk_reference_ids
         ]
     inference_chunks.sort(key=lambda chunk: chunk.chunk_id)
     return inference_chunks
@@ -374,7 +374,7 @@ def manage_batch_retrieval(
     index_name: str,
     chunk_requests: list[VespaChunkRequest],
     filters: IndexFilters,
-    get_mega_chunks: bool = False,
+    get_large_chunks: bool = False,
 ) -> list[InferenceChunkUncleaned]:
     retrieved_chunks: list[InferenceChunkUncleaned] = []
     capped_requests: list[VespaChunkRequest] = []
@@ -396,7 +396,7 @@ def manage_batch_retrieval(
                     index_name=index_name,
                     chunk_requests=capped_requests,
                     filters=filters,
-                    get_mega_chunks=get_mega_chunks,
+                    get_large_chunks=get_large_chunks,
                 )
             )
             capped_requests = []
@@ -410,7 +410,7 @@ def manage_batch_retrieval(
                 index_name=index_name,
                 chunk_requests=capped_requests,
                 filters=filters,
-                get_mega_chunks=get_mega_chunks,
+                get_large_chunks=get_large_chunks,
             )
         )
 
@@ -418,7 +418,7 @@ def manage_batch_retrieval(
         logger.debug(f"Retrieving {len(uncapped_requests)} uncapped requests")
         retrieved_chunks.extend(
             parallel_visit_api_retrieval(
-                index_name, uncapped_requests, filters, get_mega_chunks
+                index_name, uncapped_requests, filters, get_large_chunks
             )
         )
 

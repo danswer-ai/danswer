@@ -271,9 +271,9 @@ ENABLE_MINI_CHUNK = os.environ.get("ENABLE_MINI_CHUNK", "").lower() == "true"
 MINI_CHUNK_SIZE = 150
 
 # Adding larger chunks for models that support it
-ENABLE_MEGA_CHUNK = os.environ.get("ENABLE_MEGA_CHUNK", "").lower() == "true"
+ENABLE_LARGE_CHUNK = os.environ.get("ENABLE_LARGE_CHUNK", "").lower() == "true"
 # 4x the size of the regular chunk
-MEGA_CHUNK_RATIO = 4
+LARGE_CHUNK_RATIO = 4
 
 # Include the document level metadata in each chunk. If the metadata is too long, then it is thrown out
 # We don't want the metadata to overwhelm the actual contents of the chunk
