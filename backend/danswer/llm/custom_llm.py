@@ -9,6 +9,7 @@ from requests import Timeout
 
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
+from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import ToolChoiceOptions
 from danswer.llm.utils import convert_lm_input_to_basic_string
@@ -72,6 +73,12 @@ class CustomModelServer(LLM):
         response.raise_for_status()
         response_content = json.loads(response.content).get("generated_text", "")
         return AIMessage(content=response_content)
+
+    @classmethod
+    def create_prompt(cls, message: PreviousMessage) -> str:
+        # TODO improve / iterate
+
+        return f'I searched for some things! """thigns that I searched for!: {message.message}"""'
 
     def log_model_configs(self) -> None:
         logger.debug(f"Custom model at: {self._endpoint}")

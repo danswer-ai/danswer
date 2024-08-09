@@ -10,6 +10,7 @@ import {
 import { FeedbackType } from "../types";
 import { useContext, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import Prism from "prismjs";
 import {
   DanswerDocument,
   FilteredDanswerDocument,
@@ -37,20 +38,21 @@ import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Citation } from "@/components/search/results/Citation";
-import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 import {
   DislikeFeedbackIcon,
   LikeFeedbackIcon,
+  ToolCallIcon,
 } from "@/components/icons/icons";
 import {
   CustomTooltip,
   TooltipGroup,
 } from "@/components/tooltip/CustomTooltip";
-import { ValidSources } from "@/lib/types";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useMouseTracking } from "./hooks";
-import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import DualPromptDisplay from "../tools/ImagePromptCitation";
+import { Popover } from "@/components/popover/Popover";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
@@ -105,6 +107,8 @@ export const AIMessage = ({
   shared,
   isActive,
   toggleDocumentSelection,
+  hasParentAI,
+  hasChildAI,
   alternativeAssistant,
   docs,
   messageId,
@@ -116,6 +120,7 @@ export const AIMessage = ({
   citedDocuments,
   toolCall,
   isComplete,
+  generatingTool,
   hasDocs,
   handleFeedback,
   isCurrentlyShowingRetrieved,
@@ -124,8 +129,11 @@ export const AIMessage = ({
   handleForceSearch,
   retrievalDisabled,
   currentPersona,
+  setPopup,
 }: {
   shared?: boolean;
+  hasChildAI?: boolean;
+  hasParentAI?: boolean;
   isActive?: boolean;
   selectedDocuments?: DanswerDocument[] | null;
   toggleDocumentSelection?: () => void;
@@ -140,6 +148,7 @@ export const AIMessage = ({
   citedDocuments?: [string, DanswerDocument][] | null;
   toolCall?: ToolCallMetadata;
   isComplete?: boolean;
+  generatingTool?: boolean;
   hasDocs?: boolean;
   handleFeedback?: (feedbackType: FeedbackType) => void;
   isCurrentlyShowingRetrieved?: boolean;
@@ -147,9 +156,11 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
+  setPopup: (popupSpec: PopupSpec | null) => void;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
-  const processContent = (content: string | JSX.Element) => {
+
+  const buildFinalContentDisplay = (content: string | JSX.Element) => {
     if (typeof content !== "string") {
       return content;
     }
@@ -164,10 +175,38 @@ export const AIMessage = ({
       }
     }
 
-    return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
+    const indicator = !isComplete && !toolCallGenerating ? " [*]()" : "";
+    const tool_citation =
+      isComplete && toolCall?.tool_result ? ` [[${toolCall.tool_name}]]()` : "";
+
+    return content + indicator + tool_citation;
   };
 
-  const finalContent = processContent(content as string);
+  const finalContent = buildFinalContentDisplay(content as string);
+  const citationRef = useRef<HTMLDivElement | null>(null);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        citationRef.current &&
+        !citationRef.current.contains(event.target as Node)
+      ) {
+        // setIsPopoverOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    Prism.highlightAll();
+    setIsReady(true);
+  }, []);
 
   const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
 
@@ -226,59 +265,26 @@ export const AIMessage = ({
       });
   }
 
-  const uniqueSources: ValidSources[] = Array.from(
-    new Set((docs || []).map((doc) => doc.source_type))
-  ).slice(0, 3);
-
   return (
-    <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
+    <div
+      ref={trackedElementRef}
+      className={`${hasParentAI ? "pb-5" : "py-5"} px-2 lg:px-5 relative flex `}
+    >
       <div
         className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-message-max`}
       >
         <div className={`${!shared && "mobile:ml-4 xl:ml-8"}`}>
           <div className="flex">
-            <AssistantIcon
-              size="small"
-              assistant={alternativeAssistant || currentPersona}
-            />
-
+            {!hasParentAI ? (
+              <AssistantIcon
+                size="small"
+                assistant={alternativeAssistant || currentPersona}
+              />
+            ) : (
+              <div className="w-6" />
+            )}
             <div className="w-full">
               <div className="max-w-message-max break-words">
-                {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
-                  danswerSearchToolEnabledForPersona && (
-                    <>
-                      {query !== undefined &&
-                        handleShowRetrieved !== undefined &&
-                        isCurrentlyShowingRetrieved !== undefined &&
-                        !retrievalDisabled && (
-                          <div className="my-1">
-                            <SearchSummary
-                              query={query}
-                              hasDocs={hasDocs || false}
-                              messageId={messageId}
-                              finished={toolCall?.tool_result != undefined}
-                              isCurrentlyShowingRetrieved={
-                                isCurrentlyShowingRetrieved
-                              }
-                              handleShowRetrieved={handleShowRetrieved}
-                              handleSearchQueryEdit={handleSearchQueryEdit}
-                            />
-                          </div>
-                        )}
-                      {handleForceSearch &&
-                        content &&
-                        query === undefined &&
-                        !hasDocs &&
-                        !retrievalDisabled && (
-                          <div className="my-1">
-                            <SkippedSearch
-                              handleForceSearch={handleForceSearch}
-                            />
-                          </div>
-                        )}
-                    </>
-                  )}
-
                 <div className="w-full ml-4">
                   <div className="max-w-message-max break-words">
                     {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
@@ -289,19 +295,22 @@ export const AIMessage = ({
                           !retrievalDisabled && (
                             <div className="mb-1">
                               <SearchSummary
+                                docs={docs}
+                                filteredDocs={filteredDocs}
                                 query={query}
-                                finished={toolCall?.tool_result != undefined}
-                                hasDocs={hasDocs || false}
-                                messageId={messageId}
-                                isCurrentlyShowingRetrieved={
-                                  isCurrentlyShowingRetrieved
+                                finished={
+                                  toolCall?.tool_result != undefined ||
+                                  isComplete!
                                 }
-                                handleShowRetrieved={handleShowRetrieved}
+                                toggleDocumentSelection={
+                                  toggleDocumentSelection
+                                }
                                 handleSearchQueryEdit={handleSearchQueryEdit}
                               />
                             </div>
                           )}
                         {handleForceSearch &&
+                          !hasChildAI &&
                           content &&
                           query === undefined &&
                           !hasDocs &&
@@ -354,9 +363,8 @@ export const AIMessage = ({
                     {content || files ? (
                       <>
                         <FileDisplay files={files || []} />
-
                         {typeof content === "string" ? (
-                          <div className="overflow-x-auto w-full pr-2 max-w-[675px]">
+                          <div className="overflow-visible w-full pr-2 max-w-[675px]">
                             <ReactMarkdown
                               key={messageId}
                               className="prose max-w-full"
@@ -365,7 +373,49 @@ export const AIMessage = ({
                                   const { node, ...rest } = props;
                                   const value = rest.children;
 
-                                  if (value?.toString().startsWith("*")) {
+                                  if (
+                                    value?.toString() == `[${SEARCH_TOOL_NAME}]`
+                                  ) {
+                                    return <></>;
+                                  } else if (
+                                    value?.toString() ==
+                                    `[${IMAGE_GENERATION_TOOL_NAME}]`
+                                  ) {
+                                    return (
+                                      <Popover
+                                        open={isPopoverOpen}
+                                        onOpenChange={() => null} // only allow closing from the icon
+                                        content={
+                                          <button
+                                            onMouseDown={() => {
+                                              setIsPopoverOpen(!isPopoverOpen);
+                                            }}
+                                          >
+                                            <ToolCallIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
+                                          </button>
+                                        }
+                                        popover={
+                                          <DualPromptDisplay
+                                            arg="Prompt"
+                                            // ref={citationRef}
+                                            setPopup={setPopup}
+                                            prompt1={
+                                              toolCall?.tool_result?.[0]
+                                                ?.revised_prompt
+                                            }
+                                            prompt2={
+                                              toolCall?.tool_result?.[1]
+                                                ?.revised_prompt
+                                            }
+                                          />
+                                        }
+                                        side="top"
+                                        align="center"
+                                      />
+                                    );
+                                  } else if (
+                                    value?.toString().startsWith("*")
+                                  ) {
                                     return (
                                       <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
                                     );
@@ -388,7 +438,7 @@ export const AIMessage = ({
                                     return (
                                       <a
                                         key={node?.position?.start?.offset}
-                                        onMouseDown={() =>
+                                        onClick={() =>
                                           rest.href
                                             ? window.open(rest.href, "_blank")
                                             : undefined
@@ -400,10 +450,8 @@ export const AIMessage = ({
                                     );
                                   }
                                 },
-
                                 code: (props) => (
                                   <CodeBlock
-                                    className="w-full"
                                     {...props}
                                     content={content as string}
                                   />
@@ -427,83 +475,10 @@ export const AIMessage = ({
                     ) : isComplete ? null : (
                       <></>
                     )}
-
-                    {isComplete && docs && docs.length > 0 && (
-                      <div className="mt-2 -mx-8 w-full mb-4 flex relative">
-                        <div className="w-full">
-                          <div className="px-8 flex gap-x-2">
-                            {!settings?.isMobile &&
-                              filteredDocs.length > 0 &&
-                              filteredDocs.slice(0, 2).map((doc, ind) => (
-                                <div
-                                  key={doc.document_id}
-                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 pb-2 pt-1 border-b
-                              `}
-                                >
-                                  <a
-                                    href={doc.link}
-                                    target="_blank"
-                                    className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
-                                  >
-                                    <Citation link={doc.link} index={ind + 1} />
-                                    <p className="shrink truncate ellipsis break-all ">
-                                      {doc.semantic_identifier ||
-                                        doc.document_id}
-                                    </p>
-                                    <div className="ml-auto flex-none">
-                                      {doc.is_internet ? (
-                                        <InternetSearchIcon url={doc.link} />
-                                      ) : (
-                                        <SourceIcon
-                                          sourceType={doc.source_type}
-                                          iconSize={18}
-                                        />
-                                      )}
-                                    </div>
-                                  </a>
-                                  <div className="flex overscroll-x-scroll mt-.5">
-                                    <DocumentMetadataBlock document={doc} />
-                                  </div>
-                                  <div className="line-clamp-3 text-xs break-words pt-1">
-                                    {doc.blurb}
-                                  </div>
-                                </div>
-                              ))}
-                            <div
-                              onClick={() => {
-                                if (toggleDocumentSelection) {
-                                  toggleDocumentSelection();
-                                }
-                              }}
-                              key={-1}
-                              className="cursor-pointer w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 py-2 border-b"
-                            >
-                              <div className="text-sm flex justify-between font-semibold text-text-700">
-                                <p className="line-clamp-1">See context</p>
-                                <div className="flex gap-x-1">
-                                  {uniqueSources.map((sourceType, ind) => {
-                                    return (
-                                      <div key={ind} className="flex-none">
-                                        <SourceIcon
-                                          sourceType={sourceType}
-                                          iconSize={18}
-                                        />
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                              <div className="line-clamp-3 text-xs break-words pt-1">
-                                See more
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
-
-                  {handleFeedback &&
+                  {!hasChildAI &&
+                    handleFeedback &&
+                    isComplete &&
                     (isActive ? (
                       <div
                         className={`
@@ -688,24 +663,23 @@ export const HumanMessage = ({
                       <textarea
                         ref={textareaRef}
                         className={`
-                      m-0 
-                      w-full 
-                      h-auto
-                      shrink
-                      border-0
-                      rounded-lg 
-                      overflow-y-hidden
-                      bg-background-emphasis 
-                      whitespace-normal 
-                      break-word
-                      overscroll-contain
-                      outline-none 
-                      placeholder-gray-400 
-                      resize-none
-                      pl-4
-                      overflow-y-auto
-                      pr-12 
-                      py-4`}
+                          m-0 
+                          w-full 
+                          h-auto
+                          shrink
+                          border-0
+                          rounded-lg 
+                          bg-background-emphasis 
+                          whitespace-normal 
+                          break-word
+                          overscroll-contain
+                          outline-none 
+                          placeholder-gray-400 
+                          resize-none
+                          pl-4
+                          overflow-y-auto
+                          pr-12 
+                          py-4`}
                         aria-multiline
                         role="textarea"
                         value={editedContent}

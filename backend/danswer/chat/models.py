@@ -64,6 +64,10 @@ class DocumentRelevance(BaseModel):
     relevance_summaries: dict[str, RelevanceAnalysis]
 
 
+class Delimiter(BaseModel):
+    delimiter: bool
+
+
 class DanswerAnswerPiece(BaseModel):
     # A small piece of a complete answer. Used for streaming back answers.
     answer_piece: str | None  # if None, specifies the end of an Answer
@@ -136,6 +140,7 @@ AnswerQuestionPossibleReturn = (
     | ImageGenerationDisplay
     | CustomToolResponse
     | StreamingError
+    | Delimiter
 )
 
 

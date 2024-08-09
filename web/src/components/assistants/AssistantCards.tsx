@@ -9,6 +9,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import React, { useState } from "react";
 import { FiBookmark } from "react-icons/fi";
 import { MdDragIndicator } from "react-icons/md";
+import { DragHandle } from "../table/DragHandle";
 
 export const AssistantCard = ({
   assistant,
@@ -107,10 +108,7 @@ export function DraggableAssistantCard(props: {
       style={style}
       className="overlow-y-scroll inputscroll flex items-center"
     >
-      <div {...attributes} {...listeners} className="mr-1 cursor-grab">
-        <MdDragIndicator className="h-3 w-3 flex-none" />
-      </div>
-
+      <DragHandle {...attributes} {...listeners} />
       <AssistantCard {...props} />
     </div>
   );

@@ -398,7 +398,7 @@ export function processRawChatHistory(
             citations: messageInfo?.citations || {},
           }
         : {}),
-      toolCalls: messageInfo.tool_calls,
+      toolCall: messageInfo.tool_call,
       parentMessageId: messageInfo.parent_message,
       childrenMessageIds: [],
       latestChildMessageId: messageInfo.latest_child_message,

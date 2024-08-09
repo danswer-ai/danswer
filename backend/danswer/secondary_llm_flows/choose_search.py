@@ -32,7 +32,7 @@ def check_if_need_search_multi_message(
         return True
 
     prompt_msgs: list[BaseMessage] = [SystemMessage(content=REQUIRE_SEARCH_SYSTEM_MSG)]
-    prompt_msgs.extend([translate_danswer_msg_to_langchain(msg) for msg in history])
+    prompt_msgs.extend([translate_danswer_msg_to_langchain(msg, 2) for msg in history])
 
     last_query = query_message.message
 

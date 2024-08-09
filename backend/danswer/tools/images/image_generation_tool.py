@@ -16,6 +16,7 @@ from danswer.llm.utils import build_content_with_imgs
 from danswer.llm.utils import message_to_string
 from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.tools.tool import Tool
+from danswer.tools.tool import ToolRegistry
 from danswer.tools.tool import ToolResponse
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
@@ -29,7 +30,7 @@ YES_IMAGE_GENERATION = "Yes Image Generation"
 SKIP_IMAGE_GENERATION = "Skip Image Generation"
 
 IMAGE_GENERATION_TEMPLATE = f"""
-Given the conversation history and a follow up query, determine if the system should call \
+Given the conversation history and a follow up query, determine if the system should call
 an external image generation tool to better answer the latest user input.
 Your default response is {SKIP_IMAGE_GENERATION}.
 
@@ -54,6 +55,7 @@ class ImageGenerationResponse(BaseModel):
     url: str
 
 
+@ToolRegistry.register("run_image_generation")
 class ImageGenerationTool(Tool):
     _NAME = "run_image_generation"
     _DESCRIPTION = "Generate an image from a prompt."
@@ -107,6 +109,11 @@ class ImageGenerationTool(Tool):
                 },
             },
         }
+
+    @classmethod
+    def create_prompt(cls, message: PreviousMessage) -> str:
+        # TODO improve / iterate
+        return f'I generated images with these descriptions! """Descriptions: {message.message}"""'
 
     def get_args_for_non_tool_calling_llm(
         self,
@@ -187,7 +194,8 @@ class ImageGenerationTool(Tool):
                     in error_message
                 ):
                     raise ValueError(
-                        "The image generation request was rejected due to OpenAI's content policy. Please try a different prompt."
+                        "The image generation request was rejected due to OpenAI's content policy."
+                        + "Please try a different prompt."
                     )
                 elif "Invalid image URL" in error_message:
                     raise ValueError("Invalid image URL provided for image generation.")
@@ -202,7 +210,8 @@ class ImageGenerationTool(Tool):
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
         prompt = cast(str, kwargs["prompt"])
-
+        print("these are the pormtps")
+        print(prompt)
         # dalle3 only supports 1 image at a time, which is why we have to
         # parallelize this via threading
         results = cast(
