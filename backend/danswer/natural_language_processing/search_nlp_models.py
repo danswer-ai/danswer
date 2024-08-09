@@ -4,6 +4,8 @@ import requests
 from httpx import HTTPError
 from retry import retry
 
+from danswer.configs.app_configs import ENABLE_MEGA_CHUNK
+from danswer.configs.app_configs import MEGA_CHUNK_RATIO
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import (
     BATCH_SIZE_ENCODE_CHUNKS_FOR_API_EMBEDDING_SERVICES,
@@ -63,12 +65,20 @@ class EmbeddingModel:
     ) -> None:
         self.api_key = api_key
         self.provider_type = provider_type
-        self.max_seq_length = max_seq_length
         self.query_prefix = query_prefix
         self.passage_prefix = passage_prefix
         self.normalize = normalize
         self.model_name = model_name
         self.retrim_content = retrim_content
+        self.tokenizer = get_tokenizer(
+            model_name=model_name, provider_type=provider_type
+        )
+
+        self.max_seq_length = (
+            max_seq_length
+            if not ENABLE_MEGA_CHUNK
+            else max_seq_length * MEGA_CHUNK_RATIO
+        )
 
         model_server_url = build_model_server_url(server_host, server_port)
         self.embed_server_endpoint = f"{model_server_url}/encoder/bi-encoder-embed"
@@ -171,10 +181,7 @@ class EmbeddingModel:
                 tokenizer_trim_content(
                     content=text,
                     desired_length=self.max_seq_length,
-                    tokenizer=get_tokenizer(
-                        model_name=self.model_name,
-                        provider_type=self.provider_type,
-                    ),
+                    tokenizer=self.tokenizer,
                 )
                 for text in texts
             ]

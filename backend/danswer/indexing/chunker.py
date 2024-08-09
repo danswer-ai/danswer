@@ -273,12 +273,13 @@ def _combine_chunks(chunks: list[DocAwareChunk], index: int) -> DocAwareChunk:
         chunk_id=index,
         blurb=chunks[0].blurb,
         content=chunks[0].content,
-        source_links=chunks[0].source_links,
+        source_links=chunks[0].source_links or {},
         section_continuation=(index > 0),
         title_prefix=chunks[0].title_prefix,
         metadata_suffix_semantic=chunks[0].metadata_suffix_semantic,
         metadata_suffix_keyword=chunks[0].metadata_suffix_keyword,
         mega_chunk_reference_ids=[chunks[0].chunk_id],
+        mini_chunk_texts=None,
     )
 
     offset = 0
@@ -287,7 +288,9 @@ def _combine_chunks(chunks: list[DocAwareChunk], index: int) -> DocAwareChunk:
         merged_chunk.mega_chunk_reference_ids.append(chunks[i].chunk_id)
 
         offset += len(SECTION_SEPARATOR) + len(chunks[i - 1].content)
-        for link_offset, link_text in chunks[i].source_links.items():
+        for link_offset, link_text in (chunks[i].source_links or {}).items():
+            if merged_chunk.source_links is None:
+                merged_chunk.source_links = {}
             merged_chunk.source_links[link_offset + offset] = link_text
 
     return merged_chunk
