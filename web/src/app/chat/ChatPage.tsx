@@ -1382,6 +1382,7 @@ export function ChatPage({
                                 return (
                                   <div key={messageReactComponentKey}>
                                     <HumanMessage
+                                      stopGenerating={stopGeneration}
                                       content={message.message}
                                       files={message.files}
                                       messageId={message.messageId}
