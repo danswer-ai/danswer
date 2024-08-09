@@ -582,11 +582,8 @@ export function ChatPage({
   >(null);
   const adjustDocumentSidebarWidth = () => {
     if (masterFlexboxRef.current && document.documentElement.clientWidth) {
-      // numbers below are based on the actual width the center section for different
-      // screen sizes. `1700` corresponds to the custom "3xl" tailwind breakpoint
-      // NOTE: some buffer is needed to account for scroll bars
       if (document.documentElement.clientWidth > 1700) {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 950);
+        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1100);
       } else if (document.documentElement.clientWidth > 1420) {
         setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 760);
       } else {
