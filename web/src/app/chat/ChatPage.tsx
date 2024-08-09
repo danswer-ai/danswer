@@ -76,10 +76,6 @@ import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
-import {
-  FullLLMProvider,
-  LLMProviderDescriptor,
-} from "../admin/models/llm/interfaces";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -789,7 +785,7 @@ export function ChatPage({
 
     const currentAssistantId = alternativeAssistantOverride
       ? alternativeAssistantOverride.id
-      : (alternativeAssistant?.id ?? liveAssistant.id);
+      : alternativeAssistant?.id ?? liveAssistant.id;
 
     resetInputBar();
 
