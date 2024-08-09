@@ -180,7 +180,7 @@ export function ChatIntro({
             <div>
               {/*  <Logo height={80} width={80} className="m-auto" /> */}
 
-              <h1 className="flex flex-col text-[2rem] md:text-[3rem] lg:text-[44px] xl:text-[4rem] font-semibold h1-bg leading-[1.3]">
+              <h1 className="flex flex-col text-[2rem] md:text-[3rem] lg:text-[44px] 2xl:text-[4rem] font-semibold h1-bg leading-[1.3]">
                 <span>Hi, I&rsquo;am enMedD AI,</span>
                 <span>How can I help you today?</span>
               </h1>

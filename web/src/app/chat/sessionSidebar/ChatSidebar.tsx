@@ -145,16 +145,6 @@ export const ChatSidebar = ({
                       height={35}
                       className="opacity-100 transition-opacity duration-500 ease-in-out"
                     />
-                    {/* {!isExpanded && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={toggleWidth}
-                        className="ml-auto hidden xl:flex"
-                      >
-                        <PanelLeftClose size={24} />
-                      </Button>
-                    )} */}
                   </div>
 
                   {enterpriseSettings && enterpriseSettings.application_name ? (

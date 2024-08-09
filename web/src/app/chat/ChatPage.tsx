@@ -1304,7 +1304,7 @@ export function ChatPage({
 
                       <div
                         className={
-                          "mt-4 pt-12 px-5 sm:px-8 md:pt-16 md:px-12" +
+                          "mt-4 pt-20 px-5 sm:px-8 md:pt-16 md:px-12" +
                           (hasPerformedInitialScroll ? "" : " invisible")
                         }
                       >
