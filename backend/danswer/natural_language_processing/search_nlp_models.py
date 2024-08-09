@@ -1,3 +1,4 @@
+import re
 import time
 
 import requests
@@ -30,6 +31,25 @@ logger = setup_logger()
 
 def clean_model_name(model_str: str) -> str:
     return model_str.replace("/", "_").replace("-", "_").replace(".", "_")
+
+
+_WHITELIST = set(
+    " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\n\t"
+)
+_INITIAL_FILTER = re.compile(
+    "["
+    "\U00000080-\U0000FFFF"  # All Unicode characters beyond ASCII
+    "\U00010000-\U0010FFFF"  # All Unicode characters in supplementary planes
+    "]+",
+    flags=re.UNICODE,
+)
+
+
+def clean_openai_text(text: str) -> str:
+    # First, remove all weird characters
+    cleaned = _INITIAL_FILTER.sub("", text)
+    # Then, keep only whitelisted characters
+    return "".join(char for char in cleaned if char in _WHITELIST)
 
 
 def build_model_server_url(
@@ -180,6 +200,8 @@ class EmbeddingModel:
             ]
 
         if self.provider_type:
+            if self.provider_type == "openai":
+                texts = [clean_openai_text(text) for text in texts]
             return self._encode_api_model(
                 texts=texts, text_type=text_type, batch_size=api_embedding_batch_size
             )

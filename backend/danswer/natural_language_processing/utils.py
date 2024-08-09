@@ -111,18 +111,12 @@ def _check_tokenizer_cache(tokenizer_name: str) -> BaseTokenizer:
     return _TOKENIZER_CACHE[tokenizer_name]
 
 
+_DEFAULT_TOKENIZER: BaseTokenizer = HuggingFaceTokenizer(DOCUMENT_ENCODER_MODEL)
+
+
 def get_tokenizer(model_name: str | None, provider_type: str | None) -> BaseTokenizer:
-    if provider_type:
-        if provider_type.lower() == "openai":
-            # Used across ada and text-embedding-3 models
-            return _check_tokenizer_cache("openai")
-        # If we are given a cloud provider_type that isn't OpenAI, we default to trying to use the model_name
-        # this means we are approximating the token count which may leave some performance on the table
-
-    if not model_name:
-        raise ValueError("Need to provide a model_name or provider_type")
-
-    return _check_tokenizer_cache(model_name)
+    global _DEFAULT_TOKENIZER
+    return _DEFAULT_TOKENIZER
 
 
 def tokenizer_trim_content(
