@@ -1557,7 +1557,7 @@ export function ChatPage({
                         {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                         <div
                           /*   ref={endPaddingRef} */
-                          className="h-32 md:h-[250px] xl:h-[160px]"
+                          className="h-32 md:h-[250px] lg:h-[300px] xl:h-[160px]"
                         />
                         <div ref={endDivRef}></div>
 
