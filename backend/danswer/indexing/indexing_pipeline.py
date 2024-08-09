@@ -347,7 +347,7 @@ def build_indexing_pipeline(
     ignore_time_skip: bool = False,
     attempt_id: int | None = None,
 ) -> IndexingPipelineProtocol:
-    """Builds a pipline which takes in a list (batch) of docs and indexes them."""
+    """Builds a pipeline which takes in a list (batch) of docs and indexes them."""
     chunker = chunker or DefaultChunker()
 
     return partial(
