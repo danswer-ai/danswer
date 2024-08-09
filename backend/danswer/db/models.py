@@ -144,6 +144,10 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     personas: Mapped[list["Persona"]] = relationship("Persona", back_populates="user")
     # Custom tools created by this user
     custom_tools: Mapped[list["Tool"]] = relationship("Tool", back_populates="user")
+    # Notifications for the UI
+    notifications: Mapped[list["Notification"]] = relationship(
+        "Notification", back_populates="user"
+    )
 
 
 class InputPrompt(Base):
@@ -187,6 +191,19 @@ class ApiKey(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class Notification(Base):
+    __tablename__ = "notification"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+    name: Mapped[str] = mapped_column(String)
+    dismissed: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_shown: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
+    first_shown: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
+
+    user: Mapped[User] = relationship("User", back_populates="notifications")
 
 
 """
