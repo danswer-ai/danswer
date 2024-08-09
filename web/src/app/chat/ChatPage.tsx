@@ -766,39 +766,6 @@ export function ChatPage({
         : null) ||
       (messageMap.size === 1 ? Array.from(messageMap.values())[0] : null);
 
-    // if we're resending, set the parent's child to null
-    // we will use tempMessages until the regenerated message is complete
-    const messageUpdates: Message[] = [
-      {
-        messageId: TEMP_USER_MESSAGE_ID,
-        message: currMessage,
-        type: "user",
-        files: currentMessageFiles,
-        toolCalls: [],
-        parentMessageId: parentMessage?.messageId || null,
-      },
-    ];
-    if (parentMessage) {
-      messageUpdates.push({
-        ...parentMessage,
-        childrenMessageIds: (parentMessage.childrenMessageIds || []).concat([
-          TEMP_USER_MESSAGE_ID,
-        ]),
-        latestChildMessageId: TEMP_USER_MESSAGE_ID,
-      });
-    }
-    const { messageMap: frozenMessageMap, sessionId: frozenSessionId } =
-      upsertToCompleteMessageMap({
-        messages: messageUpdates,
-        chatSessionId: currChatSessionId,
-      });
-
-    // on initial message send, we insert a dummy system message
-    // set this as the parent here if no parent is set
-    if (!parentMessage && frozenMessageMap.size === 2) {
-      parentMessage = frozenMessageMap.get(SYSTEM_MESSAGE_ID) || null;
-    }
-
     const currentAssistantId = alternativeAssistantOverride
       ? alternativeAssistantOverride.id
       : alternativeAssistant
@@ -806,6 +773,7 @@ export function ChatPage({
         : liveAssistant.id;
 
     resetInputBar();
+    let messageUpdates: Message[] | null = null;
 
     setIsStreaming(true);
     let answer = "";
@@ -821,6 +789,9 @@ export function ChatPage({
     let toolCalls: ToolCallMetadata[] = [];
     let user_message_id: number | null = null;
     let assistant_message_id: number | null = null;
+
+    let frozenMessageMap = null;
+    let frozenSessionId = null;
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
@@ -864,20 +835,6 @@ export function ChatPage({
         useExistingUserMessage: isSeededChat,
       });
 
-      const updateFn = (messages: Message[]) => {
-        const replacementsMap = finalMessage
-          ? new Map([
-              [messages[0].messageId, TEMP_USER_MESSAGE_ID],
-              [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
-            ] as [number, number][])
-          : null;
-        upsertToCompleteMessageMap({
-          messages: messages,
-          replacementsMap: replacementsMap,
-          completeMessageMapOverride: frozenMessageMap,
-          chatSessionId: frozenSessionId!,
-        });
-      };
       const delay = (ms: number) => {
         return new Promise((resolve) => setTimeout(resolve, ms));
       };
@@ -928,28 +885,73 @@ export function ChatPage({
                 messageCreationInfo.reserved_assistant_message_id;
             }
 
-            const newUserMessageId =
-              user_message_id ||
-              finalMessage?.parent_message ||
-              TEMP_USER_MESSAGE_ID;
-            const newAssistantMessageId =
-              assistant_message_id ||
-              finalMessage?.message_id ||
-              TEMP_ASSISTANT_MESSAGE_ID;
+            if (!messageUpdates) {
+              // if we're resending, set the parent's child to null
+              // we will use tempMessages until the regenerated message is complete
+              messageUpdates = [
+                {
+                  messageId: user_message_id!,
+                  message: currMessage,
+                  type: "user",
+                  files: currentMessageFiles,
+                  toolCalls: [],
+                  parentMessageId: parentMessage?.messageId || null,
+                },
+              ];
+              if (parentMessage) {
+                messageUpdates.push({
+                  ...parentMessage,
+                  childrenMessageIds: (
+                    parentMessage.childrenMessageIds || []
+                  ).concat([user_message_id!]),
+                  latestChildMessageId: user_message_id,
+                });
+              }
+
+              const {
+                messageMap: currentFrozenMessageMap,
+                sessionId: currentFrozenSessionId,
+              } = upsertToCompleteMessageMap({
+                messages: messageUpdates,
+                chatSessionId: currChatSessionId,
+              });
+              frozenMessageMap = currentFrozenMessageMap;
+              frozenSessionId = currentFrozenSessionId;
+            }
+
+            // on initial message send, we insert a dummy system message
+            // set this as the parent here if no parent is set
+            parentMessage =
+              parentMessage || frozenMessageMap?.get(SYSTEM_MESSAGE_ID)!;
+
+            const updateFn = (messages: Message[]) => {
+              const replacementsMap = finalMessage
+                ? new Map([
+                    [messages[0].messageId, user_message_id],
+                    [messages[1].messageId, assistant_message_id],
+                  ] as [number, number][])
+                : null;
+              upsertToCompleteMessageMap({
+                messages: messages,
+                replacementsMap: replacementsMap,
+                completeMessageMapOverride: frozenMessageMap!,
+                chatSessionId: frozenSessionId!,
+              });
+            };
 
             updateFn([
               {
-                messageId: newUserMessageId,
+                messageId: user_message_id!,
                 message: currMessage,
                 type: "user",
                 files: currentMessageFiles,
                 toolCalls: [],
                 parentMessageId: parentMessage?.messageId || null,
-                childrenMessageIds: [newAssistantMessageId],
-                latestChildMessageId: newAssistantMessageId,
+                childrenMessageIds: [assistant_message_id!],
+                latestChildMessageId: assistant_message_id,
               },
               {
-                messageId: assistant_message_id || newAssistantMessageId,
+                messageId: assistant_message_id!,
                 message: error || answer,
                 type: error ? "error" : "assistant",
                 retrievalType,
@@ -959,7 +961,7 @@ export function ChatPage({
                 citations: finalMessage?.citations || {},
                 files: finalMessage?.files || aiMessageImages || [],
                 toolCalls: finalMessage?.tool_calls || toolCalls,
-                parentMessageId: newUserMessageId,
+                parentMessageId: user_message_id,
                 alternateAssistantID: alternativeAssistant?.id,
               },
             ]);
@@ -1432,9 +1434,7 @@ export function ChatPage({
                                   (selectedMessageForDocDisplay !== null &&
                                     selectedMessageForDocDisplay ===
                                       message.messageId) ||
-                                  (selectedMessageForDocDisplay ===
-                                    TEMP_USER_MESSAGE_ID &&
-                                    i === messageHistory.length - 1);
+                                  i === messageHistory.length - 1;
                                 const previousMessage =
                                   i !== 0 ? messageHistory[i - 1] : null;
 
