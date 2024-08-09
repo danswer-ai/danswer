@@ -175,7 +175,7 @@ export function ChatIntro({
   return (
     <>
       <div className="flex justify-center w-full pt-20">
-        <div className="2xl:w-searchbar-sm 3xl:w-searchbar px-6 xl:px-0">
+        <div className="2xl:w-searchbar-sm 3xl:w-searchbar px-5 sm:px-8 md:px-40">
           <div className="flex pt-10 xl:pt-16">
             <div>
               {/*  <Logo height={80} width={80} className="m-auto" /> */}

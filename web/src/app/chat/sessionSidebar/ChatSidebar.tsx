@@ -99,7 +99,7 @@ export const ChatSidebar = ({
             w-0
             relative
             ${isExpanded ? "xl:w-[75px]" : "xl:w-[300px]"}
-            ${!openSidebar ? "w-0" : "w-[300px] md:w-1/2"}
+            ${!openSidebar ? "w-0" : "w-[300px] md:w-[500px]"}
             `}
           id="chat-sidebar"
           onMouseEnter={() => setIsHovered(true)}
