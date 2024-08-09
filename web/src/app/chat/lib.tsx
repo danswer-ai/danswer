@@ -20,7 +20,7 @@ import {
   FileDescriptor,
   ImageGenerationDisplay,
   Message,
-  MessageCreationInfo,
+  MessageResponseIDInfo,
   RetrievalType,
   StreamingError,
   ToolCallMetadata,
@@ -111,7 +111,7 @@ export type PacketType =
   | DocumentsResponse
   | ImageGenerationDisplay
   | StreamingError
-  | MessageCreationInfo;
+  | MessageResponseIDInfo;
 
 export async function* sendMessage({
   message,
@@ -210,11 +210,6 @@ export async function* sendMessage({
       );
 
       if (!event) break;
-
-      if (event.data === "[DONE]") {
-        break;
-      }
-
       try {
         const data = JSON.parse(event.data) as PacketType;
         console.log(event.data);

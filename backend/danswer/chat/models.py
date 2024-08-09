@@ -76,7 +76,7 @@ class CitationInfo(BaseModel):
     document_id: str
 
 
-class MessageCreationInfo(BaseModel):
+class MessageResponseIDInfo(BaseModel):
     user_message_id: int | None
     reserved_assistant_message_id: int
 
