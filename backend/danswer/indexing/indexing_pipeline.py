@@ -22,9 +22,8 @@ from danswer.db.tag import create_or_add_document_tag_list
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.indexing.chunker import Chunker
-from danswer.indexing.chunker import connect_mega_chunks
-from danswer.indexing.chunker import get_default_chunker
-from danswer.indexing.chunker import get_mega_chunker
+from danswer.indexing.chunker import generate_mega_chunks
+from danswer.indexing.chunker import get_cached_chunker
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
@@ -184,20 +183,16 @@ def index_doc_batch(
 
     logger.debug("Starting chunking")
     # The embedder is needed here to get the correct tokenizer
-    chunker: Chunker = get_default_chunker(embedder)
-    if ENABLE_MEGA_CHUNK:
-        mega_chunker: Chunker = get_mega_chunker(embedder)
+    chunker: Chunker = get_cached_chunker(embedder.embedding_model.tokenizer)
     chunks: list[DocAwareChunk] = []
     for document in updatable_docs:
         chunks_per_document = chunker.chunk(document=document)
         chunks.extend(chunks_per_document)
         if ENABLE_MEGA_CHUNK:
-            mega_chunks = mega_chunker.chunk(document=document)
-            connected_mega_chunks = connect_mega_chunks(
+            mega_chunks = generate_mega_chunks(
                 chunks=chunks_per_document,
-                mega_chunks=mega_chunks,
             )
-            chunks.extend(connected_mega_chunks)
+            chunks.extend(mega_chunks)
 
     logger.debug("Starting embedding")
     chunks_with_embeddings = (

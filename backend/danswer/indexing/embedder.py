@@ -3,7 +3,6 @@ from abc import abstractmethod
 
 from sqlalchemy.orm import Session
 
-from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.models import EmbeddingModel as DbEmbeddingModel
@@ -40,6 +39,19 @@ class IndexingEmbedder(ABC):
         self.provider_type = provider_type
         self.api_key = api_key
 
+        self.embedding_model = EmbeddingModel(
+            model_name=model_name,
+            query_prefix=query_prefix,
+            passage_prefix=passage_prefix,
+            normalize=normalize,
+            api_key=api_key,
+            provider_type=provider_type,
+            # The below are globally set, this flow always uses the indexing one
+            server_host=INDEXING_MODEL_SERVER_HOST,
+            server_port=INDEXING_MODEL_SERVER_PORT,
+            retrim_content=True,
+        )
+
     @abstractmethod
     def embed_chunks(
         self,
@@ -60,20 +72,6 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
     ):
         super().__init__(
             model_name, normalize, query_prefix, passage_prefix, provider_type, api_key
-        )
-        self.max_seq_length = DOC_EMBEDDING_CONTEXT_SIZE  # Currently not customizable
-
-        self.embedding_model = EmbeddingModel(
-            model_name=model_name,
-            query_prefix=query_prefix,
-            passage_prefix=passage_prefix,
-            normalize=normalize,
-            api_key=api_key,
-            provider_type=provider_type,
-            # The below are globally set, this flow always uses the indexing one
-            server_host=INDEXING_MODEL_SERVER_HOST,
-            server_port=INDEXING_MODEL_SERVER_PORT,
-            retrim_content=True,
         )
 
     @log_function_time()

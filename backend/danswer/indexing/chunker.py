@@ -1,6 +1,6 @@
 from danswer.configs.app_configs import BLURB_SIZE
 from danswer.configs.app_configs import ENABLE_MINI_CHUNK
-from danswer.configs.app_configs import MEGA_CHUNK_SIZE
+from danswer.configs.app_configs import MEGA_CHUNK_RATIO
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.app_configs import SKIP_METADATA_IN_CHUNK
 from danswer.configs.constants import DocumentSource
@@ -11,9 +11,8 @@ from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_metadata_keys_to_ignore,
 )
 from danswer.connectors.models import Document
-from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
-from danswer.natural_language_processing.utils import get_tokenizer
+from danswer.natural_language_processing.utils import BaseTokenizer
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import shared_precompare_cleanup
 from danswer.utils.timing import log_function_time
@@ -80,7 +79,7 @@ class Chunker:
 
     def __init__(
         self,
-        embedder: IndexingEmbedder,
+        tokenizer: BaseTokenizer,
         blurb_size: int = BLURB_SIZE,
         include_metadata: bool = not SKIP_METADATA_IN_CHUNK,
         chunk_token_limit: int = DOC_EMBEDDING_CONTEXT_SIZE,
@@ -93,26 +92,23 @@ class Chunker:
         self.include_metadata = include_metadata
         self.chunk_token_limit = chunk_token_limit
 
-        self.tokenizer = get_tokenizer(
-            model_name=embedder.model_name,
-            provider_type=embedder.provider_type,
-        )
+        self.tokenizer = tokenizer
 
         self.blurb_splitter = SentenceSplitter(
-            tokenizer=self.tokenizer.tokenize,
+            tokenizer=tokenizer.tokenize,
             chunk_size=blurb_size,
             chunk_overlap=0,
         )
 
         self.chunk_splitter = SentenceSplitter(
-            tokenizer=self.tokenizer.tokenize,
+            tokenizer=tokenizer.tokenize,
             chunk_size=chunk_token_limit,
             chunk_overlap=chunk_overlap,
         )
 
         self.mini_chunk_splitter = (
             SentenceSplitter(
-                tokenizer=self.tokenizer.tokenize,
+                tokenizer=tokenizer.tokenize,
                 chunk_size=mini_chunk_size,
                 chunk_overlap=0,
             )
@@ -260,76 +256,47 @@ class Chunker:
         )
 
 
-_DEFAULT_CHUNKER: Chunker | None = None
-_MEGA_CHUNKER: Chunker | None = None
+_CACHED_CHUNKER: Chunker | None = None
 
 
-def get_default_chunker(embedder: IndexingEmbedder) -> Chunker:
-    global _DEFAULT_CHUNKER
-    if _DEFAULT_CHUNKER is None:
-        logger.debug("Creating default chunker")
-        _DEFAULT_CHUNKER = Chunker(embedder)
-    return _DEFAULT_CHUNKER
+def get_cached_chunker(tokenizer: BaseTokenizer) -> Chunker:
+    global _CACHED_CHUNKER
+    if _CACHED_CHUNKER is None or tokenizer != _CACHED_CHUNKER.tokenizer:
+        logger.debug("Creating cached chunker")
+        _CACHED_CHUNKER = Chunker(tokenizer)
+    return _CACHED_CHUNKER
 
 
-def get_mega_chunker(embedder: IndexingEmbedder) -> Chunker:
-    global _MEGA_CHUNKER
-    if _MEGA_CHUNKER is None:
-        logger.debug("Creating mega chunker")
-        _MEGA_CHUNKER = Chunker(
-            embedder,
-            chunk_token_limit=MEGA_CHUNK_SIZE,
-            enable_mini_chunk=False,
-            chunk_overlap=0,
-        )
-    return _MEGA_CHUNKER
+def _combine_chunks(chunks: list[DocAwareChunk], index: int) -> DocAwareChunk:
+    merged_chunk = DocAwareChunk(
+        source_document=chunks[0].source_document,
+        chunk_id=index,
+        blurb=chunks[0].blurb,
+        content=chunks[0].content,
+        source_links=chunks[0].source_links,
+        section_continuation=(index > 0),
+        title_prefix=chunks[0].title_prefix,
+        metadata_suffix_semantic=chunks[0].metadata_suffix_semantic,
+        metadata_suffix_keyword=chunks[0].metadata_suffix_keyword,
+        mega_chunk_reference_ids=[chunks[0].chunk_id],
+    )
+
+    offset = 0
+    for i in range(1, len(chunks)):
+        merged_chunk.content += SECTION_SEPARATOR + chunks[i].content
+        merged_chunk.mega_chunk_reference_ids.append(chunks[i].chunk_id)
+
+        offset += len(SECTION_SEPARATOR) + len(chunks[i - 1].content)
+        for link_offset, link_text in chunks[i].source_links.items():
+            merged_chunk.source_links[link_offset + offset] = link_text
+
+    return merged_chunk
 
 
-def connect_mega_chunks(
-    chunks: list[DocAwareChunk], mega_chunks: list[DocAwareChunk]
-) -> list[DocAwareChunk]:
-    """
-    this takes a list of chunks and a list of mega chunks that are from the same source docuement,
-    compares the doc_text_ranges of each chunk and mega chunk,
-    and points the mega chunk to the chunk that it is a part of the same document and text range.
-    Assumptions:
-    - The chunks are in order
-    - The mega chunks are in order
-    - The total text length of the chunks is the same as the total text length of the mega chunks
-    - The mega chunks are not overlapping
-    - The chunks and mega chunks are from the same document
-    """
-    chunk_text_length = 0
-    mega_chunk_text_length = 0
-    chunk_index = 0
-
-    result_mega_chunks: list[DocAwareChunk] = []
-
-    for mega_chunk in mega_chunks:
-        mega_chunk.mega_chunk_reference_ids = []
-        if chunk_text_length != mega_chunk_text_length:
-            mega_chunk.mega_chunk_reference_ids.append(chunk_index - 1)
-
-        # Add the length of the mega chunk content
-        mega_chunk_text_length += len(mega_chunk.content)
-        # Subtract the length of the section seperators
-        if mega_chunk.source_links:
-            mega_chunk_text_length -= (len(mega_chunk.source_links) - 1) * len(
-                SECTION_SEPARATOR
-            )
-
-        while chunk_text_length < mega_chunk_text_length:
-            if chunk_index >= len(chunks):
-                break
-            chunk_text_length += len(chunks[chunk_index].content)
-            links = chunks[chunk_index].source_links
-            if links:
-                chunk_text_length -= (len(links) - 1) * len(SECTION_SEPARATOR)
-            chunk_text_length -= CHUNK_OVERLAP
-            mega_chunk.mega_chunk_reference_ids.append(chunk_index)
-            chunk_index += 1
-
-        if len(mega_chunk.mega_chunk_reference_ids) > 1:
-            result_mega_chunks.append(mega_chunk)
-
-    return result_mega_chunks
+def generate_mega_chunks(chunks: list[DocAwareChunk]) -> list[DocAwareChunk]:
+    mega_chunks = [
+        _combine_chunks(chunks[i : i + MEGA_CHUNK_RATIO], idx)
+        for idx, i in enumerate(range(0, len(chunks), MEGA_CHUNK_RATIO))
+        if len(chunks[i : i + MEGA_CHUNK_RATIO]) > 1
+    ]
+    return mega_chunks
