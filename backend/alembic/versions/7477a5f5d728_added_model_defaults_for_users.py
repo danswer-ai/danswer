@@ -1,7 +1,7 @@
-"""Added model deafults for users
+"""Added model defaults for users
 
 Revision ID: 7477a5f5d728
-Revises: 1d6ad76d1f37
+Revises: 5fc1f54cc252
 Create Date: 2024-08-04 19:00:04.512634
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "7477a5f5d728"
-down_revision = "1d6ad76d1f37"
+down_revision = "5fc1f54cc252"
 branch_labels = None
 depends_on = None
 

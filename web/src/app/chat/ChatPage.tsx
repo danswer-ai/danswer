@@ -186,6 +186,10 @@ export function ChatPage({
 
     if (personaDefault) {
       llmOverrideManager.setLlmOverride(personaDefault);
+    } else if (user?.preferences.default_model) {
+      llmOverrideManager.setLlmOverride(
+        destructureValue(user?.preferences.default_model)
+      );
     }
   }, [liveAssistant]);
 
