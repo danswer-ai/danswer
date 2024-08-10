@@ -170,7 +170,7 @@ export function ChatPage({
   };
 
   const llmOverrideManager = useLlmOverride(
-    user?.preferences.default_model!,
+    user?.preferences.default_model,
     selectedChatSession,
     defaultTemperature
   );

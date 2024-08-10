@@ -118,7 +118,7 @@ export function SetDefaultModelModal({
           {defaultModel == null && "  No default model has been selected!"}
         </Text>
         <div className="w-full flex text-sm flex-col">
-          <div key={-1} className="w-full border-b hover:bg-gray-50">
+          <div key={-1} className="w-full border-b hover:bg-background-50">
             <td className="min-w-[80px]">
               {defaultModel == null ? (
                 <Badge>selected</Badge>
@@ -139,7 +139,10 @@ export function SetDefaultModelModal({
 
           {llmOptions.map(({ name, value }, index) => {
             return (
-              <div key={index} className="w-full border-b hover:bg-gray-50">
+              <div
+                key={index}
+                className="w-full border-b hover:bg-background-50"
+              >
                 <td className="min-w-[80px]">
                   {defaultModelDestructured?.modelName != name ? (
                     <input

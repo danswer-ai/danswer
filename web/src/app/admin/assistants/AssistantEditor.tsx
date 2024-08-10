@@ -28,7 +28,7 @@ import { GroupsIcon, PaintingIcon, SwapIcon } from "@/components/icons/icons";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { useUserGroups } from "@/lib/hooks";
-import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
+import { checkLLMSupportsImageInput, destructureValue } from "@/lib/llm/utils";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 import {
@@ -541,6 +541,8 @@ export function AssistantEditor({
                   <p className="my-1 text-text-600">
                     Your assistant will use the user&apos;s set default unless
                     otherwise specified below.
+                    {user?.preferences.default_model &&
+                      `  Your current (user-specific) default model is ${getDisplayNameForModel(destructureValue(user?.preferences?.default_model!).modelName)}`}
                   </p>
                   <div className="mb-2 flex items-starts">
                     <div className="w-96">
