@@ -1,6 +1,10 @@
+from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel
+
+from danswer.configs.constants import NotificationType
+from danswer.db.models import Notification as NotificationDBModel
 
 
 class PageType(str, Enum):
@@ -9,7 +13,21 @@ class PageType(str, Enum):
 
 
 class Notification(BaseModel):
-    notif_name: str | None
+    id: int
+    notif_type: NotificationType
+    dismissed: bool
+    last_shown: datetime
+    first_shown: datetime
+
+    @classmethod
+    def from_model(cls, notif: NotificationDBModel) -> "Notification":
+        return cls(
+            id=notif.id,
+            notif_type=notif.notif_type,
+            dismissed=notif.dismissed,
+            last_shown=notif.last_shown,
+            first_shown=notif.first_shown,
+        )
 
 
 class Settings(BaseModel):
@@ -41,5 +59,5 @@ class Settings(BaseModel):
             )
 
 
-class UserSettings(Notification, Settings):
-    """User-specific settings combining Notification and general Settings"""
+class UserSettings(Settings):
+    notifications: list[Notification]

@@ -132,6 +132,10 @@ class DocumentSource(str, Enum):
     NOT_APPLICABLE = "not_applicable"
 
 
+class NotificationType(str, Enum):
+    REINDEX = "reindex"
+
+
 class BlobType(str, Enum):
     R2 = "r2"
     S3 = "s3"
