@@ -300,7 +300,9 @@ async def handle_new_chat_message(
     def is_connected() -> bool:
         return connection_open
 
-    async def stream_generator() -> AsyncGenerator[dict | str, None]:
+    import json
+
+    async def stream_generator() -> AsyncGenerator[str, None]:
         nonlocal connection_open
         try:
             for packet in stream_chat_message(
@@ -315,11 +317,11 @@ async def handle_new_chat_message(
                 if await request.is_disconnected():
                     connection_open = False
 
-                yield packet
+                yield json.dumps(packet) if isinstance(packet, dict) else packet
 
         except Exception as e:
             logger.exception(f"Error in chat message streaming: {e}")
-            yield {"error": str(e)}
+            yield json.dumps({"error": str(e)})
 
     return StreamingResponse(stream_generator(), media_type="text/event-stream")
 
