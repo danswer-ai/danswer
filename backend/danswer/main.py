@@ -34,6 +34,7 @@ from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.constants import AuthType
+from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import POSTGRES_WEB_APP_NAME
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
@@ -53,6 +54,8 @@ from danswer.db.standard_answer import create_initial_default_standard_answer_ca
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
+from danswer.dynamic_configs.factory import get_dynamic_config_store
+from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.llm.llm_initialization import load_llm_providers
 from danswer.natural_language_processing.search_nlp_models import warm_up_encoders
 from danswer.search.retrieval.search_runner import download_nltk_data
@@ -182,6 +185,26 @@ def setup_postgres(db_session: Session) -> None:
     auto_add_search_tool_to_personas(db_session)
 
 
+def mark_reindex_flag(db_session: Session) -> None:
+    kv_store = get_dynamic_config_store()
+    try:
+        kv_store.load(KV_REINDEX_KEY)
+        return
+    except ConfigNotFoundError:
+        # Only need to update the flag if it hasn't been set
+        pass
+
+    # If their first deployment is after the changes, it will
+    # TODO enable this when the other changes go in, need to avoid
+    # this being set to False, then the user indexes things on the old version
+    # docs_exist = check_docs_exist(db_session)
+    # connectors_exist = check_connectors_exist(db_session)
+    # if docs_exist or connectors_exist:
+    #     kv_store.store(KV_REINDEX_KEY, True)
+    # else:
+    #     kv_store.store(KV_REINDEX_KEY, False)
+
+
 def setup_vespa(
     document_index: DocumentIndex,
     db_embedding_model: EmbeddingModel,
@@ -260,6 +283,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         # setup Postgres with default credential, llm providers, etc.
         setup_postgres(db_session)
+
+        # Does the user need to trigger a reindexing to bring the document index
+        # into a good state, marked in the kv store
+        mark_reindex_flag(db_session)
 
         # ensure Vespa is setup correctly
         logger.info("Verifying Document Index(s) is/are available.")

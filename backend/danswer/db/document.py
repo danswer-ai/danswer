@@ -7,6 +7,7 @@ from uuid import UUID
 
 from sqlalchemy import and_
 from sqlalchemy import delete
+from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy import select
@@ -28,6 +29,12 @@ from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+
+def check_docs_exist(db_session: Session) -> bool:
+    stmt = select(exists(DbDocument))
+    result = db_session.execute(stmt)
+    return result.scalar() or False
 
 
 def get_documents_for_connector_credential_pair(
