@@ -417,83 +417,85 @@ export function CCPairIndexingStatusTable({
               {!shouldExpand ? "Collapse All" : "Expand All"}
             </Button>
           </div>
-          {sortedSources.map((source, ind) => {
-            const sourceMatches = source
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase());
-            const matchingConnectors = groupedStatuses[source].filter(
-              (status) =>
-                (status.name || "")
-                  .toLowerCase()
-                  .includes(searchTerm.toLowerCase())
-            );
-            if (sourceMatches || matchingConnectors.length > 0) {
-              return (
-                <React.Fragment key={ind}>
-                  <div className="mt-4" />
-
-                  <SummaryRow
-                    source={source}
-                    summary={groupSummaries[source]}
-                    isOpen={connectorsToggled[source] || false}
-                    onToggle={() => toggleSource(source)}
-                  />
-
-                  {connectorsToggled[source] && (
-                    <>
-                      <TableRow className="border border-border">
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.first}]`}
-                        >
-                          Name
-                        </TableHeaderCell>
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.fifth}]`}
-                        >
-                          Last Indexed
-                        </TableHeaderCell>
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.second}]`}
-                        >
-                          Activity
-                        </TableHeaderCell>
-                        {isPaidEnterpriseFeaturesEnabled && (
-                          <TableHeaderCell
-                            className={`w-[${columnWidths.fourth}]`}
-                          >
-                            Public
-                          </TableHeaderCell>
-                        )}
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.sixth}]`}
-                        >
-                          Total Docs
-                        </TableHeaderCell>
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.third}]`}
-                        >
-                          Last Status
-                        </TableHeaderCell>
-                        <TableHeaderCell
-                          className={`w-[${columnWidths.seventh}]`}
-                        ></TableHeaderCell>
-                      </TableRow>
-                      {(sourceMatches
-                        ? groupedStatuses[source]
-                        : matchingConnectors
-                      ).map((ccPairsIndexingStatus) => (
-                        <ConnectorRow
-                          key={ccPairsIndexingStatus.cc_pair_id}
-                          ccPairsIndexingStatus={ccPairsIndexingStatus}
-                        />
-                      ))}
-                    </>
-                  )}
-                </React.Fragment>
+          {sortedSources
+            .filter((source) => source != "not_applicable")
+            .map((source, ind) => {
+              const sourceMatches = source
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase());
+              const matchingConnectors = groupedStatuses[source].filter(
+                (status) =>
+                  (status.name || "")
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase())
               );
-            }
-            return null;
-          })}
+              if (sourceMatches || matchingConnectors.length > 0) {
+                return (
+                  <React.Fragment key={ind}>
+                    <div className="mt-4" />
+
+                    <SummaryRow
+                      source={source}
+                      summary={groupSummaries[source]}
+                      isOpen={connectorsToggled[source] || false}
+                      onToggle={() => toggleSource(source)}
+                    />
+
+                    {connectorsToggled[source] && (
+                      <>
+                        <TableRow className="border border-border">
+                          <TableHeaderCell
+                            className={`w-[${columnWidths.first}]`}
+                          >
+                            Name
+                          </TableHeaderCell>
+                          <TableHeaderCell
+                            className={`w-[${columnWidths.fifth}]`}
+                          >
+                            Last Indexed
+                          </TableHeaderCell>
+                          <TableHeaderCell
+                            className={`w-[${columnWidths.second}]`}
+                          >
+                            Activity
+                          </TableHeaderCell>
+                          {isPaidEnterpriseFeaturesEnabled && (
+                            <TableHeaderCell
+                              className={`w-[${columnWidths.fourth}]`}
+                            >
+                              Public
+                            </TableHeaderCell>
+                          )}
+                          <TableHeaderCell
+                            className={`w-[${columnWidths.sixth}]`}
+                          >
+                            Total Docs
+                          </TableHeaderCell>
+                          <TableHeaderCell
+                            className={`w-[${columnWidths.third}]`}
+                          >
+                            Last Status
+                          </TableHeaderCell>
+                          <TableHeaderCell
+                            className={`w-[${columnWidths.seventh}]`}
+                          ></TableHeaderCell>
+                        </TableRow>
+                        {(sourceMatches
+                          ? groupedStatuses[source]
+                          : matchingConnectors
+                        ).map((ccPairsIndexingStatus) => (
+                          <ConnectorRow
+                            key={ccPairsIndexingStatus.cc_pair_id}
+                            ccPairsIndexingStatus={ccPairsIndexingStatus}
+                          />
+                        ))}
+                      </>
+                    )}
+                  </React.Fragment>
+                );
+              }
+              return null;
+            })}
         </TableBody>
 
         <div className="invisible w-full pb-40" />
