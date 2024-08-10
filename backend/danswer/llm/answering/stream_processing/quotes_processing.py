@@ -234,7 +234,8 @@ def process_model_tokens(
             if m:
                 found_answer_start = True
 
-                # Prevent heavy cases of hallucinations where model is not even providing a json until later
+                # Prevent heavy cases of hallucinations where model is never providing a JSON
+                # We want to quickly update the user - not stream forever
                 if is_json_prompt and len(model_output) > 70:
                     logger.warning("LLM did not produce json as prompted")
                     found_answer_end = True
