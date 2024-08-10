@@ -146,12 +146,16 @@ def handle_simplified_chat_message_2(
 ) -> ChatBasicResponse:
     """This is a Non-Streaming version that only gives back a minimal set of information"""
 
+    if len(req.messages) == 0:
+        raise HTTPException(status_code=400, detail="Messages cannot be zero length")
+
     query = req.messages[-1].message
-    msg_history = req.messages[:-1]
     if not query:
         raise HTTPException(status_code=400, detail="Empty chat message is invalid")
 
-    logger.info(f"Received new simple api chat message: {query}")
+    msg_history = req.messages[:-1]
+
+    logger.info(f"Received new simple with history chat message: {query}")
 
     user_id = user.id if user is not None else None
     chat_session = create_chat_session(
