@@ -28,7 +28,9 @@ ENABLE_RERANKING_REAL_TIME_FLOW = (
     os.environ.get("ENABLE_RERANKING_REAL_TIME_FLOW", "").lower() == "true"
 )
 
+# Used for loading defaults for automatic deployments and dev flows
 DEFAULT_CROSS_ENCODER_MODEL_NAME = "mixedbread-ai/mxbai-rerank-xsmall-v1"
+DEFAULT_CROSS_ENCODER_API_KEY = os.environ.get("DEFAULT_CROSS_ENCODER_API_KEY")
 
 # This controls the minimum number of pytorch "threads" to allocate to the embedding
 # model. If torch finds more threads on its own, this value is not used.

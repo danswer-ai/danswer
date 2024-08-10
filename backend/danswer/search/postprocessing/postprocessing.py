@@ -22,13 +22,11 @@ from danswer.search.models import InferenceSection
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import SearchQuery
-from danswer.search.models import SearchType
 from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_sections
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.timing import log_function_time
-from shared_configs.configs import DEFAULT_CROSS_ENCODER_MODEL_NAME
 
 
 logger = setup_logger()
@@ -42,11 +40,6 @@ def _log_top_section_links(search_flow: str, sections: list[InferenceSection]) -
         for section in sections
     ]
     logger.info(f"Top links from {search_flow} search: {', '.join(top_links)}")
-
-
-def should_rerank(query: SearchQuery) -> bool:
-    # Don't re-rank for keyword search
-    return query.search_type != SearchType.KEYWORD and not query.skip_rerank
 
 
 def cleanup_chunks(chunks: list[InferenceChunkUncleaned]) -> list[InferenceChunk]:
@@ -84,7 +77,7 @@ def cleanup_chunks(chunks: list[InferenceChunkUncleaned]) -> list[InferenceChunk
 
 @log_function_time(print_only=True)
 def semantic_reranking(
-    query: str,
+    query: SearchQuery,
     chunks: list[InferenceChunk],
     model_min: int = CROSS_ENCODER_RANGE_MIN,
     model_max: int = CROSS_ENCODER_RANGE_MAX,
@@ -95,17 +88,24 @@ def semantic_reranking(
 
     Note: this updates the chunks in place, it updates the chunk scores which came from retrieval
     """
-    # TODO update this
+    rerank_settings = query.rerank_settings
+
+    if not rerank_settings:
+        # Should never reach this part of the flow without reranking settings
+        raise RuntimeError("Reranking settings not found")
+
+    chunks_to_rerank = chunks[: rerank_settings.num_rerank]
+
     cross_encoder = RerankingModel(
-        model_name=DEFAULT_CROSS_ENCODER_MODEL_NAME,
-        api_key=None,
+        model_name=rerank_settings.model_name,
+        api_key=rerank_settings.api_key,
     )
 
     passages = [
         f"{chunk.semantic_identifier or chunk.title or ''}\n{chunk.content}"
-        for chunk in chunks
+        for chunk in chunks_to_rerank
     ]
-    sim_scores_floats = cross_encoder.predict(query=query, passages=passages)
+    sim_scores_floats = cross_encoder.predict(query=query.query, passages=passages)
 
     # Old logic to handle multiple cross-encoders preserved but not used
     sim_scores = [numpy.array(sim_scores_floats)]
@@ -118,15 +118,17 @@ def semantic_reranking(
         [enc_n_scores - cross_models_min for enc_n_scores in sim_scores]
     ) / len(sim_scores)
 
-    boosts = [translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks]
-    recency_multiplier = [chunk.recency_bias for chunk in chunks]
+    boosts = [
+        translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks_to_rerank
+    ]
+    recency_multiplier = [chunk.recency_bias for chunk in chunks_to_rerank]
     boosted_sim_scores = shifted_sim_scores * boosts * recency_multiplier
     normalized_b_s_scores = (boosted_sim_scores + cross_models_min - model_min) / (
         model_max - model_min
     )
     orig_indices = [i for i in range(len(normalized_b_s_scores))]
     scored_results = list(
-        zip(normalized_b_s_scores, raw_sim_scores, chunks, orig_indices)
+        zip(normalized_b_s_scores, raw_sim_scores, chunks_to_rerank, orig_indices)
     )
     scored_results.sort(key=lambda x: x[0], reverse=True)
     ranked_sim_scores, ranked_raw_scores, ranked_chunks, ranked_indices = zip(
@@ -177,12 +179,16 @@ def rerank_sections(
     """
     chunks_to_rerank = [section.center_chunk for section in sections_to_rerank]
 
+    if not query.rerank_settings:
+        # Should never reach this part of the flow without reranking settings
+        raise RuntimeError("Reranking settings not found")
+
     ranked_chunks, _ = semantic_reranking(
-        query=query.query,
-        chunks=chunks_to_rerank[: query.num_rerank],
+        query=query,
+        chunks=chunks_to_rerank,
         rerank_metrics_callback=rerank_metrics_callback,
     )
-    lower_chunks = chunks_to_rerank[query.num_rerank :]
+    lower_chunks = chunks_to_rerank[query.rerank_settings.num_rerank :]
 
     # Scores from rerank cannot be meaningfully combined with scores without rerank
     # However the ordering is still important
@@ -252,7 +258,7 @@ def search_postprocessing(
 
     rerank_task_id = None
     sections_yielded = False
-    if should_rerank(search_query):
+    if search_query.rerank_settings:
         post_processing_tasks.append(
             FunctionCall(
                 rerank_sections,

@@ -50,7 +50,7 @@ from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.models import BaseFilters
 from danswer.search.models import RetrievalDetails
-from shared_configs.configs import ENABLE_RERANKING_ASYNC_FLOW
+from danswer.search.postprocessing.reranker import get_reranking_settings
 
 
 srl = SlackRateLimiter()
@@ -223,6 +223,9 @@ def handle_regular_answer(
             enable_auto_detect_filters=auto_detect_filters,
         )
 
+        # Always apply reranking settings if it exists, this is the non-streaming flow
+        saved_rerank_settings = get_reranking_settings()
+
         # This includes throwing out answer via reflexion
         answer = _get_answer(
             DirectQARequest(
@@ -231,7 +234,9 @@ def handle_regular_answer(
                 persona_id=persona.id if persona is not None else 0,
                 retrieval_options=retrieval_details,
                 chain_of_thought=not disable_cot,
-                skip_rerank=not ENABLE_RERANKING_ASYNC_FLOW,
+                rerank_settings=saved_rerank_settings.to_reranking_model_detail()
+                if saved_rerank_settings
+                else None,
             )
         )
     except Exception as e:

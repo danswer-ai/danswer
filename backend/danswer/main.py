@@ -58,6 +58,9 @@ from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.llm.llm_initialization import load_llm_providers
 from danswer.natural_language_processing.search_nlp_models import warm_up_encoders
+from danswer.search.postprocessing.models import SavedRerankingModelDetail
+from danswer.search.postprocessing.reranker import get_reranking_settings
+from danswer.search.postprocessing.reranker import update_reranking_settings
 from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.server.auth_check import check_router_auth
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
@@ -83,7 +86,7 @@ from danswer.server.manage.embedding.api import basic_router as embedding_router
 from danswer.server.manage.get_state import router as state_router
 from danswer.server.manage.llm.api import admin_router as llm_admin_router
 from danswer.server.manage.llm.api import basic_router as llm_router
-from danswer.server.manage.secondary_index import router as secondary_index_router
+from danswer.server.manage.search_settings import router as search_settings_router
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
 from danswer.server.manage.standard_answer import router as standard_answer_router
 from danswer.server.manage.users import router as user_router
@@ -107,6 +110,9 @@ from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
+from shared_configs.configs import DEFAULT_CROSS_ENCODER_API_KEY
+from shared_configs.configs import DEFAULT_CROSS_ENCODER_MODEL_NAME
+from shared_configs.configs import ENABLE_RERANKING_ASYNC_FLOW
 from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
@@ -275,8 +281,23 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                 f'Passage embedding prefix: "{db_embedding_model.passage_prefix}"'
             )
 
-        if ENABLE_RERANKING_REAL_TIME_FLOW:
-            logger.info("Reranking step of search flow is enabled.")
+        reranking_settings = get_reranking_settings()
+        if reranking_settings and not reranking_settings.disable_for_streaming:
+            logger.info("Reranking is enabled.")
+        if not reranking_settings and (
+            ENABLE_RERANKING_REAL_TIME_FLOW or ENABLE_RERANKING_ASYNC_FLOW
+        ):
+            logger.info("Reranking is enabled.")
+            if not DEFAULT_CROSS_ENCODER_MODEL_NAME:
+                raise ValueError("No reranking model specified.")
+
+            update_reranking_settings(
+                SavedRerankingModelDetail(
+                    model_name=DEFAULT_CROSS_ENCODER_MODEL_NAME,
+                    api_key=DEFAULT_CROSS_ENCODER_API_KEY,
+                    disable_for_streaming=not ENABLE_RERANKING_REAL_TIME_FLOW,
+                )
+            )
 
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")
         download_nltk_data()
@@ -326,7 +347,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, cc_pair_router)
     include_router_with_global_prefix_prepended(application, folder_router)
     include_router_with_global_prefix_prepended(application, document_set_router)
-    include_router_with_global_prefix_prepended(application, secondary_index_router)
+    include_router_with_global_prefix_prepended(application, search_settings_router)
     include_router_with_global_prefix_prepended(
         application, slack_bot_management_router
     )

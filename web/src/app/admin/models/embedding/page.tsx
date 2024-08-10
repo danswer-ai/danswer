@@ -82,7 +82,7 @@ function Main() {
     isLoading: isLoadingCurrentModel,
     error: currentEmeddingModelError,
   } = useSWR<CloudEmbeddingModel | HostedEmbeddingModel | null>(
-    "/api/secondary-index/get-current-embedding-model",
+    "/api/search-settings/get-current-embedding-model",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
@@ -97,7 +97,7 @@ function Main() {
     isLoading: isLoadingFutureModel,
     error: futureEmeddingModelError,
   } = useSWR<CloudEmbeddingModel | HostedEmbeddingModel | null>(
-    "/api/secondary-index/get-secondary-embedding-model",
+    "/api/search-settings/get-secondary-embedding-model",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
@@ -139,7 +139,7 @@ function Main() {
     }
 
     const response = await fetch(
-      "/api/secondary-index/set-new-embedding-model",
+      "/api/search-settings/set-new-embedding-model",
       {
         method: "POST",
         body: JSON.stringify(newModel),
@@ -151,7 +151,7 @@ function Main() {
     if (response.ok) {
       setShowTentativeOpenProvider(null);
       setShowTentativeModel(null);
-      mutate("/api/secondary-index/get-secondary-embedding-model");
+      mutate("/api/search-settings/get-secondary-embedding-model");
       if (!connectors || !connectors.length) {
         setShowAddConnectorPopup(true);
       }
@@ -161,12 +161,12 @@ function Main() {
   };
 
   const onCancel = async () => {
-    const response = await fetch("/api/secondary-index/cancel-new-embedding", {
+    const response = await fetch("/api/search-settings/cancel-new-embedding", {
       method: "POST",
     });
     if (response.ok) {
       setShowTentativeModel(null);
-      mutate("/api/secondary-index/get-secondary-embedding-model");
+      mutate("/api/search-settings/get-secondary-embedding-model");
     } else {
       alert(
         `Failed to cancel embedding model update - ${await response.text()}`
@@ -189,7 +189,7 @@ function Main() {
 
   const onConfirmSelection = async (model: EmbeddingModelDescriptor) => {
     const response = await fetch(
-      "/api/secondary-index/set-new-embedding-model",
+      "/api/search-settings/set-new-embedding-model",
       {
         method: "POST",
         body: JSON.stringify(model),
@@ -200,7 +200,7 @@ function Main() {
     );
     if (response.ok) {
       setShowTentativeModel(null);
-      mutate("/api/secondary-index/get-secondary-embedding-model");
+      mutate("/api/search-settings/get-secondary-embedding-model");
       if (!connectors || !connectors.length) {
         setShowAddConnectorPopup(true);
       }

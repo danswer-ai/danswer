@@ -12,6 +12,7 @@ from danswer.configs.constants import MessageType
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.models import ChunkContext
 from danswer.search.models import RetrievalDetails
+from danswer.search.postprocessing.models import RerankingDetails
 
 
 class QueryRephrase(BaseModel):
@@ -29,8 +30,7 @@ class DirectQARequest(ChunkContext):
     prompt_id: int | None
     persona_id: int
     retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
-    # This is to forcibly skip (or run) the step, if None it uses the system defaults
-    skip_rerank: bool | None = None
+    rerank_settings: RerankingDetails | None = None
     evaluation_type: LLMEvaluationType = LLMEvaluationType.UNSPECIFIED
 
     chain_of_thought: bool = False
