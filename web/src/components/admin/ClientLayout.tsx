@@ -163,7 +163,6 @@ export function ClientLayout({
                   {
                     name: (
                       <div className="flex">
-                        {/* <FiCpu size={18} /> */}
                         <CpuIconSkeleton size={18} />
                         <div className="ml-1">LLM</div>
                       </div>

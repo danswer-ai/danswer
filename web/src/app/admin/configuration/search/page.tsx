@@ -81,6 +81,7 @@ function Main() {
   const [newUnenabledProviders, setNewUnenabledProviders] = useState<string[]>(
     []
   );
+  const [useLargeChunks, setUseLargeChunks] = useState(false);
 
   const [rerankingOption, setRerankingOption] = useState("cohere");
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
@@ -129,6 +130,8 @@ function Main() {
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
+  const [useMiniChunks, setUseMiniChunks] = useState(true);
+  // const [useLargeChunks, setUseLargeChunks] = useState(false);
 
   const onConfirm = async (
     model: CloudEmbeddingModel | HostedEmbeddingModel
@@ -281,7 +284,6 @@ function Main() {
     <div className="h-screen">
       <>
         <Title className="mb-2 !text-3xl">Search Configuration</Title>
-
         <Text className="text-black font-sembiold !text-lg">Reranking</Text>
         <Text className="mb-4">
           Choose how you want to rerank search results for better accuracy.
@@ -293,17 +295,42 @@ function Main() {
         >
           <SelectItem value="none">No reranking</SelectItem>
           <SelectItem value="local">Local reranking</SelectItem>
-          <SelectItem value="cohere">
-            Cohere reranking (default if Cohere is used)
-          </SelectItem>
+          <SelectItem value="cloud">Cloud reranking</SelectItem>
         </Select>
+
+        <Text className="text-black font-semibold !text-lg mt-4">
+          Chunk Size
+        </Text>
+        <Text className="mb-4">
+          Toggle mini and large chunks for search results.
+        </Text>
+        <div className="flex flex-col space-y-2 mb-4">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="mini-chunk-toggle"
+              name="mini-chunk-toggle"
+              checked={useMiniChunks}
+              onChange={setUseMiniChunks}
+            />
+            <Text>Mini chunks</Text>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="large-chunk-toggle"
+              name="large-chunk-toggle"
+              checked={useLargeChunks}
+              onChange={setUseLargeChunks}
+            />
+            <Text>Large chunks</Text>
+          </div>
+        </div>
+
         <Text className="text-black font-sembiold !text-lg">
           Advanced Configuration
         </Text>
         <Text className="mb-4">
           Choose how you want to rerank search results for better accuracy.
         </Text>
-        {/* <TextFormField type="password" label=""/> */}
 
         <AdvancedOptionsToggle
           showAdvancedOptions={showAdvancedOptions}

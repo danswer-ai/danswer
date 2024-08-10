@@ -12,7 +12,7 @@ export function AnnouncementBanner({ message, id }: AnnouncementProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem(`announcement_${id}_dismissed`);
+    const dismissed = localStorage.getItem(`announced_${id}_dismissed`);
     if (!dismissed) {
       setIsVisible(true);
     }
@@ -20,7 +20,7 @@ export function AnnouncementBanner({ message, id }: AnnouncementProps) {
 
   const handleDismiss = () => {
     setIsVisible(false);
-    localStorage.setItem(`announcement_${id}_dismissed`, "true");
+    localStorage.setItem(`announced_${id}_dismissed`, "true");
   };
 
   if (!isVisible) return null;
