@@ -313,8 +313,6 @@ def test_lengthy_prefixed_json_with_quotes() -> None:
             for q in o.quotes:
                 assert q.quote == "Document"
                 actual_count += 1
-    print(actual_answer)
-    print("ANSWER BE")
     assert "This is a simple answer." == actual_answer
     assert 1 == actual_count
 
