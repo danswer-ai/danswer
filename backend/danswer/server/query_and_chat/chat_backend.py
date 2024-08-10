@@ -300,7 +300,7 @@ async def handle_new_chat_message(
     def is_connected() -> bool:
         return connection_open
 
-    async def event_generator() -> AsyncGenerator[dict | str, None]:
+    async def stream_generator() -> AsyncGenerator[dict | str, None]:
         nonlocal connection_open
         try:
             for packet in stream_chat_message(
@@ -321,7 +321,7 @@ async def handle_new_chat_message(
             logger.exception(f"Error in chat message streaming: {e}")
             yield {"error": str(e)}
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(stream_generator(), media_type="text/event-stream")
 
 
 @router.put("/set-message-as-latest")
