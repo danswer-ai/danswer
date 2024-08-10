@@ -805,10 +805,14 @@ export function ChatPage({
 
     let finalMessage: BackendMessage | null = null;
     let toolCalls: ToolCallMetadata[] = [];
-    let user_message_id: number | null = null;
-    let assistant_message_id: number | null = null;
-    let frozenMessageMap: Map<number, Message> | null = null;
-    let frozenSessionId: number | null = null;
+
+    let initialFetchDetails: null | {
+      user_message_id: number;
+      assistant_message_id: number;
+      frozenMessageMap: Map<number, Message>;
+      frozenSessionId: number | null;
+    } = null;
+
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
@@ -866,7 +870,7 @@ export function ChatPage({
             continue;
           }
 
-          if (!user_message_id || !assistant_message_id) {
+          if (!initialFetchDetails) {
             if (!Object.hasOwn(packet, "user_message_id")) {
               console.error(
                 "First packet should contain message response info "
@@ -875,8 +879,9 @@ export function ChatPage({
             }
 
             const messageResponseIDInfo = packet as MessageResponseIDInfo;
-            user_message_id = messageResponseIDInfo.user_message_id!;
-            assistant_message_id =
+
+            const user_message_id = messageResponseIDInfo.user_message_id!;
+            const assistant_message_id =
               messageResponseIDInfo.reserved_assistant_message_id;
 
             // if we're resending, set the parent's child to null
@@ -909,9 +914,21 @@ export function ChatPage({
               chatSessionId: currChatSessionId,
             });
 
-            frozenMessageMap = currentFrozenMessageMap;
-            frozenSessionId = currentFrozenSessionId;
+            const frozenMessageMap = currentFrozenMessageMap;
+            const frozenSessionId = currentFrozenSessionId;
+            initialFetchDetails = {
+              frozenMessageMap,
+              frozenSessionId,
+              assistant_message_id,
+              user_message_id,
+            };
           } else {
+            const {
+              user_message_id,
+              assistant_message_id,
+              frozenMessageMap,
+              frozenSessionId,
+            } = initialFetchDetails;
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {
@@ -942,6 +959,7 @@ export function ChatPage({
               );
             } else if (Object.hasOwn(packet, "error")) {
               error = (packet as StreamingError).error;
+              throw Error(error);
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
             }
@@ -967,19 +985,19 @@ export function ChatPage({
 
             updateFn([
               {
-                messageId: user_message_id!,
+                messageId: initialFetchDetails.user_message_id!,
                 message: currMessage,
                 type: "user",
                 files: currentMessageFiles,
                 toolCalls: [],
                 parentMessageId: parentMessage?.messageId || null,
-                childrenMessageIds: [assistant_message_id!],
-                latestChildMessageId: assistant_message_id,
+                childrenMessageIds: [initialFetchDetails.assistant_message_id!],
+                latestChildMessageId: initialFetchDetails.assistant_message_id,
               },
               {
-                messageId: assistant_message_id!,
-                message: error || answer,
-                type: error ? "error" : "assistant",
+                messageId: initialFetchDetails.assistant_message_id!,
+                message: answer,
+                type: "assistant",
                 retrievalType,
                 query: finalMessage?.rephrased_query || query,
                 documents:
@@ -1016,7 +1034,7 @@ export function ChatPage({
             parentMessageId: TEMP_USER_MESSAGE_ID,
           },
         ],
-        completeMessageMapOverride: frozenMessageMap,
+        completeMessageMapOverride: completeMessageDetail.messageMap,
       });
     }
 
