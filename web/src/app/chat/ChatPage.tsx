@@ -1496,34 +1496,7 @@ export function ChatPage({
                               retrievalEnabled={retrievalEnabled}
                             />
 
-                            {/* <List
-                              height={600} // Adjust this value based on your layout
-                              itemCount={messageHistory.length}
-                              itemSize={150} // Adjust this value based on your average message height
-                              width="100%"
-
-                                messageHistory,
-                                completeMessageDetail,
-                                message,
-                                onSubmit,
-                                upsertToCompleteMessageMap,
-                                setSelectedMessageForDocDisplay,
-                                setMessageAsLatest,
-                                setCompleteMessageDetail,
-                                selectedMessageForDocDisplay,
-                                isStreaming,
-                                setCurrentFeedback,
-                                liveAssistant,
-                                availableAssistants,
-                                toggleDocumentSelectionAspects,
-                                selectedDocuments,
-                                setPopup,
-                                retrievalEnabled
-                              }}
-                            > */}
-                            {/* {MessageRenderer}
-                            </List> */}
-                            {/* {messageHistory.map((message, i) => {
+                                {/* {messageHistory.map((message, i) => {
                               const messageMap =
                                 completeMessageDetail.messageMap;
                               const messageReactComponentKey = `${i}-${completeMessageDetail.sessionId}`;

@@ -40,6 +40,7 @@
     "react-loader-spinner": "^5.4.5",
     "react-markdown": "^9.0.1",
     "react-select": "^5.8.0",
+    "react-virtualized": "^9.22.5",
     "react-window": "^1.8.10",
     "rehype-prism-plus": "^2.0.0",
     "remark-gfm": "^4.0.0",
