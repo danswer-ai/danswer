@@ -672,13 +672,11 @@ export function ChatPage({
     params: any
   ) {
     try {
-      for await (const packetBunch of sendMessage(params)) {
+      for await (const packet of sendMessage(params)) {
         if (params.signal?.aborted) {
           throw new Error("AbortError");
         }
-        for (const packet of packetBunch) {
-          stack.push(packet);
-        }
+        stack.push(packet);
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
