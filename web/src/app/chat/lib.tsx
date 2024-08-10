@@ -147,7 +147,7 @@ export async function* sendMessage({
   useExistingUserMessage?: boolean;
   alternateAssistantId?: number;
   signal?: AbortSignal;
-}): AsyncGenerator<PacketType[], void, unknown> {
+}): AsyncGenerator<PacketType, void, unknown> {
   const documentsAreSelected =
     selectedDocumentIds && selectedDocumentIds.length > 0;
 
@@ -215,7 +215,7 @@ export async function* sendMessage({
     for (const line of lines) {
       try {
         const data = JSON.parse(line) as PacketType;
-        yield [data];
+        yield data;
       } catch (error) {
         console.error("Error parsing SSE data:", error);
       }
