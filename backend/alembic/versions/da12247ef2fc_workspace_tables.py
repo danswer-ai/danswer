@@ -271,8 +271,8 @@ def downgrade() -> None:
         existing_type=sa.INTEGER(),
         nullable=False,
     )
-    op.drop_constraint(None, "api_key", type_="foreignkey")
-    op.drop_constraint(None, "api_key", type_="foreignkey")
+    op.drop_constraint("api_key__user_fk", "api_key", type_="foreignkey")
+    op.drop_constraint("api_key__user_fk", "api_key", type_="foreignkey")
     op.create_table(
         "slack_bot_config",
         sa.Column("id", sa.INTEGER(), autoincrement=True, nullable=False),
