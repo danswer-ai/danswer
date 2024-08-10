@@ -3,7 +3,15 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Button, Select, SelectItem, Switch, Text, Title } from "@tremor/react";
+import {
+  Button,
+  Divider,
+  Select,
+  SelectItem,
+  Switch,
+  Text,
+  Title,
+} from "@tremor/react";
 import useSWR, { mutate } from "swr";
 import { ModelPreview } from "./components/ModelSelector";
 import { useState } from "react";
@@ -42,6 +50,7 @@ export interface EmbeddingDetails {
 import { EmbeddingIcon, PackageIcon } from "@/components/icons/icons";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import { TextFormField } from "@/components/admin/connectors/Field";
+import { HeaderTitle } from "@/components/header/HeaderTitle";
 
 function Main() {
   const [openToggle, setOpenToggle] = useState(true);
@@ -271,14 +280,16 @@ function Main() {
   return (
     <div className="h-screen">
       <>
-        <Title className="mb-2">Reranking Options</Title>
+        <Title className="mb-2 !text-3xl">Search Configuration</Title>
+
+        <Text className="text-black font-sembiold !text-lg">Reranking</Text>
         <Text className="mb-4">
           Choose how you want to rerank search results for better accuracy.
         </Text>
         <Select
           value={rerankingOption}
           onValueChange={setRerankingOption}
-          className="max-w-xs"
+          className="max-w-xs mb-4"
         >
           <SelectItem value="none">No reranking</SelectItem>
           <SelectItem value="local">Local reranking</SelectItem>
@@ -286,9 +297,14 @@ function Main() {
             Cohere reranking (default if Cohere is used)
           </SelectItem>
         </Select>
+        <Text className="text-black font-sembiold !text-lg">
+          Advanced Configuration
+        </Text>
+        <Text className="mb-4">
+          Choose how you want to rerank search results for better accuracy.
+        </Text>
         {/* <TextFormField type="password" label=""/> */}
 
-        <Title className="mb-2 mt-6">Advanced Options</Title>
         <AdvancedOptionsToggle
           showAdvancedOptions={showAdvancedOptions}
           setShowAdvancedOptions={setShowAdvancedOptions}
@@ -317,6 +333,9 @@ function Main() {
           </div>
         )}
       </>
+
+      <Divider />
+      <Title className="mb-2 mt-8 !text-3xl">Embedding models</Title>
 
       <Text>
         These deep learning models are used to generate vector representations
