@@ -539,7 +539,7 @@ export function AssistantEditor({
                     </TooltipProvider>
                   </div>
                   <p className="my-1 text-text-600">
-                    Your assistant will use your user&apos;s set default unless
+                    Your assistant will use the user&apos;s set default unless
                     otherwise specified below.
                   </p>
                   <div className="mb-2 flex items-starts">
