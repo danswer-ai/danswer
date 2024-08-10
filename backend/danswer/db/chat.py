@@ -401,7 +401,7 @@ def reserve_message_id(
 ) -> int:
     # Create an empty chat message
     empty_message = ChatMessage(
-        chat_session_id=chat_session_id,  # This will be set later
+        chat_session_id=chat_session_id,
         parent_message=parent_message,
         latest_child_message=None,
         message="",
