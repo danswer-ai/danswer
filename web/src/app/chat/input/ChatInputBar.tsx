@@ -602,22 +602,21 @@ export function ChatInputBar({
                 }}
               />
             </div>
+
             <div className="absolute bottom-2.5 mobile:right-4 desktop:right-10">
               {isStreaming ? (
-                <div
-                  className="cursor-pointer bg-black h-[28px] rounded-full flex  w-[28px] "
-                  onClick={() => {
-                    stopGenerating();
-                  }}
+                <button
+                  className="cursor-pointer bg-background-800 h-[28px] w-[28px] rounded-full"
+                  onClick={stopGenerating}
                 >
                   <StopGeneratingIcon
                     size={10}
-                    className={`text-emphasis  m-auto text-white   flex-none
+                    className={`text-emphasis m-auto text-white flex-none
                       }`}
                   />
-                </div>
+                </button>
               ) : (
-                <div
+                <button
                   className="cursor-pointer"
                   onClick={() => {
                     if (message) {
@@ -627,13 +626,9 @@ export function ChatInputBar({
                 >
                   <SendIcon
                     size={28}
-                    className={`text-emphasis text-white p-1 rounded-full ${
-                      message && !isStreaming
-                        ? "bg-background-800"
-                        : "bg-[#D7D7D7]"
-                    }`}
+                    className={`text-emphasis text-white p-1 rounded-full ${message && !isStreaming} bg-background-800`}
                   />
-                </div>
+                </button>
               )}
             </div>
           </div>

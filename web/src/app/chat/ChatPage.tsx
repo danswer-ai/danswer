@@ -862,8 +862,56 @@ export function ChatPage({
 
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();
-          console.log(packet);
-          if (packet) {
+          if (!packet) {
+            continue;
+          }
+
+          if (!user_message_id || !assistant_message_id) {
+            if (!Object.hasOwn(packet, "user_message_id")) {
+              console.error(
+                "First packet should contain message response info "
+              );
+              continue;
+            }
+
+            const messageResponseIDInfo = packet as MessageResponseIDInfo;
+            user_message_id = messageResponseIDInfo.user_message_id!;
+            assistant_message_id =
+              messageResponseIDInfo.reserved_assistant_message_id;
+
+            // if we're resending, set the parent's child to null
+            // we will use tempMessages until the regenerated message is complete
+            messageUpdates = [
+              {
+                messageId: user_message_id,
+                message: currMessage,
+                type: "user",
+                files: currentMessageFiles,
+                toolCalls: [],
+                parentMessageId: parentMessage?.messageId || null,
+              },
+            ];
+            if (parentMessage) {
+              messageUpdates.push({
+                ...parentMessage,
+                childrenMessageIds: (
+                  parentMessage.childrenMessageIds || []
+                ).concat([user_message_id]),
+                latestChildMessageId: user_message_id,
+              });
+            }
+
+            const {
+              messageMap: currentFrozenMessageMap,
+              sessionId: currentFrozenSessionId,
+            } = upsertToCompleteMessageMap({
+              messages: messageUpdates,
+              chatSessionId: currChatSessionId,
+            });
+
+            frozenMessageMap = currentFrozenMessageMap;
+            frozenSessionId = currentFrozenSessionId;
+          } else {
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {
@@ -894,50 +942,9 @@ export function ChatPage({
               );
             } else if (Object.hasOwn(packet, "error")) {
               error = (packet as StreamingError).error;
-              stackTrace = (packet as StreamingError).stack_trace;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
-            } else if (Object.hasOwn(packet, "user_message_id")) {
-              const MessageResponseIDInfo = packet as MessageResponseIDInfo;
-              user_message_id = MessageResponseIDInfo.user_message_id;
-              assistant_message_id =
-                MessageResponseIDInfo.reserved_assistant_message_id;
             }
-
-            if (!messageUpdates) {
-              // if we're resending, set the parent's child to null
-              // we will use tempMessages until the regenerated message is complete
-              messageUpdates = [
-                {
-                  messageId: user_message_id!,
-                  message: currMessage,
-                  type: "user",
-                  files: currentMessageFiles,
-                  toolCalls: [],
-                  parentMessageId: parentMessage?.messageId || null,
-                },
-              ];
-              if (parentMessage) {
-                messageUpdates.push({
-                  ...parentMessage,
-                  childrenMessageIds: (
-                    parentMessage.childrenMessageIds || []
-                  ).concat([user_message_id!]),
-                  latestChildMessageId: user_message_id,
-                });
-              }
-
-              const {
-                messageMap: currentFrozenMessageMap,
-                sessionId: currentFrozenSessionId,
-              } = upsertToCompleteMessageMap({
-                messages: messageUpdates,
-                chatSessionId: currChatSessionId,
-              });
-              frozenMessageMap = currentFrozenMessageMap;
-              frozenSessionId = currentFrozenSessionId;
-            }
-
             // on initial message send, we insert a dummy system message
             // set this as the parent here if no parent is set
             parentMessage =
@@ -953,7 +960,7 @@ export function ChatPage({
               upsertToCompleteMessageMap({
                 messages: messages,
                 replacementsMap: replacementsMap,
-                completeMessageMapOverride: frozenMessageMap!,
+                completeMessageMapOverride: frozenMessageMap,
                 chatSessionId: frozenSessionId!,
               });
             };
