@@ -458,7 +458,7 @@ export function ChatPage({
   const messageHistory = buildLatestMessageChain(
     completeMessageDetail.messageMap
   );
-
+  const [submittedMessage, setSubmittedMessage] = useState("");
   const [chatState, setChatState] = useState<ChatState>("input");
   // const [isLoadingResponse, setIsLoadingResponse] = useState(false);
   // const [isStreaming, setIsStreaming] = useState(false);
@@ -766,12 +766,13 @@ export function ChatPage({
       });
       return;
     }
-    setChatState("loading");
-
     let currMessage = messageToResend ? messageToResend.message : message;
     if (messageOverride) {
       currMessage = messageOverride;
     }
+    setChatState("loading");
+
+    setSubmittedMessage(currMessage);
     const currMessageHistory =
       messageToResendIndex !== null
         ? messageHistory.slice(0, messageToResendIndex)
@@ -867,6 +868,7 @@ export function ChatPage({
           if (!packet) {
             continue;
           }
+          console.log(packet);
 
           if (!initialFetchDetails) {
             if (!Object.hasOwn(packet, "user_message_id")) {
@@ -920,6 +922,7 @@ export function ChatPage({
               assistant_message_id,
               user_message_id,
             };
+            setChatState("streaming");
           } else {
             const {
               user_message_id,
@@ -927,7 +930,6 @@ export function ChatPage({
               frozenMessageMap,
               frozenSessionId,
             } = initialFetchDetails;
-            setChatState("streaming");
 
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
@@ -948,7 +950,10 @@ export function ChatPage({
                   tool_result: (packet as ToolCallMetadata).tool_result,
                 },
               ];
-              if (toolCalls[0].tool_result == undefined) {
+              if (
+                !toolCalls[0].tool_result ||
+                toolCalls[0].tool_result == undefined
+              ) {
                 setChatState("toolBuilding");
               } else {
                 setChatState("streaming");
@@ -1532,7 +1537,8 @@ export function ChatPage({
                                       }
                                       isComplete={
                                         i !== messageHistory.length - 1 ||
-                                        chatState == "input"
+                                        (chatState != "streaming" &&
+                                          chatState != "toolBuilding")
                                       }
                                       hasDocs={
                                         (message.documents &&
@@ -1645,6 +1651,14 @@ export function ChatPage({
                                 );
                               }
                             })}
+                            {chatState == "loading" &&
+                              messageHistory[messageHistory.length - 1]?.type !=
+                                "user" && (
+                                <HumanMessage
+                                  messageId={-1}
+                                  content={submittedMessage}
+                                />
+                              )}
                             {chatState != "input" &&
                               messageHistory.length > 0 &&
                               messageHistory[messageHistory.length - 1].type ===
