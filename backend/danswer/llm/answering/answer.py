@@ -239,6 +239,8 @@ class Answer:
                         tool_call_chunk += message  # type: ignore
                 else:
                     if message.content:
+                        if not self.is_generating:
+                            return
                         yield cast(str, message.content)
 
             if not tool_call_chunk:
