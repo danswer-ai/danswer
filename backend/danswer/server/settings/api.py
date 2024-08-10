@@ -6,7 +6,7 @@ from fastapi import HTTPException
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.auth.users import verify_is_admin
+from danswer.auth.users import is_user_admin
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.db.models import User
 from danswer.dynamic_configs.factory import get_dynamic_config_store
@@ -46,7 +46,7 @@ def fetch_settings(user: User | None = Depends(current_user)) -> UserSettings:
 
 def get_user_notifications(user: User | None) -> Notification:
     """Get any notification names, currently the only one is the reindexing flag"""
-    is_admin = verify_is_admin(user)
+    is_admin = is_user_admin(user)
     if not is_admin:
         return Notification(notif_name=None)
     kv_store = get_dynamic_config_store()

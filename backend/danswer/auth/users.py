@@ -67,7 +67,7 @@ from danswer.utils.variable_functionality import (
 logger = setup_logger()
 
 
-def verify_is_admin(user: User | None) -> bool:
+def is_user_admin(user: User | None) -> bool:
     if AUTH_TYPE == AuthType.DISABLED:
         return True
     if user and user.role == UserRole.ADMIN:

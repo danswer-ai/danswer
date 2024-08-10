@@ -73,7 +73,7 @@ DANSWER_API_KEY_PREFIX = "API_KEY__"
 DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN = "danswerapikey.ai"
 UNNAMED_KEY_PLACEHOLDER = "Unnamed"
 
-# KV store keys (some are defined closer to where they are used)
+# Key-Value store keys
 KV_REINDEX_KEY = "needs_reindexing"
 KV_USER_STORE_KEY = "INVITED_USERS"
 KV_NO_AUTH_USER_PREFERENCES_KEY = "no_auth_user_preferences"
