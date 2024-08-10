@@ -113,8 +113,8 @@ export function SetDefaultModelModal({
         </div>
 
         <Text className="mb-4">
-          Select a default Large Language Model (Generative AI model) which will
-          be selected when no model overrides are in place.
+          Choose a Large Language Model (LLM) to serve as the default for
+          assistants that don't have a default model assigned.
           {defaultModel == null && "  No default model has been selected!"}
         </Text>
         <div className="w-full flex text-sm flex-col">
