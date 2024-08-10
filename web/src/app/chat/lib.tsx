@@ -4,7 +4,7 @@ import {
   Filters,
 } from "@/lib/search/interfaces";
 import { handleStream } from "@/lib/search/streamingUtils";
-import { FeedbackType } from "./types";
+import { ChatState, FeedbackType } from "./types";
 import {
   Dispatch,
   MutableRefObject,
@@ -624,14 +624,14 @@ export async function uploadFilesForChat(
 }
 
 export async function useScrollonStream({
-  isStreaming,
+  chatState,
   scrollableDivRef,
   scrollDist,
   endDivRef,
   distance,
   debounce,
 }: {
-  isStreaming: boolean;
+  chatState: ChatState;
   scrollableDivRef: RefObject<HTMLDivElement>;
   scrollDist: MutableRefObject<number>;
   endDivRef: RefObject<HTMLDivElement>;
@@ -645,7 +645,7 @@ export async function useScrollonStream({
   const previousScroll = useRef<number>(0);
 
   useEffect(() => {
-    if (isStreaming && scrollableDivRef && scrollableDivRef.current) {
+    if (chatState != "input" && scrollableDivRef && scrollableDivRef.current) {
       let newHeight: number = scrollableDivRef.current?.scrollTop!;
       const heightDifference = newHeight - previousScroll.current;
       previousScroll.current = newHeight;
@@ -701,7 +701,7 @@ export async function useScrollonStream({
 
   // scroll on end of stream if within distance
   useEffect(() => {
-    if (scrollableDivRef?.current && !isStreaming) {
+    if (scrollableDivRef?.current && chatState == "input") {
       if (scrollDist.current < distance) {
         scrollableDivRef?.current?.scrollBy({
           left: 0,
@@ -710,5 +710,5 @@ export async function useScrollonStream({
         });
       }
     }
-  }, [isStreaming]);
+  }, [chatState]);
 }

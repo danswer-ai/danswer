@@ -34,6 +34,7 @@ import { Hoverable } from "@/components/Hoverable";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { StopCircle } from "@phosphor-icons/react/dist/ssr";
 import { Square } from "@phosphor-icons/react";
+import { ChatState } from "../types";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
@@ -44,10 +45,9 @@ export function ChatInputBar({
   setMessage,
   stopGenerating,
   onSubmit,
-  isStreaming,
   filterManager,
   llmOverrideManager,
-  isLoadingResponse,
+  chatState,
 
   // assistants
   selectedAssistant,
@@ -64,7 +64,7 @@ export function ChatInputBar({
   inputPrompts,
 }: {
   openModelSettings: () => void;
-  isLoadingResponse: boolean;
+  chatState: ChatState;
   stopGenerating: () => void;
   showDocs: () => void;
   selectedDocuments: DanswerDocument[];
@@ -75,7 +75,6 @@ export function ChatInputBar({
   message: string;
   setMessage: (message: string) => void;
   onSubmit: () => void;
-  isStreaming: boolean;
   filterManager: FilterManager;
   llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
@@ -604,10 +603,11 @@ export function ChatInputBar({
             </div>
 
             <div className="absolute bottom-2.5 mobile:right-4 desktop:right-10">
-              {isStreaming ? (
+              {chatState == "streaming" || chatState == "toolBuilding" ? (
                 <button
-                  className="cursor-pointer bg-background-800 h-[28px] w-[28px] rounded-full"
+                  className={`cursor-pointer ${chatState == "toolBuilding" ? "bg-background-400" : "bg-background-800"}  h-[28px] w-[28px] rounded-full`}
                   onClick={stopGenerating}
+                  disabled={chatState == "toolBuilding"}
                 >
                   <StopGeneratingIcon
                     size={10}
@@ -623,11 +623,11 @@ export function ChatInputBar({
                       onSubmit();
                     }
                   }}
-                  disabled={isLoadingResponse}
+                  disabled={chatState != "input"}
                 >
                   <SendIcon
                     size={28}
-                    className={`text-emphasis text-white p-1 rounded-full ${message && !isStreaming} ${isLoadingResponse ? "bg-background-400" : "bg-background-800"} `}
+                    className={`text-emphasis text-white p-1 rounded-full  ${chatState == "input" ? "bg-background-800" : "bg-background-400"} `}
                   />
                 </button>
               )}

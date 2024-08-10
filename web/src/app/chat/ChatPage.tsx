@@ -48,7 +48,7 @@ import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
 import { LlmOverride, useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
-import { FeedbackType } from "./types";
+import { ChatState, FeedbackType } from "./types";
 import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
@@ -197,6 +197,21 @@ export function ChatPage({
   const stopGeneration = () => {
     if (abortController) {
       abortController.abort();
+    }
+    const lastMessage = messageHistory[messageHistory.length - 1];
+    if (
+      lastMessage &&
+      lastMessage.type === "assistant" &&
+      lastMessage.toolCalls[0] &&
+      lastMessage.toolCalls[0].tool_result === undefined
+    ) {
+      const newCompleteMessageMap = new Map(completeMessageDetail.messageMap);
+      const updatedMessage = { ...lastMessage, toolCalls: [] };
+      newCompleteMessageMap.set(lastMessage.messageId, updatedMessage);
+      setCompleteMessageDetail({
+        sessionId: completeMessageDetail.sessionId,
+        messageMap: newCompleteMessageMap,
+      });
     }
   };
 
@@ -443,8 +458,10 @@ export function ChatPage({
   const messageHistory = buildLatestMessageChain(
     completeMessageDetail.messageMap
   );
-  const [isLoadingResponse, setIsLoadingResponse] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
+
+  const [chatState, setChatState] = useState<ChatState>("input");
+  // const [isLoadingResponse, setIsLoadingResponse] = useState(false);
+  // const [isStreaming, setIsStreaming] = useState(false);
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
 
@@ -701,7 +718,7 @@ export function ChatPage({
     isSeededChat?: boolean;
     alternativeAssistantOverride?: Persona | null;
   } = {}) => {
-    if (isStreaming) {
+    if (chatState != "input") {
       setPopup({
         message: "Please wait for the response to complete",
         type: "error",
@@ -751,7 +768,7 @@ export function ChatPage({
       });
       return;
     }
-    setIsLoadingResponse(true);
+    setChatState("loading");
 
     let currMessage = messageToResend ? messageToResend.message : message;
     if (messageOverride) {
@@ -912,7 +929,7 @@ export function ChatPage({
               frozenMessageMap,
               frozenSessionId,
             } = initialFetchDetails;
-            setIsStreaming(true);
+            setChatState("streaming");
 
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
@@ -933,6 +950,11 @@ export function ChatPage({
                   tool_result: (packet as ToolCallMetadata).tool_result,
                 },
               ];
+              if (toolCalls[0].tool_result == undefined) {
+                setChatState("toolBuilding");
+              } else {
+                setChatState("streaming");
+              }
             } else if (Object.hasOwn(packet, "file_ids")) {
               aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
                 (fileId) => {
@@ -1021,8 +1043,7 @@ export function ChatPage({
         completeMessageMapOverride: completeMessageDetail.messageMap,
       });
     }
-    setIsLoadingResponse(false);
-    setIsStreaming(false);
+    setChatState("input");
     if (isNewSession) {
       if (finalMessage) {
         setSelectedMessageForDocDisplay(finalMessage.message_id);
@@ -1087,8 +1108,8 @@ export function ChatPage({
   const onAssistantChange = (assistant: Persona | null) => {
     if (assistant && assistant.id !== liveAssistant.id) {
       // Abort the ongoing stream if it exists
-      if (abortController && isStreaming) {
-        abortController.abort();
+      if (chatState != "input") {
+        stopGeneration();
         resetInputBar();
       }
 
@@ -1189,7 +1210,7 @@ export function ChatPage({
   });
 
   useScrollonStream({
-    isStreaming,
+    chatState,
     scrollableDivRef,
     scrollDist,
     endDivRef,
@@ -1387,7 +1408,7 @@ export function ChatPage({
 
                           {messageHistory.length === 0 &&
                             !isFetchingChatMessages &&
-                            !isStreaming && (
+                            chatState == "input" && (
                               <ChatIntro
                                 availableSources={finalAvailableSources}
                                 selectedPersona={liveAssistant}
@@ -1513,7 +1534,7 @@ export function ChatPage({
                                       }
                                       isComplete={
                                         i !== messageHistory.length - 1 ||
-                                        !isStreaming
+                                        chatState == "input"
                                       }
                                       hasDocs={
                                         (message.documents &&
@@ -1521,7 +1542,7 @@ export function ChatPage({
                                       }
                                       handleFeedback={
                                         i === messageHistory.length - 1 &&
-                                        isStreaming
+                                        chatState != "input"
                                           ? undefined
                                           : (feedbackType) =>
                                               setCurrentFeedback([
@@ -1531,7 +1552,7 @@ export function ChatPage({
                                       }
                                       handleSearchQueryEdit={
                                         i === messageHistory.length - 1 &&
-                                        !isStreaming
+                                        chatState == "input"
                                           ? (newQuery) => {
                                               if (!previousMessage) {
                                                 setPopup({
@@ -1626,7 +1647,7 @@ export function ChatPage({
                                 );
                               }
                             })}
-                            {isStreaming &&
+                            {chatState != "input" &&
                               messageHistory.length > 0 &&
                               messageHistory[messageHistory.length - 1].type ===
                                 "user" && (
@@ -1715,6 +1736,7 @@ export function ChatPage({
                             )}
 
                             <ChatInputBar
+                              chatState={chatState}
                               stopGenerating={stopGeneration}
                               openModelSettings={() => setSettingsToggled(true)}
                               inputPrompts={userInputPrompts}
@@ -1730,8 +1752,6 @@ export function ChatPage({
                               message={message}
                               setMessage={setMessage}
                               onSubmit={onSubmit}
-                              isLoadingResponse={isLoadingResponse}
-                              isStreaming={isStreaming}
                               filterManager={filterManager}
                               llmOverrideManager={llmOverrideManager}
                               files={currentMessageFiles}

@@ -156,6 +156,7 @@ class Answer:
 
         self._return_contexts = return_contexts
         self.skip_gen_ai_answer_generation = skip_gen_ai_answer_generation
+        self._is_generating = True
 
     def _update_prompt_builder_for_search_tool(
         self, prompt_builder: AnswerPromptBuilder, final_context_documents: list[LlmDoc]
@@ -229,9 +230,6 @@ class Answer:
                 tools=final_tool_definitions if final_tool_definitions else None,
                 tool_choice="required" if self.force_use_tool.force_use else None,
             ):
-                if self.is_connected is not None and not self.is_connected():
-                    return
-
                 if isinstance(message, AIMessageChunk) and (
                     message.tool_call_chunks or message.tool_calls
                 ):
@@ -298,12 +296,15 @@ class Answer:
             yield tool_runner.tool_final_result()
 
             prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
-            yield from message_generator_to_string_generator(
+            for token in message_generator_to_string_generator(
                 self.llm.stream(
                     prompt=prompt,
                     tools=[tool.tool_definition() for tool in self.tools],
                 )
-            )
+            ):
+                if not self.is_generating:
+                    return
+                yield token
 
             return
 
@@ -384,9 +385,13 @@ class Answer:
                 )
             )
             prompt = prompt_builder.build()
-            yield from message_generator_to_string_generator(
+            for token in message_generator_to_string_generator(
                 self.llm.stream(prompt=prompt)
-            )
+            ):
+                if not self.is_generating:
+                    return
+                yield token
+
             return
 
         tool, tool_args = chosen_tool_and_args
@@ -440,7 +445,12 @@ class Answer:
         yield final
 
         prompt = prompt_builder.build()
-        yield from message_generator_to_string_generator(self.llm.stream(prompt=prompt))
+        for token in message_generator_to_string_generator(
+            self.llm.stream(prompt=prompt)
+        ):
+            if not self.is_generating:
+                return
+            yield token
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
@@ -456,6 +466,7 @@ class Answer:
             and not self.skip_explicit_tool_calling
             else self._raw_output_for_non_explicit_tool_calling_llms()
         )
+        print(output_generator)
 
         def _process_stream(
             stream: Iterator[ToolCallKickoff | ToolResponse | str],
@@ -543,3 +554,13 @@ class Answer:
                 citations.append(packet)
 
         return citations
+
+    @property
+    def is_generating(self) -> list[CitationInfo]:
+        if not self._is_generating:
+            return False
+
+        if self.is_connected is not None:
+            self._is_generating = self.is_connected()
+        print(self._is_generating)
+        return self._is_generating

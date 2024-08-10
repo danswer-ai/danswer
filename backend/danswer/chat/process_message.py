@@ -453,7 +453,12 @@ def stream_chat_message_objects(
                 use_sections=new_msg_req.chunks_above > 0
                 or new_msg_req.chunks_below > 0,
             )
-        reserved_message_id = reserve_message_id(db_session=db_session)
+        reserved_message_id = reserve_message_id(
+            db_session=db_session,
+            chat_session_id=chat_session_id,
+            parent_message=user_message.id,
+            message_type=MessageType.ASSISTANT,
+        )
         yield MessageResponseIDInfo(
             user_message_id=user_message.id if user_message else None,
             reserved_assistant_message_id=reserved_message_id,
