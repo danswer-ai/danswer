@@ -36,7 +36,8 @@ class UserGroup(BaseModel):
                     is_verified=user.is_verified,
                     role=user.role,
                     preferences=UserPreferences(
-                        chosen_assistants=user.chosen_assistants
+                        default_model=user.default_model,
+                        chosen_assistants=user.chosen_assistants,
                     ),
                 )
                 for user in user_group_model.users

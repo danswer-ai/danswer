@@ -63,8 +63,10 @@ import Dropzone from "react-dropzone";
 import {
   checkLLMSupportsImageInput,
   getFinalLLM,
+  destructureValue,
   getLLMProviderOverrideForPersona,
 } from "@/lib/llm/utils";
+
 import { ChatInputBar } from "./input/ChatInputBar";
 import { useChatContext } from "@/components/context/ChatContext";
 import { v4 as uuidv4 } from "uuid";
@@ -76,6 +78,7 @@ import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
+import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -165,13 +168,15 @@ export function ChatPage({
       availableAssistants.find((assistant) => assistant.id === assistantId)
     );
   };
-  const liveAssistant =
-    selectedAssistant || filteredAssistants[0] || availableAssistants[0];
 
   const llmOverrideManager = useLlmOverride(
+    user?.preferences.default_model,
     selectedChatSession,
     defaultTemperature
   );
+
+  const liveAssistant =
+    selectedAssistant || filteredAssistants[0] || availableAssistants[0];
 
   useEffect(() => {
     const personaDefault = getLLMProviderOverrideForPersona(
@@ -181,6 +186,10 @@ export function ChatPage({
 
     if (personaDefault) {
       llmOverrideManager.setLlmOverride(personaDefault);
+    } else if (user?.preferences.default_model) {
+      llmOverrideManager.setLlmOverride(
+        destructureValue(user?.preferences.default_model)
+      );
     }
   }, [liveAssistant]);
 
@@ -785,7 +794,9 @@ export function ChatPage({
 
     const currentAssistantId = alternativeAssistantOverride
       ? alternativeAssistantOverride.id
-      : (alternativeAssistant?.id ?? liveAssistant.id);
+      : alternativeAssistant
+        ? alternativeAssistant.id
+        : liveAssistant.id;
 
     resetInputBar();
 
@@ -831,10 +842,14 @@ export function ChatPage({
         queryOverride,
         forceSearch,
 
-        modelProvider: llmOverrideManager.llmOverride.name || undefined,
+        modelProvider:
+          llmOverrideManager.llmOverride.name ||
+          llmOverrideManager.globalDefault.name ||
+          undefined,
         modelVersion:
           llmOverrideManager.llmOverride.modelName ||
           searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
+          llmOverrideManager.globalDefault.modelName ||
           undefined,
         temperature: llmOverrideManager.temperature || undefined,
         systemPromptOverride:
@@ -958,6 +973,7 @@ export function ChatPage({
         completeMessageMapOverride: frozenMessageMap,
       });
     }
+
     setIsStreaming(false);
     if (isNewSession) {
       if (finalMessage) {
@@ -1151,6 +1167,7 @@ export function ChatPage({
   });
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
+  const [settingsToggled, setSettingsToggled] = useState(false);
 
   const currentPersona = alternativeAssistant || liveAssistant;
 
@@ -1185,6 +1202,8 @@ export function ChatPage({
       <InstantSSRAutoRefresh />
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
+      {popup}
+
       <ChatPopup />
       {currentFeedback && (
         <FeedbackModal
@@ -1199,6 +1218,15 @@ export function ChatPage({
             );
             setCurrentFeedback(null);
           }}
+        />
+      )}
+
+      {settingsToggled && (
+        <SetDefaultModelModal
+          setLlmOverride={llmOverrideManager.setGlobalDefault}
+          defaultModel={user?.preferences.default_model!}
+          llmProviders={llmProviders}
+          onClose={() => setSettingsToggled(false)}
         />
       )}
       {sharingModalVisible && chatSessionIdRef.current !== null && (
@@ -1258,8 +1286,6 @@ export function ChatPage({
             ref={masterFlexboxRef}
             className="flex h-full w-full overflow-x-hidden"
           >
-            {popup}
-
             <div className="flex h-full flex-col w-full">
               {liveAssistant && (
                 <FunctionalHeader
@@ -1641,6 +1667,7 @@ export function ChatPage({
                             )}
 
                             <ChatInputBar
+                              openModelSettings={() => setSettingsToggled(true)}
                               inputPrompts={userInputPrompts}
                               showDocs={() => setDocumentSelection(true)}
                               selectedDocuments={selectedDocuments}
