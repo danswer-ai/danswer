@@ -181,7 +181,6 @@ export async function* sendMessage({
       if (!event) break;
       try {
         const data = JSON.parse(event.data) as PacketType;
-        console.log(event.data);
         yield [data];
       } catch (error) {
         console.error("Error parsing SSE data:", error);
