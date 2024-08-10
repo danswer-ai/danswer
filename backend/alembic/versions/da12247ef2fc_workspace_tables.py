@@ -276,9 +276,7 @@ def downgrade() -> None:
     op.create_table(
         "slack_bot_config",
         sa.Column("id", sa.INTEGER(), autoincrement=True, nullable=False),
-        sa.Column(
-            "persona_id", sa.INTEGER(), autoincrement=False, nullable=True
-        ),
+        sa.Column("persona_id", sa.INTEGER(), autoincrement=False, nullable=True),
         sa.Column(
             "channel_config",
             postgresql.JSONB(astext_type=sa.Text()),

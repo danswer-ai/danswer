@@ -3,11 +3,34 @@ import json
 from enum import Enum as PyEnum
 from typing import Any
 from typing import Literal
-from typing import NotRequired
 from typing import Optional
 from typing import TypedDict
 from uuid import UUID
 
+from danswer.auth.schemas import UserRole
+from danswer.configs.constants import DEFAULT_BOOST
+from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import FileOrigin
+from danswer.configs.constants import MessageType
+from danswer.configs.constants import SearchFeedbackType
+from danswer.configs.constants import TokenRateLimitScope
+from danswer.connectors.models import InputType
+from danswer.db.enums import ChatSessionSharedStatus
+from danswer.db.enums import DefaultPage
+from danswer.db.enums import IndexingStatus
+from danswer.db.enums import IndexModelStatus
+from danswer.db.enums import InstanceSubscriptionPlan
+from danswer.db.enums import TaskStatus
+from danswer.db.enums import WorkspaceSubscriptionPlan
+from danswer.db.pydantic_type import PydanticType
+from danswer.dynamic_configs.interface import JSON_ro
+from danswer.file_store.models import FileDescriptor
+from danswer.llm.override_models import LLMOverride
+from danswer.llm.override_models import PromptOverride
+from danswer.search.enums import RecencyBiasSetting
+from danswer.search.enums import SearchType
+from danswer.utils.encryption import decrypt_bytes_to_string
+from danswer.utils.encryption import encrypt_string_to_bytes
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseOAuthAccountTableUUID
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
@@ -31,31 +54,6 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import LargeBinary
 from sqlalchemy.types import TypeDecorator
-
-from danswer.auth.schemas import UserRole
-from danswer.configs.constants import DEFAULT_BOOST
-from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import FileOrigin
-from danswer.configs.constants import MessageType
-from danswer.configs.constants import SearchFeedbackType
-from danswer.configs.constants import TokenRateLimitScope
-from danswer.connectors.models import InputType
-from danswer.db.enums import ChatSessionSharedStatus
-from danswer.db.enums import IndexingStatus
-from danswer.db.enums import IndexModelStatus
-from danswer.db.enums import TaskStatus
-from danswer.db.enums import WorkspaceSubscriptionPlan
-from danswer.db.enums import InstanceSubscriptionPlan
-from danswer.db.enums import DefaultPage
-from danswer.db.pydantic_type import PydanticType
-from danswer.dynamic_configs.interface import JSON_ro
-from danswer.file_store.models import FileDescriptor
-from danswer.llm.override_models import LLMOverride
-from danswer.llm.override_models import PromptOverride
-from danswer.search.enums import RecencyBiasSetting
-from danswer.search.enums import SearchType
-from danswer.utils.encryption import decrypt_bytes_to_string
-from danswer.utils.encryption import encrypt_string_to_bytes
 
 
 class Base(DeclarativeBase):
@@ -140,9 +138,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     custom_tools: Mapped[list["Tool"]] = relationship("Tool", back_populates="user")
 
     workspace: Mapped[list["Workspace"]] = relationship(
-        "Workspace",
-        secondary="workspace__users",
-        back_populates="user"
+        "Workspace", secondary="workspace__users", back_populates="user"
     )
 
 
@@ -1078,6 +1074,7 @@ AllowedAnswerFilters = (
     Literal["well_answered_postfilter"] | Literal["questionmark_prefilter"]
 )
 
+
 class TaskQueueState(Base):
     # Currently refers to Celery Tasks
     __tablename__ = "task_queue_jobs"
@@ -1242,6 +1239,7 @@ class UserGroup(Base):
         viewonly=True,
     )
 
+
 """Tables related to Token Rate Limiting
 NOTE: `TokenRateLimit` is partially an MIT feature (global rate limit)
 """
@@ -1394,46 +1392,52 @@ class UsageReport(Base):
 Workspace Tables
 """
 
+
 class Workspace(Base):
     __tablename__ = "workspace"
 
     workspace_id: Mapped[int] = mapped_column(primary_key=True)
-    instance_id: Mapped[int | None] = mapped_column(ForeignKey("instance.instance_id"), nullable=True)
+    instance_id: Mapped[int | None] = mapped_column(
+        ForeignKey("instance.instance_id"), nullable=True
+    )
     Workspace_name: Mapped[str] = mapped_column(Text)
     custom_logo: Mapped[str] = mapped_column(Text)
     custom_header_logo: Mapped[str] = mapped_column(Text)
 
     user: Mapped[list[User]] = relationship(
-        "User",
-        secondary="workspace__users",
-        back_populates="workspace"
+        "User", secondary="workspace__users", back_populates="workspace"
     )
 
     groups: Mapped[list["UserGroup"]] = relationship(
-        "UserGroup",
-        secondary="workspace__user_group", 
-        back_populates="workspace"
+        "UserGroup", secondary="workspace__user_group", back_populates="workspace"
     )
-    
-    workspace_settings: Mapped["WorkspaceSettings"] = relationship("WorkspaceSettings", back_populates="workspace")
+
+    workspace_settings: Mapped["WorkspaceSettings"] = relationship(
+        "WorkspaceSettings", back_populates="workspace"
+    )
+
 
 class WorkspaceSettings(Base):
     __tablename__ = "workspace_settings"
 
-    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspace.workspace_id"), primary_key=True)
-    chat_page_enabled: Mapped[bool] = mapped_column(Boolean, default=True) 
+    workspace_id: Mapped[int] = mapped_column(
+        ForeignKey("workspace.workspace_id"), primary_key=True
+    )
+    chat_page_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     search_page_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     default_page: Mapped[DefaultPage] = mapped_column(
         Enum(DefaultPage, native_enum=False)
     )
     maximum_chat_retention_days: Mapped[int] = mapped_column(Integer)
-    subscription_plan:  Mapped[WorkspaceSubscriptionPlan] = mapped_column(
+    subscription_plan: Mapped[WorkspaceSubscriptionPlan] = mapped_column(
         Enum(WorkspaceSubscriptionPlan, native_enum=False)
     )
     number_of_users: Mapped[int] = mapped_column(Integer)
     storage_limit: Mapped[int] = mapped_column(Integer)
-    
-    workspace: Mapped[Workspace] = relationship("Workspace", back_populates="workspace_settings")
+
+    workspace: Mapped[Workspace] = relationship(
+        "Workspace", back_populates="workspace_settings"
+    )
 
 
 class Instance(Base):
@@ -1441,7 +1445,7 @@ class Instance(Base):
 
     instance_id: Mapped[int] = mapped_column(primary_key=True)
     instance_name: Mapped[str] = mapped_column(Text)
-    subscription_plan:  Mapped[InstanceSubscriptionPlan] = mapped_column(
+    subscription_plan: Mapped[InstanceSubscriptionPlan] = mapped_column(
         Enum(InstanceSubscriptionPlan, native_enum=False)
     )
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
@@ -1450,13 +1454,18 @@ class Instance(Base):
 class WorkspaceUsers(Base):
     __tablename__ = "workspace__users"
 
-    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspace.workspace_id"), primary_key=True)
+    workspace_id: Mapped[int] = mapped_column(
+        ForeignKey("workspace.workspace_id"), primary_key=True
+    )
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
 
 
 class WorkspaceUserGroup(Base):
     __tablename__ = "workspace__user_group"
 
-    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspace.workspace_id"), primary_key=True)
-    user_group_id: Mapped[int] = mapped_column(ForeignKey("user_group.id"), primary_key=True)
-
+    workspace_id: Mapped[int] = mapped_column(
+        ForeignKey("workspace.workspace_id"), primary_key=True
+    )
+    user_group_id: Mapped[int] = mapped_column(
+        ForeignKey("user_group.id"), primary_key=True
+    )

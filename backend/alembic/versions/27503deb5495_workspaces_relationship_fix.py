@@ -32,7 +32,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("workspace_id", "user_group_id"),
     )
-    #op.drop_constraint("chat_message_id_key", "chat_message", type_="unique")
+    # op.drop_constraint("chat_message_id_key", "chat_message", type_="unique")
     # ### end Alembic commands ###
 
 
