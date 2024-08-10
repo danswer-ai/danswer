@@ -1,6 +1,8 @@
 from pydantic import BaseModel
+from pydantic import Field
 
 from danswer.configs.constants import DocumentSource
+from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import SearchType
 from danswer.search.models import ChunkContext
@@ -44,6 +46,16 @@ class BasicCreateChatMessageRequest(ChunkContext):
     search_doc_ids: list[int] | None = None
 
 
+class BasicCreateChatMessageWithHistoryRequest(ChunkContext):
+    # Last element is the new query. All previous elements are historical context
+    messages: list[ThreadMessage]
+    prompt_id: int | None
+    persona_id: int
+    retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
+    query_override: str | None = None
+    skip_rerank: bool | None = None
+
+
 class SimpleDoc(BaseModel):
     id: str
     semantic_identifier: str
@@ -60,3 +72,4 @@ class ChatBasicResponse(BaseModel):
     simple_search_docs: list[SimpleDoc] | None = None
     error_msg: str | None = None
     message_id: int | None = None
+    llm_chunks_indices: list[int] | None = None
