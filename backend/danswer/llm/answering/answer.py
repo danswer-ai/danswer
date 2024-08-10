@@ -555,7 +555,7 @@ class Answer:
         return citations
 
     @property
-    def is_generating(self) -> list[CitationInfo]:
+    def is_generating(self) -> bool:
         if not self._is_generating:
             return False
 

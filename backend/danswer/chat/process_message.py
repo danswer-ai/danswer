@@ -456,7 +456,9 @@ def stream_chat_message_objects(
         reserved_message_id = reserve_message_id(
             db_session=db_session,
             chat_session_id=chat_session_id,
-            parent_message=user_message.id,
+            parent_message=user_message.id
+            if user_message is not None
+            else parent_message.id,
             message_type=MessageType.ASSISTANT,
         )
         yield MessageResponseIDInfo(
