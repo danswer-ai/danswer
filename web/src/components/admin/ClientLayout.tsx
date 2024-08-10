@@ -173,15 +173,6 @@ export function ClientLayout({
                   {
                     name: (
                       <div className="flex">
-                        <EmbeddingIconSkeleton />
-                        <div className="ml-1">Embedding</div>
-                      </div>
-                    ),
-                    link: "/admin/configuration/embedding",
-                  },
-                  {
-                    name: (
-                      <div className="flex">
                         <SearchIcon />
                         <div className="ml-1">Search Settings</div>
                       </div>

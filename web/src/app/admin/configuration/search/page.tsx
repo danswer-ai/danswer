@@ -3,7 +3,7 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Button, Text, Title } from "@tremor/react";
+import { Button, Select, SelectItem, Switch, Text, Title } from "@tremor/react";
 import useSWR, { mutate } from "swr";
 import { ModelPreview } from "./components/ModelSelector";
 import { useState } from "react";
@@ -40,6 +40,8 @@ export interface EmbeddingDetails {
   name: string;
 }
 import { EmbeddingIcon, PackageIcon } from "@/components/icons/icons";
+import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
+import { TextFormField } from "@/components/admin/connectors/Field";
 
 function Main() {
   const [openToggle, setOpenToggle] = useState(true);
@@ -71,6 +73,10 @@ function Main() {
     []
   );
 
+  const [rerankingOption, setRerankingOption] = useState("cohere");
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [llmChunkFilter, setLlmChunkFilter] = useState(false);
+  const [queryExpansion, setQueryExpansion] = useState(false);
   const [showDeleteCredentialsModal, setShowDeleteCredentialsModal] =
     useState<boolean>(false);
   const [isCancelling, setIsCancelling] = useState<boolean>(false);
@@ -264,6 +270,54 @@ function Main() {
 
   return (
     <div className="h-screen">
+      <>
+        <Title className="mb-2">Reranking Options</Title>
+        <Text className="mb-4">
+          Choose how you want to rerank search results for better accuracy.
+        </Text>
+        <Select
+          value={rerankingOption}
+          onValueChange={setRerankingOption}
+          className="max-w-xs"
+        >
+          <SelectItem value="none">No reranking</SelectItem>
+          <SelectItem value="local">Local reranking</SelectItem>
+          <SelectItem value="cohere">
+            Cohere reranking (default if Cohere is used)
+          </SelectItem>
+        </Select>
+        {/* <TextFormField type="password" label=""/> */}
+
+        <Title className="mb-2 mt-6">Advanced Options</Title>
+        <AdvancedOptionsToggle
+          showAdvancedOptions={showAdvancedOptions}
+          setShowAdvancedOptions={setShowAdvancedOptions}
+        />
+
+        {showAdvancedOptions && (
+          <div className="mt-4 space-y-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="llm-chunk-filter"
+                name="llm-chunk-filter"
+                checked={llmChunkFilter}
+                onChange={setLlmChunkFilter}
+              />
+              <Text>LLM chunk filter</Text>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="query-expansion"
+                name="query-expansion"
+                checked={queryExpansion}
+                onChange={setQueryExpansion}
+              />
+              <Text>Query expansion</Text>
+            </div>
+          </div>
+        )}
+      </>
+
       <Text>
         These deep learning models are used to generate vector representations
         of your documents, which then power Danswer&apos;s search.
@@ -524,7 +578,7 @@ function Page() {
   return (
     <div className="mx-auto container">
       <AdminPageTitle
-        title="Embedding"
+        title="Search Settings"
         icon={<EmbeddingIcon size={32} className="my-auto" />}
       />
 

@@ -19,7 +19,7 @@ import {
 import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { personaComparator } from "../admin/assistants/lib";
-import { FullEmbeddingModelResponse } from "../admin/configuration/embedding/components/types";
+import { FullEmbeddingModelResponse } from "../admin/configuration/search/components/types";
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatPopup } from "../chat/ChatPopup";
