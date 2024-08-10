@@ -189,36 +189,37 @@ export async function* sendMessage({
     use_existing_user_message: useExistingUserMessage,
   });
 
-  const eventSource = new EventSource(
-    `/api/chat/send-message?body=${encodeURIComponent(body)}`
-  );
+  const response = await fetch(`/api/chat/send-message`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body,
+    signal,
+  });
 
-  try {
-    while (true) {
-      if (signal?.aborted) {
-        throw new Error("AbortError");
-      }
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
 
-      const event = await new Promise<MessageEvent | null>(
-        (resolve, reject) => {
-          eventSource.onmessage = (e) => resolve(e);
-          eventSource.onerror = (e) => reject(e);
-          signal?.addEventListener("abort", () =>
-            reject(new Error("AbortError"))
-          );
-        }
-      );
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
 
-      if (!event) break;
+  while (true) {
+    const { done, value } = await reader!.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value);
+    const lines = chunk.split("\n").filter((line) => line.trim() !== "");
+
+    for (const line of lines) {
       try {
-        const data = JSON.parse(event.data) as PacketType;
+        const data = JSON.parse(line) as PacketType;
         yield [data];
       } catch (error) {
         console.error("Error parsing SSE data:", error);
       }
     }
-  } finally {
-    eventSource.close();
   }
 }
 

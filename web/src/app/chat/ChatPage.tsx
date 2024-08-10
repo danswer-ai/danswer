@@ -929,6 +929,7 @@ export function ChatPage({
               frozenMessageMap,
               frozenSessionId,
             } = initialFetchDetails;
+            console.log(initialFetchDetails);
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {

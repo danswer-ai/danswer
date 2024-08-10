@@ -8,9 +8,9 @@ from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from sse_starlette.sse import EventSourceResponse
 
 from danswer.auth.users import current_user
 from danswer.chat.chat_utils import create_chat_chain
@@ -277,7 +277,7 @@ async def handle_new_chat_message(
     request: Request,
     user: User | None = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
-) -> EventSourceResponse:
+) -> StreamingResponse:
     if request.method == "GET":
         body = request.query_params.get("body")
         if not body:
@@ -321,7 +321,7 @@ async def handle_new_chat_message(
             logger.exception(f"Error in chat message streaming: {e}")
             yield {"error": str(e)}
 
-    return EventSourceResponse(event_generator())
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @router.put("/set-message-as-latest")
