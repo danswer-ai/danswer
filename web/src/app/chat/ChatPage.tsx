@@ -741,6 +741,7 @@ export function ChatPage({
       return;
     }
 
+    setChatState("loading");
     const controller = new AbortController();
     setAbortController(controller);
 
@@ -780,13 +781,13 @@ export function ChatPage({
           "Failed to re-send message - please refresh the page and try again.",
         type: "error",
       });
+      setChatState("input");
       return;
     }
     let currMessage = messageToResend ? messageToResend.message : message;
     if (messageOverride) {
       currMessage = messageOverride;
     }
-    setChatState("loading");
 
     setSubmittedMessage(currMessage);
     const currMessageHistory =
@@ -939,7 +940,6 @@ export function ChatPage({
               assistant_message_id,
               user_message_id,
             };
-            setChatState("streaming");
           } else {
             const {
               user_message_id,
@@ -947,6 +947,12 @@ export function ChatPage({
               frozenMessageMap,
               frozenSessionId,
             } = initialFetchDetails;
+            setChatState((chatState) => {
+              if (chatState == "loading") {
+                return "streaming";
+              }
+              return chatState;
+            });
 
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
@@ -1737,34 +1743,31 @@ export function ChatPage({
                                   content={submittedMessage}
                                 />
                               )}
-                            {chatState != "input" &&
-                              messageHistory.length > 0 &&
-                              messageHistory[messageHistory.length - 1].type ===
-                                "user" && (
-                                <div
-                                  key={`${messageHistory.length}-${chatSessionIdRef.current}`}
-                                >
-                                  <AIMessage
-                                    currentPersona={liveAssistant}
-                                    alternativeAssistant={
-                                      alternativeGeneratingAssistant ??
-                                      alternativeAssistant
-                                    }
-                                    messageId={null}
-                                    personaName={liveAssistant.name}
-                                    content={
-                                      <div
-                                        key={"Generating"}
-                                        className="mr-auto relative inline-block"
-                                      >
-                                        <span className="text-sm loading-text">
-                                          Thinking...
-                                        </span>
-                                      </div>
-                                    }
-                                  />
-                                </div>
-                              )}
+                            {chatState == "loading" && (
+                              <div
+                                key={`${messageHistory.length}-${chatSessionIdRef.current}`}
+                              >
+                                <AIMessage
+                                  currentPersona={liveAssistant}
+                                  alternativeAssistant={
+                                    alternativeGeneratingAssistant ??
+                                    alternativeAssistant
+                                  }
+                                  messageId={null}
+                                  personaName={liveAssistant.name}
+                                  content={
+                                    <div
+                                      key={"Generating"}
+                                      className="mr-auto relative inline-block"
+                                    >
+                                      <span className="text-sm loading-text">
+                                        Thinking...
+                                      </span>
+                                    </div>
+                                  }
+                                />
+                              </div>
+                            )}
 
                             {currentPersona &&
                               currentPersona.starter_messages &&

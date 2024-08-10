@@ -605,11 +605,13 @@ export function ChatInputBar({
             </div>
 
             <div className="absolute bottom-2.5 mobile:right-4 desktop:right-10">
-              {chatState == "streaming" || chatState == "toolBuilding" ? (
+              {chatState == "streaming" ||
+              chatState == "toolBuilding" ||
+              chatState == "loading" ? (
                 <button
-                  className={`cursor-pointer ${chatState == "toolBuilding" ? "bg-background-400" : "bg-background-800"}  h-[28px] w-[28px] rounded-full`}
+                  className={`cursor-pointer ${chatState != "streaming" ? "bg-background-400" : "bg-background-800"}  h-[28px] w-[28px] rounded-full`}
                   onClick={stopGenerating}
-                  disabled={chatState == "toolBuilding"}
+                  disabled={chatState != "streaming"}
                 >
                   <StopGeneratingIcon
                     size={10}
