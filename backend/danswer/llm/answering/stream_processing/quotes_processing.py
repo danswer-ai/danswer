@@ -234,9 +234,11 @@ def process_model_tokens(
             if m:
                 found_answer_start = True
 
-                # Log cases where LLM begins with a long pre-amble
-                if is_json_prompt and len(model_output) > 40:
+                # Prevent heavy cases of hallucinations where model is not even providing a json until later
+                if is_json_prompt and len(model_output) > 70:
                     logger.warning("LLM did not produce json as prompted")
+                    found_answer_end = True
+                    continue
 
                 remaining = model_output[m.end() :]
                 if len(remaining) > 0:
