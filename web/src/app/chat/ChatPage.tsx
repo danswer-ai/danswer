@@ -921,7 +921,7 @@ export function ChatPage({
               if (documents && documents.length > 0) {
                 // point to the latest message (we don't know the messageId yet, which is why
                 // we have to use -1)
-                setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
+                setSelectedMessageForDocDisplay(user_message_id);
               }
             } else if (Object.hasOwn(packet, "tool_name")) {
               toolCalls = [
