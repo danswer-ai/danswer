@@ -8,6 +8,10 @@ class PageType(str, Enum):
     SEARCH = "search"
 
 
+class Notification(BaseModel):
+    notif_name: str | None
+
+
 class Settings(BaseModel):
     """General settings"""
 
@@ -35,3 +39,7 @@ class Settings(BaseModel):
             raise ValueError(
                 "The default page cannot be 'search' if the search page is disabled."
             )
+
+
+class UserSettings(Notification, Settings):
+    """User-specific settings combining Notification and general Settings"""

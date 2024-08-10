@@ -2,6 +2,7 @@ from typing import cast
 
 from fastapi import HTTPException
 from sqlalchemy import and_
+from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import aliased
@@ -19,6 +20,14 @@ from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+
+def check_connectors_exist(db_session: Session) -> bool:
+    # Connector 0 is created on server startup as a default for ingestion
+    # it will always exist and we don't need to count it for this
+    stmt = select(exists(Connector).where(Connector.id > 0))
+    result = db_session.execute(stmt)
+    return result.scalar() or False
 
 
 def fetch_connectors(

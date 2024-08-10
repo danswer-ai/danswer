@@ -73,6 +73,22 @@ DANSWER_API_KEY_PREFIX = "API_KEY__"
 DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN = "danswerapikey.ai"
 UNNAMED_KEY_PLACEHOLDER = "Unnamed"
 
+# KV store keys (some are defined closer to where they are used)
+KV_REINDEX_KEY = "needs_reindexing"
+KV_USER_STORE_KEY = "INVITED_USERS"
+KV_NO_AUTH_USER_PREFERENCES_KEY = "no_auth_user_preferences"
+KV_CRED_KEY = "credential_id_{}"
+KV_GMAIL_CRED_KEY = "gmail_app_credential"
+KV_GMAIL_SERVICE_ACCOUNT_KEY = "gmail_service_account_key"
+KV_GOOGLE_DRIVE_CRED_KEY = "google_drive_app_credential"
+KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY = "google_drive_service_account_key"
+KV_SLACK_BOT_TOKENS_CONFIG_KEY = "slack_bot_tokens_config_key"
+KV_GEN_AI_KEY_CHECK_TIME = "genai_api_key_last_check_time"
+KV_SETTINGS_KEY = "danswer_settings"
+KV_CUSTOMER_UUID_KEY = "customer_uuid"
+KV_ENTERPRISE_SETTINGS_KEY = "danswer_enterprise_settings"
+KV_CUSTOM_ANALYTICS_SCRIPT_KEY = "__custom_analytics_script__"
+
 
 class DocumentSource(str, Enum):
     # Special case, document passed in via Danswer APIs without specifying a source type
