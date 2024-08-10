@@ -466,7 +466,6 @@ class Answer:
             and not self.skip_explicit_tool_calling
             else self._raw_output_for_non_explicit_tool_calling_llms()
         )
-        print(output_generator)
 
         def _process_stream(
             stream: Iterator[ToolCallKickoff | ToolResponse | str],
@@ -562,5 +561,5 @@ class Answer:
 
         if self.is_connected is not None:
             self._is_generating = self.is_connected()
-        print(self._is_generating)
+
         return self._is_generating
