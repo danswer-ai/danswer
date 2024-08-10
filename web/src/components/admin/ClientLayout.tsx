@@ -21,6 +21,7 @@ import {
   EmbeddingIconSkeleton,
   AssistantsIconSkeleton,
   ClosedBookIcon,
+  SearchIcon,
 } from "@/components/icons/icons";
 
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
@@ -157,7 +158,7 @@ export function ClientLayout({
                 ],
               },
               {
-                name: "Model Configs",
+                name: "Configuration",
                 items: [
                   {
                     name: (
@@ -167,7 +168,7 @@ export function ClientLayout({
                         <div className="ml-1">LLM</div>
                       </div>
                     ),
-                    link: "/admin/models/llm",
+                    link: "/admin/configuration/llm",
                   },
                   {
                     name: (
@@ -176,7 +177,16 @@ export function ClientLayout({
                         <div className="ml-1">Embedding</div>
                       </div>
                     ),
-                    link: "/admin/models/embedding",
+                    link: "/admin/configuration/embedding",
+                  },
+                  {
+                    name: (
+                      <div className="flex">
+                        <SearchIcon />
+                        <div className="ml-1">Search Settings</div>
+                      </div>
+                    ),
+                    link: "/admin/configuration/search",
                   },
                 ],
               },
