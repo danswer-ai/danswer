@@ -1,5 +1,5 @@
 "use client";
-
+import { FixedSizeList as List } from "react-window";
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 import {
   BackendChatSession,
@@ -80,10 +80,11 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
+import { MessageRenderer } from "./MessageHistory";
 
-const TEMP_USER_MESSAGE_ID = -1;
-const TEMP_ASSISTANT_MESSAGE_ID = -2;
-const SYSTEM_MESSAGE_ID = -3;
+export const TEMP_USER_MESSAGE_ID = -1;
+export const TEMP_ASSISTANT_MESSAGE_ID = -2;
+export const SYSTEM_MESSAGE_ID = -3;
 
 export function ChatPage({
   toggle,
@@ -468,7 +469,7 @@ export function ChatPage({
     useState<RegenerationState | null>(null);
 
   // const [isLoadingResponse, setIsLoadingResponse] = useState(false);
-  // const [isStreaming, setIsStreaming] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
 
@@ -1442,7 +1443,6 @@ export function ChatPage({
                         className={`h-full w-full relative flex-auto transition-margin duration-300 overflow-x-auto mobile:pb-12 desktop:pb-[100px]`}
                         {...getRootProps()}
                       >
-                        {/* <input {...getInputProps()} /> */}
                         <div
                           className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
                           ref={scrollableDivRef}
@@ -1465,7 +1465,65 @@ export function ChatPage({
                               (hasPerformedInitialScroll ? "" : "invisible")
                             }
                           >
-                            {messageHistory.map((message, i) => {
+                            <MessageRenderer
+                              ref={lastMessageRef}
+                              // message={message}
+                              completeMessageDetail={completeMessageDetail}
+                              onSubmit={onSubmit}
+                              upsertToCompleteMessageMap={
+                                upsertToCompleteMessageMap
+                              }
+                              setSelectedMessageForDocDisplay={
+                                setSelectedMessageForDocDisplay
+                              }
+                              setMessageAsLatest={setMessageAsLatest}
+                              setCompleteMessageDetail={
+                                setCompleteMessageDetail
+                              }
+                              selectedMessageForDocDisplay={
+                                selectedMessageForDocDisplay
+                              }
+                              messageHistory={messageHistory}
+                              isStreaming={isStreaming}
+                              setCurrentFeedback={setCurrentFeedback}
+                              liveAssistant={liveAssistant}
+                              availableAssistants={availableAssistants}
+                              toggleDocumentSelectionAspects={
+                                toggleDocumentSelectionAspects
+                              }
+                              selectedDocuments={selectedDocuments}
+                              setPopup={setPopup}
+                              retrievalEnabled={retrievalEnabled}
+                            />
+
+                            {/* <List
+                              height={600} // Adjust this value based on your layout
+                              itemCount={messageHistory.length}
+                              itemSize={150} // Adjust this value based on your average message height
+                              width="100%"
+
+                                messageHistory,
+                                completeMessageDetail,
+                                message,
+                                onSubmit,
+                                upsertToCompleteMessageMap,
+                                setSelectedMessageForDocDisplay,
+                                setMessageAsLatest,
+                                setCompleteMessageDetail,
+                                selectedMessageForDocDisplay,
+                                isStreaming,
+                                setCurrentFeedback,
+                                liveAssistant,
+                                availableAssistants,
+                                toggleDocumentSelectionAspects,
+                                selectedDocuments,
+                                setPopup,
+                                retrievalEnabled
+                              }}
+                            > */}
+                            {/* {MessageRenderer}
+                            </List> */}
+                            {/* {messageHistory.map((message, i) => {
                               const messageMap =
                                 completeMessageDetail.messageMap;
                               const messageReactComponentKey = `${i}-${completeMessageDetail.sessionId}`;
