@@ -459,6 +459,7 @@ export function ChatPage({
   const messageHistory = buildLatestMessageChain(
     completeMessageDetail.messageMap
   );
+  const [isLoadingResponse, setIsLoadingResponse] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
@@ -766,6 +767,7 @@ export function ChatPage({
       });
       return;
     }
+    setIsLoadingResponse(true);
 
     let currMessage = messageToResend ? messageToResend.message : message;
     if (messageOverride) {
@@ -791,7 +793,6 @@ export function ChatPage({
     resetInputBar();
     let messageUpdates: Message[] | null = null;
 
-    setIsStreaming(true);
     let answer = "";
     let query: string | null = null;
     let retrievalType: RetrievalType =
@@ -929,7 +930,8 @@ export function ChatPage({
               frozenMessageMap,
               frozenSessionId,
             } = initialFetchDetails;
-            console.log(initialFetchDetails);
+            setIsStreaming(true);
+
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {
@@ -1038,7 +1040,7 @@ export function ChatPage({
         completeMessageMapOverride: completeMessageDetail.messageMap,
       });
     }
-
+    setIsLoadingResponse(false);
     setIsStreaming(false);
     if (isNewSession) {
       if (finalMessage) {
@@ -1807,6 +1809,7 @@ export function ChatPage({
                               message={message}
                               setMessage={setMessage}
                               onSubmit={onSubmit}
+                              isLoadingResponse={isLoadingResponse}
                               isStreaming={isStreaming}
                               filterManager={filterManager}
                               llmOverrideManager={llmOverrideManager}

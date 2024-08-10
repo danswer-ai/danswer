@@ -47,6 +47,7 @@ export function ChatInputBar({
   isStreaming,
   filterManager,
   llmOverrideManager,
+  isLoadingResponse,
 
   // assistants
   selectedAssistant,
@@ -63,6 +64,7 @@ export function ChatInputBar({
   inputPrompts,
 }: {
   openModelSettings: () => void;
+  isLoadingResponse: boolean;
   stopGenerating: () => void;
   showDocs: () => void;
   selectedDocuments: DanswerDocument[];
@@ -623,10 +625,11 @@ export function ChatInputBar({
                       onSubmit();
                     }
                   }}
+                  disabled={isLoadingResponse}
                 >
                   <SendIcon
                     size={28}
-                    className={`text-emphasis text-white p-1 rounded-full ${message && !isStreaming} bg-background-800`}
+                    className={`text-emphasis text-white p-1 rounded-full ${message && !isStreaming} ${isLoadingResponse ? "bg-background-400" : "bg-background-800"} `}
                   />
                 </button>
               )}
