@@ -31,6 +31,10 @@ from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
+from danswer.utils.variable_functionality import (
+    fetch_versioned_implementation_with_fallback,
+)
+from danswer.utils.variable_functionality import noop_fallback
 
 logger = setup_logger()
 
@@ -144,16 +148,32 @@ def delete_connector_credential_pair(
         num_docs_deleted += len(documents)
 
     # clean up the rest of the related Postgres entities
+    # index attempts
     delete_index_attempts(
         db_session=db_session,
         connector_id=connector_id,
         credential_id=credential_id,
     )
+
+    # document sets
     delete_document_set_cc_pair_relationship__no_commit(
         db_session=db_session,
         connector_id=connector_id,
         credential_id=credential_id,
     )
+
+    # user groups
+    cleanup_user_groups = fetch_versioned_implementation_with_fallback(
+        "danswer.db.user_group",
+        "delete_user_group_cc_pair_relationship__no_commit",
+        noop_fallback,
+    )
+    cleanup_user_groups(
+        cc_pair_id=cc_pair.id,
+        db_session=db_session,
+    )
+
+    # finally, delete the cc-pair
     delete_connector_credential_pair__no_commit(
         db_session=db_session,
         connector_id=connector_id,

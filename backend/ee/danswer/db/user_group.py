@@ -2,10 +2,12 @@ from collections.abc import Sequence
 from operator import and_
 from uuid import UUID
 
+from sqlalchemy import delete
 from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Document
@@ -335,3 +337,25 @@ def delete_user_group(db_session: Session, user_group: UserGroup) -> None:
 
     db_session.delete(user_group)
     db_session.commit()
+
+
+def delete_user_group_cc_pair_relationship__no_commit(
+    cc_pair_id: int, db_session: Session
+) -> None:
+    """Deletes all rows from UserGroup__ConnectorCredentialPair where the
+    connector_credential_pair_id matches the given cc_pair_id.
+
+    Should be used very carefully (only for connectors that are being deleted)."""
+    cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
+    if not cc_pair:
+        raise ValueError(f"Connector Credential Pair '{cc_pair_id}' does not exist")
+
+    if cc_pair.status != ConnectorCredentialPairStatus.DELETING:
+        raise ValueError(
+            f"Connector Credential Pair '{cc_pair_id}' is not in the DELETING state"
+        )
+
+    delete_stmt = delete(UserGroup__ConnectorCredentialPair).where(
+        UserGroup__ConnectorCredentialPair.cc_pair_id == cc_pair_id,
+    )
+    db_session.execute(delete_stmt)

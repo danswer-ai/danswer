@@ -18,7 +18,6 @@ from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
-from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 logger = setup_logger()
 
@@ -183,12 +182,6 @@ def update_connector_credential_pair(
     )
 
 
-def _delete_connector_credential_pair_user_groups_relationship_no__commit(
-    db_session: Session, connector_id: int, credential_id: int
-) -> None:
-    pass
-
-
 def delete_connector_credential_pair__no_commit(
     db_session: Session,
     connector_id: int,
@@ -198,17 +191,6 @@ def delete_connector_credential_pair__no_commit(
         ConnectorCredentialPair.connector_id == connector_id,
         ConnectorCredentialPair.credential_id == credential_id,
     )
-
-    delete_connector_credential_pair__no_commit_fn = fetch_versioned_implementation(
-        "danswer.db.connector_credential_pair",
-        "_delete_connector_credential_pair_user_groups_relationship__no_commit",
-    )
-    delete_connector_credential_pair__no_commit_fn(
-        db_session=db_session,
-        connector_id=connector_id,
-        credential_id=credential_id,
-    )
-
     db_session.execute(stmt)
 
 
