@@ -50,7 +50,7 @@ from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.natural_language_processing.search_nlp_models import warm_up_encoders
+from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.server.manage.models import SlackBotTokens
@@ -470,7 +470,7 @@ if __name__ == "__main__":
                     with Session(get_sqlalchemy_engine()) as db_session:
                         embedding_model = get_current_db_embedding_model(db_session)
                         if embedding_model.cloud_provider_id is None:
-                            warm_up_encoders(
+                            warm_up_bi_encoder(
                                 embedding_model=embedding_model,
                                 model_server_host=MODEL_SERVER_HOST,
                                 model_server_port=MODEL_SERVER_PORT,
