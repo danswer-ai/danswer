@@ -18,6 +18,7 @@ from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.enums import EmbeddingProvider
 from shared_configs.enums import EmbedTextType
+from shared_configs.enums import RerankerProvider
 from shared_configs.model_server_models import Embedding
 from shared_configs.model_server_models import EmbedRequest
 from shared_configs.model_server_models import EmbedResponse
@@ -217,6 +218,7 @@ class RerankingModel:
     def __init__(
         self,
         model_name: str,
+        provider_type: RerankerProvider | None,
         api_key: str | None,
         model_server_host: str = MODEL_SERVER_HOST,
         model_server_port: int = MODEL_SERVER_PORT,
@@ -224,6 +226,7 @@ class RerankingModel:
         model_server_url = build_model_server_url(model_server_host, model_server_port)
         self.rerank_server_endpoint = model_server_url + "/encoder/cross-encoder-scores"
         self.model_name = model_name
+        self.provider_type = provider_type
         self.api_key = api_key
 
     def predict(self, query: str, passages: list[str]) -> list[float]:
@@ -231,6 +234,7 @@ class RerankingModel:
             query=query,
             documents=passages,
             model_name=self.model_name,
+            provider_type=self.provider_type,
             api_key=self.api_key,
         )
 

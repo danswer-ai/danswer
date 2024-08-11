@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 from shared_configs.enums import EmbeddingProvider
 from shared_configs.enums import EmbedTextType
+from shared_configs.enums import RerankerProvider
 
 Embedding = list[float]
 
@@ -27,6 +28,7 @@ class RerankRequest(BaseModel):
     query: str
     documents: list[str]
     model_name: str
+    provider_type: RerankerProvider | None
     api_key: str | None
 
 

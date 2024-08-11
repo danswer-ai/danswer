@@ -90,14 +90,15 @@ def semantic_reranking(
     """
     rerank_settings = query.rerank_settings
 
-    if not rerank_settings:
+    if not rerank_settings or not rerank_settings.rerank_model_name:
         # Should never reach this part of the flow without reranking settings
-        raise RuntimeError("Reranking settings not found")
+        raise RuntimeError("Reranking flow should not be running")
 
     chunks_to_rerank = chunks[: rerank_settings.num_rerank]
 
     cross_encoder = RerankingModel(
         model_name=rerank_settings.rerank_model_name,
+        provider_type=rerank_settings.provider_type,
         api_key=rerank_settings.api_key,
     )
 
@@ -258,7 +259,11 @@ def search_postprocessing(
 
     rerank_task_id = None
     sections_yielded = False
-    if search_query.rerank_settings:
+    if (
+        search_query.rerank_settings
+        and search_query.rerank_settings.rerank_model_name
+        and search_query.rerank_settings.num_rerank > 0
+    ):
         post_processing_tasks.append(
             FunctionCall(
                 rerank_sections,
