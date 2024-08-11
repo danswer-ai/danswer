@@ -21,7 +21,7 @@ MAX_METRICS_CONTENT = (
 
 
 class RerankingDetails(BaseModel):
-    model_name: str
+    rerank_model_name: str
     api_key: str | None
 
     # Set to 0 to disable reranking explicitly
@@ -40,7 +40,7 @@ class SavedSearchSettings(RerankingDetails):
 
     def to_reranking_detail(self) -> RerankingDetails:
         return RerankingDetails(
-            model_name=self.model_name,
+            rerank_model_name=self.rerank_model_name,
             api_key=self.api_key,
             num_rerank=self.num_rerank,
         )

@@ -97,7 +97,7 @@ def semantic_reranking(
     chunks_to_rerank = chunks[: rerank_settings.num_rerank]
 
     cross_encoder = RerankingModel(
-        model_name=rerank_settings.model_name,
+        model_name=rerank_settings.rerank_model_name,
         api_key=rerank_settings.api_key,
     )
 
