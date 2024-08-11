@@ -73,6 +73,9 @@ jobs:
 
       - name: Wait for service to be ready
         run: |
+          echo "Starting wait-for-service script..."
+          echo "Service URL: http://localhost:8080"
+          
           start_time=$(date +%s)
           timeout=300  # 5 minutes in seconds
           
@@ -86,6 +89,8 @@ jobs:
             fi
             
             response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080)
+            echo "HTTP response code: $response"
+      
             if [ "$response" = "200" ]; then
               echo "Service is ready!"
               break
@@ -94,6 +99,7 @@ jobs:
               sleep 5
             fi
           done
+          echo "Finished waiting for service."
 
       # - name: Install pytest
       #   run: pip install pytest
