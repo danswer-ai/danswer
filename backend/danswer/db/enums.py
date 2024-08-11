@@ -36,6 +36,6 @@ class ChatSessionSharedStatus(str, PyEnum):
 
 
 class ConnectorCredentialPairStatus(str, PyEnum):
-    ACTIVE = "active"
-    PAUSED = "paused"
-    DELETING = "deleting"
+    ACTIVE = "ACTIVE"
+    PAUSED = "PAUSED"
+    DELETING = "DELETING"

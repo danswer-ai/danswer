@@ -76,10 +76,10 @@ def delete_connector_credential_pair_batch(
             ]
 
             # maps document id to list of document set names
-            new_doc_sets_for_documents: dict[str, list[str]] = {
-                document_id_and_document_set_names_tuple[
-                    0
-                ]: document_id_and_document_set_names_tuple[1]
+            new_doc_sets_for_documents: dict[str, set[str]] = {
+                document_id_and_document_set_names_tuple[0]: set(
+                    document_id_and_document_set_names_tuple[1]
+                )
                 for document_id_and_document_set_names_tuple in fetch_document_sets_for_documents(
                     db_session=db_session,
                     document_ids=document_ids_to_update,
@@ -90,13 +90,10 @@ def delete_connector_credential_pair_batch(
             access_for_documents = get_access_for_documents(
                 document_ids=document_ids_to_update,
                 db_session=db_session,
-                cc_pair_to_delete=ConnectorCredentialPairIdentifier(
-                    connector_id=connector_id,
-                    credential_id=credential_id,
-                ),
             )
 
             # update Vespa
+            logger.debug(f"Updating documents: {document_ids_to_update}")
             update_requests = [
                 UpdateRequest(
                     document_ids=[document_id],
@@ -105,10 +102,9 @@ def delete_connector_credential_pair_batch(
                 )
                 for document_id, access in access_for_documents.items()
             ]
-            logger.debug(f"Updating documents: {document_ids_to_update}")
-
             document_index.update(update_requests=update_requests)
 
+            # clean up Postgres
             delete_document_by_connector_credential_pair__no_commit(
                 db_session=db_session,
                 document_ids=document_ids_to_update,

@@ -5,6 +5,7 @@ from celery import Celery  # type: ignore
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
+from danswer.background.celery.celery_utils import should_kick_off_deletion_of_cc_pair
 from danswer.background.celery.celery_utils import should_prune_cc_pair
 from danswer.background.celery.celery_utils import should_sync_doc_set
 from danswer.background.connector_deletion import delete_connector_credential_pair
@@ -271,6 +272,26 @@ def check_for_document_sets_sync_task() -> None:
 
 
 @celery_app.task(
+    name="check_for_cc_pair_deletion_task",
+    soft_time_limit=JOB_TIMEOUT,
+)
+def check_for_cc_pair_deletion_task() -> None:
+    """Runs periodically to check if any deletion tasks should be run"""
+    with Session(get_sqlalchemy_engine()) as db_session:
+        # check if any document sets are not synced
+        cc_pairs = get_connector_credential_pairs(db_session)
+        for cc_pair in cc_pairs:
+            if should_kick_off_deletion_of_cc_pair(cc_pair, db_session):
+                logger.info(f"Deleting the {cc_pair.name} connector credential pair")
+                cleanup_connector_credential_pair_task.apply_async(
+                    kwargs=dict(
+                        connector_id=cc_pair.connector.id,
+                        credential_id=cc_pair.credential.id,
+                    ),
+                )
+
+
+@celery_app.task(
     name="check_for_prune_task",
     soft_time_limit=JOB_TIMEOUT,
 )
@@ -304,6 +325,12 @@ celery_app.conf.beat_schedule = {
     "check-for-document-set-sync": {
         "task": "check_for_document_sets_sync_task",
         "schedule": timedelta(seconds=5),
+    },
+    "check-for-cc-pair-deletion": {
+        "task": "check_for_cc_pair_deletion_task",
+        # don't need to check too often, since we kick off a deletion initially
+        # during the API call that actually marks the CC pair for deletion
+        "schedule": timedelta(minutes=1),
     },
 }
 celery_app.conf.beat_schedule.update(

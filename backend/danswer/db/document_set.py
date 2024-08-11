@@ -9,6 +9,7 @@ from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Document
 from danswer.db.models import DocumentByConnectorCredentialPair
@@ -444,6 +445,10 @@ def fetch_document_sets_for_documents(
             Document.id == DocumentByConnectorCredentialPair.id,
         )
         .where(Document.id.in_(document_ids))
+        # don't include CC pairs that are being deleted
+        # NOTE: CC pairs can never go from DELETING to any other state -> it's safe to ignore them
+        # as we can assume their document sets are no longer relevant
+        .where(ConnectorCredentialPair.status != ConnectorCredentialPairStatus.DELETING)
         .where(DocumentSet__ConnectorCredentialPair.is_current == True)  # noqa: E712
         .group_by(Document.id)
     )

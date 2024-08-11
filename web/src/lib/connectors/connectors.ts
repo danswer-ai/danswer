@@ -774,7 +774,6 @@ export interface ConnectorBase<T> {
   refresh_freq: number | null;
   prune_freq: number | null;
   indexing_start: Date | null;
-  disabled: boolean;
 }
 
 export interface Connector<T> extends ConnectorBase<T> {

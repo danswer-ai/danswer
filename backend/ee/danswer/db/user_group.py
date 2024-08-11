@@ -6,6 +6,7 @@ from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Document
 from danswer.db.models import DocumentByConnectorCredentialPair
@@ -15,7 +16,6 @@ from danswer.db.models import User
 from danswer.db.models import User__UserGroup
 from danswer.db.models import UserGroup
 from danswer.db.models import UserGroup__ConnectorCredentialPair
-from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from ee.danswer.server.user_group.models import UserGroupCreate
 from ee.danswer.server.user_group.models import UserGroupUpdate
 
@@ -90,7 +90,6 @@ def fetch_documents_for_user_group_paginated(
 def fetch_user_groups_for_documents(
     db_session: Session,
     document_ids: list[str],
-    cc_pair_to_delete: ConnectorCredentialPairIdentifier | None = None,
 ) -> Sequence[tuple[int, list[str]]]:
     stmt = (
         select(Document.id, func.array_agg(UserGroup.name))
@@ -114,18 +113,11 @@ def fetch_user_groups_for_documents(
         .join(Document, Document.id == DocumentByConnectorCredentialPair.id)
         .where(Document.id.in_(document_ids))
         .where(UserGroup__ConnectorCredentialPair.is_current == True)  # noqa: E712
+        # don't include CC pairs that are being deleted
+        # NOTE: CC pairs can never go from DELETING to any other state -> it's safe to ignore them
+        .where(ConnectorCredentialPair.status != ConnectorCredentialPairStatus.DELETING)
         .group_by(Document.id)
     )
-
-    # pretend that the specified cc pair doesn't exist
-    if cc_pair_to_delete is not None:
-        stmt = stmt.where(
-            and_(
-                ConnectorCredentialPair.connector_id != cc_pair_to_delete.connector_id,
-                ConnectorCredentialPair.credential_id
-                != cc_pair_to_delete.credential_id,
-            )
-        )
 
     return db_session.execute(stmt).all()  # type: ignore
 
