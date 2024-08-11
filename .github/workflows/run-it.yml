@@ -39,7 +39,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          file: ./web/Dockerfile
+          file: ./backend/Dockerfile
           platforms: linux/arm64
           push: false
           load: true
@@ -51,7 +51,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          file: ./web/Dockerfile.model_server
+          file: ./backend/Dockerfile.model_server
           platforms: linux/arm64
           push: false
           load: true
