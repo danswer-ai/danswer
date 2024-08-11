@@ -414,8 +414,10 @@ def fetch_documents_for_document_set_paginated(
 
 
 def fetch_document_sets_for_documents(
-    document_ids: list[str], db_session: Session
+    document_ids: list[str],
+    db_session: Session,
 ) -> Sequence[tuple[str, list[str]]]:
+    """Gives back a list of (document_id, list[document_set_names]) tuples"""
     stmt = (
         select(Document.id, func.array_agg(DocumentSetDBModel.name))
         .join(

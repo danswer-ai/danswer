@@ -4,7 +4,7 @@ import requests
 from pydantic import BaseModel
 
 from danswer.configs.constants import DocumentSource
-from tests.integration.common.connectors import create_connector
+from tests.integration.common.connectors import ConnectorClient
 from tests.integration.common.constants import API_SERVER_URL
 
 
@@ -19,7 +19,8 @@ class TestDocumentClient:
         num_docs: int = 5, cc_pair_id: int | None = None
     ) -> SeedDocumentResponse:
         if not cc_pair_id:
-            _, _, cc_pair_id = create_connector()
+            connector_details = ConnectorClient.create_connector()
+            cc_pair_id = connector_details.cc_pair_id
 
         # Create and ingest some documents
         document_ids: list[str] = []

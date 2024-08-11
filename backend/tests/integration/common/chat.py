@@ -1,14 +1,7 @@
-import pytest
 import requests
 from sqlalchemy.orm import Session
 
-from danswer.db.engine import get_session
 from danswer.db.models import User
-
-
-@pytest.fixture
-def db_session() -> Session:
-    yield next(get_session())
 
 
 def test_create_chat_session_and_send_messages(db_session: Session) -> None:
@@ -71,7 +64,3 @@ def test_create_chat_session_and_send_messages(db_session: Session) -> None:
     assert session_details["chat_session_id"] == chat_session_id
     assert session_details["description"] == "Test Chat"
     assert len(session_details["messages"]) == 4  # 2 user messages + 2 AI responses
-
-    # Clean up
-    db_session.delete(test_user)
-    db_session.commit()

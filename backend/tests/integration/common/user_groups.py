@@ -19,4 +19,4 @@ def create_user_group(user_group_creation_request: UserGroupCreate) -> int:
 def fetch_user_groups() -> list[UserGroup]:
     response = requests.get(f"{API_SERVER_URL}/manage/admin/user-group")
     response.raise_for_status()
-    return cast(list[UserGroup], response.json())
+    return [UserGroup(**ug) for ug in response.json()]

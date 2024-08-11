@@ -19,6 +19,11 @@ def _delete_connector_credential_pair_user_groups_relationship__no_commit(
         connector_id=connector_id,
         credential_id=credential_id,
     )
+    if cc_pair is None:
+        raise ValueError(
+            f"ConnectorCredentialPair with connector_id: {connector_id} "
+            f"and credential_id: {credential_id} not found"
+        )
 
     stmt = delete(UserGroup__ConnectorCredentialPair).where(
         UserGroup__ConnectorCredentialPair.cc_pair_id == cc_pair.id,
