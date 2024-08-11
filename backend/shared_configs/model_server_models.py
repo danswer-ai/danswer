@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from shared_configs.enums import EmbeddingProvider
 from shared_configs.enums import EmbedTextType
 
 Embedding = list[float]
@@ -12,7 +13,7 @@ class EmbedRequest(BaseModel):
     max_context_length: int
     normalize_embeddings: bool
     api_key: str | None
-    provider_type: str | None
+    provider_type: EmbeddingProvider | None
     text_type: EmbedTextType
     manual_query_prefix: str | None
     manual_passage_prefix: str | None
