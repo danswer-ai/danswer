@@ -17,7 +17,11 @@ export function ModelSelectionConfirmationModal({
   onCancel: () => void;
 }) {
   return (
-    <Modal title="Update Embedding Model" onOutsideClick={onCancel}>
+    <Modal
+      width="max-w-3xl"
+      title="Update Embedding Model"
+      onOutsideClick={onCancel}
+    >
       <div>
         <div className="mb-4">
           <Text className="text-lg mb-4">
@@ -50,7 +54,7 @@ export function ModelSelectionConfirmationModal({
 
           <div className="flex mt-8">
             <Button className="mx-auto" color="green" onClick={onConfirm}>
-              Confirm
+              Yes
             </Button>
           </div>
         </div>

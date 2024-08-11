@@ -1,6 +1,6 @@
 "use client";
 
-import { Text, Title } from "@tremor/react";
+import { Button, Text, Title } from "@tremor/react";
 
 import {
   CloudEmbeddingProvider,
@@ -120,8 +120,8 @@ export default function CloudEmbeddingPage({
                       !provider.configured
                         ? "opacity-80 hover:opacity-100"
                         : enabled
-                          ? "bg-background-stronger"
-                          : "hover:bg-background-strong"
+                          ? "bg-background-200"
+                          : "hover:bg-background-500"
                     }`}
                     onClick={() => {
                       if (enabled) {

@@ -29,17 +29,7 @@ import {
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ConnectorIndexingStatus } from "@/lib/types";
 import { Connector } from "@/lib/connectors/connectors";
-import Link from "next/link";
-import OpenEmbeddingPage from "./OpenEmbeddingPage";
-import CloudEmbeddingPage from "./CloudEmbeddingPage";
-import { ProviderCreationModal } from "./modals/ProviderCreationModal";
-
-import { DeleteCredentialsModal } from "./modals/DeleteCredentialsModal";
-import { SelectModelModal } from "./modals/SelectModelModal";
-import { ChangeCredentialsModal } from "./modals/ChangeCredentialsModal";
-import { ModelSelectionConfirmationModal } from "./modals/ModelSelectionModal";
 import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../llm/constants";
-import { AlreadyPickedModal } from "./modals/AlreadyPickedModal";
 
 export interface EmbeddingDetails {
   api_key: string;
@@ -51,6 +41,12 @@ import { EmbeddingIcon, PackageIcon } from "@/components/icons/icons";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
+import EmbeddingWrapper from "./EmbeddingWrapper";
+import { useFormContext } from "@/components/context/FormContext";
+import { useRouter } from "next/navigation";
+import { SIDEBAR_WIDTH } from "@/lib/constants";
+import Sidebar from "../../connectors/[connector]/Sidebar";
+import Link from "next/link";
 
 function Main() {
   const [openToggle, setOpenToggle] = useState(true);
@@ -71,6 +67,8 @@ function Main() {
 
   const [showModelInQueue, setShowModelInQueue] =
     useState<CloudEmbeddingModel | null>(null);
+
+  const [selecting, setSelecting] = useState(false);
 
   // Open Model based modals
   const [showTentativeOpenProvider, setShowTentativeOpenProvider] =
@@ -117,6 +115,7 @@ function Main() {
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
+  const router = useRouter();
   const {
     data: ongoingReIndexingStatus,
     isLoading: isLoadingOngoingReIndexingStatus,
@@ -282,167 +281,12 @@ function Main() {
 
   return (
     <div className="h-screen">
-      <>
-        <Title className="mb-2 !text-3xl">Search Configuration</Title>
-        <Text className="text-black font-sembiold !text-lg">Reranking</Text>
-        <Text className="mb-4">
-          Choose how you want to rerank search results for better accuracy.
-        </Text>
-        <Select
-          value={rerankingOption}
-          onValueChange={setRerankingOption}
-          className="max-w-xs mb-4"
-        >
-          <SelectItem value="none">No reranking</SelectItem>
-          <SelectItem value="local">Local reranking</SelectItem>
-          <SelectItem value="cloud">Cloud reranking</SelectItem>
-        </Select>
-
-        <Text className="text-black font-semibold !text-lg mt-4">
-          Chunk Size
-        </Text>
-        <Text className="mb-4">
-          Toggle mini and large chunks for search results.
-        </Text>
-        <div className="flex flex-col space-y-2 mb-4">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="mini-chunk-toggle"
-              name="mini-chunk-toggle"
-              checked={useMiniChunks}
-              onChange={setUseMiniChunks}
-            />
-            <Text>Mini chunks</Text>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="large-chunk-toggle"
-              name="large-chunk-toggle"
-              checked={useLargeChunks}
-              onChange={setUseLargeChunks}
-            />
-            <Text>Large chunks</Text>
-          </div>
-        </div>
-
-        <Text className="text-black font-sembiold !text-lg">
-          Advanced Configuration
-        </Text>
-        <Text className="mb-4">
-          Choose how you want to rerank search results for better accuracy.
-        </Text>
-
-        <AdvancedOptionsToggle
-          showAdvancedOptions={showAdvancedOptions}
-          setShowAdvancedOptions={setShowAdvancedOptions}
-        />
-
-        {showAdvancedOptions && (
-          <div className="mt-4 space-y-4">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="llm-chunk-filter"
-                name="llm-chunk-filter"
-                checked={llmChunkFilter}
-                onChange={setLlmChunkFilter}
-              />
-              <Text>LLM chunk filter</Text>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="query-expansion"
-                name="query-expansion"
-                checked={queryExpansion}
-                onChange={setQueryExpansion}
-              />
-              <Text>Query expansion</Text>
-            </div>
-          </div>
-        )}
-      </>
-
-      <Divider />
       <Title className="mb-2 mt-8 !text-3xl">Embedding models</Title>
 
       <Text>
         These deep learning models are used to generate vector representations
         of your documents, which then power Danswer&apos;s search.
       </Text>
-
-      {alreadySelectedModel && (
-        <AlreadyPickedModal
-          model={alreadySelectedModel}
-          onClose={() => setAlreadySelectedModel(null)}
-        />
-      )}
-
-      {showTentativeOpenProvider && (
-        <ModelSelectionConfirmationModal
-          selectedModel={showTentativeOpenProvider}
-          isCustom={
-            AVAILABLE_MODELS.find(
-              (model) =>
-                model.model_name === showTentativeOpenProvider.model_name
-            ) === undefined
-          }
-          onConfirm={() => onConfirm(showTentativeOpenProvider)}
-          onCancel={() => setShowTentativeOpenProvider(null)}
-        />
-      )}
-
-      {showTentativeProvider && (
-        <ProviderCreationModal
-          selectedProvider={showTentativeProvider}
-          onConfirm={() => {
-            setShowTentativeProvider(showUnconfiguredProvider);
-            clientsideAddProvider(showTentativeProvider);
-            if (showModelInQueue) {
-              setShowTentativeModel(showModelInQueue);
-            }
-          }}
-          onCancel={() => {
-            setShowModelInQueue(null);
-            setShowTentativeProvider(null);
-          }}
-        />
-      )}
-      {changeCredentialsProvider && (
-        <ChangeCredentialsModal
-          // setPopup={setPopup}
-          useFileUpload={changeCredentialsProvider.name == "Google"}
-          onDeleted={() => {
-            clientsideRemoveProvider(changeCredentialsProvider);
-            setChangeCredentialsProvider(null);
-          }}
-          provider={changeCredentialsProvider}
-          onConfirm={() => setChangeCredentialsProvider(null)}
-          onCancel={() => setChangeCredentialsProvider(null)}
-        />
-      )}
-
-      {showTentativeModel && (
-        <SelectModelModal
-          model={showTentativeModel}
-          onConfirm={() => {
-            setShowModelInQueue(null);
-            onConfirm(showTentativeModel);
-          }}
-          onCancel={() => {
-            setShowModelInQueue(null);
-            setShowTentativeModel(null);
-          }}
-        />
-      )}
-
-      {showDeleteCredentialsModal && (
-        <DeleteCredentialsModal
-          modelProvider={showTentativeProvider!}
-          onConfirm={() => {
-            setShowDeleteCredentialsModal(false);
-          }}
-          onCancel={() => setShowDeleteCredentialsModal(false)}
-        />
-      )}
 
       {currentModel ? (
         <>
@@ -453,169 +297,9 @@ function Main() {
         <Title className="mt-8 mb-4">Choose your Embedding Model</Title>
       )}
 
-      {!(futureEmbeddingModel && connectors && connectors.length > 0) && (
-        <>
-          <Title className="mt-8">Switch your Embedding Model</Title>
-          <Text className="mb-4">
-            Note that updating the backing model will require a complete
-            re-indexing of all documents across every connected source. This is
-            taken care of in the background so that the system can continue to
-            be used, but depending on the size of the corpus, this could take
-            hours or days. You can monitor the progress of the re-indexing on
-            this page while the models are being switched.
-          </Text>
-
-          <div className="mt-8 text-sm mr-auto mb-12 divide-x-2 flex">
-            <button
-              onClick={() => setOpenToggle(true)}
-              className={` mx-2 p-2 font-bold  ${
-                openToggle
-                  ? "rounded bg-background-900 text-text-100 underline"
-                  : "hover:underline"
-              }`}
-            >
-              Self-hosted
-            </button>
-            <div className="px-2 ">
-              <button
-                onClick={() => setOpenToggle(false)}
-                className={`mx-2 p-2 font-bold  ${
-                  !openToggle
-                    ? "rounded bg-background-900 text-text-100 underline"
-                    : " hover:underline"
-                }`}
-              >
-                Cloud-based
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {!showAddConnectorPopup &&
-        !futureEmbeddingModel &&
-        (openToggle ? (
-          <OpenEmbeddingPage
-            onSelectOpenSource={onSelectOpenSource}
-            currentModelName={currentModelName!}
-          />
-        ) : (
-          <CloudEmbeddingPage
-            setShowModelInQueue={setShowModelInQueue}
-            setShowTentativeModel={setShowTentativeModel}
-            currentModel={currentModel}
-            setAlreadySelectedModel={setAlreadySelectedModel}
-            embeddingProviderDetails={embeddingProviderDetails}
-            newEnabledProviders={newEnabledProviders}
-            newUnenabledProviders={newUnenabledProviders}
-            setShowTentativeProvider={setShowTentativeProvider}
-            selectedModel={selectedModel}
-            setChangeCredentialsProvider={setChangeCredentialsProvider}
-          />
-        ))}
-
-      {openToggle && (
-        <>
-          {showAddConnectorPopup && (
-            <Modal>
-              <div>
-                <div>
-                  <b className="text-base">
-                    Embedding model successfully selected
-                  </b>{" "}
-                  🙌
-                  <br />
-                  <br />
-                  To complete the initial setup, let&apos;s add a connector!
-                  <br />
-                  <br />
-                  Connectors are the way that Danswer gets data from your
-                  organization&apos;s various data sources. Once setup,
-                  we&apos;ll automatically sync data from your apps and docs
-                  into Danswer, so you can search all through all of them in one
-                  place.
-                </div>
-                <div className="flex">
-                  <Link
-                    className="mx-auto mt-2 w-fit"
-                    href="/admin/add-connector"
-                  >
-                    <Button className="mt-3 mx-auto" size="xs">
-                      Add Connector
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </Modal>
-          )}
-
-          {isCancelling && (
-            <Modal
-              onOutsideClick={() => setIsCancelling(false)}
-              title="Cancel Embedding Model Switch"
-            >
-              <div>
-                <div>
-                  Are you sure you want to cancel?
-                  <br />
-                  <br />
-                  Cancelling will revert to the previous model and all progress
-                  will be lost.
-                </div>
-                <div className="flex">
-                  <Button
-                    onClick={onCancel}
-                    className="mt-3 mx-auto"
-                    color="green"
-                  >
-                    Confirm
-                  </Button>
-                </div>
-              </div>
-            </Modal>
-          )}
-        </>
-      )}
-
-      {futureEmbeddingModel && connectors && connectors.length > 0 && (
-        <div>
-          <Title className="mt-8">Current Upgrade Status</Title>
-          <div className="mt-4">
-            <div className="italic text-lg mb-2">
-              Currently in the process of switching to:{" "}
-              {futureEmbeddingModel.model_name}
-            </div>
-            {/* <ModelOption model={futureEmbeddingModel} /> */}
-
-            <Button
-              color="red"
-              size="xs"
-              className="mt-4"
-              onClick={() => setIsCancelling(true)}
-            >
-              Cancel
-            </Button>
-
-            <Text className="my-4">
-              The table below shows the re-indexing progress of all existing
-              connectors. Once all connectors have been re-indexed successfully,
-              the new model will be used for all search queries. Until then, we
-              will use the old model so that no downtime is necessary during
-              this transition.
-            </Text>
-
-            {isLoadingOngoingReIndexingStatus ? (
-              <ThreeDotsLoader />
-            ) : ongoingReIndexingStatus ? (
-              <ReindexingProgressTable
-                reindexingProgress={ongoingReIndexingStatus}
-              />
-            ) : (
-              <ErrorCallout errorTitle="Failed to fetch re-indexing progress" />
-            )}
-          </div>
-        </div>
-      )}
+      <Link href="/admin/embeddings">
+        <Button className="mt-8">Select or update model</Button>
+      </Link>
     </div>
   );
 }

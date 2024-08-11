@@ -21,15 +21,15 @@ export function ModelPreview({ model }: { model: EmbeddingModelDescriptor }) {
 export function ModelOption({
   model,
   onSelect,
+  selected,
 }: {
   model: HostedEmbeddingModel;
   onSelect?: (model: HostedEmbeddingModel) => void;
+  selected: boolean;
 }) {
   return (
     <div
-      className={
-        "p-2 border border-border rounded shadow-md bg-hover-light w-96 flex flex-col"
-      }
+      className={`p-2 border border-border rounded shadow-md ${selected ? "bg-hover" : "bg-hover-light"} w-96 flex flex-col`}
     >
       <div className="font-bold text-lg flex">
         {model.isDefault && <FiStar className="my-auto mr-1 text-accent" />}
@@ -49,9 +49,10 @@ export function ModelOption({
           See More Details
         </a>
       )}
-      {onSelect && (
-        <div
-          className={`
+      {onSelect &&
+        (!selected ? (
+          <button
+            className={`
             m-auto 
             flex 
             mt-3
@@ -66,11 +67,31 @@ export function ModelOption({
             hover:bg-hover
             text-sm
             mt-auto`}
-          onClick={() => onSelect(model)}
-        >
-          Select Model
-        </div>
-      )}
+            onClick={() => onSelect(model)}
+          >
+            Select Model
+          </button>
+        ) : (
+          <button
+            className={`
+            m-auto 
+            flex 
+            mt-3
+            mb-1 
+            w-fit 
+            p-2 
+            rounded-lg
+            bg-background-125
+            border
+            border-border
+            cursor-pointer
+            text-sm
+            mt-auto`}
+            disabled={true}
+          >
+            Selected Model
+          </button>
+        ))}
     </div>
   );
 }
@@ -78,7 +99,9 @@ export function ModelOption({
 export function ModelSelector({
   modelOptions,
   setSelectedModel,
+  currentEmbeddingModel,
 }: {
+  currentEmbeddingModel: HostedEmbeddingModel;
   modelOptions: HostedEmbeddingModel[];
   setSelectedModel: (model: HostedEmbeddingModel) => void;
 }) {
@@ -90,6 +113,7 @@ export function ModelSelector({
             key={modelOption.model_name}
             model={modelOption}
             onSelect={setSelectedModel}
+            selected={currentEmbeddingModel == modelOption}
           />
         ))}
       </div>

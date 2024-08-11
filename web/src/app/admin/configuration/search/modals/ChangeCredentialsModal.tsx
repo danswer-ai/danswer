@@ -151,6 +151,7 @@ export function ChangeCredentialsModal({
 
   return (
     <Modal
+      width="max-w-3xl"
       icon={provider.icon}
       title={`Modify your ${provider.name} key`}
       onOutsideClick={onCancel}

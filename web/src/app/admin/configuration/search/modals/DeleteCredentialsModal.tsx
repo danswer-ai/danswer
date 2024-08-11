@@ -14,6 +14,7 @@ export function DeleteCredentialsModal({
 }) {
   return (
     <Modal
+      width="max-w-3xl"
       title={`Nuke ${modelProvider.name} Credentials?`}
       onOutsideClick={onCancel}
     >

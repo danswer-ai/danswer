@@ -27,7 +27,7 @@ import {
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
 import { UserDropdown } from "../UserDropdown";
 import { User } from "@/lib/types";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 export function ClientLayout({
   user,
@@ -39,8 +39,13 @@ export function ClientLayout({
   enableEnterprise: boolean;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  if (pathname.startsWith("/admin/connectors")) {
+  console.log(pathname);
+  if (
+    pathname.startsWith("/admin/connectors") ||
+    pathname.startsWith("/admin/embeddings")
+  ) {
     return <>{children}</>;
   }
 

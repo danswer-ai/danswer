@@ -3,6 +3,15 @@ export interface Settings {
   search_page_enabled: boolean;
   default_page: "search" | "chat";
   maximum_chat_retention_days: number | null;
+  notifications: Notification[];
+}
+
+export interface Notification {
+  id: number;
+  notif_type: string;
+  dismissed: boolean;
+  last_shown: string;
+  first_shown: string;
 }
 
 export interface EnterpriseSettings {

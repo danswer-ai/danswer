@@ -13,6 +13,7 @@ export function AlreadyPickedModal({
 }) {
   return (
     <Modal
+      width="max-w-3xl"
       title={`${model.model_name} already chosen`}
       onOutsideClick={onClose}
     >

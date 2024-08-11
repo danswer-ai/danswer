@@ -1,23 +1,28 @@
 "use client";
 import { Card, Text } from "@tremor/react";
 import { ModelSelector } from "./components/ModelSelector";
-import { AVAILABLE_MODELS, HostedEmbeddingModel } from "./components/types";
+import {
+  AVAILABLE_MODELS,
+  CloudEmbeddingModel,
+  HostedEmbeddingModel,
+} from "./components/types";
 import { CustomModelForm } from "./components/CustomModelForm";
 
 export default function OpenEmbeddingPage({
   onSelectOpenSource,
   currentModelName,
+  currentEmbeddingModel,
 }: {
   currentModelName: string;
   onSelectOpenSource: (model: HostedEmbeddingModel) => Promise<void>;
+  currentEmbeddingModel: HostedEmbeddingModel | CloudEmbeddingModel;
 }) {
   return (
     <div>
       <ModelSelector
-        modelOptions={AVAILABLE_MODELS.filter(
-          (modelOption) => modelOption.model_name !== currentModelName
-        )}
+        modelOptions={AVAILABLE_MODELS}
         setSelectedModel={onSelectOpenSource}
+        currentEmbeddingModel={currentEmbeddingModel}
       />
 
       <Text className="mt-6">
