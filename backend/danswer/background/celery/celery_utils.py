@@ -73,8 +73,8 @@ def should_kick_off_deletion_of_cc_pair(
     if deletion_task and check_task_is_live_and_not_timed_out(
         deletion_task,
         db_session,
-        # 10 minutes timeout
-        timeout=60 * 10,
+        # 1 hour timeout
+        timeout=60 * 60,
     ):
         return False
 
