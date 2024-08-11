@@ -4,8 +4,8 @@ from danswer.configs.constants import DocumentSource
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import SearchType
 from danswer.search.models import ChunkContext
+from danswer.search.models import RerankingDetails
 from danswer.search.models import RetrievalDetails
-from danswer.search.postprocessing.models import RerankingDetails
 from danswer.server.manage.models import StandardAnswer
 
 

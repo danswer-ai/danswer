@@ -11,8 +11,8 @@ from danswer.chat.models import QADocsResponse
 from danswer.configs.constants import MessageType
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.models import ChunkContext
+from danswer.search.models import RerankingDetails
 from danswer.search.models import RetrievalDetails
-from danswer.search.postprocessing.models import RerankingDetails
 
 
 class QueryRephrase(BaseModel):
@@ -29,6 +29,7 @@ class DirectQARequest(ChunkContext):
     messages: list[ThreadMessage]
     prompt_id: int | None
     persona_id: int
+    multilingual_query_expansion: list[str] | None = None
     retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
     rerank_settings: RerankingDetails | None = None
     evaluation_type: LLMEvaluationType = LLMEvaluationType.UNSPECIFIED

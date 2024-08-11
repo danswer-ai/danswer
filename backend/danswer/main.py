@@ -27,12 +27,14 @@ from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
+from danswer.configs.app_configs import ENABLE_MULTIPASS_INDEXING
 from danswer.configs.app_configs import LOG_ENDPOINT_LATENCY
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
+from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import POSTGRES_WEB_APP_NAME
@@ -58,10 +60,10 @@ from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.llm.llm_initialization import load_llm_providers
 from danswer.natural_language_processing.search_nlp_models import warm_up_encoders
-from danswer.search.postprocessing.models import SavedRerankingModelDetail
-from danswer.search.postprocessing.reranker import get_reranking_settings
-from danswer.search.postprocessing.reranker import update_reranking_settings
+from danswer.search.models import SavedSearchSettings
 from danswer.search.retrieval.search_runner import download_nltk_data
+from danswer.search.search_settings import get_search_settings
+from danswer.search.search_settings import update_search_settings
 from danswer.server.auth_check import check_router_auth
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
@@ -249,11 +251,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     if DISABLE_GENERATIVE_AI:
         logger.info("Generative AI Q&A disabled")
 
-    if MULTILINGUAL_QUERY_EXPANSION:
-        logger.info(
-            f"Using multilingual flow with languages: {MULTILINGUAL_QUERY_EXPANSION}"
-        )
-
     # fill up Postgres connection pools
     await warm_up_connections()
 
@@ -281,23 +278,37 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                 f'Passage embedding prefix: "{db_embedding_model.passage_prefix}"'
             )
 
-        reranking_settings = get_reranking_settings()
-        if reranking_settings and not reranking_settings.disable_for_streaming:
-            logger.info("Reranking is enabled.")
-        if not reranking_settings and (
-            ENABLE_RERANKING_REAL_TIME_FLOW or ENABLE_RERANKING_ASYNC_FLOW
-        ):
-            logger.info("Reranking is enabled.")
-            if not DEFAULT_CROSS_ENCODER_MODEL_NAME:
-                raise ValueError("No reranking model specified.")
+        search_settings = get_search_settings()
+        if search_settings:
+            if not search_settings.disable_rerank_for_streaming:
+                logger.info("Reranking is enabled.")
 
-            update_reranking_settings(
-                SavedRerankingModelDetail(
-                    model_name=DEFAULT_CROSS_ENCODER_MODEL_NAME,
-                    api_key=DEFAULT_CROSS_ENCODER_API_KEY,
-                    disable_for_streaming=not ENABLE_RERANKING_REAL_TIME_FLOW,
+            if search_settings.multilingual_expansion:
+                logger.info(
+                    f"Multilingual query expansion is enabled with {search_settings.multilingual_expansion}."
                 )
-            )
+        else:
+            if ENABLE_RERANKING_REAL_TIME_FLOW or ENABLE_RERANKING_ASYNC_FLOW:
+                logger.info("Reranking is enabled.")
+                if not DEFAULT_CROSS_ENCODER_MODEL_NAME:
+                    raise ValueError("No reranking model specified.")
+
+                update_search_settings(
+                    SavedSearchSettings(
+                        model_name=DEFAULT_CROSS_ENCODER_MODEL_NAME,
+                        api_key=DEFAULT_CROSS_ENCODER_API_KEY,
+                        disable_rerank_for_streaming=not ENABLE_RERANKING_REAL_TIME_FLOW,
+                        num_rerank=NUM_POSTPROCESSED_RESULTS,
+                        multilingual_expansion=[
+                            s.strip()
+                            for s in MULTILINGUAL_QUERY_EXPANSION.split(",")
+                            if s.strip()
+                        ]
+                        if MULTILINGUAL_QUERY_EXPANSION
+                        else [],
+                        multipass_indexing=ENABLE_MULTIPASS_INDEXING,
+                    )
+                )
 
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")
         download_nltk_data()

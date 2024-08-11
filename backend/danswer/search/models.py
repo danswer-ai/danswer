@@ -6,7 +6,6 @@ from pydantic import validator
 
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
-from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import Persona
@@ -14,12 +13,37 @@ from danswer.indexing.models import BaseChunk
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import SearchType
-from danswer.search.postprocessing.models import RerankingDetails
 
 
 MAX_METRICS_CONTENT = (
     200  # Just need enough characters to identify where in the doc the chunk is
 )
+
+
+class RerankingDetails(BaseModel):
+    model_name: str
+    api_key: str | None
+
+    # Set to 0 to disable reranking explicitly
+    num_rerank: int
+
+
+class SavedSearchSettings(RerankingDetails):
+    # Empty for no additional expansion
+    multilingual_expansion: list[str]
+    # Encompasses both mini and large chunks
+    multipass_indexing: bool
+
+    # For faster flows where the results should start immediately
+    # this more time intensive step can be skipped
+    disable_rerank_for_streaming: bool
+
+    def to_reranking_detail(self) -> RerankingDetails:
+        return RerankingDetails(
+            model_name=self.model_name,
+            api_key=self.api_key,
+            num_rerank=self.num_rerank,
+        )
 
 
 class Tag(BaseModel):
@@ -72,6 +96,7 @@ class SearchRequest(ChunkContext):
     offset: int | None = None
     limit: int | None = None
 
+    multilingual_expansion: list[str] | None = None
     recency_bias_multiplier: float = 1.0
     hybrid_alpha: float | None = None
     rerank_settings: RerankingDetails | None = None
@@ -93,11 +118,11 @@ class SearchQuery(ChunkContext):
     hybrid_alpha: float
     recency_bias_multiplier: float
 
+    # Only used if LLM evaluation type is not skip, None to use default settings
+    max_llm_filter_sections: int
+
     num_hits: int = NUM_RETURNED_HITS
     offset: int = 0
-
-    # Only used if not skip_llm_chunk_filter
-    max_llm_filter_sections: int = NUM_POSTPROCESSED_RESULTS
 
     class Config:
         frozen = True

@@ -75,7 +75,7 @@ UNNAMED_KEY_PLACEHOLDER = "Unnamed"
 
 # Key-Value store keys
 KV_REINDEX_KEY = "needs_reindexing"
-KV_RERANKING_SETTINGS = "reranking_settings"
+KV_SEARCH_SETTINGS = "search_settings"
 KV_USER_STORE_KEY = "INVITED_USERS"
 KV_NO_AUTH_USER_PREFERENCES_KEY = "no_auth_user_preferences"
 KV_CRED_KEY = "credential_id_{}"

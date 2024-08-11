@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from danswer.chat.models import SectionRelevancePiece
 from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
-from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
@@ -150,7 +149,6 @@ class SearchPipeline:
             query=self.search_query,
             document_index=self.document_index,
             db_session=self.db_session,
-            multilingual_expansion_str=MULTILINGUAL_QUERY_EXPANSION,
             retrieval_metrics_callback=self.retrieval_metrics_callback,
         )
 

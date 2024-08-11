@@ -7,7 +7,6 @@ from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
 from sqlalchemy.orm import Session
 
-from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
@@ -19,6 +18,7 @@ from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchQuery
 from danswer.search.postprocessing.postprocessing import cleanup_chunks
+from danswer.search.search_settings import get_multilingual_expansion
 from danswer.search.utils import inference_section_from_chunks
 from danswer.secondary_llm_flows.query_expansion import multilingual_query_expansion
 from danswer.utils.logger import setup_logger
@@ -150,13 +150,14 @@ def retrieve_chunks(
     query: SearchQuery,
     document_index: DocumentIndex,
     db_session: Session,
-    multilingual_expansion_str: str | None = MULTILINGUAL_QUERY_EXPANSION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
 ) -> list[InferenceChunk]:
     """Returns a list of the best chunks from an initial keyword/semantic/ hybrid search."""
+
+    multilingual_expansion = get_multilingual_expansion()
     # Don't do query expansion on complex queries, rephrasings likely would not work well
-    if not multilingual_expansion_str or "\n" in query.query or "\r" in query.query:
+    if not multilingual_expansion or "\n" in query.query or "\r" in query.query:
         top_chunks = doc_index_retrieval(
             query=query, document_index=document_index, db_session=db_session
         )
@@ -166,7 +167,7 @@ def retrieve_chunks(
 
         # Currently only uses query expansion on multilingual use cases
         query_rephrases = multilingual_query_expansion(
-            query.query, multilingual_expansion_str
+            query.query, multilingual_expansion
         )
         # Just to be extra sure, add the original query.
         query_rephrases.append(query.query)

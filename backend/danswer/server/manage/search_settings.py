@@ -20,8 +20,9 @@ from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import EmbeddingModelDetail
-from danswer.search.postprocessing.models import SavedRerankingModelDetail
-from danswer.search.postprocessing.reranker import update_reranking_settings
+from danswer.search.models import SavedSearchSettings
+from danswer.search.search_settings import get_search_settings
+from danswer.search.search_settings import update_search_settings
 from danswer.server.manage.models import FullModelVersionResponse
 from danswer.server.models import IdReturn
 from danswer.utils.logger import setup_logger
@@ -162,9 +163,16 @@ def get_embedding_models(
     )
 
 
-@router.post("/update-reranking-model")
-def update_reranking_model(
-    reranking_model_details: SavedRerankingModelDetail,
+@router.get("/get-search-settings")
+def get_saved_search_settings(
+    _: User | None = Depends(current_admin_user),
+) -> SavedSearchSettings | None:
+    return get_search_settings()
+
+
+@router.post("/update-search-settings")
+def update_saved_search_settings(
+    search_settings: SavedSearchSettings,
     _: User | None = Depends(current_admin_user),
 ) -> None:
-    update_reranking_settings(reranking_model_details)
+    update_search_settings(search_settings)
