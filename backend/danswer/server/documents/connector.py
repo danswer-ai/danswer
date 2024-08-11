@@ -430,6 +430,7 @@ def get_connector_indexing_status(
             ConnectorIndexingStatus(
                 cc_pair_id=cc_pair.id,
                 name=cc_pair.name,
+                cc_pair_status=cc_pair.status,
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
                 credential=CredentialSnapshot.from_credential_db_model(credential),
                 public_doc=cc_pair.is_public,

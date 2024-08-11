@@ -189,6 +189,7 @@ class ConnectorIndexingStatus(BaseModel):
 
     cc_pair_id: int
     name: str | None
+    cc_pair_status: ConnectorCredentialPairStatus
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
     owner: str

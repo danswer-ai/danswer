@@ -32,6 +32,7 @@ import { Warning } from "@phosphor-icons/react";
 import Cookies from "js-cookie";
 import { TOGGLED_CONNECTORS_COOKIE_NAME } from "@/lib/constants";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { ConnectorCredentialPairStatus } from "../../connector/[ccPairId]/types";
 
 const columnWidths = {
   first: "20%",
@@ -146,20 +147,25 @@ function ConnectorRow({
   };
 
   const getActivityBadge = () => {
-    if (ccPairsIndexingStatus.connector.disabled) {
-      if (ccPairsIndexingStatus.deletion_attempt) {
-        return (
-          <Badge
-            color="red"
-            className="w-fit px-2 py-1 rounded-full border border-red-500"
-          >
-            <div className="flex text-xs items-center gap-x-1">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              Deleting
-            </div>
-          </Badge>
-        );
-      }
+    if (
+      ccPairsIndexingStatus.cc_pair_status ===
+      ConnectorCredentialPairStatus.DELETING
+    ) {
+      return (
+        <Badge
+          color="red"
+          className="w-fit px-2 py-1 rounded-full border border-red-500"
+        >
+          <div className="flex text-xs items-center gap-x-1">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            Deleting
+          </div>
+        </Badge>
+      );
+    } else if (
+      ccPairsIndexingStatus.cc_pair_status ===
+      ConnectorCredentialPairStatus.PAUSED
+    ) {
       return (
         <Badge
           color="yellow"
@@ -172,6 +178,8 @@ function ConnectorRow({
         </Badge>
       );
     }
+
+    // ACTIVE case
     switch (ccPairsIndexingStatus.last_status) {
       case "in_progress":
         return (
@@ -302,7 +310,10 @@ export function CCPairIndexingStatusTable({
       const statuses = grouped[source];
       summaries[source] = {
         count: statuses.length,
-        active: statuses.filter((status) => !status.connector.disabled).length,
+        active: statuses.filter(
+          (status) =>
+            status.cc_pair_status === ConnectorCredentialPairStatus.ACTIVE
+        ).length,
         public: statuses.filter((status) => status.public_doc).length,
         totalDocsIndexed: statuses.reduce(
           (sum, status) => sum + status.docs_indexed,
@@ -362,6 +373,7 @@ export function CCPairIndexingStatusTable({
           ccPairsIndexingStatus={{
             cc_pair_id: 1,
             name: "Sample File Connector",
+            cc_pair_status: ConnectorCredentialPairStatus.ACTIVE,
             last_status: "success",
             connector: {
               name: "Sample File Connector",
@@ -373,7 +385,6 @@ export function CCPairIndexingStatusTable({
               refresh_freq: 86400,
               prune_freq: null,
               indexing_start: new Date("2023-07-01T12:00:00Z"),
-              disabled: false,
               id: 1,
               credential_ids: [],
               time_created: "2023-07-01T12:00:00Z",

@@ -4,8 +4,8 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 export async function setCCPairStatus(
   ccPairId: number,
   ccPairStatus: ConnectorCredentialPairStatus,
-  setPopup: (popupSpec: PopupSpec | null) => void,
-  onUpdate: () => void
+  setPopup?: (popupSpec: PopupSpec | null) => void,
+  onUpdate?: () => void
 ) {
   try {
     const response = await fetch(
@@ -21,26 +21,29 @@ export async function setCCPairStatus(
 
     if (!response.ok) {
       const errorMessage = (await response.json()).detail;
-      setPopup({
-        message: "Failed to update connector status - " + errorMessage,
-        type: "error",
-      });
+      setPopup &&
+        setPopup({
+          message: "Failed to update connector status - " + errorMessage,
+          type: "error",
+        });
     }
 
-    setPopup({
-      message:
-        ccPairStatus === ConnectorCredentialPairStatus.ACTIVE
-          ? "Enabled connector!"
-          : "Paused connector!",
-      type: "success",
-    });
+    setPopup &&
+      setPopup({
+        message:
+          ccPairStatus === ConnectorCredentialPairStatus.ACTIVE
+            ? "Enabled connector!"
+            : "Paused connector!",
+        type: "success",
+      });
 
     onUpdate && onUpdate();
   } catch (error) {
     console.error("Error updating CC pair status:", error);
-    setPopup({
-      message: "Failed to update connector status",
-      type: "error",
-    });
+    setPopup &&
+      setPopup({
+        message: "Failed to update connector status",
+        type: "error",
+      });
   }
 }

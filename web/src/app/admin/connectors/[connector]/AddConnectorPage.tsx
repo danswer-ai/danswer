@@ -189,7 +189,6 @@ export default function AddConnector({
         refresh_freq: refreshFreq * 60 || null,
         prune_freq: pruneFreq * 60 || null,
         indexing_start: indexingStart,
-        disabled: false,
       },
       undefined,
       credentialActivated ? false : true,
