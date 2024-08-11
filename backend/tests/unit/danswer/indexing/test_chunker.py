@@ -37,7 +37,12 @@ def test_chunk_document() -> None:
         passage_prefix=None,
     )
 
-    chunks = chunk_document(document, embedder=embedder)
+    chunks = chunk_document(
+        document=document,
+        model_name=embedder.model_name,
+        provider_type=embedder.provider_type,
+        enable_multipass=False,
+    )
     assert len(chunks) == 5
     assert short_section_1 in chunks[0].content
     assert short_section_3 in chunks[-1].content

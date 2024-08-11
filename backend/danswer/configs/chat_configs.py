@@ -9,7 +9,7 @@ NUM_RETURNED_HITS = 50
 # Used for LLM filtering and reranking
 # We want this to be approximately the number of results we want to show on the first page
 # It cannot be too large due to cost and latency implications
-NUM_RERANKED_RESULTS = 20
+NUM_POSTPROCESSED_RESULTS = 20
 
 # May be less depending on model
 MAX_CHUNKS_FED_TO_CHAT = float(os.environ.get("MAX_CHUNKS_FED_TO_CHAT") or 10.0)
@@ -43,11 +43,6 @@ DISABLE_LLM_QUERY_REPHRASE = (
 # 1 edit per 20 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 60 seconds
-# The keyword token classifier model and NLTK are both english facing, if using multilingual, just skip this
-if os.environ.get("EDIT_KEYWORD_QUERY"):
-    EDIT_KEYWORD_QUERY = os.environ.get("EDIT_KEYWORD_QUERY", "").lower() == "true"
-else:
-    EDIT_KEYWORD_QUERY = not os.environ.get("MULTILINGUAL_QUERY_EXPANSION")
 # Weighting factor between Vector and Keyword Search, 1 for completely vector search
 HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.62)))
 HYBRID_ALPHA_KEYWORD = max(

@@ -4,7 +4,6 @@ from typing import Optional
 from typing import TYPE_CHECKING
 
 from danswer.configs.app_configs import BLURB_SIZE
-from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.app_configs import SKIP_METADATA_IN_CHUNK
 from danswer.configs.constants import DocumentSource
@@ -15,7 +14,6 @@ from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_metadata_keys_to_ignore,
 )
 from danswer.connectors.models import Document
-from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.utils.logger import setup_logger
@@ -124,19 +122,20 @@ def _get_metadata_suffix_for_document_index(
 
 def chunk_document(
     document: Document,
-    embedder: IndexingEmbedder,
+    model_name: str,
+    provider_type: str | None,
+    enable_multipass: bool,
     chunk_tok_size: int = DOC_EMBEDDING_CONTEXT_SIZE,
     subsection_overlap: int = CHUNK_OVERLAP,
     blurb_size: int = BLURB_SIZE,  # Used for both title and content
     include_metadata: bool = not SKIP_METADATA_IN_CHUNK,
     mini_chunk_size: int = MINI_CHUNK_SIZE,
-    enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
 ) -> list[DocAwareChunk]:
     from llama_index.text_splitter import SentenceSplitter
 
     tokenizer = get_tokenizer(
-        model_name=embedder.model_name,
-        provider_type=embedder.provider_type,
+        model_name=model_name,
+        provider_type=provider_type,
     )
 
     blurb_splitter = SentenceSplitter(
@@ -212,7 +211,7 @@ def chunk_document(
                         metadata_suffix_semantic=metadata_suffix_semantic,
                         metadata_suffix_keyword=metadata_suffix_keyword,
                         mini_chunk_texts=mini_chunk_splitter.split_text(chunk_text)
-                        if enable_mini_chunk and chunk_text.strip()
+                        if enable_multipass and chunk_text.strip()
                         else None,
                     )
                 )
@@ -226,7 +225,7 @@ def chunk_document(
                 start_chunk_id=len(chunks),
                 chunk_splitter=chunk_splitter,
                 mini_chunk_splitter=mini_chunk_splitter
-                if enable_mini_chunk and chunk_text.strip()
+                if enable_multipass and chunk_text.strip()
                 else None,
                 blurb=extract_blurb(section_text, blurb_splitter),
                 title_prefix=title_prefix,
@@ -260,7 +259,7 @@ def chunk_document(
                     metadata_suffix_semantic=metadata_suffix_semantic,
                     metadata_suffix_keyword=metadata_suffix_keyword,
                     mini_chunk_texts=mini_chunk_splitter.split_text(chunk_text)
-                    if enable_mini_chunk and chunk_text.strip()
+                    if enable_multipass and chunk_text.strip()
                     else None,
                 )
             )
@@ -282,7 +281,7 @@ def chunk_document(
                 metadata_suffix_semantic=metadata_suffix_semantic,
                 metadata_suffix_keyword=metadata_suffix_keyword,
                 mini_chunk_texts=mini_chunk_splitter.split_text(chunk_text)
-                if enable_mini_chunk and chunk_text.strip()
+                if enable_multipass and chunk_text.strip()
                 else None,
             )
         )
@@ -296,18 +295,28 @@ class Chunker:
     def chunk(
         self,
         document: Document,
-        embedder: IndexingEmbedder,
     ) -> list[DocAwareChunk]:
         raise NotImplementedError
 
 
 class DefaultChunker(Chunker):
+    def __init__(
+        self, model_name: str, provider_type: str | None, enable_multipass: bool
+    ):
+        self.model_name = model_name
+        self.provider_type = provider_type
+        self.enable_multipass = enable_multipass
+
     def chunk(
         self,
         document: Document,
-        embedder: IndexingEmbedder,
     ) -> list[DocAwareChunk]:
         # Specifically for reproducing an issue with gmail
         if document.source == DocumentSource.GMAIL:
             logger.debug(f"Chunking {document.semantic_identifier}")
-        return chunk_document(document, embedder=embedder)
+        return chunk_document(
+            document=document,
+            model_name=self.model_name,
+            provider_type=self.provider_type,
+            enable_multipass=self.enable_multipass,
+        )

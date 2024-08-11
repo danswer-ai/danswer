@@ -6,7 +6,6 @@ from pydantic import validator
 
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
-from danswer.configs.chat_configs import NUM_RERANKED_RESULTS
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import Persona
@@ -14,12 +13,37 @@ from danswer.indexing.models import BaseChunk
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import SearchType
-from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
 
 
 MAX_METRICS_CONTENT = (
     200  # Just need enough characters to identify where in the doc the chunk is
 )
+
+
+class RerankingDetails(BaseModel):
+    rerank_model_name: str
+    api_key: str | None
+
+    # Set to 0 to disable reranking explicitly
+    num_rerank: int
+
+
+class SavedSearchSettings(RerankingDetails):
+    # Empty for no additional expansion
+    multilingual_expansion: list[str]
+    # Encompasses both mini and large chunks
+    multipass_indexing: bool
+
+    # For faster flows where the results should start immediately
+    # this more time intensive step can be skipped
+    disable_rerank_for_streaming: bool
+
+    def to_reranking_detail(self) -> RerankingDetails:
+        return RerankingDetails(
+            rerank_model_name=self.rerank_model_name,
+            api_key=self.api_key,
+            num_rerank=self.num_rerank,
+        )
 
 
 class Tag(BaseModel):
@@ -60,8 +84,6 @@ class ChunkContext(BaseModel):
 
 
 class SearchRequest(ChunkContext):
-    """Input to the SearchPipeline."""
-
     query: str
 
     search_type: SearchType = SearchType.SEMANTIC
@@ -74,10 +96,10 @@ class SearchRequest(ChunkContext):
     offset: int | None = None
     limit: int | None = None
 
+    multilingual_expansion: list[str] | None = None
     recency_bias_multiplier: float = 1.0
     hybrid_alpha: float | None = None
-    # This is to forcibly skip (or run) the step, if None it uses the system defaults
-    skip_rerank: bool | None = None
+    rerank_settings: RerankingDetails | None = None
     evaluation_type: LLMEvaluationType = LLMEvaluationType.UNSPECIFIED
 
     class Config:
@@ -85,23 +107,22 @@ class SearchRequest(ChunkContext):
 
 
 class SearchQuery(ChunkContext):
+    "Processed Request that is directly passed to the SearchPipeline"
     query: str
     processed_keywords: list[str]
     search_type: SearchType
     evaluation_type: LLMEvaluationType
     filters: IndexFilters
 
+    rerank_settings: RerankingDetails | None
     hybrid_alpha: float
     recency_bias_multiplier: float
 
+    # Only used if LLM evaluation type is not skip, None to use default settings
+    max_llm_filter_sections: int
+
     num_hits: int = NUM_RETURNED_HITS
     offset: int = 0
-
-    skip_rerank: bool = not ENABLE_RERANKING_REAL_TIME_FLOW
-    # Only used if not skip_rerank
-    num_rerank: int | None = NUM_RERANKED_RESULTS
-    # Only used if not skip_llm_chunk_filter
-    max_llm_filter_sections: int = NUM_RERANKED_RESULTS
 
     class Config:
         frozen = True

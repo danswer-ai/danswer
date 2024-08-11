@@ -2,10 +2,10 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import BASE_RECENCY_DECAY
 from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
-from danswer.configs.chat_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.chat_configs import FAVOR_RECENT_DECAY_MULTIPLIER
 from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import HYBRID_ALPHA_KEYWORD
+from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.db.models import User
 from danswer.llm.interfaces import LLM
@@ -19,13 +19,14 @@ from danswer.search.models import SearchRequest
 from danswer.search.models import SearchType
 from danswer.search.preprocessing.access_filters import build_access_filters_for_user
 from danswer.search.retrieval.search_runner import remove_stop_words_and_punctuation
+from danswer.search.search_settings import get_search_settings
 from danswer.secondary_llm_flows.source_filter import extract_source_filter
 from danswer.secondary_llm_flows.time_filter import extract_time_filter
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.timing import log_function_time
-from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
+
 
 logger = setup_logger()
 
@@ -137,7 +138,8 @@ def retrieval_preprocessing(
     all_query_terms = query.split()
     processed_keywords = (
         remove_stop_words_and_punctuation(all_query_terms)
-        if EDIT_KEYWORD_QUERY
+        # If the user is using a different language, don't edit the query or remove english stopwords
+        if not search_request.multilingual_expansion
         else all_query_terms
     )
 
@@ -170,9 +172,15 @@ def retrieval_preprocessing(
             )
         llm_evaluation_type = LLMEvaluationType.SKIP
 
-    skip_rerank = search_request.skip_rerank
-    if skip_rerank is None:
-        skip_rerank = not ENABLE_RERANKING_REAL_TIME_FLOW
+    rerank_settings = search_request.rerank_settings
+    # If not explicitly specified by the query, use the current settings
+    if rerank_settings is None:
+        saved_search_settings = get_search_settings()
+        if not saved_search_settings:
+            rerank_settings = None
+        # For non-streaming flows, the rerank settings are applied at the search_request level
+        elif not saved_search_settings.disable_rerank_for_streaming:
+            rerank_settings = saved_search_settings.to_reranking_detail()
 
     # Decays at 1 / (1 + (multiplier * num years))
     if persona and persona.recency_bias == RecencyBiasSetting.NO_DECAY:
@@ -201,7 +209,13 @@ def retrieval_preprocessing(
         recency_bias_multiplier=recency_bias_multiplier,
         num_hits=limit if limit is not None else NUM_RETURNED_HITS,
         offset=offset or 0,
-        skip_rerank=skip_rerank,
+        rerank_settings=rerank_settings,
+        # Should match the LLM filtering to the same as the reranked, it's understood as this is the number of results
+        # the user wants to do heavier processing on, so do the same for the LLM if reranking is on
+        # if no reranking settings are set, then use the global default
+        max_llm_filter_sections=rerank_settings.num_rerank
+        if rerank_settings
+        else NUM_POSTPROCESSED_RESULTS,
         chunks_above=search_request.chunks_above,
         chunks_below=search_request.chunks_below,
         full_doc=search_request.full_doc,
