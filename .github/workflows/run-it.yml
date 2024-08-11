@@ -31,7 +31,8 @@ jobs:
           platforms: linux/arm64
           push: false
           load: true
-          tags: myapp:latest
+          tags: danswer/danswer-web-server:latest
+          cache-from: type=registry,ref=danswer/danswer-web-server:latest
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Build Backend Docker image
@@ -42,7 +43,8 @@ jobs:
           platforms: linux/arm64
           push: false
           load: true
-          tags: myapp:latest
+          tags: danswer/danswer-backend:latest
+          cache-from: type=registry,ref=danswer/danswer-backend:latest
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Build Model Server Docker image
@@ -53,7 +55,8 @@ jobs:
           platforms: linux/arm64
           push: false
           load: true
-          tags: myapp:latest
+          tags: danswer/danswer-model-server:latest
+          cache-from: type=registry,ref=danswer/danswer-model-server:latest
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       # This step is necessary to prevent the cache from growing indefinitely
