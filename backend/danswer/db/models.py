@@ -585,7 +585,7 @@ class EmbeddingModel(Base):
     @property
     def provider_type(self) -> EmbeddingProvider | None:
         return (
-            EmbeddingProvider(self.cloud_provider.name)
+            EmbeddingProvider(self.cloud_provider.name.lower())
             if self.cloud_provider is not None
             else None
         )
