@@ -297,7 +297,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
             update_search_settings(
                 SavedSearchSettings(
                     rerank_model_name=DEFAULT_CROSS_ENCODER_MODEL_NAME,
-                    provider_type=RerankerProvider(DEFAULT_CROSS_ENCODER_PROVIDER_TYPE),
+                    provider_type=RerankerProvider(DEFAULT_CROSS_ENCODER_PROVIDER_TYPE)
+                    if DEFAULT_CROSS_ENCODER_PROVIDER_TYPE is not None
+                    else None,
                     api_key=DEFAULT_CROSS_ENCODER_API_KEY,
                     disable_rerank_for_streaming=DISABLE_RERANK_FOR_STREAMING,
                     num_rerank=NUM_POSTPROCESSED_RESULTS,
