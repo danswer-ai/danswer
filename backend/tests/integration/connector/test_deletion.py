@@ -68,8 +68,6 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
 
     print("Document sets created and synced")
 
-    # TODO: check if EE enabled via inference, probably on /enterprise-settings
-
     # if so, create ACLs
     user_group_1 = UserGroupClient.create_user_group(
         UserGroupCreate(
