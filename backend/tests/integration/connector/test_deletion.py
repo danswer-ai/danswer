@@ -3,11 +3,9 @@ import time
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from tests.integration.common.connectors import ConnectorClient
 from tests.integration.common.constants import MAX_DELAY
-from tests.integration.common.document_sets import create_document_set
-from tests.integration.common.document_sets import fetch_document_sets
+from tests.integration.common.document_sets import DocumentSetClient
 from tests.integration.common.seed_documents import TestDocumentClient
-from tests.integration.common.user_groups import create_user_group
-from tests.integration.common.user_groups import fetch_user_groups
+from tests.integration.common.user_groups import UserGroupClient
 from tests.integration.common.user_groups import UserGroupCreate
 from tests.integration.common.vespa import TestVespaClient
 
@@ -24,7 +22,7 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     )
 
     # create document sets
-    doc_set_1_id = create_document_set(
+    doc_set_1_id = DocumentSetClient.create_document_set(
         DocumentSetCreationRequest(
             name="Test Document Set 1",
             description="Intially connector to be deleted, should be empty after test",
@@ -35,7 +33,7 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
         )
     )
 
-    doc_set_2_id = create_document_set(
+    doc_set_2_id = DocumentSetClient.create_document_set(
         DocumentSetCreationRequest(
             name="Test Document Set 2",
             description="Intially both connectors, should contain undeleted connector after test",
@@ -49,7 +47,7 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     # wait for document sets to be synced
     start = time.time()
     while True:
-        doc_sets = fetch_document_sets()
+        doc_sets = DocumentSetClient.fetch_document_sets()
         doc_set_1 = next(
             (doc_set for doc_set in doc_sets if doc_set.id == doc_set_1_id), None
         )
@@ -73,12 +71,12 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     # TODO: check if EE enabled via inference, probably on /enterprise-settings
 
     # if so, create ACLs
-    user_group_1 = create_user_group(
+    user_group_1 = UserGroupClient.create_user_group(
         UserGroupCreate(
             name="Test User Group 1", user_ids=[], cc_pair_ids=[c1_details.cc_pair_id]
         )
     )
-    user_group_2 = create_user_group(
+    user_group_2 = UserGroupClient.create_user_group(
         UserGroupCreate(
             name="Test User Group 2",
             user_ids=[],
@@ -89,7 +87,7 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     # wait for user groups to be available
     start = time.time()
     while True:
-        user_groups = {ug.id: ug for ug in fetch_user_groups()}
+        user_groups = {ug.id: ug for ug in UserGroupClient.fetch_user_groups()}
 
         if not (
             user_group_1 in user_groups.keys() and user_group_2 in user_groups.keys()
@@ -146,16 +144,18 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
         }
         assert doc["fields"]["document_sets"] == {"Test Document Set 2": 1}
 
-    # TODO: validate connector credential pairs
+    # check that only connector 1 is deleted
+    # TODO: check for the CC pair rather than the connector once the refactor is done
+    all_connectors = ConnectorClient.get_connectors()
+    assert len(all_connectors) == 1
+    assert all_connectors[0]["id"] == c2_details.connector_id
 
     # validate document sets
-    all_doc_sets = fetch_document_sets()
-
+    all_doc_sets = DocumentSetClient.fetch_document_sets()
     assert len(all_doc_sets) == 2
 
     doc_set_1_found = False
     doc_set_2_found = False
-
     for doc_set in all_doc_sets:
         if doc_set.id == doc_set_1_id:
             doc_set_1_found = True
@@ -170,13 +170,11 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     assert doc_set_2_found
 
     # validate user groups
-    all_user_groups = fetch_user_groups()
-
+    all_user_groups = UserGroupClient.fetch_user_groups()
     assert len(all_user_groups) == 2
 
     user_group_1_found = False
     user_group_2_found = False
-
     for user_group in all_user_groups:
         if user_group.id == user_group_1:
             user_group_1_found = True
