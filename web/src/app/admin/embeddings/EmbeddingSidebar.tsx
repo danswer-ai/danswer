@@ -16,7 +16,7 @@ export default function EmbeddingSidebar() {
   }
   const enterpriseSettings = combinedSettings.enterpriseSettings;
 
-  const settingSteps = ["Embedding Model", "Search Settings", "Advanced"];
+  const settingSteps = ["Embedding Model", "Reranking Model", "Advanced"];
 
   return (
     <div className="flex bg-background text-default ">

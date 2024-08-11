@@ -17,6 +17,8 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import useSWR from "swr";
 import { ThreeDotsLoader } from "@/components/Loading";
+import { FiPlus } from "react-icons/fi";
+import AdvancedEmbeddingFormPage from "./AdvancedEmbeddingFormPage";
 
 export default function EmbeddingForm() {
   const { setFormStep, setAlowCreate, formStep, nextFormStep, prevFormStep } =
@@ -29,6 +31,7 @@ export default function EmbeddingForm() {
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [llmChunkFilter, setLlmChunkFilter] = useState(false);
   const [queryExpansion, setQueryExpansion] = useState(false);
+
   const [isFormValid, setisFormValid] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<
     CloudEmbeddingModel | HostedEmbeddingModel | null
@@ -44,7 +47,7 @@ export default function EmbeddingForm() {
     isLoading: isLoadingCurrentModel,
     error: currentEmbeddingModelError,
   } = useSWR<CloudEmbeddingModel | HostedEmbeddingModel | null>(
-    "/api/secondary-index/get-current-embedding-model",
+    "/api/search-settings/get-current-embedding-model",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
@@ -120,77 +123,107 @@ export default function EmbeddingForm() {
     // setIsCancelling(false);
   };
 
+  const createEmbedding = () => {
+    return <></>;
+  };
+
   return (
     <div className="mx-auto mb-8 w-full">
       {popup}
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-
-      <AdminPageTitle
-        includeDivider={false}
-        icon={<div />}
-        title={"Embedding update"}
-      />
-      {formStep == 0 && (
-        <>
-          <Card>
-            <EmbeddingModelSelection
-              currentEmbeddingModel={selectedProvider}
-              updateSelectedProvider={updateSelectedProvider}
-            />
-          </Card>
-          <div className="mt-4 flex w-full justify-end">
-            <button
-              className="enabled:cursor-pointer disabled:cursor-not-allowed disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-              disabled={selectedProvider == null}
-              onClick={() => nextFormStep()}
-            >
-              Continue
-              <ArrowRight />
-            </button>
-          </div>
-        </>
-      )}
-
-      {formStep == 1 && (
-        <>
-          <Card></Card>
-
-          <div className={`mt-4 w-full grid grid-cols-3`}>
-            <button
-              className="border-border-dark mr-auto border flex gap-x-1 items-center text-text p-2.5 text-sm font-regular rounded-sm "
-              onClick={() => prevFormStep()}
-            >
-              <ArrowLeft />
-              Previous
-            </button>
-
-            <button
-              className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-              disabled={!isFormValid}
-              onClick={async () => {
-                // await submi();
-              }}
-            >
-              Create Connector
-            </button>
-
-            <div className="flex w-full justify-end">
+      <div className="mx-auto max-w-4xl">
+        <AdminPageTitle
+          includeDivider={false}
+          icon={<div />}
+          title={"Embedding update"}
+        />
+        {formStep == 0 && (
+          <>
+            <Card>
+              <EmbeddingModelSelection
+                currentEmbeddingModel={selectedProvider}
+                updateSelectedProvider={updateSelectedProvider}
+              />
+            </Card>
+            <div className=" mt-4 flex w-full justify-end">
               <button
-                className={`enabled:cursor-pointer enabled:hover:underline disabled:cursor-not-allowed mt-auto enabled:text-text-600 disabled:text-text-400 ml-auto flex gap-x-1 items-center py-2.5 px-3.5 text-sm font-regular rounded-sm`}
-                disabled={!isFormValid}
-                onClick={() => {
-                  nextFormStep();
-                }}
+                className="enabled:cursor-pointer disabled:cursor-not-allowed disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+                disabled={selectedProvider == null}
+                onClick={() => nextFormStep()}
               >
-                Advanced
+                Continue
                 <ArrowRight />
               </button>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )}
+
+        {formStep == 1 && (
+          <>
+            <Card></Card>
+
+            <div className={` mt-4 w-full grid grid-cols-3`}>
+              <button
+                className="border-border-dark mr-auto border flex gap-x-1 items-center text-text p-2.5 text-sm font-regular rounded-sm "
+                onClick={() => prevFormStep()}
+              >
+                <ArrowLeft />
+                Previous
+              </button>
+
+              <button
+                className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+                // disabled={!isFormValid}
+                onClick={async () => {
+                  // await submi();
+                }}
+              >
+                Create Connector
+              </button>
+
+              <div className="flex w-full justify-end">
+                <button
+                  className={`enabled:cursor-pointer enabled:hover:underline disabled:cursor-not-allowed mt-auto enabled:text-text-600 disabled:text-text-400 ml-auto flex gap-x-1 items-center py-2.5 px-3.5 text-sm font-regular rounded-sm`}
+                  // disabled={!isFormValid}
+                  onClick={() => {
+                    nextFormStep();
+                  }}
+                >
+                  Advanced
+                  <ArrowRight />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+        {formStep == 2 && (
+          <>
+            <Card>
+              <AdvancedEmbeddingFormPage />
+            </Card>
+            <div className={`mt-4  grid  grid-cols-3 w-full `}>
+              <button
+                className="border-border-dark border mr-auto flex gap-x-1 items-center text-text py-2.5 px-3.5 text-sm font-regular rounded-sm"
+                onClick={() => prevFormStep()}
+              >
+                <ArrowLeft />
+                Previous
+              </button>
+              <button
+                className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+                onClick={async () => {
+                  // await createConnector();
+                }}
+              >
+                Create Connector
+                <FiPlus className="text-white h-4 w-4" />
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -47,6 +47,7 @@ import { useRouter } from "next/navigation";
 import { SIDEBAR_WIDTH } from "@/lib/constants";
 import Sidebar from "../../connectors/[connector]/Sidebar";
 import Link from "next/link";
+import { SavedSearchSettings } from "./types";
 
 function Main() {
   const [openToggle, setOpenToggle] = useState(true);
@@ -106,6 +107,13 @@ function Main() {
     errorHandlingFetcher
   );
 
+  const { data: searchSettings, isLoading: isLoadingSearchSettings } =
+    useSWR<SavedSearchSettings | null>(
+      "/api/search-settings/get-search-settings",
+      errorHandlingFetcher,
+      { refreshInterval: 5000 } // 5 seconds
+    );
+
   const {
     data: futureEmbeddingModel,
     isLoading: isLoadingFutureModel,
@@ -115,6 +123,7 @@ function Main() {
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
+  console.log(searchSettings);
   const router = useRouter();
   const {
     data: ongoingReIndexingStatus,
@@ -287,6 +296,67 @@ function Main() {
         These deep learning models are used to generate vector representations
         of your documents, which then power Danswer&apos;s search.
       </Text>
+
+      {searchSettings ? (
+        <div className="mb-12">
+          <Title className="mb-4 !text-2xl font-semibold">
+            Current Configuration
+          </Title>
+          <div className="bg-background-light p-6 rounded-lg shadow-sm">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Text className="font-semibold">Reranking Model</Text>
+                <Text className="text-gray-700">
+                  {searchSettings.rerank_model_name || "Not set"}
+                </Text>
+              </div>
+              <div>
+                <Text className="font-semibold">Provider Type</Text>
+                <Text className="text-gray-700">
+                  {searchSettings.provider_type || "Not set"}
+                </Text>
+              </div>
+              <div>
+                <Text className="font-semibold">Results to Rerank</Text>
+                <Text className="text-gray-700">
+                  {searchSettings.num_rerank}
+                </Text>
+              </div>
+              <div>
+                <Text className="font-semibold">Multilingual Expansion</Text>
+                <Text className="text-gray-700">
+                  {searchSettings.multilingual_expansion.length > 0
+                    ? searchSettings.multilingual_expansion.join(", ")
+                    : "None"}
+                </Text>
+              </div>
+              <div>
+                <Text className="font-semibold">Multipass Indexing</Text>
+                <Text className="text-gray-700">
+                  {searchSettings.multipass_indexing ? "Enabled" : "Disabled"}
+                </Text>
+              </div>
+              <div>
+                <Text className="font-semibold">
+                  Disable Rerank for Streaming
+                </Text>
+                <Text className="text-gray-700">
+                  {searchSettings.disable_rerank_for_streaming ? "Yes" : "No"}
+                </Text>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-12">
+          <Title className="mb-4 !text-2xl font-semibold">
+            Current Configuration
+          </Title>
+          <div className="bg-background-light p-6 rounded-lg shadow-sm">
+            <Text className="text-gray-600">Loading search settings...</Text>
+          </div>
+        </div>
+      )}
 
       {currentModel ? (
         <>
