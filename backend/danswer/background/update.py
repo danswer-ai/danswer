@@ -37,7 +37,7 @@ from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
 from danswer.db.swap_index import check_index_swap
-from danswer.natural_language_processing.search_nlp_models import warm_up_encoders
+from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
@@ -384,7 +384,7 @@ def update_loop(
 
         if db_embedding_model.cloud_provider_id is None:
             logger.debug("Running a first inference to warm up embedding model")
-            warm_up_encoders(
+            warm_up_bi_encoder(
                 embedding_model=db_embedding_model,
                 model_server_host=INDEXING_MODEL_SERVER_HOST,
                 model_server_port=MODEL_SERVER_PORT,
