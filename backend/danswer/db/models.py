@@ -54,6 +54,7 @@ from danswer.llm.override_models import PromptOverride
 from danswer.search.enums import RecencyBiasSetting
 from danswer.utils.encryption import decrypt_bytes_to_string
 from danswer.utils.encryption import encrypt_string_to_bytes
+from shared_configs.model_server_models import EmbeddingProvider
 
 
 class Base(DeclarativeBase):
@@ -582,8 +583,12 @@ class EmbeddingModel(Base):
           cloud_provider='{self.cloud_provider.name if self.cloud_provider else 'None'}')>"
 
     @property
-    def provider_type(self) -> str | None:
-        return self.cloud_provider.name if self.cloud_provider is not None else None
+    def provider_type(self) -> EmbeddingProvider | None:
+        return (
+            EmbeddingProvider(self.cloud_provider.name)
+            if self.cloud_provider is not None
+            else None
+        )
 
     @property
     def api_key(self) -> str | None:

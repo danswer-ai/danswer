@@ -9,6 +9,7 @@ from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.search.models import InferenceChunk
 from danswer.utils.logger import setup_logger
+from shared_configs.model_server_models import EmbeddingProvider
 
 logger = setup_logger()
 transformer_logging.set_verbosity_error()
@@ -114,7 +115,13 @@ def _check_tokenizer_cache(tokenizer_name: str) -> BaseTokenizer:
 _DEFAULT_TOKENIZER: BaseTokenizer = HuggingFaceTokenizer(DOCUMENT_ENCODER_MODEL)
 
 
-def get_tokenizer(model_name: str | None, provider_type: str | None) -> BaseTokenizer:
+def get_tokenizer(
+    model_name: str | None, provider_type: EmbeddingProvider | str | None
+) -> BaseTokenizer:
+    # Currently all of the viable models use the same sentencepiece tokenizer
+    # OpenAI uses a different one but currently it's not supported due to quality issues
+    # the inconsistent chunking makes using the sentencepiece tokenizer default better for now
+    # LLM tokenizers are specified by strings
     global _DEFAULT_TOKENIZER
     return _DEFAULT_TOKENIZER
 

@@ -2,12 +2,14 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
+from shared_configs.model_server_models import EmbeddingProvider
+
 if TYPE_CHECKING:
     from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
 
 
 class TestEmbeddingRequest(BaseModel):
-    provider: str
+    provider: EmbeddingProvider
     api_key: str | None = None
 
 

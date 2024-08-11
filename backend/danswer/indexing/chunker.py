@@ -18,6 +18,7 @@ from danswer.indexing.models import DocAwareChunk
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import shared_precompare_cleanup
+from shared_configs.model_server_models import EmbeddingProvider
 
 if TYPE_CHECKING:
     from llama_index.text_splitter import SentenceSplitter  # type:ignore
@@ -123,7 +124,7 @@ def _get_metadata_suffix_for_document_index(
 def chunk_document(
     document: Document,
     model_name: str,
-    provider_type: str | None,
+    provider_type: EmbeddingProvider | None,
     enable_multipass: bool,
     chunk_tok_size: int = DOC_EMBEDDING_CONTEXT_SIZE,
     subsection_overlap: int = CHUNK_OVERLAP,
@@ -301,7 +302,10 @@ class Chunker:
 
 class DefaultChunker(Chunker):
     def __init__(
-        self, model_name: str, provider_type: str | None, enable_multipass: bool
+        self,
+        model_name: str,
+        provider_type: EmbeddingProvider | None,
+        enable_multipass: bool,
     ):
         self.model_name = model_name
         self.provider_type = provider_type

@@ -4,6 +4,7 @@ import pytest
 
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from shared_configs.enums import EmbedTextType
+from shared_configs.model_server_models import EmbeddingProvider
 
 VALID_SAMPLE = ["hi", "hello my name is bob", "woah there!!!. 😃"]
 # openai limit is 2048, cohere is supposed to be 96 but in practice that doesn't
@@ -30,7 +31,7 @@ def openai_embedding_model() -> EmbeddingModel:
         query_prefix=None,
         passage_prefix=None,
         api_key=os.getenv("OPENAI_API_KEY"),
-        provider_type="openai",
+        provider_type=EmbeddingProvider.OPENAI,
     )
 
 
@@ -49,7 +50,7 @@ def cohere_embedding_model() -> EmbeddingModel:
         query_prefix=None,
         passage_prefix=None,
         api_key=os.getenv("COHERE_API_KEY"),
-        provider_type="cohere",
+        provider_type=EmbeddingProvider.COHERE,
     )
 
 

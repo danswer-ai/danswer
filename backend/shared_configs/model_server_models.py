@@ -1,8 +1,17 @@
+from enum import Enum
+
 from pydantic import BaseModel
 
 from shared_configs.enums import EmbedTextType
 
 Embedding = list[float]
+
+
+class EmbeddingProvider(Enum):
+    OPENAI = "openai"
+    COHERE = "cohere"
+    VOYAGE = "voyage"
+    GOOGLE = "google"
 
 
 class EmbedRequest(BaseModel):
@@ -12,7 +21,7 @@ class EmbedRequest(BaseModel):
     max_context_length: int
     normalize_embeddings: bool
     api_key: str | None
-    provider_type: str | None
+    provider_type: EmbeddingProvider | None
     text_type: EmbedTextType
     manual_query_prefix: str | None
     manual_passage_prefix: str | None

@@ -17,6 +17,7 @@ from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
 from shared_configs.enums import EmbedTextType
 from shared_configs.model_server_models import Embedding
+from shared_configs.model_server_models import EmbeddingProvider
 
 
 logger = setup_logger()
@@ -29,7 +30,7 @@ class IndexingEmbedder(ABC):
         normalize: bool,
         query_prefix: str | None,
         passage_prefix: str | None,
-        provider_type: str | None,
+        provider_type: EmbeddingProvider | None,
         api_key: str | None,
     ):
         self.model_name = model_name
@@ -54,7 +55,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         normalize: bool,
         query_prefix: str | None,
         passage_prefix: str | None,
-        provider_type: str | None = None,
+        provider_type: EmbeddingProvider | None = None,
         api_key: str | None = None,
     ):
         super().__init__(

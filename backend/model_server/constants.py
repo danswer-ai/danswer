@@ -1,6 +1,5 @@
-from enum import Enum
-
 from shared_configs.enums import EmbedTextType
+from shared_configs.model_server_models import EmbeddingProvider
 
 
 MODEL_WARM_UP_STRING = "hi " * 512
@@ -8,13 +7,6 @@ DEFAULT_OPENAI_MODEL = "text-embedding-3-small"
 DEFAULT_COHERE_MODEL = "embed-english-light-v3.0"
 DEFAULT_VOYAGE_MODEL = "voyage-large-2-instruct"
 DEFAULT_VERTEX_MODEL = "text-embedding-004"
-
-
-class EmbeddingProvider(Enum):
-    OPENAI = "openai"
-    COHERE = "cohere"
-    VOYAGE = "voyage"
-    GOOGLE = "google"
 
 
 class EmbeddingModelTextType:
