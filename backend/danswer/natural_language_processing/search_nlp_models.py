@@ -291,8 +291,12 @@ class QueryAnalysisModel:
         return response_model.is_keyword, response_model.keywords
 
 
-def retry_call(
-    func: Callable[..., Any], tries: int = 3, delay: int = 5, *args: Any, **kwargs: Any
+def warm_up_retry(
+    func: Callable[..., Any],
+    tries: int = 20,
+    delay: int = 5,
+    *args: Any,
+    **kwargs: Any,
 ) -> Callable[..., Any]:
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -338,7 +342,7 @@ def warm_up_bi_encoder(
         api_key=None,
     )
 
-    retry_encode = retry_call(embed_model.encode, tries=20, delay=5)
+    retry_encode = warm_up_retry(embed_model.encode)
     retry_encode(texts=[warm_up_str], text_type=EmbedTextType.QUERY)
 
 
@@ -353,5 +357,5 @@ def warm_up_cross_encoder(
         api_key=None,
     )
 
-    retry_predict = retry_call(reranking_model.predict, tries=20, delay=5)
-    retry_predict(WARM_UP_STRINGS[0], WARM_UP_STRINGS[1:])
+    retry_rerank = warm_up_retry(reranking_model.predict)
+    retry_rerank(WARM_UP_STRINGS[0], WARM_UP_STRINGS[1:])
