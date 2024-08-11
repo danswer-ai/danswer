@@ -12,6 +12,7 @@ from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.chat.process_message import stream_chat_message_objects
+from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
@@ -136,18 +137,30 @@ def handle_simplified_chat_message(
     return response
 
 
-# take in a list of previous chat messages
-# do query rephrasing like the other endpoint
 @router.post("/send-message-simple-with-history")
-def handle_simplified_chat_message_2(
+def handle_send_message_simple_with_history(
     req: BasicCreateChatMessageWithHistoryRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ChatBasicResponse:
-    """This is a Non-Streaming version that only gives back a minimal set of information"""
+    """This is a Non-Streaming version that only gives back a minimal set of information.
+    takes in chat history maintained by the caller
+    and does query rephrasing similar to answer-with-quote"""
 
     if len(req.messages) == 0:
         raise HTTPException(status_code=400, detail="Messages cannot be zero length")
+
+    expected_role = MessageType.USER
+    for msg in req.messages:
+        if msg.role != expected_role:
+            raise HTTPException(
+                status_code=400,
+                detail="Message roles must start and end with MessageType.USER and alternate.",
+            )
+        if expected_role == MessageType.USER:
+            expected_role = MessageType.ASSISTANT
+        else:
+            expected_role = MessageType.USER
 
     query = req.messages[-1].message
     if not query:
@@ -160,10 +173,10 @@ def handle_simplified_chat_message_2(
     user_id = user.id if user is not None else None
     chat_session = create_chat_session(
         db_session=db_session,
-        description="",  # One shot queries don't need naming as it's never displayed
+        description="handle_send_message_simple_with_history",
         user_id=user_id,
         persona_id=req.persona_id,
-        one_shot=True,
+        one_shot=False,
     )
 
     llm, _ = get_llms_for_persona(persona=chat_session.persona)
@@ -183,15 +196,15 @@ def handle_simplified_chat_message_2(
         chat_session_id=chat_session.id, db_session=db_session
     )
 
-    cm = root_message
-    for m in msg_history:
-        cm = create_new_chat_message(
+    chat_message = root_message
+    for msg in msg_history:
+        chat_message = create_new_chat_message(
             chat_session_id=chat_session.id,
-            parent_message=cm,
+            parent_message=chat_message,
             prompt_id=req.prompt_id,
-            message=m.message,
-            token_count=len(llm_tokenizer.encode(m.message)),
-            message_type=m.role,
+            message=msg.message,
+            token_count=len(llm_tokenizer.encode(msg.message)),
+            message_type=msg.role,
             db_session=db_session,
             commit=False,
         )
@@ -210,7 +223,7 @@ def handle_simplified_chat_message_2(
 
     full_chat_msg_info = CreateChatMessageRequest(
         chat_session_id=chat_session.id,
-        parent_message_id=cm.id,
+        parent_message_id=chat_message.id,
         message=rephrased_query,
         file_descriptors=[],
         prompt_id=req.prompt_id,
