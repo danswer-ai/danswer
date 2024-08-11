@@ -29,6 +29,7 @@ jobs:
           context: ./web
           file: ./web/Dockerfile
           platforms: linux/arm64
+          pull: true
           push: false
           load: true
           tags: danswer/danswer-web-server:latest
@@ -41,6 +42,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           platforms: linux/arm64
+          pull: true
           push: false
           load: true
           tags: danswer/danswer-backend:latest
@@ -53,6 +55,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile.model_server
           platforms: linux/arm64
+          pull: true
           push: false
           load: true
           tags: danswer/danswer-model-server:latest
