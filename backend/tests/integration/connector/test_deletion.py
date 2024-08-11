@@ -1,5 +1,6 @@
 import time
 
+from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from tests.integration.common.connectors import ConnectorClient
 from tests.integration.common.constants import MAX_DELAY
@@ -106,6 +107,9 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     print("User groups created and synced")
 
     # delete connector 1
+    ConnectorClient.update_connector_status(
+        cc_pair_id=c1_details.cc_pair_id, status=ConnectorCredentialPairStatus.PAUSED
+    )
     ConnectorClient.delete_connector(
         connector_id=c1_details.connector_id, credential_id=c1_details.credential_id
     )

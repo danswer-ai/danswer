@@ -5,6 +5,7 @@ import requests
 from pydantic import BaseModel
 
 from danswer.configs.constants import DocumentSource
+from danswer.db.enums import ConnectorCredentialPairStatus
 from tests.integration.common.constants import API_SERVER_URL
 
 
@@ -87,6 +88,16 @@ class ConnectorClient:
             credential_id=int(credential_id),
             cc_pair_id=int(cc_pair_id),
         )
+
+    @staticmethod
+    def update_connector_status(
+        cc_pair_id: int, status: ConnectorCredentialPairStatus
+    ) -> None:
+        response = requests.put(
+            f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair_id}/status",
+            json={"status": status},
+        )
+        response.raise_for_status()
 
     @staticmethod
     def delete_connector(connector_id: int, credential_id: int) -> None:
