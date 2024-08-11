@@ -13,6 +13,7 @@ from danswer.indexing.models import BaseChunk
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import SearchType
+from shared_configs.enums import RerankerProvider
 
 
 MAX_METRICS_CONTENT = (
@@ -21,10 +22,11 @@ MAX_METRICS_CONTENT = (
 
 
 class RerankingDetails(BaseModel):
-    rerank_model_name: str
+    # If model is None (or num_rerank is 0), then reranking is turned off
+    rerank_model_name: str | None
+    provider_type: RerankerProvider | None
     api_key: str | None
 
-    # Set to 0 to disable reranking explicitly
     num_rerank: int
 
 
@@ -41,6 +43,7 @@ class SavedSearchSettings(RerankingDetails):
     def to_reranking_detail(self) -> RerankingDetails:
         return RerankingDetails(
             rerank_model_name=self.rerank_model_name,
+            provider_type=self.provider_type,
             api_key=self.api_key,
             num_rerank=self.num_rerank,
         )

@@ -15,10 +15,7 @@ from danswer.utils.logger import setup_logger
 from model_server.custom_models import router as custom_models_router
 from model_server.custom_models import warm_up_intent_model
 from model_server.encoders import router as encoders_router
-from model_server.encoders import warm_up_cross_encoder
 from model_server.management_endpoints import router as management_router
-from shared_configs.configs import ENABLE_RERANKING_ASYNC_FLOW
-from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from shared_configs.configs import INDEXING_ONLY
 from shared_configs.configs import MIN_THREADS_ML_MODELS
 from shared_configs.configs import MODEL_SERVER_ALLOWED_HOST
@@ -64,8 +61,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     if not INDEXING_ONLY:
         warm_up_intent_model()
-        if ENABLE_RERANKING_REAL_TIME_FLOW or ENABLE_RERANKING_ASYNC_FLOW:
-            warm_up_cross_encoder()
     else:
         logger.info("This model server should only run document indexing.")
 

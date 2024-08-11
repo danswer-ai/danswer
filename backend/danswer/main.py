@@ -114,10 +114,11 @@ from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import DEFAULT_CROSS_ENCODER_API_KEY
 from shared_configs.configs import DEFAULT_CROSS_ENCODER_MODEL_NAME
-from shared_configs.configs import ENABLE_RERANKING_ASYNC_FLOW
-from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
+from shared_configs.configs import DEFAULT_CROSS_ENCODER_PROVIDER_TYPE
+from shared_configs.configs import DISABLE_RERANK_FOR_STREAMING
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
+from shared_configs.enums import RerankerProvider
 
 
 logger = setup_logger()
@@ -288,27 +289,28 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                     f"Multilingual query expansion is enabled with {search_settings.multilingual_expansion}."
                 )
         else:
-            if ENABLE_RERANKING_REAL_TIME_FLOW or ENABLE_RERANKING_ASYNC_FLOW:
+            if DEFAULT_CROSS_ENCODER_MODEL_NAME:
                 logger.info("Reranking is enabled.")
                 if not DEFAULT_CROSS_ENCODER_MODEL_NAME:
                     raise ValueError("No reranking model specified.")
 
-                update_search_settings(
-                    SavedSearchSettings(
-                        rerank_model_name=DEFAULT_CROSS_ENCODER_MODEL_NAME,
-                        api_key=DEFAULT_CROSS_ENCODER_API_KEY,
-                        disable_rerank_for_streaming=not ENABLE_RERANKING_REAL_TIME_FLOW,
-                        num_rerank=NUM_POSTPROCESSED_RESULTS,
-                        multilingual_expansion=[
-                            s.strip()
-                            for s in MULTILINGUAL_QUERY_EXPANSION.split(",")
-                            if s.strip()
-                        ]
-                        if MULTILINGUAL_QUERY_EXPANSION
-                        else [],
-                        multipass_indexing=ENABLE_MULTIPASS_INDEXING,
-                    )
+            update_search_settings(
+                SavedSearchSettings(
+                    rerank_model_name=DEFAULT_CROSS_ENCODER_MODEL_NAME,
+                    provider_type=RerankerProvider(DEFAULT_CROSS_ENCODER_PROVIDER_TYPE),
+                    api_key=DEFAULT_CROSS_ENCODER_API_KEY,
+                    disable_rerank_for_streaming=DISABLE_RERANK_FOR_STREAMING,
+                    num_rerank=NUM_POSTPROCESSED_RESULTS,
+                    multilingual_expansion=[
+                        s.strip()
+                        for s in MULTILINGUAL_QUERY_EXPANSION.split(",")
+                        if s.strip()
+                    ]
+                    if MULTILINGUAL_QUERY_EXPANSION
+                    else [],
+                    multipass_indexing=ENABLE_MULTIPASS_INDEXING,
                 )
+            )
 
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")
         download_nltk_data()
