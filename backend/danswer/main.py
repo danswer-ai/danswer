@@ -296,7 +296,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                     raise ValueError("No reranking model specified.")
             search_settings = SavedSearchSettings(
                 rerank_model_name=DEFAULT_CROSS_ENCODER_MODEL_NAME,
-                provider_type=RerankerProvider(DEFAULT_CROSS_ENCODER_PROVIDER_TYPE) if DEFAULT_CROSS_ENCODER_PROVIDER_TYPE else None,
+                provider_type=RerankerProvider(DEFAULT_CROSS_ENCODER_PROVIDER_TYPE)
+                if DEFAULT_CROSS_ENCODER_PROVIDER_TYPE
+                else None,
                 api_key=DEFAULT_CROSS_ENCODER_API_KEY,
                 disable_rerank_for_streaming=DISABLE_RERANK_FOR_STREAMING,
                 num_rerank=NUM_POSTPROCESSED_RESULTS,
