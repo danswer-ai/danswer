@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from shared_configs.model_server_models import EmbeddingProvider
+from shared_configs.enums import EmbeddingProvider
 
 if TYPE_CHECKING:
     from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel

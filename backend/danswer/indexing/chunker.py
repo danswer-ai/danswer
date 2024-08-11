@@ -18,7 +18,7 @@ from danswer.indexing.models import DocAwareChunk
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import shared_precompare_cleanup
-from shared_configs.model_server_models import EmbeddingProvider
+from shared_configs.enums import EmbeddingProvider
 
 if TYPE_CHECKING:
     from llama_index.text_splitter import SentenceSplitter  # type:ignore

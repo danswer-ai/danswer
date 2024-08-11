@@ -54,7 +54,7 @@ from danswer.llm.override_models import PromptOverride
 from danswer.search.enums import RecencyBiasSetting
 from danswer.utils.encryption import decrypt_bytes_to_string
 from danswer.utils.encryption import encrypt_string_to_bytes
-from shared_configs.model_server_models import EmbeddingProvider
+from shared_configs.enums import EmbeddingProvider
 
 
 class Base(DeclarativeBase):

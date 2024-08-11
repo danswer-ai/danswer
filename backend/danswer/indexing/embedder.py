@@ -15,9 +15,9 @@ from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
+from shared_configs.enums import EmbeddingProvider
 from shared_configs.enums import EmbedTextType
 from shared_configs.model_server_models import Embedding
-from shared_configs.model_server_models import EmbeddingProvider
 
 
 logger = setup_logger()

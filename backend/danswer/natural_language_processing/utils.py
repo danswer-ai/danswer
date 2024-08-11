@@ -9,7 +9,7 @@ from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.search.models import InferenceChunk
 from danswer.utils.logger import setup_logger
-from shared_configs.model_server_models import EmbeddingProvider
+from shared_configs.enums import EmbeddingProvider
 
 logger = setup_logger()
 transformer_logging.set_verbosity_error()
