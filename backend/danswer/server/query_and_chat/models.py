@@ -181,6 +181,7 @@ class ChatMessageDetail(BaseModel):
     message_type: MessageType
     time_sent: datetime
     alternate_assistant_id: str | None
+    alternate_model: str | None
     # Dict mapping citation number to db_doc_id
     chat_session_id: int | None = None
     citations: dict[int, int] | None

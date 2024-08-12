@@ -459,6 +459,7 @@ def create_new_chat_message(
         existing_message.tool_calls = tool_calls if tool_calls else []
         existing_message.error = error
         existing_message.alternate_assistant_id = alternate_assistant_id
+        existing_message.alternate_model = alternate_model
 
         new_chat_message = existing_message
     else:
@@ -717,6 +718,7 @@ def translate_db_message_to_chat_message_detail(
             for tool_call in chat_message.tool_calls
         ],
         alternate_assistant_id=chat_message.alternate_assistant_id,
+        alternate_model=chat_message.alternate_model,
     )
 
     return chat_msg_detail

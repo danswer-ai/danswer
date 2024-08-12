@@ -404,6 +404,7 @@ export function processRawChatHistory(
       parentMessageId: messageInfo.parent_message,
       childrenMessageIds: [],
       latestChildMessageId: messageInfo.latest_child_message,
+      alternate_model: messageInfo.alternate_model,
     };
 
     messages.set(messageInfo.message_id, message);

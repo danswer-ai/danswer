@@ -706,8 +706,10 @@ export function ChatPage({
     messageOverride,
     queryOverride,
     forceSearch,
+    regenerate,
     isSeededChat,
     alternativeAssistantOverride = null,
+    modelOverRide,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
@@ -715,6 +717,8 @@ export function ChatPage({
     forceSearch?: boolean;
     isSeededChat?: boolean;
     alternativeAssistantOverride?: Persona | null;
+    regenerate?: boolean;
+    modelOverRide?: LlmOverride;
   } = {}) => {
     if (chatState != "input") {
       setPopup({
@@ -842,10 +846,12 @@ export function ChatPage({
         forceSearch,
 
         modelProvider:
+          modelOverRide?.name ||
           llmOverrideManager.llmOverride.name ||
           llmOverrideManager.globalDefault.name ||
           undefined,
         modelVersion:
+          modelOverRide?.modelName ||
           llmOverrideManager.llmOverride.modelName ||
           searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
           llmOverrideManager.globalDefault.modelName ||
@@ -1022,6 +1028,7 @@ export function ChatPage({
                 toolCalls: finalMessage?.tool_calls || toolCalls,
                 parentMessageId: user_message_id,
                 alternateAssistantID: alternativeAssistant?.id,
+                alternate_model: finalMessage?.alternate_model,
               },
             ]);
           }
@@ -1273,6 +1280,19 @@ export function ChatPage({
   };
   const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
+  function createRegenerator(responseId: number) {
+    // Return a new function that only needs modelOverRide to be specified when called
+
+    return async function (modelOverRide: LlmOverride) {
+      return await onSubmit({
+        regenerate: true,
+        messageIdToResend: responseId,
+        modelOverRide,
+      });
+    };
+  }
+
+  console.log(messageHistory);
   return (
     <>
       <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
@@ -1433,10 +1453,10 @@ export function ChatPage({
                               const messageMap =
                                 completeMessageDetail.messageMap;
                               const messageReactComponentKey = `${i}-${completeMessageDetail.sessionId}`;
+                              const parentMessage = message.parentMessageId
+                                ? messageMap.get(message.parentMessageId)
+                                : null;
                               if (message.type === "user") {
-                                const parentMessage = message.parentMessageId
-                                  ? messageMap.get(message.parentMessageId)
-                                  : null;
                                 return (
                                   <div key={messageReactComponentKey}>
                                     <HumanMessage
@@ -1516,6 +1536,10 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      alternateModel={message.alternate_model}
+                                      regenerate={createRegenerator(
+                                        parentMessage?.messageId!
+                                      )}
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
                                       toggleDocumentSelection={

@@ -38,10 +38,8 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Citation } from "@/components/search/results/Citation";
 import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
-import {
-  DislikeFeedbackIcon,
-  LikeFeedbackIcon,
-} from "@/components/icons/icons";
+
+import { ThumbsUpIcon, ThumbsDownIcon } from "@/components/icons/icons";
 import {
   CustomTooltip,
   TooltipGroup,
@@ -52,6 +50,8 @@ import { useMouseTracking } from "./hooks";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
+import RegenerateOption from "../RegenerateOption";
+import { LlmOverride } from "@/lib/hooks";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -102,6 +102,8 @@ function FileDisplay({
 }
 
 export const AIMessage = ({
+  regenerate,
+  alternateModel,
   shared,
   isActive,
   toggleDocumentSelection,
@@ -147,6 +149,8 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
+  alternateModel?: string;
+  regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
   const processContent = (content: string | JSX.Element) => {
@@ -518,16 +522,23 @@ export const AIMessage = ({
                           </CustomTooltip>
                           <CustomTooltip showTick line content="Good response!">
                             <HoverableIcon
-                              icon={<LikeFeedbackIcon />}
+                              icon={<ThumbsUpIcon />}
                               onClick={() => handleFeedback("like")}
                             />
                           </CustomTooltip>
                           <CustomTooltip showTick line content="Bad response!">
                             <HoverableIcon
-                              icon={<DislikeFeedbackIcon />}
+                              icon={<ThumbsDownIcon />}
                               onClick={() => handleFeedback("dislike")}
                             />
                           </CustomTooltip>
+                          {regenerate && (
+                            <RegenerateOption
+                              selectedAssistant={currentPersona!}
+                              regenerate={regenerate}
+                              alternateModel={alternateModel}
+                            />
+                          )}
                         </TooltipGroup>
                       </div>
                     ) : (
@@ -549,14 +560,14 @@ export const AIMessage = ({
 
                           <CustomTooltip showTick line content="Good response!">
                             <HoverableIcon
-                              icon={<LikeFeedbackIcon />}
+                              icon={<ThumbsUpIcon />}
                               onClick={() => handleFeedback("like")}
                             />
                           </CustomTooltip>
 
                           <CustomTooltip showTick line content="Bad response!">
                             <HoverableIcon
-                              icon={<DislikeFeedbackIcon />}
+                              icon={<ThumbsDownIcon />}
                               onClick={() => handleFeedback("dislike")}
                             />
                           </CustomTooltip>
