@@ -34,17 +34,22 @@ transformer_logging.set_verbosity_error()
 logger = setup_logger()
 
 
-# We have to move each file individually because the directories might
-# have the same name but not the same contents and we dont want to overwrite
-# the files in the existing huggingface cache
-def _move_files_recursively(source: Path, dest: Path) -> None:
+def _move_files_recursively(source: Path, dest: Path, overwrite: bool = False) -> None:
+    """
+    This moves the files from the temp huggingface cache to the huggingface cache
+
+    We have to move each file individually because the directories might
+    have the same name but not the same contents and we dont want to remove
+    the files in the existing huggingface cache that don't exist in the temp
+    huggingface cache.
+    """
     for item in source.iterdir():
         target_path = dest / item.relative_to(source)
         if item.is_dir():
-            _move_files_recursively(item, target_path)
+            _move_files_recursively(item, target_path, overwrite)
         else:
             target_path.parent.mkdir(parents=True, exist_ok=True)
-            if target_path.exists():
+            if target_path.exists() and not overwrite:
                 continue
             shutil.move(str(item), str(target_path))
 
