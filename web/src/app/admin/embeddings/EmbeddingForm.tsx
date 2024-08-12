@@ -259,7 +259,7 @@ export default function EmbeddingForm() {
           </PopoverTrigger>
           <PopoverContent>
             <p className="max-w-sm bg-background-900 rounded p-2 text-text-200">
-              Needs reindexing due to:
+              Needs re-indexing due to:
               <ul className="list-disc pl-5 mt-2">
                 {currentEmbeddingModel != selectedProvider && (
                   <li>Changed embedding provider</li>
@@ -370,7 +370,11 @@ export default function EmbeddingForm() {
             <Card>
               <RerankingDetailsForm
                 setModelTab={setModelTab}
-                modelTab={modelTab}
+                modelTab={
+                  originalRerankingDetails.rerank_model_name
+                    ? modelTab
+                    : modelTab || "cloud"
+                }
                 currentRerankingDetails={rerankingDetails}
                 originalRerankingDetails={originalRerankingDetails}
                 setRerankingDetails={setRerankingDetails}

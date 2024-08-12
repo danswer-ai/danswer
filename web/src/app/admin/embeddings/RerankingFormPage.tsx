@@ -157,44 +157,6 @@ const RerankingDetailsForm = forwardRef<
         >
           {({ values, setFieldValue }) => (
             <Form className="space-y-6">
-              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {modelCards.filter(model => model.cloud == (modelTab == "cloud")).map((card) => (
-                <div
-                  key={`${card.provider}-${card.modelName}`}
-                  className={`p-4 border rounded-lg cursor-pointer ${values.provider_type === card.provider &&
-                    values.rerank_model_name === card.modelName
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:border-blue-300"
-                    }`}
-                  onClick={() => {
-                    setRerankingDetails({
-                      ...values,
-                      provider_type: card.provider!,
-                      rerank_model_name: card.modelName,
-                    });
-                    setFieldValue("provider_type", card.provider);
-                    setFieldValue("rerank_model_name", card.modelName);
-                  }}
-                >
-                  <div className="flex justify-between">
-
-                    <h3 className="font-bold text-lg mb-2">{card.displayName}</h3>
-                    {card.link && (
-                      <a
-                        href={card.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex-none text-blue-500 hover:text-blue-700"
-                      >
-                        <FiExternalLink size={18} />
-                      </a>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600">{card.description}</p>
-                </div>
-              ))}
-            </div> */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {(modelTab
                   ? modelCards.filter(
@@ -266,7 +228,16 @@ const RerankingDetailsForm = forwardRef<
 
               {isApiKeyModalOpen && (
                 <Modal
-                  onOutsideClick={() => setIsApiKeyModalOpen(false)}
+                  onOutsideClick={() => {
+                    Object.keys(originalRerankingDetails).forEach((key) => {
+                      setFieldValue(
+                        key,
+                        originalRerankingDetails[key as keyof RerankingDetails]
+                      );
+                    });
+
+                    setIsApiKeyModalOpen(false);
+                  }}
                   width="w-[800px]"
                   title="API Key Configuration"
                 >

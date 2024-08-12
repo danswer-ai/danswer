@@ -4,22 +4,15 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { Button, Card, Text, Title } from "@tremor/react";
-import useSWR, { mutate } from "swr";
+import useSWR from "swr";
 import { ModelPreview } from "./components/ModelSelector";
-import { useState } from "react";
 import {
-  CloudEmbeddingProvider,
   CloudEmbeddingModel,
   AVAILABLE_CLOUD_PROVIDERS,
   AVAILABLE_MODELS,
-  INVALID_OLD_MODEL,
   HostedEmbeddingModel,
-  EmbeddingModelDescriptor,
 } from "./components/types";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { ConnectorIndexingStatus } from "@/lib/types";
-import { Connector } from "@/lib/connectors/connectors";
-import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../llm/constants";
 
 export interface EmbeddingDetails {
   api_key: string;
@@ -163,7 +156,7 @@ function Main() {
           </Card>
 
           <Link href="/admin/embeddings">
-            <Button className="mt-8">Select or Update Search Settings</Button>
+            <Button className="mt-8">Update Search Settings</Button>
           </Link>
         </>
       ) : (

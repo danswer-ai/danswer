@@ -62,40 +62,24 @@ export default function EmbeddingSidebar() {
             <div className="mx-auto w-full max-w-2xl px-4 py-8">
               <div className="relative">
                 <div className="absolute h-[85%] left-[6px] top-[8px] bottom-0 w-0.5 bg-gray-300"></div>
-
                 {settingSteps.map((step, index) => {
-                  const allowed =
-                    (step == "Connector" && allowCreate) ||
-                    (step == "Advanced (optional)" && allowAdvanced) ||
-                    index <= formStep;
-
                   return (
                     <div
                       key={index}
-                      className={`flex items-center mb-6 relative ${
-                        !allowed ? "cursor-not-allowed" : "cursor-pointer"
-                      }`}
+                      className="flex items-center mb-6 relative cursor-pointer"
                       onClick={() => {
-                        if (allowed) {
-                          setFormStep(index);
-                        }
+                        setFormStep(index);
                       }}
                     >
                       <div className="flex-shrink-0 mr-4 z-10">
-                        <div
-                          className={`rounded-full h-3.5 w-3.5 flex items-center justify-center ${
-                            allowed ? "bg-blue-500" : "bg-gray-300"
-                          }`}
-                        >
+                        <div className="rounded-full h-3.5 w-3.5 flex items-center justify-center bg-blue-500">
                           {formStep === index && (
                             <div className="h-2 w-2 rounded-full bg-white"></div>
                           )}
                         </div>
                       </div>
                       <div
-                        className={`${
-                          index <= formStep ? "text-gray-800" : "text-gray-500"
-                        }`}
+                        className={`${index <= formStep ? "text-gray-800" : "text-gray-500"}`}
                       >
                         {step}
                       </div>
