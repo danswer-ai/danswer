@@ -48,7 +48,7 @@ import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
 import { LlmOverride, useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
-import { ChatState, FeedbackType } from "./types";
+import { ChatState, FeedbackType, RegenerationState } from "./types";
 import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
@@ -461,10 +461,7 @@ export function ChatPage({
   );
   const [submittedMessage, setSubmittedMessage] = useState("");
   const [chatState, setChatState] = useState<ChatState>("input");
-  interface RegenerationState {
-    regenerating: boolean;
-    finalMessageIndex: number;
-  }
+
   const [regenerationState, setRegenerationState] =
     useState<RegenerationState | null>(null);
 
@@ -1451,7 +1448,7 @@ export function ChatPage({
                         {...getRootProps()}
                       >
                         <div
-                          className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                          className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative flex-1`}
                           ref={scrollableDivRef}
                         >
                           {/* ChatBanner is a custom banner that displays a admin-specified message at 
@@ -1467,12 +1464,14 @@ export function ChatPage({
                             )}
                           <div
                             className={
-                              "mt-4 -ml-4 w-full mx-auto " +
+                              "mt-4 -ml-4 h-full w-full mx-auto " +
                               "absolute mobile:top-0 desktop:top-12 left-0" +
                               (hasPerformedInitialScroll ? "" : "invisible")
                             }
                           >
                             <MessageRenderer
+                              regenerationState={regenerationState}
+                              createRegenerator={createRegenerator}
                               isFetchingChatMessages={isFetchingChatMessages}
                               alternativeGeneratingAssistant={
                                 alternativeGeneratingAssistant!
@@ -1594,7 +1593,7 @@ export function ChatPage({
                           className="absolute bottom-0 z-10 w-full"
                         >
                           <div className="w-full relative pb-4">
-                            {aboveHorizon && (
+                            {true && (
                               <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
                                 <button
                                   onClick={() => clientScrollToBottom()}

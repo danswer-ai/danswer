@@ -1,15 +1,12 @@
 import { List, AutoSizer } from "react-virtualized";
 
 import {
-  forwardRef,
   SetStateAction,
   useRef,
   useEffect,
   Dispatch,
   useCallback,
   useState,
-  MutableRefObject,
-  useImperativeHandle,
 } from "react";
 import { Persona } from "../admin/assistants/interfaces";
 import { Message } from "./interfaces";
@@ -17,8 +14,8 @@ import { AIMessage, HumanMessage } from "./message/Messages";
 import { TEMP_USER_MESSAGE_ID } from "./ChatPage";
 import { getCitedDocumentsFromMessage, personaIncludesRetrieval } from "./lib";
 
-import { FeedbackType } from "./types";
-import { StarterMessage } from "./StarterMessage";
+import { FeedbackType, RegenerationState } from "./types";
+import { LlmOverride } from "@/lib/hooks";
 
 const ChatMessage = ({
   index,
@@ -46,16 +43,25 @@ const ChatMessage = ({
     selectedDocuments,
     setPopup,
     retrievalEnabled,
+    createRegenerator,
+    regenerationState,
   } = data;
 
   const message = messageHistory[index];
   const messageMap = completeMessageDetail.messageMap;
   const messageReactComponentKey = `${index}-${completeMessageDetail.sessionId}`;
+  const parentMessage = message.parentMessageId
+    ? messageMap.get(message.parentMessageId)
+    : null;
+
+  if (
+    regenerationState?.regenerating &&
+    index >= regenerationState.finalMessageIndex
+  ) {
+    return <></>;
+  }
 
   if (message.type === "user") {
-    const parentMessage = message.parentMessageId
-      ? messageMap.get(message.parentMessageId)
-      : null;
     return (
       <div style={style} key={messageReactComponentKey}>
         <HumanMessage
@@ -110,6 +116,7 @@ const ChatMessage = ({
     return (
       <div style={style} key={messageReactComponentKey}>
         <AIMessage
+          regenerate={createRegenerator(parentMessage?.messageId!, index)}
           isActive={messageHistory.length - 1 == index}
           selectedDocuments={selectedDocuments}
           toggleDocumentSelection={toggleDocumentSelectionAspects}
@@ -273,6 +280,11 @@ type MessageRendererProps = {
   selectedAssistant: Persona;
   currentPersona: Persona;
   isFetchingChatMessages: boolean;
+  createRegenerator: (
+    responseId: number,
+    finalMessageIndex: number
+  ) => (modelOverRide: LlmOverride) => Promise<void>;
+  regenerationState: RegenerationState | null;
 };
 export const MessageRenderer: React.FC<MessageRendererProps> = ({
   completeMessageDetail,
@@ -291,42 +303,57 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   selectedDocuments,
   setPopup,
   retrievalEnabled,
-  alternativeGeneratingAssistant,
-  alternativeAssistant,
-  currentPersona,
-  selectedAssistant,
-  isFetchingChatMessages,
+  createRegenerator,
+  regenerationState,
 }) => {
   const sizeMap = useRef<{ [key: number]: number }>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(0);
+  const listRef = useRef<List>(null);
 
   useEffect(() => {
-    const updateHeight = () => {
-      if (containerRef.current) {
-        setContainerHeight(containerRef.current.clientHeight);
+    const updateScrollingContainerHeight = () => {
+      if (listRef.current && listRef.current.Grid) {
+        const grid = listRef.current.Grid as any;
+        if (grid._scrollingContainer) {
+          setContainerHeight(grid._scrollingContainer.scrollHeight);
+        }
       }
     };
 
-    updateHeight();
-    const resizeObserver = new ResizeObserver(updateHeight);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
+    updateScrollingContainerHeight();
+
+    const resizeObserver = new ResizeObserver(updateScrollingContainerHeight);
+    if (listRef.current && listRef.current.Grid) {
+      const grid = listRef.current.Grid as any;
+      if (grid._scrollingContainer) {
+        resizeObserver.observe(grid._scrollingContainer);
+      }
     }
 
     return () => {
-      if (containerRef.current) {
-        resizeObserver.unobserve(containerRef.current);
-      }
+      resizeObserver.disconnect();
     };
-  }, []);
+  }, [messageHistory]);
+
   const getSize = useCallback((index: { index: number }) => {
-    return sizeMap.current[index.index] || 50; // default size
+    return sizeMap.current[index.index] || 50;
   }, []);
 
   const setSize = useCallback((index: number, size: number) => {
-    sizeMap.current = { ...sizeMap.current, [index]: size };
+    if (sizeMap.current[index] !== size) {
+      sizeMap.current[index] = size;
+      if (listRef.current) {
+        listRef.current.recomputeRowHeights(index);
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.style.height = `${containerHeight || 300}px`;
+    }
+  }, [containerHeight]);
 
   const rowRenderer = ({ index, key, style }: any) => (
     <div style={style} key={key}>
@@ -359,6 +386,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 selectedDocuments,
                 setPopup,
                 retrievalEnabled,
+                createRegenerator,
               }}
             />
           </div>
@@ -368,10 +396,12 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   );
 
   return (
-    <div className="flex-1 w-full" ref={containerRef}>
-      <AutoSizer>
+    <div className={`flex-grow overflow-y-auto`} ref={containerRef}>
+      <AutoSizer className="h-full">
         {({ width, height }: { width: number; height: number }) => (
           <List
+            className="h-full"
+            ref={listRef}
             height={height}
             rowCount={messageHistory.length}
             rowHeight={getSize}
@@ -381,64 +411,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           />
         )}
       </AutoSizer>
-      {isStreaming &&
-        messageHistory.length > 0 &&
-        messageHistory[messageHistory.length - 1].type === "user" && (
-          <div key={`${messageHistory.length}`}>
-            <AIMessage
-              currentPersona={liveAssistant}
-              alternativeAssistant={
-                alternativeGeneratingAssistant ?? alternativeAssistant
-              }
-              messageId={null}
-              personaName={liveAssistant.name}
-              content={
-                <div
-                  key={"Generating"}
-                  className="mr-auto relative inline-block"
-                >
-                  <span className="text-sm loading-text">Thinking...</span>
-                </div>
-              }
-            />
-          </div>
-        )}
-
-      {currentPersona &&
-        currentPersona.starter_messages &&
-        currentPersona.starter_messages.length > 0 &&
-        selectedAssistant &&
-        messageHistory.length === 0 &&
-        !isFetchingChatMessages && (
-          <div
-            className={`
-                          mx-auto 
-                          px-4 
-                          w-searchbar-xs 
-                          2xl:w-searchbar-sm 
-                          3xl:w-searchbar 
-                          grid 
-                          gap-4 
-                          grid-cols-1 
-                          grid-rows-1 
-                          mt-4 
-                          md:grid-cols-2 
-                          mb-6`}
-          >
-            {currentPersona.starter_messages.map((starterMessage, i) => (
-              <div key={i} className="w-full">
-                <StarterMessage
-                  starterMessage={starterMessage}
-                  onClick={() =>
-                    onSubmit({
-                      messageOverride: starterMessage.message,
-                    })
-                  }
-                />
-              </div>
-            ))}
-          </div>
-        )}
       {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
     </div>
   );
