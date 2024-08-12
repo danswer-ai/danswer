@@ -8,8 +8,6 @@ import {
   LLM_PROVIDERS_ADMIN_URL,
 } from "../../llm/constants";
 import { mutate } from "swr";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { Field } from "formik";
 
 export function ChangeCredentialsModal({
   provider,
@@ -157,11 +155,19 @@ export function ChangeCredentialsModal({
       onOutsideClick={onCancel}
     >
       <div className="mb-4">
-        <Subtitle className="mt-4 font-bold text-lg mb-2">
+        <Subtitle className="font-bold text-lg">
           Want to swap out your key?
         </Subtitle>
+        <a
+          href={provider.apiLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline cursor-pointer mt-2 mb-4"
+        >
+          Visit API
+        </a>
 
-        <div className="flex flex-col gap-y-2">
+        <div className="flex flex-col mt-4 gap-y-2">
           {useFileUpload ? (
             <>
               <Label>Upload JSON File</Label>
@@ -176,9 +182,6 @@ export function ChangeCredentialsModal({
             </>
           ) : (
             <>
-              <div className="flex gap-x-2 items-center">
-                <Label>New API Key</Label>
-              </div>
               <input
                 className={`
                     border 
@@ -187,7 +190,6 @@ export function ChangeCredentialsModal({
                     w-full 
                     py-2 
                     px-3 
-                    mt-1
                     bg-background-emphasis
                 `}
                 value={apiKey}
@@ -196,14 +198,6 @@ export function ChangeCredentialsModal({
               />
             </>
           )}
-          <a
-            href={provider.apiLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline cursor-pointer"
-          >
-            Visit API
-          </a>
         </div>
 
         {testError && (
@@ -212,13 +206,13 @@ export function ChangeCredentialsModal({
           </Callout>
         )}
 
-        <div className="flex mt-8 justify-between">
+        <div className="flex mt-4 justify-between">
           <Button
             color="blue"
             onClick={() => handleSubmit()}
             disabled={!apiKey}
           >
-            Execute Key Swap
+            Swap Key
           </Button>
         </div>
         <Divider />

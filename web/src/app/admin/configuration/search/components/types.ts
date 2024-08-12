@@ -121,47 +121,6 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
 
 export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
   {
-    id: 0,
-    name: "OpenAI",
-    website: "https://openai.com",
-    icon: OpenAIIcon,
-    description: "AI industry leader known for ChatGPT and DALL-E",
-    apiLink: "https://platform.openai.com/api-keys",
-    docsLink:
-      "https://docs.danswer.dev/guides/embedding_providers#openai-models",
-    costslink: "https://openai.com/pricing",
-    embedding_models: [
-      {
-        model_name: "text-embedding-3-large",
-        cloud_provider_name: "OpenAI",
-        description:
-          "OpenAI's large embedding model. Best performance, but more expensive.",
-        pricePerMillion: 0.13,
-        model_dim: 3072,
-        normalize: false,
-        query_prefix: "",
-        passage_prefix: "",
-        mtebScore: 64.6,
-        maxContext: 8191,
-        enabled: false,
-      },
-      {
-        model_name: "text-embedding-3-small",
-        cloud_provider_name: "OpenAI",
-        model_dim: 1536,
-        normalize: false,
-        query_prefix: "",
-        passage_prefix: "",
-        description:
-          "OpenAI's newer, more efficient embedding model. Good balance of performance and cost.",
-        pricePerMillion: 0.02,
-        enabled: false,
-        mtebScore: 62.3,
-        maxContext: 8191,
-      },
-    ],
-  },
-  {
     id: 1,
     name: "Cohere",
     website: "https://cohere.ai",
@@ -200,6 +159,47 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         normalize: false,
         query_prefix: "",
         passage_prefix: "",
+      },
+    ],
+  },
+  {
+    id: 0,
+    name: "OpenAI",
+    website: "https://openai.com",
+    icon: OpenAIIcon,
+    description: "AI industry leader known for ChatGPT and DALL-E",
+    apiLink: "https://platform.openai.com/api-keys",
+    docsLink:
+      "https://docs.danswer.dev/guides/embedding_providers#openai-models",
+    costslink: "https://openai.com/pricing",
+    embedding_models: [
+      {
+        model_name: "text-embedding-3-large",
+        cloud_provider_name: "OpenAI",
+        description:
+          "OpenAI's large embedding model. Best performance, but more expensive.",
+        pricePerMillion: 0.13,
+        model_dim: 3072,
+        normalize: false,
+        query_prefix: "",
+        passage_prefix: "",
+        mtebScore: 64.6,
+        maxContext: 8191,
+        enabled: false,
+      },
+      {
+        model_name: "text-embedding-3-small",
+        cloud_provider_name: "OpenAI",
+        model_dim: 1536,
+        normalize: false,
+        query_prefix: "",
+        passage_prefix: "",
+        description:
+          "OpenAI's newer, more efficient embedding model. Good balance of performance and cost.",
+        pricePerMillion: 0.02,
+        enabled: false,
+        mtebScore: 62.3,
+        maxContext: 8191,
       },
     ],
   },

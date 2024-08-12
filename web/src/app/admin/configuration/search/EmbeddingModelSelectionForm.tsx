@@ -1,8 +1,6 @@
 "use client";
 
-import { ThreeDotsLoader } from "@/components/Loading";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Text } from "@tremor/react";
 import useSWR, { mutate } from "swr";
 import { Dispatch, SetStateAction, useState } from "react";
 import {
@@ -25,7 +23,7 @@ import { ChangeCredentialsModal } from "./modals/ChangeCredentialsModal";
 import { ModelSelectionConfirmationModal } from "./modals/ModelSelectionModal";
 import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../llm/constants";
 import { AlreadyPickedModal } from "./modals/AlreadyPickedModal";
-import { ModelOption, ModelSelector } from "./components/ModelSelector";
+import { ModelOption } from "./components/ModelSelector";
 
 export interface EmbeddingDetails {
   api_key: string;
@@ -91,25 +89,11 @@ export function EmbeddingModelSelection({
     errorHandlingFetcher
   );
 
-  const {
-    data: futureEmbeddingModel,
-    isLoading: isLoadingFutureModel,
-    error: futureEmeddingModelError,
-  } = useSWR<CloudEmbeddingModel | HostedEmbeddingModel | null>(
-    "/api/secondary-index/get-secondary-embedding-model",
-    errorHandlingFetcher,
-    { refreshInterval: 5000 } // 5 seconds
-  );
-
   const { data: connectors } = useSWR<Connector<any>[]>(
     "/api/manage/connector",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
-
-  if (isLoadingFutureModel) {
-    return <ThreeDotsLoader />;
-  }
 
   const onConfirmSelection = async (model: EmbeddingModelDescriptor) => {
     const response = await fetch(
@@ -134,22 +118,6 @@ export function EmbeddingModelSelection({
   };
 
   const currentModelName = currentEmbeddingModel?.model_name;
-  const AVAILABLE_CLOUD_PROVIDERS_FLATTENED = AVAILABLE_CLOUD_PROVIDERS.flatMap(
-    (provider) =>
-      provider.embedding_models.map((model) => ({
-        ...model,
-        cloud_provider_id: provider.id,
-        model_name: model.model_name, // Ensure model_name is set for consistency
-      }))
-  );
-
-  const currentModel: CloudEmbeddingModel | HostedEmbeddingModel =
-    AVAILABLE_MODELS.find((model) => model.model_name === currentModelName) ||
-    AVAILABLE_CLOUD_PROVIDERS_FLATTENED.find(
-      (model) => model.model_name === currentEmbeddingModel.model_name
-    )!;
-  // ||
-  // fillOutEmbeddingModelDescriptor(currentEmbeddingModel);
 
   const onSelectOpenSource = async (model: HostedEmbeddingModel) => {
     if (currentEmbeddingModel?.model_name === INVALID_OLD_MODEL) {

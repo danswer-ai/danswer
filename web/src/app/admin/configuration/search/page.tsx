@@ -3,21 +3,10 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import {
-  Button,
-  Card,
-  Divider,
-  Select,
-  SelectItem,
-  Switch,
-  Text,
-  Title,
-} from "@tremor/react";
+import { Button, Card, Text, Title } from "@tremor/react";
 import useSWR, { mutate } from "swr";
 import { ModelPreview } from "./components/ModelSelector";
 import { useState } from "react";
-import { ReindexingProgressTable } from "./components/ReindexingProgressTable";
-import { Modal } from "@/components/Modal";
 import {
   CloudEmbeddingProvider,
   CloudEmbeddingModel,
@@ -48,48 +37,6 @@ import { SavedSearchSettings } from "../../embeddings/types";
 import UpgradingPage from "./UpgradingPage";
 
 function Main() {
-  const [openToggle, setOpenToggle] = useState(true);
-
-  // Cloud Provider based modals
-  const [showTentativeProvider, setShowTentativeProvider] =
-    useState<CloudEmbeddingProvider | null>(null);
-  const [showUnconfiguredProvider, setShowUnconfiguredProvider] =
-    useState<CloudEmbeddingProvider | null>(null);
-  const [changeCredentialsProvider, setChangeCredentialsProvider] =
-    useState<CloudEmbeddingProvider | null>(null);
-
-  // Cloud Model based modals
-  const [alreadySelectedModel, setAlreadySelectedModel] =
-    useState<CloudEmbeddingModel | null>(null);
-  const [showTentativeModel, setShowTentativeModel] =
-    useState<CloudEmbeddingModel | null>(null);
-
-  const [showModelInQueue, setShowModelInQueue] =
-    useState<CloudEmbeddingModel | null>(null);
-
-  const [selecting, setSelecting] = useState(false);
-
-  // Open Model based modals
-  const [showTentativeOpenProvider, setShowTentativeOpenProvider] =
-    useState<HostedEmbeddingModel | null>(null);
-
-  // Enabled / unenabled providers
-  const [newEnabledProviders, setNewEnabledProviders] = useState<string[]>([]);
-  const [newUnenabledProviders, setNewUnenabledProviders] = useState<string[]>(
-    []
-  );
-  const [useLargeChunks, setUseLargeChunks] = useState(false);
-
-  const [rerankingOption, setRerankingOption] = useState("cohere");
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [llmChunkFilter, setLlmChunkFilter] = useState(false);
-  const [queryExpansion, setQueryExpansion] = useState(false);
-  const [showDeleteCredentialsModal, setShowDeleteCredentialsModal] =
-    useState<boolean>(false);
-  const [isCancelling, setIsCancelling] = useState<boolean>(false);
-  const [showAddConnectorPopup, setShowAddConnectorPopup] =
-    useState<boolean>(false);
-
   const {
     data: currentEmeddingModel,
     isLoading: isLoadingCurrentModel,
@@ -98,11 +45,6 @@ function Main() {
     "/api/search-settings/get-current-embedding-model",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
-  );
-
-  const { data: embeddingProviderDetails } = useSWR<EmbeddingDetails[]>(
-    EMBEDDING_PROVIDERS_ADMIN_URL,
-    errorHandlingFetcher
   );
 
   const { data: searchSettings, isLoading: isLoadingSearchSettings } =
@@ -121,84 +63,12 @@ function Main() {
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
-  const router = useRouter();
-  const {
-    data: ongoingReIndexingStatus,
-    isLoading: isLoadingOngoingReIndexingStatus,
-  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
-    "/api/manage/admin/connector/indexing-status?secondary_index=true",
-    errorHandlingFetcher,
-    { refreshInterval: 5000 } // 5 seconds
-  );
-  const { data: connectors } = useSWR<Connector<any>[]>(
-    "/api/manage/connector",
-    errorHandlingFetcher,
-    { refreshInterval: 5000 } // 5 seconds
-  );
-  const [useMiniChunks, setUseMiniChunks] = useState(true);
-  // const [useLargeChunks, setUseLargeChunks] = useState(false);
 
-  const onConfirm = async (
-    model: CloudEmbeddingModel | HostedEmbeddingModel
-  ) => {
-    let newModel: EmbeddingModelDescriptor;
-
-    if ("cloud_provider_name" in model) {
-      // This is a CloudEmbeddingModel
-      newModel = {
-        ...model,
-        model_name: model.model_name,
-        cloud_provider_name: model.cloud_provider_name,
-        // cloud_provider_id: model.cloud_provider_id || 0,
-      };
-    } else {
-      // This is an EmbeddingModelDescriptor
-      newModel = {
-        ...model,
-        model_name: model.model_name!,
-        description: "",
-        cloud_provider_name: null,
-      };
-    }
-
-    const response = await fetch(
-      "/api/search-settings/set-new-embedding-model",
-      {
-        method: "POST",
-        body: JSON.stringify(newModel),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    if (response.ok) {
-      setShowTentativeOpenProvider(null);
-      setShowTentativeModel(null);
-      mutate("/api/search-settings/get-secondary-embedding-model");
-      if (!connectors || !connectors.length) {
-        setShowAddConnectorPopup(true);
-      }
-    } else {
-      alert(`Failed to update embedding model - ${await response.text()}`);
-    }
-  };
-
-  const onCancel = async () => {
-    const response = await fetch("/api/search-settings/cancel-new-embedding", {
-      method: "POST",
-    });
-    if (response.ok) {
-      setShowTentativeModel(null);
-      mutate("/api/search-settings/get-secondary-embedding-model");
-    } else {
-      alert(
-        `Failed to cancel embedding model update - ${await response.text()}`
-      );
-    }
-    setIsCancelling(false);
-  };
-
-  if (isLoadingCurrentModel || isLoadingFutureModel) {
+  if (
+    isLoadingCurrentModel ||
+    isLoadingFutureModel ||
+    isLoadingSearchSettings
+  ) {
     return <ThreeDotsLoader />;
   }
 
@@ -209,28 +79,6 @@ function Main() {
   ) {
     return <ErrorCallout errorTitle="Failed to fetch embedding model status" />;
   }
-
-  const onConfirmSelection = async (model: EmbeddingModelDescriptor) => {
-    const response = await fetch(
-      "/api/search-settings/set-new-embedding-model",
-      {
-        method: "POST",
-        body: JSON.stringify(model),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    if (response.ok) {
-      setShowTentativeModel(null);
-      mutate("/api/search-settings/get-secondary-embedding-model");
-      if (!connectors || !connectors.length) {
-        setShowAddConnectorPopup(true);
-      }
-    } else {
-      alert(`Failed to update embedding model - ${await response.text()}`);
-    }
-  };
 
   const currentModelName = currentEmeddingModel?.model_name;
   const AVAILABLE_CLOUD_PROVIDERS_FLATTENED = AVAILABLE_CLOUD_PROVIDERS.flatMap(
@@ -247,41 +95,6 @@ function Main() {
     AVAILABLE_CLOUD_PROVIDERS_FLATTENED.find(
       (model) => model.model_name === currentEmeddingModel.model_name
     )!;
-
-  const onSelectOpenSource = async (model: HostedEmbeddingModel) => {
-    if (currentEmeddingModel?.model_name === INVALID_OLD_MODEL) {
-      await onConfirmSelection(model);
-    } else {
-      setShowTentativeOpenProvider(model);
-    }
-  };
-
-  const selectedModel = AVAILABLE_CLOUD_PROVIDERS[0];
-  const clientsideAddProvider = (provider: CloudEmbeddingProvider) => {
-    const providerName = provider.name;
-    setNewEnabledProviders((newEnabledProviders) => [
-      ...newEnabledProviders,
-      providerName,
-    ]);
-    setNewUnenabledProviders((newUnenabledProviders) =>
-      newUnenabledProviders.filter(
-        (givenProvidername) => givenProvidername != providerName
-      )
-    );
-  };
-
-  const clientsideRemoveProvider = (provider: CloudEmbeddingProvider) => {
-    const providerName = provider.name;
-    setNewEnabledProviders((newEnabledProviders) =>
-      newEnabledProviders.filter(
-        (givenProvidername) => givenProvidername != providerName
-      )
-    );
-    setNewUnenabledProviders((newUnenabledProviders) => [
-      ...newUnenabledProviders,
-      providerName,
-    ]);
-  };
 
   return (
     <div className="h-screen">

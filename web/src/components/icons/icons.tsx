@@ -53,6 +53,9 @@ import awsWEBP from "../../../public/Amazon.webp";
 import azureIcon from "../../../public/Azure.png";
 
 import anthropicSVG from "../../../public/Anthropic.svg";
+import nomicSVG from "../../../public/nomic.svg";
+import microsoftIcon from "../../../public/microsoft.png";
+
 import mixedBreadSVG from "../../../public/mixedbread.png";
 
 import OCIStorageSVG from "../../../public/OCI.svg";
@@ -291,6 +294,35 @@ export const MixedBreadIcon = ({
     </div>
   );
 };
+
+export const NomicIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={nomicSVG} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const MicrosoftIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={microsoftIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
 export const AnthropicIcon = ({
   size = 16,
   className = defaultTailwindCSS,

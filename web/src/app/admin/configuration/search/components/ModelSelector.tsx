@@ -1,4 +1,8 @@
-import { OpenSourceIcon } from "@/components/icons/icons";
+import {
+  MicrosoftIcon,
+  NomicIcon,
+  OpenSourceIcon,
+} from "@/components/icons/icons";
 import { EmbeddingModelDescriptor, HostedEmbeddingModel } from "./types";
 import { FiExternalLink, FiStar } from "react-icons/fi";
 
@@ -41,14 +45,8 @@ export function ModelOption({
       }`}
     >
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center">
-          {model.isDefault ? (
-            <FiStar className="mr-2 text-accent" size={24} />
-          ) : (
-            <OpenSourceIcon size={24} className="mr-2" />
-          )}
-          <h3 className="font-bold text-lg">{model.model_name}</h3>
-        </div>
+        <h3 className="font-bold text-lg">{model.model_name}</h3>
+
         {model.link && (
           <a
             href={model.link}
@@ -88,7 +86,6 @@ export function ModelOption({
     </div>
   );
 }
-
 export function ModelSelector({
   modelOptions,
   setSelectedModel,
@@ -98,18 +95,90 @@ export function ModelSelector({
   modelOptions: HostedEmbeddingModel[];
   setSelectedModel: (model: HostedEmbeddingModel) => void;
 }) {
+  const groupedModelOptions = modelOptions.reduce(
+    (acc, model) => {
+      const [type] = model.model_name.split("/");
+      if (!acc[type]) {
+        acc[type] = [];
+      }
+      acc[type].push(model);
+      return acc;
+    },
+    {} as Record<string, HostedEmbeddingModel[]>
+  );
+
+  const getTitleForType = (type: string) => {
+    switch (type) {
+      case "nomic-ai":
+        return "Nomic (preferred)";
+      case "intfloat":
+        return "Microsoft";
+      default:
+        return "Open Source";
+    }
+  };
+
+  const getIconForType = (type: string) => {
+    switch (type) {
+      case "nomic-ai":
+        return <NomicIcon size={40} />;
+      case "intfloat":
+        return <MicrosoftIcon size={40} />;
+      default:
+        return <OpenSourceIcon size={40} />;
+    }
+  };
+
   return (
     <div>
-      <div className="flex flex-wrap gap-4">
-        {modelOptions.map((modelOption) => (
-          <ModelOption
-            key={modelOption.model_name}
-            model={modelOption}
-            onSelect={setSelectedModel}
-            selected={currentEmbeddingModel == modelOption}
-          />
+      <div className="flex flex-col gap-y-6 gap-6">
+        {Object.entries(groupedModelOptions).map(([type, models]) => (
+          <div key={type}>
+            <div className="flex items-center mb-2">
+              {getIconForType(type)}
+              <h2 className="ml-2  mt-2 text-xl font-bold">
+                {getTitleForType(type)}
+              </h2>
+            </div>
+
+            <div className="flex mt-4 flex-wrap gap-4">
+              {models.map((modelOption) => (
+                <ModelOption
+                  key={modelOption.model_name}
+                  model={modelOption}
+                  onSelect={setSelectedModel}
+                  selected={currentEmbeddingModel === modelOption}
+                />
+              ))}
+            </div>
+          </div>
         ))}
       </div>
     </div>
   );
 }
+
+// export function ModelSelector({
+//   modelOptions,
+//   setSelectedModel,
+//   currentEmbeddingModel,
+// }: {
+//   currentEmbeddingModel: HostedEmbeddingModel;
+//   modelOptions: HostedEmbeddingModel[];
+//   setSelectedModel: (model: HostedEmbeddingModel) => void;
+// }) {
+//   return (
+//     <div>
+//       <div className="flex flex-wrap gap-4">
+//         {modelOptions.map((modelOption) => (
+//           <ModelOption
+//             key={modelOption.model_name}
+//             model={modelOption}
+//             onSelect={setSelectedModel}
+//             selected={currentEmbeddingModel == modelOption}
+//           />
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }
