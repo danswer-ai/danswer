@@ -434,6 +434,7 @@ def create_new_chat_message(
     error: str | None = None,
     reference_docs: list[DBSearchDoc] | None = None,
     alternate_assistant_id: int | None = None,
+    # Maps the citation number [n] to the DB SearchDoc
     citations: dict[int, int] | None = None,
     tool_calls: list[ToolCall] | None = None,
     commit: bool = True,
