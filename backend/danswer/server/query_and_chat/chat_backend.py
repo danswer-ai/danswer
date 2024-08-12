@@ -274,13 +274,11 @@ def delete_chat_session_by_id(
 
 @router.post("/send-message")
 async def handle_new_chat_message(
+    chat_message_req: CreateChatMessageRequest,
     request: Request,
     user: User | None = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
 ) -> StreamingResponse:
-    chat_message_req = await request.json()
-    chat_message_req = CreateChatMessageRequest.parse_obj(chat_message_req)
-
     logger.debug(f"Received new chat message: {chat_message_req.message}")
 
     if (

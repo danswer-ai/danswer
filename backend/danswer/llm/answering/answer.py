@@ -562,6 +562,6 @@ class Answer:
             return True
 
         if self.is_connected is not None:
-            self._is_cancelled = self.is_connected()
+            self._is_cancelled = not self.is_connected()
 
         return self._is_cancelled
