@@ -1281,7 +1281,7 @@ export function ChatPage({
   const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
   function createRegenerator(responseId: number) {
-    // Return a new function that only needs modelOverRide to be specified when called
+    // Returns new function that only needs modelOverRide to be specified when called
 
     return async function (modelOverRide: LlmOverride) {
       return await onSubmit({
@@ -1292,7 +1292,6 @@ export function ChatPage({
     };
   }
 
-  console.log(messageHistory);
   return (
     <>
       <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />

@@ -98,28 +98,6 @@ export function RegenerateDropdown({
       sideOffset={5}
       triggerMaxWidth
     />
-    // // <div onClick={() => setIsOpen(!isOpen)}>
-    //     {/* <Popover
-    //         open={isOpen}
-    //         onOpenChange={(open) => setIsOpen(open)}
-    //         content={
-    //             !alternate ? (
-    //                 <Hoverable icon={FiStar} />
-    //             ) : (
-    //                 <Hoverable
-    //                     icon={FiStar}
-    //                     hoverText={alternate}
-    //                 />
-    //             )
-    //         }
-    //         popover={Dropdown}
-    //         align="start"
-    //         side={side}
-    //         sideOffset={5}
-    //         triggerMaxWidth
-    //     /> */}
-
-    // // </div>
   );
 }
 
