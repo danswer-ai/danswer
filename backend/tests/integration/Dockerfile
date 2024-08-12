@@ -80,6 +80,4 @@ COPY ./tests/integration /app/tests/integration
 
 ENV PYTHONPATH /app
 
-# Default command which does nothing
-# This container is used by api server and background which specify their own CMD
 CMD ["pytest", "-s", "/app/tests/integration"]

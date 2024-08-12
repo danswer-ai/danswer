@@ -70,6 +70,7 @@ jobs:
 
       - name: Start Docker containers
         run: cd deployment/docker_compose && docker compose -f docker-compose.dev.yml -p danswer-stack up -d
+        id: start_docker
 
       - name: Wait for service to be ready
         run: |
@@ -131,6 +132,17 @@ jobs:
           else
             echo "All integration tests passed successfully."
           fi
+
+      - name: Save Docker logs
+        if: ${{ steps.start_docker.outcome }} == 'success'
+        run: cd deployment/docker_compose && docker compose -f docker-compose.dev.yml -p danswer-stack logs > docker-compose.log
+      
+      - name: Upload logs
+        if: ${{ steps.start_docker.outcome }} == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-logs
+          path: docker-compose.log
           
       - name: Stop Docker containers
         run: docker compose down
