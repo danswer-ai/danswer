@@ -74,6 +74,7 @@ def make_slack_api_rate_limited(
 
     @wraps(call)
     def rate_limited_call(**kwargs: Any) -> SlackResponse:
+        e = None
         for _ in range(max_retries):
             try:
                 # Make the API call
@@ -84,7 +85,7 @@ def make_slack_api_rate_limited(
                 response.validate()
                 return response
 
-            except SlackApiError as e:
+            except SlackApiError:
                 if e.response["error"] == "ratelimited":
                     # Handle rate limiting: get the 'Retry-After' header value and sleep for that duration
                     retry_after = int(e.response.headers.get("Retry-After", 1))
