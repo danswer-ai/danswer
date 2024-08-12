@@ -202,6 +202,11 @@ CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING = (
     os.environ.get("CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING", "").lower() == "true"
 )
 
+# Documents exceeding this size will not be retrieved (in bytes)
+CONFLUENCE_CONNECTOR_SIZE_THRESHOLD = int(
+    os.environ.get("CONFLUENCE_CONNECTOR_SIZE_THRESHOLD", 50 * 1024 * 1024)
+)
+
 JIRA_CONNECTOR_LABELS_TO_SKIP = [
     ignored_tag
     for ignored_tag in os.environ.get("JIRA_CONNECTOR_LABELS_TO_SKIP", "").split(",")

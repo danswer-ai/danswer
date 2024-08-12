@@ -15,6 +15,7 @@ from requests import HTTPError
 
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
+from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_SIZE_THRESHOLD
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -558,6 +559,17 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     continue
 
                 if attachment["title"] not in files_in_used:
+                    continue
+
+                download_link = confluence_client.url + attachment["_links"]["download"]
+
+                attachment_size = attachment["extensions"]["fileSize"]
+                if attachment_size > CONFLUENCE_CONNECTOR_SIZE_THRESHOLD:
+                    logger.warning(
+                        f"Skipping {download_link} due to size. "
+                        f"size={attachment_size} "
+                        f"threshold={CONFLUENCE_CONNECTOR_SIZE_THRESHOLD}"
+                    )
                     continue
 
                 download_link = confluence_client.url + attachment["_links"]["download"]
