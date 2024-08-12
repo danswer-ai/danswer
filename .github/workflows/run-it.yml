@@ -135,14 +135,17 @@ jobs:
 
       - name: Save Docker logs
         if: success() || failure()
-        run: cd deployment/docker_compose && docker compose -f docker-compose.dev.yml -p danswer-stack logs > docker-compose.log
+        run: |
+          cd deployment/docker_compose
+          docker compose -f docker-compose.dev.yml -p danswer-stack logs > docker-compose.log
+          mv docker-compose.log ${{ github.workspace }}/docker-compose.log
       
       - name: Upload logs
         if: success() || failure()
         uses: actions/upload-artifact@v3
         with:
           name: docker-logs
-          path: docker-compose.log
+          path: ${{ github.workspace }}/docker-compose.log
           
       - name: Stop Docker containers
         run: docker compose down
