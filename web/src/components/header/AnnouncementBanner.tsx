@@ -3,6 +3,7 @@ import { useState, useEffect, useContext } from "react";
 import { XIcon } from "../icons/icons";
 import { CustomTooltip } from "../tooltip/CustomTooltip";
 import { SettingsContext } from "../settings/SettingsProvider";
+import Link from "next/link";
 
 interface AnnouncementProps {
   message: string;
@@ -40,26 +41,43 @@ export function AnnouncementBanner({ message, id }: AnnouncementProps) {
 
   return (
     <>
-      {notifications.map((notification) => (
-        <div
-          key={notification.id}
-          className="absolute top-0 left-1/2 transform -translate-x-1/2 bg-blue-600 rounded-sm text-white px-4 pr-8 py-3 mx-auto"
-        >
-          <p className="text-center">
-            {notification.notif_type}{" "}
-            <a className="underline cursor-pointer">Learn more</a>
-          </p>
-          <button
-            onClick={() => handleDismiss(notification.id)}
-            className="absolute top-0 right-0 mt-2 mr-2"
-            aria-label="Dismiss"
-          >
-            <CustomTooltip showTick citation delay={100} content="Dismiss">
-              <XIcon className="h-5 w-5" />
-            </CustomTooltip>
-          </button>
-        </div>
-      ))}
+      {notifications
+        .filter((notification) => !notification.dismissed)
+        .map((notification) => {
+          if (notification.notif_type == "reindex") {
+            return (
+              <div
+                key={notification.id}
+                className="absolute top-0 left-1/2 transform -translate-x-1/2 bg-blue-600 rounded-sm text-white px-4 pr-8 py-3 mx-auto"
+              >
+                <p className="text-center">
+                  Your index is out of date - we strongly recommend updating
+                  your search settings.{" "}
+                  <Link
+                    href={"/admin/configuration/search"}
+                    className="ml-2 underline cursor-pointer"
+                  >
+                    Update here
+                  </Link>
+                </p>
+                <button
+                  onClick={() => handleDismiss(notification.id)}
+                  className="absolute top-0 right-0 mt-2 mr-2"
+                  aria-label="Dismiss"
+                >
+                  <CustomTooltip
+                    showTick
+                    citation
+                    delay={100}
+                    content="Dismiss"
+                  >
+                    <XIcon className="h-5 w-5" />
+                  </CustomTooltip>
+                </button>
+              </div>
+            );
+          }
+        })}
     </>
   );
 }

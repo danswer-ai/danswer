@@ -41,11 +41,13 @@ export const CustomTooltip = ({
   light,
   citation,
   line,
+  medium,
   wrap,
   showTick = false,
   delay = 500,
   position = "bottom",
 }: {
+  medium?: boolean;
   content: string | ReactNode;
   children: JSX.Element;
   large?: boolean;
@@ -120,7 +122,7 @@ export const CustomTooltip = ({
         createPortal(
           <div
             className={`fixed z-[1000] ${citation ? "max-w-[350px]" : "w-40"} ${
-              large ? "w-96" : line && "max-w-64 w-auto"
+              large ?  medium ? "w-88" : "w-96" : line && "max-w-64 w-auto"
             } 
             transform -translate-x-1/2 text-sm 
             ${

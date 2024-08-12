@@ -1,12 +1,16 @@
 import { EmbeddingModelDescriptor, HostedEmbeddingModel } from "./types";
 import { FiStar } from "react-icons/fi";
 
-export function ModelPreview({ model }: { model: EmbeddingModelDescriptor }) {
+export function ModelPreview({
+  model,
+  display,
+}: {
+  model: EmbeddingModelDescriptor;
+  display?: boolean;
+}) {
   return (
     <div
-      className={
-        "p-2 border border-border rounded shadow-md bg-hover-light w-96 flex flex-col"
-      }
+      className={` border border-border rounded shadow-md ${display ? "bg-inverted rounded-lg p-4" : "bg-hover-light p-2"} w-96 flex flex-col`}
     >
       <div className="font-bold text-lg flex">{model.model_name}</div>
       <div className="text-sm mt-1 mx-1">

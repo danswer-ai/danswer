@@ -2,7 +2,6 @@
 
 import { EmbeddingFormProvider } from "@/components/context/EmbeddingContext";
 import EmbeddingSidebar from "./EmbeddingSidebar";
-import { EmbeddingModelSelection } from "../configuration/search/EmbeddingModelSelectionForm";
 import EmbeddingForm from "./EmbeddingForm";
 
 export default function EmbeddingWrapper() {
