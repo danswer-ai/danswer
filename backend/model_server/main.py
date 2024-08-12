@@ -1,4 +1,3 @@
-import asyncio
 import os
 import shutil
 from collections.abc import AsyncGenerator
@@ -32,21 +31,31 @@ transformer_logging.set_verbosity_error()
 logger = setup_logger()
 
 
-async def manage_huggingface_cache() -> None:
-    logger.debug("Moving contents of temp_huggingface to huggingface cache.")
-    temp_hf_cache = Path("/root/.cache/temp_huggingface")
-    hf_cache = Path("/root/.cache/huggingface")
-    if temp_hf_cache.is_dir() and any(temp_hf_cache.iterdir()):
-        hf_cache.mkdir(parents=True, exist_ok=True)
-        for item in temp_hf_cache.iterdir():
-            destination = hf_cache / item.name
-            if destination.exists():
-                logger.debug(f"Skipping existing file/directory: {destination}")
-                continue
-            await asyncio.to_thread(shutil.move, item, destination)
-        logger.debug("Moved contents of temp_huggingface to huggingface cache.")
-    else:
-        logger.debug("Source directory is empty or does not exist. Skipping move.")
+def manage_huggingface_cache() -> None:
+    logger.info("Moving contents of temp_huggingface to huggingface cache.")
+    temp_hf_cache = Path("/root/.cache/temp_huggingface/hub/")
+    hf_cache = Path("/root/.cache/huggingface/hub/")
+
+    if not temp_hf_cache.is_dir():
+        return
+
+    # we have to move each file individually because the directories might
+    # have the same name but not the same contents
+    def _move_files_recursively(source: Path, dest: Path) -> None:
+        for item in source.iterdir():
+            if item.is_dir():
+                _move_files_recursively(item, dest / item.relative_to(source))
+            else:
+                target = dest / item.relative_to(source)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if target.exists():
+                    continue
+                shutil.move(str(item), str(target))
+
+    _move_files_recursively(temp_hf_cache, hf_cache)
+    shutil.rmtree(temp_hf_cache.parent, ignore_errors=True)
+
+    logger.info("Moved contents of temp_huggingface to huggingface cache.")
 
 
 @asynccontextmanager
@@ -56,7 +65,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     else:
         logger.info("GPU is not available")
 
-    await manage_huggingface_cache()
+    manage_huggingface_cache()
 
     torch.set_num_threads(max(MIN_THREADS_ML_MODELS, torch.get_num_threads()))
     logger.info(f"Torch Threads: {torch.get_num_threads()}")
