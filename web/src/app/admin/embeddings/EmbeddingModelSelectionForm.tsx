@@ -11,7 +11,7 @@ import {
   INVALID_OLD_MODEL,
   HostedEmbeddingModel,
   EmbeddingModelDescriptor,
-} from "./components/types";
+} from "../../../components/embedding/types";
 import { Connector } from "@/lib/connectors/connectors";
 import OpenEmbeddingPage from "./pages/OpenEmbeddingPage";
 import CloudEmbeddingPage from "./pages/CloudEmbeddingPage";
@@ -22,7 +22,7 @@ import { SelectModelModal } from "./modals/SelectModelModal";
 import { ChangeCredentialsModal } from "./modals/ChangeCredentialsModal";
 import { ModelSelectionConfirmationModal } from "./modals/ModelSelectionModal";
 import { AlreadyPickedModal } from "./modals/AlreadyPickedModal";
-import { ModelOption } from "./components/ModelSelector";
+import { ModelOption } from "../../../components/embedding/ModelSelector";
 import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../configuration/llm/constants";
 
 export interface EmbeddingDetails {

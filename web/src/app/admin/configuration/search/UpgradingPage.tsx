@@ -6,12 +6,12 @@ import { Button, Text, Title } from "@tremor/react";
 import Link from "next/link";
 import { useState } from "react";
 import useSWR from "swr";
-import { ReindexingProgressTable } from "../../embeddings/components/ReindexingProgressTable";
+import { ReindexingProgressTable } from "../../../../components/embedding/ReindexingProgressTable";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import {
   CloudEmbeddingModel,
   HostedEmbeddingModel,
-} from "../../embeddings/components/types";
+} from "../../../../components/embedding/types";
 import { Connector } from "@/lib/connectors/connectors";
 
 export default function UpgradingPage({

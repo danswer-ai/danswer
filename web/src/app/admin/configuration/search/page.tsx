@@ -5,13 +5,14 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { Button, Card, Text, Title } from "@tremor/react";
 import useSWR from "swr";
-import { ModelPreview } from "./components/ModelSelector";
+import { ModelPreview } from "../../../../components/embedding/ModelSelector";
 import {
-  CloudEmbeddingModel,
   AVAILABLE_CLOUD_PROVIDERS,
-  AVAILABLE_MODELS,
   HostedEmbeddingModel,
-} from "./components/types";
+  CloudEmbeddingModel,
+  AVAILABLE_MODELS,
+} from "@/components/embedding/types";
+
 import { ErrorCallout } from "@/components/ErrorCallout";
 
 export interface EmbeddingDetails {

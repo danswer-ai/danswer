@@ -1,12 +1,12 @@
 "use client";
 import { Button, Card, Text } from "@tremor/react";
-import { ModelSelector } from "../components/ModelSelector";
+import { ModelSelector } from "../../../../components/embedding/ModelSelector";
 import {
   AVAILABLE_MODELS,
   CloudEmbeddingModel,
   HostedEmbeddingModel,
-} from "../components/types";
-import { CustomModelForm } from "../components/CustomModelForm";
+} from "../../../../components/embedding/types";
+import { CustomModelForm } from "../../../../components/embedding/CustomModelForm";
 import { useState } from "react";
 
 export default function OpenEmbeddingPage({
