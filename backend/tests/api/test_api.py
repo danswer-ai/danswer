@@ -46,7 +46,7 @@ def test_handle_simplified_chat_message(client: TestClient) -> None:
 @pytest.mark.skip(
     reason="enable when we have a testing environment with preloaded data"
 )
-def test_handle_simplified_chat_message_2(client: TestClient) -> None:
+def test_handle_send_message_simple_with_history(client: TestClient) -> None:
     req: dict[str, Any] = {}
     messages = []
     messages.append({"message": "What sorts of questions can you answer for me?"})
