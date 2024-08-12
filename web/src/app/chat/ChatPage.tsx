@@ -926,7 +926,6 @@ export function ChatPage({
                 latestChildMessageId: user_message_id,
               });
             }
-            console.log(regenerate ? [] : messageUpdates);
 
             const {
               messageMap: currentFrozenMessageMap,
