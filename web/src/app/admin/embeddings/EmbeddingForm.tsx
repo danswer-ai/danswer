@@ -1,7 +1,7 @@
 "use client";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { useFormContext } from "@/components/context/EmbeddingContext";
+
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 
 import { EmbeddingModelSelection } from "../configuration/search/EmbeddingModelSelectionForm";
@@ -25,9 +25,17 @@ import {
 } from "./types";
 import RerankingDetailsForm from "./RerankingFormPage";
 import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
+import { useEmbeddingFormContext } from "@/components/context/EmbeddingContext";
+import { Modal } from "@/components/Modal";
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@radix-ui/react-popover";
 
 export default function EmbeddingForm() {
-  const { formStep, nextFormStep, prevFormStep } = useFormContext();
+  const { formStep, nextFormStep, prevFormStep } = useEmbeddingFormContext();
   const { popup, setPopup } = usePopup();
 
   const [advancedEmbeddingDetails, setAdvancedEmbeddingDetails] =
@@ -66,6 +74,7 @@ export default function EmbeddingForm() {
     );
     return response;
   }
+  const [useDefault, setUseDefault] = useState(false);
 
   const [selectedProvider, setSelectedProvider] = useState<
     CloudEmbeddingModel | HostedEmbeddingModel | null
@@ -75,6 +84,9 @@ export default function EmbeddingForm() {
   ) => {
     setSelectedProvider(model);
   };
+  const [displayPoorModelName, setDisplayPoorModelName] = useState(true);
+  const [showPoorModel, setShowPoorModel] = useState(false);
+  const [modelTab, setModelTab] = useState<"open" | "cloud" | null>(null);
 
   const {
     data: currentEmbeddingModel,
@@ -85,6 +97,8 @@ export default function EmbeddingForm() {
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
+
+  const [showExplanation, setShowExplanation] = useState(false);
 
   const { data: searchSettings, isLoading: isLoadingSearchSettings } =
     useSWR<SavedSearchSettings | null>(
@@ -109,6 +123,20 @@ export default function EmbeddingForm() {
       });
     }
   }, [searchSettings]);
+
+  const originalRerankingDetails = searchSettings
+    ? {
+        api_key: searchSettings.api_key,
+        num_rerank: searchSettings.num_rerank,
+        provider_type: searchSettings.provider_type,
+        rerank_model_name: searchSettings.rerank_model_name,
+      }
+    : {
+        api_key: "",
+        num_rerank: 0,
+        provider_type: null,
+        rerank_model_name: "",
+      };
 
   useEffect(() => {
     if (currentEmbeddingModel) {
@@ -199,7 +227,6 @@ export default function EmbeddingForm() {
     });
     if (response.ok) {
       // setShowTentativeModel(null);
-      // mutate("/api/search-settings/get-secondary-embedding-model");
     } else {
       alert(
         `Failed to cancel embedding model update - ${await response.text()}`
@@ -207,7 +234,47 @@ export default function EmbeddingForm() {
     }
   };
 
-  const needsReIndex = currentEmbeddingModel != selectedProvider;
+  const needsReIndex =
+    currentEmbeddingModel != selectedProvider ||
+    searchSettings?.multipass_indexing !=
+      advancedEmbeddingDetails.multipass_indexing;
+
+  const ReIndxingButton = () => {
+    return (
+      <div className="flex mx-auto gap-x-1 ml-auto  items-center">
+        <button
+          className="enabled:cursor-pointer  disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex  gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+          onClick={async () => {
+            const updated = await updateSearch();
+            if (updated) {
+              await onConfirm();
+            }
+          }}
+        >
+          Re-index
+        </button>
+        <Popover open={showExplanation} onOpenChange={setShowExplanation}>
+          <PopoverTrigger>
+            <WarningCircle className="text-text-800 cursor-pointer" />
+          </PopoverTrigger>
+          <PopoverContent>
+            <p className="max-w-sm bg-background-900 rounded p-2 text-text-200">
+              Needs reindexing due to:
+              <ul className="list-disc pl-5 mt-2">
+                {currentEmbeddingModel != selectedProvider && (
+                  <li>Changed embedding provider</li>
+                )}
+                {searchSettings?.multipass_indexing !=
+                  advancedEmbeddingDetails.multipass_indexing && (
+                  <li>Multipass indexing modification</li>
+                )}
+              </ul>
+            </p>
+          </PopoverContent>
+        </Popover>
+      </div>
+    );
+  };
 
   return (
     <div className="mx-auto mb-8 w-full">
@@ -233,15 +300,33 @@ export default function EmbeddingForm() {
 
             <Card>
               <EmbeddingModelSelection
+                setModelTab={setModelTab}
+                modelTab={modelTab}
+                useDefault={useDefault}
+                setUseDefault={setUseDefault}
                 currentEmbeddingModel={selectedProvider}
                 updateSelectedProvider={updateSelectedProvider}
               />
             </Card>
-            <div className=" mt-4 flex w-full justify-end">
+            <div className="mt-4 flex w-full justify-end">
               <button
                 className="enabled:cursor-pointer disabled:cursor-not-allowed disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-                disabled={selectedProvider == null}
-                onClick={() => nextFormStep()}
+                disabled={
+                  selectedProvider == currentEmbeddingModel && !useDefault
+                }
+                onClick={() => {
+                  console.log(selectedProvider.model_name);
+                  if (
+                    selectedProvider.model_name.includes("e5") &&
+                    displayPoorModelName
+                  ) {
+                    setDisplayPoorModelName(false);
+                    setShowPoorModel(true);
+                  } else {
+                    nextFormStep();
+                  }
+                  console;
+                }}
               >
                 Continue
                 <ArrowRight />
@@ -249,18 +334,45 @@ export default function EmbeddingForm() {
             </div>
           </>
         )}
+        {showPoorModel && (
+          <Modal
+            onOutsideClick={() => setShowPoorModel(false)}
+            width="max-w-3xl"
+            title={`Are you sure you want to select ${selectedProvider.model_name}?`}
+          >
+            <>
+              <div className="text-lg">
+                {selectedProvider.model_name} is a low-performance model.
+                <br />
+                We recommend the following alternatives.
+                <li>OpenAI for cloud-based</li>
+                <li>Nomic for self-hosted</li>
+              </div>
+              <div className="flex mt-4 justify-between">
+                <Button color="green" onClick={() => setShowPoorModel(false)}>
+                  Cancel update
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowPoorModel(false);
+                    nextFormStep();
+                  }}
+                >
+                  Continue with {selectedProvider.model_name}
+                </Button>
+              </div>
+            </>
+          </Modal>
+        )}
 
         {formStep == 1 && (
           <>
-            <h2 className="text-2xl font-bold mb-4 text-text-800">
-              Post-processing configuration
-            </h2>
-            <Text className="mb-4">
-              Configure your re-ranking functionality.
-            </Text>
             <Card>
               <RerankingDetailsForm
+                setModelTab={setModelTab}
+                modelTab={modelTab}
                 currentRerankingDetails={rerankingDetails}
+                originalRerankingDetails={originalRerankingDetails}
                 setRerankingDetails={setRerankingDetails}
               />
             </Card>
@@ -275,32 +387,7 @@ export default function EmbeddingForm() {
               </button>
 
               {needsReIndex ? (
-                <div className="flex mx-auto gap-x-1 ml-auto  items-center">
-                  <button
-                    className="enabled:cursor-pointer  disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex  gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-                    onClick={async () => {
-                      const updated = await updateSearch();
-                      if (updated) {
-                        await onConfirm();
-                      }
-                    }}
-                  >
-                    Re-index
-                  </button>
-                  <CustomTooltip
-                    medium
-                    content={
-                      <p>
-                        Needs reindexing due to:
-                        <li className="list-disc">
-                          Changed embedding provider
-                        </li>
-                      </p>
-                    }
-                  >
-                    <WarningCircle className="text-text-800" />
-                  </CustomTooltip>
-                </div>
+                <ReIndxingButton />
               ) : (
                 <button
                   className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
@@ -331,6 +418,8 @@ export default function EmbeddingForm() {
           <>
             <Card>
               <AdvancedEmbeddingFormPage
+                numRerank={rerankingDetails.num_rerank}
+                setRerankingDetails={setRerankingDetails}
                 advancedEmbeddingDetails={advancedEmbeddingDetails}
                 updateAdvancedEmbeddingDetails={updateAdvancedEmbeddingDetails}
               />
@@ -346,32 +435,7 @@ export default function EmbeddingForm() {
               </button>
 
               {needsReIndex ? (
-                <div className="flex mx-auto gap-x-1 ml-auto  items-center">
-                  <button
-                    className="enabled:cursor-pointer  disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex  gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-                    onClick={async () => {
-                      const updated = await updateSearch();
-                      if (updated) {
-                        await onConfirm();
-                      }
-                    }}
-                  >
-                    Re-index
-                  </button>
-                  <CustomTooltip
-                    medium
-                    content={
-                      <p>
-                        Needs reindexing due to:
-                        <li className="list-disc">
-                          Changed embedding provider
-                        </li>
-                      </p>
-                    }
-                  >
-                    <WarningCircle className="text-text-800" />
-                  </CustomTooltip>
-                </div>
+                <ReIndxingButton />
               ) : (
                 <button
                   className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"

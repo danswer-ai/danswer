@@ -16,7 +16,7 @@ export function SelectModelModal({
     <Modal
       width="max-w-3xl"
       onOutsideClick={onCancel}
-      title={`Update model to ${model.model_name}`}
+      title={`Select ${model.model_name}`}
     >
       <div className="mb-4">
         <Text className="text-lg mb-2">

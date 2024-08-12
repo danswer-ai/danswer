@@ -247,8 +247,6 @@ function Main() {
     AVAILABLE_CLOUD_PROVIDERS_FLATTENED.find(
       (model) => model.model_name === currentEmeddingModel.model_name
     )!;
-  // ||
-  // fillOutEmeddingModelDescriptor(currentEmeddingModel);
 
   const onSelectOpenSource = async (model: HostedEmbeddingModel) => {
     if (currentEmeddingModel?.model_name === INVALID_OLD_MODEL) {

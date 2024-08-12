@@ -4,7 +4,7 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { Text } from "@tremor/react";
 import useSWR, { mutate } from "swr";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import {
   CloudEmbeddingProvider,
   CloudEmbeddingModel,
@@ -25,6 +25,7 @@ import { ChangeCredentialsModal } from "./modals/ChangeCredentialsModal";
 import { ModelSelectionConfirmationModal } from "./modals/ModelSelectionModal";
 import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../llm/constants";
 import { AlreadyPickedModal } from "./modals/AlreadyPickedModal";
+import { ModelOption, ModelSelector } from "./components/ModelSelector";
 
 export interface EmbeddingDetails {
   api_key: string;
@@ -36,14 +37,22 @@ export interface EmbeddingDetails {
 export function EmbeddingModelSelection({
   currentEmbeddingModel,
   updateSelectedProvider,
+  useDefault,
+  modelTab,
+  setModelTab,
+  setUseDefault,
 }: {
+  modelTab: "open" | "cloud" | null;
+
+  setModelTab: Dispatch<SetStateAction<"open" | "cloud" | null>>;
+
   currentEmbeddingModel: CloudEmbeddingModel | HostedEmbeddingModel;
   updateSelectedProvider: (
     model: CloudEmbeddingModel | HostedEmbeddingModel
   ) => void;
+  useDefault: boolean;
+  setUseDefault: Dispatch<SetStateAction<boolean>>;
 }) {
-  const [modelTab, setModelTab] = useState<"open" | "cloud" | null>(null);
-
   // Cloud Provider based modals
   const [showTentativeProvider, setShowTentativeProvider] =
     useState<CloudEmbeddingProvider | null>(null);
@@ -71,6 +80,7 @@ export function EmbeddingModelSelection({
   const [newUnenabledProviders, setNewUnenabledProviders] = useState<string[]>(
     []
   );
+
   const [showDeleteCredentialsModal, setShowDeleteCredentialsModal] =
     useState<boolean>(false);
   const [showAddConnectorPopup, setShowAddConnectorPopup] =
@@ -256,24 +266,40 @@ export function EmbeddingModelSelection({
         />
       )}
 
+      <p className=" t mb-4">
+        Select from cloud, self-hosted models, or continue with your current
+        embedding model.
+      </p>
       <div className="text-sm mr-auto mb-6 divide-x-2 flex">
         <button
-          onClick={() => setModelTab("cloud")}
-          className={`mx-2 p-2 font-bold  ${
-            modelTab == "cloud"
+          onClick={() => setModelTab(null)}
+          className={`mr-4 p-2 font-bold  ${
+            !modelTab
               ? "rounded bg-background-900 text-text-100 underline"
-              : " hover:underline"
+              : " hover:underline bg-background-100"
           }`}
         >
-          Cloud-based
+          Current
         </button>
+        <div className="px-2 ">
+          <button
+            onClick={() => setModelTab("cloud")}
+            className={`mx-2 p-2 font-bold  ${
+              modelTab == "cloud"
+                ? "rounded bg-background-900 text-text-100 underline"
+                : " hover:underline bg-background-100"
+            }`}
+          >
+            Cloud-based
+          </button>
+        </div>
         <div className="px-2 ">
           <button
             onClick={() => setModelTab("open")}
             className={` mx-2 p-2 font-bold  ${
               modelTab == "open"
                 ? "rounded bg-background-900 text-text-100 underline"
-                : "hover:underline"
+                : "hover:underline bg-background-100"
             }`}
           >
             Self-hosted
@@ -304,10 +330,11 @@ export function EmbeddingModelSelection({
       )}
 
       {!modelTab && (
-        <p className="text-sm">
-          Select a model type above or continue with your current embedding
-          model: {currentEmbeddingModel.model_name}
-        </p>
+        <>
+          <button onClick={() => setUseDefault(true)}>
+            <ModelOption model={currentEmbeddingModel} selected={useDefault} />
+          </button>
+        </>
       )}
     </div>
   );

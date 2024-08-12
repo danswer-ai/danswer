@@ -1,4 +1,4 @@
-import { useFormContext } from "@/components/context/EmbeddingContext";
+import { useEmbeddingFormContext } from "@/components/context/EmbeddingContext";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 
 import { SettingsIcon } from "@/components/icons/icons";
@@ -9,7 +9,7 @@ import { useContext } from "react";
 
 export default function EmbeddingSidebar() {
   const { formStep, setFormStep, allowAdvanced, allowCreate } =
-    useFormContext();
+    useEmbeddingFormContext();
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -28,7 +28,7 @@ export default function EmbeddingSidebar() {
                   bg-opacity-80
                   duration-300
                   ease-in-out
-                  w-[250px]
+                  w-[250px]npm run dev
                   `}
       >
         <div className="fixed h-full left-0 top-0 w-[250px]">

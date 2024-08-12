@@ -69,7 +69,6 @@ export default function UpgradingPage({
               Currently in the process of switching to:{" "}
               {futureEmbeddingModel.model_name}
             </div>
-            {/* <ModelOption model={futureEmbeddingModel} /> */}
 
             <Button
               color="red"

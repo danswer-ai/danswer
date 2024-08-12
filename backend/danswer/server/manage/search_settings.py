@@ -55,12 +55,6 @@ def set_new_embedding_model(
 
         embed_model_details.cloud_provider_id = cloud_id
 
-    if embed_model_details.model_name == current_model.model_name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="New embedding model is the same as the currently active one.",
-        )
-
     secondary_model = get_secondary_db_embedding_model(db_session)
 
     if secondary_model:

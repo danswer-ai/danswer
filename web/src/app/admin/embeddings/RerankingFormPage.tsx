@@ -1,118 +1,316 @@
-import React, { Dispatch, forwardRef, SetStateAction } from "react";
+import React, {
+  Dispatch,
+  forwardRef,
+  SetStateAction,
+  useEffect,
+  useState,
+} from "react";
 import { Formik, Form, FormikProps } from "formik";
 import * as Yup from "yup";
 import { EditingValue } from "@/components/credentials/EditingValue";
 import { RerankerProvider, RerankingDetails } from "./types";
+import { FiExternalLink } from "react-icons/fi";
+import { CohereIcon, OpenSourceIcon } from "@/components/icons/icons";
+import { Modal } from "@/components/Modal";
+import { Button } from "@tremor/react";
 
 interface RerankingDetailsFormProps {
   setRerankingDetails: Dispatch<SetStateAction<RerankingDetails>>;
   currentRerankingDetails: RerankingDetails;
+  originalRerankingDetails: RerankingDetails;
+  modelTab: "open" | "cloud" | null;
+  setModelTab: Dispatch<SetStateAction<"open" | "cloud" | null>>;
 }
 
 const RerankingDetailsForm = forwardRef<
   FormikProps<RerankingDetails>,
   RerankingDetailsFormProps
->(({ setRerankingDetails, currentRerankingDetails }, ref) => {
-  return (
-    <div className="py-4 rounded-lg max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4 text-text-800">
-        Reranking Configuration
-      </h2>
+>(
+  (
+    {
+      setRerankingDetails,
+      originalRerankingDetails,
+      currentRerankingDetails,
+      modelTab,
+      setModelTab,
+    },
+    ref
+  ) => {
+    interface ModelCard {
+      provider?: RerankerProvider;
+      modelName: string;
+      displayName: string;
+      description: string;
+      link: string;
+      cloud: boolean;
+    }
 
-      <Formik
-        innerRef={ref}
-        initialValues={currentRerankingDetails}
-        validationSchema={Yup.object().shape({
-          rerank_model_name: Yup.string().nullable(),
-          provider_type: Yup.mixed<RerankerProvider>()
-            .nullable()
-            .oneOf(Object.values(RerankerProvider)),
-          api_key: Yup.string().nullable(),
-          num_rerank: Yup.number().min(1, "Must be at least 1"),
-        })}
-        onSubmit={async (_, { setSubmitting }) => {
-          setSubmitting(false);
-        }}
-        enableReinitialize={true}
-      >
-        {({ values, setFieldValue }) => (
-          <Form className="space-y-6">
-            <div key="rerank_model_name">
-              <EditingValue
-                description="The name of the reranking model to use"
-                optional
-                currentValue={values.rerank_model_name}
-                onChange={(value: string | null) => {
-                  setRerankingDetails({ ...values, rerank_model_name: value });
-                  setFieldValue("rerank_model_name", value);
-                }}
-                setFieldValue={setFieldValue}
-                type="text"
-                label="Rerank Model Name"
-                name="rerank_model_name"
-              />
-            </div>
+    const modelCards: ModelCard[] = [
+      {
+        cloud: false,
+        modelName: "mxbai-rerank-xsmall-v1",
+        displayName: "MixedBread XSmall",
+        description: "Fastest, smallest model for basic reranking tasks.",
+        link: "https://huggingface.co/mixedbread-ai/mxbai-rerank-xsmall-v1",
+      },
+      {
+        cloud: false,
+        modelName: "mxbai-rerank-base-v1",
+        displayName: "MixedBread Base",
+        description: "Balanced performance for general reranking needs.",
+        link: "https://huggingface.co/mixedbread-ai/mxbai-rerank-base-v1",
+      },
+      {
+        cloud: false,
+        modelName: "mxbai-rerank-large-v1",
+        displayName: "MixedBread Large",
+        description: "Most powerful model for complex reranking tasks.",
+        link: "https://huggingface.co/mixedbread-ai/mxbai-rerank-large-v1",
+      },
+      {
+        cloud: true,
+        provider: RerankerProvider.COHERE,
+        modelName: "rerank-multilingual-v3.0",
+        displayName: "Cohere Multilingual",
+        description: "Powerful multilingual reranking model.",
+        link: "https://docs.cohere.com/docs/rerank",
+      },
+      {
+        cloud: true,
+        provider: RerankerProvider.COHERE,
+        modelName: "rerank-english-v3.0",
+        displayName: "Cohere English",
+        description: "High-performance English-focused reranking model.",
+        link: "https://docs.cohere.com/docs/rerank",
+      },
+    ];
 
-            <div key="provider_type">
-              <EditingValue
-                description="The provider type for reranking"
-                optional
-                currentValue={values.provider_type}
-                onChange={(value: string | null) => {
-                  setRerankingDetails({
-                    ...values,
-                    provider_type: value as RerankerProvider,
-                  });
-                  setFieldValue("provider_type", value);
-                }}
-                setFieldValue={setFieldValue}
-                type="select"
-                options={Object.values(RerankerProvider).map((provider) => ({
-                  value: provider,
-                  label: provider,
-                }))}
-                label="Provider Type"
-                name=""
-              />
-            </div>
-            {values.provider_type === "cohere" && (
-              <div key="api_key">
-                <EditingValue
-                  description="API key for the reranking service"
-                  optional
-                  currentValue={values.api_key}
-                  onChange={(value: string | null) => {
-                    setRerankingDetails({ ...values, api_key: value });
-                    setFieldValue("api_key", value);
+    const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+
+    return (
+      <div className="p-2 rounded-lg max-w-4xl mx-auto">
+        <h2 className="text-2xl font-bold mb-4 text-text-800">
+          Post-processing
+        </h2>
+        <div className="text-sm mr-auto mb-6 divide-x-2 flex">
+          {originalRerankingDetails.rerank_model_name && (
+            <button
+              onClick={() => setModelTab(null)}
+              className={`mx-2 p-2 font-bold  ${
+                !modelTab
+                  ? "rounded bg-background-900 text-text-100 underline"
+                  : " hover:underline bg-background-100"
+              }`}
+            >
+              Current
+            </button>
+          )}
+          <div
+            className={`${originalRerankingDetails.rerank_model_name && "px-2 ml-2"}`}
+          >
+            <button
+              onClick={() => setModelTab("cloud")}
+              className={`mr-2 p-2 font-bold  ${
+                modelTab == "cloud"
+                  ? "rounded bg-background-900 text-text-100 underline"
+                  : " hover:underline bg-background-100"
+              }`}
+            >
+              Cloud-based
+            </button>
+          </div>
+
+          <div className="px-2 ">
+            <button
+              onClick={() => setModelTab("open")}
+              className={` mx-2 p-2 font-bold  ${
+                modelTab == "open"
+                  ? "rounded bg-background-900 text-text-100 underline"
+                  : "hover:underline bg-background-100"
+              }`}
+            >
+              Self-hosted
+            </button>
+          </div>
+        </div>
+
+        <Formik
+          innerRef={ref}
+          initialValues={currentRerankingDetails}
+          validationSchema={Yup.object().shape({
+            rerank_model_name: Yup.string().nullable(),
+            provider_type: Yup.mixed<RerankerProvider>()
+              .nullable()
+              .oneOf(Object.values(RerankerProvider))
+              .optional(),
+            api_key: Yup.string().nullable(),
+            num_rerank: Yup.number().min(1, "Must be at least 1"),
+          })}
+          onSubmit={async (_, { setSubmitting }) => {
+            setSubmitting(false);
+          }}
+          enableReinitialize={true}
+        >
+          {({ values, setFieldValue }) => (
+            <Form className="space-y-6">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {modelCards.filter(model => model.cloud == (modelTab == "cloud")).map((card) => (
+                <div
+                  key={`${card.provider}-${card.modelName}`}
+                  className={`p-4 border rounded-lg cursor-pointer ${values.provider_type === card.provider &&
+                    values.rerank_model_name === card.modelName
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-blue-300"
+                    }`}
+                  onClick={() => {
+                    setRerankingDetails({
+                      ...values,
+                      provider_type: card.provider!,
+                      rerank_model_name: card.modelName,
+                    });
+                    setFieldValue("provider_type", card.provider);
+                    setFieldValue("rerank_model_name", card.modelName);
                   }}
-                  setFieldValue={setFieldValue}
-                  type="password"
-                  label="API Key"
-                  name="api_key"
-                />
+                >
+                  <div className="flex justify-between">
+
+                    <h3 className="font-bold text-lg mb-2">{card.displayName}</h3>
+                    {card.link && (
+                      <a
+                        href={card.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex-none text-blue-500 hover:text-blue-700"
+                      >
+                        <FiExternalLink size={18} />
+                      </a>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600">{card.description}</p>
+                </div>
+              ))}
+            </div> */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {modelCards
+                  .filter((model) => model.cloud == (modelTab == "cloud"))
+                  .map((card) => {
+                    const isSelected =
+                      values.provider_type === card.provider &&
+                      values.rerank_model_name === card.modelName;
+                    return (
+                      <div
+                        key={`${card.provider}-${card.modelName}`}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-50 shadow-md"
+                            : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
+                        }`}
+                        onClick={() => {
+                          if (card.provider) {
+                            setIsApiKeyModalOpen(true);
+                          }
+                          setRerankingDetails({
+                            ...values,
+                            provider_type: card.provider!,
+                            rerank_model_name: card.modelName,
+                          });
+                          setFieldValue("provider_type", card.provider);
+                          setFieldValue("rerank_model_name", card.modelName);
+                        }}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center">
+                            {card.provider === RerankerProvider.COHERE ? (
+                              <CohereIcon size={24} className="mr-2" />
+                            ) : (
+                              <OpenSourceIcon size={24} className="mr-2" />
+                            )}
+                            <h3 className="font-bold text-lg">
+                              {card.displayName}
+                            </h3>
+                          </div>
+                          {card.link && (
+                            <a
+                              href={card.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
+                            >
+                              <FiExternalLink size={18} />
+                            </a>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {card.description}
+                        </p>
+                        <div className="text-xs text-gray-500">
+                          {card.cloud ? "Cloud-based" : "Self-hosted"}
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
-            )}
-            <div key="num_rerank">
-              <EditingValue
-                description="Number of results to rerank"
-                optional={false}
-                currentValue={values.num_rerank}
-                onChangeNumber={(value: number) => {
-                  setRerankingDetails({ ...values, num_rerank: value });
-                  setFieldValue("num_rerank", value);
-                }}
-                setFieldValue={setFieldValue}
-                type="number"
-                label="Number of Results to Rerank"
-                name="num_rerank"
-              />
-            </div>
-          </Form>
-        )}
-      </Formik>
-    </div>
-  );
-});
+
+              {isApiKeyModalOpen && (
+                <Modal
+                  title="API Key Configuration"
+                  onOutsideClick={() => setIsApiKeyModalOpen(false)}
+                >
+                  <div className="px-4">
+                    <EditingValue
+                      description="API key for Cohere"
+                      optional={false}
+                      currentValue={values.api_key}
+                      onChange={(value: string | null) => {
+                        setRerankingDetails({ ...values, api_key: value });
+                        setFieldValue("api_key", value);
+                      }}
+                      setFieldValue={setFieldValue}
+                      type="password"
+                      label="API Key"
+                      name="api_key"
+                    />
+                    <div className="mt-4 flex justify-between">
+                      <Button
+                        onClick={() => {
+                          Object.keys(originalRerankingDetails).forEach(
+                            (key) => {
+                              setFieldValue(
+                                key,
+                                originalRerankingDetails[
+                                  key as keyof RerankingDetails
+                                ]
+                              );
+                            }
+                          );
+
+                          setIsApiKeyModalOpen(false);
+                        }}
+                        color="red"
+                        size="xs"
+                      >
+                        Abandon
+                      </Button>
+                      <Button
+                        onClick={() => setIsApiKeyModalOpen(false)}
+                        color="blue"
+                        size="xs"
+                      >
+                        Update
+                      </Button>
+                    </div>
+                  </div>
+                </Modal>
+              )}
+            </Form>
+          )}
+        </Formik>
+      </div>
+    );
+  }
+);
 
 RerankingDetailsForm.displayName = "RerankingDetailsForm";
 export default RerankingDetailsForm;

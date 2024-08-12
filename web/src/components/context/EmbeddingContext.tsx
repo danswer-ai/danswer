@@ -8,7 +8,7 @@ import React, {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ValidSources } from "@/lib/types";
 
-interface FormContextType {
+interface EmbeddingFormContextType {
   formStep: number;
   formValues: Record<string, any>;
   setFormValues: (values: Record<string, any>) => void;
@@ -22,7 +22,9 @@ interface FormContextType {
   setAlowCreate: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const FormContext = createContext<FormContextType | undefined>(undefined);
+const EmbeddingFormContext = createContext<
+  EmbeddingFormContextType | undefined
+>(undefined);
 
 export const EmbeddingFormProvider: React.FC<{
   children: ReactNode;
@@ -68,7 +70,7 @@ export const EmbeddingFormProvider: React.FC<{
     }
   }, [searchParams]);
 
-  const contextValue: FormContextType = {
+  const contextValue: EmbeddingFormContextType = {
     formStep,
     formValues,
     setFormValues: (values) =>
@@ -84,14 +86,18 @@ export const EmbeddingFormProvider: React.FC<{
   };
 
   return (
-    <FormContext.Provider value={contextValue}>{children}</FormContext.Provider>
+    <EmbeddingFormContext.Provider value={contextValue}>
+      {children}
+    </EmbeddingFormContext.Provider>
   );
 };
 
-export const useFormContext = () => {
-  const context = useContext(FormContext);
+export const useEmbeddingFormContext = () => {
+  const context = useContext(EmbeddingFormContext);
   if (context === undefined) {
-    throw new Error("useFormContext must be used within a FormProvider");
+    throw new Error(
+      "useEmbeddingFormContext must be used within a FormProvider"
+    );
   }
   return context;
 };

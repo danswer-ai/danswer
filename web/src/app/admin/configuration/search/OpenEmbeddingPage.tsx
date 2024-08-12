@@ -1,5 +1,5 @@
 "use client";
-import { Card, Text } from "@tremor/react";
+import { Button, Card, Text } from "@tremor/react";
 import { ModelSelector } from "./components/ModelSelector";
 import {
   AVAILABLE_MODELS,
@@ -7,6 +7,7 @@ import {
   HostedEmbeddingModel,
 } from "./components/types";
 import { CustomModelForm } from "./components/CustomModelForm";
+import { useState } from "react";
 
 export default function OpenEmbeddingPage({
   onSelectOpenSource,
@@ -17,6 +18,7 @@ export default function OpenEmbeddingPage({
   onSelectOpenSource: (model: HostedEmbeddingModel) => Promise<void>;
   currentEmbeddingModel: HostedEmbeddingModel | CloudEmbeddingModel;
 }) {
+  const [configureModel, setConfigureModel] = useState(false);
   return (
     <div>
       <ModelSelector
@@ -45,12 +47,18 @@ export default function OpenEmbeddingPage({
         have unique interfaces or special requirements. If in doubt, reach out
         to the Danswer team.
       </Text>
-
-      <div className="w-full flex">
-        <Card className="mt-4 2xl:w-4/6 mx-auto">
-          <CustomModelForm onSubmit={onSelectOpenSource} />
-        </Card>
-      </div>
+      {!configureModel && (
+        <Button onClick={() => setConfigureModel(true)} className="mt-4">
+          Configure custom model
+        </Button>
+      )}
+      {configureModel && (
+        <div className="w-full flex">
+          <Card className="mt-4 2xl:w-4/6 mx-auto">
+            <CustomModelForm onSubmit={onSelectOpenSource} />
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
