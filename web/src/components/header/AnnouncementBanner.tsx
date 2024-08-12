@@ -5,17 +5,17 @@ import { CustomTooltip } from "../tooltip/CustomTooltip";
 import { SettingsContext } from "../settings/SettingsProvider";
 import Link from "next/link";
 
-interface AnnouncementProps {
-  message: string;
-  id: string;
-}
-
-export function AnnouncementBanner({ message, id }: AnnouncementProps) {
+export function AnnouncementBanner() {
   const settings = useContext(SettingsContext);
+  const [localNotifications, setLocalNotifications] = useState(
+    settings?.settings.notifications || []
+  );
 
-  const notifications = settings?.settings.notifications;
+  useEffect(() => {
+    setLocalNotifications(settings?.settings.notifications || []);
+  }, [settings?.settings.notifications]);
 
-  if (!notifications || notifications.length === 0) return null;
+  if (!localNotifications || localNotifications.length === 0) return null;
 
   const handleDismiss = async (notificationId: number) => {
     try {
@@ -26,9 +26,13 @@ export function AnnouncementBanner({ message, id }: AnnouncementProps) {
         }
       );
       if (response.ok) {
-        // Refresh the settings context to update the notifications list
-        // You might need to implement a refresh function in your SettingsContext
-        // For now, we'll assume it exists
+        // Update local state to remove the dismissed notification
+        setLocalNotifications((prevNotifications) =>
+          prevNotifications.filter(
+            (notification) => notification.id !== notificationId
+          )
+        );
+        // Optionally, you can still refresh the global settings if needed
         // settings?.refreshSettings();
       } else {
         console.error("Failed to dismiss notification");
@@ -40,7 +44,7 @@ export function AnnouncementBanner({ message, id }: AnnouncementProps) {
 
   return (
     <>
-      {notifications
+      {localNotifications
         .filter((notification) => !notification.dismissed)
         .map((notification) => {
           if (notification.notif_type == "reindex") {
@@ -76,6 +80,7 @@ export function AnnouncementBanner({ message, id }: AnnouncementProps) {
               </div>
             );
           }
+          return null;
         })}
     </>
   );

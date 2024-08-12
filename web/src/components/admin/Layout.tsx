@@ -45,10 +45,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
       enableEnterprise={SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED}
       user={user}
     >
-      <AnnouncementBanner
-        message="Note: You should upgrade your embedding settings."
-        id="advanced_search_config_2023_06_15"
-      />
+      <AnnouncementBanner />
       {children}
     </ClientLayout>
   );
