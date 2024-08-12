@@ -9,6 +9,7 @@ from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Document
 from danswer.db.models import DocumentByConnectorCredentialPair
@@ -270,37 +271,20 @@ def mark_document_set_as_to_be_deleted(
         raise
 
 
-def mark_cc_pair__document_set_relationships_to_be_deleted__no_commit(
-    cc_pair_id: int, db_session: Session
-) -> set[int]:
-    """Marks all CC Pair -> Document Set relationships for the specified
-    `cc_pair_id` as not current and returns the list of all document set IDs
-    affected.
-
-    NOTE: raises a `ValueError` if any of the document sets are currently syncing
-    to avoid getting into a bad state."""
-    document_set__cc_pair_relationships = db_session.scalars(
-        select(DocumentSet__ConnectorCredentialPair).where(
+def delete_document_set_cc_pair_relationship__no_commit(
+    connector_id: int, credential_id: int, db_session: Session
+) -> None:
+    """Deletes all rows from DocumentSet__ConnectorCredentialPair where the
+    connector_credential_pair_id matches the given cc_pair_id."""
+    delete_stmt = delete(DocumentSet__ConnectorCredentialPair).where(
+        and_(
+            ConnectorCredentialPair.connector_id == connector_id,
+            ConnectorCredentialPair.credential_id == credential_id,
             DocumentSet__ConnectorCredentialPair.connector_credential_pair_id
-            == cc_pair_id
+            == ConnectorCredentialPair.id,
         )
-    ).all()
-
-    document_set_ids_touched: set[int] = set()
-    for document_set__cc_pair_relationship in document_set__cc_pair_relationships:
-        document_set__cc_pair_relationship.is_current = False
-
-        if not document_set__cc_pair_relationship.document_set.is_up_to_date:
-            raise ValueError(
-                "Cannot delete CC pair while it is attached to a document set "
-                "that is syncing. Please wait for the document set to finish "
-                "syncing, and then try again."
-            )
-
-        document_set__cc_pair_relationship.document_set.is_up_to_date = False
-        document_set_ids_touched.add(document_set__cc_pair_relationship.document_set_id)
-
-    return document_set_ids_touched
+    )
+    db_session.execute(delete_stmt)
 
 
 def fetch_document_sets(
@@ -431,8 +415,10 @@ def fetch_documents_for_document_set_paginated(
 
 
 def fetch_document_sets_for_documents(
-    document_ids: list[str], db_session: Session
+    document_ids: list[str],
+    db_session: Session,
 ) -> Sequence[tuple[str, list[str]]]:
+    """Gives back a list of (document_id, list[document_set_names]) tuples"""
     stmt = (
         select(Document.id, func.array_agg(DocumentSetDBModel.name))
         .join(
@@ -459,6 +445,10 @@ def fetch_document_sets_for_documents(
             Document.id == DocumentByConnectorCredentialPair.id,
         )
         .where(Document.id.in_(document_ids))
+        # don't include CC pairs that are being deleted
+        # NOTE: CC pairs can never go from DELETING to any other state -> it's safe to ignore them
+        # as we can assume their document sets are no longer relevant
+        .where(ConnectorCredentialPair.status != ConnectorCredentialPairStatus.DELETING)
         .where(DocumentSet__ConnectorCredentialPair.is_current == True)  # noqa: E712
         .group_by(Document.id)
     )

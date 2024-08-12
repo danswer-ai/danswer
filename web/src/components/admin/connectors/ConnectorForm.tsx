@@ -194,7 +194,6 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             connector_specific_config: connectorConfig,
             refresh_freq: refreshFreq || 0,
             prune_freq: pruneFreq ?? null,
-            disabled: false,
             indexing_start: indexingStart || null,
           });
 
@@ -343,7 +342,6 @@ export function UpdateConnectorForm<T extends Yup.AnyObject>({
               connector_specific_config: values,
               refresh_freq: existingConnector.refresh_freq,
               prune_freq: existingConnector.prune_freq,
-              disabled: false,
               indexing_start: existingConnector.indexing_start,
             },
             existingConnector.id

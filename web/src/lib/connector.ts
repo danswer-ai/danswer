@@ -52,26 +52,6 @@ export async function updateConnector<T>(
   return await response.json();
 }
 
-export async function disableConnector(
-  connector: Connector<any>,
-  setPopup: (popupSpec: PopupSpec | null) => void,
-  onUpdate: () => void
-) {
-  updateConnector({
-    ...connector,
-    disabled: !connector.disabled,
-  }).then(() => {
-    setPopup({
-      message: connector.disabled ? "Enabled connector!" : "Paused connector!",
-      type: "success",
-    });
-    setTimeout(() => {
-      setPopup(null);
-    }, 4000);
-    onUpdate && onUpdate();
-  });
-}
-
 export async function deleteConnector(
   connectorId: number
 ): Promise<string | null> {

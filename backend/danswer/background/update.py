@@ -25,13 +25,14 @@ from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import init_sqlalchemy_engine
+from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
 from danswer.db.index_attempt import get_last_attempt_for_cc_pair
 from danswer.db.index_attempt import get_not_started_index_attempts
 from danswer.db.index_attempt import mark_attempt_failed
-from danswer.db.models import Connector
+from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
@@ -57,12 +58,14 @@ _UNEXPECTED_STATE_FAILURE_REASON = (
 
 
 def _should_create_new_indexing(
-    connector: Connector,
+    cc_pair: ConnectorCredentialPair,
     last_index: IndexAttempt | None,
     model: EmbeddingModel,
     secondary_index_building: bool,
     db_session: Session,
 ) -> bool:
+    connector = cc_pair.connector
+
     # User can still manually create single indexing attempts via the UI for the
     # currently in use index
     if DISABLE_INDEX_UPDATE_ON_SWAP:
@@ -89,10 +92,10 @@ def _should_create_new_indexing(
                 return False
         return True
 
-    # If the connector is disabled or is the ingestion API, don't index
+    # If the connector is paused or is the ingestion API, don't index
     # NOTE: during an embedding model switch over, the following logic
     # is bypassed by the above check for a future model
-    if connector.disabled or connector.id == 0:
+    if cc_pair.status == ConnectorCredentialPairStatus.PAUSED or connector.id == 0:
         return False
 
     if not last_index:
@@ -187,7 +190,7 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
                     cc_pair.id, model.id, db_session
                 )
                 if not _should_create_new_indexing(
-                    connector=cc_pair.connector,
+                    cc_pair=cc_pair,
                     last_index=last_attempt,
                     model=model,
                     secondary_index_building=len(embedding_models) > 1,

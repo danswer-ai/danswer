@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from danswer.configs.constants import DocumentSource
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.credentials import fetch_credential_by_id
+from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexAttempt
@@ -26,7 +27,9 @@ def get_connector_credential_pairs(
 ) -> list[ConnectorCredentialPair]:
     stmt = select(ConnectorCredentialPair)
     if not include_disabled:
-        stmt = stmt.where(ConnectorCredentialPair.connector.disabled == False)  # noqa
+        stmt = stmt.where(
+            ConnectorCredentialPair.status == ConnectorCredentialPairStatus.ACTIVE
+        )  # noqa
     results = db_session.scalars(stmt)
     return list(results.all())
 
@@ -109,10 +112,56 @@ def get_last_successful_attempt_time(
     return attempt.time_started.timestamp()
 
 
+"""Updates"""
+
+
+def _update_connector_credential_pair(
+    db_session: Session,
+    cc_pair: ConnectorCredentialPair,
+    status: ConnectorCredentialPairStatus | None = None,
+    net_docs: int | None = None,
+    run_dt: datetime | None = None,
+) -> None:
+    # simply don't update last_successful_index_time if run_dt is not specified
+    # at worst, this would result in re-indexing documents that were already indexed
+    if run_dt is not None:
+        cc_pair.last_successful_index_time = run_dt
+    if net_docs is not None:
+        cc_pair.total_docs_indexed += net_docs
+    if status is not None:
+        cc_pair.status = status
+    db_session.commit()
+
+
+def update_connector_credential_pair_from_id(
+    db_session: Session,
+    cc_pair_id: int,
+    status: ConnectorCredentialPairStatus | None = None,
+    net_docs: int | None = None,
+    run_dt: datetime | None = None,
+) -> None:
+    cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
+    if not cc_pair:
+        logger.warning(
+            f"Attempted to update pair for Connector Credential Pair '{cc_pair_id}'"
+            f" but it does not exist"
+        )
+        return
+
+    _update_connector_credential_pair(
+        db_session=db_session,
+        cc_pair=cc_pair,
+        status=status,
+        net_docs=net_docs,
+        run_dt=run_dt,
+    )
+
+
 def update_connector_credential_pair(
     db_session: Session,
     connector_id: int,
     credential_id: int,
+    status: ConnectorCredentialPairStatus | None = None,
     net_docs: int | None = None,
     run_dt: datetime | None = None,
 ) -> None:
@@ -123,13 +172,14 @@ def update_connector_credential_pair(
             f"and credential id {credential_id}"
         )
         return
-    # simply don't update last_successful_index_time if run_dt is not specified
-    # at worst, this would result in re-indexing documents that were already indexed
-    if run_dt is not None:
-        cc_pair.last_successful_index_time = run_dt
-    if net_docs is not None:
-        cc_pair.total_docs_indexed += net_docs
-    db_session.commit()
+
+    _update_connector_credential_pair(
+        db_session=db_session,
+        cc_pair=cc_pair,
+        status=status,
+        net_docs=net_docs,
+        run_dt=run_dt,
+    )
 
 
 def delete_connector_credential_pair__no_commit(
@@ -160,6 +210,8 @@ def associate_default_cc_pair(db_session: Session) -> None:
         connector_id=0,
         credential_id=0,
         name="DefaultCCPair",
+        status=ConnectorCredentialPairStatus.ACTIVE,
+        is_public=True,
     )
     db_session.add(association)
     db_session.commit()
@@ -204,6 +256,7 @@ def add_credential_to_connector(
         connector_id=connector_id,
         credential_id=credential_id,
         name=cc_pair_name,
+        status=ConnectorCredentialPairStatus.ACTIVE,
         is_public=is_public,
     )
     db_session.add(association)

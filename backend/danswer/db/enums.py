@@ -33,3 +33,9 @@ class IndexModelStatus(str, PyEnum):
 class ChatSessionSharedStatus(str, PyEnum):
     PUBLIC = "public"
     PRIVATE = "private"
+
+
+class ConnectorCredentialPairStatus(str, PyEnum):
+    ACTIVE = "ACTIVE"
+    PAUSED = "PAUSED"
+    DELETING = "DELETING"

@@ -13,12 +13,16 @@ from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import KV_GEN_AI_KEY_CHECK_TIME
 from danswer.db.connector_credential_pair import get_connector_credential_pair
+from danswer.db.connector_credential_pair import (
+    update_connector_credential_pair_from_id,
+)
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.engine import get_session
+from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.feedback import fetch_docs_ranked_by_boost
 from danswer.db.feedback import update_document_boost
 from danswer.db.feedback import update_document_hidden
-from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
+from danswer.db.index_attempt import cancel_indexing_attempts_for_ccpair
 from danswer.db.models import User
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
@@ -164,8 +168,8 @@ def create_deletion_attempt_for_connector_id(
         )
 
     # Cancel any scheduled indexing attempts
-    cancel_indexing_attempts_for_connector(
-        connector_id=connector_id, db_session=db_session, include_secondary_index=True
+    cancel_indexing_attempts_for_ccpair(
+        cc_pair_id=cc_pair.id, db_session=db_session, include_secondary_index=True
     )
 
     # Check if the deletion attempt should be allowed
@@ -178,6 +182,13 @@ def create_deletion_attempt_for_connector_id(
             detail=deletion_attempt_disallowed_reason,
         )
 
+    # mark as deleting
+    update_connector_credential_pair_from_id(
+        db_session=db_session,
+        cc_pair_id=cc_pair.id,
+        status=ConnectorCredentialPairStatus.DELETING,
+    )
+    # actually kick off the deletion
     cleanup_connector_credential_pair_task.apply_async(
         kwargs=dict(connector_id=connector_id, credential_id=credential_id),
     )
