@@ -1010,9 +1010,6 @@ export function ChatPage({
                 finalMessage = null;
                 aiMessageImages = null;
                 answer = "";
-
-                // setIsGenerating(false)
-                // return
               } else {
                 console.error(
                   "Invalid message_id or parent_message in finalMessage"
@@ -1090,6 +1087,7 @@ export function ChatPage({
         completeMessageMapOverride: frozenMessageMap,
       });
     }
+
     setIsGenerating(false);
 
     setIsStreaming(false);
