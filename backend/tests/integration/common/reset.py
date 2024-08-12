@@ -82,6 +82,10 @@ def reset_postgres(database: str = "postgres") -> None:
         if table_name == "alembic_version":
             continue
 
+        # Don't touch Kombu
+        if table_name == "kombu_message" or table_name == "kombu_queue":
+            continue
+
         cur.execute(f'DELETE FROM "{table_name}"')
 
     # Re-enable triggers

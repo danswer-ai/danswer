@@ -63,7 +63,7 @@ def handle_search_request(
             persona=None,  # For simplicity, default settings should be good for this search
             offset=search_request.retrieval_options.offset,
             limit=search_request.retrieval_options.limit,
-            skip_rerank=search_request.skip_rerank,
+            rerank_settings=search_request.rerank_settings,
             evaluation_type=search_request.evaluation_type,
             chunks_above=search_request.chunks_above,
             chunks_below=search_request.chunks_below,

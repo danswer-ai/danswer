@@ -22,7 +22,6 @@ class OptionalSearchSetting(str, Enum):
 class SearchType(str, Enum):
     KEYWORD = "keyword"
     SEMANTIC = "semantic"
-    HYBRID = "hybrid"
 
 
 class LLMEvaluationType(str, Enum):

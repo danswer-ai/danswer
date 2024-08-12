@@ -37,9 +37,11 @@ def test_chunk_document() -> None:
         passage_prefix=None,
     )
 
+
     chunker = get_cached_chunker(embedder.embedding_model.tokenizer)
 
     chunks = chunker.chunk(document)
+
     assert len(chunks) == 5
     assert short_section_1 in chunks[0].content
     assert short_section_3 in chunks[-1].content

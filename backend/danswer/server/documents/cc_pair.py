@@ -1,17 +1,24 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.background.celery.celery_utils import get_deletion_status
+from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.db.connector_credential_pair import add_credential_to_connector
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.connector_credential_pair import remove_credential_from_connector
+from danswer.db.connector_credential_pair import (
+    update_connector_credential_pair_from_id,
+)
 from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.engine import get_session
+from danswer.db.enums import ConnectorCredentialPairStatus
+from danswer.db.index_attempt import cancel_indexing_attempts_for_ccpair
+from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import get_index_attempts_for_connector
 from danswer.db.models import User
 from danswer.server.documents.models import CCPairFullInfo
@@ -58,17 +65,39 @@ def get_cc_pair_full_info(
         document_count_info_list[0][-1] if document_count_info_list else 0
     )
 
-    latest_deletion_attempt = get_deletion_status(
-        connector_id=cc_pair.connector.id,
-        credential_id=cc_pair.credential.id,
-        db_session=db_session,
-    )
-
     return CCPairFullInfo.from_models(
         cc_pair_model=cc_pair,
         index_attempt_models=list(index_attempts),
-        latest_deletion_attempt=latest_deletion_attempt,
+        latest_deletion_attempt=get_deletion_attempt_snapshot(
+            connector_id=cc_pair.connector_id,
+            credential_id=cc_pair.credential_id,
+            db_session=db_session,
+        ),
         num_docs_indexed=documents_indexed,
+    )
+
+
+class CCStatusUpdateRequest(BaseModel):
+    status: ConnectorCredentialPairStatus
+
+
+@router.put("/admin/cc-pair/{cc_pair_id}/status")
+def update_cc_pair_status(
+    cc_pair_id: int,
+    status_update_request: CCStatusUpdateRequest,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    if status_update_request.status == ConnectorCredentialPairStatus.PAUSED:
+        cancel_indexing_attempts_for_ccpair(cc_pair_id, db_session)
+
+        # Just for good measure
+        cancel_indexing_attempts_past_model(db_session)
+
+    update_connector_credential_pair_from_id(
+        db_session=db_session,
+        cc_pair_id=cc_pair_id,
+        status=status_update_request.status,
     )
 
 

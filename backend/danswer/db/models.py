@@ -38,10 +38,12 @@ from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import MessageType
+from danswer.configs.constants import NotificationType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.constants import TokenRateLimitScope
 from danswer.connectors.models import InputType
 from danswer.db.enums import ChatSessionSharedStatus
+from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.enums import IndexingStatus
 from danswer.db.enums import IndexModelStatus
 from danswer.db.enums import TaskStatus
@@ -51,9 +53,9 @@ from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
 from danswer.search.enums import RecencyBiasSetting
-from danswer.search.enums import SearchType
 from danswer.utils.encryption import decrypt_bytes_to_string
 from danswer.utils.encryption import encrypt_string_to_bytes
+from shared_configs.enums import EmbeddingProvider
 
 
 class Base(DeclarativeBase):
@@ -125,6 +127,10 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         TIMESTAMPAware(timezone=True), nullable=True
     )
 
+    default_model: Mapped[str] = mapped_column(Text, nullable=True)
+    # organized in typical structured fashion
+    # formatted as `displayName__provider__modelName`
+
     # relationships
     credentials: Mapped[list["Credential"]] = relationship(
         "Credential", back_populates="user", lazy="joined"
@@ -145,6 +151,10 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     personas: Mapped[list["Persona"]] = relationship("Persona", back_populates="user")
     # Custom tools created by this user
     custom_tools: Mapped[list["Tool"]] = relationship("Tool", back_populates="user")
+    # Notifications for the UI
+    notifications: Mapped[list["Notification"]] = relationship(
+        "Notification", back_populates="user"
+    )
 
 
 class InputPrompt(Base):
@@ -156,7 +166,7 @@ class InputPrompt(Base):
     active: Mapped[bool] = mapped_column(Boolean)
     user: Mapped[User | None] = relationship("User", back_populates="input_prompts")
     is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
 
 
 class InputPrompt__User(Base):
@@ -165,7 +175,7 @@ class InputPrompt__User(Base):
     input_prompt_id: Mapped[int] = mapped_column(
         ForeignKey("inputprompt.id"), primary_key=True
     )
-    user_id: Mapped[UUID] = mapped_column(
+    user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("inputprompt.id"), primary_key=True
     )
 
@@ -188,6 +198,21 @@ class ApiKey(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class Notification(Base):
+    __tablename__ = "notification"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    notif_type: Mapped[NotificationType] = mapped_column(
+        Enum(NotificationType, native_enum=False)
+    )
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    dismissed: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_shown: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
+    first_shown: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
+
+    user: Mapped[User] = relationship("User", back_populates="notifications")
 
 
 """
@@ -216,7 +241,9 @@ class Persona__User(Base):
     __tablename__ = "persona__user"
 
     persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"), primary_key=True)
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id"), primary_key=True, nullable=True
+    )
 
 
 class DocumentSet__User(Base):
@@ -225,7 +252,9 @@ class DocumentSet__User(Base):
     document_set_id: Mapped[int] = mapped_column(
         ForeignKey("document_set.id"), primary_key=True
     )
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id"), primary_key=True, nullable=True
+    )
 
 
 class DocumentSet__ConnectorCredentialPair(Base):
@@ -333,6 +362,9 @@ class ConnectorCredentialPair(Base):
         nullable=False,
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
+    status: Mapped[ConnectorCredentialPairStatus] = mapped_column(
+        Enum(ConnectorCredentialPairStatus, native_enum=False), nullable=False
+    )
     connector_id: Mapped[int] = mapped_column(
         ForeignKey("connector.id"), primary_key=True
     )
@@ -462,7 +494,6 @@ class Connector(Base):
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    disabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
     credentials: Mapped[list["ConnectorCredentialPair"]] = relationship(
         "ConnectorCredentialPair",
@@ -555,8 +586,12 @@ class EmbeddingModel(Base):
           cloud_provider='{self.cloud_provider.name if self.cloud_provider else 'None'}')>"
 
     @property
-    def provider_type(self) -> str | None:
-        return self.cloud_provider.name if self.cloud_provider is not None else None
+    def provider_type(self) -> EmbeddingProvider | None:
+        return (
+            EmbeddingProvider(self.cloud_provider.name.lower())
+            if self.cloud_provider is not None
+            else None
+        )
 
     @property
     def api_key(self) -> str | None:
@@ -1117,10 +1152,6 @@ class Persona(Base):
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
-    # Currently stored but unused, all flows use hybrid
-    search_type: Mapped[SearchType] = mapped_column(
-        Enum(SearchType, native_enum=False), default=SearchType.HYBRID
-    )
     # Number of chunks to pass to the LLM for generation.
     num_chunks: Mapped[float | None] = mapped_column(Float, nullable=True)
     # Pass every chunk through LLM for evaluation, fairly expensive
@@ -1375,7 +1406,9 @@ class User__UserGroup(Base):
     user_group_id: Mapped[int] = mapped_column(
         ForeignKey("user_group.id"), primary_key=True
     )
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id"), primary_key=True, nullable=True
+    )
 
 
 class UserGroup__ConnectorCredentialPair(Base):

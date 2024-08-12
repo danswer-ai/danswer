@@ -14,10 +14,10 @@ from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.connectors.models import InputType
-from danswer.db.connector import disable_connector
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.index_attempt import mark_attempt_in_progress
@@ -61,7 +61,14 @@ def _get_document_generator(
         )
     except Exception as e:
         logger.exception(f"Unable to instantiate connector due to {e}")
-        disable_connector(attempt.connector_credential_pair.connector.id, db_session)
+        # since we failed to even instantiate the connector, we pause the CCPair since
+        # it will never succeed
+        update_connector_credential_pair(
+            db_session=db_session,
+            connector_id=attempt.connector_credential_pair.connector.id,
+            credential_id=attempt.connector_credential_pair.credential.id,
+            status=ConnectorCredentialPairStatus.PAUSED,
+        )
         raise e
 
     if task == InputType.LOAD_STATE:
@@ -130,6 +137,7 @@ def _run_indexing(
         db_session=db_session,
     )
 
+    db_cc_pair = index_attempt.connector_credential_pair
     db_connector = index_attempt.connector_credential_pair.connector
     db_credential = index_attempt.connector_credential_pair.credential
 
@@ -181,7 +189,7 @@ def _run_indexing(
                 # contents still need to be initially pulled.
                 db_session.refresh(db_connector)
                 if (
-                    db_connector.disabled
+                    db_cc_pair.status == ConnectorCredentialPairStatus.PAUSED
                     and db_embedding_model.status != IndexModelStatus.FUTURE
                 ):
                     # let the `except` block handle this
@@ -246,7 +254,7 @@ def _run_indexing(
             # to give better clarity in the UI, as the next run will never happen.
             if (
                 ind == 0
-                or db_connector.disabled
+                or db_cc_pair.status == ConnectorCredentialPairStatus.PAUSED
                 or index_attempt.status != IndexingStatus.IN_PROGRESS
             ):
                 mark_attempt_failed(
@@ -258,8 +266,8 @@ def _run_indexing(
                 if is_primary:
                     update_connector_credential_pair(
                         db_session=db_session,
-                        connector_id=index_attempt.connector_credential_pair.connector.id,
-                        credential_id=index_attempt.connector_credential_pair.credential.id,
+                        connector_id=db_connector.id,
+                        credential_id=db_credential.id,
                         net_docs=net_doc_change,
                     )
                 raise e

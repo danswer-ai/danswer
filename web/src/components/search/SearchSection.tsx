@@ -31,22 +31,11 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "../resizable/constants";
 import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
-import { AnswerSection } from "./results/AnswerSection";
-import { QuotesSection } from "./results/QuotesSection";
-import { QAFeedbackBlock } from "./QAFeedback";
 import { usePopup } from "../admin/connectors/Popup";
-import { ToggleRight } from "@phosphor-icons/react";
-import {
-  DislikeFeedbackIcon,
-  LikeFeedbackIcon,
-  ToggleDown,
-  ToggleUp,
-} from "../icons/icons";
-import { CustomTooltip, TooltipGroup } from "../tooltip/CustomTooltip";
-import { HoverableIcon } from "../Hoverable";
 import { FeedbackType } from "@/app/chat/types";
 import { FeedbackModal } from "@/app/chat/modal/FeedbackModal";
 import { handleChatFeedback } from "@/app/chat/lib";
+import SearchAnswer from "./SearchAnswer";
 
 export type searchState =
   | "input"
@@ -111,7 +100,6 @@ export const SearchSection = ({
   });
 
   const [agentic, setAgentic] = useState(agenticSearchEnabled);
-  const [searchAnswerExpanded, setSearchAnswerExpanded] = useState(false);
 
   const toggleAgentic = () => {
     Cookies.set(
@@ -376,6 +364,7 @@ export const SearchSection = ({
       setSearchState("input");
     }
   };
+  const [searchAnswerExpanded, setSearchAnswerExpanded] = useState(false);
 
   const resetInput = (finalized?: boolean) => {
     setSweep(false);
@@ -545,32 +534,6 @@ export const SearchSection = ({
   const [currentFeedback, setCurrentFeedback] = useState<
     [FeedbackType, number] | null
   >(null);
-
-  //
-  const [searchAnswerOverflowing, setSearchAnswerOverflowing] = useState(false);
-  const answerContainerRef = useRef<HTMLDivElement>(null);
-
-  const handleFeedback = (feedbackType: FeedbackType, messageId: number) => {
-    setCurrentFeedback([feedbackType, messageId]);
-  };
-
-  useEffect(() => {
-    const checkOverflow = () => {
-      if (answerContainerRef.current) {
-        const isOverflowing =
-          answerContainerRef.current.scrollHeight >
-          answerContainerRef.current.clientHeight;
-        setSearchAnswerOverflowing(isOverflowing);
-      }
-    };
-
-    checkOverflow();
-    window.addEventListener("resize", checkOverflow);
-
-    return () => {
-      window.removeEventListener("resize", checkOverflow);
-    };
-  }, [answer]);
 
   const onFeedback = async (
     messageId: number,
@@ -758,136 +721,15 @@ export const SearchSection = ({
                     />
                   </div>
                   {!firstSearch && (
-                    <div
-                      ref={answerContainerRef}
-                      className={`my-4 ${searchAnswerExpanded ? "min-h-[16rem]" : "h-[16rem]"}  overflow-y-hidden p-4 border-2 border-border rounded-lg relative`}
-                    >
-                      <div>
-                        <div className="flex gap-x-2">
-                          <h2 className="text-emphasis font-bold my-auto mb-1 ">
-                            AI Answer
-                          </h2>
-
-                          {searchState == "generating" && (
-                            <div
-                              key={"generating"}
-                              className="relative inline-block"
-                            >
-                              <span className="loading-text">
-                                Generating response...
-                              </span>
-                            </div>
-                          )}
-
-                          {searchState == "citing" && (
-                            <div
-                              key={"citing"}
-                              className="relative inline-block"
-                            >
-                              <span className="loading-text">
-                                Creating citations...
-                              </span>
-                            </div>
-                          )}
-
-                          {searchState == "searching" && (
-                            <div
-                              key={"Reading"}
-                              className="relative inline-block"
-                            >
-                              <span className="loading-text">Searching...</span>
-                            </div>
-                          )}
-
-                          {searchState == "reading" && (
-                            <div
-                              key={"Reading"}
-                              className="relative inline-block"
-                            >
-                              <span className="loading-text">
-                                Reading{settings?.isMobile ? "" : " Documents"}
-                                ...
-                              </span>
-                            </div>
-                          )}
-
-                          {searchState == "analyzing" && (
-                            <div
-                              key={"Generating"}
-                              className="relative inline-block"
-                            >
-                              <span className="loading-text">
-                                Running
-                                {settings?.isMobile ? "" : " Analysis"}...
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div
-                          className={`pt-1 h-auto   border-t border-border w-full`}
-                        >
-                          <AnswerSection
-                            answer={answer}
-                            quotes={quotes}
-                            error={error}
-                            isFetching={isFetching}
-                          />
-                        </div>
-
-                        {searchAnswerExpanded ||
-                          (!searchAnswerOverflowing && (
-                            <div className="w-full">
-                              {quotes !== null &&
-                                quotes.length > 0 &&
-                                answer && (
-                                  <QuotesSection
-                                    quotes={dedupedQuotes}
-                                    isFetching={isFetching}
-                                  />
-                                )}
-
-                              {searchResponse.messageId !== null && (
-                                <div className="absolute right-3 flex bottom-3">
-                                  <HoverableIcon
-                                    icon={<LikeFeedbackIcon />}
-                                    onClick={() =>
-                                      handleFeedback(
-                                        "like",
-                                        searchResponse?.messageId as number
-                                      )
-                                    }
-                                  />
-                                  <HoverableIcon
-                                    icon={<DislikeFeedbackIcon />}
-                                    onClick={() =>
-                                      handleFeedback(
-                                        "dislike",
-                                        searchResponse?.messageId as number
-                                      )
-                                    }
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                      </div>
-                      {!searchAnswerExpanded && searchAnswerOverflowing && (
-                        <div className="absolute bottom-0 left-0 w-full h-[100px] bg-gradient-to-b from-background/5 via-background/60 to-background/90"></div>
-                      )}
-
-                      {!searchAnswerExpanded && searchAnswerOverflowing && (
-                        <div className="w-full h-12 absolute items-center content-center flex left-0 px-4 bottom-0">
-                          <button
-                            onClick={() => setSearchAnswerExpanded(true)}
-                            className="flex gap-x-1 items-center justify-center hover:bg-background-100 cursor-pointer max-w-sm text-sm mx-auto w-full bg-background border py-2 rounded-full"
-                          >
-                            Show more
-                            <ToggleDown />
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <SearchAnswer
+                      isFetching={isFetching}
+                      dedupedQuotes={dedupedQuotes}
+                      searchResponse={searchResponse}
+                      setSearchAnswerExpanded={setSearchAnswerExpanded}
+                      searchAnswerExpanded={searchAnswerExpanded}
+                      setCurrentFeedback={setCurrentFeedback}
+                      searchState={searchState}
+                    />
                   )}
 
                   {!settings?.isMobile && (

@@ -4,6 +4,7 @@ from typing import Protocol
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
+from danswer.configs.app_configs import ENABLE_MULTIPASS_INDEXING
 from danswer.configs.app_configs import ENABLE_LARGE_CHUNK
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
@@ -27,6 +28,7 @@ from danswer.indexing.chunker import get_cached_chunker
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
+from danswer.search.search_settings import get_search_settings
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -272,6 +274,18 @@ def build_indexing_pipeline(
     ignore_time_skip: bool = False,
 ) -> IndexingPipelineProtocol:
     """Builds a pipeline which takes in a list (batch) of docs and indexes them."""
+
+    search_settings = get_search_settings()
+    multipass = (
+        search_settings.multipass_indexing
+        if search_settings
+        else ENABLE_MULTIPASS_INDEXING
+    )
+    chunker = chunker or DefaultChunker(
+        model_name=embedder.model_name,
+        provider_type=embedder.provider_type,
+        enable_multipass=multipass,
+    )
 
     return partial(
         index_doc_batch,

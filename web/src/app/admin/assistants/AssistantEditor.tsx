@@ -28,7 +28,7 @@ import { GroupsIcon, PaintingIcon, SwapIcon } from "@/components/icons/icons";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { useUserGroups } from "@/lib/hooks";
-import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
+import { checkLLMSupportsImageInput, destructureValue } from "@/lib/llm/utils";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 import {
@@ -435,7 +435,6 @@ export function AssistantEditor({
                   name="name"
                   tooltip="Used to identify the Assistant in the UI."
                   label="Name"
-                  disabled={isUpdate}
                   placeholder="e.g. 'Email Assistant'"
                 />
                 <div className="mb-6 ">
@@ -539,13 +538,15 @@ export function AssistantEditor({
                     </TooltipProvider>
                   </div>
                   <p className="my-1 text-text-600">
-                    You assistant will use your system default (currently{" "}
-                    {defaultModelName}) unless otherwise specified below.
+                    Your assistant will use the user&apos;s set default unless
+                    otherwise specified below.
+                    {user?.preferences.default_model &&
+                      `  Your current (user-specific) default model is ${getDisplayNameForModel(destructureValue(user?.preferences?.default_model!).modelName)}`}
                   </p>
                   <div className="mb-2 flex items-starts">
                     <div className="w-96">
                       <SelectorFormField
-                        defaultValue={`Default (${defaultModelName})`}
+                        defaultValue={`User default`}
                         name="llm_model_provider_override"
                         options={llmProviders.map((llmProvider) => ({
                           name: llmProvider.name,

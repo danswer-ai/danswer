@@ -15,7 +15,7 @@ export function SelectModelModal({
   return (
     <Modal
       onOutsideClick={onCancel}
-      title={`Elevate Your Game with ${model.model_name}`}
+      title={`Update model to ${model.model_name}`}
     >
       <div className="mb-4">
         <Text className="text-lg mb-2">

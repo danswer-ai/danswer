@@ -7,8 +7,6 @@ from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
 from sqlalchemy.orm import Session
 
-from danswer.configs.chat_configs import HYBRID_ALPHA
-from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import VespaChunkRequest
@@ -24,8 +22,8 @@ from danswer.search.models import InferenceSection
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchQuery
-from danswer.search.models import SearchType
 from danswer.search.postprocessing.postprocessing import cleanup_chunks
+from danswer.search.search_settings import get_multilingual_expansion
 from danswer.search.utils import inference_section_from_chunks
 from danswer.secondary_llm_flows.query_expansion import multilingual_query_expansion
 from danswer.utils.logger import setup_logger
@@ -59,19 +57,24 @@ def download_nltk_data() -> None:
                 logger.error(f"Failed to download {resource_name}. Error: {e}")
 
 
-def lemmatize_text(text: str) -> list[str]:
+def lemmatize_text(keywords: list[str]) -> list[str]:
     try:
+        query = " ".join(keywords)
         lemmatizer = WordNetLemmatizer()
-        word_tokens = word_tokenize(text)
-        return [lemmatizer.lemmatize(word) for word in word_tokens]
+        word_tokens = word_tokenize(query)
+        lemmatized_words = [lemmatizer.lemmatize(word) for word in word_tokens]
+        combined_keywords = list(set(keywords + lemmatized_words))
+        return combined_keywords
     except Exception:
-        return text.split(" ")
+        return keywords
 
 
-def remove_stop_words_and_punctuation(text: str) -> list[str]:
+def remove_stop_words_and_punctuation(keywords: list[str]) -> list[str]:
     try:
+        # Re-tokenize using the NLTK tokenizer for better matching
+        query = " ".join(keywords)
         stop_words = set(stopwords.words("english"))
-        word_tokens = word_tokenize(text)
+        word_tokens = word_tokenize(query)
         text_trimmed = [
             word
             for word in word_tokens
@@ -79,15 +82,7 @@ def remove_stop_words_and_punctuation(text: str) -> list[str]:
         ]
         return text_trimmed or word_tokens
     except Exception:
-        return text.split(" ")
-
-
-def query_processing(
-    query: str,
-) -> str:
-    query = " ".join(remove_stop_words_and_punctuation(query))
-    query = " ".join(lemmatize_text(query))
-    return query
+        return keywords
 
 
 def combine_retrieval_results(
@@ -119,7 +114,6 @@ def doc_index_retrieval(
     query: SearchQuery,
     document_index: DocumentIndex,
     db_session: Session,
-    hybrid_alpha: float = HYBRID_ALPHA,
 ) -> list[InferenceChunk]:
     """
     This function performs the search to retrieve the chunks,
@@ -171,8 +165,18 @@ def doc_index_retrieval(
                 hybrid_alpha=hybrid_alpha,
             )
 
-        else:
-            raise RuntimeError("Invalid Search Flow")
+    query_embedding = model.encode([query.query], text_type=EmbedTextType.QUERY)[0]
+
+    top_chunks = document_index.hybrid_retrieval(
+        query=query.query,
+        query_embedding=query_embedding,
+        final_keywords=query.processed_keywords,
+        filters=query.filters,
+        hybrid_alpha=query.hybrid_alpha,
+        time_decay_multiplier=query.recency_bias_multiplier,
+        num_to_retrieve=query.num_hits,
+        offset=query.offset,
+    )
 
     retrieval_requests: list[VespaChunkRequest] = []
     normal_chunks: list[InferenceChunkUncleaned] = []
@@ -251,19 +255,16 @@ def retrieve_chunks(
     query: SearchQuery,
     document_index: DocumentIndex,
     db_session: Session,
-    hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
-    multilingual_expansion_str: str | None = MULTILINGUAL_QUERY_EXPANSION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
 ) -> list[InferenceChunk]:
     """Returns a list of the best chunks from an initial keyword/semantic/ hybrid search."""
+
+    multilingual_expansion = get_multilingual_expansion()
     # Don't do query expansion on complex queries, rephrasings likely would not work well
-    if not multilingual_expansion_str or "\n" in query.query or "\r" in query.query:
+    if not multilingual_expansion or "\n" in query.query or "\r" in query.query:
         top_chunks = doc_index_retrieval(
-            query=query,
-            document_index=document_index,
-            db_session=db_session,
-            hybrid_alpha=hybrid_alpha,
+            query=query, document_index=document_index, db_session=db_session
         )
     else:
         simplified_queries = set()
@@ -271,7 +272,7 @@ def retrieve_chunks(
 
         # Currently only uses query expansion on multilingual use cases
         query_rephrases = multilingual_query_expansion(
-            query.query, multilingual_expansion_str
+            query.query, multilingual_expansion
         )
         # Just to be extra sure, add the original query.
         query_rephrases.append(query.query)
@@ -287,7 +288,7 @@ def retrieve_chunks(
             run_queries.append(
                 (
                     doc_index_retrieval,
-                    (q_copy, document_index, db_session, hybrid_alpha),
+                    (q_copy, document_index, db_session),
                 )
             )
         parallel_search_results = run_functions_tuples_in_parallel(run_queries)

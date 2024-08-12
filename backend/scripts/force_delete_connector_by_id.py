@@ -5,6 +5,8 @@ import sys
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
+from danswer.db.enums import ConnectorCredentialPairStatus
+
 # Modify sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
@@ -22,7 +24,7 @@ from danswer.db.connector import fetch_connector_by_id
 from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.index_attempt import (
     delete_index_attempts,
-    cancel_indexing_attempts_for_connector,
+    cancel_indexing_attempts_for_ccpair,
 )
 from danswer.db.models import ConnectorCredentialPair
 from danswer.document_index.interfaces import DocumentIndex
@@ -141,10 +143,10 @@ def _delete_connector(cc_pair_id: int, db_session: Session) -> None:
         logger.error(f"Connector credential pair with ID {cc_pair_id} not found")
         return
 
-    if not cc_pair.connector.disabled:
+    if cc_pair.status != ConnectorCredentialPairStatus.PAUSED:
         logger.error(
-            f"Connector {cc_pair.connector.name} is not disabled, cannot continue. \
-            Please navigate to the connector and disbale before attempting again"
+            f"Connector {cc_pair.connector.name} is not paused, cannot continue. \
+            Please navigate to the connector and pause before attempting again"
         )
         return
 
@@ -159,8 +161,8 @@ def _delete_connector(cc_pair_id: int, db_session: Session) -> None:
         return
 
     logger.info("Cancelling indexing attempt for the connector")
-    cancel_indexing_attempts_for_connector(
-        connector_id=connector_id, db_session=db_session, include_secondary_index=True
+    cancel_indexing_attempts_for_ccpair(
+        cc_pair_id=cc_pair_id, db_session=db_session, include_secondary_index=True
     )
 
     validated_cc_pair = get_connector_credential_pair(
