@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 
 from danswer.db.models import Persona
 from danswer.db.models import Tool as ToolDBModel
+from danswer.tools.analysis.analysis_tool import CSVAnalysisTool
+from danswer.tools.graphing.graphing_tool import GraphingTool
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
 from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
 from danswer.tools.search.search_tool import SearchTool
@@ -40,6 +42,18 @@ BUILT_IN_TOOLS: list[InCodeToolInfo] = [
         ),
         in_code_tool_id=ImageGenerationTool.__name__,
         display_name=ImageGenerationTool._DISPLAY_NAME,
+    ),
+    InCodeToolInfo(
+        cls=GraphingTool,
+        description=("The graphing Tool allows the assistant to make graphs. "),
+        in_code_tool_id=GraphingTool.__name__,
+        display_name=GraphingTool._DISPLAY_NAME,
+    ),
+    InCodeToolInfo(
+        cls=CSVAnalysisTool,
+        description=("The CSV Tool allows the assistant to make graphs. "),
+        in_code_tool_id=CSVAnalysisTool.__name__,
+        display_name=CSVAnalysisTool._DISPLAY_NAME,
     ),
     # don't show the InternetSearchTool as an option if BING_API_KEY is not available
     *(

@@ -36,7 +36,7 @@ export function Modal({
       >
         <div
           className={`
-          bg-background rounded shadow-lg
+          bg-background rounded shadow-lg rounded-lg
           relative ${width ?? "w-1/2"} text-sm 
           ${noPadding ? "" : "p-8"}
           ${className}

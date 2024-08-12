@@ -42,6 +42,7 @@ export const CustomTooltip = ({
   line,
   wrap,
   showTick = false,
+  position,
   delay = 500,
   maxWidth,
   position = "bottom",
@@ -116,10 +117,15 @@ export const CustomTooltip = ({
               } 
               rounded-lg shadow-lg`}
         >
-          {showTick && (
+          {showTick && position != "top" ? (
             <div
-              className={`absolute w-3 h-3 -top-1.5 ${position === "top" ? "bottom-1.5" : "-top-1.5"} left-1/2 transform -translate-x-1/2 rotate-45 
+              className={`absolute w-3 h-3 -top-1.5 left-1/2 transform -translate-x-1/2 rotate-45 
                   ${light ? "bg-background-200" : "bg-background-800"}`}
+            />
+          ) : (
+            <div
+              className={`absolute w-3 h-3 top-1.5 left-1/2 transform -translate-x-1/2 rotate-45 
+              ${light ? "bg-background-200" : "bg-background-800"}`}
             />
           )}
           <div

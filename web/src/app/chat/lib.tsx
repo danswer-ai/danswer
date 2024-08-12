@@ -27,6 +27,7 @@ import {
 import { Persona } from "../admin/assistants/interfaces";
 import { ReadonlyURLSearchParams } from "next/navigation";
 import { SEARCH_PARAM_NAMES } from "./searchParams";
+import { GraphChunk } from "./message/Messages";
 
 export async function updateModelOverrideForChatSession(
   chatSessionId: number,
@@ -78,7 +79,8 @@ export type PacketType =
   | AnswerPiecePacket
   | DocumentsResponse
   | ImageGenerationDisplay
-  | StreamingError;
+  | StreamingError
+  | GraphChunk;
 
 export async function* sendMessage({
   message,

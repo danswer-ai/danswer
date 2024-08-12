@@ -3,6 +3,7 @@ import {
   Filters,
   SearchDanswerDocument,
 } from "@/lib/search/interfaces";
+import { graph } from "./message/Messages";
 
 export enum RetrievalType {
   None = "none",
@@ -28,6 +29,7 @@ export enum ChatFileType {
   IMAGE = "image",
   DOCUMENT = "document",
   PLAIN_TEXT = "plain_text",
+  CSV = "csv",
 }
 
 export interface FileDescriptor {
@@ -100,6 +102,7 @@ export interface Message {
   childrenMessageIds?: number[];
   latestChildMessageId?: number | null;
   alternateAssistantID?: number | null;
+  graphs?: graph[];
 }
 
 export interface BackendChatSession {

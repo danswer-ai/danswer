@@ -44,11 +44,13 @@ from danswer.llm.answering.stream_processing.utils import map_document_id_order
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import message_generator_to_string_generator
 from danswer.natural_language_processing.utils import get_tokenizer
+from danswer.tools.analysis.analysis_tool import CSVAnalysisTool
 from danswer.tools.custom.custom_tool_prompt_builder import (
     build_user_message_for_custom_tool_for_non_tool_calling_llm,
 )
 from danswer.tools.force import filter_tools_for_force_tool_use
 from danswer.tools.force import ForceUseTool
+from danswer.tools.graphing.graphing_tool import GraphingTool
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import ImageGenerationResponse
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
@@ -445,11 +447,14 @@ class Answer:
                     self.tools, self.force_use_tool
                 )
             ]
+
             for message in self.llm.stream(
                 prompt=prompt,
                 tools=final_tool_definitions if final_tool_definitions else None,
                 tool_choice="required" if self.force_use_tool.force_use else None,
             ):
+                print("a")
+                print(message)
                 if isinstance(message, AIMessageChunk) and (
                     message.tool_call_chunks or message.tool_calls
                 ):
@@ -490,7 +495,7 @@ class Answer:
                 else tool_call_request["args"]
             )
 
-            tool_runner = ToolRunner(tool, tool_args)
+            tool_runner = ToolRunner(tool, tool_args, self.llm)
             yield tool_runner.kickoff()
             yield from tool_runner.tool_responses()
 
@@ -547,7 +552,6 @@ class Answer:
     ]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
         chosen_tool_and_args: tuple[Tool, dict] | None = None
-
         if self.force_use_tool.force_use:
             # if we are forcing a tool, we don't need to check which tools to run
             tool = next(
@@ -626,7 +630,7 @@ class Answer:
             return
 
         tool, tool_args = chosen_tool_and_args
-        tool_runner = ToolRunner(tool, tool_args)
+        tool_runner = ToolRunner(tool, tool_args, self.llm)
         yield tool_runner.kickoff()
 
         if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
@@ -644,6 +648,14 @@ class Answer:
             self._update_prompt_builder_for_search_tool(
                 prompt_builder, final_context_documents
             )
+        elif tool.name == CSVAnalysisTool._NAME:
+            for response in tool_runner.tool_responses():
+                yield response
+
+        elif tool.name == GraphingTool._NAME:
+            for response in tool_runner.tool_responses():
+                yield response
+
         elif tool.name == ImageGenerationTool._NAME:
             img_urls = []
             for response in tool_runner.tool_responses():

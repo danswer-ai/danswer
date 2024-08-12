@@ -9,6 +9,7 @@ from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import RetrievalDocs
 from danswer.search.models import SearchResponse
+from danswer.tools.graphing.models import GraphGenerationDisplay
 
 
 class LlmDoc(BaseModel):
@@ -140,6 +141,7 @@ AnswerQuestionPossibleReturn = (
     | ImageGenerationDisplay
     | CustomToolResponse
     | StreamingError
+    | GraphGenerationDisplay
     | Delimiter
 )
 

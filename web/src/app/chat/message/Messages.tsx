@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  FiImage,
   FiEdit2,
   FiChevronRight,
   FiChevronLeft,
@@ -54,12 +55,27 @@ import DualPromptDisplay from "../tools/ImagePromptCitation";
 import { Popover } from "@/components/popover/Popover";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
+import CsvPage from "@/components/chat_display/CsvDisplay";
+import { DISABLED_CSV_DISPLAY } from "@/lib/constants";
+import {
+  LineChartDisplay,
+  ModalChartWrapper,
+} from "../../../components/chat_display/graphs/LineChartDisplay";
+import PolarChartDisplay from "@/components/chat_display/graphs/PortalChart";
+import BarChartDisplay from "@/components/chat_display/graphs/BarChart";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
   INTERNET_SEARCH_TOOL_NAME,
   IMAGE_GENERATION_TOOL_NAME,
 ];
+import plotDataJson from "./linechart.json";
+import barChartDataJson from "./barchart_data.json";
+import polarChartDataJson from "./polar_plot_data.json";
+import { JSONUpload } from "./JSONUpload";
+import { ImageDisplay } from "@/components/chat_display/graphs/ImageDisplay";
+import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 
 function FileDisplay({
   files,
@@ -69,8 +85,12 @@ function FileDisplay({
   alignBubble?: boolean;
 }) {
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
-  const nonImgFiles = files.filter((file) => file.type !== ChatFileType.IMAGE);
+  const nonImgFiles = files.filter(
+    (file) => file.type !== ChatFileType.IMAGE && file.type !== ChatFileType.CSV
+  );
+  const csvImgFiles = files.filter((file) => file.type == ChatFileType.CSV);
 
+  const [close, setClose] = useState(true);
   return (
     <>
       {nonImgFiles && nonImgFiles.length > 0 && (
@@ -90,6 +110,35 @@ function FileDisplay({
           </div>
         </div>
       )}
+      {csvImgFiles && csvImgFiles.length > 0 && (
+        <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
+          <div className="flex flex-col gap-2">
+            {csvImgFiles.map((file) => {
+              return (
+                <div key={file.id} className="w-fit">
+                  {close && !DISABLED_CSV_DISPLAY ? (
+                    <CsvPage
+                      close={() => setClose(false)}
+                      csvFileDescriptor={file}
+                    />
+                  ) : (
+                    <DocumentPreview
+                      open={
+                        DISABLED_CSV_DISPLAY ? undefined : () => setClose(true)
+                      }
+                      fileName={file.name || file.id}
+                      maxWidth="max-w-64"
+                      alignBubble={alignBubble}
+                    />
+                  )}
+                  s
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {/* <LineChartDisplay /> */}
       {imageFiles && imageFiles.length > 0 && (
         <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
           <div className="flex flex-col gap-2">
@@ -102,7 +151,15 @@ function FileDisplay({
     </>
   );
 }
+export interface graph {
+  file_id: string;
+  line: boolean;
+}
 
+export interface GraphChunk {
+  file_id: string;
+  line_graph: boolean;
+}
 export const AIMessage = ({
   shared,
   isActive,
@@ -111,6 +168,7 @@ export const AIMessage = ({
   hasChildAI,
   alternativeAssistant,
   docs,
+  graphs = [],
   messageId,
   content,
   files,
@@ -134,6 +192,7 @@ export const AIMessage = ({
   shared?: boolean;
   hasChildAI?: boolean;
   hasParentAI?: boolean;
+  graphs?: graph[];
   isActive?: boolean;
   selectedDocuments?: DanswerDocument[] | null;
   toggleDocumentSelection?: () => void;
@@ -285,6 +344,35 @@ export const AIMessage = ({
             )}
             <div className="w-full">
               <div className="max-w-message-max break-words">
+                {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
+                  danswerSearchToolEnabledForPersona && (
+                    <>
+                      {query !== undefined &&
+                        handleShowRetrieved !== undefined &&
+                        isCurrentlyShowingRetrieved !== undefined &&
+                        !retrievalDisabled && (
+                          <div className="my-1">
+                            <SearchSummary
+                              filteredDocs={filteredDocs}
+                              query={query}
+                              finished={toolCall?.tool_result != undefined}
+                              handleSearchQueryEdit={handleSearchQueryEdit}
+                            />
+                          </div>
+                        )}
+                      {handleForceSearch &&
+                        content &&
+                        query === undefined &&
+                        !hasDocs &&
+                        !retrievalDisabled && (
+                          <div className="my-1">
+                            <SkippedSearch
+                              handleForceSearch={handleForceSearch}
+                            />
+                          </div>
+                        )}
+                    </>
+                  )}
                 <div className="w-full ml-4">
                   <div className="max-w-message-max break-words">
                     {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
@@ -347,18 +435,39 @@ export const AIMessage = ({
 
                     {toolCall &&
                       toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
-                        <ToolRunDisplay
-                          toolName={
-                            toolCall.tool_result
-                              ? `Searched the internet`
-                              : `Searching the internet`
-                          }
-                          toolLogo={
-                            <FiGlobe size={15} className="my-auto mr-1" />
-                          }
-                          isRunning={!toolCall.tool_result}
-                        />
+                        <div className="my-2">
+                          <ToolRunDisplay
+                            toolName={
+                              toolCall.tool_result
+                                ? `Searched the internet`
+                                : `Searching the internet`
+                            }
+                            toolLogo={
+                              <FiGlobe size={15} className="my-auto mr-1" />
+                            }
+                            isRunning={!toolCall.tool_result}
+                          />
+                        </div>
                       )}
+                    {graphs.map((graph, ind) => {
+                      return graph.line ? (
+                        <ModalChartWrapper
+                          key={ind}
+                          chartType="line"
+                          fileId={graph.file_id}
+                        >
+                          <LineChartDisplay fileId={graph.file_id} />
+                        </ModalChartWrapper>
+                      ) : (
+                        <ModalChartWrapper
+                          key={ind}
+                          chartType="bar"
+                          fileId={graph.file_id}
+                        >
+                          <BarChartDisplay fileId={graph.file_id} />
+                        </ModalChartWrapper>
+                      );
+                    })}
 
                     {content || files ? (
                       <>
@@ -475,10 +584,86 @@ export const AIMessage = ({
                     ) : isComplete ? null : (
                       <></>
                     )}
+
+                    {isComplete && docs && docs.length > 0 && (
+                      <div className="mt-2 -mx-8 w-full mb-4 flex relative">
+                        <div className="w-full">
+                          <div className="px-8 flex gap-x-2">
+                            {!settings?.isMobile &&
+                              filteredDocs.length > 0 &&
+                              filteredDocs.slice(0, 2).map((doc, ind) => (
+                                <div
+                                  key={doc.document_id}
+                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 pb-2 pt-1 border-b
+                              `}
+                                >
+                                  <a
+                                    href={doc.link}
+                                    target="_blank"
+                                    className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
+                                  >
+                                    <Citation link={doc.link} index={ind + 1} />
+                                    <p className="shrink truncate ellipsis break-all ">
+                                      {doc.semantic_identifier ||
+                                        doc.document_id}
+                                    </p>
+                                    <div className="ml-auto flex-none">
+                                      {doc.is_internet ? (
+                                        <InternetSearchIcon url={doc.link} />
+                                      ) : (
+                                        <SourceIcon
+                                          sourceType={doc.source_type}
+                                          iconSize={18}
+                                        />
+                                      )}
+                                    </div>
+                                  </a>
+                                  <div className="flex overscroll-x-scroll mt-.5">
+                                    <DocumentMetadataBlock document={doc} />
+                                  </div>
+                                  <div className="line-clamp-3 text-xs break-words pt-1">
+                                    {doc.blurb}
+                                  </div>
+                                </div>
+                              ))}
+                            <div
+                              onClick={() => {
+                                if (toggleDocumentSelection) {
+                                  toggleDocumentSelection();
+                                }
+                              }}
+                              key={-1}
+                              className="cursor-pointer w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 py-2 border-b"
+                            >
+
+                              <div className="line-clamp-3 text-xs break-words pt-1">
+                                See more
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  {!hasChildAI &&
-                    handleFeedback &&
-                    isComplete &&
+
+                  {/* <ModalChartWrapper chartType="radial" fileId={"67b61afc-e3b0-41ec-805f-2ec7cdd3c136"}>
+                        <PolarChartDisplay fileId={"67b61afc-e3b0-41ec-805f-2ec7cdd3c136"} />
+                      </ModalChartWrapper> */}
+
+                  {/* <ModalChartWrapper chartType="line" fileId="fee2ff90-4ebe-43fc-858f-a95c73385da4" >
+                        <LineChartDisplay fileId="fee2ff90-4ebe-43fc-858f-a95c73385da4" />
+                      </ModalChartWrapper> */}
+                  {/* 
+                      <ModalChartWrapper chartType="bar" fileId={"0ad36971-9353-42de-b89d-9c3361d3c3eb"}>
+                        <BarChartDisplay fileId={"0ad36971-9353-42de-b89d-9c3361d3c3eb"} />
+                      </ModalChartWrapper>
+
+                      <ModalChartWrapper chartType="other" fileId={"066fc31f-56f0-48fb-98d3-ffd46f1ac0f5"}>
+                        <ImageDisplay fileId={"066fc31f-56f0-48fb-98d3-ffd46f1ac0f5"} />
+                      </ModalChartWrapper>
+                  */}
+
+                  {handleFeedback &&
                     (isActive ? (
                       <div
                         className={`
@@ -669,6 +854,7 @@ export const HumanMessage = ({
                           shrink
                           border-0
                           rounded-lg 
+                          overflow-y-hidden
                           bg-background-emphasis 
                           whitespace-normal 
                           break-word
@@ -679,7 +865,8 @@ export const HumanMessage = ({
                           pl-4
                           overflow-y-auto
                           pr-12 
-                          py-4`}
+                          py-4
+                          `}
                         aria-multiline
                         role="textarea"
                         value={editedContent}
@@ -753,9 +940,9 @@ export const HumanMessage = ({
                   <>
                     <div className="ml-auto mr-1 my-auto">
                       {onEdit &&
-                      isHovered &&
-                      !isEditing &&
-                      (!files || files.length === 0) ? (
+                        isHovered &&
+                        !isEditing &&
+                        (!files || files.length === 0) ? (
                         <Tooltip delayDuration={1000} content={"Edit message"}>
                           <button
                             className="hover:bg-hover p-1.5 rounded"
@@ -773,14 +960,13 @@ export const HumanMessage = ({
                     </div>
 
                     <div
-                      className={`${
-                        !(
+                      className={`${!(
                           onEdit &&
                           isHovered &&
                           !isEditing &&
                           (!files || files.length === 0)
                         ) && "ml-auto"
-                      } relative   flex-none max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
+                        } relative   flex-none max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
                     >
                       {content}
                     </div>
@@ -788,9 +974,9 @@ export const HumanMessage = ({
                 ) : (
                   <>
                     {onEdit &&
-                    isHovered &&
-                    !isEditing &&
-                    (!files || files.length === 0) ? (
+                      isHovered &&
+                      !isEditing &&
+                      (!files || files.length === 0) ? (
                       <div className="my-auto">
                         <Hoverable
                           icon={FiEdit2}
@@ -809,6 +995,9 @@ export const HumanMessage = ({
               </div>
             </div>
           </div>
+
+          {/* <CSVGraph /> */}
+          {/* <CSVGraph fileId="./data.csv" /> */}
 
           <div className="flex flex-col md:flex-row gap-x-0.5 mt-1">
             {currentMessageInd !== undefined &&

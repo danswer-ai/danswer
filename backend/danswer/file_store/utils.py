@@ -1,3 +1,4 @@
+import base64
 from io import BytesIO
 from typing import cast
 from uuid import uuid4
@@ -12,6 +13,27 @@ from danswer.file_store.file_store import get_default_file_store
 from danswer.file_store.models import FileDescriptor
 from danswer.file_store.models import InMemoryChatFile
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
+
+
+def save_base64_image(base64_image: str) -> str:
+    with get_session_context_manager() as db_session:
+        if base64_image.startswith("data:image"):
+            base64_image = base64_image.split(",", 1)[1]
+
+        image_data = base64.b64decode(base64_image)
+
+        unique_id = str(uuid4())
+
+        file_io = BytesIO(image_data)
+        file_store = get_default_file_store(db_session)
+        file_store.save_file(
+            file_name=unique_id,
+            content=file_io,
+            display_name="GeneratedImage",
+            file_origin=FileOrigin.CHAT_IMAGE_GEN,
+            file_type="image/png",
+        )
+        return unique_id
 
 
 def load_chat_file(

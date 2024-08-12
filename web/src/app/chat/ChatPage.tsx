@@ -55,7 +55,7 @@ import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { FiArrowDown } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
-import { AIMessage, HumanMessage } from "./message/Messages";
+import { AIMessage, graph, GraphChunk, HumanMessage } from "./message/Messages";
 import { StarterMessage } from "./StarterMessage";
 import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
@@ -902,13 +902,13 @@ export function ChatPage({
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();
           if (packet) {
-            console.log(packet);
-            if (Object.hasOwn(packet, "delimiter")) {
-              // console.log("MESSAGE DELIMITER");
-              // TODO: Remove or put to good use!
-            }
-
-            if (Object.hasOwn(packet, "answer_piece")) {
+            if (Object.hasOwn(packet, "line_graph")) {
+              const GraphPacket = packet as GraphChunk;
+              setGraphs((graphs) => [
+                ...graphs,
+                { file_id: GraphPacket.file_id, line: GraphPacket.line_graph },
+              ]);
+            } else if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {
               documents = (packet as DocumentsResponse).top_documents;
@@ -929,14 +929,14 @@ export function ChatPage({
                 query = toolCall.tool_args.query;
               }
             } else if (Object.hasOwn(packet, "file_ids")) {
-              aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
-                (fileId) => {
-                  return {
-                    id: fileId,
-                    type: ChatFileType.IMAGE,
-                  };
-                }
-              );
+              // aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
+              //   (fileId) => {
+              //     return {
+              //       id: fileId,
+              //       type: ChatFileType.IMAGE,
+              //     };
+              //   }
+              // );
             } else if (Object.hasOwn(packet, "error")) {
               error = (packet as StreamingError).error;
             } else if (Object.hasOwn(packet, "message_id")) {
@@ -1282,6 +1282,7 @@ export function ChatPage({
     );
   });
 
+  const [graphs, setGraphs] = useState<graph[]>([]);
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
   const [settingsToggled, setSettingsToggled] = useState(false);
 
@@ -1589,6 +1590,7 @@ export function ChatPage({
                                         message.toolCall != null &&
                                         message.toolCall.tool_result == null
                                       }
+                                      graphs={graphs}
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
                                       toggleDocumentSelection={

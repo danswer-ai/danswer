@@ -116,6 +116,25 @@ def upload_file(
     return {"file_id": file_id}
 
 
+@admin_router.post("/upload-csv")
+def upload_csv(
+    file: UploadFile,
+    db_session: Session = Depends(get_session),
+    _: User | None = Depends(current_user),
+) -> dict[str, str]:
+    file_store = get_default_file_store(db_session)
+    file_type = ChatFileType.CSV
+    file_id = str(uuid.uuid4())
+    file_store.save_file(
+        file_name=file_id,
+        content=file.file,
+        display_name=file.filename,
+        file_origin=FileOrigin.CHAT_UPLOAD,
+        file_type=file.content_type or file_type.value,
+    )
+    return {"file_id": file_id}
+
+
 """Endpoints for all"""
 
 
