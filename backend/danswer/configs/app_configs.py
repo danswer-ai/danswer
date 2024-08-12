@@ -277,6 +277,10 @@ SKIP_METADATA_IN_CHUNK = os.environ.get("SKIP_METADATA_IN_CHUNK", "").lower() ==
 # Timeout to wait for job's last update before killing it, in hours
 CLEANUP_INDEXING_JOBS_TIMEOUT = int(os.environ.get("CLEANUP_INDEXING_JOBS_TIMEOUT", 3))
 
+# The indexer will warn in the logs whenver a document exceeds this threshold (in bytes)
+INDEXING_SIZE_WARNING_THRESHOLD = int(
+    os.environ.get("INDEXING_SIZE_WARNING_THRESHOLD", 100 * 1024 * 1024)
+)
 
 #####
 # Miscellaneous

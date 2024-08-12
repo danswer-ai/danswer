@@ -7,6 +7,7 @@ from datetime import timezone
 from sqlalchemy.orm import Session
 
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
+from danswer.configs.app_configs import INDEXING_SIZE_WARNING_THRESHOLD
 from danswer.configs.app_configs import POLL_CONNECTOR_OFFSET
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -200,9 +201,22 @@ def _run_indexing(
                     # Likely due to user manually disabling it or model swap
                     raise RuntimeError("Index Attempt was canceled")
 
-                logger.debug(
-                    f"Indexing batch of documents: {[doc.to_short_descriptor() for doc in doc_batch]}"
-                )
+                batch_description = []
+                for doc in doc_batch:
+                    batch_description.append(doc.to_short_descriptor())
+
+                    doc_size = 0
+                    for section in doc.sections:
+                        doc_size += len(section.text)
+
+                    if doc_size > INDEXING_SIZE_WARNING_THRESHOLD:
+                        logger.warning(
+                            f"Document size: doc='{doc.to_short_descriptor()}' "
+                            f"size={doc_size} "
+                            f"threshold={INDEXING_SIZE_WARNING_THRESHOLD}"
+                        )
+
+                logger.debug(f"Indexing batch of documents: {batch_description}")
 
                 new_docs, total_batch_chunks = indexing_pipeline(
                     document_batch=doc_batch,
