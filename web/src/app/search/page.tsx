@@ -5,6 +5,7 @@ import {
   getAuthTypeMetadataSS,
   getCurrentUserSS,
 } from "@/lib/userSS";
+import { getSecondsUntilExpiration } from "@/lib/time";
 import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
@@ -34,6 +35,7 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import ToggleSearch from "./WrappedSearch";
 import {
   AGENTIC_SEARCH_TYPE_COOKIE_NAME,
+  NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN,
   DISABLE_AGENTIC_SEARCH,
 } from "@/lib/constants";
 import WrappedSearch from "./WrappedSearch";
@@ -176,17 +178,17 @@ export default async function Home() {
 
   const toggleSidebar = sidebarToggled
     ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
-    : false;
+    : NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN;
 
   const agenticSearchEnabled = agenticSearchToggle
     ? agenticSearchToggle.value.toLocaleLowerCase() == "true" || false
     : false;
+  const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
   return (
     <>
-      <div className="m-3">
-        <HealthCheckBanner />
-      </div>
+      <Header user={user} />
+      <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
 
       {!shouldShowWelcomeModal &&

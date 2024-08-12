@@ -280,7 +280,7 @@ export function ChatInputBar({
                   ref={interactionsRef}
                   className="bg-background-200 p-2 rounded-t-lg items-center flex w-full"
                 >
-                  <AssistantIcon assistant={alternativeAssistant} border />
+                  <AssistantIcon assistant={alternativeAssistant} />
                   <p className="ml-3 text-strong my-auto">
                     {alternativeAssistant.name}
                   </p>

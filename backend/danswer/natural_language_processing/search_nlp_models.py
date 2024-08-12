@@ -72,7 +72,7 @@ class EmbeddingModel:
         texts: list[str],
         text_type: EmbedTextType,
         batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
-    ) -> list[list[float]]:
+    ) -> list[list[float] | None]:
         if not texts:
             logger.warning("No texts to be embedded")
             return []
@@ -112,14 +112,14 @@ class EmbeddingModel:
                 raise HTTPError(f"HTTP error occurred: {error_detail}") from e
             except requests.RequestException as e:
                 raise HTTPError(f"Request failed: {str(e)}") from e
+            EmbedResponse(**response.json()).embeddings
+
             return EmbedResponse(**response.json()).embeddings
 
         # Batching for local embedding
         text_batches = batch_list(texts, batch_size)
-        embeddings: list[list[float]] = []
+        embeddings: list[list[float] | None] = []
         for idx, text_batch in enumerate(text_batches, start=1):
-            logger.debug(f"Embedding Content Texts batch {idx} of {len(text_batches)}")
-
             embed_request = EmbedRequest(
                 model_name=self.model_name,
                 texts=text_batch,
@@ -145,7 +145,6 @@ class EmbeddingModel:
             # Normalize embeddings is only configured via model_configs.py, be sure to use right
             # value for the set loss
             embeddings.extend(EmbedResponse(**response.json()).embeddings)
-
         return embeddings
 
 
@@ -158,7 +157,7 @@ class CrossEncoderEnsembleModel:
         model_server_url = build_model_server_url(model_server_host, model_server_port)
         self.rerank_server_endpoint = model_server_url + "/encoder/cross-encoder-scores"
 
-    def predict(self, query: str, passages: list[str]) -> list[list[float]]:
+    def predict(self, query: str, passages: list[str]) -> list[list[float] | None]:
         rerank_request = RerankRequest(query=query, documents=passages)
 
         response = requests.post(

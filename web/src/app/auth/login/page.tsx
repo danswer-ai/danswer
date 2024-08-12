@@ -13,6 +13,7 @@ import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { LoginText } from "./LoginText";
+import { getSecondsUntilExpiration } from "@/lib/time";
 
 const Page = async ({
   searchParams,
@@ -41,7 +42,12 @@ const Page = async ({
   }
 
   // if user is already logged in, take them to the main app page
-  if (currentUser && currentUser.is_active) {
+  const secondsTillExpiration = getSecondsUntilExpiration(currentUser);
+  if (
+    currentUser &&
+    currentUser.is_active &&
+    (secondsTillExpiration === null || secondsTillExpiration > 0)
+  ) {
     if (authTypeMetadata?.requiresVerification && !currentUser.is_verified) {
       return redirect("/auth/waiting-on-verification");
     }

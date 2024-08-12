@@ -549,6 +549,32 @@ export const XIcon = ({
   );
 };
 
+export const SwapIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <svg
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px]` + className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="200"
+      height="200"
+      viewBox="0 0 14 14"
+    >
+      <g
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M2.5.5h9s2 0 2 2v9s0 2-2 2h-9s-2 0-2-2v-9s0-2 2-2" />
+        <path d="M9.5 4a.5.5 0 1 0 1 0a.5.5 0 1 0-1 0m-6 0a.5.5 0 1 0 1 0a.5.5 0 1 0-1 0m6 6a.5.5 0 1 0 1 0a.5.5 0 1 0-1 0m-6 0a.5.5 0 1 0 1 0a.5.5 0 1 0-1 0m3-3a.5.5 0 1 0 1 0a.5.5 0 1 0-1 0" />
+      </g>
+    </svg>
+  );
+};
+
 export const UndoIcon = ({
   size = 16,
   className = defaultTailwindCSS,

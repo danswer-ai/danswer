@@ -26,6 +26,7 @@ import {
 } from "@/components/resizable/constants";
 import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { fetchAssistantsSS } from "../assistants/fetchAssistantsSS";
+import { NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN } from "../constants";
 
 interface FetchChatDataResult {
   user: User | null;
@@ -84,6 +85,7 @@ export async function fetchChatData(searchParams: {
     Persona[],
     string | null,
   ];
+
   const chatSessionsResponse = results[5] as Response | null;
 
   const tagsResponse = results[6] as Response | null;
@@ -161,7 +163,7 @@ export async function fetchChatData(searchParams: {
 
   const toggleSidebar = sidebarToggled
     ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
-    : false;
+    : NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN;
 
   const finalDocumentSidebarInitialWidth = documentSidebarCookieInitialWidth
     ? parseInt(documentSidebarCookieInitialWidth.value)

@@ -79,6 +79,7 @@ export function SharedChatDisplay({
                     <HumanMessage
                       key={message.messageId}
                       content={message.message}
+                      files={message.files}
                     />
                   );
                 } else {
