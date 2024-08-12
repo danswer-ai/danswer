@@ -1,7 +1,7 @@
 """Added alternate model to chat message
 
 Revision ID: ee3f4b47fad5
-Revises: 7477a5f5d728
+Revises: 4a951134c801
 Create Date: 2024-08-12 00:11:50.915845
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "ee3f4b47fad5"
-down_revision = "7477a5f5d728"
+down_revision = "4a951134c801"
 branch_labels = None
 depends_on = None
 
