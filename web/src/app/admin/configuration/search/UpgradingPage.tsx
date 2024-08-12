@@ -11,7 +11,7 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import {
   CloudEmbeddingModel,
   HostedEmbeddingModel,
-} from "../../../../components/embedding/types";
+} from "../../../../components/embedding/interfaces";
 import { Connector } from "@/lib/connectors/connectors";
 
 export default function UpgradingPage({

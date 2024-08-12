@@ -5,7 +5,7 @@ import {
   AVAILABLE_MODELS,
   CloudEmbeddingModel,
   HostedEmbeddingModel,
-} from "../../../../components/embedding/types";
+} from "../../../../components/embedding/interfaces";
 import { CustomModelForm } from "../../../../components/embedding/CustomModelForm";
 import { useState } from "react";
 

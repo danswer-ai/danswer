@@ -1,7 +1,7 @@
 import React from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text, Callout } from "@tremor/react";
-import { CloudEmbeddingProvider } from "../../../../components/embedding/types";
+import { CloudEmbeddingProvider } from "../../../../components/embedding/interfaces";
 
 export function DeleteCredentialsModal({
   modelProvider,

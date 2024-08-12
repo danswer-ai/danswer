@@ -2,7 +2,7 @@ import React from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text } from "@tremor/react";
 
-import { CloudEmbeddingModel } from "../../../../components/embedding/types";
+import { CloudEmbeddingModel } from "../../../../components/embedding/interfaces";
 
 export function AlreadyPickedModal({
   model,

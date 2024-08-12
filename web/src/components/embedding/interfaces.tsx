@@ -2,7 +2,10 @@ import {
   CohereIcon,
   GoogleIcon,
   IconProps,
+  MicrosoftIcon,
+  NomicIcon,
   OpenAIIcon,
+  OpenSourceIcon,
   VoyageIcon,
 } from "@/components/icons/icons";
 
@@ -286,6 +289,28 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     ],
   },
 ];
+
+export const getTitleForRerankType = (type: string) => {
+  switch (type) {
+    case "nomic-ai":
+      return "Nomic (preferred)";
+    case "intfloat":
+      return "Microsoft";
+    default:
+      return "Open Source";
+  }
+};
+
+export const getIconForRerankType = (type: string) => {
+  switch (type) {
+    case "nomic-ai":
+      return <NomicIcon size={40} />;
+    case "intfloat":
+      return <MicrosoftIcon size={40} />;
+    default:
+      return <OpenSourceIcon size={40} />;
+  }
+};
 
 export const INVALID_OLD_MODEL = "thenlper/gte-small";
 

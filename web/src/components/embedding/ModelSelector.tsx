@@ -3,7 +3,12 @@ import {
   NomicIcon,
   OpenSourceIcon,
 } from "@/components/icons/icons";
-import { EmbeddingModelDescriptor, HostedEmbeddingModel } from "./types";
+import {
+  EmbeddingModelDescriptor,
+  getIconForRerankType,
+  getTitleForRerankType,
+  HostedEmbeddingModel,
+} from "./interfaces";
 import { FiExternalLink, FiStar } from "react-icons/fi";
 
 export function ModelPreview({
@@ -107,37 +112,15 @@ export function ModelSelector({
     {} as Record<string, HostedEmbeddingModel[]>
   );
 
-  const getTitleForType = (type: string) => {
-    switch (type) {
-      case "nomic-ai":
-        return "Nomic (preferred)";
-      case "intfloat":
-        return "Microsoft";
-      default:
-        return "Open Source";
-    }
-  };
-
-  const getIconForType = (type: string) => {
-    switch (type) {
-      case "nomic-ai":
-        return <NomicIcon size={40} />;
-      case "intfloat":
-        return <MicrosoftIcon size={40} />;
-      default:
-        return <OpenSourceIcon size={40} />;
-    }
-  };
-
   return (
     <div>
       <div className="flex flex-col gap-y-6 gap-6">
         {Object.entries(groupedModelOptions).map(([type, models]) => (
           <div key={type}>
             <div className="flex items-center mb-2">
-              {getIconForType(type)}
+              {getIconForRerankType(type)}
               <h2 className="ml-2  mt-2 text-xl font-bold">
-                {getTitleForType(type)}
+                {getTitleForRerankType(type)}
               </h2>
             </div>
 
@@ -157,28 +140,3 @@ export function ModelSelector({
     </div>
   );
 }
-
-// export function ModelSelector({
-//   modelOptions,
-//   setSelectedModel,
-//   currentEmbeddingModel,
-// }: {
-//   currentEmbeddingModel: HostedEmbeddingModel;
-//   modelOptions: HostedEmbeddingModel[];
-//   setSelectedModel: (model: HostedEmbeddingModel) => void;
-// }) {
-//   return (
-//     <div>
-//       <div className="flex flex-wrap gap-4">
-//         {modelOptions.map((modelOption) => (
-//           <ModelOption
-//             key={modelOption.model_name}
-//             model={modelOption}
-//             onSelect={setSelectedModel}
-//             selected={currentEmbeddingModel == modelOption}
-//           />
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }

@@ -26,14 +26,11 @@ export function AnnouncementBanner() {
         }
       );
       if (response.ok) {
-        // Update local state to remove the dismissed notification
         setLocalNotifications((prevNotifications) =>
           prevNotifications.filter(
             (notification) => notification.id !== notificationId
           )
         );
-        // Optionally, you can still refresh the global settings if needed
-        // settings?.refreshSettings();
       } else {
         console.error("Failed to dismiss notification");
       }

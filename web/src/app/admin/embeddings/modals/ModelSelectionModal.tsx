@@ -3,7 +3,7 @@ import { Button, Text, Callout } from "@tremor/react";
 import {
   EmbeddingModelDescriptor,
   HostedEmbeddingModel,
-} from "../../../../components/embedding/types";
+} from "../../../../components/embedding/interfaces";
 
 export function ModelSelectionConfirmationModal({
   selectedModel,

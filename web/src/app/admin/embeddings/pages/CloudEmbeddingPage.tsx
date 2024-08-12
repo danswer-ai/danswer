@@ -8,7 +8,7 @@ import {
   AVAILABLE_CLOUD_PROVIDERS,
   CloudEmbeddingProviderFull,
   EmbeddingModelDescriptor,
-} from "../../../../components/embedding/types";
+} from "../../../../components/embedding/interfaces";
 import { EmbeddingDetails } from "../EmbeddingModelSelectionForm";
 import { FiExternalLink, FiInfo } from "react-icons/fi";
 import { HoverPopup } from "@/components/HoverPopup";

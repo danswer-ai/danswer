@@ -11,7 +11,7 @@ import {
   INVALID_OLD_MODEL,
   HostedEmbeddingModel,
   EmbeddingModelDescriptor,
-} from "../../../components/embedding/types";
+} from "../../../components/embedding/interfaces";
 import { Connector } from "@/lib/connectors/connectors";
 import OpenEmbeddingPage from "./pages/OpenEmbeddingPage";
 import CloudEmbeddingPage from "./pages/CloudEmbeddingPage";

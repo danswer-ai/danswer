@@ -11,7 +11,7 @@ import {
   HostedEmbeddingModel,
   CloudEmbeddingModel,
   AVAILABLE_MODELS,
-} from "@/components/embedding/types";
+} from "@/components/embedding/interfaces";
 
 import { ErrorCallout } from "@/components/ErrorCallout";
 

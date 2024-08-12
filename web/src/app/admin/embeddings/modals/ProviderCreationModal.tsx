@@ -4,7 +4,7 @@ import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { Label, TextFormField } from "@/components/admin/connectors/Field";
 import { LoadingAnimation } from "@/components/Loading";
-import { CloudEmbeddingProvider } from "../../../../components/embedding/types";
+import { CloudEmbeddingProvider } from "../../../../components/embedding/interfaces";
 import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../../configuration/llm/constants";
 import { Modal } from "@/components/Modal";
 

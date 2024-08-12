@@ -10,7 +10,7 @@ import {
   CloudEmbeddingModel,
   EmbeddingModelDescriptor,
   HostedEmbeddingModel,
-} from "../../../../components/embedding/types";
+} from "../../../../components/embedding/interfaces";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import useSWR, { mutate } from "swr";
