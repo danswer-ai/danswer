@@ -284,7 +284,7 @@ def embed_text(
     elif model_name is not None:
         prefixed_texts = [f"{prefix}{text}" for text in texts] if prefix else texts
         local_model = get_embedding_model(
-            model_name=model_name, max_context_length=max_context_length
+            model_name=model_name.split("_")[0], max_context_length=max_context_length
         )
         embeddings_vectors = local_model.encode(
             prefixed_texts, normalize_embeddings=normalize_embeddings

@@ -272,7 +272,6 @@ const RerankingDetailsForm = forwardRef<
                 >
                   <div className="w-full px-4">
                     <EditingValue
-                      description="API key for Cohere"
                       optional={false}
                       currentValue={values.api_key}
                       onChange={(value: string | null) => {
@@ -281,7 +280,7 @@ const RerankingDetailsForm = forwardRef<
                       }}
                       setFieldValue={setFieldValue}
                       type="password"
-                      label="API Key"
+                      label="Cohere API Key"
                       name="api_key"
                     />
                     <div className="mt-4 flex justify-between">

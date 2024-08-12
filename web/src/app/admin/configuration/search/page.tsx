@@ -27,11 +27,8 @@ export interface EmbeddingDetails {
   default_model_id?: number;
   name: string;
 }
-import { EmbeddingIcon, PackageIcon } from "@/components/icons/icons";
+import { EmbeddingIcon } from "@/components/icons/icons";
 
-import { useRouter } from "next/navigation";
-import { SIDEBAR_WIDTH } from "@/lib/constants";
-import Sidebar from "../../connectors/[connector]/Sidebar";
 import Link from "next/link";
 import { SavedSearchSettings } from "../../embeddings/types";
 import UpgradingPage from "./UpgradingPage";
@@ -121,18 +118,14 @@ function Main() {
                         {searchSettings.rerank_model_name || "Not set"}
                       </Text>
                     </div>
-                    <div>
-                      <Text className="font-semibold">Provider Type</Text>
-                      <Text className="text-gray-700">
-                        {searchSettings.provider_type || "Not set"}
-                      </Text>
-                    </div>
+
                     <div>
                       <Text className="font-semibold">Results to Rerank</Text>
                       <Text className="text-gray-700">
                         {searchSettings.num_rerank}
                       </Text>
                     </div>
+
                     <div>
                       <Text className="font-semibold">
                         Multilingual Expansion
@@ -143,6 +136,7 @@ function Main() {
                           : "None"}
                       </Text>
                     </div>
+
                     <div>
                       <Text className="font-semibold">Multipass Indexing</Text>
                       <Text className="text-gray-700">
@@ -151,9 +145,10 @@ function Main() {
                           : "Disabled"}
                       </Text>
                     </div>
+
                     <div>
                       <Text className="font-semibold">
-                        Disable Rerank for Streaming
+                        Disable Reranking for Streaming
                       </Text>
                       <Text className="text-gray-700">
                         {searchSettings.disable_rerank_for_streaming
@@ -166,8 +161,9 @@ function Main() {
               </>
             )}
           </Card>
+
           <Link href="/admin/embeddings">
-            <Button className="mt-8">Select or update model</Button>
+            <Button className="mt-8">Select or Update Search Settings</Button>
           </Link>
         </>
       ) : (

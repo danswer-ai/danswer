@@ -108,7 +108,7 @@ class EmbeddingModelDetail(BaseModel):
         embedding_model: "EmbeddingModel",
     ) -> "EmbeddingModelDetail":
         return cls(
-            model_name=embedding_model.model_name,
+            model_name=embedding_model.model_name.split("__")[0],
             model_dim=embedding_model.model_dim,
             normalize=embedding_model.normalize,
             query_prefix=embedding_model.query_prefix,
