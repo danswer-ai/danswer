@@ -26,36 +26,27 @@ from shared_configs.configs import MODEL_SERVER_PORT
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 
+HF_CACHE_PATH = Path("/root/.cache/huggingface/")
+TEMP_HF_CACHE_PATH = Path("/root/.cache/temp_huggingface/")
+
 transformer_logging.set_verbosity_error()
 
 logger = setup_logger()
 
 
-def manage_huggingface_cache() -> None:
-    logger.info("Moving contents of temp_huggingface to huggingface cache.")
-    temp_hf_cache = Path("/root/.cache/temp_huggingface/hub/")
-    hf_cache = Path("/root/.cache/huggingface/hub/")
-
-    if not temp_hf_cache.is_dir():
-        return
-
-    # we have to move each file individually because the directories might
-    # have the same name but not the same contents
-    def _move_files_recursively(source: Path, dest: Path) -> None:
-        for item in source.iterdir():
-            if item.is_dir():
-                _move_files_recursively(item, dest / item.relative_to(source))
-            else:
-                target = dest / item.relative_to(source)
-                target.parent.mkdir(parents=True, exist_ok=True)
-                if target.exists():
-                    continue
-                shutil.move(str(item), str(target))
-
-    _move_files_recursively(temp_hf_cache, hf_cache)
-    shutil.rmtree(temp_hf_cache.parent, ignore_errors=True)
-
-    logger.info("Moved contents of temp_huggingface to huggingface cache.")
+# We have to move each file individually because the directories might
+# have the same name but not the same contents and we dont want to overwrite
+# the files in the existing huggingface cache
+def _move_files_recursively(source: Path, dest: Path) -> None:
+    for item in source.iterdir():
+        target_path = dest / item.relative_to(source)
+        if item.is_dir():
+            _move_files_recursively(item, target_path)
+        else:
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            if target_path.exists():
+                continue
+            shutil.move(str(item), str(target_path))
 
 
 @asynccontextmanager
@@ -65,7 +56,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     else:
         logger.info("GPU is not available")
 
-    manage_huggingface_cache()
+    if TEMP_HF_CACHE_PATH.is_dir():
+        logger.info("Moving contents of temp_huggingface to huggingface cache.")
+        _move_files_recursively(TEMP_HF_CACHE_PATH, HF_CACHE_PATH)
+        shutil.rmtree(TEMP_HF_CACHE_PATH, ignore_errors=True)
+        logger.info("Moved contents of temp_huggingface to huggingface cache.")
 
     torch.set_num_threads(max(MIN_THREADS_ML_MODELS, torch.get_num_threads()))
     logger.info(f"Torch Threads: {torch.get_num_threads()}")
