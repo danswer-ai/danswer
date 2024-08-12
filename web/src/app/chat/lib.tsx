@@ -628,10 +628,23 @@ export async function useScrollonStream({
   const previousScroll = useRef<number>(0);
 
   useEffect(() => {
-    if (chatState != "input" && scrollableDivRef && scrollableDivRef.current) {
+    if (
+      chatState != "input" &&
+      scrollableDivRef &&
+      scrollableDivRef.current &&
+      endDivRef.current
+    ) {
       let newHeight: number = scrollableDivRef.current?.scrollTop!;
       const heightDifference = newHeight - previousScroll.current;
       previousScroll.current = newHeight;
+      const rect = endDivRef.current.getBoundingClientRect();
+      const isInView =
+        rect.top >= 50 &&
+        rect.left >= 0 &&
+        rect.bottom <=
+          (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <=
+          (window.innerWidth || document.documentElement.clientWidth);
 
       // Prevent streaming scroll
       if (heightDifference < 0 && !preventScroll.current) {
@@ -654,6 +667,7 @@ export async function useScrollonStream({
         preventScroll.current = false;
       }
       if (
+        !isInView &&
         scrollDist.current < distance &&
         !blockActionRef.current &&
         !blockActionRef.current &&
@@ -667,6 +681,7 @@ export async function useScrollonStream({
           endDivRef.current.scrollIntoView();
         } else {
           blockActionRef.current = true;
+          console.log("HI");
 
           scrollableDivRef?.current?.scrollBy({
             left: 0,
@@ -686,6 +701,7 @@ export async function useScrollonStream({
   useEffect(() => {
     if (scrollableDivRef?.current && chatState == "input") {
       if (scrollDist.current < distance) {
+        console.log("SCROOLL");
         scrollableDivRef?.current?.scrollBy({
           left: 0,
           top: Math.max(scrollDist.current + 600, 0),

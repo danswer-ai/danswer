@@ -1,0 +1,141 @@
+import { List, AutoSizer } from "react-virtualized";
+
+import {
+  SetStateAction,
+  useRef,
+  useEffect,
+  Dispatch,
+  useCallback,
+} from "react";
+import { Persona } from "../../admin/assistants/interfaces";
+import { Message } from "../interfaces";
+import { ChatState, FeedbackType, RegenerationState } from "../types";
+import { LlmOverride } from "@/lib/hooks";
+import { MessageRouter } from "./MessageRouter";
+import { MessageHistoryProps } from "./types";
+
+export const MessageHistory: React.FC<MessageHistoryProps> = ({
+  completeMessageDetail,
+  onSubmit,
+  upsertToCompleteMessageMap,
+  setSelectedMessageForDocDisplay,
+  setMessageAsLatest,
+  setCompleteMessageDetail,
+  selectedMessageForDocDisplay,
+  messageHistory,
+  isStreaming,
+  setCurrentFeedback,
+  liveAssistant,
+  availableAssistants,
+  toggleDocumentSelectionAspects,
+  selectedDocuments,
+  setPopup,
+  retrievalEnabled,
+  createRegenerator,
+  regenerationState,
+  chatState,
+}) => {
+  const sizeMap = useRef<{ [key: number]: number }>({});
+  const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<List>(null);
+
+  useEffect(() => {
+    const updateScrollingContainerHeight = () => {
+      if (listRef.current && listRef.current.Grid) {
+        const grid = listRef.current.Grid as any;
+        if (grid._scrollingContainer && containerRef.current) {
+          containerRef.current.style.height = `${grid._scrollingContainer.scrollHeight || 1}px`;
+        }
+      }
+    };
+
+    updateScrollingContainerHeight();
+
+    const resizeObserver = new ResizeObserver(updateScrollingContainerHeight);
+    if (listRef.current && listRef.current.Grid) {
+      const grid = listRef.current.Grid as any;
+      if (grid._scrollingContainer) {
+        resizeObserver.observe(grid._scrollingContainer);
+      }
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [messageHistory]);
+
+  const getSize = useCallback((index: { index: number }) => {
+    return sizeMap.current[index.index] || 50;
+  }, []);
+
+  const setSize = useCallback((index: number, size: number) => {
+    if (sizeMap.current[index] !== size) {
+      sizeMap.current[index] = size;
+      if (listRef.current) {
+        listRef.current.recomputeRowHeights(index);
+      }
+    }
+  }, []);
+
+  const rowRenderer = ({ index, key, style }: any) => (
+    <div style={style} key={key}>
+      <AutoSizer disableHeight>
+        {({ width }: { width: number }) => (
+          <div
+            ref={(el) => {
+              if (el && el.clientHeight !== sizeMap.current[index]) {
+                setSize(index, el.clientHeight);
+              }
+            }}
+          >
+            <MessageRouter
+              index={index}
+              style={{ width }}
+              data={{
+                regenerationState,
+                messageHistory,
+                completeMessageDetail,
+                onSubmit,
+                upsertToCompleteMessageMap,
+                setSelectedMessageForDocDisplay,
+                setMessageAsLatest,
+                setCompleteMessageDetail,
+                selectedMessageForDocDisplay,
+                isStreaming,
+                setCurrentFeedback,
+                liveAssistant,
+                availableAssistants,
+                toggleDocumentSelectionAspects,
+                selectedDocuments,
+                setPopup,
+                retrievalEnabled,
+                createRegenerator,
+                chatState,
+              }}
+            />
+          </div>
+        )}
+      </AutoSizer>
+    </div>
+  );
+
+  return (
+    <div className={`flex-grow overflow-visible`} ref={containerRef}>
+      <AutoSizer className="h-full">
+        {({ width, height }: { width: number; height: number }) => (
+          <List
+            className="h-full"
+            ref={listRef}
+            height={height}
+            rowCount={messageHistory.length}
+            rowHeight={getSize}
+            rowRenderer={rowRenderer}
+            width={width}
+            overscanRowCount={2}
+          />
+        )}
+      </AutoSizer>
+      {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
+    </div>
+  );
+};

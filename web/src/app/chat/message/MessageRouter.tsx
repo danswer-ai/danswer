@@ -1,23 +1,9 @@
-import { List, AutoSizer } from "react-virtualized";
+import { Persona } from "../../admin/assistants/interfaces";
+import { AIMessage, HumanMessage } from "./Messages";
+import { TEMP_USER_MESSAGE_ID } from "../ChatPage";
+import { getCitedDocumentsFromMessage, personaIncludesRetrieval } from "../lib";
 
-import {
-  SetStateAction,
-  useRef,
-  useEffect,
-  Dispatch,
-  useCallback,
-  useState,
-} from "react";
-import { Persona } from "../admin/assistants/interfaces";
-import { Message } from "./interfaces";
-import { AIMessage, HumanMessage } from "./message/Messages";
-import { TEMP_USER_MESSAGE_ID } from "./ChatPage";
-import { getCitedDocumentsFromMessage, personaIncludesRetrieval } from "./lib";
-
-import { FeedbackType, RegenerationState } from "./types";
-import { LlmOverride } from "@/lib/hooks";
-
-const ChatMessage = ({
+export const MessageRouter = ({
   index,
   style,
   data,
@@ -45,6 +31,7 @@ const ChatMessage = ({
     retrievalEnabled,
     createRegenerator,
     regenerationState,
+    chatState,
   } = data;
 
   const message = messageHistory[index];
@@ -65,6 +52,7 @@ const ChatMessage = ({
     return (
       <div style={style} key={messageReactComponentKey}>
         <HumanMessage
+          chatState={chatState}
           content={message.message}
           files={message.files}
           messageId={message.messageId}
@@ -116,6 +104,7 @@ const ChatMessage = ({
     return (
       <div style={style} key={messageReactComponentKey}>
         <AIMessage
+          chatState={chatState}
           regenerate={createRegenerator(parentMessage?.messageId!, index)}
           isActive={messageHistory.length - 1 == index}
           selectedDocuments={selectedDocuments}
@@ -218,200 +207,4 @@ const ChatMessage = ({
       </div>
     );
   }
-};
-
-type MessageRendererProps = {
-  completeMessageDetail: {
-    sessionId: number | null;
-    messageMap: Map<number, Message>;
-  };
-
-  setCompleteMessageDetail: (
-    value: SetStateAction<{
-      sessionId: number | null;
-      messageMap: Map<number, Message>;
-    }>
-  ) => void;
-
-  onSubmit: ({
-    messageIdToResend,
-    messageOverride,
-    queryOverride,
-    forceSearch,
-    isSeededChat,
-    alternativeAssistantOverride,
-  }: {
-    messageIdToResend?: number;
-    messageOverride?: string;
-    queryOverride?: string;
-    forceSearch?: boolean;
-    isSeededChat?: boolean;
-    alternativeAssistantOverride?: Persona | null;
-  }) => Promise<any>;
-
-  upsertToCompleteMessageMap: ({
-    messages,
-    completeMessageMapOverride,
-    chatSessionId,
-    replacementsMap,
-    makeLatestChildMessage,
-  }: {
-    messages: Message[];
-    completeMessageMapOverride?: Map<number, Message> | null;
-    chatSessionId?: number;
-    replacementsMap?: Map<number, number> | null;
-    makeLatestChildMessage?: boolean;
-  }) => any;
-  setSelectedMessageForDocDisplay: (messageId: number | null) => void;
-  setMessageAsLatest: (messageId: number) => void;
-  selectedMessageForDocDisplay: number | null;
-  messageHistory: Message[];
-  isStreaming: boolean;
-  setCurrentFeedback: Dispatch<SetStateAction<[FeedbackType, number] | null>>;
-
-  liveAssistant: any; // Replace 'any' with the correct type
-  availableAssistants: any[]; // Replace 'any[]' with the correct type
-  toggleDocumentSelectionAspects: any; // Replace 'any' with the correct type
-  selectedDocuments: any[]; // Replace 'any[]' with the correct type
-  setPopup: (popup: any) => void; // Replace 'any' with the correct type
-  retrievalEnabled: boolean;
-  alternativeGeneratingAssistant: Persona;
-  alternativeAssistant: Persona;
-  selectedAssistant: Persona;
-  currentPersona: Persona;
-  isFetchingChatMessages: boolean;
-  createRegenerator: (
-    responseId: number,
-    finalMessageIndex: number
-  ) => (modelOverRide: LlmOverride) => Promise<void>;
-  regenerationState: RegenerationState | null;
-};
-export const MessageRenderer: React.FC<MessageRendererProps> = ({
-  completeMessageDetail,
-  onSubmit,
-  upsertToCompleteMessageMap,
-  setSelectedMessageForDocDisplay,
-  setMessageAsLatest,
-  setCompleteMessageDetail,
-  selectedMessageForDocDisplay,
-  messageHistory,
-  isStreaming,
-  setCurrentFeedback,
-  liveAssistant,
-  availableAssistants,
-  toggleDocumentSelectionAspects,
-  selectedDocuments,
-  setPopup,
-  retrievalEnabled,
-  createRegenerator,
-  regenerationState,
-}) => {
-  const sizeMap = useRef<{ [key: number]: number }>({});
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerHeight, setContainerHeight] = useState(0);
-  const listRef = useRef<List>(null);
-
-  useEffect(() => {
-    const updateScrollingContainerHeight = () => {
-      if (listRef.current && listRef.current.Grid) {
-        const grid = listRef.current.Grid as any;
-        if (grid._scrollingContainer) {
-          setContainerHeight(grid._scrollingContainer.scrollHeight);
-        }
-      }
-    };
-
-    updateScrollingContainerHeight();
-
-    const resizeObserver = new ResizeObserver(updateScrollingContainerHeight);
-    if (listRef.current && listRef.current.Grid) {
-      const grid = listRef.current.Grid as any;
-      if (grid._scrollingContainer) {
-        resizeObserver.observe(grid._scrollingContainer);
-      }
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [messageHistory]);
-
-  const getSize = useCallback((index: { index: number }) => {
-    return sizeMap.current[index.index] || 50;
-  }, []);
-
-  const setSize = useCallback((index: number, size: number) => {
-    if (sizeMap.current[index] !== size) {
-      sizeMap.current[index] = size;
-      if (listRef.current) {
-        listRef.current.recomputeRowHeights(index);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.style.height = `${containerHeight || 300}px`;
-    }
-  }, [containerHeight]);
-
-  const rowRenderer = ({ index, key, style }: any) => (
-    <div style={style} key={key}>
-      <AutoSizer disableHeight>
-        {({ width }: { width: number }) => (
-          <div
-            ref={(el) => {
-              if (el && el.clientHeight !== sizeMap.current[index]) {
-                setSize(index, el.clientHeight);
-              }
-            }}
-          >
-            <ChatMessage
-              index={index}
-              style={{ width }}
-              data={{
-                messageHistory,
-                completeMessageDetail,
-                onSubmit,
-                upsertToCompleteMessageMap,
-                setSelectedMessageForDocDisplay,
-                setMessageAsLatest,
-                setCompleteMessageDetail,
-                selectedMessageForDocDisplay,
-                isStreaming,
-                setCurrentFeedback,
-                liveAssistant,
-                availableAssistants,
-                toggleDocumentSelectionAspects,
-                selectedDocuments,
-                setPopup,
-                retrievalEnabled,
-                createRegenerator,
-              }}
-            />
-          </div>
-        )}
-      </AutoSizer>
-    </div>
-  );
-
-  return (
-    <div className={`flex-grow overflow-y-auto`} ref={containerRef}>
-      <AutoSizer className="h-full">
-        {({ width, height }: { width: number; height: number }) => (
-          <List
-            className="h-full"
-            ref={listRef}
-            height={height}
-            rowCount={messageHistory.length}
-            rowHeight={getSize}
-            rowRenderer={rowRenderer}
-            width={width}
-            overscanRowCount={2}
-          />
-        )}
-      </AutoSizer>
-      {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-    </div>
-  );
 };

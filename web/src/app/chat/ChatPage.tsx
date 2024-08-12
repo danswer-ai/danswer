@@ -1,5 +1,5 @@
 "use client";
-import { redirect, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   BackendChatSession,
   BackendMessage,
@@ -26,13 +26,11 @@ import {
   buildLatestMessageChain,
   checkAnyAssistantHasSearch,
   createChatSession,
-  getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
   getLastSuccessfulMessageId,
   handleChatFeedback,
   nameChatSession,
   PacketType,
-  personaIncludesRetrieval,
   processRawChatHistory,
   removeMessage,
   sendMessage,
@@ -79,7 +77,7 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
-import { MessageRenderer } from "./MessageHistory";
+import { MessageHistory } from "./message/MessageHistory";
 
 export const TEMP_USER_MESSAGE_ID = -1;
 export const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -546,7 +544,7 @@ export function ChatPage({
   const endDivRef = useRef<HTMLDivElement>(null);
   const endPaddingRef = useRef<HTMLDivElement>(null);
 
-  const messageRendererRef = useRef({
+  const MessageHistoryRef = useRef({
     lastMessageRef,
     endPaddingRef,
     endDivRef,
@@ -1454,103 +1452,104 @@ export function ChatPage({
                       the top of the chat page. Oly used in the EE version of the app. */}
 
                           {messageHistory.length === 0 &&
-                            !isFetchingChatMessages &&
-                            chatState == "input" && (
-                              <ChatIntro
-                                availableSources={finalAvailableSources}
-                                selectedPersona={liveAssistant}
-                              />
-                            )}
-                          <div
-                            className={
-                              "mt-4 -ml-4 h-full w-full mx-auto " +
-                              "absolute mobile:top-0 desktop:top-12 left-0" +
-                              (hasPerformedInitialScroll ? "" : "invisible")
-                            }
-                          >
-                            <MessageRenderer
-                              regenerationState={regenerationState}
-                              createRegenerator={createRegenerator}
-                              isFetchingChatMessages={isFetchingChatMessages}
-                              alternativeGeneratingAssistant={
-                                alternativeGeneratingAssistant!
-                              }
-                              selectedAssistant={selectedAssistant!}
-                              currentPersona={currentPersona}
-                              alternativeAssistant={alternativeAssistant!}
-                              // message={message}
-                              completeMessageDetail={completeMessageDetail}
-                              onSubmit={onSubmit}
-                              upsertToCompleteMessageMap={
-                                upsertToCompleteMessageMap
-                              }
-                              setSelectedMessageForDocDisplay={
-                                setSelectedMessageForDocDisplay
-                              }
-                              setMessageAsLatest={setMessageAsLatest}
-                              setCompleteMessageDetail={
-                                setCompleteMessageDetail
-                              }
-                              selectedMessageForDocDisplay={
-                                selectedMessageForDocDisplay
-                              }
-                              messageHistory={messageHistory}
-                              isStreaming={isStreaming}
-                              setCurrentFeedback={setCurrentFeedback}
-                              liveAssistant={liveAssistant}
-                              availableAssistants={availableAssistants}
-                              toggleDocumentSelectionAspects={
-                                toggleDocumentSelectionAspects
-                              }
-                              selectedDocuments={selectedDocuments}
-                              setPopup={setPopup}
-                              retrievalEnabled={retrievalEnabled}
+                          !isFetchingChatMessages &&
+                          chatState == "input" ? (
+                            <ChatIntro
+                              availableSources={finalAvailableSources}
+                              selectedPersona={liveAssistant}
                             />
+                          ) : (
+                            <div
+                              className={
+                                "mt-4 -ml-4 h-full w-full mx-auto " +
+                                "absolute mobile:top-0 desktop:top-12 left-0" +
+                                (hasPerformedInitialScroll ? "" : "invisible")
+                              }
+                            >
+                              <MessageHistory
+                                chatState={chatState}
+                                regenerationState={regenerationState}
+                                createRegenerator={createRegenerator}
+                                isFetchingChatMessages={isFetchingChatMessages}
+                                alternativeGeneratingAssistant={
+                                  alternativeGeneratingAssistant!
+                                }
+                                selectedAssistant={selectedAssistant!}
+                                currentPersona={currentPersona}
+                                alternativeAssistant={alternativeAssistant!}
+                                // message={message}
+                                completeMessageDetail={completeMessageDetail}
+                                onSubmit={onSubmit}
+                                upsertToCompleteMessageMap={
+                                  upsertToCompleteMessageMap
+                                }
+                                setSelectedMessageForDocDisplay={
+                                  setSelectedMessageForDocDisplay
+                                }
+                                setMessageAsLatest={setMessageAsLatest}
+                                setCompleteMessageDetail={
+                                  setCompleteMessageDetail
+                                }
+                                selectedMessageForDocDisplay={
+                                  selectedMessageForDocDisplay
+                                }
+                                messageHistory={messageHistory}
+                                isStreaming={isStreaming}
+                                setCurrentFeedback={setCurrentFeedback}
+                                liveAssistant={liveAssistant}
+                                availableAssistants={availableAssistants}
+                                toggleDocumentSelectionAspects={
+                                  toggleDocumentSelectionAspects
+                                }
+                                selectedDocuments={selectedDocuments}
+                                setPopup={setPopup}
+                                retrievalEnabled={retrievalEnabled}
+                              />
 
-                            {chatState == "loading" &&
-                              !regenerationState?.regenerating &&
-                              messageHistory[messageHistory.length - 1]?.type !=
-                                "user" && (
-                                <HumanMessage
-                                  messageId={-1}
-                                  content={submittedMessage}
-                                />
+                              {chatState == "loading" &&
+                                !regenerationState?.regenerating &&
+                                messageHistory[messageHistory.length - 1]
+                                  ?.type != "user" && (
+                                  <HumanMessage
+                                    messageId={-1}
+                                    content={submittedMessage}
+                                  />
+                                )}
+
+                              {chatState == "loading" && (
+                                <div
+                                  key={`${messageHistory.length}-${chatSessionIdRef.current}`}
+                                >
+                                  <AIMessage
+                                    currentPersona={liveAssistant}
+                                    alternativeAssistant={
+                                      alternativeGeneratingAssistant ??
+                                      alternativeAssistant
+                                    }
+                                    messageId={null}
+                                    personaName={liveAssistant.name}
+                                    content={
+                                      <div
+                                        key={"Generating"}
+                                        className="mr-auto relative inline-block"
+                                      >
+                                        <span className="text-sm loading-text">
+                                          Thinking...
+                                        </span>
+                                      </div>
+                                    }
+                                  />
+                                </div>
                               )}
 
-                            {chatState == "loading" && (
-                              <div
-                                key={`${messageHistory.length}-${chatSessionIdRef.current}`}
-                              >
-                                <AIMessage
-                                  currentPersona={liveAssistant}
-                                  alternativeAssistant={
-                                    alternativeGeneratingAssistant ??
-                                    alternativeAssistant
-                                  }
-                                  messageId={null}
-                                  personaName={liveAssistant.name}
-                                  content={
-                                    <div
-                                      key={"Generating"}
-                                      className="mr-auto relative inline-block"
-                                    >
-                                      <span className="text-sm loading-text">
-                                        Thinking...
-                                      </span>
-                                    </div>
-                                  }
-                                />
-                              </div>
-                            )}
-
-                            {currentPersona &&
-                              currentPersona.starter_messages &&
-                              currentPersona.starter_messages.length > 0 &&
-                              selectedAssistant &&
-                              messageHistory.length === 0 &&
-                              !isFetchingChatMessages && (
-                                <div
-                                  className={`
+                              {currentPersona &&
+                                currentPersona.starter_messages &&
+                                currentPersona.starter_messages.length > 0 &&
+                                selectedAssistant &&
+                                messageHistory.length === 0 &&
+                                !isFetchingChatMessages && (
+                                  <div
+                                    className={`
                                       mx-auto 
                                       px-4 
                                       w-searchbar-xs 
@@ -1563,36 +1562,37 @@ export function ChatPage({
                                       mt-4 
                                       md:grid-cols-2 
                                       mb-6`}
-                                >
-                                  {currentPersona.starter_messages.map(
-                                    (starterMessage, i) => (
-                                      <div key={i} className="w-full">
-                                        <StarterMessage
-                                          starterMessage={starterMessage}
-                                          onClick={() =>
-                                            onSubmit({
-                                              messageOverride:
-                                                starterMessage.message,
-                                            })
-                                          }
-                                        />
-                                      </div>
-                                    )
-                                  )}
-                                </div>
-                              )}
+                                  >
+                                    {currentPersona.starter_messages.map(
+                                      (starterMessage, i) => (
+                                        <div key={i} className="w-full">
+                                          <StarterMessage
+                                            starterMessage={starterMessage}
+                                            onClick={() =>
+                                              onSubmit({
+                                                messageOverride:
+                                                  starterMessage.message,
+                                              })
+                                            }
+                                          />
+                                        </div>
+                                      )
+                                    )}
+                                  </div>
+                                )}
 
-                            {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message */}
-                            <div ref={endPaddingRef} className="h-[95px]" />
-                            <div ref={endDivRef} />
-                          </div>
+                              {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message */}
+                              <div ref={endPaddingRef} className="h-[95px]" />
+                              <div ref={endDivRef} />
+                            </div>
+                          )}
                         </div>
                         <div
                           ref={inputRef}
                           className="absolute bottom-0 z-10 w-full"
                         >
                           <div className="w-full relative pb-4">
-                            {true && (
+                            {aboveHorizon && (
                               <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
                                 <button
                                   onClick={() => clientScrollToBottom()}

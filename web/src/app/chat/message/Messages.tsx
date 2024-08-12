@@ -7,7 +7,7 @@ import {
   FiTool,
   FiGlobe,
 } from "react-icons/fi";
-import { FeedbackType } from "../types";
+import { ChatState, FeedbackType } from "../types";
 import { useContext, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
@@ -126,6 +126,7 @@ export const AIMessage = ({
   handleForceSearch,
   retrievalDisabled,
   currentPersona,
+  chatState,
 }: {
   shared?: boolean;
   isActive?: boolean;
@@ -151,6 +152,7 @@ export const AIMessage = ({
   retrievalDisabled?: boolean;
   alternateModel?: string;
   regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
+  chatState?: ChatState;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
   const processContent = (content: string | JSX.Element) => {
@@ -236,7 +238,7 @@ export const AIMessage = ({
   ).slice(0, 3);
 
   return (
-    <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
+    <div ref={trackedElementRef} className={`py-5 px-2 lg:px-5 relative flex `}>
       <div
         className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-message-max`}
       >
@@ -361,7 +363,7 @@ export const AIMessage = ({
                         <FileDisplay files={files || []} />
 
                         {typeof content === "string" ? (
-                          <div className="overflow-x-auto w-full pr-2 max-w-[675px]">
+                          <div className="overflow-visible w-full pr-2 max-w-[675px]">
                             <ReactMarkdown
                               key={messageId}
                               className="prose max-w-full"
@@ -448,7 +450,7 @@ export const AIMessage = ({
                                   <a
                                     href={doc.link}
                                     target="_blank"
-                                    className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
+                                    className="text-sm flex w-full pt-1 gap-x-1.5 hidden justify-between font-semibold text-text-700"
                                   >
                                     <Citation link={doc.link} index={ind + 1} />
                                     <p className="shrink truncate ellipsis break-all ">
@@ -509,6 +511,7 @@ export const AIMessage = ({
                   </div>
 
                   {handleFeedback &&
+                    chatState == "input" &&
                     (isActive ? (
                       <div
                         className={`
@@ -633,6 +636,7 @@ export const HumanMessage = ({
   onMessageSelection,
   shared,
   stopGenerating = () => null,
+  chatState,
 }: {
   shared?: boolean;
   content: string;
@@ -642,6 +646,7 @@ export const HumanMessage = ({
   onEdit?: (editedContent: string) => void;
   onMessageSelection?: (messageId: number) => void;
   stopGenerating?: () => void;
+  chatState?: ChatState;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -710,24 +715,24 @@ export const HumanMessage = ({
                       <textarea
                         ref={textareaRef}
                         className={`
-                      m-0 
-                      w-full 
-                      h-auto
-                      shrink
-                      border-0
-                      rounded-lg 
-                      overflow-y-hidden
-                      bg-background-emphasis 
-                      whitespace-normal 
-                      break-word
-                      overscroll-contain
-                      outline-none 
-                      placeholder-gray-400 
-                      resize-none
-                      pl-4
-                      overflow-y-auto
-                      pr-12 
-                      py-4`}
+                          m-0 
+                          w-full 
+                          h-auto
+                          shrink
+                          border-0
+                          rounded-lg 
+                          overflow-y-hidden
+                          bg-background-emphasis 
+                          whitespace-normal 
+                          break-word
+                          overscroll-contain
+                          outline-none 
+                          placeholder-gray-400 
+                          resize-none
+                          pl-4
+                          overflow-y-auto
+                          pr-12 
+                          py-4`}
                         aria-multiline
                         role="textarea"
                         value={editedContent}
