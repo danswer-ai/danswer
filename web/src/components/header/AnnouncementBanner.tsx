@@ -14,7 +14,6 @@ export function AnnouncementBanner({ message, id }: AnnouncementProps) {
   const settings = useContext(SettingsContext);
 
   const notifications = settings?.settings.notifications;
-  console.log(notifications);
 
   if (!notifications || notifications.length === 0) return null;
 

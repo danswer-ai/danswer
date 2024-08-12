@@ -39,11 +39,7 @@ export interface EmbeddingDetails {
   name: string;
 }
 import { EmbeddingIcon, PackageIcon } from "@/components/icons/icons";
-import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
-import { TextFormField } from "@/components/admin/connectors/Field";
-import { HeaderTitle } from "@/components/header/HeaderTitle";
-import EmbeddingWrapper from "./EmbeddingWrapper";
-import { useFormContext } from "@/components/context/FormContext";
+
 import { useRouter } from "next/navigation";
 import { SIDEBAR_WIDTH } from "@/lib/constants";
 import Sidebar from "../../connectors/[connector]/Sidebar";
@@ -125,7 +121,6 @@ function Main() {
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
-  console.log(searchSettings);
   const router = useRouter();
   const {
     data: ongoingReIndexingStatus,

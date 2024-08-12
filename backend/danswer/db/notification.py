@@ -47,7 +47,6 @@ def get_notifications(
     query = select(Notification).where(
         Notification.user_id == user.id if user else Notification.user_id.is_(None)
     )
-    print(query)
     if not include_dismissed:
         query = query.where(Notification.dismissed.is_(False))
     if notif_type:

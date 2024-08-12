@@ -41,7 +41,6 @@ export function ClientLayout({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  console.log(pathname);
   if (
     pathname.startsWith("/admin/connectors") ||
     pathname.startsWith("/admin/embeddings")
