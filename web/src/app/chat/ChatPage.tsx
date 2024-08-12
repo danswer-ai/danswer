@@ -1,5 +1,4 @@
 "use client";
-import { FixedSizeList as List } from "react-window";
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 import {
   BackendChatSession,
