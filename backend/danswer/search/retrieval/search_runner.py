@@ -121,49 +121,19 @@ def doc_index_retrieval(
     from the large chunks to the referenced chunks,
     dedupes the chunks, and cleans the chunks.
     """
-    if query.search_type == SearchType.KEYWORD:
-        top_chunks = document_index.keyword_retrieval(
-            query=query.query,
-            filters=query.filters,
-            time_decay_multiplier=query.recency_bias_multiplier,
-            num_to_retrieve=query.num_hits,
-        )
-    else:
-        db_embedding_model = get_current_db_embedding_model(db_session)
+    db_embedding_model = get_current_db_embedding_model(db_session)
 
-        model = EmbeddingModel(
-            model_name=db_embedding_model.model_name,
-            query_prefix=db_embedding_model.query_prefix,
-            passage_prefix=db_embedding_model.passage_prefix,
-            normalize=db_embedding_model.normalize,
-            api_key=db_embedding_model.api_key,
-            provider_type=db_embedding_model.provider_type,
-            # The below are globally set, this flow always uses the indexing one
-            server_host=MODEL_SERVER_HOST,
-            server_port=MODEL_SERVER_PORT,
-        )
-
-        query_embedding = model.encode([query.query], text_type=EmbedTextType.QUERY)[0]
-
-        if query.search_type == SearchType.SEMANTIC:
-            top_chunks = document_index.semantic_retrieval(
-                query=query.query,
-                query_embedding=query_embedding,
-                filters=query.filters,
-                time_decay_multiplier=query.recency_bias_multiplier,
-                num_to_retrieve=query.num_hits,
-            )
-
-        elif query.search_type == SearchType.HYBRID:
-            top_chunks = document_index.hybrid_retrieval(
-                query=query.query,
-                query_embedding=query_embedding,
-                filters=query.filters,
-                time_decay_multiplier=query.recency_bias_multiplier,
-                num_to_retrieve=query.num_hits,
-                offset=query.offset,
-                hybrid_alpha=hybrid_alpha,
-            )
+    model = EmbeddingModel(
+        model_name=db_embedding_model.model_name,
+        query_prefix=db_embedding_model.query_prefix,
+        passage_prefix=db_embedding_model.passage_prefix,
+        normalize=db_embedding_model.normalize,
+        api_key=db_embedding_model.api_key,
+        provider_type=db_embedding_model.provider_type,
+        # The below are globally set, this flow always uses the indexing one
+        server_host=MODEL_SERVER_HOST,
+        server_port=MODEL_SERVER_PORT,
+    )
 
     query_embedding = model.encode([query.query], text_type=EmbedTextType.QUERY)[0]
 

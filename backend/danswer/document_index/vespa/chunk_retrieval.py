@@ -370,7 +370,7 @@ def _get_chunks_via_batch_search(
     return inference_chunks
 
 
-def manage_batch_retrieval(
+def batch_search_api_retrieval(
     index_name: str,
     chunk_requests: list[VespaChunkRequest],
     filters: IndexFilters,

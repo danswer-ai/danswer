@@ -14,15 +14,14 @@ import requests
 from danswer.configs.chat_configs import DOC_TIME_DECAY
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.chat_configs import TITLE_CONTENT_RATIO
-from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentInsertionRecord
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.document_index.interfaces import VespaChunkRequest
+from danswer.document_index.vespa.chunk_retrieval import batch_search_api_retrieval
 from danswer.document_index.vespa.chunk_retrieval import (
     get_all_vespa_ids_for_document_id,
 )
-from danswer.document_index.vespa.chunk_retrieval import manage_batch_retrieval
 from danswer.document_index.vespa.chunk_retrieval import (
     parallel_visit_api_retrieval,
 )
@@ -371,7 +370,7 @@ class VespaIndex(DocumentIndex):
         get_large_chunks: bool = False,
     ) -> list[InferenceChunkUncleaned]:
         if batch_retrieval:
-            return manage_batch_retrieval(
+            return batch_search_api_retrieval(
                 index_name=self.index_name,
                 chunk_requests=chunk_requests,
                 filters=filters,
@@ -383,7 +382,6 @@ class VespaIndex(DocumentIndex):
             filters=filters,
             get_large_chunks=get_large_chunks,
         )
-
 
     def hybrid_retrieval(
         self,

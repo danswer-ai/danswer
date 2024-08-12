@@ -1,5 +1,4 @@
 from danswer.configs.app_configs import BLURB_SIZE
-from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.app_configs import LARGE_CHUNK_RATIO
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.app_configs import SKIP_METADATA_IN_CHUNK
@@ -80,11 +79,11 @@ class Chunker:
     def __init__(
         self,
         tokenizer: BaseTokenizer,
+        enable_multipass: bool,
         blurb_size: int = BLURB_SIZE,
         include_metadata: bool = not SKIP_METADATA_IN_CHUNK,
         chunk_token_limit: int = DOC_EMBEDDING_CONTEXT_SIZE,
         chunk_overlap: int = CHUNK_OVERLAP,
-        enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
         mini_chunk_size: int = MINI_CHUNK_SIZE,
     ) -> None:
         from llama_index.text_splitter import SentenceSplitter
@@ -112,7 +111,7 @@ class Chunker:
                 chunk_size=mini_chunk_size,
                 chunk_overlap=0,
             )
-            if enable_mini_chunk
+            if enable_multipass
             else None
         )
 
@@ -254,17 +253,6 @@ class Chunker:
             metadata_suffix_keyword,
             content_token_limit,
         )
-
-
-_CACHED_CHUNKER: Chunker | None = None
-
-
-def get_cached_chunker(tokenizer: BaseTokenizer) -> Chunker:
-    global _CACHED_CHUNKER
-    if _CACHED_CHUNKER is None or tokenizer != _CACHED_CHUNKER.tokenizer:
-        logger.debug("Creating cached chunker")
-        _CACHED_CHUNKER = Chunker(tokenizer)
-    return _CACHED_CHUNKER
 
 
 def _combine_chunks(chunks: list[DocAwareChunk], index: int) -> DocAwareChunk:
