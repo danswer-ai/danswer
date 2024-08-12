@@ -597,6 +597,7 @@ export function ChatPage({
   };
 
   const clientScrollToBottom = (fast?: boolean) => {
+    console.log("SCOOOL");
     setTimeout(() => {
       if (fast) {
         endDivRef.current?.scrollIntoView();

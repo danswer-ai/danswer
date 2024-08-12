@@ -75,7 +75,7 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
           listRef.current.forceUpdateGrid();
         }
       }
-    }, 1),
+    }, 10),
     [messageHistory]
   );
 
@@ -133,7 +133,7 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
 
   return (
     <div
-      className={`flex-grow  max-h-[80] overflow-visible`}
+      className={`flex-grow max-h-full  overflow-visible`}
       ref={containerRef}
     >
       <AutoSizer className="h-full">
