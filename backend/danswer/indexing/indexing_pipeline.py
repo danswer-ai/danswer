@@ -4,7 +4,6 @@ from typing import Protocol
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
-from danswer.configs.app_configs import ENABLE_LARGE_CHUNK
 from danswer.configs.app_configs import ENABLE_MULTIPASS_INDEXING
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
@@ -23,7 +22,6 @@ from danswer.db.tag import create_or_add_document_tag_list
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.indexing.chunker import Chunker
-from danswer.indexing.chunker import generate_large_chunks
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
@@ -186,13 +184,7 @@ def index_doc_batch(
     logger.debug("Starting chunking")
     chunks: list[DocAwareChunk] = []
     for document in updatable_docs:
-        chunks_per_document = chunker.chunk(document=document)
-        chunks.extend(chunks_per_document)
-        if ENABLE_LARGE_CHUNK:
-            large_chunks = generate_large_chunks(
-                chunks=chunks_per_document,
-            )
-            chunks.extend(large_chunks)
+        chunks.extend(chunker.chunk(document=document))
 
     logger.debug("Starting embedding")
     chunks_with_embeddings = (
@@ -287,6 +279,7 @@ def build_indexing_pipeline(
 
     return partial(
         index_doc_batch,
+        chunker=chunker,
         embedder=embedder,
         document_index=document_index,
         ignore_time_skip=ignore_time_skip,
