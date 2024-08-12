@@ -571,6 +571,13 @@ export const AIMessage = ({
                               onClick={() => handleFeedback("dislike")}
                             />
                           </CustomTooltip>
+                          {regenerate && (
+                            <RegenerateOption
+                              selectedAssistant={currentPersona!}
+                              regenerate={regenerate}
+                              alternateModel={alternateModel}
+                            />
+                          )}
                         </TooltipGroup>
                       </div>
                     ))}
