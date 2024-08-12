@@ -42,7 +42,6 @@ export const CustomTooltip = ({
   line,
   wrap,
   showTick = false,
-  position,
   delay = 500,
   maxWidth,
   position = "bottom",

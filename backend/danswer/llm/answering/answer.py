@@ -448,6 +448,8 @@ class Answer:
                 )
             ]
 
+            print("final tools")
+            print(final_tool_definitions)
             for message in self.llm.stream(
                 prompt=prompt,
                 tools=final_tool_definitions if final_tool_definitions else None,
