@@ -1,30 +1,6 @@
-import { IconProps } from "@tremor/react";
 import { IconType } from "react-icons";
 
 const ICON_SIZE = 15;
-
-// export const Hoverable: React.FC<{
-//   icon: IconType;
-//   onClick?: () => void;
-//   size?: number;
-//   active?: boolean;
-//   hoverText?: string;
-// }> = ({ icon, active, hoverText, onClick, size = ICON_SIZE }) => {
-//   return (
-//     <div
-//       className="hover:bg-hover flex p-1.5 rounded h-fit cursor-pointer"
-//       onClick={onClick}
-//     >
-//       {icon({ size: size, className: "my-auto" })}
-//       {hoverText && (
-//         <p
-//           className={`text-xs whitespace-nowrap overflow-hidden  opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-//         >
-//           {hoverText}
-//         </p>
-//       )}
-//     </div>
-//   );
 
 export const Hoverable: React.FC<{
   icon: IconType;
