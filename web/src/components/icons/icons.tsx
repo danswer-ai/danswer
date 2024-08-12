@@ -53,6 +53,7 @@ import awsWEBP from "../../../public/Amazon.webp";
 import azureIcon from "../../../public/Azure.png";
 
 import anthropicSVG from "../../../public/Anthropic.svg";
+import mixedBreadSVG from "../../../public/mixedbread.png";
 
 import OCIStorageSVG from "../../../public/OCI.svg";
 import googleCloudStorageIcon from "../../../public/GoogleCloudStorage.png";
@@ -274,6 +275,19 @@ export const OpenSourceIcon = ({
       className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
     >
       <Image src={openSourceIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+export const MixedBreadIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={mixedBreadSVG} alt="Logo" width="96" height="96" />
     </div>
   );
 };

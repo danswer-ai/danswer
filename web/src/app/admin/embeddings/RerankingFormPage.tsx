@@ -10,7 +10,11 @@ import * as Yup from "yup";
 import { EditingValue } from "@/components/credentials/EditingValue";
 import { RerankerProvider, RerankingDetails } from "./types";
 import { FiExternalLink } from "react-icons/fi";
-import { CohereIcon, OpenSourceIcon } from "@/components/icons/icons";
+import {
+  CohereIcon,
+  MixedBreadIcon,
+  OpenSourceIcon,
+} from "@/components/icons/icons";
 import { Modal } from "@/components/Modal";
 import { Button } from "@tremor/react";
 
@@ -48,21 +52,21 @@ const RerankingDetailsForm = forwardRef<
     const modelCards: ModelCard[] = [
       {
         cloud: false,
-        modelName: "mxbai-rerank-xsmall-v1",
+        modelName: "mixedbread-ai/mxbai-rerank-xsmall-v1",
         displayName: "MixedBread XSmall",
         description: "Fastest, smallest model for basic reranking tasks.",
         link: "https://huggingface.co/mixedbread-ai/mxbai-rerank-xsmall-v1",
       },
       {
         cloud: false,
-        modelName: "mxbai-rerank-base-v1",
+        modelName: "mixedbread-ai/mxbai-rerank-base-v1",
         displayName: "MixedBread Base",
         description: "Balanced performance for general reranking needs.",
         link: "https://huggingface.co/mixedbread-ai/mxbai-rerank-base-v1",
       },
       {
         cloud: false,
-        modelName: "mxbai-rerank-large-v1",
+        modelName: "mixedbread-ai/mxbai-rerank-large-v1",
         displayName: "MixedBread Large",
         description: "Most powerful model for complex reranking tasks.",
         link: "https://huggingface.co/mixedbread-ai/mxbai-rerank-large-v1",
@@ -192,73 +196,81 @@ const RerankingDetailsForm = forwardRef<
               ))}
             </div> */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {modelCards
-                  .filter((model) => model.cloud == (modelTab == "cloud"))
-                  .map((card) => {
-                    const isSelected =
-                      values.provider_type === card.provider &&
-                      values.rerank_model_name === card.modelName;
-                    return (
-                      <div
-                        key={`${card.provider}-${card.modelName}`}
-                        className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
-                          isSelected
-                            ? "border-blue-500 bg-blue-50 shadow-md"
-                            : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
-                        }`}
-                        onClick={() => {
-                          if (card.provider) {
-                            setIsApiKeyModalOpen(true);
-                          }
-                          setRerankingDetails({
-                            ...values,
-                            provider_type: card.provider!,
-                            rerank_model_name: card.modelName,
-                          });
-                          setFieldValue("provider_type", card.provider);
-                          setFieldValue("rerank_model_name", card.modelName);
-                        }}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center">
-                            {card.provider === RerankerProvider.COHERE ? (
-                              <CohereIcon size={24} className="mr-2" />
-                            ) : (
-                              <OpenSourceIcon size={24} className="mr-2" />
-                            )}
-                            <h3 className="font-bold text-lg">
-                              {card.displayName}
-                            </h3>
-                          </div>
-                          {card.link && (
-                            <a
-                              href={card.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
-                            >
-                              <FiExternalLink size={18} />
-                            </a>
+                {(modelTab
+                  ? modelCards.filter(
+                      (model) => model.cloud == (modelTab == "cloud")
+                    )
+                  : modelCards.filter(
+                      (modelCard) =>
+                        modelCard.modelName ==
+                        originalRerankingDetails.rerank_model_name
+                    )
+                ).map((card) => {
+                  const isSelected =
+                    values.provider_type === card.provider &&
+                    values.rerank_model_name === card.modelName;
+                  return (
+                    <div
+                      key={`${card.provider}-${card.modelName}`}
+                      className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+                        isSelected
+                          ? "border-blue-500 bg-blue-50 shadow-md"
+                          : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
+                      }`}
+                      onClick={() => {
+                        if (card.provider) {
+                          setIsApiKeyModalOpen(true);
+                        }
+                        setRerankingDetails({
+                          ...values,
+                          provider_type: card.provider!,
+                          rerank_model_name: card.modelName,
+                        });
+                        setFieldValue("provider_type", card.provider);
+                        setFieldValue("rerank_model_name", card.modelName);
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center">
+                          {card.provider === RerankerProvider.COHERE ? (
+                            <CohereIcon size={24} className="mr-2" />
+                          ) : (
+                            <MixedBreadIcon size={24} className="mr-2" />
                           )}
+                          <h3 className="font-bold text-lg">
+                            {card.displayName}
+                          </h3>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">
-                          {card.description}
-                        </p>
-                        <div className="text-xs text-gray-500">
-                          {card.cloud ? "Cloud-based" : "Self-hosted"}
-                        </div>
+                        {card.link && (
+                          <a
+                            href={card.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
+                          >
+                            <FiExternalLink size={18} />
+                          </a>
+                        )}
                       </div>
-                    );
-                  })}
+                      <p className="text-sm text-gray-600 mb-2">
+                        {card.description}
+                      </p>
+                      <div className="text-xs text-gray-500">
+                        {card.cloud ? "Cloud-based" : "Self-hosted"}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {isApiKeyModalOpen && (
                 <Modal
-                  title="API Key Configuration"
                   onOutsideClick={() => setIsApiKeyModalOpen(false)}
+                  width="w-[800px]"
+                  title="API Key Configuration"
                 >
-                  <div className="px-4">
+                  <div className="w-full px-4">
                     <EditingValue
                       description="API key for Cohere"
                       optional={false}
