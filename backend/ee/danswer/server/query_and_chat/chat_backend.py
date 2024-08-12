@@ -152,10 +152,15 @@ def handle_send_message_simple_with_history(
 
     expected_role = MessageType.USER
     for msg in req.messages:
+        if not msg.message:
+            raise HTTPException(
+                status_code=400, detail="One or more chat messages were empty"
+            )
+
         if msg.role != expected_role:
             raise HTTPException(
                 status_code=400,
-                detail="Message roles must start and end with MessageType.USER and alternate.",
+                detail="Message roles must start and end with MessageType.USER and alternate in-between.",
             )
         if expected_role == MessageType.USER:
             expected_role = MessageType.ASSISTANT
@@ -163,9 +168,6 @@ def handle_send_message_simple_with_history(
             expected_role = MessageType.USER
 
     query = req.messages[-1].message
-    if not query:
-        raise HTTPException(status_code=400, detail="Empty chat message is invalid")
-
     msg_history = req.messages[:-1]
 
     logger.info(f"Received new simple with history chat message: {query}")
