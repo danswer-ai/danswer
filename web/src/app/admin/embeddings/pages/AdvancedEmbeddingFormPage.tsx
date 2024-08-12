@@ -5,7 +5,7 @@ import { EditingValue } from "@/components/credentials/EditingValue";
 import CredentialSubText from "@/components/credentials/CredentialFields";
 import { TrashIcon } from "@/components/icons/icons";
 import { FaPlus } from "react-icons/fa";
-import { AdvancedDetails, RerankingDetails } from "./types";
+import { AdvancedDetails, RerankingDetails } from "../interfaces";
 
 interface AdvancedEmbeddingFormPageProps {
   updateAdvancedEmbeddingDetails: (
@@ -76,7 +76,8 @@ const AdvancedEmbeddingFormPage = forwardRef<
                         <div key={index} className="w-full flex mb-4">
                           <Field
                             name={`multilingual_expansion.${index}`}
-                            className="w-full bg-input text-sm p-2 border border-border-medium rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2"
+                            className={`w-full bg-input text-sm p-2  border border-border-medium rounded-md
+                                      focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2`}
                             onChange={(
                               e: React.ChangeEvent<HTMLInputElement>
                             ) => {
@@ -107,7 +108,9 @@ const AdvancedEmbeddingFormPage = forwardRef<
                                 newValue
                               );
                             }}
-                            className="p-2 my-auto bg-input flex-none rounded-md bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                            className={`p-2 my-auto bg-input flex-none rounded-md 
+                              bg-red-500 text-white hover:bg-red-600
+                              focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50`}
                           >
                             <TrashIcon className="text-white my-auto" />
                           </button>
@@ -118,7 +121,8 @@ const AdvancedEmbeddingFormPage = forwardRef<
                     <button
                       type="button"
                       onClick={() => push("")}
-                      className="mt-2 p-2 bg-rose-500 text-xs text-white rounded-md hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-opacity-50 flex items-center"
+                      className={`mt-2 p-2 bg-rose-500 text-xs text-white rounded-md flex items-center
+                        hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-opacity-50`}
                     >
                       <FaPlus className="mr-2" />
                       Add Language

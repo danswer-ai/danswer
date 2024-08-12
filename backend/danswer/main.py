@@ -207,7 +207,7 @@ def mark_reindex_flag(db_session: Session) -> None:
         pass
 
     # If their first deployment is after the changes, it will
-    # TODO enable this when the other changes go in, need to avoid
+    # enable this when the other changes go in, need to avoid
     # this being set to False, then the user indexes things on the old version
     docs_exist = check_docs_exist(db_session)
     connectors_exist = check_connectors_exist(db_session)

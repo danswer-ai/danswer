@@ -13,17 +13,17 @@ import {
   EmbeddingModelDescriptor,
 } from "./components/types";
 import { Connector } from "@/lib/connectors/connectors";
-import OpenEmbeddingPage from "./OpenEmbeddingPage";
-import CloudEmbeddingPage from "./CloudEmbeddingPage";
+import OpenEmbeddingPage from "./pages/OpenEmbeddingPage";
+import CloudEmbeddingPage from "./pages/CloudEmbeddingPage";
 import { ProviderCreationModal } from "./modals/ProviderCreationModal";
 
 import { DeleteCredentialsModal } from "./modals/DeleteCredentialsModal";
 import { SelectModelModal } from "./modals/SelectModelModal";
 import { ChangeCredentialsModal } from "./modals/ChangeCredentialsModal";
 import { ModelSelectionConfirmationModal } from "./modals/ModelSelectionModal";
-import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../llm/constants";
 import { AlreadyPickedModal } from "./modals/AlreadyPickedModal";
 import { ModelOption } from "./components/ModelSelector";
+import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../configuration/llm/constants";
 
 export interface EmbeddingDetails {
   api_key: string;
@@ -116,8 +116,6 @@ export function EmbeddingModelSelection({
       alert(`Failed to update embedding model - ${await response.text()}`);
     }
   };
-
-  const currentModelName = currentEmbeddingModel?.model_name;
 
   const onSelectOpenSource = async (model: HostedEmbeddingModel) => {
     if (currentEmbeddingModel?.model_name === INVALID_OLD_MODEL) {
@@ -279,7 +277,6 @@ export function EmbeddingModelSelection({
         <OpenEmbeddingPage
           currentEmbeddingModel={currentEmbeddingModel}
           onSelectOpenSource={onSelectOpenSource}
-          currentModelName={currentModelName!}
         />
       )}
       {modelTab == "cloud" && (

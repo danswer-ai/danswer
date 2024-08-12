@@ -1,6 +1,6 @@
 import React from "react";
 import { Modal } from "@/components/Modal";
-import { Button, Text, Callout } from "@tremor/react";
+import { Button, Text } from "@tremor/react";
 import { CloudEmbeddingModel } from "../components/types";
 
 export function SelectModelModal({

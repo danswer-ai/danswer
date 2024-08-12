@@ -1,10 +1,8 @@
 "use client";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { AdminPageTitle } from "@/components/admin/Title";
-
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 
-import { EmbeddingModelSelection } from "../configuration/search/EmbeddingModelSelectionForm";
+import { EmbeddingModelSelection } from "../EmbeddingModelSelectionForm";
 import { useEffect, useState } from "react";
 import { Button, Card, Text } from "@tremor/react";
 import { ArrowLeft, ArrowRight, WarningCircle } from "@phosphor-icons/react";
@@ -12,7 +10,7 @@ import {
   CloudEmbeddingModel,
   EmbeddingModelDescriptor,
   HostedEmbeddingModel,
-} from "../configuration/search/components/types";
+} from "../components/types";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import useSWR, { mutate } from "swr";
@@ -22,9 +20,8 @@ import {
   AdvancedDetails,
   RerankingDetails,
   SavedSearchSettings,
-} from "./types";
-import RerankingDetailsForm from "./RerankingFormPage";
-import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
+} from "../interfaces";
+import RerankingDetailsForm from "../RerankingFormPage";
 import { useEmbeddingFormContext } from "@/components/context/EmbeddingContext";
 import { Modal } from "@/components/Modal";
 
@@ -218,19 +215,6 @@ export default function EmbeddingForm() {
       setPopup({ message: "Failed to update embedding model", type: "error" });
 
       alert(`Failed to update embedding model - ${await response.text()}`);
-    }
-  };
-
-  const onCancel = async () => {
-    const response = await fetch("/api/search-settings/cancel-new-embedding", {
-      method: "POST",
-    });
-    if (response.ok) {
-      // setShowTentativeModel(null);
-    } else {
-      alert(
-        `Failed to cancel embedding model update - ${await response.text()}`
-      );
     }
   };
 
@@ -431,7 +415,8 @@ export default function EmbeddingForm() {
 
             <div className={`mt-4 grid  grid-cols-3 w-full `}>
               <button
-                className="border-border-dark border mr-auto flex gap-x-1 items-center text-text py-2.5 px-3.5 text-sm font-regular rounded-sm"
+                className={`border-border-dark border mr-auto flex gap-x-1 
+                  items-center text-text py-2.5 px-3.5 text-sm font-regular rounded-sm`}
                 onClick={() => prevFormStep()}
               >
                 <ArrowLeft />
@@ -442,7 +427,9 @@ export default function EmbeddingForm() {
                 <ReIndxingButton />
               ) : (
                 <button
-                  className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+                  className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 
+                    disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center 
+                    text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
                   onClick={async () => {
                     updateSearch();
                   }}

@@ -6,7 +6,7 @@ import { CloudEmbeddingProvider } from "../components/types";
 import {
   EMBEDDING_PROVIDERS_ADMIN_URL,
   LLM_PROVIDERS_ADMIN_URL,
-} from "../../llm/constants";
+} from "../../configuration/llm/constants";
 import { mutate } from "swr";
 
 export function ChangeCredentialsModal({

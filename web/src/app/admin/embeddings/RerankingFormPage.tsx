@@ -1,20 +1,14 @@
-import React, {
-  Dispatch,
-  forwardRef,
-  SetStateAction,
-  useEffect,
-  useState,
-} from "react";
+import React, { Dispatch, forwardRef, SetStateAction, useState } from "react";
 import { Formik, Form, FormikProps } from "formik";
 import * as Yup from "yup";
 import { EditingValue } from "@/components/credentials/EditingValue";
-import { RerankerProvider, RerankingDetails } from "./types";
-import { FiExternalLink } from "react-icons/fi";
 import {
-  CohereIcon,
-  MixedBreadIcon,
-  OpenSourceIcon,
-} from "@/components/icons/icons";
+  RerankerProvider,
+  RerankingDetails,
+  rerankingModels,
+} from "./interfaces";
+import { FiExternalLink } from "react-icons/fi";
+import { CohereIcon, MixedBreadIcon } from "@/components/icons/icons";
 import { Modal } from "@/components/Modal";
 import { Button } from "@tremor/react";
 
@@ -40,55 +34,6 @@ const RerankingDetailsForm = forwardRef<
     },
     ref
   ) => {
-    interface ModelCard {
-      provider?: RerankerProvider;
-      modelName: string;
-      displayName: string;
-      description: string;
-      link: string;
-      cloud: boolean;
-    }
-
-    const modelCards: ModelCard[] = [
-      {
-        cloud: false,
-        modelName: "mixedbread-ai/mxbai-rerank-xsmall-v1",
-        displayName: "MixedBread XSmall",
-        description: "Fastest, smallest model for basic reranking tasks.",
-        link: "https://huggingface.co/mixedbread-ai/mxbai-rerank-xsmall-v1",
-      },
-      {
-        cloud: false,
-        modelName: "mixedbread-ai/mxbai-rerank-base-v1",
-        displayName: "MixedBread Base",
-        description: "Balanced performance for general reranking needs.",
-        link: "https://huggingface.co/mixedbread-ai/mxbai-rerank-base-v1",
-      },
-      {
-        cloud: false,
-        modelName: "mixedbread-ai/mxbai-rerank-large-v1",
-        displayName: "MixedBread Large",
-        description: "Most powerful model for complex reranking tasks.",
-        link: "https://huggingface.co/mixedbread-ai/mxbai-rerank-large-v1",
-      },
-      {
-        cloud: true,
-        provider: RerankerProvider.COHERE,
-        modelName: "rerank-multilingual-v3.0",
-        displayName: "Cohere Multilingual",
-        description: "Powerful multilingual reranking model.",
-        link: "https://docs.cohere.com/docs/rerank",
-      },
-      {
-        cloud: true,
-        provider: RerankerProvider.COHERE,
-        modelName: "rerank-english-v3.0",
-        displayName: "Cohere English",
-        description: "High-performance English-focused reranking model.",
-        link: "https://docs.cohere.com/docs/rerank",
-      },
-    ];
-
     const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
 
     return (
@@ -159,10 +104,10 @@ const RerankingDetailsForm = forwardRef<
             <Form className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {(modelTab
-                  ? modelCards.filter(
+                  ? rerankingModels.filter(
                       (model) => model.cloud == (modelTab == "cloud")
                     )
-                  : modelCards.filter(
+                  : rerankingModels.filter(
                       (modelCard) =>
                         modelCard.modelName ==
                         originalRerankingDetails.rerank_model_name

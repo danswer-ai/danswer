@@ -23,7 +23,7 @@ export interface EmbeddingDetails {
 import { EmbeddingIcon } from "@/components/icons/icons";
 
 import Link from "next/link";
-import { SavedSearchSettings } from "../../embeddings/types";
+import { SavedSearchSettings } from "../../embeddings/interfaces";
 import UpgradingPage from "./UpgradingPage";
 
 function Main() {

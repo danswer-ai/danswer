@@ -1,20 +1,18 @@
 "use client";
 import { Button, Card, Text } from "@tremor/react";
-import { ModelSelector } from "./components/ModelSelector";
+import { ModelSelector } from "../components/ModelSelector";
 import {
   AVAILABLE_MODELS,
   CloudEmbeddingModel,
   HostedEmbeddingModel,
-} from "./components/types";
-import { CustomModelForm } from "./components/CustomModelForm";
+} from "../components/types";
+import { CustomModelForm } from "../components/CustomModelForm";
 import { useState } from "react";
 
 export default function OpenEmbeddingPage({
   onSelectOpenSource,
-  currentModelName,
   currentEmbeddingModel,
 }: {
-  currentModelName: string;
   onSelectOpenSource: (model: HostedEmbeddingModel) => Promise<void>;
   currentEmbeddingModel: HostedEmbeddingModel | CloudEmbeddingModel;
 }) {
