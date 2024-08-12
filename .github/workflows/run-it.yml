@@ -88,24 +88,49 @@ jobs:
               exit 1
             fi
             
-            response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080)
-            echo "HTTP response code: $response"
-      
+            # Use curl with error handling to ignore specific exit code 56
+            response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 || echo "curl_error")
+            
             if [ "$response" = "200" ]; then
               echo "Service is ready!"
               break
+            elif [ "$response" = "curl_error" ]; then
+              echo "Curl encountered an error, possibly exit code 56. Continuing to retry..."
             else
-              echo "Service not ready yet. Retrying in 5 seconds..."
-              sleep 5
+              echo "Service not ready yet (HTTP status $response). Retrying in 5 seconds..."
             fi
+            
+            sleep 5
           done
           echo "Finished waiting for service."
 
-      # - name: Install pytest
-      #   run: pip install pytest
+      - name: Build integration test Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: tests/integration/Dockerfile
+          platforms: linux/arm64
+          pull: true
+          push: true
+          tags: danswer/integration-test-runner:latest
+          cache-from: type=registry,ref=danswer/integration-test-runner:latest
+          cache-to: type=registry,ref=danswer/integration-test-runner:latest,mode=max
 
-      # - name: Run integration tests
-      #   run: pytest tests/integration
+      - name: Run integration tests
+        run: |
+          echo "Running integration tests..."
+          docker run danswer/integration-test-runner:latest
+        continue-on-error: true
+        id: run_tests
 
+      - name: Check test results
+        run: |
+          if [ ${{ steps.run_tests.outcome }} == 'failure' ]; then
+            echo "Integration tests failed. Exiting with error."
+            exit 1
+          else
+            echo "All integration tests passed successfully."
+          fi
+          
       - name: Stop Docker containers
-        run: docker-compose down
+        run: docker compose down
