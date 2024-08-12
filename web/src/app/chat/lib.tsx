@@ -3,7 +3,7 @@ import {
   DanswerDocument,
   Filters,
 } from "@/lib/search/interfaces";
-import { handleStream } from "@/lib/search/streamingUtils";
+import { handleSSEStream, handleStream } from "@/lib/search/streamingUtils";
 import { ChatState, FeedbackType } from "./types";
 import {
   Dispatch,
@@ -171,25 +171,7 @@ export async function* sendMessage({
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  const reader = response.body?.getReader();
-  const decoder = new TextDecoder();
-
-  while (true) {
-    const { done, value } = await reader!.read();
-    if (done) break;
-
-    const chunk = decoder.decode(value);
-    const lines = chunk.split("\n").filter((line) => line.trim() !== "");
-
-    for (const line of lines) {
-      try {
-        const data = JSON.parse(line) as PacketType;
-        yield data;
-      } catch (error) {
-        console.error("Error parsing SSE data:", error);
-      }
-    }
-  }
+  yield* handleSSEStream<PacketType>(response);
 }
 
 export async function nameChatSession(chatSessionId: number, message: string) {

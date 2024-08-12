@@ -272,20 +272,14 @@ def delete_chat_session_by_id(
     delete_chat_session(user_id, session_id, db_session)
 
 
-@router.api_route("/send-message", methods=["POST", "GET"])
+@router.post("/send-message")
 async def handle_new_chat_message(
     request: Request,
     user: User | None = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
 ) -> StreamingResponse:
-    if request.method == "GET":
-        body = request.query_params.get("body")
-        if not body:
-            raise HTTPException(status_code=400, detail="Missing body parameter")
-        chat_message_req = CreateChatMessageRequest.parse_raw(body)
-    else:
-        chat_message_req = await request.json()
-        chat_message_req = CreateChatMessageRequest.parse_obj(chat_message_req)
+    chat_message_req = await request.json()
+    chat_message_req = CreateChatMessageRequest.parse_obj(chat_message_req)
 
     logger.debug(f"Received new chat message: {chat_message_req.message}")
 

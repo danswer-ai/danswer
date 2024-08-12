@@ -156,7 +156,7 @@ class Answer:
 
         self._return_contexts = return_contexts
         self.skip_gen_ai_answer_generation = skip_gen_ai_answer_generation
-        self._is_generating = True
+        self._is_cancelled = False
 
     def _update_prompt_builder_for_search_tool(
         self, prompt_builder: AnswerPromptBuilder, final_context_documents: list[LlmDoc]
@@ -239,7 +239,7 @@ class Answer:
                         tool_call_chunk += message  # type: ignore
                 else:
                     if message.content:
-                        if not self.is_generating:
+                        if self.is_cancelled:
                             return
                         yield cast(str, message.content)
 
@@ -304,7 +304,7 @@ class Answer:
                     tools=[tool.tool_definition() for tool in self.tools],
                 )
             ):
-                if not self.is_generating:
+                if self.is_cancelled:
                     return
                 yield token
 
@@ -390,7 +390,7 @@ class Answer:
             for token in message_generator_to_string_generator(
                 self.llm.stream(prompt=prompt)
             ):
-                if not self.is_generating:
+                if self.is_cancelled:
                     return
                 yield token
 
@@ -450,7 +450,7 @@ class Answer:
         for token in message_generator_to_string_generator(
             self.llm.stream(prompt=prompt)
         ):
-            if not self.is_generating:
+            if self.is_cancelled:
                 return
             yield token
 
@@ -557,11 +557,11 @@ class Answer:
         return citations
 
     @property
-    def is_generating(self) -> bool:
-        if not self._is_generating:
-            return False
+    def is_cancelled(self) -> bool:
+        if self._is_cancelled:
+            return True
 
         if self.is_connected is not None:
-            self._is_generating = self.is_connected()
+            self._is_cancelled = self.is_connected()
 
-        return self._is_generating
+        return self._is_cancelled

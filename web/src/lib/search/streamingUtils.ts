@@ -1,3 +1,5 @@
+import { PacketType } from "@/app/chat/lib";
+
 type NonEmptyObject = { [k: string]: any };
 
 const processSingleChunk = <T extends NonEmptyObject>(
@@ -73,5 +75,35 @@ export async function* handleStream<T extends NonEmptyObject>(
     previousPartialChunk = partialChunk as string | null;
 
     yield await Promise.resolve(completedChunks);
+  }
+}
+
+export async function* handleSSEStream<T extends PacketType>(
+  streamingResponse: Response
+): AsyncGenerator<T, void, unknown> {
+  const reader = streamingResponse.body?.getReader();
+  const decoder = new TextDecoder();
+
+  while (true) {
+    const rawChunk = await reader?.read();
+    if (!rawChunk) {
+      throw new Error("Unable to process chunk");
+    }
+    const { done, value } = rawChunk;
+    if (done) {
+      break;
+    }
+
+    const chunk = decoder.decode(value);
+    const lines = chunk.split("\n").filter((line) => line.trim() !== "");
+
+    for (const line of lines) {
+      try {
+        const data = JSON.parse(line) as T;
+        yield data;
+      } catch (error) {
+        console.error("Error parsing SSE data:", error);
+      }
+    }
   }
 }
