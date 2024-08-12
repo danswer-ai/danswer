@@ -44,7 +44,12 @@ async def optional_user_(
     return user
 
 
-def api_key_dep(request: Request, db_session: Session = Depends(get_session)) -> User:
+def api_key_dep(
+    request: Request, db_session: Session = Depends(get_session)
+) -> User | None:
+    if AUTH_TYPE == AuthType.DISABLED:
+        return None
+
     hashed_api_key = get_hashed_api_key_from_request(request)
     if not hashed_api_key:
         raise HTTPException(status_code=401, detail="Missing API key")

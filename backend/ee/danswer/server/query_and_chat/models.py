@@ -1,8 +1,10 @@
 from pydantic import BaseModel
 
 from danswer.configs.constants import DocumentSource
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import SearchType
 from danswer.search.models import ChunkContext
+from danswer.search.models import RerankingDetails
 from danswer.search.models import RetrievalDetails
 from danswer.server.manage.models import StandardAnswer
 
@@ -21,9 +23,9 @@ class DocumentSearchRequest(ChunkContext):
     search_type: SearchType
     retrieval_options: RetrievalDetails
     recency_bias_multiplier: float = 1.0
-    # This is to forcibly skip (or run) the step, if None it uses the system defaults
-    skip_rerank: bool | None = None
-    skip_llm_chunk_filter: bool | None = None
+    evaluation_type: LLMEvaluationType
+    # None to use system defaults for reranking
+    rerank_settings: RerankingDetails | None = None
 
 
 class BasicCreateChatMessageRequest(ChunkContext):

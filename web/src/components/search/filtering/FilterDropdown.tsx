@@ -6,22 +6,23 @@ interface Option {
   display: string | JSX.Element;
   displayName?: string;
 }
-
 export function FilterDropdown({
   options,
   selected,
   handleSelect,
   icon,
   defaultDisplay,
+  width = "w-64",
 }: {
   options: Option[];
   selected: string[];
   handleSelect: (option: Option) => void;
   icon: JSX.Element;
   defaultDisplay: string | JSX.Element;
+  width?: string;
 }) {
   return (
-    <div className="w-64">
+    <div>
       <CustomDropdown
         dropdown={
           <div
@@ -32,7 +33,7 @@ export function FilterDropdown({
           bg-background
           flex 
           flex-col 
-          w-64 
+          ${width}
           max-h-96 
           overflow-y-auto 
           overscroll-contain`}
@@ -76,17 +77,18 @@ export function FilterDropdown({
         <div
           className={`
         flex 
-        w-64
+        ${width}
         text-sm 
         px-3
         py-1.5 
         rounded-lg 
         border 
+        gap-x-2
         border-border
         cursor-pointer 
         hover:bg-hover-light`}
         >
-          {icon}
+          <div className="flex-none my-auto">{icon}</div>
           {selected.length === 0 ? (
             defaultDisplay
           ) : (

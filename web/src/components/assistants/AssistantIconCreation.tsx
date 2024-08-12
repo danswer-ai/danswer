@@ -41,6 +41,7 @@ export const IconImageSelection = ({
     </div>
   );
 };
+
 export function IconImageUpload({
   selectedFile,
   updateFile,
@@ -92,7 +93,7 @@ export function IconImageUpload({
                 }
               >
                 <input {...getInputProps()} />
-                <p className="font-base text-sm text-neutral-800">
+                <p className="font-base text-sm text-text-800">
                   Upload a .png or .jpg file
                 </p>
               </div>

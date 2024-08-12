@@ -12,7 +12,7 @@ from danswer.db.connector_credential_pair import get_connector_credential_pair_f
 from danswer.db.connector_credential_pair import remove_credential_from_connector
 from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.engine import get_session
-from danswer.db.index_attempt import get_index_attempts_for_cc_pair
+from danswer.db.index_attempt import get_index_attempts_for_connector
 from danswer.db.models import User
 from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
@@ -43,9 +43,9 @@ def get_cc_pair_full_info(
         credential_id=cc_pair.credential_id,
     )
 
-    index_attempts = get_index_attempts_for_cc_pair(
-        db_session=db_session,
-        cc_pair_identifier=cc_pair_identifier,
+    index_attempts = get_index_attempts_for_connector(
+        db_session,
+        cc_pair.connector_id,
     )
 
     document_count_info_list = list(
@@ -70,6 +70,28 @@ def get_cc_pair_full_info(
         latest_deletion_attempt=latest_deletion_attempt,
         num_docs_indexed=documents_indexed,
     )
+
+
+@router.put("/admin/cc-pair/{cc_pair_id}/name")
+def update_cc_pair_name(
+    cc_pair_id: int,
+    new_name: str,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse[int]:
+    cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
+    if not cc_pair:
+        raise HTTPException(status_code=404, detail="CC Pair not found")
+
+    try:
+        cc_pair.name = new_name
+        db_session.commit()
+        return StatusResponse(
+            success=True, message="Name updated successfully", data=cc_pair_id
+        )
+    except IntegrityError:
+        db_session.rollback()
+        raise HTTPException(status_code=400, detail="Name must be unique")
 
 
 @router.put("/connector/{connector_id}/credential/{credential_id}")

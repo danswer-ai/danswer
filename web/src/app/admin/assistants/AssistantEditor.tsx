@@ -20,6 +20,7 @@ import {
   TextFormField,
 } from "@/components/admin/connectors/Field";
 import { usePopup } from "@/components/admin/connectors/Popup";
+import { getDisplayNameForModel } from "@/lib/hooks";
 import { Bubble } from "@/components/Bubble";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
@@ -27,7 +28,7 @@ import { GroupsIcon, PaintingIcon, SwapIcon } from "@/components/icons/icons";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { useUserGroups } from "@/lib/hooks";
-import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
+import { checkLLMSupportsImageInput, destructureValue } from "@/lib/llm/utils";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 import {
@@ -99,6 +100,14 @@ export function AssistantEditor({
     "#6FFFFF",
   ];
 
+  // state to persist across formik reformatting
+  const [defautIconColor, _setDeafultIconColor] = useState(
+    colorOptions[Math.floor(Math.random() * colorOptions.length)]
+  );
+  const [defaultIconShape, _setDeafultIconShape] = useState(
+    generateRandomIconShape().encodedGrid
+  );
+
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   // EE only
@@ -152,7 +161,7 @@ export function AssistantEditor({
   llmProviders.forEach((llmProvider) => {
     const providerOptions = llmProvider.model_names.map((modelName) => {
       return {
-        name: modelName,
+        name: getDisplayNameForModel(modelName),
         value: modelName,
       };
     });
@@ -206,8 +215,8 @@ export function AssistantEditor({
       existingPersona?.llm_model_version_override ?? null,
     starter_messages: existingPersona?.starter_messages ?? [],
     enabled_tools_map: enabledToolsMap,
-    icon_color: existingPersona?.icon_color ?? "#FF6FBF",
-    icon_shape: existingPersona?.icon_shape ?? 123242312,
+    icon_color: existingPersona?.icon_color ?? defautIconColor,
+    icon_shape: existingPersona?.icon_shape ?? defaultIconShape,
     uploaded_image: null,
 
     //   search_tool_enabled: existingPersona
@@ -426,7 +435,6 @@ export function AssistantEditor({
                   name="name"
                   tooltip="Used to identify the Assistant in the UI."
                   label="Name"
-                  disabled={isUpdate}
                   placeholder="e.g. 'Email Assistant'"
                 />
                 <div className="mb-6 ">
@@ -440,7 +448,7 @@ export function AssistantEditor({
                           <FiInfo size={12} />
                         </TooltipTrigger>
                         <TooltipContent side="top" align="center">
-                          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
                             Choose an icon to visually represent your Assistant
                             (optional)
                           </p>
@@ -449,7 +457,7 @@ export function AssistantEditor({
                     </TooltipProvider>
                   </div>
 
-                  <div className="flex -mb-2 mt-2  items-center space-x-2">
+                  <div className="flex -mb-2 mt-2 items-center space-x-2">
                     {createSVG(
                       {
                         encodedGrid: values.icon_shape,
@@ -491,6 +499,7 @@ export function AssistantEditor({
                   label="Description"
                   placeholder="e.g. 'Use this Assistant to help draft professional emails'"
                 />
+
                 <TextFormField
                   tooltip="Gives your assistant a prime directive"
                   name="system_prompt"
@@ -520,7 +529,7 @@ export function AssistantEditor({
                           <FiInfo size={12} />
                         </TooltipTrigger>
                         <TooltipContent side="top" align="center">
-                          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
                             Select a Large Language Model (Generative AI model)
                             to power this Assistant
                           </p>
@@ -529,13 +538,15 @@ export function AssistantEditor({
                     </TooltipProvider>
                   </div>
                   <p className="my-1 text-text-600">
-                    You assistant will use your system default (currently{" "}
-                    {defaultModelName}) unless otherwise specified below.
+                    Your assistant will use the user&apos;s set default unless
+                    otherwise specified below.
+                    {user?.preferences.default_model &&
+                      `  Your current (user-specific) default model is ${getDisplayNameForModel(destructureValue(user?.preferences?.default_model!).modelName)}`}
                   </p>
                   <div className="mb-2 flex items-starts">
                     <div className="w-96">
                       <SelectorFormField
-                        defaultValue={`Default (${defaultModelName})`}
+                        defaultValue={`User default`}
                         name="llm_model_provider_override"
                         options={llmProviders.map((llmProvider) => ({
                           name: llmProvider.name,
@@ -570,7 +581,6 @@ export function AssistantEditor({
                     )}
                   </div>
                 </div>
-
                 <div className="mb-6">
                   <div className="flex gap-x-2 items-center">
                     <div className="block font-medium text-base">
@@ -582,7 +592,7 @@ export function AssistantEditor({
                           <FiInfo size={12} />
                         </TooltipTrigger>
                         <TooltipContent side="top" align="center">
-                          <p className="bg-neutral-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
                             You can give your assistant advanced capabilities
                             like image generation
                           </p>
@@ -899,14 +909,14 @@ export function AssistantEditor({
                                         <Field
                                           name={`starter_messages[${index}].message`}
                                           className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
+                                          border 
+                                          border-border 
+                                          bg-background 
+                                          rounded 
+                                          w-full 
+                                          py-2 
+                                          px-3 
+                                          mr-4
                                       `}
                                           as="textarea"
                                           autoComplete="off"

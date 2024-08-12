@@ -39,6 +39,7 @@ export default async function Page({
     finalDocumentSidebarInitialWidth,
     shouldShowWelcomeModal,
     shouldDisplaySourcesIncompleteModal,
+    userInputPrompts,
   } = data;
 
   return (
@@ -48,10 +49,6 @@ export default async function Page({
       {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
         <ApiKeyModal user={user} />
       )}
-      {shouldDisplaySourcesIncompleteModal && (
-        <NoCompleteSourcesModal ccPairs={ccPairs} />
-      )}
-
       <ChatProvider
         value={{
           user,
@@ -63,6 +60,7 @@ export default async function Page({
           llmProviders,
           folders,
           openedFolders,
+          userInputPrompts,
         }}
       >
         <WrappedChat

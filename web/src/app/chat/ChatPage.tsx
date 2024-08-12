@@ -15,8 +15,8 @@ import {
   ToolCallMetadata,
 } from "./interfaces";
 
+import Prism from "prismjs";
 import Cookies from "js-cookie";
-
 import { HistorySidebar } from "./sessionSidebar/HistorySidebar";
 import { Persona } from "../admin/assistants/interfaces";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -45,7 +45,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
-import { useFilters, useLlmOverride } from "@/lib/hooks";
+import { LlmOverride, useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { FeedbackType } from "./types";
 import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
@@ -55,25 +55,30 @@ import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { FiArrowDown } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
-import { ThreeDots } from "react-loader-spinner";
 import { StarterMessage } from "./StarterMessage";
 import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
-import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
+import {
+  checkLLMSupportsImageInput,
+  getFinalLLM,
+  destructureValue,
+  getLLMProviderOverrideForPersona,
+} from "@/lib/llm/utils";
+
 import { ChatInputBar } from "./input/ChatInputBar";
 import { useChatContext } from "@/components/context/ChatContext";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";
-import { ChatBanner } from "./ChatBanner";
 
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
+import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -85,7 +90,7 @@ export function ChatPage({
   defaultSelectedAssistantId,
   toggledSidebar,
 }: {
-  toggle: () => void;
+  toggle: (toggled?: boolean) => void;
   documentSidebarInitialWidth?: number;
   defaultSelectedAssistantId?: number;
   toggledSidebar: boolean;
@@ -102,6 +107,7 @@ export function ChatPage({
     llmProviders,
     folders,
     openedFolders,
+    userInputPrompts,
   } = useChatContext();
 
   // chat session
@@ -112,10 +118,12 @@ export function ChatPage({
   const selectedChatSession = chatSessions.find(
     (chatSession) => chatSession.id === existingChatSessionId
   );
+
   const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
 
-  // LLM
-  const llmOverrideManager = useLlmOverride(selectedChatSession);
+  // Only updates on session load (ie. rename / switching chat session)
+  // Useful for determining which session has been loaded (i.e. still on `new, empty session` or `previous session`)
+  const loadedIdSessionRef = useRef<number | null>(existingChatSessionId);
 
   // Assistants
   const filteredAssistants = orderAssistantsForUser(availableAssistants, user);
@@ -137,6 +145,21 @@ export function ChatPage({
           )
         : undefined
   );
+
+  // Gather default temperature settings
+  const search_param_temperature = searchParams.get(
+    SEARCH_PARAM_NAMES.TEMPERATURE
+  );
+  const defaultTemperature = search_param_temperature
+    ? parseFloat(search_param_temperature)
+    : selectedAssistant?.tools.some(
+          (tool) =>
+            tool.in_code_tool_id === "SearchTool" ||
+            tool.in_code_tool_id === "InternetSearchTool"
+        )
+      ? 0
+      : 0.7;
+
   const setSelectedAssistantFromId = (assistantId: number) => {
     // NOTE: also intentionally look through available assistants here, so that
     // even if the user has hidden an assistant they can still go back to it
@@ -145,8 +168,30 @@ export function ChatPage({
       availableAssistants.find((assistant) => assistant.id === assistantId)
     );
   };
+
+  const llmOverrideManager = useLlmOverride(
+    user?.preferences.default_model,
+    selectedChatSession,
+    defaultTemperature
+  );
+
   const liveAssistant =
     selectedAssistant || filteredAssistants[0] || availableAssistants[0];
+
+  useEffect(() => {
+    const personaDefault = getLLMProviderOverrideForPersona(
+      liveAssistant,
+      llmProviders
+    );
+
+    if (personaDefault) {
+      llmOverrideManager.setLlmOverride(personaDefault);
+    } else if (user?.preferences.default_model) {
+      llmOverrideManager.setLlmOverride(
+        destructureValue(user?.preferences.default_model)
+      );
+    }
+  }, [liveAssistant]);
 
   // this is for "@"ing assistants
   const [alternativeAssistant, setAlternativeAssistant] =
@@ -173,11 +218,20 @@ export function ChatPage({
     existingChatSessionId !== null
   );
 
+  const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    Prism.highlightAll();
+    setIsReady(true);
+  }, []);
+
   // this is triggered every time the user switches which chat
   // session they are using
   useEffect(() => {
     const priorChatSessionId = chatSessionIdRef.current;
+    const loadedSessionId = loadedIdSessionRef.current;
     chatSessionIdRef.current = existingChatSessionId;
+    loadedIdSessionRef.current = existingChatSessionId;
+
     textAreaRef.current?.focus();
 
     // only clear things if we're going from one chat session to another
@@ -205,10 +259,6 @@ export function ChatPage({
       // if we're creating a brand new chat, then don't need to scroll
       if (chatSessionIdRef.current !== null) {
         setHasPerformedInitialScroll(false);
-      }
-
-      if (isStreaming) {
-        setIsCancelled(true);
       }
     }
 
@@ -247,8 +297,15 @@ export function ChatPage({
 
       const newMessageMap = processRawChatHistory(chatSession.messages);
       const newMessageHistory = buildLatestMessageChain(newMessageMap);
-      // if the last message is an error, don't overwrite it
-      if (messageHistory[messageHistory.length - 1]?.type !== "error") {
+
+      // Update message history except for edge where where
+      // last message is an error and we're on a new chat.
+      // This corresponds to a "renaming" of chat, which occurs after first message
+      // stream
+      if (
+        messageHistory[messageHistory.length - 1]?.type !== "error" ||
+        loadedSessionId != null
+      ) {
         setCompleteMessageDetail({
           sessionId: chatSession.chat_session_id,
           messageMap: newMessageMap,
@@ -380,6 +437,8 @@ export function ChatPage({
     completeMessageDetail.messageMap
   );
   const [isStreaming, setIsStreaming] = useState(false);
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
 
   // uploaded files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
@@ -450,8 +509,6 @@ export function ChatPage({
   const [sharingModalVisible, setSharingModalVisible] =
     useState<boolean>(false);
 
-  // state for cancelling streaming
-  const [isCancelled, setIsCancelled] = useState(false);
   const [aboveHorizon, setAboveHorizon] = useState(false);
 
   const scrollableDivRef = useRef<HTMLDivElement>(null);
@@ -516,22 +573,8 @@ export function ChatPage({
     }, 50);
   };
 
-  const isCancelledRef = useRef<boolean>(isCancelled); // scroll is cancelled
-  useEffect(() => {
-    isCancelledRef.current = isCancelled;
-  }, [isCancelled]);
-
   const distance = 500; // distance that should "engage" the scroll
   const debounce = 100; // time for debouncing
-
-  useScrollonStream({
-    isStreaming,
-    scrollableDivRef,
-    scrollDist,
-    endDivRef,
-    distance,
-    debounce,
-  });
 
   const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(
     existingChatSessionId === null
@@ -598,23 +641,30 @@ export function ChatPage({
       return this.stack.length === 0;
     }
   }
+
   async function updateCurrentMessageFIFO(
     stack: CurrentMessageFIFO,
     params: any
   ) {
     try {
       for await (const packetBunch of sendMessage(params)) {
+        if (params.signal?.aborted) {
+          throw new Error("AbortError");
+        }
         for (const packet of packetBunch) {
           stack.push(packet);
         }
-
-        if (isCancelledRef.current) {
-          setIsCancelled(false);
-          break;
-        }
       }
-    } catch (error) {
-      stack.error = String(error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          console.debug("Stream aborted");
+        } else {
+          stack.error = error.message;
+        }
+      } else {
+        stack.error = String(error);
+      }
     } finally {
       stack.isComplete = true;
     }
@@ -643,8 +693,19 @@ export function ChatPage({
     isSeededChat?: boolean;
     alternativeAssistantOverride?: Persona | null;
   } = {}) => {
-    setAlternativeGeneratingAssistant(alternativeAssistantOverride);
+    if (isStreaming) {
+      setPopup({
+        message: "Please wait for the response to complete",
+        type: "error",
+      });
 
+      return;
+    }
+
+    const controller = new AbortController();
+    setAbortController(controller);
+
+    setAlternativeGeneratingAssistant(alternativeAssistantOverride);
     clientScrollToBottom();
     let currChatSessionId: number;
     let isNewSession = chatSessionIdRef.current === null;
@@ -733,7 +794,9 @@ export function ChatPage({
 
     const currentAssistantId = alternativeAssistantOverride
       ? alternativeAssistantOverride.id
-      : alternativeAssistant?.id || liveAssistant.id;
+      : alternativeAssistant
+        ? alternativeAssistant.id
+        : liveAssistant.id;
 
     resetInputBar();
 
@@ -756,6 +819,8 @@ export function ChatPage({
 
       const stack = new CurrentMessageFIFO();
       updateCurrentMessageFIFO(stack, {
+        signal: controller.signal, // Add this line
+
         message: currMessage,
         alternateAssistantId: currentAssistantId,
         fileDescriptors: currentMessageFiles,
@@ -777,15 +842,16 @@ export function ChatPage({
         queryOverride,
         forceSearch,
 
-        modelProvider: llmOverrideManager.llmOverride.name || undefined,
+        modelProvider:
+          llmOverrideManager.llmOverride.name ||
+          llmOverrideManager.globalDefault.name ||
+          undefined,
         modelVersion:
           llmOverrideManager.llmOverride.modelName ||
           searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
+          llmOverrideManager.globalDefault.modelName ||
           undefined,
-        temperature:
-          llmOverrideManager.temperature ||
-          parseFloat(searchParams.get(SEARCH_PARAM_NAMES.TEMPERATURE) || "") ||
-          undefined,
+        temperature: llmOverrideManager.temperature || undefined,
         systemPromptOverride:
           searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
         useExistingUserMessage: isSeededChat,
@@ -815,7 +881,6 @@ export function ChatPage({
 
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();
-
           if (packet) {
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
@@ -882,10 +947,6 @@ export function ChatPage({
               },
             ]);
           }
-          if (isCancelledRef.current) {
-            setIsCancelled(false);
-            break;
-          }
         }
       }
     } catch (e: any) {
@@ -912,6 +973,7 @@ export function ChatPage({
         completeMessageMapOverride: frozenMessageMap,
       });
     }
+
     setIsStreaming(false);
     if (isNewSession) {
       if (finalMessage) {
@@ -976,9 +1038,12 @@ export function ChatPage({
 
   const onAssistantChange = (assistant: Persona | null) => {
     if (assistant && assistant.id !== liveAssistant.id) {
-      // remove uploaded files
-      setCurrentMessageFiles([]);
-      setSelectedAssistant(assistant);
+      // Abort the ongoing stream if it exists
+      if (abortController && isStreaming) {
+        abortController.abort();
+        resetInputBar();
+      }
+
       textAreaRef.current?.focus();
       router.push(buildChatUrl(searchParams, null, assistant.id));
     }
@@ -1059,6 +1124,10 @@ export function ChatPage({
 
     toggle();
   };
+  const removeToggle = () => {
+    setShowDocSidebar(false);
+    toggle(false);
+  };
 
   const sidebarElementRef = useRef<HTMLDivElement>(null);
 
@@ -1067,6 +1136,17 @@ export function ChatPage({
     sidebarElementRef,
     showDocSidebar,
     setShowDocSidebar,
+    setToggled: removeToggle,
+    mobile: settings?.isMobile,
+  });
+
+  useScrollonStream({
+    isStreaming,
+    scrollableDivRef,
+    scrollDist,
+    endDivRef,
+    distance,
+    debounce,
   });
 
   useEffect(() => {
@@ -1087,6 +1167,7 @@ export function ChatPage({
   });
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
+  const [settingsToggled, setSettingsToggled] = useState(false);
 
   const currentPersona = alternativeAssistant || liveAssistant;
 
@@ -1119,531 +1200,532 @@ export function ChatPage({
     <>
       <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
       <InstantSSRAutoRefresh />
-
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
+      {popup}
+
       <ChatPopup />
+      {currentFeedback && (
+        <FeedbackModal
+          feedbackType={currentFeedback[0]}
+          onClose={() => setCurrentFeedback(null)}
+          onSubmit={({ message, predefinedFeedback }) => {
+            onFeedback(
+              currentFeedback[1],
+              currentFeedback[0],
+              message,
+              predefinedFeedback
+            );
+            setCurrentFeedback(null);
+          }}
+        />
+      )}
 
-      <div className="flex relative bg-background text-default ">
-        <div
-          ref={sidebarElementRef}
-          className={`
-            flex-none
-            absolute
-            left-0
-            z-20
-            sidebar
-            bg-background-100
-            h-screen
-            transition-all
-            bg-opacity-80
-            duration-300
-            ease-in-out
-            ${
-              showDocSidebar || toggledSidebar
-                ? "opacity-100 w-[300px] translate-x-0"
-                : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
-            }`}
-        >
-          <div className="w-full relative">
-            <HistorySidebar
-              page="chat"
-              ref={innerSidebarElementRef}
-              toggleSidebar={toggleSidebar}
-              toggled={toggledSidebar}
-              existingChats={chatSessions}
-              currentChatSession={selectedChatSession}
-              folders={folders}
-              openedFolders={openedFolders}
-            />
-          </div>
-        </div>
-        <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
-          {popup}
-          {currentFeedback && (
-            <FeedbackModal
-              feedbackType={currentFeedback[0]}
-              onClose={() => setCurrentFeedback(null)}
-              onSubmit={({ message, predefinedFeedback }) => {
-                onFeedback(
-                  currentFeedback[1],
-                  currentFeedback[0],
-                  message,
-                  predefinedFeedback
-                );
-                setCurrentFeedback(null);
-              }}
-            />
-          )}
-
-          {sharingModalVisible && chatSessionIdRef.current !== null && (
-            <ShareChatSessionModal
-              chatSessionId={chatSessionIdRef.current}
-              existingSharedStatus={chatSessionSharedStatus}
-              onClose={() => setSharingModalVisible(false)}
-              onShare={(shared) =>
-                setChatSessionSharedStatus(
-                  shared
-                    ? ChatSessionSharedStatus.Public
-                    : ChatSessionSharedStatus.Private
-                )
-              }
-            />
-          )}
-
-          <div className="flex h-[calc(100dvh)] flex-col w-full">
-            {liveAssistant && (
-              <FunctionalHeader
-                page="chat"
-                setSharingModalVisible={
-                  chatSessionIdRef.current !== null
-                    ? setSharingModalVisible
-                    : undefined
-                }
-                showSidebar={showDocSidebar}
-                user={user}
-                currentChatSession={selectedChatSession}
-              />
-            )}
-            <div className="w-full flex">
-              <div
-                style={{ transition: "width 0.30s ease-out" }}
-                className={`
-                  flex-none 
-                  overflow-y-hidden 
-                  bg-background-100 
-                  transition-all 
-                  bg-opacity-80
-                  duration-300 
-                  ease-in-out
-                  h-full
-                  ${toggledSidebar || showDocSidebar ? "w-[300px]" : "w-[0px]"}
-                  `}
-              />
-              <ChatBanner />
+      {settingsToggled && (
+        <SetDefaultModelModal
+          setLlmOverride={llmOverrideManager.setGlobalDefault}
+          defaultModel={user?.preferences.default_model!}
+          llmProviders={llmProviders}
+          onClose={() => setSettingsToggled(false)}
+        />
+      )}
+      {sharingModalVisible && chatSessionIdRef.current !== null && (
+        <ShareChatSessionModal
+          chatSessionId={chatSessionIdRef.current}
+          existingSharedStatus={chatSessionSharedStatus}
+          onClose={() => setSharingModalVisible(false)}
+          onShare={(shared) =>
+            setChatSessionSharedStatus(
+              shared
+                ? ChatSessionSharedStatus.Public
+                : ChatSessionSharedStatus.Private
+            )
+          }
+        />
+      )}
+      <div className="fixed inset-0 flex flex-col text-default">
+        <div className="h-[100dvh] overflow-y-hidden">
+          <div className="w-full">
+            <div
+              ref={sidebarElementRef}
+              className={`
+                flex-none
+                fixed
+                left-0
+                z-30
+                bg-background-100
+                h-screen
+                transition-all
+                bg-opacity-80
+                duration-300
+                ease-in-out
+                ${
+                  showDocSidebar || toggledSidebar
+                    ? "opacity-100 w-[250px] translate-x-0"
+                    : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
+                }`}
+            >
+              <div className="w-full relative">
+                <HistorySidebar
+                  reset={() => setMessage("")}
+                  page="chat"
+                  ref={innerSidebarElementRef}
+                  toggleSidebar={toggleSidebar}
+                  toggled={toggledSidebar && !settings?.isMobile}
+                  existingChats={chatSessions}
+                  currentChatSession={selectedChatSession}
+                  folders={folders}
+                  openedFolders={openedFolders}
+                  removeToggle={removeToggle}
+                />
+              </div>
             </div>
-            {documentSidebarInitialWidth !== undefined ? (
-              <Dropzone onDrop={handleImageUpload} noClick>
-                {({ getRootProps }) => (
-                  <div className="flex h-full w-full">
-                    <div
-                      style={{ transition: "width 0.30s ease-out" }}
-                      className={`
-                        flex-none 
-                        overflow-y-hidden 
-                        bg-background-100 
-                        transition-all 
-                        bg-opacity-80
-                        duration-300 
-                        ease-in-out
-                        h-full
-                        ${toggledSidebar ? "w-[300px]" : "w-[0px]"}
+          </div>
+
+          <div
+            ref={masterFlexboxRef}
+            className="flex h-full w-full overflow-x-hidden"
+          >
+            <div className="flex h-full flex-col w-full">
+              {liveAssistant && (
+                <FunctionalHeader
+                  sidebarToggled={toggledSidebar}
+                  reset={() => setMessage("")}
+                  page="chat"
+                  setSharingModalVisible={
+                    chatSessionIdRef.current !== null
+                      ? setSharingModalVisible
+                      : undefined
+                  }
+                  toggleSidebar={toggleSidebar}
+                  user={user}
+                  currentChatSession={selectedChatSession}
+                />
+              )}
+
+              {documentSidebarInitialWidth !== undefined && isReady ? (
+                <Dropzone onDrop={handleImageUpload} noClick>
+                  {({ getRootProps }) => (
+                    <div className="flex h-full w-full">
+                      {!settings?.isMobile && (
+                        <div
+                          style={{ transition: "width 0.30s ease-out" }}
+                          className={`
+                          flex-none 
+                          overflow-y-hidden 
+                          bg-background-100 
+                          transition-all 
+                          bg-opacity-80
+                          duration-300 
+                          ease-in-out
+                          h-full
+                          ${toggledSidebar ? "w-[250px]" : "w-[0px]"}
                       `}
-                    ></div>
-                    <div
-                      className={`h-full w-full relative flex-auto transition-margin duration-300  overflow-x-auto pb-[140px]`}
-                      {...getRootProps()}
-                    >
-                      {/* <input {...getInputProps()} /> */}
+                        ></div>
+                      )}
+
                       <div
-                        className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
-                        ref={scrollableDivRef}
+                        className={`h-full w-full relative flex-auto transition-margin duration-300 overflow-x-auto mobile:pb-12 desktop:pb-[100px]`}
+                        {...getRootProps()}
                       >
-                        {/* ChatBanner is a custom banner that displays a admin-specified message at 
+                        {/* <input {...getInputProps()} /> */}
+                        <div
+                          className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                          ref={scrollableDivRef}
+                        >
+                          {/* ChatBanner is a custom banner that displays a admin-specified message at 
                       the top of the chat page. Oly used in the EE version of the app. */}
 
-                        {messageHistory.length === 0 &&
-                          !isFetchingChatMessages &&
-                          !isStreaming && (
-                            <ChatIntro
-                              availableSources={finalAvailableSources}
-                              selectedPersona={liveAssistant}
-                            />
-                          )}
-                        <div
-                          className={
-                            "mt-4 -ml-4 w-full mx-auto " +
-                            "absolute top-12 left-0  " +
-                            (hasPerformedInitialScroll ? "" : "invisible")
-                          }
-                        >
-                          {messageHistory.map((message, i) => {
-                            const messageMap = completeMessageDetail.messageMap;
-                            const messageReactComponentKey = `${i}-${completeMessageDetail.sessionId}`;
-                            if (message.type === "user") {
-                              const parentMessage = message.parentMessageId
-                                ? messageMap.get(message.parentMessageId)
-                                : null;
-                              return (
-                                <div key={messageReactComponentKey}>
-                                  <HumanMessage
-                                    content={message.message}
-                                    files={message.files}
-                                    messageId={message.messageId}
-                                    otherMessagesCanSwitchTo={
-                                      parentMessage?.childrenMessageIds || []
-                                    }
-                                    onEdit={(editedContent) => {
-                                      const parentMessageId =
-                                        message.parentMessageId!;
-                                      const parentMessage =
-                                        messageMap.get(parentMessageId)!;
-                                      upsertToCompleteMessageMap({
-                                        messages: [
-                                          {
-                                            ...parentMessage,
-                                            latestChildMessageId: null,
-                                          },
-                                        ],
-                                      });
-                                      onSubmit({
-                                        messageIdToResend:
-                                          message.messageId || undefined,
-                                        messageOverride: editedContent,
-                                      });
-                                    }}
-                                    onMessageSelection={(messageId) => {
-                                      const newCompleteMessageMap = new Map(
-                                        messageMap
-                                      );
-                                      newCompleteMessageMap.get(
-                                        message.parentMessageId!
-                                      )!.latestChildMessageId = messageId;
-                                      setCompleteMessageDetail({
-                                        sessionId:
-                                          completeMessageDetail.sessionId,
-                                        messageMap: newCompleteMessageMap,
-                                      });
-                                      setSelectedMessageForDocDisplay(
-                                        messageId
-                                      );
-                                      // set message as latest so we can edit this message
-                                      // and so it sticks around on page reload
-                                      setMessageAsLatest(messageId);
-                                    }}
-                                  />
-                                </div>
-                              );
-                            } else if (message.type === "assistant") {
-                              const isShowingRetrieved =
-                                (selectedMessageForDocDisplay !== null &&
-                                  selectedMessageForDocDisplay ===
-                                    message.messageId) ||
-                                (selectedMessageForDocDisplay ===
-                                  TEMP_USER_MESSAGE_ID &&
-                                  i === messageHistory.length - 1);
-                              const previousMessage =
-                                i !== 0 ? messageHistory[i - 1] : null;
-
-                              const currentAlternativeAssistant =
-                                message.alternateAssistantID != null
-                                  ? availableAssistants.find(
-                                      (persona) =>
-                                        persona.id ==
-                                        message.alternateAssistantID
-                                    )
+                          {messageHistory.length === 0 &&
+                            !isFetchingChatMessages &&
+                            !isStreaming && (
+                              <ChatIntro
+                                availableSources={finalAvailableSources}
+                                selectedPersona={liveAssistant}
+                              />
+                            )}
+                          <div
+                            className={
+                              "mt-4 -ml-4 w-full mx-auto " +
+                              "absolute mobile:top-0 desktop:top-12 left-0" +
+                              (hasPerformedInitialScroll ? "" : "invisible")
+                            }
+                          >
+                            {messageHistory.map((message, i) => {
+                              const messageMap =
+                                completeMessageDetail.messageMap;
+                              const messageReactComponentKey = `${i}-${completeMessageDetail.sessionId}`;
+                              if (message.type === "user") {
+                                const parentMessage = message.parentMessageId
+                                  ? messageMap.get(message.parentMessageId)
                                   : null;
-
-                              return (
-                                <div
-                                  key={messageReactComponentKey}
-                                  ref={
-                                    i == messageHistory.length - 1
-                                      ? lastMessageRef
-                                      : null
-                                  }
-                                >
-                                  <AIMessage
-                                    isActive={messageHistory.length - 1 == i}
-                                    selectedDocuments={selectedDocuments}
-                                    toggleDocumentSelection={
-                                      toggleDocumentSelectionAspects
-                                    }
-                                    docs={message.documents}
-                                    currentPersona={liveAssistant}
-                                    alternativeAssistant={
-                                      currentAlternativeAssistant
-                                    }
-                                    messageId={message.messageId}
-                                    content={message.message}
-                                    files={message.files}
-                                    query={
-                                      messageHistory[i]?.query || undefined
-                                    }
-                                    personaName={liveAssistant.name}
-                                    citedDocuments={getCitedDocumentsFromMessage(
-                                      message
-                                    )}
-                                    toolCall={
-                                      message.toolCalls && message.toolCalls[0]
-                                    }
-                                    isComplete={
-                                      i !== messageHistory.length - 1 ||
-                                      !isStreaming
-                                    }
-                                    hasDocs={
-                                      (message.documents &&
-                                        message.documents.length > 0) === true
-                                    }
-                                    handleFeedback={
-                                      i === messageHistory.length - 1 &&
-                                      isStreaming
-                                        ? undefined
-                                        : (feedbackType) =>
-                                            setCurrentFeedback([
-                                              feedbackType,
-                                              message.messageId as number,
-                                            ])
-                                    }
-                                    handleSearchQueryEdit={
-                                      i === messageHistory.length - 1 &&
-                                      !isStreaming
-                                        ? (newQuery) => {
-                                            if (!previousMessage) {
-                                              setPopup({
-                                                type: "error",
-                                                message:
-                                                  "Cannot edit query of first message - please refresh the page and try again.",
-                                              });
-                                              return;
-                                            }
-
-                                            if (
-                                              previousMessage.messageId === null
-                                            ) {
-                                              setPopup({
-                                                type: "error",
-                                                message:
-                                                  "Cannot edit query of a pending message - please wait a few seconds and try again.",
-                                              });
-                                              return;
-                                            }
-                                            onSubmit({
-                                              messageIdToResend:
-                                                previousMessage.messageId,
-                                              queryOverride: newQuery,
-                                              alternativeAssistantOverride:
-                                                currentAlternativeAssistant,
-                                            });
-                                          }
-                                        : undefined
-                                    }
-                                    isCurrentlyShowingRetrieved={
-                                      isShowingRetrieved
-                                    }
-                                    handleShowRetrieved={(messageNumber) => {
-                                      if (isShowingRetrieved) {
-                                        setSelectedMessageForDocDisplay(null);
-                                      } else {
-                                        if (messageNumber !== null) {
-                                          setSelectedMessageForDocDisplay(
-                                            messageNumber
-                                          );
-                                        } else {
-                                          setSelectedMessageForDocDisplay(-1);
-                                        }
+                                return (
+                                  <div key={messageReactComponentKey}>
+                                    <HumanMessage
+                                      content={message.message}
+                                      files={message.files}
+                                      messageId={message.messageId}
+                                      otherMessagesCanSwitchTo={
+                                        parentMessage?.childrenMessageIds || []
                                       }
-                                    }}
-                                    handleForceSearch={() => {
-                                      if (
-                                        previousMessage &&
-                                        previousMessage.messageId
-                                      ) {
+                                      onEdit={(editedContent) => {
+                                        const parentMessageId =
+                                          message.parentMessageId!;
+                                        const parentMessage =
+                                          messageMap.get(parentMessageId)!;
+                                        upsertToCompleteMessageMap({
+                                          messages: [
+                                            {
+                                              ...parentMessage,
+                                              latestChildMessageId: null,
+                                            },
+                                          ],
+                                        });
                                         onSubmit({
                                           messageIdToResend:
-                                            previousMessage.messageId,
-                                          forceSearch: true,
-                                          alternativeAssistantOverride:
-                                            currentAlternativeAssistant,
+                                            message.messageId || undefined,
+                                          messageOverride: editedContent,
                                         });
-                                      } else {
-                                        setPopup({
-                                          type: "error",
-                                          message:
-                                            "Failed to force search - please refresh the page and try again.",
+                                      }}
+                                      onMessageSelection={(messageId) => {
+                                        const newCompleteMessageMap = new Map(
+                                          messageMap
+                                        );
+                                        newCompleteMessageMap.get(
+                                          message.parentMessageId!
+                                        )!.latestChildMessageId = messageId;
+                                        setCompleteMessageDetail({
+                                          sessionId:
+                                            completeMessageDetail.sessionId,
+                                          messageMap: newCompleteMessageMap,
                                         });
-                                      }
-                                    }}
-                                    retrievalDisabled={
-                                      currentAlternativeAssistant
-                                        ? !personaIncludesRetrieval(
-                                            currentAlternativeAssistant!
-                                          )
-                                        : !retrievalEnabled
+                                        setSelectedMessageForDocDisplay(
+                                          messageId
+                                        );
+                                        // set message as latest so we can edit this message
+                                        // and so it sticks around on page reload
+                                        setMessageAsLatest(messageId);
+                                      }}
+                                    />
+                                  </div>
+                                );
+                              } else if (message.type === "assistant") {
+                                const isShowingRetrieved =
+                                  (selectedMessageForDocDisplay !== null &&
+                                    selectedMessageForDocDisplay ===
+                                      message.messageId) ||
+                                  (selectedMessageForDocDisplay ===
+                                    TEMP_USER_MESSAGE_ID &&
+                                    i === messageHistory.length - 1);
+                                const previousMessage =
+                                  i !== 0 ? messageHistory[i - 1] : null;
+
+                                const currentAlternativeAssistant =
+                                  message.alternateAssistantID != null
+                                    ? availableAssistants.find(
+                                        (persona) =>
+                                          persona.id ==
+                                          message.alternateAssistantID
+                                      )
+                                    : null;
+
+                                return (
+                                  <div
+                                    key={messageReactComponentKey}
+                                    ref={
+                                      i == messageHistory.length - 1
+                                        ? lastMessageRef
+                                        : null
                                     }
-                                  />
-                                </div>
-                              );
-                            } else {
-                              return (
-                                <div key={messageReactComponentKey}>
+                                  >
+                                    <AIMessage
+                                      isActive={messageHistory.length - 1 == i}
+                                      selectedDocuments={selectedDocuments}
+                                      toggleDocumentSelection={
+                                        toggleDocumentSelectionAspects
+                                      }
+                                      docs={message.documents}
+                                      currentPersona={liveAssistant}
+                                      alternativeAssistant={
+                                        currentAlternativeAssistant
+                                      }
+                                      messageId={message.messageId}
+                                      content={message.message}
+                                      files={message.files}
+                                      query={
+                                        messageHistory[i]?.query || undefined
+                                      }
+                                      personaName={liveAssistant.name}
+                                      citedDocuments={getCitedDocumentsFromMessage(
+                                        message
+                                      )}
+                                      toolCall={
+                                        message.toolCalls &&
+                                        message.toolCalls[0]
+                                      }
+                                      isComplete={
+                                        i !== messageHistory.length - 1 ||
+                                        !isStreaming
+                                      }
+                                      hasDocs={
+                                        (message.documents &&
+                                          message.documents.length > 0) === true
+                                      }
+                                      handleFeedback={
+                                        i === messageHistory.length - 1 &&
+                                        isStreaming
+                                          ? undefined
+                                          : (feedbackType) =>
+                                              setCurrentFeedback([
+                                                feedbackType,
+                                                message.messageId as number,
+                                              ])
+                                      }
+                                      handleSearchQueryEdit={
+                                        i === messageHistory.length - 1 &&
+                                        !isStreaming
+                                          ? (newQuery) => {
+                                              if (!previousMessage) {
+                                                setPopup({
+                                                  type: "error",
+                                                  message:
+                                                    "Cannot edit query of first message - please refresh the page and try again.",
+                                                });
+                                                return;
+                                              }
+
+                                              if (
+                                                previousMessage.messageId ===
+                                                null
+                                              ) {
+                                                setPopup({
+                                                  type: "error",
+                                                  message:
+                                                    "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                                });
+                                                return;
+                                              }
+                                              onSubmit({
+                                                messageIdToResend:
+                                                  previousMessage.messageId,
+                                                queryOverride: newQuery,
+                                                alternativeAssistantOverride:
+                                                  currentAlternativeAssistant,
+                                              });
+                                            }
+                                          : undefined
+                                      }
+                                      isCurrentlyShowingRetrieved={
+                                        isShowingRetrieved
+                                      }
+                                      handleShowRetrieved={(messageNumber) => {
+                                        if (isShowingRetrieved) {
+                                          setSelectedMessageForDocDisplay(null);
+                                        } else {
+                                          if (messageNumber !== null) {
+                                            setSelectedMessageForDocDisplay(
+                                              messageNumber
+                                            );
+                                          } else {
+                                            setSelectedMessageForDocDisplay(-1);
+                                          }
+                                        }
+                                      }}
+                                      handleForceSearch={() => {
+                                        if (
+                                          previousMessage &&
+                                          previousMessage.messageId
+                                        ) {
+                                          onSubmit({
+                                            messageIdToResend:
+                                              previousMessage.messageId,
+                                            forceSearch: true,
+                                            alternativeAssistantOverride:
+                                              currentAlternativeAssistant,
+                                          });
+                                        } else {
+                                          setPopup({
+                                            type: "error",
+                                            message:
+                                              "Failed to force search - please refresh the page and try again.",
+                                          });
+                                        }
+                                      }}
+                                      retrievalDisabled={
+                                        currentAlternativeAssistant
+                                          ? !personaIncludesRetrieval(
+                                              currentAlternativeAssistant!
+                                            )
+                                          : !retrievalEnabled
+                                      }
+                                    />
+                                  </div>
+                                );
+                              } else {
+                                return (
+                                  <div key={messageReactComponentKey}>
+                                    <AIMessage
+                                      currentPersona={liveAssistant}
+                                      messageId={message.messageId}
+                                      personaName={liveAssistant.name}
+                                      content={
+                                        <p className="text-red-700 text-sm my-auto">
+                                          {message.message}
+                                        </p>
+                                      }
+                                    />
+                                  </div>
+                                );
+                              }
+                            })}
+                            {isStreaming &&
+                              messageHistory.length > 0 &&
+                              messageHistory[messageHistory.length - 1].type ===
+                                "user" && (
+                                <div
+                                  key={`${messageHistory.length}-${chatSessionIdRef.current}`}
+                                >
                                   <AIMessage
                                     currentPersona={liveAssistant}
-                                    messageId={message.messageId}
+                                    alternativeAssistant={
+                                      alternativeGeneratingAssistant ??
+                                      alternativeAssistant
+                                    }
+                                    messageId={null}
                                     personaName={liveAssistant.name}
                                     content={
-                                      <p className="text-red-700 text-sm my-auto">
-                                        {message.message}
-                                      </p>
+                                      <div
+                                        key={"Generating"}
+                                        className="mr-auto relative inline-block"
+                                      >
+                                        <span className="text-sm loading-text">
+                                          Thinking...
+                                        </span>
+                                      </div>
                                     }
                                   />
                                 </div>
-                              );
-                            }
-                          })}
-                          {isStreaming &&
-                            messageHistory.length > 0 &&
-                            messageHistory[messageHistory.length - 1].type ===
-                              "user" && (
-                              <div
-                                key={`${messageHistory.length}-${chatSessionIdRef.current}`}
-                              >
-                                <AIMessage
-                                  currentPersona={liveAssistant}
-                                  alternativeAssistant={
-                                    alternativeGeneratingAssistant ??
-                                    alternativeAssistant
-                                  }
-                                  messageId={null}
-                                  personaName={liveAssistant.name}
-                                  content={
-                                    <div className="text-sm my-auto">
-                                      <ThreeDots
-                                        height="30"
-                                        width="50"
-                                        color="#3b82f6"
-                                        ariaLabel="grid-loading"
-                                        radius="12.5"
-                                        wrapperStyle={{}}
-                                        wrapperClass=""
-                                        visible={true}
-                                      />
-                                    </div>
-                                  }
-                                />
-                              </div>
-                            )}
+                              )}
 
-                          {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-                          <div ref={endPaddingRef} className="h-[95px]" />
-                          <div ref={endDivRef}></div>
-
-                          {currentPersona &&
-                            currentPersona.starter_messages &&
-                            currentPersona.starter_messages.length > 0 &&
-                            selectedAssistant &&
-                            messageHistory.length === 0 &&
-                            !isFetchingChatMessages && (
-                              <div
-                                className={`
-                            mx-auto 
-                            px-4 
-                            w-searchbar-xs 
-                            2xl:w-searchbar-sm 
-                            3xl:w-searchbar 
-                            grid 
-                            gap-4 
-                            grid-cols-1 
-                            grid-rows-1 
-                            mt-4 
-                            md:grid-cols-2 
-                            mb-6`}
-                              >
-                                {currentPersona.starter_messages.map(
-                                  (starterMessage, i) => (
-                                    <div key={i} className="w-full">
-                                      <StarterMessage
-                                        starterMessage={starterMessage}
-                                        onClick={() =>
-                                          onSubmit({
-                                            messageOverride:
-                                              starterMessage.message,
-                                          })
-                                        }
-                                      />
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            )}
-                          <div ref={endDivRef} />
+                            {currentPersona &&
+                              currentPersona.starter_messages &&
+                              currentPersona.starter_messages.length > 0 &&
+                              selectedAssistant &&
+                              messageHistory.length === 0 &&
+                              !isFetchingChatMessages && (
+                                <div
+                                  className={`
+                                      mx-auto 
+                                      px-4 
+                                      w-searchbar-xs 
+                                      2xl:w-searchbar-sm 
+                                      3xl:w-searchbar 
+                                      grid 
+                                      gap-4 
+                                      grid-cols-1 
+                                      grid-rows-1 
+                                      mt-4 
+                                      md:grid-cols-2 
+                                      mb-6`}
+                                >
+                                  {currentPersona.starter_messages.map(
+                                    (starterMessage, i) => (
+                                      <div key={i} className="w-full">
+                                        <StarterMessage
+                                          starterMessage={starterMessage}
+                                          onClick={() =>
+                                            onSubmit({
+                                              messageOverride:
+                                                starterMessage.message,
+                                            })
+                                          }
+                                        />
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              )}
+                            {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
+                            <div ref={endPaddingRef} className="h-[95px]" />
+                            <div ref={endDivRef} />
+                          </div>
                         </div>
-                      </div>
-                      <div
-                        ref={inputRef}
-                        className="absolute bottom-0 z-10 w-full"
-                      >
-                        <div className="w-full relative pb-4">
-                          {aboveHorizon && (
-                            <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
-                              <button
-                                onClick={() => clientScrollToBottom()}
-                                className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2 mx-auto "
-                              >
-                                <FiArrowDown size={18} />
-                              </button>
-                            </div>
-                          )}
+                        <div
+                          ref={inputRef}
+                          className="absolute bottom-0 z-10 w-full"
+                        >
+                          <div className="w-full relative pb-4">
+                            {aboveHorizon && (
+                              <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
+                                <button
+                                  onClick={() => clientScrollToBottom()}
+                                  className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2 mx-auto "
+                                >
+                                  <FiArrowDown size={18} />
+                                </button>
+                              </div>
+                            )}
 
-                          <ChatInputBar
-                            showDocs={() => setDocumentSelection(true)}
-                            selectedDocuments={selectedDocuments}
-                            // assistant stuff
-                            assistantOptions={filteredAssistants}
-                            selectedAssistant={liveAssistant}
-                            setSelectedAssistant={onAssistantChange}
-                            setAlternativeAssistant={setAlternativeAssistant}
-                            alternativeAssistant={alternativeAssistant}
-                            // end assistant stuff
-                            message={message}
-                            setMessage={setMessage}
-                            onSubmit={onSubmit}
-                            isStreaming={isStreaming}
-                            setIsCancelled={setIsCancelled}
-                            filterManager={filterManager}
-                            llmOverrideManager={llmOverrideManager}
-                            files={currentMessageFiles}
-                            setFiles={setCurrentMessageFiles}
-                            handleFileUpload={handleImageUpload}
-                            textAreaRef={textAreaRef}
-                            chatSessionId={chatSessionIdRef.current!}
-                          />
+                            <ChatInputBar
+                              openModelSettings={() => setSettingsToggled(true)}
+                              inputPrompts={userInputPrompts}
+                              showDocs={() => setDocumentSelection(true)}
+                              selectedDocuments={selectedDocuments}
+                              // assistant stuff
+                              assistantOptions={filteredAssistants}
+                              selectedAssistant={liveAssistant}
+                              setSelectedAssistant={onAssistantChange}
+                              setAlternativeAssistant={setAlternativeAssistant}
+                              alternativeAssistant={alternativeAssistant}
+                              // end assistant stuff
+                              message={message}
+                              setMessage={setMessage}
+                              onSubmit={onSubmit}
+                              isStreaming={isStreaming}
+                              filterManager={filterManager}
+                              llmOverrideManager={llmOverrideManager}
+                              files={currentMessageFiles}
+                              setFiles={setCurrentMessageFiles}
+                              handleFileUpload={handleImageUpload}
+                              textAreaRef={textAreaRef}
+                              chatSessionId={chatSessionIdRef.current!}
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
+                  )}
+                </Dropzone>
+              ) : (
+                <div className="mx-auto h-full flex">
+                  <div
+                    style={{ transition: "width 0.30s ease-out" }}
+                    className={`flex-none bg-transparent transition-all bg-opacity-80 duration-300 ease-in-out h-full
+                        ${toggledSidebar ? "w-[250px] " : "w-[0px]"}`}
+                  />
+                  <div className="my-auto">
+                    <DanswerInitializingLoader />
                   </div>
-                )}
-              </Dropzone>
-            ) : (
-              <div className="mx-auto h-full flex">
-                <div
-                  style={{ transition: "width 0.30s ease-out" }}
-                  className={`flex-none bg-transparent transition-all bg-opacity-80 duration-300 ease-in-out h-full
-                        ${toggledSidebar ? "w-[300px] " : "w-[0px]"}`}
-                />
-                <div className="my-auto">
-                  <DanswerInitializingLoader />
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-
-          <DocumentSidebar
-            initialWidth={390}
-            ref={innerSidebarElementRef}
-            closeSidebar={() => setDocumentSelection(false)}
-            selectedMessage={aiMessage}
-            selectedDocuments={selectedDocuments}
-            toggleDocumentSelection={toggleDocumentSelection}
-            clearSelectedDocuments={clearSelectedDocuments}
-            selectedDocumentTokens={selectedDocumentTokens}
-            maxTokens={maxTokens}
-            isLoading={isFetchingChatMessages}
-            isOpen={documentSelection}
-          />
+          <FixedLogo />
         </div>
-        <FixedLogo />
       </div>
+      <DocumentSidebar
+        initialWidth={350}
+        ref={innerSidebarElementRef}
+        closeSidebar={() => setDocumentSelection(false)}
+        selectedMessage={aiMessage}
+        selectedDocuments={selectedDocuments}
+        toggleDocumentSelection={toggleDocumentSelection}
+        clearSelectedDocuments={clearSelectedDocuments}
+        selectedDocumentTokens={selectedDocumentTokens}
+        maxTokens={maxTokens}
+        isLoading={isFetchingChatMessages}
+        isOpen={documentSelection}
+      />
     </>
   );
 }

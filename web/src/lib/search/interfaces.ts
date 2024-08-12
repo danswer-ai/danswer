@@ -96,8 +96,13 @@ export interface SearchResponse {
 }
 
 export enum SourceCategory {
-  AppConnection = "Connect to Apps",
-  ImportedKnowledge = "Import Knowledge",
+  Storage = "Storage",
+  Wiki = "Wiki",
+  CustomerSupport = "Customer Support",
+  Messaging = "Messaging",
+  ProjectManagement = "Project Management",
+  CodeRepository = "Code Repository",
+  Other = "Other",
 }
 
 export interface SourceMetadata {
@@ -153,7 +158,6 @@ export interface SearchRequestOverrides {
 }
 
 export interface ValidQuestionResponse {
-  answerable: boolean | null;
   reasoning: string | null;
   error: string | null;
 }

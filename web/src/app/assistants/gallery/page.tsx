@@ -6,9 +6,6 @@ import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrap
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
-import { AssistantsGallery } from "./AssistantsGallery";
-import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
-import GalleryWrapper from "../SidebarWrapper";
 import WrappedAssistantsGallery from "./WrappedAssistantsGallery";
 
 export default async function GalleryPage({
@@ -36,6 +33,7 @@ export default async function GalleryPage({
     openedFolders,
     shouldShowWelcomeModal,
     toggleSidebar,
+    userInputPrompts,
   } = data;
 
   return (
@@ -55,6 +53,7 @@ export default async function GalleryPage({
           llmProviders,
           folders,
           openedFolders,
+          userInputPrompts,
         }}
       >
         <WrappedAssistantsGallery

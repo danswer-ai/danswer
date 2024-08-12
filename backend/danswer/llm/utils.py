@@ -1,3 +1,4 @@
+import json
 from collections.abc import Callable
 from collections.abc import Iterator
 from typing import Any
@@ -28,6 +29,7 @@ from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import LOG_LEVEL
 
+
 if TYPE_CHECKING:
     from danswer.llm.answering.models import PreviousMessage
 
@@ -37,9 +39,13 @@ logger = setup_logger()
 def translate_danswer_msg_to_langchain(
     msg: Union[ChatMessage, "PreviousMessage"],
 ) -> BaseMessage:
+    files: list[InMemoryChatFile] = []
+
     # If the message is a `ChatMessage`, it doesn't have the downloaded files
-    # attached. Just ignore them for now
-    files = [] if isinstance(msg, ChatMessage) else msg.files
+    # attached. Just ignore them for now. Also, OpenAI doesn't allow files to
+    # be attached to AI messages, so we must remove them
+    if not isinstance(msg, ChatMessage) and msg.message_type != MessageType.ASSISTANT:
+        files = msg.files
     content = build_content_with_imgs(msg.message, files)
 
     if msg.message_type == MessageType.SYSTEM:
@@ -219,6 +225,13 @@ def check_message_tokens(
             total_tokens += check_number_of_tokens(part["text"], encode_fn)
         elif part["type"] == "image_url":
             total_tokens += _IMG_TOKENS
+
+    if isinstance(message, AIMessage) and message.tool_calls:
+        for tool_call in message.tool_calls:
+            total_tokens += check_number_of_tokens(
+                json.dumps(tool_call["args"]), encode_fn
+            )
+            total_tokens += check_number_of_tokens(tool_call["name"], encode_fn)
 
     return total_tokens
 

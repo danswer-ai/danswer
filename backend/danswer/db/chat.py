@@ -16,7 +16,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
 
 from danswer.auth.schemas import UserRole
-from danswer.chat.models import LLMRelevanceSummaryResponse
+from danswer.chat.models import DocumentRelevance
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
@@ -541,11 +541,11 @@ def get_doc_query_identifiers_from_model(
 def update_search_docs_table_with_relevance(
     db_session: Session,
     reference_db_search_docs: list[SearchDoc],
-    relevance_summary: LLMRelevanceSummaryResponse,
+    relevance_summary: DocumentRelevance,
 ) -> None:
     for search_doc in reference_db_search_docs:
         relevance_data = relevance_summary.relevance_summaries.get(
-            f"{search_doc.document_id}-{search_doc.chunk_ind}"
+            search_doc.document_id
         )
         if relevance_data is not None:
             db_session.execute(

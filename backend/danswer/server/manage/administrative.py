@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import KV_GEN_AI_KEY_CHECK_TIME
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.engine import get_session
@@ -34,8 +35,6 @@ from danswer.utils.logger import setup_logger
 
 router = APIRouter(prefix="/manage")
 logger = setup_logger()
-
-GEN_AI_KEY_CHECK_TIME = "genai_api_key_last_check_time"
 
 """Admin only API endpoints"""
 
@@ -116,7 +115,7 @@ def validate_existing_genai_api_key(
     curr_time = datetime.now(tz=timezone.utc)
     try:
         last_check = datetime.fromtimestamp(
-            cast(float, kv_store.load(GEN_AI_KEY_CHECK_TIME)), tz=timezone.utc
+            cast(float, kv_store.load(KV_GEN_AI_KEY_CHECK_TIME)), tz=timezone.utc
         )
         check_freq_sec = timedelta(seconds=GENERATIVE_MODEL_ACCESS_CHECK_FREQ)
         if curr_time - last_check < check_freq_sec:
@@ -136,7 +135,7 @@ def validate_existing_genai_api_key(
 
     # Mark check as successful
     curr_time = datetime.now(tz=timezone.utc)
-    kv_store.store(GEN_AI_KEY_CHECK_TIME, curr_time.timestamp())
+    kv_store.store(KV_GEN_AI_KEY_CHECK_TIME, curr_time.timestamp())
 
 
 @router.post("/admin/deletion-attempt")

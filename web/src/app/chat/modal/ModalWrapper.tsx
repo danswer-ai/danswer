@@ -1,3 +1,5 @@
+import { XIcon } from "@/components/icons/icons";
+
 export const ModalWrapper = ({
   children,
   bgClassName,
@@ -29,6 +31,14 @@ export const ModalWrapper = ({
           (modalClassName || "")
         }
       >
+        {onClose && (
+          <div className="w-full cursor-pointer flex justify-end">
+            <button onClick={onClose}>
+              <XIcon />
+            </button>
+          </div>
+        )}
+
         {children}
       </div>
     </div>

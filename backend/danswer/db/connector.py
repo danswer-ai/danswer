@@ -2,6 +2,7 @@ from typing import cast
 
 from fastapi import HTTPException
 from sqlalchemy import and_
+from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import aliased
@@ -11,6 +12,7 @@ from danswer.configs.app_configs import DEFAULT_PRUNING_FREQ
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
 from danswer.db.models import Connector
+from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import IndexAttempt
 from danswer.server.documents.models import ConnectorBase
 from danswer.server.documents.models import ObjectCreationIdResponse
@@ -18,6 +20,14 @@ from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+
+def check_connectors_exist(db_session: Session) -> bool:
+    # Connector 0 is created on server startup as a default for ingestion
+    # it will always exist and we don't need to count it for this
+    stmt = select(exists(Connector).where(Connector.id > 0))
+    result = db_session.execute(stmt)
+    return result.scalar() or False
 
 
 def fetch_connectors(
@@ -85,9 +95,8 @@ def create_connector(
         input_type=connector_data.input_type,
         connector_specific_config=connector_data.connector_specific_config,
         refresh_freq=connector_data.refresh_freq,
-        prune_freq=connector_data.prune_freq
-        if connector_data.prune_freq is not None
-        else DEFAULT_PRUNING_FREQ,
+        indexing_start=connector_data.indexing_start,
+        prune_freq=connector_data.prune_freq,
         disabled=connector_data.disabled,
     )
     db_session.add(connector)
@@ -191,7 +200,8 @@ def fetch_latest_index_attempt_by_connector(
     for connector in connectors:
         latest_index_attempt = (
             db_session.query(IndexAttempt)
-            .filter(IndexAttempt.connector_id == connector.id)
+            .join(ConnectorCredentialPair)
+            .filter(ConnectorCredentialPair.connector_id == connector.id)
             .order_by(IndexAttempt.time_updated.desc())
             .first()
         )
@@ -207,13 +217,11 @@ def fetch_latest_index_attempts_by_status(
 ) -> list[IndexAttempt]:
     subquery = (
         db_session.query(
-            IndexAttempt.connector_id,
-            IndexAttempt.credential_id,
+            IndexAttempt.connector_credential_pair_id,
             IndexAttempt.status,
             func.max(IndexAttempt.time_updated).label("time_updated"),
         )
-        .group_by(IndexAttempt.connector_id)
-        .group_by(IndexAttempt.credential_id)
+        .group_by(IndexAttempt.connector_credential_pair_id)
         .group_by(IndexAttempt.status)
         .subquery()
     )
@@ -223,12 +231,13 @@ def fetch_latest_index_attempts_by_status(
     query = db_session.query(IndexAttempt).join(
         alias,
         and_(
-            IndexAttempt.connector_id == alias.connector_id,
-            IndexAttempt.credential_id == alias.credential_id,
+            IndexAttempt.connector_credential_pair_id
+            == alias.connector_credential_pair_id,
             IndexAttempt.status == alias.status,
             IndexAttempt.time_updated == alias.time_updated,
         ),
     )
+
     return cast(list[IndexAttempt], query.all())
 
 
@@ -247,20 +256,31 @@ def fetch_unique_document_sources(db_session: Session) -> list[DocumentSource]:
 def create_initial_default_connector(db_session: Session) -> None:
     default_connector_id = 0
     default_connector = fetch_connector_by_id(default_connector_id, db_session)
-
     if default_connector is not None:
         if (
             default_connector.source != DocumentSource.INGESTION_API
             or default_connector.input_type != InputType.LOAD_STATE
             or default_connector.refresh_freq is not None
             or default_connector.disabled
+            or default_connector.name != "Ingestion API"
+            or default_connector.connector_specific_config != {}
+            or default_connector.prune_freq is not None
         ):
-            raise ValueError(
-                "DB is not in a valid initial state. "
-                "Default connector does not have expected values."
+            logger.warning(
+                "Default connector does not have expected values. Updating to proper state."
             )
+            # Ensure default connector has correct valuesg
+            default_connector.source = DocumentSource.INGESTION_API
+            default_connector.input_type = InputType.LOAD_STATE
+            default_connector.refresh_freq = None
+            default_connector.disabled = False
+            default_connector.name = "Ingestion API"
+            default_connector.connector_specific_config = {}
+            default_connector.prune_freq = None
+            db_session.commit()
         return
 
+    # Create a new default connector if it doesn't exist
     connector = Connector(
         id=default_connector_id,
         name="Ingestion API",
@@ -269,6 +289,7 @@ def create_initial_default_connector(db_session: Session) -> None:
         connector_specific_config={},
         refresh_freq=None,
         prune_freq=None,
+        disabled=False,
     )
     db_session.add(connector)
     db_session.commit()

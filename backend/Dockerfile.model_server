@@ -18,14 +18,18 @@ RUN apt-get remove -y --allow-remove-essential perl-base && \
     apt-get autoremove -y
 
 # Pre-downloading models for setups with limited egress
-RUN python -c "from transformers import AutoModel, AutoTokenizer, TFDistilBertForSequenceClassification; \
+# Download tokenizers, distilbert for the Danswer model
+# Download model weights
+# Run Nomic to pull in the custom architecture and have it cached locally
+RUN python -c "from transformers import AutoTokenizer; \
+AutoTokenizer.from_pretrained('distilbert-base-uncased', cache_folder='/root/.cache/temp_huggingface/hub/'); \
+AutoTokenizer.from_pretrained('mixedbread-ai/mxbai-rerank-xsmall-v1', cache_folder='/root/.cache/temp_huggingface/hub/'); \
 from huggingface_hub import snapshot_download; \
-AutoTokenizer.from_pretrained('danswer/intent-model'); \
-AutoTokenizer.from_pretrained('intfloat/e5-base-v2'); \
-AutoTokenizer.from_pretrained('mixedbread-ai/mxbai-rerank-xsmall-v1'); \
-snapshot_download('danswer/intent-model'); \
-snapshot_download('intfloat/e5-base-v2'); \
-snapshot_download('mixedbread-ai/mxbai-rerank-xsmall-v1')"
+snapshot_download(repo_id='danswer/hybrid-intent-token-classifier', revision='v1.0.3', cache_dir='/root/.cache/temp_huggingface/hub/'); \
+snapshot_download('nomic-ai/nomic-embed-text-v1', cache_dir='/root/.cache/temp_huggingface/hub/'); \
+snapshot_download('mixedbread-ai/mxbai-rerank-xsmall-v1', cache_dir='/root/.cache/temp_huggingface/hub/'); \
+from sentence_transformers import SentenceTransformer; \
+SentenceTransformer(model_name_or_path='nomic-ai/nomic-embed-text-v1', trust_remote_code=True, cache_folder='/root/.cache/temp_huggingface/hub/');"
 
 WORKDIR /app
 

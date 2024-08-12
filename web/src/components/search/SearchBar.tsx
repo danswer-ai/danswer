@@ -1,15 +1,18 @@
-import React, { KeyboardEvent, ChangeEvent } from "react";
-import { searchState } from "./SearchSection";
+import React, { KeyboardEvent, ChangeEvent, useContext } from "react";
 
 import { MagnifyingGlass } from "@phosphor-icons/react";
-
 interface FullSearchBarProps {
   query: string;
   setQuery: (query: string) => void;
   onSearch: (fast?: boolean) => void;
-  searchState?: searchState;
   agentic?: boolean;
   toggleAgentic?: () => void;
+  ccPairs: CCPairBasicInfo[];
+  documentSets: DocumentSet[];
+  filterManager: any; // You might want to replace 'any' with a more specific type
+  finalAvailableDocumentSets: DocumentSet[];
+  finalAvailableSources: string[];
+  tags: Tag[];
 }
 
 import { useState, useEffect, useRef } from "react";
@@ -17,6 +20,10 @@ import { SendIcon } from "../icons/icons";
 import { Divider } from "@tremor/react";
 import { CustomTooltip } from "../tooltip/CustomTooltip";
 import KeyboardSymbol from "@/lib/browserUtilities";
+import { SettingsContext } from "../settings/SettingsProvider";
+import { HorizontalSourceSelector, SourceSelector } from "./filtering/Filters";
+import { CCPairBasicInfo, DocumentSet, Tag } from "@/lib/types";
+import { SourceMetadata } from "@/lib/search/interfaces";
 
 export const AnimatedToggle = ({
   isOn,
@@ -115,12 +122,17 @@ export const AnimatedToggle = ({
 export default AnimatedToggle;
 
 export const FullSearchBar = ({
-  searchState,
   query,
   setQuery,
   onSearch,
   agentic,
   toggleAgentic,
+  ccPairs,
+  documentSets,
+  filterManager,
+  finalAvailableDocumentSets,
+  finalAvailableSources,
+  tags,
 }: FullSearchBarProps) => {
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const target = event.target;
@@ -133,11 +145,17 @@ export const FullSearchBar = ({
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      !(event.nativeEvent as any).isComposing
+    ) {
       onSearch(agentic);
       event.preventDefault();
     }
   };
+
+  const settings = useContext(SettingsContext);
 
   return (
     <div
@@ -189,43 +207,41 @@ export const FullSearchBar = ({
         suppressContentEditableWarning={true}
       />
 
-      <div className="flex justify-end w-full items-center space-x-3 mr-12 px-4 pb-2">
-        {searchState == "searching" && (
-          <div key={"Reading"} className="mr-auto relative inline-block">
-            <span className="loading-text">Searching...</span>
-          </div>
-        )}
-
-        {searchState == "reading" && (
-          <div key={"Reading"} className="mr-auto relative inline-block">
-            <span className="loading-text">Reading Documents...</span>
-          </div>
-        )}
-
-        {searchState == "analyzing" && (
-          <div key={"Generating"} className="mr-auto relative inline-block">
-            <span className="loading-text">Generating Analysis...</span>
-          </div>
-        )}
-
-        {toggleAgentic && (
-          <AnimatedToggle isOn={agentic!} handleToggle={toggleAgentic} />
-        )}
-
-        <div className="my-auto pl-2">
-          <button
-            onClick={() => {
-              onSearch(agentic);
-            }}
-            className="flex my-auto cursor-pointer"
-          >
-            <SendIcon
-              size={28}
-              className={`text-emphasis text-white p-1 rounded-full ${
-                query ? "bg-background-800" : "bg-[#D7D7D7]"
-              }`}
+      <div
+        className={`flex 2xl:justify-end justify-between w-full items-center space-x-3 px-4 pb-2`}
+      >
+        <div className="2xl:hidden">
+          {(ccPairs.length > 0 || documentSets.length > 0) && (
+            <HorizontalSourceSelector
+              isHorizontal
+              {...filterManager}
+              showDocSidebar={false}
+              availableDocumentSets={finalAvailableDocumentSets}
+              existingSources={finalAvailableSources}
+              availableTags={tags}
             />
-          </button>
+          )}
+        </div>
+        <div className="flex my-auto gap-x-3">
+          {toggleAgentic && (
+            <AnimatedToggle isOn={agentic!} handleToggle={toggleAgentic} />
+          )}
+
+          <div className="my-auto pl-2">
+            <button
+              onClick={() => {
+                onSearch(agentic);
+              }}
+              className="flex my-auto cursor-pointer"
+            >
+              <SendIcon
+                size={28}
+                className={`text-emphasis text-white p-1 rounded-full ${
+                  query ? "bg-background-800" : "bg-[#D7D7D7]"
+                }`}
+              />
+            </button>
+          </div>
         </div>
       </div>
       <div className="absolute bottom-2.5 right-10"></div>
@@ -251,7 +267,11 @@ export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      !(event.nativeEvent as any).isComposing
+    ) {
       onSearch();
       event.preventDefault();
     }

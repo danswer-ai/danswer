@@ -166,13 +166,12 @@ def create_connector(env_name: str, file_paths: list[str]) -> int:
         refresh_freq=None,
         prune_freq=None,
         disabled=False,
+        indexing_start=None,
     )
 
     body = connector.dict()
-    print("body:", body)
     response = requests.post(url, headers=GENERAL_HEADERS, json=body)
     if response.status_code == 200:
-        print("Connector created successfully:", response.json())
         return response.json()["id"]
     else:
         raise RuntimeError(response.__dict__)
@@ -183,6 +182,7 @@ def create_credential(env_name: str) -> int:
     body = {
         "credential_json": {},
         "admin_public": True,
+        "source": DocumentSource.FILE,
     }
     response = requests.post(url, headers=GENERAL_HEADERS, json=body)
     if response.status_code == 200:

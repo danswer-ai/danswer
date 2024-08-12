@@ -7,10 +7,10 @@ import {
 import { fetchSS } from "@/lib/utilsSS";
 import { redirect } from "next/navigation";
 import { BackendChatSession } from "../../interfaces";
-import { Header } from "@/components/header/Header";
 import { SharedChatDisplay } from "./SharedChatDisplay";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { fetchAssistantsSS } from "@/lib/assistants/fetchAssistantsSS";
+import FunctionalHeader from "@/components/chat_search/Header";
 
 async function getSharedChat(chatId: string) {
   const response = await fetchSS(
@@ -57,7 +57,7 @@ export default async function Page({ params }: { params: { chatId: string } }) {
   return (
     <div>
       <div className="absolute top-0 z-40 w-full">
-        <Header user={user} />
+        <FunctionalHeader page="shared" user={user} />
       </div>
 
       <div className="flex relative bg-background text-default overflow-hidden pt-16 h-screen">

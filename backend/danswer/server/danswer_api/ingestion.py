@@ -12,6 +12,7 @@ from danswer.db.document import get_ingestion_documents
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_session
+from danswer.db.models import User
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.embedder import DefaultIndexingEmbedder
@@ -31,7 +32,7 @@ router = APIRouter(prefix="/danswer-api")
 @router.get("/connector-docs/{cc_pair_id}")
 def get_docs_by_connector_credential_pair(
     cc_pair_id: int,
-    _: str = Depends(api_key_dep),
+    _: User | None = Depends(api_key_dep),
     db_session: Session = Depends(get_session),
 ) -> list[DocMinimalInfo]:
     db_docs = get_documents_by_cc_pair(cc_pair_id=cc_pair_id, db_session=db_session)
@@ -47,7 +48,7 @@ def get_docs_by_connector_credential_pair(
 
 @router.get("/ingestion")
 def get_ingestion_docs(
-    _: str = Depends(api_key_dep),
+    _: User | None = Depends(api_key_dep),
     db_session: Session = Depends(get_session),
 ) -> list[DocMinimalInfo]:
     db_docs = get_ingestion_documents(db_session)
@@ -64,7 +65,7 @@ def get_ingestion_docs(
 @router.post("/ingestion")
 def upsert_ingestion_doc(
     doc_info: IngestionDocument,
-    _: str = Depends(api_key_dep),
+    _: User | None = Depends(api_key_dep),
     db_session: Session = Depends(get_session),
 ) -> IngestionResult:
     doc_info.document.from_ingestion_api = True
@@ -107,8 +108,8 @@ def upsert_ingestion_doc(
         db_session=db_session,
     )
 
-    new_doc, chunks = indexing_pipeline(
-        documents=[document],
+    new_doc, __chunk_count = indexing_pipeline(
+        document_batch=[document],
         index_attempt_metadata=IndexAttemptMetadata(
             connector_id=cc_pair.connector_id,
             credential_id=cc_pair.credential_id,
@@ -146,7 +147,7 @@ def upsert_ingestion_doc(
         )
 
         sec_ind_pipeline(
-            documents=[document],
+            document_batch=[document],
             index_attempt_metadata=IndexAttemptMetadata(
                 connector_id=cc_pair.connector_id,
                 credential_id=cc_pair.credential_id,

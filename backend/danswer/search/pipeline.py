@@ -5,17 +5,18 @@ from typing import cast
 
 from sqlalchemy.orm import Session
 
-from danswer.chat.models import RelevanceChunk
-from danswer.configs.chat_configs import DISABLE_AGENTIC_SEARCH
-from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
+from danswer.chat.models import SectionRelevancePiece
+from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PromptConfig
+from danswer.llm.answering.prune_and_merge import _merge_sections
 from danswer.llm.answering.prune_and_merge import ChunkRange
 from danswer.llm.answering.prune_and_merge import merge_chunk_intervals
 from danswer.llm.interfaces import LLM
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import IndexFilters
@@ -29,6 +30,7 @@ from danswer.search.postprocessing.postprocessing import search_postprocessing
 from danswer.search.preprocessing.preprocessing import retrieval_preprocessing
 from danswer.search.retrieval.search_runner import retrieve_chunks
 from danswer.search.utils import inference_section_from_chunks
+from danswer.search.utils import relevant_sections_to_indices
 from danswer.secondary_llm_flows.agentic_evaluation import evaluate_inference_section
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
@@ -75,7 +77,6 @@ class SearchPipeline:
         # Preprocessing steps generate this
         self._search_query: SearchQuery | None = None
         self._predicted_search_type: SearchType | None = None
-        self._predicted_flow: QueryFlow | None = None
 
         # Initial document index retrieval chunks
         self._retrieved_chunks: list[InferenceChunk] | None = None
@@ -84,21 +85,22 @@ class SearchPipeline:
         # Reranking and LLM section selection can be run together
         # If only LLM selection is on, the reranked chunks are yielded immediatly
         self._reranked_sections: list[InferenceSection] | None = None
-        self._relevant_section_indices: list[int] | None = None
+        self._final_context_sections: list[InferenceSection] | None = None
+
+        self._section_relevance: list[SectionRelevancePiece] | None = None
 
         # Generates reranked chunks and LLM selections
         self._postprocessing_generator: (
-            Iterator[list[InferenceSection] | list[int]] | None
+            Iterator[list[InferenceSection] | list[SectionRelevancePiece]] | None
         ) = None
+
+        # No longer computed but keeping around in case it's reintroduced later
+        self._predicted_flow: QueryFlow | None = QueryFlow.QUESTION_ANSWER
 
     """Pre-processing"""
 
     def _run_preprocessing(self) -> None:
-        (
-            final_search_query,
-            predicted_search_type,
-            predicted_flow,
-        ) = retrieval_preprocessing(
+        final_search_query = retrieval_preprocessing(
             search_request=self.search_request,
             user=self.user,
             llm=self.llm,
@@ -106,8 +108,7 @@ class SearchPipeline:
             bypass_acl=self.bypass_acl,
         )
         self._search_query = final_search_query
-        self._predicted_search_type = predicted_search_type
-        self._predicted_flow = predicted_flow
+        self._predicted_search_type = final_search_query.search_type
 
     @property
     def search_query(self) -> SearchQuery:
@@ -148,8 +149,6 @@ class SearchPipeline:
             query=self.search_query,
             document_index=self.document_index,
             db_session=self.db_session,
-            hybrid_alpha=self.search_request.hybrid_alpha,
-            multilingual_expansion_str=MULTILINGUAL_QUERY_EXPANSION,
             retrieval_metrics_callback=self.retrieval_metrics_callback,
         )
 
@@ -332,44 +331,71 @@ class SearchPipeline:
         return self._reranked_sections
 
     @property
-    def relevant_section_indices(self) -> list[int]:
-        if self._relevant_section_indices is not None:
-            return self._relevant_section_indices
+    def final_context_sections(self) -> list[InferenceSection]:
+        if self._final_context_sections is not None:
+            return self._final_context_sections
 
-        self._relevant_section_indices = next(
-            cast(Iterator[list[int]], self._postprocessing_generator)
-        )
-        return self._relevant_section_indices
+        self._final_context_sections = _merge_sections(sections=self.reranked_sections)
+        return self._final_context_sections
 
     @property
-    def relevance_summaries(self) -> dict[str, RelevanceChunk]:
-        if DISABLE_AGENTIC_SEARCH:
+    def section_relevance(self) -> list[SectionRelevancePiece] | None:
+        if self._section_relevance is not None:
+            return self._section_relevance
+
+        if (
+            self.search_query.evaluation_type == LLMEvaluationType.SKIP
+            or DISABLE_LLM_DOC_RELEVANCE
+        ):
+            return None
+
+        if self.search_query.evaluation_type == LLMEvaluationType.UNSPECIFIED:
             raise ValueError(
-                "Agentic saerch operation called while DISABLE_AGENTIC_SEARCH is toggled"
+                "Attempted to access section relevance scores on search query with evaluation type `UNSPECIFIED`."
+                + "The search query evaluation type should have been specified."
             )
-        if len(self.reranked_sections) == 0:
-            logger.warning(
-                "No sections found in agentic search evalution. Returning empty dict."
+
+        if self.search_query.evaluation_type == LLMEvaluationType.AGENTIC:
+            sections = self.final_context_sections
+            functions = [
+                FunctionCall(
+                    evaluate_inference_section,
+                    (section, self.search_query.query, self.llm),
+                )
+                for section in sections
+            ]
+            try:
+                results = run_functions_in_parallel(function_calls=functions)
+                self._section_relevance = list(results.values())
+            except Exception:
+                raise ValueError(
+                    "An issue occured during the agentic evaluation proecss."
+                )
+
+        elif self.search_query.evaluation_type == LLMEvaluationType.BASIC:
+            if DISABLE_LLM_DOC_RELEVANCE:
+                raise ValueError(
+                    "Basic search evaluation operation called while DISABLE_LLM_DOC_RELEVANCE is enabled."
+                )
+            self._section_relevance = next(
+                cast(
+                    Iterator[list[SectionRelevancePiece]],
+                    self._postprocessing_generator,
+                )
             )
-            return {}
 
-        sections = self.reranked_sections
-        functions = [
-            FunctionCall(
-                evaluate_inference_section, (section, self.search_query.query, self.llm)
+        else:
+            # All other cases should have been handled above
+            raise ValueError(
+                f"Unexpected evaluation type: {self.search_query.evaluation_type}"
             )
-            for section in sections
-        ]
 
-        results = run_functions_in_parallel(function_calls=functions)
-
-        return {
-            next(iter(value)): value[next(iter(value))] for value in results.values()
-        }
+        return self._section_relevance
 
     @property
     def section_relevance_list(self) -> list[bool]:
-        return [
-            True if ind in self.relevant_section_indices else False
-            for ind in range(len(self.reranked_sections))
-        ]
+        llm_indices = relevant_sections_to_indices(
+            relevance_sections=self.section_relevance,
+            items=self.final_context_sections,
+        )
+        return [ind in llm_indices for ind in range(len(self.final_context_sections))]

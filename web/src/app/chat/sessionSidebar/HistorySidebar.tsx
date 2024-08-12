@@ -1,23 +1,12 @@
 "use client";
 
 import { FiEdit, FiFolderPlus } from "react-icons/fi";
-import {
-  Dispatch,
-  ForwardedRef,
-  forwardRef,
-  SetStateAction,
-  useContext,
-  useEffect,
-} from "react";
+import { ForwardedRef, forwardRef, useContext, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BasicClickable } from "@/components/BasicClickable";
 import { ChatSession } from "../interfaces";
 
-import {
-  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
-  NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
-} from "@/lib/constants";
+import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
 
 import { Folder } from "../folders/interfaces";
 import { createFolder } from "../folders/FolderManagement";
@@ -25,33 +14,30 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import React from "react";
-import { Logo } from "@/components/Logo";
-import { HeaderTitle } from "@/components/header/Header";
-import { TbLayoutSidebarRightExpand } from "react-icons/tb";
 import {
-  AssistantsIcon,
   AssistantsIconSkeleton,
-  BackIcon,
-  LefToLineIcon,
-  RightToLineIcon,
+  ClosedBookIcon,
 } from "@/components/icons/icons";
 import { PagesTab } from "./PagesTab";
-import { Tooltip } from "@/components/tooltip/Tooltip";
-import KeyboardSymbol from "@/lib/browserUtilities";
+import { pageType } from "./types";
+import LogoType from "@/components/header/LogoType";
 
 interface HistorySidebarProps {
-  page: "search" | "chat" | "assistants";
+  page: pageType;
   existingChats?: ChatSession[];
   currentChatSession?: ChatSession | null | undefined;
   folders?: Folder[];
   openedFolders?: { [key: number]: boolean };
   toggleSidebar?: () => void;
   toggled?: boolean;
+  removeToggle?: () => void;
+  reset?: () => void;
 }
 
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
   (
     {
+      reset = () => null,
       toggled,
       page,
       existingChats,
@@ -59,10 +45,10 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
       folders,
       openedFolders,
       toggleSidebar,
+      removeToggle,
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
-    const commandSymbol = KeyboardSymbol();
     const router = useRouter();
     const { popup, setPopup } = usePopup();
 
@@ -78,8 +64,18 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
     if (!combinedSettings) {
       return null;
     }
-    const settings = combinedSettings.settings;
+
     const enterpriseSettings = combinedSettings.enterpriseSettings;
+
+    const handleNewChat = () => {
+      reset();
+      const newChatUrl =
+        `/${page}` +
+        (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA && currentChatSession
+          ? `?assistantId=${currentChatSession.persona_id}`
+          : "");
+      router.push(newChatUrl);
+    };
 
     return (
       <>
@@ -97,51 +93,38 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             flex 
             flex-col relative
             h-screen
-            transition-transform`}
+            transition-transform 
+            mt-2`}
         >
-          <div className="max-w-full ml-3 mr-3 mt-2 flex flex gap-x-1 items-center my-auto text-text-700 text-xl">
-            <div className="mr-1 mb-auto h-6 w-6">
-              <Logo height={24} width={24} />
-            </div>
-
-            <div className="invisible">
-              {enterpriseSettings && enterpriseSettings.application_name ? (
-                <div>
-                  <HeaderTitle>
-                    {enterpriseSettings.application_name}
-                  </HeaderTitle>
-                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                    <p className="text-xs text-subtle">Powered by Danswer</p>
-                  )}
-                </div>
-              ) : (
-                <HeaderTitle>Danswer</HeaderTitle>
-              )}
-            </div>
-            {toggleSidebar && (
-              <Tooltip delayDuration={1000} content={`${commandSymbol}E show`}>
-                <button className="mb-auto ml-auto" onClick={toggleSidebar}>
-                  {!toggled ? <RightToLineIcon /> : <LefToLineIcon />}
-                </button>
-              </Tooltip>
-            )}
-          </div>
-          {!(page == "search") && (
+          <LogoType
+            showArrow={true}
+            toggled={toggled}
+            page={page}
+            toggleSidebar={toggleSidebar}
+          />
+          {page == "chat" && (
             <div className="mx-3 mt-4 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
               <Link
+                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
                 href={
-                  "/chat" +
+                  `/${page}` +
                   (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                  currentChatSession
-                    ? `?assistantId=${currentChatSession.persona_id}`
+                  currentChatSession?.persona_id
+                    ? `?assistantId=${currentChatSession?.persona_id}`
                     : "")
                 }
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey) {
+                    return;
+                  }
+                  if (handleNewChat) {
+                    handleNewChat();
+                  }
+                }}
               >
                 <FiEdit className="flex-none " />
                 <p className="my-auto flex items-center text-sm">New Chat</p>
               </Link>
-
               <button
                 onClick={() =>
                   createFolder("New Folder")
@@ -172,11 +155,20 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                   Manage Assistants
                 </p>
               </Link>
+              <Link
+                href="/prompts"
+                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+              >
+                <ClosedBookIcon className="h-4 w-4 my-auto" />
+                <p className="my-auto flex items-center text-sm">
+                  Manage Prompts
+                </p>
+              </Link>
             </div>
           )}
           <div className="border-b border-border pb-4 mx-3" />
-
           <PagesTab
+            closeSidebar={removeToggle}
             page={page}
             existingChats={existingChats}
             currentChatId={currentChatId}

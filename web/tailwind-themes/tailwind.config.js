@@ -23,6 +23,10 @@ module.exports = {
       },
 
       keyframes: {
+        "subtle-pulse": {
+          "0%, 100%": { opacity: 0.9 },
+          "50%": { opacity: 0.5 },
+        },
         pulse: {
           "0%, 100%": { opacity: 0.9 },
           "50%": { opacity: 0.4 },
@@ -30,7 +34,7 @@ module.exports = {
       },
       animation: {
         "fade-in-up": "fadeInUp 0.5s ease-out",
-
+        "subtle-pulse": "subtle-pulse 2s ease-in-out infinite",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
 
@@ -41,6 +45,8 @@ module.exports = {
         "2xl": "1420px",
         "3xl": "1700px",
         "4xl": "2000px",
+        mobile: { max: "767px" },
+        desktop: "768px",
       },
       fontFamily: {
         sans: ["var(--font-inter)"],
@@ -61,9 +67,21 @@ module.exports = {
         "searchbar-max": "750px",
       },
       colors: {
-        // background
+        // code styling
+        "code-bg": "black", // black
+        "code-text": "#e0e0e0", // light gray
+        "token-comment": "#608b4e", // green
+        "token-punctuation": "#d4d4d4", // light gray
+        "token-property": "#569cd6", // blue
+        "token-selector": "#e07b53", // more vibrant orange
+        "token-atrule": "#d18ad8", // more vibrant purple
+        "token-function": "#f0e68c", // more vibrant light yellow
+        "token-regex": "#9cdcfe", // light blue
+        "token-attr-name": "#9cdcfe", // light blue
 
+        // background
         "background-search": "#ffffff", // white
+        input: "#f5f5f5",
 
         background: "#fafafa", // 50
         "background-100": "#f5f5f5", // neutral-100
@@ -110,6 +128,7 @@ module.exports = {
         "border-light": "#f3f4f6", // gray-100
         "border-medium": "#d1d5db", // gray-300
         "border-strong": "#9ca3af", // gray-400
+        "border-dark": "#525252", // neutral-600
 
         // hover
         "hover-light": "#f3f4f6", // gray-100
@@ -224,10 +243,17 @@ module.exports = {
         "tremor-full": "9999px",
       },
       fontSize: {
+        "code-sm": "small",
         "tremor-label": ["0.75rem"],
         "tremor-default": ["0.875rem", { lineHeight: "1.25rem" }],
         "tremor-title": ["1.125rem", { lineHeight: "1.75rem" }],
         "tremor-metric": ["1.875rem", { lineHeight: "2.25rem" }],
+      },
+      fontWeight: {
+        "token-bold": "bold",
+      },
+      fontStyle: {
+        "token-italic": "italic",
       },
     },
   },

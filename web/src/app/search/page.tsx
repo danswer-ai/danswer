@@ -1,5 +1,3 @@
-import { SearchSection } from "@/components/search/SearchSection";
-import { Header } from "@/components/header/Header";
 import {
   AuthTypeMetadata,
   getAuthTypeMetadataSS,
@@ -36,7 +34,7 @@ import ToggleSearch from "./WrappedSearch";
 import {
   AGENTIC_SEARCH_TYPE_COOKIE_NAME,
   NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN,
-  DISABLE_AGENTIC_SEARCH,
+  DISABLE_LLM_DOC_RELEVANCE,
 } from "@/lib/constants";
 import WrappedSearch from "./WrappedSearch";
 
@@ -53,7 +51,7 @@ export default async function Home() {
     fetchSS("/manage/document-set"),
     fetchAssistantsSS(),
     fetchSS("/query/valid-tags"),
-    fetchSS("/secondary-index/get-embedding-models"),
+    fetchSS("/search-settings/get-embedding-models"),
     fetchSS("/query/user-searches"),
   ];
 
@@ -187,7 +185,6 @@ export default async function Home() {
 
   return (
     <>
-      <Header user={user} />
       <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
 
@@ -207,7 +204,7 @@ export default async function Home() {
 
       <InstantSSRAutoRefresh />
       <WrappedSearch
-        disabledAgentic={DISABLE_AGENTIC_SEARCH}
+        disabledAgentic={DISABLE_LLM_DOC_RELEVANCE}
         initiallyToggled={toggleSidebar}
         querySessions={querySessions}
         user={user}

@@ -24,8 +24,6 @@ from danswer.configs.app_configs import VESPA_HOST
 from danswer.configs.app_configs import VESPA_PORT
 from danswer.configs.app_configs import VESPA_TENANT_PORT
 from danswer.configs.chat_configs import DOC_TIME_DECAY
-from danswer.configs.chat_configs import EDIT_KEYWORD_QUERY
-from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.chat_configs import TITLE_CONTENT_RATIO
 from danswer.configs.constants import ACCESS_CONTROL_LIST
@@ -52,7 +50,6 @@ from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.constants import TITLE
 from danswer.configs.constants import TITLE_EMBEDDING
-from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
 )
@@ -65,10 +62,9 @@ from danswer.document_index.vespa.utils import replace_invalid_doc_id_characters
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.search.models import IndexFilters
 from danswer.search.models import InferenceChunkUncleaned
-from danswer.search.retrieval.search_runner import query_processing
-from danswer.search.retrieval.search_runner import remove_stop_words_and_punctuation
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
+from shared_configs.model_server_models import Embedding
 
 logger = setup_logger()
 
@@ -329,20 +325,16 @@ def _index_vespa_chunk(
         "Content-Type": "application/json",
     }
     document = chunk.source_document
+
     # No minichunk documents in vespa, minichunk vectors are stored in the chunk itself
     vespa_chunk_id = str(get_uuid_from_chunk(chunk))
     embeddings = chunk.embeddings
 
-    if chunk.embeddings.full_embedding is None:
-        embeddings.full_embedding = chunk.title_embedding
     embeddings_name_vector_map = {"full_chunk": embeddings.full_embedding}
 
     if embeddings.mini_chunk_embeddings:
         for ind, m_c_embed in enumerate(embeddings.mini_chunk_embeddings):
-            if m_c_embed is None:
-                embeddings_name_vector_map[f"mini_chunk_{ind}"] = chunk.title_embedding
-            else:
-                embeddings_name_vector_map[f"mini_chunk_{ind}"] = m_c_embed
+            embeddings_name_vector_map[f"mini_chunk_{ind}"] = m_c_embed
 
     title = document.get_title_for_document_index()
 
@@ -997,95 +989,17 @@ class VespaIndex(DocumentIndex):
         inference_chunks.sort(key=lambda chunk: chunk.chunk_id)
         return inference_chunks
 
-    def keyword_retrieval(
-        self,
-        query: str,
-        filters: IndexFilters,
-        time_decay_multiplier: float,
-        num_to_retrieve: int = NUM_RETURNED_HITS,
-        offset: int = 0,
-        edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
-    ) -> list[InferenceChunkUncleaned]:
-        # IMPORTANT: THIS FUNCTION IS NOT UP TO DATE, DOES NOT WORK CORRECTLY
-        vespa_where_clauses = _build_vespa_filters(filters)
-        yql = (
-            VespaIndex.yql_base.format(index_name=self.index_name)
-            + vespa_where_clauses
-            # `({defaultIndex: "content_summary"}userInput(@query))` section is
-            # needed for highlighting while the N-gram highlighting is broken /
-            # not working as desired
-            + '({grammar: "weakAnd"}userInput(@query) '
-            + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
-        )
-
-        final_query = query_processing(query) if edit_keyword_query else query
-
-        params: dict[str, str | int] = {
-            "yql": yql,
-            "query": final_query,
-            "input.query(decay_factor)": str(DOC_TIME_DECAY * time_decay_multiplier),
-            "hits": num_to_retrieve,
-            "offset": offset,
-            "ranking.profile": "keyword_search",
-            "timeout": _VESPA_TIMEOUT,
-        }
-
-        return _query_vespa(params)
-
-    def semantic_retrieval(
-        self,
-        query: str,
-        query_embedding: list[float],
-        filters: IndexFilters,
-        time_decay_multiplier: float,
-        num_to_retrieve: int = NUM_RETURNED_HITS,
-        offset: int = 0,
-        distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
-        edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
-    ) -> list[InferenceChunkUncleaned]:
-        # IMPORTANT: THIS FUNCTION IS NOT UP TO DATE, DOES NOT WORK CORRECTLY
-        vespa_where_clauses = _build_vespa_filters(filters)
-        yql = (
-            VespaIndex.yql_base.format(index_name=self.index_name)
-            + vespa_where_clauses
-            + f"(({{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding)) "
-            # `({defaultIndex: "content_summary"}userInput(@query))` section is
-            # needed for highlighting while the N-gram highlighting is broken /
-            # not working as desired
-            + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
-        )
-
-        query_keywords = (
-            " ".join(remove_stop_words_and_punctuation(query))
-            if edit_keyword_query
-            else query
-        )
-
-        params: dict[str, str | int] = {
-            "yql": yql,
-            "query": query_keywords,  # Needed for highlighting
-            "input.query(query_embedding)": str(query_embedding),
-            "input.query(decay_factor)": str(DOC_TIME_DECAY * time_decay_multiplier),
-            "hits": num_to_retrieve,
-            "offset": offset,
-            "ranking.profile": f"hybrid_search{len(query_embedding)}",
-            "timeout": _VESPA_TIMEOUT,
-        }
-
-        return _query_vespa(params)
-
     def hybrid_retrieval(
         self,
         query: str,
-        query_embedding: list[float],
+        query_embedding: Embedding,
+        final_keywords: list[str] | None,
         filters: IndexFilters,
+        hybrid_alpha: float,
         time_decay_multiplier: float,
         num_to_retrieve: int,
         offset: int = 0,
-        hybrid_alpha: float | None = HYBRID_ALPHA,
         title_content_ratio: float | None = TITLE_CONTENT_RATIO,
-        distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
-        edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunkUncleaned]:
         vespa_where_clauses = _build_vespa_filters(filters)
         # Needs to be at least as much as the value set in Vespa schema config
@@ -1099,20 +1013,14 @@ class VespaIndex(DocumentIndex):
             + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
         )
 
-        query_keywords = (
-            " ".join(remove_stop_words_and_punctuation(query))
-            if edit_keyword_query
-            else query
-        )
+        final_query = " ".join(final_keywords) if final_keywords else query
 
         params: dict[str, str | int | float] = {
             "yql": yql,
-            "query": query_keywords,
+            "query": final_query,
             "input.query(query_embedding)": str(query_embedding),
             "input.query(decay_factor)": str(DOC_TIME_DECAY * time_decay_multiplier),
-            "input.query(alpha)": hybrid_alpha
-            if hybrid_alpha is not None
-            else HYBRID_ALPHA,
+            "input.query(alpha)": hybrid_alpha,
             "input.query(title_content_ratio)": title_content_ratio
             if title_content_ratio is not None
             else TITLE_CONTENT_RATIO,

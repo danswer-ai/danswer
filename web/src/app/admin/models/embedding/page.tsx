@@ -4,9 +4,8 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { Button, Text, Title } from "@tremor/react";
-import { FiPackage } from "react-icons/fi";
 import useSWR, { mutate } from "swr";
-import { ModelOption, ModelPreview } from "./components/ModelSelector";
+import { ModelPreview } from "./components/ModelSelector";
 import { useState } from "react";
 import { ReindexingProgressTable } from "./components/ReindexingProgressTable";
 import { Modal } from "@/components/Modal";
@@ -20,7 +19,8 @@ import {
   EmbeddingModelDescriptor,
 } from "./components/types";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { Connector, ConnectorIndexingStatus } from "@/lib/types";
+import { ConnectorIndexingStatus } from "@/lib/types";
+import { Connector } from "@/lib/connectors/connectors";
 import Link from "next/link";
 import OpenEmbeddingPage from "./OpenEmbeddingPage";
 import CloudEmbeddingPage from "./CloudEmbeddingPage";
@@ -82,7 +82,7 @@ function Main() {
     isLoading: isLoadingCurrentModel,
     error: currentEmeddingModelError,
   } = useSWR<CloudEmbeddingModel | HostedEmbeddingModel | null>(
-    "/api/secondary-index/get-current-embedding-model",
+    "/api/search-settings/get-current-embedding-model",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
@@ -97,7 +97,7 @@ function Main() {
     isLoading: isLoadingFutureModel,
     error: futureEmeddingModelError,
   } = useSWR<CloudEmbeddingModel | HostedEmbeddingModel | null>(
-    "/api/secondary-index/get-secondary-embedding-model",
+    "/api/search-settings/get-secondary-embedding-model",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
@@ -139,7 +139,7 @@ function Main() {
     }
 
     const response = await fetch(
-      "/api/secondary-index/set-new-embedding-model",
+      "/api/search-settings/set-new-embedding-model",
       {
         method: "POST",
         body: JSON.stringify(newModel),
@@ -151,7 +151,7 @@ function Main() {
     if (response.ok) {
       setShowTentativeOpenProvider(null);
       setShowTentativeModel(null);
-      mutate("/api/secondary-index/get-secondary-embedding-model");
+      mutate("/api/search-settings/get-secondary-embedding-model");
       if (!connectors || !connectors.length) {
         setShowAddConnectorPopup(true);
       }
@@ -161,12 +161,12 @@ function Main() {
   };
 
   const onCancel = async () => {
-    const response = await fetch("/api/secondary-index/cancel-new-embedding", {
+    const response = await fetch("/api/search-settings/cancel-new-embedding", {
       method: "POST",
     });
     if (response.ok) {
       setShowTentativeModel(null);
-      mutate("/api/secondary-index/get-secondary-embedding-model");
+      mutate("/api/search-settings/get-secondary-embedding-model");
     } else {
       alert(
         `Failed to cancel embedding model update - ${await response.text()}`
@@ -189,7 +189,7 @@ function Main() {
 
   const onConfirmSelection = async (model: EmbeddingModelDescriptor) => {
     const response = await fetch(
-      "/api/secondary-index/set-new-embedding-model",
+      "/api/search-settings/set-new-embedding-model",
       {
         method: "POST",
         body: JSON.stringify(model),
@@ -200,7 +200,7 @@ function Main() {
     );
     if (response.ok) {
       setShowTentativeModel(null);
-      mutate("/api/secondary-index/get-secondary-embedding-model");
+      mutate("/api/search-settings/get-secondary-embedding-model");
       if (!connectors || !connectors.length) {
         setShowAddConnectorPopup(true);
       }
@@ -265,8 +265,8 @@ function Main() {
   return (
     <div className="h-screen">
       <Text>
-        Embedding models are used to generate embeddings for your documents,
-        which then power Danswer&apos;s search.
+        These deep learning models are used to generate vector representations
+        of your documents, which then power Danswer&apos;s search.
       </Text>
 
       {alreadySelectedModel && (
@@ -347,9 +347,7 @@ function Main() {
       {currentModel ? (
         <>
           <Title className="mt-8 mb-2">Current Embedding Model</Title>
-          <Text>
-            <ModelPreview model={currentModel} />
-          </Text>
+          <ModelPreview model={currentModel} />
         </>
       ) : (
         <Title className="mt-8 mb-4">Choose your Embedding Model</Title>
@@ -359,12 +357,12 @@ function Main() {
         <>
           <Title className="mt-8">Switch your Embedding Model</Title>
           <Text className="mb-4">
-            If the current model is not working for you, you can update your
-            model choice below. Note that this will require a complete
-            re-indexing of all your documents across every connected source. We
-            will take care of this in the background, but depending on the size
-            of your corpus, this could take hours, day, or even weeks. You can
-            monitor the progress of the re-indexing on this page.
+            Note that updating the backing model will require a complete
+            re-indexing of all documents across every connected source. This is
+            taken care of in the background so that the system can continue to
+            be used, but depending on the size of the corpus, this could take
+            hours or days. You can monitor the progress of the re-indexing on
+            this page while the models are being switched.
           </Text>
 
           <div className="mt-8 text-sm mr-auto mb-12 divide-x-2 flex">
@@ -372,7 +370,7 @@ function Main() {
               onClick={() => setOpenToggle(true)}
               className={` mx-2 p-2 font-bold  ${
                 openToggle
-                  ? "rounded bg-neutral-900 text-neutral-100 underline"
+                  ? "rounded bg-background-900 text-text-100 underline"
                   : "hover:underline"
               }`}
             >
@@ -383,7 +381,7 @@ function Main() {
                 onClick={() => setOpenToggle(false)}
                 className={`mx-2 p-2 font-bold  ${
                   !openToggle
-                    ? "rounded bg-neutral-900   text-neutral-100 underline"
+                    ? "rounded bg-background-900 text-text-100 underline"
                     : " hover:underline"
                 }`}
               >

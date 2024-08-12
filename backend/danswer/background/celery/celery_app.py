@@ -14,6 +14,7 @@ from danswer.background.task_utils import name_cc_cleanup_task
 from danswer.background.task_utils import name_cc_prune_task
 from danswer.background.task_utils import name_document_set_sync_task
 from danswer.configs.app_configs import JOB_TIMEOUT
+from danswer.configs.constants import POSTGRES_CELERY_APP_NAME
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.models import InputType
 from danswer.db.connector_credential_pair import get_connector_credential_pair
@@ -38,7 +39,9 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-connection_string = build_connection_string(db_api=SYNC_DB_API)
+connection_string = build_connection_string(
+    db_api=SYNC_DB_API, app_name=POSTGRES_CELERY_APP_NAME
+)
 celery_broker_url = f"sqla+{connection_string}"
 celery_backend_url = f"db+{connection_string}"
 celery_app = Celery(__name__, broker=celery_broker_url, backend=celery_backend_url)
@@ -100,7 +103,7 @@ def cleanup_connector_credential_pair_task(
 @build_celery_task_wrapper(name_cc_prune_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def prune_documents_task(connector_id: int, credential_id: int) -> None:
-    """connector pruning task. For a cc pair, this task pulls all docuement IDs from the source
+    """connector pruning task. For a cc pair, this task pulls all document IDs from the source
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
     from the most recently pulled document ID list"""
     with Session(get_sqlalchemy_engine()) as db_session:

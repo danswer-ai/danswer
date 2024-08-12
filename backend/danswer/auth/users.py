@@ -67,6 +67,14 @@ from danswer.utils.variable_functionality import (
 logger = setup_logger()
 
 
+def is_user_admin(user: User | None) -> bool:
+    if AUTH_TYPE == AuthType.DISABLED:
+        return True
+    if user and user.role == UserRole.ADMIN:
+        return True
+    return False
+
+
 def verify_auth_setting() -> None:
     if AUTH_TYPE not in [AuthType.DISABLED, AuthType.BASIC, AuthType.GOOGLE_OAUTH]:
         raise ValueError(
@@ -346,6 +354,12 @@ async def double_check_user(
             detail="Access denied. User is not verified.",
         )
 
+    if user.oidc_expiry and user.oidc_expiry < datetime.now(timezone.utc):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. User's OIDC token has expired.",
+        )
+
     return user
 
 
@@ -364,4 +378,5 @@ async def current_admin_user(user: User | None = Depends(current_user)) -> User 
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. User is not an admin.",
         )
+
     return user
