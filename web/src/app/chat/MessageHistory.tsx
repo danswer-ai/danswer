@@ -274,53 +274,29 @@ type MessageRendererProps = {
   currentPersona: Persona;
   isFetchingChatMessages: boolean;
 };
-
-export const MessageRenderer = forwardRef<
-  {
-    lastMessageRef: HTMLDivElement | null;
-    endPaddingRef: HTMLDivElement | null;
-    endDivRef: HTMLDivElement | null;
-    chatSessionIdRef: number | null;
-  },
-  MessageRendererProps
->((props, ref) => {
-  const {
-    completeMessageDetail,
-    onSubmit,
-    upsertToCompleteMessageMap,
-    setSelectedMessageForDocDisplay,
-    setMessageAsLatest,
-    setCompleteMessageDetail,
-    selectedMessageForDocDisplay,
-    messageHistory,
-    isStreaming,
-    setCurrentFeedback,
-    liveAssistant,
-    availableAssistants,
-    toggleDocumentSelectionAspects,
-    selectedDocuments,
-    setPopup,
-    retrievalEnabled,
-    alternativeGeneratingAssistant,
-    alternativeAssistant,
-    currentPersona,
-    selectedAssistant,
-    isFetchingChatMessages,
-  } = props;
-
-  const lastMessageRef = useRef<HTMLDivElement>(null);
-  const endPaddingRef = useRef<HTMLDivElement>(null);
-  const endDivRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-  const chatSessionIdRef = useRef<number | null>(null);
-
-  useImperativeHandle(ref, () => ({
-    lastMessageRef: lastMessageRef.current,
-    chatSessionIdRef: chatSessionIdRef.current,
-    endPaddingRef: endPaddingRef.current,
-    endDivRef: endDivRef.current,
-  }));
-
+export const MessageRenderer: React.FC<MessageRendererProps> = ({
+  completeMessageDetail,
+  onSubmit,
+  upsertToCompleteMessageMap,
+  setSelectedMessageForDocDisplay,
+  setMessageAsLatest,
+  setCompleteMessageDetail,
+  selectedMessageForDocDisplay,
+  messageHistory,
+  isStreaming,
+  setCurrentFeedback,
+  liveAssistant,
+  availableAssistants,
+  toggleDocumentSelectionAspects,
+  selectedDocuments,
+  setPopup,
+  retrievalEnabled,
+  alternativeGeneratingAssistant,
+  alternativeAssistant,
+  currentPersona,
+  selectedAssistant,
+  isFetchingChatMessages,
+}) => {
   const sizeMap = useRef<{ [key: number]: number }>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(0);
@@ -350,7 +326,6 @@ export const MessageRenderer = forwardRef<
 
   const setSize = useCallback((index: number, size: number) => {
     sizeMap.current = { ...sizeMap.current, [index]: size };
-    listRef.current?.recomputeRowHeights(index);
   }, []);
 
   const rowRenderer = ({ index, key, style }: any) => (
@@ -397,7 +372,6 @@ export const MessageRenderer = forwardRef<
       <AutoSizer>
         {({ width, height }: { width: number; height: number }) => (
           <List
-            ref={listRef}
             height={height}
             rowCount={messageHistory.length}
             rowHeight={getSize}
@@ -410,7 +384,7 @@ export const MessageRenderer = forwardRef<
       {isStreaming &&
         messageHistory.length > 0 &&
         messageHistory[messageHistory.length - 1].type === "user" && (
-          <div key={`${messageHistory.length}-${chatSessionIdRef.current}`}>
+          <div key={`${messageHistory.length}`}>
             <AIMessage
               currentPersona={liveAssistant}
               alternativeAssistant={
@@ -466,8 +440,6 @@ export const MessageRenderer = forwardRef<
           </div>
         )}
       {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-      <div ref={endPaddingRef} className="h-[95px]" />
-      <div ref={endDivRef} />
     </div>
   );
-});
+};
