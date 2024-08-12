@@ -75,7 +75,6 @@ jobs:
       - name: Wait for service to be ready
         run: |
           echo "Starting wait-for-service script..."
-          echo "Service URL: http://localhost:8080"
           
           start_time=$(date +%s)
           timeout=300  # 5 minutes in seconds
@@ -90,7 +89,7 @@ jobs:
             fi
             
             # Use curl with error handling to ignore specific exit code 56
-            response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 || echo "curl_error")
+            response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health || echo "curl_error")
             
             if [ "$response" = "200" ]; then
               echo "Service is ready!"
@@ -146,6 +145,6 @@ jobs:
         with:
           name: docker-logs
           path: ${{ github.workspace }}/docker-compose.log
-          
+
       - name: Stop Docker containers
         run: docker compose down
