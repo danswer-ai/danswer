@@ -173,6 +173,7 @@ export const AIMessage = ({
 
   const finalContent = processContent(content as string);
 
+  const [isRegenerateHovered, setIsRegenerateHovered] = useState(false);
   const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
 
   const settings = useContext(SettingsContext);
@@ -534,6 +535,7 @@ export const AIMessage = ({
                           </CustomTooltip>
                           {regenerate && (
                             <RegenerateOption
+                              onHoverChange={setIsRegenerateHovered}
                               selectedAssistant={currentPersona!}
                               regenerate={regenerate}
                               alternateModel={alternateModel}
@@ -546,8 +548,8 @@ export const AIMessage = ({
                         ref={hoverElementRef}
                         className={`
                         absolute -bottom-4
-                        invisible ${(isHovering || settings?.isMobile) && "!visible"}
-                        opacity-0 ${(isHovering || settings?.isMobile) && "!opacity-100"}
+                        invisible ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!visible"}
+                        opacity-0 ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!opacity-100"}
                         translate-y-2 ${(isHovering || settings?.isMobile) && "!translate-y-0"}
                         transition-transform duration-300 ease-in-out 
                         flex md:flex-row gap-x-0.5 bg-background-125/40 p-1.5 rounded-lg
@@ -576,6 +578,7 @@ export const AIMessage = ({
                               selectedAssistant={currentPersona!}
                               regenerate={regenerate}
                               alternateModel={alternateModel}
+                              onHoverChange={setIsRegenerateHovered}
                             />
                           )}
                         </TooltipGroup>

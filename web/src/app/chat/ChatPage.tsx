@@ -460,6 +460,13 @@ export function ChatPage({
   );
   const [submittedMessage, setSubmittedMessage] = useState("");
   const [chatState, setChatState] = useState<ChatState>("input");
+  interface RegenerationState {
+    regenerating: boolean;
+    finalMessageIndex: number;
+  }
+  const [regenerationState, setRegenerationState] =
+    useState<RegenerationState | null>(null);
+
   // const [isLoadingResponse, setIsLoadingResponse] = useState(false);
   // const [isStreaming, setIsStreaming] = useState(false);
   const [abortController, setAbortController] =
@@ -710,6 +717,7 @@ export function ChatPage({
     isSeededChat,
     alternativeAssistantOverride = null,
     modelOverRide,
+    finalMessageIndex,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
@@ -719,6 +727,7 @@ export function ChatPage({
     alternativeAssistantOverride?: Persona | null;
     regenerate?: boolean;
     modelOverRide?: LlmOverride;
+    finalMessageIndex?: number;
   } = {}) => {
     if (chatState != "input") {
       setPopup({
@@ -728,8 +737,13 @@ export function ChatPage({
 
       return;
     }
-
+    setRegenerationState(
+      regenerate
+        ? { regenerating: true, finalMessageIndex: finalMessageIndex || 0 }
+        : null
+    );
     setChatState("loading");
+
     const controller = new AbortController();
     setAbortController(controller);
 
@@ -769,6 +783,7 @@ export function ChatPage({
           "Failed to re-send message - please refresh the page and try again.",
         type: "error",
       });
+      setRegenerationState(null);
       setChatState("input");
       return;
     }
@@ -911,12 +926,13 @@ export function ChatPage({
                 latestChildMessageId: user_message_id,
               });
             }
+            console.log(regenerate ? [] : messageUpdates);
 
             const {
               messageMap: currentFrozenMessageMap,
               sessionId: currentFrozenSessionId,
             } = upsertToCompleteMessageMap({
-              messages: messageUpdates,
+              messages: regenerate ? [] : messageUpdates,
               chatSessionId: currChatSessionId,
             });
 
@@ -1058,6 +1074,7 @@ export function ChatPage({
         completeMessageMapOverride: completeMessageDetail.messageMap,
       });
     }
+    setRegenerationState(null);
     setChatState("input");
     if (isNewSession) {
       if (finalMessage) {
@@ -1280,13 +1297,14 @@ export function ChatPage({
   };
   const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
-  function createRegenerator(responseId: number) {
-    // Returns new function that only needs modelOverRide to be specified when called
+  function createRegenerator(responseId: number, finalMessageIndex: number) {
+    // Returns new function that only needs `modelOverRide` to be specified when called
 
     return async function (modelOverRide: LlmOverride) {
       return await onSubmit({
         regenerate: true,
         messageIdToResend: responseId,
+        finalMessageIndex,
         modelOverRide,
       });
     };
@@ -1455,6 +1473,13 @@ export function ChatPage({
                               const parentMessage = message.parentMessageId
                                 ? messageMap.get(message.parentMessageId)
                                 : null;
+                              if (
+                                regenerationState?.regenerating &&
+                                i >= regenerationState.finalMessageIndex
+                              ) {
+                                return <></>;
+                              }
+
                               if (message.type === "user") {
                                 return (
                                   <div key={messageReactComponentKey}>
@@ -1537,7 +1562,8 @@ export function ChatPage({
                                     <AIMessage
                                       alternateModel={message.alternate_model}
                                       regenerate={createRegenerator(
-                                        parentMessage?.messageId!
+                                        parentMessage?.messageId!,
+                                        i
                                       )}
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
@@ -1680,6 +1706,7 @@ export function ChatPage({
                               }
                             })}
                             {chatState == "loading" &&
+                              !regenerationState?.regenerating &&
                               messageHistory[messageHistory.length - 1]?.type !=
                                 "user" && (
                                 <HumanMessage
@@ -1687,6 +1714,7 @@ export function ChatPage({
                                   content={submittedMessage}
                                 />
                               )}
+
                             {chatState == "loading" && (
                               <div
                                 key={`${messageHistory.length}-${chatSessionIdRef.current}`}

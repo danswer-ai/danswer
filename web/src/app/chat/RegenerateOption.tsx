@@ -105,10 +105,12 @@ export default function RegenerateOption({
   selectedAssistant,
   regenerate,
   alternateModel,
+  onHoverChange,
 }: {
   selectedAssistant: Persona;
   regenerate: (modelOverRide: LlmOverride) => Promise<void>;
   alternateModel?: string;
+  onHoverChange: (isHovered: boolean) => void;
 }) {
   const llmOverrideManager = useLlmOverride();
 
@@ -153,7 +155,11 @@ export default function RegenerateOption({
       : llmName);
 
   return (
-    <div className="group flex items-center relative">
+    <div
+      className="group flex items-center relative"
+      onMouseEnter={() => onHoverChange(true)}
+      onMouseLeave={() => onHoverChange(false)}
+    >
       <RegenerateDropdown
         alternate={alternateModel}
         options={llmOptions}
