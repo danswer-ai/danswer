@@ -4,6 +4,7 @@ import { useRef, useEffect, useCallback } from "react";
 
 import { MessageRouter } from "./MessageRouter";
 import { MessageHistoryProps } from "./types";
+import { debounce } from "lodash";
 
 export const MessageHistory: React.FC<MessageHistoryProps> = ({
   completeMessageDetail,
@@ -64,16 +65,27 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
     return sizeMap.current[index.index] || 50;
   }, []);
 
-  const setSize = useCallback((index: number, size: number) => {
-    const currentSize = sizeMap.current[index];
-    if (currentSize !== size) {
-      sizeMap.current[index] = size;
-      if (listRef.current) {
-        listRef.current.recomputeRowHeights(index);
-        listRef.current.forceUpdateGrid();
+  const debouncedSetSize = useCallback(
+    debounce((index: number, size: number) => {
+      const currentSize = sizeMap.current[index];
+      if (currentSize !== size) {
+        sizeMap.current[index] = size;
+        if (listRef.current) {
+          listRef.current.recomputeRowHeights(index);
+          listRef.current.forceUpdateGrid();
+        }
       }
-    }
-  }, []);
+    }, 1),
+    [messageHistory]
+  );
+
+  const setSize = useCallback(
+    (index: number, size: number) => {
+      debouncedSetSize(index, size);
+    },
+    [debouncedSetSize]
+  );
+
   const rowRenderer = ({ index, key, style }: any) => (
     <div style={style} key={key}>
       <AutoSizer disableHeight>
@@ -120,7 +132,10 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
   );
 
   return (
-    <div className={`flex-grow overflow-visible`} ref={containerRef}>
+    <div
+      className={`flex-grow  max-h-[80] overflow-visible`}
+      ref={containerRef}
+    >
       <AutoSizer className="h-full">
         {({ width, height }: { width: number; height: number }) => (
           <List
@@ -132,7 +147,9 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
             rowRenderer={rowRenderer}
             width={width}
             overscanRowCount={2}
-            setsi
+            onRowsRendered={({ startIndex, stopIndex }) => {
+              console.log(`Rendering rows from ${startIndex} to ${stopIndex}`);
+            }}
           />
         )}
       </AutoSizer>
