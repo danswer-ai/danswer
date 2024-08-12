@@ -664,6 +664,7 @@ export const SearchSection = ({
                     <div className="mt-6">
                       {!(agenticResults && isFetching) || disabledAgentic ? (
                         <SearchResultsDisplay
+                          searchState={searchState}
                           disabledAgentic={disabledAgentic}
                           contentEnriched={contentEnriched}
                           comments={comments}
@@ -736,6 +737,7 @@ export const SearchSection = ({
                     <div className="mt-6">
                       {!(agenticResults && isFetching) || disabledAgentic ? (
                         <SearchResultsDisplay
+                          searchState={searchState}
                           disabledAgentic={disabledAgentic}
                           contentEnriched={contentEnriched}
                           comments={comments}
