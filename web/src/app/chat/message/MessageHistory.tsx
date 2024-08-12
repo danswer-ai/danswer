@@ -1,16 +1,7 @@
 import { List, AutoSizer } from "react-virtualized";
 
-import {
-  SetStateAction,
-  useRef,
-  useEffect,
-  Dispatch,
-  useCallback,
-} from "react";
-import { Persona } from "../../admin/assistants/interfaces";
-import { Message } from "../interfaces";
-import { ChatState, FeedbackType, RegenerationState } from "../types";
-import { LlmOverride } from "@/lib/hooks";
+import { useRef, useEffect, useCallback } from "react";
+
 import { MessageRouter } from "./MessageRouter";
 import { MessageHistoryProps } from "./types";
 
@@ -42,6 +33,7 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
   useEffect(() => {
     const updateScrollingContainerHeight = () => {
       if (listRef.current && listRef.current.Grid) {
+        listRef.current.recomputeRowHeights();
         const grid = listRef.current.Grid as any;
         if (grid._scrollingContainer && containerRef.current) {
           containerRef.current.style.height = `${grid._scrollingContainer.scrollHeight || 1}px`;
@@ -51,7 +43,11 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
 
     updateScrollingContainerHeight();
 
-    const resizeObserver = new ResizeObserver(updateScrollingContainerHeight);
+    const resizeObserver = new ResizeObserver(() => {
+      updateScrollingContainerHeight();
+      listRef.current?.recomputeRowHeights(0);
+    });
+
     if (listRef.current && listRef.current.Grid) {
       const grid = listRef.current.Grid as any;
       if (grid._scrollingContainer) {
@@ -69,22 +65,26 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
   }, []);
 
   const setSize = useCallback((index: number, size: number) => {
-    if (sizeMap.current[index] !== size) {
+    const currentSize = sizeMap.current[index];
+    if (currentSize !== size) {
       sizeMap.current[index] = size;
       if (listRef.current) {
         listRef.current.recomputeRowHeights(index);
+        listRef.current.forceUpdateGrid();
       }
     }
   }, []);
-
   const rowRenderer = ({ index, key, style }: any) => (
     <div style={style} key={key}>
       <AutoSizer disableHeight>
         {({ width }: { width: number }) => (
           <div
             ref={(el) => {
-              if (el && el.clientHeight !== sizeMap.current[index]) {
-                setSize(index, el.clientHeight);
+              if (el) {
+                const newHeight = el.clientHeight;
+                if (newHeight !== sizeMap.current[index]) {
+                  setSize(index, newHeight);
+                }
               }
             }}
           >
@@ -132,6 +132,7 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
             rowRenderer={rowRenderer}
             width={width}
             overscanRowCount={2}
+            setsi
           />
         )}
       </AutoSizer>
