@@ -7,10 +7,11 @@ from typing import Dict
 from typing import Type
 
 from danswer.dynamic_configs.interface import JSON_ro
-from danswer.llm.answering.models import ChatMessage
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.interfaces import LLM
 from danswer.tools.models import ToolResponse
+
+# from danswer.llm.answering.models import ChatMessage
 
 
 class Tool(abc.ABC):
@@ -91,7 +92,7 @@ class ToolRegistry:
         return cls._registry[tool_id]
 
     @classmethod
-    def get_prompt(cls, tool_id: str, message: PreviousMessage | ChatMessage) -> str:
+    def get_prompt(cls, tool_id: str, message: PreviousMessage) -> str:
         if tool_id not in cls._registry:
             raise ValueError(f"No tool registered with id: {tool_id}")
         tool = cls._registry[tool_id]

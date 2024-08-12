@@ -702,6 +702,7 @@ class Answer:
             and not self.skip_explicit_tool_calling
             else self._raw_output_for_non_explicit_tool_calling_llms()
         )
+        print(f" output generator {output_generator} ")
 
         self.processing_stream = []
 

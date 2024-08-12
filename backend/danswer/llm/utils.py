@@ -96,9 +96,6 @@ def translate_danswer_msg_to_langchain(
     raise ValueError(f"New message type {msg.message_type} not handled")
 
 
-# from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
-
-
 def translate_history_to_basemessages(
     history: list[ChatMessage] | list["PreviousMessage"],
 ) -> tuple[list[BaseMessage], list[int]]:
@@ -108,6 +105,7 @@ def translate_history_to_basemessages(
     token_count = 1
     from danswer.llm.temporary import create_previous_message
     from danswer.tools.tool import ToolRegistry
+    from danswer.llm.answering.models import PreviousMessage
 
     for i, msg in enumerate(history):
         message = cast(ChatMessage, msg)
