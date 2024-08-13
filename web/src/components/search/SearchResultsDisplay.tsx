@@ -35,8 +35,10 @@ export const SearchResultsDisplay = ({
   isFetching,
   defaultOverrides,
   performSweep,
+  searchState,
   sweep,
 }: {
+  searchState: searchState;
   disabledAgentic?: boolean;
   contentEnriched?: boolean;
   agenticResults?: boolean | null;
@@ -92,16 +94,11 @@ export const SearchResultsDisplay = ({
   if (isFetching && !answer && !documents) {
     return null;
   }
-  if (
-    answer === null &&
-    documents != null &&
-    documents.length == 0 &&
-    !isFetching
-  ) {
+  if (documents != null && documents.length == 0 && searchState == "input") {
     return (
       <div className="text-base gap-x-1.5 flex flex-col">
-        <div className="flex gap-x-2 items-center text-error">
-          <AlertIcon size={16} className="text-error" />
+        <div className="flex gap-x-2 items-center font-semibold">
+          <AlertIcon size={16} />
           No documents were found!
         </div>
         <p>
@@ -114,7 +111,6 @@ export const SearchResultsDisplay = ({
   if (
     answer === null &&
     (documents === null || documents.length === 0) &&
-    quotes === null &&
     !isFetching
   ) {
     return (
@@ -166,12 +162,6 @@ export const SearchResultsDisplay = ({
   return (
     <>
       {popup}
-
-      {documents && documents.length == 0 && (
-        <p className="flex text-lg font-bold">
-          No docs found! Ensure that you have enabled at least one connector
-        </p>
-      )}
 
       {documents && documents.length > 0 && (
         <div className="mt-4">
