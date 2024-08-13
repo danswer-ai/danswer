@@ -681,7 +681,6 @@ export async function useScrollonStream({
           endDivRef.current.scrollIntoView();
         } else {
           blockActionRef.current = true;
-          console.log("HI");
 
           scrollableDivRef?.current?.scrollBy({
             left: 0,
@@ -701,7 +700,6 @@ export async function useScrollonStream({
   useEffect(() => {
     if (scrollableDivRef?.current && chatState == "input") {
       if (scrollDist.current < distance) {
-        console.log("SCROOLL");
         scrollableDivRef?.current?.scrollBy({
           left: 0,
           top: Math.max(scrollDist.current + 600, 0),

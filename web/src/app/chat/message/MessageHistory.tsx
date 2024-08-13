@@ -32,7 +32,6 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
   const listRef = useRef<List>(null);
 
   useEffect(() => {
-    console.log("UPDATING");
     const updateScrollingContainerHeight = () => {
       if (listRef.current && listRef.current.Grid) {
         listRef.current.recomputeRowHeights();
@@ -88,7 +87,7 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
   );
 
   const rowRenderer = ({ index, key, style }: any) => (
-    <div className="overflow-visible" style={style} key={key}>
+    <div className="w-full h-full" style={style} key={key}>
       <AutoSizer disableHeight>
         {({ width }: { width: number }) => (
           <div
@@ -133,25 +132,24 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
   );
 
   return (
-    <div className={`flex-grow max-h-full overflow-visible`} ref={containerRef}>
-      <AutoSizer className="bg-red-500 overflow-visible h-full">
-        {({ width, height }: { width: number; height: number }) => (
-          <List
-            className="h-full"
-            ref={listRef}
-            height={height}
-            rowCount={messageHistory.length}
-            rowHeight={getSize}
-            rowRenderer={rowRenderer}
-            width={width}
-            overscanRowCount={2}
-            onRowsRendered={({ startIndex, stopIndex }) => {
-              console.log(`Rendering rows from ${startIndex} to ${stopIndex}`);
-            }}
-          />
-        )}
-      </AutoSizer>
-      {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-    </div>
+    <AutoSizer className="w-full flex-grow overflow-hidden h-full">
+      {({ width, height }: { width: number; height: number }) => (
+        <List
+          className="h-full overflow-hidden"
+          ref={listRef}
+          height={height}
+          rowCount={messageHistory.length}
+          rowHeight={getSize}
+          rowRenderer={rowRenderer}
+          width={width}
+          overscanRowCount={4}
+          onRowsRendered={({ startIndex, stopIndex }) => {
+            console.log(`Rendering rows from ${startIndex} to ${stopIndex}`);
+          }}
+        />
+      )}
+    </AutoSizer>
+
+    // </div>
   );
 };

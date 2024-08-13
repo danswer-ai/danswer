@@ -1467,45 +1467,49 @@ export function ChatPage({
                                 (hasPerformedInitialScroll ? "" : "invisible")
                               }
                             >
-                              <MessageHistory
-                                chatState={chatState}
-                                regenerationState={regenerationState}
-                                createRegenerator={createRegenerator}
-                                isFetchingChatMessages={isFetchingChatMessages}
-                                alternativeGeneratingAssistant={
-                                  alternativeGeneratingAssistant!
-                                }
-                                selectedAssistant={selectedAssistant!}
-                                currentPersona={currentPersona}
-                                alternativeAssistant={alternativeAssistant!}
-                                // message={message}
-                                completeMessageDetail={completeMessageDetail}
-                                onSubmit={onSubmit}
-                                upsertToCompleteMessageMap={
-                                  upsertToCompleteMessageMap
-                                }
-                                setSelectedMessageForDocDisplay={
-                                  setSelectedMessageForDocDisplay
-                                }
-                                setMessageAsLatest={setMessageAsLatest}
-                                setCompleteMessageDetail={
-                                  setCompleteMessageDetail
-                                }
-                                selectedMessageForDocDisplay={
-                                  selectedMessageForDocDisplay
-                                }
-                                messageHistory={messageHistory}
-                                isStreaming={isStreaming}
-                                setCurrentFeedback={setCurrentFeedback}
-                                liveAssistant={liveAssistant}
-                                availableAssistants={availableAssistants}
-                                toggleDocumentSelectionAspects={
-                                  toggleDocumentSelectionAspects
-                                }
-                                selectedDocuments={selectedDocuments}
-                                setPopup={setPopup}
-                                retrievalEnabled={retrievalEnabled}
-                              />
+                              <div className="flex-grow  w-full h-full bg-black">
+                                <MessageHistory
+                                  chatState={chatState}
+                                  regenerationState={regenerationState}
+                                  createRegenerator={createRegenerator}
+                                  isFetchingChatMessages={
+                                    isFetchingChatMessages
+                                  }
+                                  alternativeGeneratingAssistant={
+                                    alternativeGeneratingAssistant!
+                                  }
+                                  selectedAssistant={selectedAssistant!}
+                                  currentPersona={currentPersona}
+                                  alternativeAssistant={alternativeAssistant!}
+                                  // message={message}
+                                  completeMessageDetail={completeMessageDetail}
+                                  onSubmit={onSubmit}
+                                  upsertToCompleteMessageMap={
+                                    upsertToCompleteMessageMap
+                                  }
+                                  setSelectedMessageForDocDisplay={
+                                    setSelectedMessageForDocDisplay
+                                  }
+                                  setMessageAsLatest={setMessageAsLatest}
+                                  setCompleteMessageDetail={
+                                    setCompleteMessageDetail
+                                  }
+                                  selectedMessageForDocDisplay={
+                                    selectedMessageForDocDisplay
+                                  }
+                                  messageHistory={messageHistory}
+                                  isStreaming={isStreaming}
+                                  setCurrentFeedback={setCurrentFeedback}
+                                  liveAssistant={liveAssistant}
+                                  availableAssistants={availableAssistants}
+                                  toggleDocumentSelectionAspects={
+                                    toggleDocumentSelectionAspects
+                                  }
+                                  selectedDocuments={selectedDocuments}
+                                  setPopup={setPopup}
+                                  retrievalEnabled={retrievalEnabled}
+                                />
+                              </div>
 
                               {chatState == "loading" &&
                                 !regenerationState?.regenerating &&
