@@ -569,7 +569,7 @@ export const SearchSection = ({
 
   return (
     <>
-      <div className="flex relative w-full pr-[8px] h-full text-default">
+      <div className="flex relative pr-[8px] h-full text-default">
         {popup}
         {currentFeedback && (
           <FeedbackModal
@@ -618,7 +618,7 @@ export const SearchSection = ({
           </div>
         </div>
 
-        <div className="absolute left-0 w-full top-0">
+        <div className="absolute include-scrollbar h-screen overflow-y-auto left-0 w-full top-0">
           <FunctionalHeader
             sidebarToggled={toggledSidebar}
             reset={() => setQuery("")}
@@ -644,7 +644,7 @@ export const SearchSection = ({
 
             {
               <div
-                className={`desktop:px-24 w-full  ${chatBannerPresent && "mt-10"} pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto`}
+                className={` overflow-y-auto desktop:px-24 w-full ${chatBannerPresent && "mt-10"} pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto`}
               >
                 <div className="absolute z-10 mobile:px-4 mobile:max-w-searchbar-max mobile:w-[90%] top-12 desktop:left-0 hidden 2xl:block mobile:left-1/2 mobile:transform mobile:-translate-x-1/2 desktop:w-52 3xl:w-64">
                   {!settings?.isMobile &&
@@ -706,6 +706,7 @@ export const SearchSection = ({
                       toggleAgentic={
                         disabledAgentic ? undefined : toggleAgentic
                       }
+                      showingSidebar={showDocSidebar || toggledSidebar}
                       agentic={agentic}
                       query={query}
                       setQuery={setQuery}

@@ -1330,7 +1330,7 @@ export function ChatPage({
                       >
                         {/* <input {...getInputProps()} /> */}
                         <div
-                          className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                          className={`w-full h-full flex flex-col overflow-y-auto include-scrollbar overflow-x-hidden relative`}
                           ref={scrollableDivRef}
                         >
                           {/* ChatBanner is a custom banner that displays a admin-specified message at 

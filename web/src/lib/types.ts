@@ -14,13 +14,15 @@ export enum UserStatus {
   deactivated = "deactivated",
 }
 
+export type UserRole = "basic" | "admin";
+
 export interface User {
   id: string;
   email: string;
   is_active: string;
   is_superuser: string;
   is_verified: string;
-  role: "basic" | "admin";
+  role: UserRole;
   preferences: UserPreferences;
   status: UserStatus;
   current_token_created_at?: Date;
