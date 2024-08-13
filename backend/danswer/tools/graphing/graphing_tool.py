@@ -27,6 +27,7 @@ from danswer.tools.graphing.models import GraphingError
 from danswer.tools.graphing.models import GraphingResponse
 from danswer.tools.graphing.models import GraphingResult
 from danswer.tools.tool import Tool
+from danswer.tools.tool import ToolRegistry
 from danswer.tools.tool import ToolResponse
 from danswer.utils.logger import setup_logger
 
@@ -91,6 +92,7 @@ Provide raw Python code without formatting
 """
 
 
+@ToolRegistry.register("run_image_generation")
 class GraphingTool(Tool):
     _NAME = "create_graph"
     _DISPLAY_NAME = "Graphing Tool"
@@ -114,6 +116,13 @@ class GraphingTool(Tool):
     @property
     def display_name(self) -> str:
         return self._DISPLAY_NAME
+
+    @classmethod
+    def create_prompt(cls, message: PreviousMessage) -> str:
+        # TODO improve / iterate
+        print(f"\n\n\n------------\n\n\nCreating a grpah {message.message}")
+
+        return f'I searched for some things! """thigns that I searched for!: {message.message}"""'
 
     def tool_definition(self) -> dict:
         return {

@@ -226,6 +226,7 @@ class Answer:
                     }
                 ]
             else:
+                # Causes overflow for longer system messages (ensure responses aren't super)
                 prompt_builder.update_system_prompt(
                     default_build_system_message(self.prompt_config)
                 )
@@ -304,7 +305,7 @@ class Answer:
                 print("my tool call request is htis")
                 print(tool_args)
 
-                tool_runner = ToolRunner(tool, tool_args)
+                tool_runner = ToolRunner(tool, tool_args, self.llm)
                 yield tool_runner.kickoff()
 
                 tool_responses = list(tool_runner.tool_responses())

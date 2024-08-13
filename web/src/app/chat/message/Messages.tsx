@@ -131,7 +131,6 @@ function FileDisplay({
                       alignBubble={alignBubble}
                     />
                   )}
-                  s
                 </div>
               );
             })}
@@ -635,7 +634,6 @@ export const AIMessage = ({
                               key={-1}
                               className="cursor-pointer w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 py-2 border-b"
                             >
-
                               <div className="line-clamp-3 text-xs break-words pt-1">
                                 See more
                               </div>
@@ -940,9 +938,9 @@ export const HumanMessage = ({
                   <>
                     <div className="ml-auto mr-1 my-auto">
                       {onEdit &&
-                        isHovered &&
-                        !isEditing &&
-                        (!files || files.length === 0) ? (
+                      isHovered &&
+                      !isEditing &&
+                      (!files || files.length === 0) ? (
                         <Tooltip delayDuration={1000} content={"Edit message"}>
                           <button
                             className="hover:bg-hover p-1.5 rounded"
@@ -960,13 +958,14 @@ export const HumanMessage = ({
                     </div>
 
                     <div
-                      className={`${!(
+                      className={`${
+                        !(
                           onEdit &&
                           isHovered &&
                           !isEditing &&
                           (!files || files.length === 0)
                         ) && "ml-auto"
-                        } relative   flex-none max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
+                      } relative   flex-none max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
                     >
                       {content}
                     </div>
@@ -974,9 +973,9 @@ export const HumanMessage = ({
                 ) : (
                   <>
                     {onEdit &&
-                      isHovered &&
-                      !isEditing &&
-                      (!files || files.length === 0) ? (
+                    isHovered &&
+                    !isEditing &&
+                    (!files || files.length === 0) ? (
                       <div className="my-auto">
                         <Hoverable
                           icon={FiEdit2}

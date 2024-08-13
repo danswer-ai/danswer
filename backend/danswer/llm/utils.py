@@ -123,6 +123,10 @@ def translate_history_to_basemessages(
             assistant_content = (assistant_content or "") + ToolRegistry.get_prompt(
                 "run_image_generation", message
             )
+        if message.tool_call and message.tool_call.tool_name == "create_graph":
+            assistant_content = (assistant_content or "") + ToolRegistry.get_prompt(
+                "create_graph", message
+            )
 
             # assistant_content = assistant_content or "" +  f"I generated images with these descriptions! {message.message}"
         else:
