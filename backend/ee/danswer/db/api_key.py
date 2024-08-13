@@ -2,7 +2,8 @@ import uuid
 
 from fastapi_users.password import PasswordHelper
 from sqlalchemy import select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
 from danswer.configs.constants import DANSWER_API_KEY_PREFIX
@@ -21,10 +22,11 @@ def is_api_key_email_address(email: str) -> bool:
 
 
 def fetch_api_keys(db_session: Session) -> list[ApiKeyDescriptor]:
-    api_keys = db_session.scalars(
-        select(ApiKey)
-        .options(joinedload(ApiKey.user))
-    ).unique().all()
+    api_keys = (
+        db_session.scalars(select(ApiKey).options(joinedload(ApiKey.user)))
+        .unique()
+        .all()
+    )
     return [
         ApiKeyDescriptor(
             api_key_id=api_key.id,
