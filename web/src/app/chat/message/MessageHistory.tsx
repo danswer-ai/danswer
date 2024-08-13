@@ -32,6 +32,7 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
   const listRef = useRef<List>(null);
 
   useEffect(() => {
+    console.log("UPDATING");
     const updateScrollingContainerHeight = () => {
       if (listRef.current && listRef.current.Grid) {
         listRef.current.recomputeRowHeights();
@@ -59,7 +60,7 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [messageHistory]);
+  }, [messageHistory, chatState, isStreaming]);
 
   const getSize = useCallback((index: { index: number }) => {
     return sizeMap.current[index.index] || 50;
@@ -75,7 +76,7 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
           listRef.current.forceUpdateGrid();
         }
       }
-    }, 10),
+    }, 1),
     [messageHistory]
   );
 
@@ -87,7 +88,7 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
   );
 
   const rowRenderer = ({ index, key, style }: any) => (
-    <div style={style} key={key}>
+    <div className="overflow-visible" style={style} key={key}>
       <AutoSizer disableHeight>
         {({ width }: { width: number }) => (
           <div
@@ -132,11 +133,8 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({
   );
 
   return (
-    <div
-      className={`flex-grow max-h-full  overflow-visible`}
-      ref={containerRef}
-    >
-      <AutoSizer className="h-full">
+    <div className={`flex-grow max-h-full overflow-visible`} ref={containerRef}>
+      <AutoSizer className="bg-red-500 overflow-visible h-full">
         {({ width, height }: { width: number; height: number }) => (
           <List
             className="h-full"
