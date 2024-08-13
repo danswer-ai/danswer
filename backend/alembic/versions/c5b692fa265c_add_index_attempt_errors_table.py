@@ -1,7 +1,7 @@
 """Add index_attempt_errors table
 
 Revision ID: c5b692fa265c
-Revises: 1d6ad76d1f37
+Revises: 4a951134c801
 Create Date: 2024-08-08 14:06:39.581972
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "c5b692fa265c"
-down_revision = "1d6ad76d1f37"
+down_revision = "4a951134c801"
 branch_labels = None
 depends_on = None
 
