@@ -1,4 +1,4 @@
-import { useState } from "react";
+/* import { useState } from "react";
 import { ModalWrapper } from "./ModalWrapper";
 import { Callout, Divider, Text } from "@tremor/react";
 import { Spinner } from "@/components/Spinner";
@@ -161,9 +161,9 @@ export function ShareChatSessionModal({
       </>
     </ModalWrapper>
   );
-}
+} */
 
-/* import { useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -173,11 +173,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Button, Callout, Divider, Text } from "@tremor/react";
+import { Callout, Divider, Text } from "@tremor/react";
 import { Spinner } from "@/components/Spinner";
 import { ChatSessionSharedStatus } from "../interfaces";
 import { FiCopy, FiX } from "react-icons/fi";
 import { CopyButton } from "@/components/CopyButton";
+import { Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 function buildShareLink(chatSessionId: number) {
   const baseUrl = `${window.location.protocol}//${window.location.host}`;
@@ -247,7 +249,7 @@ export function ShareChatSessionModal({
                 link:
               </Text>
 
-              <div className="flex mt-2">
+              <div className="flex my-2">
                 <CopyButton content={shareLink} />
                 <a
                   href={shareLink}
@@ -257,8 +259,6 @@ export function ShareChatSessionModal({
                   {shareLink}
                 </a>
               </div>
-
-              <Divider />
 
               <Text className="mb-4">
                 Click the button below to make the chat private again.
@@ -278,26 +278,29 @@ export function ShareChatSessionModal({
 
                   setLinkGenerating(false);
                 }}
-                size="xs"
-                color="red"
+                variant="destructive"
               >
                 Delete Share Link
               </Button>
             </div>
           ) : (
             <div>
-              <Callout title="Warning" color="yellow" className="mb-4">
-                Ensure that all content in the chat is safe to share with the
-                whole organization. The content of the retrieved documents will
-                not be visible, but the names of cited documents as well as the
-                AI and human messages will be visible.
-              </Callout>
+              <div className="pb-6">
+                <span className="font-bold">Warning</span>
+                <p className="pt-2">
+                  Ensure that all content in the chat is safe to share with the
+                  whole organization. The content of the retrieved documents
+                  will not be visible, but the names of cited documents as well
+                  as the AI and human messages will be visible.
+                </p>
+              </div>
 
               <Button
-                icon={FiCopy}
                 onClick={async () => {
                   setLinkGenerating(true);
 
+                  // NOTE: for "inescure" non-https setup, the `navigator.clipboard.writeText` may fail
+                  // as the browser may not allow the clipboard to be accessed.
                   try {
                     const shareLink = await generateShareLink(chatSessionId);
                     if (!shareLink) {
@@ -313,10 +316,8 @@ export function ShareChatSessionModal({
 
                   setLinkGenerating(false);
                 }}
-                size="xs"
-                color="green"
               >
-                Generate and Copy Share Link
+                <Copy size={16} /> Generate and Copy Share Link
               </Button>
             </div>
           )}
@@ -324,4 +325,4 @@ export function ShareChatSessionModal({
       </DialogContent>
     </Dialog>
   );
-} */
+}

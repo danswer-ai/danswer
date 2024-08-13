@@ -95,6 +95,18 @@ import Logo from "../../../public/logo-brand.png";
 import { Button } from "@/components/ui/button";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { AnimatePresence, motion } from "framer-motion";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1131,16 +1143,10 @@ export function ChatPage({
   console.log(hasPerformedInitialScroll);
 
   const [openSidebar, setOpenSidebar] = useState(false);
-  /* const [isExpanded, setIsExpanded] = useState(false);
-  const [isHovered, setIsHovered] = useState(false); */
 
   const toggleLeftSideBar = () => {
     setOpenSidebar((prevState) => !prevState);
   };
-
-  /*   const toggleWidth = () => {
-    setIsExpanded((prevState) => !prevState);
-  }; */
 
   return (
     <>
@@ -1154,17 +1160,8 @@ export function ChatPage({
               <Image src={Logo} alt="Logo" width={112} />
             </div>
 
-            <div className="flex ml-auto">
+            <div className="flex ml-auto gap-2 items-center">
               {chatSessionIdRef.current !== null && (
-                <Button
-                  onClick={() => setSharingModalVisible(true)}
-                  className="px-3"
-                  variant="ghost"
-                >
-                  <Share size={20} />
-                </Button>
-              )}
-              {/* {chatSessionIdRef.current !== null && (
                 <ShareChatSessionModal
                   chatSessionId={chatSessionIdRef.current}
                   existingSharedStatus={chatSessionSharedStatus}
@@ -1176,15 +1173,14 @@ export function ChatPage({
                     )
                   }
                 >
-                  <Button
+                  <div
                     onClick={() => setSharingModalVisible(true)}
-                    className="px-3"
-                    variant="ghost"
+                    className="h-10 w-10 hover:bg-light hover:text-accent-foreground inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-regular text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                   >
                     <Share size={20} />
-                  </Button>
+                  </div>
                 </ShareChatSessionModal>
-              )} */}
+              )}
 
               {retrievalEnabled && showDocSidebar && (
                 <Button onClick={toggleSidebar} variant="ghost" size="icon">
@@ -1194,21 +1190,6 @@ export function ChatPage({
             </div>
           </div>
         </div>
-      )}
-
-      {sharingModalVisible && chatSessionIdRef.current !== null && (
-        <ShareChatSessionModal
-          chatSessionId={chatSessionIdRef.current}
-          existingSharedStatus={chatSessionSharedStatus}
-          onClose={() => setSharingModalVisible(false)}
-          onShare={(shared) =>
-            setChatSessionSharedStatus(
-              shared
-                ? ChatSessionSharedStatus.Public
-                : ChatSessionSharedStatus.Private
-            )
-          }
-        />
       )}
 
       <HealthCheckBanner />

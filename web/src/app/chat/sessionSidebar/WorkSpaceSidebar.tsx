@@ -34,10 +34,20 @@ export const WorkSpaceSidebar = ({ openSidebar }: WorkSpaceSidebarProps) => {
             className="rounded-full min-w-10 min-h-10"
           />
           <Separator />
-          <Image src={Notion} alt="Notion" width={30} height={30} />
-          <Image src={Dropbox} alt="Dropbox" width={30} height={30} />
-          <Image src={Gitlab} alt="Gitlab" width={30} height={30} />
-          <Image src={HubSpot} alt="HubSpot" width={30} height={30} />
+          <div className="flex flex-col items-center gap-6">
+            <Button variant="ghost" size="icon">
+              <Image src={Notion} alt="Notion" width={30} height={30} />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Image src={Dropbox} alt="Dropbox" width={30} height={30} />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Image src={Gitlab} alt="Gitlab" width={30} height={30} />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Image src={HubSpot} alt="HubSpot" width={30} height={30} />
+            </Button>
+          </div>
         </div>
         <div>
           <Button variant="ghost" size="icon" className="mb-4">
