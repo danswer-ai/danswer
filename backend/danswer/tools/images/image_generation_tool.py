@@ -112,7 +112,7 @@ class ImageGenerationTool(Tool):
                         },
                         "shape": {
                             "type": "string",
-                            "description": "Optional. Image size: 'square' (default) or 'portrait'",
+                            "description": "Optional. Image shape: 'square', 'portrait', or 'landscape'",
                             "enum": [shape.value for shape in ImageShape],
                         },
                     },

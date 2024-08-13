@@ -7,7 +7,6 @@ import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constan
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { BackIcon } from "@/components/icons/icons";
-import getConfig from "next/config";
 
 interface Item {
   name: string | JSX.Element;
@@ -27,8 +26,6 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
 
   const settings = combinedSettings.settings;
   const enterpriseSettings = combinedSettings.enterpriseSettings;
-  const { publicRuntimeConfig } = getConfig();
-  const webVersion = publicRuntimeConfig?.version;
 
   return (
     <div className="pl-0">
@@ -97,13 +94,13 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
           </div>
         ))}
       </nav>
-      {webVersion && (
+      {combinedSettings.webVersion && (
         <div
           className="flex  flex-col mt-4 items-center justify-center w-full"
           key={"danswerVersion"}
         >
           <h2 className="text-sm text-text w-52 font-medium pb-2">
-            Danswer version {webVersion}
+            Danswer version {combinedSettings.webVersion}
           </h2>
         </div>
       )}
