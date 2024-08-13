@@ -36,6 +36,8 @@ export function ChatDocumentDisplay({
     return null;
   }
 
+  const score = Math.abs(document.score) * 100;
+
   return (
     <div
       key={document.semantic_identifier}
@@ -49,7 +51,7 @@ export function ChatDocumentDisplay({
           <div className="flex items-center">
             <a
               className={
-                "rounded-regular flex font-bold flex-shrink overflow-hidden text-black text-sm mr-6" +
+                "rounded-regular flex font-bold flex-shrink overflow-hidden text-dark-900 text-sm mr-6" +
                 (document.link ? "" : "pointer-events-none")
               }
               href={document.link}
@@ -85,23 +87,21 @@ export function ChatDocumentDisplay({
                     />
                   </div>
                 )}
-                <div
-                  className={`
-              text-xs
-              text-primary
-              bg-primary-300
-              rounded
-              p-0.5
-              w-fit
-              select-none
-              my-auto`}
+                <Badge
+                  variant={`${
+                    score < 50
+                      ? "destructive"
+                      : score < 90
+                      ? "warning"
+                      : "success"
+                  }`}
                 >
-                  {(Math.abs(document.score) * 100).toFixed()}%
-                </div>
+                  {score.toFixed()}%
+                </Badge>
               </div>
             )}
           </div>
-          <Badge variant="secondary" className="my-1.5">
+          <Badge variant="secondary" className="my-1.5 inline-flex">
             July 25, 2023{" "}
           </Badge>
         </div>

@@ -244,7 +244,9 @@ export function ChatInputBar({
           <ImagePlus size={24} className="mr-4" />
           <Mic size={24} className="mr-4" />
         </div>
-        <div className="relative w-full mx-auto shrink 2xl:w-searchbar-sm 3xl:w-searchbar">
+        {/* <div className="relative w-full mx-auto shrink 2xl:w-searchbar-sm 3xl:w-searchbar"> */}
+        {/* <div className="relative w-full mx-auto shrink 2xl:w-searchbar 2xl:px-5 3xl:px-0"> */}
+        <div className="relative w-full mx-auto shrink 2xl:w-searchbar 2xl:px-5 3xl:px-0">
           {showSuggestions && filteredPersonas.length > 0 && (
             <div
               ref={suggestionsRef}
@@ -284,6 +286,22 @@ export function ChatInputBar({
             </div>
           )}
 
+          <Button
+            onClick={() => {
+              if (!isStreaming) {
+                if (message) {
+                  onSubmit();
+                }
+              } else {
+                setIsCancelled(true);
+              }
+            }}
+            className="absolute right-3 bottom-[9px] rounded-full w-8 h-8 md:hidden"
+            size="xs"
+          >
+            <Send size={16} />
+          </Button>
+
           <div
             className="
                 opacity-100
@@ -299,7 +317,8 @@ export function ChatInputBar({
                 [&:has(textarea:focus)]::ring-1
                 [&:has(textarea:focus)]::ring-black
                 shadow-sm
-                px-6
+                px-4
+                lg:px-6
               "
           >
             {alternativeAssistant && (
@@ -374,6 +393,7 @@ export function ChatInputBar({
                   xl:h-28
                   py-3
                   xl:py-6
+                  pr-10
                   ${
                     textAreaRef.current &&
                     textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT

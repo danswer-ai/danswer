@@ -27,14 +27,19 @@ const config = {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",
           300: "#D7EAFF",
+          light: "#F1F5F9",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
+          DEFAULT: "var(--secondary)",
           foreground: "hsl(var(--secondary-foreground))",
         },
         destructive: {
           DEFAULT: "var(--destructive)",
           foreground: "var(--destructive-foreground)",
+        },
+        warning: {
+          DEFAULT: "var(--warning)",
+          foreground: "var(--warning-foreground)",
         },
         success: {
           DEFAULT: "var(--success)",
@@ -113,7 +118,18 @@ const config = {
         // for display documents
         document: "#ec4899", // pink-500
 
-        // light mode
+        dark: {
+          50: "rgba(14, 14, 15, 0.1)",
+          100: "rgba(14, 14, 15, 0.2)",
+          200: "rgba(14, 14, 15, 0.3)",
+          300: "rgba(14, 14, 15, 0.4)",
+          400: "rgba(14, 14, 15, 0.5)",
+          500: "rgba(14, 14, 15, 0.6)",
+          600: "rgba(14, 14, 15, 0.7)",
+          700: "rgba(14, 14, 15, 0.8)",
+          800: "rgba(14, 14, 15, 0.9)",
+          900: "rgba(14, 14, 15, 1)",
+        },
       },
       borderRadius: {
         xs: "4px",
@@ -147,6 +163,7 @@ const config = {
         sans: ["var(--font-sans)"],
       },
       width: {
+        sidebar: "300px",
         "message-xs": "450px",
         "message-sm": "550px",
         "message-default": "740px",

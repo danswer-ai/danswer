@@ -10,22 +10,23 @@ export default function Hero() {
       <div className="flex flex-col w-full gap-24 pt-32">
         <div className="flex items-center justify-between w-full">
           <div className="flex flex-col items-center gap-6 text-lg lg:w-1/2 lg:items-start">
-            <h1 className="text-5xl font-bold text-center text-black md:w-3/4 md:text-6xl lg:text-7xl lg:text-start lg:w-full">
+            <h1 className="text-5xl font-bold text-center text-dark-900 md:w-3/4 md:text-6xl lg:text-7xl lg:text-start lg:w-full">
               The Enterprise{" "}
               <span className="text-[#2039F3]">Generative AI</span> Platform{" "}
             </h1>
             <div className="flex flex-col items-center justify-center lg:items-start lg:justify-start">
               <p className="text-center lg:text-start">
-                <strong className="text-black">Augment</strong> your workforce
-                with <strong className="text-black">AI Assistants.</strong>
+                <strong className="text-dark-900">Augment</strong> your
+                workforce with{" "}
+                <strong className="text-dark-900">AI Assistants.</strong>
               </p>
               <p className="text-center lg:text-start">
-                <strong className="text-black">Automate</strong> back office
+                <strong className="text-dark-900">Automate</strong> back office
                 operations.
               </p>
               <p className="text-center lg:text-start">
                 Make your organization{" "}
-                <strong className="text-black">smarter.</strong>
+                <strong className="text-dark-900">smarter.</strong>
               </p>
             </div>
 

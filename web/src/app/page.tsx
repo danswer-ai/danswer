@@ -1,5 +1,5 @@
 import { fetchSettingsSS } from "@/components/settings/lib";
-import { redirect, usePathname } from "next/navigation";
+import { redirect } from "next/navigation";
 import CallToActions from "./homepage/callToActions";
 import Certifications from "./homepage/certifications";
 import DataLoaders from "./homepage/dataLoaders";
@@ -10,16 +10,10 @@ import Models from "./homepage/models";
 import Navbar from "./homepage/navbar";
 import Platform from "./homepage/platform";
 import UseCases from "./homepage/useCases";
-import { useEffect } from "react";
 import Lenis from "lenis";
 
 export default async function Page() {
   const settings = await fetchSettingsSS();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
 
   // The default page setting must only be available to authenticated users
   // If the user is not authenticated, they must be redirected to the landing page

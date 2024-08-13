@@ -49,7 +49,7 @@ function Calendar({
           "day-outside text-muted-foreground opacity-50 aria-selected:bg-background-strong aria-selected:text-muted-foreground aria-selected:opacity-30",
         day_disabled: "text-muted-foreground opacity-50",
         day_range_middle:
-          "aria-selected:bg-background-strong aria-selected:text-black",
+          "aria-selected:bg-background-strong aria-selected:text-dark-900",
         day_hidden: "invisible",
         ...classNames,
       }}

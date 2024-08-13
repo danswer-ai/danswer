@@ -7,6 +7,7 @@ import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
 import { FiInfo, FiRadio, FiTag } from "react-icons/fi";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
+import { Badge } from "../ui/badge";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -116,10 +117,9 @@ export function DocumentMetadataBlock({
   return (
     <div className="flex flex-wrap gap-1">
       {document.updated_at && (
-        <div className="pr-1">
-          <DocumentUpdatedAtBadge updatedAt={document.updated_at} />
-        </div>
+        <DocumentUpdatedAtBadge updatedAt={document.updated_at} />
       )}
+
       {Object.entries(document.metadata).length > 0 && (
         <>
           <div className="pl-1 border-l border-border" />
@@ -164,74 +164,76 @@ export const DocumentDisplay = ({
     return null;
   }
 
+  const score = Math.abs(document.score) * 100;
+
   return (
     <div
       key={document.semantic_identifier}
-      className="text-sm border-b border-border mb-3"
+      className="text-sm border-b border-border px-4 py-8"
       onMouseEnter={() => {
         setIsHovered(true);
       }}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex relative">
-        {document.score !== null && (
-          <div
-            className={
-              "absolute top-2/4 -translate-y-2/4 flex " +
-              (isSelected ? "-left-14 w-14" : "-left-10 w-10")
-            }
-          >
-            {isSelected && (
-              <div className="w-4 h-4 my-auto mr-1 flex flex-col">
-                <HoverPopup
-                  mainContent={<FiRadio className="text-gray-500 my-auto" />}
-                  popupContent={
-                    <div className="text-xs text-gray-300 w-36 flex">
-                      <div className="flex mx-auto">
-                        <div className="w-3 h-3 flex flex-col my-auto mr-1">
-                          <FiInfo className="my-auto" />
+      <div className="flex flex-col relative gap-3">
+        <div className="flex items-center gap-[5px]">
+          <Badge variant="secondary">
+            <SourceIcon sourceType={document.source_type} iconSize={16} />
+            <span className="ml-1">
+              {document.source_type.charAt(0).toUpperCase() +
+                document.source_type.slice(1)}
+            </span>
+          </Badge>
+          <DocumentMetadataBlock document={document} />
+          {document.score !== null && (
+            <div className="flex items-center gap-[5px]">
+              <Badge
+                variant={`${
+                  score < 50
+                    ? "destructive"
+                    : score < 90
+                    ? "warning"
+                    : "success"
+                }`}
+              >
+                {score.toFixed()}%
+              </Badge>
+              {isSelected && (
+                <Badge variant="secondary">
+                  <HoverPopup
+                    mainContent={<FiRadio size={16} />}
+                    popupContent={
+                      <div className="text-xs text-gray-300 w-36 flex">
+                        <div className="flex mx-auto">
+                          <div className="w-3 h-3 flex flex-col my-auto mr-1">
+                            <FiInfo className="my-auto" />
+                          </div>
+                          <div className="my-auto">The AI liked this doc!</div>
                         </div>
-                        <div className="my-auto">The AI liked this doc!</div>
                       </div>
-                    </div>
-                  }
-                  direction="bottom"
-                  style="dark"
-                />
-              </div>
-            )}
-            <div
-              className={`
-                text-xs
-                text-emphasis
-                bg-hover
-                rounded
-                p-0.5
-                w-fit
-                my-auto
-                select-none
-                ml-auto
-                mr-2`}
-            >
-              {Math.abs(document.score).toFixed(2)}
+                    }
+                    direction="bottom"
+                    style="dark"
+                  />
+                </Badge>
+              )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
         <a
           className={
-            "rounded-regular flex font-bold text-link max-w-full " +
+            "rounded-regular flex font-bold text-dark-900 max-w-full " +
             (document.link ? "" : "pointer-events-none")
           }
           href={document.link}
           target="_blank"
           rel="noopener noreferrer"
         >
-          <SourceIcon sourceType={document.source_type} iconSize={22} />
-          <p className="truncate text-wrap break-all ml-2 my-auto text-base max-w-full">
+          <p className="truncate text-wrap break-all my-auto text-base max-w-full">
             {document.semantic_identifier || document.document_id}
           </p>
         </a>
-        <div className="ml-auto">
+        {/* <div className="ml-auto">
           {isHovered && messageId && (
             <DocumentFeedbackBlock
               documentId={document.document_id}
@@ -240,12 +242,9 @@ export const DocumentDisplay = ({
               setPopup={setPopup}
             />
           )}
-        </div>
+        </div> */}
       </div>
-      <div className="mt-1">
-        <DocumentMetadataBlock document={document} />
-      </div>
-      <p className="pl-1 pt-2 pb-3 break-words">
+      <p className="break-words pt-3">
         {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
       </p>
     </div>

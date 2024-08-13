@@ -48,7 +48,7 @@ export default async function Page({
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
-      <ChatProvider
+      {/* <ChatProvider
         value={{
           user,
           chatSessions,
@@ -60,12 +60,12 @@ export default async function Page({
           folders,
           openedFolders,
         }}
-      >
-        <ChatPage
-          defaultSelectedPersonaId={defaultPersonaId}
-          documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
-        />
-      </ChatProvider>
+      > */}
+      <ChatPage
+        defaultSelectedPersonaId={defaultPersonaId}
+        documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
+      />
+      {/*  </ChatProvider> */}
     </>
   );
 }

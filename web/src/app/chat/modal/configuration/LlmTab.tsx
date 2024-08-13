@@ -64,7 +64,7 @@ export function LlmTab({
 
   return (
     <div>
-      <label className="block text-sm font-semibold pb-2 text-black">
+      <label className="block text-sm font-semibold pb-2 text-dark-900">
         Choose Model
       </label>
       <Text className="pb-1">
@@ -100,7 +100,7 @@ export function LlmTab({
         </Select>
       </div>
 
-      <label className="block text-black text-sm font-semibold pb-2 pt-6">
+      <label className="block text-dark-900 text-sm font-semibold pb-2 pt-6">
         Temperature
       </label>
 

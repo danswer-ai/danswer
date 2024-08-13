@@ -83,7 +83,7 @@ export function DatePicker({
             {placeholder}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto p-0 !z-[1001]" align="start">
           <Calendar
             initialFocus
             mode="range"
@@ -99,7 +99,7 @@ export function DatePicker({
         <SelectTrigger className="w-[150px] rounded-l-none !rounded-r-regular">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="z-[1001]">
           <SelectItem value="last_30_days">Last 30 Days</SelectItem>
           <SelectItem value="last_7_days">Last 7 Days</SelectItem>
           <SelectItem value="today">Today</SelectItem>

@@ -42,7 +42,7 @@ export function AssistantsTab({
             <CardContent className="p-0 w-full flex gap-3">
               <AssistantIcon assistant={assistant} size="small" />
               <div>
-                <div className="text-sm font-semibold text-black pt-1 pb-2">
+                <div className="text-sm font-semibold text-dark-900 pt-1 pb-2">
                   {assistant.name}
                 </div>
                 {/* {assistant.tools.length > 0 && (
@@ -70,7 +70,7 @@ export function AssistantsTab({
                     })}
                   </div>
                 )} */}
-                <div className="text-sm text-black mb-2">
+                <div className="text-sm text-dark-900 mb-2">
                   {assistant.description}
                 </div>
                 <div className="mt-2 flex flex-col gap-y-2">

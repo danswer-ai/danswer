@@ -61,7 +61,7 @@ const Page = async () => {
               {/* you need to make this page not async to be able to get settings context */}
             </Title>
             <div className="flex flex-col mt-5">
-              <h1 className="text-xl font-bold text-black">Sign Up</h1>
+              <h1 className="text-xl font-bold text-dark-900">Sign Up</h1>
               <Text>
                 Already have an account?{" "}
                 <Link href="/auth/login" className="font-medium text-link">

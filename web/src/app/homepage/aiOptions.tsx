@@ -37,7 +37,9 @@ export default function AIOptions() {
           .filter((data) => data.category === activeCategory)
           .map((data, i) => (
             <div key={i} className="flex flex-col items-start gap-6 md:w-1/3">
-              <h4 className="text-xl font-semibold text-black">{data.title}</h4>
+              <h4 className="text-xl font-semibold text-dark-900">
+                {data.title}
+              </h4>
               <p>{data.description}</p>
               <button className="text-[#2039F3] font-bold">Learn more</button>
             </div>

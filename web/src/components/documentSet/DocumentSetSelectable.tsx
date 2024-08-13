@@ -42,7 +42,7 @@ export function DocumentSetSelectable({
           ))}
         </div>
         <div className="flex flex-col h-full">
-          <div className="font-bold text-black">{documentSet.name}</div>
+          <div className="font-bold text-dark-900">{documentSet.name}</div>
           <div className="text-sm pt-1">{documentSet.description}</div>
         </div>
       </div>

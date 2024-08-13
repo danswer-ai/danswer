@@ -9,7 +9,7 @@ export default function Enterprise() {
           <p className="text-[#64A3FF] font-semibold">
             Enterprise-grade security and privacy
           </p>
-          <h3 className="pt-3 text-3xl md:text-4xl font-bold text-black md:w-[600px]">
+          <h3 className="pt-3 text-3xl md:text-4xl font-bold text-dark-900 md:w-[600px]">
             Secure AI applications for every Enterprise
           </h3>
           <p className="pt-6 text-xl md:w-[700px] leading-relaxed">
@@ -23,7 +23,7 @@ export default function Enterprise() {
           {enterpriseData.map((data, i) => (
             <div key={i}>
               <p>
-                <strong className="text-black">{data.title}</strong>{" "}
+                <strong className="text-dark-900">{data.title}</strong>{" "}
                 {data.details}
               </p>
             </div>

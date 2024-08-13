@@ -25,6 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 export function ChatSessionDisplay({
   chatSession,
@@ -210,6 +211,7 @@ export function ChatSessionDisplay({
                               icon={FiShare2}
                               onSelect={() => setIsShareModalVisible(true)}
                             />
+
                             <DefaultDropdownElement
                               name="Rename"
                               icon={FiEdit2}

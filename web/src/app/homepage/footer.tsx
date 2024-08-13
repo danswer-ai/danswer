@@ -40,7 +40,7 @@ export default function Footer() {
 
             <div className="flex flex-wrap justify-between gap-10 xl:gap-20">
               <div className="flex flex-col gap-3">
-                <span className="font-semibold text-black">Solutions</span>
+                <span className="font-semibold text-dark-900">Solutions</span>
                 <ul className="flex flex-col gap-2.5">
                   <li className="cursor-pointer">Enterprise</li>
                   <li className="cursor-pointer">SMB</li>
@@ -56,7 +56,7 @@ export default function Footer() {
                 </ul>
               </div>
               <div className="flex flex-col gap-3">
-                <span className="font-semibold text-black">Support</span>
+                <span className="font-semibold text-dark-900">Support</span>
                 <ul className="flex flex-col gap-2.5">
                   <li className="cursor-pointer">Pricing</li>
                   <li className="cursor-pointer">Documentation</li>
@@ -66,7 +66,7 @@ export default function Footer() {
                 </ul>
               </div>
               <div className="flex flex-col gap-3">
-                <span className="font-semibold text-black">Company</span>
+                <span className="font-semibold text-dark-900">Company</span>
                 <ul className="flex flex-col gap-2.5">
                   <li className="cursor-pointer">About</li>
                   <li className="cursor-pointer">Blog</li>
@@ -77,7 +77,7 @@ export default function Footer() {
                 </ul>
               </div>
               <div className="flex flex-col gap-3">
-                <span className="font-semibold text-black">Legal</span>
+                <span className="font-semibold text-dark-900">Legal</span>
                 <ul className="flex flex-col gap-2.5">
                   <li className="cursor-pointer">Privacy</li>
                   <li className="cursor-pointer">Terms</li>

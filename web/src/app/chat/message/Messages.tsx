@@ -169,8 +169,9 @@ export const AIMessage = ({
   ) : undefined;
 
   return (
-    <div className={"flex -mr-6 w-full pb-5 lg:px-28"}>
-      <div className="relative mx-auto w-full 2xl:w-searchbar-sm 3xl:w-searchbar">
+    <div className={"flex -mr-6 w-full pb-5"}>
+      {/* <div className="relative mx-auto w-full 2xl:w-searchbar-sm 3xl:w-searchbar"> */}
+      <div className="w-full">
         <div className="">
           <div className="flex">
             <AssistantIcon
@@ -200,7 +201,7 @@ export const AIMessage = ({
           </div>
 
           {/* <div className="pt-2 pl-12 break-words w-full sm:w-message-xs 2xl:w-message-sm 3xl:w-message-default"> */}
-          <div className="pl-12 break-words w-full">
+          <div className="pl-1 md:pl-12 break-words w-full">
             {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
               <>
                 {query !== undefined &&
@@ -355,7 +356,7 @@ export const AIMessage = ({
             )}
           </div>
           {handleFeedback && (
-            <div className="flex flex-row gap-x-0.5 ml-12 mt-1.5">
+            <div className="flex flex-row gap-x-0.5 pl-1 md:pl-12 mt-1.5">
               <CopyButton content={content.toString()} />
               <Hoverable onClick={() => handleFeedback("like")}>
                 <FiThumbsUp />
@@ -451,11 +452,12 @@ export const HumanMessage = ({
 
   return (
     <div
-      className="relative flex w-full pb-5 -mr-6 lg:px-28"
+      className="relative flex w-full pb-5 -mr-6"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="w-full mx-auto 2xl:w-searchbar-sm 3xl:w-searchbar relative">
+      {/* <div className="w-full mx-auto 2xl:w-searchbar-sm 3xl:w-searchbar relative"> */}
+      <div className="w-full">
         <div className="">
           <div className="flex">
             <div className="p-1 mx-1 bg-blue-400 rounded-regular h-fit">
@@ -467,8 +469,8 @@ export const HumanMessage = ({
             <div className="my-auto ml-2 font-bold text-emphasis">You</div>
           </div>
           {/*  <div className="flex flex-wrap pt-2 pl-12 w-full sm:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default"> */}
-          <div className="flex flex-wrap pt-2 pl-12 w-full">
-            <div className={`break-words ${isEditing ? "w-full" : "w-auto"}`}>
+          <div className="flex flex-wrap pt-4 pl-1 md:pl-12 w-full">
+            <div className="break-words w-full">
               <FileDisplay files={files || []} />
               {isEditing ? (
                 <div>
