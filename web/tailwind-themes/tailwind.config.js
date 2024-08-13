@@ -67,8 +67,19 @@ module.exports = {
         "searchbar-max": "750px",
       },
       colors: {
-        // background
+        // code styling
+        "code-bg": "black", // black
+        "code-text": "#e0e0e0", // light gray
+        "token-comment": "#608b4e", // green
+        "token-punctuation": "#d4d4d4", // light gray
+        "token-property": "#569cd6", // blue
+        "token-selector": "#e07b53", // more vibrant orange
+        "token-atrule": "#d18ad8", // more vibrant purple
+        "token-function": "#f0e68c", // more vibrant light yellow
+        "token-regex": "#9cdcfe", // light blue
+        "token-attr-name": "#9cdcfe", // light blue
 
+        // background
         "background-search": "#ffffff", // white
         input: "#f5f5f5",
 
@@ -232,10 +243,17 @@ module.exports = {
         "tremor-full": "9999px",
       },
       fontSize: {
+        "code-sm": "small",
         "tremor-label": ["0.75rem"],
         "tremor-default": ["0.875rem", { lineHeight: "1.25rem" }],
         "tremor-title": ["1.125rem", { lineHeight: "1.75rem" }],
         "tremor-metric": ["1.875rem", { lineHeight: "2.25rem" }],
+      },
+      fontWeight: {
+        "token-bold": "bold",
+      },
+      fontStyle: {
+        "token-italic": "italic",
       },
     },
   },

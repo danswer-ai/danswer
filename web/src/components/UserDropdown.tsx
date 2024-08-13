@@ -9,7 +9,11 @@ import { checkUserIsNoAuthUser, logout } from "@/lib/user";
 import { Popover } from "./popover/Popover";
 import { LOGOUT_DISABLED } from "@/lib/constants";
 import { SettingsContext } from "./settings/SettingsProvider";
-import { LightSettingsIcon } from "./icons/icons";
+import {
+  AssistantsIconSkeleton,
+  LightSettingsIcon,
+  UsersIcon,
+} from "./icons/icons";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 
 export function UserDropdown({
@@ -105,6 +109,7 @@ export function UserDropdown({
                 </Link>
               </>
             )}
+
             {showLogout && (
               <>
                 {(!(page == "search" || page == "chat") || showAdminPanel) && (

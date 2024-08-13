@@ -45,7 +45,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
-import { useFilters, useLlmOverride } from "@/lib/hooks";
+import { LlmOverride, useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { FeedbackType } from "./types";
 import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
@@ -60,7 +60,13 @@ import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
-import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
+import {
+  checkLLMSupportsImageInput,
+  getFinalLLM,
+  destructureValue,
+  getLLMProviderOverrideForPersona,
+} from "@/lib/llm/utils";
+
 import { ChatInputBar } from "./input/ChatInputBar";
 import { useChatContext } from "@/components/context/ChatContext";
 import { v4 as uuidv4 } from "uuid";
@@ -72,6 +78,7 @@ import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
+import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -152,10 +159,6 @@ export function ChatPage({
         )
       ? 0
       : 0.7;
-  const llmOverrideManager = useLlmOverride(
-    selectedChatSession,
-    defaultTemperature
-  );
 
   const setSelectedAssistantFromId = (assistantId: number) => {
     // NOTE: also intentionally look through available assistants here, so that
@@ -165,8 +168,30 @@ export function ChatPage({
       availableAssistants.find((assistant) => assistant.id === assistantId)
     );
   };
+
+  const llmOverrideManager = useLlmOverride(
+    user?.preferences.default_model,
+    selectedChatSession,
+    defaultTemperature
+  );
+
   const liveAssistant =
     selectedAssistant || filteredAssistants[0] || availableAssistants[0];
+
+  useEffect(() => {
+    const personaDefault = getLLMProviderOverrideForPersona(
+      liveAssistant,
+      llmProviders
+    );
+
+    if (personaDefault) {
+      llmOverrideManager.setLlmOverride(personaDefault);
+    } else if (user?.preferences.default_model) {
+      llmOverrideManager.setLlmOverride(
+        destructureValue(user?.preferences.default_model)
+      );
+    }
+  }, [liveAssistant]);
 
   // this is for "@"ing assistants
   const [alternativeAssistant, setAlternativeAssistant] =
@@ -412,6 +437,8 @@ export function ChatPage({
     completeMessageDetail.messageMap
   );
   const [isStreaming, setIsStreaming] = useState(false);
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
 
   // uploaded files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
@@ -614,18 +641,30 @@ export function ChatPage({
       return this.stack.length === 0;
     }
   }
+
   async function updateCurrentMessageFIFO(
     stack: CurrentMessageFIFO,
     params: any
   ) {
     try {
       for await (const packetBunch of sendMessage(params)) {
+        if (params.signal?.aborted) {
+          throw new Error("AbortError");
+        }
         for (const packet of packetBunch) {
           stack.push(packet);
         }
       }
-    } catch (error) {
-      stack.error = String(error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          console.debug("Stream aborted");
+        } else {
+          stack.error = error.message;
+        }
+      } else {
+        stack.error = String(error);
+      }
     } finally {
       stack.isComplete = true;
     }
@@ -662,6 +701,9 @@ export function ChatPage({
 
       return;
     }
+
+    const controller = new AbortController();
+    setAbortController(controller);
 
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
     clientScrollToBottom();
@@ -752,7 +794,9 @@ export function ChatPage({
 
     const currentAssistantId = alternativeAssistantOverride
       ? alternativeAssistantOverride.id
-      : alternativeAssistant?.id || liveAssistant.id;
+      : alternativeAssistant
+        ? alternativeAssistant.id
+        : liveAssistant.id;
 
     resetInputBar();
 
@@ -775,6 +819,8 @@ export function ChatPage({
 
       const stack = new CurrentMessageFIFO();
       updateCurrentMessageFIFO(stack, {
+        signal: controller.signal, // Add this line
+
         message: currMessage,
         alternateAssistantId: currentAssistantId,
         fileDescriptors: currentMessageFiles,
@@ -796,10 +842,14 @@ export function ChatPage({
         queryOverride,
         forceSearch,
 
-        modelProvider: llmOverrideManager.llmOverride.name || undefined,
+        modelProvider:
+          llmOverrideManager.llmOverride.name ||
+          llmOverrideManager.globalDefault.name ||
+          undefined,
         modelVersion:
           llmOverrideManager.llmOverride.modelName ||
           searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
+          llmOverrideManager.globalDefault.modelName ||
           undefined,
         temperature: llmOverrideManager.temperature || undefined,
         systemPromptOverride:
@@ -923,6 +973,7 @@ export function ChatPage({
         completeMessageMapOverride: frozenMessageMap,
       });
     }
+
     setIsStreaming(false);
     if (isNewSession) {
       if (finalMessage) {
@@ -987,9 +1038,12 @@ export function ChatPage({
 
   const onAssistantChange = (assistant: Persona | null) => {
     if (assistant && assistant.id !== liveAssistant.id) {
-      // remove uploaded files
-      setCurrentMessageFiles([]);
-      setSelectedAssistant(assistant);
+      // Abort the ongoing stream if it exists
+      if (abortController && isStreaming) {
+        abortController.abort();
+        resetInputBar();
+      }
+
       textAreaRef.current?.focus();
       router.push(buildChatUrl(searchParams, null, assistant.id));
     }
@@ -1113,6 +1167,7 @@ export function ChatPage({
   });
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
+  const [settingsToggled, setSettingsToggled] = useState(false);
 
   const currentPersona = alternativeAssistant || liveAssistant;
 
@@ -1147,6 +1202,8 @@ export function ChatPage({
       <InstantSSRAutoRefresh />
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
+      {popup}
+
       <ChatPopup />
       {currentFeedback && (
         <FeedbackModal
@@ -1161,6 +1218,15 @@ export function ChatPage({
             );
             setCurrentFeedback(null);
           }}
+        />
+      )}
+
+      {settingsToggled && (
+        <SetDefaultModelModal
+          setLlmOverride={llmOverrideManager.setGlobalDefault}
+          defaultModel={user?.preferences.default_model!}
+          llmProviders={llmProviders}
+          onClose={() => setSettingsToggled(false)}
         />
       )}
       {sharingModalVisible && chatSessionIdRef.current !== null && (
@@ -1220,8 +1286,6 @@ export function ChatPage({
             ref={masterFlexboxRef}
             className="flex h-full w-full overflow-x-hidden"
           >
-            {popup}
-
             <div className="flex h-full flex-col w-full">
               {liveAssistant && (
                 <FunctionalHeader
@@ -1261,12 +1325,12 @@ export function ChatPage({
                       )}
 
                       <div
-                        className={`h-full w-full relative flex-auto transition-margin duration-300 overflow-x-auto mobile:pb-12 desktop:pb-[140px]`}
+                        className={`h-full w-full relative flex-auto transition-margin duration-300 overflow-x-auto mobile:pb-12 desktop:pb-[100px]`}
                         {...getRootProps()}
                       >
                         {/* <input {...getInputProps()} /> */}
                         <div
-                          className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                          className={`w-full h-full flex flex-col overflow-y-auto include-scrollbar overflow-x-hidden relative`}
                           ref={scrollableDivRef}
                         >
                           {/* ChatBanner is a custom banner that displays a admin-specified message at 
@@ -1603,6 +1667,7 @@ export function ChatPage({
                             )}
 
                             <ChatInputBar
+                              openModelSettings={() => setSettingsToggled(true)}
                               inputPrompts={userInputPrompts}
                               showDocs={() => setDocumentSelection(true)}
                               selectedDocuments={selectedDocuments}

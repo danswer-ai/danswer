@@ -1,12 +1,12 @@
 "use client";
 
-import { CCPairFullInfo } from "./types";
+import { CCPairFullInfo, ConnectorCredentialPairStatus } from "./types";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
 import { Button, Divider, Title } from "@tremor/react";
 import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
-import { ConfigDisplay } from "./ConfigDisplay";
+import { AdvancedConfigDisplay, ConfigDisplay } from "./ConfigDisplay";
 import { ModifyStatusButtonCluster } from "./ModifyStatusButtonCluster";
 import { DeletionButton } from "./DeletionButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
@@ -92,7 +92,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
   }
 
   const lastIndexAttempt = ccPair.index_attempts[0];
-  const isDeleting = isCurrentlyDeleting(ccPair.latest_deletion_attempt);
+  const isDeleting = ccPair.status === ConnectorCredentialPairStatus.DELETING;
 
   // figure out if we need to artificially deflate the number of docs indexed.
   // This is required since the total number of docs indexed by a CC Pair is
@@ -112,14 +112,17 @@ function Main({ ccPairId }: { ccPairId: number }) {
     setEditableName(ccPair.name);
     setIsEditing(true);
   };
-  const deleting =
-    ccPair.latest_deletion_attempt?.status == "PENDING" ||
-    ccPair.latest_deletion_attempt?.status == "STARTED";
 
   const resetEditing = () => {
     setIsEditing(false);
     setEditableName(ccPair.name);
   };
+
+  const {
+    prune_freq: pruneFreq,
+    refresh_freq: refreshFreq,
+    indexing_start: indexingStart,
+  } = ccPair.connector;
   return (
     <>
       {popup}
@@ -163,16 +166,18 @@ function Main({ ccPairId }: { ccPairId: number }) {
               ccPairId={ccPair.id}
               connectorId={ccPair.connector.id}
               credentialId={ccPair.credential.id}
-              isDisabled={ccPair.connector.disabled}
+              isDisabled={
+                ccPair.status === ConnectorCredentialPairStatus.PAUSED
+              }
               isDeleting={isDeleting}
             />
           )}
-          {!deleting && <ModifyStatusButtonCluster ccPair={ccPair} />}
+          {!isDeleting && <ModifyStatusButtonCluster ccPair={ccPair} />}
         </div>
       </div>
       <CCPairStatus
         status={lastIndexAttempt?.status || "not_started"}
-        disabled={ccPair.connector.disabled}
+        disabled={ccPair.status === ConnectorCredentialPairStatus.PAUSED}
         isDeleting={isDeleting}
       />
       <div className="text-sm mt-1">
@@ -197,6 +202,15 @@ function Main({ ccPairId }: { ccPairId: number }) {
         connectorSpecificConfig={ccPair.connector.connector_specific_config}
         sourceType={ccPair.connector.source}
       />
+
+      {(pruneFreq || indexingStart || refreshFreq) && (
+        <AdvancedConfigDisplay
+          pruneFreq={pruneFreq}
+          indexingStart={indexingStart}
+          refreshFreq={refreshFreq}
+        />
+      )}
+
       {/* NOTE: no divider / title here for `ConfigDisplay` since it is optional and we need
         to render these conditionally.*/}
       <div className="mt-6">

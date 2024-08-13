@@ -340,15 +340,14 @@ def expire_index_attempts(
     db_session.commit()
 
 
-def cancel_indexing_attempts_for_connector(
-    connector_id: int,
+def cancel_indexing_attempts_for_ccpair(
+    cc_pair_id: int,
     db_session: Session,
     include_secondary_index: bool = False,
 ) -> None:
     stmt = (
         delete(IndexAttempt)
-        .where(IndexAttempt.connector_credential_pair_id == ConnectorCredentialPair.id)
-        .where(ConnectorCredentialPair.connector_id == connector_id)
+        .where(IndexAttempt.connector_credential_pair_id == cc_pair_id)
         .where(IndexAttempt.status == IndexingStatus.NOT_STARTED)
     )
 
@@ -366,6 +365,8 @@ def cancel_indexing_attempts_for_connector(
 def cancel_indexing_attempts_past_model(
     db_session: Session,
 ) -> None:
+    """Stops all indexing attempts that are in progress or not started for
+    any embedding model that not present/future"""
     db_session.execute(
         update(IndexAttempt)
         .where(

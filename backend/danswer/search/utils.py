@@ -19,6 +19,14 @@ T = TypeVar(
     SavedSearchDocWithContent,
 )
 
+TSection = TypeVar(
+    "TSection",
+    InferenceSection,
+    SearchDoc,
+    SavedSearchDoc,
+    SavedSearchDocWithContent,
+)
+
 
 def dedupe_documents(items: list[T]) -> tuple[list[T], list[int]]:
     seen_ids = set()
@@ -39,30 +47,9 @@ def dedupe_documents(items: list[T]) -> tuple[list[T], list[int]]:
 
 
 def relevant_sections_to_indices(
-    relevance_sections: list[SectionRelevancePiece] | None,
-    inference_sections: list[InferenceSection],
+    relevance_sections: list[SectionRelevancePiece] | None, items: list[TSection]
 ) -> list[int]:
-    if relevance_sections is None:
-        return []
-
-    relevant_set = {
-        (chunk.document_id, chunk.chunk_id)
-        for chunk in relevance_sections
-        if chunk.relevant
-    }
-    relevant_indices = [
-        index
-        for index, section in enumerate(inference_sections)
-        if (section.center_chunk.document_id, section.center_chunk.chunk_id)
-        in relevant_set
-    ]
-    return relevant_indices
-
-
-def relevant_documents_to_indices(
-    relevance_sections: list[SectionRelevancePiece] | None, search_docs: list[SearchDoc]
-) -> list[int]:
-    if relevance_sections is None:
+    if not relevance_sections:
         return []
 
     relevant_set = {
@@ -73,8 +60,18 @@ def relevant_documents_to_indices(
 
     return [
         index
-        for index, section in enumerate(search_docs)
-        if (section.document_id, section.chunk_ind) in relevant_set
+        for index, item in enumerate(items)
+        if (
+            (
+                isinstance(item, InferenceSection)
+                and (item.center_chunk.document_id, item.center_chunk.chunk_id)
+                in relevant_set
+            )
+            or (
+                not isinstance(item, (InferenceSection))
+                and (item.document_id, item.chunk_ind) in relevant_set
+            )
+        )
     ]
 
 

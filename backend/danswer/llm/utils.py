@@ -29,6 +29,7 @@ from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import LOG_LEVEL
 
+
 if TYPE_CHECKING:
     from danswer.llm.answering.models import PreviousMessage
 

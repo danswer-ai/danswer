@@ -181,7 +181,7 @@ class SearchTool(Tool):
         self, query: str
     ) -> Generator[ToolResponse, None, None]:
         if self.selected_sections is None:
-            raise ValueError("sections must be specified")
+            raise ValueError("Sections must be specified")
 
         yield ToolResponse(
             id=SEARCH_RESPONSE_SUMMARY_ID,

@@ -9,6 +9,8 @@ from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import FileOrigin
+from danswer.configs.constants import KV_CUSTOM_ANALYTICS_SCRIPT_KEY
+from danswer.configs.constants import KV_ENTERPRISE_SETTINGS_KEY
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.file_store.file_store import get_default_file_store
@@ -17,7 +19,6 @@ from ee.danswer.server.enterprise_settings.models import AnalyticsScriptUpload
 from ee.danswer.server.enterprise_settings.models import EnterpriseSettings
 
 
-_ENTERPRISE_SETTINGS_KEY = "danswer_enterprise_settings"
 logger = setup_logger()
 
 
@@ -25,27 +26,26 @@ def load_settings() -> EnterpriseSettings:
     dynamic_config_store = get_dynamic_config_store()
     try:
         settings = EnterpriseSettings(
-            **cast(dict, dynamic_config_store.load(_ENTERPRISE_SETTINGS_KEY))
+            **cast(dict, dynamic_config_store.load(KV_ENTERPRISE_SETTINGS_KEY))
         )
     except ConfigNotFoundError:
         settings = EnterpriseSettings()
-        dynamic_config_store.store(_ENTERPRISE_SETTINGS_KEY, settings.dict())
+        dynamic_config_store.store(KV_ENTERPRISE_SETTINGS_KEY, settings.dict())
 
     return settings
 
 
 def store_settings(settings: EnterpriseSettings) -> None:
-    get_dynamic_config_store().store(_ENTERPRISE_SETTINGS_KEY, settings.dict())
+    get_dynamic_config_store().store(KV_ENTERPRISE_SETTINGS_KEY, settings.dict())
 
 
-_CUSTOM_ANALYTICS_SCRIPT_KEY = "__custom_analytics_script__"
 _CUSTOM_ANALYTICS_SECRET_KEY = os.environ.get("CUSTOM_ANALYTICS_SECRET_KEY")
 
 
 def load_analytics_script() -> str | None:
     dynamic_config_store = get_dynamic_config_store()
     try:
-        return cast(str, dynamic_config_store.load(_CUSTOM_ANALYTICS_SCRIPT_KEY))
+        return cast(str, dynamic_config_store.load(KV_CUSTOM_ANALYTICS_SCRIPT_KEY))
     except ConfigNotFoundError:
         return None
 
@@ -58,7 +58,7 @@ def store_analytics_script(analytics_script_upload: AnalyticsScriptUpload) -> No
         raise ValueError("Invalid secret key")
 
     get_dynamic_config_store().store(
-        _CUSTOM_ANALYTICS_SCRIPT_KEY, analytics_script_upload.script
+        KV_CUSTOM_ANALYTICS_SCRIPT_KEY, analytics_script_upload.script
     )
 
 

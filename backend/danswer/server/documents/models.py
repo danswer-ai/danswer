@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
+from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
@@ -39,8 +40,11 @@ class ConnectorBase(BaseModel):
     connector_specific_config: dict[str, Any]
     refresh_freq: int | None  # In seconds, None for one time index with no refresh
     prune_freq: int | None
-    disabled: bool
     indexing_start: datetime | None
+
+
+class ConnectorCredentialBase(ConnectorBase):
+    is_public: bool
 
 
 class ConnectorSnapshot(ConnectorBase):
@@ -66,7 +70,6 @@ class ConnectorSnapshot(ConnectorBase):
             indexing_start=connector.indexing_start,
             time_created=connector.time_created,
             time_updated=connector.time_updated,
-            disabled=connector.disabled,
         )
 
 
@@ -147,6 +150,7 @@ class IndexAttemptSnapshot(BaseModel):
 class CCPairFullInfo(BaseModel):
     id: int
     name: str
+    status: ConnectorCredentialPairStatus
     num_docs_indexed: int
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
@@ -164,6 +168,7 @@ class CCPairFullInfo(BaseModel):
         return cls(
             id=cc_pair_model.id,
             name=cc_pair_model.name,
+            status=cc_pair_model.status,
             num_docs_indexed=num_docs_indexed,
             connector=ConnectorSnapshot.from_connector_db_model(
                 cc_pair_model.connector
@@ -184,6 +189,7 @@ class ConnectorIndexingStatus(BaseModel):
 
     cc_pair_id: int
     name: str | None
+    cc_pair_status: ConnectorCredentialPairStatus
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
     owner: str

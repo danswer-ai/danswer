@@ -332,6 +332,7 @@ export const AIMessage = ({
                       )}
 
                     {toolCall &&
+                      (!files || files.length == 0) &&
                       toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
                       !toolCall.tool_result && <GeneratingImageDisplay />}
 
@@ -355,7 +356,7 @@ export const AIMessage = ({
                         <FileDisplay files={files || []} />
 
                         {typeof content === "string" ? (
-                          <div className="overflow-x-auto w-full pr-2 max-w-[675px]">
+                          <div className="overflow-x-visible w-full pr-2 max-w-[675px]">
                             <ReactMarkdown
                               key={messageId}
                               className="prose max-w-full"

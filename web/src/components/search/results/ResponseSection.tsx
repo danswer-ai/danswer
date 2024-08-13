@@ -71,17 +71,7 @@ export const ResponseSection = ({
         }}
       >
         <div className="my-auto">{icon}</div>
-        <div className="my-auto text-sm text-gray-200 italic">{header}</div>
-
-        {!isNotControllable && (
-          <div className="ml-auto">
-            {finalIsOpen ? (
-              <ChevronDownIcon size={16} className="text-gray-400" />
-            ) : (
-              <ChevronLeftIcon size={16} className="text-gray-400" />
-            )}
-          </div>
-        )}
+        <div className="my-auto text-sm text-gray-200">{header}</div>
       </div>
       {finalIsOpen && <div className="pb-1 mx-2 text-sm mb-1">{body}</div>}
     </div>

@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from danswer.chat.models import SectionRelevancePiece
 from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
-from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
@@ -78,7 +77,6 @@ class SearchPipeline:
         # Preprocessing steps generate this
         self._search_query: SearchQuery | None = None
         self._predicted_search_type: SearchType | None = None
-        self._predicted_flow: QueryFlow | None = None
 
         # Initial document index retrieval chunks
         self._retrieved_chunks: list[InferenceChunk] | None = None
@@ -96,14 +94,13 @@ class SearchPipeline:
             Iterator[list[InferenceSection] | list[SectionRelevancePiece]] | None
         ) = None
 
+        # No longer computed but keeping around in case it's reintroduced later
+        self._predicted_flow: QueryFlow | None = QueryFlow.QUESTION_ANSWER
+
     """Pre-processing"""
 
     def _run_preprocessing(self) -> None:
-        (
-            final_search_query,
-            predicted_search_type,
-            predicted_flow,
-        ) = retrieval_preprocessing(
+        final_search_query = retrieval_preprocessing(
             search_request=self.search_request,
             user=self.user,
             llm=self.llm,
@@ -111,8 +108,7 @@ class SearchPipeline:
             bypass_acl=self.bypass_acl,
         )
         self._search_query = final_search_query
-        self._predicted_search_type = predicted_search_type
-        self._predicted_flow = predicted_flow
+        self._predicted_search_type = final_search_query.search_type
 
     @property
     def search_query(self) -> SearchQuery:
@@ -153,8 +149,6 @@ class SearchPipeline:
             query=self.search_query,
             document_index=self.document_index,
             db_session=self.db_session,
-            hybrid_alpha=self.search_request.hybrid_alpha,
-            multilingual_expansion_str=MULTILINGUAL_QUERY_EXPANSION,
             retrieval_metrics_callback=self.retrieval_metrics_callback,
         )
 
@@ -370,8 +364,13 @@ class SearchPipeline:
                 )
                 for section in sections
             ]
-            results = run_functions_in_parallel(function_calls=functions)
-            self._section_relevance = list(results.values())
+            try:
+                results = run_functions_in_parallel(function_calls=functions)
+                self._section_relevance = list(results.values())
+            except Exception:
+                raise ValueError(
+                    "An issue occured during the agentic evaluation proecss."
+                )
 
         elif self.search_query.evaluation_type == LLMEvaluationType.BASIC:
             if DISABLE_LLM_DOC_RELEVANCE:
@@ -397,6 +396,6 @@ class SearchPipeline:
     def section_relevance_list(self) -> list[bool]:
         llm_indices = relevant_sections_to_indices(
             relevance_sections=self.section_relevance,
-            inference_sections=self.final_context_sections,
+            items=self.final_context_sections,
         )
         return [ind in llm_indices for ind in range(len(self.final_context_sections))]

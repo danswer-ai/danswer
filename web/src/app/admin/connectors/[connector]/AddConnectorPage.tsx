@@ -189,10 +189,10 @@ export default function AddConnector({
         refresh_freq: refreshFreq * 60 || null,
         prune_freq: pruneFreq * 60 || null,
         indexing_start: indexingStart,
-        disabled: false,
       },
       undefined,
-      credentialActivated ? false : true
+      credentialActivated ? false : true,
+      isPublic
     );
 
     // If no credential
@@ -328,7 +328,6 @@ export default function AddConnector({
           <>
             <Card>
               <Title className="mb-2 text-lg">Select a credential</Title>
-
               <GmailMain />
             </Card>
             <div className="mt-4 flex w-full justify-end">

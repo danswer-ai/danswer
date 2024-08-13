@@ -16,6 +16,8 @@ from sqlalchemy.orm import sessionmaker
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
 from danswer.configs.app_configs import POSTGRES_PASSWORD
+from danswer.configs.app_configs import POSTGRES_POOL_PRE_PING
+from danswer.configs.app_configs import POSTGRES_POOL_RECYCLE
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
@@ -77,7 +79,13 @@ def get_sqlalchemy_engine() -> Engine:
         connection_string = build_connection_string(
             db_api=SYNC_DB_API, app_name=POSTGRES_APP_NAME + "_sync"
         )
-        _SYNC_ENGINE = create_engine(connection_string, pool_size=40, max_overflow=10)
+        _SYNC_ENGINE = create_engine(
+            connection_string,
+            pool_size=40,
+            max_overflow=10,
+            pool_pre_ping=POSTGRES_POOL_PRE_PING,
+            pool_recycle=POSTGRES_POOL_RECYCLE,
+        )
     return _SYNC_ENGINE
 
 
@@ -94,6 +102,8 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
             },
             pool_size=40,
             max_overflow=10,
+            pool_pre_ping=POSTGRES_POOL_PRE_PING,
+            pool_recycle=POSTGRES_POOL_RECYCLE,
         )
     return _ASYNC_ENGINE
 

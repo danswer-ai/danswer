@@ -31,10 +31,11 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "../resizable/constants";
 import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
-import { AnswerSection } from "./results/AnswerSection";
-import { QuotesSection } from "./results/QuotesSection";
-import { QAFeedbackBlock } from "./QAFeedback";
 import { usePopup } from "../admin/connectors/Popup";
+import { FeedbackType } from "@/app/chat/types";
+import { FeedbackModal } from "@/app/chat/modal/FeedbackModal";
+import { handleChatFeedback } from "@/app/chat/lib";
+import SearchAnswer from "./SearchAnswer";
 
 export type searchState =
   | "input"
@@ -148,6 +149,9 @@ export const SearchSection = ({
     personas[0]?.id || 0
   );
 
+  // Used for search state display
+  const [analyzeStartTime, setAnalyzeStartTime] = useState<number>(0);
+
   // Filters
   const filterManager = useFilters();
   const availableSources = ccPairs.map((ccPair) => ccPair.source);
@@ -218,6 +222,16 @@ export const SearchSection = ({
   const [defaultOverrides, setDefaultOverrides] =
     useState<SearchDefaultOverrides>(SEARCH_DEFAULT_OVERRIDES_START);
 
+  const newSearchState = (
+    currentSearchState: searchState,
+    newSearchState: searchState
+  ) => {
+    if (currentSearchState != "input") {
+      return newSearchState;
+    }
+    return "input";
+  };
+
   // Helpers
   const initialSearchResponse: SearchResponse = {
     answer: null,
@@ -237,12 +251,15 @@ export const SearchSection = ({
       answer,
     }));
 
-    setSearchState((searchState) => {
-      if (searchState != "input") {
-        return "generating";
-      }
-      return "input";
-    });
+    if (analyzeStartTime) {
+      const elapsedTime = Date.now() - analyzeStartTime;
+      const nextInterval = Math.ceil(elapsedTime / 1500) * 1500;
+      setTimeout(() => {
+        setSearchState((searchState) =>
+          newSearchState(searchState, "generating")
+        );
+      }, nextInterval - elapsedTime);
+    }
   };
 
   const updateQuotes = (quotes: Quote[]) => {
@@ -256,20 +273,17 @@ export const SearchSection = ({
   const updateDocs = (documents: SearchDanswerDocument[]) => {
     if (agentic) {
       setTimeout(() => {
-        setSearchState((searchState) => {
-          if (searchState != "input") {
-            return "reading";
-          }
-          return "input";
-        });
+        setSearchState((searchState) => newSearchState(searchState, "reading"));
       }, 1500);
 
       setTimeout(() => {
+        setAnalyzeStartTime(Date.now());
         setSearchState((searchState) => {
-          if (searchState != "input") {
-            return "analyzing";
+          const newState = newSearchState(searchState, "analyzing");
+          if (newState === "analyzing") {
+            setAnalyzeStartTime(Date.now());
           }
-          return "input";
+          return newState;
         });
       }, 4500);
     }
@@ -301,11 +315,14 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       selectedDocIndices: docIndices,
     }));
-  const updateError = (error: FlowType) =>
+  const updateError = (error: FlowType) => {
+    resetInput(true);
+
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       error,
     }));
+  };
   const updateMessageAndThreadId = (
     messageId: number,
     chat_session_id: number
@@ -347,12 +364,14 @@ export const SearchSection = ({
       setSearchState("input");
     }
   };
+  const [searchAnswerExpanded, setSearchAnswerExpanded] = useState(false);
 
-  const resetInput = () => {
+  const resetInput = (finalized?: boolean) => {
     setSweep(false);
     setFirstSearch(false);
     setComments(null);
-    setSearchState("searching");
+    setSearchState(finalized ? "input" : "searching");
+    setSearchAnswerExpanded(false);
   };
 
   const [agenticResults, setAgenticResults] = useState<boolean | null>(null);
@@ -429,7 +448,6 @@ export const SearchSection = ({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateDocumentRelevance,
       }),
-
       updateComments: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateComments,
@@ -513,6 +531,37 @@ export const SearchSection = ({
       }
     });
   }
+  const [currentFeedback, setCurrentFeedback] = useState<
+    [FeedbackType, number] | null
+  >(null);
+
+  const onFeedback = async (
+    messageId: number,
+    feedbackType: FeedbackType,
+    feedbackDetails: string,
+    predefinedFeedback: string | undefined
+  ) => {
+    const response = await handleChatFeedback(
+      messageId,
+      feedbackType,
+      feedbackDetails,
+      predefinedFeedback
+    );
+
+    if (response.ok) {
+      setPopup({
+        message: "Thanks for your feedback!",
+        type: "success",
+      });
+    } else {
+      const responseJson = await response.json();
+      const errorMsg = responseJson.detail || responseJson.message;
+      setPopup({
+        message: `Failed to submit feedback - ${errorMsg}`,
+        type: "error",
+      });
+    }
+  };
 
   const chatBannerPresent = settings?.enterpriseSettings?.custom_header_content;
 
@@ -520,7 +569,23 @@ export const SearchSection = ({
 
   return (
     <>
-      <div className="flex relative w-full pr-[8px] h-full text-default">
+      <div className="flex relative pr-[8px] h-full text-default">
+        {popup}
+        {currentFeedback && (
+          <FeedbackModal
+            feedbackType={currentFeedback[0]}
+            onClose={() => setCurrentFeedback(null)}
+            onSubmit={({ message, predefinedFeedback }) => {
+              onFeedback(
+                currentFeedback[1],
+                currentFeedback[0],
+                message,
+                predefinedFeedback
+              );
+              setCurrentFeedback(null);
+            }}
+          />
+        )}
         <div
           ref={sidebarElementRef}
           className={`
@@ -553,7 +618,7 @@ export const SearchSection = ({
           </div>
         </div>
 
-        <div className="absolute left-0 w-full top-0">
+        <div className="absolute include-scrollbar h-screen overflow-y-auto left-0 w-full top-0">
           <FunctionalHeader
             sidebarToggled={toggledSidebar}
             reset={() => setQuery("")}
@@ -579,7 +644,7 @@ export const SearchSection = ({
 
             {
               <div
-                className={`desktop:px-24 w-full  ${chatBannerPresent && "mt-10"} pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto`}
+                className={` overflow-y-auto desktop:px-24 w-full  ${chatBannerPresent && "mt-10"} pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto`}
               >
                 <div className="absolute z-10 mobile:px-4 mobile:max-w-searchbar-max mobile:w-[90%] top-12 desktop:left-0 hidden 2xl:block mobile:left-1/2 mobile:transform mobile:-translate-x-1/2 desktop:w-52 3xl:w-64">
                   {!settings?.isMobile &&
@@ -599,6 +664,7 @@ export const SearchSection = ({
                     <div className="mt-6">
                       {!(agenticResults && isFetching) || disabledAgentic ? (
                         <SearchResultsDisplay
+                          searchState={searchState}
                           disabledAgentic={disabledAgentic}
                           contentEnriched={contentEnriched}
                           comments={comments}
@@ -656,103 +722,22 @@ export const SearchSection = ({
                     />
                   </div>
                   {!firstSearch && (
-                    <div className="my-4 min-h-[16rem] p-4 border-2 border-border rounded-lg relative">
-                      <div>
-                        <div className="flex gap-x-2 mb-1">
-                          <h2 className="text-emphasis font-bold my-auto mb-1 ">
-                            AI Answer
-                          </h2>
-
-                          {searchState == "generating" && (
-                            <div
-                              key={"generating"}
-                              className="relative inline-block"
-                            >
-                              <span className="loading-text">
-                                Generating response...
-                              </span>
-                            </div>
-                          )}
-
-                          {searchState == "citing" && (
-                            <div
-                              key={"citing"}
-                              className="relative inline-block"
-                            >
-                              <span className="loading-text">
-                                Generating citations...
-                              </span>
-                            </div>
-                          )}
-
-                          {searchState == "searching" && (
-                            <div
-                              key={"Reading"}
-                              className="relative inline-block"
-                            >
-                              <span className="loading-text">Searching...</span>
-                            </div>
-                          )}
-
-                          {searchState == "reading" && (
-                            <div
-                              key={"Reading"}
-                              className="relative inline-block"
-                            >
-                              <span className="loading-text">
-                                Reading{settings?.isMobile ? "" : " Documents"}
-                                ...
-                              </span>
-                            </div>
-                          )}
-
-                          {searchState == "analyzing" && (
-                            <div
-                              key={"Generating"}
-                              className="relative inline-block"
-                            >
-                              <span className="loading-text">
-                                Generating
-                                {settings?.isMobile ? "" : " Analysis"}...
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="mb-2 pt-1 border-t border-border w-full">
-                          <AnswerSection
-                            answer={answer}
-                            quotes={quotes}
-                            error={error}
-                            isFetching={isFetching}
-                          />
-                        </div>
-
-                        {quotes !== null && quotes.length > 0 && answer && (
-                          <div className="pt-1 border-t border-border w-full">
-                            <QuotesSection
-                              quotes={dedupedQuotes}
-                              isFetching={isFetching}
-                            />
-
-                            {searchResponse.messageId !== null && (
-                              <div className="absolute right-3 bottom-3">
-                                <QAFeedbackBlock
-                                  messageId={searchResponse.messageId}
-                                  setPopup={setPopup}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    <SearchAnswer
+                      isFetching={isFetching}
+                      dedupedQuotes={dedupedQuotes}
+                      searchResponse={searchResponse}
+                      setSearchAnswerExpanded={setSearchAnswerExpanded}
+                      searchAnswerExpanded={searchAnswerExpanded}
+                      setCurrentFeedback={setCurrentFeedback}
+                      searchState={searchState}
+                    />
                   )}
 
                   {!settings?.isMobile && (
                     <div className="mt-6">
                       {!(agenticResults && isFetching) || disabledAgentic ? (
                         <SearchResultsDisplay
+                          searchState={searchState}
                           disabledAgentic={disabledAgentic}
                           contentEnriched={contentEnriched}
                           comments={comments}
