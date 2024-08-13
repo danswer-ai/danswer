@@ -15,6 +15,8 @@ import { useState } from "react";
 import { Hoverable } from "@/components/Hoverable";
 import { Popover } from "@/components/popover/Popover";
 import { FiStar } from "react-icons/fi";
+import { StarFeedback } from "@/components/icons/icons";
+import { IconType } from "react-icons";
 
 export function RegenerateDropdown({
   options,
@@ -86,9 +88,13 @@ export function RegenerateDropdown({
       content={
         <div onClick={() => setIsOpen(!isOpen)}>
           {!alternate ? (
-            <Hoverable icon={FiStar} />
+            <Hoverable size={16} icon={StarFeedback as IconType} />
           ) : (
-            <Hoverable icon={FiStar} hoverText={alternate} />
+            <Hoverable
+              size={16}
+              icon={StarFeedback as IconType}
+              hoverText={getDisplayNameForModel(alternate)}
+            />
           )}
         </div>
       }

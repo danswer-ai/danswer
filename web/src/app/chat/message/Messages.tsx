@@ -39,7 +39,12 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Citation } from "@/components/search/results/Citation";
 import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 
-import { ThumbsUpIcon, ThumbsDownIcon } from "@/components/icons/icons";
+import {
+  ThumbsUpIcon,
+  ThumbsDownIcon,
+  LikeFeedback,
+  DislikeFeedback,
+} from "@/components/icons/icons";
 import {
   CustomTooltip,
   TooltipGroup,
@@ -523,13 +528,13 @@ export const AIMessage = ({
                           </CustomTooltip>
                           <CustomTooltip showTick line content="Good response!">
                             <HoverableIcon
-                              icon={<ThumbsUpIcon />}
+                              icon={<LikeFeedback />}
                               onClick={() => handleFeedback("like")}
                             />
                           </CustomTooltip>
                           <CustomTooltip showTick line content="Bad response!">
                             <HoverableIcon
-                              icon={<ThumbsDownIcon />}
+                              icon={<DislikeFeedback size={16} />}
                               onClick={() => handleFeedback("dislike")}
                             />
                           </CustomTooltip>
@@ -562,14 +567,14 @@ export const AIMessage = ({
 
                           <CustomTooltip showTick line content="Good response!">
                             <HoverableIcon
-                              icon={<ThumbsUpIcon />}
+                              icon={<LikeFeedback />}
                               onClick={() => handleFeedback("like")}
                             />
                           </CustomTooltip>
 
                           <CustomTooltip showTick line content="Bad response!">
                             <HoverableIcon
-                              icon={<ThumbsDownIcon />}
+                              icon={<DislikeFeedback size={16} />}
                               onClick={() => handleFeedback("dislike")}
                             />
                           </CustomTooltip>
