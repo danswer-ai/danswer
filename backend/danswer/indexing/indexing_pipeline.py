@@ -267,7 +267,7 @@ def build_indexing_pipeline(
     chunker: Chunker | None = None,
     ignore_time_skip: bool = False,
 ) -> IndexingPipelineProtocol:
-    """Builds a pipline which takes in a list (batch) of docs and indexes them."""
+    """Builds a pipeline which takes in a list (batch) of docs and indexes them."""
     search_settings = get_search_settings()
     multipass = (
         search_settings.multipass_indexing
