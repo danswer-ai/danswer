@@ -619,22 +619,16 @@ export const useScrollonStreamVirtualized = ({
   distance: number;
   debounceTime: number;
 }) => {
-  console.log("created");
-
   useEffect(() => {
-    console.log("outside if");
-    console.log(listRef);
-
     if (chatState != "input" && listRef.current) {
-      console.log("hello");
       const scrollToBottomIfClose = () => {
-        console.log("SCROLLING");
         const list = listRef.current;
         if (list && list.Grid) {
           const grid = list.Grid as any; // Type assertion
           if (grid._scrollingContainer) {
             const { scrollTop, scrollHeight, clientHeight } =
               grid._scrollingContainer;
+
             const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
 
             if (distanceFromBottom < distance) {
@@ -645,24 +639,23 @@ export const useScrollonStreamVirtualized = ({
       };
 
       const debouncedScroll = debounce(scrollToBottomIfClose, debounceTime);
+      debouncedScroll();
 
-      const scrollingContainer = (listRef.current.Grid as any)
-        ?._scrollingContainer;
-      if (scrollingContainer) {
-        scrollingContainer.addEventListener("scroll", debouncedScroll);
-      }
+      // const scrollingContainer = (listRef.current.Grid as any)
+      //   ?._scrollingContainer;
+      // if (scrollingContainer) {
+      //   scrollingContainer.addEventListener("scroll", debouncedScroll);
+      // }
 
-      return () => {
-        if (scrollingContainer) {
-          scrollingContainer.removeEventListener("scroll", debouncedScroll);
-        }
-      };
+      // return () => {
+      //   if (scrollingContainer) {
+      //     scrollingContainer.removeEventListener("scroll", debouncedScroll);
+      //   }
+      // };
     } else {
       console.log("out of ref");
-      console.log(listRef);
-      console.log(chatState);
     }
-  }, [chatState, listRef, distance, debounceTime]);
+  });
 };
 export async function useScrollonStream({
   chatState,

@@ -651,8 +651,9 @@ export function ChatPage({
             scrollContainer.scrollHeight -
             scrollContainer.scrollTop -
             scrollContainer.clientHeight;
+          console.log(` scroll ${distanceToBottom}`);
 
-          if (distanceToBottom < 20) {
+          if (distanceToBottom < 300) {
             scrollContainer.scrollTo({
               top: scrollContainer.scrollHeight,
               behavior: "smooth",
@@ -673,7 +674,7 @@ export function ChatPage({
     chatState,
     listRef,
     distance: 500,
-    debounceTime: 100,
+    debounceTime: 10,
   });
   const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(
     existingChatSessionId === null
@@ -1625,8 +1626,7 @@ export function ChatPage({
                           className="absolute bottom-0 z-10 w-full"
                         >
                           <div className="w-full relative pb-4">
-                            {true && (
-                              // aboveHorizon
+                            {aboveHorizon && (
                               <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
                                 <button
                                   onClick={() => clientScrollToBottom()}

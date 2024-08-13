@@ -205,8 +205,8 @@ export const MessageHistory = forwardRef<List, MessageHistoryProps>(
           />
         )}
       </AutoSizer>
-
-      // </div>
     );
   }
 );
+
+MessageHistory.displayName = "MessageHistory";
