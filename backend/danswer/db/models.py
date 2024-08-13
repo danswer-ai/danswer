@@ -193,6 +193,9 @@ class ApiKey(Base):
     api_key_display: Mapped[str] = mapped_column(String, unique=True)
     # the ID of the "user" who represents the access credentials for the API key
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
+    user_role: Mapped[UserRole] = mapped_column(
+        Enum(UserRole, native_enum=False, default=UserRole.BASIC)
+    )
     # the ID of the user who owns the key
     owner_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(

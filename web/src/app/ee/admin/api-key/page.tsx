@@ -173,6 +173,7 @@ function Main() {
           <TableRow>
             <TableHeaderCell>Name</TableHeaderCell>
             <TableHeaderCell>API Key</TableHeaderCell>
+            <TableHeaderCell>Role</TableHeaderCell>
             <TableHeaderCell>Regenerate</TableHeaderCell>
             <TableHeaderCell>Delete</TableHeaderCell>
           </TableRow>
@@ -200,6 +201,9 @@ function Main() {
               </TableCell>
               <TableCell className="max-w-64">
                 {apiKey.api_key_display}
+              </TableCell>
+              <TableCell className="max-w-64">
+                {apiKey.api_key_role.toUpperCase()}
               </TableCell>
               <TableCell>
                 <div
