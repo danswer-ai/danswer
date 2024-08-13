@@ -1,9 +1,11 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { Credential } from "./connectors/credentials";
 import { Connector } from "./connectors/connectors";
+import { ConnectorCredentialPairStatus } from "@/app/admin/connector/[ccPairId]/types";
 
 export interface UserPreferences {
   chosen_assistants: number[] | null;
+  default_model: string | null;
 }
 
 export enum UserStatus {
@@ -67,6 +69,7 @@ export interface ConnectorIndexingStatus<
 > {
   cc_pair_id: number;
   name: string | null;
+  cc_pair_status: ConnectorCredentialPairStatus;
   connector: Connector<ConnectorConfigType>;
   credential: Credential<ConnectorCredentialType>;
   public_doc: boolean;

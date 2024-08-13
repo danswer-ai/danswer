@@ -150,7 +150,6 @@ body {
 pre[class*="language-"],
 code[class*="language-"] {
   color: theme("colors.code-text");
-  background: white;
 }
 
 /* Token styles */

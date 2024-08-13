@@ -219,28 +219,4 @@ schema DANSWER_CHUNK_NAME {
             expression: bm25(content) + (5 * bm25(title))
         }
     }
-
-    # THE ONES BELOW ARE OUT OF DATE, DO NOT USE
-    # THEY MIGHT NOT EVEN WORK AT ALL
-    rank-profile keyword_search inherits default, default_rank {
-        first-phase {
-            expression: bm25(content) * document_boost * recency_bias
-        }
-
-        match-features: recency_bias document_boost bm25(content)
-    }
-
-    rank-profile semantic_searchVARIABLE_DIM inherits default, default_rank {
-        inputs {
-            query(query_embedding) tensor<float>(x[VARIABLE_DIM])
-        }
-
-        first-phase {
-            # Cannot do boost with the chosen embedding model because of high default similarity
-            # This depends on the embedding model chosen
-            expression: closeness(field, embeddings)
-        }
-
-        match-features: recency_bias document_boost closest(embeddings)
-    }
 }

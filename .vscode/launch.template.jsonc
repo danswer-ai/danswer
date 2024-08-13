@@ -70,7 +70,7 @@
             "cwd": "${workspaceFolder}/backend",
             "envFile": "${workspaceFolder}/.env",
             "env": {
-                "ENABLE_MINI_CHUNK": "false",
+                "ENABLE_MULTIPASS_INDEXING": "false",
                 "LOG_LEVEL": "DEBUG",
                 "PYTHONUNBUFFERED": "1",
                 "PYTHONPATH": "."

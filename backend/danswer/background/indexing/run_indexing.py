@@ -7,6 +7,7 @@ from datetime import timezone
 from sqlalchemy.orm import Session
 
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
+from danswer.configs.app_configs import INDEXING_SIZE_WARNING_THRESHOLD
 from danswer.configs.app_configs import POLL_CONNECTOR_OFFSET
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -14,10 +15,10 @@ from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.connectors.models import InputType
-from danswer.db.connector import disable_connector
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.index_attempt import mark_attempt_in_progress
@@ -62,7 +63,14 @@ def _get_document_generator(
         )
     except Exception as e:
         logger.exception(f"Unable to instantiate connector due to {e}")
-        disable_connector(attempt.connector_credential_pair.connector.id, db_session)
+        # since we failed to even instantiate the connector, we pause the CCPair since
+        # it will never succeed
+        update_connector_credential_pair(
+            db_session=db_session,
+            connector_id=attempt.connector_credential_pair.connector.id,
+            credential_id=attempt.connector_credential_pair.credential.id,
+            status=ConnectorCredentialPairStatus.PAUSED,
+        )
         raise e
 
     if task == InputType.LOAD_STATE:
@@ -132,6 +140,7 @@ def _run_indexing(
         db_session=db_session,
     )
 
+    db_cc_pair = index_attempt.connector_credential_pair
     db_connector = index_attempt.connector_credential_pair.connector
     db_credential = index_attempt.connector_credential_pair.credential
 
@@ -189,7 +198,7 @@ def _run_indexing(
                 # contents still need to be initially pulled.
                 db_session.refresh(db_connector)
                 if (
-                    db_connector.disabled
+                    db_cc_pair.status == ConnectorCredentialPairStatus.PAUSED
                     and db_embedding_model.status != IndexModelStatus.FUTURE
                 ):
                     # let the `except` block handle this
@@ -200,9 +209,22 @@ def _run_indexing(
                     # Likely due to user manually disabling it or model swap
                     raise RuntimeError("Index Attempt was canceled")
 
-                logger.debug(
-                    f"Indexing batch of documents: {[doc.to_short_descriptor() for doc in doc_batch]}"
-                )
+                batch_description = []
+                for doc in doc_batch:
+                    batch_description.append(doc.to_short_descriptor())
+
+                    doc_size = 0
+                    for section in doc.sections:
+                        doc_size += len(section.text)
+
+                    if doc_size > INDEXING_SIZE_WARNING_THRESHOLD:
+                        logger.warning(
+                            f"Document size: doc='{doc.to_short_descriptor()}' "
+                            f"size={doc_size} "
+                            f"threshold={INDEXING_SIZE_WARNING_THRESHOLD}"
+                        )
+
+                logger.debug(f"Indexing batch of documents: {batch_description}")
 
                 index_attempt_md.batch_num = batch_num + 1  # use 1-index for this
                 new_docs, total_batch_chunks = indexing_pipeline(
@@ -254,7 +276,7 @@ def _run_indexing(
             # to give better clarity in the UI, as the next run will never happen.
             if (
                 ind == 0
-                or db_connector.disabled
+                or db_cc_pair.status == ConnectorCredentialPairStatus.PAUSED
                 or index_attempt.status != IndexingStatus.IN_PROGRESS
             ):
                 mark_attempt_failed(
@@ -266,8 +288,8 @@ def _run_indexing(
                 if is_primary:
                     update_connector_credential_pair(
                         db_session=db_session,
-                        connector_id=index_attempt.connector_credential_pair.connector.id,
-                        credential_id=index_attempt.connector_credential_pair.credential.id,
+                        connector_id=db_connector.id,
+                        credential_id=db_credential.id,
                         net_docs=net_doc_change,
                     )
                 raise e

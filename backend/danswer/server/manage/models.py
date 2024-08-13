@@ -39,6 +39,7 @@ class AuthTypeResponse(BaseModel):
 
 class UserPreferences(BaseModel):
     chosen_assistants: list[int] | None
+    default_model: str | None
 
 
 class UserInfo(BaseModel):
@@ -67,7 +68,12 @@ class UserInfo(BaseModel):
             is_superuser=user.is_superuser,
             is_verified=user.is_verified,
             role=user.role,
-            preferences=(UserPreferences(chosen_assistants=user.chosen_assistants)),
+            preferences=(
+                UserPreferences(
+                    chosen_assistants=user.chosen_assistants,
+                    default_model=user.default_model,
+                )
+            ),
             oidc_expiry=user.oidc_expiry,
             current_token_created_at=current_token_created_at,
             current_token_expiry_length=expiry_length,

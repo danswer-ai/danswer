@@ -165,7 +165,6 @@ def create_connector(env_name: str, file_paths: list[str]) -> int:
         connector_specific_config={"file_locations": file_paths},
         refresh_freq=None,
         prune_freq=None,
-        disabled=False,
         indexing_start=None,
     )
 

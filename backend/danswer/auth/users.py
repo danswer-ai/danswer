@@ -67,6 +67,14 @@ from danswer.utils.variable_functionality import (
 logger = setup_logger()
 
 
+def is_user_admin(user: User | None) -> bool:
+    if AUTH_TYPE == AuthType.DISABLED:
+        return True
+    if user and user.role == UserRole.ADMIN:
+        return True
+    return False
+
+
 def verify_auth_setting() -> None:
     if AUTH_TYPE not in [AuthType.DISABLED, AuthType.BASIC, AuthType.GOOGLE_OAUTH]:
         raise ValueError(

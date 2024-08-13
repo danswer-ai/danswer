@@ -11,6 +11,7 @@ from danswer.chat.models import QADocsResponse
 from danswer.configs.constants import MessageType
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.models import ChunkContext
+from danswer.search.models import RerankingDetails
 from danswer.search.models import RetrievalDetails
 
 
@@ -28,9 +29,9 @@ class DirectQARequest(ChunkContext):
     messages: list[ThreadMessage]
     prompt_id: int | None
     persona_id: int
+    multilingual_query_expansion: list[str] | None = None
     retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
-    # This is to forcibly skip (or run) the step, if None it uses the system defaults
-    skip_rerank: bool | None = None
+    rerank_settings: RerankingDetails | None = None
     evaluation_type: LLMEvaluationType = LLMEvaluationType.UNSPECIFIED
 
     chain_of_thought: bool = False

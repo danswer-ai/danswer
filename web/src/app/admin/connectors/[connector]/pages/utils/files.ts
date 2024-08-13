@@ -43,7 +43,6 @@ export const submitFiles = async (
     refresh_freq: null,
     prune_freq: null,
     indexing_start: null,
-    disabled: false,
   });
   if (connectorErrorMsg || !connector) {
     setPopup({

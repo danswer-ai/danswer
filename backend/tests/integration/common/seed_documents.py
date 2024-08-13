@@ -1,10 +1,10 @@
 import uuid
-from typing import cast
 
 import requests
 from pydantic import BaseModel
 
 from danswer.configs.constants import DocumentSource
+from tests.integration.common.connectors import ConnectorClient
 from tests.integration.common.constants import API_SERVER_URL
 
 
@@ -15,34 +15,12 @@ class SeedDocumentResponse(BaseModel):
 
 class TestDocumentClient:
     @staticmethod
-    def seed_documents(num_docs: int = 5) -> SeedDocumentResponse:
-        unique_id = uuid.uuid4()
-
-        # Create a connector
-        connector_name = f"test_connector_{unique_id}"
-        connector_data = {
-            "name": connector_name,
-            "source": DocumentSource.NOT_APPLICABLE,
-            "input_type": "load_state",
-            "connector_specific_config": {},
-            "refresh_freq": 60,
-            "disabled": True,
-        }
-        response = requests.post(
-            f"{API_SERVER_URL}/manage/admin/connector",
-            json=connector_data,
-        )
-        response.raise_for_status()
-        connector_id = response.json()["id"]
-
-        # Associate the credential with the connector
-        cc_pair_metadata = {"name": f"test_cc_pair_{unique_id}", "is_public": True}
-        response = requests.put(
-            f"{API_SERVER_URL}/manage/connector/{connector_id}/credential/0",
-            json=cc_pair_metadata,
-        )
-        response.raise_for_status()
-        cc_pair_id = cast(int, response.json()["data"])
+    def seed_documents(
+        num_docs: int = 5, cc_pair_id: int | None = None
+    ) -> SeedDocumentResponse:
+        if not cc_pair_id:
+            connector_details = ConnectorClient.create_connector()
+            cc_pair_id = connector_details.cc_pair_id
 
         # Create and ingest some documents
         document_ids: list[str] = []

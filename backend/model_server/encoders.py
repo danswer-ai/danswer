@@ -1,4 +1,3 @@
-import gc
 import json
 from typing import Any
 from typing import Optional
@@ -23,12 +22,10 @@ from model_server.constants import DEFAULT_VERTEX_MODEL
 from model_server.constants import DEFAULT_VOYAGE_MODEL
 from model_server.constants import EmbeddingModelTextType
 from model_server.constants import EmbeddingProvider
-from model_server.constants import MODEL_WARM_UP_STRING
 from model_server.utils import simple_log_function_time
-from shared_configs.configs import CROSS_EMBED_CONTEXT_SIZE
-from shared_configs.configs import CROSS_ENCODER_MODEL_ENSEMBLE
 from shared_configs.configs import INDEXING_ONLY
 from shared_configs.enums import EmbedTextType
+from shared_configs.enums import RerankerProvider
 from shared_configs.model_server_models import Embedding
 from shared_configs.model_server_models import EmbedRequest
 from shared_configs.model_server_models import EmbedResponse
@@ -42,7 +39,8 @@ logger = setup_logger()
 router = APIRouter(prefix="/encoder")
 
 _GLOBAL_MODELS_DICT: dict[str, "SentenceTransformer"] = {}
-_RERANK_MODELS: Optional[list["CrossEncoder"]] = None
+_RERANK_MODEL: Optional["CrossEncoder"] = None
+
 # If we are not only indexing, dont want retry very long
 _RETRY_DELAY = 10 if INDEXING_ONLY else 0.1
 _RETRY_TRIES = 10 if INDEXING_ONLY else 2
@@ -77,14 +75,11 @@ class CloudEmbedding:
     def __init__(
         self,
         api_key: str,
-        provider: str,
+        provider: EmbeddingProvider,
         # Only for Google as is needed on client setup
         model: str | None = None,
     ) -> None:
-        try:
-            self.provider = EmbeddingProvider(provider.lower())
-        except ValueError:
-            raise ValueError(f"Unsupported provider: {provider}")
+        self.provider = provider
         self.client = _initialize_client(api_key, self.provider, model)
 
     def _embed_openai(self, texts: list[str], model: str | None) -> list[Embedding]:
@@ -194,7 +189,7 @@ class CloudEmbedding:
 
     @staticmethod
     def create(
-        api_key: str, provider: str, model: str | None = None
+        api_key: str, provider: EmbeddingProvider, model: str | None = None
     ) -> "CloudEmbedding":
         logger.debug(f"Creating Embedding instance for provider: {provider}")
         return CloudEmbedding(api_key, provider, model)
@@ -229,32 +224,15 @@ def get_embedding_model(
     return _GLOBAL_MODELS_DICT[model_name]
 
 
-def get_local_reranking_model_ensemble(
-    model_names: list[str] = CROSS_ENCODER_MODEL_ENSEMBLE,
-    max_context_length: int = CROSS_EMBED_CONTEXT_SIZE,
-) -> list[CrossEncoder]:
-    global _RERANK_MODELS
-    if _RERANK_MODELS is None or max_context_length != _RERANK_MODELS[0].max_length:
-        del _RERANK_MODELS
-        gc.collect()
-
-        _RERANK_MODELS = []
-        for model_name in model_names:
-            logger.info(f"Loading {model_name}")
-            model = CrossEncoder(model_name)
-            model.max_length = max_context_length
-            _RERANK_MODELS.append(model)
-    return _RERANK_MODELS
-
-
-def warm_up_cross_encoders() -> None:
-    logger.info(f"Warming up Cross-Encoders: {CROSS_ENCODER_MODEL_ENSEMBLE}")
-
-    cross_encoders = get_local_reranking_model_ensemble()
-    [
-        cross_encoder.predict((MODEL_WARM_UP_STRING, MODEL_WARM_UP_STRING))
-        for cross_encoder in cross_encoders
-    ]
+def get_local_reranking_model(
+    model_name: str,
+) -> CrossEncoder:
+    global _RERANK_MODEL
+    if _RERANK_MODEL is None:
+        logger.info(f"Loading {model_name}")
+        model = CrossEncoder(model_name)
+        _RERANK_MODEL = model
+    return _RERANK_MODEL
 
 
 @simple_log_function_time()
@@ -265,7 +243,7 @@ def embed_text(
     max_context_length: int,
     normalize_embeddings: bool,
     api_key: str | None,
-    provider_type: str | None,
+    provider_type: EmbeddingProvider | None,
     prefix: str | None,
 ) -> list[Embedding]:
     if not all(texts):
@@ -325,13 +303,19 @@ def embed_text(
 
 
 @simple_log_function_time()
-def calc_sim_scores(query: str, docs: list[str]) -> list[list[float] | None]:
-    cross_encoders = get_local_reranking_model_ensemble()
-    sim_scores = [
-        encoder.predict([(query, doc) for doc in docs]).tolist()  # type: ignore
-        for encoder in cross_encoders
-    ]
-    return sim_scores
+def local_rerank(query: str, docs: list[str], model_name: str) -> list[float]:
+    cross_encoder = get_local_reranking_model(model_name)
+    return cross_encoder.predict([(query, doc) for doc in docs]).tolist()  # type: ignore
+
+
+def cohere_rerank(
+    query: str, docs: list[str], model_name: str, api_key: str
+) -> list[float]:
+    cohere_client = CohereClient(api_key=api_key)
+    response = cohere_client.rerank(query=query, documents=docs, model=model_name)
+    results = response.results
+    sorted_results = sorted(results, key=lambda item: item.index)
+    return [result.relevance_score for result in sorted_results]
 
 
 @router.post("/bi-encoder-embed")
@@ -369,23 +353,38 @@ async def process_embed_request(
 
 
 @router.post("/cross-encoder-scores")
-async def process_rerank_request(embed_request: RerankRequest) -> RerankResponse:
+async def process_rerank_request(rerank_request: RerankRequest) -> RerankResponse:
     """Cross encoders can be purely black box from the app perspective"""
     if INDEXING_ONLY:
         raise RuntimeError("Indexing model server should not call intent endpoint")
 
-    if not embed_request.documents or not embed_request.query:
+    if not rerank_request.documents or not rerank_request.query:
         raise HTTPException(
             status_code=400, detail="Missing documents or query for reranking"
         )
-    if not all(embed_request.documents):
+    if not all(rerank_request.documents):
         raise ValueError("Empty documents cannot be reranked.")
 
     try:
-        sim_scores = calc_sim_scores(
-            query=embed_request.query, docs=embed_request.documents
-        )
-        return RerankResponse(scores=sim_scores)
+        if rerank_request.provider_type is None:
+            sim_scores = local_rerank(
+                query=rerank_request.query,
+                docs=rerank_request.documents,
+                model_name=rerank_request.model_name,
+            )
+            return RerankResponse(scores=sim_scores)
+        elif rerank_request.provider_type == RerankerProvider.COHERE:
+            if rerank_request.api_key is None:
+                raise RuntimeError("Cohere Rerank Requires an API Key")
+            sim_scores = cohere_rerank(
+                query=rerank_request.query,
+                docs=rerank_request.documents,
+                model_name=rerank_request.model_name,
+                api_key=rerank_request.api_key,
+            )
+            return RerankResponse(scores=sim_scores)
+        else:
+            raise ValueError(f"Unsupported provider: {rerank_request.provider_type}")
     except Exception as e:
         logger.exception(f"Error during reranking process:\n{str(e)}")
         raise HTTPException(

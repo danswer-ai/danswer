@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { FullImageModal } from "./FullImageModal";
 import { buildImgUrl } from "./utils";
-import Image from "next/image";
 
 export function InMessageImage({ fileId }: { fileId: string }) {
   const [fullImageShowing, setFullImageShowing] = useState(false);
@@ -20,7 +19,7 @@ export function InMessageImage({ fileId }: { fileId: string }) {
           <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-lg" />
         )}
 
-        <Image
+        <img
           width={1200}
           height={1200}
           alt="Chat Message Image"

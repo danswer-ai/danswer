@@ -5,6 +5,7 @@ from typing import Protocol
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
+from danswer.configs.app_configs import ENABLE_MULTIPASS_INDEXING
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
@@ -27,6 +28,7 @@ from danswer.indexing.chunker import DefaultChunker
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
+from danswer.search.search_settings import get_search_settings
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -259,11 +261,10 @@ def index_doc_batch(
         return 0, 0
 
     logger.debug("Starting chunking")
-    # The embedder is needed here to get the correct tokenizer
     chunks: list[DocAwareChunk] = [
         chunk
         for document in ctx.updatable_docs
-        for chunk in chunker.chunk(document=document, embedder=embedder)
+        for chunk in chunker.chunk(document=document)
     ]
 
     logger.debug("Starting embedding")
@@ -348,7 +349,17 @@ def build_indexing_pipeline(
     attempt_id: int | None = None,
 ) -> IndexingPipelineProtocol:
     """Builds a pipeline which takes in a list (batch) of docs and indexes them."""
-    chunker = chunker or DefaultChunker()
+    search_settings = get_search_settings()
+    multipass = (
+        search_settings.multipass_indexing
+        if search_settings
+        else ENABLE_MULTIPASS_INDEXING
+    )
+    chunker = chunker or DefaultChunker(
+        model_name=embedder.model_name,
+        provider_type=embedder.provider_type,
+        enable_multipass=multipass,
+    )
 
     return partial(
         index_doc_batch_with_handler,

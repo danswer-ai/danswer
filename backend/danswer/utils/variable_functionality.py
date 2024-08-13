@@ -76,3 +76,7 @@ def fetch_versioned_implementation_with_fallback(
             e,
         )
         return fallback
+
+
+def noop_fallback(*args: Any, **kwargs: Any) -> None:
+    pass
