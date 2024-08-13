@@ -199,7 +199,7 @@ const AddUserButton = ({
           <div className="flex flex-col gap-y-4">
             <Text className="font-medium text-base">
               Add the email addresses to import, separated by whitespaces.
-              Invited uers will be able to login to this domain with their email
+              Invited users will be able to login to this domain with their email
               address.
             </Text>
             <BulkAdd onSuccess={onSuccess} onFailure={onFailure} />
