@@ -54,3 +54,5 @@ export const CUSTOM_ANALYTICS_ENABLED = process.env.CUSTOM_ANALYTICS_SECRET_KEY
 
 export const DISABLE_LLM_DOC_RELEVANCE =
   process.env.DISABLE_LLM_DOC_RELEVANCE?.toLowerCase() === "true";
+
+export const DANSWER_VERSION = process.env.DANSWER_VERSION;

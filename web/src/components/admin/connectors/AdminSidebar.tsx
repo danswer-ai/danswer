@@ -3,7 +3,10 @@
 import React, { useContext } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
+import {
+  DANSWER_VERSION,
+  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
+} from "@/lib/constants";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { BackIcon } from "@/components/icons/icons";
@@ -93,6 +96,16 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
           </div>
         ))}
       </nav>
+      {DANSWER_VERSION && (
+        <div
+          className="flex  flex-col mt-4 items-center justify-center w-full"
+          key={"danswerVersion"}
+        >
+          <h2 className="text-sm text-text w-52 font-medium pb-2">
+            Danswer version {DANSWER_VERSION}
+          </h2>
+        </div>
+      )}
     </div>
   );
 }
