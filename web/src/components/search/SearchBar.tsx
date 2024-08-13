@@ -13,6 +13,7 @@ interface FullSearchBarProps {
   finalAvailableDocumentSets: DocumentSet[];
   finalAvailableSources: string[];
   tags: Tag[];
+  showingSidebar: boolean;
 }
 
 import { useState, useEffect, useRef } from "react";
@@ -122,6 +123,7 @@ export const AnimatedToggle = ({
 export default AnimatedToggle;
 
 export const FullSearchBar = ({
+  showingSidebar,
   query,
   setQuery,
   onSearch,
@@ -154,8 +156,6 @@ export const FullSearchBar = ({
       event.preventDefault();
     }
   };
-
-  const settings = useContext(SettingsContext);
 
   return (
     <div
@@ -208,9 +208,9 @@ export const FullSearchBar = ({
       />
 
       <div
-        className={`flex 2xl:justify-end justify-between w-full items-center space-x-3 px-4 pb-2`}
+        className={` flex ${showingSidebar && "!justify-between"} 2xl:justify-end justify-between w-full items-center space-x-3 py-3 px-4 `}
       >
-        <div className="2xl:hidden">
+        <div className={`-my-1 ${!showingSidebar && "2xl:hidden"}`}>
           {(ccPairs.length > 0 || documentSets.length > 0) && (
             <HorizontalSourceSelector
               isHorizontal
