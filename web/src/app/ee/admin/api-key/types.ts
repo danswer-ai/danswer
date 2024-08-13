@@ -1,6 +1,6 @@
 import { UserRole } from "@/lib/types";
 
-interface APIKey {
+export interface APIKey {
   api_key_id: number;
   api_key_display: string;
   api_key: string | null;
@@ -9,7 +9,7 @@ interface APIKey {
   user_id: string;
 }
 
-interface APIKeyArgs {
+export interface APIKeyArgs {
   name?: string;
   role: UserRole;
 }

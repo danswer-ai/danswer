@@ -26,6 +26,7 @@ import { Modal } from "@/components/Modal";
 import { Spinner } from "@/components/Spinner";
 import { deleteApiKey, regenerateApiKey } from "./lib";
 import { DanswerApiKeyForm } from "./DanswerApiKeyForm";
+import { APIKey } from "./types";
 
 const API_KEY_TEXT = `
 API Keys allow you to access Danswer APIs programmatically. Click the button below to generate a new API Key.
