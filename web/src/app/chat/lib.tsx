@@ -1,3 +1,4 @@
+import debounce from "lodash/debounce";
 import {
   AnswerPiecePacket,
   DanswerDocument,
@@ -28,6 +29,7 @@ import {
 import { Persona } from "../admin/assistants/interfaces";
 import { ReadonlyURLSearchParams } from "next/navigation";
 import { SEARCH_PARAM_NAMES } from "./searchParams";
+import { List } from "react-virtualized";
 
 export async function updateModelOverrideForChatSession(
   chatSessionId: number,
@@ -606,6 +608,62 @@ export async function uploadFilesForChat(
   return [responseJson.files as FileDescriptor[], null];
 }
 
+export const useScrollonStreamVirtualized = ({
+  chatState,
+  listRef,
+  distance,
+  debounceTime,
+}: {
+  chatState: ChatState;
+  listRef: React.RefObject<List>;
+  distance: number;
+  debounceTime: number;
+}) => {
+  console.log("created");
+
+  useEffect(() => {
+    console.log("outside if");
+    console.log(listRef);
+
+    if (chatState != "input" && listRef.current) {
+      console.log("hello");
+      const scrollToBottomIfClose = () => {
+        console.log("SCROLLING");
+        const list = listRef.current;
+        if (list && list.Grid) {
+          const grid = list.Grid as any; // Type assertion
+          if (grid._scrollingContainer) {
+            const { scrollTop, scrollHeight, clientHeight } =
+              grid._scrollingContainer;
+            const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+            if (distanceFromBottom < distance) {
+              list.scrollToRow(list.props.rowCount - 1);
+            }
+          }
+        }
+      };
+
+      const debouncedScroll = debounce(scrollToBottomIfClose, debounceTime);
+
+      const scrollingContainer = (listRef.current.Grid as any)
+        ?._scrollingContainer;
+      if (scrollingContainer) {
+        scrollingContainer.addEventListener("scroll", debouncedScroll);
+      }
+
+      return () => {
+        if (scrollingContainer) {
+          scrollingContainer.removeEventListener("scroll", debouncedScroll);
+        }
+      };
+    } else {
+      console.log("out of ref");
+      console.log(listRef);
+      console.log(chatState);
+    }
+  }, [chatState, listRef, distance, debounceTime]);
+};
 export async function useScrollonStream({
   chatState,
   scrollableDivRef,

@@ -38,6 +38,7 @@ import {
   updateParentChildren,
   uploadFilesForChat,
   useScrollonStream,
+  useScrollonStreamVirtualized,
 } from "./lib";
 import { useContext, useEffect, useRef, useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -78,6 +79,7 @@ import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 import { MessageHistory } from "./message/MessageHistory";
+import { List } from "react-virtualized";
 
 export const TEMP_USER_MESSAGE_ID = -1;
 export const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -463,7 +465,7 @@ export function ChatPage({
     useState<RegenerationState | null>(null);
 
   // const [isLoadingResponse, setIsLoadingResponse] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
+  // const [isStreaming, setIsStreaming] = useState(false);
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
 
@@ -544,28 +546,68 @@ export function ChatPage({
   const endDivRef = useRef<HTMLDivElement>(null);
   const endPaddingRef = useRef<HTMLDivElement>(null);
 
-  const MessageHistoryRef = useRef({
-    lastMessageRef,
-    endPaddingRef,
-    endDivRef,
-    chatSessionIdRef,
-  });
+  const listRef = useRef<List>(null);
 
   const previousHeight = useRef<number>(
     inputRef.current?.getBoundingClientRect().height!
   );
   const scrollDist = useRef<number>(0);
 
-  const updateScrollTracking = () => {
-    const scrollDistance =
-      endDivRef?.current?.getBoundingClientRect()?.top! -
-      inputRef?.current?.getBoundingClientRect()?.top!;
-    scrollDist.current = scrollDistance;
-    setAboveHorizon(scrollDist.current > 500);
+  const updateScrollTrackingVirtualized = () => {
+    if (listRef.current && listRef.current.Grid) {
+      const grid = listRef.current.Grid as any;
+      if (grid._scrollingContainer) {
+        const { scrollTop, scrollHeight, clientHeight } =
+          grid._scrollingContainer;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+        scrollDist.current = distanceFromBottom;
+        console.log(distanceFromBottom);
+        setAboveHorizon(distanceFromBottom > 500);
+      }
+    }
   };
+  // const updateScrollTracking = () => {
+  //   const scrollDistance =
+  //     endDivRef?.current?.getBoundingClientRect()?.top! -
+  //     inputRef?.current?.getBoundingClientRect()?.top!;
+  //   scrollDist.current = scrollDistance;
+  //   setAboveHorizon(scrollDist.current > 500);
+  // };
+  useEffect(() => {
+    updateScrollTrackingVirtualized();
+  }, [messageHistory, listRef.current]);
 
-  scrollableDivRef?.current?.addEventListener("scroll", updateScrollTracking);
+  useEffect(() => {
+    const addScrollListener = () => {
+      if (listRef.current && listRef.current.Grid) {
+        const grid = listRef.current.Grid as any;
+        if (grid._scrollingContainer) {
+          grid._scrollingContainer.addEventListener(
+            "scroll",
+            updateScrollTrackingVirtualized
+          );
+        }
+      }
+    };
 
+    const removeScrollListener = () => {
+      if (listRef.current && listRef.current.Grid) {
+        const grid = listRef.current.Grid as any;
+        if (grid._scrollingContainer) {
+          grid._scrollingContainer.removeEventListener(
+            "scroll",
+            updateScrollTrackingVirtualized
+          );
+        }
+      }
+    };
+
+    addScrollListener();
+
+    return () => {
+      removeScrollListener();
+    };
+  }, [listRef.current]);
   const handleInputResize = () => {
     setTimeout(() => {
       if (inputRef.current && lastMessageRef.current) {
@@ -597,20 +639,42 @@ export function ChatPage({
   };
 
   const clientScrollToBottom = (fast?: boolean) => {
-    console.log("SCOOOL");
-    setTimeout(() => {
-      if (fast) {
-        endDivRef.current?.scrollIntoView();
-      } else {
-        endDivRef.current?.scrollIntoView({ behavior: "smooth" });
-      }
-      setHasPerformedInitialScroll(true);
-    }, 50);
+    console.log("Scrolling to bottom");
+    if (listRef.current) {
+      setTimeout(() => {
+        const rowCount = listRef.current?.props.rowCount || 0;
+
+        const grid = listRef?.current?.Grid as any;
+        if (grid && grid._scrollingContainer) {
+          const scrollContainer = grid._scrollingContainer;
+          const distanceToBottom =
+            scrollContainer.scrollHeight -
+            scrollContainer.scrollTop -
+            scrollContainer.clientHeight;
+
+          if (distanceToBottom < 20) {
+            scrollContainer.scrollTo({
+              top: scrollContainer.scrollHeight,
+              behavior: "smooth",
+            });
+          } else {
+            listRef.current?.scrollToRow(rowCount - 1);
+            // scrollContainer.scrollTop = scrollContainer.scrollHeight;
+          }
+        }
+        setHasPerformedInitialScroll(true);
+      }, 50);
+    }
   };
 
   const distance = 500; // distance that should "engage" the scroll
   const debounce = 100; // time for debouncing
-
+  useScrollonStreamVirtualized({
+    chatState,
+    listRef,
+    distance: 500,
+    debounceTime: 100,
+  });
   const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(
     existingChatSessionId === null
   );
@@ -623,7 +687,7 @@ export function ChatPage({
 
   // tracks scrolling
   useEffect(() => {
-    updateScrollTracking();
+    updateScrollTrackingVirtualized();
   }, [messageHistory]);
 
   // used for resizing of the document sidebar
@@ -1243,14 +1307,14 @@ export function ChatPage({
     mobile: settings?.isMobile,
   });
 
-  useScrollonStream({
-    chatState,
-    scrollableDivRef,
-    scrollDist,
-    endDivRef,
-    distance,
-    debounce,
-  });
+  // useScrollonStream({
+  //   chatState,
+  //   scrollableDivRef,
+  //   scrollDist,
+  //   endDivRef,
+  //   distance,
+  //   debounce,
+  // });
 
   useEffect(() => {
     const includes = checkAnyAssistantHasSearch(
@@ -1467,85 +1531,48 @@ export function ChatPage({
                                 (hasPerformedInitialScroll ? "" : "invisible")
                               }
                             >
-                              <div className="flex-grow  w-full h-full bg-black">
-                                <MessageHistory
-                                  chatState={chatState}
-                                  regenerationState={regenerationState}
-                                  createRegenerator={createRegenerator}
-                                  isFetchingChatMessages={
-                                    isFetchingChatMessages
-                                  }
-                                  alternativeGeneratingAssistant={
-                                    alternativeGeneratingAssistant!
-                                  }
-                                  selectedAssistant={selectedAssistant!}
-                                  currentPersona={currentPersona}
-                                  alternativeAssistant={alternativeAssistant!}
-                                  // message={message}
-                                  completeMessageDetail={completeMessageDetail}
-                                  onSubmit={onSubmit}
-                                  upsertToCompleteMessageMap={
-                                    upsertToCompleteMessageMap
-                                  }
-                                  setSelectedMessageForDocDisplay={
-                                    setSelectedMessageForDocDisplay
-                                  }
-                                  setMessageAsLatest={setMessageAsLatest}
-                                  setCompleteMessageDetail={
-                                    setCompleteMessageDetail
-                                  }
-                                  selectedMessageForDocDisplay={
-                                    selectedMessageForDocDisplay
-                                  }
-                                  messageHistory={messageHistory}
-                                  isStreaming={isStreaming}
-                                  setCurrentFeedback={setCurrentFeedback}
-                                  liveAssistant={liveAssistant}
-                                  availableAssistants={availableAssistants}
-                                  toggleDocumentSelectionAspects={
-                                    toggleDocumentSelectionAspects
-                                  }
-                                  selectedDocuments={selectedDocuments}
-                                  setPopup={setPopup}
-                                  retrievalEnabled={retrievalEnabled}
-                                />
-                              </div>
-
-                              {chatState == "loading" &&
-                                !regenerationState?.regenerating &&
-                                messageHistory[messageHistory.length - 1]
-                                  ?.type != "user" && (
-                                  <HumanMessage
-                                    messageId={-1}
-                                    content={submittedMessage}
-                                  />
-                                )}
-
-                              {chatState == "loading" && (
-                                <div
-                                  key={`${messageHistory.length}-${chatSessionIdRef.current}`}
-                                >
-                                  <AIMessage
-                                    currentPersona={liveAssistant}
-                                    alternativeAssistant={
-                                      alternativeGeneratingAssistant ??
-                                      alternativeAssistant
-                                    }
-                                    messageId={null}
-                                    personaName={liveAssistant.name}
-                                    content={
-                                      <div
-                                        key={"Generating"}
-                                        className="mr-auto relative inline-block"
-                                      >
-                                        <span className="text-sm loading-text">
-                                          Thinking...
-                                        </span>
-                                      </div>
-                                    }
-                                  />
-                                </div>
-                              )}
+                              {/* <div className="flex-grow bg w-full h-full "> */}
+                              <MessageHistory
+                                ref={listRef}
+                                submittedMessage={submittedMessage}
+                                chatState={chatState}
+                                regenerationState={regenerationState}
+                                createRegenerator={createRegenerator}
+                                isFetchingChatMessages={isFetchingChatMessages}
+                                alternativeGeneratingAssistant={
+                                  alternativeGeneratingAssistant!
+                                }
+                                selectedAssistant={selectedAssistant!}
+                                currentPersona={currentPersona}
+                                alternativeAssistant={alternativeAssistant!}
+                                // message={message}
+                                completeMessageDetail={completeMessageDetail}
+                                onSubmit={onSubmit}
+                                upsertToCompleteMessageMap={
+                                  upsertToCompleteMessageMap
+                                }
+                                setSelectedMessageForDocDisplay={
+                                  setSelectedMessageForDocDisplay
+                                }
+                                setMessageAsLatest={setMessageAsLatest}
+                                setCompleteMessageDetail={
+                                  setCompleteMessageDetail
+                                }
+                                selectedMessageForDocDisplay={
+                                  selectedMessageForDocDisplay
+                                }
+                                messageHistory={messageHistory}
+                                isStreaming={chatState != "input"}
+                                setCurrentFeedback={setCurrentFeedback}
+                                liveAssistant={liveAssistant}
+                                availableAssistants={availableAssistants}
+                                toggleDocumentSelectionAspects={
+                                  toggleDocumentSelectionAspects
+                                }
+                                selectedDocuments={selectedDocuments}
+                                setPopup={setPopup}
+                                retrievalEnabled={retrievalEnabled}
+                              />
 
                               {currentPersona &&
                                 currentPersona.starter_messages &&
@@ -1566,7 +1593,8 @@ export function ChatPage({
                                       grid-rows-1 
                                       mt-4 
                                       md:grid-cols-2 
-                                      mb-6`}
+                                      mb-6
+                                      `}
                                   >
                                     {currentPersona.starter_messages.map(
                                       (starterMessage, i) => (
@@ -1597,7 +1625,8 @@ export function ChatPage({
                           className="absolute bottom-0 z-10 w-full"
                         >
                           <div className="w-full relative pb-4">
-                            {aboveHorizon && (
+                            {true && (
+                              // aboveHorizon
                               <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
                                 <button
                                   onClick={() => clientScrollToBottom()}

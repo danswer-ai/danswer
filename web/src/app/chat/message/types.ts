@@ -9,6 +9,7 @@ export type MessageHistoryProps = {
     sessionId: number | null;
     messageMap: Map<number, Message>;
   };
+  submittedMessage: string;
 
   setCompleteMessageDetail: (
     value: SetStateAction<{
