@@ -65,12 +65,12 @@ export default function SearchAnswer({
     return () => {
       window.removeEventListener("resize", checkOverflow);
     };
-  }, [answer]);
+  }, [answer, quotes]);
 
   return (
     <div
       ref={answerContainerRef}
-      className={`my-4 ${searchAnswerExpanded ? "min-h-[16rem]" : "h-[16rem]"}  overflow-y-hidden p-4 border-2 border-border rounded-lg relative`}
+      className={`my-4 ${searchAnswerExpanded ? "min-h-[16rem]" : "h-[16rem]"} ${(!searchAnswerExpanded || searchAnswerOverflowing) && "overflow-y-hidden"} p-4 border-2 border-border rounded-lg relative`}
     >
       <div>
         <div className="flex gap-x-2">
@@ -113,7 +113,7 @@ export default function SearchAnswer({
           )}
         </div>
 
-        <div className={`pt-1 h-auto   border-t border-border w-full`}>
+        <div className={`pt-1 h-auto border-t border-border w-full`}>
           <AnswerSection
             answer={answer}
             quotes={quotes}
