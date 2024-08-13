@@ -3,13 +3,11 @@
 import React, { useContext } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import {
-  DANSWER_VERSION,
-  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
-} from "@/lib/constants";
+import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { BackIcon } from "@/components/icons/icons";
+import getConfig from "next/config";
 
 interface Item {
   name: string | JSX.Element;
@@ -26,8 +24,11 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
   if (!combinedSettings) {
     return null;
   }
+
   const settings = combinedSettings.settings;
   const enterpriseSettings = combinedSettings.enterpriseSettings;
+  const { publicRuntimeConfig } = getConfig();
+  const webVersion = publicRuntimeConfig?.version;
 
   return (
     <div className="pl-0">
@@ -96,13 +97,13 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
           </div>
         ))}
       </nav>
-      {DANSWER_VERSION && (
+      {webVersion && (
         <div
           className="flex  flex-col mt-4 items-center justify-center w-full"
           key={"danswerVersion"}
         >
           <h2 className="text-sm text-text w-52 font-medium pb-2">
-            Danswer version {DANSWER_VERSION}
+            Danswer version {webVersion}
           </h2>
         </div>
       )}
