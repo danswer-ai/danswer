@@ -208,7 +208,7 @@ export const FullSearchBar = ({
       />
 
       <div
-        className={`flex ${showingSidebar ? "2xl:justify-between" : "2xl:justify-end"} justify-between !4xl:justify-end  w-full items-center space-x-3 py-3 px-4 `}
+        className={`flex ${showingSidebar ? " 2xl:justify-between" : "2xl:justify-end"} justify-between 4xl:justify-end  w-full items-center space-x-3 py-3 px-4 `}
       >
         <div className={`-my-1 4xl:hidden ${!showingSidebar && "2xl:hidden"}`}>
           {(ccPairs.length > 0 || documentSets.length > 0) && (
