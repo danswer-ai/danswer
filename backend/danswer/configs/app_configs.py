@@ -287,6 +287,10 @@ INDEXING_SIZE_WARNING_THRESHOLD = int(
     os.environ.get("INDEXING_SIZE_WARNING_THRESHOLD", 100 * 1024 * 1024)
 )
 
+# during indexing, will log verbose memory diff stats every x batches and at the end.
+# 0 disables this behavior and is the default.
+INDEXING_TRACER_INTERVAL = int(os.environ.get("INDEXING_TRACER_INTERVAL", 0))
+
 #####
 # Miscellaneous
 #####
