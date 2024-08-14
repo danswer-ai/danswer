@@ -389,17 +389,3 @@ def warm_up_cross_encoder(
 
     retry_rerank = warm_up_retry(reranking_model.predict)
     retry_rerank(WARM_UP_STRINGS[0], WARM_UP_STRINGS[1:])
-
-
-def warm_up_connector_classifier(
-    model_server_host: str = MODEL_SERVER_HOST,
-    model_server_port: int = MODEL_SERVER_PORT,
-):
-    logger.debug(f"Warming up connector classifier model: {model_server_host}")
-
-    classification_model = ConnectorClassificationModel(
-        model_server_host=model_server_host,
-        model_server_port=model_server_port,
-    )
-    retry_classification = warm_up_retry(classification_model.predict)
-    retry_classification(WARM_UP_STRINGS[0], ["GitHub"])
