@@ -346,6 +346,3 @@ async def process_analysis_request(
 
     is_keyword, keywords = run_analysis(intent_request)
     return IntentResponse(is_keyword=is_keyword, keywords=keywords)
-
-# curl localhost:9000/custom/connector-classification -X POST -H "Content-Type: application/json" -d '{"available_connectors":["GitHub"], "query": "where is the repo located"}'
-# curl localhost:9000/custom/query-analysis -X POST -H "Content-Type: application/json" -d '{"query":"How are you?","semantic_percent_threshold":0.5,"keyword_percent_threshold":0.5}'
