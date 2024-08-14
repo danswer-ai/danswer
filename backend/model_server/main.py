@@ -63,7 +63,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         warm_up_intent_model()
     else:
         logger.info("This model server should only run document indexing.")
-    torch.cuda.empty_cache()
+
     yield
 
 

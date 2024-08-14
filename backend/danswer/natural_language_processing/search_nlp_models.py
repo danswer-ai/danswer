@@ -139,44 +139,19 @@ class EmbeddingModel:
         else:
             return _make_request()
 
-    def _encode_api_model(
-        self, texts: list[str], text_type: EmbedTextType, batch_size: int
-    ) -> list[Embedding]:
-        if not self.provider_type:
-            raise ValueError("Provider type is not set for API embedding")
-
-        embeddings: list[Embedding] = []
-
-        text_batches = batch_list(texts, batch_size)
-        for idx, text_batch in enumerate(text_batches, start=1):
-            logger.debug(f"Encoding batch {idx} of {len(text_batches)}")
-            embed_request = EmbedRequest(
-                model_name=self.model_name,
-                texts=text_batch,
-                max_context_length=self.max_seq_length,
-                normalize_embeddings=self.normalize,
-                api_key=self.api_key,
-                provider_type=self.provider_type,
-                text_type=text_type,
-                manual_query_prefix=self.query_prefix,
-                manual_passage_prefix=self.passage_prefix,
-            )
-            response = self._make_model_server_request(embed_request)
-            embeddings.extend(response.embeddings)
-
-        return embeddings
-
-    def _encode_local_model(
+    def _batch_encode_texts(
         self,
         texts: list[str],
         text_type: EmbedTextType,
         batch_size: int,
     ) -> list[Embedding]:
         text_batches = batch_list(texts, batch_size)
-        embeddings: list[Embedding] = []
+
         logger.debug(
             f"Encoding {len(texts)} texts in {len(text_batches)} batches for local model"
         )
+
+        embeddings: list[Embedding] = []
         for idx, text_batch in enumerate(text_batches, start=1):
             logger.debug(f"Encoding batch {idx} of {len(text_batches)}")
             embed_request = EmbedRequest(
@@ -218,16 +193,27 @@ class EmbeddingModel:
                 for text in texts
             ]
 
-        if self.provider_type:
-            if self.provider_type == "openai":
-                texts = [clean_openai_text(text) for text in texts]
-            return self._encode_api_model(
-                texts=texts, text_type=text_type, batch_size=api_embedding_batch_size
-            )
+        if self.provider_type == EmbeddingProvider.OPENAI:
+            # If the provider is openai, we need to clean the text
+            # as a temporary workaround for the openai API
+            texts = [clean_openai_text(text) for text in texts]
 
-        # if no provider, use local model
-        return self._encode_local_model(
-            texts=texts, text_type=text_type, batch_size=local_embedding_batch_size
+        batch_size = (
+            api_embedding_batch_size
+            if self.provider_type
+            else local_embedding_batch_size
+        )
+        # if ENABLE_LARGE_CHUNK:
+        #     batch_size //= 2
+        longest = 0
+        for text in texts:
+            if len(text) > longest:
+                longest = len(text)
+        logger.info(f"Longest text: {longest}")
+        return self._batch_encode_texts(
+            texts=texts,
+            text_type=text_type,
+            batch_size=batch_size,
         )
 
 
