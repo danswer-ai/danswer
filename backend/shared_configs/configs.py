@@ -14,8 +14,11 @@ INDEXING_MODEL_SERVER_PORT = int(
 )
 
 # Danswer custom Deep Learning Models
+CONNECTOR_CLASSIFIER_MODEL_REPO = "ShukantP/danswer-connector-classifier"
+CONNECTOR_CLASSIFIER_MODEL_TAG = "3fa7999c89ae72bc3892448dbd3a77c429e49153"
 INTENT_MODEL_VERSION = "danswer/hybrid-intent-token-classifier"
 INTENT_MODEL_TAG = "v1.0.3"
+
 
 # Bi-Encoder, other details
 DOC_EMBEDDING_CONTEXT_SIZE = 512

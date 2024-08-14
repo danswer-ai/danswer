@@ -7,6 +7,16 @@ from shared_configs.enums import RerankerProvider
 Embedding = list[float]
 
 
+class ConnectorClassificationRequest(BaseModel):
+    available_connectors: list[str]
+    query: str
+
+
+class ConnectorClassificationResponse(BaseModel):
+    filter_by_connector: bool
+    connectors: list[str]
+
+
 class EmbedRequest(BaseModel):
     texts: list[str]
     # Can be none for cloud embedding model requests, error handling logic exists for other cases

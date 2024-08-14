@@ -3,7 +3,7 @@ import os
 
 import torch
 import torch.nn as nn
-from transformers import DistilBertConfig  # type: ignore
+from transformers import DistilBertConfig, DistilBertTokenizer  # type: ignore
 from transformers import DistilBertModel
 
 
@@ -64,5 +64,56 @@ class HybridClassifier(nn.Module):
 
         for param in model.parameters():
             param.requires_grad = False
+
+        return model
+
+
+class ConnectorClassifier(nn.Module):
+    def __init__(self, config: DistilBertConfig) -> None:
+        super().__init__()
+
+        self.config = config
+        self.distilbert = DistilBertModel(config)
+        self.connector_global_classifier = nn.Linear(self.distilbert.config.dim, 1)
+        self.connector_match_classifier = nn.Linear(self.distilbert.config.dim, 1)
+        self.tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
+        self.dropout = nn.Dropout(self.distilbert.config.seq_classif_dropout)
+        self.connector_end_token_id = self.tokenizer.get_vocab()[self.config.connector_end_token]
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+    ):
+        hidden_states = self.distilbert(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
+
+        cls_position_id = input_ids == self.tokenizer.cls_token_id
+        cls_hidden_states = hidden_states[cls_position_id]
+        global_logits = self.connector_global_classifier(cls_hidden_states).view(-1)
+        global_confidence = torch.sigmoid(global_logits).view(-1)
+
+        connector_end_position_ids = (input_ids == self.connector_end_token_id)
+        connector_end_hidden_states = hidden_states[connector_end_position_ids]
+        connector_end_hidden_states = self.dropout(connector_end_hidden_states)
+        classifier_output = self.connector_match_classifier(connector_end_hidden_states)
+        classifier_confidence = torch.nn.functional.sigmoid(classifier_output).view(-1)
+
+        return global_confidence, classifier_confidence
+
+    @classmethod
+    def from_pretrained(cls, repo_dir: str) -> "ConnectorClassifier":
+        config = DistilBertConfig.from_pretrained(os.path.join(repo_dir, "config.json"))
+        device = torch.device("cuda") if torch.cuda.is_available() else \
+            torch.device("mps") if torch.backends.mps.is_available() else \
+            torch.device("cpu")
+        state_dict = torch.load(
+            os.path.join(repo_dir, "pytorch_model.pt"),
+            map_location=device,
+            weights_only=True,
+        )
+
+        model = cls(config)
+        model.load_state_dict(state_dict)
+        model.to(device)
 
         return model
