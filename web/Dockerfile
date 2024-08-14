@@ -24,7 +24,7 @@ COPY . .
 # Install dependencies
 RUN npm ci
 
-# needed to get the `standalone` dir we expect latercd .
+# needed to get the `standalone` dir we expect later
 ENV NEXT_PRIVATE_STANDALONE true
 
 # Disable automatic telemetry collection

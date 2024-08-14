@@ -96,11 +96,11 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
       </nav>
       {combinedSettings.webVersion && (
         <div
-          className="flex  flex-col mt-4 items-center justify-center w-full"
+          className="flex flex-col mt-6 items-center justify-center w-full"
           key={"danswerVersion"}
         >
-          <h2 className="text-sm text-text w-52 font-medium pb-2">
-            Danswer version {combinedSettings.webVersion}
+          <h2 className="text-xs text-text w-52 font-medium pb-2">
+            Danswer version: {combinedSettings.webVersion}
           </h2>
         </div>
       )}
