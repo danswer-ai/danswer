@@ -61,6 +61,9 @@ function findSummaryGenerationTool(tools: ToolSnapshot[]) {
 function findInternetSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "InternetSearchTool");
 }
+function findComposeEmailTool(tools: ToolSnapshot[]) {
+  return tools.find((tool) => tool.in_code_tool_id === "ComposeEmailTool");
+}
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
   return <div className="text-sm text-subtle mb-2">{children}</div>;
@@ -162,6 +165,7 @@ export function AssistantEditor({
   const sqlGenerationTool =  findSqlGenerationTool(tools);
   const summaryGenerationTool =  findSummaryGenerationTool(tools);
   const internetSearchTool = findInternetSearchTool(tools);
+  const composeEmailTool =  findComposeEmailTool(tools);
 
   const customTools = tools.filter(
     (tool) =>
@@ -169,7 +173,8 @@ export function AssistantEditor({
       tool.in_code_tool_id !== imageGenerationTool?.in_code_tool_id &&
       tool.in_code_tool_id !== internetSearchTool?.in_code_tool_id &&
       tool.in_code_tool_id !== sqlGenerationTool?.in_code_tool_id &&
-      tool.in_code_tool_id !== summaryGenerationTool?.in_code_tool_id
+      tool.in_code_tool_id !== summaryGenerationTool?.in_code_tool_id &&
+      tool.in_code_tool_id !== composeEmailTool?.in_code_tool_id
   );
 
   const availableTools = [
@@ -179,6 +184,7 @@ export function AssistantEditor({
     ...(internetSearchTool ? [internetSearchTool] : []),
     ...(sqlGenerationTool ? [sqlGenerationTool] : []),
     ...(summaryGenerationTool ? [summaryGenerationTool] : []),
+    ...(composeEmailTool ? [composeEmailTool] : []),
   ];
   const enabledToolsMap: { [key: number]: boolean } = {};
   availableTools.forEach((tool) => {
@@ -303,6 +309,9 @@ export function AssistantEditor({
                 : false;
           const summaryGenerationToolEnabled = summaryGenerationTool
                 ? enabledTools.includes(summaryGenerationTool.id)
+                : false;
+          const composeEmailToolEnabled = composeEmailTool
+                ? enabledTools.includes(composeEmailTool.id)
                 : false;
           if (imageGenerationToolEnabled) {
             if (
@@ -570,6 +579,17 @@ export function AssistantEditor({
                               subtext={summaryGenerationTool.description}
                               onChange={() => {
                                   toggleToolInValues(summaryGenerationTool.id);
+                              }}
+                          />
+                      )}
+                      {composeEmailTool && (
+                          <BooleanFormField
+                              noPadding
+                              name={`enabled_tools_map.${composeEmailTool.id}`}
+                              label={composeEmailTool.display_name}
+                              subtext={composeEmailTool.description}
+                              onChange={() => {
+                                  toggleToolInValues(composeEmailTool.id);
                               }}
                           />
                       )}
