@@ -45,31 +45,7 @@ export function AssistantsTab({
                 <div className="text-sm font-semibold text-dark-900 pt-1 pb-2">
                   {assistant.name}
                 </div>
-                {/* {assistant.tools.length > 0 && (
-                  <div className="text-xs text-subtle flex flex-wrap gap-2">
-                    {assistant.tools.map((tool) => {
-                      let toolName = tool.name;
-                      let toolIcon = null;
 
-                      if (tool.name === "SearchTool") {
-                        toolName = "Search";
-                        toolIcon = <FiSearch className="mr-1 my-auto" />;
-                      } else if (tool.name === "ImageGenerationTool") {
-                        toolName = "Image Generation";
-                        toolIcon = <FiImage className="mr-1 my-auto" />;
-                      }
-
-                      return (
-                        <Bubble key={tool.id} isSelected={false}>
-                          <div className="flex flex-row gap-1">
-                            {toolIcon}
-                            {toolName}
-                          </div>
-                        </Bubble>
-                      );
-                    })}
-                  </div>
-                )} */}
                 <div className="text-sm text-dark-900 mb-2">
                   {assistant.description}
                 </div>

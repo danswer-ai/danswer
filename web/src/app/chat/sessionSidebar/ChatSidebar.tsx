@@ -54,7 +54,7 @@ export const ChatSidebar = ({
   folders: Folder[];
   openedFolders: { [key: number]: boolean };
   toggleSideBar?: () => void;
-  isExpanded: boolean;
+  isExpanded?: boolean;
   isSearch?: boolean;
   openSidebar?: boolean;
 }) => {
@@ -98,9 +98,11 @@ export const ChatSidebar = ({
   let opacityClass = "opacity-100";
 
   if (isLgScreen) {
-    opacityClass = isExpanded ? "lg:opacity-0" : "lg:opacity-100";
+    opacityClass = isExpanded ? "lg:opacity-0" : "lg:opacity-100 delay-200";
   } else {
-    opacityClass = openSidebar ? "opacity-100" : "opacity-0 lg:opacity-100";
+    opacityClass = openSidebar
+      ? "opacity-100 delay-200"
+      : "opacity-0 lg:opacity-100";
   }
 
   return (
@@ -125,15 +127,6 @@ export const ChatSidebar = ({
         id="chat-sidebar"
       >
         <div
-          /* className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${
-            isLgScreen
-              ? isExpanded
-                ? "lg:opacity-0"
-                : "lg:opacity-100"
-              : !openSidebar
-              ? "opacity-0 lg:opacity-100"
-              : "opacity-100"
-          }`} */
           className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${opacityClass}`}
         >
           <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
@@ -168,7 +161,7 @@ export const ChatSidebar = ({
               {settings.search_page_enabled && (
                 <Link
                   href="/search"
-                  className={`flex p-2 rounded cursor-pointer hover:bg-hover-light items-center gap-2 ${
+                  className={`flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 ${
                     isSearch ? "shadow-sm" : ""
                   }`}
                 >
@@ -180,7 +173,7 @@ export const ChatSidebar = ({
                 <>
                   <Link
                     href="/chat"
-                    className={`flex p-2 rounded cursor-pointer hover:bg-hover-light items-center gap-2 ${
+                    className={`flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 ${
                       !isSearch ? "shadow-sm" : ""
                     }`}
                   >
@@ -189,7 +182,7 @@ export const ChatSidebar = ({
                   </Link>
                   <Link
                     href="/assistants/mine"
-                    className="flex p-2 rounded cursor-pointer hover:bg-hover-light items-center gap-2"
+                    className="flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
                   >
                     <Headset size={16} />
                     <span className="truncate">Explore Assistants</span>

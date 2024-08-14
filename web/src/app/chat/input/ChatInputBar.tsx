@@ -1,14 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { FiCpu, FiX, FiPlus, FiInfo } from "react-icons/fi";
-import { BsFillSendFill } from "react-icons/bs";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
-import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
 import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
 import { FileDescriptor } from "../interfaces";
 import { InputBarPreview } from "../files/InputBarPreview";
-import { Hoverable } from "@/components/Hoverable";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { Button } from "@/components/ui/button";
@@ -22,6 +18,7 @@ import {
   Plus,
   Info,
   CirclePlus,
+  X,
 } from "lucide-react";
 
 const MAX_INPUT_HEIGHT = 200;
@@ -209,7 +206,7 @@ export function ChatInputBar({
 
   return (
     <div>
-      <div className="flex justify-center items-center max-w-screen-lg pb-2 mx-auto mb-2 px-5">
+      <div className="flex justify-center items-center max-w-screen-lg pb-2 mx-auto mb-2 px-5 2xl:px-0">
         <div
           className={`flex md:hidden items-center trasition-[width] ease-in-out duration-500 ${
             isShowing ? "w-[200px]" : "w-10"
@@ -244,9 +241,7 @@ export function ChatInputBar({
           <ImagePlus size={24} className="mr-4" />
           <Mic size={24} className="mr-4" />
         </div>
-        {/* <div className="relative w-full mx-auto shrink 2xl:w-searchbar-sm 3xl:w-searchbar"> */}
-        {/* <div className="relative w-full mx-auto shrink 2xl:w-searchbar 2xl:px-5 3xl:px-0"> */}
-        <div className="relative w-full mx-auto shrink 2xl:w-searchbar 2xl:px-5 3xl:px-0">
+        <div className="relative w-full mx-auto shrink 2xl:w-searchbar 3xl:px-0">
           {showSuggestions && filteredPersonas.length > 0 && (
             <div
               ref={suggestionsRef}
@@ -339,16 +334,18 @@ export function ChatInputBar({
                         </p>
                       }
                     >
-                      <button>
-                        <Hoverable>
-                          <FiInfo />
-                        </Hoverable>
-                      </button>
+                      <Button variant="ghost" size="xs">
+                        <Info size={16} />
+                      </Button>
                     </Tooltip>
 
-                    <Hoverable onClick={() => onSetSelectedAssistant(null)}>
-                      <FiX />
-                    </Hoverable>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => onSetSelectedAssistant(null)}
+                    >
+                      <X size={16} />
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -457,15 +454,15 @@ export function ChatInputBar({
                   }}
                   variant="ghost"
                 >
-                  <Paperclip size={20} />
+                  <Paperclip size={20} className="text-primary" />
                 </Button>
 
                 <Button variant="ghost">
-                  <ImagePlus size={20} />
+                  <ImagePlus size={20} className="text-primary" />
                 </Button>
 
                 <Button variant="ghost">
-                  <Mic size={20} />
+                  <Mic size={20} className="text-primary" />
                 </Button>
               </div>
               <div>

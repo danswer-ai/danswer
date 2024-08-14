@@ -115,7 +115,6 @@ export function SearchSummary({
               event.preventDefault();
             }
           }}
-          /*  className="px-1 py-0.5 h-[28px] text-sm mr-2 w-full rounded-xs border border-border-strong" */
         />
       </div>
       <div className="ml-2 my-auto flex">

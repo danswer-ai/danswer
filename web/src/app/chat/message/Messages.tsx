@@ -170,7 +170,6 @@ export const AIMessage = ({
 
   return (
     <div className={"flex -mr-6 w-full pb-5"}>
-      {/* <div className="relative mx-auto w-full 2xl:w-searchbar-sm 3xl:w-searchbar"> */}
       <div className="w-full">
         <div className="">
           <div className="flex">
@@ -200,7 +199,6 @@ export const AIMessage = ({
               )}
           </div>
 
-          {/* <div className="pt-2 pl-12 break-words w-full sm:w-message-xs 2xl:w-message-sm 3xl:w-message-default"> */}
           <div className="pl-1.5 md:pl-12 break-words w-full">
             {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
               <>
@@ -358,12 +356,22 @@ export const AIMessage = ({
           {handleFeedback && (
             <div className="flex flex-row gap-x-0.5 pl-1 md:pl-12 mt-1.5">
               <CopyButton content={content.toString()} />
-              <Hoverable onClick={() => handleFeedback("like")}>
-                <FiThumbsUp />
-              </Hoverable>
-              <Hoverable onClick={() => handleFeedback("dislike")}>
-                <FiThumbsDown />
-              </Hoverable>
+              <Button
+                variant="ghost"
+                size="xs"
+                className="!p-1.5 !px-[7px]"
+                onClick={() => handleFeedback("like")}
+              >
+                <ThumbsUp size={16} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="xs"
+                className="!p-1.5 !px-[7px]"
+                onClick={() => handleFeedback("dislike")}
+              >
+                <ThumbsDown size={16} />
+              </Button>
             </div>
           )}
         </div>
@@ -401,6 +409,7 @@ function MessageSwitcher({
 import logo from "../../../public/logo.png";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { Pencil, ThumbsDown, ThumbsUp } from "lucide-react";
 
 export const HumanMessage = ({
   content,
@@ -456,7 +465,6 @@ export const HumanMessage = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* <div className="w-full mx-auto 2xl:w-searchbar-sm 3xl:w-searchbar relative"> */}
       <div className="w-full">
         <div className="">
           <div className="flex">
@@ -468,7 +476,6 @@ export const HumanMessage = ({
 
             <div className="my-auto ml-2 font-bold text-black">You</div>
           </div>
-          {/*  <div className="flex flex-wrap pt-2 pl-12 w-full sm:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default"> */}
           <div className="flex flex-wrap pt-4 pl-1.5 md:pl-12 w-full">
             <div className="break-words w-full">
               <FileDisplay files={files || []} />
@@ -507,7 +514,6 @@ export const HumanMessage = ({
                       resize-none
                       pl-4
                       overflow-y-auto
-                      pr-12 
                       py-4`}
                       aria-multiline
                       role="textarea"
@@ -548,19 +554,23 @@ export const HumanMessage = ({
                   <div className="flex flex-col max-w-full prose preserve-lines">
                     {content}
                   </div>
+
                   {onEdit &&
                     isHovered &&
                     !isEditing &&
                     (!files || files.length === 0) && (
-                      <div className="bg-hover absolute right-0 -top-[38px] xl:left-[calc(100%_+_10px)] xl:right-auto xl:top-0 rounded">
-                        <Hoverable
+                      <div className="bg-hover absolute -top-8 right-0 rounded">
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          className="!p-1.5 !px-[7px]"
                           onClick={() => {
                             setIsEditing(true);
                             setIsHovered(false);
                           }}
                         >
-                          <FiEdit2 />
-                        </Hoverable>
+                          <Pencil size={16} />
+                        </Button>
                       </div>
                     )}
                 </div>
@@ -591,22 +601,6 @@ export const HumanMessage = ({
                   />
                 </div>
               )}
-            {/* {onEdit &&
-            isHovered &&
-            !isEditing &&
-            (!files || files.length === 0) ? (
-              <div className="bg-red-500 absolute">
-                <Hoverable
-                  icon={FiEdit2}
-                  onClick={() => {
-                    setIsEditing(true);
-                    setIsHovered(false);
-                  }}
-                />
-              </div>
-            ) : (
-              <div className="h-[27px]" />
-            )} */}
           </div>
         </div>
       </div>

@@ -108,7 +108,6 @@ export function ResizableSection({
           `}
         ></div>
       </div>
-      {/* <div className={`resize-section h-full flex w-[300px]`}>{children}</div> */}
       <div className={`resize-section h-full flex`}>{children}</div>
     </div>
   );

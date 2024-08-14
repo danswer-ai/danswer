@@ -123,12 +123,6 @@ const Main = () => {
       {confluenceCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            {/* <div className="flex">
-                <p className="my-auto">Existing Username: </p>
-                <p className="max-w-md my-auto ml-1 italic truncate">
-                  {confluenceCredential.credential_json?.confluence_username}
-                </p>{" "}
-              </div> */}
             <p className="my-auto">Existing Access Token: </p>
             <p className="max-w-md my-auto ml-1 italic truncate">
               {confluenceCredential.credential_json?.confluence_access_token}

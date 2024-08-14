@@ -4,7 +4,6 @@ import * as Yup from "yup";
 import { Popup } from "./Popup";
 import { CredentialBase } from "@/lib/types";
 import { createCredential } from "@/lib/credential";
-/* import { Button } from "@tremor/react"; */
 import { Button } from "@/components/ui/button";
 
 export async function submitCredential<T>(

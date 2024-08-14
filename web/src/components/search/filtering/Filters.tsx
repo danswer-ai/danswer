@@ -78,18 +78,6 @@ export function SourceSelector({
 
   return (
     <div className="w-full flex flex-col lg:gap-4 text-dark-900">
-      {/* <div className="flex pb-2 mb-4 border-b border-border text-emphasis">
-        <h2 className="my-auto font-bold">Filters</h2>
-        <FiFilter className="my-auto ml-2" size="16" />
-      </div>
-
-      <>
-        <SectionTitle>Time Range</SectionTitle>
-        <div className="mt-2">
-          <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
-        </div>
-      </> */}
-
       {existingSources.length > 0 && (
         <div className="lg:border rounded-[8px] w-full p-2.5">
           <SectionTitle>Sources</SectionTitle>
@@ -273,15 +261,10 @@ export function HorizontalFilters({
           </SelectTrigger>
           <SelectContent>
             {availableDocumentSets.map((documentSet) => (
-              <SelectItem
-                key={documentSet.name}
-                value={documentSet.name}
-                className="flex items-center"
-              >
-                <div className="my-auto">
-                  <FiBookmark />
+              <SelectItem key={documentSet.name} value={documentSet.name}>
+                <div className="flex items-center gap-2">
+                  <FiBookmark /> {documentSet.name}
                 </div>
-                <span className="ml-2 text-sm">{documentSet.name}</span>
               </SelectItem>
             ))}
           </SelectContent>

@@ -33,7 +33,7 @@ export function Logo({
   return (
     <div style={{ height, width }} className={`relative ${className}`}>
       {/* TODO: figure out how to use Next Image here */}
-      <img
+      <Image
         src="/api/enterprise-settings/logo"
         alt="Logo"
         style={{ objectFit: "contain", height, width }}

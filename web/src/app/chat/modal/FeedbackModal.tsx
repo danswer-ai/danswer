@@ -1,105 +1,3 @@
-/* "use client";
-
-import { useState } from "react";
-import { FeedbackType } from "../types";
-import { FiThumbsDown, FiThumbsUp } from "react-icons/fi";
-import { ModalWrapper } from "./ModalWrapper";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-
-const predefinedPositiveFeedbackOptions =
-  process.env.NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS?.split(",") ||
-  [];
-const predefinedNegativeFeedbackOptions =
-  process.env.NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS?.split(",") || [
-    "Retrieved documents were not relevant",
-    "AI misread the documents",
-    "Cited source had incorrect information",
-  ];
-
-interface FeedbackModalProps {
-  feedbackType: FeedbackType;
-  onClose: () => void;
-  onSubmit: (feedbackDetails: {
-    message: string;
-    predefinedFeedback?: string;
-  }) => void;
-}
-
-export const FeedbackModal = ({
-  feedbackType,
-  onClose,
-  onSubmit,
-}: FeedbackModalProps) => {
-  const [message, setMessage] = useState("");
-  const [predefinedFeedback, setPredefinedFeedback] = useState<
-    string | undefined
-  >();
-
-  const handlePredefinedFeedback = (feedback: string) => {
-    setPredefinedFeedback(feedback);
-  };
-
-  const handleSubmit = () => {
-    onSubmit({ message, predefinedFeedback });
-    onClose();
-  };
-
-  const predefinedFeedbackOptions =
-    feedbackType === "like"
-      ? predefinedPositiveFeedbackOptions
-      : predefinedNegativeFeedbackOptions;
-
-  return (
-    <ModalWrapper onClose={onClose} modalClassName="max-w-5xl">
-      <>
-        <h2 className="flex mb-4 text-2xl font-bold text-emphasis">
-          <div className="my-auto mr-1">
-            {feedbackType === "like" ? (
-              <FiThumbsUp className="my-auto mr-2 text-green-500" />
-            ) : (
-              <FiThumbsDown className="my-auto mr-2 text-red-600" />
-            )}
-          </div>
-          Provide additional feedback
-        </h2>
-
-        <Textarea
-          autoFocus
-          role="textarea"
-          aria-multiline
-          placeholder={
-            feedbackType === "like"
-              ? "(Optional) What did you like about this response?"
-              : "(Optional) What was the issue with the response? How could it be improved?"
-          }
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-        />
-        <RadioGroup defaultValue="" className="mt-4">
-          {predefinedFeedbackOptions.map((feedback, index) => (
-            <div
-              key={index}
-              className="flex items-center space-x-2"
-              onClick={() => handlePredefinedFeedback(feedback)}
-            >
-              <RadioGroupItem value={feedback} id={feedback} />
-              <Label htmlFor={feedback}>{feedback}</Label>
-            </div>
-          ))}
-        </RadioGroup>
-        <div className="flex mt-2">
-          <Button className="mx-auto mt-4" onClick={handleSubmit}>
-            Submit feedback
-          </Button>
-        </div>
-      </>
-    </ModalWrapper>
-  );
-}; */
 "use client";
 
 import { useState } from "react";
@@ -111,11 +9,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 

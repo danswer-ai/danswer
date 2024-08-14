@@ -1,16 +1,13 @@
 import { HoverPopup } from "@/components/HoverPopup";
 import { SourceIcon } from "@/components/SourceIcon";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { DocumentFeedbackBlock } from "@/components/search/DocumentFeedbackBlock";
-import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
 import { DanswerDocument } from "@/lib/search/interfaces";
-import { FiInfo, FiRadio } from "react-icons/fi";
-import { DocumentSelector } from "./DocumentSelector";
 import {
   DocumentMetadataBlock,
   buildDocumentSummaryDisplay,
 } from "@/components/search/DocumentDisplay";
 import { Badge } from "@/components/ui/badge";
+import { Info, Radio } from "lucide-react";
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
@@ -69,14 +66,12 @@ export function ChatDocumentDisplay({
                 {isAIPick && (
                   <div className="w-4 h-4 my-auto mr-1 flex flex-col">
                     <HoverPopup
-                      mainContent={
-                        <FiRadio className="text-gray-500 my-auto" />
-                      }
+                      mainContent={<Radio className="text-gray-500 my-auto" />}
                       popupContent={
                         <div className="text-xs text-gray-300 w-36 flex">
                           <div className="flex mx-auto">
                             <div className="w-3 h-3 flex flex-col my-auto mr-1">
-                              <FiInfo className="my-auto" />
+                              <Info className="my-auto" />
                             </div>
                             <div className="my-auto">
                               The AI liked this doc!

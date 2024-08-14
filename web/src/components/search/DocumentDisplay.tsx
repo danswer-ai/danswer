@@ -189,17 +189,6 @@ export const DocumentDisplay = ({
           <DocumentMetadataBlock document={document} />
           {document.score !== null && (
             <div className="flex items-center gap-[5px]">
-              {/* <Badge
-                variant={`${
-                  score < 50
-                    ? "destructive"
-                    : score < 90
-                    ? "warning"
-                    : "success"
-                }`}
-              >
-                {score.toFixed()}%
-              </Badge> */}
               <Badge variant={badgeVariant}>{score.toFixed()}%</Badge>
               {isSelected && (
                 <Badge variant="secondary">
@@ -236,16 +225,6 @@ export const DocumentDisplay = ({
             {document.semantic_identifier || document.document_id}
           </p>
         </a>
-        {/* <div className="ml-auto">
-          {isHovered && messageId && (
-            <DocumentFeedbackBlock
-              documentId={document.document_id}
-              messageId={messageId}
-              documentRank={documentRank}
-              setPopup={setPopup}
-            />
-          )}
-        </div> */}
       </div>
       <p className="break-words pt-3">
         {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}

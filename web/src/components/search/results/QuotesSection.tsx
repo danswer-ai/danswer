@@ -48,17 +48,6 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
         </div>
       )}
       <div className="text-sm flex w-fit">
-        {/* <a
-          className="flex max-w-sidebar shrink box-border p-2 border border-border rounded-regular hover:bg-hover-light"
-          href={quoteInfo.link || undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <SourceIcon sourceType={quoteInfo.source_type} iconSize={18} />
-          <p className="truncate break-all ml-2 mr-2">
-            {quoteInfo.semantic_identifier || quoteInfo.document_id}
-          </p>
-        </a> */}
         <a
           href={quoteInfo.link || undefined}
           target="_blank"
@@ -71,15 +60,6 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
             </p>
           </Button>
         </a>
-
-        {/* <div
-          className="cursor-pointer h-full pt-2 pb-2 px-1 border-t border-b border-r border-gray-800 rounded-r-lg hover:bg-gray-800"
-          onClick={() => setDetailIsOpen(!detailIsOpen)}
-        >
-          <div className="pt-0.5 mx-auto h-[20px]">
-            <ZoomInIcon className="text-gray-500" size={14} />
-          </div>
-        </div> */}
       </div>
     </div>
   );

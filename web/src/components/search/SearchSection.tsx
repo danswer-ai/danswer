@@ -226,8 +226,7 @@ export const SearchSection = ({
   }
 
   return (
-    <div className="relative flex gap-16 lg:gap-14 xl:gap-10 2xl:gap-20 h-full lg:pl-8 xl:pl-0">
-      {/* <div className="relative flex gap-16 xl:gap-20 h-full lg:pl-14 xl:pl-0"> */}
+    <div className="relative flex gap-16 lg:gap-14 xl:gap-10 2xl:gap-20 h-full lg:pl-8 xl:pl-0 ml-auto">
       <div className="w-full flex flex-col gap-5">
         {/* {personas.length > 0 ? (
           <div className="flex mb-2 w-48">
@@ -241,14 +240,6 @@ export const SearchSection = ({
           <div className="pt-3" />
         )} */}
 
-        {/* <SearchBar
-          query={query}
-          setQuery={setQuery}
-          onSearch={async () => {
-            setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
-            await onSearch({ offset: 0 });
-          }}
-        /> */}
         <SearchBar
           query={query}
           setQuery={setQuery}
@@ -256,6 +247,7 @@ export const SearchSection = ({
             setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
             await onSearch({ offset: 0 });
           }}
+          isSearch
         >
           {(ccPairs.length > 0 || documentSets.length > 0) && (
             <SourceSelector
@@ -301,7 +293,7 @@ export const SearchSection = ({
         </div>
       </div>
 
-      <div className="min-w-[220px] lg:min-w-[300px] xl:min-w-[320px] max-w-[320px] ml-auto hidden lg:flex flex-col">
+      <div className="min-w-[220px] lg:min-w-[300px] xl:min-w-[320px] max-w-[320px] hidden lg:flex flex-col">
         {(ccPairs.length > 0 || documentSets.length > 0) && (
           <SourceSelector
             {...filterManager}

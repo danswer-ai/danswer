@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
       : buildClientUrl("/enmedd-chp.ico");
 
   return {
-    title: dynamicSettings.enterpriseSettings?.application_name ?? "enMedD CHP",
+    title: dynamicSettings.enterpriseSettings?.application_name ?? "enMedD AI",
     description: "enMedD Conversational Health Platform",
     icons: {
       icon: logoLocation,

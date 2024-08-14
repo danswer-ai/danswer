@@ -10,7 +10,6 @@ import Models from "./homepage/models";
 import Navbar from "./homepage/navbar";
 import Platform from "./homepage/platform";
 import UseCases from "./homepage/useCases";
-import Lenis from "lenis";
 
 export default async function Page() {
   const settings = await fetchSettingsSS();
@@ -26,17 +25,6 @@ export default async function Page() {
   } else {
     redirect("/chat");
   }
-
-  // useEffect(() => {
-  //   const lenis = new Lenis();
-
-  //   function raf(time: number) {
-  //     lenis.raf(time);
-  //     requestAnimationFrame(raf);
-  //   }
-
-  //   requestAnimationFrame(raf);
-  // }, []);
 
   return (
     <>

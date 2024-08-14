@@ -24,6 +24,7 @@ export function CopyButton({
       }}
       variant="ghost"
       size="xs"
+      className="!p-1.5 !px-[7px]"
     >
       {copyClicked ? <Check size={16} /> : <Copy size={16} />}
     </Button>
