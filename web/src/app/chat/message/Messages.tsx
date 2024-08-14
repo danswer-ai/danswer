@@ -154,10 +154,17 @@ export const AIMessage = ({
       return content;
     }
 
-    const codeBlockRegex = /```[\s\S]*?```|```[\s\S]*?$/g;
+    const codeBlockRegex = /```(\w*)\n[\s\S]*?```|```[\s\S]*?$/g;
     const matches = content.match(codeBlockRegex);
 
     if (matches) {
+      content = matches.reduce((acc, match) => {
+        if (!match.match(/```\w+/)) {
+          return acc.replace(match, match.replace("```", "```plaintext"));
+        }
+        return acc;
+      }, content);
+
       const lastMatch = matches[matches.length - 1];
       if (!lastMatch.endsWith("```")) {
         return content;
@@ -166,7 +173,6 @@ export const AIMessage = ({
 
     return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
   };
-
   const finalContent = processContent(content as string);
 
   const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
@@ -400,7 +406,6 @@ export const AIMessage = ({
                                     );
                                   }
                                 },
-
                                 code: (props) => (
                                   <CodeBlock
                                     className="w-full"
