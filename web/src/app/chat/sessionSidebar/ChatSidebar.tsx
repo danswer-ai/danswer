@@ -116,17 +116,6 @@ export const ChatSidebar = ({
             `}
         id="chat-sidebar"
       >
-        {/* <div
-          className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${
-            isLgScreen
-              ? isExpanded
-                ? "lg:opacity-0"
-                : "lg:opacity-100"
-              : !openSidebar
-              ? "opacity-0 lg:opacity-100"
-              : "opacity-100"
-          }`}
-        > */}
         <div
           className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${
             isLgScreen
