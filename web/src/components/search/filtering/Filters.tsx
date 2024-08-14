@@ -81,17 +81,18 @@ export function SourceSelector({
       }
     });
   };
-  const [toggled, setToggled] = useState(true);
+
+  let allSourcesSelected = selectedSources.length > 0;
 
   const toggleAllSources = () => {
-    if (toggled) {
-      listSourceMetadata().forEach((source) => {
-        setSelectedSources((sources) => [...sources, source]);
-      });
-    } else {
+    if (allSourcesSelected) {
       setSelectedSources([]);
+    } else {
+      const allSources = listSourceMetadata().filter((source) =>
+        existingSources.includes(source.internalName)
+      );
+      setSelectedSources(allSources);
     }
-    setToggled((toggled) => !toggled);
   };
 
   return (
@@ -115,9 +116,12 @@ export function SourceSelector({
           <div className="flex w-full gap-x-2 items-center">
             <div className="font-bold text-xs  mt-2 flex items-center gap-x-2">
               <p>Sources</p>
-              <button onClick={toggleAllSources}>
-                {toggled ? <PlusIcon size={14} /> : <MinusIcon />}
-              </button>
+              <input
+                type="checkbox"
+                checked={allSourcesSelected}
+                onChange={toggleAllSources}
+                className="my-auto form-checkbox h-3 w-3 text-primary border-background-900 rounded"
+              />
             </div>
           </div>
           <div className="px-1">

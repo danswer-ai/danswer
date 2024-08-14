@@ -175,7 +175,7 @@ export function WhitelabelingForm() {
 
             {values.use_custom_logotype ? (
               <div className="mt-3">
-                <SubLabel>Current Custom Logo: </SubLabel>
+                <SubLabel>Current Custom Logotype: </SubLabel>
                 <img
                   src={"/api/enterprise-settings/logotype?u=" + Date.now()}
                   alt="logotype"
@@ -202,7 +202,9 @@ export function WhitelabelingForm() {
 
                 <SubLabel>
                   Override the current custom logotype by uploading a new image
-                  below and clicking the Update button.
+                  below and clicking the Update button. This logotype is the
+                  text-based logo that will be rendered at the bottom right of
+                  the chat screen.
                 </SubLabel>
               </div>
             ) : (
@@ -253,7 +255,7 @@ export function WhitelabelingForm() {
 
             <div className="mt-4">
               <TextFormField
-                label="Custom Lower Disclaimer"
+                label="Custom Footer"
                 name="custom_lower_disclaimer_content"
                 subtext={`Custom Markdown content that will be displayed at the bottom of the Chat page.`}
                 placeholder="Your disclaimer content..."

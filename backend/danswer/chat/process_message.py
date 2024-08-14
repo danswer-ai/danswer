@@ -694,6 +694,8 @@ def stream_chat_message_objects(
 
     except Exception as e:
         error_msg = str(e)
+        print(error_msg)
+
         logger.exception(f"Failed to process chat message: {error_msg}")
 
         if "Illegal header value b'Bearer  '" in error_msg:

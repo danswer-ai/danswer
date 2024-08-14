@@ -40,12 +40,14 @@ export function getChatRetentionInfo(
   chatSession: ChatSession,
   settings: Settings
 ): ChatRetentionInfo {
-  const chatRetentionDays = settings.maximum_chat_retention_days || 1;
+  // If `maximum_chat_retention_days` isn't set- never display retention warning.
+  const chatRetentionDays = settings.maximum_chat_retention_days || 10000;
   const createdDate = new Date(chatSession.time_created);
   const today = new Date();
   const daysFromCreation = Math.ceil(
     (today.getTime() - createdDate.getTime()) / (1000 * 3600 * 24)
   );
+  // console.log(chatRetentionDays)
   const daysUntilExpiration = chatRetentionDays - daysFromCreation;
   const showRetentionWarning =
     chatRetentionDays < 7 ? daysUntilExpiration < 2 : daysUntilExpiration < 7;

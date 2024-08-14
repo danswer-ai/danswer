@@ -15,7 +15,6 @@ import {
   FiCheck,
   FiEdit2,
   FiMoreHorizontal,
-  FiSettings,
   FiShare2,
   FiTrash,
   FiX,
@@ -56,8 +55,6 @@ export function ChatSessionDisplay({
   const [delayedSkipGradient, setDelayedSkipGradient] = useState(skipGradient);
   const settings = useContext(SettingsContext);
 
-  const [isDeletionModalVisible, setIsDeletionModalVisible] = useState(false);
-
   useEffect(() => {
     if (skipGradient) {
       setDelayedSkipGradient(true);
@@ -83,12 +80,10 @@ export function ChatSessionDisplay({
     return <></>;
   }
 
-  const {
-    chatRetentionDays,
-    daysFromCreation,
-    daysUntilExpiration,
-    showRetentionWarning,
-  } = getChatRetentionInfo(chatSession, settings?.settings);
+  const { daysUntilExpiration, showRetentionWarning } = getChatRetentionInfo(
+    chatSession,
+    settings?.settings
+  );
 
   return (
     <>
@@ -172,7 +167,7 @@ export function ChatSessionDisplay({
                   </div>
                 ) : (
                   <div className="ml-auto my-auto justify-end flex z-30">
-                    {showRetentionWarning && (
+                    {!showShareModal && showRetentionWarning && (
                       <CustomTooltip
                         line
                         content={
@@ -231,12 +226,14 @@ export function ChatSessionDisplay({
                         />
                       </div>
                     </div>
-                    <div
-                      onClick={() => setIsDeletionModalVisible(true)}
-                      className={`hover:bg-black/10 p-1 -m-1 rounded ml-1`}
-                    >
-                      <FiTrash size={16} />
-                    </div>
+                    {showDeleteModal && (
+                      <div
+                        onClick={() => showDeleteModal(chatSession)}
+                        className={`hover:bg-black/10 p-1 -m-1 rounded ml-1`}
+                      >
+                        <FiTrash size={16} />
+                      </div>
+                    )}
                   </div>
                 ))}
             </div>
