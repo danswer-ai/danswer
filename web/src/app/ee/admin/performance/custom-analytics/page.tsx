@@ -11,7 +11,7 @@ function Main() {
         <div className="mt-4">
           <Callout title="Custom Analytics is not enabled." color="red">
             To set up custom analytics scripts, please work with the team who
-            setup Danswer in your organization to set the{" "}
+            setup enMedD CHP in your organization to set the{" "}
             <i>CUSTOM_ANALYTICS_SECRET_KEY</i> environment variable.
           </Callout>
         </div>
@@ -22,7 +22,7 @@ function Main() {
   return (
     <div>
       <Text className="mb-8">
-        This allows you to bring your own analytics tool to Danswer! Copy the
+        This allows you to bring your own analytics tool to enMedD CHP! Copy the
         Web snippet from your analytics provider into the box below, and
         we&apos;ll start sending usage events.
       </Text>
