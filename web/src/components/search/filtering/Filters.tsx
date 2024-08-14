@@ -18,9 +18,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CustomSelect } from "@/components/Select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Brain } from "lucide-react";
 
 const SectionTitle = ({ children }: { children: string }) => (
-  <div className="flex mt-2 text-xs font-bold">{children}</div>
+  <div className="flex p-2 text-sm font-bold">{children}</div>
 );
 
 export interface SourceSelectorProps {
@@ -75,8 +77,8 @@ export function SourceSelector({
   };
 
   return (
-    <div>
-      <div className="flex pb-2 mb-4 border-b border-border text-emphasis">
+    <div className="w-full flex flex-col lg:gap-4 text-dark-900">
+      {/* <div className="flex pb-2 mb-4 border-b border-border text-emphasis">
         <h2 className="my-auto font-bold">Filters</h2>
         <FiFilter className="my-auto ml-2" size="16" />
       </div>
@@ -86,32 +88,33 @@ export function SourceSelector({
         <div className="mt-2">
           <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
         </div>
-      </>
+      </> */}
 
       {existingSources.length > 0 && (
-        <div className="mt-4">
+        <div className="lg:border rounded-[8px] w-full p-2.5">
           <SectionTitle>Sources</SectionTitle>
-          <div className="px-1">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:gap-0">
             {listSourceMetadata()
               .filter((source) => existingSources.includes(source.internalName))
-              .map((source) => (
+              .map((source, index, array) => (
                 <div
                   key={source.internalName}
-                  className={
-                    "flex cursor-pointer w-full items-center " +
-                    "py-1.5 my-1.5 rounded-regular px-2 select-none " +
-                    (selectedSources
-                      .map((source) => source.internalName)
-                      .includes(source.internalName)
-                      ? "bg-hover"
-                      : "hover:bg-hover-light")
-                  }
+                  className={`w-full flex items-center justify-between cursor-pointer p-2 gap-2 ${
+                    index === 0 ? "lg:border-t" : ""
+                  } ${index !== array.length - 1 ? "lg:border-b" : ""}`}
                   onClick={() => handleSelect(source)}
                 >
-                  <SourceIcon sourceType={source.internalName} iconSize={16} />
-                  <span className="ml-2 text-sm text-default">
-                    {source.displayName}
-                  </span>
+                  <label
+                    htmlFor={source.internalName}
+                    className="flex items-center w-full"
+                  >
+                    <SourceIcon
+                      sourceType={source.internalName}
+                      iconSize={24}
+                    />
+                    <span className="ml-3 text-sm">{source.displayName}</span>
+                  </label>
+                  <Checkbox id={source.internalName} />
                 </div>
               ))}
           </div>
@@ -119,28 +122,23 @@ export function SourceSelector({
       )}
 
       {availableDocumentSets.length > 0 && (
-        <>
-          <div className="mt-4">
-            <SectionTitle>Knowledge Sets</SectionTitle>
-          </div>
-          <div className="px-1">
+        <div className="lg:border rounded-[8px] w-full p-2.5">
+          <SectionTitle>Knowledge Sets</SectionTitle>
+          <div>
             {availableDocumentSets.map((documentSet) => (
-              <div key={documentSet.name} className="my-1.5 flex">
-                <div
-                  key={documentSet.name}
-                  className={
-                    "flex cursor-pointer w-full items-center " +
-                    "py-1.5 rounded-regular px-2 " +
-                    (selectedDocumentSets.includes(documentSet.name)
-                      ? "bg-hover"
-                      : "hover:bg-hover-light")
-                  }
+              <div
+                key={documentSet.name}
+                className={`w-full flex items-center justify-between cursor-pointer p-2 gap-2`}
+              >
+                <label
+                  htmlFor={documentSet.name}
+                  className="flex items-center w-full"
                   onClick={() => handleDocumentSetSelect(documentSet.name)}
                 >
                   <HoverPopup
                     mainContent={
-                      <div className="flex my-auto mr-2">
-                        <InfoIcon className={defaultTailwindCSS} />
+                      <div className="flex my-auto mr-3">
+                        <Brain size={24} />
                       </div>
                     }
                     popupContent={
@@ -152,24 +150,22 @@ export function SourceSelector({
                     classNameModifications="-ml-2"
                   />
                   <span className="text-sm">{documentSet.name}</span>
-                </div>
+                </label>
+                <Checkbox id={documentSet.name} />
               </div>
             ))}
           </div>
-        </>
+        </div>
       )}
 
       {availableTags.length > 0 && (
-        <>
-          <div className="mt-4 mb-2">
-            <SectionTitle>Tags</SectionTitle>
-          </div>
+        <div className="p-4 lg:p-0">
           <TagFilter
             tags={availableTags}
             selectedTags={selectedTags}
             setSelectedTags={setSelectedTags}
           />
-        </>
+        </div>
       )}
     </div>
   );

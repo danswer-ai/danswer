@@ -28,7 +28,7 @@ function SectionHeader({
       className={`w-full pt-3 flex text-lg font-medium items-end border-b border-border`}
     >
       <div className="flex justify-between w-full mt-auto items-center pb-3.5">
-        <p className="flex truncate text-black">
+        <p className="flex truncate text-dark-900">
           {icon({ className: "my-auto mr-1" })}
           {name}
         </p>

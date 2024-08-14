@@ -1,6 +1,6 @@
 import { timeAgo } from "@/lib/time";
-import { MetadataBadge } from "../MetadataBadge";
+import { Badge } from "../ui/badge";
 
 export function DocumentUpdatedAtBadge({ updatedAt }: { updatedAt: string }) {
-  return <MetadataBadge value={"Updated " + timeAgo(updatedAt)} />;
+  return <Badge variant="secondary">{"Updated " + timeAgo(updatedAt)}</Badge>;
 }

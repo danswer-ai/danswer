@@ -11,7 +11,7 @@ export default function Platform() {
         <div className="flex flex-col w-full gap-10">
           <div className="flex flex-col font-bold md:items-center">
             <span className="text-[#64A3FF] pb-3">Platform</span>
-            <h2 className="flex flex-col text-4xl text-black md:text-5xl md:items-center">
+            <h2 className="flex flex-col text-4xl text-dark-900 md:text-5xl md:items-center">
               <span>A User-Friendly </span>
               <span>Interface to Build AI Solutions</span>
             </h2>
@@ -43,7 +43,9 @@ export default function Platform() {
         <div className="grid grid-cols-2 gap-10 lg:mx-[8.5rem]">
           {platformData.map((data, i) => (
             <div key={i}>
-              <h4 className="text-xl font-semibold text-black">{data.title}</h4>
+              <h4 className="text-xl font-semibold text-dark-900">
+                {data.title}
+              </h4>
               <p>{data.details}</p>
             </div>
           ))}

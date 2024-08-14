@@ -5,7 +5,7 @@ import Image from "next/image";
 export default function Menu() {
   return (
     <div
-      className="fixed top-0 right-0 w-full h-screen p-6 pt-24 pb-10 text-black bg-white md:w-96 z-1000"
+      className="fixed top-0 right-0 w-full h-screen p-6 pt-24 pb-10 text-dark-900 bg-white md:w-96 z-1000"
       style={{
         boxShadow:
           "0px 3px 5px -1px #00000033, 0px 1px 18px 0px #0000001F, 0px 6px 10px 0px #00000024",
@@ -20,7 +20,7 @@ export default function Menu() {
           className="fixed top-4"
         />
         <div className="flex flex-col gap-10">
-          <ul className="flex flex-col items-start gap-6 font-semibold text-black">
+          <ul className="flex flex-col items-start gap-6 font-semibold text-dark-900">
             <li className="cursor-pointer">Solutions</li>
             <li className="cursor-pointer">Customers</li>
             <li className="cursor-pointer">Security</li>

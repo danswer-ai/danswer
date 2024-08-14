@@ -3,6 +3,7 @@ import { ResponseSection, StatusOptions } from "./ResponseSection";
 import { CheckmarkIcon, CopyIcon } from "@/components/icons/icons";
 import { useState } from "react";
 import { SourceIcon } from "@/components/SourceIcon";
+import { Button } from "@/components/ui/button";
 
 const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
   const [detailIsOpen, setDetailIsOpen] = useState(false);
@@ -46,9 +47,9 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
           </div>
         </div>
       )}
-      <button className="text-sm flex w-fit">
-        <a
-          className="flex max-w-[300px] shrink box-border p-2 border border-border rounded-regular hover:bg-hover-light"
+      <div className="text-sm flex w-fit">
+        {/* <a
+          className="flex max-w-sidebar shrink box-border p-2 border border-border rounded-regular hover:bg-hover-light"
           href={quoteInfo.link || undefined}
           target="_blank"
           rel="noopener noreferrer"
@@ -57,6 +58,18 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
           <p className="truncate break-all ml-2 mr-2">
             {quoteInfo.semantic_identifier || quoteInfo.document_id}
           </p>
+        </a> */}
+        <a
+          href={quoteInfo.link || undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button variant="outline">
+            <SourceIcon sourceType={quoteInfo.source_type} iconSize={18} />
+            <p className="truncate break-all ml-2 mr-2">
+              {quoteInfo.semantic_identifier || quoteInfo.document_id}
+            </p>
+          </Button>
         </a>
 
         {/* <div
@@ -67,7 +80,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
             <ZoomInIcon className="text-gray-500" size={14} />
           </div>
         </div> */}
-      </button>
+      </div>
     </div>
   );
 };

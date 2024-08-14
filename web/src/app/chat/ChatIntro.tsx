@@ -174,15 +174,17 @@ export function ChatIntro({
 
   return (
     <>
-      <div className="flex justify-center w-full pt-20">
-        <div className="2xl:w-searchbar-sm 3xl:w-searchbar px-5 sm:px-8 md:px-40">
-          <div className="flex pt-10 xl:pt-16">
+      <div className="flex justify-center w-full py-20">
+        {/* <div className="xl:w-searchbar 2xl:w-searchbar-sm 3xl:w-searchbar px-5 sm:px-8 lg:px-20 xl:px-5 2xl:px-0 pt-10 md:pt-16 lg:pt-0 xl:pt-16"> */}
+        {/* <div className="max-w-screen-lg 2xl:w-searchbar-sm 3xl:w-searchbar px-5 lg:px-6 2xl:px-0 pt-10 md:pt-16 lg:pt-0 xl:pt-16"> */}
+        <div className="max-w-screen-lg 2xl:w-searchbar px-5 3xl:px-0 pt-10 md:pt-16 lg:pt-0 xl:pt-16">
+          <div className="flex">
             <div>
               {/*  <Logo height={80} width={80} className="m-auto" /> */}
 
-              <h1 className="flex flex-col text-[2rem] md:text-[3rem] lg:text-[44px] 2xl:text-[4rem] font-semibold h1-bg leading-[1.3]">
-                <span>Hi, I&rsquo;am enMedD AI,</span>
-                <span>How can I help you today?</span>
+              <h1 className="flex flex-col text-[2rem] md:text-[3rem] lg:text-[44px] 2xl:text-[4rem] font-medium leading-[1.2] tracking-tighter">
+                <span className="h1-bg">Hi, I&rsquo;am enMedD AI,</span>
+                <span className="h1-bg">How can I help you today?</span>
               </h1>
               {/* <div className="m-auto mt-4 text-3xl font-bold text-strong w-fit">
                 {selectedPersona?.name || "How can I help you today?"}
@@ -267,7 +269,7 @@ export function ChatIntro({
 
               {availableSources.length > 0 && (
                 <div className="mt-1">
-                  <p className="mt-4 mb-1 font-bold text-emphasis">
+                  <p className="mt-4 mb-1 font-bold text-dark-900">
                     Connected Sources:{" "}
                   </p>
                   <div className={`flex flex-wrap gap-2`}>
@@ -276,12 +278,8 @@ export function ChatIntro({
                         key={sourceMetadata.internalName}
                         variant="secondary"
                       >
-                        <div className="my-auto mr-1">
-                          {sourceMetadata.icon({})}
-                        </div>
-                        <div className="my-auto">
-                          {sourceMetadata.displayName}
-                        </div>
+                        {sourceMetadata.icon({})}
+                        {sourceMetadata.displayName}
                       </Badge>
                     ))}
                   </div>
