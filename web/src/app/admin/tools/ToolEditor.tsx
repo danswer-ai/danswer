@@ -46,11 +46,11 @@ function ToolForm({
   isSubmitting: boolean;
   definitionErrorState: [
     string | null,
-    React.Dispatch<React.SetStateAction<string | null>>,
+    React.Dispatch<React.SetStateAction<string | null>>
   ];
   methodSpecsState: [
     MethodSpec[] | null,
-    React.Dispatch<React.SetStateAction<MethodSpec[] | null>>,
+    React.Dispatch<React.SetStateAction<MethodSpec[] | null>>
   ];
 }) {
   const [definitionError, setDefinitionError] = definitionErrorState;
