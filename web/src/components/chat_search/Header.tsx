@@ -30,9 +30,6 @@ export default function FunctionalHeader({
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
   toggleSidebar?: () => void;
 }) {
-  const combinedSettings = useContext(SettingsContext);
-  const enterpriseSettings = combinedSettings?.enterpriseSettings;
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {

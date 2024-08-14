@@ -82,6 +82,7 @@ import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 import { DeleteChatModal } from "./modal/DeleteChatModal";
+import { map } from "lodash";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -93,7 +94,7 @@ export function ChatPage({
   defaultSelectedAssistantId,
   toggledSidebar,
 }: {
-  toggle: (toggled?: boolean) => void;
+  toggle: (toggled: boolean) => void;
   documentSidebarInitialWidth?: number;
   defaultSelectedAssistantId?: number;
   toggledSidebar: boolean;
@@ -243,6 +244,7 @@ export function ChatPage({
       existingChatSessionId !== priorChatSessionId;
     if (isChatSessionSwitch) {
       // de-select documents
+
       clearSelectedDocuments();
 
       // reset all filters
@@ -273,10 +275,7 @@ export function ChatPage({
         } else {
           setSelectedAssistant(undefined);
         }
-        setCompleteMessageDetail({
-          sessionId: null,
-          messageMap: new Map(),
-        });
+        setCompleteMessageDetail(new Map([[existingChatSessionId, new Map()]]));
         setChatSessionSharedStatus(ChatSessionSharedStatus.Private);
 
         // if we're supposed to submit on initial load, then do that here
@@ -289,7 +288,7 @@ export function ChatPage({
         }
         return;
       }
-
+      clearSelectedDocuments();
       setIsFetchingChatMessages(true);
       const response = await fetch(
         `/api/chat/get-chat-session/${existingChatSessionId}`
@@ -309,9 +308,10 @@ export function ChatPage({
         messageHistory[messageHistory.length - 1]?.type !== "error" ||
         loadedSessionId != null
       ) {
-        setCompleteMessageDetail({
-          sessionId: chatSession.chat_session_id,
-          messageMap: newMessageMap,
+        setCompleteMessageDetail((prevState) => {
+          const newState = new Map(prevState);
+          newState.set(chatSession.chat_session_id!, newMessageMap);
+          return newState;
         });
 
         const latestMessageId =
@@ -358,10 +358,16 @@ export function ChatPage({
   const [message, setMessage] = useState(
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
-  const [completeMessageDetail, setCompleteMessageDetail] = useState<{
-    sessionId: number | null;
-    messageMap: Map<number, Message>;
-  }>({ sessionId: null, messageMap: new Map() });
+
+  const [completeMessageDetail, setCompleteMessageDetail] = useState<
+    Map<number | null, Map<number, Message>>
+  >(new Map());
+
+  // const [completeMessageDetail, setCompleteMessageDetail] = useState<{
+  //   sessionId: number | null;
+  //   messageMap: Map<number, Message>;
+  // }>({ sessionId: null, messageMap: new Map() });
+
   const upsertToCompleteMessageMap = ({
     messages,
     completeMessageMapOverride,
@@ -379,7 +385,9 @@ export function ChatPage({
   }) => {
     // deep copy
     const frozenCompleteMessageMap =
-      completeMessageMapOverride || completeMessageDetail.messageMap;
+      completeMessageMapOverride ||
+      completeMessageDetail.get(chatSessionIdRef.current) ||
+      new Map();
     const newCompleteMessageMap = structuredClone(frozenCompleteMessageMap);
     if (newCompleteMessageMap.size === 0) {
       const systemMessageId = messages[0].parentMessageId || SYSTEM_MESSAGE_ID;
@@ -428,16 +436,24 @@ export function ChatPage({
         )!.latestChildMessageId = messages[0].messageId;
       }
     }
-    const newCompleteMessageDetail = {
-      sessionId: chatSessionId || completeMessageDetail.sessionId,
-      messageMap: newCompleteMessageMap,
-    };
-    setCompleteMessageDetail(newCompleteMessageDetail);
-    return newCompleteMessageDetail;
+    const sessionId = chatSessionId;
+    const messageMap = newCompleteMessageMap;
+    // const newCompleteMessageDetail = {
+    //   sessionId: chatSessionId || completeMessageDetail.sessionId,
+    //   messageMap: newCompleteMessageMap,
+    // };
+    const messageDetail = { sessionId: messageMap };
+    setCompleteMessageDetail((prevState) => {
+      const newState = new Map(prevState);
+      newState.set(sessionId!, messageMap);
+      return newState;
+    });
+    return { messageMap, sessionId };
+    // return newCompleteMessageDetail;
   };
 
   const messageHistory = buildLatestMessageChain(
-    completeMessageDetail.messageMap
+    completeMessageDetail.get(chatSessionIdRef.current as number) || new Map()
   );
   const [isStreaming, setIsStreaming] = useState(false);
   const [abortController, setAbortController] =
@@ -704,6 +720,7 @@ export function ChatPage({
 
       return;
     }
+    console.log("submitting");
 
     const controller = new AbortController();
     setAbortController(controller);
@@ -729,7 +746,8 @@ export function ChatPage({
       (message) => message.messageId === messageIdToResend
     );
 
-    const messageMap = completeMessageDetail.messageMap;
+    const messageMap =
+      completeMessageDetail.get(chatSessionIdRef.current) || new Map();
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
       messageToResend?.parentMessageId !== undefined
@@ -746,6 +764,8 @@ export function ChatPage({
       });
       return;
     }
+    console.log("message map");
+    console.log(messageMap);
 
     let currMessage = messageToResend ? messageToResend.message : message;
     if (messageOverride) {
@@ -783,6 +803,11 @@ export function ChatPage({
         latestChildMessageId: TEMP_USER_MESSAGE_ID,
       });
     }
+    // const frozenMessageMap = upsertToCompleteMessageMap({
+    //   messages: messageUpdates,
+    //   chatSessionId: currChatSessionId,
+    // });
+
     const { messageMap: frozenMessageMap, sessionId: frozenSessionId } =
       upsertToCompleteMessageMap({
         messages: messageUpdates,
@@ -874,6 +899,7 @@ export function ChatPage({
           chatSessionId: frozenSessionId!,
         });
       };
+
       const delay = (ms: number) => {
         return new Promise((resolve) => setTimeout(resolve, ms));
       };
@@ -1125,7 +1151,7 @@ export function ChatPage({
         path: "/",
       };
 
-    toggle();
+    toggle(!toggledSidebar);
   };
   const removeToggle = () => {
     setShowDocSidebar(false);
@@ -1392,9 +1418,10 @@ export function ChatPage({
                             }
                           >
                             {messageHistory.map((message, i) => {
-                              const messageMap =
-                                completeMessageDetail.messageMap;
-                              const messageReactComponentKey = `${i}-${completeMessageDetail.sessionId}`;
+                              const messageMap = completeMessageDetail.get(
+                                chatSessionIdRef.current
+                              )!;
+                              const messageReactComponentKey = `${i}-${chatSessionIdRef.current}`;
                               if (message.type === "user") {
                                 const parentMessage = message.parentMessageId
                                   ? messageMap.get(message.parentMessageId)
@@ -1431,14 +1458,42 @@ export function ChatPage({
                                         const newCompleteMessageMap = new Map(
                                           messageMap
                                         );
-                                        newCompleteMessageMap.get(
-                                          message.parentMessageId!
-                                        )!.latestChildMessageId = messageId;
-                                        setCompleteMessageDetail({
-                                          sessionId:
-                                            completeMessageDetail.sessionId,
-                                          messageMap: newCompleteMessageMap,
-                                        });
+                                        const chatSession =
+                                          newCompleteMessageMap.get(
+                                            chatSessionIdRef.current!
+                                          );
+                                        if (
+                                          chatSession &&
+                                          chatSession instanceof Map
+                                        ) {
+                                          const parentMessage = chatSession.get(
+                                            message.parentMessageId!
+                                          );
+                                          if (parentMessage) {
+                                            parentMessage.latestChildMessageId =
+                                              messageId;
+                                          }
+                                        }
+
+                                        // newCompleteMessageMap.get(chatSessionIdRef.current)!.get(
+                                        //   message.parentMessageId!
+                                        // )!.latestChildMessageId = messageId;
+
+                                        setCompleteMessageDetail(
+                                          (prevState) => {
+                                            const newState = new Map(prevState);
+                                            newState.set(
+                                              chatSessionIdRef.current!,
+                                              (newCompleteMessageMap as any)!
+                                            );
+                                            return newState;
+                                          }
+                                        );
+                                        // setCompleteMessageDetail(completeMessageDetail => {
+                                        //   sessionId:
+                                        //     completeMessageDetail.sessionId,
+                                        //   messageMap: newCompleteMessageMap,
+                                        // });
                                         setSelectedMessageForDocDisplay(
                                           messageId
                                         );

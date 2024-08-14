@@ -30,13 +30,15 @@ const FolderItem = ({
   folder,
   currentChatId,
   isInitiallyExpanded,
+  initiallySelected,
 }: {
   folder: Folder;
   currentChatId?: number;
   isInitiallyExpanded: boolean;
+  initiallySelected: boolean;
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(isInitiallyExpanded);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(initiallySelected);
   const [editedFolderName, setEditedFolderName] = useState<string>(
     folder.folder_name
   );
@@ -135,6 +137,14 @@ const FolderItem = ({
     };
   }, []);
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initiallySelected && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [initiallySelected]);
+
   const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragOver(false);
@@ -214,6 +224,7 @@ const FolderItem = ({
               </div>
               {isEditing ? (
                 <input
+                  ref={inputRef}
                   type="text"
                   value={editedFolderName}
                   onChange={handleFolderNameChange}
@@ -285,10 +296,12 @@ export const FolderList = ({
   folders,
   currentChatId,
   openedFolders,
+  newFolderId,
 }: {
   folders: Folder[];
   currentChatId?: number;
   openedFolders?: { [key: number]: boolean };
+  newFolderId: number | null;
 }) => {
   if (folders.length === 0) {
     return null;
@@ -301,6 +314,7 @@ export const FolderList = ({
           key={folder.folder_id}
           folder={folder}
           currentChatId={currentChatId}
+          initiallySelected={newFolderId == folder.folder_id}
           isInitiallyExpanded={
             openedFolders ? openedFolders[folder.folder_id] || false : false
           }

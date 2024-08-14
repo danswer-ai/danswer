@@ -1,7 +1,13 @@
 "use client";
 
 import { FiEdit, FiFolderPlus } from "react-icons/fi";
-import { ForwardedRef, forwardRef, useContext, useEffect } from "react";
+import {
+  ForwardedRef,
+  forwardRef,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
@@ -81,6 +87,9 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
       router.push(newChatUrl);
     };
 
+    // For focusing
+    const [newFolderId, setNewFolderId] = useState<number | null>(null);
+
     return (
       <>
         {popup}
@@ -135,6 +144,9 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                     .then((folderId) => {
                       console.log(`Folder created with ID: ${folderId}`);
                       router.refresh();
+                      console.log("NEW FOLDER");
+                      console.log(folderId);
+                      setNewFolderId(folderId);
                     })
                     .catch((error) => {
                       console.error("Failed to create folder:", error);
@@ -172,6 +184,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
           )}
           <div className="border-b border-border pb-4 mx-3" />
           <PagesTab
+            newFolderId={newFolderId}
             showDeleteModal={showDeleteModal}
             showShareModal={showShareModal}
             closeSidebar={removeToggle}

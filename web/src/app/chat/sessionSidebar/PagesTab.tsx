@@ -7,7 +7,7 @@ import { Folder } from "../folders/interfaces";
 import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { pageType } from "./types";
 
 export function PagesTab({
@@ -17,6 +17,7 @@ export function PagesTab({
   folders,
   openedFolders,
   closeSidebar,
+  newFolderId,
   showShareModal,
   showDeleteModal,
 }: {
@@ -26,6 +27,7 @@ export function PagesTab({
   folders?: Folder[];
   openedFolders?: { [key: number]: boolean };
   closeSidebar?: () => void;
+  newFolderId: number | null;
   showShareModal?: (chatSession: ChatSession) => void;
   showDeleteModal?: (chatSession: ChatSession) => void;
 }) {
@@ -69,8 +71,10 @@ export function PagesTab({
         <div className="py-2 border-b border-border">
           <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-bold">
             Chat Folders
+            {newFolderId ? newFolderId : "Hi"}
           </div>
           <FolderList
+            newFolderId={newFolderId}
             folders={folders}
             currentChatId={currentChatId}
             openedFolders={openedFolders}

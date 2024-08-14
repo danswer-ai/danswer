@@ -56,6 +56,7 @@ export function useDocumentSelection(): [
   }
 
   function clearDocuments() {
+    console.log("SETINGS DOCS TO EMPTY");
     setSelectedDocuments([]);
     setTotalTokens(0);
   }

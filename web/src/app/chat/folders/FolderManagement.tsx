@@ -13,7 +13,8 @@ export async function createFolder(folderName: string): Promise<number> {
     throw new Error("Failed to create folder");
   }
   const data = await response.json();
-  return data.folder_id;
+  console.log(data);
+  return data;
 }
 
 // Function to add a chat session to a folder

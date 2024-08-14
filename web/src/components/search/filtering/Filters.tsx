@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { DocumentSet, Tag, ValidSources } from "@/lib/types";
 import { SourceMetadata } from "@/lib/search/interfaces";
-import { InfoIcon, defaultTailwindCSS } from "../../icons/icons";
+import {
+  GearIcon,
+  InfoIcon,
+  MinusIcon,
+  PlusCircleIcon,
+  PlusIcon,
+  defaultTailwindCSS,
+} from "../../icons/icons";
 import { HoverPopup } from "../../HoverPopup";
 import {
   FiBook,
@@ -74,6 +81,18 @@ export function SourceSelector({
       }
     });
   };
+  const [toggled, setToggled] = useState(true);
+
+  const toggleAllSources = () => {
+    if (toggled) {
+      listSourceMetadata().forEach((source) => {
+        setSelectedSources((sources) => [...sources, source]);
+      });
+    } else {
+      setSelectedSources([]);
+    }
+    setToggled((toggled) => !toggled);
+  };
 
   return (
     <div
@@ -93,7 +112,14 @@ export function SourceSelector({
 
       {existingSources.length > 0 && (
         <div className="mt-4">
-          <SectionTitle>Sources</SectionTitle>
+          <div className="flex w-full gap-x-2 items-center">
+            <div className="font-bold text-xs  mt-2 flex items-center gap-x-2">
+              <p>Sources</p>
+              <button onClick={toggleAllSources}>
+                {toggled ? <PlusIcon size={14} /> : <MinusIcon />}
+              </button>
+            </div>
+          </div>
           <div className="px-1">
             {listSourceMetadata()
               .filter((source) => existingSources.includes(source.internalName))
