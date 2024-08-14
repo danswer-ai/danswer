@@ -165,6 +165,8 @@ export const DocumentDisplay = ({
   }
 
   const score = Math.abs(document.score) * 100;
+  const badgeVariant =
+    score < 50 ? "destructive" : score < 90 ? "warning" : "success";
 
   return (
     <div
@@ -187,7 +189,7 @@ export const DocumentDisplay = ({
           <DocumentMetadataBlock document={document} />
           {document.score !== null && (
             <div className="flex items-center gap-[5px]">
-              <Badge
+              {/* <Badge
                 variant={`${
                   score < 50
                     ? "destructive"
@@ -197,7 +199,8 @@ export const DocumentDisplay = ({
                 }`}
               >
                 {score.toFixed()}%
-              </Badge>
+              </Badge> */}
+              <Badge variant={badgeVariant}>{score.toFixed()}%</Badge>
               {isSelected && (
                 <Badge variant="secondary">
                   <HoverPopup

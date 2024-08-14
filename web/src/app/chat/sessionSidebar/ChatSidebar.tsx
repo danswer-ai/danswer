@@ -94,6 +94,13 @@ export const ChatSidebar = ({
   }
   const settings = combinedSettings.settings;
   const enterpriseSettings = combinedSettings.enterpriseSettings;
+  const opacityClass = isLgScreen
+    ? isExpanded
+      ? "lg:opacity-0"
+      : "lg:opacity-100"
+    : !openSidebar
+    ? "opacity-0 lg:opacity-100"
+    : "opacity-100";
 
   return (
     <>
@@ -117,7 +124,7 @@ export const ChatSidebar = ({
         id="chat-sidebar"
       >
         <div
-          className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${
+          /* className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${
             isLgScreen
               ? isExpanded
                 ? "lg:opacity-0"
@@ -125,7 +132,8 @@ export const ChatSidebar = ({
               : !openSidebar
               ? "opacity-0 lg:opacity-100"
               : "opacity-100"
-          }`}
+          }`} */
+          className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${opacityClass}`}
         >
           <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
             <Image src={Logo} alt="enmedd-logo" height={35} />

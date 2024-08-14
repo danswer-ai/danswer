@@ -37,6 +37,8 @@ export function ChatDocumentDisplay({
   }
 
   const score = Math.abs(document.score) * 100;
+  const badgeVariant =
+    score < 50 ? "destructive" : score < 90 ? "warning" : "success";
 
   return (
     <div
@@ -87,17 +89,7 @@ export function ChatDocumentDisplay({
                     />
                   </div>
                 )}
-                <Badge
-                  variant={`${
-                    score < 50
-                      ? "destructive"
-                      : score < 90
-                      ? "warning"
-                      : "success"
-                  }`}
-                >
-                  {score.toFixed()}%
-                </Badge>
+                <Badge variant={badgeVariant}>{score.toFixed()}%</Badge>
               </div>
             )}
           </div>
