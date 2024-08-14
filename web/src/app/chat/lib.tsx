@@ -682,7 +682,7 @@ export async function useScrollonStream({
   // scroll on end of stream if within distance
   useEffect(() => {
     if (scrollableDivRef?.current && !isStreaming) {
-      if (scrollDist.current < distance) {
+      if (scrollDist.current < distance - 50) {
         scrollableDivRef?.current?.scrollBy({
           left: 0,
           top: Math.max(scrollDist.current + 600, 0),

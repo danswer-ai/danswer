@@ -268,14 +268,14 @@ export function ChatInputBar({
 
   return (
     <div>
-      <div className="flex justify-center pb-2 max-w-screen-lg mx-auto mb-2">
+      <div className="flex justify-center max-w-screen-lg mx-auto">
         <div
           className="
             w-[90%]
+            max-w-searchbar-max
             shrink
             relative
             desktop:px-4
-            max-w-searchbar-max
             mx-auto
           "
         >
@@ -528,6 +528,7 @@ export function ChatInputBar({
                 mobilePosition="top-right"
               >
                 <ChatInputOption
+                  toggle
                   flexPriority="shrink"
                   name={
                     selectedAssistant ? selectedAssistant.name : "Assistants"
@@ -559,6 +560,7 @@ export function ChatInputBar({
               >
                 <ChatInputOption
                   flexPriority="second"
+                  toggle
                   name={
                     settings?.isMobile
                       ? undefined

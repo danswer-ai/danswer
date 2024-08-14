@@ -11,6 +11,7 @@ import {
   FiCheck,
   FiEdit2,
   FiMoreHorizontal,
+  FiSettings,
   FiShare2,
   FiTrash,
   FiX,
@@ -20,6 +21,8 @@ import { Popover } from "@/components/popover/Popover";
 import { ShareChatSessionModal } from "../modal/ShareChatSessionModal";
 import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { WarningCircle } from "@phosphor-icons/react";
+import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
 
 export function ChatSessionDisplay({
   chatSession,
@@ -41,13 +44,27 @@ export function ChatSessionDisplay({
   showDeleteModal?: (chatSession: ChatSession) => void;
 }) {
   const router = useRouter();
-  const [isDeletionModalVisible, setIsDeletionModalVisible] = useState(false);
   const [isRenamingChat, setIsRenamingChat] = useState(false);
   const [isMoreOptionsDropdownOpen, setIsMoreOptionsDropdownOpen] =
     useState(false);
   const [isShareModalVisible, setIsShareModalVisible] = useState(false);
   const [chatName, setChatName] = useState(chatSession.name);
   const [delayedSkipGradient, setDelayedSkipGradient] = useState(skipGradient);
+
+  const chatRetentionDays =
+    useContext(SettingsContext)?.settings.maximum_chat_retention_days || 1;
+  const createdDate = new Date(chatSession.time_created);
+  const today = new Date();
+  const daysFromCreation = Math.ceil(
+    (today.getTime() - createdDate.getTime()) / (1000 * 3600 * 24)
+  );
+  const daysUntilExpiration = chatRetentionDays - daysFromCreation;
+  console.log("chatRetentionDays");
+  console.log(chatRetentionDays);
+  console.log(daysUntilExpiration);
+
+  const showRetentionWarning =
+    chatRetentionDays < 7 ? daysUntilExpiration < 2 : daysUntilExpiration < 7;
 
   useEffect(() => {
     if (skipGradient) {
@@ -152,7 +169,24 @@ export function ChatSessionDisplay({
                     </div>
                   </div>
                 ) : (
-                  <div className="ml-auto my-auto flex z-30">
+                  <div className="ml-auto my-auto justify-end flex z-30">
+                    {showRetentionWarning && (
+                      <CustomTooltip
+                        line
+                        content={
+                          <p>
+                            This chat will expire{" "}
+                            {daysUntilExpiration < 1
+                              ? "today"
+                              : `in ${daysUntilExpiration} day${daysUntilExpiration !== 1 ? "s" : ""}`}
+                          </p>
+                        }
+                      >
+                        <div className="z-50">
+                          <WarningCircle className="text-warning" />
+                        </div>
+                      </CustomTooltip>
+                    )}
                     <div>
                       <div
                         onClick={() => {
@@ -160,7 +194,7 @@ export function ChatSessionDisplay({
                             !isMoreOptionsDropdownOpen
                           );
                         }}
-                        className={"-m-1"}
+                        className={"-my-1"}
                       >
                         <Popover
                           open={isMoreOptionsDropdownOpen}

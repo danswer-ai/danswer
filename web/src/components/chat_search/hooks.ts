@@ -52,7 +52,12 @@ export const useSidebarVisibility = ({
           !isWithinSidebar &&
           !toggledSidebar
         ) {
-          setShowDocSidebar(false);
+          setTimeout(() => {
+            setShowDocSidebar((showDocSidebar) => {
+              // Account for possition as point in time of
+              return !(xPosition.current > 100);
+            });
+          }, 200);
         } else if (currentXPosition < 100 && !showDocSidebar) {
           if (!mobile) {
             setShowDocSidebar(true);

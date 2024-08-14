@@ -50,7 +50,7 @@ export default function LogoType({
         </div>
       )}
       <div
-        className={` ${showArrow ? "desktop:invisible" : "invisible"} break-words inline-block w-fit ml-2 text-text-700 text-xl`}
+        className={`bg-black cursor-pointer ${showArrow ? "desktop:invisible" : "invisible"} break-words inline-block w-fit ml-2 text-text-700 text-xl`}
       >
         <div className="max-w-[175px]">
           {enterpriseSettings && enterpriseSettings.application_name ? (
