@@ -63,6 +63,7 @@ def store_analytics_script(analytics_script_upload: AnalyticsScriptUpload) -> No
 
 
 _LOGO_FILENAME = "__logo__"
+_LOGOTYPE_FILENAME = "__logotype__"
 
 
 def is_valid_file_type(filename: str) -> bool:
@@ -79,8 +80,7 @@ def guess_file_type(filename: str) -> str:
 
 
 def upload_logo(
-    db_session: Session,
-    file: UploadFile | str,
+    db_session: Session, file: UploadFile | str, is_logotype: bool = False
 ) -> bool:
     content: IO[Any]
 
@@ -111,7 +111,7 @@ def upload_logo(
 
     file_store = get_default_file_store(db_session)
     file_store.save_file(
-        file_name=_LOGO_FILENAME,
+        file_name=_LOGOTYPE_FILENAME if is_logotype else _LOGO_FILENAME,
         content=content,
         display_name=display_name,
         file_origin=FileOrigin.OTHER,

@@ -55,7 +55,7 @@ export const useSidebarVisibility = ({
           setTimeout(() => {
             setShowDocSidebar((showDocSidebar) => {
               // Account for possition as point in time of
-              return !(xPosition.current > 100);
+              return !(xPosition.current > sidebarRect.right);
             });
           }, 200);
         } else if (currentXPosition < 100 && !showDocSidebar) {

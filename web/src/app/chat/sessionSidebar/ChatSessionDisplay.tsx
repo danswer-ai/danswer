@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
 import { useState, useEffect, useContext } from "react";
-import { deleteChatSession, renameChatSession } from "../lib";
+import {
+  deleteChatSession,
+  getChatRetentionInfo,
+  renameChatSession,
+} from "../lib";
 import { DeleteChatModal } from "../modal/DeleteChatModal";
 import { BasicSelectable } from "@/components/BasicClickable";
 import Link from "next/link";
@@ -50,21 +54,9 @@ export function ChatSessionDisplay({
   const [isShareModalVisible, setIsShareModalVisible] = useState(false);
   const [chatName, setChatName] = useState(chatSession.name);
   const [delayedSkipGradient, setDelayedSkipGradient] = useState(skipGradient);
+  const settings = useContext(SettingsContext);
 
-  const chatRetentionDays =
-    useContext(SettingsContext)?.settings.maximum_chat_retention_days || 1;
-  const createdDate = new Date(chatSession.time_created);
-  const today = new Date();
-  const daysFromCreation = Math.ceil(
-    (today.getTime() - createdDate.getTime()) / (1000 * 3600 * 24)
-  );
-  const daysUntilExpiration = chatRetentionDays - daysFromCreation;
-  console.log("chatRetentionDays");
-  console.log(chatRetentionDays);
-  console.log(daysUntilExpiration);
-
-  const showRetentionWarning =
-    chatRetentionDays < 7 ? daysUntilExpiration < 2 : daysUntilExpiration < 7;
+  const [isDeletionModalVisible, setIsDeletionModalVisible] = useState(false);
 
   useEffect(() => {
     if (skipGradient) {
@@ -86,7 +78,17 @@ export function ChatSessionDisplay({
       alert("Failed to rename chat session");
     }
   };
-  const settings = useContext(SettingsContext);
+
+  if (!settings) {
+    return <></>;
+  }
+
+  const {
+    chatRetentionDays,
+    daysFromCreation,
+    daysUntilExpiration,
+    showRetentionWarning,
+  } = getChatRetentionInfo(chatSession, settings?.settings);
 
   return (
     <>
@@ -137,7 +139,7 @@ export function ChatSessionDisplay({
                       event.preventDefault();
                     }
                   }}
-                  className="-my-px px-1 mr-2 w-full rounded"
+                  className="-my-px px-1 mr-1 w-full rounded"
                 />
               ) : (
                 <p className="break-all overflow-hidden whitespace-nowrap w-full mr-3 relative">
@@ -151,10 +153,10 @@ export function ChatSessionDisplay({
 
               {isSelected &&
                 (isRenamingChat ? (
-                  <div className="ml-auto my-auto flex">
+                  <div className="ml-auto my-auto items-center flex">
                     <div
                       onClick={onRename}
-                      className={`hover:bg-black/10 p-1 -m-1 rounded`}
+                      className={`hover:bg-black/10  p-1 -m-1 rounded`}
                     >
                       <FiCheck size={16} />
                     </div>
@@ -182,11 +184,12 @@ export function ChatSessionDisplay({
                           </p>
                         }
                       >
-                        <div className="z-50">
+                        <div className="mr-1 hover:bg-black/10 p-1 -m-1 rounded z-50">
                           <WarningCircle className="text-warning" />
                         </div>
                       </CustomTooltip>
                     )}
+
                     <div>
                       <div
                         onClick={() => {
@@ -228,14 +231,12 @@ export function ChatSessionDisplay({
                         />
                       </div>
                     </div>
-                    {showDeleteModal && (
-                      <div
-                        onClick={() => showDeleteModal(chatSession)}
-                        className={`hover:bg-black/10 p-1 -m-1 rounded ml-2`}
-                      >
-                        <FiTrash size={16} />
-                      </div>
-                    )}
+                    <div
+                      onClick={() => setIsDeletionModalVisible(true)}
+                      className={`hover:bg-black/10 p-1 -m-1 rounded ml-1`}
+                    >
+                      <FiTrash size={16} />
+                    </div>
                   </div>
                 ))}
             </div>

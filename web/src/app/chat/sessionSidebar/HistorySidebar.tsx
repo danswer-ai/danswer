@@ -62,6 +62,9 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
     const router = useRouter();
     const { popup, setPopup } = usePopup();
 
+    // For determining intial focus state
+    const [newFolderId, setNewFolderId] = useState<number | null>(null);
+
     const currentChatId = currentChatSession?.id;
 
     // prevent the NextJS Router cache from causing the chat sidebar to not
@@ -75,8 +78,6 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
       return null;
     }
 
-    const enterpriseSettings = combinedSettings.enterpriseSettings;
-
     const handleNewChat = () => {
       reset();
       const newChatUrl =
@@ -86,9 +87,6 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
           : "");
       router.push(newChatUrl);
     };
-
-    // For focusing
-    const [newFolderId, setNewFolderId] = useState<number | null>(null);
 
     return (
       <>

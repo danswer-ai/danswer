@@ -71,7 +71,6 @@ import slackIcon from "../../../public/Slack.png";
 import s3Icon from "../../../public/S3.png";
 import r2Icon from "../../../public/r2.png";
 import salesforceIcon from "../../../public/Salesforce.png";
-import pepsiLogtype from "../../../public/pepsi.png";
 
 import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";
@@ -84,8 +83,7 @@ import cohereIcon from "../../../public/Cohere.svg";
 import voyageIcon from "../../../public/Voyage.png";
 import googleIcon from "../../../public/Google.webp";
 
-import { FaRobot, FaSlack } from "react-icons/fa";
-import { IconType } from "react-icons";
+import { FaRobot } from "react-icons/fa";
 
 export interface IconProps {
   size?: number;
@@ -1203,7 +1201,7 @@ export const RequestTrackerIcon = ({
   </div>
 );
 
-export const PepsiIcon = ({
+export const SalesforceIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => (
@@ -1211,7 +1209,7 @@ export const PepsiIcon = ({
     style={{ width: `${size}px`, height: `${size}px` }}
     className={`w-[${size}px] h-[${size}px] ` + className}
   >
-    <Image src={pepsiLogtype} alt="Logo" width="96" height="96" />
+    <Image src={salesforceIcon} alt="Logo" width="96" height="96" />
   </div>
 );
 

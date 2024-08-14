@@ -27,6 +27,36 @@ import {
 import { Persona } from "../admin/assistants/interfaces";
 import { ReadonlyURLSearchParams } from "next/navigation";
 import { SEARCH_PARAM_NAMES } from "./searchParams";
+import { Settings } from "../admin/settings/interfaces";
+
+interface ChatRetentionInfo {
+  chatRetentionDays: number;
+  daysFromCreation: number;
+  daysUntilExpiration: number;
+  showRetentionWarning: boolean;
+}
+
+export function getChatRetentionInfo(
+  chatSession: ChatSession,
+  settings: Settings
+): ChatRetentionInfo {
+  const chatRetentionDays = settings.maximum_chat_retention_days || 1;
+  const createdDate = new Date(chatSession.time_created);
+  const today = new Date();
+  const daysFromCreation = Math.ceil(
+    (today.getTime() - createdDate.getTime()) / (1000 * 3600 * 24)
+  );
+  const daysUntilExpiration = chatRetentionDays - daysFromCreation;
+  const showRetentionWarning =
+    chatRetentionDays < 7 ? daysUntilExpiration < 2 : daysUntilExpiration < 7;
+
+  return {
+    chatRetentionDays,
+    daysFromCreation,
+    daysUntilExpiration,
+    showRetentionWarning,
+  };
+}
 
 export async function updateModelOverrideForChatSession(
   chatSessionId: number,
