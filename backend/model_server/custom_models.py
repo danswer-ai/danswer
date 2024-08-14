@@ -108,9 +108,15 @@ def tokenize_connector_classification_query(
     query: str,
     tokenizer: PreTrainedTokenizer,
     connector_token_end_id: int,
-):
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Tokenize the connectors & user query into one prompt for the forward pass of ConnectorClassifier models
+
+    The attention mask is just all 1s. The prompt is CLS + each connector name suffixed with the connector end
+    token and then the user query.
+    """
+
     input_ids = torch.tensor([tokenizer.cls_token_id], dtype=torch.long)
-    attention_mask = torch.tensor([1], dtype=torch.long)
 
     for connector in connectors:
         connector_token_ids = tokenizer(
@@ -124,12 +130,6 @@ def tokenize_connector_classification_query(
             connector_token_ids["input_ids"].squeeze(dim=0),
             torch.tensor([connector_token_end_id], dtype=torch.long)
         ), dim=-1)
-        attention_mask = torch.cat((
-            attention_mask,
-            connector_token_ids["attention_mask"].squeeze(dim=0),
-            torch.tensor([1], dtype=torch.long),
-        ), dim=-1)
-
     query_token_ids = tokenizer(
         query,
         add_special_tokens=False,
@@ -144,14 +144,7 @@ def tokenize_connector_classification_query(
         ),
         dim=-1,
     )
-    attention_mask = torch.cat(
-        (
-            attention_mask,
-            query_token_ids["attention_mask"].squeeze(dim=0),
-            torch.tensor([1], dtype=torch.long),
-        ),
-        dim=-1,
-    )
+    attention_mask = torch.ones(input_ids.numel(), dtype=torch.long)
 
     return input_ids.unsqueeze(0), attention_mask.unsqueeze(0)
 
