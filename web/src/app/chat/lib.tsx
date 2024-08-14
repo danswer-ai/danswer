@@ -47,7 +47,6 @@ export function getChatRetentionInfo(
   const daysFromCreation = Math.ceil(
     (today.getTime() - createdDate.getTime()) / (1000 * 3600 * 24)
   );
-  // console.log(chatRetentionDays)
   const daysUntilExpiration = chatRetentionDays - daysFromCreation;
   const showRetentionWarning =
     chatRetentionDays < 7 ? daysUntilExpiration < 2 : daysUntilExpiration < 7;
