@@ -66,7 +66,10 @@ def warm_up_intent_model() -> None:
         MODEL_WARM_UP_STRING, return_tensors="pt", truncation=True, padding=True
     )
     intent_model = get_local_intent_model()
-    intent_model(query_ids=tokens["input_ids"], query_mask=tokens["attention_mask"])
+    intent_model(
+        query_ids=tokens["input_ids"].to(next(intent_model.parameters()).device),
+        query_mask=tokens["attention_mask"].to(next(intent_model.parameters()).device),
+    )
 
 
 @simple_log_function_time()
