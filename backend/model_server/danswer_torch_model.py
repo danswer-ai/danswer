@@ -115,4 +115,9 @@ class ConnectorClassifier(nn.Module):
         model = cls(config)
         model.load_state_dict(state_dict)
         model.to(device)
+        model.eval()
+
+        for param in model.parameters():
+            param.requires_grad = False
+
         return model
