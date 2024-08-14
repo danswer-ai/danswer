@@ -1,4 +1,5 @@
 "use client";
+import ReactMarkdown from "react-markdown";
 
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -82,6 +83,8 @@ import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 import { DeleteChatModal } from "./modal/DeleteChatModal";
+import remarkGfm from "remark-gfm";
+import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1736,13 +1739,16 @@ export function ChatPage({
                               enterpriseSettings.custom_lower_disclaimer_content && (
                                 <div className="mobile:hidden mt-4 flex items-center justify-center relative w-[95%] mx-auto">
                                   <div className="text-sm text-text-500 max-w-searchbar-max px-4 text-center">
-                                    {
-                                      settings?.enterpriseSettings
-                                        ?.custom_lower_disclaimer_content
-                                    }
+                                    <MinimalMarkdown
+                                      className=""
+                                      content={
+                                        enterpriseSettings.custom_lower_disclaimer_content
+                                      }
+                                    />
                                   </div>
                                 </div>
                               )}
+
                             {enterpriseSettings &&
                               enterpriseSettings.use_custom_logotype && (
                                 <div className="hidden lg:block absolute right-0 bottom-0">

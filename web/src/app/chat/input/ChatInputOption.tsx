@@ -73,9 +73,9 @@ export const ChatInputOption: React.FC<ChatInputOptionProps> = ({
       onClick={onClick}
     >
       <Icon size={size} className="flex-none" />
-      <div className="flex gap-x-.5">
+      <div className="flex items-center gap-x-.5">
         {name && <span className="text-sm break-all line-clamp-1">{name}</span>}
-        {toggle && <ChevronRightIcon />}
+        {toggle && <ChevronRightIcon className="flex-none" size={size} />}
       </div>
 
       {isTooltipVisible && tooltipContent && (
