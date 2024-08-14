@@ -77,7 +77,6 @@ class ConnectorClassifier(nn.Module):
         self.connector_global_classifier = nn.Linear(self.distilbert.config.dim, 1)
         self.connector_match_classifier = nn.Linear(self.distilbert.config.dim, 1)
         self.tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-        self.dropout = nn.Dropout(self.distilbert.config.seq_classif_dropout)
         self.connector_end_token_id = self.tokenizer.get_vocab()[self.config.connector_end_token]
 
     def forward(
@@ -94,7 +93,6 @@ class ConnectorClassifier(nn.Module):
 
         connector_end_position_ids = (input_ids == self.connector_end_token_id)
         connector_end_hidden_states = hidden_states[connector_end_position_ids]
-        connector_end_hidden_states = self.dropout(connector_end_hidden_states)
         classifier_output = self.connector_match_classifier(connector_end_hidden_states)
         classifier_confidence = torch.nn.functional.sigmoid(classifier_output).view(-1)
 
