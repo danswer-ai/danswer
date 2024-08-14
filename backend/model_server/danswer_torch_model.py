@@ -77,6 +77,8 @@ class ConnectorClassifier(nn.Module):
         self.connector_global_classifier = nn.Linear(self.distilbert.config.dim, 1)
         self.connector_match_classifier = nn.Linear(self.distilbert.config.dim, 1)
         self.tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
+
+        # Token indicating end of connector name, and on which classifier is used
         self.connector_end_token_id = self.tokenizer.get_vocab()[self.config.connector_end_token]
 
     def forward(
