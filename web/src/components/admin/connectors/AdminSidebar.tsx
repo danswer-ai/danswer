@@ -23,6 +23,7 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
   if (!combinedSettings) {
     return null;
   }
+
   const settings = combinedSettings.settings;
   const enterpriseSettings = combinedSettings.enterpriseSettings;
 
@@ -93,6 +94,16 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
           </div>
         ))}
       </nav>
+      {combinedSettings.webVersion && (
+        <div
+          className="flex flex-col mt-6 items-center justify-center w-full"
+          key={"danswerVersion"}
+        >
+          <h2 className="text-xs text-text w-52 font-medium pb-2">
+            Danswer version: {combinedSettings.webVersion}
+          </h2>
+        </div>
+      )}
     </div>
   );
 }

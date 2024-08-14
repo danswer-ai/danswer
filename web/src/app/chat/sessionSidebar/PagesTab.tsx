@@ -17,6 +17,8 @@ export function PagesTab({
   folders,
   openedFolders,
   closeSidebar,
+  showShareModal,
+  showDeleteModal,
 }: {
   page: pageType;
   existingChats?: ChatSession[];
@@ -24,6 +26,8 @@ export function PagesTab({
   folders?: Folder[];
   openedFolders?: { [key: number]: boolean };
   closeSidebar?: () => void;
+  showShareModal?: (chatSession: ChatSession) => void;
+  showDeleteModal?: (chatSession: ChatSession) => void;
 }) {
   const groupedChatSessions = existingChats
     ? groupSessionsByDateRange(existingChats)
@@ -117,6 +121,8 @@ export function PagesTab({
                         return (
                           <div key={`${chat.id}-${chat.name}`}>
                             <ChatSessionDisplay
+                              showDeleteModal={showDeleteModal}
+                              showShareModal={showShareModal}
                               closeSidebar={closeSidebar}
                               search={page == "search"}
                               chatSession={chat}

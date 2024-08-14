@@ -27,6 +27,8 @@ export function ChatSessionDisplay({
   isSelected,
   skipGradient,
   closeSidebar,
+  showShareModal,
+  showDeleteModal,
 }: {
   chatSession: ChatSession;
   isSelected: boolean;
@@ -35,6 +37,8 @@ export function ChatSessionDisplay({
   // if not set, the gradient will still be applied and cause weirdness
   skipGradient?: boolean;
   closeSidebar?: () => void;
+  showShareModal?: (chatSession: ChatSession) => void;
+  showDeleteModal?: (chatSession: ChatSession) => void;
 }) {
   const router = useRouter();
   const [isDeletionModalVisible, setIsDeletionModalVisible] = useState(false);
@@ -77,22 +81,6 @@ export function ChatSessionDisplay({
         />
       )}
 
-      {isDeletionModalVisible && (
-        <DeleteChatModal
-          onClose={() => setIsDeletionModalVisible(false)}
-          onSubmit={async () => {
-            const response = await deleteChatSession(chatSession.id);
-            if (response.ok) {
-              setIsDeletionModalVisible(false);
-              // go back to the main page
-              router.push("/chat");
-            } else {
-              alert("Failed to delete chat session");
-            }
-          }}
-          chatSessionName={chatSession.name}
-        />
-      )}
       <Link
         className="flex my-1 group relative"
         key={chatSession.id}
@@ -186,11 +174,13 @@ export function ChatSessionDisplay({
                           }
                           popover={
                             <div className="border border-border rounded-lg bg-background z-50 w-32">
-                              <DefaultDropdownElement
-                                name="Share"
-                                icon={FiShare2}
-                                onSelect={() => setIsShareModalVisible(true)}
-                              />
+                              {showShareModal && (
+                                <DefaultDropdownElement
+                                  name="Share"
+                                  icon={FiShare2}
+                                  onSelect={() => showShareModal(chatSession)}
+                                />
+                              )}
                               <DefaultDropdownElement
                                 name="Rename"
                                 icon={FiEdit2}
@@ -204,12 +194,14 @@ export function ChatSessionDisplay({
                         />
                       </div>
                     </div>
-                    <div
-                      onClick={() => setIsDeletionModalVisible(true)}
-                      className={`hover:bg-black/10 p-1 -m-1 rounded ml-2`}
-                    >
-                      <FiTrash size={16} />
-                    </div>
+                    {showDeleteModal && (
+                      <div
+                        onClick={() => showDeleteModal(chatSession)}
+                        className={`hover:bg-black/10 p-1 -m-1 rounded ml-2`}
+                      >
+                        <FiTrash size={16} />
+                      </div>
+                    )}
                   </div>
                 ))}
             </div>
