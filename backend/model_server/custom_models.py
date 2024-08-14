@@ -85,9 +85,11 @@ def run_inference(tokens: BatchEncoding) -> tuple[list[float], list[float]]:
 
     token_logits = outputs["token_logits"]
     intent_logits = outputs["intent_logits"]
-    intent_probabilities = F.softmax(intent_logits, dim=-1).numpy()[0]
 
-    token_probabilities = F.softmax(token_logits, dim=-1).numpy()[0]
+    # Move tensors to CPU before applying softmax and converting to numpy
+    intent_probabilities = F.softmax(intent_logits.cpu(), dim=-1).numpy()[0]
+    token_probabilities = F.softmax(token_logits.cpu(), dim=-1).numpy()[0]
+
     # Extract the probabilities for the positive class (index 1) for each token
     token_positive_probs = token_probabilities[:, 1].tolist()
 
