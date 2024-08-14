@@ -140,10 +140,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 onClick={() =>
                   createFolder("New Folder")
                     .then((folderId) => {
-                      console.log(`Folder created with ID: ${folderId}`);
                       router.refresh();
-                      console.log("NEW FOLDER");
-                      console.log(folderId);
                       setNewFolderId(folderId);
                     })
                     .catch((error) => {

@@ -126,7 +126,6 @@ export default function FunctionalWrapper({
   const [toggledSidebar, setToggledSidebar] = useState(initiallyToggled);
 
   const toggle = (value?: boolean) => {
-    console.log(`toggling ${value}`);
     setToggledSidebar((toggledSidebar) =>
       value !== undefined ? value : !toggledSidebar
     );
