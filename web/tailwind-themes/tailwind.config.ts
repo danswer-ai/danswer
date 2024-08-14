@@ -74,7 +74,7 @@ const config = {
         link: "#3b82f6", // blue-500
         "link-hover": "#1d4ed8", // blue-700
         subtle: "#6b7280", // gray-500
-        default: "#4b5563", // gray-600
+        default: "rgba(14, 14, 15, 0.8)", // gray-600
         emphasis: "#374151", // gray-700
         strong: "#111827", // gray-900
         inverted: "#ffffff", // white

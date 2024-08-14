@@ -1322,7 +1322,7 @@ export function ChatPage({
                         /* className={`mt-4 py-20 lg:py-16 px-5 max-w-screen-lg mx-auto 2xl:max-w-auto ${
                           hasPerformedInitialScroll ? "" : " invisible"
                         } ${messageHistory.length === 0 ? "hidden" : "block"}`} */
-                        className={`mt-4 py-20 lg:py-16 px-5 3xl:px-0 max-w-screen-lg mx-auto 2xl:w-searchbar ${
+                        className={`mt-4 py-20 lg:py-16 px-5 3xl:px-0 max-w-screen-lg mx-auto 2xl:w-searchbar w-full ${
                           hasPerformedInitialScroll ? "" : " invisible"
                         } ${messageHistory.length === 0 ? "hidden" : "block"}`}
                         /* className={`mt-4 py-20 lg:py-16 px-5 mx-auto 3xl:px-0 w-full shrink max-w-screen-lg 3xl:w-searchbar ${

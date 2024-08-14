@@ -93,9 +93,9 @@ export function ChatDocumentDisplay({
               </div>
             )}
           </div>
-          <Badge variant="secondary" className="my-1.5 inline-flex">
+          {/* <Badge variant="secondary" className="my-1.5 inline-flex">
             July 25, 2023{" "}
-          </Badge>
+          </Badge> */}
         </div>
         <div>
           <div className="mt-1">

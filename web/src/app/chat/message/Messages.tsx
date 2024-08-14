@@ -179,7 +179,7 @@ export const AIMessage = ({
               assistant={alternativeAssistant || currentPersona}
             />
 
-            <div className="my-auto ml-2 font-bold text-emphasis">
+            <div className="my-auto ml-2 font-bold text-black">
               {personaName || "enMedD AI"}
             </div>
 
@@ -201,7 +201,7 @@ export const AIMessage = ({
           </div>
 
           {/* <div className="pt-2 pl-12 break-words w-full sm:w-message-xs 2xl:w-message-sm 3xl:w-message-default"> */}
-          <div className="pl-1 md:pl-12 break-words w-full">
+          <div className="pl-1.5 md:pl-12 break-words w-full">
             {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
               <>
                 {query !== undefined &&
@@ -313,7 +313,7 @@ export const AIMessage = ({
             )}
             {citedDocuments && citedDocuments.length > 0 && (
               <div className="mt-2 flex flex-col gap-1">
-                <b className="text-sm text-emphasis">Sources:</b>
+                <b className="text-sm text-black">Sources:</b>
                 <div className="flex flex-wrap gap-2">
                   {citedDocuments
                     .filter(([_, document]) => document.semantic_identifier)
@@ -466,10 +466,10 @@ export const HumanMessage = ({
               </div>
             </div>
 
-            <div className="my-auto ml-2 font-bold text-emphasis">You</div>
+            <div className="my-auto ml-2 font-bold text-black">You</div>
           </div>
           {/*  <div className="flex flex-wrap pt-2 pl-12 w-full sm:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default"> */}
-          <div className="flex flex-wrap pt-4 pl-1 md:pl-12 w-full">
+          <div className="flex flex-wrap pt-4 pl-1.5 md:pl-12 w-full">
             <div className="break-words w-full">
               <FileDisplay files={files || []} />
               {isEditing ? (

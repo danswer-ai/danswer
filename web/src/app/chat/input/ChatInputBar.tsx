@@ -212,7 +212,7 @@ export function ChatInputBar({
       <div className="flex justify-center items-center max-w-screen-lg pb-2 mx-auto mb-2 px-5">
         <div
           className={`flex md:hidden items-center trasition-[width] ease-in-out duration-500 ${
-            isShowing ? "w-full" : "w-10"
+            isShowing ? "w-[200px]" : "w-10"
           }`}
         >
           <CirclePlus

@@ -108,7 +108,7 @@ export function ConfigurationModal({
         className="w-full flex flex-col gap-4"
         orientation="vertical"
       >
-        <TabsList className="!flex flex-col !h-auto w-[150px] md:flex-row md:w-[500px]">
+        <TabsList className="!flex flex-col !h-auto w-[150px] sm:flex-row sm:w-[500px]">
           <TabsTrigger value="assistant" className="w-full">
             <Cpu size={16} className="mr-2" /> My Assistant
           </TabsTrigger>

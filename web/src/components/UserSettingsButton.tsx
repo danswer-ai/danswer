@@ -244,7 +244,7 @@ export function UserSettingsButton({ user }: { user: UserTypes | null }) {
               )}
               <div
                 onClick={handleLogout}
-                className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-primary hover:text-white"
+                className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-primary hover:text-white rounded"
               >
                 <FiLogOut
                   className="my-auto mr-3"
