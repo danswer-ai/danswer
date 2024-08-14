@@ -107,7 +107,8 @@ class EmbeddingModel:
         )
 
         self.max_seq_length = max_seq_length
-        if get_search_settings().multipass_indexing:
+        search_settings = get_search_settings()
+        if search_settings and search_settings.multipass_indexing:
             self.max_seq_length *= LARGE_CHUNK_RATIO
 
         model_server_url = build_model_server_url(server_host, server_port)
