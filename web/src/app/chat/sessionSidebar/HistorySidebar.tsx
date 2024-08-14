@@ -32,6 +32,8 @@ interface HistorySidebarProps {
   toggled?: boolean;
   removeToggle?: () => void;
   reset?: () => void;
+  showShareModal?: (chatSession: ChatSession) => void;
+  showDeleteModal?: (chatSession: ChatSession) => void;
 }
 
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
@@ -46,6 +48,8 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
       openedFolders,
       toggleSidebar,
       removeToggle,
+      showShareModal,
+      showDeleteModal,
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
@@ -168,6 +172,8 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
           )}
           <div className="border-b border-border pb-4 mx-3" />
           <PagesTab
+            showDeleteModal={showDeleteModal}
+            showShareModal={showShareModal}
             closeSidebar={removeToggle}
             page={page}
             existingChats={existingChats}

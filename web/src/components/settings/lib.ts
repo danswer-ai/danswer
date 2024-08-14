@@ -1,9 +1,14 @@
-import { EnterpriseSettings, Settings } from "@/app/admin/settings/interfaces";
+import {
+  CombinedSettings,
+  EnterpriseSettings,
+  Settings,
+} from "@/app/admin/settings/interfaces";
 import {
   CUSTOM_ANALYTICS_ENABLED,
   SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED,
 } from "@/lib/constants";
 import { fetchSS } from "@/lib/utilsSS";
+import { getWebVersion } from "@/lib/version";
 
 export async function fetchSettingsSS() {
   const tasks = [fetchSS("/settings")];
@@ -22,21 +27,16 @@ export async function fetchSettingsSS() {
   const customAnalyticsScript = (
     tasks.length > 2 ? await results[2].json() : null
   ) as string | null;
+  const webVersion = getWebVersion();
 
   const combinedSettings: CombinedSettings = {
     settings,
     enterpriseSettings,
     customAnalyticsScript,
+    webVersion,
   };
 
   return combinedSettings;
-}
-
-export interface CombinedSettings {
-  settings: Settings;
-  enterpriseSettings: EnterpriseSettings | null;
-  customAnalyticsScript: string | null;
-  isMobile?: boolean;
 }
 
 let cachedSettings: CombinedSettings;

@@ -355,6 +355,7 @@ def kickoff_indexing_jobs(
             secondary_str = " (secondary index)" if use_secondary_index else ""
             logger.info(
                 f"Indexing dispatched{secondary_str}: "
+                f"attempt_id={attempt.id} "
                 f"connector='{attempt.connector_credential_pair.connector.name}' "
                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
                 f"credentials='{attempt.connector_credential_pair.credential_id}'"

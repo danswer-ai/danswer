@@ -82,10 +82,12 @@ const FolderItem = ({
     }
   };
 
-  const saveFolderName = async () => {
+  const saveFolderName = async (continueEditing?: boolean) => {
     try {
       await updateFolderName(folder.folder_id, editedFolderName);
-      setIsEditing(false);
+      if (!continueEditing) {
+        setIsEditing(false);
+      }
       router.refresh(); // Refresh values to update the sidebar
     } catch (error) {
       setPopup({ message: "Failed to save folder name", type: "error" });
@@ -171,7 +173,7 @@ const FolderItem = ({
       {showDeleteConfirm && (
         <div
           ref={deleteConfirmRef}
-          className="absolute max-w-xs border z-[100] border-border-medium top-0 right-0 w-[250px] -bo-0 top-2 mt-4 p-2 bg-background-100 rounded shadow-lg z-10"
+          className="absolute max-w-xs border z-[100] border-border-medium top-0 right-0 w-[225px] -bo-0 top-2 mt-4 p-2 bg-background-100 rounded shadow-lg z-10"
         >
           <p className="text-sm mb-2">
             Are you sure you want to delete <i>{folder.folder_name}</i>? All the
@@ -216,6 +218,7 @@ const FolderItem = ({
                   value={editedFolderName}
                   onChange={handleFolderNameChange}
                   onKeyDown={handleKeyDown}
+                  onBlur={() => saveFolderName(true)}
                   className="text-sm px-1 flex-1 min-w-0 -my-px mr-2"
                 />
               ) : (
@@ -239,20 +242,13 @@ const FolderItem = ({
                       <FiTrash size={16} />
                     </div>
                   </div>
-
-                  {/* <div
-                    onClick={deleteFolderHandler}
-                    className="hover:bg-black/10 p-1 -m-1 rounded ml-2"
-                  >
-                    <FiTrash size={16} />
-                  </div> */}
                 </div>
               )}
 
               {isEditing && (
                 <div className="flex ml-auto my-auto">
                   <div
-                    onClick={saveFolderName}
+                    onClick={() => saveFolderName()}
                     className="hover:bg-black/10 p-1 -m-1 rounded"
                   >
                     <FiCheck size={16} />
@@ -310,6 +306,12 @@ export const FolderList = ({
           }
         />
       ))}
+      {folders.length == 1 && folders[0].chat_sessions.length == 0 && (
+        <p className="text-sm font-normal text-subtle mt-2">
+          {" "}
+          Drag a chat into a folder to save for later{" "}
+        </p>
+      )}
     </div>
   );
 };

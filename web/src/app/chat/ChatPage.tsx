@@ -5,6 +5,7 @@ import {
   BackendChatSession,
   BackendMessage,
   ChatFileType,
+  ChatSession,
   ChatSessionSharedStatus,
   DocumentsResponse,
   FileDescriptor,
@@ -26,6 +27,7 @@ import {
   buildLatestMessageChain,
   checkAnyAssistantHasSearch,
   createChatSession,
+  deleteChatSession,
   getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
   getLastSuccessfulMessageId,
@@ -79,6 +81,7 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
+import { DeleteChatModal } from "./modal/DeleteChatModal";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1188,7 +1191,17 @@ export function ChatPage({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [router]);
+  const [sharedChatSession, setSharedChatSession] =
+    useState<ChatSession | null>();
+  const [deletingChatSession, setDeletingChatSession] =
+    useState<ChatSession | null>();
 
+  const showDeleteModal = (chatSession: ChatSession) => {
+    setDeletingChatSession(chatSession);
+  };
+  const showShareModal = (chatSession: ChatSession) => {
+    setSharedChatSession(chatSession);
+  };
   const [documentSelection, setDocumentSelection] = useState(false);
   const toggleDocumentSelectionAspects = () => {
     setDocumentSelection((documentSelection) => !documentSelection);
@@ -1229,11 +1242,29 @@ export function ChatPage({
           onClose={() => setSettingsToggled(false)}
         />
       )}
-      {sharingModalVisible && chatSessionIdRef.current !== null && (
+
+      {deletingChatSession && (
+        <DeleteChatModal
+          onClose={() => setDeletingChatSession(null)}
+          onSubmit={async () => {
+            const response = await deleteChatSession(deletingChatSession.id);
+            if (response.ok) {
+              setDeletingChatSession(null);
+              // go back to the main page
+              router.push("/chat");
+            } else {
+              alert("Failed to delete chat session");
+            }
+          }}
+          chatSessionName={deletingChatSession.name}
+        />
+      )}
+
+      {sharedChatSession && (
         <ShareChatSessionModal
-          chatSessionId={chatSessionIdRef.current}
-          existingSharedStatus={chatSessionSharedStatus}
-          onClose={() => setSharingModalVisible(false)}
+          chatSessionId={sharedChatSession.id}
+          existingSharedStatus={sharedChatSession.shared_status}
+          onClose={() => setSharedChatSession(null)}
           onShare={(shared) =>
             setChatSessionSharedStatus(
               shared
@@ -1241,6 +1272,13 @@ export function ChatPage({
                 : ChatSessionSharedStatus.Private
             )
           }
+        />
+      )}
+      {sharingModalVisible && chatSessionIdRef.current !== null && (
+        <ShareChatSessionModal
+          chatSessionId={chatSessionIdRef.current}
+          existingSharedStatus={chatSessionSharedStatus}
+          onClose={() => setSharingModalVisible(false)}
         />
       )}
       <div className="fixed inset-0 flex flex-col text-default">
@@ -1277,6 +1315,8 @@ export function ChatPage({
                   folders={folders}
                   openedFolders={openedFolders}
                   removeToggle={removeToggle}
+                  showShareModal={showShareModal}
+                  showDeleteModal={showDeleteModal}
                 />
               </div>
             </div>
@@ -1330,7 +1370,7 @@ export function ChatPage({
                       >
                         {/* <input {...getInputProps()} /> */}
                         <div
-                          className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                          className={`w-full h-full flex flex-col overflow-y-auto include-scrollbar overflow-x-hidden relative`}
                           ref={scrollableDivRef}
                         >
                           {/* ChatBanner is a custom banner that displays a admin-specified message at 

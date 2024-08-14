@@ -163,6 +163,19 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
 
         return embedded_chunks
 
+    @classmethod
+    def from_db_embedding_model(
+        cls, embedding_model: DbEmbeddingModel
+    ) -> "DefaultIndexingEmbedder":
+        return cls(
+            model_name=embedding_model.model_name,
+            normalize=embedding_model.normalize,
+            query_prefix=embedding_model.query_prefix,
+            passage_prefix=embedding_model.passage_prefix,
+            provider_type=embedding_model.provider_type,
+            api_key=embedding_model.api_key,
+        )
+
 
 def get_embedding_model_from_db_embedding_model(
     db_session: Session, index_model_status: IndexModelStatus = IndexModelStatus.PRESENT
