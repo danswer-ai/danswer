@@ -20,4 +20,5 @@ export interface CombinedSettings {
   enterpriseSettings: EnterpriseSettings | null;
   customAnalyticsScript: string | null;
   isMobile?: boolean;
+  webVersion: string | null;
 }

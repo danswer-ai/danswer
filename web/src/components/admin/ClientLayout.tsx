@@ -27,7 +27,6 @@ import { FiActivity, FiBarChart2 } from "react-icons/fi";
 import { UserDropdown } from "../UserDropdown";
 import { User } from "@/lib/types";
 import { usePathname } from "next/navigation";
-import { PencilCircle } from "@phosphor-icons/react";
 
 export function ClientLayout({
   user,
