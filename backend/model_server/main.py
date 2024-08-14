@@ -69,7 +69,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     logger.info(f"Torch Threads: {torch.get_num_threads()}")
 
     if not INDEXING_ONLY:
-        warm_up_connector_classifier_model()
+        # warm_up_connector_classifier_model()
         warm_up_intent_model()
     else:
         logger.info("This model server should only run document indexing.")

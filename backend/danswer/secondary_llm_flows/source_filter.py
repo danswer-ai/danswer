@@ -1,4 +1,5 @@
 import json
+import os
 import random
 
 from sqlalchemy.orm import Session
@@ -9,6 +10,7 @@ from danswer.db.engine import get_sqlalchemy_engine
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import message_to_string
+from danswer.natural_language_processing.search_nlp_models import ConnectorClassificationModel
 from danswer.prompts.constants import SOURCES_KEY
 from danswer.prompts.filter_extration import FILE_SOURCE_WARNING
 from danswer.prompts.filter_extration import SOURCE_FILTER_PROMPT
@@ -42,10 +44,35 @@ def _sample_document_sources(
         return random.sample(valid_sources, num_sample)
 
 
+def _sample_documents_using_custom_connector_classifier(
+    query: str,
+    valid_sources: list[DocumentSource],
+) -> list[DocumentSource] | None:
+    available_connectors = list(filter(
+        lambda conn: conn.lower() in query.lower(),
+        [item.value for item in valid_sources],
+    ))
+
+    if not available_connectors:
+        return None
+
+    filter_by_connector, connectors = ConnectorClassificationModel().predict(query, available_connectors)
+
+    return strings_to_document_sources(connectors) if filter_by_connector and connectors else None
+
+
+
 def extract_source_filter(
     query: str, llm: LLM, db_session: Session
 ) -> list[DocumentSource] | None:
     """Returns a list of valid sources for search or None if no specific sources were detected"""
+
+    valid_sources = fetch_unique_document_sources(db_session)
+    if not valid_sources:
+        return None
+
+    if os.getenv("FEATURE_FLAG_USE_CONNECTOR_CLASSIFIER"):
+        return _sample_documents_using_custom_connector_classifier(query, valid_sources)
 
     def _get_source_filter_messages(
         query: str,
@@ -145,10 +172,6 @@ def extract_source_filter(
         except ValueError:
             logger.warning("LLM failed to provide a valid Source Filter output")
             return None
-
-    valid_sources = fetch_unique_document_sources(db_session)
-    if not valid_sources:
-        return None
 
     messages = _get_source_filter_messages(query=query, valid_sources=valid_sources)
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)

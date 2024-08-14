@@ -22,6 +22,8 @@ from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.enums import EmbeddingProvider
 from shared_configs.enums import EmbedTextType
 from shared_configs.enums import RerankerProvider
+from shared_configs.model_server_models import ConnectorClassificationRequest
+from shared_configs.model_server_models import ConnectorClassificationResponse
 from shared_configs.model_server_models import Embedding
 from shared_configs.model_server_models import EmbedRequest
 from shared_configs.model_server_models import EmbedResponse
@@ -291,6 +293,34 @@ class QueryAnalysisModel:
         return response_model.is_keyword, response_model.keywords
 
 
+class ConnectorClassificationModel:
+    def __init__(
+        self,
+        model_server_host: str = MODEL_SERVER_HOST,
+        model_server_port: int = MODEL_SERVER_PORT,
+    ):
+        model_server_url = build_model_server_url(model_server_host, model_server_port)
+        self.connector_classification_endpoint = model_server_url + "/custom/connector-classification"
+
+    def predict(
+        self,
+        query: str,
+        available_connectors: list[str],
+    ) -> tuple[bool, list[str]]:
+        connector_classification_request = ConnectorClassificationRequest(
+            available_connectors=available_connectors,
+            query=query,
+        )
+        response = requests.post(
+            self.connector_classification_endpoint, json=connector_classification_request.dict()
+        )
+        response.raise_for_status()
+
+        response_model = ConnectorClassificationResponse(**response.json())
+
+        return response_model.filter_by_connector, response_model.connectors
+
+
 def warm_up_retry(
     func: Callable[..., Any],
     tries: int = 20,
@@ -359,3 +389,17 @@ def warm_up_cross_encoder(
 
     retry_rerank = warm_up_retry(reranking_model.predict)
     retry_rerank(WARM_UP_STRINGS[0], WARM_UP_STRINGS[1:])
+
+
+def warm_up_connector_classifier(
+    model_server_host: str = MODEL_SERVER_HOST,
+    model_server_port: int = MODEL_SERVER_PORT,
+):
+    logger.debug(f"Warming up connector classifier model: {model_server_host}")
+
+    classification_model = ConnectorClassificationModel(
+        model_server_host=model_server_host,
+        model_server_port=model_server_port,
+    )
+    retry_classification = warm_up_retry(classification_model.predict)
+    retry_classification(WARM_UP_STRINGS[0], ["GitHub"])

@@ -331,7 +331,7 @@ async def process_connector_classification_request(
         raise RuntimeError("Indexing model server should not call connector classification endpoint")
 
     if len(classification_request.available_connectors) == 0:
-        return ConnectorClassificationResponse(False, [])
+        return ConnectorClassificationResponse(filter_by_connector=False, connectors=[])
 
     filter_by_connector, connectors = run_connector_classification(classification_request)
     return ConnectorClassificationResponse(filter_by_connector=filter_by_connector, connectors=connectors)

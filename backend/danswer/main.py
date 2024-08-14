@@ -1,3 +1,4 @@
+import os
 import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -60,6 +61,7 @@ from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.llm.llm_initialization import load_llm_providers
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
+from danswer.natural_language_processing.search_nlp_models import warm_up_connector_classifier
 from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
 from danswer.search.models import SavedSearchSettings
 from danswer.search.retrieval.search_runner import download_nltk_data
@@ -340,6 +342,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         if db_embedding_model.cloud_provider_id is None:
             warm_up_bi_encoder(
                 embedding_model=db_embedding_model,
+                model_server_host=MODEL_SERVER_HOST,
+                model_server_port=MODEL_SERVER_PORT,
+            )
+
+        if os.getenv("FEATURE_FLAG_USE_CONNECTOR_CLASSIFIER"):
+            warm_up_connector_classifier(
                 model_server_host=MODEL_SERVER_HOST,
                 model_server_port=MODEL_SERVER_PORT,
             )
