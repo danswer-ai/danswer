@@ -1,4 +1,5 @@
 "use client";
+import ReactMarkdown from "react-markdown";
 
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -82,6 +83,8 @@ import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 import { DeleteChatModal } from "./modal/DeleteChatModal";
+import remarkGfm from "remark-gfm";
+import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -289,7 +292,7 @@ export function ChatPage({
         }
         return;
       }
-
+      clearSelectedDocuments();
       setIsFetchingChatMessages(true);
       const response = await fetch(
         `/api/chat/get-chat-session/${existingChatSessionId}`
@@ -1110,6 +1113,7 @@ export function ChatPage({
   // settings are passed in via Context and therefore aren't
   // available in server-side components
   const settings = useContext(SettingsContext);
+  const enterpriseSettings = settings?.enterpriseSettings;
   if (settings?.settings?.chat_page_enabled === false) {
     router.push("/search");
   }
@@ -1694,7 +1698,7 @@ export function ChatPage({
                           ref={inputRef}
                           className="absolute bottom-0 z-10 w-full"
                         >
-                          <div className="w-full relative pb-4">
+                          <div className="w-[95%] mx-auto relative mb-8">
                             {aboveHorizon && (
                               <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
                                 <button
@@ -1730,6 +1734,35 @@ export function ChatPage({
                               textAreaRef={textAreaRef}
                               chatSessionId={chatSessionIdRef.current!}
                             />
+
+                            {enterpriseSettings &&
+                              enterpriseSettings.custom_lower_disclaimer_content && (
+                                <div className="mobile:hidden mt-4 flex items-center justify-center relative w-[95%] mx-auto">
+                                  <div className="text-sm text-text-500 max-w-searchbar-max px-4 text-center">
+                                    <MinimalMarkdown
+                                      className=""
+                                      content={
+                                        enterpriseSettings.custom_lower_disclaimer_content
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                            {enterpriseSettings &&
+                              enterpriseSettings.use_custom_logotype && (
+                                <div className="hidden lg:block absolute right-0 bottom-0">
+                                  <img
+                                    src={
+                                      "/api/enterprise-settings/logotype?u=" +
+                                      Date.now()
+                                    }
+                                    alt="logotype"
+                                    style={{ objectFit: "contain" }}
+                                    className="w-fit h-8"
+                                  />
+                                </div>
+                              )}
                           </div>
                         </div>
                       </div>
@@ -1750,7 +1783,7 @@ export function ChatPage({
               )}
             </div>
           </div>
-          <FixedLogo />
+          <FixedLogo toggleSidebar={toggleSidebar} />
         </div>
       </div>
       <DocumentSidebar

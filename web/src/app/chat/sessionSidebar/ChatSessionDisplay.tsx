@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
 import { useState, useEffect, useContext } from "react";
-import { deleteChatSession, renameChatSession } from "../lib";
+import {
+  deleteChatSession,
+  getChatRetentionInfo,
+  renameChatSession,
+} from "../lib";
 import { DeleteChatModal } from "../modal/DeleteChatModal";
 import { BasicSelectable } from "@/components/BasicClickable";
 import Link from "next/link";
@@ -20,6 +24,8 @@ import { Popover } from "@/components/popover/Popover";
 import { ShareChatSessionModal } from "../modal/ShareChatSessionModal";
 import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { WarningCircle } from "@phosphor-icons/react";
+import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
 
 export function ChatSessionDisplay({
   chatSession,
@@ -41,13 +47,13 @@ export function ChatSessionDisplay({
   showDeleteModal?: (chatSession: ChatSession) => void;
 }) {
   const router = useRouter();
-  const [isDeletionModalVisible, setIsDeletionModalVisible] = useState(false);
   const [isRenamingChat, setIsRenamingChat] = useState(false);
   const [isMoreOptionsDropdownOpen, setIsMoreOptionsDropdownOpen] =
     useState(false);
   const [isShareModalVisible, setIsShareModalVisible] = useState(false);
   const [chatName, setChatName] = useState(chatSession.name);
   const [delayedSkipGradient, setDelayedSkipGradient] = useState(skipGradient);
+  const settings = useContext(SettingsContext);
 
   useEffect(() => {
     if (skipGradient) {
@@ -69,7 +75,15 @@ export function ChatSessionDisplay({
       alert("Failed to rename chat session");
     }
   };
-  const settings = useContext(SettingsContext);
+
+  if (!settings) {
+    return <></>;
+  }
+
+  const { daysUntilExpiration, showRetentionWarning } = getChatRetentionInfo(
+    chatSession,
+    settings?.settings
+  );
 
   return (
     <>
@@ -120,7 +134,7 @@ export function ChatSessionDisplay({
                       event.preventDefault();
                     }
                   }}
-                  className="-my-px px-1 mr-2 w-full rounded"
+                  className="-my-px px-1 mr-1 w-full rounded"
                 />
               ) : (
                 <p className="break-all overflow-hidden whitespace-nowrap w-full mr-3 relative">
@@ -134,10 +148,10 @@ export function ChatSessionDisplay({
 
               {isSelected &&
                 (isRenamingChat ? (
-                  <div className="ml-auto my-auto flex">
+                  <div className="ml-auto my-auto items-center flex">
                     <div
                       onClick={onRename}
-                      className={`hover:bg-black/10 p-1 -m-1 rounded`}
+                      className={`hover:bg-black/10  p-1 -m-1 rounded`}
                     >
                       <FiCheck size={16} />
                     </div>
@@ -152,7 +166,25 @@ export function ChatSessionDisplay({
                     </div>
                   </div>
                 ) : (
-                  <div className="ml-auto my-auto flex z-30">
+                  <div className="ml-auto my-auto justify-end flex z-30">
+                    {!showShareModal && showRetentionWarning && (
+                      <CustomTooltip
+                        line
+                        content={
+                          <p>
+                            This chat will expire{" "}
+                            {daysUntilExpiration < 1
+                              ? "today"
+                              : `in ${daysUntilExpiration} day${daysUntilExpiration !== 1 ? "s" : ""}`}
+                          </p>
+                        }
+                      >
+                        <div className="mr-1 hover:bg-black/10 p-1 -m-1 rounded z-50">
+                          <WarningCircle className="text-warning" />
+                        </div>
+                      </CustomTooltip>
+                    )}
+
                     <div>
                       <div
                         onClick={() => {
@@ -160,7 +192,7 @@ export function ChatSessionDisplay({
                             !isMoreOptionsDropdownOpen
                           );
                         }}
-                        className={"-m-1"}
+                        className={"-my-1"}
                       >
                         <Popover
                           open={isMoreOptionsDropdownOpen}
@@ -197,7 +229,7 @@ export function ChatSessionDisplay({
                     {showDeleteModal && (
                       <div
                         onClick={() => showDeleteModal(chatSession)}
-                        className={`hover:bg-black/10 p-1 -m-1 rounded ml-2`}
+                        className={`hover:bg-black/10 p-1 -m-1 rounded ml-1`}
                       >
                         <FiTrash size={16} />
                       </div>
