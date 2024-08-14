@@ -5,6 +5,7 @@ import random
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DocumentSource
+from danswer.configs.chat_configs import ENABLE_CONNECTOR_CLASSIFIER
 from danswer.db.connector import fetch_unique_document_sources
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.llm.interfaces import LLM
@@ -71,7 +72,7 @@ def extract_source_filter(
     if not valid_sources:
         return None
 
-    if os.getenv("FEATURE_FLAG_USE_CONNECTOR_CLASSIFIER"):
+    if ENABLE_CONNECTOR_CLASSIFIER:
         return _sample_documents_using_custom_connector_classifier(query, valid_sources)
 
     def _get_source_filter_messages(

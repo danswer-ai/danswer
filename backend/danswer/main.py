@@ -34,6 +34,7 @@ from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
+from danswer.configs.chat_configs import ENABLE_CONNECTOR_CLASSIFIER
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
 from danswer.configs.constants import AuthType
@@ -346,7 +347,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                 model_server_port=MODEL_SERVER_PORT,
             )
 
-        if os.getenv("FEATURE_FLAG_USE_CONNECTOR_CLASSIFIER"):
+        if ENABLE_CONNECTOR_CLASSIFIER:
             warm_up_connector_classifier(
                 model_server_host=MODEL_SERVER_HOST,
                 model_server_port=MODEL_SERVER_PORT,
