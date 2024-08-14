@@ -27,7 +27,6 @@ basic_router = APIRouter(prefix="/enterprise-settings")
 def put_settings(
     settings: EnterpriseSettings, _: User | None = Depends(current_admin_user)
 ) -> None:
-    print(settings)
     try:
         settings.check_validity()
     except ValueError as e:
@@ -47,7 +46,6 @@ def put_logo(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> None:
-    print(is_logotype)
     upload_logo(file=file, db_session=db_session, is_logotype=is_logotype)
 
 
