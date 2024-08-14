@@ -245,7 +245,12 @@ class Chunker:
         # If there is only whitespace left then don't include it. If there are no chunks at all
         # from the doc, we can just create a single chunk with the title.
         if chunk_text.strip() or not chunks:
-            chunks.append(_create_chunk(chunk_text, link_offsets))
+            chunks.append(
+                _create_chunk(
+                    chunk_text,
+                    link_offsets or {0: section_link_text},
+                )
+            )
 
         # If the chunk does not have any useable content, it will not be indexed
         return chunks

@@ -125,7 +125,7 @@ def _vespa_hit_to_inference_chunk(
         chunk_id=fields[CHUNK_ID],
         blurb=fields.get(BLURB, ""),  # Unused
         content=fields[CONTENT],  # Includes extra title prefix and metadata suffix
-        source_links=source_links_dict,
+        source_links=source_links_dict or {0: ""},
         section_continuation=fields[SECTION_CONTINUATION],
         document_id=fields[DOCUMENT_ID],
         source_type=fields[SOURCE_TYPE],
