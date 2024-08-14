@@ -243,7 +243,6 @@ export function ChatPage({
       existingChatSessionId !== priorChatSessionId;
     if (isChatSessionSwitch) {
       // de-select documents
-
       clearSelectedDocuments();
 
       // reset all filters
@@ -274,7 +273,10 @@ export function ChatPage({
         } else {
           setSelectedAssistant(undefined);
         }
-        setCompleteMessageDetail(new Map([[existingChatSessionId, new Map()]]));
+        setCompleteMessageDetail({
+          sessionId: null,
+          messageMap: new Map(),
+        });
         setChatSessionSharedStatus(ChatSessionSharedStatus.Private);
 
         // if we're supposed to submit on initial load, then do that here
@@ -307,10 +309,9 @@ export function ChatPage({
         messageHistory[messageHistory.length - 1]?.type !== "error" ||
         loadedSessionId != null
       ) {
-        setCompleteMessageDetail((prevState) => {
-          const newState = new Map(prevState);
-          newState.set(chatSession.chat_session_id!, newMessageMap);
-          return newState;
+        setCompleteMessageDetail({
+          sessionId: chatSession.chat_session_id,
+          messageMap: newMessageMap,
         });
 
         const latestMessageId =
@@ -357,16 +358,10 @@ export function ChatPage({
   const [message, setMessage] = useState(
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
-
-  const [completeMessageDetail, setCompleteMessageDetail] = useState<
-    Map<number | null, Map<number, Message>>
-  >(new Map());
-
-  // const [completeMessageDetail, setCompleteMessageDetail] = useState<{
-  //   sessionId: number | null;
-  //   messageMap: Map<number, Message>;
-  // }>({ sessionId: null, messageMap: new Map() });
-
+  const [completeMessageDetail, setCompleteMessageDetail] = useState<{
+    sessionId: number | null;
+    messageMap: Map<number, Message>;
+  }>({ sessionId: null, messageMap: new Map() });
   const upsertToCompleteMessageMap = ({
     messages,
     completeMessageMapOverride,
@@ -384,9 +379,7 @@ export function ChatPage({
   }) => {
     // deep copy
     const frozenCompleteMessageMap =
-      completeMessageMapOverride ||
-      completeMessageDetail.get(chatSessionIdRef.current) ||
-      new Map();
+      completeMessageMapOverride || completeMessageDetail.messageMap;
     const newCompleteMessageMap = structuredClone(frozenCompleteMessageMap);
     if (newCompleteMessageMap.size === 0) {
       const systemMessageId = messages[0].parentMessageId || SYSTEM_MESSAGE_ID;
@@ -435,24 +428,16 @@ export function ChatPage({
         )!.latestChildMessageId = messages[0].messageId;
       }
     }
-    const sessionId = chatSessionId;
-    const messageMap = newCompleteMessageMap;
-    // const newCompleteMessageDetail = {
-    //   sessionId: chatSessionId || completeMessageDetail.sessionId,
-    //   messageMap: newCompleteMessageMap,
-    // };
-    const messageDetail = { sessionId: messageMap };
-    setCompleteMessageDetail((prevState) => {
-      const newState = new Map(prevState);
-      newState.set(sessionId!, messageMap);
-      return newState;
-    });
-    return { messageMap, sessionId };
-    // return newCompleteMessageDetail;
+    const newCompleteMessageDetail = {
+      sessionId: chatSessionId || completeMessageDetail.sessionId,
+      messageMap: newCompleteMessageMap,
+    };
+    setCompleteMessageDetail(newCompleteMessageDetail);
+    return newCompleteMessageDetail;
   };
 
   const messageHistory = buildLatestMessageChain(
-    completeMessageDetail.get(chatSessionIdRef.current as number) || new Map()
+    completeMessageDetail.messageMap
   );
   const [isStreaming, setIsStreaming] = useState(false);
   const [abortController, setAbortController] =
@@ -719,7 +704,6 @@ export function ChatPage({
 
       return;
     }
-    console.log("submitting");
 
     const controller = new AbortController();
     setAbortController(controller);
@@ -745,8 +729,7 @@ export function ChatPage({
       (message) => message.messageId === messageIdToResend
     );
 
-    const messageMap =
-      completeMessageDetail.get(chatSessionIdRef.current) || new Map();
+    const messageMap = completeMessageDetail.messageMap;
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
       messageToResend?.parentMessageId !== undefined
@@ -763,8 +746,6 @@ export function ChatPage({
       });
       return;
     }
-    console.log("message map");
-    console.log(messageMap);
 
     let currMessage = messageToResend ? messageToResend.message : message;
     if (messageOverride) {
@@ -802,11 +783,6 @@ export function ChatPage({
         latestChildMessageId: TEMP_USER_MESSAGE_ID,
       });
     }
-    // const frozenMessageMap = upsertToCompleteMessageMap({
-    //   messages: messageUpdates,
-    //   chatSessionId: currChatSessionId,
-    // });
-
     const { messageMap: frozenMessageMap, sessionId: frozenSessionId } =
       upsertToCompleteMessageMap({
         messages: messageUpdates,
@@ -898,7 +874,6 @@ export function ChatPage({
           chatSessionId: frozenSessionId!,
         });
       };
-
       const delay = (ms: number) => {
         return new Promise((resolve) => setTimeout(resolve, ms));
       };
@@ -1418,10 +1393,9 @@ export function ChatPage({
                             }
                           >
                             {messageHistory.map((message, i) => {
-                              const messageMap = completeMessageDetail.get(
-                                chatSessionIdRef.current
-                              )!;
-                              const messageReactComponentKey = `${i}-${chatSessionIdRef.current}`;
+                              const messageMap =
+                                completeMessageDetail.messageMap;
+                              const messageReactComponentKey = `${i}-${completeMessageDetail.sessionId}`;
                               if (message.type === "user") {
                                 const parentMessage = message.parentMessageId
                                   ? messageMap.get(message.parentMessageId)
@@ -1458,42 +1432,14 @@ export function ChatPage({
                                         const newCompleteMessageMap = new Map(
                                           messageMap
                                         );
-                                        const chatSession =
-                                          newCompleteMessageMap.get(
-                                            chatSessionIdRef.current!
-                                          );
-                                        if (
-                                          chatSession &&
-                                          chatSession instanceof Map
-                                        ) {
-                                          const parentMessage = chatSession.get(
-                                            message.parentMessageId!
-                                          );
-                                          if (parentMessage) {
-                                            parentMessage.latestChildMessageId =
-                                              messageId;
-                                          }
-                                        }
-
-                                        // newCompleteMessageMap.get(chatSessionIdRef.current)!.get(
-                                        //   message.parentMessageId!
-                                        // )!.latestChildMessageId = messageId;
-
-                                        setCompleteMessageDetail(
-                                          (prevState) => {
-                                            const newState = new Map(prevState);
-                                            newState.set(
-                                              chatSessionIdRef.current!,
-                                              (newCompleteMessageMap as any)!
-                                            );
-                                            return newState;
-                                          }
-                                        );
-                                        // setCompleteMessageDetail(completeMessageDetail => {
-                                        //   sessionId:
-                                        //     completeMessageDetail.sessionId,
-                                        //   messageMap: newCompleteMessageMap,
-                                        // });
+                                        newCompleteMessageMap.get(
+                                          message.parentMessageId!
+                                        )!.latestChildMessageId = messageId;
+                                        setCompleteMessageDetail({
+                                          sessionId:
+                                            completeMessageDetail.sessionId,
+                                          messageMap: newCompleteMessageMap,
+                                        });
                                         setSelectedMessageForDocDisplay(
                                           messageId
                                         );
