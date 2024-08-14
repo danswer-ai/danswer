@@ -299,7 +299,7 @@ const StandardAnswersTable = ({
             <div className="mt-4">
               <Text>
                 Ensure that you have added the category to the relevant{" "}
-                <a className="text-blue-500" href="/admin/bot">
+                <a className="text-link" href="/admin/bot">
                   Slack bot
                 </a>
                 .
