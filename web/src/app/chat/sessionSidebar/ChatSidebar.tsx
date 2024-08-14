@@ -94,6 +94,7 @@ export const ChatSidebar = ({
   }
   const settings = combinedSettings.settings;
   const enterpriseSettings = combinedSettings.enterpriseSettings;
+
   const opacityClass = isLgScreen
     ? isExpanded
       ? "lg:opacity-0"
