@@ -1,5 +1,4 @@
 from danswer.configs.app_configs import BLURB_SIZE
-from danswer.configs.app_configs import ENABLE_LARGE_CHUNK
 from danswer.configs.app_configs import LARGE_CHUNK_RATIO
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.app_configs import SKIP_METADATA_IN_CHUNK
@@ -297,7 +296,7 @@ class Chunker:
             content_token_limit,
         )
 
-        if self.enable_multipass or ENABLE_LARGE_CHUNK:
+        if self.enable_multipass:
             large_chunks = generate_large_chunks(normal_chunks)
             normal_chunks.extend(large_chunks)
 

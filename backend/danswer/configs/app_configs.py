@@ -277,8 +277,6 @@ ENABLE_MULTIPASS_INDEXING = (
 # tokens. But we need it to be at least as big as 1/4th chunk size to avoid having a tiny mini-chunk at the end
 MINI_CHUNK_SIZE = 150
 
-# Adding larger chunks for models that support it
-ENABLE_LARGE_CHUNK = os.environ.get("ENABLE_LARGE_CHUNK", "").lower() == "true"
 # 4x the size of the regular chunk
 LARGE_CHUNK_RATIO = 4
 

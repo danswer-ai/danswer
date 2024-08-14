@@ -8,7 +8,6 @@ import requests
 from httpx import HTTPError
 from retry import retry
 
-from danswer.configs.app_configs import ENABLE_LARGE_CHUNK
 from danswer.configs.app_configs import LARGE_CHUNK_RATIO
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import (
@@ -18,6 +17,7 @@ from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.db.models import EmbeddingModel as DBEmbeddingModel
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.natural_language_processing.utils import tokenizer_trim_content
+from danswer.search.search_settings import get_search_settings
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
@@ -106,11 +106,9 @@ class EmbeddingModel:
             model_name=model_name, provider_type=provider_type
         )
 
-        self.max_seq_length = (
-            max_seq_length
-            if not ENABLE_LARGE_CHUNK
-            else max_seq_length * LARGE_CHUNK_RATIO
-        )
+        self.max_seq_length = max_seq_length
+        if get_search_settings().multipass_indexing:
+            self.max_seq_length *= LARGE_CHUNK_RATIO
 
         model_server_url = build_model_server_url(server_host, server_port)
         self.embed_server_endpoint = f"{model_server_url}/encoder/bi-encoder-embed"
@@ -203,13 +201,7 @@ class EmbeddingModel:
             if self.provider_type
             else local_embedding_batch_size
         )
-        # if ENABLE_LARGE_CHUNK:
-        #     batch_size //= 2
-        longest = 0
-        for text in texts:
-            if len(text) > longest:
-                longest = len(text)
-        logger.info(f"Longest text: {longest}")
+
         return self._batch_encode_texts(
             texts=texts,
             text_type=text_type,
