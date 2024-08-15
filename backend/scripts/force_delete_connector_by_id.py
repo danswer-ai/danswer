@@ -143,9 +143,9 @@ def _delete_connector(cc_pair_id: int, db_session: Session) -> None:
         logger.error(f"Connector credential pair with ID {cc_pair_id} not found")
         return
 
-    if cc_pair.status != ConnectorCredentialPairStatus.PAUSED:
+    if cc_pair.status == ConnectorCredentialPairStatus.ACTIVE:
         logger.error(
-            f"Connector {cc_pair.connector.name} is not paused, cannot continue. \
+            f"Connector {cc_pair.connector.name} is active, cannot continue. \
             Please navigate to the connector and pause before attempting again"
         )
         return
@@ -177,6 +177,11 @@ def _delete_connector(cc_pair_id: int, db_session: Session) -> None:
             f"{connector_id} and Credential ID: {credential_id} does not exist."
         )
 
+    file_names: list[str] = (
+        cc_pair.connector.connector_specific_config["file_locations"]
+        if cc_pair.connector.source == DocumentSource.FILE
+        else []
+    )
     try:
         logger.info("Deleting information from Vespa and Postgres")
         curr_ind_name, sec_ind_name = get_both_index_names(db_session)
@@ -195,11 +200,10 @@ def _delete_connector(cc_pair_id: int, db_session: Session) -> None:
     except Exception as e:
         logger.error(f"Failed to delete connector due to {e}")
 
-    if cc_pair.connector.source == DocumentSource.FILE:
-        connector = cc_pair.connector
+    if file_names:
         logger.info("Deleting stored files!")
         file_store = get_default_file_store(db_session)
-        for file_name in connector.connector_specific_config["file_locations"]:
+        for file_name in file_names:
             logger.info(f"Deleting file {file_name}")
             file_store.delete_file(file_name)
 
