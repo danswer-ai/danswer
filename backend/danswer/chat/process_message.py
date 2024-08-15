@@ -51,6 +51,7 @@ from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
 from danswer.llm.interfaces import LLMConfig
+from danswer.llm.utils import litellm_exception_to_error_msg
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import OptionalSearchSetting
@@ -691,31 +692,14 @@ def stream_chat_message_objects(
                 if isinstance(packet, ToolCallFinalResult):
                     tool_result = packet
                 yield cast(ChatPacket, packet)
-
     except Exception as e:
         error_msg = str(e)
-
         logger.exception(f"Failed to process chat message: {error_msg}")
 
-        if "Illegal header value b'Bearer  '" in error_msg:
-            error_msg = (
-                f"Authentication error: Invalid or empty API key provided for '{llm.config.model_provider}'. "
-                "Please check your API key configuration."
-            )
-        elif (
-            "Invalid leading whitespace, reserved character(s), or return character(s) in header value"
-            in error_msg
-        ):
-            error_msg = (
-                f"Authentication error: Invalid API key format for '{llm.config.model_provider}'. "
-                "Please ensure your API key does not contain leading/trailing whitespace or invalid characters."
-            )
-        elif llm.config.api_key and llm.config.api_key.lower() in error_msg.lower():
-            error_msg = f"LLM failed to respond. Invalid API key error from '{llm.config.model_provider}'."
-        else:
-            error_msg = "An unexpected error occurred while processing your request. Please try again later."
-
-        yield StreamingError(error=error_msg)
+        client_error_msg = litellm_exception_to_error_msg(e, llm)
+        if llm.config.api_key and len(llm.config.api_key) > 2:
+            error_msg = error_msg.replace(llm.config.api_key, "[REDACTED_API_KEY]")
+        yield StreamingError(error=client_error_msg, stack_trace=error_msg)
         db_session.rollback()
         return
 

@@ -85,6 +85,7 @@ import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 import { DeleteChatModal } from "./modal/DeleteChatModal";
 import remarkGfm from "remark-gfm";
 import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
+import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -118,6 +119,8 @@ export function ChatPage({
 
   // chat session
   const existingChatIdRaw = searchParams.get("chatId");
+  const currentPersonaId = searchParams.get(SEARCH_PARAM_NAMES.PERSONA_ID);
+
   const existingChatSessionId = existingChatIdRaw
     ? parseInt(existingChatIdRaw)
     : null;
@@ -181,10 +184,19 @@ export function ChatPage({
     defaultTemperature
   );
 
-  const liveAssistant =
-    selectedAssistant || filteredAssistants[0] || availableAssistants[0];
+  const [alternativeAssistant, setAlternativeAssistant] =
+    useState<Persona | null>(null);
 
+  const liveAssistant =
+    alternativeAssistant ||
+    selectedAssistant ||
+    filteredAssistants[0] ||
+    availableAssistants[0];
   useEffect(() => {
+    if (!loadedIdSessionRef.current && !currentPersonaId) {
+      return;
+    }
+
     const personaDefault = getLLMProviderOverrideForPersona(
       liveAssistant,
       llmProviders
@@ -200,8 +212,6 @@ export function ChatPage({
   }, [liveAssistant]);
 
   // this is for "@"ing assistants
-  const [alternativeAssistant, setAlternativeAssistant] =
-    useState<Persona | null>(null);
 
   // this is used to track which assistant is being used to generate the current message
   // for example, this would come into play when:
@@ -816,6 +826,8 @@ export function ChatPage({
     let documents: DanswerDocument[] = selectedDocuments;
     let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
+    let stackTrace: string | null = null;
+
     let finalMessage: BackendMessage | null = null;
     let toolCalls: ToolCallMetadata[] = [];
 
@@ -887,6 +899,7 @@ export function ChatPage({
 
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();
+          console.log(packet);
           if (packet) {
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
@@ -918,6 +931,7 @@ export function ChatPage({
               );
             } else if (Object.hasOwn(packet, "error")) {
               error = (packet as StreamingError).error;
+              stackTrace = (packet as StreamingError).stack_trace;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
             }
@@ -950,6 +964,7 @@ export function ChatPage({
                 toolCalls: finalMessage?.tool_calls || toolCalls,
                 parentMessageId: newUserMessageId,
                 alternateAssistantID: alternativeAssistant?.id,
+                stackTrace: stackTrace,
               },
             ]);
           }
@@ -1172,6 +1187,9 @@ export function ChatPage({
       liveAssistant
     );
   });
+  const [stackTraceModalContent, setStackTraceModalContent] = useState<
+    string | null
+  >(null);
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
   const [settingsToggled, setSettingsToggled] = useState(false);
@@ -1261,6 +1279,13 @@ export function ChatPage({
             }
           }}
           chatSessionName={deletingChatSession.name}
+        />
+      )}
+
+      {stackTraceModalContent && (
+        <ExceptionTraceModal
+          onOutsideClick={() => setStackTraceModalContent(null)}
+          exceptionTrace={stackTraceModalContent}
         />
       )}
 
@@ -1615,6 +1640,18 @@ export function ChatPage({
                                       content={
                                         <p className="text-red-700 text-sm my-auto">
                                           {message.message}
+                                          {message.stackTrace && (
+                                            <span
+                                              onClick={() =>
+                                                setStackTraceModalContent(
+                                                  message.stackTrace!
+                                                )
+                                              }
+                                              className="ml-2 cursor-pointer underline"
+                                            >
+                                              Show stack trace.
+                                            </span>
+                                          )}
                                         </p>
                                       }
                                     />

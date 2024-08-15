@@ -78,6 +78,7 @@ class CitationInfo(BaseModel):
 
 class StreamingError(BaseModel):
     error: str
+    stack_trace: str | None = None
 
 
 class DanswerQuote(BaseModel):
