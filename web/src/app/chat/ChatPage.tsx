@@ -79,6 +79,7 @@ import { Button } from "@/components/ui/button";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1249,7 +1250,7 @@ export function ChatPage({
                         )}
 
                       <div
-                        className={`mt-4 py-20 lg:py-16 px-5 3xl:px-0 max-w-screen-lg mx-auto 2xl:w-searchbar w-full ${
+                        className={`mt-4 py-20 lg:py-16 px-5 2xl:px-0 max-w-screen-lg mx-auto 2xl:w-searchbar w-full ${
                           hasPerformedInitialScroll ? "" : " invisible"
                         } ${messageHistory.length === 0 ? "hidden" : "block"}`}
                       >
@@ -1482,17 +1483,9 @@ export function ChatPage({
                                 messageId={null}
                                 personaName={livePersona.name}
                                 content={
-                                  <div className="my-auto text-sm">
-                                    <ThreeDots
-                                      height="30"
-                                      width="50"
-                                      color="#3b82f6"
-                                      ariaLabel="grid-loading"
-                                      radius="12.5"
-                                      wrapperStyle={{}}
-                                      wrapperClass=""
-                                      visible={true}
-                                    />
+                                  <div className="my-auto text-sm flex flex-col gap-1">
+                                    <Skeleton className="h-5 w-full" />
+                                    <Skeleton className="h-5 w-full" />
                                   </div>
                                 }
                               />

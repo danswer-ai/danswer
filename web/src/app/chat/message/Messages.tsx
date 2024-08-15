@@ -31,6 +31,7 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -142,17 +143,9 @@ export const AIMessage = ({
   const shouldShowLoader =
     !toolCall || (toolCall.tool_name === SEARCH_TOOL_NAME && !content);
   const defaultLoader = shouldShowLoader ? (
-    <div className="my-auto text-sm">
-      <ThreeDots
-        height="30"
-        width="50"
-        color="#3b82f6"
-        ariaLabel="grid-loading"
-        radius="12.5"
-        wrapperStyle={{}}
-        wrapperClass=""
-        visible={true}
-      />
+    <div className="my-auto text-sm flex flex-col gap-1">
+      <Skeleton className="h-5 w-full" />
+      <Skeleton className="h-5 w-full" />
     </div>
   ) : undefined;
 
