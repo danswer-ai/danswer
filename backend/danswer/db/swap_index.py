@@ -52,7 +52,6 @@ def check_index_swap(db_session: Session) -> None:
             new_status=IndexModelStatus.PRESENT,
             db_session=db_session,
         )
-        print("ATTMEPTING TO MARK INDEX AS FALSE")
         kv_store = get_dynamic_config_store()
         kv_store.store(KV_REINDEX_KEY, False)
 

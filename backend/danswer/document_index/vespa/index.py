@@ -160,8 +160,8 @@ class VespaIndex(DocumentIndex):
         schema = schema if needs_reindexing else remove_ngrams_from_schema(schema)
         zip_dict[f"schemas/{schema_names[0]}.sd"] = schema.encode("utf-8")
         # Save schema to JSON
-        with open(f"{self.index_name}_schema.json", "w") as f:
-            f.write(schema)
+        # with open(f"{self.index_name}_schema.json", "w") as f:
+        #     f.write(schema)
 
         if self.secondary_index_name:
             upcoming_schema = schema_template.replace(
@@ -170,8 +170,8 @@ class VespaIndex(DocumentIndex):
             upcoming_schema = remove_ngrams_from_schema(upcoming_schema)
             zip_dict[f"schemas/{schema_names[1]}.sd"] = upcoming_schema.encode("utf-8")
             # Save schema to JSON
-            with open(f"{self.index_name}_schema2.txt", "w") as f:
-                f.write(upcoming_schema)
+            # with open(f"{self.index_name}_schema2.txt", "w") as f:
+            #     f.write(upcoming_schema)
 
         zip_file = in_memory_zip_from_file_bytes(zip_dict)
 

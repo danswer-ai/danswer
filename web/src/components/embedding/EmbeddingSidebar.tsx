@@ -28,7 +28,7 @@ export default function EmbeddingSidebar() {
                   bg-opacity-80
                   duration-300
                   ease-in-out
-                  w-[250px]npm run dev
+                  w-[250px]
                   `}
       >
         <div className="fixed h-full left-0 top-0 w-[250px]">
