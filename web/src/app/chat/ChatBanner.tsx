@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import { Popover } from "@/components/popover/Popover";
 import { ChevronDownIcon } from "@/components/icons/icons";
 import { Divider } from "@tremor/react";
+import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
 
 export function ChatBanner() {
   const settings = useContext(SettingsContext);
@@ -79,14 +80,19 @@ export function ChatBanner() {
             ref={contentRef}
             className="line-clamp-2 text-center w-full overflow-hidden pr-8"
           >
-            {renderMarkdown("")}
+            <MinimalMarkdown
+              className=""
+              content={settings.enterpriseSettings.custom_header_content}
+            />
           </div>
-
           <div
             ref={fullContentRef}
             className="absolute top-0 left-0 invisible w-full"
           >
-            {renderMarkdown("")}
+            <MinimalMarkdown
+              className=""
+              content={settings.enterpriseSettings.custom_header_content}
+            />
           </div>
           <div className="absolute bottom-0 right-0 ">
             {isOverflowing && (
@@ -104,7 +110,12 @@ export function ChatBanner() {
                 popover={
                   <div className="bg-background-100 p-4 rounded shadow-lg mobile:max-w-xs desktop:max-w-md">
                     <p className="text-lg font-bold">Banner Content</p>
-                    {renderMarkdown("max-h-96 overflow-y-auto")}
+                    <MinimalMarkdown
+                      className="max-h-96 overflow-y-auto"
+                      content={
+                        settings.enterpriseSettings.custom_header_content
+                      }
+                    />
                   </div>
                 }
                 side="bottom"

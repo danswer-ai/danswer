@@ -6,7 +6,7 @@ import {
   NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
   NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
 } from "@/lib/constants";
-import { LefToLineIcon, NewChatIcon, RightToLineIcon } from "../icons/icons";
+import { LeftToLineIcon, NewChatIcon, RightToLineIcon } from "../icons/icons";
 import { Tooltip } from "../tooltip/Tooltip";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 import { Logo } from "../Logo";
@@ -50,7 +50,7 @@ export default function LogoType({
         </div>
       )}
       <div
-        className={` ${showArrow ? "desktop:invisible" : "invisible"} break-words inline-block w-fit ml-2 text-text-700 text-xl`}
+        className={`bg-black cursor-pointer ${showArrow ? "desktop:invisible" : "invisible"} break-words inline-block w-fit ml-2 text-text-700 text-xl`}
       >
         <div className="max-w-[175px]">
           {enterpriseSettings && enterpriseSettings.application_name ? (
@@ -100,7 +100,7 @@ export default function LogoType({
             {!toggled && !combinedSettings?.isMobile ? (
               <RightToLineIcon />
             ) : (
-              <LefToLineIcon />
+              <LeftToLineIcon />
             )}
           </button>
         </Tooltip>
