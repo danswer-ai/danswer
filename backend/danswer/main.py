@@ -1,4 +1,3 @@
-import os
 import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -62,7 +61,9 @@ from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.llm.llm_initialization import load_llm_providers
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
-from danswer.natural_language_processing.search_nlp_models import warm_up_connector_classifier
+from danswer.natural_language_processing.search_nlp_models import (
+    warm_up_connector_classifier,
+)
 from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
 from danswer.search.models import SavedSearchSettings
 from danswer.search.retrieval.search_runner import download_nltk_data

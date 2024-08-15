@@ -2,8 +2,9 @@ import torch
 import torch.nn.functional as F
 from fastapi import APIRouter
 from huggingface_hub import snapshot_download  # type: ignore
-from transformers import AutoTokenizer, PreTrainedTokenizer  # type: ignore
+from transformers import AutoTokenizer
 from transformers import BatchEncoding
+from transformers import PreTrainedTokenizer
 
 from danswer.utils.logger import setup_logger
 from model_server.constants import MODEL_WARM_UP_STRING
@@ -36,7 +37,9 @@ def get_connector_classifier_tokenizer() -> AutoTokenizer:
     if _CONNECTOR_CLASSIFIER_TOKENIZER is None:
         # The tokenizer details are not uploaded to the HF hub since it's just the
         # unmodified distilbert tokenizer.
-        _CONNECTOR_CLASSIFIER_TOKENIZER = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+        _CONNECTOR_CLASSIFIER_TOKENIZER = AutoTokenizer.from_pretrained(
+            "distilbert-base-uncased"
+        )
     return _CONNECTOR_CLASSIFIER_TOKENIZER
 
 
@@ -51,14 +54,18 @@ def get_local_connector_classifier(
             local_path = snapshot_download(
                 repo_id=model_name_or_path, revision=tag, local_files_only=True
             )
-            _CONNECTOR_CLASSIFIER_MODEL = ConnectorClassifier.from_pretrained(local_path)
+            _CONNECTOR_CLASSIFIER_MODEL = ConnectorClassifier.from_pretrained(
+                local_path
+            )
         except Exception as e:
             logger.warning(f"Failed to load model directly: {e}")
             try:
                 # Attempt to download the model snapshot
                 logger.info(f"Downloading model snapshot for {model_name_or_path}")
                 local_path = snapshot_download(repo_id=model_name_or_path, revision=tag)
-                _CONNECTOR_CLASSIFIER_MODEL = ConnectorClassifier.from_pretrained(local_path)
+                _CONNECTOR_CLASSIFIER_MODEL = ConnectorClassifier.from_pretrained(
+                    local_path
+                )
             except Exception as e:
                 logger.error(
                     f"Failed to load model even after attempted snapshot download: {e}"
@@ -125,11 +132,14 @@ def tokenize_connector_classification_query(
             return_tensors="pt",
         )
 
-        input_ids = torch.cat((
-            input_ids,
-            connector_token_ids["input_ids"].squeeze(dim=0),
-            torch.tensor([connector_token_end_id], dtype=torch.long)
-        ), dim=-1)
+        input_ids = torch.cat(
+            (
+                input_ids,
+                connector_token_ids["input_ids"].squeeze(dim=0),
+                torch.tensor([connector_token_end_id], dtype=torch.long),
+            ),
+            dim=-1,
+        )
     query_token_ids = tokenizer(
         query,
         add_special_tokens=False,
@@ -150,7 +160,9 @@ def tokenize_connector_classification_query(
 
 
 def warm_up_connector_classifier_model() -> None:
-    logger.info(f"Warming up connector_classifier model {CONNECTOR_CLASSIFIER_MODEL_TAG}")
+    logger.info(
+        f"Warming up connector_classifier model {CONNECTOR_CLASSIFIER_MODEL_TAG}"
+    )
     connector_classifier_tokenizer = get_connector_classifier_tokenizer()
     connector_classifier = get_local_connector_classifier()
 
@@ -327,7 +339,9 @@ async def process_connector_classification_request(
     classification_request: ConnectorClassificationRequest,
 ) -> ConnectorClassificationResponse:
     if INDEXING_ONLY:
-        raise RuntimeError("Indexing model server should not call connector classification endpoint")
+        raise RuntimeError(
+            "Indexing model server should not call connector classification endpoint"
+        )
 
     if len(classification_request.available_connectors) == 0:
         return ConnectorClassificationResponse(filter_by_connector=False, connectors=[])

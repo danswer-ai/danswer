@@ -3,8 +3,9 @@ import os
 
 import torch
 import torch.nn as nn
-from transformers import DistilBertConfig, DistilBertTokenizer  # type: ignore
+from transformers import DistilBertConfig
 from transformers import DistilBertModel
+from transformers import DistilBertTokenizer
 
 
 class HybridClassifier(nn.Module):
@@ -82,10 +83,12 @@ class ConnectorClassifier(nn.Module):
         self.distilbert = DistilBertModel(config)
         self.connector_global_classifier = nn.Linear(self.distilbert.config.dim, 1)
         self.connector_match_classifier = nn.Linear(self.distilbert.config.dim, 1)
-        self.tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
+        self.tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
 
         # Token indicating end of connector name, and on which classifier is used
-        self.connector_end_token_id = self.tokenizer.get_vocab()[self.config.connector_end_token]
+        self.connector_end_token_id = self.tokenizer.get_vocab()[
+            self.config.connector_end_token
+        ]
 
         self.device = torch.device("cpu")
 
@@ -94,13 +97,17 @@ class ConnectorClassifier(nn.Module):
         input_ids: torch.Tensor,
         attention_mask: torch.Tensor,
     ):
-        hidden_states = self.distilbert(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
+        hidden_states = self.distilbert(
+            input_ids=input_ids, attention_mask=attention_mask
+        ).last_hidden_state
 
-        cls_hidden_states = hidden_states[:, 0, :]  # Take leap of faith that first token is always [CLS]
+        cls_hidden_states = hidden_states[
+            :, 0, :
+        ]  # Take leap of faith that first token is always [CLS]
         global_logits = self.connector_global_classifier(cls_hidden_states).view(-1)
         global_confidence = torch.sigmoid(global_logits).view(-1)
 
-        connector_end_position_ids = (input_ids == self.connector_end_token_id)
+        connector_end_position_ids = input_ids == self.connector_end_token_id
         connector_end_hidden_states = hidden_states[connector_end_position_ids]
         classifier_output = self.connector_match_classifier(connector_end_hidden_states)
         classifier_confidence = torch.nn.functional.sigmoid(classifier_output).view(-1)
@@ -110,9 +117,13 @@ class ConnectorClassifier(nn.Module):
     @classmethod
     def from_pretrained(cls, repo_dir: str) -> "ConnectorClassifier":
         config = DistilBertConfig.from_pretrained(os.path.join(repo_dir, "config.json"))
-        device = torch.device("cuda") if torch.cuda.is_available() else \
-            torch.device("mps") if torch.backends.mps.is_available() else \
-            torch.device("cpu")
+        device = (
+            torch.device("cuda")
+            if torch.cuda.is_available()
+            else torch.device("mps")
+            if torch.backends.mps.is_available()
+            else torch.device("cpu")
+        )
         state_dict = torch.load(
             os.path.join(repo_dir, "pytorch_model.pt"),
             map_location=device,

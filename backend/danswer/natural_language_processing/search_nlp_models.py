@@ -300,7 +300,9 @@ class ConnectorClassificationModel:
         model_server_port: int = MODEL_SERVER_PORT,
     ):
         model_server_url = build_model_server_url(model_server_host, model_server_port)
-        self.connector_classification_endpoint = model_server_url + "/custom/connector-classification"
+        self.connector_classification_endpoint = (
+            model_server_url + "/custom/connector-classification"
+        )
 
     def predict(
         self,
@@ -312,7 +314,8 @@ class ConnectorClassificationModel:
             query=query,
         )
         response = requests.post(
-            self.connector_classification_endpoint, json=connector_classification_request.dict()
+            self.connector_classification_endpoint,
+            json=connector_classification_request.dict(),
         )
         response.raise_for_status()
 
