@@ -65,6 +65,7 @@ def warm_up_intent_model() -> None:
     tokens = intent_tokenizer(
         MODEL_WARM_UP_STRING, return_tensors="pt", truncation=True, padding=True
     )
+
     intent_model = get_local_intent_model()
     device = intent_model.device
     intent_model(

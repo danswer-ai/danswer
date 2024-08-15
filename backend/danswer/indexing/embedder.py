@@ -3,7 +3,6 @@ from abc import abstractmethod
 
 from sqlalchemy.orm import Session
 
-from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.models import EmbeddingModel as DbEmbeddingModel
@@ -13,6 +12,7 @@ from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.utils.logger import setup_logger
+from danswer.utils.timing import log_function_time
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
 from shared_configs.enums import EmbeddingProvider
@@ -40,6 +40,19 @@ class IndexingEmbedder(ABC):
         self.provider_type = provider_type
         self.api_key = api_key
 
+        self.embedding_model = EmbeddingModel(
+            model_name=model_name,
+            query_prefix=query_prefix,
+            passage_prefix=passage_prefix,
+            normalize=normalize,
+            api_key=api_key,
+            provider_type=provider_type,
+            # The below are globally set, this flow always uses the indexing one
+            server_host=INDEXING_MODEL_SERVER_HOST,
+            server_port=INDEXING_MODEL_SERVER_PORT,
+            retrim_content=True,
+        )
+
     @abstractmethod
     def embed_chunks(
         self,
@@ -61,28 +74,18 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         super().__init__(
             model_name, normalize, query_prefix, passage_prefix, provider_type, api_key
         )
-        self.max_seq_length = DOC_EMBEDDING_CONTEXT_SIZE  # Currently not customizable
 
-        self.embedding_model = EmbeddingModel(
-            model_name=model_name,
-            query_prefix=query_prefix,
-            passage_prefix=passage_prefix,
-            normalize=normalize,
-            api_key=api_key,
-            provider_type=provider_type,
-            # The below are globally set, this flow always uses the indexing one
-            server_host=INDEXING_MODEL_SERVER_HOST,
-            server_port=INDEXING_MODEL_SERVER_PORT,
-            retrim_content=True,
-        )
-
+    @log_function_time()
     def embed_chunks(
         self,
         chunks: list[DocAwareChunk],
     ) -> list[IndexChunk]:
         # All chunks at this point must have some non-empty content
         flat_chunk_texts: list[str] = []
+        large_chunks_present = False
         for chunk in chunks:
+            if chunk.large_chunk_reference_ids:
+                large_chunks_present = True
             chunk_text = (
                 f"{chunk.title_prefix}{chunk.content}{chunk.metadata_suffix_semantic}"
             ) or chunk.source_document.get_title_for_document_index()
@@ -98,7 +101,9 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
                 flat_chunk_texts.extend(chunk.mini_chunk_texts)
 
         embeddings = self.embedding_model.encode(
-            flat_chunk_texts, text_type=EmbedTextType.PASSAGE
+            texts=flat_chunk_texts,
+            text_type=EmbedTextType.PASSAGE,
+            large_chunks_present=large_chunks_present,
         )
 
         chunk_titles = {

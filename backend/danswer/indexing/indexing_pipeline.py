@@ -22,7 +22,6 @@ from danswer.db.tag import create_or_add_document_tag_list
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.indexing.chunker import Chunker
-from danswer.indexing.chunker import DefaultChunker
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
@@ -183,11 +182,9 @@ def index_doc_batch(
     )
 
     logger.debug("Starting chunking")
-    chunks: list[DocAwareChunk] = [
-        chunk
-        for document in updatable_docs
-        for chunk in chunker.chunk(document=document)
-    ]
+    chunks: list[DocAwareChunk] = []
+    for document in updatable_docs:
+        chunks.extend(chunker.chunk(document=document))
 
     logger.debug("Starting embedding")
     chunks_with_embeddings = (
@@ -274,10 +271,20 @@ def build_indexing_pipeline(
         if search_settings
         else ENABLE_MULTIPASS_INDEXING
     )
-    chunker = chunker or DefaultChunker(
-        model_name=embedder.model_name,
-        provider_type=embedder.provider_type,
+    enable_large_chunks = multipass and (
+        embedder.provider_type is not None or embedder.model_name.startswith("nomic-ai")
+    )
+
+    if multipass and not enable_large_chunks:
+        logger.warning(
+            "Multipass indexing is enabled, but the provider type or model name"
+            " is not supported. Only mini chunks will be indexed."
+        )
+
+    chunker = chunker or Chunker(
+        tokenizer=embedder.embedding_model.tokenizer,
         enable_multipass=multipass,
+        enable_large_chunks=enable_large_chunks,
     )
 
     return partial(

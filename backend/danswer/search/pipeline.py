@@ -10,6 +10,7 @@ from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
+from danswer.document_index.interfaces import VespaChunkRequest
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prune_and_merge import _merge_sections
@@ -26,6 +27,7 @@ from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchRequest
+from danswer.search.postprocessing.postprocessing import cleanup_chunks
 from danswer.search.postprocessing.postprocessing import search_postprocessing
 from danswer.search.preprocessing.preprocessing import retrieval_preprocessing
 from danswer.search.retrieval.search_runner import retrieve_chunks
@@ -35,7 +37,6 @@ from danswer.secondary_llm_flows.agentic_evaluation import evaluate_inference_se
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
-from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
@@ -145,6 +146,7 @@ class SearchPipeline:
         if self._retrieved_chunks is not None:
             return self._retrieved_chunks
 
+        # These chunks do not include large chunks and have been deduped
         self._retrieved_chunks = retrieve_chunks(
             query=self.search_query,
             document_index=self.document_index,
@@ -165,49 +167,51 @@ class SearchPipeline:
         if self._retrieved_sections is not None:
             return self._retrieved_sections
 
+        # These chunks are ordered, deduped, and contain no large chunks
         retrieved_chunks = self._get_chunks()
 
         above = self.search_query.chunks_above
         below = self.search_query.chunks_below
 
-        functions_with_args: list[tuple[Callable, tuple]] = []
         expanded_inference_sections = []
+        inference_chunks: list[InferenceChunk] = []
+        chunk_requests: list[VespaChunkRequest] = []
 
         # Full doc setting takes priority
 
         if self.search_query.full_doc:
             seen_document_ids = set()
-            unique_chunks = []
 
             # This preserves the ordering since the chunks are retrieved in score order
             for chunk in retrieved_chunks:
                 if chunk.document_id not in seen_document_ids:
                     seen_document_ids.add(chunk.document_id)
-                    unique_chunks.append(chunk)
-
-                    functions_with_args.append(
-                        (
-                            self.document_index.id_based_retrieval,
-                            (
-                                chunk.document_id,
-                                None,  # Start chunk ind
-                                None,  # End chunk ind
-                                # There is no chunk level permissioning, this expansion around chunks
-                                # can be assumed to be safe
-                                IndexFilters(access_control_list=None),
-                            ),
+                    chunk_requests.append(
+                        VespaChunkRequest(
+                            document_id=chunk.document_id,
                         )
                     )
-            list_inference_chunks = run_functions_tuples_in_parallel(
-                functions_with_args, allow_failures=False
+
+            inference_chunks.extend(
+                cleanup_chunks(
+                    self.document_index.id_based_retrieval(
+                        chunk_requests=chunk_requests,
+                        filters=IndexFilters(access_control_list=None),
+                    )
+                )
             )
 
-            for ind, chunk in enumerate(unique_chunks):
-                inf_chunks = list_inference_chunks[ind]
+            # Create a dictionary to group chunks by document_id
+            grouped_inference_chunks: dict[str, list[InferenceChunk]] = {}
+            for chunk in inference_chunks:
+                if chunk.document_id not in grouped_inference_chunks:
+                    grouped_inference_chunks[chunk.document_id] = []
+                grouped_inference_chunks[chunk.document_id].append(chunk)
 
+            for chunk_group in grouped_inference_chunks.values():
                 inference_section = inference_section_from_chunks(
-                    center_chunk=chunk,
-                    chunks=inf_chunks,
+                    center_chunk=chunk_group[0],
+                    chunks=chunk_group,
                 )
 
                 if inference_section is not None:
@@ -244,37 +248,34 @@ class SearchPipeline:
         ]
 
         flat_ranges: list[ChunkRange] = [r for ranges in merged_ranges for r in ranges]
-        flattened_inference_chunks: list[InferenceChunk] = []
-        parallel_functions_with_args = []
 
         for chunk_range in flat_ranges:
             # Don't need to fetch chunks within range for merging if chunk_above / below are 0.
             if above == below == 0:
-                flattened_inference_chunks.extend(chunk_range.chunks)
+                inference_chunks.extend(chunk_range.chunks)
 
             else:
-                parallel_functions_with_args.append(
-                    (
-                        self.document_index.id_based_retrieval,
-                        (
-                            chunk_range.chunks[0].document_id,
-                            chunk_range.start,
-                            chunk_range.end,
-                            IndexFilters(access_control_list=None),
-                        ),
+                chunk_requests.append(
+                    VespaChunkRequest(
+                        document_id=chunk_range.chunks[0].document_id,
+                        min_chunk_ind=chunk_range.start,
+                        max_chunk_ind=chunk_range.end,
                     )
                 )
 
-        if parallel_functions_with_args:
-            list_inference_chunks = run_functions_tuples_in_parallel(
-                parallel_functions_with_args, allow_failures=False
+        if chunk_requests:
+            inference_chunks.extend(
+                cleanup_chunks(
+                    self.document_index.id_based_retrieval(
+                        chunk_requests=chunk_requests,
+                        filters=IndexFilters(access_control_list=None),
+                        batch_retrieval=True,
+                    )
+                )
             )
-            for inference_chunks in list_inference_chunks:
-                flattened_inference_chunks.extend(inference_chunks)
 
         doc_chunk_ind_to_chunk = {
-            (chunk.document_id, chunk.chunk_id): chunk
-            for chunk in flattened_inference_chunks
+            (chunk.document_id, chunk.chunk_id): chunk for chunk in inference_chunks
         }
 
         # Build the surroundings for all of the initial retrieved chunks
