@@ -631,7 +631,7 @@ export function ChatInputBar({
                 >
                   <SendIcon
                     size={28}
-                    className={`text-emphasis text-white p-1 rounded-full  ${chatState == "input" ? "bg-background-800" : "bg-background-400"} `}
+                    className={`text-emphasis text-white p-1 rounded-full  ${chatState == "input" && message ? "bg-background-800" : "bg-background-400"} `}
                   />
                 </button>
               )}

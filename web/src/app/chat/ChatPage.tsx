@@ -435,6 +435,7 @@ export function ChatPage({
       );
       messages[0].parentMessageId = systemMessageId;
     }
+
     messages.forEach((message) => {
       const idToReplace = replacementsMap?.get(message.messageId);
       if (idToReplace) {
@@ -450,7 +451,6 @@ export function ChatPage({
       }
       newCompleteMessageMap.set(message.messageId, message);
     });
-
     // if specified, make these new message the latest of the current message chain
     if (makeLatestChildMessage) {
       const currentMessageChain = buildLatestMessageChain(
@@ -832,9 +832,6 @@ export function ChatPage({
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
-      console.log("HOWDY");
-      console.log(currMessageHistory);
-      console.log(lastSuccessfulMessageId);
 
       const stack = new CurrentMessageFIFO();
       updateCurrentMessageFIFO(stack, {
@@ -992,7 +989,7 @@ export function ChatPage({
               );
             } else if (Object.hasOwn(packet, "error")) {
               error = (packet as StreamingError).error;
-              throw Error(error);
+              stackTrace = (packet as StreamingError).stack_trace;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
             }
@@ -1029,7 +1026,7 @@ export function ChatPage({
               },
               {
                 messageId: initialFetchDetails.assistant_message_id!,
-                message: answer,
+                message: error || answer,
                 type: error ? "error" : "assistant",
                 retrievalType,
                 query: finalMessage?.rephrased_query || query,
