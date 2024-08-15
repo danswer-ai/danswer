@@ -567,7 +567,7 @@ export function ChatPage({
   const adjustDocumentSidebarWidth = () => {
     if (masterFlexboxRef.current && document.documentElement.clientWidth) {
       if (document.documentElement.clientWidth > 1700) {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1400);
+        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1460);
       } else if (document.documentElement.clientWidth > 1420) {
         setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1060);
       } else {
@@ -1250,7 +1250,7 @@ export function ChatPage({
                         )}
 
                       <div
-                        className={`mt-4 py-20 lg:py-16 px-5 2xl:px-0 max-w-screen-lg mx-auto 2xl:w-searchbar w-full ${
+                        className={`mt-4 py-20 lg:py-16 px-5 2xl:px-0 max-w-full mx-auto 2xl:w-searchbar w-full ${
                           hasPerformedInitialScroll ? "" : " invisible"
                         } ${messageHistory.length === 0 ? "hidden" : "block"}`}
                       >

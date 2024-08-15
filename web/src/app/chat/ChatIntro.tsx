@@ -39,7 +39,7 @@ export function ChatIntro({
   return (
     <>
       <div className="flex justify-center w-full py-20">
-        <div className="max-w-screen-lg 2xl:w-searchbar px-5 2xl:px-0 pt-10 md:pt-16 lg:pt-0 xl:pt-16">
+        <div className="max-w-full 2xl:w-searchbar px-5 2xl:px-0 pt-10 md:pt-16 lg:pt-0 2xl:pt-14">
           <div className="flex">
             <div>
               <h1 className="flex flex-col text-[2rem] md:text-[3rem] 2xl:text-[4rem] font-medium leading-[1.2] tracking-tighter">
