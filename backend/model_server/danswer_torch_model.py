@@ -96,7 +96,7 @@ class ConnectorClassifier(nn.Module):
         self,
         input_ids: torch.Tensor,
         attention_mask: torch.Tensor,
-    ):
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         hidden_states = self.distilbert(
             input_ids=input_ids, attention_mask=attention_mask
         ).last_hidden_state
