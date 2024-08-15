@@ -1,16 +1,5 @@
 "use client";
 
-import {
-  FiCpu,
-  FiImage,
-  FiThumbsDown,
-  FiThumbsUp,
-  FiUser,
-  FiEdit2,
-  FiChevronRight,
-  FiChevronLeft,
-  FiTool,
-} from "react-icons/fi";
 import { FeedbackType } from "../types";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -27,7 +16,6 @@ import {
   SEARCH_TOOL_NAME,
 } from "../tools/constants";
 import { ToolRunDisplay } from "../tools/ToolRunningAnimation";
-import { Hoverable } from "@/components/Hoverable";
 import { DocumentPreview } from "../files/documents/DocumentPreview";
 import { InMessageImage } from "../files/images/InMessageImage";
 import { CodeBlock } from "./CodeBlock";
@@ -240,7 +228,7 @@ export const AIMessage = ({
                         ? `Used "${toolCall.tool_name}"`
                         : `Using "${toolCall.tool_name}"`
                     }
-                    toolLogo={<FiTool size={15} className="my-auto mr-1" />}
+                    toolLogo={<Wrench size={15} className="my-auto mr-1" />}
                     isRunning={!toolCall.tool_result || !content}
                   />
                 </div>
@@ -252,7 +240,7 @@ export const AIMessage = ({
                 <div className="my-2">
                   <ToolRunDisplay
                     toolName={`Generating images`}
-                    toolLogo={<FiImage size={15} className="my-auto mr-1" />}
+                    toolLogo={<ImageIcon size={15} className="my-auto mr-1" />}
                     isRunning={!toolCall.tool_result}
                   />
                 </div>
@@ -393,23 +381,40 @@ function MessageSwitcher({
 }) {
   return (
     <div className="flex items-center text-sm space-x-0.5">
-      <Hoverable onClick={currentPage === 1 ? undefined : handlePrevious}>
-        <FiChevronLeft />
-      </Hoverable>
+      <Button
+        variant="ghost"
+        size="xs"
+        className="!p-1.5 !px-[7px]"
+        onClick={currentPage === 1 ? undefined : handlePrevious}
+      >
+        <ChevronLeft />
+      </Button>
       <span className="select-none text-emphasis text-medium">
         {currentPage} / {totalPages}
       </span>
-      <Hoverable onClick={currentPage === totalPages ? undefined : handleNext}>
-        <FiChevronRight />
-      </Hoverable>
+      <Button
+        variant="ghost"
+        size="xs"
+        className="!p-1.5 !px-[7px]"
+        onClick={currentPage === totalPages ? undefined : handleNext}
+      >
+        <ChevronRight />
+      </Button>
     </div>
   );
 }
 
-import logo from "../../../public/logo.png";
-import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, ThumbsDown, ThumbsUp } from "lucide-react";
+import {
+  Pencil,
+  ThumbsDown,
+  ThumbsUp,
+  Wrench,
+  Image as ImageIcon,
+  User,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 export const HumanMessage = ({
   content,
@@ -470,7 +475,7 @@ export const HumanMessage = ({
           <div className="flex">
             <div className="p-1 mx-1 bg-blue-400 rounded-regular h-fit">
               <div className="text-inverted">
-                <FiUser size={25} className="mx-auto my-auto" />
+                <User size={25} className="mx-auto my-auto" />
               </div>
             </div>
 

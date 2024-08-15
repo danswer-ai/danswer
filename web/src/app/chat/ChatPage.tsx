@@ -78,6 +78,7 @@ import Logo from "../../../public/logo-brand.png";
 import { Button } from "@/components/ui/button";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { AnimatePresence, motion } from "framer-motion";
+import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1104,6 +1105,11 @@ export function ChatPage({
   console.log(hasPerformedInitialScroll);
 
   const [openSidebar, setOpenSidebar] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  const toggleWidth = () => {
+    setIsExpanded((prevState) => !prevState);
+  };
 
   const toggleLeftSideBar = () => {
     setOpenSidebar((prevState) => !prevState);
@@ -1162,9 +1168,22 @@ export function ChatPage({
 
       <div className="relative flex overflow-x-hidden bg-background text-default h-full">
         <DynamicSidebar
+          user={user}
           openSidebar={openSidebar}
           toggleLeftSideBar={toggleLeftSideBar}
-        />
+          toggleWidth={toggleWidth}
+          isExpanded={isExpanded}
+        >
+          <ChatSidebar
+            existingChats={chatSessions}
+            currentChatSession={selectedChatSession}
+            folders={folders}
+            openedFolders={openedFolders}
+            toggleSideBar={toggleLeftSideBar}
+            openSidebar={openSidebar}
+            isExpanded={isExpanded}
+          />
+        </DynamicSidebar>
 
         <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
           {popup}

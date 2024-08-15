@@ -5,60 +5,29 @@ import {
   Search,
   MessageCircleMore,
   Headset,
-  FolderPlus,
-  X,
-  Plus,
   PanelLeftClose,
-  Menu,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { useContext, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { ChatSession } from "../interfaces";
-
-import {
-  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
-  NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
-} from "@/lib/constants";
-
-import { ChatTab } from "./ChatTab";
-import { Folder } from "../folders/interfaces";
-import { createFolder } from "../folders/FolderManagement";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { SettingsContext } from "@/components/settings/SettingsProvider";
 
-import Logo from "../../../../public/logo-brand.png";
-import SmallLogo from "../../../../public/logo.png";
+import Logo from "../../../public/logo-brand.png";
 import { HeaderTitle } from "@/components/header/Header";
-import { UserSettingsButton } from "@/components/UserSettingsButton";
-import { useChatContext } from "@/components/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
-export const ChatSidebar = ({
-  existingChats,
-  currentChatSession,
-  folders,
-  openedFolders,
-  toggleSideBar,
+export const SearchSidebar = ({
   isExpanded,
-  isSearch,
   openSidebar,
+  toggleSideBar,
 }: {
-  existingChats: ChatSession[];
-  currentChatSession: ChatSession | null | undefined;
-  folders: Folder[];
-  openedFolders: { [key: number]: boolean };
-  toggleSideBar?: () => void;
   isExpanded?: boolean;
-  isSearch?: boolean;
   openSidebar?: boolean;
+  toggleSideBar?: () => void;
 }) => {
-  let { user } = useChatContext();
-  const router = useRouter();
   const { popup, setPopup } = usePopup();
 
   const [isLgScreen, setIsLgScreen] = useState(false);
@@ -78,14 +47,6 @@ export const ChatSidebar = ({
       mediaQuery.removeEventListener("change", handleMediaQueryChange);
     };
   }, []);
-
-  const currentChatId = currentChatSession?.id;
-
-  // prevent the NextJS Router cache from causing the chat sidebar to not
-  // update / show an outdated list of chats
-  useEffect(() => {
-    router.refresh();
-  }, [currentChatId]);
 
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
@@ -160,9 +121,7 @@ export const ChatSidebar = ({
               {settings.search_page_enabled && (
                 <Link
                   href="/search"
-                  className={`flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 ${
-                    isSearch ? "shadow-sm" : ""
-                  }`}
+                  className={`flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 shadow-sm`}
                 >
                   <Search size={16} className="min-w-4 min-h-4" />
                   Search
@@ -172,9 +131,7 @@ export const ChatSidebar = ({
                 <>
                   <Link
                     href="/chat"
-                    className={`flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 ${
-                      !isSearch ? "shadow-sm" : ""
-                    }`}
+                    className={`flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2`}
                   >
                     <MessageCircleMore size={16} className="min-w-4 min-h-4" />
                     Chat
@@ -190,61 +147,7 @@ export const ChatSidebar = ({
               )}
               <Separator className="mt-4" />
             </div>
-
-            {!isSearch && (
-              <ChatTab
-                existingChats={existingChats}
-                currentChatId={currentChatId}
-                folders={folders}
-                openedFolders={openedFolders}
-                toggleSideBar={toggleSideBar}
-              />
-            )}
           </div>
-
-          {!isSearch && (
-            <div className="flex items-center gap-3 px-4 pt-4 mt-auto">
-              <Link
-                href={
-                  "/chat" +
-                  (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                  currentChatSession
-                    ? `?assistantId=${currentChatSession.persona_id}`
-                    : "")
-                }
-                className=" w-full"
-              >
-                <Button
-                  className="transition-all ease-in-out duration-300 w-full"
-                  onClick={toggleSideBar}
-                >
-                  <Plus size={16} />
-                  Start new chat
-                </Button>
-              </Link>
-              <div>
-                <Button
-                  onClick={() =>
-                    createFolder("New Folder")
-                      .then((folderId) => {
-                        console.log(`Folder created with ID: ${folderId}`);
-                        router.refresh();
-                      })
-                      .catch((error) => {
-                        console.error("Failed to create folder:", error);
-                        setPopup({
-                          message: `Failed to create folder: ${error.message}`,
-                          type: "error",
-                        });
-                      })
-                  }
-                  size="icon"
-                >
-                  <FolderPlus size={16} />
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </>

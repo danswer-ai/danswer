@@ -1,4 +1,3 @@
-import { useChatContext } from "@/components/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { UserSettingsButton } from "@/components/UserSettingsButton";
 import { Ellipsis, Settings } from "lucide-react";
@@ -10,14 +9,17 @@ import Gitlab from "../../../../public/Gitlab.png";
 import HubSpot from "../../../../public/HubSpot.png";
 import Vanguard from "../../../../public/logo.png";
 import { Separator } from "@/components/ui/separator";
+import { User } from "@/lib/types";
 
 interface WorkSpaceSidebarProps {
-  openSidebar: boolean;
+  openSidebar?: boolean;
+  user?: User | null;
 }
 
-export const WorkSpaceSidebar = ({ openSidebar }: WorkSpaceSidebarProps) => {
-  let { user } = useChatContext();
-
+export const WorkSpaceSidebar = ({
+  openSidebar,
+  user,
+}: WorkSpaceSidebarProps) => {
   return (
     <div className={`bg-background h-full px-4 py-6 border-r border-border`}>
       <div

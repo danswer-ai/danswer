@@ -6,9 +6,20 @@ import { Button } from "@/components/ui/button";
 import { PanelRightClose } from "lucide-react";
 import Image from "next/image";
 import Logo from "../../../public/logo-brand.png";
+import { User } from "@/lib/types";
+import { SearchSidebar } from "./SearchSidebar";
 
-export function Bar() {
+interface BarProps {
+  user?: User | null;
+}
+
+export function Bar({ user }: BarProps) {
   const [openSidebar, setOpenSidebar] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  const toggleWidth = () => {
+    setIsExpanded((prevState) => !prevState);
+  };
 
   const toggleLeftSideBar = () => {
     setOpenSidebar((prevState) => !prevState);
@@ -28,10 +39,19 @@ export function Bar() {
       </div>
 
       <DynamicSidebar
+        user={user}
         openSidebar={openSidebar}
-        toggleLeftSideBar={toggleLeftSideBar}
         isSearch
-      />
+        toggleLeftSideBar={toggleLeftSideBar}
+        toggleWidth={toggleWidth}
+        isExpanded={isExpanded}
+      >
+        <SearchSidebar
+          toggleSideBar={toggleLeftSideBar}
+          openSidebar={openSidebar}
+          isExpanded={isExpanded}
+        />
+      </DynamicSidebar>
     </>
   );
 }
