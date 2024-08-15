@@ -50,9 +50,10 @@ def _sample_documents_using_custom_connector_classifier(
     query: str,
     valid_sources: list[DocumentSource],
 ) -> list[DocumentSource] | None:
+    query_joined = "".join(ch for ch in query.lower() if ch.isalnum())
     available_connectors = list(
         filter(
-            lambda conn: conn.lower() in query.lower(),
+            lambda conn: conn.lower() in query_joined,
             [item.value for item in valid_sources],
         )
     )
