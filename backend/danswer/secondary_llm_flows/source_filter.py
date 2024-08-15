@@ -57,9 +57,9 @@ def _sample_documents_using_custom_connector_classifier(
     if not available_connectors:
         return None
 
-    filter_by_connector, connectors = ConnectorClassificationModel().predict(query, available_connectors)
+    connectors = ConnectorClassificationModel().predict(query, available_connectors)
 
-    return strings_to_document_sources(connectors) if filter_by_connector and connectors else None
+    return strings_to_document_sources(connectors) if connectors else None
 
 
 

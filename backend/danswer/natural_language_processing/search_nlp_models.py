@@ -306,7 +306,7 @@ class ConnectorClassificationModel:
         self,
         query: str,
         available_connectors: list[str],
-    ) -> tuple[bool, list[str]]:
+    ) -> list[str]:
         connector_classification_request = ConnectorClassificationRequest(
             available_connectors=available_connectors,
             query=query,
@@ -318,7 +318,7 @@ class ConnectorClassificationModel:
 
         response_model = ConnectorClassificationResponse(**response.json())
 
-        return response_model.filter_by_connector, response_model.connectors
+        return response_model.connectors
 
 
 def warm_up_retry(

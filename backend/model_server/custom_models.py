@@ -253,7 +253,7 @@ def clean_keywords(keywords: list[str]) -> list[str]:
     return cleaned_words
 
 
-def run_connector_classification(req: ConnectorClassificationRequest) -> tuple[bool, list[str]]:
+def run_connector_classification(req: ConnectorClassificationRequest) -> list[str]:
     tokenizer = get_connector_classifier_tokenizer()
     model = get_local_connector_classifier()
 
@@ -270,10 +270,8 @@ def run_connector_classification(req: ConnectorClassificationRequest) -> tuple[b
 
     global_confidence, classifier_confidence = model(input_ids, attention_mask)
 
-    print(global_confidence)
-
     if global_confidence.item() < 0.5:
-        return False, []
+        return []
 
     passed_connectors = []
 
@@ -281,7 +279,7 @@ def run_connector_classification(req: ConnectorClassificationRequest) -> tuple[b
         if classifier_confidence.view(-1)[i].item() > 0.5:
             passed_connectors.append(connector_name)
 
-    return len(passed_connectors) > 0, passed_connectors
+    return passed_connectors
 
 
 def run_analysis(intent_req: IntentRequest) -> tuple[bool, list[str]]:
@@ -326,8 +324,8 @@ async def process_connector_classification_request(
     if len(classification_request.available_connectors) == 0:
         return ConnectorClassificationResponse(filter_by_connector=False, connectors=[])
 
-    filter_by_connector, connectors = run_connector_classification(classification_request)
-    return ConnectorClassificationResponse(filter_by_connector=filter_by_connector, connectors=connectors)
+    connectors = run_connector_classification(classification_request)
+    return ConnectorClassificationResponse(connectors=connectors)
 
 
 @router.post("/query-analysis")

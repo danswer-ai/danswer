@@ -13,7 +13,6 @@ class ConnectorClassificationRequest(BaseModel):
 
 
 class ConnectorClassificationResponse(BaseModel):
-    filter_by_connector: bool
     connectors: list[str]
 
 
