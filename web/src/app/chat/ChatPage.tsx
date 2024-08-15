@@ -476,8 +476,6 @@ export function ChatPage({
   );
   const [submittedMessage, setSubmittedMessage] = useState("");
   const [chatState, setChatState] = useState<ChatState>("input");
-  // const [isLoadingResponse, setIsLoadingResponse] = useState(false);
-  // const [isStreaming, setIsStreaming] = useState(false);
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
 
@@ -902,7 +900,6 @@ export function ChatPage({
             const assistant_message_id =
               messageResponseIDInfo.reserved_assistant_message_id;
 
-            // if we're resending, set the parent's child to null
             // we will use tempMessages until the regenerated message is complete
             messageUpdates = [
               {

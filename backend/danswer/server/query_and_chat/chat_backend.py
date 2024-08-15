@@ -279,6 +279,13 @@ async def handle_new_chat_message(
     user: User | None = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
 ) -> StreamingResponse:
+    """This endpoint is both used for all the following purposes:
+    - Sending a new message in the session
+    - Regenerating a message in the session (just send the same one again)
+    - Editing a message (similar to regenerating but sending a different message)
+    - Kicking off a seeded chat session (set `use_existing_user_message`)
+    To avoid extra overhead/latency, this assumes (and checks) that previous messages on the path
+    have already been set as latest"""
     logger.debug(f"Received new chat message: {chat_message_req.message}")
 
     if (
