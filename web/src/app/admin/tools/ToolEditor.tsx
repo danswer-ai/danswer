@@ -54,7 +54,7 @@ function ToolForm({
   ];
 }) {
   const [definitionError, setDefinitionError] = definitionErrorState;
-  const [methodSpecs, setMethodSpecs] = methodSpecsState; /*  */
+  const [methodSpecs, setMethodSpecs] = methodSpecsState;
 
   const debouncedValidateDefinition = useCallback(
     debounce(async (definition: string) => {

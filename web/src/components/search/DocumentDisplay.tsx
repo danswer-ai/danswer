@@ -171,7 +171,7 @@ export const DocumentDisplay = ({
   return (
     <div
       key={document.semantic_identifier}
-      className="text-sm border-b border-border px-4 py-8"
+      className="text-sm border-b border-border px-4 py-8 break-words break-all"
       onMouseEnter={() => {
         setIsHovered(true);
       }}

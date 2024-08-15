@@ -85,8 +85,15 @@ export function SearchSummary({
   }, [query]);
 
   const searchingForDisplay = (
-    <div className={`flex py-1 rounded ${isOverflowed && "cursor-default"}`}>
-      <Search className="mr-2 my-auto" size={14} />
+    <div
+      className={`flex items-center py-1 rounded ${
+        isOverflowed && "cursor-default"
+      }`}
+    >
+      <Search
+        /* className="mr-2 my-auto" size={14} */ size={16}
+        className="min-w-4 min-h-4 mr-2"
+      />
       <div className="line-clamp-1 break-all px-0.5" ref={searchingForRef}>
         Searching for: <i>{finalQuery}</i>
       </div>
@@ -153,9 +160,9 @@ export function SearchSummary({
               <HoverPopup
                 mainContent={searchingForDisplay}
                 popupContent={
-                  <div>
+                  <div className="w-full max-h-40 overflow-auto">
                     <b>Full query:</b>{" "}
-                    <div className="mt-1 italic">{query}</div>
+                    <div className="mt-1 italic w-full">{query}</div>
                   </div>
                 }
                 direction="top"
@@ -165,10 +172,15 @@ export function SearchSummary({
             )}
           </div>
           {handleSearchQueryEdit && (
-            <div className="my-auto ml-2">
-              <Hoverable onClick={() => setIsEditing(true)}>
-                <Pencil size={14} />
-              </Hoverable>
+            <div className="my-auto mx-2">
+              <Button
+                variant="ghost"
+                size="xs"
+                className="!p-1.5 !px-[7px]"
+                onClick={() => setIsEditing(true)}
+              >
+                <Pencil size={16} />
+              </Button>
             </div>
           )}
         </>
