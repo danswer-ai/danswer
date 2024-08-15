@@ -286,12 +286,6 @@ def build_indexing_pipeline(
         embedder.provider_type != EmbeddingProvider.COHERE
     )
 
-    if multipass and not enable_large_chunks:
-        logger.warning(
-            "Multipass indexing is enabled, but the provider type or model name"
-            " is not supported. Only mini chunks will be indexed."
-        )
-
     chunker = chunker or Chunker(
         tokenizer=embedder.embedding_model.tokenizer,
         enable_multipass=multipass,
