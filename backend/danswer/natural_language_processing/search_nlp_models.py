@@ -17,7 +17,6 @@ from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.db.models import EmbeddingModel as DBEmbeddingModel
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.natural_language_processing.utils import tokenizer_trim_content
-from danswer.search.search_settings import get_search_settings
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
@@ -91,8 +90,6 @@ class EmbeddingModel:
         passage_prefix: str | None,
         api_key: str | None,
         provider_type: EmbeddingProvider | None,
-        # The following are globals are currently not configurable
-        max_seq_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
         retrim_content: bool = False,
     ) -> None:
         self.api_key = api_key
@@ -105,11 +102,6 @@ class EmbeddingModel:
         self.tokenizer = get_tokenizer(
             model_name=model_name, provider_type=provider_type
         )
-
-        self.max_seq_length = max_seq_length
-        search_settings = get_search_settings()
-        if search_settings and search_settings.multipass_indexing:
-            self.max_seq_length *= LARGE_CHUNK_RATIO
 
         model_server_url = build_model_server_url(server_host, server_port)
         self.embed_server_endpoint = f"{model_server_url}/encoder/bi-encoder-embed"
@@ -143,6 +135,7 @@ class EmbeddingModel:
         texts: list[str],
         text_type: EmbedTextType,
         batch_size: int,
+        max_seq_length: int,
     ) -> list[Embedding]:
         text_batches = batch_list(texts, batch_size)
 
@@ -156,7 +149,7 @@ class EmbeddingModel:
             embed_request = EmbedRequest(
                 model_name=self.model_name,
                 texts=text_batch,
-                max_context_length=self.max_seq_length,
+                max_context_length=max_seq_length,
                 normalize_embeddings=self.normalize,
                 api_key=self.api_key,
                 provider_type=self.provider_type,
@@ -173,11 +166,16 @@ class EmbeddingModel:
         self,
         texts: list[str],
         text_type: EmbedTextType,
+        large_chunks_present: bool = False,
         local_embedding_batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
         api_embedding_batch_size: int = BATCH_SIZE_ENCODE_CHUNKS_FOR_API_EMBEDDING_SERVICES,
+        max_seq_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
     ) -> list[Embedding]:
         if not texts or not all(texts):
             raise ValueError(f"Empty or missing text for embedding: {texts}")
+
+        if large_chunks_present:
+            max_seq_length *= LARGE_CHUNK_RATIO
 
         if self.retrim_content:
             # This is applied during indexing as a catchall for overly long titles (or other uncapped fields)
@@ -186,7 +184,7 @@ class EmbeddingModel:
             texts = [
                 tokenizer_trim_content(
                     content=text,
-                    desired_length=self.max_seq_length,
+                    desired_length=max_seq_length,
                     tokenizer=self.tokenizer,
                 )
                 for text in texts
@@ -207,6 +205,7 @@ class EmbeddingModel:
             texts=texts,
             text_type=text_type,
             batch_size=batch_size,
+            max_seq_length=max_seq_length,
         )
 
 

@@ -82,7 +82,10 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
     ) -> list[IndexChunk]:
         # All chunks at this point must have some non-empty content
         flat_chunk_texts: list[str] = []
+        large_chunks_present = False
         for chunk in chunks:
+            if chunk.large_chunk_reference_ids:
+                large_chunks_present = True
             chunk_text = (
                 f"{chunk.title_prefix}{chunk.content}{chunk.metadata_suffix_semantic}"
             ) or chunk.source_document.get_title_for_document_index()
@@ -98,7 +101,9 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
                 flat_chunk_texts.extend(chunk.mini_chunk_texts)
 
         embeddings = self.embedding_model.encode(
-            flat_chunk_texts, text_type=EmbedTextType.PASSAGE
+            texts=flat_chunk_texts,
+            text_type=EmbedTextType.PASSAGE,
+            large_chunks_present=large_chunks_present,
         )
 
         chunk_titles = {

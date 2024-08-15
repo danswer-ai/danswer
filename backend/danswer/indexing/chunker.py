@@ -116,7 +116,8 @@ class Chunker:
     def __init__(
         self,
         tokenizer: BaseTokenizer,
-        enable_multipass: bool,
+        enable_multipass: bool = False,
+        enable_large_chunks: bool = False,
         blurb_size: int = BLURB_SIZE,
         include_metadata: bool = not SKIP_METADATA_IN_CHUNK,
         chunk_token_limit: int = DOC_EMBEDDING_CONTEXT_SIZE,
@@ -128,7 +129,7 @@ class Chunker:
         self.include_metadata = include_metadata
         self.chunk_token_limit = chunk_token_limit
         self.enable_multipass = enable_multipass
-
+        self.enable_large_chunks = enable_large_chunks
         self.tokenizer = tokenizer
 
         self.blurb_splitter = SentenceSplitter(
@@ -296,7 +297,7 @@ class Chunker:
             content_token_limit,
         )
 
-        if self.enable_multipass:
+        if self.enable_multipass and self.enable_large_chunks:
             large_chunks = generate_large_chunks(normal_chunks)
             normal_chunks.extend(large_chunks)
 

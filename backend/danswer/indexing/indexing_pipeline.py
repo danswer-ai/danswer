@@ -265,16 +265,26 @@ def build_indexing_pipeline(
     ignore_time_skip: bool = False,
 ) -> IndexingPipelineProtocol:
     """Builds a pipeline which takes in a list (batch) of docs and indexes them."""
-
     search_settings = get_search_settings()
     multipass = (
         search_settings.multipass_indexing
         if search_settings
         else ENABLE_MULTIPASS_INDEXING
     )
+    enable_large_chunks = multipass and (
+        embedder.provider_type or embedder.model_name == "nomic-ai/nomic-embed-text-v1"
+    )
+
+    if multipass and not enable_large_chunks:
+        logger.warning(
+            "Multipass indexing is enabled, but the provider type or model name"
+            " is not supported. Only mini chunks will be indexed."
+        )
+
     chunker = chunker or Chunker(
         tokenizer=embedder.embedding_model.tokenizer,
         enable_multipass=multipass,
+        enable_large_chunks=enable_large_chunks,
     )
 
     return partial(
