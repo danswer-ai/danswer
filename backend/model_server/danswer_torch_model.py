@@ -87,6 +87,8 @@ class ConnectorClassifier(nn.Module):
         # Token indicating end of connector name, and on which classifier is used
         self.connector_end_token_id = self.tokenizer.get_vocab()[self.config.connector_end_token]
 
+        self.device = torch.device("cpu")
+
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -120,6 +122,7 @@ class ConnectorClassifier(nn.Module):
         model = cls(config)
         model.load_state_dict(state_dict)
         model.to(device)
+        model.device = device
         model.eval()
 
         for param in model.parameters():

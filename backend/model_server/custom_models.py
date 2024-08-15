@@ -160,8 +160,8 @@ def warm_up_connector_classifier_model() -> None:
         connector_classifier_tokenizer,
         connector_classifier.connector_end_token_id,
     )
-    input_ids = input_ids.to(next(connector_classifier.parameters()).device)
-    attention_mask = attention_mask.to(next(connector_classifier.parameters()).device)
+    input_ids = input_ids.to(connector_classifier.device)
+    attention_mask = attention_mask.to(connector_classifier.device)
 
     connector_classifier(input_ids, attention_mask)
 
@@ -273,8 +273,8 @@ def run_connector_classification(req: ConnectorClassificationRequest) -> list[st
         tokenizer,
         model.connector_end_token_id,
     )
-    input_ids = input_ids.to(next(model.parameters()).device)
-    attention_mask = attention_mask.to(next(model.parameters()).device)
+    input_ids = input_ids.to(model.device)
+    attention_mask = attention_mask.to(model.device)
 
     global_confidence, classifier_confidence = model(input_ids, attention_mask)
 
