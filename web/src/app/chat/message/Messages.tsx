@@ -8,7 +8,14 @@ import {
   FiGlobe,
 } from "react-icons/fi";
 import { FeedbackType } from "../types";
-import { useContext, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import {
   DanswerDocument,
@@ -52,6 +59,7 @@ import { useMouseTracking } from "./hooks";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
+import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -432,7 +440,6 @@ export const AIMessage = ({
                     ) : isComplete ? null : (
                       <></>
                     )}
-
                     {isComplete && docs && docs.length > 0 && (
                       <div className="mt-2 -mx-8 w-full mb-4 flex relative">
                         <div className="w-full">

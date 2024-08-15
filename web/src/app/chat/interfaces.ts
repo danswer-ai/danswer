@@ -87,6 +87,7 @@ export interface Message {
   childrenMessageIds?: number[];
   latestChildMessageId?: number | null;
   alternateAssistantID?: number | null;
+  stackTrace?: string | null;
 }
 
 export interface BackendChatSession {
@@ -128,4 +129,5 @@ export interface ImageGenerationDisplay {
 
 export interface StreamingError {
   error: string;
+  stack_trace: string;
 }

@@ -692,15 +692,14 @@ def stream_chat_message_objects(
                 if isinstance(packet, ToolCallFinalResult):
                     tool_result = packet
                 yield cast(ChatPacket, packet)
-
     except Exception as e:
         error_msg = str(e)
-        # Log the full error for debugging
         logger.exception(f"Failed to process chat message: {error_msg}")
 
-        error_msg = litellm_exception_to_error_msg(e, llm)
-
-        yield StreamingError(error=error_msg)
+        client_error_msg = litellm_exception_to_error_msg(e, llm)
+        if llm.config.api_key and len(llm.config.api_key) > 2:
+            error_msg = error_msg.replace(llm.config.api_key, "[REDACTED_API_KEY]")
+        yield StreamingError(error=client_error_msg, stack_trace=error_msg)
         db_session.rollback()
         return
 
