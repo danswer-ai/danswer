@@ -272,7 +272,7 @@ def build_indexing_pipeline(
         else ENABLE_MULTIPASS_INDEXING
     )
     enable_large_chunks = multipass and (
-        embedder.provider_type or embedder.model_name == "nomic-ai/nomic-embed-text-v1"
+        embedder.provider_type is not None or embedder.model_name.startswith("nomic-ai")
     )
 
     if multipass and not enable_large_chunks:
