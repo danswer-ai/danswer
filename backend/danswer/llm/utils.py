@@ -16,18 +16,18 @@ from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
-from litellm.exceptions import APIConnectionError
-from litellm.exceptions import APIError
-from litellm.exceptions import AuthenticationError
-from litellm.exceptions import BadRequestError
-from litellm.exceptions import BudgetExceededError
-from litellm.exceptions import ContentPolicyViolationError
-from litellm.exceptions import ContextWindowExceededError
-from litellm.exceptions import NotFoundError
-from litellm.exceptions import PermissionDeniedError
-from litellm.exceptions import RateLimitError
-from litellm.exceptions import Timeout
-from litellm.exceptions import UnprocessableEntityError
+from litellm.exceptions import APIConnectionError  # type: ignore
+from litellm.exceptions import APIError  # type: ignore
+from litellm.exceptions import AuthenticationError  # type: ignore
+from litellm.exceptions import BadRequestError  # type: ignore
+from litellm.exceptions import BudgetExceededError  # type: ignore
+from litellm.exceptions import ContentPolicyViolationError  # type: ignore
+from litellm.exceptions import ContextWindowExceededError  # type: ignore
+from litellm.exceptions import NotFoundError  # type: ignore
+from litellm.exceptions import PermissionDeniedError  # type: ignore
+from litellm.exceptions import RateLimitError  # type: ignore
+from litellm.exceptions import Timeout  # type: ignore
+from litellm.exceptions import UnprocessableEntityError  # type: ignore
 
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
@@ -47,7 +47,7 @@ if TYPE_CHECKING:
 logger = setup_logger()
 
 
-def litellm_exception_to_error_msg(e: Exception, llm: LLM | None = None) -> str:
+def litellm_exception_to_error_msg(e: Exception, llm: LLM) -> str:
     error_msg = str(e)
     if "Illegal header value b'Bearer  '" in error_msg:
         error_msg = (
@@ -67,8 +67,10 @@ def litellm_exception_to_error_msg(e: Exception, llm: LLM | None = None) -> str:
     elif isinstance(e, AuthenticationError):
         error_msg = "Authentication failed: Please check your API key and credentials."
     elif isinstance(e, PermissionDeniedError):
-        error_msg = "Permission denied: You don't have the necessary permissions for this operation."
-        +"Ensure you have access to this model."
+        error_msg = (
+            "Permission denied: You don't have the necessary permissions for this operation."
+            "Ensure you have access to this model."
+        )
     elif isinstance(e, NotFoundError):
         error_msg = "Resource not found: The requested resource doesn't exist."
     elif isinstance(e, UnprocessableEntityError):
