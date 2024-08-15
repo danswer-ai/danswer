@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.embedding_model import get_current_db_embedding_model
@@ -10,6 +11,7 @@ from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import (
     count_unique_cc_pairs_with_successful_index_attempts,
 )
+from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -50,6 +52,9 @@ def check_index_swap(db_session: Session) -> None:
             new_status=IndexModelStatus.PRESENT,
             db_session=db_session,
         )
+        print("ATTMEPTING TO MARK INDEX AS FALSE")
+        kv_store = get_dynamic_config_store()
+        kv_store.store(KV_REINDEX_KEY, False)
 
         if cc_pair_count > 0:
             # Expire jobs for the now past index/embedding model

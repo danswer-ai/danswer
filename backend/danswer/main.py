@@ -200,7 +200,8 @@ def setup_postgres(db_session: Session) -> None:
 def mark_reindex_flag(db_session: Session) -> None:
     kv_store = get_dynamic_config_store()
     try:
-        kv_store.load(KV_REINDEX_KEY)
+        value = kv_store.load(KV_REINDEX_KEY)
+        print(f"Re-indexing flag has  value {value}")
         return
     except ConfigNotFoundError:
         # Only need to update the flag if it hasn't been set
