@@ -28,6 +28,7 @@ from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.search.search_settings import get_search_settings
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
+from shared_configs.enums import EmbeddingProvider
 
 logger = setup_logger()
 
@@ -271,15 +272,19 @@ def build_indexing_pipeline(
         if search_settings
         else ENABLE_MULTIPASS_INDEXING
     )
-    enable_large_chunks = multipass and (
-        embedder.provider_type is not None or embedder.model_name.startswith("nomic-ai")
-    )
 
-    if multipass and not enable_large_chunks:
-        logger.warning(
-            "Multipass indexing is enabled, but the provider type or model name"
-            " is not supported. Only mini chunks will be indexed."
+    enable_large_chunks = (
+        multipass
+        and
+        # Only local models that supports larger context are from Nomic
+        (
+            embedder.provider_type is not None
+            or embedder.model_name.startswith("nomic-ai")
         )
+        and
+        # Cohere does not support larger context they recommend not going above 512 tokens
+        embedder.provider_type != EmbeddingProvider.COHERE
+    )
 
     chunker = chunker or Chunker(
         tokenizer=embedder.embedding_model.tokenizer,
