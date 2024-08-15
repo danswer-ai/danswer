@@ -3,9 +3,9 @@ import os
 
 import torch
 import torch.nn as nn
-from transformers import DistilBertConfig
-from transformers import DistilBertModel
-from transformers import DistilBertTokenizer
+from transformers import DistilBertConfig  # type: ignore
+from transformers import DistilBertModel  # type: ignore
+from transformers import DistilBertTokenizer  # type: ignore
 
 
 class HybridClassifier(nn.Module):

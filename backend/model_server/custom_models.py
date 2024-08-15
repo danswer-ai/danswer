@@ -2,9 +2,9 @@ import torch
 import torch.nn.functional as F
 from fastapi import APIRouter
 from huggingface_hub import snapshot_download  # type: ignore
-from transformers import AutoTokenizer
-from transformers import BatchEncoding
-from transformers import PreTrainedTokenizer
+from transformers import AutoTokenizer  # type: ignore
+from transformers import BatchEncoding  # type: ignore
+from transformers import PreTrainedTokenizer  # type: ignore
 
 from danswer.utils.logger import setup_logger
 from model_server.constants import MODEL_WARM_UP_STRING
