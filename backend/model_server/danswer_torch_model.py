@@ -88,8 +88,7 @@ class ConnectorClassifier(nn.Module):
     ):
         hidden_states = self.distilbert(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
 
-        cls_position_id = input_ids == self.tokenizer.cls_token_id
-        cls_hidden_states = hidden_states[cls_position_id]
+        cls_hidden_states = hidden_states[:, 0, :]  # Take leap of faith that first token is always [CLS]
         global_logits = self.connector_global_classifier(cls_hidden_states).view(-1)
         global_confidence = torch.sigmoid(global_logits).view(-1)
 
