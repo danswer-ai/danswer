@@ -1,6 +1,5 @@
 import { EmphasizedClickable } from "@/components/BasicClickable";
 import { HoverPopup } from "@/components/HoverPopup";
-import { Hoverable } from "@/components/Hoverable";
 import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -126,7 +125,7 @@ export function SearchSummary({
         />
       </div>
       <div className="ml-2 my-auto flex">
-        <Hoverable
+        <Button
           onClick={() => {
             if (!finalQuery) {
               setFinalQuery(query);
@@ -135,17 +134,23 @@ export function SearchSummary({
             }
             setIsEditing(false);
           }}
+          variant="ghost"
+          size="xs"
+          className="!p-1.5 !px-[7px]"
         >
           <Check size={16} />
-        </Hoverable>
-        <Hoverable
+        </Button>
+        <Button
           onClick={() => {
             setFinalQuery(query);
             setIsEditing(false);
           }}
+          variant="ghost"
+          size="xs"
+          className="!p-1.5 !px-[7px]"
         >
           <X size={16} />
-        </Hoverable>
+        </Button>
       </div>
     </div>
   ) : null;

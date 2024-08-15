@@ -36,7 +36,6 @@ import { HeaderTitle } from "@/components/header/Header";
 import { UserSettingsButton } from "@/components/UserSettingsButton";
 import { useChatContext } from "@/components/context/ChatContext";
 import { Button } from "@/components/ui/button";
-import { Hoverable } from "@/components/Hoverable";
 import { Separator } from "@/components/ui/separator";
 
 export const ChatSidebar = ({
