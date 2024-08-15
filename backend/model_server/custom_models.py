@@ -344,7 +344,7 @@ async def process_connector_classification_request(
         )
 
     if len(classification_request.available_connectors) == 0:
-        return ConnectorClassificationResponse(filter_by_connector=False, connectors=[])
+        return ConnectorClassificationResponse(connectors=[])
 
     connectors = run_connector_classification(classification_request)
     return ConnectorClassificationResponse(connectors=connectors)
