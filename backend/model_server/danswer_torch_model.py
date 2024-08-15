@@ -22,7 +22,6 @@ class HybridClassifier(nn.Module):
             self.distilbert.config.dim, self.distilbert.config.dim
         )
         self.intent_classifier = nn.Linear(self.distilbert.config.dim, 2)
-        self.dropout = nn.Dropout(self.distilbert.config.seq_classif_dropout)
 
         self.device = torch.device("cpu")
 
@@ -37,8 +36,7 @@ class HybridClassifier(nn.Module):
         # Intent classification on the CLS token
         cls_token_state = sequence_output[:, 0, :]
         pre_classifier_out = self.pre_classifier(cls_token_state)
-        dropout_out = self.dropout(pre_classifier_out)
-        intent_logits = self.intent_classifier(dropout_out)
+        intent_logits = self.intent_classifier(pre_classifier_out)
 
         # Keyword classification on all tokens
         token_logits = self.keyword_classifier(sequence_output)
