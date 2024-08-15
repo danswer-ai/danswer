@@ -20,6 +20,7 @@ import {
 import { CustomSelect } from "@/components/Select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Brain } from "lucide-react";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 const SectionTitle = ({ children }: { children: string }) => (
   <div className="flex p-2 text-sm font-bold">{children}</div>
@@ -123,20 +124,18 @@ export function SourceSelector({
                   className="flex items-center w-full"
                   onClick={() => handleDocumentSetSelect(documentSet.name)}
                 >
-                  <HoverPopup
-                    mainContent={
+                  <CustomTooltip
+                    trigger={
                       <div className="flex my-auto mr-3">
                         <Brain size={24} />
                       </div>
                     }
-                    popupContent={
-                      <div className="w-64 text-sm">
-                        <div className="flex font-medium">Description</div>
-                        <div className="mt-1">{documentSet.description}</div>
-                      </div>
-                    }
-                    classNameModifications="-ml-2"
-                  />
+                  >
+                    <div className="text-sm">
+                      <div className="flex font-medium">Description</div>
+                      <div className="mt-1">{documentSet.description}</div>
+                    </div>
+                  </CustomTooltip>
                   <span className="text-sm">{documentSet.name}</span>
                 </label>
                 <Checkbox id={documentSet.name} />

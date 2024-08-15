@@ -8,6 +8,7 @@ import { FiInfo, FiRadio, FiTag } from "react-icons/fi";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
 import { Badge } from "../ui/badge";
+import { CustomTooltip } from "../CustomTooltip";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -191,23 +192,22 @@ export const DocumentDisplay = ({
             <div className="flex items-center gap-[5px]">
               <Badge variant={badgeVariant}>{score.toFixed()}%</Badge>
               {isSelected && (
-                <Badge variant="secondary">
-                  <HoverPopup
-                    mainContent={<FiRadio size={16} />}
-                    popupContent={
-                      <div className="text-xs text-gray-300 w-36 flex">
-                        <div className="flex mx-auto">
-                          <div className="w-3 h-3 flex flex-col my-auto mr-1">
-                            <FiInfo className="my-auto" />
-                          </div>
-                          <div className="my-auto">The AI liked this doc!</div>
-                        </div>
+                <CustomTooltip
+                  trigger={
+                    <Badge variant="secondary">
+                      <FiRadio size={16} />
+                    </Badge>
+                  }
+                >
+                  <div className="text-xs flex">
+                    <div className="flex mx-auto">
+                      <div className="w-3 h-3 flex flex-col my-auto mr-1">
+                        <FiInfo className="my-auto" />
                       </div>
-                    }
-                    direction="bottom"
-                    style="dark"
-                  />
-                </Badge>
+                      <div className="my-auto">The AI liked this doc!</div>
+                    </div>
+                  </div>
+                </CustomTooltip>
               )}
             </div>
           )}

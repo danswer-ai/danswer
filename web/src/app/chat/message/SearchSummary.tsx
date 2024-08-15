@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { X, Check, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 export function ShowHideDocsButton({
   messageId,
@@ -157,16 +158,12 @@ export function SearchSummary({
         <>
           <div className="text-sm my-2">
             {isOverflowed ? (
-              <HoverPopup
-                mainContent={searchingForDisplay}
-                popupContent={
-                  <div className="w-full max-h-40 overflow-auto">
-                    <b>Full query:</b>{" "}
-                    <div className="mt-1 italic w-full">{query}</div>
-                  </div>
-                }
-                direction="top"
-              />
+              <CustomTooltip trigger={searchingForDisplay} align="start">
+                <div className="w-full max-w-96 lg:max-w-screen-md max-h-40 overflow-auto">
+                  <b>Full query:</b>{" "}
+                  <div className="mt-1 italic w-full">{query}</div>
+                </div>
+              </CustomTooltip>
             ) : (
               searchingForDisplay
             )}

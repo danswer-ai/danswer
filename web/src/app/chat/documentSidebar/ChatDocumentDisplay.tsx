@@ -8,6 +8,7 @@ import {
 } from "@/components/search/DocumentDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Info, Radio } from "lucide-react";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
@@ -65,23 +66,16 @@ export function ChatDocumentDisplay({
               <div className="ml-auto">
                 {isAIPick && (
                   <div className="w-4 h-4 my-auto mr-1 flex flex-col">
-                    <HoverPopup
-                      mainContent={<Radio className="text-gray-500 my-auto" />}
-                      popupContent={
-                        <div className="text-xs text-gray-300 w-36 flex">
-                          <div className="flex mx-auto">
-                            <div className="w-3 h-3 flex flex-col my-auto mr-1">
-                              <Info className="my-auto" />
-                            </div>
-                            <div className="my-auto">
-                              The AI liked this doc!
-                            </div>
+                    <CustomTooltip trigger={<Radio className="my-auto" />}>
+                      <div className="text-xs text-gray-300 flex">
+                        <div className="flex mx-auto">
+                          <div className="w-3 h-3 flex flex-col my-auto mr-1">
+                            <Info className="my-auto" />
                           </div>
+                          <div className="my-auto">The AI liked this doc!</div>
                         </div>
-                      }
-                      direction="bottom"
-                      style="dark"
-                    />
+                      </div>
+                    </CustomTooltip>
                   </div>
                 )}
                 <Badge variant={badgeVariant}>{score.toFixed()}%</Badge>

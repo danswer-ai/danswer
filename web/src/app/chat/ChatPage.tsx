@@ -561,14 +561,15 @@ export function ChatPage({
   const [maxDocumentSidebarWidth, setMaxDocumentSidebarWidth] = useState<
     number | null
   >(null);
+
   const adjustDocumentSidebarWidth = () => {
     if (masterFlexboxRef.current && document.documentElement.clientWidth) {
       if (document.documentElement.clientWidth > 1700) {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1100);
+        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1400);
       } else if (document.documentElement.clientWidth > 1420) {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 760);
+        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1060);
       } else {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 660);
+        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 960);
       }
     }
   };
