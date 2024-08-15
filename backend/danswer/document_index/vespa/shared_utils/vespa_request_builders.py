@@ -84,7 +84,7 @@ def build_vespa_id_based_retrieval_yql(
         f'({DOCUMENT_ID} contains "{chunk_request.document_id}"'
     )
 
-    if chunk_request.is_capped():
+    if chunk_request.is_capped:
         id_based_retrieval_yql_section += (
             f" and {CHUNK_ID} >= {chunk_request.min_chunk_ind or 0}"
         )

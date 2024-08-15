@@ -277,7 +277,7 @@ ENABLE_MULTIPASS_INDEXING = (
 # tokens. But we need it to be at least as big as 1/4th chunk size to avoid having a tiny mini-chunk at the end
 MINI_CHUNK_SIZE = 150
 
-# 4x the size of the regular chunk
+# This is the number of regular chunks per large chunk
 LARGE_CHUNK_RATIO = 4
 
 # Include the document level metadata in each chunk. If the metadata is too long, then it is thrown out

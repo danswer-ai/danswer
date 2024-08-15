@@ -88,6 +88,7 @@ schema DANSWER_CHUNK_NAME {
             rank:filter
             attribute: fast-search
         }
+        # If chunk is a large chunk, this will contain the ids of the smaller chunks
         field large_chunk_reference_ids type array<int> {
             indexing: summary | attribute
         }

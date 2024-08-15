@@ -100,7 +100,6 @@ def _vespa_hit_to_inference_chunk(
         else None
     )
 
-    # The highlights might include the title but this is the best way we have so far to show the highlighting
     match_highlights = _process_dynamic_summary(
         # fallback to regular `content` if the `content_summary` field
         # isn't present
@@ -174,7 +173,7 @@ def _get_chunks_via_visit_api(
     # build filters
     selection = f"{index_name}.document_id=='{chunk_request.document_id}'"
 
-    if chunk_request.is_capped():
+    if chunk_request.is_capped:
         selection += f" and {index_name}.chunk_id>={chunk_request.min_chunk_ind or 0}"
         selection += f" and {index_name}.chunk_id<={chunk_request.max_chunk_ind}"
     if not get_large_chunks:
@@ -383,7 +382,7 @@ def batch_search_api_retrieval(
     for request in chunk_requests:
         # All requests without a chunk range are uncapped
         # Uncapped requests are retrieved using the Visit API
-        range = request.range()
+        range = request.range
         if range is None:
             uncapped_requests.append(request)
             continue

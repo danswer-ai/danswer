@@ -51,7 +51,7 @@ def get_uuid_from_chunk(
         [doc_str, str(chunk.chunk_id), str(mini_chunk_ind)]
     )
     if chunk.large_chunk_reference_ids:
-        unique_identifier_string += "_".join(
+        unique_identifier_string += "_large" + "_".join(
             [
                 str(referenced_chunk_id)
                 for referenced_chunk_id in chunk.large_chunk_reference_ids
