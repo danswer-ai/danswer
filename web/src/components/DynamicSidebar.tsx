@@ -3,17 +3,16 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { WorkSpaceSidebar } from "@/app/chat/sessionSidebar/WorkSpaceSidebar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
 import { User } from "@/lib/types";
-import { ChatSidebar } from "@/app/chat/sessionSidebar/ChatSidebar";
-import { useChatContext } from "@/components/context/ChatContext";
-import { useSearchParams } from "next/navigation";
 
 interface SidebarProps {
   user?: User | null;
   isSearch?: boolean;
   openSidebar: boolean;
   toggleLeftSideBar: () => void;
+  isExpanded: boolean;
+  toggleWidth: () => void;
+  children: React.ReactNode;
 }
 
 export function DynamicSidebar({
@@ -21,24 +20,10 @@ export function DynamicSidebar({
   isSearch,
   openSidebar,
   toggleLeftSideBar,
+  toggleWidth,
+  isExpanded,
+  children,
 }: SidebarProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
-
-  const toggleWidth = () => {
-    setIsExpanded((prevState) => !prevState);
-  };
-
-  let { chatSessions, folders, openedFolders } = useChatContext();
-
-  const searchParams = useSearchParams();
-  const existingChatIdRaw = searchParams.get("chatId");
-  const existingChatSessionId = existingChatIdRaw
-    ? parseInt(existingChatIdRaw)
-    : null;
-  const selectedChatSession = chatSessions.find(
-    (chatSession) => chatSession.id === existingChatSessionId
-  );
-
   return (
     <>
       <AnimatePresence>
@@ -64,17 +49,8 @@ export function DynamicSidebar({
         } ${isSearch ? "xl:relative" : "lg:relative"}`}
       >
         <div className="h-full relative flex w-full">
-          <WorkSpaceSidebar openSidebar={openSidebar} />
-          <ChatSidebar
-            existingChats={chatSessions}
-            currentChatSession={selectedChatSession}
-            folders={folders}
-            openedFolders={openedFolders}
-            toggleSideBar={toggleLeftSideBar}
-            isExpanded={isExpanded}
-            isSearch={isSearch}
-            openSidebar={openSidebar}
-          />
+          <WorkSpaceSidebar openSidebar={openSidebar} user={user} />
+          {children}
           <button
             onClick={toggleWidth}
             className="absolute bottom-1/2 -translate-y-1/2 border rounded-r py-2 transition-all ease-in-out duration-500 border-l-0 z-modal left-full"
