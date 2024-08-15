@@ -1,6 +1,4 @@
 "use client";
-import ReactMarkdown from "react-markdown";
-
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 import {
   BackendChatSession,

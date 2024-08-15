@@ -28,6 +28,18 @@ from litellm.exceptions import PermissionDeniedError  # type: ignore
 from litellm.exceptions import RateLimitError  # type: ignore
 from litellm.exceptions import Timeout  # type: ignore
 from litellm.exceptions import UnprocessableEntityError  # type: ignore
+from litellm.exceptions import APIConnectionError  # type: ignore
+from litellm.exceptions import APIError  # type: ignore
+from litellm.exceptions import AuthenticationError  # type: ignore
+from litellm.exceptions import BadRequestError  # type: ignore
+from litellm.exceptions import BudgetExceededError  # type: ignore
+from litellm.exceptions import ContentPolicyViolationError  # type: ignore
+from litellm.exceptions import ContextWindowExceededError  # type: ignore
+from litellm.exceptions import NotFoundError  # type: ignore
+from litellm.exceptions import PermissionDeniedError  # type: ignore
+from litellm.exceptions import RateLimitError  # type: ignore
+from litellm.exceptions import Timeout  # type: ignore
+from litellm.exceptions import UnprocessableEntityError  # type: ignore
 
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
@@ -47,7 +59,7 @@ if TYPE_CHECKING:
 logger = setup_logger()
 
 
-def litellm_exception_to_error_msg(e: Exception, llm: LLM) -> str:
+def streaming_exception_to_error_msg(e: Exception, llm: LLM) -> str:
     error_msg = str(e)
 
     if isinstance(e, BadRequestError):
