@@ -21,7 +21,7 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Card, Divider, Text, Title } from "@tremor/react";
+import { Card, Divider, Text, Title, Button } from "@tremor/react";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -82,7 +82,7 @@ const Main = () => {
   return (
     <>
       {popup}
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 1: Provide your authorization details
       </Title>
 
@@ -90,11 +90,11 @@ const Main = () => {
         <>
           <div className="flex mb-1 text-sm">
             <p className="my-auto">Existing Integration Token: </p>
-            <p className="ml-1 italic my-auto max-w-md">
+            <p className="max-w-md my-auto ml-1 italic">
               {notionCredential.credential_json?.notion_integration_token}
             </p>
-            <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+            <Button
+              className="p-1 ml-1 rounded-full hover:bg-gray-700"
               onClick={async () => {
                 if (notionConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -107,9 +107,10 @@ const Main = () => {
                 await adminDeleteCredential(notionCredential.id);
                 refreshCredentials();
               }}
+              variant="light"
             >
               <TrashIcon />
-            </button>
+            </Button>
           </div>
         </>
       ) : (
@@ -157,7 +158,7 @@ const Main = () => {
         </>
       )}
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 2: Manage Connectors
       </Title>
       {notionConnectorIndexingStatuses.length > 0 && (
@@ -203,8 +204,8 @@ const Main = () => {
       {notionCredential && (
         <>
           <Card className="mt-4">
-            <h2 className="font-bold mb-1">Create New Connection</h2>
-            <p className="text-sm mb-4">
+            <h2 className="mb-1 font-bold">Create New Connection</h2>
+            <p className="mb-4 text-sm">
               Press connect below to start the connection to Notion.
             </p>
             <ConnectorForm<NotionConfig>
@@ -259,7 +260,7 @@ const Main = () => {
 
 export default function Page() {
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto">
       <div className="mb-4">
         <HealthCheckBanner />
       </div>

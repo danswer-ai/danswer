@@ -23,13 +23,12 @@ export function PersonaSelector({
             border 
             border-border 
             bg-background
-            rounded-lg 
+            rounded-regular 
             flex 
             flex-col 
             w-64 
             max-h-96 
             overflow-y-auto 
-            flex
             overscroll-contain`}
         >
           {personas.map((persona, ind) => {

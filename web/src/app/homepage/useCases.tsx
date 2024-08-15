@@ -10,7 +10,7 @@ export default function UseCases() {
         <div className="flex flex-col gap-10">
           <div className="flex flex-col font-bold md:items-center">
             <span className="text-[#64A3FF] pb-3">Use Cases</span>
-            <h2 className="flex flex-col text-4xl text-black md:text-5xl md:items-center">
+            <h2 className="flex flex-col text-4xl text-dark-900 md:text-5xl md:items-center">
               <span>Enterprise-Grade</span>
               <span className="text-start md:text-center">
                 AI solutions for your Organization

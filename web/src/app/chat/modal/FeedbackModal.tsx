@@ -3,7 +3,17 @@
 import { useState } from "react";
 import { FeedbackType } from "../types";
 import { FiThumbsDown, FiThumbsUp } from "react-icons/fi";
-import { ModalWrapper } from "./ModalWrapper";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const predefinedPositiveFeedbackOptions =
   process.env.NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS?.split(",") ||
@@ -49,41 +59,23 @@ export const FeedbackModal = ({
       : predefinedNegativeFeedbackOptions;
 
   return (
-    <ModalWrapper onClose={onClose} modalClassName="max-w-5xl">
-      <>
-        <h2 className="text-2xl text-emphasis font-bold mb-4 flex">
-          <div className="mr-1 my-auto">
-            {feedbackType === "like" ? (
-              <FiThumbsUp className="text-green-500 my-auto mr-2" />
-            ) : (
-              <FiThumbsDown className="text-red-600 my-auto mr-2" />
-            )}
-          </div>
-          Provide additional feedback
-        </h2>
-        <div className="mb-4 flex flex-wrap justify-start">
-          {predefinedFeedbackOptions.map((feedback, index) => (
-            <button
-              key={index}
-              className={`bg-border hover:bg-hover text-default py-2 px-4 rounded m-1 
-                ${predefinedFeedback === feedback && "ring-2 ring-accent"}`}
-              onClick={() => handlePredefinedFeedback(feedback)}
-            >
-              {feedback}
-            </button>
-          ))}
-        </div>
-        <textarea
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-5xl">
+        <DialogHeader>
+          <DialogTitle className="flex text-2xl font-bold text-emphasis">
+            <div className="my-auto mr-1">
+              {feedbackType === "like" ? (
+                <FiThumbsUp className="my-auto mr-2 text-green-500" />
+              ) : (
+                <FiThumbsDown className="my-auto mr-2 text-red-600" />
+              )}
+            </div>
+            Provide additional feedback
+          </DialogTitle>
+        </DialogHeader>
+
+        <Textarea
           autoFocus
-          className={`
-            w-full flex-grow 
-            border border-border-strong rounded 
-            outline-none placeholder-subtle 
-            pl-4 pr-4 py-4 bg-background 
-            overflow-hidden h-28 
-            whitespace-normal resize-none 
-            break-all overscroll-contain
-          `}
           role="textarea"
           aria-multiline
           placeholder={
@@ -94,15 +86,24 @@ export const FeedbackModal = ({
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
-        <div className="flex mt-2">
-          <button
-            className="bg-accent text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none mx-auto"
-            onClick={handleSubmit}
-          >
+        <RadioGroup className="">
+          {predefinedFeedbackOptions.map((feedback, index) => (
+            <div
+              key={index}
+              className="flex items-center space-x-2"
+              onClick={() => handlePredefinedFeedback(feedback)}
+            >
+              <RadioGroupItem value={feedback} id={feedback} />
+              <Label htmlFor={feedback}>{feedback}</Label>
+            </div>
+          ))}
+        </RadioGroup>
+        <DialogFooter>
+          <Button className="mx-auto" onClick={handleSubmit}>
             Submit feedback
-          </button>
-        </div>
-      </>
-    </ModalWrapper>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

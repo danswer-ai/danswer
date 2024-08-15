@@ -12,7 +12,7 @@ export const LoginText = () => {
   }
 
   return (
-    <div className="text-black">
+    <div className="text-dark-900">
       <h1 className="my-2 text-3xl font-bold">Login</h1>
       <p>
         Welcome back to{" "}

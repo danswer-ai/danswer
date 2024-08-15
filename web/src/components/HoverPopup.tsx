@@ -46,7 +46,7 @@ export const HoverPopup = ({
     >
       {hovered && (
         <div
-          className={`absolute ${popupDirectionClass} z-30`}
+          className={`absolute w-full ${popupDirectionClass} z-30`}
           style={popupStyle}
         >
           <div

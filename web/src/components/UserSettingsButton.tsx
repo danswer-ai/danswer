@@ -1,19 +1,16 @@
 "use client";
 
-import { useState, useRef, useContext } from "react";
-import { FiSearch, FiMessageSquare, FiTool, FiLogOut } from "react-icons/fi";
+import { useState, useRef } from "react";
+import { FiTool, FiLogOut } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User } from "@/lib/types";
+import { User as UserTypes } from "@/lib/types";
 import { checkUserIsNoAuthUser, logout } from "@/lib/user";
-import { BasicClickable, BasicSelectable } from "@/components/BasicClickable";
-import { Popover } from "./popover/Popover";
-import { FaBrain } from "react-icons/fa";
 import { LOGOUT_DISABLED } from "@/lib/constants";
-import { Settings } from "@/app/admin/settings/interfaces";
-import { SettingsContext } from "./settings/SettingsProvider";
+import { Bell, CircleUserRound, Cpu, User } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
 
-export function UserSettingsButton({ user }: { user: User | null }) {
+export function UserSettingsButton({ user }: { user: UserTypes | null }) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
   const userInfoRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -36,68 +33,79 @@ export function UserSettingsButton({ user }: { user: User | null }) {
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
 
   return (
-    <div className="relative w-full px-3 py-2" ref={userInfoRef}>
-      <Popover
-        triggerMaxWidth={true}
-        matchWidth={true}
-        open={userInfoVisible}
-        onOpenChange={setUserInfoVisible}
-        content={
-          <BasicClickable fullWidth>
-            <div
-              onClick={() => setUserInfoVisible(!userInfoVisible)}
-              className="flex min-w-full items-center gap-3 cursor-pointer px-3 py-2 bg-white"
-            >
-              <div className="flex items-center justify-center bg-white rounded-full min-h-10 min-w-10 aspect-square text-base font-normal border-2 border-gray-900 shadow-md">
-                {user && user.email ? user.email[0].toUpperCase() : "A"}
-              </div>
-              <div className="w-full h-full flex flex-col items-start justify-center truncate">
-                {/* TODO: Set this as a user.name - which will be added to the schema of the user and the database schema user table */}
-                <p className="text-base font-semibold">
-                  {user && user.email
-                    ? `${toPascalCase(user.email.split(".")[0])} ${toPascalCase(
-                        user.email.split(".")[1].split("@")[0]
-                      )}`
-                    : "Admin"}
-                </p>
-                <p className="text-xs">
-                  {user && user.email ? user.email : "admin@enmedd-chp.com"}
-                </p>
-              </div>
-            </div>
-          </BasicClickable>
-        }
-        popover={
+    <div className="relative" ref={userInfoRef}>
+      <Popover>
+        <PopoverTrigger
+          asChild
+          onClick={() => setUserInfoVisible(!userInfoVisible)}
+          className="w-full relative cursor-pointer"
+        >
           <div
-            className={`
-                z-[60]
-                text-strong 
-                text-sm 
-                border 
-                border-border 
-                bg-background 
-                rounded-lg 
-                shadow-lg  
-                flex 
-                flex-col 
-                w-full 
-                max-h-96 
-                overflow-y-auto 
-                p-1 
-                overscroll-contain 
-              `}
+            className="flex items-center justify-center bg-white rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-base font-normal border-2 border-gray-900 shadow-md text-default py-2"
+            onClick={() => setUserInfoVisible(!userInfoVisible)}
           >
+            {user && user.email ? user.email[0].toUpperCase() : "A"}
+          </div>
+        </PopoverTrigger>
+        <PopoverContent className={`w-[250px] !z-[999] mb-2 ml-4 text-sm`}>
+          <div className="w-full text-black-800">
+            <>
+              <Link
+                href=""
+                className="flex py-3 px-4 cursor-pointer rounded hover:bg-primary hover:text-white items-center gap-3 group"
+              >
+                <CircleUserRound
+                  size={40}
+                  className="min-w-10 min-h-10"
+                  strokeWidth={1}
+                />
+                <div className="flex flex-col w-[160px]">
+                  <span className="text-dark-700 truncate group-hover:text-white">
+                    Johny Doe
+                  </span>
+                  <span className="text-dark-500 truncate group-hover:text-white">
+                    johnydoe@gmail.com
+                  </span>
+                </div>
+              </Link>
+              <div className="my-1 border-b border-border" />
+            </>
+            <Link
+              href="/admin/indexing/status"
+              className="flex py-3 px-4 cursor-pointer rounded hover:bg-primary hover:text-white"
+            >
+              <User className="my-auto mr-3" size={24} strokeWidth={1.5} />
+              Profile Settings
+            </Link>
             {showAdminPanel && (
               <>
                 <Link
                   href="/admin/indexing/status"
-                  className="flex py-3 px-4 cursor-pointer rounded hover:bg-hover-light"
+                  className="flex py-3 px-4 cursor-pointer rounded hover:bg-primary hover:text-white"
                 >
-                  <FiTool className="my-auto mr-2 text-lg" />
+                  <FiTool
+                    className="my-auto mr-3"
+                    size={24}
+                    strokeWidth={1.5}
+                  />
                   Admin Panel
                 </Link>
               </>
             )}
+            <Link
+              href="/admin/indexing/status"
+              className="flex py-3 px-4 cursor-pointer rounded hover:bg-primary hover:text-white"
+            >
+              <Cpu className="my-auto mr-3" size={24} strokeWidth={1.5} />
+              My Assistant
+            </Link>
+            <Link
+              href="/admin/indexing/status"
+              className="flex py-3 px-4 cursor-pointer rounded hover:bg-primary hover:text-white"
+            >
+              <Bell className="my-auto mr-3" size={24} strokeWidth={1.5} />
+              Notification
+            </Link>
             {showLogout && (
               <>
                 {showAdminPanel && (
@@ -105,19 +113,20 @@ export function UserSettingsButton({ user }: { user: User | null }) {
                 )}
                 <div
                   onClick={handleLogout}
-                  className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-hover-light"
+                  className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-primary hover:text-white rounded"
                 >
-                  <FiLogOut className="my-auto mr-2 text-lg" />
+                  <FiLogOut
+                    className="my-auto mr-3"
+                    size={24}
+                    strokeWidth={1.5}
+                  />
                   Log out
                 </div>
               </>
             )}
           </div>
-        }
-        side="top"
-        align="end"
-        sideOffset={10}
-      />
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

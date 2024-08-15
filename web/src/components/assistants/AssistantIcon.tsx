@@ -1,5 +1,7 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
 import React from "react";
+import logo from "../../../public/logo.png";
+import Image from "next/image";
 
 export function generatePastelColorFromId(id: string): string {
   const hash = Array.from(id).reduce(
@@ -24,14 +26,15 @@ export function AssistantIcon({
   const color = generatePastelColorFromId(assistant.id.toString());
 
   return (
-    <div
+    <Image
+      src={logo}
+      alt="enmedd-logo"
       className={`
-      ${border && " border border-.5 border-border-strong "}
-      ${(!size || size == "large") && "w-6 h-6"}
-      ${size == "small" && "w-6 h-6"}
-      rounded-lg
-      `}
-      style={{ backgroundColor: color }}
+    ${border && " border border-.5 border-border-strong "}
+    ${(!size || size == "large") && "w-10 h-10"}
+    ${size == "small" && "w-7 h-7"}
+    rounded-regular
+    `}
     />
   );
 }

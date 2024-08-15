@@ -15,9 +15,10 @@ import { FormBodyBuilder, RequireAtLeastOne } from "./types";
 import { BooleanFormField, TextFormField } from "./Field";
 import { createCredential, linkCredential } from "@/lib/credential";
 import { useSWRConfig } from "swr";
-import { Button, Divider } from "@tremor/react";
+import { Divider } from "@tremor/react";
 import IsPublicField from "./IsPublicField";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { Button } from "@/components/ui/button";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
@@ -253,10 +254,8 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             <div className="flex">
               <Button
                 type="submit"
-                size="xs"
-                color="green"
                 disabled={isSubmitting}
-                className="mx-auto w-64"
+                className="w-64 mx-auto"
               >
                 Connect
               </Button>
@@ -337,10 +336,8 @@ export function UpdateConnectorForm<T extends Yup.AnyObject>({
             <div className="flex">
               <Button
                 type="submit"
-                color="green"
-                size="xs"
                 disabled={isSubmitting}
-                className="mx-auto w-64"
+                className="w-64 mx-auto"
               >
                 Update
               </Button>

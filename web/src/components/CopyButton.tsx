@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { FiCheck, FiCopy } from "react-icons/fi";
-import { Hoverable } from "./Hoverable";
+import { Button } from "./ui/button";
+import { Check, Copy } from "lucide-react";
 
 export function CopyButton({
   content,
@@ -12,8 +12,7 @@ export function CopyButton({
   const [copyClicked, setCopyClicked] = useState(false);
 
   return (
-    <Hoverable
-      icon={copyClicked ? FiCheck : FiCopy}
+    <Button
       onClick={() => {
         if (content) {
           navigator.clipboard.writeText(content.toString());
@@ -23,6 +22,11 @@ export function CopyButton({
         setCopyClicked(true);
         setTimeout(() => setCopyClicked(false), 3000);
       }}
-    />
+      variant="ghost"
+      size="xs"
+      className="!p-1.5 !px-[7px]"
+    >
+      {copyClicked ? <Check size={16} /> : <Copy size={16} />}
+    </Button>
   );
 }

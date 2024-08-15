@@ -83,7 +83,7 @@ export function ChatPersonaSelector({
             border 
             border-border 
             bg-background
-            rounded-lg 
+            rounded-regular 
             shadow-lg 
             flex 
             flex-col 

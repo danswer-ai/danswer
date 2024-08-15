@@ -5,8 +5,9 @@ import { Divider, Text, Title } from "@tremor/react";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Persona } from "./interfaces";
-import { RobotIcon } from "@/components/icons/icons";
+import { LinkIcon, RobotIcon } from "@/components/icons/icons";
 import { AdminPageTitle } from "@/components/admin/Title";
+import { Button } from "@/components/ui/button";
 
 export default async function Page() {
   const personaResponse = await fetchSS("/admin/persona");
@@ -44,14 +45,11 @@ export default async function Page() {
         <Divider />
 
         <Title>Create an Assistant</Title>
-        <Link
-          href="/admin/assistants/new"
-          className="flex py-2 px-4 mt-2 border border-border h-fit cursor-pointer hover:bg-hover text-sm w-40"
-        >
-          <div className="mx-auto flex">
+        <Link href="/admin/assistants/new" className="flex items-center">
+          <Button className="mt-2">
             <FiPlusSquare className="my-auto mr-2" />
             New Assistant
-          </div>
+          </Button>
         </Link>
 
         <Divider />

@@ -2,12 +2,19 @@
 
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { runConnector } from "@/lib/connector";
-import { Button, Divider, Text } from "@tremor/react";
+import { Divider, Text } from "@tremor/react";
 import { useRouter } from "next/navigation";
 import { mutate } from "swr";
 import { buildCCPairInfoUrl } from "./lib";
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 function ReIndexPopup({
   connectorId,
@@ -47,8 +54,6 @@ function ReIndexPopup({
       <div>
         <Button
           className="ml-auto"
-          color="green"
-          size="xs"
           onClick={() => {
             triggerIndexing(false);
             hide();
@@ -66,8 +71,6 @@ function ReIndexPopup({
 
         <Button
           className="ml-auto"
-          color="green"
-          size="xs"
           onClick={() => {
             triggerIndexing(true);
             hide();
@@ -116,22 +119,26 @@ export function ReIndexButton({
         />
       )}
       {popup}
-      <Button
-        className="ml-auto"
-        color="green"
-        size="xs"
-        onClick={() => {
-          setReIndexPopupVisible(true);
-        }}
-        disabled={isDisabled}
-        tooltip={
-          isDisabled
-            ? "Connector must be active in order to run indexing"
-            : undefined
-        }
-      >
-        Run Indexing
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              className="ml-auto"
+              onClick={() => {
+                setReIndexPopupVisible(true);
+              }}
+              disabled={isDisabled}
+            >
+              Run Indexing
+            </Button>
+          </TooltipTrigger>
+          {isDisabled ? (
+            <TooltipContent>
+              Connector must be active in order to run indexing
+            </TooltipContent>
+          ) : undefined}
+        </Tooltip>
+      </TooltipProvider>
     </>
   );
 }

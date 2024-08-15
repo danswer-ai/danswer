@@ -5,14 +5,23 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { Title } from "@tremor/react";
 import { Settings } from "./interfaces";
 import { useRouter } from "next/navigation";
-import { DefaultDropdown, Option } from "@/components/Dropdown";
+import { Option } from "@/components/Dropdown";
 import { useContext } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import React, { useState, useEffect } from "react";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Button } from "@tremor/react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label as ShadcnLabel } from "@/components/ui/label";
 
-function Checkbox({
+function CheckboxComponent({
   label,
   sublabel,
   checked,
@@ -21,21 +30,21 @@ function Checkbox({
   label: string;
   sublabel: string;
   checked: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex text-sm mb-4">
-      <input
-        checked={checked}
-        onChange={onChange}
-        type="checkbox"
-        className="mx-3 px-5 w-3.5 h-3.5 my-auto"
-      />
-      <div>
-        <Label>{label}</Label>
-        <SubLabel>{sublabel}</SubLabel>
+    <div className="flex text-sm mb-4 gap-3">
+      <Checkbox checked={checked} onCheckedChange={onChange} id={label} />
+      <div className="grid gap-1.5 leading-none">
+        <ShadcnLabel
+          htmlFor={label}
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          {label}
+        </ShadcnLabel>
+        <p className="text-sm text-muted-foreground">{sublabel}</p>
       </div>
-    </label>
+    </div>
   );
 }
 
@@ -58,11 +67,25 @@ function Selector({
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
       <div className="mt-2 w-full max-w-96">
-        <DefaultDropdown
-          options={options}
-          selected={selected}
-          onSelect={onSelect}
-        />
+        <Select
+          onValueChange={(value) => {
+            if (value) onSelect(value);
+          }}
+        >
+          <SelectTrigger className="w-full mt-1">
+            <SelectValue
+              placeholder="Select an option"
+              defaultValue={selected}
+            />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );
@@ -188,34 +211,34 @@ export function SettingsForm() {
       {popup}
       <Title className="mb-4">Page Visibility</Title>
 
-      <Checkbox
+      <CheckboxComponent
         label="Search Page Enabled?"
         sublabel={`If set, then the "Search" page will be accessible to all users 
-        and will show up as an option on the top navbar. If unset, then this 
-        page will not be available.`}
+          and will show up as an option on the top navbar. If unset, then this 
+          page will not be available.`}
         checked={settings.search_page_enabled}
-        onChange={(e) => {
+        onChange={(checked) => {
           const updates: any[] = [
-            { fieldName: "search_page_enabled", newValue: e.target.checked },
+            { fieldName: "search_page_enabled", newValue: checked },
           ];
-          if (!e.target.checked && settings.default_page === "search") {
+          if (!checked && settings.default_page === "search") {
             updates.push({ fieldName: "default_page", newValue: "chat" });
           }
           updateSettingField(updates);
         }}
       />
 
-      <Checkbox
+      <CheckboxComponent
         label="Chat Page Enabled?"
         sublabel={`If set, then the "Chat" page will be accessible to all users 
-        and will show up as an option on the top navbar. If unset, then this 
-        page will not be available.`}
+   and will show up as an option on the top navbar. If unset, then this 
+   page will not be available.`}
         checked={settings.chat_page_enabled}
-        onChange={(e) => {
+        onChange={(checked) => {
           const updates: any[] = [
-            { fieldName: "chat_page_enabled", newValue: e.target.checked },
+            { fieldName: "chat_page_enabled", newValue: checked },
           ];
-          if (!e.target.checked && settings.default_page === "chat") {
+          if (!checked && settings.default_page === "chat") {
             updates.push({ fieldName: "default_page", newValue: "search" });
           }
           updateSettingField(updates);
@@ -237,12 +260,13 @@ export function SettingsForm() {
             ]);
         }}
       />
+
       {isEnterpriseEnabled && (
         <>
           <Title className="mb-4">Chat Settings</Title>
           <IntegerInput
             label="Chat Retention"
-            sublabel="Enter the maximum number of days you would like enMedD CHP to retain chat messages. Leaving this field empty will cause enMedD CHP to never delete chat messages."
+            sublabel="Enter the maximum number of days you would like Danswer to retain chat messages. Leaving this field empty will cause Danswer to never delete chat messages."
             value={chatRetention === "" ? null : Number(chatRetention)}
             onChange={(e) => {
               const numValue = parseInt(e.target.value, 10);

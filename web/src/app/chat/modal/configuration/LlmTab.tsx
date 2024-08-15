@@ -7,7 +7,15 @@ import { Text } from "@tremor/react";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { destructureValue, getFinalLLM, structureValue } from "@/lib/llm/utils";
 import { updateModelOverrideForChatSession } from "../../lib";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
+import { Card, CardContent } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function LlmTab({
   llmOverrideManager,
@@ -55,35 +63,46 @@ export function LlmTab({
   });
 
   return (
-    <div className="mb-4">
-      <label className="block text-sm font-medium mb-2">Choose Model</label>
-      <Text className="mb-1">
+    <div>
+      <label className="block text-sm font-semibold pb-2 text-dark-900">
+        Choose Model
+      </label>
+      <Text className="pb-1">
         Override the default model for the{" "}
-        <i className="font-medium">{currentAssistant.name}</i> assistant. The
+        <b className="font-medium">{currentAssistant.name}</b> assistant. The
         override will apply only for this chat session.
       </Text>
-      <Text className="mb-3">
+      <Text className="pb-5 pt-3">
         Default Model: <i className="font-medium">{defaultLlmName}</i>.
       </Text>
 
-      <div className="w-96">
-        <DefaultDropdown
-          options={llmOptions}
-          selected={structureValue(
-            llmOverride.name,
-            llmOverride.provider,
-            llmOverride.modelName
-          )}
-          onSelect={(value) => {
+      <div className="xl:w-96">
+        <Select
+          onValueChange={(value) => {
             setLlmOverride(destructureValue(value as string));
             if (chatSessionId) {
               updateModelOverrideForChatSession(chatSessionId, value as string);
             }
           }}
-        />
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select an option...">
+              {llmOverride.modelName}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="z-modal">
+            {llmOptions.map((option, index) => (
+              <SelectItem key={index} value={option.value}>
+                {option.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <label className="block text-sm font-medium mb-2 mt-4">Temperature</label>
+      <label className="block text-dark-900 text-sm font-semibold pb-2 pt-6">
+        Temperature
+      </label>
 
       <Text className="mb-8">
         Adjust the temperature of the LLM. Higher temperature will make the LLM
@@ -92,20 +111,13 @@ export function LlmTab({
       </Text>
 
       <div className="relative w-full">
-        <input
-          type="range"
-          onChange={(e) => handleTemperatureChange(parseFloat(e.target.value))}
-          className="
-            w-full 
-            p-2 
-            border 
-            border-border
-            rounded-md
-          "
-          min="0"
-          max="2"
-          step="0.01"
-          value={localTemperature}
+        <Slider
+          onValueChange={(value) => handleTemperatureChange(value[0])}
+          min={0}
+          max={2}
+          step={0.01}
+          value={[localTemperature]}
+          className="slider"
         />
         <div
           className="absolute text-sm"
@@ -115,7 +127,7 @@ export function LlmTab({
               Math.max((localTemperature || 0) * 50, 10),
               90
             )}%)`,
-            top: "-1.5rem",
+            top: "-2rem",
           }}
         >
           {localTemperature}

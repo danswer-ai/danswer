@@ -32,8 +32,7 @@ const ChatInputOption = ({
     <div
       className={`
         border 
-        border 
-        rounded-lg 
+        rounded-regular 
         flex 
         flex-col 
         bg-background
@@ -68,7 +67,7 @@ const ChatInputOption = ({
           hover:bg-hover
           hover:text-emphasis
           p-1.5
-          rounded-md
+          rounded-xs
         "
         onClick={handleClick}
         title={name}

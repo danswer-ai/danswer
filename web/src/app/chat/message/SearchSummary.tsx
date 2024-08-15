@@ -1,11 +1,12 @@
-import {
-  BasicClickable,
-  EmphasizedClickable,
-} from "@/components/BasicClickable";
+import { EmphasizedClickable } from "@/components/BasicClickable";
 import { HoverPopup } from "@/components/HoverPopup";
 import { Hoverable } from "@/components/Hoverable";
+import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { FiCheck, FiEdit2, FiSearch, FiX } from "react-icons/fi";
+import { Input } from "@/components/ui/input";
+import { X, Check, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 export function ShowHideDocsButton({
   messageId,
@@ -22,13 +23,13 @@ export function ShowHideDocsButton({
       onClick={() => handleShowRetrieved(messageId)}
     >
       {isCurrentlyShowingRetrieved ? (
-        <EmphasizedClickable>
+        <Button size="xs" variant="outline">
           <div className="w-24 text-xs">Hide Docs</div>
-        </EmphasizedClickable>
+        </Button>
       ) : (
-        <BasicClickable>
+        <Button size="xs" variant="outline">
           <div className="w-24 text-xs">Show Docs</div>
-        </BasicClickable>
+        </Button>
       )}
     </div>
   );
@@ -85,8 +86,15 @@ export function SearchSummary({
   }, [query]);
 
   const searchingForDisplay = (
-    <div className={`flex p-1 rounded ${isOverflowed && "cursor-default"}`}>
-      <FiSearch className="mr-2 my-auto" size={14} />
+    <div
+      className={`flex items-center py-1 rounded ${
+        isOverflowed && "cursor-default"
+      }`}
+    >
+      <Search
+        /* className="mr-2 my-auto" size={14} */ size={16}
+        className="min-w-4 min-h-4 mr-2"
+      />
       <div className="line-clamp-1 break-all px-0.5" ref={searchingForRef}>
         Searching for: <i>{finalQuery}</i>
       </div>
@@ -96,7 +104,7 @@ export function SearchSummary({
   const editInput = handleSearchQueryEdit ? (
     <div className="flex w-full mr-3">
       <div className="my-2 w-full">
-        <input
+        <Input
           ref={editQueryRef}
           value={finalQuery}
           onChange={(e) => setFinalQuery(e.target.value)}
@@ -115,12 +123,10 @@ export function SearchSummary({
               event.preventDefault();
             }
           }}
-          className="px-1 py-0.5 h-[28px] text-sm mr-2 w-full rounded-sm border border-border-strong"
         />
       </div>
       <div className="ml-2 my-auto flex">
         <Hoverable
-          icon={FiCheck}
           onClick={() => {
             if (!finalQuery) {
               setFinalQuery(query);
@@ -129,14 +135,17 @@ export function SearchSummary({
             }
             setIsEditing(false);
           }}
-        />
+        >
+          <Check size={16} />
+        </Hoverable>
         <Hoverable
-          icon={FiX}
           onClick={() => {
             setFinalQuery(query);
             setIsEditing(false);
           }}
-        />
+        >
+          <X size={16} />
+        </Hoverable>
       </div>
     </div>
   ) : null;
@@ -149,23 +158,26 @@ export function SearchSummary({
         <>
           <div className="text-sm my-2">
             {isOverflowed ? (
-              <HoverPopup
-                mainContent={searchingForDisplay}
-                popupContent={
-                  <div>
-                    <b>Full query:</b>{" "}
-                    <div className="mt-1 italic">{query}</div>
-                  </div>
-                }
-                direction="top"
-              />
+              <CustomTooltip trigger={searchingForDisplay} align="start">
+                <div className="w-full max-w-96 lg:max-w-screen-md max-h-40 overflow-auto">
+                  <b>Full query:</b>{" "}
+                  <div className="mt-1 italic w-full">{query}</div>
+                </div>
+              </CustomTooltip>
             ) : (
               searchingForDisplay
             )}
           </div>
           {handleSearchQueryEdit && (
-            <div className="my-auto">
-              <Hoverable icon={FiEdit2} onClick={() => setIsEditing(true)} />
+            <div className="my-auto mx-2">
+              <Button
+                variant="ghost"
+                size="xs"
+                className="!p-1.5 !px-[7px]"
+                onClick={() => setIsEditing(true)}
+              >
+                <Pencil size={16} />
+              </Button>
             </div>
           )}
         </>

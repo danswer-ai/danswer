@@ -1,6 +1,7 @@
 import { Modal } from "@/components/Modal";
-import { Button, Text, Callout } from "@tremor/react";
+import { Text, Callout } from "@tremor/react";
 import { EmbeddingModelDescriptor } from "./embeddingModels";
+import { Button } from "@/components/ui/button";
 
 export function ModelSelectionConfirmaion({
   selectedModel,
@@ -41,7 +42,7 @@ export function ModelSelectionConfirmaion({
       )}
 
       <div className="flex mt-8">
-        <Button className="mx-auto" color="green" onClick={onConfirm}>
+        <Button className="mx-auto" onClick={onConfirm}>
           Confirm
         </Button>
       </div>

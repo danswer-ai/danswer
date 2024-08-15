@@ -6,8 +6,9 @@ import { CustomLLMProviderUpdateForm } from "./CustomLLMProviderUpdateForm";
 import { useState } from "react";
 import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
 import { mutate } from "swr";
-import { Badge, Button } from "@tremor/react";
+import { Badge } from "@tremor/react";
 import isEqual from "lodash/isEqual";
+import { Button } from "@/components/ui/button";
 
 function LLMProviderUpdateModal({
   llmProviderDescriptor,
@@ -125,8 +126,7 @@ function LLMProviderDisplay({
 
         <div className="ml-auto">
           <Button
-            color={existingLlmProvider ? "green" : "blue"}
-            size="xs"
+            variant={existingLlmProvider ? "secondary" : "default"}
             onClick={() => setFormIsVisible(true)}
           >
             {existingLlmProvider ? "Edit" : "Set up"}
