@@ -832,6 +832,9 @@ export function ChatPage({
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
+      console.log("HOWDY");
+      console.log(currMessageHistory);
+      console.log(lastSuccessfulMessageId);
 
       const stack = new CurrentMessageFIFO();
       updateCurrentMessageFIFO(stack, {
@@ -1020,14 +1023,14 @@ export function ChatPage({
                 type: "user",
                 files: currentMessageFiles,
                 toolCalls: [],
-                parentMessageId: parentMessage?.messageId || null,
+                parentMessageId: error ? null : lastSuccessfulMessageId,
                 childrenMessageIds: [initialFetchDetails.assistant_message_id!],
                 latestChildMessageId: initialFetchDetails.assistant_message_id,
               },
               {
                 messageId: initialFetchDetails.assistant_message_id!,
                 message: answer,
-                type: "assistant",
+                type: error ? "error" : "assistant",
                 retrievalType,
                 query: finalMessage?.rephrased_query || query,
                 documents:
@@ -1035,7 +1038,7 @@ export function ChatPage({
                 citations: finalMessage?.citations || {},
                 files: finalMessage?.files || aiMessageImages || [],
                 toolCalls: finalMessage?.tool_calls || toolCalls,
-                parentMessageId: user_message_id,
+                parentMessageId: initialFetchDetails.user_message_id,
                 alternateAssistantID: alternativeAssistant?.id,
                 stackTrace: stackTrace,
               },
@@ -1048,7 +1051,8 @@ export function ChatPage({
       upsertToCompleteMessageMap({
         messages: [
           {
-            messageId: TEMP_USER_MESSAGE_ID,
+            messageId:
+              initialFetchDetails?.user_message_id || TEMP_USER_MESSAGE_ID,
             message: currMessage,
             type: "user",
             files: currentMessageFiles,
@@ -1056,12 +1060,15 @@ export function ChatPage({
             parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
           },
           {
-            messageId: TEMP_ASSISTANT_MESSAGE_ID,
+            messageId:
+              initialFetchDetails?.assistant_message_id ||
+              TEMP_ASSISTANT_MESSAGE_ID,
             message: errorMsg,
             type: "error",
             files: aiMessageImages || [],
             toolCalls: [],
-            parentMessageId: TEMP_USER_MESSAGE_ID,
+            parentMessageId:
+              initialFetchDetails?.user_message_id || TEMP_USER_MESSAGE_ID,
           },
         ],
         completeMessageMapOverride: completeMessageDetail.messageMap,
