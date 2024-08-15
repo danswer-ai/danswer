@@ -118,6 +118,8 @@ export function ChatPage({
 
   // chat session
   const existingChatIdRaw = searchParams.get("chatId");
+  const currentPersonaId = searchParams.get(SEARCH_PARAM_NAMES.PERSONA_ID);
+
   const existingChatSessionId = existingChatIdRaw
     ? parseInt(existingChatIdRaw)
     : null;
@@ -181,10 +183,19 @@ export function ChatPage({
     defaultTemperature
   );
 
-  const liveAssistant =
-    selectedAssistant || filteredAssistants[0] || availableAssistants[0];
+  const [alternativeAssistant, setAlternativeAssistant] =
+    useState<Persona | null>(null);
 
+  const liveAssistant =
+    alternativeAssistant ||
+    selectedAssistant ||
+    filteredAssistants[0] ||
+    availableAssistants[0];
   useEffect(() => {
+    if (!loadedIdSessionRef.current && !currentPersonaId) {
+      return;
+    }
+
     const personaDefault = getLLMProviderOverrideForPersona(
       liveAssistant,
       llmProviders
@@ -200,8 +211,6 @@ export function ChatPage({
   }, [liveAssistant]);
 
   // this is for "@"ing assistants
-  const [alternativeAssistant, setAlternativeAssistant] =
-    useState<Persona | null>(null);
 
   // this is used to track which assistant is being used to generate the current message
   // for example, this would come into play when:
