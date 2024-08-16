@@ -586,7 +586,19 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
   },
   zendesk: {
     description: "Configure Zendesk connector",
-    values: [],
+    values: [
+      {
+        type: "select",
+        query: "Select the what content this connector will index:",
+        label: "Content Type",
+        name: "content_type",
+        optional: true,
+        options: [
+          { name: "articles", value: "articles" },
+          { name: "tickets", value: "tickets" }
+        ],
+      }
+    ],
   },
   linear: {
     description: "Configure Dropbox connector",

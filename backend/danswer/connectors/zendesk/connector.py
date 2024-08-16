@@ -1,8 +1,10 @@
 from typing import Any
+import time
 
 import requests
 from retry import retry
 from zenpy import Zenpy  # type: ignore
+from zenpy.lib.api_objects import Ticket, Comment  # type: ignore
 from zenpy.lib.api_objects.help_centre_objects import Article  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -52,17 +54,21 @@ def _article_to_document(article: Article, content_tags: dict[str, str]) -> Docu
         metadata=metadata,
     )
 
-
 class ZendeskClientNotSetUpError(PermissionError):
     def __init__(self) -> None:
         super().__init__("Zendesk Client is not set up, was load_credentials called?")
 
 
 class ZendeskConnector(LoadConnector, PollConnector):
-    def __init__(self, batch_size: int = INDEX_BATCH_SIZE) -> None:
+    def __init__(
+        self, 
+        batch_size: int = INDEX_BATCH_SIZE, 
+        content_type: str = "articles",
+    ) -> None:
         self.batch_size = batch_size
         self.zendesk_client: Zenpy | None = None
         self.content_tags: dict[str, str] = {}
+        self.content_type = content_type
 
     @retry(tries=3, delay=2, backoff=2)
     def _set_content_tags(
@@ -122,12 +128,64 @@ class ZendeskConnector(LoadConnector, PollConnector):
     def load_from_state(self) -> GenerateDocumentsOutput:
         return self.poll_source(None, None)
 
+    def _ticket_to_document(self, ticket: Ticket) -> Document:
+        if self.zendesk_client is None:
+            raise ZendeskClientNotSetUpError()
+
+        requester = BasicExpertInfo(
+            display_name=ticket.requester.name,
+            email=ticket.requester.email
+        )
+        update_time = time_str_to_utc(ticket.updated_at)
+
+        metadata: dict[str, Union[str, list[str]]] = {
+            "status": ticket.status,
+            "priority": ticket.priority,
+            "tags": ticket.tags,
+            "ticket_type": ticket.type,
+            "subject": ticket.subject,
+        }
+
+        metadata = {k: v for k, v in metadata.items() if v}
+
+        # Fetch comments for the ticket
+        comments = self.zendesk_client.tickets.comments(ticket=ticket)
+
+        # Combine all comments into a single text
+        comments_text = "\n\n".join([
+            f"Comment by {comment.author.name} at {comment.created_at}:\n{comment.body}"
+            for comment in comments
+        ])
+
+        # Combine ticket description and comments
+        full_text = f"Ticket Description:\n{ticket.description}\n\nComments:\n{comments_text}"
+
+        return Document(
+            id=f"ticket:{ticket.id}",
+            sections=[
+                Section(link=ticket.url, text=full_text)
+            ],
+            source=DocumentSource.ZENDESK,
+            semantic_identifier=f"Ticket #{ticket.id}: {ticket.subject}",
+            doc_updated_at=update_time,
+            primary_owners=[requester],
+            metadata=metadata,
+        )
+
     def poll_source(
         self, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None
     ) -> GenerateDocumentsOutput:
         if self.zendesk_client is None:
             raise ZendeskClientNotSetUpError()
 
+        if self.content_type == "articles":
+            yield from self._poll_articles(start)
+        elif self.content_type == "tickets":
+            yield from self._poll_tickets(start)
+        else:
+            raise ValueError(f"Unsupported content_type: {self.content_type}")
+
+    def _poll_articles(self, start: SecondsSinceUnixEpoch | None) -> GenerateDocumentsOutput:
         articles = (
             self.zendesk_client.help_center.articles(cursor_pagination=True)
             if start is None
@@ -155,10 +213,49 @@ class ZendeskConnector(LoadConnector, PollConnector):
         if doc_batch:
             yield doc_batch
 
+    def _poll_tickets(self, start: SecondsSinceUnixEpoch | None) -> GenerateDocumentsOutput:
+        if self.zendesk_client is None:
+            raise ZendeskClientNotSetUpError()
+
+        # Get all tickets if the default start time is not provided
+        if start is None:
+            start = 0
+
+        try:
+            ticket_generator = self.zendesk_client.tickets.incremental(start_time=int(start))
+            
+            total_processed = 0
+            while True:
+                doc_batch = []
+                for _ in range(self.batch_size):
+                    try:
+                        ticket = next(ticket_generator)
+                        doc_batch.append(self._ticket_to_document(ticket))
+                        total_processed += 1
+                    except StopIteration:
+                        # No more tickets to process
+                        if doc_batch:
+                            print(f"Yielding final batch of {len(doc_batch)} tickets")
+                            yield doc_batch
+                        print(f"Finished processing. Total tickets processed: {total_processed}")
+                        return
+                    except Exception as e:
+                        print(f"Error processing ticket: {str(e)}")
+                
+                if doc_batch:
+                    print(f"Yielding batch of {len(doc_batch)} tickets")
+                    yield doc_batch
+                
+                print(f"Total tickets processed: {total_processed}")
+                time.sleep(5)  # 5-second delay between batches to rate-limit calling the Zendesk API
+
+        except Exception as e:
+            print(f"Error fetching tickets from Zendesk: {str(e)}")
+            raise
 
 if __name__ == "__main__":
     import os
-    import time
+    # import time
 
     connector = ZendeskConnector()
     connector.load_credentials(
