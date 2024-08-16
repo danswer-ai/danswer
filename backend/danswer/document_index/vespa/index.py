@@ -136,7 +136,6 @@ class VespaIndex(DocumentIndex):
         services = services_template.replace(DOCUMENT_REPLACEMENT_PAT, doc_lines)
         kv_store = get_dynamic_config_store()
 
-        # print("within ensure indices")
         needs_reindexing = False
         try:
             needs_reindexing = cast(bool, kv_store.load(KV_REINDEX_KEY))
@@ -166,9 +165,6 @@ class VespaIndex(DocumentIndex):
         ).replace(VESPA_DIM_REPLACEMENT_PAT, str(index_embedding_dim))
         schema = add_ngrams_to_schema(schema) if needs_reindexing else schema
         zip_dict[f"schemas/{schema_names[0]}.sd"] = schema.encode("utf-8")
-        # Save schema to JSON
-        # with open(f"{self.index_name}_schema.json", "w") as f:
-        #     f.write(schema)
 
         if self.secondary_index_name:
             upcoming_schema = schema_template.replace(
@@ -176,9 +172,6 @@ class VespaIndex(DocumentIndex):
             ).replace(VESPA_DIM_REPLACEMENT_PAT, str(secondary_index_embedding_dim))
             upcoming_schema = upcoming_schema
             zip_dict[f"schemas/{schema_names[1]}.sd"] = upcoming_schema.encode("utf-8")
-            # Save schema to JSON
-            # with open(f"{self.index_name}_schema2.txt", "w") as f:
-            #     f.write(upcoming_schema)
 
         zip_file = in_memory_zip_from_file_bytes(zip_dict)
 

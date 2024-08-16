@@ -299,7 +299,6 @@ export default function EmbeddingForm() {
                   selectedProvider == currentEmbeddingModel && !useDefault
                 }
                 onClick={() => {
-                  console.log(selectedProvider.model_name);
                   if (
                     selectedProvider.model_name.includes("e5") &&
                     displayPoorModelName
