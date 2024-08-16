@@ -15,6 +15,10 @@ from danswer.db.models import Document
 from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import DocumentSet__ConnectorCredentialPair
+from danswer.db.models import User
+from danswer.db.models import User__UserGroup
+from danswer.db.models import UserGroup
+from danswer.db.models import UserRole
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from danswer.server.features.document_set.models import DocumentSetUpdateRequest
 from danswer.utils.variable_functionality import fetch_versioned_implementation
@@ -344,6 +348,33 @@ def fetch_document_sets(
 def fetch_all_document_sets(db_session: Session) -> Sequence[DocumentSetDBModel]:
     """Used for Admin UI where they should have visibility into all document sets"""
     return db_session.scalars(select(DocumentSetDBModel)).all()
+
+
+def fetch_document_sets_for_curator(
+    user: User,
+    db_session: Session,
+) -> Sequence[DocumentSetDBModel]:
+    """Used for Curator UI where they should have visibility into all document sets for the groups they curate"""
+
+    public_stmt = select(DocumentSetDBModel).where(
+        DocumentSetDBModel.is_public == True  # noqa: E712
+    )
+    public_document_sets = db_session.scalars(public_stmt).all()
+
+    where_clause = User__UserGroup.user_id == user.id
+    if user.role == UserRole.CURATOR:
+        where_clause &= User__UserGroup.is_curator == True  # noqa: E712
+
+    curated_stmt = (
+        select(DocumentSetDBModel)
+        .join(UserGroup.document_sets)
+        .join(User__UserGroup, UserGroup.id == User__UserGroup.user_group_id)
+        .where(where_clause)
+        .distinct()
+    )
+    curated_document_sets = db_session.scalars(curated_stmt).all()
+
+    return public_document_sets + curated_document_sets
 
 
 def fetch_user_document_sets(

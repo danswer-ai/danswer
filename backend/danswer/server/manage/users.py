@@ -37,6 +37,7 @@ from danswer.server.manage.models import AllUsersResponse
 from danswer.server.manage.models import UserByEmail
 from danswer.server.manage.models import UserInfo
 from danswer.server.manage.models import UserRoleResponse
+from danswer.server.manage.models import UserRoleUpdateRequest
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
@@ -49,6 +50,40 @@ router = APIRouter()
 
 
 USERS_PAGE_SIZE = 10
+
+
+@router.patch("/manage/set-user-role")
+def set_user_role(
+    user_role_update_request: UserRoleUpdateRequest,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    user_to_promote = get_user_by_email(
+        email=user_role_update_request.user_email, db_session=db_session
+    )
+    if not user_to_promote:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_to_promote.role = user_role_update_request.new_role
+    db_session.add(user_to_promote)
+    db_session.commit()
+
+
+@router.patch("/manage/set-user-to-global-curator")
+def set_user_to_curator(
+    user_email: UserByEmail,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    user_to_promote = get_user_by_email(
+        email=user_email.user_email, db_session=db_session
+    )
+    if not user_to_promote:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_to_promote.role = UserRole.GLOBAL_CURATOR
+    db_session.add(user_to_promote)
+    db_session.commit()
 
 
 @router.patch("/manage/promote-user-to-admin")

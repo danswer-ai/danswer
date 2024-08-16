@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
@@ -372,7 +373,7 @@ def upload_files(
 @router.get("/admin/connector/indexing-status")
 def get_connector_indexing_status(
     secondary_index: bool = False,
-    _: User = Depends(current_admin_user),
+    _: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[ConnectorIndexingStatus]:
     indexing_statuses: list[ConnectorIndexingStatus] = []

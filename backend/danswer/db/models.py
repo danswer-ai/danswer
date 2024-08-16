@@ -1406,6 +1406,8 @@ class SamlAccount(Base):
 class User__UserGroup(Base):
     __tablename__ = "user__user_group"
 
+    is_curator: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
     user_group_id: Mapped[int] = mapped_column(
         ForeignKey("user_group.id"), primary_key=True
     )

@@ -7,6 +7,8 @@ from fastapi_users import schemas
 class UserRole(str, Enum):
     BASIC = "basic"
     ADMIN = "admin"
+    CURATOR = "curator"
+    GLOBAL_CURATOR = "global_curator"
 
 
 class UserStatus(str, Enum):
