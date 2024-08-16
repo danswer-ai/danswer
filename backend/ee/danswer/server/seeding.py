@@ -23,7 +23,6 @@ from ee.danswer.server.enterprise_settings.store import (
 )
 from ee.danswer.server.enterprise_settings.store import upload_logo
 
-
 logger = setup_logger()
 
 _SEED_CONFIG_ENV_VAR_NAME = "ENV_SEED_CONFIGURATION"
@@ -36,7 +35,8 @@ class SeedConfiguration(BaseModel):
     personas: list[CreatePersonaRequest] | None = None
     settings: Settings | None = None
     enterprise_settings: EnterpriseSettings | None = None
-    analytics_script: AnalyticsScriptUpload | None = None
+    analytics_script_key: str | None = None
+    analytics_script_path: str | None = None
 
 
 def _parse_env() -> SeedConfiguration | None:
@@ -119,10 +119,19 @@ def _seed_logo(db_session: Session, logo_path: str | None) -> None:
 
 
 def _seed_analytics_script(seed_config: SeedConfiguration) -> None:
-    if seed_config.analytics_script is not None:
+    if seed_config.analytics_script_path and seed_config.analytics_script_key:
         logger.info("Seeding analytics script")
         try:
-            store_analytics_script(seed_config.analytics_script)
+            with open(seed_config.analytics_script_path, "r") as file:
+                script_content = file.read()
+            analytics_script = AnalyticsScriptUpload(
+                script=script_content, secret_key=seed_config.analytics_script_key
+            )
+            store_analytics_script(analytics_script)
+        except FileNotFoundError:
+            logger.error(
+                f"Analytics script file not found: {seed_config.analytics_script_path}"
+            )
         except ValueError as e:
             logger.error(f"Failed to seed analytics script: {str(e)}")
 
@@ -133,7 +142,6 @@ def get_seed_config() -> SeedConfiguration | None:
 
 def seed_db() -> None:
     seed_config = _parse_env()
-
     if seed_config is None:
         logger.info("No seeding configuration file passed")
         return
