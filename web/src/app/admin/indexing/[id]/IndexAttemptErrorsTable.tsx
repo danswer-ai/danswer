@@ -1,24 +1,20 @@
 "use client";
 
+import { Modal } from "@/components/Modal";
+import { PageSelector } from "@/components/PageSelector";
+import { CheckmarkIcon, CopyIcon } from "@/components/icons/icons";
+import { localizeAndPrettify } from "@/lib/time";
 import {
   Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
   TableBody,
   TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
   Text,
-  Button,
-  Divider,
 } from "@tremor/react";
-import { IndexAttemptStatus } from "@/components/Status";
-import { IndexAttemptError } from "./types";
 import { useState } from "react";
-import { PageSelector } from "@/components/PageSelector";
-import { localizeAndPrettify } from "@/lib/time";
-import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
-import { Modal } from "@/components/Modal";
-import { CheckmarkIcon, CopyIcon } from "@/components/icons/icons";
+import { IndexAttemptError } from "./types";
 
 const NUM_IN_PAGE = 8;
 
