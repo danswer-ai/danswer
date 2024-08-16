@@ -97,7 +97,9 @@ class CreateChatMessageRequest(ChunkContext):
     # allows the caller to specify the exact search query they want to use
     # will disable Query Rewording if specified
     query_override: str | None = None
+    alternate_model: str | None = None  # Added optional string for alternate model
 
+    regenerate: bool | None = None
     # allows the caller to override the Persona / Prompt
     llm_override: LLMOverride | None = None
     prompt_override: PromptOverride | None = None
@@ -179,6 +181,7 @@ class ChatMessageDetail(BaseModel):
     message_type: MessageType
     time_sent: datetime
     alternate_assistant_id: str | None
+    alternate_model: str | None
     # Dict mapping citation number to db_doc_id
     chat_session_id: int | None = None
     citations: dict[int, int] | None
