@@ -122,7 +122,7 @@ export const CustomTooltip = ({
         createPortal(
           <div
             className={`fixed z-[1000] ${citation ? "max-w-[350px]" : "w-40"} ${
-              large ?  medium ? "w-88" : "w-96" : line && "max-w-64 w-auto"
+              large ? (medium ? "w-88" : "w-96") : line && "max-w-64 w-auto"
             } 
             transform -translate-x-1/2 text-sm 
             ${
