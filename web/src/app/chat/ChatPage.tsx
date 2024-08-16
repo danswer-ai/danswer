@@ -80,6 +80,8 @@ import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { LuChevronsLeftRight } from "react-icons/lu";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1103,7 +1105,6 @@ export function ChatPage({
       setEditingRetrievalEnabled(false);
     }
   };
-  console.log(hasPerformedInitialScroll);
 
   const [openSidebar, setOpenSidebar] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
@@ -1240,13 +1241,51 @@ export function ChatPage({
                       the top of the chat page. Only used in the EE version of the app. */}
                       <ChatBanner />
 
+                      {/* {messageHistory.length === 0 &&
+                        !isFetchingChatMessages &&
+                        !isStreaming && (
+                          <ChatIntro
+                            availableSources={finalAvailableSources}
+                            livePersona={livePersona}
+                            currentPersona={currentPersona}
+                            selectedPersona={selectedPersona}
+                            onSubmit={onSubmit({
+                              messageOverride: starterMessage.message,
+                            })}
+                          />
+                        )} */}
                       {messageHistory.length === 0 &&
                         !isFetchingChatMessages &&
                         !isStreaming && (
                           <ChatIntro
                             availableSources={finalAvailableSources}
-                            selectedPersona={livePersona}
-                          />
+                            livePersona={livePersona}
+                          >
+                            {currentPersona &&
+                              currentPersona.starter_messages &&
+                              currentPersona.starter_messages.length > 0 &&
+                              selectedPersona &&
+                              messageHistory.length === 0 &&
+                              !isFetchingChatMessages && (
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-10">
+                                  {currentPersona.starter_messages.map(
+                                    (starterMessage, i) => (
+                                      <div key={i} className="w-full">
+                                        <StarterMessage
+                                          starterMessage={starterMessage}
+                                          onClick={() =>
+                                            onSubmit({
+                                              messageOverride:
+                                                starterMessage.message,
+                                            })
+                                          }
+                                        />
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              )}
+                          </ChatIntro>
                         )}
 
                       <div
@@ -1496,7 +1535,7 @@ export function ChatPage({
 
                         <div ref={endDivRef}></div>
 
-                        {currentPersona &&
+                        {/* {currentPersona &&
                           currentPersona.starter_messages &&
                           currentPersona.starter_messages.length > 0 &&
                           selectedPersona &&
@@ -1533,7 +1572,7 @@ export function ChatPage({
                                 )
                               )}
                             </div>
-                          )}
+                          )} */}
                         <div ref={endDivRef} />
                       </div>
                     </div>

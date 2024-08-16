@@ -275,7 +275,7 @@ export const AIMessage = ({
                         <CodeBlock {...props} content={content as string} />
                       ),
                       p: ({ node, ...props }) => (
-                        <p {...props} className="text-default" />
+                        <p {...props} className="text-default mt-2.5" />
                       ),
                     }}
                     remarkPlugins={[remarkGfm]}
@@ -557,7 +557,7 @@ export const HumanMessage = ({
                     isHovered &&
                     !isEditing &&
                     (!files || files.length === 0) && (
-                      <div className="bg-hover absolute -top-8 right-0 rounded">
+                      <div className="bg-hover absolute -top-11 right-0 rounded">
                         <Button
                           variant="ghost"
                           size="xs"
