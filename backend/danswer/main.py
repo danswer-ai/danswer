@@ -71,6 +71,7 @@ from danswer.server.documents.cc_pair import router as cc_pair_router
 from danswer.server.documents.connector import router as connector_router
 from danswer.server.documents.credential import router as credential_router
 from danswer.server.documents.document import router as document_router
+from danswer.server.documents.indexing import router as indexing_router
 from danswer.server.features.document_set.api import router as document_set_router
 from danswer.server.features.folder.api import router as folder_router
 from danswer.server.features.input_prompt.api import (
@@ -388,6 +389,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(
         application, token_rate_limit_settings_router
     )
+    include_router_with_global_prefix_prepended(application, indexing_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step

@@ -6,12 +6,12 @@ class IndexingStatus(str, PyEnum):
     IN_PROGRESS = "in_progress"
     SUCCESS = "success"
     FAILED = "failed"
-    PARTIAL_SUCCESS = "partial_success"
+    COMPLETED_WITH_ERRORS = "completed_with_errors"
 
     def is_terminal(self) -> bool:
         terminal_states = {
             IndexingStatus.SUCCESS,
-            IndexingStatus.PARTIAL_SUCCESS,
+            IndexingStatus.COMPLETED_WITH_ERRORS,
             IndexingStatus.FAILED,
         }
         return self in terminal_states

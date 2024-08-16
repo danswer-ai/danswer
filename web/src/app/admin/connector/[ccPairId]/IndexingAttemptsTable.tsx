@@ -18,7 +18,8 @@ import { PageSelector } from "@/components/PageSelector";
 import { localizeAndPrettify } from "@/lib/time";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
 import { Modal } from "@/components/Modal";
-import { CheckmarkIcon, CopyIcon } from "@/components/icons/icons";
+import { CheckmarkIcon, CopyIcon, SearchIcon } from "@/components/icons/icons";
+import Link from "next/link";
 
 const NUM_IN_PAGE = 8;
 
@@ -82,7 +83,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
             <TableHeaderCell>Status</TableHeaderCell>
             <TableHeaderCell>New Doc Cnt</TableHeaderCell>
             <TableHeaderCell>Total Doc Cnt</TableHeaderCell>
-            <TableHeaderCell>Error Msg</TableHeaderCell>
+            <TableHeaderCell>Error Message</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -125,9 +126,24 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                   <TableCell>{indexAttempt.total_docs_indexed}</TableCell>
                   <TableCell>
                     <div>
-                      <Text className="flex flex-wrap whitespace-normal">
-                        {indexAttempt.error_msg || "-"}
-                      </Text>
+                      {indexAttempt.status === "completed_with_errors" && (
+                        <Link
+                          className="cursor-pointer my-auto"
+                          href={`/admin/indexing/${indexAttempt.id}`}
+                        >
+                          <Text className="flex flex-wrap text-link whitespace-normal">
+                            <SearchIcon />
+                            &nbsp;View Errors
+                          </Text>
+                        </Link>
+                      )}
+
+                      {indexAttempt.status !== "completed_with_errors" && (
+                        <Text className="flex flex-wrap whitespace-normal">
+                          {indexAttempt.error_msg || "-"}
+                        </Text>
+                      )}
+
                       {indexAttempt.full_exception_trace && (
                         <div
                           onClick={() => {

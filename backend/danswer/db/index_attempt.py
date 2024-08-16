@@ -11,6 +11,8 @@ from sqlalchemy import update
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
 
+from danswer.connectors.models import Document
+from danswer.connectors.models import DocumentErrorSummary
 from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexAttemptError
@@ -123,7 +125,7 @@ def mark_attempt_partially_succeeded(
     index_attempt: IndexAttempt,
     db_session: Session,
 ) -> None:
-    index_attempt.status = IndexingStatus.PARTIAL_SUCCESS
+    index_attempt.status = IndexingStatus.COMPLETED_WITH_ERRORS
     db_session.add(index_attempt)
     db_session.commit()
 
@@ -416,19 +418,36 @@ def count_unique_cc_pairs_with_successful_index_attempts(
 def create_index_attempt_error(
     index_attempt_id: int | None,
     batch: int | None,
-    document_ids: list[str],
+    docs: list[Document],
     exception_msg: str,
-    exception_trace: str,
+    exception_traceback: str,
     db_session: Session,
 ) -> int:
+    doc_summaries = []
+    for doc in docs:
+        doc_summary = DocumentErrorSummary.from_document(doc)
+        doc_summaries.append(doc_summary.to_dict())
+
     new_error = IndexAttemptError(
         index_attempt_id=index_attempt_id,
         batch=batch,
-        errors=document_ids,
+        doc_summaries=doc_summaries,
         error_msg=exception_msg,
-        full_exception_trace=exception_trace,
+        traceback=exception_traceback,
     )
     db_session.add(new_error)
     db_session.commit()
 
     return new_error.id
+
+
+def get_index_attempt_errors(
+    index_attempt_id: int,
+    db_session: Session,
+) -> list[IndexAttemptError]:
+    stmt = select(IndexAttemptError).where(
+        IndexAttemptError.index_attempt_id == index_attempt_id
+    )
+
+    errors = db_session.scalars(stmt)
+    return list(errors.all())

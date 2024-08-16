@@ -287,6 +287,9 @@ INDEXING_SIZE_WARNING_THRESHOLD = int(
     os.environ.get("INDEXING_SIZE_WARNING_THRESHOLD", 100 * 1024 * 1024)
 )
 
+# During an indexing attempt, limits the number of exceptions logged
+INDEXING_EXCEPTION_LOG_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LOG_LIMIT", 10))
+
 #####
 # Miscellaneous
 #####

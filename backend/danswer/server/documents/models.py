@@ -6,12 +6,14 @@ from pydantic import BaseModel
 
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.models import DocumentErrorSummary
 from danswer.connectors.models import InputType
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
 from danswer.db.models import IndexAttempt
+from danswer.db.models import IndexAttemptError as DbIndexAttemptError
 from danswer.db.models import IndexingStatus
 from danswer.db.models import TaskStatus
 from danswer.server.utils import mask_credential_dict
@@ -144,6 +146,31 @@ class IndexAttemptSnapshot(BaseModel):
                 else None
             ),
             time_updated=index_attempt.time_updated.isoformat(),
+        )
+
+
+class IndexAttemptError(BaseModel):
+    id: int
+    index_attempt_id: int | None
+    batch_number: int | None
+    doc_summaries: list[DocumentErrorSummary]
+    error_msg: str | None
+    traceback: str | None
+    time_created: str
+
+    @classmethod
+    def from_db_model(cls, error: DbIndexAttemptError) -> "IndexAttemptError":
+        doc_summaries = [
+            DocumentErrorSummary.from_dict(summary) for summary in error.doc_summaries
+        ]
+        return IndexAttemptError(
+            id=error.id,
+            index_attempt_id=error.index_attempt_id,
+            batch_number=error.batch,
+            doc_summaries=doc_summaries,
+            error_msg=error.error_msg,
+            traceback=error.traceback,
+            time_created=error.time_created.isoformat(),
         )
 
 

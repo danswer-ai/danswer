@@ -22,9 +22,13 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("index_attempt_id", sa.Integer(), nullable=True),
         sa.Column("batch", sa.Integer(), nullable=True),
-        sa.Column("errors", postgresql.ARRAY(sa.String()), nullable=False),
+        sa.Column(
+            "doc_summaries",
+            postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+        ),
         sa.Column("error_msg", sa.Text(), nullable=True),
-        sa.Column("full_exception_trace", sa.Text(), nullable=True),
+        sa.Column("traceback", sa.Text(), nullable=True),
         sa.Column(
             "time_created",
             sa.DateTime(timezone=True),

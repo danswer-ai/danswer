@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
 from danswer.configs.app_configs import ENABLE_MULTIPASS_INDEXING
+from danswer.configs.app_configs import INDEXING_EXCEPTION_LOG_LIMIT
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
@@ -146,17 +147,14 @@ def index_doc_batch_with_handler(
             ignore_time_skip=ignore_time_skip,
         )
     except Exception as e:
-        INDEX_ATTEMPT_EXCEPTION_LOG_LIMIT = 2
-
-        if index_attempt_metadata.num_exceptions < INDEX_ATTEMPT_EXCEPTION_LOG_LIMIT:
-            doc_ids = [doc.id for doc in document_batch]
+        if index_attempt_metadata.num_exceptions < INDEXING_EXCEPTION_LOG_LIMIT:
             trace = traceback.format_exc()
             create_index_attempt_error(
                 attempt_id,
                 batch=index_attempt_metadata.batch_num,
-                document_ids=doc_ids,
+                docs=document_batch,
                 exception_msg=str(e),
-                exception_trace=trace,
+                exception_traceback=trace,
                 db_session=db_session,
             )
             logger.exception(
@@ -164,9 +162,10 @@ def index_doc_batch_with_handler(
             )
 
         index_attempt_metadata.num_exceptions += 1
-        if index_attempt_metadata.num_exceptions >= INDEX_ATTEMPT_EXCEPTION_LOG_LIMIT:
+        if index_attempt_metadata.num_exceptions >= INDEXING_EXCEPTION_LOG_LIMIT:
             logger.info(
-                f"Maximum number of exception logs for this index attempt ({INDEX_ATTEMPT_EXCEPTION_LOG_LIMIT}) has been reached."
+                f"Maximum number of exception logs for this index attempt "
+                f"({INDEXING_EXCEPTION_LOG_LIMIT}) has been reached."
             )
 
     return r

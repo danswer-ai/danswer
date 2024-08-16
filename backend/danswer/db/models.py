@@ -695,9 +695,9 @@ class IndexAttemptError(Base):
     # The index of the batch where the error occurred (if looping thru batches)
     # Just informational.
     batch: Mapped[int | None] = mapped_column(Integer, default=None)
-    errors: Mapped[list[str]] = mapped_column(postgresql.ARRAY(String))
+    doc_summaries: Mapped[list[Any]] = mapped_column(postgresql.JSONB())
     error_msg: Mapped[str | None] = mapped_column(Text, default=None)
-    full_exception_trace: Mapped[str | None] = mapped_column(Text, default=None)
+    traceback: Mapped[str | None] = mapped_column(Text, default=None)
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
