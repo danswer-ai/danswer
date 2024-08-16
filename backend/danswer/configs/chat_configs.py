@@ -45,6 +45,9 @@ QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 60 seconds
 # Weighting factor between Vector and Keyword Search, 1 for completely vector search
 HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.5)))
+HYBRID_ALPHA_KEYWORD = max(
+    0, min(1, float(os.environ.get("HYBRID_ALPHA_KEYWORD") or 0.4))
+)
 # Weighting factor between Title and Content of documents during search, 1 for completely
 # Title based. Default heavily favors Content because Title is also included at the top of
 # Content. This is to avoid cases where the Content is very relevant but it may not be clear

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
 from typing import BinaryIO
+from typing import cast
 
 import httpx
 import requests
@@ -91,10 +92,17 @@ def _create_document_xml_lines(doc_names: list[str | None]) -> str:
     return "\n".join(doc_lines)
 
 
-def remove_ngrams_from_schema(schema_content: str) -> str:
-    # Remove the match blocks containing gram and gram-size
+def add_ngrams_to_schema(schema_content: str) -> str:
+    # Add the match blocks containing gram and gram-size to title and content fields
     schema_content = re.sub(
-        r"match\s*{\s*gram\s*gram-size:\s*3\s*}", "", schema_content
+        r"(field title type string \{[^}]*indexing: summary \| index \| attribute)",
+        r"\1\n            match {\n                gram\n                gram-size: 3\n            }",
+        schema_content,
+    )
+    schema_content = re.sub(
+        r"(field content type string \{[^}]*indexing: summary \| index)",
+        r"\1\n            match {\n                gram\n                gram-size: 3\n            }",
+        schema_content,
     )
     return schema_content
 
@@ -131,8 +139,7 @@ class VespaIndex(DocumentIndex):
         # print("within ensure indices")
         needs_reindexing = False
         try:
-            needs_reindexing = kv_store.load(KV_REINDEX_KEY)
-            # print(needs_reindexing)
+            needs_reindexing = cast(bool, kv_store.load(KV_REINDEX_KEY))
         except Exception:
             logger.debug("Could not load the reindexing flag. Using ngrams")
 
@@ -157,7 +164,7 @@ class VespaIndex(DocumentIndex):
         schema = schema_template.replace(
             DANSWER_CHUNK_REPLACEMENT_PAT, self.index_name
         ).replace(VESPA_DIM_REPLACEMENT_PAT, str(index_embedding_dim))
-        schema = schema if needs_reindexing else remove_ngrams_from_schema(schema)
+        schema = add_ngrams_to_schema(schema) if needs_reindexing else schema
         zip_dict[f"schemas/{schema_names[0]}.sd"] = schema.encode("utf-8")
         # Save schema to JSON
         # with open(f"{self.index_name}_schema.json", "w") as f:
@@ -167,7 +174,7 @@ class VespaIndex(DocumentIndex):
             upcoming_schema = schema_template.replace(
                 DANSWER_CHUNK_REPLACEMENT_PAT, self.secondary_index_name
             ).replace(VESPA_DIM_REPLACEMENT_PAT, str(secondary_index_embedding_dim))
-            upcoming_schema = remove_ngrams_from_schema(upcoming_schema)
+            upcoming_schema = upcoming_schema
             zip_dict[f"schemas/{schema_names[1]}.sd"] = upcoming_schema.encode("utf-8")
             # Save schema to JSON
             # with open(f"{self.index_name}_schema2.txt", "w") as f:
