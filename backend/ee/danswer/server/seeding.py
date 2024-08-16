@@ -35,7 +35,7 @@ class SeedConfiguration(BaseModel):
     personas: list[CreatePersonaRequest] | None = None
     settings: Settings | None = None
     enterprise_settings: EnterpriseSettings | None = None
-    analytics_script_key: str | None = None
+    # Use existing `CUSTOM_ANALYTICS_SECRET_KEY` for reference
     analytics_script_path: str | None = None
 
 
@@ -119,13 +119,14 @@ def _seed_logo(db_session: Session, logo_path: str | None) -> None:
 
 
 def _seed_analytics_script(seed_config: SeedConfiguration) -> None:
-    if seed_config.analytics_script_path and seed_config.analytics_script_key:
+    custom_analytics_secret_key = os.environ.get("CUSTOM_ANALYTICS_SECRET_KEY")
+    if seed_config.analytics_script_path and custom_analytics_secret_key:
         logger.info("Seeding analytics script")
         try:
             with open(seed_config.analytics_script_path, "r") as file:
                 script_content = file.read()
             analytics_script = AnalyticsScriptUpload(
-                script=script_content, secret_key=seed_config.analytics_script_key
+                script=script_content, secret_key=custom_analytics_secret_key
             )
             store_analytics_script(analytics_script)
         except FileNotFoundError:
