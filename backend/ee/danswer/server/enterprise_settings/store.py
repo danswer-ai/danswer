@@ -55,8 +55,6 @@ def store_analytics_script(analytics_script_upload: AnalyticsScriptUpload) -> No
         not _CUSTOM_ANALYTICS_SECRET_KEY
         or analytics_script_upload.secret_key != _CUSTOM_ANALYTICS_SECRET_KEY
     ):
-        print(_CUSTOM_ANALYTICS_SECRET_KEY)
-        print(analytics_script_upload.secret_key)
         raise ValueError("Invalid secret key")
 
     get_dynamic_config_store().store(
