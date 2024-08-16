@@ -4,7 +4,7 @@ import { useState, useRef, useContext } from "react";
 import { FiLogOut } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User } from "@/lib/types";
+import { User, UserRole } from "@/lib/types";
 import { checkUserIsNoAuthUser, logout } from "@/lib/user";
 import { Popover } from "./popover/Popover";
 import { LOGOUT_DISABLED } from "@/lib/constants";
@@ -42,7 +42,11 @@ export function UserDropdown({
     });
   };
 
-  const showAdminPanel = !user || user.role === "admin";
+  const showAdminPanel =
+    !user ||
+    user.role === UserRole.ADMIN ||
+    user.role === UserRole.CURATOR ||
+    user.role === UserRole.GLOBAL_CURATOR;
   const showLogout =
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
 

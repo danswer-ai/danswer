@@ -1,4 +1,4 @@
-import { type User, UserStatus } from "@/lib/types";
+import { type User, UserStatus, UserRole } from "@/lib/types";
 import CenteredPageSelector from "./CenteredPageSelector";
 import { type PageSelectorProps } from "@/components/PageSelector";
 import { HidableSection } from "@/app/admin/assistants/HidableSection";
@@ -13,7 +13,11 @@ import {
   TableBody,
   TableCell,
   Button,
+  Select,
+  SelectItem,
 } from "@tremor/react";
+import { GenericConfirmModal } from "@/components/modals/GenericConfirmModal";
+import { useState } from "react";
 
 interface Props {
   users: Array<User>;
@@ -21,33 +25,73 @@ interface Props {
   mutate: () => void;
 }
 
-const PromoterButton = ({
+const UserRoleDropdown = ({
   user,
-  promote,
   onSuccess,
   onError,
 }: {
   user: User;
-  promote: boolean;
   onSuccess: () => void;
   onError: (message: string) => void;
 }) => {
-  const { trigger, isMutating } = useSWRMutation(
-    promote
-      ? "/api/manage/promote-user-to-admin"
-      : "/api/manage/demote-admin-to-basic",
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingRole, setPendingRole] = useState<string | null>(null);
+
+  const { trigger: setUserRole, isMutating: isSettingRole } = useSWRMutation(
+    "/api/manage/set-user-role",
     userMutationFetcher,
     { onSuccess, onError }
   );
+
+  const handleChange = (value: string) => {
+    if (value === user.role) return;
+    if (
+      user.role === UserRole.CURATOR ||
+      user.role === UserRole.GLOBAL_CURATOR
+    ) {
+      setShowConfirmModal(true);
+      setPendingRole(value);
+    } else {
+      setUserRole({
+        user_email: user.email,
+        new_role: value,
+      });
+    }
+  };
+
+  const handleConfirm = () => {
+    if (pendingRole) {
+      setUserRole({
+        user_email: user.email,
+        new_role: pendingRole,
+      });
+    }
+    setShowConfirmModal(false);
+    setPendingRole(null);
+  };
+
   return (
-    <Button
-      className="w-min"
-      onClick={() => trigger({ user_email: user.email })}
-      disabled={isMutating}
-      size="xs"
-    >
-      {promote ? "Promote" : "Demote"} to {promote ? "Admin" : "Basic"} User
-    </Button>
+    <>
+      <Select
+        value={user.role}
+        onValueChange={handleChange}
+        disabled={isSettingRole}
+        className="w-40 mx-auto"
+      >
+        <SelectItem value={UserRole.BASIC}>Basic</SelectItem>
+        <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+        <SelectItem value={UserRole.GLOBAL_CURATOR}>Global Curator</SelectItem>
+      </Select>
+      {showConfirmModal && (
+        <GenericConfirmModal
+          title="Change Curator Role"
+          message="Warning: Switching roles from curator will remove their status as curator from all groups they curate"
+          confirmText={`Switch Role to ${pendingRole ?? "new role"}`}
+          onClose={() => setShowConfirmModal(false)}
+          onConfirm={handleConfirm}
+        />
+      )}
+    </>
   );
 };
 
@@ -140,8 +184,8 @@ const SignedUpUserTable = ({
           <TableHead>
             <TableRow>
               <TableHeaderCell>Email</TableHeaderCell>
-              <TableHeaderCell>Role</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell className="text-center">Role</TableHeaderCell>
+              <TableHeaderCell className="text-center">Status</TableHeaderCell>
               <TableHeaderCell>
                 <div className="flex">
                   <div className="ml-auto">Actions</div>
@@ -154,19 +198,17 @@ const SignedUpUserTable = ({
               <TableRow key={user.id}>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <i>{user.role === "admin" ? "Admin" : "User"}</i>
+                  <UserRoleDropdown
+                    user={user}
+                    onSuccess={onPromotionSuccess}
+                    onError={onPromotionError}
+                  />
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-center">
                   <i>{user.status === "live" ? "Active" : "Inactive"}</i>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col items-end gap-y-2">
-                    <PromoterButton
-                      user={user}
-                      promote={user.role !== "admin"}
-                      onSuccess={onPromotionSuccess}
-                      onError={onPromotionError}
-                    />
                     <DeactivaterButton
                       user={user}
                       deactivate={user.status === UserStatus.live}

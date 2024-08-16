@@ -8,7 +8,6 @@ import {
   getChatRetentionInfo,
   renameChatSession,
 } from "../lib";
-import { DeleteChatModal } from "../modal/DeleteChatModal";
 import { BasicSelectable } from "@/components/BasicClickable";
 import Link from "next/link";
 import {
