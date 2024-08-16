@@ -30,9 +30,6 @@ export default function FunctionalHeader({
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
   toggleSidebar?: () => void;
 }) {
-  const combinedSettings = useContext(SettingsContext);
-  const enterpriseSettings = combinedSettings?.enterpriseSettings;
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
@@ -69,7 +66,7 @@ export default function FunctionalHeader({
   };
   return (
     <div className="pb-6 left-0 sticky top-0 z-20 w-full relative flex">
-      <div className="mt-2 mx-2.5 text-text-700 relative flex w-full">
+      <div className="mt-2 mx-2.5 cursor-pointer text-text-700 relative flex w-full">
         <LogoType
           assistantId={currentChatSession?.persona_id}
           page={page}

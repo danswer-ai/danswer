@@ -1,10 +1,12 @@
 "use client";
+import ReactMarkdown from "react-markdown";
 
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 import {
   BackendChatSession,
   BackendMessage,
   ChatFileType,
+  ChatSession,
   ChatSessionSharedStatus,
   DocumentsResponse,
   FileDescriptor,
@@ -26,6 +28,7 @@ import {
   buildLatestMessageChain,
   checkAnyAssistantHasSearch,
   createChatSession,
+  deleteChatSession,
   getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
   getLastSuccessfulMessageId,
@@ -79,6 +82,10 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
+import { DeleteChatModal } from "./modal/DeleteChatModal";
+import remarkGfm from "remark-gfm";
+import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
+import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -112,6 +119,8 @@ export function ChatPage({
 
   // chat session
   const existingChatIdRaw = searchParams.get("chatId");
+  const currentPersonaId = searchParams.get(SEARCH_PARAM_NAMES.PERSONA_ID);
+
   const existingChatSessionId = existingChatIdRaw
     ? parseInt(existingChatIdRaw)
     : null;
@@ -175,10 +184,19 @@ export function ChatPage({
     defaultTemperature
   );
 
-  const liveAssistant =
-    selectedAssistant || filteredAssistants[0] || availableAssistants[0];
+  const [alternativeAssistant, setAlternativeAssistant] =
+    useState<Persona | null>(null);
 
+  const liveAssistant =
+    alternativeAssistant ||
+    selectedAssistant ||
+    filteredAssistants[0] ||
+    availableAssistants[0];
   useEffect(() => {
+    if (!loadedIdSessionRef.current && !currentPersonaId) {
+      return;
+    }
+
     const personaDefault = getLLMProviderOverrideForPersona(
       liveAssistant,
       llmProviders
@@ -194,8 +212,6 @@ export function ChatPage({
   }, [liveAssistant]);
 
   // this is for "@"ing assistants
-  const [alternativeAssistant, setAlternativeAssistant] =
-    useState<Persona | null>(null);
 
   // this is used to track which assistant is being used to generate the current message
   // for example, this would come into play when:
@@ -286,7 +302,7 @@ export function ChatPage({
         }
         return;
       }
-
+      clearSelectedDocuments();
       setIsFetchingChatMessages(true);
       const response = await fetch(
         `/api/chat/get-chat-session/${existingChatSessionId}`
@@ -810,6 +826,8 @@ export function ChatPage({
     let documents: DanswerDocument[] = selectedDocuments;
     let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
+    let stackTrace: string | null = null;
+
     let finalMessage: BackendMessage | null = null;
     let toolCalls: ToolCallMetadata[] = [];
 
@@ -881,6 +899,7 @@ export function ChatPage({
 
         if (!stack.isEmpty()) {
           const packet = stack.nextPacket();
+          console.log(packet);
           if (packet) {
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
@@ -912,6 +931,7 @@ export function ChatPage({
               );
             } else if (Object.hasOwn(packet, "error")) {
               error = (packet as StreamingError).error;
+              stackTrace = (packet as StreamingError).stack_trace;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
             }
@@ -944,6 +964,7 @@ export function ChatPage({
                 toolCalls: finalMessage?.tool_calls || toolCalls,
                 parentMessageId: newUserMessageId,
                 alternateAssistantID: alternativeAssistant?.id,
+                stackTrace: stackTrace,
               },
             ]);
           }
@@ -1107,6 +1128,7 @@ export function ChatPage({
   // settings are passed in via Context and therefore aren't
   // available in server-side components
   const settings = useContext(SettingsContext);
+  const enterpriseSettings = settings?.enterpriseSettings;
   if (settings?.settings?.chat_page_enabled === false) {
     router.push("/search");
   }
@@ -1165,6 +1187,9 @@ export function ChatPage({
       liveAssistant
     );
   });
+  const [stackTraceModalContent, setStackTraceModalContent] = useState<
+    string | null
+  >(null);
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
   const [settingsToggled, setSettingsToggled] = useState(false);
@@ -1188,7 +1213,17 @@ export function ChatPage({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [router]);
+  const [sharedChatSession, setSharedChatSession] =
+    useState<ChatSession | null>();
+  const [deletingChatSession, setDeletingChatSession] =
+    useState<ChatSession | null>();
 
+  const showDeleteModal = (chatSession: ChatSession) => {
+    setDeletingChatSession(chatSession);
+  };
+  const showShareModal = (chatSession: ChatSession) => {
+    setSharedChatSession(chatSession);
+  };
   const [documentSelection, setDocumentSelection] = useState(false);
   const toggleDocumentSelectionAspects = () => {
     setDocumentSelection((documentSelection) => !documentSelection);
@@ -1229,11 +1264,36 @@ export function ChatPage({
           onClose={() => setSettingsToggled(false)}
         />
       )}
-      {sharingModalVisible && chatSessionIdRef.current !== null && (
+
+      {deletingChatSession && (
+        <DeleteChatModal
+          onClose={() => setDeletingChatSession(null)}
+          onSubmit={async () => {
+            const response = await deleteChatSession(deletingChatSession.id);
+            if (response.ok) {
+              setDeletingChatSession(null);
+              // go back to the main page
+              router.push("/chat");
+            } else {
+              alert("Failed to delete chat session");
+            }
+          }}
+          chatSessionName={deletingChatSession.name}
+        />
+      )}
+
+      {stackTraceModalContent && (
+        <ExceptionTraceModal
+          onOutsideClick={() => setStackTraceModalContent(null)}
+          exceptionTrace={stackTraceModalContent}
+        />
+      )}
+
+      {sharedChatSession && (
         <ShareChatSessionModal
-          chatSessionId={chatSessionIdRef.current}
-          existingSharedStatus={chatSessionSharedStatus}
-          onClose={() => setSharingModalVisible(false)}
+          chatSessionId={sharedChatSession.id}
+          existingSharedStatus={sharedChatSession.shared_status}
+          onClose={() => setSharedChatSession(null)}
           onShare={(shared) =>
             setChatSessionSharedStatus(
               shared
@@ -1241,6 +1301,13 @@ export function ChatPage({
                 : ChatSessionSharedStatus.Private
             )
           }
+        />
+      )}
+      {sharingModalVisible && chatSessionIdRef.current !== null && (
+        <ShareChatSessionModal
+          chatSessionId={chatSessionIdRef.current}
+          existingSharedStatus={chatSessionSharedStatus}
+          onClose={() => setSharingModalVisible(false)}
         />
       )}
       <div className="fixed inset-0 flex flex-col text-default">
@@ -1277,6 +1344,8 @@ export function ChatPage({
                   folders={folders}
                   openedFolders={openedFolders}
                   removeToggle={removeToggle}
+                  showShareModal={showShareModal}
+                  showDeleteModal={showDeleteModal}
                 />
               </div>
             </div>
@@ -1571,6 +1640,18 @@ export function ChatPage({
                                       content={
                                         <p className="text-red-700 text-sm my-auto">
                                           {message.message}
+                                          {message.stackTrace && (
+                                            <span
+                                              onClick={() =>
+                                                setStackTraceModalContent(
+                                                  message.stackTrace!
+                                                )
+                                              }
+                                              className="ml-2 cursor-pointer underline"
+                                            >
+                                              Show stack trace.
+                                            </span>
+                                          )}
                                         </p>
                                       }
                                     />
@@ -1654,7 +1735,7 @@ export function ChatPage({
                           ref={inputRef}
                           className="absolute bottom-0 z-10 w-full"
                         >
-                          <div className="w-full relative pb-4">
+                          <div className="w-[95%] mx-auto relative mb-8">
                             {aboveHorizon && (
                               <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
                                 <button
@@ -1690,6 +1771,35 @@ export function ChatPage({
                               textAreaRef={textAreaRef}
                               chatSessionId={chatSessionIdRef.current!}
                             />
+
+                            {enterpriseSettings &&
+                              enterpriseSettings.custom_lower_disclaimer_content && (
+                                <div className="mobile:hidden mt-4 flex items-center justify-center relative w-[95%] mx-auto">
+                                  <div className="text-sm text-text-500 max-w-searchbar-max px-4 text-center">
+                                    <MinimalMarkdown
+                                      className=""
+                                      content={
+                                        enterpriseSettings.custom_lower_disclaimer_content
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                            {enterpriseSettings &&
+                              enterpriseSettings.use_custom_logotype && (
+                                <div className="hidden lg:block absolute right-0 bottom-0">
+                                  <img
+                                    src={
+                                      "/api/enterprise-settings/logotype?u=" +
+                                      Date.now()
+                                    }
+                                    alt="logotype"
+                                    style={{ objectFit: "contain" }}
+                                    className="w-fit h-8"
+                                  />
+                                </div>
+                              )}
                           </div>
                         </div>
                       </div>
@@ -1710,7 +1820,7 @@ export function ChatPage({
               )}
             </div>
           </div>
-          <FixedLogo />
+          <FixedLogo toggleSidebar={toggleSidebar} />
         </div>
       </div>
       <DocumentSidebar

@@ -65,23 +65,32 @@ def warm_up_intent_model() -> None:
     tokens = intent_tokenizer(
         MODEL_WARM_UP_STRING, return_tensors="pt", truncation=True, padding=True
     )
+
     intent_model = get_local_intent_model()
-    intent_model(query_ids=tokens["input_ids"], query_mask=tokens["attention_mask"])
+    device = intent_model.device
+    intent_model(
+        query_ids=tokens["input_ids"].to(device),
+        query_mask=tokens["attention_mask"].to(device),
+    )
 
 
 @simple_log_function_time()
 def run_inference(tokens: BatchEncoding) -> tuple[list[float], list[float]]:
     intent_model = get_local_intent_model()
+    device = intent_model.device
 
     outputs = intent_model(
-        query_ids=tokens["input_ids"], query_mask=tokens["attention_mask"]
+        query_ids=tokens["input_ids"].to(device),
+        query_mask=tokens["attention_mask"].to(device),
     )
 
     token_logits = outputs["token_logits"]
     intent_logits = outputs["intent_logits"]
-    intent_probabilities = F.softmax(intent_logits, dim=-1).numpy()[0]
 
-    token_probabilities = F.softmax(token_logits, dim=-1).numpy()[0]
+    # Move tensors to CPU before applying softmax and converting to numpy
+    intent_probabilities = F.softmax(intent_logits.cpu(), dim=-1).numpy()[0]
+    token_probabilities = F.softmax(token_logits.cpu(), dim=-1).numpy()[0]
+
     # Extract the probabilities for the positive class (index 1) for each token
     token_positive_probs = token_probabilities[:, 1].tolist()
 

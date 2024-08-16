@@ -16,6 +16,25 @@ class DocumentInsertionRecord:
     already_existed: bool
 
 
+@dataclass(frozen=True)
+class VespaChunkRequest:
+    document_id: str
+    min_chunk_ind: int | None = None
+    max_chunk_ind: int | None = None
+
+    @property
+    def is_capped(self) -> bool:
+        # If the max chunk index is not None, then the chunk request is capped
+        # If the min chunk index is None, we can assume the min is 0
+        return self.max_chunk_ind is not None
+
+    @property
+    def range(self) -> int | None:
+        if self.max_chunk_ind is not None:
+            return (self.max_chunk_ind - (self.min_chunk_ind or 0)) + 1
+        return None
+
+
 @dataclass
 class DocumentMetadata:
     """
@@ -183,10 +202,9 @@ class IdRetrievalCapable(abc.ABC):
     @abc.abstractmethod
     def id_based_retrieval(
         self,
-        document_id: str,
-        min_chunk_ind: int | None,
-        max_chunk_ind: int | None,
-        user_access_control_list: list[str] | None = None,
+        chunk_requests: list[VespaChunkRequest],
+        filters: IndexFilters,
+        batch_retrieval: bool = False,
     ) -> list[InferenceChunkUncleaned]:
         """
         Fetch chunk(s) based on document id
@@ -197,11 +215,9 @@ class IdRetrievalCapable(abc.ABC):
         or extended section will have duplicate segments.
 
         Parameters:
-        - document_id: document id for which to retrieve the chunk(s)
-        - min_chunk_ind: if None then fetch from the start of doc
-        - max_chunk_ind:
-        - filters: standard filters object, in this case only the access filter is applied as a
-                permission check
+        - chunk_requests: requests containing the document id and the chunk range to retrieve
+        - filters: Filters to apply to retrieval
+        - batch_retrieval: If True, perform a batch retrieval
 
         Returns:
             list of chunks for the document id or the specific chunk by the specified chunk index

@@ -1,7 +1,7 @@
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.indexing.chunker import chunk_document
+from danswer.indexing.chunker import Chunker
 from danswer.indexing.embedder import DefaultIndexingEmbedder
 
 
@@ -37,12 +37,12 @@ def test_chunk_document() -> None:
         passage_prefix=None,
     )
 
-    chunks = chunk_document(
-        document=document,
-        model_name=embedder.model_name,
-        provider_type=embedder.provider_type,
+    chunker = Chunker(
+        tokenizer=embedder.embedding_model.tokenizer,
         enable_multipass=False,
     )
+    chunks = chunker.chunk(document)
+
     assert len(chunks) == 5
     assert short_section_1 in chunks[0].content
     assert short_section_3 in chunks[-1].content

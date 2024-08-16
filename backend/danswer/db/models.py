@@ -199,6 +199,9 @@ class ApiKey(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
+    # Add this relationship to access the User object via user_id
+    user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
+
 
 class Notification(Base):
     __tablename__ = "notification"

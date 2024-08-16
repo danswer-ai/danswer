@@ -25,13 +25,13 @@ from danswer.db.tag import create_or_add_document_tag_list
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.indexing.chunker import Chunker
-from danswer.indexing.chunker import DefaultChunker
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.search.search_settings import get_search_settings
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
+from shared_configs.enums import EmbeddingProvider
 
 logger = setup_logger()
 
@@ -260,11 +260,9 @@ def index_doc_batch(
         return 0, 0
 
     logger.debug("Starting chunking")
-    chunks: list[DocAwareChunk] = [
-        chunk
-        for document in ctx.updatable_docs
-        for chunk in chunker.chunk(document=document)
-    ]
+    chunks: list[DocAwareChunk] = []
+    for document in ctx.updatable_docs:
+        chunks.extend(chunker.chunk(document=document))
 
     logger.debug("Starting embedding")
     chunks_with_embeddings = (
@@ -354,10 +352,24 @@ def build_indexing_pipeline(
         if search_settings
         else ENABLE_MULTIPASS_INDEXING
     )
-    chunker = chunker or DefaultChunker(
-        model_name=embedder.model_name,
-        provider_type=embedder.provider_type,
+
+    enable_large_chunks = (
+        multipass
+        and
+        # Only local models that supports larger context are from Nomic
+        (
+            embedder.provider_type is not None
+            or embedder.model_name.startswith("nomic-ai")
+        )
+        and
+        # Cohere does not support larger context they recommend not going above 512 tokens
+        embedder.provider_type != EmbeddingProvider.COHERE
+    )
+
+    chunker = chunker or Chunker(
+        tokenizer=embedder.embedding_model.tokenizer,
         enable_multipass=multipass,
+        enable_large_chunks=enable_large_chunks,
     )
 
     return partial(

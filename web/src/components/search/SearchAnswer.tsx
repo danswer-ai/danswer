@@ -65,12 +65,12 @@ export default function SearchAnswer({
     return () => {
       window.removeEventListener("resize", checkOverflow);
     };
-  }, [answer]);
+  }, [answer, quotes]);
 
   return (
     <div
       ref={answerContainerRef}
-      className={`my-4 ${searchAnswerExpanded ? "min-h-[16rem]" : "h-[16rem]"}  overflow-y-hidden p-4 border-2 border-border rounded-lg relative`}
+      className={`my-4 ${searchAnswerExpanded ? "min-h-[16rem]" : "h-[16rem]"} ${!searchAnswerExpanded && searchAnswerOverflowing && "overflow-y-hidden"} p-4 border-2 border-border rounded-lg relative`}
     >
       <div>
         <div className="flex gap-x-2">
@@ -113,7 +113,7 @@ export default function SearchAnswer({
           )}
         </div>
 
-        <div className={`pt-1 h-auto   border-t border-border w-full`}>
+        <div className={`pt-1 h-auto border-t border-border w-full`}>
           <AnswerSection
             answer={answer}
             quotes={quotes}
@@ -122,37 +122,28 @@ export default function SearchAnswer({
           />
         </div>
 
-        {searchAnswerExpanded ||
-          (!searchAnswerOverflowing && (
-            <div className="w-full">
-              {quotes !== null && quotes.length > 0 && answer && (
-                <QuotesSection quotes={dedupedQuotes} isFetching={isFetching} />
-              )}
+        <div className="w-full">
+          {quotes !== null && quotes.length > 0 && answer && (
+            <QuotesSection quotes={dedupedQuotes} isFetching={isFetching} />
+          )}
 
-              {searchResponse.messageId !== null && (
-                <div className="absolute right-3 flex bottom-3">
-                  <HoverableIcon
-                    icon={<LikeFeedbackIcon />}
-                    onClick={() =>
-                      handleFeedback(
-                        "like",
-                        searchResponse?.messageId as number
-                      )
-                    }
-                  />
-                  <HoverableIcon
-                    icon={<DislikeFeedbackIcon />}
-                    onClick={() =>
-                      handleFeedback(
-                        "dislike",
-                        searchResponse?.messageId as number
-                      )
-                    }
-                  />
-                </div>
-              )}
+          {searchResponse.messageId !== null && (
+            <div className="absolute right-3 flex bottom-3">
+              <HoverableIcon
+                icon={<LikeFeedbackIcon />}
+                onClick={() =>
+                  handleFeedback("like", searchResponse?.messageId as number)
+                }
+              />
+              <HoverableIcon
+                icon={<DislikeFeedbackIcon />}
+                onClick={() =>
+                  handleFeedback("dislike", searchResponse?.messageId as number)
+                }
+              />
             </div>
-          ))}
+          )}
+        </div>
       </div>
       {!searchAnswerExpanded && searchAnswerOverflowing && (
         <div className="absolute bottom-0 left-0 w-full h-[100px] bg-gradient-to-b from-background/5 via-background/60 to-background/90"></div>

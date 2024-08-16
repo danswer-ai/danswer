@@ -8,8 +8,10 @@ export interface Settings {
 export interface EnterpriseSettings {
   application_name: string | null;
   use_custom_logo: boolean;
+  use_custom_logotype: boolean;
 
   // custom Chat components
+  custom_lower_disclaimer_content: string | null;
   custom_header_content: string | null;
   custom_popup_header: string | null;
   custom_popup_content: string | null;
@@ -20,4 +22,5 @@ export interface CombinedSettings {
   enterpriseSettings: EnterpriseSettings | null;
   customAnalyticsScript: string | null;
   isMobile?: boolean;
+  webVersion: string | null;
 }

@@ -8,6 +8,7 @@ import requests
 from httpx import HTTPError
 from retry import retry
 
+from danswer.configs.app_configs import LARGE_CHUNK_RATIO
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import (
     BATCH_SIZE_ENCODE_CHUNKS_FOR_API_EMBEDDING_SERVICES,
@@ -89,18 +90,18 @@ class EmbeddingModel:
         passage_prefix: str | None,
         api_key: str | None,
         provider_type: EmbeddingProvider | None,
-        # The following are globals are currently not configurable
-        max_seq_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
         retrim_content: bool = False,
     ) -> None:
         self.api_key = api_key
         self.provider_type = provider_type
-        self.max_seq_length = max_seq_length
         self.query_prefix = query_prefix
         self.passage_prefix = passage_prefix
         self.normalize = normalize
         self.model_name = model_name
         self.retrim_content = retrim_content
+        self.tokenizer = get_tokenizer(
+            model_name=model_name, provider_type=provider_type
+        )
 
         model_server_url = build_model_server_url(server_host, server_port)
         self.embed_server_endpoint = f"{model_server_url}/encoder/bi-encoder-embed"
@@ -129,50 +130,26 @@ class EmbeddingModel:
         else:
             return _make_request()
 
-    def _encode_api_model(
-        self, texts: list[str], text_type: EmbedTextType, batch_size: int
-    ) -> list[Embedding]:
-        if not self.provider_type:
-            raise ValueError("Provider type is not set for API embedding")
-
-        embeddings: list[Embedding] = []
-
-        text_batches = batch_list(texts, batch_size)
-        for idx, text_batch in enumerate(text_batches, start=1):
-            logger.debug(f"Encoding batch {idx} of {len(text_batches)}")
-            embed_request = EmbedRequest(
-                model_name=self.model_name,
-                texts=text_batch,
-                max_context_length=self.max_seq_length,
-                normalize_embeddings=self.normalize,
-                api_key=self.api_key,
-                provider_type=self.provider_type,
-                text_type=text_type,
-                manual_query_prefix=self.query_prefix,
-                manual_passage_prefix=self.passage_prefix,
-            )
-            response = self._make_model_server_request(embed_request)
-            embeddings.extend(response.embeddings)
-
-        return embeddings
-
-    def _encode_local_model(
+    def _batch_encode_texts(
         self,
         texts: list[str],
         text_type: EmbedTextType,
         batch_size: int,
+        max_seq_length: int,
     ) -> list[Embedding]:
         text_batches = batch_list(texts, batch_size)
-        embeddings: list[Embedding] = []
+
         logger.debug(
             f"Encoding {len(texts)} texts in {len(text_batches)} batches for local model"
         )
+
+        embeddings: list[Embedding] = []
         for idx, text_batch in enumerate(text_batches, start=1):
             logger.debug(f"Encoding batch {idx} of {len(text_batches)}")
             embed_request = EmbedRequest(
                 model_name=self.model_name,
                 texts=text_batch,
-                max_context_length=self.max_seq_length,
+                max_context_length=max_seq_length,
                 normalize_embeddings=self.normalize,
                 api_key=self.api_key,
                 provider_type=self.provider_type,
@@ -189,11 +166,16 @@ class EmbeddingModel:
         self,
         texts: list[str],
         text_type: EmbedTextType,
+        large_chunks_present: bool = False,
         local_embedding_batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
         api_embedding_batch_size: int = BATCH_SIZE_ENCODE_CHUNKS_FOR_API_EMBEDDING_SERVICES,
+        max_seq_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
     ) -> list[Embedding]:
         if not texts or not all(texts):
             raise ValueError(f"Empty or missing text for embedding: {texts}")
+
+        if large_chunks_present:
+            max_seq_length *= LARGE_CHUNK_RATIO
 
         if self.retrim_content:
             # This is applied during indexing as a catchall for overly long titles (or other uncapped fields)
@@ -202,25 +184,28 @@ class EmbeddingModel:
             texts = [
                 tokenizer_trim_content(
                     content=text,
-                    desired_length=self.max_seq_length,
-                    tokenizer=get_tokenizer(
-                        model_name=self.model_name,
-                        provider_type=self.provider_type,
-                    ),
+                    desired_length=max_seq_length,
+                    tokenizer=self.tokenizer,
                 )
                 for text in texts
             ]
 
-        if self.provider_type:
-            if self.provider_type == "openai":
-                texts = [clean_openai_text(text) for text in texts]
-            return self._encode_api_model(
-                texts=texts, text_type=text_type, batch_size=api_embedding_batch_size
-            )
+        if self.provider_type == EmbeddingProvider.OPENAI:
+            # If the provider is openai, we need to clean the text
+            # as a temporary workaround for the openai API
+            texts = [clean_openai_text(text) for text in texts]
 
-        # if no provider, use local model
-        return self._encode_local_model(
-            texts=texts, text_type=text_type, batch_size=local_embedding_batch_size
+        batch_size = (
+            api_embedding_batch_size
+            if self.provider_type
+            else local_embedding_batch_size
+        )
+
+        return self._batch_encode_texts(
+            texts=texts,
+            text_type=text_type,
+            batch_size=batch_size,
+            max_seq_length=max_seq_length,
         )
 
 

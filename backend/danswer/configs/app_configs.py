@@ -276,6 +276,10 @@ ENABLE_MULTIPASS_INDEXING = (
 # Slightly larger since the sentence aware split is a max cutoff so most minichunks will be under MINI_CHUNK_SIZE
 # tokens. But we need it to be at least as big as 1/4th chunk size to avoid having a tiny mini-chunk at the end
 MINI_CHUNK_SIZE = 150
+
+# This is the number of regular chunks per large chunk
+LARGE_CHUNK_RATIO = 4
+
 # Include the document level metadata in each chunk. If the metadata is too long, then it is thrown out
 # We don't want the metadata to overwhelm the actual contents of the chunk
 SKIP_METADATA_IN_CHUNK = os.environ.get("SKIP_METADATA_IN_CHUNK", "").lower() == "true"
@@ -286,6 +290,10 @@ CLEANUP_INDEXING_JOBS_TIMEOUT = int(os.environ.get("CLEANUP_INDEXING_JOBS_TIMEOU
 INDEXING_SIZE_WARNING_THRESHOLD = int(
     os.environ.get("INDEXING_SIZE_WARNING_THRESHOLD", 100 * 1024 * 1024)
 )
+
+# during indexing, will log verbose memory diff stats every x batches and at the end.
+# 0 disables this behavior and is the default.
+INDEXING_TRACER_INTERVAL = int(os.environ.get("INDEXING_TRACER_INTERVAL", 0))
 
 # During an indexing attempt, limits the number of exceptions logged
 INDEXING_EXCEPTION_LOG_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LOG_LIMIT", 10))

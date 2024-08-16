@@ -8,7 +8,14 @@ import {
   FiGlobe,
 } from "react-icons/fi";
 import { FeedbackType } from "../types";
-import { useContext, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import {
   DanswerDocument,
@@ -52,6 +59,7 @@ import { useMouseTracking } from "./hooks";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
+import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -154,10 +162,17 @@ export const AIMessage = ({
       return content;
     }
 
-    const codeBlockRegex = /```[\s\S]*?```|```[\s\S]*?$/g;
+    const codeBlockRegex = /```(\w*)\n[\s\S]*?```|```[\s\S]*?$/g;
     const matches = content.match(codeBlockRegex);
 
     if (matches) {
+      content = matches.reduce((acc, match) => {
+        if (!match.match(/```\w+/)) {
+          return acc.replace(match, match.replace("```", "```plaintext"));
+        }
+        return acc;
+      }, content);
+
       const lastMatch = matches[matches.length - 1];
       if (!lastMatch.endsWith("```")) {
         return content;
@@ -166,7 +181,6 @@ export const AIMessage = ({
 
     return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
   };
-
   const finalContent = processContent(content as string);
 
   const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
@@ -400,7 +414,6 @@ export const AIMessage = ({
                                     );
                                   }
                                 },
-
                                 code: (props) => (
                                   <CodeBlock
                                     className="w-full"
@@ -427,7 +440,6 @@ export const AIMessage = ({
                     ) : isComplete ? null : (
                       <></>
                     )}
-
                     {isComplete && docs && docs.length > 0 && (
                       <div className="mt-2 -mx-8 w-full mb-4 flex relative">
                         <div className="w-full">

@@ -172,6 +172,7 @@ class InferenceChunk(BaseChunk):
     updated_at: datetime | None
     primary_owners: list[str] | None = None
     secondary_owners: list[str] | None = None
+    large_chunk_reference_ids: list[int] = []
 
     @property
     def unique_id(self) -> str:

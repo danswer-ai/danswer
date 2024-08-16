@@ -80,7 +80,10 @@ export default function FunctionalWrapper({
   initiallyToggled,
   content,
 }: {
-  content: (toggledSidebar: boolean, toggle: () => void) => ReactNode;
+  content: (
+    toggledSidebar: boolean,
+    toggle: (toggled?: boolean) => void
+  ) => ReactNode;
   initiallyToggled: boolean;
 }) {
   const router = useRouter();
@@ -123,11 +126,9 @@ export default function FunctionalWrapper({
   const [toggledSidebar, setToggledSidebar] = useState(initiallyToggled);
 
   const toggle = (value?: boolean) => {
-    if (value !== undefined) {
-      setToggledSidebar(value);
-    } else {
-      setToggledSidebar((prevState) => !prevState);
-    }
+    setToggledSidebar((toggledSidebar) =>
+      value !== undefined ? value : !toggledSidebar
+    );
   };
 
   return (

@@ -23,6 +23,8 @@ class HybridClassifier(nn.Module):
         self.intent_classifier = nn.Linear(self.distilbert.config.dim, 2)
         self.dropout = nn.Dropout(self.distilbert.config.seq_classif_dropout)
 
+        self.device = torch.device("cpu")
+
     def forward(
         self,
         query_ids: torch.Tensor,
@@ -51,17 +53,21 @@ class HybridClassifier(nn.Module):
             config = json.load(f)
         model = cls(**config)
 
-        if torch.cuda.is_available():
+        if torch.backends.mps.is_available():
+            # Apple silicon GPU
+            device = torch.device("mps")
+        elif torch.cuda.is_available():
             device = torch.device("cuda")
-            model.load_state_dict(torch.load(model_path, map_location=device))
-            model = model.to(device)
-
         else:
-            # No cuda, model most likely just loaded on CPU
-            model.load_state_dict(torch.load(model_path))
+            device = torch.device("cpu")
+
+        model.load_state_dict(torch.load(model_path, map_location=device))
+        model = model.to(device)
+
+        model.device = device
 
         model.eval()
-
+        # Eval doesn't set requires_grad to False, do it manually to save memory and have faster inference
         for param in model.parameters():
             param.requires_grad = False
 
