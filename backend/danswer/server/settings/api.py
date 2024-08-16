@@ -3,6 +3,7 @@ from typing import cast
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
@@ -99,21 +100,32 @@ def get_user_notifications(
         logger.warning("Could not find reindex flag")
         return []
 
-    reindex_notifs = get_notifications(
-        user=user, notif_type=NotificationType.REINDEX, db_session=db_session
-    )
+    try:
+        with db_session.begin_nested():  # Ensure we don't  overcount the reindex notifications
+            reindex_notifs = get_notifications(
+                user=user, notif_type=NotificationType.REINDEX, db_session=db_session
+            )
 
-    if not reindex_notifs:
-        notif = create_notification(
-            user=user, notif_type=NotificationType.REINDEX, db_session=db_session
-        )
-        return [Notification.from_model(notif)]
+            if not reindex_notifs:
+                notif = create_notification(
+                    user=user,
+                    notif_type=NotificationType.REINDEX,
+                    db_session=db_session,
+                )
+                db_session.flush()
+                return [Notification.from_model(notif)]
 
-    if len(reindex_notifs) > 1:
-        logger.error("User has multiple reindex notifications")
+            if len(reindex_notifs) > 1:
+                logger.error("User has multiple reindex notifications")
 
-    reindex_notif = reindex_notifs[0]
+            reindex_notif = reindex_notifs[0]
+            update_notification_last_shown(
+                notification=reindex_notif, db_session=db_session
+            )
 
-    update_notification_last_shown(notification=reindex_notif, db_session=db_session)
-
-    return [Notification.from_model(reindex_notif)]
+        db_session.commit()
+        return [Notification.from_model(reindex_notif)]
+    except SQLAlchemyError:
+        logger.exception("Error while processing notifications")
+        db_session.rollback()
+        return []
