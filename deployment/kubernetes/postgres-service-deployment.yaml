@@ -56,3 +56,20 @@ spec:
         requests:
           # Adjust the storage request size as needed.
           storage: 5Gi
+      storageClassName: relational-db-storage
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: relational-db-pv
+  labels:
+    type: local
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: relational-db-storage
