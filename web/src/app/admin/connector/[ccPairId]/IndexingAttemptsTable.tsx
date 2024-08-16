@@ -126,7 +126,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                   <TableCell>{indexAttempt.total_docs_indexed}</TableCell>
                   <TableCell>
                     <div>
-                      {indexAttempt.status === "completed_with_errors" && (
+                      {indexAttempt.error_count > 0 && (
                         <Link
                           className="cursor-pointer my-auto"
                           href={`/admin/indexing/${indexAttempt.id}`}
@@ -138,11 +138,18 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                         </Link>
                       )}
 
-                      {indexAttempt.status !== "completed_with_errors" && (
+                      {indexAttempt.status === "success" && (
                         <Text className="flex flex-wrap whitespace-normal">
-                          {indexAttempt.error_msg || "-"}
+                          {"-"}
                         </Text>
                       )}
+
+                      {indexAttempt.status === "failed" &&
+                        indexAttempt.error_msg && (
+                          <Text className="flex flex-wrap whitespace-normal">
+                            {indexAttempt.error_msg}
+                          </Text>
+                        )}
 
                       {indexAttempt.full_exception_trace && (
                         <div

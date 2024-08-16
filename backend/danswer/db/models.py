@@ -657,6 +657,8 @@ class IndexAttempt(Base):
         "EmbeddingModel", back_populates="index_attempts"
     )
 
+    error_rows = relationship("IndexAttemptError", back_populates="index_attempt")
+
     __table_args__ = (
         Index(
             "ix_index_attempt_latest_for_connector_credential_pair",
@@ -702,6 +704,9 @@ class IndexAttemptError(Base):
         DateTime(timezone=True),
         server_default=func.now(),
     )
+
+    # This is the reverse side of the relationship
+    index_attempt = relationship("IndexAttempt", back_populates="error_rows")
 
     __table_args__ = (
         Index(

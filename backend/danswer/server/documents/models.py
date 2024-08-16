@@ -124,6 +124,7 @@ class IndexAttemptSnapshot(BaseModel):
     total_docs_indexed: int  # includes docs that are updated
     docs_removed_from_index: int
     error_msg: str | None
+    error_count: int
     full_exception_trace: str | None
     time_started: str | None
     time_updated: str
@@ -139,6 +140,7 @@ class IndexAttemptSnapshot(BaseModel):
             total_docs_indexed=index_attempt.total_docs_indexed or 0,
             docs_removed_from_index=index_attempt.docs_removed_from_index or 0,
             error_msg=index_attempt.error_msg,
+            error_count=len(index_attempt.error_rows),
             full_exception_trace=index_attempt.full_exception_trace,
             time_started=(
                 index_attempt.time_started.isoformat()
