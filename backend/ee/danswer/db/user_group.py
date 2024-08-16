@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import delete
 from sqlalchemy import func
 from sqlalchemy import select
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
@@ -18,8 +19,13 @@ from danswer.db.models import User
 from danswer.db.models import User__UserGroup
 from danswer.db.models import UserGroup
 from danswer.db.models import UserGroup__ConnectorCredentialPair
+from danswer.db.models import UserRole
+from danswer.utils.logger import setup_logger
+from ee.danswer.server.user_group.models import SetCuratorRequest
 from ee.danswer.server.user_group.models import UserGroupCreate
 from ee.danswer.server.user_group.models import UserGroupUpdate
+
+logger = setup_logger()
 
 
 def fetch_user_group(db_session: Session, user_group_id: int) -> UserGroup | None:
@@ -179,11 +185,17 @@ def insert_user_group(db_session: Session, user_group: UserGroupCreate) -> UserG
 
 
 def _cleanup_user__user_group_relationships__no_commit(
-    db_session: Session, user_group_id: int
+    db_session: Session,
+    user_group_id: int,
+    user_ids: list[UUID] | None = None,
 ) -> None:
     """NOTE: does not commit the transaction."""
+    where_clause = User__UserGroup.user_group_id == user_group_id
+    if user_ids:
+        where_clause &= User__UserGroup.user_id.in_(user_ids)
+
     user__user_group_relationships = db_session.scalars(
-        select(User__UserGroup).where(User__UserGroup.user_group_id == user_group_id)
+        select(User__UserGroup).where(where_clause)
     ).all()
     for user__user_group_relationship in user__user_group_relationships:
         db_session.delete(user__user_group_relationship)
@@ -211,6 +223,67 @@ def _mark_user_group__cc_pair_relationships_outdated__no_commit(
         user_group__cc_pair_relationship.is_current = False
 
 
+def validate_curator_status(
+    db_session: Session,
+    users: list[User],
+) -> None:
+    for user in users:
+        # Check if the user is a curator in any of their groups
+        curator_relationships = (
+            db_session.query(User__UserGroup)
+            .filter(
+                User__UserGroup.user_id == user.id,
+                User__UserGroup.is_curator == True,  # noqa: E712
+            )
+            .all()
+        )
+        logger.info(
+            f"User {user.email} has {len(curator_relationships)} curator relationships"
+        )
+
+        if curator_relationships:
+            user.role = UserRole.CURATOR
+        elif user.role == UserRole.CURATOR:
+            user.role = UserRole.BASIC
+        db_session.add(user)
+    db_session.commit()
+
+
+def disable_curator_status(db_session: Session, user_id: int) -> None:
+    stmt = (
+        update(User__UserGroup)
+        .where(User__UserGroup.user_id == user_id)
+        .values(is_curator=False)
+    )
+    db_session.execute(stmt)
+    db_session.commit()
+
+
+def update_user_group_role(
+    db_session: Session, user_group_id: int, set_curator_request: SetCuratorRequest
+) -> None:
+    relationship_to_update = (
+        db_session.query(User__UserGroup)
+        .filter(
+            User__UserGroup.user_group_id == user_group_id,
+            User__UserGroup.user_id == set_curator_request.user_id,
+        )
+        .first()
+    )
+
+    if relationship_to_update:
+        relationship_to_update.is_curator = set_curator_request.is_curator
+    else:
+        relationship_to_update = User__UserGroup(
+            user_group_id=user_group_id,
+            user_id=set_curator_request.user_id,
+            is_curator=True,
+        )
+        db_session.add(relationship_to_update)
+
+    db_session.commit()
+
+
 def update_user_group(
     db_session: Session, user_group_id: int, user_group: UserGroupUpdate
 ) -> UserGroup:
@@ -225,18 +298,23 @@ def update_user_group(
     cc_pairs_updated = set([cc_pair.id for cc_pair in existing_cc_pairs]) != set(
         user_group.cc_pair_ids
     )
-    users_updated = set([user.id for user in db_user_group.users]) != set(
-        user_group.user_ids
-    )
+    current_user_ids = set([user.id for user in db_user_group.users])
+    updated_user_ids = set(user_group.user_ids)
+    added_user_ids = updated_user_ids - current_user_ids
+    removed_user_ids = current_user_ids - updated_user_ids
 
-    if users_updated:
+    if removed_user_ids:
         _cleanup_user__user_group_relationships__no_commit(
-            db_session=db_session, user_group_id=user_group_id
+            db_session=db_session,
+            user_group_id=user_group_id,
+            user_ids=removed_user_ids,
         )
+
+    if added_user_ids:
         _add_user__user_group_relationships__no_commit(
             db_session=db_session,
             user_group_id=user_group_id,
-            user_ids=user_group.user_ids,
+            user_ids=added_user_ids,
         )
     if cc_pairs_updated:
         _mark_user_group__cc_pair_relationships_outdated__no_commit(
@@ -253,6 +331,8 @@ def update_user_group(
         db_user_group.is_up_to_date = False
 
     db_session.commit()
+    removed_users = db_session.query(User).filter(User.id.in_(removed_user_ids)).all()
+    validate_curator_status(db_session, removed_users)
     return db_user_group
 
 

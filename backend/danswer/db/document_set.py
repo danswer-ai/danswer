@@ -362,7 +362,7 @@ def fetch_document_sets_for_curator(
     public_document_sets = db_session.scalars(public_stmt).all()
 
     where_clause = User__UserGroup.user_id == user.id
-    if user.role == UserRole.CURATOR:
+    if user.role == UserRole.CURATOR:  # as opposed to global curator
         where_clause &= User__UserGroup.is_curator == True  # noqa: E712
 
     curated_stmt = (

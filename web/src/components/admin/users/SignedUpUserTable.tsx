@@ -45,10 +45,7 @@ const UserRoleDropdown = ({
 
   const handleChange = (value: string) => {
     if (value === user.role) return;
-    if (
-      user.role === UserRole.CURATOR ||
-      user.role === UserRole.GLOBAL_CURATOR
-    ) {
+    if (user.role === UserRole.CURATOR) {
       setShowConfirmModal(true);
       setPendingRole(value);
     } else {
@@ -144,31 +141,15 @@ const SignedUpUserTable = ({
 }: Props & PageSelectorProps) => {
   if (!users.length) return null;
 
-  const onSuccess = (message: string) => {
-    mutate();
-    setPopup({
-      message,
-      type: "success",
-    });
+  const handlePopup = (message: string, type: "success" | "error") => {
+    if (type === "success") mutate();
+    setPopup({ message, type });
   };
-  const onError = (message: string) => {
-    setPopup({
-      message,
-      type: "error",
-    });
-  };
-  const onPromotionSuccess = () => {
-    onSuccess("User promoted to admin user!");
-  };
-  const onPromotionError = (errorMsg: string) => {
-    onError(`Unable to promote user - ${errorMsg}`);
-  };
-  const onDemotionSuccess = () => {
-    onSuccess("Admin demoted to basic user!");
-  };
-  const onDemotionError = (errorMsg: string) => {
-    onError(`Unable to demote admin - ${errorMsg}`);
-  };
+
+  const onRoleChangeSuccess = () =>
+    handlePopup("User role updated successfully!", "success");
+  const onRoleChangeError = (errorMsg: string) =>
+    handlePopup(`Unable to update user role - ${errorMsg}`, "error");
 
   return (
     <HidableSection sectionTitle="Current Users">
@@ -200,8 +181,8 @@ const SignedUpUserTable = ({
                 <TableCell>
                   <UserRoleDropdown
                     user={user}
-                    onSuccess={onPromotionSuccess}
-                    onError={onPromotionError}
+                    onSuccess={onRoleChangeSuccess}
+                    onError={onRoleChangeError}
                   />
                 </TableCell>
                 <TableCell className="text-center">

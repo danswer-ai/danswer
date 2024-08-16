@@ -188,6 +188,7 @@ export interface UserGroup {
   id: number;
   name: string;
   users: User[];
+  curator_ids: string[];
   cc_pairs: CCPairDescriptor<any, any>[];
   document_sets: DocumentSet[];
   personas: Persona[];

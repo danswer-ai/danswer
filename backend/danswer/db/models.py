@@ -1488,6 +1488,10 @@ class UserGroup(Base):
         "User",
         secondary=User__UserGroup.__table__,
     )
+    user_group_relationships: Mapped[list[User__UserGroup]] = relationship(
+        "User__UserGroup",
+        viewonly=True,
+    )
     cc_pairs: Mapped[list[ConnectorCredentialPair]] = relationship(
         "ConnectorCredentialPair",
         secondary=UserGroup__ConnectorCredentialPair.__table__,

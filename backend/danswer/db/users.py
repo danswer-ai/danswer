@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import Column
@@ -17,5 +18,11 @@ def list_users(db_session: Session, q: str = "") -> Sequence[User]:
 
 def get_user_by_email(email: str, db_session: Session) -> User | None:
     user = db_session.query(User).filter(User.email == email).first()  # type: ignore
+
+    return user
+
+
+def fetch_user_by_id(db_session: Session, user_id: UUID) -> User | None:
+    user = db_session.query(User).filter(User.id == user_id).first()  # type: ignore
 
     return user
