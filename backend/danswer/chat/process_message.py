@@ -351,7 +351,14 @@ def stream_chat_message_objects(
             parent_message = root_message
 
         user_message = None
-        if not use_existing_user_message:
+        if new_msg_req.regenerate:
+            final_msg, history_msgs = create_chat_chain(
+                parent_id=parent_id,
+                chat_session_id=chat_session_id,
+                db_session=db_session,
+            )
+
+        elif not use_existing_user_message:
             # Create new message at the right place in the tree and update the parent's child pointer
             # Don't commit yet until we verify the chat message chain
             user_message = create_new_chat_message(
@@ -470,12 +477,17 @@ def stream_chat_message_objects(
             user_message_id=user_message.id if user_message else None,
             reserved_assistant_message_id=reserved_message_id,
         )
+
+        alternate_model = (
+            new_msg_req.llm_override.model_version if new_msg_req.llm_override else None
+        )
         # Cannot determine these without the LLM step or breaking out early
         partial_response = partial(
             create_new_chat_message,
             chat_session_id=chat_session_id,
             parent_message=final_msg,
             prompt_id=prompt_id,
+            alternate_model=alternate_model,
             # message=,
             # rephrased_query=,
             # token_count=,
