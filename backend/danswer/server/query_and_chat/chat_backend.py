@@ -293,9 +293,6 @@ async def handle_new_chat_message(
         and chat_message_req.prompt_id is not None
         and not chat_message_req.use_existing_user_message
     ):
-        print(chat_message_req.message)
-        print(chat_message_req.prompt_id)
-        print(chat_message_req.use_existing_user_message)
         raise HTTPException(status_code=400, detail="Empty chat message is invalid")
     connection_open = True
 
