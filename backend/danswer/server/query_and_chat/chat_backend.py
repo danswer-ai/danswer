@@ -1,6 +1,7 @@
 import asyncio
 import io
 import uuid
+from collections.abc import Callable
 from collections.abc import Generator
 
 from fastapi import APIRouter
@@ -273,10 +274,10 @@ def delete_chat_session_by_id(
     delete_chat_session(user_id, session_id, db_session)
 
 
-async def is_disconnected(request: Request):
+async def is_disconnected(request: Request) -> Callable[[], bool]:
     main_loop = asyncio.get_event_loop()
 
-    def is_disconnected_sync():
+    def is_disconnected_sync() -> bool:
         future = asyncio.run_coroutine_threadsafe(request.is_disconnected(), main_loop)
         try:
             return not future.result(timeout=0.01)
@@ -292,7 +293,7 @@ def handle_new_chat_message(
     request: Request,
     user: User | None = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
-    is_disconnected_func=Depends(is_disconnected),
+    is_disconnected_func: Callable[[], bool] = Depends(is_disconnected),
 ) -> StreamingResponse:
     """This endpoint is both used for all the following purposes:
     - Sending a new message in the session
