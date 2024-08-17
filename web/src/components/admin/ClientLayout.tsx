@@ -26,7 +26,7 @@ import {
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
 import { UserDropdown } from "../UserDropdown";
 import { User } from "@/lib/types";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { useContext } from "react";
 import { CustomTooltip } from "../tooltip/CustomTooltip";
