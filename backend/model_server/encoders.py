@@ -286,7 +286,7 @@ def embed_text(
         prefixed_texts = [f"{prefix}{text}" for text in texts] if prefix else texts
 
         # strip additional metadata from model name right before constructing from Huggingface
-        stripped_model_name = (model_name.removesuffix(ALT_INDEX_SUFFIX),)
+        stripped_model_name = model_name.removesuffix(ALT_INDEX_SUFFIX)
         local_model = get_embedding_model(
             model_name=stripped_model_name, max_context_length=max_context_length
         )
