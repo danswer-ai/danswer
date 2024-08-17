@@ -339,11 +339,9 @@ def get_llm_max_tokens(
         return GEN_AI_MAX_TOKENS
 
     try:
-        model_obj = (
-            model_map.get(f"{model_provider}/{model_name}")
-            or model_map.get(model_name)
-            or model_map[model_name.split("/")[1]]
-        )
+        model_obj = model_map.get(f"{model_provider}/{model_name}")
+        if not model_obj:
+            model_obj = model_map[model_name]
 
         if "max_input_tokens" in model_obj:
             return model_obj["max_input_tokens"]
