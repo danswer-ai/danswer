@@ -18,7 +18,6 @@ import {
   ZoomInIconSkeleton,
   SlackIconSkeleton,
   DocumentSetIconSkeleton,
-  EmbeddingIconSkeleton,
   AssistantsIconSkeleton,
   ClosedBookIcon,
   SearchIcon,
@@ -42,7 +41,7 @@ export function ClientLayout({
   enableEnterprise: boolean;
 }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const settings = useContext(SettingsContext);
 
   if (
     pathname.startsWith("/admin/connectors") ||
@@ -50,7 +49,6 @@ export function ClientLayout({
   ) {
     return <>{children}</>;
   }
-  const settings = useContext(SettingsContext);
 
   return (
     <div className="h-screen overflow-y-hidden">
