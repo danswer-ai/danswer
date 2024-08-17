@@ -10,7 +10,7 @@ import {
 } from "@/lib/types";
 import { ChatSession } from "@/app/chat/interfaces";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
+import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
 import { InputPrompt } from "@/app/admin/prompt-library/interfaces";
 

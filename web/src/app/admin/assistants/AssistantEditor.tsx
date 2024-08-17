@@ -42,7 +42,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FiInfo, FiPlus, FiX } from "react-icons/fi";
 import * as Yup from "yup";
-import { FullLLMProvider } from "../models/llm/interfaces";
+import { FullLLMProvider } from "../configuration/llm/interfaces";
 import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";

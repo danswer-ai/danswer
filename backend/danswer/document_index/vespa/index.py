@@ -1,12 +1,14 @@
 import concurrent.futures
 import io
 import os
+import re
 import time
 import zipfile
 from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
 from typing import BinaryIO
+from typing import cast
 
 import httpx
 import requests
@@ -14,6 +16,7 @@ import requests
 from danswer.configs.chat_configs import DOC_TIME_DECAY
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.chat_configs import TITLE_CONTENT_RATIO
+from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentInsertionRecord
 from danswer.document_index.interfaces import UpdateRequest
@@ -53,6 +56,7 @@ from danswer.document_index.vespa_constants import VESPA_APPLICATION_ENDPOINT
 from danswer.document_index.vespa_constants import VESPA_DIM_REPLACEMENT_PAT
 from danswer.document_index.vespa_constants import VESPA_TIMEOUT
 from danswer.document_index.vespa_constants import YQL_BASE
+from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.search.models import IndexFilters
 from danswer.search.models import InferenceChunkUncleaned
@@ -88,6 +92,21 @@ def _create_document_xml_lines(doc_names: list[str | None]) -> str:
     return "\n".join(doc_lines)
 
 
+def add_ngrams_to_schema(schema_content: str) -> str:
+    # Add the match blocks containing gram and gram-size to title and content fields
+    schema_content = re.sub(
+        r"(field title type string \{[^}]*indexing: summary \| index \| attribute)",
+        r"\1\n            match {\n                gram\n                gram-size: 3\n            }",
+        schema_content,
+    )
+    schema_content = re.sub(
+        r"(field content type string \{[^}]*indexing: summary \| index)",
+        r"\1\n            match {\n                gram\n                gram-size: 3\n            }",
+        schema_content,
+    )
+    return schema_content
+
+
 class VespaIndex(DocumentIndex):
     def __init__(self, index_name: str, secondary_index_name: str | None) -> None:
         self.index_name = index_name
@@ -115,6 +134,13 @@ class VespaIndex(DocumentIndex):
 
         doc_lines = _create_document_xml_lines(schema_names)
         services = services_template.replace(DOCUMENT_REPLACEMENT_PAT, doc_lines)
+        kv_store = get_dynamic_config_store()
+
+        needs_reindexing = False
+        try:
+            needs_reindexing = cast(bool, kv_store.load(KV_REINDEX_KEY))
+        except Exception:
+            logger.debug("Could not load the reindexing flag. Using ngrams")
 
         with open(overrides_file, "r") as overrides_f:
             overrides_template = overrides_f.read()
@@ -134,10 +160,10 @@ class VespaIndex(DocumentIndex):
 
         with open(schema_file, "r") as schema_f:
             schema_template = schema_f.read()
-
         schema = schema_template.replace(
             DANSWER_CHUNK_REPLACEMENT_PAT, self.index_name
         ).replace(VESPA_DIM_REPLACEMENT_PAT, str(index_embedding_dim))
+        schema = add_ngrams_to_schema(schema) if needs_reindexing else schema
         zip_dict[f"schemas/{schema_names[0]}.sd"] = schema.encode("utf-8")
 
         if self.secondary_index_name:

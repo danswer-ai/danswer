@@ -2,7 +2,7 @@ import React from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text } from "@tremor/react";
 
-import { CloudEmbeddingModel } from "../components/types";
+import { CloudEmbeddingModel } from "../../../../components/embedding/interfaces";
 
 export function AlreadyPickedModal({
   model,
@@ -13,6 +13,7 @@ export function AlreadyPickedModal({
 }) {
   return (
     <Modal
+      width="max-w-3xl"
       title={`${model.model_name} already chosen`}
       onOutsideClick={onClose}
     >

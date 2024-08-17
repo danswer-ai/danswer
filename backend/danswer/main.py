@@ -38,11 +38,13 @@ from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import POSTGRES_WEB_APP_NAME
+from danswer.db.connector import check_connectors_exist
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.credentials import create_initial_public_credential
+from danswer.db.document import check_docs_exist
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
@@ -198,21 +200,22 @@ def setup_postgres(db_session: Session) -> None:
 def mark_reindex_flag(db_session: Session) -> None:
     kv_store = get_dynamic_config_store()
     try:
-        kv_store.load(KV_REINDEX_KEY)
+        value = kv_store.load(KV_REINDEX_KEY)
+        logger.debug(f"Re-indexing flag has value {value}")
         return
     except ConfigNotFoundError:
         # Only need to update the flag if it hasn't been set
         pass
 
     # If their first deployment is after the changes, it will
-    # TODO enable this when the other changes go in, need to avoid
+    # enable this when the other changes go in, need to avoid
     # this being set to False, then the user indexes things on the old version
-    # docs_exist = check_docs_exist(db_session)
-    # connectors_exist = check_connectors_exist(db_session)
-    # if docs_exist or connectors_exist:
-    #     kv_store.store(KV_REINDEX_KEY, True)
-    # else:
-    #     kv_store.store(KV_REINDEX_KEY, False)
+    docs_exist = check_docs_exist(db_session)
+    connectors_exist = check_connectors_exist(db_session)
+    if docs_exist or connectors_exist:
+        kv_store.store(KV_REINDEX_KEY, True)
+    else:
+        kv_store.store(KV_REINDEX_KEY, False)
 
 
 def setup_vespa(
