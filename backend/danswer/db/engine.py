@@ -47,14 +47,16 @@ SessionFactory: sessionmaker[Session] | None = None
 if LOG_POSTGRES_LATENCY:
     # Function to log before query execution
     @event.listens_for(Engine, "before_cursor_execute")
-    def before_cursor_execute(
+    def before_cursor_execute(  # type: ignore
         conn, cursor, statement, parameters, context, executemany
     ):
         conn.info["query_start_time"] = time.time()
 
     # Function to log after query execution
     @event.listens_for(Engine, "after_cursor_execute")
-    def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    def after_cursor_execute(  # type: ignore
+        conn, cursor, statement, parameters, context, executemany
+    ):
         total_time = time.time() - conn.info["query_start_time"]
         # don't spam TOO hard
         if total_time > 0.1:
