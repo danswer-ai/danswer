@@ -33,23 +33,19 @@ export interface EmbeddingDetails {
 }
 
 export function EmbeddingModelSelection({
+  selectedProvider,
   currentEmbeddingModel,
   updateSelectedProvider,
-  useDefault,
   modelTab,
   setModelTab,
-  setUseDefault,
 }: {
   modelTab: "open" | "cloud" | null;
-
   setModelTab: Dispatch<SetStateAction<"open" | "cloud" | null>>;
-
   currentEmbeddingModel: CloudEmbeddingModel | HostedEmbeddingModel;
+  selectedProvider: CloudEmbeddingModel | HostedEmbeddingModel;
   updateSelectedProvider: (
     model: CloudEmbeddingModel | HostedEmbeddingModel
   ) => void;
-  useDefault: boolean;
-  setUseDefault: Dispatch<SetStateAction<boolean>>;
 }) {
   // Cloud Provider based modals
   const [showTentativeProvider, setShowTentativeProvider] =
@@ -118,14 +114,13 @@ export function EmbeddingModelSelection({
   };
 
   const onSelectOpenSource = async (model: HostedEmbeddingModel) => {
-    if (currentEmbeddingModel?.model_name === INVALID_OLD_MODEL) {
+    if (selectedProvider?.model_name === INVALID_OLD_MODEL) {
       await onConfirmSelection(model);
     } else {
       setShowTentativeOpenProvider(model);
     }
   };
 
-  const selectedModel = AVAILABLE_CLOUD_PROVIDERS[0];
   const clientsideAddProvider = (provider: CloudEmbeddingProvider) => {
     const providerName = provider.name;
     setNewEnabledProviders((newEnabledProviders) => [
@@ -275,29 +270,34 @@ export function EmbeddingModelSelection({
 
       {modelTab == "open" && (
         <OpenEmbeddingPage
-          currentEmbeddingModel={currentEmbeddingModel}
+          selectedProvider={selectedProvider}
           onSelectOpenSource={onSelectOpenSource}
         />
       )}
+
       {modelTab == "cloud" && (
         <CloudEmbeddingPage
           setShowModelInQueue={setShowModelInQueue}
           setShowTentativeModel={setShowTentativeModel}
-          currentModel={currentEmbeddingModel}
+          currentModel={selectedProvider}
           setAlreadySelectedModel={setAlreadySelectedModel}
           embeddingProviderDetails={embeddingProviderDetails}
           newEnabledProviders={newEnabledProviders}
           newUnenabledProviders={newUnenabledProviders}
           setShowTentativeProvider={setShowTentativeProvider}
-          selectedModel={selectedModel}
           setChangeCredentialsProvider={setChangeCredentialsProvider}
         />
       )}
 
       {!modelTab && (
         <>
-          <button onClick={() => setUseDefault(true)}>
-            <ModelOption model={currentEmbeddingModel} selected={useDefault} />
+          <button onClick={() => updateSelectedProvider(currentEmbeddingModel)}>
+            <ModelOption
+              model={currentEmbeddingModel}
+              selected={
+                selectedProvider.model_name == currentEmbeddingModel.model_name
+              }
+            />
           </button>
         </>
       )}

@@ -54,17 +54,17 @@ export const rerankingModels: RerankingModel[] = [
   {
     cloud: true,
     provider: RerankerProvider.COHERE,
-    modelName: "rerank-multilingual-v3.0",
-    displayName: "Cohere Multilingual",
-    description: "Powerful multilingual reranking model.",
+    modelName: "rerank-english-v3.0",
+    displayName: "Cohere English",
+    description: "High-performance English-focused reranking model.",
     link: "https://docs.cohere.com/docs/rerank",
   },
   {
     cloud: true,
     provider: RerankerProvider.COHERE,
-    modelName: "rerank-english-v3.0",
-    displayName: "Cohere English",
-    description: "High-performance English-focused reranking model.",
+    modelName: "rerank-multilingual-v3.0",
+    displayName: "Cohere Multilingual",
+    description: "Powerful multilingual reranking model.",
     link: "https://docs.cohere.com/docs/rerank",
   },
 ];

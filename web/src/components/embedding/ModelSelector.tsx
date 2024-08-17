@@ -20,7 +20,7 @@ export function ModelPreview({
 }) {
   return (
     <div
-      className={` border border-border rounded shadow-md ${display ? "bg-inverted rounded-lg p-4" : "bg-hover-light p-2"} w-96 flex flex-col`}
+      className={`border border-border rounded shadow-md ${display ? "bg-inverted rounded-lg p-4" : "bg-hover-light p-2"} w-96 flex flex-col`}
     >
       <div className="font-bold text-lg flex">{model.model_name}</div>
       <div className="text-sm mt-1 mx-1">
@@ -64,7 +64,7 @@ export function ModelOption({
           </a>
         )}
       </div>
-      <p className="text-sm text-gray-600 mb-2">
+      <p className="text-sm k text-gray-600 text-left mb-2">
         {model.description || "Custom model—no description is available."}
       </p>
       <div className="text-xs text-gray-500">
@@ -119,7 +119,7 @@ export function ModelSelector({
           <div key={type}>
             <div className="flex items-center mb-2">
               {getIconForRerankType(type)}
-              <h2 className="ml-2  mt-2 text-xl font-bold">
+              <h2 className="ml-2 mt-2 text-xl font-bold">
                 {getTitleForRerankType(type)}
               </h2>
             </div>

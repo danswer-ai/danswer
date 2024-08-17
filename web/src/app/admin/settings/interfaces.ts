@@ -4,6 +4,7 @@ export interface Settings {
   default_page: "search" | "chat";
   maximum_chat_retention_days: number | null;
   notifications: Notification[];
+  needs_reindexing: boolean;
 }
 
 export interface Notification {

@@ -52,10 +52,11 @@ def check_index_swap(db_session: Session) -> None:
             new_status=IndexModelStatus.PRESENT,
             db_session=db_session,
         )
-        kv_store = get_dynamic_config_store()
-        kv_store.store(KV_REINDEX_KEY, False)
 
         if cc_pair_count > 0:
+            kv_store = get_dynamic_config_store()
+            kv_store.store(KV_REINDEX_KEY, False)
+
             # Expire jobs for the now past index/embedding model
             cancel_indexing_attempts_past_model(db_session)
 

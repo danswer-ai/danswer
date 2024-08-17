@@ -26,8 +26,11 @@ import { EmbeddingIcon } from "@/components/icons/icons";
 import Link from "next/link";
 import { SavedSearchSettings } from "../../embeddings/interfaces";
 import UpgradingPage from "./UpgradingPage";
+import { useContext } from "react";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 function Main() {
+  const settings = useContext(SettingsContext);
   const {
     data: currentEmeddingModel,
     isLoading: isLoadingCurrentModel,
@@ -91,6 +94,12 @@ function Main() {
     <div className="h-screen">
       {!futureEmbeddingModel ? (
         <>
+          {settings?.settings.needs_reindexing && (
+            <p className="max-w-3xl">
+              Your search settings are currently out of date! We recommend
+              updating your search settings and re-indexing.
+            </p>
+          )}
           <Title className="mb-6 mt-8 !text-2xl">Embedding Model</Title>
 
           {currentModel ? (
@@ -174,7 +183,6 @@ function Page() {
         title="Search Settings"
         icon={<EmbeddingIcon size={32} className="my-auto" />}
       />
-
       <Main />
     </div>
   );

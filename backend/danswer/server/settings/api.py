@@ -56,7 +56,18 @@ def fetch_settings(
     Postgres calls"""
     general_settings = load_settings()
     user_notifications = get_user_notifications(user, db_session)
-    return UserSettings(**general_settings.dict(), notifications=user_notifications)
+
+    try:
+        kv_store = get_dynamic_config_store()
+        needs_reindexing = cast(bool, kv_store.load(KV_REINDEX_KEY))
+    except ConfigNotFoundError:
+        needs_reindexing = False
+
+    return UserSettings(
+        **general_settings.dict(),
+        notifications=user_notifications,
+        needs_reindexing=needs_reindexing
+    )
 
 
 @basic_router.post("/notifications/{notification_id}/dismiss")
@@ -88,8 +99,8 @@ def get_user_notifications(
 
     kv_store = get_dynamic_config_store()
     try:
-        need_index = cast(bool, kv_store.load(KV_REINDEX_KEY))
-        if not need_index:
+        needs_index = cast(bool, kv_store.load(KV_REINDEX_KEY))
+        if not needs_index:
             dismiss_all_notifications(
                 notif_type=NotificationType.REINDEX, db_session=db_session
             )

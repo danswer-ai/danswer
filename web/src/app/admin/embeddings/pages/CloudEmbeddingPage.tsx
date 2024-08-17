@@ -32,7 +32,6 @@ export default function CloudEmbeddingPage({
   newUnenabledProviders: string[];
   embeddingProviderDetails?: EmbeddingDetails[];
   newEnabledProviders: string[];
-  selectedModel: CloudEmbeddingProvider;
   setShowTentativeProvider: React.Dispatch<
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
@@ -125,7 +124,7 @@ export default function CloudEmbeddingPage({
   );
 }
 
-function CloudModelCard({
+export function CloudModelCard({
   model,
   provider,
   currentModel,

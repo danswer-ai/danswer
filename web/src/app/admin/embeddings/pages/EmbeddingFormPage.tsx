@@ -25,12 +25,6 @@ import RerankingDetailsForm from "../RerankingFormPage";
 import { useEmbeddingFormContext } from "@/components/context/EmbeddingContext";
 import { Modal } from "@/components/Modal";
 
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@radix-ui/react-popover";
-
 export default function EmbeddingForm() {
   const { formStep, nextFormStep, prevFormStep } = useEmbeddingFormContext();
   const { popup, setPopup } = usePopup();
@@ -71,11 +65,7 @@ export default function EmbeddingForm() {
     );
     return response;
   }
-  const [useDefault, setUseDefault] = useState(false);
 
-  const [selectedProvider, setSelectedProvider] = useState<
-    CloudEmbeddingModel | HostedEmbeddingModel | null
-  >(null);
   const updateSelectedProvider = (
     model: CloudEmbeddingModel | HostedEmbeddingModel
   ) => {
@@ -95,7 +85,9 @@ export default function EmbeddingForm() {
     { refreshInterval: 5000 } // 5 seconds
   );
 
-  const [showExplanation, setShowExplanation] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<
+    CloudEmbeddingModel | HostedEmbeddingModel | null
+  >(currentEmbeddingModel!);
 
   const { data: searchSettings, isLoading: isLoadingSearchSettings } =
     useSWR<SavedSearchSettings | null>(
@@ -225,9 +217,9 @@ export default function EmbeddingForm() {
 
   const ReIndxingButton = () => {
     return (
-      <div className="flex mx-auto gap-x-1 ml-auto  items-center">
+      <div className="flex mx-auto gap-x-1 ml-auto items-center">
         <button
-          className="enabled:cursor-pointer  disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex  gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+          className="enabled:cursor-pointer disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
           onClick={async () => {
             const updated = await updateSearch();
             if (updated) {
@@ -237,25 +229,25 @@ export default function EmbeddingForm() {
         >
           Re-index
         </button>
-        <Popover open={showExplanation} onOpenChange={setShowExplanation}>
-          <PopoverTrigger>
-            <WarningCircle className="text-text-800 cursor-pointer" />
-          </PopoverTrigger>
-          <PopoverContent>
-            <p className="max-w-sm bg-background-900 rounded p-2 text-text-200">
-              Needs re-indexing due to:
-              <ul className="list-disc pl-5 mt-2">
-                {currentEmbeddingModel != selectedProvider && (
-                  <li>Changed embedding provider</li>
-                )}
-                {searchSettings?.multipass_indexing !=
-                  advancedEmbeddingDetails.multipass_indexing && (
-                  <li>Multipass indexing modification</li>
-                )}
-              </ul>
-            </p>
-          </PopoverContent>
-        </Popover>
+        <div className="relative group">
+          <WarningCircle
+            className="text-text-800 cursor-help"
+            size={20}
+            weight="fill"
+          />
+          <div className="absolute z-10 invisible group-hover:visible bg-background-800 text-text-200 text-sm rounded-md shadow-md p-2 right-0 mt-1 w-64">
+            <p className="font-semibold mb-2">Needs re-indexing due to:</p>
+            <ul className="list-disc pl-5">
+              {currentEmbeddingModel != selectedProvider && (
+                <li>Changed embedding provider</li>
+              )}
+              {searchSettings?.multipass_indexing !=
+                advancedEmbeddingDetails.multipass_indexing && (
+                <li>Multipass indexing modification</li>
+              )}
+            </ul>
+          </div>
+        </div>
       </div>
     );
   };
@@ -281,23 +273,18 @@ export default function EmbeddingForm() {
               take hours or days. You can monitor the progress of the
               re-indexing on this page while the models are being switched.
             </Text>
-
             <Card>
               <EmbeddingModelSelection
                 setModelTab={setModelTab}
                 modelTab={modelTab}
-                useDefault={useDefault}
-                setUseDefault={setUseDefault}
-                currentEmbeddingModel={selectedProvider}
+                selectedProvider={selectedProvider}
+                currentEmbeddingModel={currentEmbeddingModel}
                 updateSelectedProvider={updateSelectedProvider}
               />
             </Card>
             <div className="mt-4 flex w-full justify-end">
               <button
                 className="enabled:cursor-pointer disabled:cursor-not-allowed disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-                disabled={
-                  selectedProvider == currentEmbeddingModel && !useDefault
-                }
                 onClick={() => {
                   if (
                     selectedProvider.model_name.includes("e5") &&
@@ -308,7 +295,6 @@ export default function EmbeddingForm() {
                   } else {
                     nextFormStep();
                   }
-                  console;
                 }}
               >
                 Continue

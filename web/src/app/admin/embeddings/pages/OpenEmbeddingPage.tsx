@@ -11,10 +11,10 @@ import { useState } from "react";
 
 export default function OpenEmbeddingPage({
   onSelectOpenSource,
-  currentEmbeddingModel,
+  selectedProvider,
 }: {
   onSelectOpenSource: (model: HostedEmbeddingModel) => Promise<void>;
-  currentEmbeddingModel: HostedEmbeddingModel | CloudEmbeddingModel;
+  selectedProvider: HostedEmbeddingModel | CloudEmbeddingModel;
 }) {
   const [configureModel, setConfigureModel] = useState(false);
   return (
@@ -22,7 +22,7 @@ export default function OpenEmbeddingPage({
       <ModelSelector
         modelOptions={AVAILABLE_MODELS}
         setSelectedModel={onSelectOpenSource}
-        currentEmbeddingModel={currentEmbeddingModel}
+        currentEmbeddingModel={selectedProvider}
       />
 
       <Text className="mt-6">

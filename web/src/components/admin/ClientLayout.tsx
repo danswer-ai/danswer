@@ -28,6 +28,9 @@ import { FiActivity, FiBarChart2 } from "react-icons/fi";
 import { UserDropdown } from "../UserDropdown";
 import { User } from "@/lib/types";
 import { usePathname, useSearchParams } from "next/navigation";
+import { SettingsContext } from "../settings/SettingsProvider";
+import { useContext } from "react";
+import { CustomTooltip } from "../tooltip/CustomTooltip";
 
 export function ClientLayout({
   user,
@@ -47,6 +50,7 @@ export function ClientLayout({
   ) {
     return <>{children}</>;
   }
+  const settings = useContext(SettingsContext);
 
   return (
     <div className="h-screen overflow-y-hidden">
@@ -174,10 +178,13 @@ export function ClientLayout({
                     link: "/admin/configuration/llm",
                   },
                   {
+                    error: settings?.settings.needs_reindexing,
                     name: (
                       <div className="flex">
                         <SearchIcon />
-                        <div className="ml-1">Search Settings</div>
+                        <CustomTooltip content="Navigate here to update your search settings">
+                          <div className="ml-1">Search Settings</div>
+                        </CustomTooltip>
                       </div>
                     ),
                     link: "/admin/configuration/search",
