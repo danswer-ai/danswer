@@ -464,6 +464,7 @@ export function ChatPage({
       sessionId: chatSessionId || completeMessageDetail.sessionId,
       messageMap: newCompleteMessageMap,
     };
+    console.log(newCompleteMessageDetail);
     setCompleteMessageDetail(newCompleteMessageDetail);
     return newCompleteMessageDetail;
   };
@@ -480,8 +481,6 @@ export function ChatPage({
   const [regenerationState, setRegenerationState] =
     useState<RegenerationState | null>(null);
 
-  // const [isLoadingResponse, setIsLoadingResponse] = useState(false);
-  // const [isStreaming, setIsStreaming] = useState(false);
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
 
@@ -731,6 +730,10 @@ export function ChatPage({
     alternativeAssistantOverride = null,
     modelOverRide,
     finalMessageIndex,
+    regenerateParentMessageId,
+    regenerateParentMessage,
+    currentRegenerateId,
+    regenMessage,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
@@ -741,6 +744,10 @@ export function ChatPage({
     regenerate?: boolean;
     modelOverRide?: LlmOverride;
     finalMessageIndex?: number;
+    regenerateParentMessageId?: number;
+    regenerateParentMessage?: Message;
+    currentRegenerateId?: number;
+    regenMessage?: string;
   } = {}) => {
     if (chatState != "input") {
       setPopup({
@@ -780,6 +787,7 @@ export function ChatPage({
     const messageToResend = messageHistory.find(
       (message) => message.messageId === messageIdToResend
     );
+    console.log(messageToResend);
 
     const messageMap = completeMessageDetail.messageMap;
     const messageToResendParent =
@@ -800,7 +808,8 @@ export function ChatPage({
       setChatState("input");
       return;
     }
-    let currMessage = messageToResend ? messageToResend.message : message;
+    let currMessage =
+      regenMessage || (messageToResend ? messageToResend.message : message);
     if (messageOverride) {
       currMessage = messageOverride;
     }
@@ -857,7 +866,7 @@ export function ChatPage({
         message: currMessage,
         alternateAssistantId: currentAssistantId,
         fileDescriptors: currentMessageFiles,
-        parentMessageId: lastSuccessfulMessageId,
+        parentMessageId: regenerateParentMessageId || lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
         promptId: liveAssistant?.prompts[0]?.id || 0,
         filters: buildFilters(
@@ -874,7 +883,7 @@ export function ChatPage({
           .map((document) => document.db_doc_id as number),
         queryOverride,
         forceSearch,
-
+        regenerate,
         modelProvider:
           modelOverRide?.name ||
           llmOverrideManager.llmOverride.name ||
@@ -923,7 +932,9 @@ export function ChatPage({
             // we will use tempMessages until the regenerated message is complete
             messageUpdates = [
               {
-                messageId: user_message_id,
+                messageId: regenerate
+                  ? regenerateParentMessageId!
+                  : user_message_id,
                 message: currMessage,
                 type: "user",
                 files: currentMessageFiles,
@@ -931,7 +942,8 @@ export function ChatPage({
                 parentMessageId: parentMessage?.messageId || null,
               },
             ];
-            if (parentMessage) {
+
+            if (parentMessage && !regenerate) {
               messageUpdates.push({
                 ...parentMessage,
                 childrenMessageIds: (
@@ -940,12 +952,14 @@ export function ChatPage({
                 latestChildMessageId: user_message_id,
               });
             }
+            console.log("messageUpdatesaaa");
+            console.log(regenerateParentMessage?.childrenMessageIds);
 
             const {
               messageMap: currentFrozenMessageMap,
               sessionId: currentFrozenSessionId,
             } = upsertToCompleteMessageMap({
-              messages: regenerate ? [] : messageUpdates,
+              messages: messageUpdates,
               chatSessionId: currChatSessionId,
             });
 
@@ -1016,7 +1030,18 @@ export function ChatPage({
               parentMessage || frozenMessageMap?.get(SYSTEM_MESSAGE_ID)!;
 
             const updateFn = (messages: Message[]) => {
-              const replacementsMap = null;
+              const replacementsMap = regenerate
+                ? new Map([
+                    [regenerateParentMessageId, regenerateParentMessageId],
+                    [
+                      currentRegenerateId,
+                      initialFetchDetails?.assistant_message_id,
+                    ],
+                    // [curr]
+                  ] as [number, number][])
+                : null;
+
+              console.log(messages);
               upsertToCompleteMessageMap({
                 messages: messages,
                 replacementsMap: replacementsMap,
@@ -1027,13 +1052,18 @@ export function ChatPage({
 
             updateFn([
               {
-                messageId: initialFetchDetails.user_message_id!,
+                messageId: regenerate
+                  ? regenerateParentMessageId!
+                  : initialFetchDetails.user_message_id!,
                 message: currMessage,
                 type: "user",
                 files: currentMessageFiles,
                 toolCalls: [],
                 parentMessageId: error ? null : lastSuccessfulMessageId,
-                childrenMessageIds: [initialFetchDetails.assistant_message_id!],
+                childrenMessageIds: [
+                  ...(regenerateParentMessage?.childrenMessageIds || []),
+                  initialFetchDetails.assistant_message_id!,
+                ],
                 latestChildMessageId: initialFetchDetails.assistant_message_id,
               },
               {
@@ -1047,7 +1077,9 @@ export function ChatPage({
                 citations: finalMessage?.citations || {},
                 files: finalMessage?.files || aiMessageImages || [],
                 toolCalls: finalMessage?.tool_calls || toolCalls,
-                parentMessageId: initialFetchDetails.user_message_id,
+                parentMessageId: regenerate
+                  ? regenerateParentMessageId!
+                  : initialFetchDetails.user_message_id,
                 alternateAssistantID: alternativeAssistant?.id,
                 stackTrace: stackTrace,
                 alternate_model: finalMessage?.alternate_model,
@@ -1334,7 +1366,13 @@ export function ChatPage({
   };
   const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
-  function createRegenerator(responseId: number, finalMessageIndex: number) {
+  function createRegenerator(
+    responseId: number,
+    finalMessageIndex: number,
+    regenerateParentMessage: Message,
+    currentRegenerateId: number,
+    regenMessage: string
+  ) {
     // Returns new function that only needs `modelOverRide` to be specified when called
 
     return async function (modelOverRide: LlmOverride) {
@@ -1343,6 +1381,10 @@ export function ChatPage({
         messageIdToResend: responseId,
         finalMessageIndex,
         modelOverRide,
+        regenerateParentMessageId: finalMessageIndex!,
+        regenerateParentMessage,
+        currentRegenerateId,
+        regenMessage,
       });
     };
   }
@@ -1559,9 +1601,6 @@ export function ChatPage({
                                       content={message.message}
                                       files={message.files}
                                       messageId={message.messageId}
-                                      otherMessagesCanSwitchTo={
-                                        parentMessage?.childrenMessageIds || []
-                                      }
                                       onEdit={(editedContent) => {
                                         const parentMessageId =
                                           message.parentMessageId!;
@@ -1581,6 +1620,9 @@ export function ChatPage({
                                           messageOverride: editedContent,
                                         });
                                       }}
+                                      otherMessagesCanSwitchTo={
+                                        parentMessage?.childrenMessageIds || []
+                                      }
                                       onMessageSelection={(messageId) => {
                                         const newCompleteMessageMap = new Map(
                                           messageMap
@@ -1621,6 +1663,13 @@ export function ChatPage({
                                       )
                                     : null;
 
+                                if (
+                                  regenerationState?.regenerating &&
+                                  chatState == "loading" &&
+                                  i == messageHistory.length - 1
+                                ) {
+                                  return <></>;
+                                }
                                 return (
                                   <div
                                     key={messageReactComponentKey}
@@ -1634,8 +1683,33 @@ export function ChatPage({
                                       alternateModel={message.alternate_model}
                                       regenerate={createRegenerator(
                                         parentMessage?.messageId!,
-                                        i
+                                        parentMessage?.messageId!,
+                                        parentMessage!,
+                                        message.messageId,
+                                        parentMessage?.message!
                                       )}
+                                      otherMessagesCanSwitchTo={
+                                        parentMessage?.childrenMessageIds || []
+                                      }
+                                      onMessageSelection={(messageId) => {
+                                        const newCompleteMessageMap = new Map(
+                                          messageMap
+                                        );
+                                        newCompleteMessageMap.get(
+                                          message.parentMessageId!
+                                        )!.latestChildMessageId = messageId;
+                                        setCompleteMessageDetail({
+                                          sessionId:
+                                            completeMessageDetail.sessionId,
+                                          messageMap: newCompleteMessageMap,
+                                        });
+                                        setSelectedMessageForDocDisplay(
+                                          messageId
+                                        );
+                                        // set message as latest so we can edit this message
+                                        // and so it sticks around on page reload
+                                        setMessageAsLatest(messageId);
+                                      }}
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
                                       toggleDocumentSelection={

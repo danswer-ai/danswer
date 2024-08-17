@@ -114,6 +114,7 @@ export type PacketType =
   | MessageResponseIDInfo;
 
 export async function* sendMessage({
+  regenerate,
   message,
   fileDescriptors,
   parentMessageId,
@@ -131,6 +132,7 @@ export async function* sendMessage({
   alternateAssistantId,
   signal,
 }: {
+  regenerate: boolean;
   message: string;
   fileDescriptors: FileDescriptor[];
   parentMessageId: number | null;
@@ -159,6 +161,7 @@ export async function* sendMessage({
     prompt_id: promptId,
     search_doc_ids: documentsAreSelected ? selectedDocumentIds : null,
     file_descriptors: fileDescriptors,
+    regenerate,
     retrieval_options: !documentsAreSelected
       ? {
           run_search:

@@ -139,9 +139,13 @@ export const AIMessage = ({
   handleForceSearch,
   retrievalDisabled,
   currentPersona,
+  otherMessagesCanSwitchTo,
+  onMessageSelection,
 }: {
   shared?: boolean;
   isActive?: boolean;
+  otherMessagesCanSwitchTo?: number[];
+  onMessageSelection?: (messageId: number) => void;
   selectedDocuments?: DanswerDocument[] | null;
   toggleDocumentSelection?: () => void;
   docs?: DanswerDocument[] | null;
@@ -250,6 +254,9 @@ export const AIMessage = ({
       });
   }
 
+  const currentMessageInd = messageId
+    ? otherMessagesCanSwitchTo?.indexOf(messageId)
+    : undefined;
   const uniqueSources: ValidSources[] = Array.from(
     new Set((docs || []).map((doc) => doc.source_type))
   ).slice(0, 3);
@@ -487,6 +494,29 @@ export const AIMessage = ({
                         </div>
                       </div>
                     )}
+                  </div>
+                  <div className="flex  justify-start  w-full gap-x-0.5 mt-1">
+                    {currentMessageInd !== undefined &&
+                      onMessageSelection &&
+                      otherMessagesCanSwitchTo &&
+                      otherMessagesCanSwitchTo.length > 1 && (
+                        <div className="mr-auto">
+                          <MessageSwitcher
+                            currentPage={currentMessageInd + 1}
+                            totalPages={otherMessagesCanSwitchTo.length}
+                            handlePrevious={() => {
+                              onMessageSelection(
+                                otherMessagesCanSwitchTo[currentMessageInd - 1]
+                              );
+                            }}
+                            handleNext={() => {
+                              onMessageSelection(
+                                otherMessagesCanSwitchTo[currentMessageInd + 1]
+                              );
+                            }}
+                          />
+                        </div>
+                      )}
                   </div>
 
                   {handleFeedback &&
