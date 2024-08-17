@@ -448,8 +448,6 @@ def stream_chat_message_objects(
                     else default_num_chunks
                 ),
                 max_window_percentage=max_document_percentage,
-                use_sections=new_msg_req.chunks_above > 0
-                or new_msg_req.chunks_below > 0,
             )
 
         # Cannot determine these without the LLM step or breaking out early
