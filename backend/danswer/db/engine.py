@@ -1,9 +1,11 @@
 import contextlib
+import time
 from collections.abc import AsyncGenerator
 from collections.abc import Generator
 from datetime import datetime
 from typing import ContextManager
 
+from sqlalchemy import event
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
 from sqlalchemy.engine import Engine
@@ -39,6 +41,21 @@ _SYNC_ENGINE: Engine | None = None
 _ASYNC_ENGINE: AsyncEngine | None = None
 
 SessionFactory: sessionmaker[Session] | None = None
+
+
+# Function to log before query execution
+@event.listens_for(Engine, "before_cursor_execute")
+def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    conn.info["query_start_time"] = time.time()
+    logger.info(f"Start Query: {statement}")
+
+
+# Function to log after query execution
+@event.listens_for(Engine, "after_cursor_execute")
+def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    total_time = time.time() - conn.info["query_start_time"]
+    logger.info(f"Query Complete: {statement}")
+    logger.info(f"Total Time: {total_time:.4f} seconds")
 
 
 def get_db_current_time(db_session: Session) -> datetime:
