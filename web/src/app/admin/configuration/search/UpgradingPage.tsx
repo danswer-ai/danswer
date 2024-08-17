@@ -5,7 +5,7 @@ import { ConnectorIndexingStatus } from "@/lib/types";
 import { Button, Text, Title } from "@tremor/react";
 import Link from "next/link";
 import { useState } from "react";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { ReindexingProgressTable } from "../../../../components/embedding/ReindexingProgressTable";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import {
@@ -36,6 +36,20 @@ export default function UpgradingPage({
     { refreshInterval: 5000 } // 5 seconds
   );
 
+  const onCancel = async () => {
+    const response = await fetch("/api/search-settings/cancel-new-embedding", {
+      method: "POST",
+    });
+    if (response.ok) {
+      mutate("/api/search-settings/get-secondary-embedding-model");
+    } else {
+      alert(
+        `Failed to cancel embedding model update - ${await response.text()}`
+      );
+    }
+    setIsCancelling(false);
+  };
+
   return (
     <>
       {isCancelling && (
@@ -52,11 +66,7 @@ export default function UpgradingPage({
               be lost.
             </div>
             <div className="flex">
-              <Button
-                // onClick={onCancel}
-                className="mt-3 mx-auto"
-                color="green"
-              >
+              <Button onClick={onCancel} className="mt-3 mx-auto" color="green">
                 Confirm
               </Button>
             </div>
