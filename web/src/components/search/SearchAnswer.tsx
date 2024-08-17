@@ -52,13 +52,11 @@ export default function SearchAnswer({
   useEffect(() => {
     const checkOverflow = () => {
       if (answerContainerRef.current) {
-        const isOverflowing =
-          answerContainerRef.current.scrollHeight >
-          answerContainerRef.current.clientHeight;
-        setSearchAnswerOverflowing(isOverflowing);
+        const containerHeight = answerContainerRef.current.clientHeight;
+        const contentHeight = answerContainerRef.current.scrollHeight;
+        setSearchAnswerOverflowing(contentHeight > containerHeight);
       }
     };
-
     checkOverflow();
     window.addEventListener("resize", checkOverflow);
 
