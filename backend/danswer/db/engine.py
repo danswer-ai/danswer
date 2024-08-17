@@ -58,25 +58,6 @@ def after_cursor_execute(conn, cursor, statement, parameters, context, executema
         logger.info(f"Total Time: {total_time:.4f} seconds")
 
 
-# Function to log before query execution
-@event.listens_for(AsyncEngine, "before_cursor_execute")
-def before_cursor_execute_async(
-    conn, cursor, statement, parameters, context, executemany
-):
-    conn.info["query_start_time"] = time.time()
-
-
-# Function to log after query execution
-@event.listens_for(AsyncEngine, "after_cursor_execute")
-def after_cursor_execute_async(
-    conn, cursor, statement, parameters, context, executemany
-):
-    total_time = time.time() - conn.info["query_start_time"]
-    if total_time > 0.1:
-        logger.info(f"Query Complete: {statement}")
-        logger.info(f"Total Time: {total_time:.4f} seconds")
-
-
 def get_db_current_time(db_session: Session) -> datetime:
     """Get the current time from Postgres representing the start of the transaction
     Within the same transaction this value will not update
