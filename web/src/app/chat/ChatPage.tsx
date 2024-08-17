@@ -999,12 +999,7 @@ export function ChatPage({
               parentMessage || frozenMessageMap?.get(SYSTEM_MESSAGE_ID)!;
 
             const updateFn = (messages: Message[]) => {
-              const replacementsMap = finalMessage
-                ? new Map([
-                    [messages[0].messageId, user_message_id],
-                    [messages[1].messageId, assistant_message_id],
-                  ] as [number, number][])
-                : null;
+              const replacementsMap = null;
               upsertToCompleteMessageMap({
                 messages: messages,
                 replacementsMap: replacementsMap,

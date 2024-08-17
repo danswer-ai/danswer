@@ -255,7 +255,6 @@ export const AIMessage = ({
               size="small"
               assistant={alternativeAssistant || currentPersona}
             />
-            {messageId}
             <div className="w-full">
               <div className="max-w-message-max break-words">
                 {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
@@ -679,7 +678,6 @@ export const HumanMessage = ({
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />
-            {messageId}
             <div className="flex justify-end">
               <div className="w-full ml-8 flex w-full max-w-message-max break-words">
                 {isEditing ? (
