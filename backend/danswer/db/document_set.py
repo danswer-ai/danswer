@@ -356,14 +356,10 @@ def fetch_document_sets_for_curator(
 ) -> Sequence[DocumentSetDBModel]:
     """Used for Curator UI where they should have visibility into all document sets for the groups they curate"""
 
-    public_stmt = select(DocumentSetDBModel).where(
-        DocumentSetDBModel.is_public == True  # noqa: E712
-    )
-    public_document_sets = db_session.scalars(public_stmt).all()
-
     where_clause = User__UserGroup.user_id == user.id
     if user.role == UserRole.CURATOR:  # as opposed to global curator
         where_clause &= User__UserGroup.is_curator == True  # noqa: E712
+    where_clause |= DocumentSetDBModel.is_public == True  # noqa: E712
 
     curated_stmt = (
         select(DocumentSetDBModel)
@@ -372,9 +368,8 @@ def fetch_document_sets_for_curator(
         .where(where_clause)
         .distinct()
     )
-    curated_document_sets = db_session.scalars(curated_stmt).all()
 
-    return public_document_sets + curated_document_sets
+    return db_session.scalars(curated_stmt).all()
 
 
 def fetch_user_document_sets(

@@ -44,9 +44,9 @@ class UserGroup(BaseModel):
                 for user in user_group_model.users
             ],
             curator_ids=[
-                str(user.user_id)
+                user.user_id
                 for user in user_group_model.user_group_relationships
-                if user.is_curator
+                if user.is_curator and user.user_id is not None
             ],
             cc_pairs=[
                 ConnectorCredentialPairDescriptor(

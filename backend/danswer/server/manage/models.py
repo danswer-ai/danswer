@@ -86,7 +86,7 @@ class UserByEmail(BaseModel):
 
 class UserRoleUpdateRequest(BaseModel):
     user_email: str
-    new_role: str
+    new_role: UserRole
 
 
 class UserRoleResponse(BaseModel):

@@ -16,10 +16,32 @@ from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
+from danswer.db.models import User__UserGroup
+from danswer.db.models import UserGroup
+from danswer.db.models import UserRole
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+
+def get_connector_credential_pairs_for_curator(
+    db_session: Session,
+    user: User,
+) -> list[ConnectorCredentialPair]:
+    where_clause = User__UserGroup.user_id == user.id
+    if user.role == UserRole.CURATOR:  # as opposed to global curator
+        where_clause &= User__UserGroup.is_curator == True  # noqa: E712
+    where_clause |= ConnectorCredentialPair.is_public == True  # noqa: E712
+    curated_stmt = (
+        select(ConnectorCredentialPair)
+        .join(UserGroup.cc_pairs)
+        .join(User__UserGroup, UserGroup.id == User__UserGroup.user_group_id)
+        .where(where_clause)
+        .distinct()
+    )
+
+    return list(db_session.scalars(curated_stmt).all())
 
 
 def get_connector_credential_pairs(

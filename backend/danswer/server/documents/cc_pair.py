@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.db.connector_credential_pair import add_credential_to_connector
@@ -21,6 +21,7 @@ from danswer.db.index_attempt import cancel_indexing_attempts_for_ccpair
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import get_index_attempts_for_connector
 from danswer.db.models import User
+from danswer.db.models import UserRole
 from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorCredentialPairMetadata
@@ -32,17 +33,16 @@ router = APIRouter(prefix="/manage")
 @router.get("/admin/cc-pair/{cc_pair_id}")
 def get_cc_pair_full_info(
     cc_pair_id: int,
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> CCPairFullInfo:
-    cc_pair = get_connector_credential_pair_from_id(
-        cc_pair_id=cc_pair_id,
-        db_session=db_session,
-    )
-    if cc_pair is None:
+    cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
+    if not cc_pair:
+        raise HTTPException(status_code=404, detail="CC Pair not found")
+    if cc_pair.is_public and (user is None or user.role != UserRole.ADMIN):
         raise HTTPException(
             status_code=400,
-            detail=f"Connector with ID {cc_pair_id} not found. Has it been deleted?",
+            detail="Public connection cannot be renamed by non-admin users",
         )
 
     cc_pair_identifier = ConnectorCredentialPairIdentifier(
@@ -85,9 +85,18 @@ class CCStatusUpdateRequest(BaseModel):
 def update_cc_pair_status(
     cc_pair_id: int,
     status_update_request: CCStatusUpdateRequest,
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
+    cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
+    if not cc_pair:
+        raise HTTPException(status_code=404, detail="CC Pair not found")
+    if cc_pair.is_public and (user is None or user.role != UserRole.ADMIN):
+        raise HTTPException(
+            status_code=400,
+            detail="Public connection cannot be renamed by non-admin users",
+        )
+
     if status_update_request.status == ConnectorCredentialPairStatus.PAUSED:
         cancel_indexing_attempts_for_ccpair(cc_pair_id, db_session)
 
@@ -105,12 +114,17 @@ def update_cc_pair_status(
 def update_cc_pair_name(
     cc_pair_id: int,
     new_name: str,
-    user: User | None = Depends(current_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
     cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
     if not cc_pair:
         raise HTTPException(status_code=404, detail="CC Pair not found")
+    if cc_pair.is_public and (user is None or user.role != UserRole.ADMIN):
+        raise HTTPException(
+            status_code=400,
+            detail="Public connection cannot be renamed by non-admin users",
+        )
 
     try:
         cc_pair.name = new_name
@@ -128,7 +142,7 @@ def associate_credential_to_connector(
     connector_id: int,
     credential_id: int,
     metadata: ConnectorCredentialPairMetadata,
-    user: User | None = Depends(current_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
     try:

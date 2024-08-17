@@ -17,8 +17,10 @@ from danswer.connectors.google_drive.constants import (
 )
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
+from danswer.db.models import Credential__UserGroup
 from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.models import User
+from danswer.db.models import User__UserGroup
 from danswer.server.documents.models import CredentialBase
 from danswer.server.documents.models import CredentialDataUpdateRequest
 from danswer.utils.logger import setup_logger
@@ -66,6 +68,24 @@ def fetch_credentials(
     return list(results.all())
 
 
+def fetch_credentials_for_curator(
+    db_session: Session,
+    user: User,
+) -> list[Credential]:
+    where_clause = and_(
+        Credential.id == Credential__UserGroup.credential_id,
+        Credential__UserGroup.user_group_id == User__UserGroup.user_group_id,
+        User__UserGroup.user_id == user.id,
+    )
+    if user.role == UserRole.CURATOR:
+        where_clause = and_(
+            where_clause, User__UserGroup.is_curator == True  # noqa: E712
+        )
+    where_clause = or_(where_clause, Credential.curator_public == True)  # noqa: E712
+    curator_stmt = select(Credential).where(where_clause).distinct()
+    return list(db_session.scalars(curator_stmt).all())
+
+
 def fetch_credential_by_id(
     credential_id: int,
     user: User | None,
@@ -88,6 +108,32 @@ def fetch_credentials_by_source(
     base_query = _attach_user_filters(base_query, user)
     credentials = db_session.execute(base_query).scalars().all()
     return list(credentials)
+
+
+def fetch_curator_credentials_by_source(
+    db_session: Session,
+    user: User,
+    document_source: DocumentSource | None = None,
+) -> list[Credential]:
+    where_clause = and_(
+        Credential.id == Credential__UserGroup.credential_id,
+        Credential__UserGroup.user_group_id == User__UserGroup.user_group_id,
+        User__UserGroup.user_id == user.id,
+    )
+    if user.role == UserRole.CURATOR:
+        where_clause = and_(
+            where_clause, User__UserGroup.is_curator == True  # noqa: E712
+        )
+    where_clause = or_(where_clause, Credential.curator_public == True)  # noqa: E712
+
+    final_stmt = (
+        select(Credential)
+        .where(Credential.source == document_source)
+        .where(where_clause)
+        .distinct()
+    )
+
+    return list(db_session.scalars(final_stmt).all())
 
 
 def swap_credentials_connector(
@@ -153,11 +199,32 @@ def create_credential(
         admin_public=credential_data.admin_public,
         source=credential_data.source,
         name=credential_data.name,
+        curator_public=credential_data.curator_public,
     )
     db_session.add(credential)
+    db_session.flush()  # This ensures the credential gets an ID
+
+    credential_user_groups = []
+    for group_id in credential_data.groups:
+        credential_user_groups.append(
+            Credential__UserGroup(
+                credential_id=credential.id,
+                user_group_id=group_id,
+            )
+        )
+    db_session.add_all(credential_user_groups)
     db_session.commit()
 
     return credential
+
+
+def _cleanup_credential__user_group_relationships__no_commit(
+    db_session: Session, credential_id: int
+) -> None:
+    """NOTE: does not commit the transaction."""
+    db_session.query(Credential__UserGroup).filter(
+        Credential__UserGroup.credential_id == credential_id
+    ).delete(synchronize_session=False)
 
 
 def alter_credential(
@@ -230,6 +297,7 @@ def delete_credential(
     db_session: Session,
     force: bool = False,
 ) -> None:
+    _cleanup_credential__user_group_relationships__no_commit(db_session, credential_id)
     credential = fetch_credential_by_id(credential_id, user, db_session)
     if credential is None:
         raise ValueError(
@@ -274,7 +342,6 @@ def delete_credential(
         logger.info(f"Force deleting credential {credential_id}")
     else:
         logger.info(f"Deleting credential {credential_id}")
-
     db_session.delete(credential)
     db_session.commit()
 

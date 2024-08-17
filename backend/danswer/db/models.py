@@ -529,6 +529,8 @@ class Credential(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    curator_public: Mapped[bool] = mapped_column(Boolean, default=False)
+
     connectors: Mapped[list["ConnectorCredentialPair"]] = relationship(
         "ConnectorCredentialPair",
         back_populates="credential",
@@ -1472,6 +1474,17 @@ class DocumentSet__UserGroup(Base):
     )
 
 
+class Credential__UserGroup(Base):
+    __tablename__ = "credential__user_group"
+
+    credential_id: Mapped[int] = mapped_column(
+        ForeignKey("credential.id"), primary_key=True
+    )
+    user_group_id: Mapped[int] = mapped_column(
+        ForeignKey("user_group.id"), primary_key=True
+    )
+
+
 class UserGroup(Base):
     __tablename__ = "user_group"
 
@@ -1512,6 +1525,10 @@ class UserGroup(Base):
         "DocumentSet",
         secondary=DocumentSet__UserGroup.__table__,
         viewonly=True,
+    )
+    credentials: Mapped[list[Credential]] = relationship(
+        "Credential",
+        secondary=Credential__UserGroup.__table__,
     )
 
 

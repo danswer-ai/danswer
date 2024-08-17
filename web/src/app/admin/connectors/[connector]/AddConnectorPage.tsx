@@ -9,6 +9,7 @@ import { Card, Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/lib";
 import { usePopup } from "@/components/admin/connectors/Popup";
+import { useUserGroups } from "@/lib/hooks";
 import { useFormContext } from "@/components/context/FormContext";
 import { getSourceDisplayName } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
@@ -50,6 +51,7 @@ export default function AddConnector({
 }: {
   connector: ValidSources;
 }) {
+  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
   const [name, setName] = useState("");
   const [currentCredential, setCurrentCredential] =
     useState<Credential<any> | null>(null);
@@ -382,6 +384,7 @@ export default function AddConnector({
                       setPopup={setPopup}
                       onSwitch={onSwap}
                       onClose={() => setCreateConnectorToggle(false)}
+                      userGroups={userGroups || []}
                     />
                   </>
                 </Modal>

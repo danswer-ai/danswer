@@ -89,6 +89,8 @@ class CredentialBase(BaseModel):
     admin_public: bool
     source: DocumentSource
     name: str | None = None
+    curator_public: bool = False
+    groups: list[int] = []
 
 
 class CredentialSnapshot(CredentialBase):
@@ -96,6 +98,11 @@ class CredentialSnapshot(CredentialBase):
     user_id: UUID | None
     time_created: datetime
     time_updated: datetime
+    name: str
+    source: DocumentSource
+    credential_json: dict[str, Any]
+    admin_public: bool
+    curator_public: bool
 
     @classmethod
     def from_credential_db_model(cls, credential: Credential) -> "CredentialSnapshot":
@@ -103,7 +110,7 @@ class CredentialSnapshot(CredentialBase):
             id=credential.id,
             credential_json=(
                 mask_credential_dict(credential.credential_json)
-                if MASK_CREDENTIAL_PREFIX
+                if MASK_CREDENTIAL_PREFIX and credential.credential_json
                 else credential.credential_json
             ),
             user_id=credential.user_id,
@@ -112,6 +119,7 @@ class CredentialSnapshot(CredentialBase):
             time_updated=credential.time_updated,
             source=credential.source or DocumentSource.NOT_APPLICABLE,
             name=credential.name,
+            curator_public=credential.curator_public,
         )
 
 

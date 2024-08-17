@@ -86,7 +86,7 @@ def set_user_role(
         disable_curator_status(db_session, user_to_update.id)
         validate_curator_status(db_session, [user_to_update])
     else:
-        user_to_update.role = user_role_update_request.new_role
+        user_to_update.role = user_role_update_request.new_role.value
 
     db_session.add(user_to_update)
     db_session.commit()

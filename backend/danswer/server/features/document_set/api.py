@@ -80,7 +80,7 @@ def list_document_sets_admin(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[DocumentSet]:
-    if user.role == UserRole.ADMIN:
+    if user is None or user.role == UserRole.ADMIN:
         return [
             DocumentSet.from_model(ds)
             for ds in fetch_all_document_sets(db_session=db_session)

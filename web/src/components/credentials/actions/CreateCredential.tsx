@@ -1,10 +1,14 @@
-import React from "react";
-import { Button, Card } from "@tremor/react";
+import React, { useState } from "react";
+import { Button, Card, Divider } from "@tremor/react";
 import { ValidSources } from "@/lib/types";
+import { UserGroup } from "@/lib/types";
 import { FaAccusoft } from "react-icons/fa";
 import { submitCredential } from "@/components/admin/connectors/CredentialForm";
-import { TextFormField } from "@/components/admin/connectors/Field";
-import { Form, Formik, FormikHelpers } from "formik";
+import {
+  TextFormField,
+  BooleanFormField,
+} from "@/components/admin/connectors/Field";
+import { Form, Formik, FormikHelpers, FormikProps } from "formik";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDocLink } from "@/lib/sources";
 import GDriveMain from "@/app/admin/connectors/[connector]/pages/gdrive/GoogleDrivePage";
@@ -16,8 +20,92 @@ import {
 } from "@/lib/connectors/credentials";
 import { PlusCircleIcon } from "../../icons/icons";
 import { GmailMain } from "@/app/admin/connectors/[connector]/pages/gmail/GmailPage";
-import { ActionType, dictionaryType, formType } from "../types";
+import { ActionType, dictionaryType } from "../types";
 import { createValidationSchema } from "../lib";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
+import { ArrayHelpers, FieldArray } from "formik";
+import { Text } from "@tremor/react";
+import { FiUsers } from "react-icons/fi";
+
+// Update the formType definition
+type formType = {
+  name: string;
+  curator_public: boolean;
+  groups: number[];
+  [key: string]: string | boolean | number[];
+};
+
+const AdvancedOptions = ({
+  formikProps,
+  userGroups,
+}: {
+  formikProps: FormikProps<formType>;
+  userGroups: UserGroup[];
+}) => (
+  <div className="mt-4">
+    <BooleanFormField
+      name="curator_public"
+      label="Is Public?"
+      subtext={
+        <>
+          If set, then documents indexed by this credential will be visible to{" "}
+          <b>all users</b>. If turned off, then only users who explicitly have
+          been given access to the documents (e.g. through a User Group) will
+          have access.
+        </>
+      }
+    />
+
+    {!formikProps.values.curator_public && (
+      <>
+        <Text className="mb-3">
+          If any groups are specified, then this Credential will only be visible
+          to the specified groups. If no groups are specified, then the
+          Credential will be visible to all users.
+        </Text>
+        <FieldArray
+          name="groups"
+          render={(arrayHelpers: ArrayHelpers) => (
+            <div className="flex gap-2 flex-wrap">
+              {userGroups.map((userGroup: UserGroup) => {
+                const ind = formikProps.values.groups.indexOf(userGroup.id);
+                let isSelected = ind !== -1;
+                return (
+                  <div
+                    key={userGroup.id}
+                    className={`
+                      px-3 
+                      py-1
+                      rounded-lg 
+                      border
+                      border-border 
+                      w-fit 
+                      flex 
+                      cursor-pointer 
+                      ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
+                    `}
+                    onClick={() => {
+                      if (isSelected) {
+                        arrayHelpers.remove(ind);
+                      } else {
+                        arrayHelpers.push(userGroup.id);
+                      }
+                    }}
+                  >
+                    <div className="my-auto flex">
+                      <FiUsers className="my-auto mr-2" /> {userGroup.name}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        />
+      </>
+    )}
+  </div>
+);
 
 export default function CreateCredential({
   hideSource,
@@ -29,6 +117,7 @@ export default function CreateCredential({
   onSwap = async () => null,
   swapConnector,
   refresh = () => null,
+  userGroups,
 }: {
   // Source information
   hideSource?: boolean; // hides docs link
@@ -51,7 +140,11 @@ export default function CreateCredential({
 
   // Mutating parent state
   refresh?: () => void;
+
+  userGroups: UserGroup[];
 }) {
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+
   const handleSubmit = async (
     values: formType,
     formikHelpers: FormikHelpers<formType>,
@@ -68,12 +161,14 @@ export default function CreateCredential({
     setSubmitting(true);
     formikHelpers.setSubmitting(true);
 
-    const { name, ...credentialValues } = values;
+    const { name, curator_public, groups, ...credentialValues } = values;
 
     try {
       const response = await submitCredential({
         credential_json: credentialValues,
         admin_public: true,
+        curator_public: curator_public,
+        groups: groups,
         name: name,
         source: sourceType,
       });
@@ -88,7 +183,7 @@ export default function CreateCredential({
         if (action === "createAndSwap") {
           onSwap(credential, swapConnector.id);
         } else {
-          setPopup({ type: "success", message: "Created new credneital!!" });
+          setPopup({ type: "success", message: "Created new credential!" });
           setTimeout(() => setPopup(null), 4000);
         }
         onClose();
@@ -123,11 +218,17 @@ export default function CreateCredential({
   const credentialTemplate: dictionaryType = credentialTemplates[sourceType];
   const validationSchema = createValidationSchema(credentialTemplate);
 
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
+
   return (
     <Formik
-      initialValues={{
-        name: "",
-      }}
+      initialValues={
+        {
+          name: "",
+          curator_public: true,
+          groups: [],
+        } as formType
+      }
       validationSchema={validationSchema}
       onSubmit={() => {}} // This will be overridden by our custom submit handlers
     >
@@ -182,6 +283,20 @@ export default function CreateCredential({
                     Create
                   </div>
                 </Button>
+                {isPaidEnterpriseFeaturesEnabled && (
+                  <>
+                    <AdvancedOptionsToggle
+                      showAdvancedOptions={showAdvancedOptions}
+                      setShowAdvancedOptions={setShowAdvancedOptions}
+                    />
+                    {showAdvancedOptions && (
+                      <AdvancedOptions
+                        formikProps={formikProps}
+                        userGroups={userGroups}
+                      />
+                    )}
+                  </>
+                )}
               </div>
             )}
           </Card>

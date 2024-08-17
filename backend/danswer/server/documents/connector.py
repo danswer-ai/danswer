@@ -55,6 +55,9 @@ from danswer.db.connector import update_connector
 from danswer.db.connector_credential_pair import add_credential_to_connector
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
+from danswer.db.connector_credential_pair import (
+    get_connector_credential_pairs_for_curator,
+)
 from danswer.db.credentials import create_credential
 from danswer.db.credentials import delete_gmail_service_account_credentials
 from danswer.db.credentials import delete_google_drive_service_account_credentials
@@ -68,6 +71,7 @@ from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_latest_finished_index_attempt_for_cc_pair
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import User
+from danswer.db.models import UserRole
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.file_store.file_store import get_default_file_store
 from danswer.server.documents.models import AuthStatus
@@ -373,13 +377,16 @@ def upload_files(
 @router.get("/admin/connector/indexing-status")
 def get_connector_indexing_status(
     secondary_index: bool = False,
-    _: User = Depends(current_curator_or_admin_user),
+    user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[ConnectorIndexingStatus]:
     indexing_statuses: list[ConnectorIndexingStatus] = []
 
     # TODO: make this one query
-    cc_pairs = get_connector_credential_pairs(db_session)
+    if user.role == UserRole.ADMIN:
+        cc_pairs = get_connector_credential_pairs(db_session)
+    else:
+        cc_pairs = get_connector_credential_pairs_for_curator(db_session, user)
     cc_pair_identifiers = [
         ConnectorCredentialPairIdentifier(
             connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id

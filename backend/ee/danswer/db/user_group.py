@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
+from danswer.db.models import Credential__UserGroup
 from danswer.db.models import Document
 from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.models import LLMProvider__UserGroup
@@ -43,7 +44,7 @@ def fetch_user_groups(
 
 
 def fetch_user_groups_for_user(
-    db_session: Session, user_id: UUID
+    db_session: Session, user_id: UUID, only_curator_groups: bool = False
 ) -> Sequence[UserGroup]:
     stmt = (
         select(UserGroup)
@@ -51,6 +52,8 @@ def fetch_user_groups_for_user(
         .join(User, User.id == User__UserGroup.user_id)  # type: ignore
         .where(User.id == user_id)  # type: ignore
     )
+    if only_curator_groups:
+        stmt = stmt.where(User__UserGroup.is_curator == True)  # noqa: E712
     return db_session.scalars(stmt).all()
 
 
@@ -201,6 +204,20 @@ def _cleanup_user__user_group_relationships__no_commit(
         db_session.delete(user__user_group_relationship)
 
 
+def _cleanup_credential__user_group_relationships__no_commit(
+    db_session: Session,
+    user_group_id: int,
+) -> None:
+    """NOTE: does not commit the transaction."""
+    credential__user_group_relationships = db_session.scalars(
+        select(Credential__UserGroup).where(
+            Credential__UserGroup.user_group_id == user_group_id
+        )
+    ).all()
+    for credential__user_group_relationship in credential__user_group_relationships:
+        db_session.delete(credential__user_group_relationship)
+
+
 def _cleanup_llm_provider__user_group_relationships__no_commit(
     db_session: Session, user_group_id: int
 ) -> None:
@@ -249,7 +266,7 @@ def validate_curator_status(
     db_session.commit()
 
 
-def disable_curator_status(db_session: Session, user_id: int) -> None:
+def disable_curator_status(db_session: Session, user_id: UUID) -> None:
     stmt = (
         update(User__UserGroup)
         .where(User__UserGroup.user_id == user_id)
@@ -300,8 +317,8 @@ def update_user_group(
     )
     current_user_ids = set([user.id for user in db_user_group.users])
     updated_user_ids = set(user_group.user_ids)
-    added_user_ids = updated_user_ids - current_user_ids
-    removed_user_ids = current_user_ids - updated_user_ids
+    added_user_ids = list(updated_user_ids - current_user_ids)
+    removed_user_ids = list(current_user_ids - updated_user_ids)
 
     if removed_user_ids:
         _cleanup_user__user_group_relationships__no_commit(
@@ -331,8 +348,10 @@ def update_user_group(
         db_user_group.is_up_to_date = False
 
     db_session.commit()
-    removed_users = db_session.query(User).filter(User.id.in_(removed_user_ids)).all()
-    validate_curator_status(db_session, removed_users)
+    removed_users = db_session.scalars(
+        select(User).where(User.id.in_(removed_user_ids))  # type: ignore
+    ).all()
+    validate_curator_status(db_session, list(removed_users))
     return db_user_group
 
 
@@ -359,6 +378,9 @@ def prepare_user_group_for_deletion(db_session: Session, user_group_id: int) -> 
 
     _check_user_group_is_modifiable(db_user_group)
 
+    _cleanup_credential__user_group_relationships__no_commit(
+        db_session=db_session, user_group_id=user_group_id
+    )
     _cleanup_user__user_group_relationships__no_commit(
         db_session=db_session, user_group_id=user_group_id
     )

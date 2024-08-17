@@ -6,6 +6,7 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import { FaSwatchbook } from "react-icons/fa";
 import { NewChatIcon } from "@/components/icons/icons";
 import { useState } from "react";
+import { useUserGroups } from "@/lib/hooks";
 import {
   deleteCredential,
   swapCredential,
@@ -27,6 +28,7 @@ import {
   ConfluenceCredentialJson,
   Credential,
 } from "@/lib/connectors/credentials";
+import { UserGroup } from "@/lib/types"; // Added this import
 
 export default function CredentialSection({
   ccPair,
@@ -47,6 +49,8 @@ export default function CredentialSection({
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
+
+  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
 
   const onSwap = async (
     selectedCredential: Credential<any>,
@@ -189,6 +193,7 @@ export default function CredentialSection({
             setPopup={setPopup}
             onSwap={onSwap}
             onClose={closeCreateCredential}
+            userGroups={userGroups || []}
           />
         </Modal>
       )}
