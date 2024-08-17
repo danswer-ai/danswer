@@ -714,7 +714,6 @@ export async function useScrollonStream({
 
   // scroll on end of stream if within distance
   useEffect(() => {
-
     if (scrollableDivRef?.current && chatState == "input") {
       if (scrollDist.current < distance - 50) {
         scrollableDivRef?.current?.scrollBy({
