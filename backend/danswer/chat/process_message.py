@@ -345,12 +345,16 @@ def stream_chat_message_objects(
             parent_message = root_message
 
         user_message = None
+        print(new_msg_req.regenerate)
         if new_msg_req.regenerate:
+            print("REGENERATING")
             final_msg, history_msgs = create_chat_chain(
                 parent_id=parent_id,
                 chat_session_id=chat_session_id,
                 db_session=db_session,
+                regenerate=new_msg_req.regenerate,
             )
+            print(final_msg.__dict__)
 
         elif not use_existing_user_message:
             # Create new message at the right place in the tree and update the parent's child pointer
