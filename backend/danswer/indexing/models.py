@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 from danswer.access.models import DocumentAccess
+from danswer.configs.constants import ALT_INDEX_SUFFIX
 from danswer.connectors.models import Document
 from danswer.utils.logger import setup_logger
 from shared_configs.model_server_models import Embedding
@@ -110,7 +111,7 @@ class EmbeddingModelDetail(BaseModel):
         return cls(
             # When constructing EmbeddingModel Detail for user-facing flows, strip the
             # unneeded additional data after the `_`s
-            model_name=embedding_model.model_name.split("__")[0],
+            model_name=embedding_model.model_name.removesuffix(ALT_INDEX_SUFFIX),
             model_dim=embedding_model.model_dim,
             normalize=embedding_model.normalize,
             query_prefix=embedding_model.query_prefix,

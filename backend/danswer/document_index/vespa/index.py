@@ -170,7 +170,6 @@ class VespaIndex(DocumentIndex):
             upcoming_schema = schema_template.replace(
                 DANSWER_CHUNK_REPLACEMENT_PAT, self.secondary_index_name
             ).replace(VESPA_DIM_REPLACEMENT_PAT, str(secondary_index_embedding_dim))
-            upcoming_schema = upcoming_schema
             zip_dict[f"schemas/{schema_names[1]}.sd"] = upcoming_schema.encode("utf-8")
 
         zip_file = in_memory_zip_from_file_bytes(zip_dict)

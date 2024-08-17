@@ -15,6 +15,7 @@ from sentence_transformers import SentenceTransformer  # type: ignore
 from vertexai.language_models import TextEmbeddingInput  # type: ignore
 from vertexai.language_models import TextEmbeddingModel  # type: ignore
 
+from danswer.configs.constants import ALT_INDEX_SUFFIX
 from danswer.utils.logger import setup_logger
 from model_server.constants import DEFAULT_COHERE_MODEL
 from model_server.constants import DEFAULT_OPENAI_MODEL
@@ -285,7 +286,7 @@ def embed_text(
         prefixed_texts = [f"{prefix}{text}" for text in texts] if prefix else texts
 
         # strip additional metadata from model name right before constructing from Huggingface
-        stripped_model_name = model_name.split("_")[0]
+        stripped_model_name = (model_name.removesuffix(ALT_INDEX_SUFFIX),)
         local_model = get_embedding_model(
             model_name=stripped_model_name, max_context_length=max_context_length
         )

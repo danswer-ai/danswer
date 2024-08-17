@@ -4,6 +4,10 @@ import { XIcon } from "../icons/icons";
 import { CustomTooltip } from "../tooltip/CustomTooltip";
 import { SettingsContext } from "../settings/SettingsProvider";
 import Link from "next/link";
+import Cookies from "js-cookie";
+
+const DISMISSED_NOTIFICATION_COOKIE_PREFIX = "dismissed_notification_";
+const COOKIE_EXPIRY_DAYS = 1;
 
 export function AnnouncementBanner() {
   const settings = useContext(SettingsContext);
@@ -12,7 +16,15 @@ export function AnnouncementBanner() {
   );
 
   useEffect(() => {
-    setLocalNotifications(settings?.settings.notifications || []);
+    const filteredNotifications = (
+      settings?.settings.notifications || []
+    ).filter(
+      (notification) =>
+        !Cookies.get(
+          `${DISMISSED_NOTIFICATION_COOKIE_PREFIX}${notification.id}`
+        )
+    );
+    setLocalNotifications(filteredNotifications);
   }, [settings?.settings.notifications]);
 
   if (!localNotifications || localNotifications.length === 0) return null;
@@ -26,6 +38,11 @@ export function AnnouncementBanner() {
         }
       );
       if (response.ok) {
+        Cookies.set(
+          `${DISMISSED_NOTIFICATION_COOKIE_PREFIX}${notificationId}`,
+          "true",
+          { expires: COOKIE_EXPIRY_DAYS }
+        );
         setLocalNotifications((prevNotifications) =>
           prevNotifications.filter(
             (notification) => notification.id !== notificationId

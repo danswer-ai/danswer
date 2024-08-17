@@ -101,27 +101,30 @@ def get_user_notifications(
         return []
 
     try:
-        with db_session.begin_nested():  # Ensure we don't  overcount the reindex notifications
-            reindex_notifs = get_notifications(
-                user=user, notif_type=NotificationType.REINDEX, db_session=db_session
+        # Need a transaction in order to prevent under-counting current notifications
+        db_session.begin()
+
+        reindex_notifs = get_notifications(
+            user=user, notif_type=NotificationType.REINDEX, db_session=db_session
+        )
+
+        if not reindex_notifs:
+            notif = create_notification(
+                user=user,
+                notif_type=NotificationType.REINDEX,
+                db_session=db_session,
             )
+            db_session.flush()
+            db_session.commit()
+            return [Notification.from_model(notif)]
 
-            if not reindex_notifs:
-                notif = create_notification(
-                    user=user,
-                    notif_type=NotificationType.REINDEX,
-                    db_session=db_session,
-                )
-                db_session.flush()
-                return [Notification.from_model(notif)]
+        if len(reindex_notifs) > 1:
+            logger.error("User has multiple reindex notifications")
 
-            if len(reindex_notifs) > 1:
-                logger.error("User has multiple reindex notifications")
-
-            reindex_notif = reindex_notifs[0]
-            update_notification_last_shown(
-                notification=reindex_notif, db_session=db_session
-            )
+        reindex_notif = reindex_notifs[0]
+        update_notification_last_shown(
+            notification=reindex_notif, db_session=db_session
+        )
 
         db_session.commit()
         return [Notification.from_model(reindex_notif)]

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
+from danswer.configs.constants import ALT_INDEX_SUFFIX
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.embedding_model import create_embedding_model
@@ -57,8 +58,8 @@ def set_new_embedding_model(
 
     # account for same model name being indexed with two different configurations
     if embed_model_details.model_name == current_model.model_name:
-        if "__" not in current_model.model_name:
-            embed_model_details.model_name += "__alt"
+        if not current_model.model_name.endswith(ALT_INDEX_SUFFIX):
+            embed_model_details.model_name += ALT_INDEX_SUFFIX
 
     secondary_model = get_secondary_db_embedding_model(db_session)
 
