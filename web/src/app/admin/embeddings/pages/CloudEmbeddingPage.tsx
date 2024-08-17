@@ -65,7 +65,8 @@ export default function CloudEmbeddingPage({
         Here are some cloud-based models to choose from.
       </Title>
       <Text className="mb-4">
-        They require API keys and run in the clouds of the respective providers.
+        These models require API keys and run in the clouds of the respective
+        providers.
       </Text>
 
       <div className="gap-4 mt-2 pb-10 flex content-start flex-wrap">
@@ -74,7 +75,7 @@ export default function CloudEmbeddingPage({
             <div className="flex items-center mb-2">
               {provider.icon({ size: 40 })}
               <h2 className="ml-2  mt-2 text-xl font-bold">
-                {provider.name} {provider.name == "Cohere" && "(preferred)"}
+                {provider.name} {provider.name == "Cohere" && "(recommended)"}
               </h2>
               <HoverPopup
                 mainContent={
@@ -99,9 +100,7 @@ export default function CloudEmbeddingPage({
               }}
               className="mb-2  hover:underline text-sm cursor-pointer"
             >
-              {provider.configured
-                ? "Modify credentials"
-                : "Configure provider"}
+              {provider.configured ? "Modify API key" : "Provide API key"}
             </button>
             <div className="flex flex-wrap gap-4">
               {provider.embedding_models.map((model) => (

@@ -8,7 +8,7 @@ import {
 } from "../../../../components/embedding/interfaces";
 import { CustomModelForm } from "../../../../components/embedding/CustomModelForm";
 import { useState } from "react";
-
+import { Title } from "@tremor/react";
 export default function OpenEmbeddingPage({
   onSelectOpenSource,
   selectedProvider,
@@ -19,6 +19,13 @@ export default function OpenEmbeddingPage({
   const [configureModel, setConfigureModel] = useState(false);
   return (
     <div>
+      <Title className="mt-8">
+        Here are some locally-hosted models to choose from.
+      </Title>
+      <Text className="mb-4">
+        These models can be used without any API keys, and can leverage a GPU
+        for faster inference.
+      </Text>
       <ModelSelector
         modelOptions={AVAILABLE_MODELS}
         setSelectedModel={onSelectOpenSource}

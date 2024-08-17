@@ -293,7 +293,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
 export const getTitleForRerankType = (type: string) => {
   switch (type) {
     case "nomic-ai":
-      return "Nomic (preferred)";
+      return "Nomic (recommended)";
     case "intfloat":
       return "Microsoft";
     default:
