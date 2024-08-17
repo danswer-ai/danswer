@@ -146,7 +146,6 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as async_session:
-        logger.info("SESSION")
         yield async_session
 
 
