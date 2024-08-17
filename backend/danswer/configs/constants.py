@@ -38,9 +38,6 @@ POSTGRES_CELERY_WORKER_APP_NAME = "celery_worker"
 POSTGRES_PERMISSIONS_APP_NAME = "permissions"
 POSTGRES_UNKNOWN_APP_NAME = "unknown"
 
-# Used to distinguish alternative indices
-ALT_INDEX_SUFFIX = "__danswer_alt_index"
-
 # API Keys
 DANSWER_API_KEY_PREFIX = "API_KEY__"
 DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN = "danswerapikey.ai"

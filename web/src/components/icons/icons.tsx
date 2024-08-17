@@ -55,8 +55,7 @@ import azureIcon from "../../../public/Azure.png";
 import anthropicSVG from "../../../public/Anthropic.svg";
 import nomicSVG from "../../../public/nomic.svg";
 import microsoftIcon from "../../../public/microsoft.png";
-
-import mixedBreadSVG from "../../../public/mixedbread.png";
+import mixedBreadSVG from "../../../public/Mixedbread.png";
 
 import OCIStorageSVG from "../../../public/OCI.svg";
 import googleCloudStorageIcon from "../../../public/GoogleCloudStorage.png";

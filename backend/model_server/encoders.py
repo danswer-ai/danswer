@@ -15,7 +15,6 @@ from sentence_transformers import SentenceTransformer  # type: ignore
 from vertexai.language_models import TextEmbeddingInput  # type: ignore
 from vertexai.language_models import TextEmbeddingModel  # type: ignore
 
-from danswer.configs.constants import ALT_INDEX_SUFFIX
 from danswer.utils.logger import setup_logger
 from model_server.constants import DEFAULT_COHERE_MODEL
 from model_server.constants import DEFAULT_OPENAI_MODEL
@@ -24,6 +23,7 @@ from model_server.constants import DEFAULT_VOYAGE_MODEL
 from model_server.constants import EmbeddingModelTextType
 from model_server.constants import EmbeddingProvider
 from model_server.utils import simple_log_function_time
+from shared_configs.configs import ALT_INDEX_SUFFIX
 from shared_configs.configs import INDEXING_ONLY
 from shared_configs.enums import EmbedTextType
 from shared_configs.enums import RerankerProvider

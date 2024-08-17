@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
-from danswer.configs.constants import ALT_INDEX_SUFFIX
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.embedding_model import create_embedding_model
@@ -27,6 +26,7 @@ from danswer.search.search_settings import update_search_settings
 from danswer.server.manage.models import FullModelVersionResponse
 from danswer.server.models import IdReturn
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import ALT_INDEX_SUFFIX
 
 router = APIRouter(prefix="/search-settings")
 logger = setup_logger()

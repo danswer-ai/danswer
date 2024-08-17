@@ -3,9 +3,9 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 from danswer.access.models import DocumentAccess
-from danswer.configs.constants import ALT_INDEX_SUFFIX
 from danswer.connectors.models import Document
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import ALT_INDEX_SUFFIX
 from shared_configs.model_server_models import Embedding
 
 if TYPE_CHECKING:
