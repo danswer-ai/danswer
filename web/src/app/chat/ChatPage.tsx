@@ -938,12 +938,8 @@ export function ChatPage({
               user_message_id,
             };
           } else {
-            const {
-              user_message_id,
-              assistant_message_id,
-              frozenMessageMap,
-              frozenSessionId,
-            } = initialFetchDetails;
+            const { user_message_id, frozenMessageMap, frozenSessionId } =
+              initialFetchDetails;
             setChatState((chatState) => {
               if (chatState == "loading") {
                 return "streaming";
@@ -993,6 +989,7 @@ export function ChatPage({
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
             }
+
             // on initial message send, we insert a dummy system message
             // set this as the parent here if no parent is set
             parentMessage =

@@ -1,6 +1,7 @@
+import asyncio
 import io
 import uuid
-from collections.abc import AsyncGenerator
+from collections.abc import Generator
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -272,12 +273,26 @@ def delete_chat_session_by_id(
     delete_chat_session(user_id, session_id, db_session)
 
 
+async def is_disconnected(request: Request):
+    main_loop = asyncio.get_event_loop()
+
+    def is_disconnected_sync():
+        future = asyncio.run_coroutine_threadsafe(request.is_disconnected(), main_loop)
+        try:
+            return not future.result(timeout=0.01)
+        except asyncio.TimeoutError:
+            return True
+
+    return is_disconnected_sync
+
+
 @router.post("/send-message")
-async def handle_new_chat_message(
+def handle_new_chat_message(
     chat_message_req: CreateChatMessageRequest,
     request: Request,
     user: User | None = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
+    is_disconnected_func=Depends(is_disconnected),
 ) -> StreamingResponse:
     """This endpoint is both used for all the following purposes:
     - Sending a new message in the session
@@ -294,15 +309,10 @@ async def handle_new_chat_message(
         and not chat_message_req.use_existing_user_message
     ):
         raise HTTPException(status_code=400, detail="Empty chat message is invalid")
-    connection_open = True
-
-    def is_connected() -> bool:
-        return connection_open
 
     import json
 
-    async def stream_generator() -> AsyncGenerator[str, None]:
-        nonlocal connection_open
+    def stream_generator() -> Generator[str, None, None]:
         try:
             for packet in stream_chat_message(
                 new_msg_req=chat_message_req,
@@ -311,11 +321,8 @@ async def handle_new_chat_message(
                 litellm_additional_headers=get_litellm_additional_request_headers(
                     request.headers
                 ),
-                is_connected=is_connected,
+                is_connected=is_disconnected_func,
             ):
-                if await request.is_disconnected():
-                    connection_open = False
-
                 yield json.dumps(packet) if isinstance(packet, dict) else packet
 
         except Exception as e:
