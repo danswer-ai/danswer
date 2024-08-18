@@ -90,6 +90,7 @@ module.exports = {
         "background-200": "#e5e5e5", // neutral-200
         "background-300": "#d4d4d4", // neutral-300
         "background-400": "#a3a3a3", // neutral-400
+        "background-600": "#525252", // neutral-800
         "background-500": "#737373", // neutral-400
         "background-600": "#525252", // neutral-400
         "background-700": "#404040", // neutral-400

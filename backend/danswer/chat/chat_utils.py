@@ -39,6 +39,7 @@ def create_chat_chain(
 ) -> tuple[ChatMessage, list[ChatMessage]]:
     """Build the linear chain of messages without including the root message"""
     mainline_messages: list[ChatMessage] = []
+
     all_chat_messages = get_chat_messages_by_session(
         chat_session_id=chat_session_id,
         user_id=None,

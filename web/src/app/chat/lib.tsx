@@ -3,8 +3,8 @@ import {
   DanswerDocument,
   Filters,
 } from "@/lib/search/interfaces";
-import { handleStream } from "@/lib/search/streamingUtils";
-import { FeedbackType } from "./types";
+import { handleSSEStream, handleStream } from "@/lib/search/streamingUtils";
+import { ChatState, FeedbackType } from "./types";
 import {
   Dispatch,
   MutableRefObject,
@@ -20,6 +20,7 @@ import {
   FileDescriptor,
   ImageGenerationDisplay,
   Message,
+  MessageResponseIDInfo,
   RetrievalType,
   StreamingError,
   ToolCallMetadata,
@@ -109,7 +110,8 @@ export type PacketType =
   | AnswerPiecePacket
   | DocumentsResponse
   | ImageGenerationDisplay
-  | StreamingError;
+  | StreamingError
+  | MessageResponseIDInfo;
 
 export async function* sendMessage({
   message,
@@ -127,6 +129,7 @@ export async function* sendMessage({
   systemPromptOverride,
   useExistingUserMessage,
   alternateAssistantId,
+  signal,
 }: {
   message: string;
   fileDescriptors: FileDescriptor[];
@@ -137,70 +140,69 @@ export async function* sendMessage({
   selectedDocumentIds: number[] | null;
   queryOverride?: string;
   forceSearch?: boolean;
-  // LLM overrides
   modelProvider?: string;
   modelVersion?: string;
   temperature?: number;
-  // prompt overrides
   systemPromptOverride?: string;
-  // if specified, will use the existing latest user message
-  // and will ignore the specified `message`
   useExistingUserMessage?: boolean;
   alternateAssistantId?: number;
-}) {
+  signal?: AbortSignal;
+}): AsyncGenerator<PacketType, void, unknown> {
   const documentsAreSelected =
     selectedDocumentIds && selectedDocumentIds.length > 0;
 
-  const sendMessageResponse = await fetch("/api/chat/send-message", {
+  const body = JSON.stringify({
+    alternate_assistant_id: alternateAssistantId,
+    chat_session_id: chatSessionId,
+    parent_message_id: parentMessageId,
+    message: message,
+    prompt_id: promptId,
+    search_doc_ids: documentsAreSelected ? selectedDocumentIds : null,
+    file_descriptors: fileDescriptors,
+    retrieval_options: !documentsAreSelected
+      ? {
+          run_search:
+            promptId === null ||
+            promptId === undefined ||
+            queryOverride ||
+            forceSearch
+              ? "always"
+              : "auto",
+          real_time: true,
+          filters: filters,
+        }
+      : null,
+    query_override: queryOverride,
+    prompt_override: systemPromptOverride
+      ? {
+          system_prompt: systemPromptOverride,
+        }
+      : null,
+    llm_override:
+      temperature || modelVersion
+        ? {
+            temperature,
+            model_provider: modelProvider,
+            model_version: modelVersion,
+          }
+        : null,
+    use_existing_user_message: useExistingUserMessage,
+  });
+
+  const response = await fetch(`/api/chat/send-message`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      alternate_assistant_id: alternateAssistantId,
-      chat_session_id: chatSessionId,
-      parent_message_id: parentMessageId,
-      message: message,
-      prompt_id: promptId,
-      search_doc_ids: documentsAreSelected ? selectedDocumentIds : null,
-      file_descriptors: fileDescriptors,
-      retrieval_options: !documentsAreSelected
-        ? {
-            run_search:
-              promptId === null ||
-              promptId === undefined ||
-              queryOverride ||
-              forceSearch
-                ? "always"
-                : "auto",
-            real_time: true,
-            filters: filters,
-          }
-        : null,
-      query_override: queryOverride,
-      prompt_override: systemPromptOverride
-        ? {
-            system_prompt: systemPromptOverride,
-          }
-        : null,
-      llm_override:
-        temperature || modelVersion
-          ? {
-              temperature,
-              model_provider: modelProvider,
-              model_version: modelVersion,
-            }
-          : null,
-      use_existing_user_message: useExistingUserMessage,
-    }),
+    body,
+    signal,
   });
-  if (!sendMessageResponse.ok) {
-    const errorJson = await sendMessageResponse.json();
-    const errorMsg = errorJson.message || errorJson.detail || "";
-    throw Error(`Failed to send message - ${errorMsg}`);
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  yield* handleStream<PacketType>(sendMessageResponse);
+  yield* handleSSEStream<PacketType>(response);
 }
 
 export async function nameChatSession(chatSessionId: number, message: string) {
@@ -635,14 +637,14 @@ export async function uploadFilesForChat(
 }
 
 export async function useScrollonStream({
-  isStreaming,
+  chatState,
   scrollableDivRef,
   scrollDist,
   endDivRef,
   distance,
   debounce,
 }: {
-  isStreaming: boolean;
+  chatState: ChatState;
   scrollableDivRef: RefObject<HTMLDivElement>;
   scrollDist: MutableRefObject<number>;
   endDivRef: RefObject<HTMLDivElement>;
@@ -656,7 +658,7 @@ export async function useScrollonStream({
   const previousScroll = useRef<number>(0);
 
   useEffect(() => {
-    if (isStreaming && scrollableDivRef && scrollableDivRef.current) {
+    if (chatState != "input" && scrollableDivRef && scrollableDivRef.current) {
       let newHeight: number = scrollableDivRef.current?.scrollTop!;
       const heightDifference = newHeight - previousScroll.current;
       previousScroll.current = newHeight;
@@ -712,7 +714,7 @@ export async function useScrollonStream({
 
   // scroll on end of stream if within distance
   useEffect(() => {
-    if (scrollableDivRef?.current && !isStreaming) {
+    if (scrollableDivRef?.current && chatState == "input") {
       if (scrollDist.current < distance - 50) {
         scrollableDivRef?.current?.scrollBy({
           left: 0,
@@ -721,5 +723,5 @@ export async function useScrollonStream({
         });
       }
     }
-  }, [isStreaming]);
+  }, [chatState]);
 }

@@ -393,6 +393,34 @@ def get_or_create_root_message(
         return new_root_message
 
 
+def reserve_message_id(
+    db_session: Session,
+    chat_session_id: int,
+    parent_message: int,
+    message_type: MessageType,
+) -> int:
+    # Create an empty chat message
+    empty_message = ChatMessage(
+        chat_session_id=chat_session_id,
+        parent_message=parent_message,
+        latest_child_message=None,
+        message="",
+        token_count=0,
+        message_type=message_type,
+    )
+
+    # Add the empty message to the session
+    db_session.add(empty_message)
+
+    # Flush the session to get an ID for the new chat message
+    db_session.flush()
+
+    # Get the ID of the newly created message
+    new_id = empty_message.id
+
+    return new_id
+
+
 def create_new_chat_message(
     chat_session_id: int,
     parent_message: ChatMessage,
@@ -410,28 +438,50 @@ def create_new_chat_message(
     citations: dict[int, int] | None = None,
     tool_calls: list[ToolCall] | None = None,
     commit: bool = True,
+    reserved_message_id: int | None = None,
 ) -> ChatMessage:
-    new_chat_message = ChatMessage(
-        chat_session_id=chat_session_id,
-        parent_message=parent_message.id,
-        latest_child_message=None,
-        message=message,
-        rephrased_query=rephrased_query,
-        prompt_id=prompt_id,
-        token_count=token_count,
-        message_type=message_type,
-        citations=citations,
-        files=files,
-        tool_calls=tool_calls if tool_calls else [],
-        error=error,
-        alternate_assistant_id=alternate_assistant_id,
-    )
+    if reserved_message_id is not None:
+        # Edit existing message
+        existing_message = db_session.query(ChatMessage).get(reserved_message_id)
+        if existing_message is None:
+            raise ValueError(f"No message found with id {reserved_message_id}")
+
+        existing_message.chat_session_id = chat_session_id
+        existing_message.parent_message = parent_message.id
+        existing_message.message = message
+        existing_message.rephrased_query = rephrased_query
+        existing_message.prompt_id = prompt_id
+        existing_message.token_count = token_count
+        existing_message.message_type = message_type
+        existing_message.citations = citations
+        existing_message.files = files
+        existing_message.tool_calls = tool_calls if tool_calls else []
+        existing_message.error = error
+        existing_message.alternate_assistant_id = alternate_assistant_id
+
+        new_chat_message = existing_message
+    else:
+        # Create new message
+        new_chat_message = ChatMessage(
+            chat_session_id=chat_session_id,
+            parent_message=parent_message.id,
+            latest_child_message=None,
+            message=message,
+            rephrased_query=rephrased_query,
+            prompt_id=prompt_id,
+            token_count=token_count,
+            message_type=message_type,
+            citations=citations,
+            files=files,
+            tool_calls=tool_calls if tool_calls else [],
+            error=error,
+            alternate_assistant_id=alternate_assistant_id,
+        )
+        db_session.add(new_chat_message)
 
     # SQL Alchemy will propagate this to update the reference_docs' foreign keys
     if reference_docs:
         new_chat_message.search_docs = reference_docs
-
-    db_session.add(new_chat_message)
 
     # Flush the session to get an ID for the new chat message
     db_session.flush()
