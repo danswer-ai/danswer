@@ -61,11 +61,6 @@ def create_chat_chain(
         )
 
     current_message: ChatMessage | None = root_message
-    print(parent_id)
-    print(id_to_msg)
-    for chat in all_chat_messages:
-        print(f"{chat.id}: {chat.message}")
-    # print(
     while current_message is not None:
         child_msg = current_message.latest_child_message
         if not child_msg or (parent_id and current_message.id == parent_id):
