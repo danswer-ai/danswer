@@ -110,6 +110,7 @@ from danswer.tools.built_in_tools import auto_add_search_tool_to_personas
 from danswer.tools.built_in_tools import load_builtin_tools
 from danswer.tools.built_in_tools import refresh_built_in_tools_cache
 from danswer.utils.logger import setup_logger
+from danswer.utils.logger import setup_uvicorn_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
@@ -125,6 +126,7 @@ from shared_configs.enums import RerankerProvider
 
 
 logger = setup_logger()
+setup_uvicorn_logger()
 
 
 def validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:
