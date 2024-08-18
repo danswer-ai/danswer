@@ -60,7 +60,7 @@ if LOG_POSTGRES_LATENCY:
     ):
         total_time = time.time() - conn.info["query_start_time"]
         # don't spam TOO hard
-        if total_time > 0.01:
+        if total_time > 0.1:
             logger.debug(
                 f"Query Complete: {statement}\n\nTotal Time: {total_time:.4f} seconds"
             )
