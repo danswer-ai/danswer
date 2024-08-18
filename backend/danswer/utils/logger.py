@@ -130,7 +130,7 @@ def setup_logger(
 def setup_uvicorn_logger() -> None:
     logger = logging.getLogger("uvicorn.access")
     handler = logging.StreamHandler()
-    handler.setLevel(LOG_LEVEL)
+    handler.setLevel(get_log_level_from_str(LOG_LEVEL))
 
     formatter = get_standard_formatter()
     handler.setFormatter(formatter)
