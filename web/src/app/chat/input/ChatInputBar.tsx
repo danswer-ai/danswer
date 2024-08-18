@@ -434,7 +434,7 @@ export function ChatInputBar({
                   className="mr-2"
                 >
                   <Cpu size={16} />
-                  My Assistants
+                  {selectedAssistant?.name}
                 </Button>
 
                 <Button

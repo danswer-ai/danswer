@@ -96,7 +96,8 @@ body {
 }
 
 .h1-bg {
-  display: inline-block;
+  font-size: 3rem;
+  font-weight: 600;
   background: linear-gradient(90deg, #000000 0%, #2039f3 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
