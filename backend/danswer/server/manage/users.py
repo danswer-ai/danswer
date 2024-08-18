@@ -21,6 +21,7 @@ from danswer.auth.noauth_user import set_no_auth_user_preferences
 from danswer.auth.schemas import UserRole
 from danswer.auth.schemas import UserStatus
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.auth.users import optional_user
 from danswer.configs.app_configs import AUTH_TYPE
@@ -97,7 +98,7 @@ def list_all_users(
     q: str | None = None,
     accepted_page: int | None = None,
     invited_page: int | None = None,
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> AllUsersResponse:
     if not q:
@@ -105,7 +106,7 @@ def list_all_users(
 
     users = [
         user
-        for user in list_users(db_session, q=q)
+        for user in list_users(db_session, q=q, user=user)
         if not is_api_key_email_address(user.email)
     ]
     accepted_emails = {user.email for user in users}

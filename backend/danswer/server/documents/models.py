@@ -45,6 +45,7 @@ class ConnectorBase(BaseModel):
 
 class ConnectorCredentialBase(ConnectorBase):
     is_public: bool
+    groups: list[int] | None
 
 
 class ConnectorSnapshot(ConnectorBase):
@@ -98,7 +99,7 @@ class CredentialSnapshot(CredentialBase):
     user_id: UUID | None
     time_created: datetime
     time_updated: datetime
-    name: str
+    name: str | None
     source: DocumentSource
     credential_json: dict[str, Any]
     admin_public: bool
@@ -220,6 +221,7 @@ class ConnectorCredentialPairIdentifier(BaseModel):
 class ConnectorCredentialPairMetadata(BaseModel):
     name: str | None
     is_public: bool
+    groups: list[int] | None
 
 
 class ConnectorCredentialPairDescriptor(BaseModel):

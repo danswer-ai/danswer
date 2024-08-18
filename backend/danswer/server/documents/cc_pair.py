@@ -10,6 +10,7 @@ from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.db.connector_credential_pair import add_credential_to_connector
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
+from danswer.db.connector_credential_pair import relate_groups_to_cc_pair
 from danswer.db.connector_credential_pair import remove_credential_from_connector
 from danswer.db.connector_credential_pair import (
     update_connector_credential_pair_from_id,
@@ -26,6 +27,9 @@ from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorCredentialPairMetadata
 from danswer.server.models import StatusResponse
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 router = APIRouter(prefix="/manage")
 
@@ -36,13 +40,12 @@ def get_cc_pair_full_info(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> CCPairFullInfo:
-    cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
+    cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id, db_session, user, for_editing=False
+    )
     if not cc_pair:
-        raise HTTPException(status_code=404, detail="CC Pair not found")
-    if cc_pair.is_public and (user is None or user.role != UserRole.ADMIN):
         raise HTTPException(
-            status_code=400,
-            detail="Public connection cannot be renamed by non-admin users",
+            status_code=404, detail="CC Pair not found for current user permissions"
         )
 
     cc_pair_identifier = ConnectorCredentialPairIdentifier(
@@ -88,13 +91,16 @@ def update_cc_pair_status(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
+    cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id=cc_pair_id,
+        db_session=db_session,
+        user=user,
+        for_editing=True,
+    )
     if not cc_pair:
-        raise HTTPException(status_code=404, detail="CC Pair not found")
-    if cc_pair.is_public and (user is None or user.role != UserRole.ADMIN):
         raise HTTPException(
             status_code=400,
-            detail="Public connection cannot be renamed by non-admin users",
+            detail="CC Pair not found for current user's permissions",
         )
 
     if status_update_request.status == ConnectorCredentialPairStatus.PAUSED:
@@ -117,13 +123,15 @@ def update_cc_pair_name(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
-    cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
+    cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id=cc_pair_id,
+        db_session=db_session,
+        user=user,
+        for_editing=True,
+    )
     if not cc_pair:
-        raise HTTPException(status_code=404, detail="CC Pair not found")
-    if cc_pair.is_public and (user is None or user.role != UserRole.ADMIN):
         raise HTTPException(
-            status_code=400,
-            detail="Public connection cannot be renamed by non-admin users",
+            status_code=400, detail="CC Pair not found for current user's permissions"
         )
 
     try:
@@ -145,14 +153,33 @@ def associate_credential_to_connector(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
+    if user and user.role != UserRole.ADMIN and metadata.is_public:
+        raise HTTPException(
+            status_code=400,
+            detail="Public connections cannot be created by non-admin users",
+        )
+
     try:
-        return add_credential_to_connector(
+        cc_pair_id = add_credential_to_connector(
             connector_id=connector_id,
             credential_id=credential_id,
             cc_pair_name=metadata.name,
             is_public=metadata.is_public,
             user=user,
             db_session=db_session,
+        )
+
+        if metadata.groups:
+            relate_groups_to_cc_pair(
+                db_session=db_session,
+                cc_pair_id=cc_pair_id,
+                user_group_ids=metadata.groups,
+            )
+
+        return StatusResponse(
+            success=True,
+            message=f"New Credential {credential_id} added to Connector",
+            data=connector_id,
         )
     except IntegrityError:
         raise HTTPException(status_code=400, detail="Name must be unique")

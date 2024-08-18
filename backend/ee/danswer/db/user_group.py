@@ -311,10 +311,6 @@ def update_user_group(
 
     _check_user_group_is_modifiable(db_user_group)
 
-    existing_cc_pairs = db_user_group.cc_pairs
-    cc_pairs_updated = set([cc_pair.id for cc_pair in existing_cc_pairs]) != set(
-        user_group.cc_pair_ids
-    )
     current_user_ids = set([user.id for user in db_user_group.users])
     updated_user_ids = set(user_group.user_ids)
     added_user_ids = list(updated_user_ids - current_user_ids)
@@ -333,6 +329,10 @@ def update_user_group(
             user_group_id=user_group_id,
             user_ids=added_user_ids,
         )
+
+    cc_pairs_updated = set([cc_pair.id for cc_pair in db_user_group.cc_pairs]) != set(
+        user_group.cc_pair_ids
+    )
     if cc_pairs_updated:
         _mark_user_group__cc_pair_relationships_outdated__no_commit(
             db_session=db_session, user_group_id=user_group_id

@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy import delete
 from sqlalchemy import desc
+from sqlalchemy import Select
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -17,7 +18,7 @@ from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
-from danswer.db.models import UserGroup
+from danswer.db.models import UserGroup__ConnectorCredentialPair
 from danswer.db.models import UserRole
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
@@ -25,29 +26,30 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def get_connector_credential_pairs_for_curator(
-    db_session: Session,
-    user: User,
-) -> list[ConnectorCredentialPair]:
-    where_clause = User__UserGroup.user_id == user.id
-    if user.role == UserRole.CURATOR:  # as opposed to global curator
-        where_clause &= User__UserGroup.is_curator == True  # noqa: E712
-    where_clause |= ConnectorCredentialPair.is_public == True  # noqa: E712
-    curated_stmt = (
-        select(ConnectorCredentialPair)
-        .join(UserGroup.cc_pairs)
-        .join(User__UserGroup, UserGroup.id == User__UserGroup.user_group_id)
-        .where(where_clause)
-        .distinct()
+def _add_curator_filters(stmt: Select, user: User, for_editing: bool = True) -> Select:
+    stmt = stmt.outerjoin(UserGroup__ConnectorCredentialPair).outerjoin(
+        User__UserGroup,
+        User__UserGroup.user_group_id
+        == UserGroup__ConnectorCredentialPair.user_group_id,
     )
+    where_clause = User__UserGroup.user_id == user.id
+    if user.role == UserRole.CURATOR and for_editing:
+        where_clause &= User__UserGroup.is_curator == True  # noqa: E712
+    if not for_editing:
+        where_clause |= ConnectorCredentialPair.is_public == True  # noqa: E712
 
-    return list(db_session.scalars(curated_stmt).all())
+    return stmt.where(where_clause)
 
 
 def get_connector_credential_pairs(
-    db_session: Session, include_disabled: bool = True
+    db_session: Session,
+    include_disabled: bool = True,
+    user: User | None = None,
+    for_editing: bool = True,
 ) -> list[ConnectorCredentialPair]:
     stmt = select(ConnectorCredentialPair)
+    if user and user.role != UserRole.ADMIN:
+        stmt = _add_curator_filters(stmt, user, for_editing)
     if not include_disabled:
         stmt = stmt.where(
             ConnectorCredentialPair.status == ConnectorCredentialPairStatus.ACTIVE
@@ -60,8 +62,12 @@ def get_connector_credential_pair(
     connector_id: int,
     credential_id: int,
     db_session: Session,
+    user: User | None = None,
+    for_editing: bool = True,
 ) -> ConnectorCredentialPair | None:
     stmt = select(ConnectorCredentialPair)
+    if user and user.role != UserRole.ADMIN:
+        stmt = _add_curator_filters(stmt, user, for_editing)
     stmt = stmt.where(ConnectorCredentialPair.connector_id == connector_id)
     stmt = stmt.where(ConnectorCredentialPair.credential_id == credential_id)
     result = db_session.execute(stmt)
@@ -71,8 +77,12 @@ def get_connector_credential_pair(
 def get_connector_credential_source_from_id(
     cc_pair_id: int,
     db_session: Session,
+    user: User | None = None,
+    for_editing: bool = True,
 ) -> DocumentSource | None:
     stmt = select(ConnectorCredentialPair)
+    if user and user.role != UserRole.ADMIN:
+        stmt = _add_curator_filters(stmt, user, for_editing)
     stmt = stmt.where(ConnectorCredentialPair.id == cc_pair_id)
     result = db_session.execute(stmt)
     cc_pair = result.scalar_one_or_none()
@@ -82,8 +92,12 @@ def get_connector_credential_source_from_id(
 def get_connector_credential_pair_from_id(
     cc_pair_id: int,
     db_session: Session,
+    user: User | None = None,
+    for_editing: bool = True,
 ) -> ConnectorCredentialPair | None:
     stmt = select(ConnectorCredentialPair)
+    if user and user.role != UserRole.ADMIN:
+        stmt = _add_curator_filters(stmt, user, for_editing)
     stmt = stmt.where(ConnectorCredentialPair.id == cc_pair_id)
     result = db_session.execute(stmt)
     return result.scalar_one_or_none()
@@ -135,6 +149,20 @@ def get_last_successful_attempt_time(
 
 
 """Updates"""
+
+
+def relate_groups_to_cc_pair(
+    db_session: Session,
+    cc_pair_id: int,
+    user_group_ids: list[int],
+) -> None:
+    for group_id in user_group_ids:
+        db_session.add(
+            UserGroup__ConnectorCredentialPair(
+                user_group_id=group_id, cc_pair_id=cc_pair_id
+            )
+        )
+    db_session.commit()
 
 
 def _update_connector_credential_pair(
@@ -246,7 +274,7 @@ def add_credential_to_connector(
     is_public: bool,
     user: User | None,
     db_session: Session,
-) -> StatusResponse[int]:
+) -> int:
     connector = fetch_connector_by_id(connector_id, db_session)
     credential = fetch_credential_by_id(credential_id, user, db_session)
 
@@ -284,11 +312,7 @@ def add_credential_to_connector(
     db_session.add(association)
     db_session.commit()
 
-    return StatusResponse(
-        success=True,
-        message=f"New Credential {credential_id} added to Connector",
-        data=connector_id,
-    )
+    return association.id
 
 
 def remove_credential_from_connector(

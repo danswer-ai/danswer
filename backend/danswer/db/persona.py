@@ -7,6 +7,7 @@ from sqlalchemy import delete
 from sqlalchemy import func
 from sqlalchemy import not_
 from sqlalchemy import or_
+from sqlalchemy import Select
 from sqlalchemy import select
 from sqlalchemy import update
 from sqlalchemy.orm import Session
@@ -34,48 +35,33 @@ from danswer.utils.variable_functionality import fetch_versioned_implementation
 logger = setup_logger()
 
 
-def fetch_persona_by_id(db_session: Session, persona_id: int) -> Persona:
-    persona = db_session.scalar(select(Persona).where(Persona.id == persona_id))
+def _add_curator_filters(stmt: Select, user: User, for_editing: bool = True) -> Select:
+    stmt = stmt.outerjoin(Persona__UserGroup).outerjoin(
+        User__UserGroup,
+        User__UserGroup.user_group_id == Persona__UserGroup.user_group_id,
+    )
+    where_clause = User__UserGroup.user_id == user.id
+    if user.role == UserRole.CURATOR and for_editing:
+        where_clause &= User__UserGroup.is_curator == True  # noqa: E712
+    if not for_editing:
+        where_clause |= Persona.is_public == True  # noqa: E712
+
+    return stmt.where(where_clause)
+
+
+def fetch_persona_by_id(
+    db_session: Session, persona_id: int, user: User | None, for_editing: bool = True
+) -> Persona:
+    stmt = select(Persona).where(Persona.id == persona_id).distinct()
+    if user is not None and user.role != UserRole.ADMIN:
+        stmt = _add_curator_filters(stmt, user, for_editing=True)
+    persona = db_session.scalars(stmt).one_or_none()
     if not persona:
         raise HTTPException(
             status_code=403,
-            detail=f"Persona with ID {persona_id} does not exist",
+            detail=f"Persona with ID {persona_id} does not exist or user is not authorized to access it",
         )
     return persona
-
-
-def _get_persona_if_editable_by_user(
-    db_session: Session, user: User | None, persona_id: int
-) -> Persona:
-    # if user is None, assume that no-auth is turned on
-    if user is None:
-        return fetch_persona_by_id(db_session, persona_id)
-
-    # admins can edit everything
-    if user.role == UserRole.ADMIN:
-        return fetch_persona_by_id(db_session, persona_id)
-
-    where_clause = User__UserGroup.user_id == user.id
-    if user.role != UserRole.GLOBAL_CURATOR:
-        where_clause &= User__UserGroup.is_curator == True  # noqa: E712
-    where_clause |= Persona.user_id == user.id  # or check if user owns persona
-
-    persona_stmt = (
-        select(Persona)
-        .outerjoin(Persona.groups)
-        .outerjoin(UserGroup.user_group_relationships)
-        .where(Persona.id == persona_id)
-        .where(where_clause)
-    )
-    editable_persona = list(db_session.scalars(persona_stmt).all())
-
-    if editable_persona:
-        return editable_persona[0]
-
-    raise HTTPException(
-        status_code=403,
-        detail=f"User not authorized to edit persona with ID {persona_id}",
-    )
 
 
 def _get_persona_by_name(
@@ -169,8 +155,8 @@ def update_persona_shared_users(
     """Simplified version of `create_update_persona` which only touches the
     accessibility rather than any of the logic (e.g. prompt, connected data sources,
     etc.)."""
-    persona = _get_persona_if_editable_by_user(
-        db_session=db_session, user=user, persona_id=persona_id
+    persona = fetch_persona_by_id(
+        db_session=db_session, persona_id=persona_id, user=user, for_editing=True
     )
 
     if persona.is_public:
@@ -427,8 +413,8 @@ def upsert_persona(
             raise ValueError("Cannot update default persona with non-default.")
 
         # this checks if the user has permission to edit the persona
-        persona = _get_persona_if_editable_by_user(
-            db_session=db_session, user=user, persona_id=persona.id
+        persona = fetch_persona_by_id(
+            db_session=db_session, persona_id=persona.id, user=user, for_editing=True
         )
 
         persona.name = name
@@ -528,8 +514,8 @@ def update_persona_visibility(
     db_session: Session,
     user: User | None = None,
 ) -> None:
-    persona = _get_persona_if_editable_by_user(
-        db_session=db_session, user=user, persona_id=persona_id
+    persona = fetch_persona_by_id(
+        db_session=db_session, persona_id=persona_id, user=user, for_editing=True
     )
     persona.is_visible = is_visible
     db_session.commit()

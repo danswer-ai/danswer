@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_curator_or_admin_user
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import KV_GEN_AI_KEY_CHECK_TIME
@@ -145,7 +146,7 @@ def validate_existing_genai_api_key(
 @router.post("/admin/deletion-attempt")
 def create_deletion_attempt_for_connector_id(
     connector_credential_pair_identifier: ConnectorCredentialPairIdentifier,
-    _: User = Depends(current_admin_user),
+    user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     from danswer.background.celery.celery_app import (
@@ -159,6 +160,8 @@ def create_deletion_attempt_for_connector_id(
         db_session=db_session,
         connector_id=connector_id,
         credential_id=credential_id,
+        user=user,
+        for_editing=True,
     )
     if cc_pair is None:
         raise HTTPException(

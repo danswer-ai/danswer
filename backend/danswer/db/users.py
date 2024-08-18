@@ -1,19 +1,32 @@
 from collections.abc import Sequence
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
-from sqlalchemy.schema import Column
 
 from danswer.db.models import User
+from danswer.db.models import User__UserGroup
+from danswer.db.models import UserRole
 
 
-def list_users(db_session: Session, q: str = "") -> Sequence[User]:
+def list_users(
+    db_session: Session, q: str = "", user: User | None = None
+) -> Sequence[User]:
     """List all users. No pagination as of now, as the # of users
     is assumed to be relatively small (<< 1 million)"""
-    query = db_session.query(User)
+    stmt = select(User)
+
     if q:
-        query = query.filter(Column("email").ilike("%{}%".format(q)))
-    return query.all()
+        stmt = stmt.where(User.email.ilike(f"%{q}%"))
+
+    if user and user.role != UserRole.ADMIN:
+        stmt = stmt.join(User__UserGroup)
+        where_clause = User__UserGroup.user_id == user.id
+        if user.role == UserRole.CURATOR:
+            where_clause &= User__UserGroup.is_curator == True  # noqa: E712
+        stmt = stmt.where(where_clause)
+
+    return db_session.scalars(stmt).unique().all()
 
 
 def get_user_by_email(email: str, db_session: Session) -> User | None:
