@@ -357,7 +357,6 @@ def stream_chat_message_objects(
                 parent_id=parent_id,
                 chat_session_id=chat_session_id,
                 db_session=db_session,
-                regenerate=new_msg_req.regenerate,
             )
 
         elif not use_existing_user_message:
