@@ -21,6 +21,7 @@ import { CustomSelect } from "@/components/Select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Brain } from "lucide-react";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { SortSearch } from "../SortSearch";
 
 const SectionTitle = ({ children }: { children: string }) => (
   <div className="flex p-2 text-sm font-bold">{children}</div>
@@ -79,6 +80,16 @@ export function SourceSelector({
 
   return (
     <div className="w-full flex flex-col lg:gap-4 text-dark-900">
+      <div className="lg:hidden">
+        <SortSearch isMobile />
+
+        <DateRangeSelector
+          isMobile
+          value={timeRange}
+          onValueChange={setTimeRange}
+        />
+      </div>
+
       {existingSources.length > 0 && (
         <div className="lg:border rounded-[8px] w-full p-2.5">
           <SectionTitle>Sources</SectionTitle>

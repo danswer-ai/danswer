@@ -90,7 +90,7 @@ export const SearchSidebar = ({
           className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${opacityClass}`}
         >
           <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
-            <Image src={Logo} alt="enmedd-logo" height={35} />
+            <Image src={Logo} alt="enmedd-logo" height={40} />
 
             <div className="lg:hidden">
               <Button variant="ghost" size="icon" onClick={toggleSideBar}>
