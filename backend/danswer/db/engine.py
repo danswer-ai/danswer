@@ -174,7 +174,7 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def warm_up_connections(
-    sync_connections_to_warm_up: int = 10, async_connections_to_warm_up: int = 10
+    sync_connections_to_warm_up: int = 20, async_connections_to_warm_up: int = 20
 ) -> None:
     sync_postgres_engine = get_sqlalchemy_engine()
     connections = [
