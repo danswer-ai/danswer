@@ -204,11 +204,11 @@ def get_personas(
 
     if joinedload_all:
         stmt = stmt.options(
-            joinedload(Persona.prompts)
-            .joinedload(Persona.tools)
-            .joinedload(Persona.document_sets)
-            .joinedload(Persona.groups)
-            .joinedload(Persona.users)
+            joinedload(Persona.prompts),
+            joinedload(Persona.tools),
+            joinedload(Persona.document_sets),
+            joinedload(Persona.groups),
+            joinedload(Persona.users),
         )
 
     return db_session.scalars(stmt).all()
