@@ -22,6 +22,8 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.html_utils import parse_html_page_basic
 
+# Define a constant for the time delay
+TIME_DELAY_SECONDS = 5
 
 def _article_to_document(article: Article, content_tags: dict[str, str]) -> Document:
     author = BasicExpertInfo(
@@ -235,22 +237,15 @@ class ZendeskConnector(LoadConnector, PollConnector):
                     except StopIteration:
                         # No more tickets to process
                         if doc_batch:
-                            print(f"Yielding final batch of {len(doc_batch)} tickets")
                             yield doc_batch
-                        print(f"Finished processing. Total tickets processed: {total_processed}")
                         return
-                    except Exception as e:
-                        print(f"Error processing ticket: {str(e)}")
                 
                 if doc_batch:
-                    print(f"Yielding batch of {len(doc_batch)} tickets")
                     yield doc_batch
                 
-                print(f"Total tickets processed: {total_processed}")
-                time.sleep(5)  # 5-second delay between batches to rate-limit calling the Zendesk API
+                time.sleep(TIME_DELAY_SECONDS)  # 5-second delay between batches to rate-limit calling the Zendesk API
 
         except Exception as e:
-            print(f"Error fetching tickets from Zendesk: {str(e)}")
             raise
 
 if __name__ == "__main__":

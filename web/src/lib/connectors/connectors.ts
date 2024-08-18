@@ -592,11 +592,12 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         query: "Select the what content this connector will index:",
         label: "Content Type",
         name: "content_type",
-        optional: true,
+        optional: false,
         options: [
           { name: "articles", value: "articles" },
           { name: "tickets", value: "tickets" }
         ],
+        default: 0,
       }
     ],
   },
