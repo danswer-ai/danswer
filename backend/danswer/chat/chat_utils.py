@@ -37,7 +37,6 @@ def create_chat_chain(
     db_session: Session,
     prefetch_tool_calls: bool = True,
     parent_id: int | None = None,
-    regenerate: bool = False,
 ) -> tuple[ChatMessage, list[ChatMessage]]:
     """Build the linear chain of messages without including the root message"""
     mainline_messages: list[ChatMessage] = []
