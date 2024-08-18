@@ -472,6 +472,8 @@ export function buildLatestMessageChain(
   const rootMessage = Array.from(messageMap.values()).find(
     (message) => message.parentMessageId === null
   );
+  console.log("Message Chain");
+  console.log(messageMap);
 
   let finalMessageList: Message[] = [];
   if (rootMessage) {

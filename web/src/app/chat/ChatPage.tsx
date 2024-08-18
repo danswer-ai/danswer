@@ -474,6 +474,7 @@ export function ChatPage({
   const messageHistory = buildLatestMessageChain(
     completeMessageDetail.messageMap
   );
+  console.log(messageHistory);
   const [submittedMessage, setSubmittedMessage] = useState("");
   const [chatState, setChatState] = useState<ChatState>("input");
   interface RegenerationState {
@@ -1058,7 +1059,10 @@ export function ChatPage({
                 type: "user",
                 files: currentMessageFiles,
                 toolCalls: [],
-                parentMessageId: error ? null : lastSuccessfulMessageId,
+                parentMessageId: error
+                  ? null
+                  : regenerationRequest?.parentMessage.messageId ||
+                    lastSuccessfulMessageId,
                 childrenMessageIds: [
                   ...(regenerationRequest?.parentMessage?.childrenMessageIds ||
                     []),
