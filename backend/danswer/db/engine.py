@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
+from danswer.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
 from danswer.configs.app_configs import LOG_POSTGRES_LATENCY
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
@@ -63,6 +64,27 @@ if LOG_POSTGRES_LATENCY:
             logger.debug(
                 f"Query Complete: {statement}\n\nTotal Time: {total_time:.4f} seconds"
             )
+
+
+if LOG_POSTGRES_CONN_COUNTS:
+    # Global counter for connection checkouts and checkins
+    checkout_count = 0
+    checkin_count = 0
+
+    @event.listens_for(Engine, "checkout")
+    def log_checkout(dbapi_connection, connection_record, connection_proxy):
+        global checkout_count
+        checkout_count += 1
+        print(f"Total connection checkouts: {checkout_count}")
+
+    @event.listens_for(Engine, "checkin")
+    def log_checkin(dbapi_connection, connection_record):
+        global checkin_count
+        checkin_count += 1
+        print(f"Total connection checkins: {checkin_count}")
+
+
+"""END DEBUGGING LOGGING"""
 
 
 def get_db_current_time(db_session: Session) -> datetime:

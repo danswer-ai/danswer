@@ -44,7 +44,7 @@ export default async function Page({
 
   return (
     <>
-      <InstantSSRAutoRefresh />
+      {/* <InstantSSRAutoRefresh /> */}
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
       {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
         <ApiKeyModal user={user} />

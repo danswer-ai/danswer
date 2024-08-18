@@ -36,33 +36,16 @@ export default async function GalleryPage({
 
   return (
     <>
-      <InstantSSRAutoRefresh />
-
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
 
-      <ChatProvider
-        value={{
-          user,
-          chatSessions,
-          availableSources,
-          availableDocumentSets: documentSets,
-          availableAssistants: assistants,
-          availableTags: tags,
-          llmProviders,
-          folders,
-          openedFolders,
-          userInputPrompts,
-        }}
-      >
-        <WrappedAssistantsMine
-          initiallyToggled={toggleSidebar}
-          chatSessions={chatSessions}
-          folders={folders}
-          openedFolders={openedFolders}
-          user={user}
-          assistants={assistants}
-        />
-      </ChatProvider>
+      <WrappedAssistantsMine
+        initiallyToggled={toggleSidebar}
+        chatSessions={chatSessions}
+        folders={folders}
+        openedFolders={openedFolders}
+        user={user}
+        assistants={assistants}
+      />
     </>
   );
 }

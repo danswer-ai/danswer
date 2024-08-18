@@ -10,12 +10,24 @@ import {
 import { fetchSS } from "@/lib/utilsSS";
 import { getWebVersion } from "@/lib/version";
 
+export async function fetchStandardSettingsSS() {
+  return fetchSS("/settings");
+}
+
+export async function fetchEnterpriseSettingsSS() {
+  return fetchSS("/enterprise-settings");
+}
+
+export async function fetchCustomAnalyticsScriptSS() {
+  return fetchSS("/enterprise-settings/custom-analytics-script");
+}
+
 export async function fetchSettingsSS() {
-  const tasks = [fetchSS("/settings")];
+  const tasks = [fetchStandardSettingsSS()];
   if (SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED) {
-    tasks.push(fetchSS("/enterprise-settings"));
+    tasks.push(fetchEnterpriseSettingsSS());
     if (CUSTOM_ANALYTICS_ENABLED) {
-      tasks.push(fetchSS("/enterprise-settings/custom-analytics-script"));
+      tasks.push(fetchCustomAnalyticsScriptSS());
     }
   }
 
