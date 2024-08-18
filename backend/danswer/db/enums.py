@@ -33,3 +33,19 @@ class IndexModelStatus(str, PyEnum):
 class ChatSessionSharedStatus(str, PyEnum):
     PUBLIC = "public"
     PRIVATE = "private"
+
+
+class DefaultPage(str, PyEnum):
+    CHAT = "chat"
+    SEARCH = "search"
+
+
+class WorkspaceSubscriptionPlan(str, PyEnum):
+    BASIC = "basic"
+    PROFESSIONAL = "professional"
+    ORGANIZATION = "organization"
+
+
+class InstanceSubscriptionPlan(str, PyEnum):
+    ENTERPRISE = "enterprise"
+    PARTNER = "partner"
