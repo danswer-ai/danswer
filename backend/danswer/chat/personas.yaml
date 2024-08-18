@@ -5,7 +5,7 @@ personas:
   # this is for DanswerBot to use when tagged in a non-configured channel
   # Careful setting specific IDs, this won't autoincrement the next ID value for postgres
   - id: 0
-    name: "enMedD CHP"
+    name: "enMedD AI"
     description: >
       Assistant with access to documents from your Connected Sources.
     # Default Prompt objects attached to the persona, see prompts.yaml
@@ -37,7 +37,29 @@ personas:
     #   - "Engineer Onboarding"
     #   - "Benefits"
     document_sets: []
-
+    starter_messages:
+      [
+        {
+          "name": "Business Advice",
+          "description": "Ask me anything about starting, running, or growing a business.",
+          "message": "What business advice do you need?",
+        },
+        {
+          "name": "Marketing Strategy",
+          "description": "Let's discuss your target audience, messaging, and channels.",
+          "message": "How can I improve my marketing strategy?",
+        },
+        {
+          "name": "Financial Planning",
+          "description": "Ask me about budgeting, cash flow, or investment.",
+          "message": "Do you have any questions about business finance?",
+        },
+        {
+          "name": "Employee Management",
+          "description": "Let's discuss hiring, onboarding, performance reviews, or team building.",
+          "message": "How can I improve my employee management skills?",
+        },
+      ]
 
   - id: 1
     name: "GPT"
@@ -50,7 +72,6 @@ personas:
     llm_filter_extraction: true
     recency_bias: "auto"
     document_sets: []
-
 
   - id: 2
     name: "Paraphrase"

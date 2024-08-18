@@ -1,16 +1,5 @@
 "use client";
 
-import {
-  FiCpu,
-  FiImage,
-  FiThumbsDown,
-  FiThumbsUp,
-  FiUser,
-  FiEdit2,
-  FiChevronRight,
-  FiChevronLeft,
-  FiTool,
-} from "react-icons/fi";
 import { FeedbackType } from "../types";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -27,7 +16,6 @@ import {
   SEARCH_TOOL_NAME,
 } from "../tools/constants";
 import { ToolRunDisplay } from "../tools/ToolRunningAnimation";
-import { Hoverable } from "@/components/Hoverable";
 import { DocumentPreview } from "../files/documents/DocumentPreview";
 import { InMessageImage } from "../files/images/InMessageImage";
 import { CodeBlock } from "./CodeBlock";
@@ -43,6 +31,7 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -154,17 +143,9 @@ export const AIMessage = ({
   const shouldShowLoader =
     !toolCall || (toolCall.tool_name === SEARCH_TOOL_NAME && !content);
   const defaultLoader = shouldShowLoader ? (
-    <div className="my-auto text-sm">
-      <ThreeDots
-        height="30"
-        width="50"
-        color="#3b82f6"
-        ariaLabel="grid-loading"
-        radius="12.5"
-        wrapperStyle={{}}
-        wrapperClass=""
-        visible={true}
-      />
+    <div className="my-auto text-sm flex flex-col gap-1">
+      <Skeleton className="h-5 w-full" />
+      <Skeleton className="h-5 w-full" />
     </div>
   ) : undefined;
 
@@ -240,7 +221,7 @@ export const AIMessage = ({
                         ? `Used "${toolCall.tool_name}"`
                         : `Using "${toolCall.tool_name}"`
                     }
-                    toolLogo={<FiTool size={15} className="my-auto mr-1" />}
+                    toolLogo={<Wrench size={15} className="my-auto mr-1" />}
                     isRunning={!toolCall.tool_result || !content}
                   />
                 </div>
@@ -252,7 +233,7 @@ export const AIMessage = ({
                 <div className="my-2">
                   <ToolRunDisplay
                     toolName={`Generating images`}
-                    toolLogo={<FiImage size={15} className="my-auto mr-1" />}
+                    toolLogo={<ImageIcon size={15} className="my-auto mr-1" />}
                     isRunning={!toolCall.tool_result}
                   />
                 </div>
@@ -294,7 +275,7 @@ export const AIMessage = ({
                         <CodeBlock {...props} content={content as string} />
                       ),
                       p: ({ node, ...props }) => (
-                        <p {...props} className="text-default" />
+                        <p {...props} className="text-default mt-2.5" />
                       ),
                     }}
                     remarkPlugins={[remarkGfm]}
@@ -393,23 +374,40 @@ function MessageSwitcher({
 }) {
   return (
     <div className="flex items-center text-sm space-x-0.5">
-      <Hoverable onClick={currentPage === 1 ? undefined : handlePrevious}>
-        <FiChevronLeft />
-      </Hoverable>
+      <Button
+        variant="ghost"
+        size="xs"
+        className="!p-1.5 !px-[7px]"
+        onClick={currentPage === 1 ? undefined : handlePrevious}
+      >
+        <ChevronLeft />
+      </Button>
       <span className="select-none text-emphasis text-medium">
         {currentPage} / {totalPages}
       </span>
-      <Hoverable onClick={currentPage === totalPages ? undefined : handleNext}>
-        <FiChevronRight />
-      </Hoverable>
+      <Button
+        variant="ghost"
+        size="xs"
+        className="!p-1.5 !px-[7px]"
+        onClick={currentPage === totalPages ? undefined : handleNext}
+      >
+        <ChevronRight />
+      </Button>
     </div>
   );
 }
 
-import logo from "../../../public/logo.png";
-import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, ThumbsDown, ThumbsUp } from "lucide-react";
+import {
+  Pencil,
+  ThumbsDown,
+  ThumbsUp,
+  Wrench,
+  Image as ImageIcon,
+  User,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 export const HumanMessage = ({
   content,
@@ -470,7 +468,7 @@ export const HumanMessage = ({
           <div className="flex">
             <div className="p-1 mx-1 bg-blue-400 rounded-regular h-fit">
               <div className="text-inverted">
-                <FiUser size={25} className="mx-auto my-auto" />
+                <User size={25} className="mx-auto my-auto" />
               </div>
             </div>
 
@@ -559,7 +557,7 @@ export const HumanMessage = ({
                     isHovered &&
                     !isEditing &&
                     (!files || files.length === 0) && (
-                      <div className="bg-hover absolute -top-8 right-0 rounded">
+                      <div className="bg-hover absolute -top-11 right-0 rounded">
                         <Button
                           variant="ghost"
                           size="xs"

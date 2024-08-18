@@ -5,9 +5,6 @@ import { CUSTOM_ANALYTICS_ENABLED } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { Metadata } from "next";
 import { buildClientUrl } from "@/lib/utilsSS";
-import { ChatProvider } from "@/components/context/ChatContext";
-import { fetchChatData } from "@/lib/chat/fetchChatData";
-import { redirect } from "next/navigation";
 
 const fontSans = FontSans({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -40,23 +37,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const combinedSettings = await getCombinedSettings({});
-  const chatData = await fetchChatData({});
-
-  if ("redirect" in chatData) {
-    redirect(chatData.redirect);
-  }
-
-  const {
-    user,
-    chatSessions,
-    availableSources,
-    documentSets,
-    personas,
-    tags,
-    llmProviders,
-    folders,
-    openedFolders,
-  } = chatData;
 
   return (
     <html lang="en">
@@ -76,21 +56,7 @@ export default async function RootLayout({
         }`}
       >
         <SettingsProvider settings={combinedSettings}>
-          <ChatProvider
-            value={{
-              user,
-              chatSessions,
-              availableSources,
-              availableDocumentSets: documentSets,
-              availablePersonas: personas,
-              availableTags: tags,
-              llmProviders,
-              folders,
-              openedFolders,
-            }}
-          >
-            {children}
-          </ChatProvider>
+          {children}
         </SettingsProvider>
       </body>
     </html>

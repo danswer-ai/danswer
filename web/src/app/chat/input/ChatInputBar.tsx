@@ -66,7 +66,7 @@ export function ChatInputBar({
     const textarea = textAreaRef.current;
     if (textarea) {
       const updateHeight = () => {
-        const isSmallDevice = window.innerWidth < 1024; // Adjust the breakpoint as needed
+        const isSmallDevice = window.innerWidth < 768; // Adjust the breakpoint as needed
 
         textarea.style.height = "0px";
         textarea.style.height = `${Math.min(
@@ -206,7 +206,7 @@ export function ChatInputBar({
 
   return (
     <div>
-      <div className="flex justify-center items-center max-w-screen-lg pb-2 mx-auto mb-2 px-5 2xl:px-0">
+      <div className="flex justify-center items-center max-w-full pb-2 mx-auto mb-2 px-5 2xl:px-0">
         <div
           className={`flex md:hidden items-center trasition-[width] ease-in-out duration-500 ${
             isShowing ? "w-[200px]" : "w-10"

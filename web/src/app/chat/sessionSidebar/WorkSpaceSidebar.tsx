@@ -1,4 +1,3 @@
-import { useChatContext } from "@/components/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { UserSettingsButton } from "@/components/UserSettingsButton";
 import { Ellipsis, Settings } from "lucide-react";
@@ -8,16 +7,19 @@ import Notion from "../../../../public/Notion.png";
 import Dropbox from "../../../../public/Dropbox.png";
 import Gitlab from "../../../../public/Gitlab.png";
 import HubSpot from "../../../../public/HubSpot.png";
-import Vanguard from "../../../../public/logo.png";
+import enMedD from "../../../../public/logo.png";
 import { Separator } from "@/components/ui/separator";
+import { User } from "@/lib/types";
 
 interface WorkSpaceSidebarProps {
-  openSidebar: boolean;
+  openSidebar?: boolean;
+  user?: User | null;
 }
 
-export const WorkSpaceSidebar = ({ openSidebar }: WorkSpaceSidebarProps) => {
-  let { user } = useChatContext();
-
+export const WorkSpaceSidebar = ({
+  openSidebar,
+  user,
+}: WorkSpaceSidebarProps) => {
   return (
     <div className={`bg-background h-full px-4 py-6 border-r border-border`}>
       <div
@@ -27,15 +29,15 @@ export const WorkSpaceSidebar = ({ openSidebar }: WorkSpaceSidebarProps) => {
       >
         <div className="flex flex-col items-center gap-6">
           <Image
-            src={Vanguard}
-            alt="Vanguard"
+            src={enMedD}
+            alt="enMedD Logo"
             width={40}
             height={40}
             className="rounded-full min-w-10 min-h-10"
           />
           <Separator />
           <div className="flex flex-col items-center gap-6">
-            <Button variant="ghost" size="icon">
+            {/* <Button variant="ghost" size="icon">
               <Image src={Notion} alt="Notion" width={30} height={30} />
             </Button>
             <Button variant="ghost" size="icon">
@@ -49,7 +51,7 @@ export const WorkSpaceSidebar = ({ openSidebar }: WorkSpaceSidebarProps) => {
             </Button>
             <Button variant="ghost" size="icon">
               <Ellipsis />
-            </Button>
+            </Button> */}
           </div>
         </div>
         <div>

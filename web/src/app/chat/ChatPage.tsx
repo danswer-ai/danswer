@@ -78,6 +78,10 @@ import Logo from "../../../public/logo-brand.png";
 import { Button } from "@/components/ui/button";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { AnimatePresence, motion } from "framer-motion";
+import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { LuChevronsLeftRight } from "react-icons/lu";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -565,7 +569,7 @@ export function ChatPage({
   const adjustDocumentSidebarWidth = () => {
     if (masterFlexboxRef.current && document.documentElement.clientWidth) {
       if (document.documentElement.clientWidth > 1700) {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1400);
+        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1460);
       } else if (document.documentElement.clientWidth > 1420) {
         setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1060);
       } else {
@@ -1101,9 +1105,13 @@ export function ChatPage({
       setEditingRetrievalEnabled(false);
     }
   };
-  console.log(hasPerformedInitialScroll);
 
   const [openSidebar, setOpenSidebar] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  const toggleWidth = () => {
+    setIsExpanded((prevState) => !prevState);
+  };
 
   const toggleLeftSideBar = () => {
     setOpenSidebar((prevState) => !prevState);
@@ -1162,9 +1170,22 @@ export function ChatPage({
 
       <div className="relative flex overflow-x-hidden bg-background text-default h-full">
         <DynamicSidebar
+          user={user}
           openSidebar={openSidebar}
           toggleLeftSideBar={toggleLeftSideBar}
-        />
+          toggleWidth={toggleWidth}
+          isExpanded={isExpanded}
+        >
+          <ChatSidebar
+            existingChats={chatSessions}
+            currentChatSession={selectedChatSession}
+            folders={folders}
+            openedFolders={openedFolders}
+            toggleSideBar={toggleLeftSideBar}
+            openSidebar={openSidebar}
+            isExpanded={isExpanded}
+          />
+        </DynamicSidebar>
 
         <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
           {popup}
@@ -1220,17 +1241,55 @@ export function ChatPage({
                       the top of the chat page. Only used in the EE version of the app. */}
                       <ChatBanner />
 
+                      {/* {messageHistory.length === 0 &&
+                        !isFetchingChatMessages &&
+                        !isStreaming && (
+                          <ChatIntro
+                            availableSources={finalAvailableSources}
+                            livePersona={livePersona}
+                            currentPersona={currentPersona}
+                            selectedPersona={selectedPersona}
+                            onSubmit={onSubmit({
+                              messageOverride: starterMessage.message,
+                            })}
+                          />
+                        )} */}
                       {messageHistory.length === 0 &&
                         !isFetchingChatMessages &&
                         !isStreaming && (
                           <ChatIntro
                             availableSources={finalAvailableSources}
-                            selectedPersona={livePersona}
-                          />
+                            livePersona={livePersona}
+                          >
+                            {currentPersona &&
+                              currentPersona.starter_messages &&
+                              currentPersona.starter_messages.length > 0 &&
+                              selectedPersona &&
+                              messageHistory.length === 0 &&
+                              !isFetchingChatMessages && (
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-10">
+                                  {currentPersona.starter_messages.map(
+                                    (starterMessage, i) => (
+                                      <div key={i} className="w-full">
+                                        <StarterMessage
+                                          starterMessage={starterMessage}
+                                          onClick={() =>
+                                            onSubmit({
+                                              messageOverride:
+                                                starterMessage.message,
+                                            })
+                                          }
+                                        />
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              )}
+                          </ChatIntro>
                         )}
 
                       <div
-                        className={`mt-4 py-20 lg:py-16 px-5 3xl:px-0 max-w-screen-lg mx-auto 2xl:w-searchbar w-full ${
+                        className={`mt-4 py-20 lg:py-16 px-5 2xl:px-0 max-w-full mx-auto 2xl:w-searchbar w-full ${
                           hasPerformedInitialScroll ? "" : " invisible"
                         } ${messageHistory.length === 0 ? "hidden" : "block"}`}
                       >
@@ -1463,17 +1522,9 @@ export function ChatPage({
                                 messageId={null}
                                 personaName={livePersona.name}
                                 content={
-                                  <div className="my-auto text-sm">
-                                    <ThreeDots
-                                      height="30"
-                                      width="50"
-                                      color="#3b82f6"
-                                      ariaLabel="grid-loading"
-                                      radius="12.5"
-                                      wrapperStyle={{}}
-                                      wrapperClass=""
-                                      visible={true}
-                                    />
+                                  <div className="my-auto text-sm flex flex-col gap-1">
+                                    <Skeleton className="h-5 w-full" />
+                                    <Skeleton className="h-5 w-full" />
                                   </div>
                                 }
                               />
@@ -1484,7 +1535,7 @@ export function ChatPage({
 
                         <div ref={endDivRef}></div>
 
-                        {currentPersona &&
+                        {/* {currentPersona &&
                           currentPersona.starter_messages &&
                           currentPersona.starter_messages.length > 0 &&
                           selectedPersona &&
@@ -1521,7 +1572,7 @@ export function ChatPage({
                                 )
                               )}
                             </div>
-                          )}
+                          )} */}
                         <div ref={endDivRef} />
                       </div>
                     </div>

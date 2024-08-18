@@ -155,10 +155,6 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
-      screens: {
-        "2xl": "1420px",
-        "3xl": "1700px",
-      },
       fontFamily: {
         sans: ["var(--font-sans)"],
       },
@@ -204,6 +200,10 @@ const config = {
         popout: "800",
         toast: "900",
         modal: "1000",
+      },
+      screens: {
+        "2xl": "1420px",
+        "3xl": "1700px",
       },
     },
   },

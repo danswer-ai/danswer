@@ -149,7 +149,7 @@ export default async function Home() {
 
   return (
     <div className="relative flex h-full">
-      <Bar />
+      <Bar user={user} />
 
       <HealthCheckBanner />
 

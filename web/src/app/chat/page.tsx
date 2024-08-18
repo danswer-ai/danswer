@@ -6,6 +6,7 @@ import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { ChatPage } from "./ChatPage";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
+import { ChatProvider } from "@/components/context/ChatContext";
 
 export default async function Page({
   searchParams,
@@ -48,12 +49,26 @@ export default async function Page({
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
 
-      <div className="h-full overflow-hidden">
-        <ChatPage
-          defaultSelectedPersonaId={defaultPersonaId}
-          documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
-        />
-      </div>
+      <ChatProvider
+        value={{
+          user,
+          chatSessions,
+          availableSources,
+          availableDocumentSets: documentSets,
+          availablePersonas: personas,
+          availableTags: tags,
+          llmProviders,
+          folders,
+          openedFolders,
+        }}
+      >
+        <div className="h-full overflow-hidden">
+          <ChatPage
+            defaultSelectedPersonaId={defaultPersonaId}
+            documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
+          />
+        </div>
+      </ChatProvider>
     </>
   );
 }
