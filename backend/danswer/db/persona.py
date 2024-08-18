@@ -9,6 +9,7 @@ from sqlalchemy import not_
 from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy import update
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm import Session
 
@@ -169,6 +170,7 @@ def get_personas(
     include_default: bool = True,
     include_slack_bot_personas: bool = False,
     include_deleted: bool = False,
+    joinedload_all: bool = False,
 ) -> Sequence[Persona]:
     stmt = select(Persona).distinct()
     if user_id is not None:
@@ -199,6 +201,15 @@ def get_personas(
         stmt = stmt.where(not_(Persona.name.startswith(SLACK_BOT_PERSONA_PREFIX)))
     if not include_deleted:
         stmt = stmt.where(Persona.deleted.is_(False))
+
+    if joinedload_all:
+        stmt = stmt.options(
+            joinedload(Persona.prompts)
+            .joinedload(Persona.tools)
+            .joinedload(Persona.document_sets)
+            .joinedload(Persona.groups)
+            .joinedload(Persona.users)
+        )
 
     return db_session.scalars(stmt).all()
 
