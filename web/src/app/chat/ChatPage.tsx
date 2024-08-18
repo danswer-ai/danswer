@@ -216,7 +216,7 @@ export function ChatPage({
     }
   }, [liveAssistant]);
 
-  const stopGeneration = (sessionId?: number) => {
+  const stopGenerating = (sessionId?: number) => {
     const currentSession = currentSessionId();
     const controller = abortControllers.get(currentSession);
     if (controller) {
@@ -320,6 +320,7 @@ export function ChatPage({
         } else {
           setSelectedAssistant(undefined);
         }
+        updateCompleteMessageDetail(null, new Map());
         setChatSessionSharedStatus(ChatSessionSharedStatus.Private);
 
         // if we're supposed to submit on initial load, then do that here
@@ -398,12 +399,22 @@ export function ChatPage({
   const [message, setMessage] = useState(
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
-  const [chatState, setChatState] = useState<Map<number, ChatState>>(new Map());
 
-  const updateChatState = (newState: ChatState, sessionId?: number) => {
+  const [chatState, setChatState] = useState<Map<number | null, ChatState>>(
+    new Map([[null, "input"]])
+  );
+
+  const resetEmptyChatState = () => {
+    updateChatState("input", null);
+  };
+
+  const updateChatState = (newState: ChatState, sessionId?: number | null) => {
     setChatState((prevState) => {
       const newChatState = new Map(prevState);
-      newChatState.set(sessionId || currentSessionId(), newState);
+      newChatState.set(
+        sessionId !== undefined ? sessionId : currentSessionId(),
+        newState
+      );
       return newChatState;
     });
   };
@@ -417,7 +428,7 @@ export function ChatPage({
   >(new Map());
 
   const updateCompleteMessageDetail = (
-    sessionId: number,
+    sessionId: number | null,
     messageMap: Map<number, Message>
   ) => {
     setCompleteMessageDetail((prevState) => {
@@ -521,6 +532,13 @@ export function ChatPage({
   const messageHistory = buildLatestMessageChain(
     currentMessageMap(completeMessageDetail)
   );
+  console.log(messageHistory);
+  console.log(completeMessageDetail);
+  console.log(currentMessageMap(completeMessageDetail));
+  console.log(chatState);
+  console.log(currentChatState());
+  console.log(currentSessionId());
+  console.log("----");
 
   const [submittedMessage, setSubmittedMessage] = useState("");
 
@@ -539,6 +557,9 @@ export function ChatPage({
 
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
+
+  console.log(currentMessageMap(completeMessageDetail));
+  console.log(currentSessionId());
 
   // uploaded files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
@@ -1184,6 +1205,7 @@ export function ChatPage({
       });
     }
     setRegenerationState(null);
+    resetEmptyChatState();
     updateChatState("input");
     if (isNewSession) {
       if (finalMessage) {
@@ -1252,7 +1274,7 @@ export function ChatPage({
     if (assistant && assistant.id !== liveAssistant.id) {
       // Abort the ongoing stream if it exists
       if (currentChatStateValue != "input") {
-        stopGeneration();
+        stopGenerating();
         resetInputBar();
       }
 
@@ -1555,7 +1577,7 @@ export function ChatPage({
               <div className="w-full relative">
                 <HistorySidebar
                   explicitlyUntoggle={explicitlyUntoggle}
-                  stopGenerating={stopGeneration}
+                  stopGenerating={stopGenerating}
                   reset={() => setMessage("")}
                   page="chat"
                   ref={innerSidebarElementRef}
@@ -1663,7 +1685,7 @@ export function ChatPage({
                                 return (
                                   <div key={messageReactComponentKey}>
                                     <HumanMessage
-                                      stopGenerating={stopGeneration}
+                                      stopGenerating={stopGenerating}
                                       content={message.message}
                                       files={message.files}
                                       messageId={message.messageId}
@@ -2026,7 +2048,7 @@ export function ChatPage({
 
                             <ChatInputBar
                               chatState={currentChatStateValue}
-                              stopGenerating={stopGeneration}
+                              stopGenerating={stopGenerating}
                               openModelSettings={() => setSettingsToggled(true)}
                               inputPrompts={userInputPrompts}
                               showDocs={() => setDocumentSelection(true)}
