@@ -13,7 +13,7 @@ from danswer.server.documents.models import IndexAttemptError
 router = APIRouter(prefix="/manage")
 
 
-@router.get("/admin/indexing_errors/{index_attempt_id}")
+@router.get("/admin/indexing-errors/{index_attempt_id}")
 def get_indexing_errors(
     index_attempt_id: int,
     _: User | None = Depends(current_admin_user),

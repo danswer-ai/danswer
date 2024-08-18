@@ -2,11 +2,12 @@ import traceback
 from functools import partial
 from typing import Protocol
 
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
 from danswer.configs.app_configs import ENABLE_MULTIPASS_INDEXING
-from danswer.configs.app_configs import INDEXING_EXCEPTION_LOG_LIMIT
+from danswer.configs.app_configs import INDEXING_EXCEPTION_LIMIT
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
@@ -36,12 +37,12 @@ from shared_configs.enums import EmbeddingProvider
 logger = setup_logger()
 
 
-class DocumentBatchPrepareContext:
-    def __init__(
-        self, updatable_docs: list[Document], id_to_db_doc_map: dict[str, DBDocument]
-    ):
-        self.updatable_docs: list[Document] = updatable_docs
-        self.id_to_db_doc_map: dict[str, DBDocument] = id_to_db_doc_map
+class DocumentBatchPrepareContext(BaseModel):
+    updatable_docs: list[Document]
+    id_to_db_doc_map: dict[str, DBDocument]
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class IndexingPipelineProtocol(Protocol):
@@ -147,26 +148,39 @@ def index_doc_batch_with_handler(
             ignore_time_skip=ignore_time_skip,
         )
     except Exception as e:
-        if index_attempt_metadata.num_exceptions < INDEXING_EXCEPTION_LOG_LIMIT:
-            trace = traceback.format_exc()
-            create_index_attempt_error(
-                attempt_id,
-                batch=index_attempt_metadata.batch_num,
-                docs=document_batch,
-                exception_msg=str(e),
-                exception_traceback=trace,
-                db_session=db_session,
-            )
-            logger.exception(
-                f"Indexing batch {index_attempt_metadata.batch_num} failed. msg='{e}' trace='{trace}'"
-            )
+        if INDEXING_EXCEPTION_LIMIT == 0:
+            raise
+
+        trace = traceback.format_exc()
+        create_index_attempt_error(
+            attempt_id,
+            batch=index_attempt_metadata.batch_num,
+            docs=document_batch,
+            exception_msg=str(e),
+            exception_traceback=trace,
+            db_session=db_session,
+        )
+        logger.exception(
+            f"Indexing batch {index_attempt_metadata.batch_num} failed. msg='{e}' trace='{trace}'"
+        )
 
         index_attempt_metadata.num_exceptions += 1
-        if index_attempt_metadata.num_exceptions >= INDEXING_EXCEPTION_LOG_LIMIT:
+        if index_attempt_metadata.num_exceptions == INDEXING_EXCEPTION_LIMIT:
             logger.info(
-                f"Maximum number of exception logs for this index attempt "
-                f"({INDEXING_EXCEPTION_LOG_LIMIT}) has been reached."
+                f"Maximum number of exceptions for this index attempt "
+                f"({INDEXING_EXCEPTION_LIMIT}) has been reached. "
+                f"The next exception will abort the indexing attempt."
             )
+        elif index_attempt_metadata.num_exceptions > INDEXING_EXCEPTION_LIMIT:
+            logger.warning(
+                f"Maximum number of exceptions for this index attempt "
+                f"({INDEXING_EXCEPTION_LIMIT}) has been exceeded. Raising RuntimeError."
+            )
+            raise RuntimeError(
+                f"Maximum exception limit of {INDEXING_EXCEPTION_LIMIT} exceeded."
+            )
+        else:
+            pass
 
     return r
 

@@ -295,8 +295,9 @@ INDEXING_SIZE_WARNING_THRESHOLD = int(
 # 0 disables this behavior and is the default.
 INDEXING_TRACER_INTERVAL = int(os.environ.get("INDEXING_TRACER_INTERVAL", 0))
 
-# During an indexing attempt, limits the number of exceptions logged
-INDEXING_EXCEPTION_LOG_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LOG_LIMIT", 10))
+# During an indexing attempt, specifies the number of batches which are allowed to
+# exception without aborting the attempt.
+INDEXING_EXCEPTION_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LIMIT", 0))
 
 #####
 # Miscellaneous

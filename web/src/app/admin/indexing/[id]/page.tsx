@@ -11,11 +11,6 @@ import { IndexAttemptErrorsTable } from "./IndexAttemptErrorsTable";
 import { buildIndexingErrorsUrl } from "./lib";
 import { IndexAttemptError } from "./types";
 
-// since the uploaded files are cleaned up after some period of time
-// re-indexing will not work for the file connector. Also, it would not
-// make sense to re-index, since the files will not have changed.
-const CONNECTOR_TYPES_THAT_CANT_REINDEX: ValidSources[] = ["file"];
-
 function Main({ id }: { id: number }) {
   const {
     data: indexAttemptErrors,
