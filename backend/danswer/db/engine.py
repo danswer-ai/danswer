@@ -52,6 +52,7 @@ if LOG_POSTGRES_LATENCY:
         conn, cursor, statement, parameters, context, executemany
     ):
         conn.info["query_start_time"] = time.time()
+        logger.debug(f"Query Started: {statement}")
 
     # Function to log after query execution
     @event.listens_for(Engine, "after_cursor_execute")

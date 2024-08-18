@@ -26,6 +26,8 @@ from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.openapi import OpenAPIResponseType
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from danswer.auth.invited_users import get_invited_users
@@ -51,6 +53,7 @@ from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_default_admin_user_emails
 from danswer.db.auth import get_user_count
 from danswer.db.auth import get_user_db
+from danswer.db.engine import get_async_session
 from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import AccessToken
@@ -366,7 +369,9 @@ async def double_check_user(
 
 async def current_user(
     user: User | None = Depends(optional_user),
+    async_db_session: AsyncSession = Depends(get_async_session),
 ) -> User | None:
+    logger.info(await async_db_session.scalar(select(User).where(User.id == user.id)))
     return await double_check_user(user)
 
 
