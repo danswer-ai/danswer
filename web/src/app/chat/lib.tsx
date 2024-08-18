@@ -389,13 +389,12 @@ export function getLastSuccessfulMessageId(messageHistory: Message[]) {
     .reverse()
     .find(
       (message) =>
-        message.type === "assistant" &&
+        (message.type === "assistant" || message.type === "system") &&
         message.messageId !== -1 &&
         message.messageId !== null
     );
   return lastSuccessfulMessage ? lastSuccessfulMessage?.messageId : null;
 }
-
 export function processRawChatHistory(
   rawMessages: BackendMessage[]
 ): Map<number, Message> {

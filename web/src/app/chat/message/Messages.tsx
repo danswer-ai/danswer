@@ -261,6 +261,12 @@ export const AIMessage = ({
     new Set((docs || []).map((doc) => doc.source_type))
   ).slice(0, 3);
 
+  const includeMessageSwitcher =
+    currentMessageInd !== undefined &&
+    onMessageSelection &&
+    otherMessagesCanSwitchTo &&
+    otherMessagesCanSwitchTo.length > 1;
+
   return (
     <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
       <div
@@ -530,29 +536,6 @@ export const AIMessage = ({
                       </div>
                     )}
                   </div>
-                  <div className="flex  justify-start  w-full gap-x-0.5 mt-1">
-                    {currentMessageInd !== undefined &&
-                      onMessageSelection &&
-                      otherMessagesCanSwitchTo &&
-                      otherMessagesCanSwitchTo.length > 1 && (
-                        <div className="mr-auto">
-                          <MessageSwitcher
-                            currentPage={currentMessageInd + 1}
-                            totalPages={otherMessagesCanSwitchTo.length}
-                            handlePrevious={() => {
-                              onMessageSelection(
-                                otherMessagesCanSwitchTo[currentMessageInd - 1]
-                              );
-                            }}
-                            handleNext={() => {
-                              onMessageSelection(
-                                otherMessagesCanSwitchTo[currentMessageInd + 1]
-                              );
-                            }}
-                          />
-                        </div>
-                      )}
-                  </div>
 
                   {handleFeedback &&
                     (isActive ? (
@@ -564,6 +547,30 @@ export const AIMessage = ({
                   `}
                       >
                         <TooltipGroup>
+                          <div className="flex justify-start w-full gap-x-0.5">
+                            {includeMessageSwitcher && (
+                              <div className="-mx-1 mr-auto">
+                                <MessageSwitcher
+                                  currentPage={currentMessageInd + 1}
+                                  totalPages={otherMessagesCanSwitchTo.length}
+                                  handlePrevious={() => {
+                                    onMessageSelection(
+                                      otherMessagesCanSwitchTo[
+                                        currentMessageInd - 1
+                                      ]
+                                    );
+                                  }}
+                                  handleNext={() => {
+                                    onMessageSelection(
+                                      otherMessagesCanSwitchTo[
+                                        currentMessageInd + 1
+                                      ]
+                                    );
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
                           <CustomTooltip showTick line content="Copy!">
                             <CopyButton content={content.toString()} />
                           </CustomTooltip>
@@ -602,6 +609,30 @@ export const AIMessage = ({
                         `}
                       >
                         <TooltipGroup>
+                          <div className="flex justify-start w-full gap-x-0.5">
+                            {includeMessageSwitcher && (
+                              <div className="-mx-1 mr-auto">
+                                <MessageSwitcher
+                                  currentPage={currentMessageInd + 1}
+                                  totalPages={otherMessagesCanSwitchTo.length}
+                                  handlePrevious={() => {
+                                    onMessageSelection(
+                                      otherMessagesCanSwitchTo[
+                                        currentMessageInd - 1
+                                      ]
+                                    );
+                                  }}
+                                  handleNext={() => {
+                                    onMessageSelection(
+                                      otherMessagesCanSwitchTo[
+                                        currentMessageInd + 1
+                                      ]
+                                    );
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
                           <CustomTooltip showTick line content="Copy!">
                             <CopyButton content={content.toString()} />
                           </CustomTooltip>
