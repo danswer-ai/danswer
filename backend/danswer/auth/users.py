@@ -48,7 +48,6 @@ from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
 from danswer.configs.constants import DANSWER_API_KEY_PREFIX
-from danswer.configs.constants import SESSION_KEY
 from danswer.configs.constants import UNNAMED_KEY_PLACEHOLDER
 from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_default_admin_user_emails
@@ -331,7 +330,7 @@ async def optional_user(
     # db_session: Session = Depends(get_session),
     async_db_session: AsyncSession = Depends(get_async_session),
 ) -> User | None:
-    cookie = request.cookies.get(SESSION_KEY)
+    cookie = request.cookies.get("fastapiusersauth")
     if not cookie:
         return None
 
@@ -382,9 +381,9 @@ async def double_check_user(
 
 async def current_user(
     user: User | None = Depends(optional_user),
-    async_db_session: AsyncSession = Depends(get_async_session),
+    # async_db_session: AsyncSession = Depends(get_async_session),
 ) -> User | None:
-    logger.info(await async_db_session.scalar(select(User).where(User.id == user.id)))
+    # logger.info(await async_db_session.scalar(select(User).where(User.id == user.id)))
     return await double_check_user(user)
 
 
