@@ -401,8 +401,35 @@ export function ChatPage({
     new Map([[null, "input"]])
   );
 
-  const resetEmptyChatState = () => {
-    updateChatState("input", null);
+  const updateStatesWithNewSessionId = (newSessionId: number) => {
+    setRegenerationState((prevState) => {
+      const newState = new Map(prevState);
+      const existingState = newState.get(null);
+      if (existingState !== undefined) {
+        newState.set(newSessionId, existingState);
+        newState.delete(null);
+      }
+      return newState;
+    });
+
+    setChatState((prevState) => {
+      const newState = new Map(prevState);
+      if (newState.has(null)) {
+        newState.set(newSessionId, newState.get(null)!);
+        newState.delete(null);
+      }
+      return newState;
+    });
+
+    setAbortControllers((prevState) => {
+      const newState = new Map(prevState);
+      const existingState = newState.get(null);
+      if (existingState) {
+        newState.set(newSessionId, existingState);
+        newState.delete(null);
+      }
+      return newState;
+    });
   };
 
   const updateChatState = (newState: ChatState, sessionId?: number | null) => {
@@ -529,14 +556,6 @@ export function ChatPage({
   const messageHistory = buildLatestMessageChain(
     currentMessageMap(completeMessageDetail)
   );
-  console.log(messageHistory);
-  console.log(completeMessageDetail);
-  console.log(currentMessageMap(completeMessageDetail));
-  console.log(chatState);
-  console.log(currentChatState());
-  console.log(currentSessionId());
-  console.log("----");
-
   const [submittedMessage, setSubmittedMessage] = useState("");
 
   interface RegenerationState {
@@ -544,18 +563,35 @@ export function ChatPage({
     finalMessageIndex: number;
   }
 
-  const [regenerationState, setRegenerationState] =
-    useState<RegenerationState | null>(null);
+  const [regenerationState, setRegenerationState] = useState<
+    Map<number | null, RegenerationState | null>
+  >(new Map([[null, null]]));
+
+  const updateRegenerationState = (
+    newState: RegenerationState | null,
+    sessionId?: number | null
+  ) => {
+    setRegenerationState((prevState) => {
+      const newRegenerationState = new Map(prevState);
+      newRegenerationState.set(
+        sessionId !== undefined ? sessionId : currentSessionId(),
+        newState
+      );
+      return newRegenerationState;
+    });
+  };
+
+  const resetRegenerationState = (sessionId?: number | null) => {
+    updateRegenerationState(null, sessionId);
+  };
+
+  const currentRegenerationState = (): RegenerationState | null => {
+    return regenerationState.get(currentSessionId()) || null;
+  };
 
   const [abortControllers, setAbortControllers] = useState<
-    Map<number, AbortController>
+    Map<number | null, AbortController>
   >(new Map());
-
-  const [abortController, setAbortController] =
-    useState<AbortController | null>(null);
-
-  console.log(currentMessageMap(completeMessageDetail));
-  console.log(currentSessionId());
 
   // uploaded files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
@@ -820,7 +856,7 @@ export function ChatPage({
 
       return;
     }
-    setRegenerationState(
+    updateRegenerationState(
       regenerationRequest
         ? { regenerating: true, finalMessageIndex: messageIdToResend || 0 }
         : null
@@ -843,6 +879,7 @@ export function ChatPage({
     } else {
       currChatSessionId = chatSessionIdRef.current as number;
     }
+    updateStatesWithNewSessionId(currChatSessionId);
     chatSessionIdRef.current = currChatSessionId;
 
     const controller = new AbortController();
@@ -870,7 +907,7 @@ export function ChatPage({
           "Failed to re-send message - please refresh the page and try again.",
         type: "error",
       });
-      setRegenerationState(null);
+      resetRegenerationState(currentSessionId());
       updateChatState("input");
       return;
     }
@@ -1193,8 +1230,8 @@ export function ChatPage({
         completeMessageMapOverride: currentMessageMap(completeMessageDetail),
       });
     }
-    setRegenerationState(null);
-    resetEmptyChatState();
+    resetRegenerationState(currentSessionId());
+
     updateChatState("input");
     if (isNewSession) {
       if (finalMessage) {
@@ -1650,8 +1687,9 @@ export function ChatPage({
                                 ? messageMap.get(message.parentMessageId)
                                 : null;
                               if (
-                                regenerationState?.regenerating &&
-                                i >= regenerationState.finalMessageIndex
+                                currentRegenerationState()?.regenerating &&
+                                i >=
+                                  currentRegenerationState()?.finalMessageIndex!
                               ) {
                                 return <></>;
                               }
@@ -1726,7 +1764,7 @@ export function ChatPage({
                                     : null;
 
                                 if (
-                                  regenerationState?.regenerating &&
+                                  currentRegenerationState()?.regenerating &&
                                   currentChatStateValue == "loading" &&
                                   i == messageHistory.length - 1
                                 ) {
@@ -1924,7 +1962,7 @@ export function ChatPage({
                               }
                             })}
                             {currentChatStateValue == "loading" &&
-                              !regenerationState?.regenerating &&
+                              !currentRegenerationState()?.regenerating &&
                               messageHistory[messageHistory.length - 1]?.type !=
                                 "user" && (
                                 <HumanMessage
