@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import FileOrigin
 from danswer.db.engine import get_session
@@ -45,13 +46,14 @@ class IsVisibleRequest(BaseModel):
 def patch_persona_visibility(
     persona_id: int,
     is_visible_request: IsVisibleRequest,
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     update_persona_visibility(
         persona_id=persona_id,
         is_visible=is_visible_request.is_visible,
         db_session=db_session,
+        user=user,
     )
 
 
@@ -69,7 +71,7 @@ def patch_persona_display_priority(
 
 @admin_router.get("")
 def list_personas_admin(
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
 ) -> list[PersonaSnapshot]:
@@ -77,7 +79,7 @@ def list_personas_admin(
         PersonaSnapshot.from_model(persona)
         for persona in get_personas(
             db_session=db_session,
-            user_id=None,  # user_id = None -> give back all personas
+            user=user,
             include_deleted=include_deleted,
         )
     ]
@@ -186,11 +188,10 @@ def list_personas(
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
 ) -> list[PersonaSnapshot]:
-    user_id = user.id if user is not None else None
     return [
         PersonaSnapshot.from_model(persona)
         for persona in get_personas(
-            user_id=user_id, include_deleted=include_deleted, db_session=db_session
+            user=user, include_deleted=include_deleted, db_session=db_session
         )
     ]
 

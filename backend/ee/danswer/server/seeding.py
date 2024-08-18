@@ -66,7 +66,7 @@ def _seed_llms(
 def _seed_personas(db_session: Session, personas: list[CreatePersonaRequest]) -> None:
     # don't seed personas if we've already done this
     existing_personas = get_personas(
-        user_id=None,  # Admin view
+        user=None,  # Admin view
         db_session=db_session,
         include_default=True,
         include_slack_bot_personas=True,
