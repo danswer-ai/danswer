@@ -280,7 +280,13 @@ async def is_disconnected(request: Request) -> Callable[[], bool]:
         try:
             return not future.result(timeout=0.01)
         except asyncio.TimeoutError:
-            logger.warning("Asyncio timed out")
+            logger.error("Asyncio timed out")
+            return True
+        except Exception as e:
+            error_msg = str(e)
+            logger.critical(
+                f"An unexpected error occured with the disconnect check coroutine: {error_msg}"
+            )
             return True
 
     return is_disconnected_sync
