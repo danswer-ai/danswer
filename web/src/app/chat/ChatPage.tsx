@@ -87,6 +87,7 @@ import { DeleteChatModal } from "./modal/DeleteChatModal";
 import remarkGfm from "remark-gfm";
 import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
+import { NEXT_PUBLIC_STOP_GENERATING_ON_SWITCH } from "@/lib/constants";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -212,10 +213,18 @@ export function ChatPage({
     }
   }, [liveAssistant]);
 
-  const stopGeneration = () => {
-    if (abortController) {
-      abortController.abort();
+  const stopGeneration = (sessionId?: number) => {
+    const currentSession = currentSessionId();
+    const controller = abortControllers.get(currentSession);
+    if (controller) {
+      controller.abort();
+      setAbortControllers((prev) => {
+        const newControllers = new Map(prev);
+        newControllers.delete(currentSession);
+        return newControllers;
+      });
     }
+
     const lastMessage = messageHistory[messageHistory.length - 1];
     if (
       lastMessage &&
@@ -223,16 +232,16 @@ export function ChatPage({
       lastMessage.toolCalls[0] &&
       lastMessage.toolCalls[0].tool_result === undefined
     ) {
-      const newCompleteMessageMap = new Map(completeMessageDetail.messageMap);
+      const newCompleteMessageMap = new Map(
+        currentMessageMap(completeMessageDetail)
+      );
       const updatedMessage = { ...lastMessage, toolCalls: [] };
       newCompleteMessageMap.set(lastMessage.messageId, updatedMessage);
-      setCompleteMessageDetail({
-        sessionId: completeMessageDetail.sessionId,
-        messageMap: newCompleteMessageMap,
-      });
+      updateCompleteMessageDetail(currentSession, newCompleteMessageMap);
     }
-  };
 
+    updateChatState("input", currentSession);
+  };
   // this is for "@"ing assistants
 
   // this is used to track which assistant is being used to generate the current message
@@ -308,10 +317,6 @@ export function ChatPage({
         } else {
           setSelectedAssistant(undefined);
         }
-        setCompleteMessageDetail({
-          sessionId: null,
-          messageMap: new Map(),
-        });
         setChatSessionSharedStatus(ChatSessionSharedStatus.Private);
 
         // if we're supposed to submit on initial load, then do that here
@@ -344,10 +349,7 @@ export function ChatPage({
         messageHistory[messageHistory.length - 1]?.type !== "error" ||
         loadedSessionId != null
       ) {
-        setCompleteMessageDetail({
-          sessionId: chatSession.chat_session_id,
-          messageMap: newMessageMap,
-        });
+        updateCompleteMessageDetail(chatSession.chat_session_id, newMessageMap);
 
         const latestMessageId =
           newMessageHistory[newMessageHistory.length - 1]?.messageId;
@@ -393,11 +395,45 @@ export function ChatPage({
   const [message, setMessage] = useState(
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
+  const [chatState, setChatState] = useState<Map<number, ChatState>>(new Map());
 
-  const [completeMessageDetail, setCompleteMessageDetail] = useState<{
-    sessionId: number | null;
-    messageMap: Map<number, Message>;
-  }>({ sessionId: null, messageMap: new Map() });
+  const updateChatState = (newState: ChatState, sessionId?: number) => {
+    setChatState((prevState) => {
+      const newChatState = new Map(prevState);
+      newChatState.set(sessionId || currentSessionId(), newState);
+      return newChatState;
+    });
+  };
+
+  const currentChatState = (): ChatState => {
+    return chatState.get(currentSessionId()) || "input";
+  };
+
+  const [completeMessageDetail, setCompleteMessageDetail] = useState<
+    Map<number | null, Map<number, Message>>
+  >(new Map());
+
+  const updateCompleteMessageDetail = (
+    sessionId: number,
+    messageMap: Map<number, Message>
+  ) => {
+    setCompleteMessageDetail((prevState) => {
+      const newState = new Map(prevState);
+      newState.set(sessionId, messageMap);
+      return newState;
+    });
+  };
+
+  const currentMessageMap = (
+    messageDetail: Map<number | null, Map<number, Message>>
+  ) => {
+    return (
+      messageDetail.get(chatSessionIdRef.current) || new Map<number, Message>()
+    );
+  };
+  const currentSessionId = (): number => {
+    return chatSessionIdRef.current!;
+  };
 
   const upsertToCompleteMessageMap = ({
     messages,
@@ -416,7 +452,7 @@ export function ChatPage({
   }) => {
     // deep copy
     const frozenCompleteMessageMap =
-      completeMessageMapOverride || completeMessageDetail.messageMap;
+      completeMessageMapOverride || currentMessageMap(completeMessageDetail);
     const newCompleteMessageMap = structuredClone(frozenCompleteMessageMap);
 
     if (newCompleteMessageMap.size === 0) {
@@ -466,26 +502,36 @@ export function ChatPage({
         )!.latestChildMessageId = messages[0].messageId;
       }
     }
+
     const newCompleteMessageDetail = {
-      sessionId: chatSessionId || completeMessageDetail.sessionId,
+      sessionId: chatSessionId || currentSessionId(),
       messageMap: newCompleteMessageMap,
     };
-    setCompleteMessageDetail(newCompleteMessageDetail);
+
+    updateCompleteMessageDetail(
+      chatSessionId || currentSessionId(),
+      newCompleteMessageMap
+    );
     return newCompleteMessageDetail;
   };
 
   const messageHistory = buildLatestMessageChain(
-    completeMessageDetail.messageMap
+    currentMessageMap(completeMessageDetail)
   );
 
   const [submittedMessage, setSubmittedMessage] = useState("");
-  const [chatState, setChatState] = useState<ChatState>("input");
+
   interface RegenerationState {
     regenerating: boolean;
     finalMessageIndex: number;
   }
+
   const [regenerationState, setRegenerationState] =
     useState<RegenerationState | null>(null);
+
+  const [abortControllers, setAbortControllers] = useState<
+    Map<number, AbortController>
+  >(new Map());
 
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
@@ -745,7 +791,7 @@ export function ChatPage({
     modelOverRide?: LlmOverride;
     regenerationRequest?: RegenerationRequest | null;
   } = {}) => {
-    if (chatState != "input") {
+    if (currentChatState() != "input") {
       setPopup({
         message: "Please wait for the response to complete",
         type: "error",
@@ -758,10 +804,8 @@ export function ChatPage({
         ? { regenerating: true, finalMessageIndex: messageIdToResend || 0 }
         : null
     );
-    setChatState("loading");
 
-    const controller = new AbortController();
-    setAbortController(controller);
+    updateChatState("loading");
 
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
     clientScrollToBottom();
@@ -780,11 +824,16 @@ export function ChatPage({
     }
     chatSessionIdRef.current = currChatSessionId;
 
+    const controller = new AbortController();
+    setAbortControllers((prev) =>
+      new Map(prev).set(currChatSessionId, controller)
+    );
+
     const messageToResend = messageHistory.find(
       (message) => message.messageId === messageIdToResend
     );
 
-    const messageMap = completeMessageDetail.messageMap;
+    const messageMap = currentMessageMap(completeMessageDetail);
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
       messageToResend?.parentMessageId !== undefined
@@ -801,7 +850,7 @@ export function ChatPage({
         type: "error",
       });
       setRegenerationState(null);
-      setChatState("input");
+      updateChatState("input");
       return;
     }
     let currMessage = messageToResend ? messageToResend.message : message;
@@ -853,7 +902,9 @@ export function ChatPage({
     } = null;
 
     try {
-      const mapKeys = Array.from(completeMessageDetail.messageMap.keys());
+      const mapKeys = Array.from(
+        currentMessageMap(completeMessageDetail).keys()
+      );
       const systemMessage = Math.min(...mapKeys);
 
       const lastSuccessfulMessageId =
@@ -973,11 +1024,15 @@ export function ChatPage({
           } else {
             const { user_message_id, frozenMessageMap, frozenSessionId } =
               initialFetchDetails;
-            setChatState((chatState) => {
-              if (chatState == "loading") {
-                return "streaming";
+
+            setChatState((prevState) => {
+              if (prevState.get(chatSessionIdRef.current!) === "loading") {
+                return new Map(prevState).set(
+                  chatSessionIdRef.current!,
+                  "streaming"
+                );
               }
-              return chatState;
+              return prevState;
             });
 
             if (Object.hasOwn(packet, "answer_piece")) {
@@ -1003,9 +1058,9 @@ export function ChatPage({
                 !toolCalls[0].tool_result ||
                 toolCalls[0].tool_result == undefined
               ) {
-                setChatState("toolBuilding");
+                updateChatState("toolBuilding");
               } else {
-                setChatState("streaming");
+                updateChatState("streaming");
               }
             } else if (Object.hasOwn(packet, "file_ids")) {
               aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
@@ -1114,11 +1169,11 @@ export function ChatPage({
               initialFetchDetails?.user_message_id || TEMP_USER_MESSAGE_ID,
           },
         ],
-        completeMessageMapOverride: completeMessageDetail.messageMap,
+        completeMessageMapOverride: currentMessageMap(completeMessageDetail),
       });
     }
     setRegenerationState(null);
-    setChatState("input");
+    updateChatState("input");
     if (isNewSession) {
       if (finalMessage) {
         setSelectedMessageForDocDisplay(finalMessage.message_id);
@@ -1185,7 +1240,7 @@ export function ChatPage({
   const onAssistantChange = (assistant: Persona | null) => {
     if (assistant && assistant.id !== liveAssistant.id) {
       // Abort the ongoing stream if it exists
-      if (chatState != "input") {
+      if (currentChatStateValue != "input") {
         stopGeneration();
         resetInputBar();
       }
@@ -1287,8 +1342,10 @@ export function ChatPage({
     mobile: settings?.isMobile,
   });
 
+  const currentChatStateValue = currentChatState();
+
   useScrollonStream({
-    chatState,
+    chatState: currentChatStateValue,
     scrollableDivRef,
     scrollDist,
     endDivRef,
@@ -1549,7 +1606,7 @@ export function ChatPage({
 
                           {messageHistory.length === 0 &&
                             !isFetchingChatMessages &&
-                            chatState == "input" && (
+                            currentChatStateValue == "input" && (
                               <ChatIntro
                                 availableSources={finalAvailableSources}
                                 selectedPersona={liveAssistant}
@@ -1563,9 +1620,10 @@ export function ChatPage({
                             }
                           >
                             {messageHistory.map((message, i) => {
-                              const messageMap =
-                                completeMessageDetail.messageMap;
-                              const messageReactComponentKey = `${i}-${completeMessageDetail.sessionId}`;
+                              const messageMap = currentMessageMap(
+                                completeMessageDetail
+                              );
+                              const messageReactComponentKey = `${i}-${currentSessionId()}`;
                               const parentMessage = message.parentMessageId
                                 ? messageMap.get(message.parentMessageId)
                                 : null;
@@ -1613,11 +1671,10 @@ export function ChatPage({
                                         newCompleteMessageMap.get(
                                           message.parentMessageId!
                                         )!.latestChildMessageId = messageId;
-                                        setCompleteMessageDetail({
-                                          sessionId:
-                                            completeMessageDetail.sessionId,
-                                          messageMap: newCompleteMessageMap,
-                                        });
+                                        updateCompleteMessageDetail(
+                                          currentSessionId(),
+                                          newCompleteMessageMap
+                                        );
                                         setSelectedMessageForDocDisplay(
                                           messageId
                                         );
@@ -1648,7 +1705,7 @@ export function ChatPage({
 
                                 if (
                                   regenerationState?.regenerating &&
-                                  chatState == "loading" &&
+                                  currentChatStateValue == "loading" &&
                                   i == messageHistory.length - 1
                                 ) {
                                   return <></>;
@@ -1678,11 +1735,12 @@ export function ChatPage({
                                         newCompleteMessageMap.get(
                                           message.parentMessageId!
                                         )!.latestChildMessageId = messageId;
-                                        setCompleteMessageDetail({
-                                          sessionId:
-                                            completeMessageDetail.sessionId,
-                                          messageMap: newCompleteMessageMap,
-                                        });
+
+                                        updateCompleteMessageDetail(
+                                          currentSessionId(),
+                                          newCompleteMessageMap
+                                        );
+
                                         setSelectedMessageForDocDisplay(
                                           messageId
                                         );
@@ -1716,8 +1774,9 @@ export function ChatPage({
                                       }
                                       isComplete={
                                         i !== messageHistory.length - 1 ||
-                                        (chatState != "streaming" &&
-                                          chatState != "toolBuilding")
+                                        (currentChatStateValue != "streaming" &&
+                                          currentChatStateValue !=
+                                            "toolBuilding")
                                       }
                                       hasDocs={
                                         (message.documents &&
@@ -1725,7 +1784,7 @@ export function ChatPage({
                                       }
                                       handleFeedback={
                                         i === messageHistory.length - 1 &&
-                                        chatState != "input"
+                                        currentChatStateValue != "input"
                                           ? undefined
                                           : (feedbackType) =>
                                               setCurrentFeedback([
@@ -1735,7 +1794,7 @@ export function ChatPage({
                                       }
                                       handleSearchQueryEdit={
                                         i === messageHistory.length - 1 &&
-                                        chatState == "input"
+                                        currentChatStateValue == "input"
                                           ? (newQuery) => {
                                               if (!previousMessage) {
                                                 setPopup({
@@ -1842,7 +1901,7 @@ export function ChatPage({
                                 );
                               }
                             })}
-                            {chatState == "loading" &&
+                            {currentChatStateValue == "loading" &&
                               !regenerationState?.regenerating &&
                               messageHistory[messageHistory.length - 1]?.type !=
                                 "user" && (
@@ -1852,7 +1911,7 @@ export function ChatPage({
                                 />
                               )}
 
-                            {chatState == "loading" && (
+                            {currentChatStateValue == "loading" && (
                               <div
                                 key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                               >
@@ -1938,7 +1997,7 @@ export function ChatPage({
                             )}
 
                             <ChatInputBar
-                              chatState={chatState}
+                              chatState={currentChatStateValue}
                               stopGenerating={stopGeneration}
                               openModelSettings={() => setSettingsToggled(true)}
                               inputPrompts={userInputPrompts}
