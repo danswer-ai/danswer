@@ -722,7 +722,6 @@ def stream_chat_message_objects(
 
     # Post-LLM answer processing
     try:
-        logger.debug("Saving responses")
         db_citations = None
         if reference_db_search_docs:
             db_citations = translate_citations(
@@ -759,7 +758,7 @@ def stream_chat_message_objects(
             else [],
         )
 
-        logger.debug("Committing changes")
+        logger.debug("Committing messages")
         db_session.commit()  # actually save user / assistant message
 
         msg_detail_response = translate_db_message_to_chat_message_detail(
