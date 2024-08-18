@@ -1068,7 +1068,9 @@ export function ChatPage({
       if (finalMessage) {
         setSelectedMessageForDocDisplay(finalMessage.message_id);
       }
+
       if (!searchParamBasedChatSessionName) {
+        await new Promise((resolve) => setTimeout(resolve, 200));
         await nameChatSession(currChatSessionId, currMessage);
       }
 

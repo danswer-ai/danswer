@@ -210,8 +210,6 @@ def rename_chat_session(
     chat_session_id = rename_req.chat_session_id
     user_id = user.id if user is not None else None
 
-    logger.info(f"Received rename request for chat session: {chat_session_id}")
-
     if name:
         update_chat_session(
             db_session=db_session,
@@ -282,6 +280,7 @@ async def is_disconnected(request: Request) -> Callable[[], bool]:
         try:
             return not future.result(timeout=0.01)
         except asyncio.TimeoutError:
+            logger.warning("Asyncio timed out")
             return True
 
     return is_disconnected_sync

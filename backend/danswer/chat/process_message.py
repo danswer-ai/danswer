@@ -708,6 +708,7 @@ def stream_chat_message_objects(
                 if isinstance(packet, ToolCallFinalResult):
                     tool_result = packet
                 yield cast(ChatPacket, packet)
+        logger.debug("Reached end of stream")
     except Exception as e:
         error_msg = str(e)
         logger.exception(f"Failed to process chat message: {error_msg}")
@@ -721,6 +722,7 @@ def stream_chat_message_objects(
 
     # Post-LLM answer processing
     try:
+        logger.debug("Saving responses")
         db_citations = None
         if reference_db_search_docs:
             db_citations = translate_citations(
@@ -756,6 +758,8 @@ def stream_chat_message_objects(
             if tool_result
             else [],
         )
+
+        logger.debug("Committing changes")
         db_session.commit()  # actually save user / assistant message
 
         msg_detail_response = translate_db_message_to_chat_message_detail(
@@ -764,7 +768,8 @@ def stream_chat_message_objects(
 
         yield msg_detail_response
     except Exception as e:
-        logger.exception(e)
+        error_msg = str(e)
+        logger.exception(error_msg)
 
         # Frontend will erase whatever answer and show this instead
         yield StreamingError(error="Failed to parse LLM output")

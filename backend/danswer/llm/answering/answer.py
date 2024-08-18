@@ -562,6 +562,8 @@ class Answer:
             return True
 
         if self.is_connected is not None:
+            if not self.is_connected():
+                logger.debug("Answer stream has been cancelled")
             self._is_cancelled = not self.is_connected()
 
         return self._is_cancelled
