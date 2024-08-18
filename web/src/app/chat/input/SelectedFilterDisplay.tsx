@@ -36,7 +36,7 @@ const SelectedFilter = ({
       border 
       border-border 
       py-1 
-      rounded-lg 
+      rounded-regular 
       px-2 
       w-fit 
       select-none 

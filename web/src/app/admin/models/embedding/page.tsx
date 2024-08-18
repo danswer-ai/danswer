@@ -3,7 +3,7 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Button, Card, Text, Title } from "@tremor/react";
+import { Card, Text, Title } from "@tremor/react";
 import { FiPackage } from "react-icons/fi";
 import useSWR, { mutate } from "swr";
 import { ModelOption, ModelSelector } from "./ModelSelector";
@@ -11,6 +11,7 @@ import { useState } from "react";
 import { ModelSelectionConfirmaionModal } from "./ModelSelectionConfirmation";
 import { ReindexingProgressTable } from "./ReindexingProgressTable";
 import { Modal } from "@/components/Modal";
+import { Button } from "@/components/ui/button";
 import {
   AVAILABLE_MODELS,
   EmbeddingModelDescriptor,
@@ -164,9 +165,7 @@ function Main() {
             </div>
             <div className="flex">
               <Link className="mx-auto mt-2 w-fit" href="/admin/add-connector">
-                <Button className="mx-auto mt-3" size="xs">
-                  Add Connector
-                </Button>
+                <Button className="mx-auto mt-3">Add Connector</Button>
               </Link>
             </div>
           </div>
@@ -299,12 +298,7 @@ function Main() {
                 </div>
                 <ModelOption model={newModelSelection} />
 
-                <Button
-                  color="red"
-                  size="xs"
-                  className="mt-4"
-                  onClick={() => setIsCancelling(true)}
-                >
+                <Button className="mt-4" onClick={() => setIsCancelling(true)}>
                   Cancel
                 </Button>
 

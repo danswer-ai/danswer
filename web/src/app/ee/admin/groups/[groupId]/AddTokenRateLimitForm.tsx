@@ -5,8 +5,6 @@ import { insertGroupTokenRateLimit } from "../../../../admin/token-rate-limits/l
 import { mutate } from "swr";
 
 interface AddMemberFormProps {
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
   userGroupId: number;
 }
@@ -25,8 +23,6 @@ const handleCreateGroupTokenRateLimit = async (
 };
 
 export const AddTokenRateLimitForm: React.FC<AddMemberFormProps> = ({
-  isOpen,
-  setIsOpen,
   setPopup,
   userGroupId,
 }) => {
@@ -38,7 +34,6 @@ export const AddTokenRateLimitForm: React.FC<AddMemberFormProps> = ({
   ) => {
     handleCreateGroupTokenRateLimit(period_hours, token_budget, group_id)
       .then(() => {
-        setIsOpen(false);
         setPopup({ type: "success", message: "Token rate limit created!" });
         mutate(`/api/admin/token-rate-limits/user-group/${userGroupId}`);
       })
@@ -49,8 +44,6 @@ export const AddTokenRateLimitForm: React.FC<AddMemberFormProps> = ({
 
   return (
     <CreateRateLimitModal
-      isOpen={isOpen}
-      setIsOpen={setIsOpen}
       onSubmit={handleSubmit}
       setPopup={setPopup}
       forSpecificScope={Scope.USER_GROUP}

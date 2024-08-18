@@ -1,10 +1,16 @@
 import { useState } from "react";
-import { ModalWrapper } from "./ModalWrapper";
-import { Button, Callout, Divider, Text } from "@tremor/react";
-import { Spinner } from "@/components/Spinner";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Text } from "@tremor/react";
 import { ChatSessionSharedStatus } from "../interfaces";
-import { FiCopy, FiX } from "react-icons/fi";
 import { CopyButton } from "@/components/CopyButton";
+import { Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 function buildShareLink(chatSessionId: number) {
   const baseUrl = `${window.location.protocol}//${window.location.host}`;
@@ -42,12 +48,12 @@ export function ShareChatSessionModal({
   chatSessionId,
   existingSharedStatus,
   onShare,
-  onClose,
+  children,
 }: {
   chatSessionId: number;
   existingSharedStatus: ChatSessionSharedStatus;
   onShare?: (shared: boolean) => void;
-  onClose: () => void;
+  children: React.ReactNode;
 }) {
   const [linkGenerating, setLinkGenerating] = useState(false);
   const [shareLink, setShareLink] = useState<string>(
@@ -57,22 +63,13 @@ export function ShareChatSessionModal({
   );
 
   return (
-    <ModalWrapper onClose={onClose} modalClassName="max-w-3xl">
-      <>
-        <div className="flex mb-4">
-          <h2 className="text-2xl text-emphasis font-bold flex my-auto">
-            Share link to Chat
-          </h2>
+    <Dialog>
+      <DialogTrigger>{children}</DialogTrigger>
 
-          <div
-            onClick={onClose}
-            className="my-auto ml-auto p-2 hover:bg-hover rounded cursor-pointer"
-          >
-            <FiX size={20} />
-          </div>
-        </div>
-
-        {linkGenerating && <Spinner />}
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Share link to Chat</DialogTitle>
+        </DialogHeader>
 
         <div className="flex mt-2">
           {shareLink ? (
@@ -83,7 +80,7 @@ export function ShareChatSessionModal({
                 link:
               </Text>
 
-              <div className="flex mt-2">
+              <div className="flex my-2">
                 <CopyButton content={shareLink} />
                 <a
                   href={shareLink}
@@ -93,8 +90,6 @@ export function ShareChatSessionModal({
                   {shareLink}
                 </a>
               </div>
-
-              <Divider />
 
               <Text className="mb-4">
                 Click the button below to make the chat private again.
@@ -114,23 +109,24 @@ export function ShareChatSessionModal({
 
                   setLinkGenerating(false);
                 }}
-                size="xs"
-                color="red"
+                variant="destructive"
               >
                 Delete Share Link
               </Button>
             </div>
           ) : (
             <div>
-              <Callout title="Warning" color="yellow" className="mb-4">
-                Ensure that all content in the chat is safe to share with the
-                whole organization. The content of the retrieved documents will
-                not be visible, but the names of cited documents as well as the
-                AI and human messages will be visible.
-              </Callout>
+              <div className="pb-6">
+                <span className="font-bold">Warning</span>
+                <p className="pt-2">
+                  Ensure that all content in the chat is safe to share with the
+                  whole organization. The content of the retrieved documents
+                  will not be visible, but the names of cited documents as well
+                  as the AI and human messages will be visible.
+                </p>
+              </div>
 
               <Button
-                icon={FiCopy}
                 onClick={async () => {
                   setLinkGenerating(true);
 
@@ -151,15 +147,13 @@ export function ShareChatSessionModal({
 
                   setLinkGenerating(false);
                 }}
-                size="xs"
-                color="green"
               >
-                Generate and Copy Share Link
+                <Copy size={16} /> Generate and Copy Share Link
               </Button>
             </div>
           )}
         </div>
-      </>
-    </ModalWrapper>
+      </DialogContent>
+    </Dialog>
   );
 }

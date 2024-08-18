@@ -28,7 +28,7 @@ export default function Certifications() {
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-xl font-semibold text-black">
+                  <h4 className="text-xl font-semibold text-dark-900">
                     {data.title}
                   </h4>
                   <p className="pt-2 text-[rgba(14,_14,_15,_0.5)]">

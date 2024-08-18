@@ -25,6 +25,8 @@ import { PersonaSelector } from "./PersonaSelector";
 import { computeAvailableFilters } from "@/lib/filters";
 import { useRouter } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
+import { DateRangeSelector } from "./DateRangeSelector";
+import { SortSearch } from "./SortSearch";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -224,8 +226,74 @@ export const SearchSection = ({
   }
 
   return (
-    <div className="relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
-      <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64">
+    <div className="relative flex gap-16 lg:gap-14 xl:gap-10 2xl:gap-20 h-full lg:pl-8 xl:pl-0 ml-auto">
+      <div className="w-full flex flex-col gap-5">
+        {/* {personas.length > 0 ? (
+          <div className="flex mb-2 w-48">
+            <PersonaSelector
+              personas={personas}
+              selectedPersonaId={selectedPersona}
+              onPersonaChange={(persona) => setSelectedPersona(persona.id)}
+            />
+          </div>
+        ) : (
+          <div className="pt-3" />
+        )} */}
+
+        <SearchBar
+          query={query}
+          setQuery={setQuery}
+          onSearch={async () => {
+            setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
+            await onSearch({ offset: 0 });
+          }}
+          isSearch
+        >
+          {(ccPairs.length > 0 || documentSets.length > 0) && (
+            <SourceSelector
+              {...filterManager}
+              availableDocumentSets={finalAvailableDocumentSets}
+              existingSources={finalAvailableSources}
+              availableTags={tags}
+            />
+          )}
+        </SearchBar>
+
+        <div className="w-full flex justify-between flex-col md:flex-row gap-5">
+          <div className="p-[3px] rounded-sm bg-primary-light flex gap-1 text-dark-900 text-sm font-medium">
+            <button className="px-4 py-2 bg-background rounded-xs w-full">
+              All
+            </button>
+            <button className="px-4 py-2 rounded-xs w-full">Public</button>
+            <button className="px-4 py-2 rounded-xs w-full">Private</button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <DateRangeSelector
+              value={filterManager.timeRange}
+              onValueChange={filterManager.setTimeRange}
+            />
+
+            <SortSearch />
+          </div>
+        </div>
+
+        <div className="h-full overflow-auto">
+          <SearchResultsDisplay
+            searchResponse={searchResponse}
+            validQuestionResponse={validQuestionResponse}
+            isFetching={isFetching}
+            defaultOverrides={defaultOverrides}
+            personaName={
+              selectedPersona
+                ? personas.find((p) => p.id === selectedPersona)?.name
+                : null
+            }
+          />
+        </div>
+      </div>
+
+      <div className="min-w-[220px] lg:min-w-[300px] xl:min-w-[320px] max-w-[320px] hidden lg:flex flex-col">
         {(ccPairs.length > 0 || documentSets.length > 0) && (
           <SourceSelector
             {...filterManager}
@@ -235,7 +303,7 @@ export const SearchSection = ({
           />
         )}
 
-        <div className="pr-5 mt-10">
+        <div className="mt-4">
           <SearchHelper
             isFetching={isFetching}
             searchResponse={searchResponse}
@@ -255,42 +323,6 @@ export const SearchSection = ({
                 offset,
               }));
             }}
-          />
-        </div>
-      </div>
-      <div className="md:w-[720px] 3xl:w-[800px] mx-auto">
-        {personas.length > 0 ? (
-          <div className="flex mb-2 w-fit">
-            <PersonaSelector
-              personas={personas}
-              selectedPersonaId={selectedPersona}
-              onPersonaChange={(persona) => setSelectedPersona(persona.id)}
-            />
-          </div>
-        ) : (
-          <div className="pt-3" />
-        )}
-
-        <SearchBar
-          query={query}
-          setQuery={setQuery}
-          onSearch={async () => {
-            setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
-            await onSearch({ offset: 0 });
-          }}
-        />
-
-        <div className="mt-2">
-          <SearchResultsDisplay
-            searchResponse={searchResponse}
-            validQuestionResponse={validQuestionResponse}
-            isFetching={isFetching}
-            defaultOverrides={defaultOverrides}
-            personaName={
-              selectedPersona
-                ? personas.find((p) => p.id === selectedPersona)?.name
-                : null
-            }
           />
         </div>
       </div>

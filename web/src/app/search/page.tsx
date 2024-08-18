@@ -1,5 +1,4 @@
 import { SearchSection } from "@/components/search/SearchSection";
-import { Header } from "@/components/header/Header";
 import {
   AuthTypeMetadata,
   getAuthTypeMetadataSS,
@@ -24,6 +23,7 @@ import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingM
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatPopup } from "../chat/ChatPopup";
+import { Bar } from "./bar";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -148,11 +148,11 @@ export default async function Home() {
     !shouldShowWelcomeModal;
 
   return (
-    <>
-      <Header user={user} />
-      <div className="m-3">
-        <HealthCheckBanner />
-      </div>
+    <div className="relative flex h-full">
+      <Bar user={user} />
+
+      <HealthCheckBanner />
+
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
 
       {!shouldShowWelcomeModal &&
@@ -171,17 +171,15 @@ export default async function Home() {
 
       <InstantSSRAutoRefresh />
 
-      <div className="flex flex-col items-center min-h-screen px-6 pt-10 lg:px-24">
-        <div className="w-full">
-          <SearchSection
-            ccPairs={ccPairs}
-            documentSets={documentSets}
-            personas={personas}
-            tags={tags}
-            defaultSearchType={searchTypeDefault}
-          />
-        </div>
+      <div className="w-full pt-20 lg:pt-14 px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 h-screen overflow-hidden">
+        <SearchSection
+          ccPairs={ccPairs}
+          documentSets={documentSets}
+          personas={personas}
+          tags={tags}
+          defaultSearchType={searchTypeDefault}
+        />
       </div>
-    </>
+    </div>
   );
 }

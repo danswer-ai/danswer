@@ -28,7 +28,7 @@ export default function DataLoaders() {
       <div className="flex flex-col items-center w-full gap-16 pt-32 lg:gap-40 lg:flex-row">
         <div className="lg:w-1/2">
           <p className="text-[#64A3FF] font-semibold">Data loaders</p>
-          <h3 className="pt-3 text-3xl font-bold text-black md:text-4xl">
+          <h3 className="pt-3 text-3xl font-bold text-dark-900 md:text-4xl">
             Connect with your Data, wherever it sits...
           </h3>
           <p className="pt-6 text-xl leading-relaxed">

@@ -1,5 +1,10 @@
 import { useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 export function SectionHeader({
   children,
@@ -21,30 +26,32 @@ export function HidableSection({
   children,
   sectionTitle,
   defaultHidden = false,
+  defaultOpen,
 }: {
   children: string | JSX.Element;
   sectionTitle: string | JSX.Element;
   defaultHidden?: boolean;
+  defaultOpen?: boolean;
 }) {
   const [isHidden, setIsHidden] = useState(defaultHidden);
 
   return (
-    <div>
-      <div
-        className="flex hover:bg-hover-light rounded cursor-pointer p-2"
+    <Collapsible defaultOpen={defaultOpen}>
+      <CollapsibleTrigger
+        className="flex hover:bg-hover-light rounded cursor-pointer p-2 w-full"
         onClick={() => setIsHidden(!isHidden)}
       >
         <SectionHeader includeMargin={false}>{sectionTitle}</SectionHeader>
-        <div className="my-auto ml-auto p-1">
+        <div className="ml-auto">
           {isHidden ? (
             <FiChevronRight size={24} />
           ) : (
             <FiChevronDown size={24} />
           )}
         </div>
-      </div>
+      </CollapsibleTrigger>
 
-      {!isHidden && <div className="mx-2 mt-2">{children}</div>}
-    </div>
+      <CollapsibleContent className="mx-2 mt-2">{children}</CollapsibleContent>
+    </Collapsible>
   );
 }

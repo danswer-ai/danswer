@@ -4,20 +4,26 @@ import SignedUpUserTable from "@/components/admin/users/SignedUpUserTable";
 import { SearchBar } from "@/components/search/SearchBar";
 import { useState } from "react";
 import { FiPlusSquare } from "react-icons/fi";
-import { Modal } from "@/components/Modal";
 
-import { Button, Text } from "@tremor/react";
 import { LoadingAnimation } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { usePopup, PopupSpec } from "@/components/admin/connectors/Popup";
 import { UsersIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { type User, UserStatus } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { HidableSection } from "@/app/admin/assistants/HidableSection";
 import BulkAdd from "@/components/admin/users/BulkAdd";
 import { UsersResponse } from "@/lib/users/interfaces";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
   if (!validDomains.length) {
@@ -104,7 +110,7 @@ const UsersTables = ({
 
   return (
     <>
-      <HidableSection sectionTitle="Invited Users">
+      <HidableSection sectionTitle="Invited Users" defaultOpen>
         {invited.length > 0 ? (
           finalInvited.length > 0 ? (
             <InvitedUserTable
@@ -187,24 +193,25 @@ const AddUserButton = ({
     });
   };
   return (
-    <>
-      <Button className="w-fit" onClick={() => setModal(true)}>
-        <div className="flex">
-          <FiPlusSquare className="my-auto mr-2" />
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <FiPlusSquare className="mr-2" />
           Invite Users
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-full w-1/2">
+        <DialogHeader>
+          <DialogTitle>Bulk Add Users</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-y-3 pt-4">
+          <Label>
+            Add the email addresses to import, separated by whitespaces.
+          </Label>
+          <BulkAdd onSuccess={onSuccess} onFailure={onFailure} />
         </div>
-      </Button>
-      {modal && (
-        <Modal title="Bulk Add Users" onOutsideClick={() => setModal(false)}>
-          <div className="flex flex-col gap-y-4">
-            <Text className="text-base font-medium">
-              Add the email addresses to import, separated by whitespaces.
-            </Text>
-            <BulkAdd onSuccess={onSuccess} onFailure={onFailure} />
-          </div>
-        </Modal>
-      )}
-    </>
+      </DialogContent>
+    </Dialog>
   );
 };
 

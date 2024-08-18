@@ -38,7 +38,7 @@ export const UserEditor = ({
               }}
               className={`
                   flex 
-                  rounded-lg 
+                  rounded-regular 
                   px-2 
                   py-1 
                   border 

@@ -1,19 +1,22 @@
 "use client";
 
+import React, { useState } from "react";
 import {
-  FiBook,
-  FiEdit,
-  FiFolderPlus,
-  FiMessageSquare,
-  FiPlusSquare,
-  FiSearch,
-  FiX,
-} from "react-icons/fi";
-import { useContext, useEffect, useRef, useState } from "react";
+  Search,
+  MessageCircleMore,
+  Headset,
+  FolderPlus,
+  X,
+  Plus,
+  PanelLeftClose,
+  Menu,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { useContext, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { BasicClickable, BasicSelectable } from "@/components/BasicClickable";
 import { ChatSession } from "../interfaces";
 
 import {
@@ -27,32 +30,54 @@ import { createFolder } from "../folders/FolderManagement";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
-import React from "react";
-import { FaBrain, FaHeadset } from "react-icons/fa";
-/* import { Logo } from "@/components/Logo"; */
 import Logo from "../../../../public/logo-brand.png";
+import SmallLogo from "../../../../public/logo.png";
 import { HeaderTitle } from "@/components/header/Header";
 import { UserSettingsButton } from "@/components/UserSettingsButton";
 import { useChatContext } from "@/components/context/ChatContext";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 export const ChatSidebar = ({
   existingChats,
   currentChatSession,
   folders,
   openedFolders,
-  handleClose,
+  toggleSideBar,
+  isExpanded,
+  isSearch,
   openSidebar,
 }: {
   existingChats: ChatSession[];
   currentChatSession: ChatSession | null | undefined;
   folders: Folder[];
   openedFolders: { [key: number]: boolean };
-  handleClose?: () => void;
+  toggleSideBar?: () => void;
+  isExpanded?: boolean;
+  isSearch?: boolean;
   openSidebar?: boolean;
 }) => {
   let { user } = useChatContext();
   const router = useRouter();
   const { popup, setPopup } = usePopup();
+
+  const [isLgScreen, setIsLgScreen] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+
+    const handleMediaQueryChange = (e: MediaQueryListEvent) => {
+      setIsLgScreen(e.matches);
+    };
+
+    setIsLgScreen(mediaQuery.matches);
+
+    mediaQuery.addEventListener("change", handleMediaQueryChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleMediaQueryChange);
+    };
+  }, []);
 
   const currentChatId = currentChatSession?.id;
 
@@ -69,35 +94,52 @@ export const ChatSidebar = ({
   const settings = combinedSettings.settings;
   const enterpriseSettings = combinedSettings.enterpriseSettings;
 
+  let opacityClass = "opacity-100";
+
+  if (isLgScreen) {
+    opacityClass = isExpanded ? "lg:opacity-0" : "lg:opacity-100 delay-200";
+  } else {
+    opacityClass = openSidebar
+      ? "opacity-100 delay-200"
+      : "opacity-0 lg:opacity-100";
+  }
+
   return (
     <>
       {popup}
       <div
-        className={`py-4
-        flex-none
-        bg-background-weak
-        border-r 
-        border-border 
-        flex-col 
-        h-screen
-        transition-transform z-30 ${
-          openSidebar ? "w-full md:w-80 left-0 absolute flex" : "hidden lg:flex"
-        }`}
+        className={`py-6
+            bg-background
+            flex-col 
+            h-full
+            ease-in-out
+            flex
+            transition-[width] duration-500
+            z-overlay
+            w-full overflow-hidden lg:overflow-visible
+            ${
+              isExpanded
+                ? "lg:w-0 border-none"
+                : "lg:w-sidebar border-r border-border"
+            }
+            `}
         id="chat-sidebar"
       >
-        <div className="flex">
-          <div
-            className="w-full"
-            /*  href={
-              settings && settings.default_page === "chat" ? "/chat" : "/search"
-            } */
-          >
-            <div className="flex items-center w-full px-4">
-              <div className="flex items-center justify-between w-full">
-                <Image src={Logo} alt="enmedd-logo" width={112} />
-                <FiX onClick={handleClose} className="lg:hidden" />
-              </div>
+        <div
+          className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${opacityClass}`}
+        >
+          <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
+            <Image src={Logo} alt="enmedd-logo" height={35} />
 
+            <div className="lg:hidden">
+              <Button variant="ghost" size="icon" onClick={toggleSideBar}>
+                <PanelLeftClose size={24} />
+              </Button>
+            </div>
+          </div>
+
+          <div className="h-full overflow-auto">
+            <div className="flex px-4">
               {enterpriseSettings && enterpriseSettings.application_name ? (
                 <div>
                   <HeaderTitle>
@@ -114,90 +156,96 @@ export const ChatSidebar = ({
                 <></>
               )}
             </div>
+            <div className="px-4 text-sm text-emphasis font-medium flex flex-col gap-1">
+              {settings.search_page_enabled && (
+                <Link
+                  href="/search"
+                  className={`flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 ${
+                    isSearch ? "shadow-sm" : ""
+                  }`}
+                >
+                  <Search size={16} className="min-w-4 min-h-4" />
+                  Search
+                </Link>
+              )}
+              {settings.chat_page_enabled && (
+                <>
+                  <Link
+                    href="/chat"
+                    className={`flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 ${
+                      !isSearch ? "shadow-sm" : ""
+                    }`}
+                  >
+                    <MessageCircleMore size={16} className="min-w-4 min-h-4" />
+                    Chat
+                  </Link>
+                  <Link
+                    href="/assistants/mine"
+                    className="flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
+                  >
+                    <Headset size={16} />
+                    <span className="truncate">Explore Assistants</span>
+                  </Link>
+                </>
+              )}
+              <Separator className="mt-4" />
+            </div>
+
+            {!isSearch && (
+              <ChatTab
+                existingChats={existingChats}
+                currentChatId={currentChatId}
+                folders={folders}
+                openedFolders={openedFolders}
+                toggleSideBar={toggleSideBar}
+              />
+            )}
           </div>
-        </div>
-        {/* <HeaderTitle>enMedD CHP</HeaderTitle> */}
-        {
-          <div className="mt-5">
-            {settings.search_page_enabled && (
+
+          {!isSearch && (
+            <div className="flex items-center gap-3 px-4 pt-4 mt-auto">
               <Link
-                href="/search"
-                className="flex px-4 py-2 rounded cursor-pointer hover:bg-hover-light"
+                href={
+                  "/chat" +
+                  (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
+                  currentChatSession
+                    ? `?assistantId=${currentChatSession.persona_id}`
+                    : "")
+                }
+                className=" w-full"
               >
-                <FiSearch className="my-auto mr-2 text-base" />
-                Search
+                <Button
+                  className="transition-all ease-in-out duration-300 w-full"
+                  onClick={toggleSideBar}
+                >
+                  <Plus size={16} />
+                  Start new chat
+                </Button>
               </Link>
-            )}
-            {settings.chat_page_enabled && (
-              <>
-                <Link
-                  href="/chat"
-                  className="flex px-4 py-2 rounded cursor-pointer hover:bg-hover-light"
+              <div>
+                <Button
+                  onClick={() =>
+                    createFolder("New Folder")
+                      .then((folderId) => {
+                        console.log(`Folder created with ID: ${folderId}`);
+                        router.refresh();
+                      })
+                      .catch((error) => {
+                        console.error("Failed to create folder:", error);
+                        setPopup({
+                          message: `Failed to create folder: ${error.message}`,
+                          type: "error",
+                        });
+                      })
+                  }
+                  size="icon"
                 >
-                  <FiMessageSquare className="my-auto mr-2 text-base" />
-                  Chat
-                </Link>
-                <Link
-                  href="/assistants/mine"
-                  className="flex px-4 py-2 rounded cursor-pointer hover:bg-hover-light"
-                >
-                  <FaHeadset className="my-auto mr-2 text-base" />
-                  My Assistants
-                </Link>
-              </>
-            )}
-          </div>
-        }
-        <div className="pb-4 mx-3 border-b border-border" />
-
-        <ChatTab
-          existingChats={existingChats}
-          currentChatId={currentChatId}
-          folders={folders}
-          openedFolders={openedFolders}
-        />
-
-        <div className="flex items-center gap-3 px-3 pb-1">
-          <Link
-            href={
-              "/chat" +
-              (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-              currentChatSession
-                ? `?assistantId=${currentChatSession.persona_id}`
-                : "")
-            }
-            className="w-full"
-          >
-            <BasicClickable fullWidth>
-              <div className="flex items-center px-2 py-1 text-base">
-                <FiEdit className="ml-1 mr-2" /> New Chat
+                  <FolderPlus size={16} />
+                </Button>
               </div>
-            </BasicClickable>
-          </Link>
-          <div className="h-full ">
-            <BasicClickable
-              onClick={() =>
-                createFolder("New Folder")
-                  .then((folderId) => {
-                    console.log(`Folder created with ID: ${folderId}`);
-                    router.refresh();
-                  })
-                  .catch((error) => {
-                    console.error("Failed to create folder:", error);
-                    setPopup({
-                      message: `Failed to create folder: ${error.message}`,
-                      type: "error",
-                    });
-                  })
-              }
-            >
-              <div className="flex items-center h-full px-2 text-base aspect-square">
-                <FiFolderPlus className="mx-auto my-auto" />
-              </div>
-            </BasicClickable>
-          </div>
+            </div>
+          )}
         </div>
-        <UserSettingsButton user={user} />
       </div>
     </>
   );

@@ -2,7 +2,6 @@
 
 import { AdminPageTitle } from "@/components/admin/Title";
 import {
-  Button,
   Tab,
   TabGroup,
   TabList,
@@ -66,7 +65,6 @@ const handleCreateTokenRateLimit = async (
 
 function Main() {
   const [tabIndex, setTabIndex] = useState(0);
-  const [modalIsOpen, setModalIsOpen] = useState(false);
   const { popup, setPopup } = usePopup();
 
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
@@ -97,7 +95,6 @@ function Main() {
       group_id
     )
       .then(() => {
-        setModalIsOpen(false);
         setPopup({ type: "success", message: "Token rate limit created!" });
         updateTable(target_scope);
       })
@@ -143,14 +140,13 @@ function Main() {
         </li>
       </ul>
 
-      <Button
-        color="green"
-        size="xs"
-        className="mt-3"
-        onClick={() => setModalIsOpen(true)}
-      >
-        Create a Token Rate Limit
-      </Button>
+      <CreateRateLimitModal
+        setPopup={setPopup}
+        onSubmit={handleSubmit}
+        forSpecificScope={
+          isPaidEnterpriseFeaturesEnabled ? undefined : Scope.GLOBAL
+        }
+      />
 
       {isPaidEnterpriseFeaturesEnabled && (
         <TabGroup className="mt-6" index={tabIndex} onIndexChange={setTabIndex}>
@@ -202,16 +198,6 @@ function Main() {
           />
         </div>
       )}
-
-      <CreateRateLimitModal
-        isOpen={modalIsOpen}
-        setIsOpen={() => setModalIsOpen(false)}
-        setPopup={setPopup}
-        onSubmit={handleSubmit}
-        forSpecificScope={
-          isPaidEnterpriseFeaturesEnabled ? undefined : Scope.GLOBAL
-        }
-      />
     </div>
   );
 }

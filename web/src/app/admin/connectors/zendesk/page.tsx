@@ -21,7 +21,7 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Card, Divider, Text, Title } from "@tremor/react";
+import { Card, Divider, Text, Title, Button } from "@tremor/react";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -82,7 +82,7 @@ const Main = () => {
   return (
     <>
       {popup}
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mt-6 mb-2 ml-auto mr-auto">
         Provide your API details
       </Title>
 
@@ -90,11 +90,11 @@ const Main = () => {
         <>
           <div className="flex mb-1 text-sm">
             <p className="my-auto">Existing API Token: </p>
-            <p className="ml-1 italic my-auto max-w-md">
+            <p className="max-w-md my-auto ml-1 italic">
               {zendeskCredential.credential_json?.zendesk_token}
             </p>
-            <button
-              className="ml-1 hover:bg-hover rounded p-1"
+            <Button
+              className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 if (zendeskConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -107,9 +107,10 @@ const Main = () => {
                 await adminDeleteCredential(zendeskCredential.id);
                 refreshCredentials();
               }}
+              variant="light"
             >
               <TrashIcon />
-            </button>
+            </Button>
           </div>
         </>
       ) : (
@@ -172,7 +173,7 @@ const Main = () => {
 
       {zendeskConnectorIndexingStatuses.length > 0 && (
         <>
-          <Title className="mb-2 mt-6 ml-auto mr-auto">
+          <Title className="mt-6 mb-2 ml-auto mr-auto">
             Zendesk indexing status
           </Title>
           <Text className="mb-2">
@@ -206,8 +207,8 @@ const Main = () => {
       {zendeskCredential && zendeskConnectorIndexingStatuses.length === 0 && (
         <>
           <Card className="mt-4">
-            <h2 className="font-bold mb-3">Create Connection</h2>
-            <p className="text-sm mb-4">
+            <h2 className="mb-3 font-bold">Create Connection</h2>
+            <p className="mb-4 text-sm">
               Press connect below to start the connection to your Zendesk
               instance.
             </p>
@@ -241,7 +242,7 @@ const Main = () => {
 
 export default function Page() {
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto">
       <div className="mb-4">
         <HealthCheckBanner />
       </div>

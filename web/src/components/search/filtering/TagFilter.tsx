@@ -1,5 +1,7 @@
+import { Input } from "@/components/ui/input";
 import { containsObject, objectsAreEquivalent } from "@/lib/contains";
 import { Tag } from "@/lib/types";
+import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { FiTag, FiX } from "react-icons/fi";
 
@@ -56,14 +58,20 @@ export function TagFilter({
 
   return (
     <div className="relative">
-      <input
-        ref={inputRef}
-        className="w-full border border-border py-0.5 px-2 rounded text-sm h-8"
-        placeholder="Find a tag"
-        value={filterValue}
-        onChange={(event) => setFilterValue(event.target.value)}
-        onFocus={() => setTagOptionsAreVisible(true)}
-      />
+      <div className="relative">
+        <Input
+          ref={inputRef}
+          placeholder="Search tags"
+          value={filterValue}
+          onChange={(event) => setFilterValue(event.target.value)}
+          onFocus={() => setTagOptionsAreVisible(true)}
+          className="pl-8"
+        />
+        <Search
+          size={16}
+          className="absolute left-2.5 top-1/2 -translate-y-1/2"
+        />
+      </div>
       {selectedTags.length > 0 && (
         <div className="mt-2">
           <div className="mt-1 flex flex-wrap gap-x-1 gap-y-1">
@@ -88,7 +96,7 @@ export function TagFilter({
           </div>
         </div>
       )}
-      {tagOptionsAreVisible && (
+      {/* {tagOptionsAreVisible && (
         <div className="absolute top-0 right-0 transform translate-x-[105%] z-40">
           <div
             ref={popupRef}
@@ -129,7 +137,7 @@ export function TagFilter({
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

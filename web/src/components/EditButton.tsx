@@ -13,12 +13,12 @@ export function EditButton({ onClick }: { onClick: () => void }) {
         w-fit 
         p-2 
         cursor-pointer 
-        rounded-lg
+        rounded-regular
         border-border
         text-sm`}
       onClick={onClick}
     >
-      <FiEdit2 className="mr-1 my-auto" />
+      <FiEdit2 className="my-auto mr-1" />
       Edit
     </div>
   );

@@ -104,7 +104,7 @@ export function SearchMultiSelectDropdown({
           bg-background
           border
           border-border
-          rounded-md 
+          rounded-xs 
           shadow-sm 
           `}
           onClick={(e) => e.stopPropagation()}
@@ -129,7 +129,7 @@ export function SearchMultiSelectDropdown({
             left-0
             mt-3
             w-full
-            rounded-md
+            rounded-xs
             shadow-lg
             bg-background
             border
@@ -309,7 +309,7 @@ export function DefaultDropdown({
       bg-background 
       px-3
       py-1.5 
-      rounded-lg 
+      rounded-regular 
       border 
       border-border 
       cursor-pointer`}
@@ -326,8 +326,7 @@ export function DefaultDropdown({
     <div
       className={`
         border 
-        border 
-        rounded-lg 
+        rounded-regular 
         flex 
         flex-col 
         bg-background

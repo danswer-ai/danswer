@@ -27,7 +27,7 @@ export function Modal({
       <div
         className={`
         fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm
-        flex items-center justify-center z-50
+        flex items-center justify-center z-modal
       `}
         onClick={onOutsideClick}
       >
@@ -40,26 +40,26 @@ export function Modal({
         `}
           onClick={(event) => event.stopPropagation()}
         >
-          {title && (
-            <>
-              <div className="flex mb-4">
+          {onOutsideClick && (
+            <div
+              onClick={onOutsideClick}
+              className="absolute top-6 right-6 cursor-pointer"
+            >
+              <FiX size={20} />
+            </div>
+          )}
+          <>
+            {title && (
+              <div className="mb-4">
                 <h2
                   className={"my-auto font-bold " + (titleSize || "text-2xl")}
                 >
                   {title}
                 </h2>
-                {onOutsideClick && (
-                  <div
-                    onClick={onOutsideClick}
-                    className="p-2 my-auto ml-auto rounded cursor-pointer hover:bg-hover"
-                  >
-                    <FiX size={20} />
-                  </div>
-                )}
+                {!hideDividerForTitle && <Divider />}
               </div>
-              {!hideDividerForTitle && <Divider />}
-            </>
-          )}
+            )}
+          </>
           {children}
         </div>
       </div>

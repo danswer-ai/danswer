@@ -1,9 +1,9 @@
-import { Button } from "@tremor/react";
 import {
   ArrayHelpers,
   ErrorMessage,
   Field,
   FieldArray,
+  FieldProps,
   useField,
   useFormikContext,
 } from "formik";
@@ -11,6 +11,11 @@ import * as Yup from "yup";
 import { FormBodyBuilder } from "./types";
 import { DefaultDropdown, StringOrNumberOption } from "@/components/Dropdown";
 import { FiPlus, FiX } from "react-icons/fi";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label as ShadcnLabel } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export function SectionHeader({
   children,
@@ -52,7 +57,9 @@ export function TextFormField({
   label: string;
   subtext?: string | JSX.Element;
   placeholder?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (
+    e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+  ) => void;
   type?: string;
   isTextArea?: boolean;
   disabled?: boolean;
@@ -69,32 +76,33 @@ export function TextFormField({
   }
 
   return (
-    <div className="mb-4">
-      <Label>{label}</Label>
-      {subtext && <SubLabel>{subtext}</SubLabel>}
-      <Field
-        as={isTextArea ? "textarea" : "input"}
-        type={type}
-        name={name}
-        id={name}
-        className={`
-          border 
-          border-border 
-          rounded 
-          w-full 
-          py-2 
-          px-3 
-          mt-1
-          ${heightString}
-          ${fontSize}
-          ${disabled ? " bg-background-strong" : " bg-background-emphasis"}
-          ${isCode ? " font-mono" : ""}
-        `}
-        disabled={disabled}
-        placeholder={placeholder}
-        autoComplete={autoCompleteDisabled ? "off" : undefined}
-        {...(onChange ? { onChange } : {})}
-      />
+    <div className="mb-4 grid gap-2">
+      <div className="grid gap-1.5 leading-none">
+        <ShadcnLabel
+          htmlFor={label}
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          {label}
+        </ShadcnLabel>
+        {subtext && <p className="text-sm text-muted-foreground">{subtext}</p>}
+      </div>
+      <Field name={name}>
+        {({ field }: FieldProps) => {
+          const Component = isTextArea ? Textarea : Input;
+          return (
+            <Component
+              {...field}
+              type={type}
+              name={name}
+              id={name}
+              disabled={disabled}
+              placeholder={placeholder}
+              autoComplete={autoCompleteDisabled ? "off" : undefined}
+              {...(onChange ? { onChange } : {})}
+            />
+          );
+        }}
+      </Field>
       {error ? (
         <ManualErrorMessage>{error}</ManualErrorMessage>
       ) : (
@@ -114,7 +122,7 @@ interface BooleanFormFieldProps {
   name: string;
   label: string;
   subtext?: string | JSX.Element;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLButtonElement>) => void;
 }
 
 export const BooleanFormField = ({
@@ -125,18 +133,24 @@ export const BooleanFormField = ({
 }: BooleanFormFieldProps) => {
   return (
     <div className="mb-4">
-      <label className="flex text-sm">
-        <Field
-          name={name}
-          type="checkbox"
-          className="mx-3 px-5 w-3.5 h-3.5 my-auto"
-          {...(onChange ? { onChange } : {})}
-        />
-        <div>
-          <Label>{label}</Label>
-          {subtext && <SubLabel>{subtext}</SubLabel>}
+      <div className="flex text-sm mb-4 gap-3">
+        <Field name={name}>
+          {({ field }: FieldProps) => (
+            <Checkbox
+              {...field}
+              name={name}
+              id={label}
+              {...(onChange ? { onChange } : {})}
+            />
+          )}
+        </Field>
+        <div className="grid gap-1.5 leading-none">
+          <ShadcnLabel htmlFor={label}>{label}</ShadcnLabel>
+          {subtext && (
+            <p className="text-sm text-muted-foreground">{subtext}</p>
+          )}
         </div>
-      </label>
+      </div>
 
       <ErrorMessage
         name={name}
@@ -213,12 +227,9 @@ export function TextArrayField<T extends Yup.AnyObject>({
                 arrayHelpers.push("");
               }}
               className="mt-3"
-              color="green"
-              size="xs"
               type="button"
-              icon={FiPlus}
             >
-              Add New
+              <FiPlus className="mr-1.5" /> Add New
             </Button>
           </div>
         )}

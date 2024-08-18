@@ -17,7 +17,7 @@ export function InputBarPreviewImage({ fileId }: { fileId: string }) {
       <div>
         <img
           onClick={() => setFullImageShowing(true)}
-          className="h-16 w-16 object-cover rounded-lg bg-background cursor-pointer"
+          className="h-16 w-16 object-cover rounded-regular bg-background cursor-pointer"
           src={buildImgUrl(fileId)}
         />
       </div>

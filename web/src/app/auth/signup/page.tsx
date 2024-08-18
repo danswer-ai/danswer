@@ -7,12 +7,19 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { EmailPasswordForm } from "../login/EmailPasswordForm";
-import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
-/* import { Logo } from "@/components/Logo"; */
 
 import Logo from "../../../../public/logo-brand.png";
 import Image from "next/image";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { GmailIcon } from "@/components/icons/icons";
+import { Separator } from "@/components/ui/separator";
 
 const Page = async () => {
   // catch cases where the backend is completely unreachable here
@@ -49,43 +56,59 @@ const Page = async () => {
 
   return (
     <main>
-      <div className="absolute w-full top-10x">
+      <div className="absolute w-full top-10">
         <HealthCheckBanner />
       </div>
       <div className="flex items-center justify-center min-h-screen px-6 py-12 sm:px-6 lg:px-8">
         <div>
-          <Card className="mt-4 md:w-96">
-            <Title className="flex items-center justify-center gap-2 py-3 w-100">
+          <Card className="flex flex-col items-center px-5 py-8 md:p-12 ">
+            <CardHeader className="p-0">
               <Image src={Logo} alt="Logo" className="w-40" />
-              {/* TODO: Change this into enterprise settings application name */}
-              {/* you need to make this page not async to be able to get settings context */}
-            </Title>
-            <div className="flex flex-col mt-5">
-              <h1 className="text-xl font-bold text-black">Sign Up</h1>
-              <Text>
-                Already have an account?{" "}
-                <Link href="/auth/login" className="font-medium text-link">
-                  Log In
+            </CardHeader>
+            <CardContent className="w-full p-0">
+              <div className="flex flex-col mt-5">
+                <h1 className="text-2xl font-bold text-dark-900">Sign Up</h1>
+                <p className="text-sm text-dark-500 pt-2">
+                  Already have an account?{" "}
+                  <Link href="/auth/login" className="font-medium text-link">
+                    Log In
+                  </Link>
+                </p>
+              </div>
+              <div className="mt-10">
+                <Button variant="outline" className="w-full">
+                  <GmailIcon /> Continue with Gmail
+                </Button>
+              </div>
+
+              <div className="mt-8 flex items-center w-full">
+                <Separator className="flex flex-1" />
+                <span className="flex flex-1 text-xs text-dark-500 items-center justify-center whitespace-nowrap mx-2 w-full">
+                  Or continue with
+                </span>
+                <Separator className="flex flex-1" />
+              </div>
+
+              <div className="py-8">
+                <EmailPasswordForm
+                  isSignup
+                  shouldVerify={authTypeMetadata?.requiresVerification}
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="p-0">
+              <p className="text-sm text-dark-500">
+                By signing in, you agree to our{" "}
+                <Link href={"#"} className="font-medium text-link">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href={"#"} className="font-medium text-link">
+                  Privacy Policy
                 </Link>
-              </Text>
-            </div>
-            <div className="py-5">
-              <EmailPasswordForm
-                isSignup
-                shouldVerify={authTypeMetadata?.requiresVerification}
-              />
-            </div>
-            <p className="text-sm">
-              By signing in, you agree to our{" "}
-              <Link href={"#"} className="font-medium text-link">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link href={"#"} className="font-medium text-link">
-                Privacy Policy
-              </Link>
-              .
-            </p>
+                .
+              </p>
+            </CardFooter>
           </Card>
         </div>
       </div>

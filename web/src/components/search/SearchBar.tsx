@@ -1,24 +1,30 @@
 import React, { KeyboardEvent, ChangeEvent } from "react";
 import { MagnifyingGlass } from "@phosphor-icons/react";
+import { Input } from "@/components/ui/input";
+import { Filter } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 interface SearchBarProps {
   query: string;
   setQuery: (query: string) => void;
   onSearch: () => void;
+  children?: React.ReactNode;
+  isSearch?: boolean;
 }
 
-export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
-  const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+export const SearchBar = ({
+  query,
+  setQuery,
+  onSearch,
+  children,
+  isSearch,
+}: SearchBarProps) => {
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const target = event.target;
     setQuery(target.value);
-
-    // Resize the textarea to fit the content
-    target.style.height = "24px";
-    const newHeight = target.scrollHeight;
-    target.style.height = `${newHeight}px`;
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       onSearch();
       event.preventDefault();
@@ -26,21 +32,33 @@ export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
   };
 
   return (
-    <div className="flex justify-center">
-      <div className="flex items-center w-full px-4 py-2 border-2 rounded-lg opacity-100 border-border focus-within:border-accent bg-background-search">
-        <MagnifyingGlass className="text-emphasis" />
-        <textarea
-          autoFocus
-          className="flex-grow h-6 ml-2 overflow-hidden whitespace-normal outline-none resize-none placeholder-default"
-          role="textarea"
-          aria-multiline
-          placeholder="Search..."
-          value={query}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          suppressContentEditableWarning={true}
-        />
-      </div>
+    <div className="relative w-full">
+      <MagnifyingGlass
+        size={16}
+        className="text-emphasis absolute left-2 top-1/2 -translate-y-1/2"
+      />
+      <Input
+        autoFocus
+        aria-multiline
+        placeholder="Search..."
+        value={query}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        suppressContentEditableWarning={true}
+        className="pl-7"
+      />
+      {isSearch && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 lg:hidden">
+          <Popover>
+            <PopoverTrigger asChild className="w-full relative cursor-pointer">
+              <Filter size={16} className="text-emphasis" />
+            </PopoverTrigger>
+            <PopoverContent className="w-[85vw] md:w-[50vw] z-overlay mt-4 text-sm absolute -right-[18px]">
+              {children}
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
     </div>
   );
 };

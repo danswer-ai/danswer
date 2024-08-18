@@ -1,19 +1,17 @@
 import "./globals.css";
-
-import { Inter } from "next/font/google";
+import { Inter as FontSans } from "next/font/google";
 import { getCombinedSettings } from "@/components/settings/lib";
 import { CUSTOM_ANALYTICS_ENABLED } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { Metadata } from "next";
 import { buildClientUrl } from "@/lib/utilsSS";
 
-const inter = Inter({
+const fontSans = FontSans({
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-sans",
 });
 
-// TODO: Make Enterprise settings normal settings / make it not enterprise
-// since our only license is Copyright license
 export async function generateMetadata(): Promise<Metadata> {
   const dynamicSettings = await getCombinedSettings({ forceRetrieval: true });
   const logoLocation =
@@ -23,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
       : buildClientUrl("/enmedd-chp.ico");
 
   return {
-    title: dynamicSettings.enterpriseSettings?.application_name ?? "enMedD CHP",
+    title: dynamicSettings.enterpriseSettings?.application_name ?? "enMedD AI",
     description: "enMedD Conversational Health Platform",
     icons: {
       icon: logoLocation,
@@ -53,8 +51,7 @@ export default async function RootLayout({
         </head>
       )}
       <body
-        className={`${inter.variable} font-sans text-default bg-background ${
-          // TODO: remove this once proper dark mode exists
+        className={`${fontSans.variable} font-sans text-default bg-background ${
           process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
         }`}
       >
