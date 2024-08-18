@@ -1,3 +1,10 @@
+from danswer.utils.logger import GlobalLogSetting
+
+# Needs to be set early before the other modules are imported
+GlobalLogSetting.set_log_file_name("alembic")
+
+
+# flake8: noqa: E402
 import asyncio
 from logging.config import fileConfig
 

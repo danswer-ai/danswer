@@ -45,5 +45,8 @@ MIN_THREADS_ML_MODELS = int(os.environ.get("MIN_THREADS_ML_MODELS") or 1)
 # or intent classification
 INDEXING_ONLY = os.environ.get("INDEXING_ONLY", "").lower() == "true"
 
-# notset, debug, info, warning, error, or critical
+# Enable generating persistent log files for local dev environments
+DEV_LOGGING_ENABLED = os.environ.get("DEV_LOGGING_ENABLED", "").lower() == "true"
+
+# notset, debug, info, notice, warning, error, or critical
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "info")

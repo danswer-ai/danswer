@@ -1,3 +1,9 @@
+from danswer.utils.logger import GlobalLogSetting
+
+# Needs to be set early before the other modules are imported
+GlobalLogSetting.set_log_file_name("model_server")
+
+# flake8: noqa: E402
 import logging
 import time
 from datetime import datetime
@@ -45,6 +51,7 @@ from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import LOG_LEVEL
 from shared_configs.configs import MODEL_SERVER_PORT
+
 
 logger = setup_logger()
 

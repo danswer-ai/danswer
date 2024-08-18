@@ -1,3 +1,9 @@
+from danswer.utils.logger import GlobalLogSetting
+
+# Needs to be set early before the other modules are imported
+GlobalLogSetting.set_log_file_name("api_server")
+
+# flake8: noqa: E402
 import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -254,10 +260,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     verify_auth()
 
     if OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET:
-        logger.info("Both OAuth Client ID and Secret are configured.")
+        logger.notice("Both OAuth Client ID and Secret are configured.")
 
     if DISABLE_GENERATIVE_AI:
-        logger.info("Generative AI Q&A disabled")
+        logger.notice("Generative AI Q&A disabled")
 
     # fill up Postgres connection pools
     await warm_up_connections()
