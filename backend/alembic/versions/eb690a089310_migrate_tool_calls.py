@@ -1,7 +1,7 @@
 """migrate tool calls
 
 Revision ID: eb690a089310
-Revises: 4a951134c801
+Revises: ee3f4b47fad5
 Create Date: 2024-08-04 17:07:47.533051
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "eb690a089310"
-down_revision = "4a951134c801"
+down_revision = "ee3f4b47fad5"
 branch_labels = None
 depends_on = None
 
