@@ -1,3 +1,4 @@
+import time
 import uuid
 from uuid import UUID
 
@@ -186,13 +187,16 @@ def list_personas(
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
 ) -> list[PersonaSnapshot]:
+    start = time.time()
     user_id = user.id if user is not None else None
-    return [
+    result = [
         PersonaSnapshot.from_model(persona)
         for persona in get_personas(
             user_id=user_id, include_deleted=include_deleted, db_session=db_session
         )
     ]
+    logger.info(f"Time taken on Personas: {time.time() - start}")
+    return result
 
 
 @basic_router.get("/{persona_id}")
