@@ -43,13 +43,20 @@ import {
   uploadFilesForChat,
   useScrollonStream,
 } from "./lib";
-import { useContext, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
 import { LlmOverride, useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
-import { ChatState, FeedbackType } from "./types";
+import { ChatState, FeedbackType, RegenerationState } from "./types";
 import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
@@ -400,56 +407,6 @@ export function ChatPage({
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
 
-  const [chatState, setChatState] = useState<Map<number | null, ChatState>>(
-    new Map([[null, "input"]])
-  );
-
-  const updateStatesWithNewSessionId = (newSessionId: number) => {
-    setRegenerationState((prevState) => {
-      const newState = new Map(prevState);
-      const existingState = newState.get(null);
-      if (existingState !== undefined) {
-        newState.set(newSessionId, existingState);
-        newState.delete(null);
-      }
-      return newState;
-    });
-
-    setChatState((prevState) => {
-      const newState = new Map(prevState);
-      if (newState.has(null)) {
-        newState.set(newSessionId, newState.get(null)!);
-        newState.delete(null);
-      }
-      return newState;
-    });
-
-    setAbortControllers((prevState) => {
-      const newState = new Map(prevState);
-      const existingState = newState.get(null);
-      if (existingState) {
-        newState.set(newSessionId, existingState);
-        newState.delete(null);
-      }
-      return newState;
-    });
-  };
-
-  const updateChatState = (newState: ChatState, sessionId?: number | null) => {
-    setChatState((prevState) => {
-      const newChatState = new Map(prevState);
-      newChatState.set(
-        sessionId !== undefined ? sessionId : currentSessionId(),
-        newState
-      );
-      return newChatState;
-    });
-  };
-
-  const currentChatState = (): ChatState => {
-    return chatState.get(currentSessionId()) || "input";
-  };
-
   const [completeMessageDetail, setCompleteMessageDetail] = useState<
     Map<number | null, Map<number, Message>>
   >(new Map());
@@ -561,15 +518,71 @@ export function ChatPage({
   );
   const [submittedMessage, setSubmittedMessage] = useState("");
 
-  interface RegenerationState {
-    regenerating: boolean;
-    finalMessageIndex: number;
-  }
-
+  const [chatState, setChatState] = useState<Map<number | null, ChatState>>(
+    new Map([[null, "input"]])
+  );
 
   const [regenerationState, setRegenerationState] = useState<
     Map<number | null, RegenerationState | null>
   >(new Map([[null, null]]));
+
+  const [abortControllers, setAbortControllers] = useState<
+    Map<number | null, AbortController>
+  >(new Map());
+
+  // Updates "null" session values to new session id for
+  // regeneration, chat, and abort controller state, messagehistory
+  const updateStatesWithNewSessionId = (newSessionId: number) => {
+    const updateState = (
+      setState: Dispatch<SetStateAction<Map<number | null, any>>>,
+      defaultValue?: any
+    ) => {
+      setState((prevState) => {
+        const newState = new Map(prevState);
+        const existingState = newState.get(null);
+        if (existingState !== undefined) {
+          newState.set(newSessionId, existingState);
+          newState.delete(null);
+        } else if (defaultValue !== undefined) {
+          newState.set(newSessionId, defaultValue);
+        }
+        return newState;
+      });
+    };
+
+    updateState(setRegenerationState);
+    updateState(setChatState);
+    updateState(setAbortControllers);
+
+    // Update completeMessageDetail
+    setCompleteMessageDetail((prevState) => {
+      const newState = new Map(prevState);
+      const existingMessages = newState.get(null);
+      if (existingMessages) {
+        newState.set(newSessionId, existingMessages);
+        newState.delete(null);
+      }
+      return newState;
+    });
+
+    // Update chatSessionIdRef
+    chatSessionIdRef.current = newSessionId;
+  };
+
+  const updateChatState = (newState: ChatState, sessionId?: number | null) => {
+    setChatState((prevState) => {
+      const newChatState = new Map(prevState);
+      newChatState.set(
+        sessionId !== undefined ? sessionId : currentSessionId(),
+        newState
+      );
+      return newChatState;
+    });
+  };
+
+  const currentChatState = (): ChatState => {
+    return chatState.get(currentSessionId()) || "input";
+  };
 
   const updateRegenerationState = (
     newState: RegenerationState | null,
@@ -593,9 +606,8 @@ export function ChatPage({
     return regenerationState.get(currentSessionId()) || null;
   };
 
-  const [abortControllers, setAbortControllers] = useState<
-    Map<number | null, AbortController>
-  >(new Map());
+  const currentSessionChatState = currentChatState();
+  const currentSessionRegenerationState = currentRegenerationState();
 
   // uploaded files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
@@ -852,6 +864,8 @@ export function ChatPage({
     modelOverRide?: LlmOverride;
     regenerationRequest?: RegenerationRequest | null;
   } = {}) => {
+    const frozenSessionId = currentSessionId();
+
     if (currentChatState() != "input") {
       setPopup({
         message: "Please wait for the response to complete",
@@ -884,7 +898,6 @@ export function ChatPage({
       currChatSessionId = chatSessionIdRef.current as number;
     }
     updateStatesWithNewSessionId(currChatSessionId);
-    chatSessionIdRef.current = currChatSessionId;
 
     const controller = new AbortController();
     setAbortControllers((prev) =>
@@ -912,7 +925,7 @@ export function ChatPage({
         type: "error",
       });
       resetRegenerationState(currentSessionId());
-      updateChatState("input");
+      updateChatState("input", frozenSessionId);
       return;
     }
     let currMessage = messageToResend ? messageToResend.message : message;
@@ -960,7 +973,6 @@ export function ChatPage({
       user_message_id: number;
       assistant_message_id: number;
       frozenMessageMap: Map<number, Message>;
-      frozenSessionId: number | null;
     } = null;
 
     try {
@@ -1067,27 +1079,22 @@ export function ChatPage({
               });
             }
 
-            const {
-              messageMap: currentFrozenMessageMap,
-              sessionId: currentFrozenSessionId,
-            } = upsertToCompleteMessageMap({
-              messages: messageUpdates,
-              chatSessionId: currChatSessionId,
-            });
+            const { messageMap: currentFrozenMessageMap } =
+              upsertToCompleteMessageMap({
+                messages: messageUpdates,
+                chatSessionId: currChatSessionId,
+              });
 
             const frozenMessageMap = currentFrozenMessageMap;
-            const frozenSessionId = currentFrozenSessionId;
             initialFetchDetails = {
               frozenMessageMap,
-              frozenSessionId,
               assistant_message_id,
               user_message_id,
             };
 
             resetRegenerationState();
           } else {
-            const { user_message_id, frozenMessageMap, frozenSessionId } =
-              initialFetchDetails;
+            const { user_message_id, frozenMessageMap } = initialFetchDetails;
 
             setChatState((prevState) => {
               if (prevState.get(chatSessionIdRef.current!) === "loading") {
@@ -1121,9 +1128,9 @@ export function ChatPage({
                 !toolCalls[0].tool_result ||
                 toolCalls[0].tool_result == undefined
               ) {
-                updateChatState("toolBuilding");
+                updateChatState("toolBuilding", frozenSessionId);
               } else {
-                updateChatState("streaming");
+                updateChatState("streaming", frozenSessionId);
               }
 
               // This will be consolidated in upcoming tool calls udpate,
@@ -1310,7 +1317,7 @@ export function ChatPage({
   const onAssistantChange = (assistant: Persona | null) => {
     if (assistant && assistant.id !== liveAssistant.id) {
       // Abort the ongoing stream if it exists
-      if (currentChatStateValue != "input") {
+      if (currentSessionChatState != "input") {
         stopGenerating();
         resetInputBar();
       }
@@ -1423,10 +1430,8 @@ export function ChatPage({
     mobile: settings?.isMobile,
   });
 
-  const currentChatStateValue = currentChatState();
-
   useScrollonStream({
-    chatState: currentChatStateValue,
+    chatState: currentSessionChatState,
     scrollableDivRef,
     scrollDist,
     endDivRef,
@@ -1687,7 +1692,7 @@ export function ChatPage({
 
                           {messageHistory.length === 0 &&
                             !isFetchingChatMessages &&
-                            currentChatStateValue == "input" && (
+                            currentSessionChatState == "input" && (
                               <ChatIntro
                                 availableSources={finalAvailableSources}
                                 selectedPersona={liveAssistant}
@@ -1709,9 +1714,9 @@ export function ChatPage({
                                 ? messageMap.get(message.parentMessageId)
                                 : null;
                               if (
-                                currentRegenerationState()?.regenerating &&
+                                currentSessionRegenerationState?.regenerating &&
                                 message.messageId >=
-                                currentRegenerationState()?.finalMessageIndex!
+                                  currentSessionRegenerationState?.finalMessageIndex!
                               ) {
                                 return <></>;
                               }
@@ -1786,10 +1791,9 @@ export function ChatPage({
                                     : null;
 
                                 if (
-                                  currentRegenerationState()?.regenerating &&
-                                  currentChatStateValue == "loading" &&
-                                  message.messageId >
-                                  (currentRegenerationState()?.finalMessageIndex || 0) - 1
+                                  currentSessionRegenerationState?.regenerating &&
+                                  currentSessionChatState == "loading" &&
+                                  message.messageId == messageHistory.length - 1
                                 ) {
                                   return <></>;
                                 }
@@ -1858,9 +1862,10 @@ export function ChatPage({
                                       }
                                       isComplete={
                                         i !== messageHistory.length - 1 ||
-                                        (currentChatStateValue != "streaming" &&
-                                          currentChatStateValue !=
-                                          "toolBuilding")
+                                        (currentSessionChatState !=
+                                          "streaming" &&
+                                          currentSessionChatState !=
+                                            "toolBuilding")
                                       }
                                       hasDocs={
                                         (message.documents &&
@@ -1868,7 +1873,7 @@ export function ChatPage({
                                       }
                                       handleFeedback={
                                         i === messageHistory.length - 1 &&
-                                          currentChatStateValue != "input"
+                                        currentSessionChatState != "input"
                                           ? undefined
                                           : (feedbackType) =>
                                             setCurrentFeedback([
@@ -1878,7 +1883,7 @@ export function ChatPage({
                                       }
                                       handleSearchQueryEdit={
                                         i === messageHistory.length - 1 &&
-                                          currentChatStateValue == "input"
+                                        currentSessionChatState == "input"
                                           ? (newQuery) => {
                                             if (!previousMessage) {
                                               setPopup({
@@ -1985,8 +1990,8 @@ export function ChatPage({
                                 );
                               }
                             })}
-                            {currentChatStateValue == "loading" &&
-                              !currentRegenerationState()?.regenerating &&
+                            {currentSessionChatState == "loading" &&
+                              !currentSessionRegenerationState?.regenerating &&
                               messageHistory[messageHistory.length - 1]?.type !=
                               "user" && (
                                 <HumanMessage
@@ -1995,7 +2000,7 @@ export function ChatPage({
                                 />
                               )}
 
-                            {currentChatStateValue == "loading" && (
+                            {currentSessionChatState == "loading" && (
                               <div
                                 key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                               >
@@ -2081,7 +2086,7 @@ export function ChatPage({
                             )}
 
                             <ChatInputBar
-                              chatState={currentChatStateValue}
+                              chatState={currentSessionChatState}
                               stopGenerating={stopGenerating}
                               openModelSettings={() => setSettingsToggled(true)}
                               inputPrompts={userInputPrompts}
