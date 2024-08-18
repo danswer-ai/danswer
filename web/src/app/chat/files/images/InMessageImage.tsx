@@ -15,10 +15,11 @@ export function InMessageImage({ fileId }: { fileId: string }) {
       />
 
       <div className="relative w-full h-full max-w-96 max-h-96">
-        {!imageLoaded && (
-          <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-lg" />
-        )}
-
+        <div
+          className={`absolute inset-0 bg-gray-200 rounded-lg transition-opacity duration-300 ${
+            imageLoaded ? "opacity-0" : "opacity-100"
+          }`}
+        />
         <img
           width={1200}
           height={1200}

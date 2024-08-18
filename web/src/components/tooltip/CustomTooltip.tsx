@@ -44,8 +44,10 @@ export const CustomTooltip = ({
   wrap,
   showTick = false,
   delay = 500,
+  maxWidth,
   position = "bottom",
 }: {
+  maxWidth?: boolean;
   content: string | ReactNode;
   children: JSX.Element;
   large?: boolean;
@@ -56,6 +58,7 @@ export const CustomTooltip = ({
   wrap?: boolean;
   citation?: boolean;
   position?: "top" | "bottom";
+  className?: string;
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });

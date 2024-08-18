@@ -9,6 +9,7 @@ import {
   buildDocumentSummaryDisplay,
 } from "@/components/search/DocumentDisplay";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import { MOBILE_SIDEBAR_CARD_WIDTH, SIDEBAR_CARD_WIDTH } from "@/lib/constants";
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
@@ -39,8 +40,8 @@ export function ChatDocumentDisplay({
   return (
     <div
       key={document.semantic_identifier}
-      className={`p-2 w-[325px] justify-start rounded-md ${
-        isSelected ? "bg-background-200" : "bg-background-125"
+      className={`p-2 desktop:${SIDEBAR_CARD_WIDTH} mobile:${MOBILE_SIDEBAR_CARD_WIDTH} justify-start rounded-md ${
+        isSelected ? "bg-background-200" : "bg-background-150"
       } text-sm mx-3`}
     >
       <div className="flex relative justify-start overflow-y-visible">

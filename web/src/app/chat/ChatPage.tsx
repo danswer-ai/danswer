@@ -13,6 +13,7 @@ import {
   ImageGenerationDisplay,
   Message,
   MessageResponseIDInfo,
+  PreviousAIMessage,
   RetrievalType,
   StreamingError,
   ToolCallMetadata,
@@ -89,6 +90,18 @@ import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
+import {
+  getConsecutiveAIMessagesAtEnd,
+  getUniqueDocumentsFromAIMessages,
+} from "@/lib/chat/aiMessageSequence";
+import {
+  IMAGE_GENERATION_TOOL_NAME,
+  SEARCH_TOOL_NAME,
+} from "./tools/constants";
+import {
+  MOBILE_SIDEBAR_WIDTH_CONST,
+  SIDEBAR_WIDTH_CONST,
+} from "@/lib/constants";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 import { DeleteChatModal } from "./modal/DeleteChatModal";
 import remarkGfm from "remark-gfm";
@@ -236,8 +249,8 @@ export function ChatPage({
     if (
       lastMessage &&
       lastMessage.type === "assistant" &&
-      lastMessage.toolCalls[0] &&
-      lastMessage.toolCalls[0].tool_result === undefined
+      lastMessage.toolCall &&
+      lastMessage.toolCall.tool_result === undefined
     ) {
       const newCompleteMessageMap = new Map(
         currentMessageMap(completeMessageDetail)
@@ -458,7 +471,7 @@ export function ChatPage({
         message: "",
         type: "system",
         files: [],
-        toolCalls: [],
+        toolCall: null,
         parentMessageId: null,
         childrenMessageIds: [firstMessageId],
         latestChildMessageId: firstMessageId,
@@ -876,6 +889,7 @@ export function ChatPage({
         ? { regenerating: true, finalMessageIndex: messageIdToResend || 0 }
         : null
     );
+    let previousMessage: PreviousAIMessage | null = null;
 
     updateChatState("loading");
 
@@ -943,6 +957,38 @@ export function ChatPage({
         : null) ||
       (messageMap.size === 1 ? Array.from(messageMap.values())[0] : null);
 
+    // if we're resending, set the parent's child to null
+    // we will use tempMessages until the regenerated message is complete
+    const messageUpdates: Message[] = [
+      {
+        messageId: TEMP_USER_MESSAGE_ID,
+        message: currMessage,
+        type: "user",
+        files: currentMessageFiles,
+        toolCall: null,
+        parentMessageId: parentMessage?.messageId || null,
+      },
+    ];
+    if (parentMessage) {
+      messageUpdates.push({
+        ...parentMessage,
+        childrenMessageIds: (parentMessage.childrenMessageIds || []).concat([
+          TEMP_USER_MESSAGE_ID,
+        ]),
+        latestChildMessageId: TEMP_USER_MESSAGE_ID,
+      });
+    }
+    let { messageMap: frozenMessageMap } = upsertToCompleteMessageMap({
+      messages: messageUpdates,
+      chatSessionId: currChatSessionId,
+    });
+
+    // on initial message send, we insert a dummy system message
+    // set this as the parent here if no parent is set
+    if (!parentMessage && frozenMessageMap.size === 2) {
+      parentMessage = frozenMessageMap.get(SYSTEM_MESSAGE_ID) || null;
+    }
+
     const currentAssistantId = alternativeAssistantOverride
       ? alternativeAssistantOverride.id
       : alternativeAssistant
@@ -950,7 +996,6 @@ export function ChatPage({
         : liveAssistant.id;
 
     resetInputBar();
-    let messageUpdates: Message[] | null = null;
 
     let answer = "";
     let query: string | null = null;
@@ -964,7 +1009,7 @@ export function ChatPage({
     let stackTrace: string | null = null;
 
     let finalMessage: BackendMessage | null = null;
-    let toolCalls: ToolCallMetadata[] = [];
+    let toolCall: ToolCallMetadata | null = null;
 
     let initialFetchDetails: null | {
       user_message_id: number;
@@ -1024,10 +1069,28 @@ export function ChatPage({
         useExistingUserMessage: isSeededChat,
       });
 
+      let updateFn = (messages: Message[]) => {
+        const replacementsMap = finalMessage
+          ? new Map([
+              [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+              [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+            ] as [number, number][])
+          : null;
+
+        return upsertToCompleteMessageMap({
+          messages: messages,
+          replacementsMap: replacementsMap,
+          completeMessageMapOverride: frozenMessageMap,
+          chatSessionId: frozenSessionId!,
+        });
+      };
+      let files = currentMessageFiles;
       const delay = (ms: number) => {
         return new Promise((resolve) => setTimeout(resolve, ms));
       };
 
+      let parentId: number | null = null;
+      let generatedAssistantId: number | null = null;
       await delay(50);
       while (!stack.isComplete || !stack.isEmpty()) {
         await delay(2);
@@ -1053,18 +1116,19 @@ export function ChatPage({
               messageResponseIDInfo.reserved_assistant_message_id;
 
             // we will use tempMessages until the regenerated message is complete
-            messageUpdates = [
-              {
-                messageId: regenerationRequest
-                  ? regenerationRequest?.parentMessage?.messageId!
-                  : user_message_id,
-                message: currMessage,
-                type: "user",
-                files: currentMessageFiles,
-                toolCalls: [],
-                parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
-              },
-            ];
+            // TODO FIX
+            // messageUpdates = [
+            //   {
+            //     messageId: regenerationRequest
+            //       ? regenerationRequest?.parentMessage?.messageId!
+            //       : user_message_id,
+            //     message: currMessage,
+            //     type: "user",
+            //     files: currentMessageFiles,
+            //     toolCalls: [],
+            //     parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
+            //   },
+            // ];
 
             if (parentMessage && !regenerationRequest) {
               messageUpdates.push({
@@ -1101,6 +1165,12 @@ export function ChatPage({
               return prevState;
             });
 
+            console.log(packet);
+            if (Object.hasOwn(packet, "delimiter")) {
+              // console.log("MESSAGE DELIMITER");
+              // TODO: Remove or put to good use!
+            }
+
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {
@@ -1113,17 +1183,21 @@ export function ChatPage({
                 setSelectedMessageForDocDisplay(user_message_id);
               }
             } else if (Object.hasOwn(packet, "tool_name")) {
-              toolCalls = [
-                {
-                  tool_name: (packet as ToolCallMetadata).tool_name,
-                  tool_args: (packet as ToolCallMetadata).tool_args,
-                  tool_result: (packet as ToolCallMetadata).tool_result,
-                },
-              ];
-              if (
-                !toolCalls[0].tool_result ||
-                toolCalls[0].tool_result == undefined
-              ) {
+              toolCall = {
+                tool_name: (packet as ToolCallMetadata).tool_name,
+                tool_args: (packet as ToolCallMetadata).tool_args,
+                tool_result: (packet as ToolCallMetadata).tool_result,
+              };
+              if (toolCall.tool_name === SEARCH_TOOL_NAME) {
+                query = toolCall.tool_args.query;
+              }
+              toolCall = {
+                tool_name: (packet as ToolCallMetadata).tool_name,
+                tool_args: (packet as ToolCallMetadata).tool_args,
+                tool_result: (packet as ToolCallMetadata).tool_result,
+              };
+
+              if (toolCall.tool_result || toolCall.tool_result == undefined) {
                 updateChatState("toolBuilding", frozenSessionId);
               } else {
                 updateChatState("streaming", frozenSessionId);
@@ -1148,7 +1222,7 @@ export function ChatPage({
             // set this as the parent here if no parent is set
             parentMessage =
               parentMessage || frozenMessageMap?.get(SYSTEM_MESSAGE_ID)!;
-
+            // TODO bring back the functionality specific to this
             const updateFn = (messages: Message[]) => {
               const replacementsMap = regenerationRequest
                 ? new Map([
@@ -1179,7 +1253,7 @@ export function ChatPage({
                 message: currMessage,
                 type: "user",
                 files: currentMessageFiles,
-                toolCalls: [],
+                toolCall: null,
                 parentMessageId: error ? null : lastSuccessfulMessageId,
                 childrenMessageIds: [
                   ...(regenerationRequest?.parentMessage?.childrenMessageIds ||
@@ -1198,7 +1272,7 @@ export function ChatPage({
                   finalMessage?.context_docs?.top_documents || documents,
                 citations: finalMessage?.citations || {},
                 files: finalMessage?.files || aiMessageImages || [],
-                toolCalls: finalMessage?.tool_calls || toolCalls,
+                toolCall: finalMessage?.tool_call || toolCall,
                 parentMessageId: regenerationRequest
                   ? regenerationRequest?.parentMessage?.messageId!
                   : initialFetchDetails.user_message_id,
@@ -1220,7 +1294,7 @@ export function ChatPage({
             message: currMessage,
             type: "user",
             files: currentMessageFiles,
-            toolCalls: [],
+            toolCall: null,
             parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
           },
           {
@@ -1230,7 +1304,7 @@ export function ChatPage({
             message: errorMsg,
             type: "error",
             files: aiMessageImages || [],
-            toolCalls: [],
+            toolCall: null,
             parentMessageId:
               initialFetchDetails?.user_message_id || TEMP_USER_MESSAGE_ID,
           },
@@ -1493,6 +1567,10 @@ export function ChatPage({
       });
     };
   }
+
+  const currentAIMessages = getConsecutiveAIMessagesAtEnd(messageHistory);
+  const currentFullContext =
+    getUniqueDocumentsFromAIMessages(currentAIMessages);
 
   return (
     <>
@@ -1776,6 +1854,29 @@ export function ChatPage({
                                 ) {
                                   return <></>;
                                 }
+                                const hasParentMessage =
+                                  message.parentMessageId !== null &&
+                                  message.parentMessageId !== undefined;
+                                const parentMessage = hasParentMessage
+                                  ? messageMap.get(message.parentMessageId!)
+                                  : null;
+                                const parentMessageType = parentMessage
+                                  ? parentMessage.type
+                                  : null;
+
+                                const hasChildMessage =
+                                  message.latestChildMessageId !== null &&
+                                  message.latestChildMessageId !== undefined;
+                                const childMessage = hasChildMessage
+                                  ? messageMap.get(
+                                      message.latestChildMessageId!
+                                    )
+                                  : null;
+                                const hasParentAI =
+                                  parentMessage?.type == "assistant";
+                                const hasChildAI =
+                                  childMessage?.type == "assistant";
+
                                 return (
                                   <div
                                     key={messageReactComponentKey}
@@ -1814,6 +1915,13 @@ export function ChatPage({
                                         // and so it sticks around on page reload
                                         setMessageAsLatest(messageId);
                                       }}
+                                      setPopup={setPopup}
+                                      hasParentAI={hasParentAI}
+                                      hasChildAI={hasChildAI}
+                                      generatingTool={
+                                        message.toolCall != null &&
+                                        message.toolCall.tool_result == null
+                                      }
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
                                       toggleDocumentSelection={
@@ -1827,17 +1935,12 @@ export function ChatPage({
                                       messageId={message.messageId}
                                       content={message.message}
                                       files={message.files}
-                                      query={
-                                        messageHistory[i]?.query || undefined
-                                      }
+                                      query={message.query || undefined}
                                       personaName={liveAssistant.name}
                                       citedDocuments={getCitedDocumentsFromMessage(
                                         message
                                       )}
-                                      toolCall={
-                                        message.toolCalls &&
-                                        message.toolCalls[0]
-                                      }
+                                      toolCall={message.toolCall!}
                                       isComplete={
                                         i !== messageHistory.length - 1 ||
                                         (currentSessionChatState !=
@@ -1861,6 +1964,7 @@ export function ChatPage({
                                       }
                                       handleSearchQueryEdit={
                                         i === messageHistory.length - 1 &&
+                                        !hasParentAI &&
                                         currentSessionChatState == "input"
                                           ? (newQuery) => {
                                               if (!previousMessage) {
@@ -1943,9 +2047,11 @@ export function ChatPage({
                                 return (
                                   <div key={messageReactComponentKey}>
                                     <AIMessage
+                                      setPopup={setPopup}
                                       currentPersona={liveAssistant}
                                       messageId={message.messageId}
                                       personaName={liveAssistant.name}
+                                      files={message.files}
                                       content={
                                         <p className="text-red-700 text-sm my-auto">
                                           {message.message}
@@ -1983,6 +2089,7 @@ export function ChatPage({
                                 key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                               >
                                 <AIMessage
+                                  setPopup={setPopup}
                                   currentPersona={liveAssistant}
                                   alternativeAssistant={
                                     alternativeGeneratingAssistant ??
@@ -2141,10 +2248,12 @@ export function ChatPage({
         </div>
       </div>
       <DocumentSidebar
-        initialWidth={350}
+        initialWidth={
+          settings?.isMobile ? MOBILE_SIDEBAR_WIDTH_CONST : SIDEBAR_WIDTH_CONST
+        }
         ref={innerSidebarElementRef}
         closeSidebar={() => setDocumentSelection(false)}
-        selectedMessage={aiMessage}
+        currentDocuments={currentFullContext}
         selectedDocuments={selectedDocuments}
         toggleDocumentSelection={toggleDocumentSelection}
         clearSelectedDocuments={clearSelectedDocuments}

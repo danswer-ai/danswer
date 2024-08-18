@@ -10,11 +10,11 @@ import litellm  # type: ignore
 import tiktoken
 from langchain.prompts.base import StringPromptValue
 from langchain.prompts.chat import ChatPromptValue
+from langchain.schema import AIMessage
+from langchain.schema import BaseMessage
+from langchain.schema import HumanMessage
 from langchain.schema import PromptValue
 from langchain.schema.language_model import LanguageModelInput
-from langchain.schema.messages import AIMessage
-from langchain.schema.messages import BaseMessage
-from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 from litellm.exceptions import APIConnectionError  # type: ignore
 from litellm.exceptions import APIError  # type: ignore
@@ -45,6 +45,27 @@ if TYPE_CHECKING:
     from danswer.llm.answering.models import PreviousMessage
 
 logger = setup_logger()
+
+# def translate_danswer_msg_to_langchain(
+#     msg: Union[ChatMessage, "PreviousMessage"]
+# ) -> BaseMessage:
+#     files: list[InMemoryChatFile] = []
+
+#     # If the message is a `ChatMessage`, it doesn't have the downloaded files
+#     # attached. Just ignore them for now. Also, OpenAI doesn't allow files to
+#     # be attached to AI messages, so we must remove them
+#     if not isinstance(msg, ChatMessage) and msg.message_type != MessageType.ASSISTANT:
+#         files = msg.files
+#     content = build_content_with_imgs(msg.message, files)
+
+#     if msg.message_type == MessageType.SYSTEM:
+#         print("SYSTE MESAGE")
+#         print(msg.message)
+#         # raise ValueError("System messages are not currently part of history")
+#     if msg.message_type == MessageType.ASSISTANT:
+#         return AIMessage(content=content)
+#     if msg.message_type == MessageType.USER:
+#         return HumanMessage(content=content)
 
 
 def litellm_exception_to_error_msg(e: Exception, llm: LLM) -> str:
@@ -100,21 +121,38 @@ def litellm_exception_to_error_msg(e: Exception, llm: LLM) -> str:
 
 
 def translate_danswer_msg_to_langchain(
-    msg: Union[ChatMessage, "PreviousMessage"],
+    msg: Union[ChatMessage, "PreviousMessage"], token_count: int
 ) -> BaseMessage:
-    files: list[InMemoryChatFile] = []
-
-    # If the message is a `ChatMessage`, it doesn't have the downloaded files
-    # attached. Just ignore them for now. Also, OpenAI doesn't allow files to
-    # be attached to AI messages, so we must remove them
-    if not isinstance(msg, ChatMessage) and msg.message_type != MessageType.ASSISTANT:
-        files = msg.files
-    content = build_content_with_imgs(msg.message, files)
+    content = msg.message
 
     if msg.message_type == MessageType.SYSTEM:
-        raise ValueError("System messages are not currently part of history")
+        return SystemMessage(content=content)
+    wrapped_content = ""
     if msg.message_type == MessageType.ASSISTANT:
-        return AIMessage(content=content)
+        try:
+            parsed_content = json.loads(content)
+            if (
+                "name" in parsed_content
+                and parsed_content["name"] == "run_image_generation"
+            ):
+                wrapped_content += f"I, the AI, am now generating an \
+                image based on the prompt: '{parsed_content['args']['prompt']}'\n"
+                wrapped_content += "[/AI IMAGE GENERATION REQUEST]"
+            elif (
+                "id" in parsed_content
+                and parsed_content["id"] == "image_generation_response"
+            ):
+                wrapped_content += "I, the AI, have generated the following image(s) based on the previous request:\n"
+                for img in parsed_content["response"]:
+                    wrapped_content += f"- Description: {img['revised_prompt']}\n"
+                    wrapped_content += f"  Image URL: {img['url']}\n\n"
+                wrapped_content += "[/AI IMAGE GENERATION RESPONSE]"
+            else:
+                wrapped_content = content
+        except json.JSONDecodeError:
+            wrapped_content = content
+        return AIMessage(content=wrapped_content)
+
     if msg.message_type == MessageType.USER:
         return HumanMessage(content=content)
 
@@ -124,13 +162,101 @@ def translate_danswer_msg_to_langchain(
 def translate_history_to_basemessages(
     history: list[ChatMessage] | list["PreviousMessage"],
 ) -> tuple[list[BaseMessage], list[int]]:
+    print("message history is")
+    new_history = []
+    assistant_content = None
+    token_count = 1
+    from danswer.llm.temporary import create_previous_message
+    from danswer.tools.tool import ToolRegistry
+    from danswer.llm.answering.models import PreviousMessage
+
+    for i, msg in enumerate(history):
+        message = cast(ChatMessage, msg)
+        if message.message_type != MessageType.ASSISTANT:
+            if assistant_content is not None:
+                combined_ai_message = create_previous_message(
+                    assistant_content, token_count
+                )
+                assistant_content = None
+                new_history.append(combined_ai_message)
+            new_history.append(cast(PreviousMessage, message))
+            continue
+
+        if message.tool_call and message.tool_call.tool_name == "run_image_generation":
+            assistant_content = (assistant_content or "") + ToolRegistry.get_prompt(
+                "run_image_generation", message
+            )
+
+            # assistant_content = assistant_content or "" +  f"I generated images with these descriptions! {message.message}"
+        else:
+            assistant_content = message.message
+
+            # TODO make better + fix token counting
+    if assistant_content is not None:
+        combined_ai_message = create_previous_message(assistant_content, token_count)
+        new_history.append(combined_ai_message)
+
+    history = new_history
+    for h in history:
+        print(f"\t\t{h.message_type}: \t\t|| {h.message[:100]}\n\n")
+
     history_basemessages = [
-        translate_danswer_msg_to_langchain(msg)
+        translate_danswer_msg_to_langchain(msg, 0)
         for msg in history
         if msg.token_count != 0
     ]
+
     history_token_counts = [msg.token_count for msg in history if msg.token_count != 0]
+    # summary = "[CONVERSATION SUMMARY]\n"
+    # summary += "The most recent user request may involve generating additional images. "
+    # summary += "I should carefully review the conversation history an
+    # d the latest user request and almost defeinitely GENERATE MORE IMAGES "
+    # summary += "[/CONVERSATION SUMMARY]"
+    # history_basemessages.append(AIMessage(content=summary))
+    # history_token_counts.append(100)
+    # print()
+    for msg in history_basemessages:
+        print(f"{msg.type} : \t \t ||||||||| {msg.content[:20]}")
+
+        # print(f"{msg.type}: {msg.content[:20]}")
+
     return history_basemessages, history_token_counts
+
+
+# def translate_history_to_basemessages(
+#     history: Union[list[ChatMessage], list["PreviousMessage"]]
+# ) -> tuple[list[BaseMessage], list[int]]:
+#     history_basemessages = []
+#     history_token_counts = []
+#     image_generation_count = 0
+
+#     for msg in history:
+#         if msg.token_count != 0:
+#             translated_msg = translate_danswer_msg_to_langchain(
+#                 msg, image_generation_count
+#             )
+#             if (
+#                 isinstance(translated_msg.content, str)
+#                 and "[ImageGenerationRe" in translated_msg.content
+#             ):
+#                 image_generation_count += 1
+#             history_basemessages.append(translated_msg)
+#             history_token_counts.append(msg.token_count)
+
+#     # Add a generic summary message at the end
+#     summary = "[CONVERSATION SUMMARY]\n"
+#     summary += "The most recent user request may involve generating additional images. "
+#     summary += "I should carefully review the conversation history and the latest user request "
+#     summary += (
+#         "to determine if any new images need to be generated, ensuring I don't repeat "
+#     )
+#     summary += "any image generations that have already been completed.\n"
+#     summary += f"I already generated {image_generation_count} images thus far. I should keep my responses EXTREMELY SHORT"
+#     summary += "[/CONVERSATION SUMMARY]"
+#     history_basemessages.append(AIMessage(content=summary))
+#     history_token_counts.append(100)
+
+#     return history_basemessages, history_token_counts
 
 
 def _build_content(
@@ -189,15 +315,15 @@ def build_content_with_imgs(
             for file in files
             if file.file_type == "image"
         ]
-        + [
-            {
-                "type": "image_url",
-                "image_url": {
-                    "url": url,
-                },
-            }
-            for url in img_urls
-        ],
+        # + [
+        #     {
+        #         "type": "image_url",
+        #         "image_url": {
+        #             "url": url,
+        #         },
+        #     }
+        #     for url in img_urls
+        # ],
     )
 
 

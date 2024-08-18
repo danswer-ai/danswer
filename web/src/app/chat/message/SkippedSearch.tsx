@@ -27,15 +27,12 @@ export function SkippedSearch({
   handleForceSearch: () => void;
 }) {
   return (
-    <div className="flex  text-sm !pt-0 p-1">
+    <div className="flex group-hover:text-text-900 text-text-500 text-sm !pt-0 p-1">
       <div className="flex mb-auto">
-        <FiBook className="my-auto flex-none mr-2" size={14} />
-        <div className="my-auto cursor-default">
-          <span className="mobile:hidden">
-            The AI decided this query didn&apos;t need a search
-          </span>
-          <span className="desktop:hidden">No search</span>
-        </div>
+        <span className="mobile:hidden">
+          The AI decided this query didn&apos;t need a search
+        </span>
+        <span className="desktop:hidden">No search</span>
       </div>
 
       <div className="ml-auto my-auto" onClick={handleForceSearch}>
