@@ -341,9 +341,13 @@ async def optional_user(
         return None
 
     user_result = await async_db_session.execute(
-        select(User.id, User.email, User.is_verified, User.oidc_expiry).where(
-            User.id == access_token.user_id
-        )
+        select(
+            User.id,
+            User.email,
+            User.is_verified,
+            User.oidc_expiry,
+            User.chosen_assistants,
+        ).where(User.id == access_token.user_id)
     )
     user_data = user_result.fetchone()
     dummy_user = User(
@@ -354,7 +358,7 @@ async def optional_user(
         role=UserRole.BASIC,
         is_active=True,
         is_superuser=False,
-        chosen_assistants=None,
+        chosen_assistants=user_data[4],
         default_model=None,
     )
     return dummy_user
