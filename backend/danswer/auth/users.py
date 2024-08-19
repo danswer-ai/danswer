@@ -27,6 +27,7 @@ from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.openapi import OpenAPIResponseType
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
@@ -340,14 +341,20 @@ async def optional_user(
     if not access_token:
         return None
 
+    # user_result = await async_db_session.execute(
+    #     select(
+    #         User.id,
+    #         User.email,
+    #         User.is_verified,
+    #         User.oidc_expiry,
+    #         User.chosen_assistants,
+    #     ).where(User.id == access_token.user_id)
+    # )
     user_result = await async_db_session.execute(
-        select(
-            User.id,
-            User.email,
-            User.is_verified,
-            User.oidc_expiry,
-            User.chosen_assistants,
-        ).where(User.id == access_token.user_id)
+        text(
+            "select id, email, is_verified, oidc_expiry, chosen_assistants from public.user where id = :id"
+        ),
+        {"id": access_token.user_id},
     )
     user_data = user_result.fetchone()
     dummy_user = User(
