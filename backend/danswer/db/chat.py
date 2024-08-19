@@ -481,7 +481,7 @@ def create_new_chat_message(
             message_type=message_type,
             citations=citations,
             files=files,
-            tool_calls=tool_call,
+            tool_call=tool_call,
             error=error,
             alternate_assistant_id=alternate_assistant_id,
             alternate_model=alternate_model,

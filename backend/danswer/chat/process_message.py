@@ -835,7 +835,9 @@ def stream_chat_message_objects(
                     tool_name=tool_result.tool_name,
                     tool_arguments=tool_result.tool_args,
                     tool_result=tool_result.tool_result,
-                ),
+                )
+                if tool_result
+                else None,
             )
 
             logger.debug("Committing messages")

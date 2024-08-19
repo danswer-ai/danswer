@@ -1216,6 +1216,124 @@ export function ChatPage({
               stackTrace = (packet as StreamingError).stack_trace;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
+
+              const newUserMessageId = finalMessage.parent_message!;
+              const newAssistantMessageId = finalMessage.message_id;
+
+              if (
+                newUserMessageId !== undefined &&
+                newAssistantMessageId !== undefined
+              ) {
+                let {
+                  messageMap: newFrozenMessageMap,
+                  sessionId: newFrozenSessionId,
+                } = updateFn([
+                  {
+                    messageId: regenerationRequest
+                      ? regenerationRequest?.parentMessage?.messageId!
+                      : initialFetchDetails.user_message_id!,
+                    message: currMessage,
+                    type:
+                      previousMessage?.type || generatedAssistantId
+                        ? "assistant"
+                        : "user",
+                    files: previousMessage?.files || files,
+                    toolCall: previousMessage?.toolCall || null,
+                    parentMessageId:
+                      previousMessage?.parentMessageId ||
+                      parentMessage?.messageId ||
+                      null,
+                    childrenMessageIds: [
+                      ...(regenerationRequest?.parentMessage
+                        ?.childrenMessageIds || []),
+                      initialFetchDetails.assistant_message_id!,
+                    ],
+                    latestChildMessageId:
+                      initialFetchDetails.assistant_message_id,
+                  },
+                  {
+                    messageId: initialFetchDetails.assistant_message_id!,
+                    message: error || answer,
+                    type: error ? "error" : "assistant",
+                    retrievalType,
+                    query: finalMessage?.rephrased_query || query,
+                    documents:
+                      finalMessage?.context_docs?.top_documents || documents,
+                    citations: finalMessage?.citations || {},
+                    files: finalMessage?.files || aiMessageImages || [],
+                    toolCall: finalMessage?.tool_call || toolCall,
+                    parentMessageId: regenerationRequest
+                      ? regenerationRequest?.parentMessage?.messageId!
+                      : initialFetchDetails.user_message_id,
+
+                    alternateAssistantID: alternativeAssistant?.id,
+                  },
+                ]);
+
+                // updateFn([
+                //   {
+                //     messageId: newUserMessageId,
+                //     message: currMessage,
+                //     type: parentId ? "assistant" : "user",
+                //     files: files,
+                //     toolCall: null,
+                //     parentMessageId: parentMessage?.messageId || null,
+                //     childrenMessageIds: [newAssistantMessageId],
+                //     latestChildMessageId: newAssistantMessageId,
+                //   },
+                //   {
+                //     messageId: newAssistantMessageId,
+                //     message: answer,
+                //     type: "assistant",
+                //     retrievalType,
+                //     query: finalMessage.rephrased_query || query,
+                //     documents:
+                //       finalMessage.context_docs?.top_documents || documents,
+                //     citations: finalMessage.citations || {},
+                //     files: finalMessage.files || aiMessageImages || [],
+                //     toolCall: finalMessage.tool_call || toolCall,
+                //     parentMessageId: newUserMessageId,
+                //     alternateAssistantID: alternativeAssistant?.id,
+                //   },
+                // ]);
+                parentId = newUserMessageId;
+                currMessage = answer;
+                generatedAssistantId = newUserMessageId;
+
+                previousMessage = {
+                  parentMessageId: parentId,
+                  toolCall: finalMessage.tool_call,
+                  documents:
+                    finalMessage.context_docs?.top_documents || documents,
+                  type: "assistant",
+                };
+
+                updateFn = (messages: Message[]) => {
+                  const replacementsMap = finalMessage
+                    ? new Map([
+                        [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+                        [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+                      ] as [number, number][])
+                    : null;
+
+                  return upsertToCompleteMessageMap({
+                    messages: messages,
+                    replacementsMap: replacementsMap,
+                    completeMessageMapOverride: newFrozenMessageMap,
+                    chatSessionId: frozenSessionId!,
+                  });
+                };
+                files = finalMessage.files;
+                // setCurrentMessageFsetiles(finalMessage.files)
+                finalMessage = null;
+                aiMessageImages = null;
+                answer = "";
+              } else {
+                console.error(
+                  "Invalid message_id or parent_message in finalMessage"
+                );
+              }
+              finalMessage = null as BackendMessage | null;
             }
 
             // on initial message send, we insert a dummy system message
@@ -1223,64 +1341,116 @@ export function ChatPage({
             parentMessage =
               parentMessage || frozenMessageMap?.get(SYSTEM_MESSAGE_ID)!;
             // TODO bring back the functionality specific to this
-            const updateFn = (messages: Message[]) => {
-              const replacementsMap = regenerationRequest
-                ? new Map([
-                    [
-                      regenerationRequest?.parentMessage?.messageId,
-                      regenerationRequest?.parentMessage?.messageId,
-                    ],
-                    [
-                      regenerationRequest?.messageId,
-                      initialFetchDetails?.assistant_message_id,
-                    ],
-                  ] as [number, number][])
-                : null;
+            // updateFn = (messages: Message[]) => {
+            //   const replacementsMap = regenerationRequest
+            //     ? new Map([
+            //       [
+            //         regenerationRequest?.parentMessage?.messageId,
+            //         regenerationRequest?.parentMessage?.messageId,
+            //       ],
+            //       [
+            //         regenerationRequest?.messageId,
+            //         initialFetchDetails?.assistant_message_id,
+            //       ],
+            //     ] as [number, number][])
+            //     : null;
 
-              return upsertToCompleteMessageMap({
-                messages: messages,
-                replacementsMap: replacementsMap,
-                completeMessageMapOverride: frozenMessageMap,
-                chatSessionId: frozenSessionId!,
-              });
-            };
+            //   return upsertToCompleteMessageMap({
+            //     messages: messages,
+            //     replacementsMap: replacementsMap,
+            //     completeMessageMapOverride: frozenMessageMap,
+            //     chatSessionId: frozenSessionId!,
+            //   });
+            // };
+            if (
+              !Object.hasOwn(packet, "message_id") &&
+              !Object.hasOwn(packet, "delimiter")
+            ) {
+              // const newUserMessageId =
+              //   finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
+              // const newAssistantMessageId =
+              //   finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
 
-            updateFn([
-              {
-                messageId: regenerationRequest
-                  ? regenerationRequest?.parentMessage?.messageId!
-                  : initialFetchDetails.user_message_id!,
-                message: currMessage,
-                type: "user",
-                files: currentMessageFiles,
-                toolCall: null,
-                parentMessageId: error ? null : lastSuccessfulMessageId,
-                childrenMessageIds: [
-                  ...(regenerationRequest?.parentMessage?.childrenMessageIds ||
-                    []),
-                  initialFetchDetails.assistant_message_id!,
-                ],
-                latestChildMessageId: initialFetchDetails.assistant_message_id,
-              },
-              {
-                messageId: initialFetchDetails.assistant_message_id!,
-                message: error || answer,
-                type: error ? "error" : "assistant",
-                retrievalType,
-                query: finalMessage?.rephrased_query || query,
-                documents:
-                  finalMessage?.context_docs?.top_documents || documents,
-                citations: finalMessage?.citations || {},
-                files: finalMessage?.files || aiMessageImages || [],
-                toolCall: finalMessage?.tool_call || toolCall,
-                parentMessageId: regenerationRequest
-                  ? regenerationRequest?.parentMessage?.messageId!
-                  : initialFetchDetails.user_message_id,
-                alternateAssistantID: alternativeAssistant?.id,
-                stackTrace: stackTrace,
-                alternate_model: finalMessage?.alternate_model,
-              },
-            ]);
+              updateFn([
+                {
+                  messageId: regenerationRequest
+                    ? regenerationRequest?.parentMessage?.messageId!
+                    : initialFetchDetails.user_message_id!,
+                  message: currMessage,
+                  type:
+                    previousMessage?.type || generatedAssistantId
+                      ? "assistant"
+                      : "user",
+                  files: previousMessage?.files || files,
+                  toolCall: previousMessage?.toolCall || null,
+                  parentMessageId:
+                    previousMessage?.parentMessageId ||
+                    parentMessage?.messageId ||
+                    null,
+                  childrenMessageIds: [
+                    ...(regenerationRequest?.parentMessage
+                      ?.childrenMessageIds || []),
+                    initialFetchDetails.assistant_message_id!,
+                  ],
+                  latestChildMessageId:
+                    initialFetchDetails.assistant_message_id,
+                },
+                {
+                  messageId: initialFetchDetails.assistant_message_id!,
+                  message: error || answer,
+                  type: error ? "error" : "assistant",
+                  retrievalType,
+                  query: finalMessage?.rephrased_query || query,
+                  documents:
+                    finalMessage?.context_docs?.top_documents || documents,
+                  citations: finalMessage?.citations || {},
+                  files: finalMessage?.files || aiMessageImages || [],
+                  toolCall: finalMessage?.tool_call || toolCall,
+                  parentMessageId: regenerationRequest
+                    ? regenerationRequest?.parentMessage?.messageId!
+                    : initialFetchDetails.user_message_id,
+
+                  alternateAssistantID: alternativeAssistant?.id,
+                },
+              ]);
+            }
+
+            // updateFn([
+            //   {
+            //     messageId: regenerationRequest
+            //       ? regenerationRequest?.parentMessage?.messageId!
+            //       : initialFetchDetails.user_message_id!,
+            //     message: currMessage,
+            //     type: "user",
+            //     files: currentMessageFiles,
+            //     toolCall: null,
+            //     parentMessageId: error ? null : lastSuccessfulMessageId,
+            //     childrenMessageIds: [
+            //       ...(regenerationRequest?.parentMessage?.childrenMessageIds ||
+            //         []),
+            //       initialFetchDetails.assistant_message_id!,
+            //     ],
+            //     latestChildMessageId: initialFetchDetails.assistant_message_id,
+            //   },
+            //   {
+            //     messageId: initialFetchDetails.assistant_message_id!,
+            //     message: error || answer,
+            //     type: error ? "error" : "assistant",
+            //     retrievalType,
+            //     query: finalMessage?.rephrased_query || query,
+            //     documents:
+            //       finalMessage?.context_docs?.top_documents || documents,
+            //     citations: finalMessage?.citations || {},
+            //     files: finalMessage?.files || aiMessageImages || [],
+            //     toolCall: finalMessage?.tool_call || toolCall,
+            //     parentMessageId: regenerationRequest
+            //       ? regenerationRequest?.parentMessage?.messageId!
+            //       : initialFetchDetails.user_message_id,
+            //     alternateAssistantID: alternativeAssistant?.id,
+            //     stackTrace: stackTrace,
+            //     alternate_model: finalMessage?.alternate_model,
+            //   },
+            // ]);
           }
         }
       }
