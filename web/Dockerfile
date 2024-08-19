@@ -104,5 +104,7 @@ ENV NEXT_PUBLIC_DISABLE_LOGOUT=${NEXT_PUBLIC_DISABLE_LOGOUT}
 # expose is done for AWS deployment
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
+CMD ["node", "server.js"]

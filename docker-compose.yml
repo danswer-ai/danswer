@@ -16,6 +16,7 @@ services:
     restart: always
     ports:
       - "8080:8080"
+    network_mode: host
     environment:
       # Auth Settings
       - AUTH_TYPE=${AUTH_TYPE:-disabled}
@@ -212,6 +213,7 @@ services:
     depends_on:
       - api_server
     restart: always
+    network_mode: host
     environment:
       - INTERNAL_URL=http://api_server:8080
       - WEB_DOMAIN=${WEB_DOMAIN:-}
