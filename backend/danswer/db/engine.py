@@ -75,13 +75,13 @@ if LOG_POSTGRES_CONN_COUNTS:
     def log_checkout(dbapi_connection, connection_record, connection_proxy):
         global checkout_count
         checkout_count += 1
-        print(f"Total connection checkouts: {checkout_count}")
+        logger.debug(f"Total connection checkouts: {checkout_count}")
 
     @event.listens_for(Engine, "checkin")
     def log_checkin(dbapi_connection, connection_record):
         global checkin_count
         checkin_count += 1
-        print(f"Total connection checkins: {checkin_count}")
+        logger.debug(f"Total connection checkins: {checkin_count}")
 
 
 """END DEBUGGING LOGGING"""
