@@ -5,6 +5,7 @@ from sqlalchemy import delete
 from sqlalchemy import desc
 from sqlalchemy import Select
 from sqlalchemy import select
+from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DocumentSource
@@ -27,14 +28,16 @@ logger = setup_logger()
 
 
 def _add_curator_filters(stmt: Select, user: User, for_editing: bool = True) -> Select:
-    stmt = stmt.outerjoin(UserGroup__ConnectorCredentialPair).outerjoin(
-        User__UserGroup,
-        User__UserGroup.user_group_id
-        == UserGroup__ConnectorCredentialPair.user_group_id,
+    UG__CCpair = aliased(UserGroup__ConnectorCredentialPair)
+    User__UG = aliased(User__UserGroup)
+
+    stmt = stmt.outerjoin(UG__CCpair).outerjoin(
+        User__UG,
+        User__UG.user_group_id == UG__CCpair.user_group_id,
     )
-    where_clause = User__UserGroup.user_id == user.id
+    where_clause = User__UG.user_id == user.id
     if user.role == UserRole.CURATOR and for_editing:
-        where_clause &= User__UserGroup.is_curator == True  # noqa: E712
+        where_clause &= User__UG.is_curator == True  # noqa: E712
     if not for_editing:
         where_clause |= ConnectorCredentialPair.is_public == True  # noqa: E712
 

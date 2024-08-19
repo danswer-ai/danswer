@@ -36,6 +36,7 @@ from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.manage.models import BoostDoc
 from danswer.server.manage.models import BoostUpdateRequest
 from danswer.server.manage.models import HiddenUpdateRequest
+from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
 
 router = APIRouter(prefix="/manage")
@@ -48,11 +49,14 @@ logger = setup_logger()
 def get_most_boosted_docs(
     ascending: bool,
     limit: int,
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[BoostDoc]:
     boost_docs = fetch_docs_ranked_by_boost(
-        ascending=ascending, limit=limit, db_session=db_session
+        ascending=ascending,
+        limit=limit,
+        db_session=db_session,
+        user=user,
     )
     return [
         BoostDoc(
@@ -70,45 +74,43 @@ def get_most_boosted_docs(
 @router.post("/admin/doc-boosts")
 def document_boost_update(
     boost_update: BoostUpdateRequest,
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
-) -> None:
+) -> StatusResponse:
     curr_ind_name, sec_ind_name = get_both_index_names(db_session)
     document_index = get_default_document_index(
         primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
     )
 
-    try:
-        update_document_boost(
-            db_session=db_session,
-            document_id=boost_update.document_id,
-            boost=boost_update.boost,
-            document_index=document_index,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    update_document_boost(
+        db_session=db_session,
+        document_id=boost_update.document_id,
+        boost=boost_update.boost,
+        document_index=document_index,
+        user=user,
+    )
+    return StatusResponse(success=True, message="Updated document boost")
 
 
 @router.post("/admin/doc-hidden")
 def document_hidden_update(
     hidden_update: HiddenUpdateRequest,
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
-) -> None:
+) -> StatusResponse:
     curr_ind_name, sec_ind_name = get_both_index_names(db_session)
     document_index = get_default_document_index(
         primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
     )
 
-    try:
-        update_document_hidden(
-            db_session=db_session,
-            document_id=hidden_update.document_id,
-            hidden=hidden_update.hidden,
-            document_index=document_index,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    update_document_hidden(
+        db_session=db_session,
+        document_id=hidden_update.document_id,
+        hidden=hidden_update.hidden,
+        document_index=document_index,
+        user=user,
+    )
+    return StatusResponse(success=True, message="Updated document boost")
 
 
 @router.get("/admin/genai-api-key/validate")

@@ -1,22 +1,35 @@
 from uuid import UUID
 
+from fastapi import HTTPException
+from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import delete
 from sqlalchemy import desc
+from sqlalchemy import Select
 from sqlalchemy import select
+from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.db.chat import get_chat_message
 from danswer.db.models import ChatMessageFeedback
+from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Document as DbDocument
+from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.models import DocumentRetrievalFeedback
+from danswer.db.models import User
+from danswer.db.models import User__UserGroup
+from danswer.db.models import UserGroup__ConnectorCredentialPair
+from danswer.db.models import UserRole
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 
-def fetch_db_doc_by_id(doc_id: str, db_session: Session) -> DbDocument:
+def _fetch_db_doc_by_id(doc_id: str, db_session: Session) -> DbDocument:
     stmt = select(DbDocument).where(DbDocument.id == doc_id)
     result = db_session.execute(stmt)
     doc = result.scalar_one_or_none()
@@ -27,15 +40,50 @@ def fetch_db_doc_by_id(doc_id: str, db_session: Session) -> DbDocument:
     return doc
 
 
+def _add_curator_filters(stmt: Select, user: User, for_editing: bool = True) -> Select:
+    DocByCC = aliased(DocumentByConnectorCredentialPair)
+    CCPair = aliased(ConnectorCredentialPair)
+    UG__CCpair = aliased(UserGroup__ConnectorCredentialPair)
+    User__UG = aliased(User__UserGroup)
+
+    stmt = (
+        stmt.outerjoin(DocByCC, DocByCC.id == DbDocument.id)
+        .outerjoin(
+            CCPair,
+            and_(
+                CCPair.connector_id == DocByCC.connector_id,
+                CCPair.credential_id == DocByCC.credential_id,
+            ),
+        )
+        .outerjoin(UG__CCpair, UG__CCpair.cc_pair_id == CCPair.id)
+        .outerjoin(User__UG, User__UG.user_group_id == UG__CCpair.user_group_id)
+    )
+
+    where_clause = User__UG.user_id == user.id
+    if user.role == UserRole.CURATOR and for_editing:
+        where_clause &= User__UG.is_curator == True  # noqa: E712
+    if not for_editing:
+        where_clause |= CCPair.is_public == True  # noqa: E712
+
+    return stmt.where(where_clause)
+
+
 def fetch_docs_ranked_by_boost(
-    db_session: Session, ascending: bool = False, limit: int = 100
+    db_session: Session,
+    user: User | None = None,
+    ascending: bool = False,
+    limit: int = 100,
 ) -> list[DbDocument]:
     order_func = asc if ascending else desc
-    stmt = (
-        select(DbDocument)
-        .order_by(order_func(DbDocument.boost), order_func(DbDocument.semantic_id))
-        .limit(limit)
+    stmt = select(DbDocument)
+
+    if user and user.role != UserRole.ADMIN:
+        stmt = _add_curator_filters(stmt=stmt, user=user, for_editing=False)
+
+    stmt = stmt.order_by(
+        order_func(DbDocument.boost), order_func(DbDocument.semantic_id)
     )
+    stmt = stmt.limit(limit)
     result = db_session.execute(stmt)
     doc_list = result.scalars().all()
 
@@ -43,12 +91,20 @@ def fetch_docs_ranked_by_boost(
 
 
 def update_document_boost(
-    db_session: Session, document_id: str, boost: int, document_index: DocumentIndex
+    db_session: Session,
+    document_id: str,
+    boost: int,
+    document_index: DocumentIndex,
+    user: User | None = None,
 ) -> None:
     stmt = select(DbDocument).where(DbDocument.id == document_id)
+    if user and user.role != UserRole.ADMIN:
+        stmt = _add_curator_filters(stmt, user, for_editing=True)
     result = db_session.execute(stmt).scalar_one_or_none()
     if result is None:
-        raise ValueError(f"No document found with ID: '{document_id}'")
+        raise HTTPException(
+            status_code=400, detail="Document is not editable by this user"
+        )
 
     result.boost = boost
 
@@ -63,12 +119,20 @@ def update_document_boost(
 
 
 def update_document_hidden(
-    db_session: Session, document_id: str, hidden: bool, document_index: DocumentIndex
+    db_session: Session,
+    document_id: str,
+    hidden: bool,
+    document_index: DocumentIndex,
+    user: User | None = None,
 ) -> None:
     stmt = select(DbDocument).where(DbDocument.id == document_id)
+    if user and user.role != UserRole.ADMIN:
+        stmt = _add_curator_filters(stmt, user, for_editing=True)
     result = db_session.execute(stmt).scalar_one_or_none()
     if result is None:
-        raise ValueError(f"No document found with ID: '{document_id}'")
+        raise HTTPException(
+            status_code=400, detail="Document is not editable by this user"
+        )
 
     result.hidden = hidden
 
@@ -92,7 +156,7 @@ def create_doc_retrieval_feedback(
     feedback: SearchFeedbackType | None = None,
 ) -> None:
     """Creates a new Document feedback row and updates the boost value in Postgres and Vespa"""
-    db_doc = fetch_db_doc_by_id(document_id, db_session)
+    db_doc = _fetch_db_doc_by_id(document_id, db_session)
 
     retrieval_feedback = DocumentRetrievalFeedback(
         chat_message_id=message_id,
