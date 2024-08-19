@@ -188,7 +188,7 @@ def list_personas(
     include_deleted: bool = False,
 ) -> list[PersonaSnapshot]:
     user_id = user.id if user is not None else None
-    result = [
+    return [
         PersonaSnapshot.from_model(persona)
         for persona in get_personas(
             user_id=user_id,
@@ -197,7 +197,6 @@ def list_personas(
             joinedload_all=True,
         )
     ]
-    return result
 
 
 @basic_router.get("/{persona_id}")

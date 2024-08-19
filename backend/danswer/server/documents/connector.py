@@ -387,7 +387,6 @@ def get_connector_indexing_status(
     ]
 
     latest_index_attempts = get_latest_index_attempts(
-        # connector_credential_pair_identifiers=cc_pair_identifiers,
         secondary_index=secondary_index,
         db_session=db_session,
     )

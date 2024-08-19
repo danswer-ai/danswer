@@ -106,7 +106,7 @@ class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
     oauth_accounts: Mapped[list[OAuthAccount]] = relationship(
-        "OAuthAccount",  # lazy="joined"
+        "OAuthAccount", lazy="joined"
     )
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, native_enum=False, default=UserRole.BASIC)
@@ -133,8 +133,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
     # relationships
     credentials: Mapped[list["Credential"]] = relationship(
-        "Credential",
-        back_populates="user",  # lazy="joined"
+        "Credential", back_populates="user", lazy="joined"
     )
     chat_sessions: Mapped[list["ChatSession"]] = relationship(
         "ChatSession", back_populates="user"

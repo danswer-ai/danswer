@@ -1,7 +1,6 @@
 "use client";
-import ReactMarkdown from "react-markdown";
 
-import { redirect, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   BackendChatSession,
   BackendMessage,
@@ -23,7 +22,6 @@ import Cookies from "js-cookie";
 import { HistorySidebar } from "./sessionSidebar/HistorySidebar";
 import { Persona } from "../admin/assistants/interfaces";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import {
   buildChatUrl,
   buildLatestMessageChain,
@@ -84,7 +82,6 @@ import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 import { DeleteChatModal } from "./modal/DeleteChatModal";
-import remarkGfm from "remark-gfm";
 import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
@@ -1304,7 +1301,6 @@ export function ChatPage({
   return (
     <>
       <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
-      <InstantSSRAutoRefresh />
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
       {popup}
