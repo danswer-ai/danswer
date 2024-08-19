@@ -26,9 +26,6 @@ from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.openapi import OpenAPIResponseType
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
-from sqlalchemy import select
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from danswer.auth.invited_users import get_invited_users
@@ -54,7 +51,7 @@ from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_default_admin_user_emails
 from danswer.db.auth import get_user_count
 from danswer.db.auth import get_user_db
-from danswer.db.engine import get_async_session
+from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import AccessToken
 from danswer.db.models import User
@@ -62,6 +59,7 @@ from danswer.db.users import get_user_by_email
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
+from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 
 logger = setup_logger()
@@ -327,53 +325,44 @@ async def optional_user_(
 
 async def optional_user(
     request: Request,
-    # user: User | None = Depends(optional_fastapi_current_user),
-    # db_session: Session = Depends(get_session),
-    async_db_session: AsyncSession = Depends(get_async_session),
+    user: User | None = Depends(optional_fastapi_current_user),
+    db_session: Session = Depends(get_session),
+    # async_db_session: AsyncSession = Depends(get_async_session),
 ) -> User | None:
-    cookie = request.cookies.get("fastapiusersauth")
-    if not cookie:
-        return None
+    # cookie = request.cookies.get("fastapiusersauth")
+    # if not cookie:
+    #     return None
 
-    access_token = await async_db_session.scalar(
-        select(AccessToken).where(AccessToken.token == cookie)
-    )
-    if not access_token:
-        return None
+    # access_token = await async_db_session.scalar(
+    #     select(AccessToken).where(AccessToken.token == cookie)
+    # )
+    # if not access_token:
+    #     return None
 
     # user_result = await async_db_session.execute(
-    #     select(
-    #         User.id,
-    #         User.email,
-    #         User.is_verified,
-    #         User.oidc_expiry,
-    #         User.chosen_assistants,
-    #     ).where(User.id == access_token.user_id)
+    #     text(
+    #         f"""select id, email, is_verified, oidc_expiry, chosen_assistants
+    #         from public.user where id = '{access_token.user_id}'"""
+    #     ),
     # )
-    user_result = await async_db_session.execute(
-        text(
-            f"""select id, email, is_verified, oidc_expiry, chosen_assistants
-            from public.user where id = '{access_token.user_id}'"""
-        ),
-    )
-    user_data = user_result.fetchone()
-    dummy_user = User(
-        id=user_data[0],
-        email=user_data[1],
-        is_verified=user_data[2],
-        oidc_expiry=user_data[3],
-        role=UserRole.BASIC,
-        is_active=True,
-        is_superuser=False,
-        chosen_assistants=user_data[4],
-        default_model=None,
-    )
-    return dummy_user
+    # user_data = user_result.fetchone()
+    # dummy_user = User(
+    #     id=user_data[0],
+    #     email=user_data[1],
+    #     is_verified=user_data[2],
+    #     oidc_expiry=user_data[3],
+    #     role=UserRole.BASIC,
+    #     is_active=True,
+    #     is_superuser=False,
+    #     chosen_assistants=user_data[4],
+    #     default_model=None,
+    # )
+    # return dummy_user
 
-    # versioned_fetch_user = fetch_versioned_implementation(
-    #     "danswer.auth.users", "optional_user_"
-    # )
-    # return await versioned_fetch_user(request, user, db_session)
+    versioned_fetch_user = fetch_versioned_implementation(
+        "danswer.auth.users", "optional_user_"
+    )
+    return await versioned_fetch_user(request, user, db_session)
 
 
 async def double_check_user(
