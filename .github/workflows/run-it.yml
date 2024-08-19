@@ -107,7 +107,7 @@ jobs:
       - name: Build integration test Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./backend
           file: tests/integration/Dockerfile
           platforms: linux/arm64
           pull: true
