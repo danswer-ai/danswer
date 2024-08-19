@@ -254,10 +254,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     verify_auth()
 
     if OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET:
-        logger.info("Both OAuth Client ID and Secret are configured.")
+        logger.notice("Both OAuth Client ID and Secret are configured.")
 
     if DISABLE_GENERATIVE_AI:
-        logger.info("Generative AI Q&A disabled")
+        logger.notice("Generative AI Q&A disabled")
 
     # fill up Postgres connection pools
     await warm_up_connections()

@@ -46,6 +46,7 @@ from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import LOG_LEVEL
 from shared_configs.configs import MODEL_SERVER_PORT
 
+
 logger = setup_logger()
 
 # If the indexing dies, it's most likely due to resource constraints,
