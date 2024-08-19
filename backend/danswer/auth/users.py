@@ -352,7 +352,7 @@ async def optional_user(
     # )
     user_result = await async_db_session.execute(
         text(
-            f"""select id, email, is_verified, oidc_expiry
+            f"""select id, email, is_verified, oidc_expiry, chosen_assistants
             from public.user where id = '{access_token.user_id}'"""
         ),
     )
@@ -365,7 +365,7 @@ async def optional_user(
         role=UserRole.BASIC,
         is_active=True,
         is_superuser=False,
-        chosen_assistants=None,
+        chosen_assistants=user_data[4],
         default_model=None,
     )
     return dummy_user
