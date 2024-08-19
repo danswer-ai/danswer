@@ -17,7 +17,7 @@ def list_users(
     stmt = select(User)
 
     if q:
-        stmt = stmt.where(User.email.ilike(f"%{q}%"))
+        stmt = stmt.where(User.email.ilike(f"%{q}%"))  # type: ignore
 
     if user and user.role != UserRole.ADMIN:
         stmt = stmt.join(User__UserGroup)

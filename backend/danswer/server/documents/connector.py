@@ -68,6 +68,7 @@ from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_latest_finished_index_attempt_for_cc_pair
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import User
+from danswer.db.models import UserRole
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.file_store.file_store import get_default_file_store
 from danswer.server.documents.models import AuthStatus
@@ -497,17 +498,48 @@ def _validate_connector_allowed(source: DocumentSource) -> None:
     )
 
 
+def _check_connector_permissions(
+    connector_data: ConnectorCredentialBase, user: User | None
+) -> ConnectorBase:
+    """
+    This is not a proper permission check, but this should prevent curators creating bad situations
+    until a long-term solution is implemented (Replacing CC pairs/Connectors with Connections)
+    """
+    logger.info(f"connector_data: {connector_data.__dict__}")
+    if user and user.role != UserRole.ADMIN:
+        if connector_data.is_public:
+            raise HTTPException(
+                status_code=400,
+                detail="Public connectors can only be created by admins",
+            )
+        if not connector_data.groups:
+            raise HTTPException(
+                status_code=400,
+                detail="Connectors created by curators must have groups",
+            )
+    return ConnectorBase(
+        name=connector_data.name,
+        source=connector_data.source,
+        input_type=connector_data.input_type,
+        connector_specific_config=connector_data.connector_specific_config,
+        refresh_freq=connector_data.refresh_freq,
+        prune_freq=connector_data.prune_freq,
+        indexing_start=connector_data.indexing_start,
+    )
+
+
 @router.post("/admin/connector")
 def create_connector_from_model(
-    connector_data: ConnectorBase,
-    _: User = Depends(current_curator_or_admin_user),
+    connector_data: ConnectorCredentialBase,
+    user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
     try:
         _validate_connector_allowed(connector_data.source)
+        connector_base = _check_connector_permissions(connector_data, user)
         return create_connector(
             db_session=db_session,
-            connector_data=connector_data,
+            connector_data=connector_base,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -521,7 +553,9 @@ def create_connector_with_mock_credential(
 ) -> StatusResponse:
     try:
         _validate_connector_allowed(connector_data.source)
-        connector_response = create_connector(connector_data, db_session)
+        connector_response = create_connector(
+            db_session=db_session, connector_data=connector_data
+        )
         mock_credential = CredentialBase(
             credential_json={}, admin_public=True, source=connector_data.source
         )
@@ -531,7 +565,7 @@ def create_connector_with_mock_credential(
         response = add_credential_to_connector(
             connector_id=cast(int, connector_response.id),  # will aways be an int
             credential_id=credential.id,
-            is_public=connector_data.is_public,
+            is_public=connector_data.is_public or False,
             user=user,
             db_session=db_session,
             cc_pair_name=connector_data.name,
@@ -545,16 +579,17 @@ def create_connector_with_mock_credential(
 @router.patch("/admin/connector/{connector_id}")
 def update_connector_from_model(
     connector_id: int,
-    connector_data: ConnectorBase,
-    _: User = Depends(current_admin_user),
+    connector_data: ConnectorCredentialBase,
+    user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ConnectorSnapshot | StatusResponse[int]:
     try:
         _validate_connector_allowed(connector_data.source)
+        connector_base = _check_connector_permissions(connector_data, user)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    updated_connector = update_connector(connector_id, connector_data, db_session)
+    updated_connector = update_connector(connector_id, connector_base, db_session)
     if updated_connector is None:
         raise HTTPException(
             status_code=404, detail=f"Connector {connector_id} does not exist"

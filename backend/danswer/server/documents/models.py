@@ -44,8 +44,8 @@ class ConnectorBase(BaseModel):
 
 
 class ConnectorCredentialBase(ConnectorBase):
-    is_public: bool
-    groups: list[int] | None
+    is_public: bool | None = None
+    groups: list[int] | None = None
 
 
 class ConnectorSnapshot(ConnectorBase):

@@ -54,7 +54,7 @@ def fetch_persona_by_id(
 ) -> Persona:
     stmt = select(Persona).where(Persona.id == persona_id).distinct()
     if user is not None and user.role != UserRole.ADMIN:
-        stmt = _add_curator_filters(stmt, user, for_editing=True)
+        stmt = _add_curator_filters(stmt=stmt, user=user, for_editing=for_editing)
     persona = db_session.scalars(stmt).one_or_none()
     if not persona:
         raise HTTPException(

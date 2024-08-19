@@ -10,7 +10,8 @@ export const submitFiles = async (
   setSelectedFiles: (files: File[]) => void,
   name: string,
   advancedConfig: AdvancedConfig,
-  isPublic: boolean
+  isPublic: boolean,
+  groups?: number[]
 ) => {
   const formData = new FormData();
 
@@ -43,6 +44,8 @@ export const submitFiles = async (
     refresh_freq: null,
     prune_freq: null,
     indexing_start: null,
+    is_public: isPublic,
+    groups: groups,
   });
   if (connectorErrorMsg || !connector) {
     setPopup({
@@ -77,7 +80,8 @@ export const submitFiles = async (
     connector.id,
     credentialId,
     name,
-    isPublic
+    isPublic,
+    groups
   );
   if (!credentialResponse.ok) {
     const credentialResponseJson = await credentialResponse.json();

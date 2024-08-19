@@ -274,7 +274,7 @@ def add_credential_to_connector(
     is_public: bool,
     user: User | None,
     db_session: Session,
-) -> int:
+) -> StatusResponse:
     connector = fetch_connector_by_id(connector_id, db_session)
     credential = fetch_credential_by_id(credential_id, user, db_session)
 
@@ -312,7 +312,11 @@ def add_credential_to_connector(
     db_session.add(association)
     db_session.commit()
 
-    return association.id
+    return StatusResponse(
+        success=False,
+        message=f"Connector already has Credential {credential_id}",
+        data=connector_id,
+    )
 
 
 def remove_credential_from_connector(

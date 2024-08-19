@@ -1,7 +1,16 @@
-import React, { Dispatch, SetStateAction, useEffect } from "react";
-import { Formik, Form, Field, FieldArray } from "formik";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import {
+  Formik,
+  Form,
+  Field,
+  FieldArray,
+  FormikProps,
+  ArrayHelpers,
+} from "formik";
 import * as Yup from "yup";
 import { FaPlus } from "react-icons/fa";
+import { useUserGroups } from "@/lib/hooks";
+import { UserGroup } from "@/lib/types";
 import { EditingValue } from "@/components/credentials/EditingValue";
 import { Divider } from "@tremor/react";
 import CredentialSubText from "@/components/credentials/CredentialFields";
@@ -10,6 +19,17 @@ import { FileUpload } from "@/components/admin/connectors/FileUpload";
 import { ConnectionConfiguration } from "@/lib/connectors/connectors";
 import { useFormContext } from "@/components/context/FormContext";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { Text } from "@tremor/react";
+import { FiUsers } from "react-icons/fi";
+import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
+import {
+  IsPublicGroupSelectorFormType,
+  IsPublicGroupSelector,
+} from "@/components/IsPublicGroupSelector";
+import {
+  TextFormField,
+  BooleanFormField,
+} from "@/components/admin/connectors/Field";
 
 export interface DynamicConnectionFormProps {
   config: ConnectionConfiguration;
@@ -21,6 +41,8 @@ export interface DynamicConnectionFormProps {
   setName: Dispatch<SetStateAction<string>>;
   updateValues: (field: string, value: any) => void;
   isPublic: boolean;
+  groups: number[];
+  setGroups: Dispatch<SetStateAction<number[]>>;
   onFormStatusChange: (isValid: boolean) => void; // New prop
 }
 
@@ -33,11 +55,18 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   setSelectedFiles,
   isPublic,
   setIsPublic,
+  groups,
+  setGroups,
   initialName,
   onFormStatusChange,
 }) => {
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
+  const { setAllowAdvanced } = useFormContext();
+  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
+
   const initialValues = {
     name: initialName || "",
+    groups: [], // Initialize groups as an empty array
     ...(defaultValues ||
       config.values.reduce(
         (acc, field, ind) => {
@@ -55,9 +84,6 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
         {} as Record<string, any>
       )),
   };
-  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
-
-  const { setAllowAdvanced } = useFormContext();
 
   const validationSchema = Yup.object().shape({
     name: Yup.string().required("Connector Name is required"),
@@ -292,18 +318,77 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
               {isPaidEnterpriseFeaturesEnabled && (
                 <>
                   <Divider />
-
                   <EditingValue
                     description={`If set, then documents indexed by this connector will be visible to all users. If turned off, then only users who explicitly have been given access to the documents (e.g. through a User Group) will have access`}
                     optional
-                    setFieldValue={(field: string, value: boolean) =>
-                      setIsPublic(value)
-                    }
+                    setFieldValue={(field: string, value: boolean) => {
+                      setIsPublic(value);
+                      if (value) {
+                        setGroups([]); // Clear groups when setting to public
+                      }
+                    }}
                     type={"checkbox"}
                     label={"Documents are Public?"}
                     name={"public"}
                     currentValue={isPublic}
                   />
+                  {!isPublic && (
+                    <div>
+                      <Text className="text-sm font-medium text-text-700 mb-2">
+                        Select User Groups
+                      </Text>
+                      <FieldArray
+                        name="groups"
+                        render={() => (
+                          <div className="flex gap-2 flex-wrap">
+                            {!userGroupsIsLoading &&
+                              userGroups &&
+                              userGroups.map((userGroup: UserGroup) => {
+                                const isSelected =
+                                  groups?.includes(userGroup.id) || false;
+                                return (
+                                  <div
+                                    key={userGroup.id}
+                                    className={`
+                                    px-3 
+                                    py-1
+                                    rounded-lg 
+                                    border
+                                    border-border 
+                                    w-fit 
+                                    flex 
+                                    cursor-pointer 
+                                    ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
+                                  `}
+                                    onClick={() => {
+                                      if (setGroups) {
+                                        if (isSelected) {
+                                          setGroups(
+                                            groups?.filter(
+                                              (id) => id !== userGroup.id
+                                            ) || []
+                                          );
+                                        } else {
+                                          setGroups([
+                                            ...(groups || []),
+                                            userGroup.id,
+                                          ]);
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    <div className="my-auto flex">
+                                      <FiUsers className="my-auto mr-2" />{" "}
+                                      {userGroup.name}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        )}
+                      />
+                    </div>
+                  )}
                 </>
               )}
             </Form>

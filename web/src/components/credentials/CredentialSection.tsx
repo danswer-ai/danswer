@@ -50,8 +50,6 @@ export default function CredentialSection({
     { refreshInterval: 5000 } // 5 seconds
   );
 
-  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
-
   const onSwap = async (
     selectedCredential: Credential<any>,
     connectorId: number
@@ -193,7 +191,6 @@ export default function CredentialSection({
             setPopup={setPopup}
             onSwap={onSwap}
             onClose={closeCreateCredential}
-            userGroups={userGroups || []}
           />
         </Modal>
       )}

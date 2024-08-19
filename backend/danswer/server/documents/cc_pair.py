@@ -153,6 +153,8 @@ def associate_credential_to_connector(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
+    logger.info(f"Associating credential {credential_id} to connector {connector_id}")
+    logger.info(f"Metadata: {metadata}")
     if user and user.role != UserRole.ADMIN and metadata.is_public:
         raise HTTPException(
             status_code=400,
@@ -160,7 +162,7 @@ def associate_credential_to_connector(
         )
 
     try:
-        cc_pair_id = add_credential_to_connector(
+        response = add_credential_to_connector(
             connector_id=connector_id,
             credential_id=credential_id,
             cc_pair_name=metadata.name,
@@ -169,18 +171,14 @@ def associate_credential_to_connector(
             db_session=db_session,
         )
 
-        if metadata.groups:
+        if metadata.groups and isinstance(response.data, int):
             relate_groups_to_cc_pair(
                 db_session=db_session,
-                cc_pair_id=cc_pair_id,
+                cc_pair_id=response.data,
                 user_group_ids=metadata.groups,
             )
 
-        return StatusResponse(
-            success=True,
-            message=f"New Credential {credential_id} added to Connector",
-            data=connector_id,
-        )
+        return response
     except IntegrityError:
         raise HTTPException(status_code=400, detail="Name must be unique")
 

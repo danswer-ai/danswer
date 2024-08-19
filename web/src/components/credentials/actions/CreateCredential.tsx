@@ -24,88 +24,15 @@ import { ActionType, dictionaryType } from "../types";
 import { createValidationSchema } from "../lib";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
-import { ArrayHelpers, FieldArray } from "formik";
-import { Text } from "@tremor/react";
-import { FiUsers } from "react-icons/fi";
+import {
+  IsPublicGroupSelectorFormType,
+  IsPublicGroupSelector,
+} from "@/components/IsPublicGroupSelector";
 
-// Update the formType definition
-type formType = {
+type formType = IsPublicGroupSelectorFormType & {
   name: string;
-  curator_public: boolean;
-  groups: number[];
-  [key: string]: string | boolean | number[];
+  [key: string]: any; // For additional credential fields
 };
-
-const AdvancedOptions = ({
-  formikProps,
-  userGroups,
-}: {
-  formikProps: FormikProps<formType>;
-  userGroups: UserGroup[];
-}) => (
-  <div className="mt-4">
-    <BooleanFormField
-      name="curator_public"
-      label="Is Public?"
-      subtext={
-        <>
-          If set, then documents indexed by this credential will be visible to{" "}
-          <b>all users</b>. If turned off, then only users who explicitly have
-          been given access to the documents (e.g. through a User Group) will
-          have access.
-        </>
-      }
-    />
-
-    {!formikProps.values.curator_public && (
-      <>
-        <Text className="mb-3">
-          If any groups are specified, then this Credential will only be visible
-          to the specified groups. If no groups are specified, then the
-          Credential will be visible to all users.
-        </Text>
-        <FieldArray
-          name="groups"
-          render={(arrayHelpers: ArrayHelpers) => (
-            <div className="flex gap-2 flex-wrap">
-              {userGroups.map((userGroup: UserGroup) => {
-                const ind = formikProps.values.groups.indexOf(userGroup.id);
-                let isSelected = ind !== -1;
-                return (
-                  <div
-                    key={userGroup.id}
-                    className={`
-                      px-3 
-                      py-1
-                      rounded-lg 
-                      border
-                      border-border 
-                      w-fit 
-                      flex 
-                      cursor-pointer 
-                      ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
-                    `}
-                    onClick={() => {
-                      if (isSelected) {
-                        arrayHelpers.remove(ind);
-                      } else {
-                        arrayHelpers.push(userGroup.id);
-                      }
-                    }}
-                  >
-                    <div className="my-auto flex">
-                      <FiUsers className="my-auto mr-2" /> {userGroup.name}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        />
-      </>
-    )}
-  </div>
-);
 
 export default function CreateCredential({
   hideSource,
@@ -117,7 +44,6 @@ export default function CreateCredential({
   onSwap = async () => null,
   swapConnector,
   refresh = () => null,
-  userGroups,
 }: {
   // Source information
   hideSource?: boolean; // hides docs link
@@ -140,8 +66,6 @@ export default function CreateCredential({
 
   // Mutating parent state
   refresh?: () => void;
-
-  userGroups: UserGroup[];
 }) {
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
@@ -161,13 +85,13 @@ export default function CreateCredential({
     setSubmitting(true);
     formikHelpers.setSubmitting(true);
 
-    const { name, curator_public, groups, ...credentialValues } = values;
+    const { name, is_public, groups, ...credentialValues } = values;
 
     try {
       const response = await submitCredential({
         credential_json: credentialValues,
         admin_public: true,
-        curator_public: curator_public,
+        curator_public: is_public,
         groups: groups,
         name: name,
         source: sourceType,
@@ -225,7 +149,7 @@ export default function CreateCredential({
       initialValues={
         {
           name: "",
-          curator_public: true,
+          is_public: true,
           groups: [],
         } as formType
       }
@@ -290,9 +214,9 @@ export default function CreateCredential({
                       setShowAdvancedOptions={setShowAdvancedOptions}
                     />
                     {showAdvancedOptions && (
-                      <AdvancedOptions
+                      <IsPublicGroupSelector
                         formikProps={formikProps}
-                        userGroups={userGroups}
+                        objectName="credential"
                       />
                     )}
                   </>

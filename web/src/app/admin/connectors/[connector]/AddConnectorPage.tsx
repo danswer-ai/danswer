@@ -9,7 +9,6 @@ import { Card, Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/lib";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { useUserGroups } from "@/lib/hooks";
 import { useFormContext } from "@/components/context/FormContext";
 import { getSourceDisplayName } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
@@ -24,6 +23,7 @@ import CreateCredential from "@/components/credentials/actions/CreateCredential"
 import ModifyCredential from "@/components/credentials/actions/ModifyCredential";
 import { ValidSources } from "@/lib/types";
 import { Credential, credentialTemplates } from "@/lib/connectors/credentials";
+import { ConnectorBase } from "@/lib/connectors/connectors";
 import {
   ConnectionConfiguration,
   connectorConfigs,
@@ -51,7 +51,6 @@ export default function AddConnector({
 }: {
   connector: ValidSources;
 }) {
-  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
   const [name, setName] = useState("");
   const [currentCredential, setCurrentCredential] =
     useState<Credential<any> | null>(null);
@@ -97,6 +96,7 @@ export default function AddConnector({
   const [pruneFreq, setPruneFreq] = useState<number>(defaultPrune);
   const [indexingStart, setIndexingStart] = useState<Date | null>(null);
   const [isPublic, setIsPublic] = useState(true);
+  const [groups, setGroups] = useState<number[]>([]);
   const [createConnectorToggle, setCreateConnectorToggle] = useState(false);
   const formRef = useRef<FormikProps<any>>(null);
   const [advancedFormPageState, setAdvancedFormPageState] = useState(true);
@@ -172,7 +172,8 @@ export default function AddConnector({
         setSelectedFiles,
         name,
         AdvancedConfig,
-        isPublic
+        isPublic,
+        groups
       );
       if (response) {
         setTimeout(() => {
@@ -191,6 +192,8 @@ export default function AddConnector({
         refresh_freq: refreshFreq * 60 || null,
         prune_freq: pruneFreq * 60 || null,
         indexing_start: indexingStart,
+        is_public: isPublic,
+        groups: groups,
       },
       undefined,
       credentialActivated ? false : true,
@@ -220,7 +223,8 @@ export default function AddConnector({
         response.id,
         credential?.id!,
         name,
-        isPublic
+        isPublic,
+        groups
       );
       if (linkCredentialResponse.ok) {
         setPopup({
@@ -384,7 +388,6 @@ export default function AddConnector({
                       setPopup={setPopup}
                       onSwitch={onSwap}
                       onClose={() => setCreateConnectorToggle(false)}
-                      userGroups={userGroups || []}
                     />
                   </>
                 </Modal>
@@ -414,6 +417,8 @@ export default function AddConnector({
               setName={setName}
               config={configuration}
               isPublic={isPublic}
+              groups={groups}
+              setGroups={setGroups}
               defaultValues={values}
               initialName={name}
               onFormStatusChange={handleFormStatusChange}
@@ -467,10 +472,10 @@ export default function AddConnector({
               key={advancedFormPageState ? 0 : 1}
               setIndexingStart={setIndexingStart}
               indexingStart={indexingStart}
-              currentPruneFreq={pruneFreq}
-              currentRefreshFreq={refreshFreq}
               setPruneFreq={setPruneFreq}
+              currentPruneFreq={pruneFreq}
               setRefreshFreq={setRefreshFreq}
+              currentRefreshFreq={refreshFreq}
               ref={formRef}
             />
 
