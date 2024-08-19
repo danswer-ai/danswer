@@ -366,7 +366,7 @@ class VespaIndex(DocumentIndex):
                     )
 
         self._apply_updates_batched(processed_updates_requests)
-        logger.info(
+        logger.debug(
             "Finished updating Vespa documents in %.2f seconds",
             time.monotonic() - update_start,
         )

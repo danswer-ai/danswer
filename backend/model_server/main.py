@@ -54,23 +54,23 @@ def _move_files_recursively(source: Path, dest: Path, overwrite: bool = False) -
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     if torch.cuda.is_available():
-        logger.info("GPU is available")
+        logger.notice("GPU is available")
     else:
-        logger.info("GPU is not available")
+        logger.notice("GPU is not available")
 
     if TEMP_HF_CACHE_PATH.is_dir():
-        logger.info("Moving contents of temp_huggingface to huggingface cache.")
+        logger.notice("Moving contents of temp_huggingface to huggingface cache.")
         _move_files_recursively(TEMP_HF_CACHE_PATH, HF_CACHE_PATH)
         shutil.rmtree(TEMP_HF_CACHE_PATH, ignore_errors=True)
-        logger.info("Moved contents of temp_huggingface to huggingface cache.")
+        logger.notice("Moved contents of temp_huggingface to huggingface cache.")
 
     torch.set_num_threads(max(MIN_THREADS_ML_MODELS, torch.get_num_threads()))
-    logger.info(f"Torch Threads: {torch.get_num_threads()}")
+    logger.notice(f"Torch Threads: {torch.get_num_threads()}")
 
     if not INDEXING_ONLY:
         warm_up_intent_model()
     else:
-        logger.info("This model server should only run document indexing.")
+        logger.notice("This model server should only run document indexing.")
 
     yield
 
@@ -91,8 +91,8 @@ app = get_model_app()
 
 
 if __name__ == "__main__":
-    logger.info(
+    logger.notice(
         f"Starting Danswer Model Server on http://{MODEL_SERVER_ALLOWED_HOST}:{str(MODEL_SERVER_PORT)}/"
     )
-    logger.info(f"Model Server Version: {__version__}")
+    logger.notice(f"Model Server Version: {__version__}")
     uvicorn.run(app, host=MODEL_SERVER_ALLOWED_HOST, port=MODEL_SERVER_PORT)

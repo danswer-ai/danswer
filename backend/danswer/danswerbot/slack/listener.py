@@ -10,6 +10,7 @@ from slack_sdk.socket_mode.response import SocketModeResponse
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import MessageType
+from danswer.configs.constants import SLACK_CHANNEL_ID
 from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
@@ -21,7 +22,6 @@ from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_I
 from danswer.danswerbot.slack.constants import GENERATE_ANSWER_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import IMMEDIATE_RESOLVED_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
-from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
 from danswer.danswerbot.slack.constants import VIEW_DOC_FEEDBACK_ID
 from danswer.danswerbot.slack.handlers.handle_buttons import handle_doc_feedback_button
 from danswer.danswerbot.slack.handlers.handle_buttons import handle_followup_button
@@ -39,7 +39,6 @@ from danswer.danswerbot.slack.handlers.handle_message import (
 from danswer.danswerbot.slack.handlers.handle_message import schedule_feedback_reminder
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.tokens import fetch_tokens
-from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import decompose_action_id
 from danswer.danswerbot.slack.utils import get_channel_name_from_id
 from danswer.danswerbot.slack.utils import get_danswer_bot_app_id
@@ -84,18 +83,18 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
         event = cast(dict[str, Any], req.payload.get("event", {}))
         msg = cast(str | None, event.get("text"))
         channel = cast(str | None, event.get("channel"))
-        channel_specific_logger = ChannelIdAdapter(
-            logger, extra={SLACK_CHANNEL_ID: channel}
-        )
+        channel_specific_logger = setup_logger(extra={SLACK_CHANNEL_ID: channel})
 
         # This should never happen, but we can't continue without a channel since
         # we can't send a response without it
         if not channel:
-            channel_specific_logger.error("Found message without channel - skipping")
+            channel_specific_logger.warning("Found message without channel - skipping")
             return False
 
         if not msg:
-            channel_specific_logger.error("Cannot respond to empty message - skipping")
+            channel_specific_logger.warning(
+                "Cannot respond to empty message - skipping"
+            )
             return False
 
         if (
@@ -185,9 +184,8 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
     if req.type == "slash_commands":
         # Verify that there's an associated channel
         channel = req.payload.get("channel_id")
-        channel_specific_logger = ChannelIdAdapter(
-            logger, extra={SLACK_CHANNEL_ID: channel}
-        )
+        channel_specific_logger = setup_logger(extra={SLACK_CHANNEL_ID: channel})
+
         if not channel:
             channel_specific_logger.error(
                 "Received DanswerBot command without channel - skipping"
@@ -230,7 +228,7 @@ def process_feedback(req: SocketModeRequest, client: SocketModeClient) -> None:
     )
 
     query_event_id, _, _ = decompose_action_id(feedback_id)
-    logger.info(f"Successfully handled QA feedback for event: {query_event_id}")
+    logger.notice(f"Successfully handled QA feedback for event: {query_event_id}")
 
 
 def build_request_details(
@@ -247,15 +245,17 @@ def build_request_details(
         msg = remove_danswer_bot_tag(msg, client=client.web_client)
 
         if DANSWER_BOT_REPHRASE_MESSAGE:
-            logger.info(f"Rephrasing Slack message. Original message: {msg}")
+            logger.notice(f"Rephrasing Slack message. Original message: {msg}")
             try:
                 msg = rephrase_slack_message(msg)
-                logger.info(f"Rephrased message: {msg}")
+                logger.notice(f"Rephrased message: {msg}")
             except Exception as e:
                 logger.error(f"Error while trying to rephrase the Slack message: {e}")
+        else:
+            logger.notice(f"Received Slack message: {msg}")
 
         if tagged:
-            logger.info("User tagged DanswerBot")
+            logger.debug("User tagged DanswerBot")
 
         if thread_ts != message_ts and thread_ts is not None:
             thread_messages = read_slack_thread(
@@ -437,7 +437,7 @@ def _initialize_socket_client(socket_client: SocketModeClient) -> None:
     socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
 
     # Establish a WebSocket connection to the Socket Mode servers
-    logger.info("Listening for messages from Slack...")
+    logger.notice("Listening for messages from Slack...")
     socket_client.connect()
 
 
@@ -454,7 +454,7 @@ if __name__ == "__main__":
     slack_bot_tokens: SlackBotTokens | None = None
     socket_client: SocketModeClient | None = None
 
-    logger.info("Verifying query preprocessing (NLTK) data is downloaded")
+    logger.notice("Verifying query preprocessing (NLTK) data is downloaded")
     download_nltk_data()
 
     while True:
@@ -463,7 +463,7 @@ if __name__ == "__main__":
 
             if latest_slack_bot_tokens != slack_bot_tokens:
                 if slack_bot_tokens is not None:
-                    logger.info("Slack Bot tokens have changed - reconnecting")
+                    logger.notice("Slack Bot tokens have changed - reconnecting")
                 else:
                     # This happens on the very first time the listener process comes up
                     # or the tokens have updated (set up for the first time)

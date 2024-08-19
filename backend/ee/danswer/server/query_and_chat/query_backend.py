@@ -51,7 +51,7 @@ def handle_search_request(
 ) -> DocumentSearchResponse:
     """Simple search endpoint, does not create a new message or records in the DB"""
     query = search_request.message
-    logger.info(f"Received document search query: {query}")
+    logger.notice(f"Received document search query: {query}")
 
     llm, fast_llm = get_default_llms()
     search_pipeline = SearchPipeline(
@@ -130,7 +130,7 @@ def get_answer_with_quote(
     db_session: Session = Depends(get_session),
 ) -> OneShotQAResponse:
     query = query_request.messages[0].message
-    logger.info(f"Received query for one shot answer API with quotes: {query}")
+    logger.notice(f"Received query for one shot answer API with quotes: {query}")
 
     persona = get_persona_by_id(
         persona_id=query_request.persona_id,

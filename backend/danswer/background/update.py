@@ -380,7 +380,7 @@ def update_loop(
         # batch of documents indexed
 
         if db_embedding_model.cloud_provider_id is None:
-            logger.debug("Running a first inference to warm up embedding model")
+            logger.notice("Running a first inference to warm up embedding model")
             warm_up_bi_encoder(
                 embedding_model=db_embedding_model,
                 model_server_host=INDEXING_MODEL_SERVER_HOST,
@@ -447,7 +447,7 @@ def update__main() -> None:
     set_is_ee_based_on_env_variable()
     init_sqlalchemy_engine(POSTGRES_INDEXER_APP_NAME)
 
-    logger.info("Starting indexing service")
+    logger.notice("Starting indexing service")
     update_loop()
 
 

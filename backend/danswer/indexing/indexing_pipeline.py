@@ -166,7 +166,7 @@ def index_doc_batch_with_handler(
 
         index_attempt_metadata.num_exceptions += 1
         if index_attempt_metadata.num_exceptions == INDEXING_EXCEPTION_LIMIT:
-            logger.info(
+            logger.warning(
                 f"Maximum number of exceptions for this index attempt "
                 f"({INDEXING_EXCEPTION_LIMIT}) has been reached. "
                 f"The next exception will abort the indexing attempt."
@@ -174,7 +174,7 @@ def index_doc_batch_with_handler(
         elif index_attempt_metadata.num_exceptions > INDEXING_EXCEPTION_LIMIT:
             logger.warning(
                 f"Maximum number of exceptions for this index attempt "
-                f"({INDEXING_EXCEPTION_LIMIT}) has been exceeded. Raising RuntimeError."
+                f"({INDEXING_EXCEPTION_LIMIT}) has been exceeded."
             )
             raise RuntimeError(
                 f"Maximum exception limit of {INDEXING_EXCEPTION_LIMIT} exceeded."

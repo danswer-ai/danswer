@@ -226,7 +226,7 @@ class DefaultMultiLLM(LLM):
         self._model_kwargs = model_kwargs
 
     def log_model_configs(self) -> None:
-        logger.info(f"Config: {self.config}")
+        logger.debug(f"Config: {self.config}")
 
     def _completion(
         self,

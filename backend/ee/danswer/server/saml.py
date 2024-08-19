@@ -50,7 +50,7 @@ async def upsert_saml_user(email: str) -> User:
                 try:
                     return await user_manager.get_by_email(email)
                 except exceptions.UserNotExists:
-                    logger.info("Creating user from SAML login")
+                    logger.notice("Creating user from SAML login")
 
                 user_count = await get_user_count()
                 role = UserRole.ADMIN if user_count == 0 else UserRole.BASIC

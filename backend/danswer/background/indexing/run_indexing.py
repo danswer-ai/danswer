@@ -160,7 +160,7 @@ def _run_indexing(
     )
 
     if INDEXING_TRACER_INTERVAL > 0:
-        logger.info(f"Memory tracer starting: interval={INDEXING_TRACER_INTERVAL}")
+        logger.debug(f"Memory tracer starting: interval={INDEXING_TRACER_INTERVAL}")
         tracer = DanswerTracer()
         tracer.start()
         tracer.snap()
@@ -269,7 +269,7 @@ def _run_indexing(
                     INDEXING_TRACER_INTERVAL > 0
                     and tracer_counter % INDEXING_TRACER_INTERVAL == 0
                 ):
-                    logger.info(
+                    logger.debug(
                         f"Running trace comparison for batch {tracer_counter}. interval={INDEXING_TRACER_INTERVAL}"
                     )
                     tracer.snap()
@@ -285,7 +285,7 @@ def _run_indexing(
                     run_dt=run_end_dt,
                 )
         except Exception as e:
-            logger.info(
+            logger.exception(
                 f"Connector run ran into exception after elapsed time: {time.time() - start_time} seconds"
             )
             # Only mark the attempt as a complete failure if this is the first indexing window.
@@ -323,13 +323,13 @@ def _run_indexing(
             break
 
     if INDEXING_TRACER_INTERVAL > 0:
-        logger.info(
+        logger.debug(
             f"Running trace comparison between start and end of indexing. {tracer_counter} batches processed."
         )
         tracer.snap()
         tracer.log_first_diff(INDEXING_TRACER_NUM_PRINT_ENTRIES)
         tracer.stop()
-        logger.info("Memory tracer stopped.")
+        logger.debug("Memory tracer stopped.")
 
     if (
         index_attempt_md.num_exceptions > 0
