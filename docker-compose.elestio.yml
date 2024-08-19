@@ -300,38 +300,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "6"
-
-
-  # nginx:
-  #   image: nginx:1.23.4-alpine
-  #   restart: always
-  #   # nginx will immediately crash with `nginx: [emerg] host not found in upstream`
-  #   # if api_server / web_server are not up 
-  #   depends_on:
-  #     - api_server
-  #     - web_server
-  #   environment:
-  #     - DOMAIN=localhost
-  #   ports:
-  #     - "80:80"
-  #     - "3000:80"  # allow for localhost:3000 usage, since that is the norm
-  #   volumes:
-  #     - ./deployment/data/nginx:/etc/nginx/conf.d
-  #   logging:
-  #     driver: json-file
-  #     options:
-  #       max-size: "50m"
-  #       max-file: "6"
-  #   # the specified script waits for the api_server to start up. 
-  #   # Without this we've seen issues where nginx shows no error logs but 
-  #   # does not recieve any traffic
-  #   # NOTE: we have to use dos2unix to remove Carriage Return chars from the file
-  #   # in order to make this work on both Unix-like systems and windows
-  #   command: > 
-  #     /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
-  #     && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
-        
+        max-file: "6"        
 
 volumes:
   db_volume:

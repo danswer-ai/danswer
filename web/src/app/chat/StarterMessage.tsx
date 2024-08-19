@@ -11,14 +11,15 @@ export function StarterMessage({
 }) {
   return (
     <Card
-      className="h-[180px] p-4 justify-between flex flex-col cursor-pointer border-input-colored"
+      className="min-h-[180px] p-4 justify-between flex flex-col cursor-pointer border-input-colored"
       onClick={onClick}
     >
       <CardContent className="p-0 text-default">
         <p className="text-subtle text-sm">{starterMessage.description}</p>
       </CardContent>{" "}
       <CardFooter className="p-0">
-        <ChevronsLeftRight size={24} className="ml-auto" />
+        {/* TODO: Create icon as a data for the starter messages */}
+        {/* <ChevronsLeftRight size={24} className="ml-auto" /> */}
       </CardFooter>
     </Card>
   );

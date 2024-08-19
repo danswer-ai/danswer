@@ -23,7 +23,7 @@ export function ChatIntro({
           <div className="flex">
             <div>
               <h1 className="flex flex-col text-[2rem] md:text-[3rem] 2xl:text-[4rem] font-medium leading-[1.2] tracking-tighter">
-                <span className="h1-bg">Hi, I&rsquo;am enMedD AI,</span>
+                <span className="h1-bg">Hi, I am {livePersona?.name},</span>
                 <span className="h1-bg">How can I help you today?</span>
               </h1>
               {/* <div className="m-auto mt-4 text-3xl font-bold text-strong w-fit">
