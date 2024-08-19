@@ -352,7 +352,7 @@ async def optional_user(
     # )
     user_result = await async_db_session.execute(
         text(
-            f"""select id, email, is_verified, oidc_expiry, chosen_assistants
+            f"""select id, email, is_verified, oidc_expiry
             from public.user where id = '{access_token.user_id}'"""
         ),
     )
