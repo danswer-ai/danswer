@@ -1,9 +1,3 @@
-from danswer.utils.logger import GlobalLogSetting
-
-# Needs to be set early before the other modules are imported
-GlobalLogSetting.set_log_file_name("api_server")
-
-# flake8: noqa: E402
 import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager

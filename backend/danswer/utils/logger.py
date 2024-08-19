@@ -4,29 +4,11 @@ from collections.abc import MutableMapping
 from typing import Any
 
 from shared_configs.configs import DEV_LOGGING_ENABLED
+from shared_configs.configs import LOG_FILE_NAME
 from shared_configs.configs import LOG_LEVEL
 
 
 logging.addLevelName(logging.INFO + 5, "NOTICE")
-
-
-class GlobalLogSetting:
-    """Sets the log file names for the process, this must be set at the entry point of the process
-    since this is used by setup_logger() which is run at module import time."""
-
-    _LOG_FILE_NAME: str | None = None
-
-    @classmethod
-    def get_log_file_name(cls) -> str:
-        if cls._LOG_FILE_NAME is None:
-            raise ValueError("Log file name has not been set.")
-        return cls._LOG_FILE_NAME
-
-    @classmethod
-    def set_log_file_name(cls, log_file_name: str) -> None:
-        if cls._LOG_FILE_NAME is not None and cls._LOG_FILE_NAME != log_file_name:
-            raise ValueError("Log file name has already been set.")
-        cls._LOG_FILE_NAME = log_file_name
 
 
 class IndexAttemptSingleton:
@@ -131,17 +113,16 @@ def setup_logger(
     logger.addHandler(handler)
 
     is_containerized = os.path.exists("/.dockerenv")
-    if is_containerized or DEV_LOGGING_ENABLED:
+    if LOG_FILE_NAME and (is_containerized or DEV_LOGGING_ENABLED):
         log_levels = ["debug", "info", "notice"]
         for level in log_levels:
-            file_name = GlobalLogSetting.get_log_file_name()
-            file_name_template = (
-                f"/var/log/{file_name}_{level}.log"
+            file_name = (
+                f"/var/log/{LOG_FILE_NAME}_{level}.log"
                 if is_containerized
-                else f"./log/{file_name}_{level}.log"
+                else f"./log/{LOG_FILE_NAME}_{level}.log"
             )
             file_handler = logging.handlers.RotatingFileHandler(
-                file_name_template.format(file_name=file_name),
+                file_name,
                 maxBytes=25 * 1024 * 1024,  # 25 MB
                 backupCount=5,  # Keep 5 backup files
             )

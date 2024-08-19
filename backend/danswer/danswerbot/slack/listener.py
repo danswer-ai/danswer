@@ -1,9 +1,3 @@
-from danswer.utils.logger import GlobalLogSetting
-
-# Needs to be set early before the other modules are imported
-GlobalLogSetting.set_log_file_name("slack_bot")
-
-# flake8: noqa: E402
 import time
 from threading import Event
 from typing import Any

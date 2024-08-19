@@ -1,9 +1,3 @@
-from danswer.utils.logger import GlobalLogSetting
-
-# Needs to be set early before the other modules are imported
-GlobalLogSetting.set_log_file_name("model_server")
-
-# flake8: noqa: E402
 import logging
 import time
 from datetime import datetime

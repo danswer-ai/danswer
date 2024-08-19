@@ -1,9 +1,3 @@
-from danswer.utils.logger import GlobalLogSetting
-
-# Needs to be set early before the other modules are imported
-GlobalLogSetting.set_log_file_name("model_server")
-
-# flake8: noqa: E402
 import os
 import shutil
 from collections.abc import AsyncGenerator
@@ -14,6 +8,7 @@ import torch
 import uvicorn
 from fastapi import FastAPI
 from transformers import logging as transformer_logging  # type:ignore
+
 from danswer import __version__
 from danswer.utils.logger import setup_logger
 from model_server.custom_models import router as custom_models_router
