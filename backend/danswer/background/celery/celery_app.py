@@ -282,7 +282,7 @@ def check_for_cc_pair_deletion_task() -> None:
         cc_pairs = get_connector_credential_pairs(db_session)
         for cc_pair in cc_pairs:
             if should_kick_off_deletion_of_cc_pair(cc_pair, db_session):
-                logger.info(f"Deleting the {cc_pair.name} connector credential pair")
+                logger.notice(f"Deleting the {cc_pair.name} connector credential pair")
                 cleanup_connector_credential_pair_task.apply_async(
                     kwargs=dict(
                         connector_id=cc_pair.connector.id,

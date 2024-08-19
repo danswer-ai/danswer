@@ -111,7 +111,6 @@ from danswer.tools.built_in_tools import auto_add_search_tool_to_personas
 from danswer.tools.built_in_tools import load_builtin_tools
 from danswer.tools.built_in_tools import refresh_built_in_tools_cache
 from danswer.utils.logger import setup_logger
-from danswer.utils.logger import setup_uvicorn_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
@@ -127,7 +126,6 @@ from shared_configs.enums import RerankerProvider
 
 
 logger = setup_logger()
-setup_uvicorn_logger()
 
 
 def validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -179,22 +177,22 @@ def include_router_with_global_prefix_prepended(
 
 
 def setup_postgres(db_session: Session) -> None:
-    logger.info("Verifying default connector/credential exist.")
+    logger.notice("Verifying default connector/credential exist.")
     create_initial_public_credential(db_session)
     create_initial_default_connector(db_session)
     associate_default_cc_pair(db_session)
 
-    logger.info("Verifying default standard answer category exists.")
+    logger.notice("Verifying default standard answer category exists.")
     create_initial_default_standard_answer_category(db_session)
 
-    logger.info("Loading LLM providers from env variables")
+    logger.notice("Loading LLM providers from env variables")
     load_llm_providers(db_session)
 
-    logger.info("Loading default Prompts and Personas")
+    logger.notice("Loading default Prompts and Personas")
     delete_old_default_personas(db_session)
     load_chat_yamls()
 
-    logger.info("Loading built-in tools")
+    logger.notice("Loading built-in tools")
     load_builtin_tools(db_session)
     refresh_built_in_tools_cache(db_session)
     auto_add_search_tool_to_personas(db_session)
@@ -238,7 +236,7 @@ def setup_vespa(
             )
             break
         except Exception:
-            logger.info(f"Waiting on Vespa, retrying in {wait_time} seconds...")
+            logger.notice(f"Waiting on Vespa, retrying in {wait_time} seconds...")
             time.sleep(wait_time)
 
 
@@ -279,25 +277,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         # Expire all old embedding models indexing attempts, technically redundant
         cancel_indexing_attempts_past_model(db_session)
 
-        logger.info(f'Using Embedding model: "{db_embedding_model.model_name}"')
+        logger.notice(f'Using Embedding model: "{db_embedding_model.model_name}"')
         if db_embedding_model.query_prefix or db_embedding_model.passage_prefix:
-            logger.info(f'Query embedding prefix: "{db_embedding_model.query_prefix}"')
-            logger.info(
+            logger.notice(
+                f'Query embedding prefix: "{db_embedding_model.query_prefix}"'
+            )
+            logger.notice(
                 f'Passage embedding prefix: "{db_embedding_model.passage_prefix}"'
             )
 
         search_settings = get_search_settings()
         if search_settings:
             if not search_settings.disable_rerank_for_streaming:
-                logger.info("Reranking is enabled.")
+                logger.notice("Reranking is enabled.")
 
             if search_settings.multilingual_expansion:
-                logger.info(
+                logger.notice(
                     f"Multilingual query expansion is enabled with {search_settings.multilingual_expansion}."
                 )
         else:
             if DEFAULT_CROSS_ENCODER_MODEL_NAME:
-                logger.info("Reranking is enabled.")
+                logger.notice("Reranking is enabled.")
                 if not DEFAULT_CROSS_ENCODER_MODEL_NAME:
                     raise ValueError("No reranking model specified.")
             search_settings = SavedSearchSettings(
@@ -322,7 +322,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         if search_settings.rerank_model_name and not search_settings.provider_type:
             warm_up_cross_encoder(search_settings.rerank_model_name)
 
-        logger.info("Verifying query preprocessing (NLTK) data is downloaded")
+        logger.notice("Verifying query preprocessing (NLTK) data is downloaded")
         download_nltk_data()
 
         # setup Postgres with default credential, llm providers, etc.
@@ -333,7 +333,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         mark_reindex_flag(db_session)
 
         # ensure Vespa is setup correctly
-        logger.info("Verifying Document Index(s) is/are available.")
+        logger.notice("Verifying Document Index(s) is/are available.")
         document_index = get_default_document_index(
             primary_index_name=db_embedding_model.index_name,
             secondary_index_name=secondary_db_embedding_model.index_name
@@ -342,7 +342,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         )
         setup_vespa(document_index, db_embedding_model, secondary_db_embedding_model)
 
-        logger.info(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
+        logger.notice(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
         if db_embedding_model.cloud_provider_id is None:
             warm_up_bi_encoder(
                 embedding_model=db_embedding_model,
@@ -485,11 +485,11 @@ app = fetch_versioned_implementation(module="danswer.main", attribute="get_appli
 
 
 if __name__ == "__main__":
-    logger.info(
+    logger.notice(
         f"Starting Danswer Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
     )
 
     if global_version.get_is_ee_version():
-        logger.info("Running Enterprise Edition")
+        logger.notice("Running Enterprise Edition")
 
     uvicorn.run(app, host=APP_HOST, port=APP_PORT)

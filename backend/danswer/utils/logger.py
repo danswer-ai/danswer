@@ -112,6 +112,12 @@ def setup_logger(
 
     logger.addHandler(handler)
 
+    uvicorn_logger = logging.getLogger("uvicorn.access")
+    if uvicorn_logger:
+        uvicorn_logger.handlers = []
+        uvicorn_logger.addHandler(handler)
+        uvicorn_logger.setLevel(log_level)
+
     is_containerized = os.path.exists("/.dockerenv")
     if LOG_FILE_NAME and (is_containerized or DEV_LOGGING_ENABLED):
         log_levels = ["debug", "info", "notice"]
@@ -130,17 +136,9 @@ def setup_logger(
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
 
+            if uvicorn_logger:
+                uvicorn_logger.addHandler(file_handler)
+
     logger.notice = lambda msg, *args, **kwargs: logger.log(logging.getLevelName("NOTICE"), msg, *args, **kwargs)  # type: ignore
 
     return DanswerLoggingAdapter(logger)
-
-
-def setup_uvicorn_logger() -> None:
-    logger = logging.getLogger("uvicorn.access")
-    handler = logging.StreamHandler()
-    handler.setLevel(get_log_level_from_str(LOG_LEVEL))
-
-    formatter = get_standard_formatter()
-    handler.setFormatter(formatter)
-
-    logger.handlers = [handler]
