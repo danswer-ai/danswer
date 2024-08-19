@@ -1304,6 +1304,7 @@ export function ChatPage({
   return (
     <>
       <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
+      <InstantSSRAutoRefresh />
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
       {popup}

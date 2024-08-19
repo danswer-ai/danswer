@@ -185,6 +185,7 @@ export default async function Home() {
     <>
       <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
+      <InstantSSRAutoRefresh />
 
       {!shouldShowWelcomeModal &&
         !shouldDisplayNoSourcesModal &&
