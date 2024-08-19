@@ -1275,8 +1275,7 @@ export function ChatPage({
                                           starterMessage={starterMessage}
                                           onClick={() =>
                                             onSubmit({
-                                              messageOverride:
-                                                starterMessage.message,
+                                              messageOverride: starterMessage.message,
                                             })
                                           }
                                         />
