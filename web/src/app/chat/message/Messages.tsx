@@ -452,7 +452,7 @@ export const AIMessage = ({
                               `}
                                 >
                                   <a
-                                    href={doc.link}
+                                    href={doc.link || undefined}
                                     target="_blank"
                                     className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
                                   >
