@@ -340,10 +340,24 @@ async def optional_user(
     if not access_token:
         return None
 
-    user = await async_db_session.scalar(
-        select(User).where(User.id == access_token.user_id)
+    user_result = await async_db_session.execute(
+        select(User.id, User.email, User.is_verified, User.oidc_expiry).where(
+            User.id == access_token.user_id
+        )
     )
-    return user
+    user_data = user_result.fetchone()
+    dummy_user = User(
+        id=user_data[0],
+        email=user_data[1],
+        is_verified=user_data[2],
+        oidc_expiry=user_data[3],
+        role=UserRole.BASIC,
+        is_active=True,
+        is_superuser=False,
+        chosen_assistants=None,
+        default_model=None,
+    )
+    return dummy_user
 
     # versioned_fetch_user = fetch_versioned_implementation(
     #     "danswer.auth.users", "optional_user_"
