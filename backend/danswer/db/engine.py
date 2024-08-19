@@ -75,7 +75,17 @@ if LOG_POSTGRES_CONN_COUNTS:
     def log_checkout(dbapi_connection, connection_record, connection_proxy):  # type: ignore
         global checkout_count
         checkout_count += 1
-        logger.debug(f"Total connection checkouts: {checkout_count}")
+
+        active_connections = connection_proxy._pool.checkedout()
+        idle_connections = connection_proxy._pool.checkedin()
+        pool_size = connection_proxy._pool.size()
+        logger.debug(
+            "Connection Checkout\n"
+            f"Active Connections: {active_connections};\n"
+            f"Idle: {idle_connections};\n"
+            f"Pool Size: {pool_size};\n"
+            f"Total connection checkouts: {checkout_count}"
+        )
 
     @event.listens_for(Engine, "checkin")
     def log_checkin(dbapi_connection, connection_record):  # type: ignore
