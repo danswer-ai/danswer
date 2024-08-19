@@ -1241,19 +1241,6 @@ export function ChatPage({
                       the top of the chat page. Only used in the EE version of the app. */}
                       <ChatBanner />
 
-                      {/* {messageHistory.length === 0 &&
-                        !isFetchingChatMessages &&
-                        !isStreaming && (
-                          <ChatIntro
-                            availableSources={finalAvailableSources}
-                            livePersona={livePersona}
-                            currentPersona={currentPersona}
-                            selectedPersona={selectedPersona}
-                            onSubmit={onSubmit({
-                              messageOverride: starterMessage.message,
-                            })}
-                          />
-                        )} */}
                       {messageHistory.length === 0 &&
                         !isFetchingChatMessages &&
                         !isStreaming && (
@@ -1535,44 +1522,6 @@ export function ChatPage({
 
                         <div ref={endDivRef}></div>
 
-                        {/* {currentPersona &&
-                          currentPersona.starter_messages &&
-                          currentPersona.starter_messages.length > 0 &&
-                          selectedPersona &&
-                          messageHistory.length === 0 &&
-                          !isFetchingChatMessages && (
-                            <div
-                              className={`
-                            mx-auto 
-                            px-4 
-                            w-searchbar-xs 
-                            2xl:w-searchbar-sm 
-                            3xl:w-searchbar 
-                            grid 
-                            gap-4 
-                            grid-cols-1 
-                            grid-rows-1 
-                            mt-4 
-                            md:grid-cols-2 
-                            mb-6`}
-                            >
-                              {currentPersona.starter_messages.map(
-                                (starterMessage, i) => (
-                                  <div key={i} className="w-full">
-                                    <StarterMessage
-                                      starterMessage={starterMessage}
-                                      onClick={() =>
-                                        onSubmit({
-                                          messageOverride:
-                                            starterMessage.message,
-                                        })
-                                      }
-                                    />
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          )} */}
                         <div ref={endDivRef} />
                       </div>
                     </div>
