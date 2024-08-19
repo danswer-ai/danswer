@@ -72,13 +72,13 @@ if LOG_POSTGRES_CONN_COUNTS:
     checkin_count = 0
 
     @event.listens_for(Engine, "checkout")
-    def log_checkout(dbapi_connection, connection_record, connection_proxy):
+    def log_checkout(dbapi_connection, connection_record, connection_proxy):  # type: ignore
         global checkout_count
         checkout_count += 1
         logger.debug(f"Total connection checkouts: {checkout_count}")
 
     @event.listens_for(Engine, "checkin")
-    def log_checkin(dbapi_connection, connection_record):
+    def log_checkin(dbapi_connection, connection_record):  # type: ignore
         global checkin_count
         checkin_count += 1
         logger.debug(f"Total connection checkins: {checkin_count}")
