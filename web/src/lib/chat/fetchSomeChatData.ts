@@ -59,6 +59,9 @@ type FetchOption =
   | "folders"
   | "userInputPrompts";
 
+/* 
+NOTE: currently unused, but leaving here for future use. 
+*/
 export async function fetchSomeChatData(
   searchParams: { [key: string]: string },
   fetchOptions: FetchOption[] = []
