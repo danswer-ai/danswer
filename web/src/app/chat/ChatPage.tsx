@@ -566,7 +566,7 @@ export function ChatPage({
     number | null
   >(null);
 
-  const adjustDocumentSidebarWidth = () => {
+  /* const adjustDocumentSidebarWidth = () => {
     if (masterFlexboxRef.current && document.documentElement.clientWidth) {
       if (document.documentElement.clientWidth > 1700) {
         setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1460);
@@ -574,6 +574,18 @@ export function ChatPage({
         setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1060);
       } else {
         setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 960);
+      }
+    }
+  }; */
+
+  const adjustDocumentSidebarWidth = () => {
+    if (masterFlexboxRef.current && document.documentElement.clientWidth) {
+      if (document.documentElement.clientWidth > 1700) {
+        setMaxDocumentSidebarWidth(400);
+      } else if (document.documentElement.clientWidth > 1420) {
+        setMaxDocumentSidebarWidth(350);
+      } else {
+        setMaxDocumentSidebarWidth(300);
       }
     }
   };
@@ -1262,7 +1274,8 @@ export function ChatPage({
                                           starterMessage={starterMessage}
                                           onClick={() =>
                                             onSubmit({
-                                              messageOverride: starterMessage.message,
+                                              messageOverride:
+                                                starterMessage.message,
                                             })
                                           }
                                         />
@@ -1614,6 +1627,37 @@ export function ChatPage({
                           />
                         </ResizableSection>
                       </div>
+                      {/* <div
+                        ref={sidebarElementRef}
+                        className="fixed 2xl:relative top-0 right-0 z-overlay bg-background  flex-none overflow-y-hidden h-full"
+                        style={{
+                          width: !showDocSidebar
+                            ? Math.max(300, usedSidebarWidth)
+                            : 0,
+                        }}
+                      >
+                        <ResizableSection
+                          updateSidebarWidth={updateSidebarWidth}
+                          intialWidth={usedSidebarWidth}
+                          minWidth={300}
+                          maxWidth={maxDocumentSidebarWidth || undefined}
+                        >
+                          <DocumentSidebar
+                            initialWidth={showDocSidebar ? usedSidebarWidth : 0}
+                            ref={innerSidebarElementRef}
+                            closeSidebar={() => toggleSidebar()}
+                            selectedMessage={aiMessage}
+                            selectedDocuments={selectedDocuments}
+                            toggleDocumentSelection={toggleDocumentSelection}
+                            clearSelectedDocuments={clearSelectedDocuments}
+                            selectedDocumentTokens={selectedDocumentTokens}
+                            maxTokens={maxTokens}
+                            isLoading={isFetchingChatMessages}
+                            showDocSidebar={showDocSidebar}
+                            isWide={isWide}
+                          />
+                        </ResizableSection>
+                      </div> */}
                     </>
                   ) : // Another option is to use a div with the width set to the initial width, so that the
                   // chat section appears in the same place as before

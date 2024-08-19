@@ -90,10 +90,7 @@ export function SearchSummary({
         isOverflowed && "cursor-default"
       }`}
     >
-      <Search
-        /* className="mr-2 my-auto" size={14} */ size={16}
-        className="min-w-4 min-h-4 mr-2"
-      />
+      <Search size={16} className="min-w-4 min-h-4 mr-2" />
       <div className="line-clamp-1 break-all px-0.5" ref={searchingForRef}>
         Searching for: <i>{finalQuery}</i>
       </div>
