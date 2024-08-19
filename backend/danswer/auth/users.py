@@ -352,9 +352,9 @@ async def optional_user(
     # )
     user_result = await async_db_session.execute(
         text(
-            "select id, email, is_verified, oidc_expiry, chosen_assistants from public.user where id = :id"
+            f"""select id, email, is_verified, oidc_expiry, chosen_assistants
+            from public.user where id = '{access_token.user_id}'"""
         ),
-        {"id": access_token.user_id},
     )
     user_data = user_result.fetchone()
     dummy_user = User(
