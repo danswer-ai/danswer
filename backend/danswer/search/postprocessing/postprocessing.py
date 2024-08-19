@@ -39,7 +39,7 @@ def _log_top_section_links(search_flow: str, sections: list[InferenceSection]) -
         else "No Link"
         for section in sections
     ]
-    logger.info(f"Top links from {search_flow} search: {', '.join(top_links)}")
+    logger.debug(f"Top links from {search_flow} search: {', '.join(top_links)}")
 
 
 def cleanup_chunks(chunks: list[InferenceChunkUncleaned]) -> list[InferenceChunk]:

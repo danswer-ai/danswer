@@ -335,7 +335,9 @@ def prepare_to_modify_documents(
                     yield transaction
                     break
         except OperationalError as e:
-            logger.info(f"Failed to acquire locks for documents, retrying. Error: {e}")
+            logger.warning(
+                f"Failed to acquire locks for documents, retrying. Error: {e}"
+            )
 
         time.sleep(retry_delay)
 

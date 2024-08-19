@@ -375,7 +375,7 @@ class Answer:
                 else None
             )
 
-            logger.info(f"Chosen tool: {chosen_tool_and_args}")
+            logger.notice(f"Chosen tool: {chosen_tool_and_args}")
 
         if not chosen_tool_and_args:
             prompt_builder.update_system_prompt(

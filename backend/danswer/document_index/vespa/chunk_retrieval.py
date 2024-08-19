@@ -316,7 +316,7 @@ def query_vespa(
 
     response_json: dict[str, Any] = response.json()
     if LOG_VESPA_TIMING_INFORMATION:
-        logger.info("Vespa timing info: %s", response_json.get("timing"))
+        logger.debug("Vespa timing info: %s", response_json.get("timing"))
     hits = response_json["root"].get("children", [])
 
     for hit in hits:

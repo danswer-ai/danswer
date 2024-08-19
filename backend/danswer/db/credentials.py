@@ -271,9 +271,9 @@ def delete_credential(
             )
 
     if force:
-        logger.info(f"Force deleting credential {credential_id}")
+        logger.warning(f"Force deleting credential {credential_id}")
     else:
-        logger.info(f"Deleting credential {credential_id}")
+        logger.notice(f"Deleting credential {credential_id}")
 
     db_session.delete(credential)
     db_session.commit()

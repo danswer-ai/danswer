@@ -1,8 +1,10 @@
 import logging
 import os
 from collections.abc import MutableMapping
+from logging.handlers import RotatingFileHandler
 from typing import Any
 
+from danswer.configs.constants import SLACK_CHANNEL_ID
 from shared_configs.configs import DEV_LOGGING_ENABLED
 from shared_configs.configs import LOG_FILE_NAME
 from shared_configs.configs import LOG_LEVEL
@@ -48,14 +50,21 @@ class DanswerLoggingAdapter(logging.LoggerAdapter):
         # If this is an indexing job, add the attempt ID to the log message
         # This helps filter the logs for this specific indexing
         attempt_id = IndexAttemptSingleton.get_index_attempt_id()
-        if attempt_id is None:
-            return msg, kwargs
+        if attempt_id is not None:
+            msg = f"[Attempt ID: {attempt_id}] {msg}"
 
-        return f"[Attempt ID: {attempt_id}] {msg}", kwargs
+        # For Slack Bot, logs the channel relevant to the request
+        channel_id = self.extra.get(SLACK_CHANNEL_ID) if self.extra else None
+        if channel_id:
+            msg = f"[Channel ID: {channel_id}] {msg}"
 
-    def notice(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        return msg, kwargs
+
+    def notice(self, msg: Any, *args: Any, **kwargs: Any) -> None:
         # Stacklevel is set to 2 to point to the actual caller of notice instead of here
-        self.log(logging.getLevelName("NOTICE"), msg, *args, **kwargs, stacklevel=2)
+        self.log(
+            logging.getLevelName("NOTICE"), str(msg), *args, **kwargs, stacklevel=2
+        )
 
 
 class ColoredFormatter(logging.Formatter):
@@ -95,12 +104,13 @@ def get_standard_formatter() -> ColoredFormatter:
 def setup_logger(
     name: str = __name__,
     log_level: int = get_log_level_from_str(),
+    extra: MutableMapping[str, Any] | None = None,
 ) -> DanswerLoggingAdapter:
     logger = logging.getLogger(name)
 
     # If the logger already has handlers, assume it was already configured and return it.
     if logger.handlers:
-        return DanswerLoggingAdapter(logger)
+        return DanswerLoggingAdapter(logger, extra=extra)
 
     logger.setLevel(log_level)
 
@@ -127,7 +137,7 @@ def setup_logger(
                 if is_containerized
                 else f"./log/{LOG_FILE_NAME}_{level}.log"
             )
-            file_handler = logging.handlers.RotatingFileHandler(
+            file_handler = RotatingFileHandler(
                 file_name,
                 maxBytes=25 * 1024 * 1024,  # 25 MB
                 backupCount=5,  # Keep 5 backup files
@@ -141,4 +151,4 @@ def setup_logger(
 
     logger.notice = lambda msg, *args, **kwargs: logger.log(logging.getLevelName("NOTICE"), msg, *args, **kwargs)  # type: ignore
 
-    return DanswerLoggingAdapter(logger)
+    return DanswerLoggingAdapter(logger, extra=extra)

@@ -49,7 +49,7 @@ def _seed_llms(
     db_session: Session, llm_upsert_requests: list[LLMProviderUpsertRequest]
 ) -> None:
     if llm_upsert_requests:
-        logger.info("Seeding LLMs")
+        logger.notice("Seeding LLMs")
         seeded_providers = [
             upsert_llm_provider(db_session, llm_upsert_request)
             for llm_upsert_request in llm_upsert_requests
@@ -59,7 +59,7 @@ def _seed_llms(
 
 def _seed_personas(db_session: Session, personas: list[CreatePersonaRequest]) -> None:
     if personas:
-        logger.info("Seeding Personas")
+        logger.notice("Seeding Personas")
         for persona in personas:
             upsert_persona(
                 user=None,  # Seeding is done as admin
@@ -83,31 +83,31 @@ def _seed_personas(db_session: Session, personas: list[CreatePersonaRequest]) ->
 
 
 def _seed_settings(settings: Settings) -> None:
-    logger.info("Seeding Settings")
+    logger.notice("Seeding Settings")
     try:
         settings.check_validity()
         store_base_settings(settings)
-        logger.info("Successfully seeded Settings")
+        logger.notice("Successfully seeded Settings")
     except ValueError as e:
         logger.error(f"Failed to seed Settings: {str(e)}")
 
 
 def _seed_enterprise_settings(seed_config: SeedConfiguration) -> None:
     if seed_config.enterprise_settings is not None:
-        logger.info("Seeding enterprise settings")
+        logger.notice("Seeding enterprise settings")
         store_ee_settings(seed_config.enterprise_settings)
 
 
 def _seed_logo(db_session: Session, logo_path: str | None) -> None:
     if logo_path:
-        logger.info("Uploading logo")
+        logger.notice("Uploading logo")
         upload_logo(db_session=db_session, file=logo_path)
 
 
 def _seed_analytics_script(seed_config: SeedConfiguration) -> None:
     custom_analytics_secret_key = os.environ.get("CUSTOM_ANALYTICS_SECRET_KEY")
     if seed_config.analytics_script_path and custom_analytics_secret_key:
-        logger.info("Seeding analytics script")
+        logger.notice("Seeding analytics script")
         try:
             with open(seed_config.analytics_script_path, "r") as file:
                 script_content = file.read()
@@ -130,7 +130,7 @@ def get_seed_config() -> SeedConfiguration | None:
 def seed_db() -> None:
     seed_config = _parse_env()
     if seed_config is None:
-        logger.info("No seeding configuration file passed")
+        logger.debug("No seeding configuration file passed")
         return
 
     with get_session_context_manager() as db_session:

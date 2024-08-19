@@ -37,7 +37,8 @@ def log_function_time(
             if debug_only:
                 logger.debug(final_log)
             else:
-                logger.info(final_log)
+                # These are generally more important logs so the level is a bit higher
+                logger.notice(final_log)
 
             if not print_only:
                 optional_telemetry(

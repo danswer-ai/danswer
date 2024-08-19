@@ -54,7 +54,7 @@ def admin_search(
     db_session: Session = Depends(get_session),
 ) -> AdminSearchResponse:
     query = question.query
-    logger.info(f"Received admin search query: {query}")
+    logger.notice(f"Received admin search query: {query}")
     user_acl_filters = build_access_filters_for_user(user, db_session)
     final_filters = IndexFilters(
         source_type=question.filters.source_type,
@@ -122,7 +122,7 @@ def query_validation(
     # Note if weak model prompt is chosen, this check does not occur and will simply return that
     # the query is valid, this is because weaker models cannot really handle this task well.
     # Additionally, some weak model servers cannot handle concurrent inferences.
-    logger.info(f"Validating query: {simple_query.query}")
+    logger.notice(f"Validating query: {simple_query.query}")
     reasoning, answerable = get_query_answerability(simple_query.query)
     return QueryValidationResponse(reasoning=reasoning, answerable=answerable)
 
@@ -231,7 +231,7 @@ def stream_query_validation(
     # Note if weak model prompt is chosen, this check does not occur and will simply return that
     # the query is valid, this is because weaker models cannot really handle this task well.
     # Additionally, some weak model servers cannot handle concurrent inferences.
-    logger.info(f"Validating query: {simple_query.query}")
+    logger.notice(f"Validating query: {simple_query.query}")
     return StreamingResponse(
         stream_query_answerability(simple_query.query), media_type="application/json"
     )
@@ -245,7 +245,7 @@ def get_answer_with_quote(
 ) -> StreamingResponse:
     query = query_request.messages[0].message
 
-    logger.info(f"Received query for one shot answer with quotes: {query}")
+    logger.notice(f"Received query for one shot answer with quotes: {query}")
 
     packets = stream_search_answer(
         query_req=query_request,

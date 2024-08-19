@@ -48,7 +48,7 @@ def get_local_intent_model(
             logger.warning(f"Failed to load model directly: {e}")
             try:
                 # Attempt to download the model snapshot
-                logger.info(f"Downloading model snapshot for {model_name_or_path}")
+                logger.notice(f"Downloading model snapshot for {model_name_or_path}")
                 local_path = snapshot_download(repo_id=model_name_or_path, revision=tag)
                 _INTENT_MODEL = HybridClassifier.from_pretrained(local_path)
             except Exception as e:
@@ -60,7 +60,7 @@ def get_local_intent_model(
 
 
 def warm_up_intent_model() -> None:
-    logger.info(f"Warming up Intent Model: {INTENT_MODEL_VERSION}")
+    logger.notice(f"Warming up Intent Model: {INTENT_MODEL_VERSION}")
     intent_tokenizer = get_intent_model_tokenizer()
     tokens = intent_tokenizer(
         MODEL_WARM_UP_STRING, return_tensors="pt", truncation=True, padding=True
