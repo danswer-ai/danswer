@@ -113,4 +113,4 @@ $COMPOSE_CMD -f docker-compose.prod.yml run --name enmedd-stack --rm --entrypoin
 echo
 
 echo "### Reloading nginx ..."
-$COMPOSE_CMD -f docker-compose.prod.yml -p enmedd-stack up --force-recreate -d --build
+$COMPOSE_CMD -f docker-compose.prod.yml -p enmedd-stack up -d --build --force-recreate 
