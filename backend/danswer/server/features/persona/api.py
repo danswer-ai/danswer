@@ -1,4 +1,3 @@
-import time
 import uuid
 from uuid import UUID
 
@@ -80,6 +79,7 @@ def list_personas_admin(
             db_session=db_session,
             user_id=None,  # user_id = None -> give back all personas
             include_deleted=include_deleted,
+            joinedload_all=True,
         )
     ]
 
@@ -187,7 +187,6 @@ def list_personas(
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
 ) -> list[PersonaSnapshot]:
-    start = time.time()
     user_id = user.id if user is not None else None
     result = [
         PersonaSnapshot.from_model(persona)
@@ -198,7 +197,6 @@ def list_personas(
             joinedload_all=True,
         )
     ]
-    logger.info(f"Time taken on Personas: {time.time() - start}")
     return result
 
 

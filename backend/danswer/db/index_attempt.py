@@ -182,7 +182,6 @@ def get_last_attempt(
 
 
 def get_latest_index_attempts(
-    # connector_credential_pair_identifiers: list[ConnectorCredentialPairIdentifier],
     secondary_index: bool,
     db_session: Session,
 ) -> Sequence[IndexAttempt]:
@@ -196,23 +195,6 @@ def get_latest_index_attempts(
     else:
         ids_stmt = ids_stmt.where(EmbeddingModel.status == IndexModelStatus.PRESENT)
 
-    # where_stmts: list[ColumnElement] = []
-    # for connector_credential_pair_identifier in connector_credential_pair_identifiers:
-    #     where_stmts.append(
-    #         IndexAttempt.connector_credential_pair_id
-    #         == (
-    #             select(ConnectorCredentialPair.id)
-    #             .where(
-    #                 ConnectorCredentialPair.connector_id
-    #                 == connector_credential_pair_identifier.connector_id,
-    #                 ConnectorCredentialPair.credential_id
-    #                 == connector_credential_pair_identifier.credential_id,
-    #             )
-    #             .scalar_subquery()
-    #         )
-    #     )
-    # if where_stmts:
-    #     ids_stmt = ids_stmt.where(or_(*where_stmts))
     ids_stmt = ids_stmt.group_by(IndexAttempt.connector_credential_pair_id)
     ids_subquery = ids_stmt.subquery()
 

@@ -327,38 +327,7 @@ async def optional_user(
     request: Request,
     user: User | None = Depends(optional_fastapi_current_user),
     db_session: Session = Depends(get_session),
-    # async_db_session: AsyncSession = Depends(get_async_session),
 ) -> User | None:
-    # cookie = request.cookies.get("fastapiusersauth")
-    # if not cookie:
-    #     return None
-
-    # access_token = await async_db_session.scalar(
-    #     select(AccessToken).where(AccessToken.token == cookie)
-    # )
-    # if not access_token:
-    #     return None
-
-    # user_result = await async_db_session.execute(
-    #     text(
-    #         f"""select id, email, is_verified, oidc_expiry, chosen_assistants
-    #         from public.user where id = '{access_token.user_id}'"""
-    #     ),
-    # )
-    # user_data = user_result.fetchone()
-    # dummy_user = User(
-    #     id=user_data[0],
-    #     email=user_data[1],
-    #     is_verified=user_data[2],
-    #     oidc_expiry=user_data[3],
-    #     role=UserRole.BASIC,
-    #     is_active=True,
-    #     is_superuser=False,
-    #     chosen_assistants=user_data[4],
-    #     default_model=None,
-    # )
-    # return dummy_user
-
     versioned_fetch_user = fetch_versioned_implementation(
         "danswer.auth.users", "optional_user_"
     )
@@ -395,9 +364,7 @@ async def double_check_user(
 
 async def current_user(
     user: User | None = Depends(optional_user),
-    # async_db_session: AsyncSession = Depends(get_async_session),
 ) -> User | None:
-    # logger.info(await async_db_session.scalar(select(User).where(User.id == user.id)))
     return await double_check_user(user)
 
 
