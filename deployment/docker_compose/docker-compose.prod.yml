@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     command: >
       /bin/sh -c "alembic upgrade head &&
-      echo \"Starting Danswer Api Server\" &&
+      echo \"Starting enMedD AI Api Server\" &&
       uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
