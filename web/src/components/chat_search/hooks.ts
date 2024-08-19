@@ -66,10 +66,16 @@ export const useSidebarVisibility = ({
       }
     };
 
+    const handleMouseLeave = () => {
+      setShowDocSidebar(false);
+    };
+
     document.addEventListener("mousemove", handleEvent);
+    document.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
       document.removeEventListener("mousemove", handleEvent);
+      document.removeEventListener("mouseleave", handleMouseLeave);
     };
   }, [showDocSidebar, toggledSidebar, sidebarElementRef, mobile]);
 
