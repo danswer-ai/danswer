@@ -365,7 +365,7 @@ async def optional_user(
         role=UserRole.BASIC,
         is_active=True,
         is_superuser=False,
-        chosen_assistants=user_data[4],
+        chosen_assistants=None,
         default_model=None,
     )
     return dummy_user
