@@ -17,6 +17,7 @@ from danswer.utils.logger import setup_logger
 
 from danswer.tools.summary.summary_tool import SummaryGenerationTool
 from danswer.tools.text_to_sql.sql_generation_tool import SqlGenerationTool
+from danswer.tools.email.compose_email_tool import ComposeEmailTool
 
 logger = setup_logger()
 
@@ -59,6 +60,14 @@ BUILT_IN_TOOLS: list[InCodeToolInfo] = [
         ),
         in_code_tool_id=SummaryGenerationTool.__name__,
         display_name=SummaryGenerationTool._DISPLAY_NAME,
+    ),
+    InCodeToolInfo(
+        cls=ComposeEmailTool,
+        description=(
+            "The Compose Email Tool allows the assistant to use user prompt to compose email for given text."
+        ),
+        in_code_tool_id=ComposeEmailTool.__name__,
+        display_name=ComposeEmailTool._DISPLAY_NAME,
     ),
     # don't show the InternetSearchTool as an option if BING_API_KEY is not available
     *(

@@ -91,6 +91,8 @@ from danswer.utils.timing import log_generator_function_time
 
 from danswer.tools.summary.summary_tool import SummaryGenerationTool, SUMMARY_GENERATION_RESPONSE_ID
 from danswer.tools.text_to_sql.sql_generation_tool import SqlGenerationTool, SQL_GENERATION_RESPONSE_ID
+from danswer.tools.email.compose_email_tool import ComposeEmailTool, COMPOSE_EMAIL_RESPONSE_ID
+
 
 logger = setup_logger()
 
@@ -499,6 +501,15 @@ def stream_chat_message_objects(
                         files = latest_query_files
                     )
                     tool_dict[db_tool_model.id] = [summary_generation_tool]
+                elif tool_cls.__name__ == ComposeEmailTool.__name__:
+                    sql_generation_tool = ComposeEmailTool(
+                        user=user,
+                        persona=persona,
+                        prompt_config=prompt_config,
+                        llm_config=llm.config,
+                        llm=llm
+                    )
+                    tool_dict[db_tool_model.id] = [sql_generation_tool]
                 elif tool_cls.__name__ == ImageGenerationTool.__name__:
                     img_generation_llm_config: LLMConfig | None = None
                     if (
@@ -666,6 +677,8 @@ def stream_chat_message_objects(
                 elif packet.id == SQL_GENERATION_RESPONSE_ID:
                     yield cast(ChatPacket, packet)
                 elif packet.id == SUMMARY_GENERATION_RESPONSE_ID:
+                    yield cast(ChatPacket, packet)
+                elif packet.id == COMPOSE_EMAIL_RESPONSE_ID:
                     yield cast(ChatPacket, packet)
                 elif packet.id == CUSTOM_TOOL_RESPONSE_ID:
                     custom_tool_response = cast(CustomToolCallSummary, packet.response)
