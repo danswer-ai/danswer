@@ -3,11 +3,8 @@ import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
-import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatProvider } from "@/components/context/ChatContext";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
-import FunctionalWrapper from "./shared_chat_search/FunctionalWrapper";
-import { ChatPage } from "./ChatPage";
 import WrappedChat from "./WrappedChat";
 
 export default async function Page({

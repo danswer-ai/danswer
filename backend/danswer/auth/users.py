@@ -59,9 +59,7 @@ from danswer.db.users import get_user_by_email
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
-from danswer.utils.variable_functionality import (
-    fetch_versioned_implementation,
-)
+from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 
 logger = setup_logger()

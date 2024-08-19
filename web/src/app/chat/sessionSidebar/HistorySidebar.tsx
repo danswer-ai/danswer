@@ -69,11 +69,11 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
 
     const currentChatId = currentChatSession?.id;
 
-    // prevent the NextJS Router cache from causing the chat sidebar to not
-    // update / show an outdated list of chats
-    useEffect(() => {
-      router.refresh();
-    }, [currentChatId]);
+    // NOTE: do not do something like the below - assume that the parent
+    // will handle properly refreshing the existingChats
+    // useEffect(() => {
+    //   router.refresh();
+    // }, [currentChatId]);
 
     const combinedSettings = useContext(SettingsContext);
     if (!combinedSettings) {

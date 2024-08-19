@@ -326,6 +326,9 @@ LOG_VESPA_TIMING_INFORMATION = (
 )
 LOG_ENDPOINT_LATENCY = os.environ.get("LOG_ENDPOINT_LATENCY", "").lower() == "true"
 LOG_POSTGRES_LATENCY = os.environ.get("LOG_POSTGRES_LATENCY", "").lower() == "true"
+LOG_POSTGRES_CONN_COUNTS = (
+    os.environ.get("LOG_POSTGRES_CONN_COUNTS", "").lower() == "true"
+)
 # Anonymous usage telemetry
 DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"
 

@@ -185,6 +185,7 @@ export default async function Home() {
     <>
       <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
+      <InstantSSRAutoRefresh />
 
       {!shouldShowWelcomeModal &&
         !shouldDisplayNoSourcesModal &&
@@ -200,7 +201,6 @@ export default async function Home() {
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      <InstantSSRAutoRefresh />
       <WrappedSearch
         disabledAgentic={DISABLE_LLM_DOC_RELEVANCE}
         initiallyToggled={toggleSidebar}
