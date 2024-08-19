@@ -16,7 +16,6 @@ services:
     restart: always
     ports:
       - "8080:8080"
-    network_mode: host
     environment:
       # Auth Settings
       - AUTH_TYPE=${AUTH_TYPE:-disabled}
@@ -206,14 +205,13 @@ services:
         - NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS=${NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS:-}
         - NEXT_PUBLIC_DISABLE_LOGOUT=${NEXT_PUBLIC_DISABLE_LOGOUT:-}
 
-        # Enterprise Edition only
+      # Enterprise Edition only
         - NEXT_PUBLIC_THEME=${NEXT_PUBLIC_THEME:-}
         # DO NOT TURN ON unless you have EXPLICIT PERMISSION from Danswer.
         - NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED=${NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED:-false}
     depends_on:
       - api_server
     restart: always
-    network_mode: host
     environment:
       - INTERNAL_URL=http://api_server:8080
       - WEB_DOMAIN=${WEB_DOMAIN:-}
