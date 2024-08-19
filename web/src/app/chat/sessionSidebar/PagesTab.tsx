@@ -17,10 +17,12 @@ export function PagesTab({
   folders,
   openedFolders,
   closeSidebar,
+  stopGenerating,
   newFolderId,
   showShareModal,
   showDeleteModal,
 }: {
+  stopGenerating: () => void;
   page: pageType;
   existingChats?: ChatSession[];
   currentChatId?: number;
@@ -71,7 +73,6 @@ export function PagesTab({
         <div className="py-2 border-b border-border">
           <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-bold">
             Chat Folders
-            {newFolderId ? newFolderId : "Hi"}
           </div>
           <FolderList
             newFolderId={newFolderId}
@@ -125,6 +126,7 @@ export function PagesTab({
                         return (
                           <div key={`${chat.id}-${chat.name}`}>
                             <ChatSessionDisplay
+                              stopGenerating={stopGenerating}
                               showDeleteModal={showDeleteModal}
                               showShareModal={showShareModal}
                               closeSidebar={closeSidebar}

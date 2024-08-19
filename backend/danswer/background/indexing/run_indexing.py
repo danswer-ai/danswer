@@ -24,6 +24,7 @@ from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.index_attempt import mark_attempt_in_progress
+from danswer.db.index_attempt import mark_attempt_partially_succeeded
 from danswer.db.index_attempt import mark_attempt_succeeded
 from danswer.db.index_attempt import update_docs_indexed
 from danswer.db.models import IndexAttempt
@@ -131,6 +132,7 @@ def _run_indexing(
     )
 
     indexing_pipeline = build_indexing_pipeline(
+        attempt_id=index_attempt.id,
         embedder=embedding_model,
         document_index=document_index,
         ignore_time_skip=index_attempt.from_beginning
@@ -158,11 +160,17 @@ def _run_indexing(
     )
 
     if INDEXING_TRACER_INTERVAL > 0:
-        logger.info(f"Memory tracer starting: interval={INDEXING_TRACER_INTERVAL}")
+        logger.debug(f"Memory tracer starting: interval={INDEXING_TRACER_INTERVAL}")
         tracer = DanswerTracer()
         tracer.start()
         tracer.snap()
 
+    index_attempt_md = IndexAttemptMetadata(
+        connector_id=db_connector.id,
+        credential_id=db_credential.id,
+    )
+
+    batch_num = 0
     net_doc_change = 0
     document_count = 0
     chunk_count = 0
@@ -228,13 +236,13 @@ def _run_indexing(
 
                 logger.debug(f"Indexing batch of documents: {batch_description}")
 
+                index_attempt_md.batch_num = batch_num + 1  # use 1-index for this
                 new_docs, total_batch_chunks = indexing_pipeline(
                     document_batch=doc_batch,
-                    index_attempt_metadata=IndexAttemptMetadata(
-                        connector_id=db_connector.id,
-                        credential_id=db_credential.id,
-                    ),
+                    index_attempt_metadata=index_attempt_md,
                 )
+
+                batch_num += 1
                 net_doc_change += new_docs
                 chunk_count += total_batch_chunks
                 document_count += len(doc_batch)
@@ -261,7 +269,7 @@ def _run_indexing(
                     INDEXING_TRACER_INTERVAL > 0
                     and tracer_counter % INDEXING_TRACER_INTERVAL == 0
                 ):
-                    logger.info(
+                    logger.debug(
                         f"Running trace comparison for batch {tracer_counter}. interval={INDEXING_TRACER_INTERVAL}"
                     )
                     tracer.snap()
@@ -277,7 +285,7 @@ def _run_indexing(
                     run_dt=run_end_dt,
                 )
         except Exception as e:
-            logger.info(
+            logger.exception(
                 f"Connector run ran into exception after elapsed time: {time.time() - start_time} seconds"
             )
             # Only mark the attempt as a complete failure if this is the first indexing window.
@@ -315,15 +323,52 @@ def _run_indexing(
             break
 
     if INDEXING_TRACER_INTERVAL > 0:
-        logger.info(
+        logger.debug(
             f"Running trace comparison between start and end of indexing. {tracer_counter} batches processed."
         )
         tracer.snap()
         tracer.log_first_diff(INDEXING_TRACER_NUM_PRINT_ENTRIES)
         tracer.stop()
-        logger.info("Memory tracer stopped.")
+        logger.debug("Memory tracer stopped.")
 
-    mark_attempt_succeeded(index_attempt, db_session)
+    if (
+        index_attempt_md.num_exceptions > 0
+        and index_attempt_md.num_exceptions >= batch_num
+    ):
+        mark_attempt_failed(
+            index_attempt,
+            db_session,
+            failure_reason="All batches exceptioned.",
+        )
+        if is_primary:
+            update_connector_credential_pair(
+                db_session=db_session,
+                connector_id=index_attempt.connector_credential_pair.connector.id,
+                credential_id=index_attempt.connector_credential_pair.credential.id,
+            )
+        raise Exception(
+            f"Connector failed - All batches exceptioned: batches={batch_num}"
+        )
+
+    elapsed_time = time.time() - start_time
+
+    if index_attempt_md.num_exceptions == 0:
+        mark_attempt_succeeded(index_attempt, db_session)
+        logger.info(
+            f"Connector succeeded: "
+            f"docs={document_count} chunks={chunk_count} elapsed={elapsed_time:.2f}s"
+        )
+    else:
+        mark_attempt_partially_succeeded(index_attempt, db_session)
+        logger.info(
+            f"Connector completed with some errors: "
+            f"exceptions={index_attempt_md.num_exceptions} "
+            f"batches={batch_num} "
+            f"docs={document_count} "
+            f"chunks={chunk_count} "
+            f"elapsed={elapsed_time:.2f}s"
+        )
+
     if is_primary:
         update_connector_credential_pair(
             db_session=db_session,
@@ -331,11 +376,6 @@ def _run_indexing(
             credential_id=db_credential.id,
             run_dt=run_end_dt,
         )
-
-    elapsed_time = time.time() - start_time
-    logger.info(
-        f"Connector succeeded: docs={document_count} chunks={chunk_count} elapsed={elapsed_time:.2f}s"
-    )
 
 
 def _prepare_index_attempt(db_session: Session, index_attempt_id: int) -> IndexAttempt:

@@ -85,7 +85,7 @@ def upload_logo(
     content: IO[Any]
 
     if isinstance(file, str):
-        logger.info(f"Uploading logo from local path {file}")
+        logger.notice(f"Uploading logo from local path {file}")
         if not os.path.isfile(file) or not is_valid_file_type(file):
             logger.error(
                 "Invalid file type- only .png, .jpg, and .jpeg files are allowed"
@@ -99,7 +99,7 @@ def upload_logo(
         file_type = guess_file_type(file)
 
     else:
-        logger.info("Uploading logo from uploaded file")
+        logger.notice("Uploading logo from uploaded file")
         if not file.filename or not is_valid_file_type(file.filename):
             raise HTTPException(
                 status_code=400,

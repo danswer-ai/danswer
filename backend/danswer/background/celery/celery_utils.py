@@ -92,7 +92,7 @@ def should_sync_doc_set(document_set: DocumentSet, db_session: Session) -> bool:
         logger.info(f"Document set '{document_set.id}' is already syncing. Skipping.")
         return False
 
-    logger.info(f"Document set {document_set.id} syncing now!")
+    logger.info(f"Document set {document_set.id} syncing now.")
     return True
 
 

@@ -190,7 +190,7 @@ def _apply_pruning(
             ):
                 # If the section is just a little bit over, it is likely due to the additional tool message tokens
                 # no need to record this, the content will be trimmed just in case
-                logger.info(
+                logger.warning(
                     "Found more tokens in Section than expected, "
                     "likely mismatch between embedding and LLM tokenizers. Trimming content..."
                 )

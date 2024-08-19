@@ -42,7 +42,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FiInfo, FiPlus, FiX } from "react-icons/fi";
 import * as Yup from "yup";
-import { FullLLMProvider } from "../models/llm/interfaces";
+import { FullLLMProvider } from "../configuration/llm/interfaces";
 import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";
@@ -114,6 +114,7 @@ export function AssistantEditor({
 
   const [finalPrompt, setFinalPrompt] = useState<string | null>("");
   const [finalPromptError, setFinalPromptError] = useState<string>("");
+  const [removePersonaImage, setRemovePersonaImage] = useState(false);
 
   const triggerFinalPromptUpdate = async (
     systemPrompt: string,
@@ -228,6 +229,9 @@ export function AssistantEditor({
     groups: existingPersona?.groups ?? [],
   };
 
+  const [existingPersonaImageId, setExistingPersonaImageId] = useState<
+    string | null
+  >(existingPersona?.uploaded_image_id || null);
   return (
     <div>
       {popup}
@@ -352,6 +356,7 @@ export function AssistantEditor({
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,
               tool_ids: enabledTools,
+              remove_image: removePersonaImage,
             });
           } else {
             [promptResponse, personaResponse] = await createPersona({
@@ -488,7 +493,9 @@ export function AssistantEditor({
 
                   <IconImageSelection
                     setFieldValue={setFieldValue}
-                    existingPersona={existingPersona!}
+                    existingPersonaImageId={existingPersonaImageId!}
+                    setExistingPersonaImageId={setExistingPersonaImageId}
+                    setRemovePersonaImage={setRemovePersonaImage}
                   />
                 </div>
 

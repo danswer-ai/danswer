@@ -20,6 +20,8 @@ INTENT_MODEL_TAG = "v1.0.3"
 # Bi-Encoder, other details
 DOC_EMBEDDING_CONTEXT_SIZE = 512
 
+# Used to distinguish alternative indices
+ALT_INDEX_SUFFIX = "__danswer_alt_index"
 
 # Used for loading defaults for automatic deployments and dev flows
 # For local, use: mixedbread-ai/mxbai-rerank-xsmall-v1
@@ -34,7 +36,6 @@ DISABLE_RERANK_FOR_STREAMING = (
     os.environ.get("DISABLE_RERANK_FOR_STREAMING", "").lower() == "true"
 )
 
-
 # This controls the minimum number of pytorch "threads" to allocate to the embedding
 # model. If torch finds more threads on its own, this value is not used.
 MIN_THREADS_ML_MODELS = int(os.environ.get("MIN_THREADS_ML_MODELS") or 1)
@@ -43,5 +44,11 @@ MIN_THREADS_ML_MODELS = int(os.environ.get("MIN_THREADS_ML_MODELS") or 1)
 # or intent classification
 INDEXING_ONLY = os.environ.get("INDEXING_ONLY", "").lower() == "true"
 
-# notset, debug, info, warning, error, or critical
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "info")
+# The process needs to have this for the log file to write to
+# otherwise, it will not create additional log files
+LOG_FILE_NAME = os.environ.get("LOG_FILE_NAME") or "danswer"
+
+# Enable generating persistent log files for local dev environments
+DEV_LOGGING_ENABLED = os.environ.get("DEV_LOGGING_ENABLED", "").lower() == "true"
+# notset, debug, info, notice, warning, error, or critical
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "notice")

@@ -1,7 +1,7 @@
 import React from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text, Callout } from "@tremor/react";
-import { CloudEmbeddingProvider } from "../components/types";
+import { CloudEmbeddingProvider } from "../../../../components/embedding/interfaces";
 
 export function DeleteCredentialsModal({
   modelProvider,
@@ -14,6 +14,7 @@ export function DeleteCredentialsModal({
 }) {
   return (
     <Modal
+      width="max-w-3xl"
       title={`Nuke ${modelProvider.name} Credentials?`}
       onOutsideClick={onCancel}
     >

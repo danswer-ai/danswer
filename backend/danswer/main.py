@@ -38,11 +38,13 @@ from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import POSTGRES_WEB_APP_NAME
+from danswer.db.connector import check_connectors_exist
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.credentials import create_initial_public_credential
+from danswer.db.document import check_docs_exist
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
@@ -71,6 +73,7 @@ from danswer.server.documents.cc_pair import router as cc_pair_router
 from danswer.server.documents.connector import router as connector_router
 from danswer.server.documents.credential import router as credential_router
 from danswer.server.documents.document import router as document_router
+from danswer.server.documents.indexing import router as indexing_router
 from danswer.server.features.document_set.api import router as document_set_router
 from danswer.server.features.folder.api import router as folder_router
 from danswer.server.features.input_prompt.api import (
@@ -174,22 +177,22 @@ def include_router_with_global_prefix_prepended(
 
 
 def setup_postgres(db_session: Session) -> None:
-    logger.info("Verifying default connector/credential exist.")
+    logger.notice("Verifying default connector/credential exist.")
     create_initial_public_credential(db_session)
     create_initial_default_connector(db_session)
     associate_default_cc_pair(db_session)
 
-    logger.info("Verifying default standard answer category exists.")
+    logger.notice("Verifying default standard answer category exists.")
     create_initial_default_standard_answer_category(db_session)
 
-    logger.info("Loading LLM providers from env variables")
+    logger.notice("Loading LLM providers from env variables")
     load_llm_providers(db_session)
 
-    logger.info("Loading default Prompts and Personas")
+    logger.notice("Loading default Prompts and Personas")
     delete_old_default_personas(db_session)
     load_chat_yamls()
 
-    logger.info("Loading built-in tools")
+    logger.notice("Loading built-in tools")
     load_builtin_tools(db_session)
     refresh_built_in_tools_cache(db_session)
     auto_add_search_tool_to_personas(db_session)
@@ -198,21 +201,22 @@ def setup_postgres(db_session: Session) -> None:
 def mark_reindex_flag(db_session: Session) -> None:
     kv_store = get_dynamic_config_store()
     try:
-        kv_store.load(KV_REINDEX_KEY)
+        value = kv_store.load(KV_REINDEX_KEY)
+        logger.debug(f"Re-indexing flag has value {value}")
         return
     except ConfigNotFoundError:
         # Only need to update the flag if it hasn't been set
         pass
 
     # If their first deployment is after the changes, it will
-    # TODO enable this when the other changes go in, need to avoid
+    # enable this when the other changes go in, need to avoid
     # this being set to False, then the user indexes things on the old version
-    # docs_exist = check_docs_exist(db_session)
-    # connectors_exist = check_connectors_exist(db_session)
-    # if docs_exist or connectors_exist:
-    #     kv_store.store(KV_REINDEX_KEY, True)
-    # else:
-    #     kv_store.store(KV_REINDEX_KEY, False)
+    docs_exist = check_docs_exist(db_session)
+    connectors_exist = check_connectors_exist(db_session)
+    if docs_exist or connectors_exist:
+        kv_store.store(KV_REINDEX_KEY, True)
+    else:
+        kv_store.store(KV_REINDEX_KEY, False)
 
 
 def setup_vespa(
@@ -232,7 +236,7 @@ def setup_vespa(
             )
             break
         except Exception:
-            logger.info(f"Waiting on Vespa, retrying in {wait_time} seconds...")
+            logger.notice(f"Waiting on Vespa, retrying in {wait_time} seconds...")
             time.sleep(wait_time)
 
 
@@ -248,10 +252,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     verify_auth()
 
     if OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET:
-        logger.info("Both OAuth Client ID and Secret are configured.")
+        logger.notice("Both OAuth Client ID and Secret are configured.")
 
     if DISABLE_GENERATIVE_AI:
-        logger.info("Generative AI Q&A disabled")
+        logger.notice("Generative AI Q&A disabled")
 
     # fill up Postgres connection pools
     await warm_up_connections()
@@ -273,25 +277,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         # Expire all old embedding models indexing attempts, technically redundant
         cancel_indexing_attempts_past_model(db_session)
 
-        logger.info(f'Using Embedding model: "{db_embedding_model.model_name}"')
+        logger.notice(f'Using Embedding model: "{db_embedding_model.model_name}"')
         if db_embedding_model.query_prefix or db_embedding_model.passage_prefix:
-            logger.info(f'Query embedding prefix: "{db_embedding_model.query_prefix}"')
-            logger.info(
+            logger.notice(
+                f'Query embedding prefix: "{db_embedding_model.query_prefix}"'
+            )
+            logger.notice(
                 f'Passage embedding prefix: "{db_embedding_model.passage_prefix}"'
             )
 
         search_settings = get_search_settings()
         if search_settings:
             if not search_settings.disable_rerank_for_streaming:
-                logger.info("Reranking is enabled.")
+                logger.notice("Reranking is enabled.")
 
             if search_settings.multilingual_expansion:
-                logger.info(
+                logger.notice(
                     f"Multilingual query expansion is enabled with {search_settings.multilingual_expansion}."
                 )
         else:
             if DEFAULT_CROSS_ENCODER_MODEL_NAME:
-                logger.info("Reranking is enabled.")
+                logger.notice("Reranking is enabled.")
                 if not DEFAULT_CROSS_ENCODER_MODEL_NAME:
                     raise ValueError("No reranking model specified.")
             search_settings = SavedSearchSettings(
@@ -316,7 +322,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         if search_settings.rerank_model_name and not search_settings.provider_type:
             warm_up_cross_encoder(search_settings.rerank_model_name)
 
-        logger.info("Verifying query preprocessing (NLTK) data is downloaded")
+        logger.notice("Verifying query preprocessing (NLTK) data is downloaded")
         download_nltk_data()
 
         # setup Postgres with default credential, llm providers, etc.
@@ -327,7 +333,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         mark_reindex_flag(db_session)
 
         # ensure Vespa is setup correctly
-        logger.info("Verifying Document Index(s) is/are available.")
+        logger.notice("Verifying Document Index(s) is/are available.")
         document_index = get_default_document_index(
             primary_index_name=db_embedding_model.index_name,
             secondary_index_name=secondary_db_embedding_model.index_name
@@ -336,7 +342,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         )
         setup_vespa(document_index, db_embedding_model, secondary_db_embedding_model)
 
-        logger.info(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
+        logger.notice(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
         if db_embedding_model.cloud_provider_id is None:
             warm_up_bi_encoder(
                 embedding_model=db_embedding_model,
@@ -388,6 +394,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(
         application, token_rate_limit_settings_router
     )
+    include_router_with_global_prefix_prepended(application, indexing_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step
@@ -478,11 +485,11 @@ app = fetch_versioned_implementation(module="danswer.main", attribute="get_appli
 
 
 if __name__ == "__main__":
-    logger.info(
+    logger.notice(
         f"Starting Danswer Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
     )
 
     if global_version.get_is_ee_version():
-        logger.info("Running Enterprise Edition")
+        logger.notice("Running Enterprise Edition")
 
     uvicorn.run(app, host=APP_HOST, port=APP_PORT)

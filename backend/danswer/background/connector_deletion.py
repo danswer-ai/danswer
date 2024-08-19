@@ -185,11 +185,11 @@ def delete_connector_credential_pair(
         connector_id=connector_id,
     )
     if not connector or not len(connector.credentials):
-        logger.debug("Found no credentials left for connector, deleting connector")
+        logger.info("Found no credentials left for connector, deleting connector")
         db_session.delete(connector)
     db_session.commit()
 
-    logger.info(
+    logger.notice(
         "Successfully deleted connector_credential_pair with connector_id:"
         f" '{connector_id}' and credential_id: '{credential_id}'. Deleted {num_docs_deleted} docs."
     )

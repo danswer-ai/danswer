@@ -19,7 +19,7 @@ import {
 import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { personaComparator } from "../admin/assistants/lib";
-import { FullEmbeddingModelResponse } from "../admin/models/embedding/components/types";
+import { FullEmbeddingModelResponse } from "@/components/embedding/interfaces";
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatPopup } from "../chat/ChatPopup";
@@ -27,10 +27,8 @@ import {
   FetchAssistantsResponse,
   fetchAssistantsSS,
 } from "@/lib/assistants/fetchAssistantsSS";
-import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
 import { ChatSession } from "../chat/interfaces";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
-import ToggleSearch from "./WrappedSearch";
 import {
   AGENTIC_SEARCH_TYPE_COOKIE_NAME,
   NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN,

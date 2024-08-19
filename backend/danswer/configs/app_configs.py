@@ -295,6 +295,10 @@ INDEXING_SIZE_WARNING_THRESHOLD = int(
 # 0 disables this behavior and is the default.
 INDEXING_TRACER_INTERVAL = int(os.environ.get("INDEXING_TRACER_INTERVAL", 0))
 
+# During an indexing attempt, specifies the number of batches which are allowed to
+# exception without aborting the attempt.
+INDEXING_EXCEPTION_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LIMIT", 0))
+
 #####
 # Miscellaneous
 #####
@@ -321,6 +325,7 @@ LOG_VESPA_TIMING_INFORMATION = (
     os.environ.get("LOG_VESPA_TIMING_INFORMATION", "").lower() == "true"
 )
 LOG_ENDPOINT_LATENCY = os.environ.get("LOG_ENDPOINT_LATENCY", "").lower() == "true"
+LOG_POSTGRES_LATENCY = os.environ.get("LOG_POSTGRES_LATENCY", "").lower() == "true"
 # Anonymous usage telemetry
 DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"
 

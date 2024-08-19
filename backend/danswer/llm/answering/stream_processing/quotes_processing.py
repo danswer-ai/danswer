@@ -170,11 +170,11 @@ def process_answer(
         logger.debug("No answer extracted from raw output")
         return DanswerAnswer(answer=None), DanswerQuotes(quotes=[])
 
-    logger.info(f"Answer: {answer}")
+    logger.notice(f"Answer: {answer}")
     if not quote_strings:
         logger.debug("No quotes extracted from raw output")
         return DanswerAnswer(answer=answer), DanswerQuotes(quotes=[])
-    logger.info(f"All quotes (including unmatched): {quote_strings}")
+    logger.debug(f"All quotes (including unmatched): {quote_strings}")
     quotes = match_quotes_to_docs(quote_strings, docs)
     logger.debug(f"Final quotes: {quotes}")
 
@@ -197,7 +197,7 @@ def _extract_quotes_from_completed_token_stream(
 ) -> DanswerQuotes:
     answer, quotes = process_answer(model_output, context_docs, is_json_prompt)
     if answer:
-        logger.info(answer)
+        logger.notice(answer)
     elif model_output:
         logger.warning("Answer extraction from model output failed.")
 

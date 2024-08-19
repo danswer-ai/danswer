@@ -46,6 +46,7 @@ from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import LOG_LEVEL
 from shared_configs.configs import MODEL_SERVER_PORT
 
+
 logger = setup_logger()
 
 # If the indexing dies, it's most likely due to resource constraints,
@@ -118,16 +119,6 @@ def _should_create_new_indexing(
     current_db_time = get_db_current_time(db_session)
     time_since_index = current_db_time - last_index.time_updated
     return time_since_index.total_seconds() >= connector.refresh_freq
-
-
-def _is_indexing_job_marked_as_finished(index_attempt: IndexAttempt | None) -> bool:
-    if index_attempt is None:
-        return False
-
-    return (
-        index_attempt.status == IndexingStatus.FAILED
-        or index_attempt.status == IndexingStatus.SUCCESS
-    )
 
 
 def _mark_run_failed(
@@ -215,10 +206,12 @@ def cleanup_indexing_jobs(
             )
 
             # do nothing for ongoing jobs that haven't been stopped
-            if not job.done() and not _is_indexing_job_marked_as_finished(
-                index_attempt
-            ):
-                continue
+            if not job.done():
+                if not index_attempt:
+                    continue
+
+                if not index_attempt.is_finished():
+                    continue
 
             if job.status == "error":
                 logger.error(job.exception())
@@ -387,7 +380,7 @@ def update_loop(
         # batch of documents indexed
 
         if db_embedding_model.cloud_provider_id is None:
-            logger.debug("Running a first inference to warm up embedding model")
+            logger.notice("Running a first inference to warm up embedding model")
             warm_up_bi_encoder(
                 embedding_model=db_embedding_model,
                 model_server_host=INDEXING_MODEL_SERVER_HOST,
@@ -454,7 +447,7 @@ def update__main() -> None:
     set_is_ee_based_on_env_variable()
     init_sqlalchemy_engine(POSTGRES_INDEXER_APP_NAME)
 
-    logger.info("Starting indexing service")
+    logger.notice("Starting indexing service")
     update_loop()
 
 

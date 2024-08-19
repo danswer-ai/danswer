@@ -4,8 +4,8 @@ import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { Label, TextFormField } from "@/components/admin/connectors/Field";
 import { LoadingAnimation } from "@/components/Loading";
-import { CloudEmbeddingProvider } from "../components/types";
-import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../../llm/constants";
+import { CloudEmbeddingProvider } from "../../../../components/embedding/interfaces";
+import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../../configuration/llm/constants";
 import { Modal } from "@/components/Modal";
 
 export function ProviderCreationModal({
@@ -133,6 +133,7 @@ export function ProviderCreationModal({
 
   return (
     <Modal
+      width="max-w-3xl"
       title={`Configure ${selectedProvider.name}`}
       onOutsideClick={onCancel}
       icon={selectedProvider.icon}

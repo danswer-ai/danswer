@@ -265,7 +265,7 @@ def retrieve_chunks(
         top_chunks = combine_retrieval_results(parallel_search_results)
 
     if not top_chunks:
-        logger.info(
+        logger.warning(
             f"{query.search_type.value.capitalize()} search returned no results "
             f"with filters: {query.filters}"
         )

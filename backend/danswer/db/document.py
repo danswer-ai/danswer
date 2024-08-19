@@ -317,7 +317,7 @@ def prepare_to_modify_documents(
     called ahead of any modification to Vespa. Locks should be released by the
     caller as soon as updates are complete by finishing the transaction.
 
-    NOTE: only one commit is allowed within the context manager returned by this funtion.
+    NOTE: only one commit is allowed within the context manager returned by this function.
     Multiple commits will result in a sqlalchemy.exc.InvalidRequestError.
     NOTE: this function will commit any existing transaction.
     """
@@ -335,7 +335,9 @@ def prepare_to_modify_documents(
                     yield transaction
                     break
         except OperationalError as e:
-            logger.info(f"Failed to acquire locks for documents, retrying. Error: {e}")
+            logger.warning(
+                f"Failed to acquire locks for documents, retrying. Error: {e}"
+            )
 
         time.sleep(retry_delay)
 

@@ -50,7 +50,7 @@ def get_gmail_creds_for_authorized_user(
         try:
             creds.refresh(Request())
             if creds.valid:
-                logger.info("Refreshed Gmail tokens.")
+                logger.notice("Refreshed Gmail tokens.")
                 return creds
         except Exception as e:
             logger.exception(f"Failed to refresh gmail access token due to: {e}")

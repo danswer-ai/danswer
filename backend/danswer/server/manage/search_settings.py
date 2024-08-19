@@ -26,6 +26,7 @@ from danswer.search.search_settings import update_search_settings
 from danswer.server.manage.models import FullModelVersionResponse
 from danswer.server.models import IdReturn
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import ALT_INDEX_SUFFIX
 
 router = APIRouter(prefix="/search-settings")
 logger = setup_logger()
@@ -55,11 +56,10 @@ def set_new_embedding_model(
 
         embed_model_details.cloud_provider_id = cloud_id
 
+    # account for same model name being indexed with two different configurations
     if embed_model_details.model_name == current_model.model_name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="New embedding model is the same as the currently active one.",
-        )
+        if not current_model.model_name.endswith(ALT_INDEX_SUFFIX):
+            embed_model_details.model_name += ALT_INDEX_SUFFIX
 
     secondary_model = get_secondary_db_embedding_model(db_session)
 

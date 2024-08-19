@@ -56,7 +56,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
         Raises ValueError for unsupported bucket types.
         """
 
-        logger.info(
+        logger.debug(
             f"Loading credentials for {self.bucket_name} or type {self.bucket_type}"
         )
 
@@ -220,7 +220,7 @@ class BlobStorageConnector(LoadConnector, PollConnector):
             yield batch
 
     def load_from_state(self) -> GenerateDocumentsOutput:
-        logger.info("Loading blob objects")
+        logger.debug("Loading blob objects")
         return self._yield_blob_objects(
             start=datetime(1970, 1, 1, tzinfo=timezone.utc),
             end=datetime.now(timezone.utc),
