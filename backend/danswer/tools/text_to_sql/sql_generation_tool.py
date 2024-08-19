@@ -9,10 +9,13 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from danswer.dynamic_configs.interface import JSON_ro
+from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.answering.prompts.build import AnswerPromptBuilder, default_build_system_message, \
     default_build_user_message
 from danswer.llm.utils import message_to_string
 from danswer.prompts.constants import GENERAL_SEP_PAT
+from danswer.tools.infographics.plot_charts import PlotCharts
+from danswer.tools.infographics.resolve_plot_parameters_using_llm import ResolvePlotParametersUsingLLM
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
 from danswer.utils.logger import setup_logger
@@ -85,7 +88,8 @@ class SqlGenerationTool(Tool):
             persona: Persona,
             prompt_config: PromptConfig,
             llm_config: LLMConfig,
-            llm: LLM | None
+            llm: LLM | None,
+            files: list[InMemoryChatFile] | None
 
     ) -> None:
         self.db_session = db_session
@@ -94,6 +98,11 @@ class SqlGenerationTool(Tool):
         self.prompt_config = prompt_config
         self.llm_config = llm_config
         self.llm = llm
+        self.plot_charts = PlotCharts()
+        self.resolve_plot_parameters = ResolvePlotParametersUsingLLM(llm=llm,
+                                                                     llm_config=llm_config,
+                                                                     prompt_config=prompt_config),
+        self.files = files
 
     @property
     def name(self) -> str:
@@ -108,6 +117,7 @@ class SqlGenerationTool(Tool):
         return self._DISPLAY_NAME
 
     """For explicit tool calling"""
+
     def tool_definition(self) -> dict:
         return {
             "type": "function",
@@ -156,6 +166,8 @@ class SqlGenerationTool(Tool):
         )
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
+        # query= " list all employes by there age  output = is sql
+        # infographi_query = show emplyes age chart by salary
         query = cast(str, kwargs["query"])
 
         llm_config = self.llm_config
@@ -174,17 +186,25 @@ class SqlGenerationTool(Tool):
         sql_generation_tool_output = message_to_string(
             self.llm.invoke(prompt=prompt)
         )
-        # run the SQL in DB
-        db_results = self.db_session.execute(text(sql_generation_tool_output))
-        # dbrows = db_results.fetchall()
-        dbrows = db_results.fetchmany(size=10)
+        files = self.files
+        if files:
+            # read excel file
+            # create json
+            result_list = []
+        else:
+            # run the SQL in DB
+            db_results = self.db_session.execute(text(sql_generation_tool_output))
+            # dbrows = db_results.fetchall()
+            dbrows = db_results.fetchmany(size=10)
 
-        # Convert rows to a list of dictionaries
-        # Each row will be converted to a dictionary using column names
-        result_list = [dict(row._mapping) for row in dbrows]
+            # Convert rows to a list of dictionaries
+            # Each row will be converted to a dictionary using column names
+            result_list = [dict(row._mapping) for row in dbrows]
 
-        final_response = ""
+
         isTableResponse = "json" in query
+        isChartInQuery = "chart" in query
+        # isChartInQuery = True
         if not result_list:
             final_response = "No result found. Please rephrase your query!"
         else:
@@ -196,6 +216,18 @@ class SqlGenerationTool(Tool):
                 json_result = json.dumps(result_list, default=json_encoder, ensure_ascii=False, indent=4)
                 json_response = f"\n\n```json\n{json_result}\n```\n\n"
                 final_response = json_response
+            elif isChartInQuery:
+                # "\"``` dummy infor about this chart ```" + "## Below is visualization " +
+                final_response = self.resolve_parameters_and_generate_chart(
+                    query, result_list,
+                    sql_generation_tool_output)
+                # json_encoder = lambda obj: obj.isoformat() if isinstance(obj, (date, datetime)) else TypeError(
+                #     f"Object of type {type(obj).__name__} is not JSON serializable")
+                # # Serialize the list of dictionaries to a JSON string
+                # json_result = json.dumps(final_response, default=json_encoder, ensure_ascii=False, indent=4)
+                # json_response = f"\n\n```json\n{json_result}\n```\n\n"
+                # final_response = json_response
+
             else:
                 table_response = self.format_as_markdown_table(result_list)
                 final_response = table_response
@@ -205,6 +237,16 @@ class SqlGenerationTool(Tool):
             response=final_response
         )
 
+    def resolve_parameters_and_generate_chart(self, query, result_list, sql_query):
+        df = self.plot_charts.create_dataframe(json_data=result_list)
+        chart_type = self.plot_charts.find_chart_type(df)
+        column_names = self.resolve_plot_parameters.resolve_graph_parameters_from_chart_type_and_sql_and_requirements(sql_query=sql_query,
+                                                                                                                      requirement=query,
+                                                                                                                      chart_type=chart_type)
+        base64_markdown = self.plot_charts.generate_chart_as_markdown_base64(dataframe=df,
+                                                                            field_names=column_names,
+                                                                            chart_type=chart_type)
+        return base64_markdown
 
     # Function to format the list of dictionaries as a markdown table
     def format_as_markdown_table(self, data):
@@ -230,7 +272,6 @@ class SqlGenerationTool(Tool):
         table = "\n".join([header_row, separator_row] + data_rows)
 
         return table
-
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         sql_generation_response = cast(
