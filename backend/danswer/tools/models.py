@@ -35,5 +35,5 @@ class ToolRunnerResponse(BaseModel):
         return values
 
 
-class ToolCallFinalResult(ToolCallKickoff):
+class ToolCallMetadata(ToolCallKickoff):
     tool_result: Any  # we would like to use JSON_ro, but can't due to its recursive nature

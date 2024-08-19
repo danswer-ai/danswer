@@ -764,10 +764,11 @@ class ToolCall(Base):
     tool_arguments: Mapped[dict[str, JSON_ro]] = mapped_column(postgresql.JSONB())
     tool_result: Mapped[JSON_ro] = mapped_column(postgresql.JSONB())
 
-    message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
-
     message: Mapped["ChatMessage"] = relationship(
-        "ChatMessage", back_populates="tool_calls"
+        "ChatMessage",
+        back_populates="tool_call",
+        uselist=False,
+        foreign_keys="ChatMessage.tool_call_id",
     )
 
 
@@ -852,6 +853,9 @@ class ChatMessage(Base):
     parent_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latest_child_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     message: Mapped[str] = mapped_column(Text)
+    tool_call_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tool_call.id"), nullable=True
+    )
     rephrased_query: Mapped[str] = mapped_column(Text, nullable=True)
     # If None, then there is no answer generation, it's the special case of only
     # showing the user the retrieved docs
@@ -894,9 +898,8 @@ class ChatMessage(Base):
     )
     # NOTE: Should always be attached to the `assistant` message.
     # represents the tool calls used to generate this message
-    tool_calls: Mapped[list["ToolCall"]] = relationship(
-        "ToolCall",
-        back_populates="message",
+    tool_call: Mapped["ToolCall"] = relationship(
+        "ToolCall", back_populates="message", foreign_keys=[tool_call_id]
     )
     standard_answers: Mapped[list["StandardAnswer"]] = relationship(
         "StandardAnswer",

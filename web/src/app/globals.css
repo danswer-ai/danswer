@@ -119,6 +119,28 @@
   }
 }
 
+@keyframes custom-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(180deg);
+  }
+  50% {
+    transform: rotate(270deg);
+  }
+  75% {
+    transform: rotate(315deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.generating-spin {
+  animation: custom-spin 2s cubic-bezier(0.4, 0.2, 0.6, 0.8) infinite;
+}
+
 .collapsible {
   max-height: 300px;
   transition:
@@ -222,4 +244,18 @@ code[class*="language-"] {
 
 .code-line .token.attr-name {
   color: theme("colors.token-attr-name");
+}
+
+@keyframes pulse-strong {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.animate-pulse-strong {
+  animation: pulse-strong 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

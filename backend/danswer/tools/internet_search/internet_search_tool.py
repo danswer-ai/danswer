@@ -119,6 +119,12 @@ class InternetSearchTool(Tool):
     def display_name(self) -> str:
         return self._DISPLAY_NAME
 
+    @classmethod
+    def create_prompt(cls, message: PreviousMessage) -> str:
+        # TODO improve / iterate
+
+        return f'I searched for some things! """thigns that I searched for!: {message.message}"""'
+
     def tool_definition(self) -> dict:
         return {
             "type": "function",

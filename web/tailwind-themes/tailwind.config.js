@@ -90,11 +90,11 @@ module.exports = {
         "background-200": "#e5e5e5", // neutral-200
         "background-300": "#d4d4d4", // neutral-300
         "background-400": "#a3a3a3", // neutral-400
-        "background-600": "#525252", // neutral-800
-        "background-500": "#737373", // neutral-400
-        "background-600": "#525252", // neutral-400
-        "background-700": "#404040", // neutral-400
-        "background-800": "#262626", // neutral-800
+        "background-400": "#a3a3a3", // neutral-500
+        "background-500": "#737373", // darkMedium, neutral-500
+        "background-600": "#525252", // dark, neutral-600
+        "background-700": "#404040", // solid, neutral-700
+        "background-800": "#262626", // solidDark, neutral-800
         "background-900": "#111827", // gray-900
         "background-inverted": "#000000", // black
 
@@ -111,6 +111,10 @@ module.exports = {
         "text-600": "#525252", // dark, neutral-600
         "text-700": "#404040", // solid, neutral-700
         "text-800": "#262626", // solidDark, neutral-800
+        "text-900": "#171717", // dark, neutral-900
+
+        "text-toolrun": "#a3a3a3", // darkMedium, neutral-500
+        "text-toolhover": "#171717", // dark, neutral-900
 
         subtle: "#6b7280", // gray-500
         default: "#4b5563", // gray-600

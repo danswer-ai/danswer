@@ -41,7 +41,7 @@ export function FullImageModal({
           <img
             src={buildImgUrl(fileId)}
             alt="Uploaded image"
-            className="max-w-full max-h-full"
+            className="max-w-full rounded-lg max-h-full"
           />
         </Dialog.Content>
       </Dialog.Portal>
