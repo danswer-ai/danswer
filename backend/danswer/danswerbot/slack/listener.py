@@ -10,7 +10,6 @@ from slack_sdk.socket_mode.response import SocketModeResponse
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import MessageType
-from danswer.configs.constants import SLACK_CHANNEL_ID
 from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
@@ -56,6 +55,7 @@ from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
+from shared_configs.configs import SLACK_CHANNEL_ID
 
 logger = setup_logger()
 

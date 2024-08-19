@@ -1,5 +1,7 @@
 import os
 
+# Used for logging
+SLACK_CHANNEL_ID = "channel_id"
 
 MODEL_SERVER_HOST = os.environ.get("MODEL_SERVER_HOST") or "localhost"
 MODEL_SERVER_ALLOWED_HOST = os.environ.get("MODEL_SERVER_HOST") or "0.0.0.0"
