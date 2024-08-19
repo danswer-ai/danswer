@@ -12,11 +12,6 @@ ID_SEPARATOR = ":;:"
 DEFAULT_BOOST = 0
 SESSION_KEY = "session"
 
-
-# Used for logging
-SLACK_CHANNEL_ID = "channel_id"
-
-
 # For chunking/processing chunks
 RETURN_SEPARATOR = "\n\r\n"
 SECTION_SEPARATOR = "\n\n"
