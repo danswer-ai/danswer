@@ -73,6 +73,7 @@ def _add_user_filters(stmt: Select, user: User, for_editing: bool = True) -> Sel
         )
     else:
         where_clause |= Persona.is_public == True  # noqa: E712
+    where_clause |= Persona.user_id == user.id
 
     return stmt.where(where_clause)
 

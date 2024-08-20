@@ -40,6 +40,10 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
     fetchCurrentUser();
   }, []);
 
+  useEffect(() => {
+    formikProps.setFieldValue("is_public", false);
+  }, []);
+
   return (
     <div className="mt-4">
       <BooleanFormField
