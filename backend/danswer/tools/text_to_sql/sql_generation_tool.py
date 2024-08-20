@@ -9,7 +9,6 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from danswer.dynamic_configs.interface import JSON_ro
-from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.answering.prompts.build import AnswerPromptBuilder, default_build_system_message, \
     default_build_user_message
 from danswer.llm.utils import message_to_string
@@ -88,8 +87,7 @@ class SqlGenerationTool(Tool):
             persona: Persona,
             prompt_config: PromptConfig,
             llm_config: LLMConfig,
-            llm: LLM | None,
-            files: list[InMemoryChatFile] | None
+            llm: LLM | None
 
     ) -> None:
         self.db_session = db_session
@@ -101,8 +99,7 @@ class SqlGenerationTool(Tool):
         self.plot_charts = PlotCharts()
         self.resolve_plot_parameters = ResolvePlotParametersUsingLLM(llm=llm,
                                                                      llm_config=llm_config,
-                                                                     prompt_config=prompt_config),
-        self.files = files
+                                                                     prompt_config=prompt_config)
 
     @property
     def name(self) -> str:
@@ -186,21 +183,15 @@ class SqlGenerationTool(Tool):
         sql_generation_tool_output = message_to_string(
             self.llm.invoke(prompt=prompt)
         )
-        files = self.files
-        if files:
-            # read excel file
-            # create json
-            result_list = []
-        else:
-            # run the SQL in DB
-            db_results = self.db_session.execute(text(sql_generation_tool_output))
-            # dbrows = db_results.fetchall()
-            dbrows = db_results.fetchmany(size=10)
 
-            # Convert rows to a list of dictionaries
-            # Each row will be converted to a dictionary using column names
-            result_list = [dict(row._mapping) for row in dbrows]
+        # run the SQL in DB
+        db_results = self.db_session.execute(text(sql_generation_tool_output))
+        # dbrows = db_results.fetchall()
+        dbrows = db_results.fetchmany(size=10)
 
+        # Convert rows to a list of dictionaries
+        # Each row will be converted to a dictionary using column names
+        result_list = [dict(row._mapping) for row in dbrows]
 
         isTableResponse = "json" in query
         isChartInQuery = "chart" in query

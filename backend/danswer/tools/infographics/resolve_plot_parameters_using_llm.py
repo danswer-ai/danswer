@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from danswer.utils.logger import setup_logger
 import json
 
-
 # Setup logger
 logger = setup_logger()
 
@@ -25,7 +24,7 @@ class ResolvePlotParametersUsingLLM:
         self.prompt_config = prompt_config
         logger.info('Initialized ResolvePlotParametersUsingLLM with model %s', self.llm_config.model_name)
 
-    def construct_prompt(self, sql_query, requirement, chart_type) -> str:
+    def construct_prompt(self, sql_query, schema, requirement, chart_type) -> str:
         """ Construct the detailed prompt for querying the LLM. """
         resolve_x_and_y_context = f"""
                         Given the SQL query results, database schema, and user requirements, please identify the appropriate fields for creating a visualization using Plotly. Ensure that the output directly matches the SQL query structure, considering all selected fields.
@@ -34,10 +33,7 @@ class ResolvePlotParametersUsingLLM:
                         {sql_query}
 
                         **Database Schema:**
-                        Album(AlbumId  primary key, Title, ArtistId)
-                        Artist(ArtistId primary key,Name)
-                        Customer(CustomerId primary key,FirstName,LastName,Company,Address,City,State,Country)
-                        Employee(EmployeeId primary key,FirstName,LastName,Title,ReportsTo, BirthDate,Address,City,State,Country,Phone,Email)
+                        {schema}
 
                         **Chart Type:**
                         {chart_type}
@@ -71,19 +67,10 @@ class ResolvePlotParametersUsingLLM:
         #     database_schema=self.get_database_schema()
         # )
 
-    def get_database_schema(self) -> str:
-        """ Return the database schema. """
-        return """
-            Album(AlbumId primary key, Title, ArtistId),
-            Artist(ArtistId primary key,Name),
-            Customer(CustomerId primary key,FirstName,LastName,Company,Address,City,State,Country),
-            Employee(EmployeeId primary key,FirstName,LastName,Title,ReportsTo, BirthDate,Address,City,State,Country,Phone,Email)
-        """
-
-    def resolve_graph_parameters_from_chart_type_and_sql_and_requirements(self, sql_query, requirement,
+    def resolve_graph_parameters_from_chart_type_and_sql_and_requirements(self, sql_query, schema, requirement,
                                                                           chart_type) -> list:
         """ Resolve graph parameters by querying the LLM with constructed prompts. """
-        prompt = self.construct_prompt(sql_query, requirement, chart_type)
+        prompt = self.construct_prompt(sql_query, schema, requirement, chart_type)
         try:
             llm_response = self.llm.invoke(prompt=prompt)
             #field_names = self.post_process(llm_response)
@@ -98,6 +85,18 @@ class ResolvePlotParametersUsingLLM:
 
     def post_process(self, text):
         return "".join([json.loads(token)['response'] for token in text['text'].strip().split('\n')])
+
+    def get_database_schema(self) -> str:
+        """ Return the database schema. """
+        return """
+            Album(AlbumId primary key, Title, ArtistId),
+            Artist(ArtistId primary key,Name),
+            Customer(CustomerId primary key,FirstName,LastName,Company,Address,City,State,Country),
+            Employee(EmployeeId primary key,FirstName,LastName,Title,ReportsTo, BirthDate,Address,City,State,Country,Phone,Email)
+        """
+
+
+
 
 if __name__ == '__main__':
     llm_config = LLMConfig(model_name="model_v1", other_configurations={})
