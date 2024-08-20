@@ -400,6 +400,12 @@ def kombu_message_cleanup_task_helper(ctx: dict, db_session: Session) -> bool:
             )
             if result.rowcount > 0:  # type: ignore
                 ctx["deleted"] += 1
+        else:
+            task_name = payload["headers"]["task"]
+            logger.warning(
+                f"Message found for task older than {ctx['cleanup_age']} days. "
+                f"id={task_id} name={task_name}"
+            )
 
         ctx["last_processed_id"] = msg[0]
 
