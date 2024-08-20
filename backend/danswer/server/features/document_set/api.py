@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Query
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
@@ -77,11 +78,14 @@ def delete_document_set(
 def list_document_sets_admin(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    get_editable: bool = Query(
+        False, description="If true, return get_editable document sets"
+    ),
 ) -> list[DocumentSet]:
     return [
         DocumentSet.from_model(ds)
         for ds in fetch_all_document_sets(
-            db_session=db_session, user=user, get_editable=False
+            db_session=db_session, user=user, get_editable=get_editable
         )
     ]
 

@@ -41,16 +41,16 @@ const numToDisplay = 50;
 
 const EditRow = ({
   documentSet,
-  isAdmin,
+  isEditable,
 }: {
   documentSet: DocumentSet;
-  isAdmin: boolean;
+  isEditable: boolean;
 }) => {
   const router = useRouter();
 
   const [isSyncingTooltipOpen, setIsSyncingTooltipOpen] = useState(false);
 
-  if (!isAdmin && documentSet.is_public) {
+  if (!isEditable) {
     return (
       <div className="text-emphasis font-medium my-auto p-1">
         {documentSet.name}
@@ -103,9 +103,10 @@ interface DocumentFeedbackTableProps {
 
 const DocumentSetTable = ({
   documentSets,
+  editableDocumentSets,
   refresh,
   setPopup,
-}: DocumentFeedbackTableProps) => {
+}: DocumentFeedbackTableProps & { editableDocumentSets: DocumentSet[] }) => {
   const [page, setPage] = useState(1);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const isAdmin = currentUser?.role === UserRole.ADMIN;
@@ -136,6 +137,13 @@ const DocumentSetTable = ({
     }
   });
 
+  const sortedDocumentSets = [
+    ...editableDocumentSets,
+    ...documentSets.filter(
+      (ds) => !editableDocumentSets.some((eds) => eds.id === ds.id)
+    ),
+  ];
+
   return (
     <div>
       <Title>Existing Document Sets</Title>
@@ -150,14 +158,20 @@ const DocumentSetTable = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {documentSets
+          {sortedDocumentSets
             .slice((page - 1) * numToDisplay, page * numToDisplay)
             .map((documentSet) => {
+              const isEditable = editableDocumentSets.some(
+                (eds) => eds.id === documentSet.id
+              );
               return (
                 <TableRow key={documentSet.id}>
                   <TableCell className="whitespace-normal break-all">
                     <div className="flex gap-x-1 text-emphasis">
-                      <EditRow documentSet={documentSet} isAdmin={isAdmin} />
+                      <EditRow
+                        documentSet={documentSet}
+                        isEditable={isEditable}
+                      />
                     </div>
                   </TableCell>
                   <TableCell>
@@ -205,38 +219,46 @@ const DocumentSetTable = ({
                     {documentSet.is_public ? (
                       <Badge
                         size="md"
-                        color={isAdmin ? "green" : "gray"}
+                        color={isEditable ? "green" : "gray"}
                         icon={FiUnlock}
                       >
                         Public
                       </Badge>
                     ) : (
-                      <Badge size="md" color="blue" icon={FiLock}>
+                      <Badge
+                        size="md"
+                        color={isEditable ? "blue" : "gray"}
+                        icon={FiLock}
+                      >
                         Private
                       </Badge>
                     )}
                   </TableCell>
                   <TableCell>
-                    <DeleteButton
-                      onClick={async () => {
-                        const response = await deleteDocumentSet(
-                          documentSet.id
-                        );
-                        if (response.ok) {
-                          setPopup({
-                            message: `Document set "${documentSet.name}" scheduled for deletion`,
-                            type: "success",
-                          });
-                        } else {
-                          const errorMsg = (await response.json()).detail;
-                          setPopup({
-                            message: `Failed to schedule document set for deletion - ${errorMsg}`,
-                            type: "error",
-                          });
-                        }
-                        refresh();
-                      }}
-                    />
+                    {isEditable ? (
+                      <DeleteButton
+                        onClick={async () => {
+                          const response = await deleteDocumentSet(
+                            documentSet.id
+                          );
+                          if (response.ok) {
+                            setPopup({
+                              message: `Document set "${documentSet.name}" scheduled for deletion`,
+                              type: "success",
+                            });
+                          } else {
+                            const errorMsg = (await response.json()).detail;
+                            setPopup({
+                              message: `Failed to schedule document set for deletion - ${errorMsg}`,
+                              type: "error",
+                            });
+                          }
+                          refresh();
+                        }}
+                      />
+                    ) : (
+                      "-"
+                    )}
                   </TableCell>
                 </TableRow>
               );
@@ -247,7 +269,7 @@ const DocumentSetTable = ({
       <div className="mt-3 flex">
         <div className="mx-auto">
           <PageSelector
-            totalPages={Math.ceil(documentSets.length / numToDisplay)}
+            totalPages={Math.ceil(sortedDocumentSets.length / numToDisplay)}
             currentPage={page}
             onPageChange={(newPage) => setPage(newPage)}
           />
@@ -265,6 +287,12 @@ const Main = () => {
     error: documentSetsError,
     refreshDocumentSets,
   } = useDocumentSets();
+  const {
+    data: editableDocumentSets,
+    isLoading: isEditableDocumentSetsLoading,
+    error: editableDocumentSetsError,
+    refreshDocumentSets: refreshEditableDocumentSets,
+  } = useDocumentSets(true);
 
   const {
     data: ccPairs,
@@ -272,12 +300,20 @@ const Main = () => {
     error: ccPairsError,
   } = useConnectorCredentialIndexingStatus();
 
-  if (isDocumentSetsLoading || isCCPairsLoading) {
+  if (
+    isDocumentSetsLoading ||
+    isCCPairsLoading ||
+    isEditableDocumentSetsLoading
+  ) {
     return <ThreeDotsLoader />;
   }
 
   if (documentSetsError || !documentSets) {
     return <div>Error: {documentSetsError}</div>;
+  }
+
+  if (editableDocumentSetsError || !editableDocumentSets) {
+    return <div>Error: {editableDocumentSetsError}</div>;
   }
 
   if (ccPairsError || !ccPairs) {
@@ -310,6 +346,7 @@ const Main = () => {
           <Divider />
           <DocumentSetTable
             documentSets={documentSets}
+            editableDocumentSets={editableDocumentSets}
             ccPairs={ccPairs}
             refresh={refreshDocumentSets}
             setPopup={setPopup}
