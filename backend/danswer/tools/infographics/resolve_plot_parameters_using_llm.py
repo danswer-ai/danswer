@@ -67,9 +67,10 @@ class ResolvePlotParametersUsingLLM:
         #     database_schema=self.get_database_schema()
         # )
 
-    def resolve_graph_parameters_from_chart_type_and_sql_and_requirements(self, sql_query, schema, requirement,
+    def resolve_graph_parameters_from_chart_type_and_sql_and_requirements(self, sql_query, requirement,
                                                                           chart_type) -> list:
         """ Resolve graph parameters by querying the LLM with constructed prompts. """
+        schema = self.get_database_schema()
         prompt = self.construct_prompt(sql_query, schema, requirement, chart_type)
         try:
             llm_response = self.llm.invoke(prompt=prompt)

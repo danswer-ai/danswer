@@ -235,8 +235,8 @@ class SqlGenerationTool(Tool):
                                                                                                                       requirement=query,
                                                                                                                       chart_type=chart_type)
         base64_markdown = self.plot_charts.generate_chart_as_markdown_base64(dataframe=df,
-                                                                            field_names=column_names,
-                                                                            chart_type=chart_type)
+                                                                             field_names=column_names,
+                                                                             chart_type=chart_type)
         return base64_markdown
 
     # Function to format the list of dictionaries as a markdown table
