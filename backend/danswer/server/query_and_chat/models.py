@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
-from pydantic import root_validator
+from pydantic import model_validator
 
 from danswer.chat.models import RetrievalDocs
 from danswer.configs.constants import DocumentSource
@@ -54,16 +54,11 @@ class ChatFeedbackRequest(BaseModel):
     feedback_text: str | None = None
     predefined_feedback: str | None = None
 
-    @root_validator
-    def check_is_positive_or_feedback_text(cls: BaseModel, values: dict) -> dict:
-        is_positive, feedback_text = values.get("is_positive"), values.get(
-            "feedback_text"
-        )
-
-        if is_positive is None and feedback_text is None:
+    @model_validator(mode="after")
+    def check_is_positive_or_feedback_text(self) -> "ChatFeedbackRequest":
+        if self.is_positive is None and self.feedback_text is None:
             raise ValueError("Empty feedback received.")
-
-        return values
+        return self
 
 
 """
@@ -108,18 +103,13 @@ class CreateChatMessageRequest(ChunkContext):
     # used for seeded chats to kick off the generation of an AI answer
     use_existing_user_message: bool = False
 
-    @root_validator
-    def check_search_doc_ids_or_retrieval_options(cls: BaseModel, values: dict) -> dict:
-        search_doc_ids, retrieval_options = values.get("search_doc_ids"), values.get(
-            "retrieval_options"
-        )
-
-        if search_doc_ids is None and retrieval_options is None:
+    @model_validator(mode="after")
+    def check_search_doc_ids_or_retrieval_options(self) -> "CreateChatMessageRequest":
+        if self.search_doc_ids is None and self.retrieval_options is None:
             raise ValueError(
                 "Either search_doc_ids or retrieval_options must be provided, but not both or neither."
             )
-
-        return values
+        return self
 
 
 class ChatMessageIdentifier(BaseModel):
@@ -160,7 +150,8 @@ class SearchFeedbackRequest(BaseModel):
     click: bool
     search_feedback: SearchFeedbackType | None = None
 
-    @root_validator
+    @model_validator(mode="after")
+    @classmethod
     def check_click_or_search_feedback(cls: BaseModel, values: dict) -> dict:
         click, feedback = values.get("click"), values.get("search_feedback")
 

@@ -1,7 +1,7 @@
 from typing import Any
 
 from pydantic import BaseModel
-from pydantic import root_validator
+from pydantic import model_validator
 
 
 class ToolResponse(BaseModel):
@@ -19,12 +19,10 @@ class ToolRunnerResponse(BaseModel):
     tool_response: ToolResponse | None = None
     tool_message_content: str | list[str | dict[str, Any]] | None = None
 
-    @root_validator
-    def validate_tool_runner_response(
-        cls, values: dict[str, ToolResponse | str]
-    ) -> dict[str, ToolResponse | str]:
+    @model_validator(mode="after")
+    def validate_tool_runner_response(self) -> "ToolRunnerResponse":
         fields = ["tool_response", "tool_message_content", "tool_run_kickoff"]
-        provided = sum(1 for field in fields if values.get(field) is not None)
+        provided = sum(1 for field in fields if getattr(self, field) is not None)
 
         if provided != 1:
             raise ValueError(
@@ -32,7 +30,7 @@ class ToolRunnerResponse(BaseModel):
                 "or 'tool_run_kickoff' must be provided"
             )
 
-        return values
+        return self
 
 
 class ToolCallFinalResult(ToolCallKickoff):

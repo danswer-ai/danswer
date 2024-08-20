@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
-from pydantic import validator
+from pydantic import field_validator
 
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
@@ -80,12 +80,11 @@ class ChunkContext(BaseModel):
     chunks_below: int = CONTEXT_CHUNKS_BELOW
     full_doc: bool = False
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("chunks_above", "chunks_below", pre=True, each_item=False)
-    def check_non_negative(cls, value: int, field: Any) -> int:
+    @field_validator("chunks_above", "chunks_below")
+    @classmethod
+    def check_non_negative(cls, value: int) -> int:
         if value < 0:
-            raise ValueError(f"{field.name} must be non-negative")
+            raise ValueError("Value must be non-negative")
         return value
 
 
