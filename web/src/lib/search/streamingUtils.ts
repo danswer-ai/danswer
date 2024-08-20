@@ -108,7 +108,7 @@ export async function* handleSSEStream<T extends PacketType>(
       } catch (error) {
         console.error("Error parsing SSE data:", error);
 
-        // Try to extract valid JSON objects from the line
+        // Detect JSON objects (ie. check if parseable json has been accumulated)
         const jsonObjects = line.match(/\{[^{}]*\}/g);
         if (jsonObjects) {
           for (const jsonObj of jsonObjects) {
