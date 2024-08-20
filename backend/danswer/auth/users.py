@@ -8,6 +8,8 @@ from email.mime.text import MIMEText
 from typing import Optional
 from typing import Tuple
 
+from email_validator import EmailNotValidError
+from email_validator import validate_email
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -61,7 +63,6 @@ from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 
-
 logger = setup_logger()
 
 
@@ -104,8 +105,28 @@ def user_needs_to_be_verified() -> bool:
 
 def verify_email_is_invited(email: str) -> None:
     whitelist = get_invited_users()
-    if (whitelist and email not in whitelist) or not email:
-        raise PermissionError("User not on allowed user whitelist")
+    if not whitelist:
+        return
+
+    if not email:
+        raise PermissionError("Email must be specified")
+
+    email_info = validate_email(email)  # can raise EmailNotValidError
+
+    for email_whitelist in whitelist:
+        try:
+            # normalized emails are now being inserted into the db
+            # we can remove this normalization on read after some time has passed
+            email_info_whitelist = validate_email(email_whitelist)
+        except EmailNotValidError:
+            continue
+
+        # oddly, normalization does not include lowercasing the user part of the
+        # email address ... which we want to allow
+        if email_info.normalized.lower() == email_info_whitelist.normalized.lower():
+            return
+
+    raise PermissionError("User not on allowed user whitelist")
 
 
 def verify_email_in_whitelist(email: str) -> None:
