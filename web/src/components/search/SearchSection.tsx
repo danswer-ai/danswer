@@ -511,6 +511,8 @@ export const SearchSection = ({
   };
   const [firstSearch, setFirstSearch] = useState(true);
   const [searchState, setSearchState] = useState<searchState>("input");
+
+  // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
   const [untoggled, setUntoggled] = useState(false);
 
   const explicitlyUntoggle = () => {
