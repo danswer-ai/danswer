@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import field_validator
-from pydantic import root_validator
+from pydantic import model_validator
 
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import AuthType
@@ -195,7 +195,8 @@ class SlackBotConfigCreationRequest(BaseModel):
             )
         return value
 
-    @root_validator
+    @model_validator(mode="after")
+    @classmethod
     def validate_document_sets_and_persona_id(
         cls, values: dict[str, Any]
     ) -> dict[str, Any]:

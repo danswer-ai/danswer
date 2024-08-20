@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel
 from pydantic import Field
-from pydantic import root_validator
+from pydantic import model_validator
 
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerContexts
@@ -45,7 +45,8 @@ class DirectQARequest(ChunkContext):
     # If True, skips generative an AI response to the search query
     skip_gen_ai_answer_generation: bool = False
 
-    @root_validator
+    @model_validator(mode="after")
+    @classmethod
     def check_chain_of_thought_and_prompt_id(
         cls, values: dict[str, Any]
     ) -> dict[str, Any]:
