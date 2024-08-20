@@ -41,7 +41,13 @@ def _fetch_db_doc_by_id(doc_id: str, db_session: Session) -> DbDocument:
     return doc
 
 
-def _add_user_filters(stmt: Select, user: User, for_editing: bool = True) -> Select:
+def _add_user_filters(
+    stmt: Select, user: User | None, get_editable: bool = True
+) -> Select:
+    # If user is None, assume the user is an admin or auth is disabled
+    if user is None or user.role == UserRole.ADMIN:
+        return stmt
+
     DocByCC = aliased(DocumentByConnectorCredentialPair)
     CCPair = aliased(ConnectorCredentialPair)
     UG__CCpair = aliased(UserGroup__ConnectorCredentialPair)
@@ -76,9 +82,9 @@ def _add_user_filters(stmt: Select, user: User, for_editing: bool = True) -> Sel
     for (as well as public objects as well)
     """
     where_clause = User__UG.user_id == user.id
-    if user.role == UserRole.CURATOR and for_editing:
+    if user.role == UserRole.CURATOR and get_editable:
         where_clause &= User__UG.is_curator == True  # noqa: E712
-    if for_editing:
+    if get_editable:
         user_groups = select(User__UG.user_group_id).where(User__UG.user_id == user.id)
         where_clause &= (
             ~exists()
@@ -101,8 +107,7 @@ def fetch_docs_ranked_by_boost(
     order_func = asc if ascending else desc
     stmt = select(DbDocument)
 
-    if user and user.role != UserRole.ADMIN:
-        stmt = _add_user_filters(stmt=stmt, user=user, for_editing=False)
+    stmt = _add_user_filters(stmt=stmt, user=user, get_editable=False)
 
     stmt = stmt.order_by(
         order_func(DbDocument.boost), order_func(DbDocument.semantic_id)
@@ -122,8 +127,7 @@ def update_document_boost(
     user: User | None = None,
 ) -> None:
     stmt = select(DbDocument).where(DbDocument.id == document_id)
-    if user and user.role != UserRole.ADMIN:
-        stmt = _add_user_filters(stmt, user, for_editing=True)
+    stmt = _add_user_filters(stmt, user, get_editable=True)
     result = db_session.execute(stmt).scalar_one_or_none()
     if result is None:
         raise HTTPException(
@@ -150,8 +154,7 @@ def update_document_hidden(
     user: User | None = None,
 ) -> None:
     stmt = select(DbDocument).where(DbDocument.id == document_id)
-    if user and user.role != UserRole.ADMIN:
-        stmt = _add_user_filters(stmt, user, for_editing=True)
+    stmt = _add_user_filters(stmt, user, get_editable=True)
     result = db_session.execute(stmt).scalar_one_or_none()
     if result is None:
         raise HTTPException(

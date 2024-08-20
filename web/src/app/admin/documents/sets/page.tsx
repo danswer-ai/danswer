@@ -16,7 +16,9 @@ import {
 } from "@tremor/react";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 import { ConnectorIndexingStatus, DocumentSet } from "@/lib/types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getCurrentUser } from "@/lib/user";
+import { User, UserRole } from "@/lib/types";
 import { useDocumentSets } from "./hooks";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { deleteDocumentSet } from "./lib";
@@ -28,6 +30,8 @@ import {
   FiCheckCircle,
   FiClock,
   FiEdit2,
+  FiLock,
+  FiUnlock,
 } from "react-icons/fi";
 import { DeleteButton } from "@/components/DeleteButton";
 import Link from "next/link";
@@ -35,10 +39,25 @@ import { useRouter } from "next/navigation";
 
 const numToDisplay = 50;
 
-const EditRow = ({ documentSet }: { documentSet: DocumentSet }) => {
+const EditRow = ({
+  documentSet,
+  isAdmin,
+}: {
+  documentSet: DocumentSet;
+  isAdmin: boolean;
+}) => {
   const router = useRouter();
 
   const [isSyncingTooltipOpen, setIsSyncingTooltipOpen] = useState(false);
+
+  if (!isAdmin && documentSet.is_public) {
+    return (
+      <div className="text-emphasis font-medium my-auto p-1">
+        {documentSet.name}
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex">
       {isSyncingTooltipOpen && (
@@ -88,6 +107,23 @@ const DocumentSetTable = ({
   setPopup,
 }: DocumentFeedbackTableProps) => {
   const [page, setPage] = useState(1);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const isAdmin = currentUser?.role === UserRole.ADMIN;
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          setCurrentUser(user);
+        } else {
+          console.error("Failed to fetch current user");
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   // sort by name for consistent ordering
   documentSets.sort((a, b) => {
@@ -109,6 +145,7 @@ const DocumentSetTable = ({
             <TableHeaderCell>Name</TableHeaderCell>
             <TableHeaderCell>Connectors</TableHeaderCell>
             <TableHeaderCell>Status</TableHeaderCell>
+            <TableHeaderCell>Public</TableHeaderCell>
             <TableHeaderCell>Delete</TableHeaderCell>
           </TableRow>
         </TableHead>
@@ -120,7 +157,7 @@ const DocumentSetTable = ({
                 <TableRow key={documentSet.id}>
                   <TableCell className="whitespace-normal break-all">
                     <div className="flex gap-x-1 text-emphasis">
-                      <EditRow documentSet={documentSet} />
+                      <EditRow documentSet={documentSet} isAdmin={isAdmin} />
                     </div>
                   </TableCell>
                   <TableCell>
@@ -161,6 +198,21 @@ const DocumentSetTable = ({
                     ) : (
                       <Badge size="md" color="red" icon={FiAlertTriangle}>
                         Deleting
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {documentSet.is_public ? (
+                      <Badge
+                        size="md"
+                        color={isAdmin ? "green" : "gray"}
+                        icon={FiUnlock}
+                      >
+                        Public
+                      </Badge>
+                    ) : (
+                      <Badge size="md" color="blue" icon={FiLock}>
+                        Private
                       </Badge>
                     )}
                   </TableCell>

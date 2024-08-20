@@ -349,7 +349,13 @@ def fetch_document_sets(
     ]
 
 
-def _add_user_filters(stmt: Select, user: User, for_editing: bool = True) -> Select:
+def _add_user_filters(
+    stmt: Select, user: User | None, get_editable: bool = True
+) -> Select:
+    # If user is None, assume the user is an admin or auth is disabled
+    if user is None or user.role == UserRole.ADMIN:
+        return stmt
+
     DocumentSet__UG = aliased(DocumentSet__UserGroup)
     User__UG = aliased(User__UserGroup)
     """
@@ -371,9 +377,9 @@ def _add_user_filters(stmt: Select, user: User, for_editing: bool = True) -> Sel
     for (as well as public DocumentSets)
     """
     where_clause = User__UserGroup.user_id == user.id
-    if user.role == UserRole.CURATOR and for_editing:
+    if user.role == UserRole.CURATOR and get_editable:
         where_clause &= User__UserGroup.is_curator == True  # noqa: E712
-    if for_editing:
+    if get_editable:
         user_groups = select(User__UG.user_group_id).where(User__UG.user_id == user.id)
         if user.role == UserRole.CURATOR:
             user_groups = user_groups.where(User__UG.is_curator == True)  # noqa: E712
@@ -390,13 +396,12 @@ def _add_user_filters(stmt: Select, user: User, for_editing: bool = True) -> Sel
 
 
 def fetch_all_document_sets(
-    db_session: Session, user: User | None = None, for_editing: bool = True
+    db_session: Session, user: User | None = None, get_editable: bool = True
 ) -> Sequence[DocumentSetDBModel]:
     """Used for Admin UI where they should have visibility into all document sets"""
     stmt = select(DocumentSetDBModel).distinct()
-    if user and user.role != UserRole.ADMIN:
-        stmt = _add_user_filters(stmt, user, for_editing=for_editing)
-    return db_session.scalars(stmt)
+    stmt = _add_user_filters(stmt, user, get_editable=get_editable)
+    return db_session.scalars(stmt).all()
 
 
 def fetch_document_sets_for_curator(

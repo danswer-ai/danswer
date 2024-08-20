@@ -41,7 +41,7 @@ def get_cc_pair_full_info(
     db_session: Session = Depends(get_session),
 ) -> CCPairFullInfo:
     cc_pair = get_connector_credential_pair_from_id(
-        cc_pair_id, db_session, user, for_editing=False
+        cc_pair_id, db_session, user, get_editable=False
     )
     if not cc_pair:
         raise HTTPException(
@@ -95,7 +95,7 @@ def update_cc_pair_status(
         cc_pair_id=cc_pair_id,
         db_session=db_session,
         user=user,
-        for_editing=True,
+        get_editable=True,
     )
     if not cc_pair:
         raise HTTPException(
@@ -127,7 +127,7 @@ def update_cc_pair_name(
         cc_pair_id=cc_pair_id,
         db_session=db_session,
         user=user,
-        for_editing=True,
+        get_editable=True,
     )
     if not cc_pair:
         raise HTTPException(

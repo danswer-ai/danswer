@@ -81,7 +81,7 @@ def list_document_sets_admin(
     return [
         DocumentSet.from_model(ds)
         for ds in fetch_all_document_sets(
-            db_session=db_session, user=user, for_editing=False
+            db_session=db_session, user=user, get_editable=False
         )
     ]
 

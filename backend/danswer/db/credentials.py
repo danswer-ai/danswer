@@ -29,7 +29,7 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def _attach_user_filters(
+def _add_user_filters(
     stmt: Select[tuple[Credential]],
     user: User | None,
     assume_admin: bool = False,  # Used with API key
@@ -82,7 +82,7 @@ def fetch_credentials(
     user: User | None = None,
 ) -> list[Credential]:
     stmt = select(Credential)
-    stmt = _attach_user_filters(stmt, user)
+    stmt = _add_user_filters(stmt, user)
     results = db_session.scalars(stmt)
     return list(results.all())
 
@@ -94,7 +94,7 @@ def fetch_credential_by_id(
     assume_admin: bool = False,
 ) -> Credential | None:
     stmt = select(Credential).where(Credential.id == credential_id)
-    stmt = _attach_user_filters(stmt, user, assume_admin=assume_admin)
+    stmt = _add_user_filters(stmt, user, assume_admin=assume_admin)
     result = db_session.execute(stmt)
     credential = result.scalar_one_or_none()
     return credential
@@ -106,7 +106,7 @@ def fetch_credentials_by_source(
     document_source: DocumentSource | None = None,
 ) -> list[Credential]:
     base_query = select(Credential).where(Credential.source == document_source)
-    base_query = _attach_user_filters(base_query, user)
+    base_query = _add_user_filters(base_query, user)
     credentials = db_session.execute(base_query).scalars().all()
     return list(credentials)
 

@@ -163,7 +163,7 @@ def create_deletion_attempt_for_connector_id(
         connector_id=connector_id,
         credential_id=credential_id,
         user=user,
-        for_editing=True,
+        get_editable=True,
     )
     if cc_pair is None:
         raise HTTPException(

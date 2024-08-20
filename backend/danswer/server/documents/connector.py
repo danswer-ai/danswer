@@ -385,7 +385,7 @@ def get_connector_indexing_status(
     cc_pairs = get_connector_credential_pairs(
         db_session=db_session,
         user=user,
-        for_editing=False,
+        get_editable=False,
     )
 
     cc_pair_identifiers = [

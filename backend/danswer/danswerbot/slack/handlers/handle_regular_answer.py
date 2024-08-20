@@ -150,7 +150,7 @@ def handle_regular_answer(
                         db_session,
                         new_message_request.persona_id,
                         user=None,
-                        for_editing=False,
+                        get_editable=False,
                     ),
                 )
                 llm, _ = get_llms_for_persona(persona)

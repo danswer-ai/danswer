@@ -28,7 +28,13 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def _add_user_filters(stmt: Select, user: User, for_editing: bool = True) -> Select:
+def _add_user_filters(
+    stmt: Select, user: User | None, get_editable: bool = True
+) -> Select:
+    # If user is None, assume the user is an admin or auth is disabled
+    if user is None or user.role == UserRole.ADMIN:
+        return stmt
+
     UG__CCpair = aliased(UserGroup__ConnectorCredentialPair)
     User__UG = aliased(User__UserGroup)
 
@@ -53,9 +59,9 @@ def _add_user_filters(stmt: Select, user: User, for_editing: bool = True) -> Sel
     for (as well as public cc_pairs)
     """
     where_clause = User__UG.user_id == user.id
-    if user.role == UserRole.CURATOR and for_editing:
+    if user.role == UserRole.CURATOR and get_editable:
         where_clause &= User__UG.is_curator == True  # noqa: E712
-    if for_editing:
+    if get_editable:
         user_groups = select(User__UG.user_group_id).where(User__UG.user_id == user.id)
         where_clause &= (
             ~exists()
@@ -73,11 +79,10 @@ def get_connector_credential_pairs(
     db_session: Session,
     include_disabled: bool = True,
     user: User | None = None,
-    for_editing: bool = True,
+    get_editable: bool = True,
 ) -> list[ConnectorCredentialPair]:
     stmt = select(ConnectorCredentialPair)
-    if user and user.role != UserRole.ADMIN:
-        stmt = _add_user_filters(stmt, user, for_editing)
+    stmt = _add_user_filters(stmt, user, get_editable)
     if not include_disabled:
         stmt = stmt.where(
             ConnectorCredentialPair.status == ConnectorCredentialPairStatus.ACTIVE
@@ -91,11 +96,10 @@ def get_connector_credential_pair(
     credential_id: int,
     db_session: Session,
     user: User | None = None,
-    for_editing: bool = True,
+    get_editable: bool = True,
 ) -> ConnectorCredentialPair | None:
     stmt = select(ConnectorCredentialPair)
-    if user and user.role != UserRole.ADMIN:
-        stmt = _add_user_filters(stmt, user, for_editing)
+    stmt = _add_user_filters(stmt, user, get_editable)
     stmt = stmt.where(ConnectorCredentialPair.connector_id == connector_id)
     stmt = stmt.where(ConnectorCredentialPair.credential_id == credential_id)
     result = db_session.execute(stmt)
@@ -106,11 +110,10 @@ def get_connector_credential_source_from_id(
     cc_pair_id: int,
     db_session: Session,
     user: User | None = None,
-    for_editing: bool = True,
+    get_editable: bool = True,
 ) -> DocumentSource | None:
     stmt = select(ConnectorCredentialPair)
-    if user and user.role != UserRole.ADMIN:
-        stmt = _add_user_filters(stmt, user, for_editing)
+    stmt = _add_user_filters(stmt, user, get_editable)
     stmt = stmt.where(ConnectorCredentialPair.id == cc_pair_id)
     result = db_session.execute(stmt)
     cc_pair = result.scalar_one_or_none()
@@ -121,11 +124,10 @@ def get_connector_credential_pair_from_id(
     cc_pair_id: int,
     db_session: Session,
     user: User | None = None,
-    for_editing: bool = True,
+    get_editable: bool = True,
 ) -> ConnectorCredentialPair | None:
     stmt = select(ConnectorCredentialPair).distinct()
-    if user and user.role != UserRole.ADMIN:
-        stmt = _add_user_filters(stmt, user, for_editing)
+    stmt = _add_user_filters(stmt, user, get_editable)
     stmt = stmt.where(ConnectorCredentialPair.id == cc_pair_id)
     result = db_session.execute(stmt)
     return result.scalar_one_or_none()
@@ -371,7 +373,7 @@ def remove_credential_from_connector(
         credential_id=credential_id,
         db_session=db_session,
         user=user,
-        for_editing=True,
+        get_editable=True,
     )
 
     if association is not None:

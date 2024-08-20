@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import Query
 from fastapi import UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -74,12 +75,16 @@ def list_personas_admin(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
+    get_editable: bool = Query(
+        False, description="If true, return get_editable personas"
+    ),
 ) -> list[PersonaSnapshot]:
     return [
         PersonaSnapshot.from_model(persona)
         for persona in get_personas(
             db_session=db_session,
             user=user,
+            get_editable=get_editable,
             include_deleted=include_deleted,
         )
     ]

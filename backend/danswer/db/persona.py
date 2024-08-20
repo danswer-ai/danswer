@@ -37,16 +37,29 @@ from danswer.utils.variable_functionality import fetch_versioned_implementation
 logger = setup_logger()
 
 
-def _add_user_filters(stmt: Select, user: User, for_editing: bool = True) -> Select:
+def _add_user_filters(
+    stmt: Select, user: User | None, get_editable: bool = True
+) -> Select:
+    # If user is None, assume the user is an admin or auth is disabled
+    if user is None or user.role == UserRole.ADMIN:
+        return stmt
+
     Persona__UG = aliased(Persona__UserGroup)
     User__UG = aliased(User__UserGroup)
     """
     Here we select cc_pairs by relation:
     User -> User__UserGroup -> Persona__UserGroup -> Persona
     """
-    stmt = stmt.outerjoin(Persona__UG).outerjoin(
-        User__UserGroup,
-        User__UserGroup.user_group_id == Persona__UG.user_group_id,
+    stmt = (
+        stmt.outerjoin(Persona__UG)
+        .outerjoin(
+            User__UserGroup,
+            User__UserGroup.user_group_id == Persona__UG.user_group_id,
+        )
+        .outerjoin(
+            Persona__User,
+            Persona__User.persona_id == Persona.id,
+        )
     )
     """
     Filter Personas by:
@@ -57,11 +70,12 @@ def _add_user_filters(stmt: Select, user: User, for_editing: bool = True) -> Sel
     that the user isn't a curator for
     - if we are not editing, we show all Personas in the groups the user is a curator
     for (as well as public Personas)
+    - if we are not editing, we return all Personas directly connected to the user
     """
     where_clause = User__UserGroup.user_id == user.id
-    if user.role == UserRole.CURATOR and for_editing:
+    if user.role == UserRole.CURATOR and get_editable:
         where_clause &= User__UserGroup.is_curator == True  # noqa: E712
-    if for_editing:
+    if get_editable:
         user_groups = select(User__UG.user_group_id).where(User__UG.user_id == user.id)
         if user.role == UserRole.CURATOR:
             user_groups = user_groups.where(User__UG.is_curator == True)  # noqa: E712
@@ -73,17 +87,18 @@ def _add_user_filters(stmt: Select, user: User, for_editing: bool = True) -> Sel
         )
     else:
         where_clause |= Persona.is_public == True  # noqa: E712
+        where_clause &= Persona.is_visible == True  # noqa: E712
+        where_clause |= Persona__User.user_id == user.id
     where_clause |= Persona.user_id == user.id
 
     return stmt.where(where_clause)
 
 
 def fetch_persona_by_id(
-    db_session: Session, persona_id: int, user: User | None, for_editing: bool = True
+    db_session: Session, persona_id: int, user: User | None, get_editable: bool = True
 ) -> Persona:
     stmt = select(Persona).where(Persona.id == persona_id).distinct()
-    if user is not None and user.role != UserRole.ADMIN:
-        stmt = _add_user_filters(stmt=stmt, user=user, for_editing=for_editing)
+    stmt = _add_user_filters(stmt=stmt, user=user, get_editable=get_editable)
     persona = db_session.scalars(stmt).one_or_none()
     if not persona:
         raise HTTPException(
@@ -187,7 +202,7 @@ def update_persona_shared_users(
     accessibility rather than any of the logic (e.g. prompt, connected data sources,
     etc.)."""
     persona = fetch_persona_by_id(
-        db_session=db_session, persona_id=persona_id, user=user, for_editing=True
+        db_session=db_session, persona_id=persona_id, user=user, get_editable=True
     )
 
     if persona.is_public:
@@ -228,32 +243,34 @@ def get_personas(
     # if user is `None` assume the user is an admin or auth is disabled
     user: User | None,
     db_session: Session,
+    get_editable: bool = True,
     include_default: bool = True,
     include_slack_bot_personas: bool = False,
     include_deleted: bool = False,
 ) -> Sequence[Persona]:
     stmt = select(Persona).distinct()
-    if user is not None and user.role != UserRole.ADMIN:
-        # Subquery to find all groups the user belongs to
-        user_groups_subquery = (
-            select(User__UserGroup.user_group_id)
-            .where(User__UserGroup.user_id == user.id)
-            .subquery()
-        )
+    stmt = _add_user_filters(stmt=stmt, user=user, get_editable=get_editable)
+    # if user is not None and user.role != UserRole.ADMIN:
+    #     # Subquery to find all groups the user belongs to
+    #     user_groups_subquery = (
+    #         select(User__UserGroup.user_group_id)
+    #         .where(User__UserGroup.user_id == user.id)
+    #         .subquery()
+    #     )
 
-        # Include personas where the user is directly related or part of a user group that has access
-        access_conditions = or_(
-            Persona.is_public == True,  # noqa: E712
-            Persona.id.in_(  # User has access through list of users with access
-                select(Persona__User.persona_id).where(Persona__User.user_id == user.id)
-            ),
-            Persona.id.in_(  # User is part of a group that has access
-                select(Persona__UserGroup.persona_id).where(
-                    Persona__UserGroup.user_group_id.in_(user_groups_subquery)  # type: ignore
-                )
-            ),
-        )
-        stmt = stmt.where(access_conditions)
+    #     # Include personas where the user is directly related or part of a user group that has access
+    #     access_conditions = or_(
+    #         Persona.is_public == True,  # noqa: E712
+    #         Persona.id.in_(  # User has access through list of users with access
+    #             select(Persona__User.persona_id).where(Persona__User.user_id == user.id)
+    #         ),
+    #         Persona.id.in_(  # User is part of a group that has access
+    #             select(Persona__UserGroup.persona_id).where(
+    #                 Persona__UserGroup.user_group_id.in_(user_groups_subquery)  # type: ignore
+    #             )
+    #         ),
+    #     )
+    #     stmt = stmt.where(access_conditions)
 
     if not include_default:
         stmt = stmt.where(Persona.default_persona.is_(False))
@@ -446,7 +463,7 @@ def upsert_persona(
 
         # this checks if the user has permission to edit the persona
         persona = fetch_persona_by_id(
-            db_session=db_session, persona_id=persona.id, user=user, for_editing=True
+            db_session=db_session, persona_id=persona.id, user=user, get_editable=True
         )
 
         persona.name = name
@@ -548,7 +565,7 @@ def update_persona_visibility(
     user: User | None = None,
 ) -> None:
     persona = fetch_persona_by_id(
-        db_session=db_session, persona_id=persona_id, user=user, for_editing=True
+        db_session=db_session, persona_id=persona_id, user=user, get_editable=True
     )
     persona.is_visible = is_visible
     db_session.commit()
